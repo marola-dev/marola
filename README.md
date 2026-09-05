@@ -1,17 +1,113 @@
-# marola
+<h1 align="center">🌊 marola</h1>
 
-A Telegram assistant that answers "what's the best hour tomorrow to swim nearby?" — real nearby
-beach discovery (OpenStreetMap), live sea/weather conditions (Open-Meteo), a jellyfish/whale
-heuristic, an LLM-generated summary reviewed by a second LLM pass, all runnable **entirely locally
-with a free Ollama model, zero Azure account needed** — with Azure Maps/Foundry/Cosmos DB/Vision/
-Application Insights available as opt-in upgrades per integration, never a package deal. Also built
-as hands-on coverage of every [AI-103: Developing AI Apps and Agents on Azure](https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-apps-and-agents-developer-associate/)
-exam domain, and a design target for [AI-500: Designing and Implementing Multi-Agent AI Solutions](https://learn.microsoft.com/en-us/credentials/certifications/)
-(for which AI-103 is the mandatory prerequisite) — see [`docs/AI-103-MAPPING.md`](./docs/AI-103-MAPPING.md) and
-[`docs/AI-500-MAPPING.md`](./docs/AI-500-MAPPING.md).
+<p align="center"><b>When LLMs meet the ocean.</b><br/>
+Local-first ocean intelligence for open-water swimmers: the best hour to swim tomorrow, official
+bathing-water quality per sampling point, tides, jellyfish and whale odds, and a grounded
+"ask the ocean" — all on your own machine with a free model, sourced or clearly labelled, never invented.</p>
 
-**Start here:** [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md) — a step-by-step guide to running the
-whole pipeline with a small, free local Ollama model. Full doc set, all centralized under `docs/`:
+<p align="center">
+<a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://github.com/h0ffmann/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+<img src="https://img.shields.io/badge/Scala-3.9_LTS-DC322F?logo=scala&logoColor=white" alt="Scala 3.9" />
+<img src="https://img.shields.io/badge/JDK-25-007396?logo=openjdk&logoColor=white" alt="JDK 25" />
+<img src="https://img.shields.io/badge/effects-Kyo-DC322F" alt="Kyo" />
+<img src="https://img.shields.io/badge/runs_on-Ollama_%C2%B7_llama3.2-000000?logo=ollama&logoColor=white" alt="Ollama" />
+<img src="https://img.shields.io/badge/agents-MCP_tools-000000?logo=modelcontextprotocol&logoColor=white" alt="MCP" />
+<img src="https://img.shields.io/badge/prompts-DSPy--compiled-B5121B" alt="DSPy" />
+<img src="https://img.shields.io/badge/license-MIT-green" alt="MIT" />
+</p>
+
+marola (Portuguese for a small, gentle wave) takes the two things an LLM is bad at on its own —
+knowing what the sea is doing *right now* and not making things up about it — and fixes both.
+Live data decides the numbers; deterministic rules decide anything safety-related; a curated,
+sourced corpus decides what the model may say; a second model reviews the first. The LLM does the
+one thing it is good at: turning all that into a sentence you'd actually read on the sand.
+
+## What you get
+
+- **Best hour tomorrow, per beach near you** — OpenStreetMap beaches (nodes, ways *and* the
+  multipolygon relations most big beaches are), Open-Meteo sea/weather/tide forecasts, a 0-100
+  swimability score with the reasons, never at night, ties resolved toward mid-morning.
+- **Official bathing-water quality, per sampling point** — Santa Catarina's IMA feed (260 points,
+  weekly), matched to each beach: a stream mouth can be IMPRÓPRIA while the sand 300 m away is
+  fine, and marola says which is which. Unfit water zeroes the score; that rule is code, not a prompt.
+- **Tides, swell, period, wind, UV, jellyfish likelihood, whale-spotting odds** in one detailed
+  block for the top pick — and a one-line ranked list for the rest.
+- **Ask the ocean** — local RAG over a sourced marine corpus (rip currents, stings, whales,
+  water quality, waves, foam) with `[n]` citations; off-corpus questions get the model's general
+  knowledge with a visible "unsourced" label instead of a refusal. Benchmarked: it beats the plain
+  prompt 0.84 vs 0.75 on 22 ocean questions and cites on 41% of answers, the prompt on none.
+- **A sourced "did you know?"** about the sea in front of you, rotated daily, never touched by the LLM.
+- **Agent-ready** — the whole pipeline is exposed as MCP tools (`get_swim_recommendation`,
+  `get_water_quality`, `ask_ocean_question`) for Claude Desktop or any MCP client.
+- **Everything runs locally** — Ollama + `llama3.2`, no account, no key, no cloud; Azure AI
+  Foundry / Maps / Cosmos DB / Vision / App Insights are per-integration opt-ins, never a package deal.
+
+```
+ 1. [ 55/100] Praia da Joaquina      (4.6km)  Sun 6 Sep, 10:00  |  water: PRÓPRIA (1/1 pts, 25 Aug)  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low
+ 6. [ 35/100] Praia do Campeche      (2.1km)  Sun 6 Sep, 08:00  |  water: 4/5 PRÓPRIA — avoid Ponto 73 (25 Aug)  |  18.8°C, 28km/h, 1.4m  |  jellyfish: Low
+
+Top pick — Praia da Joaquina, Sun 6 Sep, 10:00-11:00
+  Water quality   PRÓPRIA (1/1 pts, 25 Aug) · Ponto 33 (…ao lado do Posto de Guarda-Vidas): latest 10 enterococci/100mL · Source: IMA/SC
+  Sea             19.0°C, waves 1.3m every 6s from the S, swell 0.8m/6s, current 0.9 km/h
+  Tide            low 05:00 (-0.1m), high 13:00 (+0.7m), low 18:00 (+0.3m)
+  Whales          Low at this hour; best daylight odds Low at 07:00 — humpback season
+
+Reviewer (score 75/100, verdict: approve): Praia da Joaquina is a great spot for swimming with mild conditions and low jellyfish risk.
+
+🐋 Sea life: Humpback whales (baleia-jubarte) travel up the Brazilian coast … [source: https://en.wikipedia.org/wiki/Humpback_whale]
+```
+
+## Why it's built this way
+
+| The usual LLM failure | What marola does instead |
+|---|---|
+| Doesn't know today's sea | Every number comes from a live call: Overpass, Open-Meteo, the IMA bathing-water feed. The model never guesses a wave height. |
+| Confidently wrong about safety | Water vetoes, darkness, rough-sea deductions are deterministic Scala in `scoring/`, unit-tested, outside the prompt. |
+| Invents facts | Answers are grounded on a sourced corpus with citations, or labelled "unsourced"; the lore paragraph is shown verbatim from a curated file. |
+| One model grading itself | A second, DSPy-compiled reviewer pass scores and can rewrite the summary before you see it. |
+| Needs a cloud account to try | `nix develop && just ollama-up && just run` — that's the whole setup. |
+| Regressions only caught in production | The full pipeline replays recorded real API responses in CI, no network, no Ollama; the live E2E is manual and model-cached. |
+
+## Quick start
+
+```bash
+# 1. Reproducible dev shell (JDK 25, sbt, just, ollama, repomix, az, gh — see flake.nix).
+nix develop            # or `direnv allow` — both also load ./.env if present
+
+# 2. Ollama up, model pulled (llama3.2 by default; it embeds the corpus too — no second model).
+just ollama-up
+
+# 3. Build, test, quality gates — the same ones CI runs, no network needed.
+just build && just test && just quality
+
+# 4. Where are you? Pin it once (else marola geolocates your IP, city-level, and says so).
+export MAROLA_ORIGIN_LAT=-27.6733 MAROLA_ORIGIN_LON=-48.4700     # Praia do Campeche
+
+# 5. The product.
+just run -- --summarize                                            # ranked beaches, top-pick block, review, lore
+just ask "what should I do if I get caught in a rip current?"      # grounded answer with sources
+just benchmark                                                     # marola vs. a plain prompt, 22 questions
+just mcp-server                                                    # the pipeline as MCP tools over stdio
+```
+
+No Telegram token, no Azure account, no API key is needed for any line above. Full walkthrough with
+real output: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md).
+
+## Where it's going
+
+The CLI is the workbench; the product surface is a **Telegram bot** — share a location, get the
+list; ask a question; send a photo of that thing on the sand — designed in
+[MIP-0002](./docs/mips/MIP-0002-telegram-bot-phase-1.md), with sub-three-second replies
+([MIP-0003](./docs/mips/MIP-0003-fast-replies-caching-and-fan-out.md)) and a daily digest for the
+beaches you care about ([MIP-0004](./docs/mips/MIP-0004-daily-digest-subscriptions-and-reach.md)).
+Non-trivial changes start as a numbered proposal under [`docs/mips/`](./docs/mips/README.md).
+The repo also doubles as hands-on coverage of the Azure AI-103 exam domains and a design target for
+AI-500 (see the last section).
+
+## Documentation
+
+**Start here:** [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md) — the whole pipeline with a small,
+free local model, step by step. Everything else lives under `docs/`:
 
 | Doc | What it covers |
 |---|---|
@@ -43,27 +139,6 @@ If you're an AI coding agent (Claude Code, etc.) picking this repo up: read
 - **Dev environment:** Nix flake (works on Ubuntu, not NixOS-specific)
 - **Task runner:** [`just`](https://github.com/casey/just)
 - **Build:** sbt multi-project — `core`/`local`/`azure`/`cli` (see `docs/FUTURE-WORK.md` §7.3) so the local-only path carries zero Azure SDK dependency
-
-## Quick start
-
-```bash
-# 1. Enter the reproducible dev shell (installs JDK 25, sbt, just, ollama, python3, az cli, gh — see flake.nix)
-nix develop
-# or, with direnv installed:
-direnv allow
-
-# 2. Pull a small, free local model and start Ollama (see docs/RUN-LOCALLY.md for the full guide)
-ollama pull llama3.2:1b
-ollama serve &
-
-# 3. Build & test
-just build
-just test
-
-# 4. Run marola locally — no Telegram, no Azure
-export MAROLA_LOCAL_LLM_MODEL=llama3.2:1b
-just run -- --summarize
-```
 
 ## Repo layout
 
