@@ -80,6 +80,11 @@ What GitHub shows: a stacked PR is a PR whose base is the previous branch; its p
 feature, `gh stack`) adds the ordered list at the top of each PR; `just uprds` writes the same list
 at the end of each body, with the summed Cost, for readers without the feature.
 
+The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape (Summary/MIP/What
+changed/Tested/Cost); the PR title is the first commit's subject on the branch, capped at 70
+characters (`scripts/lib/uprd_title.sh`) so it stays skimmable — `just uprd`/`just uprds` print a
+warning when a title had to be cut, worth a manual retitle if the cut reads awkwardly.
+
 Cost: `Cost:` is measured, not guessed. One session per task → `/usage` or `just claude-cost`.
 One session for several tasks → `just cost-split MIP-NNNN` splits the session log by commit time
 and prints the trailer per branch; amend with `GIT_COMMITTER_DATE` preserved so the split stays
@@ -136,6 +141,7 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 | Live checks | `just run -- --brief`, `just e2e`; once MIP-0005 lands, `just site-build floripa && just site-serve` |
 | One PR | `scripts/stack.sh pr` (`--dry-run` prints the gh commands) |
 | Every PR of a stack | `just uprds MIP-NNNN` |
+| PR body shape / title length | `.github/PULL_REQUEST_TEMPLATE.md`; title capped at 70 chars, cut point printed as a warning |
 | GitHub Stack | `just stack-setup` once, then `just stack-link MIP-NNNN`, `just stack-view`, `just stack-sync MIP-NNNN` |
 | Local stack view | `scripts/stack.sh status [MIP-NNNN]`, `just stack status MIP-NNNN` |
 | After a base merged | `scripts/stack.sh restack` (one branch) or `just stack-sync MIP-NNNN` (whole stack) |
