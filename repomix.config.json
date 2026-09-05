@@ -1,0 +1,26 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": ".tmp/marola-context-mips.md",
+    "style": "markdown",
+    "headerText": "marola — context pack for writing MIPs in a browser session. Only the documents an author needs: what the product is, its architecture, the MIP process/template, the existing MIPs, and the future-work backlog. No source code (see the repo for that).",
+    "instructionFilePath": "repomix-instruction.md",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "showLineNumbers": false,
+    "compress": false,
+    "git": { "sortByChanges": false }
+  },
+  "include": [
+    "README.md",
+    "AGENTS.md",
+    "docs/ARCHITECTURE.md",
+    "docs/FUTURE-WORK.md",
+    "docs/mips/**",
+    ".claude/skills/mip/SKILL.md"
+  ],
+  "ignore": { "useGitignore": true, "useDefaultPatterns": true, "customPatterns": [] },
+  "security": { "enableSecurityCheck": true }
+}

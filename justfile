@@ -144,6 +144,38 @@ finetune-dataset:
     python3 finetune/build_dataset.py
 
 # ---------------------------------------------------------------------
+# Browser-session context — repomix.config.json, repomix-instruction.md
+# ---------------------------------------------------------------------
+
+# Pack README, AGENTS.md, ARCHITECTURE, FUTURE-WORK, the MIP skill and all MIPs (~35k tokens, no
+# code) into .tmp/marola-context-mips.md and copy it to the clipboard. Paste it into a browser
+# Claude chat, attach the voice notes (.ogg) or text, and say "convert the audios into MIP
+# proposals" — the pack's instruction section tells the assistant the rest (template, numbering,
+# transcript appendix, what not to assert).
+context-mips:
+    mkdir -p .tmp && repomix -c repomix.config.json --quiet
+    @just _clip .tmp/marola-context-mips.md
+
+# Same idea for the whole repo (code included, comments stripped) — big; for code questions only.
+context-full:
+    mkdir -p .tmp && repomix --style markdown --compress --remove-comments -o .tmp/marola-context-full.md --quiet
+    @just _clip .tmp/marola-context-full.md
+
+_clip file:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    size="$(wc -c < "{{file}}")"
+    if command -v wl-copy >/dev/null 2>&1 && [ -n "${WAYLAND_DISPLAY:-}" ]; then
+        wl-copy < "{{file}}"; echo "copied to clipboard via wl-copy: {{file}} ($size bytes)"
+    elif command -v xclip >/dev/null 2>&1 && [ -n "${DISPLAY:-}" ]; then
+        xclip -selection clipboard < "{{file}}"; echo "copied to clipboard via xclip: {{file}} ($size bytes)"
+    elif command -v pbcopy >/dev/null 2>&1; then
+        pbcopy < "{{file}}"; echo "copied to clipboard via pbcopy: {{file}} ($size bytes)"
+    else
+        echo "no clipboard tool/display found — open the file instead: {{file}} ($size bytes)"
+    fi
+
+# ---------------------------------------------------------------------
 # ai-jail — sandbox AI coding agents (bubblewrap/Landlock/seccomp on
 # Linux). https://github.com/akitaonrails/ai-jail
 # Project policy lives in `.ai-jail` (committed, untrusted layer — can

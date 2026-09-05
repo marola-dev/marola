@@ -220,7 +220,17 @@ Then update the pinned date in `PipelineGoldenSpec` (`fixedToday`) to the day th
 The live equivalents run on demand only: `just e2e` locally, or the manual `marola-e2e.yml`
 workflow (its network job needs no Ollama; the LLM job is opt-in and caches the model).
 
-## 8. What this guide deliberately doesn't cover
+## 8. Writing MIPs from voice notes in a browser session
+
+`just context-mips` packs the documents a MIP author needs (README, AGENTS.md, ARCHITECTURE,
+FUTURE-WORK, the `mip` skill, every existing MIP — no code, ~35k tokens) with repomix into
+`.tmp/marola-context-mips.md` and copies it to the clipboard. In a browser Claude chat: paste, attach
+the WhatsApp voice notes (`.ogg`) or chat text, and say "convert the audios into MIP proposals".
+The pack's own instruction section (`repomix-instruction.md`) fixes the template, numbering, the
+transcript appendix and the rule that unverified claims go under "Open questions". Save the
+returned files under `docs/mips/` and let the in-repo agent verify the sources.
+
+## 9. What this guide deliberately doesn't cover
 
 Telegram bot setup (there is no bot loop yet — see `TELEGRAM-SETUP.md` for credential setup ahead
 of that Phase 1 work) and any Azure integration (`ARCHITECTURE.md` §5/§6, all optional, none needed

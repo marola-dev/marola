@@ -62,6 +62,13 @@
             # GitHub
             pkgs.gh
 
+            # `just context-mips`: packs the docs a browser Claude session needs into one
+            # markdown file (repomix) and copies it to the clipboard (wl-copy on Wayland, xclip
+            # on X11) — see repomix.config.json / repomix-instruction.md.
+            pkgs.repomix
+            pkgs.wl-clipboard
+            pkgs.xclip
+
             # General
             pkgs.jq
             pkgs.git
