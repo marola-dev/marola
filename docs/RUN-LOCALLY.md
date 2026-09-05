@@ -66,12 +66,28 @@ just run
 just run -- --summarize
 ```
 
-Expected shape of the output — this is a real run from Campeche, Florianópolis, with
-`MAROLA_ORIGIN_LAT/LON` set in `.env` (see §4.1) and `llama3.2` as the model. Your beach names and
-numbers will differ: it's live data.
+Expected shape of the output — this is a real session from Campeche, Florianópolis, with
+`MAROLA_ORIGIN_LAT/LON` set in `.env` (see §4.1) and `llama3.2` as the model, showing the whole
+sequence: enter the dev shell, make sure Ollama is up, optionally start a sandboxed coding agent,
+then run marola. Your beach names and numbers will differ: it's live data.
 
 ```
-$ just run -- --summarize
+$ cd ~/code/marola
+$ nix develop
+marola dev shell
+loaded /home/hoffmann/code/marola/.env
+openjdk version "25.0.4.1" 2026-08-18
+Run 'just' to see available commands.
+
+(nix:marola-env) hoffmann@hoffmann-MS-7D89:~/code/marola$ just ollama-up
+ollama: serving, model 'llama3.2' already pulled
+
+# Optional — only if you want Claude Code working in the repo, sandboxed (see AGENTS.md):
+(nix:marola-env) hoffmann@hoffmann-MS-7D89:~/code/marola$ just jail-claude
+# ... Claude Code runs inside ai-jail; `just run` works from inside it too. Exit it, or open a
+# second terminal in the same dev shell, to run marola yourself:
+
+(nix:marola-env) hoffmann@hoffmann-MS-7D89:~/code/marola$ just run -- --summarize
 mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --summarize"
 [info] welcome to sbt 1.10.7 (N/A Java 25.0.4.1)
 ...
