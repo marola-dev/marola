@@ -8,6 +8,12 @@
 | **Tasks** | `docs/mips/MIP-0008.tasks.md` — stacked PRs, one per task |
 | **Phase** | 3 (deploy artefacts) — no Azure; the Phase 1 prerequisite (the Telegram bot, MIP-0002) is still missing and is not needed for anything here |
 | **Related** | `ARCHITECTURE.md` §11 (Phase 3), `RUN-LOCALLY.md` (what "everything I do with nix develop" means), `finetune/README.md` (the two fine-tuning tiers), MIP-0005 (the site that will show the smoke test), `marola-e2e.yml` (the existing Ollama-in-CI recipe), `AI-103-MAPPING.md` (deploy/containerise rows) |
+| **Effort** | XL — four Dockerfile targets incl. a GraalVM native-image spike, compose, 3 CI workflows, a benchmark gate; 7 stacked PRs |
+| **Gain** | infra/dev-loop (anyone with Docker can run marola with no Nix); cost/ops (a versioned, gated `marola-local` artifact) |
+| **Effort vs Gain** | cheap win, delivered — high leverage for a scoped, no-Azure-spend Phase 3 deploy artifact |
+| **Depends on** | none blocking; Phase 3, explicitly does not need MIP-0002/Phase 1; no Azure resource (GHCR + Actions only) |
+| **Risk** | the native-image path is one Kyo/GraalVM upgrade away from breaking silently — reachability metadata is hand-maintained |
+| **Cost so far** | ~$15.98 total (~$15.08 across 7 PRs #26–#32, per the status row, + ~$0.90 for the MIP draft itself) |
 
 ## 1. Summary
 

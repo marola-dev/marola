@@ -35,7 +35,9 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
    "Open questions", not in "Design".
 4. **Write the MIP** using the template below. Every section is required; write "None" rather than
    deleting a heading. Keep it under ~250 lines; long research goes in an appendix at the end.
-5. **Add it to the index.** Append a row to `docs/mips/README.md`: number, title, status, date.
+5. **Add it to the index.** Append a row to `docs/mips/README.md`: number, title, status, date, and
+   the four triage columns (Effort, Gain, Verdict, Cost so far) copied from the MIP's own metadata
+   block — see "Filling the six triage fields" below.
 6. **Link it.** If it supersedes or implements a `FUTURE-WORK.md` section, add a one-line pointer
    there ("see `docs/mips/MIP-NNNN-...md`"). If it closes an exam-mapping gap, note it in the
    relevant mapping row's Status column as "proposed: MIP-NNNN".
@@ -72,6 +74,12 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
 | **Created** | YYYY-MM-DD |
 | **Phase** | 0 / 1 / 2 / 3 / 4 (`ARCHITECTURE.md` §11) |
 | **Related** | `FUTURE-WORK.md` §N, `AI-103-MAPPING.md` row "...", MIP-NNNN |
+| **Effort** | S / M / L / XL — one clause why (what's new: a module? a store? a CI workflow?) |
+| **Gain** | one or more of `user value`, `exam coverage (AI-103/AI-500 domain …)`, `infra/dev-loop`, `cost/ops`, each with one clause |
+| **Effort vs Gain** | `do next` / `do when X lands` / `cheap win` / `expensive, defer` / `park` — one sentence why |
+| **Depends on** | other MIPs it needs or that need it; whether Phase 1 or a paid Azure resource gates it (`AGENTS.md`) |
+| **Risk** | the one thing most likely to make this not worth it |
+| **Cost so far** | the summed `Cost:` trailers of its merged PRs, or "—" if nothing has merged yet |
 
 ## 1. Summary
 Two to four sentences: what changes for the user, and why now.
@@ -114,7 +122,23 @@ Things that need a human decision or a check that couldn't be done yet.
 Raw research notes, sample payloads, links.
 ```
 
+## Filling the six triage fields
+
+- **Effort**: size the *build*, not the design — S is a single-file, no-new-dependency change; M
+  touches a few files or adds one small trait; L adds a module, a store, or a CI workflow; XL is
+  several of those together or a new user-facing surface. Say what specifically drives the size.
+- **Gain**: pick every tag that genuinely applies from the fixed list (`user value`, `exam coverage
+  (name the AI-103/AI-500 row)`, `infra/dev-loop`, `cost/ops`) — most MIPs carry two, not one.
+- **Effort vs Gain**: the honest triage call given today's Effort and Gain, not a sales pitch — name
+  the blocking MIP for `do when X lands`, the missing precondition for `park`.
+- **Depends on**: list other MIPs by number, and say explicitly whether `AGENTS.md`'s Phase 1 gate
+  (the Telegram bot) or its cost-and-deployment-safety gate (a paid Azure resource) blocks this one.
+- **Risk**: one real failure mode, not a hedge — the thing that would make you regret building it.
+- **Cost so far**: pull it from the merged PRs' `Cost:` trailers (`just cost-split MIP-NNNN`); write
+  "—" for nothing merged yet, never a guess.
+
 ## Index file
 
-`docs/mips/README.md` holds one table: `| MIP | Title | Status | Created |`. Keep it sorted by
-number. Create it with the first MIP if it doesn't exist.
+`docs/mips/README.md` holds one table: `| MIP | Title | Status | Created | Effort | Gain | Verdict |
+Cost so far |` (`Verdict` = the MIP's `Effort vs Gain` field). Keep it sorted by number. Create it
+with the first MIP if it doesn't exist.

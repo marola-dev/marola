@@ -7,6 +7,12 @@
 | **Created** | 2026-09-05 |
 | **Phase** | 0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite |
 | **Related** | `AGENTS.md` (the rules this turns from advisory into enforced), `docs/DEV-FLOW.md`, `docs/AGENT-SKILLS.md` §3 (skill candidates), `docs/FABLE_REVIEW.md` §3 (jail environment notes), `PHILOSOPHY.md` (why constraints, not prose), `.claude/settings.json`, `.claude/skills/`, `justfile` (`jail-claude`, `jcf`, `jcs`); MIP-0013 (an OpenCode tryout — most of tasks 1-5, 7 and 9 here have a one-config-key equivalent there) |
+| **Effort** | M — ten small, independent config/hook PRs; each individually small, but ten of them |
+| **Gain** | infra/dev-loop (turns "never `azd up`" from prose into a hook); cost/ops (fewer permission prompts, a shorter `AGENTS.md`) |
+| **Effort vs Gain** | do next — the cost gate (task 2) is "the rule that must be a hook, not prose" per AI-500 §4; cheap and overdue |
+| **Depends on** | none blocking; Phase 0, developer tooling only; MIP-0013's tryout result may show which tasks are Claude-Code-specific |
+| **Risk** | a shell-text `permissions.deny` is a guard rail, not a boundary — `bash -c "azd up"` evades it; ai-jail and the human go-ahead remain the real boundary |
+| **Cost so far** | bundled in a shared ~$9.65 session total (commit 3fdcd05) with MIP-0010 and other PRs, not separately split — nothing implementing it has merged |
 
 ## 1. Summary
 

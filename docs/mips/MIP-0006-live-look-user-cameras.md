@@ -7,6 +7,12 @@
 | **Created** | 2026-09-05 |
 | **Phase** | 1 (bot photo handler, local vision) → 2 (Azure AI Vision opt-in) |
 | **Related** | `ARCHITECTURE.md` §5e (`VisionClient`, `--analyze-photo`), §5d (`SightingStore`), MIP-0002 (the photo arrives through the bot), MIP-0005 (the map shows it), `AI-500-MAPPING.md` §4 (content safety on public output) |
+| **Effort** | XL — new model+store, a bot photo pipeline, face-detection/rejection, retention/deletion, abuse controls |
+| **Gain** | user value (closes the "what does it look like now" gap); exam coverage (AI-103 §4 computer vision, AI-500 §4) |
+| **Effort vs Gain** | do when X lands — needs MIP-0002 first; the privacy/face-rejection work alone is substantial |
+| **Depends on** | MIP-0002 (photos arrive via the bot), MIP-0005 (the map shows it); Phase 1 prerequisite missing; Azure AI Vision opt-in gated behind the cost rule |
+| **Risk** | a single leaked or misclassified face on the public map ends user trust — the reject-not-blur v1 design exists for exactly this |
+| **Cost so far** | ~$0.7 shared with MIP-0007 (same drafting commit 5abeecc, not split further) |
 
 ## 1. Summary
 

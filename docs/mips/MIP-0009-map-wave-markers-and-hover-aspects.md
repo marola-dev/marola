@@ -7,6 +7,12 @@
 | **Created** | 2026-09-05 |
 | **Phase** | 1 — the map exists (MIP-0005) and this only changes what it draws; no earlier-phase prerequisite is missing for it |
 | **Related** | MIP-0005 (the map and its board JSON), MIP-0008 task 6 (the footer panel; same `app.js`), `FUTURE-WORK.md` §1 (other activities as layers on the same map), `AI-103-MAPPING.md` §1 "Responsible AI: transparency" |
+| **Effort** | S — no new data; one pure Scala function (`windLevel`) plus a JS/CSS-only marker and tooltip change |
+| **Gain** | user value (answers "where's it calm now" without 40 clicks); exam coverage (AI-103 §1 responsible-AI transparency) |
+| **Effort vs Gain** | cheap win — small, self-contained, no dependency on any other Draft MIP |
+| **Depends on** | MIP-0005 (the map and board this changes); no phase or Azure gate |
+| **Risk** | fixed-pixel wave `divIcon`s can overlap at 300m beach spacing (Ingleses/Santinho) — a legibility risk, not a data one |
+| **Cost so far** | ~$3.18 shared bucket with MIP-0008's wrap-up (commit 44b848c, "not split further" per its own `Cost:` line) |
 
 ## 1. Summary
 

@@ -7,6 +7,12 @@
 | **Created** | 2026-09-05 |
 | **Phase** | 4 (Harden & calibrate) — needs marola's own accumulated data first |
 | **Related** | `ARCHITECTURE.md` §8 (calibrating the heuristics on real reports), MIP-0001 (water-quality cadence), MIP-0004 (subscriptions produce usage series), MIP-0006 (looks produce observation series), `dspy/` (the existing offline-Python-produces-an-artifact pattern) |
+| **Effort** | L — a new Python offline step plus a Scala loader; needs weeks of accumulated series before any backtest |
+| **Gain** | infra/dev-loop (calibrates the jellyfish/whale heuristics against real reports); exam coverage (AI-103 §1/§2) |
+| **Effort vs Gain** | park — Phase 4, explicitly needs marola's own accumulated data first; only accumulation is worth starting now |
+| **Depends on** | MIP-0001 (water cadence), MIP-0004 (usage series), MIP-0006 (observation series); Phase 4; Azure ML/Foundry opt-in gated behind the cost rule |
+| **Risk** | zero-shot foundation models may simply lose to "last result persists" on marola's tiny, noisy series |
+| **Cost so far** | ~$0.7 shared with MIP-0006 (same drafting commit 5abeecc, not split further) |
 
 ## 1. Summary
 

@@ -2,12 +2,18 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — v1 (local server, Phase 0) scoped into tasks 2026-09-05; the Azure ML path (§4.5) stays Draft, blocked on Phase 1 |
+| **Status** | Implemented — v1 (local server, Phase 0), all 7 tasks merged: PRs #44 → #51 → #52 → #49 → #48 → #47 → #50 (`docs/mips/MIP-0010.tasks.md`); cost ~$16.52 across the 7 PRs (summed `Cost:` trailers, below). The Azure ML tracking-server path (§4.5) stays Draft/unbuilt, blocked on Phase 1 (MIP-0002) and the cost-confirmation gate — not a task here by design |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "MIP for adding MLflow, and how to deploy it local/azure") |
 | **Created** | 2026-09-05 |
 | **Tasks** | `docs/mips/MIP-0010.tasks.md` — stacked PRs, one per task |
 | **Phase** | 0 for the local server and the Scala/Python logging (developer tooling, no user-visible change); the Azure ML path is Phase 2 and waits on Phase 1 (MIP-0002) like every other Azure opt-in |
 | **Related** | `FUTURE-WORK.md` §10 (the Langfuse-shaped tracing gap this closes for the JVM side), `FUTURE-WORK.md` §4.1 (evaluation harness — the ledger this MIP adds is what a harness writes to), `ARCHITECTURE.md` §5f (`Telemetry.scala`, the existing OpenTelemetry plumbing), `docs/benchmarks/` and `scripts/benchmark_gate.py` (today's Markdown ledger), `dspy/` and `finetune/` (the offline Python steps), `AI-103-MAPPING.md` "Monitor an AI solution", `AI-500-MAPPING.md` §3 |
+| **Effort** | L — 7 stacked PRs across three lanes (ledger, tracing, dspy), a new REST client, an OTel split |
+| **Gain** | infra/dev-loop (replaces a hand-pasted Markdown ledger with a queryable one); exam coverage (AI-103 "Monitor an AI solution", AI-500 §3) |
+| **Effort vs Gain** | cheap win, delivered — developer-only, no user-facing risk, closes a named exam-mapping gap |
+| **Depends on** | none for v1 (local only, delivered); the Azure ML path (§4.5) explicitly waits on Phase 1 (MIP-0002) and the cost-confirmation gate |
+| **Risk** | MLflow's OTLP ingest and REST surface are both young (server 3.16.0 vs. a lagging Java client) — a version bump could break the REST contract silently |
+| **Cost so far** | ~$16.52 across the 7 implementation PRs (#44, #51, #52, #49, #48, #47, #50); the MIP's own drafting cost is bundled into a shared ~$9.65 session total with MIP-0011 and other PRs (commit 3fdcd05), not separately split |
 
 ## 1. Summary
 

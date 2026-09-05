@@ -7,6 +7,12 @@
 | **Created** | 2026-09-05 |
 | **Phase** | 1 (digest, subscriptions, pt-BR content) → 2 (other states' water data), after MIP-0002/0003 |
 | **Related** | `FUTURE-WORK.md` §1.5 (multi-activity subscriptions), §9.2 (proactive alerts — deliberately *not* this), MIP-0001 §4.3 (other agencies), `AI-500-MAPPING.md` §4 (human gate on proactive behaviour) |
+| **Effort** | L — first persistent user-data store, a scheduler, i18n content, two unverified regional water providers |
+| **Gain** | user value (a push habit loop); exam coverage (AI-103 "Responsible AI" consent/deletion, AI-500 §4) |
+| **Effort vs Gain** | do when X lands — needs MIP-0002/MIP-0003 shipped first; RJ/SP providers add unverified effort |
+| **Depends on** | MIP-0002, MIP-0003; Phase 1 gated (the bot must exist to subscribe to); no Azure resource (INEA/CETESB are public agencies) |
+| **Risk** | INEA/CETESB feeds may not be machine-readable at all, deflating the "reach" half of the pitch |
+| **Cost so far** | — (nothing merged beyond the design doc, same untracked commit as MIP-0002/0003) |
 
 ## 1. Summary
 

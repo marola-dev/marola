@@ -7,6 +7,12 @@
 | **Created** | 2026-09-05 |
 | **Phase** | 1 for the local cache and fan-out (needed by MIP-0002); 4 for the shared cache (`ARCHITECTURE.md` §11 "Harden & calibrate") |
 | **Related** | `ARCHITECTURE.md` §7 (Overpass fair use), §9 (no caching, Overpass slowness), `SCALA3-JDK-REVIEW.md` §3 (virtual threads), MIP-0002 (the consumer) |
+| **Effort** | M — one cache trait + decorator, concurrent fan-out; local file cache, no new module |
+| **Gain** | infra/dev-loop (unblocks MIP-0002 adoption); cost/ops (less Overpass/Open-Meteo load, fewer 429s) |
+| **Effort vs Gain** | do next — moderate effort, and MIP-0002 cannot ship to real users without it |
+| **Depends on** | none technically; MIP-0002 is the consumer that makes it worth building now; Phase 1 (Phase 4 for the shared/Azure cache); no Azure resource in v1 |
+| **Risk** | coarse-tile caching or a stale-served forecast could quietly mislead near a tile edge |
+| **Cost so far** | — (nothing merged beyond the design doc, same untracked commit as MIP-0002) |
 
 ## 1. Summary
 

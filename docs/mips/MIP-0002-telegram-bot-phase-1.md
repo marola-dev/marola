@@ -7,6 +7,12 @@
 | **Created** | 2026-09-05 |
 | **Phase** | 1 (`ARCHITECTURE.md` §11) — this *is* Phase 1 |
 | **Related** | `ARCHITECTURE.md` §2/§4/§11, `TELEGRAM-SETUP.md`, `FUTURE-WORK.md` §7.3 (`marola-bot` module), MIP-0001 (what a reply contains), MIP-0003 (why replies must be fast first) |
+| **Effort** | L — new user surface, polling loop, i18n, rate limiting, a credential path; this *is* Phase 1 |
+| **Gain** | user value (the only real product surface; everything else is a CLI stand-in) |
+| **Effort vs Gain** | do next — the explicit Phase 1 gate every other user-facing MIP waits behind |
+| **Depends on** | none blocking it; MIP-0003 is a stated hard prerequisite for anyone but the author to use it |
+| **Risk** | cold reply latency (~35-45s) makes Telegram users give up before MIP-0003's cache lands |
+| **Cost so far** | — (nothing merged beyond the design doc; bundled in commit 8c033ae with no `Cost:` trailer) |
 
 ## 1. Summary
 

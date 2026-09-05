@@ -7,6 +7,12 @@
 | **Created** | 2026-09-05 |
 | **Phase** | 0 for the Scala prompt compiler, the DSPy removal and the `llm4s/` module behind marola's own traits (developer tooling; the swimmer sees a re-compiled prompt, nothing else). The agent loop waits on Phase 1 (MIP-0002, still Draft); the HTTP MCP server for a Foundry agent is Phase 2/3 and behind the cost gate |
 | **Related** | `PHILOSOPHY.md` ("Why Scala 3 on the JVM" — the Python paragraph this MIP acts on), `FUTURE-WORK.md` §10 (`ds4s`, "DSPy stays a Python subprocess indefinitely" — revisited here) and §4.1 (held-out eval), `AGENT-FRAMEWORKS-SURVEY.md` §1.2 (llm4s row), `ARCHITECTURE.md` §5a (the DSPy step, `CompiledPrompt`) and §5c ("HTTP/SSE MCP transport — not built"), MIP-0010 (ledger + traces this step should write to; its task 7 becomes moot), MIP-0008 (native image — dependency weight), MIP-0002 (the first real agent surface), `AI-103-MAPPING.md` rows "Prompt engineering", "Optimize prompts systematically", "Agent orchestration frameworks", `AI-500-MAPPING.md` §1, §2, §4 |
+| **Effort** | XL — a new module, a from-scratch Scala prompt compiler replacing DSPy, a dependency-boundary CI check, an agent/MCP layer gated on Phase 1 |
+| **Gain** | infra/dev-loop (removes the Python/DSPy toolchain and its training/serving skew); exam coverage (AI-103 §2/§3, AI-500 §1/§2) |
+| **Effort vs Gain** | do when X lands — tasks 1-3 (the prompt compiler) are dependency-free and could go now; tasks 4-7 (the agent) wait on MIP-0002 |
+| **Depends on** | MIP-0010 (the ledger the compiler logs to); MIP-0002/Phase 1 (the agent tasks); no Azure resource — llm4s's Azure path is explicitly rejected (key-only) |
+| **Risk** | llm4s is pre-1.0 with 154 transitive jars and one coordinate rename already — real churn for what would otherwise be a 30-line adapter |
+| **Cost so far** | n/a — the merged commit's own `Cost:` line was left as an unfilled placeholder ("~unmeasured in-agent · fill from `just claude-cost` before PR") |
 
 ## 1. Summary
 

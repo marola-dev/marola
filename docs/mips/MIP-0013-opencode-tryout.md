@@ -7,6 +7,12 @@
 | **Created** | 2026-09-05 |
 | **Phase** | 0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite |
 | **Related** | `AGENTS.md` (attribution, `Cost:` trailer, gates, ai-jail — every rule the harness has to keep enforcing), `PHILOSOPHY.md` ("Why ai-jail", "Why a `justfile`"), `docs/DEV-FLOW.md`, `docs/AGENT-SKILLS.md`, MIP-0011 (the Claude Code practices this maps onto OpenCode or declares lost), `.claude/settings.json`, `.claude/skills/`, `.ai-jail`, `justfile` (`jail-claude`/`jcf`/`jcs`/`claude-cost`/`cost-split`), `scripts/cost-split.py` (reads Claude Code's session logs — the one hard dependency on the harness) |
+| **Effort** | S — additive-only config files (`opencode.json`, a jail recipe, a second cost-log reader); no code deleted |
+| **Gain** | infra/dev-loop (vendor independence; tests which of MIP-0011's practices are harness-neutral) |
+| **Effort vs Gain** | cheap win — small and reversible ("rollback is stop typing opencode"); two tasks produce real comparison data |
+| **Depends on** | MIP-0011 (most of its ten tasks map onto OpenCode config keys); no phase or Azure gate |
+| **Risk** | since 2026-04-04 Claude under OpenCode is pay-per-token API, not subscription — the tryout's `Cost:` figures become real bills, not a quota proxy |
+| **Cost so far** | ~289k tokens (forked subagent, ~8 min) for PR #53 — not priced; the commit's own note says `cost-split.py` cannot price subagent usage |
 
 ## 1. Summary
 

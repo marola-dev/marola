@@ -7,6 +7,12 @@
 | **Created** | 2026-09-05 |
 | **Phase** | 0 (CLI) now; the reply format is designed for Phase 1 (Telegram) |
 | **Related** | `ARCHITECTURE.md` §5 (integration pattern), §8 (heuristics honesty); `FUTURE-WORK.md` §1.3 (wave period), §9.1 (ocean-knowledge grounding — this is its first concrete step); `AI-103-MAPPING.md` rows "Responsible AI" and "Text analysis" |
+| **Effort** | M — new client, a pure matcher, one scoring rule, a curated sourced lore corpus; no new module |
+| **Gain** | user value (a safety-critical water veto); exam coverage (AI-103 "Responsible AI", "Text analysis") |
+| **Effort vs Gain** | cheap win, delivered — moderate effort for a real safety fix in the score |
+| **Depends on** | none; Phase 0/1; no Azure resource used or needed |
+| **Risk** | the undocumented IMA endpoint can change or vanish without notice |
+| **Cost so far** | n/a — PRs #2/#3/#4 predate the `Cost:` trailer convention (Claude-Session links instead) |
 
 ## 1. Summary
 

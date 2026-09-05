@@ -8,6 +8,12 @@
 | **Phase** | 1 (local build + a manual deploy), 3 for the scheduled deploy (`ARCHITECTURE.md` §11) |
 | **Tasks** | `docs/mips/MIP-0005.tasks.md` — 4 stacked PRs: board-json, site-build, map-page, scheduling |
 | **Related** | MIP-0003 (precomputed boards — this is their first consumer), MIP-0002 (the bot links here), MIP-0001 (what a beach card shows), `ARCHITECTURE.md` §7 (Overpass fair use), `FUTURE-WORK.md` §1 (other activities become layers on the same map) |
+| **Effort** | L — a new site pipeline (board JSON, static builder, map page, scheduled CI deploy), 4 stacked PRs |
+| **Gain** | user value (the product a person actually glances at); cost/ops (compute-once-serve-many) |
+| **Effort vs Gain** | cheap win, delivered — high-visibility surface for one MIP's worth of static-site work, no Azure |
+| **Depends on** | none blocking; consumes MIP-0003's cache once it lands (not yet) |
+| **Risk** | OSM raster tiles violate their usage policy at real public-launch traffic — needs the Protomaps switch first |
+| **Cost so far** | ~$12.46 across 4 PRs (#17→#19→#20→#21), per the status row (`just cost-split MIP-0005`) |
 
 ## 1. Summary
 
