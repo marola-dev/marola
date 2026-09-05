@@ -127,6 +127,10 @@ the requested feature but flag which earlier-phase prerequisite is still missing
 - **One feature, one session.** Start a feature with `/clear` (or a new session) and `/rename` it
   to the branch name so `/usage`'s session block and ccusage's per-session rows map to one PR.
   Re-runs of `just benchmark`/`just e2e` driven by the agent count toward the feature; note them.
+  When one session does produce several PRs (a MIP stack), `just cost-split MIP-NNNN` attributes
+  the session's logged usage to each commit by time and prints the per-branch `Cost:` trailer —
+  measured, not estimated; `just uprds MIP-NNNN` then refreshes every PR of the stack with its
+  Cost section and a shared stack overview.
 - **Heavier option, when it matters:** Claude Code exports `claude_code.cost.usage` and
   `claude_code.token.usage` over OpenTelemetry (`CLAUDE_CODE_ENABLE_TELEMETRY=1`,
   `OTEL_METRICS_EXPORTER=otlp`, `OTEL_EXPORTER_OTLP_ENDPOINT=...`) with `session.id`, `model`,

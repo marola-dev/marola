@@ -206,9 +206,23 @@ _clip file:
 uprd *args:
     scripts/uprd.sh {{args}}
 
+# Same for a whole MIP stack (scripts/uprds.sh): every `mip-NNNN/k-*` PR gets its regenerated
+# body plus a shared "Stack" section — merge order, each PR's state, this one marked, the summed
+# Cost — and a branch without a PR gets one opened on the right base. `just uprds MIP-0005`,
+# `just uprds --dry-run` to preview without gh.
+uprds *args:
+    scripts/uprds.sh {{args}}
+
 # ---------------------------------------------------------------------
 # Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"
 # ---------------------------------------------------------------------
+
+# Split a session's real token usage across the commits it produced (scripts/cost-split.py):
+# the usage between two commits is the second commit's cost, priced from LiteLLM's table (what
+# ccusage uses). Prints one `Cost:` trailer per branch. `just cost-split` for the current branch,
+# `just cost-split MIP-0005` for a stack, `--session <id-prefix>` to pin one session, `--json`.
+cost-split *args:
+    python3 scripts/cost-split.py {{args}}
 
 # What Claude Code sessions consumed, from the local session logs (~/.claude/projects), priced at
 # list rates — the quota proxy to paste into a PR's "Cost" line. Uses ccusage (free, npm) via npx.

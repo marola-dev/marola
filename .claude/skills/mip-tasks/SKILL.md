@@ -60,6 +60,12 @@ The PR body is generated (`scripts/uprd.sh`) and starts with "Stacked on `<base>
 MIP-NNNN". Review and merge **in order, bottom of the stack first**, squash-merging as this repo
 does.
 
+When several tasks came out of one session, `just cost-split MIP-NNNN` splits that session's
+logged usage by commit time and prints the measured `Cost:` trailer per branch (amend before the
+PR, or note the split in the body). `just uprds MIP-NNNN` refreshes every PR of the stack at once
+— regenerated body plus a shared "Stack" section (merge order, states, summed Cost) — and opens
+any PR still missing on its right base.
+
 ## Step 3 — after a base PR merges: restack
 
 Squash merges give the merged commits new hashes, so the next PR in the stack shows conflicts

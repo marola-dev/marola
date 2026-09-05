@@ -5,6 +5,8 @@
 #   just uprd --dry-run       # print the body that would be written, change nothing
 #   just uprd path/to/body.md # use that file as the body instead of generating one
 #   BASE=main just uprd       # base branch (default: the PR's base, else main)
+#   BRANCH=x EXTRA_FILE=f     # (scripts/uprds.sh) another branch than the checked-out one, and a
+#                             # file appended to the generated body — the stack section
 #
 # Generated body = "What changed" (one entry per commit on the branch, subject + body, trailers
 # stripped) + "Cost" (every `Cost:` trailer found in those commits, per AGENTS.md "Attribution and
@@ -20,8 +22,11 @@ for arg in "$@"; do
   esac
 done
 
-branch="$(git branch --show-current)"
+branch="${BRANCH:-$(git branch --show-current)}"
 [ -n "$branch" ] || { echo "uprd: detached HEAD — check out the PR branch first" >&2; exit 1; }
+# The branch's tip: local if it exists here, else the remote-tracking one (uprds on a stack that
+# was pushed from another machine).
+if git rev-parse --verify -q "$branch" >/dev/null; then head_ref="$branch"; else head_ref="origin/$branch"; fi
 
 pr_number=""; pr_url=""; base="${BASE:-}"
 if pr_json="$(gh pr view "$branch" --json number,url,baseRefName 2>/dev/null)"; then
@@ -40,7 +45,7 @@ fi
 create_pr="${create_pr:-0}"
 
 generate_body() {
-  local range="origin/$base..HEAD"
+  local range="origin/$base..$head_ref"
   git fetch -q origin "$base" 2>/dev/null || true
   echo "## What changed"
   echo
@@ -70,6 +75,7 @@ generate_body() {
   else
     echo "- not recorded in this branch's commits — add a \`Cost:\` trailer (AGENTS.md, \"Attribution and cost accounting\"); \`just claude-cost\` shows the sessions"
   fi
+  if [ -n "${EXTRA_FILE:-}" ] && [ -s "$EXTRA_FILE" ]; then echo; cat "$EXTRA_FILE"; fi
 }
 
 tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
@@ -85,7 +91,7 @@ if [ "$create_pr" -eq 1 ]; then
   # Title = the first commit's subject on the branch; pass --title in the body-file mode to override
   # by editing the PR afterwards. The branch must already be pushed.
   git rev-parse --verify -q "origin/$branch" >/dev/null || git push -q -u origin "$branch"
-  title="$(git log --reverse --format=%s "origin/$base..HEAD" | head -1)"
+  title="$(git log --reverse --format=%s "origin/$base..$head_ref" | head -1)"
   pr_url="$(gh pr create --base "$base" --head "$branch" --title "$title" --body-file "$tmp")"
   echo "created PR: $pr_url"
 else
