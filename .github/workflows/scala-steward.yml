@@ -1,0 +1,42 @@
+name: scala-steward (dependency update PRs)
+
+# Scans build.sbt/project/** for newer releases of every dependency (core/local/azure/cli — dspy/
+# is Python-only, out of scope) and opens one PR per update it finds. Free: GitHub Actions minutes
+# only, no paid resource, no Azure involved (AGENTS.md's cost rule is about Azure provisioning,
+# not this).
+#
+# Uses the default GITHUB_TOKEN (verified via scala-steward-org/scala-steward-action's own docs,
+# 2026-09-05: no PAT/GitHub App needed for a single repo). Caveat, also GitHub's own documented
+# behaviour, not this action's: a PR opened by GITHUB_TOKEN does not trigger other workflows
+# (recursive-workflow prevention) — so ci.yml's checks won't appear automatically on a Steward PR.
+# Push an empty commit (or close/reopen) to get CI to run before merging, or replace github-token
+# below with a PAT (repo scope) in a secret if you want that automatic.
+#
+# Kyo (io.getkyo) is pinned pre-1.0 and verified against the jar, not getkyo.io's docs (AGENTS.md,
+# build.sbt) — a Steward PR bumping it is useful signal, but still needs that same jar-verification
+# step before merging, same as any manual Kyo bump.
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # weekly, Monday 03:00 UTC — off the site build's :15/:45 cadence
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  scala-steward:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: sbt/setup-sbt@v1
+
+      - uses: scala-steward-org/scala-steward-action@v2

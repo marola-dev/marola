@@ -39,3 +39,22 @@ if git diff --cached --name-only --diff-filter=ACM | grep -qE '\.scala$'; then
 else
   echo "pre-commit: no staged .scala files, skipping sbt compile."
 fi
+
+# Same gate ci.yml's `quality` job runs, but at commit time — a broken workflow file used to
+# surface only once GitHub Actions ran it. `pkgs.actionlint` is in flake.nix's devShell; if it's
+# missing here (not using `nix develop`), skip rather than block.
+if git diff --cached --name-only --diff-filter=ACM | grep -qE '^\.github/workflows/.*\.ya?ml$'; then
+  if command -v actionlint >/dev/null 2>&1; then
+    echo "pre-commit: staged workflow changes detected, running actionlint..."
+    if ! actionlint; then
+      echo ""
+      echo "pre-commit: actionlint failed — commit blocked." >&2
+      echo "Fix the workflow, or bypass with 'git commit --no-verify' if you really need to." >&2
+      exit 1
+    fi
+  else
+    echo "pre-commit: staged workflow changes detected but actionlint not installed — skipping (use 'nix develop')."
+  fi
+else
+  echo "pre-commit: no staged workflow files, skipping actionlint."
+fi

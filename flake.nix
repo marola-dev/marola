@@ -81,6 +81,11 @@
             # flake: it needs a daemon the host runs.
             pkgs.hadolint
 
+            # GitHub Actions workflow lint (`just quality`, .githooks/pre-commit) — was missing
+            # here, so `command -v actionlint` silently skipped it locally and a bad workflow only
+            # surfaced once CI ran it.
+            pkgs.actionlint
+
             # ai-jail — sandboxes AI coding agents (Claude Code, ...)
             # behind bubblewrap/Landlock/seccomp on Linux. Not a substitute
             # for the AGENTS.md cost/deploy rules, but a real containment

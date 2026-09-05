@@ -56,7 +56,7 @@ are MIP material; check these before assuming something is undecided or unbuilt:
 
 ```bash
 nix develop          # reproducible dev shell (JDK 25, sbt, scala-cli, coursier,
-                      # just, python3, az, gh, hadolint — see flake.nix; Docker itself is the host's)
+                      # just, python3, az, gh, hadolint, actionlint — see flake.nix; Docker itself is the host's)
 just                  # list all available recipes
 just build            # sbt compile
 just test             # sbt test

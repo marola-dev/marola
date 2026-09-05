@@ -286,6 +286,19 @@ uprds *args:
 stack *args:
     scripts/stack.sh {{args}}
 
+# Delete every local branch whose PR gh confirms MERGED (local branch + remote ref, if still
+# there) — never the current branch or main. Safe for mip-NNNN/k-slug branches too.
+# `just branches-clean --dry-run` prints what would run. Needs `gh auth status` OK.
+branches-clean *args:
+    scripts/branches.sh clean {{args}}
+
+# Open a base=main PR for every local *plain* branch (not a mip-NNNN/k-slug stack branch) that's
+# ahead of origin/main and has no PR yet. Stack branches print a pointer to `scripts/stack.sh pr`
+# / `just uprds MIP-NNNN` instead — they need the previous task's branch as base, not main.
+# `just branches-open --dry-run` to preview. Needs `gh auth status` OK.
+branches-open *args:
+    scripts/branches.sh open {{args}}
+
 # GitHub's native Stacks (the "Preview stack" box on a PR) via the official `gh stack` extension.
 # One-time: needs a gh login; installs the extension and its agent skill (`gh skill install
 # github/gh-stack`). Both live under ~/.local/share/gh, not in the flake — gh extensions are per-user.

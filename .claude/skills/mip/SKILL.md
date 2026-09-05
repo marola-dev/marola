@@ -1,6 +1,6 @@
 ---
 name: mip
-description: Write or revise a Marola Improvement Proposal (MIP) — a numbered design doc under docs/mips/ for any non-trivial feature, integration, or architecture change in marola. Use when the user says "MIP", "improvement proposal", "propose <feature>", "write up a design for", or wants a feature planned before it's built. Not the same thing as docs/SKILLS.md (an exam-skills roadmap).
+description: Write or revise a Marola Improvement Proposal (MIP) — a numbered design doc under docs/mips/ for any non-trivial feature, integration, or architecture change in marola. Use when the user says "MIP", "improvement proposal", "propose a feature", "write up a design for", or wants a feature planned before it's built. Not the same thing as docs/SKILLS.md (an exam-skills roadmap).
 ---
 
 # Writing a Marola Improvement Proposal (MIP)
