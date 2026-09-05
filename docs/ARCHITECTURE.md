@@ -449,6 +449,10 @@ scaffold.**
   default mode beat the plain prompt 0.84 vs 0.75 overall, 0.92 vs 0.55 inside the corpus, citing
   on 41% of answers — after adding the `NO_ANSWER_IN_PASSAGES` two-stage fallback, without which
   `llama3.2`'s own embeddings could not tell relevant passages from irrelevant ones.
+  With `MAROLA_MLFLOW_TRACKING_URI` set (MIP-0010, `just mlflow-up`), the same run is also
+  logged to the `RunLedger` — experiment `marola/benchmark`, params `model`/`embed_model`/
+  `min_score`/`corpus_sha`/`git_sha`/`questions`, one metric per arm column, the Markdown report
+  as the artifact (`cli/bench/BenchmarkLedger`); the Markdown file stays what the gate reads.
 - **Fine-tuning.** `finetune/` (README there is the honest status): Tier 1 is an Ollama
   `Modelfile` variant `marola-llama3.2` (persona + decoding parameters, no weight change) — built
   and run. Tier 2 is a QLoRA recipe (`build_dataset.py` → 41 chat examples from the DSPy demos,

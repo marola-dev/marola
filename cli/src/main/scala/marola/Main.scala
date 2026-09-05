@@ -1,11 +1,12 @@
 package marola
 
+import java.nio.file.Paths
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 import kyo.*
 
-import marola.bench.OceanBenchmark
+import marola.bench.{BenchmarkLedger, OceanBenchmark}
 import marola.knowledge.OceanQa
 import marola.llm.{CompiledPrompt, LlmClient, Reviewer}
 import marola.location.IpGeolocation
@@ -262,8 +263,52 @@ object Main extends KyoApp:
                 path <- Sync.defer(OceanBenchmark.save(report))
                 _ <- Console.printLine("\n" + report.markdown)
                 _ <- Console.printLine(s"\nSaved to $path")
+                _ <- logBenchmarkRun(config, report, Paths.get(path))
               yield ()
             case failure => Console.printLine(s"(benchmark failed: $failure)")
+        yield ()
+
+  /**
+   * MIP-0010 task 4: the same run into the configured `RunLedger` — `RunLedger.Noop` prints nothing
+   * (no tracking URI configured, the default); `MlflowRunLedger` prints the run's URL, or a warning
+   * when the server could not be reached. Never fails the benchmark: the report is already saved.
+   */
+  private def logBenchmarkRun(
+      config: AppConfig,
+      report: OceanBenchmark.Report,
+      reportPath: java.nio.file.Path
+  ): Unit < Async =
+    config.mlflowTrackingUri match
+      case None => Sync.defer(())
+      case Some(uri) =>
+        val context = BenchmarkLedger.Context(
+          model = config.localLlmModel,
+          embedModel = config.localEmbedModel,
+          minScore = config.askMinScore,
+          corpusSha = BenchmarkLedger.corpusSha(Paths.get("knowledge")),
+          gitSha = BenchmarkLedger.gitSha()
+        )
+        for
+          handle <- BenchmarkLedger.log(
+            config.runLedger,
+            config.mlflowExperiment,
+            report,
+            context,
+            reportPath
+          )
+          _ <- handle match
+            case Some(run) =>
+              Console.printLine(
+                s"mlflow: experiment \"${config.mlflowExperiment}/benchmark\", run ${run.runId.take(8)} — " +
+                  s"params ${BenchmarkLedger.params(report, context).map((k, v) => s"$k=$v").mkString(" ")}; " +
+                  s"artifact ${reportPath.getFileName}" + run.url
+                    .map(u => s"\n        → $u")
+                    .getOrElse("")
+              )
+            case None =>
+              Console.printLine(
+                s"mlflow: could not log this run to $uri (is the server up? `just mlflow-up`) — the report above is saved regardless"
+              )
         yield ()
 
   private def reindexKnowledge(config: AppConfig): Unit < Async =
