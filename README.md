@@ -95,13 +95,31 @@ real output: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md).
 
 ## Where it's going
 
-The CLI is the workbench; the product surface is a **Telegram bot** — share a location, get the
-list; ask a question; send a photo of that thing on the sand — designed in
-[MIP-0002](./docs/mips/MIP-0002-telegram-bot-phase-1.md), with sub-three-second replies
+**Next: the product surface.** The CLI is the workbench; the product is a **Telegram bot** —
+share a location, get the list; ask a question; send a photo of that thing on the sand
+([MIP-0002](./docs/mips/MIP-0002-telegram-bot-phase-1.md)), with sub-three-second replies
 ([MIP-0003](./docs/mips/MIP-0003-fast-replies-caching-and-fan-out.md)) and a daily digest for the
 beaches you care about ([MIP-0004](./docs/mips/MIP-0004-daily-digest-subscriptions-and-reach.md)).
-Non-trivial changes start as a numbered proposal under [`docs/mips/`](./docs/mips/README.md).
-The repo also doubles as hands-on coverage of the Azure AI-103 exam domains and a design target for
+
+**Then: the rest of the sea.** Swimming is the first activity, not the only one. The same live data,
+water quality, tides and knowledge corpus serve every sea activity — each is one scoring function
+and its own vocabulary, not a new app (design in [`FUTURE-WORK.md`](./docs/FUTURE-WORK.md) §1):
+
+| Activity | What changes | Status |
+|---|---|---|
+| 🏄 **Surf** | Wants what swimmers avoid: swell height *and period*, groundswell vs. wind chop, offshore vs. onshore wind relative to the beach's orientation, tide stage per break. Open-Meteo already returns the swell fields marola fetches for the tide block. | Designed (§1.3); needs a per-beach orientation lookup |
+| 🤿 **Diving & snorkelling** | Visibility above all: turbidity/chlorophyll (Copernicus Marine), low current, calm entry/exit, slack tide windows from the tide series; sea-life odds (turtles, rays) from the sightings feedback loop. | Designed (§1.4); visibility source is the open question |
+| 🎣 **Fishing** | Tide stage and turn times (already computed), water temperature and upwelling, wind for shore vs. boat, moon phase; closed seasons (*defeso*) and protected areas as hard rules, not suggestions. | Planned; scoring and regulatory sources not yet designed |
+| 🌊 **Natural disasters & hazards** | A different question: not "what's good" but "is something dangerous coming" — rip-current risk from swell/period/tide, storm surge, dangerous sea states, cold shock from upwelling, red tides, water-quality collapses after storms; cross-checked against official civil-defence alerts, never replacing them. | Designed as the escalation agent (§9.2, [AI-500 §4](./docs/AI-500-MAPPING.md)); proactive alerts are gated behind a human-confirmation design before anything ships |
+| 🛶 Kayak, SUP, open-water events | Wind and chop thresholds of their own; group/event digests. | Extensibility target only — one `ActivityScoring` each |
+
+The rule for all of them holds: anything safety-relevant is deterministic code with a named source;
+the model only writes the sentence. A daily digest that you subscribed to is fine; an unrequested
+"get out of the water" push is the one feature that needs a governance gate first, and it will get
+one.
+
+Non-trivial changes start as a numbered proposal under [`docs/mips/`](./docs/mips/README.md). The
+repo also doubles as hands-on coverage of the Azure AI-103 exam domains and a design target for
 AI-500 (see the last section).
 
 ## Documentation
