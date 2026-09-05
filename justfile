@@ -173,10 +173,13 @@ context-full:
 # The Node repomix (nixpkgs, flake.nix) — not the unrelated PyPI "repomix" Python port, which a
 # pip/pipx install can put earlier on PATH (it prints an argparse usage and ignores our config).
 # Prefer the /nix/store one whatever the PATH order; fall back to whatever `repomix` is.
+# `type -aP` lists every match on PATH; `command -v -a` (used before) is not valid bash, so the
+# lookup silently failed and the PyPI port ran: "RepomixConfig.__init__() got an unexpected
+# keyword argument '$schema'".
 _repomix:
     #!/usr/bin/env bash
     set -euo pipefail
-    bin="$(command -v -a repomix 2>/dev/null | grep -m1 '^/nix/store/' || command -v repomix || true)"
+    bin="$(type -aP repomix 2>/dev/null | grep -m1 '^/nix/store/' || command -v repomix || true)"
     [ -n "$bin" ] || { echo "repomix not found — enter 'nix develop' (flake.nix provides it)" >&2; exit 1; }
     if ! "$bin" --version 2>/dev/null | grep -qE '^[0-9]+\.[0-9]+'; then
         echo "warning: $bin does not look like the Node repomix; output may be wrong" >&2
