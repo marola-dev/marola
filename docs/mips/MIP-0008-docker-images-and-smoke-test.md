@@ -2,9 +2,10 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Implemented — PRs #26 → #27 → #28 → #29 → #30 → #31 → #32 (stack merged 2026-09-05; tasks and v1 decisions: [`MIP-0008.tasks.md`](./MIP-0008.tasks.md)); cost ~$15.08 across the seven PRs (measured with `just cost-split MIP-0008 --session d802fa69`) on top of this document's own $0.90. The native-image spike (§11.1) succeeded: `:native` shipped |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026, during the MIP-0005 implementation session) |
 | **Created** | 2026-09-05 |
+| **Tasks** | `docs/mips/MIP-0008.tasks.md` — stacked PRs, one per task |
 | **Phase** | 3 (deploy artefacts) — no Azure; the Phase 1 prerequisite (the Telegram bot, MIP-0002) is still missing and is not needed for anything here |
 | **Related** | `ARCHITECTURE.md` §11 (Phase 3), `RUN-LOCALLY.md` (what "everything I do with nix develop" means), `finetune/README.md` (the two fine-tuning tiers), MIP-0005 (the site that will show the smoke test), `marola-e2e.yml` (the existing Ollama-in-CI recipe), `AI-103-MAPPING.md` (deploy/containerise rows) |
 

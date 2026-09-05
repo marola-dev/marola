@@ -126,8 +126,13 @@ wrong (VPN, or an ISP whose block geolocates elsewhere — common in Brazil), pi
 
 ```bash
 just run -- --lat -27.6733 --lon -48.4700 --summarize     # one-off
+just run -- --location-url 'https://www.google.com/maps/@-27.6733,-48.47,15z'   # or paste a Google Maps pin
 export MAROLA_ORIGIN_LAT=-27.6733 MAROLA_ORIGIN_LON=-48.4700   # once per shell
 ```
+
+`--location-url` reads the `@lat,lon`, `q=lat,lon` or `!3dlat!4dlon` part of a Google Maps URL
+(quote it — the URL has `!` and `&` in it). A `maps.app.goo.gl` short link needs expanding first:
+`curl -sIL <short link> | grep -i '^location:' | tail -1`.
 
 ### 4.1 Pinning it permanently: `.env`
 
@@ -263,6 +268,12 @@ just site-serve                # http://localhost:8000 — tap Praia do Campeche
 pointing at both. The page shows every beach as a marker coloured by score, a card with the same
 numbers the CLI prints, a day picker, an hour slider, the generated-at time and every source. No
 cookies, no analytics; "near me" is the browser's own geolocation, on request, never sent anywhere.
+If `site/dist/smoke/latest.json` exists (the docker smoke test's last run, §10 — `site.yml` copies
+it from the `site-data` branch; locally `git archive origin/site-data smoke | tar -x -C site/dist`,
+or `python3 scripts/smoke_record.py record …` on any `--summarize` transcript) the footer adds a
+"Last live run" panel — model, image, top pick, the reviewed sentence labelled as model text with
+the reviewer's verdict (hidden on `reject`), the last ten runs — and a dashed marker at the run's
+origin.
 
 Keep it fresh locally with a timer — a plain cron line (`crontab -e`):
 
@@ -270,7 +281,11 @@ Keep it fresh locally with a timer — a plain cron line (`crontab -e`):
 15 */3 * * *  cd /path/to/marola && nix develop -c just site-build >> .tmp/site-build.log 2>&1
 ```
 
-or a `systemd --user` timer with the same command. Publishing: `just site-deploy` triggers
+or a `systemd --user` timer with the same command. Only `site/dist` is ever published, and
+`site.yml` fails if anything outside its allowlist (the page, `vendor/`, `data/`, `smoke/`) is
+in there — the repository is private, the map is public, and `docs/*.md` stay on GitHub rather
+than becoming pages (Pages source must be "GitHub Actions", never "Deploy from a branch", which
+would run Jekyll over the whole branch). Publishing: `just site-deploy` triggers
 `.github/workflows/site.yml` (build on the runner, deploy to GitHub Pages — the same workflow runs
 every 3 h on its own and on every merge to `main` that touches `site/` or the pipeline; the result
 is https://h0ffmann.github.io/marola/), `just site-deploy cloudflare` pushes a local `site/dist` with wrangler.
@@ -278,7 +293,62 @@ Tiles come from OpenStreetMap's public servers, which is fine for a link shared 
 not for a public launch — switch `tiles` in `site/areas.json` to a Protomaps/MapTiler source
 before that (MIP-0005 §8).
 
-## 10. What this guide deliberately doesn't cover
+## 10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)
+
+The same pipeline from a machine that has Docker and nothing else. `docker-compose.yml` runs the
+CLI image with an Ollama sidecar; the model is pulled once into a named volume:
+
+```bash
+docker compose run --rm marola --brief --lat -27.6733 --lon -48.47                         # no LLM
+docker compose --profile ollama run --rm marola --summarize --lat -27.6733 --lon -48.47    # + draft + reviewer (llama3.2, 2 GB pulled once)
+docker compose --profile local run --rm marola-local --summarize --lat -27.6733 --lon -48.47   # the marola-llama3.2 variant, built from finetune/Modelfile
+```
+
+`.env` is read if present (origin, provider switches — `.env.example`) and never copied into
+the image; `MAROLA_LOCAL_LLM_MODEL=llama3.2:1b` picks the small model from §2. Without compose,
+against an Ollama already running on the host:
+
+```bash
+docker run --rm --network host ghcr.io/h0ffmann/marola:jvm --summarize --lat -27.6733 --lon -48.47
+```
+
+`ghcr.io/h0ffmann/marola:local` (profile `local` above) is Ollama with the marola-llama3.2
+variant already inside, built by `docker-local.yml` and promoted only when the benchmark gate
+passes — `finetune/README.md` "As an image". `ghcr.io/h0ffmann/marola:jvm` is built by CI from `main` (`.github/workflows/docker.yml`: a PR
+lints the Dockerfile and builds `jvm` without pushing, a merge pushes `jvm` for amd64 + arm64 and
+`native`, each also tagged `<target>-<sha>`; `dev` on request); `just docker-build`
+builds the same target here and `just docker-run -- …` runs it with `--network host`. The
+`Dockerfile` is one multi-stage file: `builder` (sbt, Temurin 25) → `jvm` (Temurin 25 JRE on
+Alpine, ~70 MB + the 55 MB jar), `native-build` → `native` (below), and `dev` — the literal
+`nix develop` in an image, for reading or hacking on the code without installing Nix
+(`docker run -it marola:dev bash`). Lint: `just quality` runs hadolint on it (in the flake).
+
+**Native binary (GraalVM).** The same CLI compiled ahead of time — one 69 MB executable, no JVM,
+~75 MB of RSS, on a distroless image (`ghcr.io/h0ffmann/marola:native`, amd64). Everything
+`just run` does works, `--summarize` and the reviewer included (verified live 2026-09-05 with
+`llama3.2:1b`); the MCP server stays on the JVM image. Locally:
+
+```bash
+just native-image                                            # GraalVM from nixpkgs, sbt cli/nativeImage → cli/target/marola (~1 min)
+just native-run -- --summarize --lat -27.6733 --lon -48.47   # the binary, same flags as `just run`
+just docker-build native                                     # the distroless image, if you have a daemon
+```
+
+**The smoke test.** GitHub → Actions → "docker smoke test" → Run workflow (`lat`/`lon`, or a
+Google Maps pin in `maps_url`, `model`, `image`) runs `--summarize` in the published image on a
+runner with a cached `llama3.2:1b` — also every morning at 09:30 UTC. `scripts/smoke_record.py`
+turns the transcript into `smoke/latest.json` + `smoke/history.json` on the orphan `site-data`
+branch (never deployed by that workflow: `site.yml` copies it into the map, so two deploys never
+race), the map's footer shows it as "Last live run" and the job fails when the pipeline, the
+model or the reviewer did not answer. `python3 scripts/smoke_record.py --self-test` (in `just
+quality`) parses a recorded transcript, `scripts/fixtures/smoke-stdout-2026-09-05.txt`.
+
+The arguments (`--initialize-at-build-time` for slf4j/logback/Jackson, `-march=compatibility`)
+and the reachability metadata (the `*.json` resources, `sun.misc.Signal` for Kyo's handler) live
+in `cli/src/main/resources/META-INF/native-image/`, read from the classpath, so the sbt task and
+the Dockerfile's `native-image -jar` build the same thing.
+
+## 11. What this guide deliberately doesn't cover
 
 Telegram bot setup (there is no bot loop yet — see `TELEGRAM-SETUP.md` for credential setup ahead
 of that Phase 1 work) and any Azure integration (`ARCHITECTURE.md` §5/§6, all optional, none needed

@@ -5,12 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>marola — best hour to swim, every beach</title>
   <meta name="description" content="Every beach around the area ranked by swim conditions for today and tomorrow: sea, wind, waves, water quality, tides, jellyfish. Computed once, no tracking.">
+  <meta name="theme-color" content="#ffffff">
   <link rel="stylesheet" href="vendor/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="bar">
-    <h1><span class="wave">🌊</span> marola</h1>
+    <div class="brand">
+      <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 9c2.5 0 2.5-2.5 5-2.5S9.5 9 12 9s2.5-2.5 5-2.5S19.5 9 22 9"/><path d="M2 16c2.5 0 2.5-2.5 5-2.5s2.5 2.5 5 2.5 2.5-2.5 5-2.5 2.5 2.5 5 2.5"/></svg>marola</h1>
+      <p class="tagline">Best hour to swim at every beach: sea, wind, tide, water quality.</p>
+    </div>
     <div class="controls">
       <select id="area" aria-label="Area"></select>
       <div id="days" class="segmented" role="group" aria-label="Day"></div>
@@ -23,7 +27,7 @@
     <label for="hour"><span id="hour-label">best hour per beach</span></label>
     <input id="hour" type="range" min="-1" max="-1" value="-1" step="1" aria-label="Hour of the day">
     <span class="legend" aria-hidden="true">
-      <i class="c70"></i>≥70 <i class="c40"></i>40 <i class="c1"></i>1 <i class="c0"></i>unfit/0 <i class="cna"></i>no data
+      <b>score</b> <span><i class="c70"></i>≥70</span> <span><i class="c40"></i>40–69</span> <span><i class="c1"></i>1–39</span> <span><i class="c0"></i>unfit</span> <span><i class="cna"></i>no data</span>
     </span>
   </div>
 

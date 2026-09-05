@@ -26,6 +26,7 @@ jobs:
       scala: ${{ steps.filter.outputs.scala }}
       python: ${{ steps.filter.outputs.python }}
       workflows: ${{ steps.filter.outputs.workflows }}
+      docker: ${{ steps.filter.outputs.docker }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -45,9 +46,15 @@ jobs:
             python:
               - 'dspy/**'
               - 'finetune/**'
+              - 'scripts/*.py'
+              - 'scripts/fixtures/**'
               - 'ruff.toml'
             workflows:
               - '.github/workflows/**'
+            docker:
+              - 'Dockerfile*'
+              - 'docker-compose.yml'
+              - '.dockerignore'
 
   build-test:
     needs: changes
@@ -101,10 +108,11 @@ jobs:
         run: sbt scalafmtCheckAll "scalafixAll --check" compile test
 
   # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/,
-  # and a linter for these workflow files themselves.
+  # a linter for these workflow files themselves, and hadolint for the Dockerfiles — the same
+  # gates as `just quality`.
   quality-other:
     needs: changes
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -113,12 +121,22 @@ jobs:
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
-          args: check dspy finetune
+          args: check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py
       - name: ruff format --check
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
-          args: format --check dspy finetune
+          args: format --check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py
+      - name: self-tests — smoke_record (the smoke workflow's parser) and benchmark_gate (marola-local's gate)
+        if: needs.changes.outputs.python == 'true'
+        run: |
+          python3 scripts/smoke_record.py --self-test
+          python3 scripts/benchmark_gate.py --self-test
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2
+      - name: hadolint (Dockerfiles)
+        if: needs.changes.outputs.docker == 'true'
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile

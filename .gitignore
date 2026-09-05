@@ -35,12 +35,16 @@ result-*
 *.log
 
 # sbt boot server socket dir (see justfile's XDG_RUNTIME_DIR override)
-/.tmp/
+/.tmp/*
+!/.tmp/.gitkeep
 
 # LocalFileSightingStore's default output (sightings/) — runtime data, not a build artifact
-/data/
-/finetune/data/
-/finetune/out/
+/data/*
+!/data/.gitkeep
+/finetune/data/*
+!/finetune/data/.gitkeep
+/finetune/out/*
+!/finetune/out/.gitkeep
 
 # repomix — `just context-*` writes under /.tmp/ (ignored above); these are repomix's own default
 # output names in case it's run bare from the repo root
@@ -48,4 +52,5 @@ repomix-output.*
 repomix-output/
 
 # MIP-0005: `just site-build` output (boards + a copy of site/static/) — derived, deployed, not committed
-/site/dist/
+/site/dist/*
+!/site/dist/.gitkeep

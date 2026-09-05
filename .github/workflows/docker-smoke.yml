@@ -1,0 +1,161 @@
+name: docker smoke test (a live --summarize, shown on the map)
+
+# MIP-0008 §5.4/§5.5: run the published image end to end — Overpass, Open-Meteo, IMA, a small
+# Ollama model for the draft and the reviewer — at a real location, and put the result where the
+# map shows it as "Last live run". The cheapest continuous check that pipeline, prompt, reviewer
+# and model still produce a sane sentence together.
+#
+# Cost (MIP §8): ~5 min of runner per run — image pull, the Ollama binary + `llama3.2:1b` from
+# the cache (the 1.3 GB pull happens once per model, as in marola-e2e.yml), ~1 min of pipeline
+# and 1-2 min of CPU inference. Daily plus on demand; never per PR. One Overpass query per run.
+#
+# Where the result goes: NOT to Pages directly — site.yml owns the deploy and two deploys would
+# race. This workflow commits `smoke/` to the orphan `site-data` branch (tiny JSON files, one bot
+# commit per run) and triggers site.yml, which copies the branch into site/dist/smoke/. If the
+# trigger fails, the next scheduled site build (≤ 3 h) picks it up anyway.
+
+on:
+  workflow_dispatch:
+    inputs:
+      lat:
+        description: "Latitude (with lon); empty = Campeche, Florianópolis"
+        type: string
+        default: ""
+      lon:
+        description: "Longitude (with lat)"
+        type: string
+        default: ""
+      maps_url:
+        description: "A Google Maps pin instead of lat/lon — a maps.app.goo.gl short link is expanded"
+        type: string
+        default: ""
+      model:
+        description: "Ollama model for the draft and the reviewer"
+        type: string
+        default: "llama3.2:1b"
+      image:
+        description: "Image to run"
+        type: string
+        default: "ghcr.io/h0ffmann/marola:jvm"
+  schedule:
+    - cron: "30 9 * * *" # 06:30 in Brazil, before the morning swim (MIP-0008.tasks.md decision 3)
+
+permissions:
+  contents: write # push to the site-data branch
+  actions: write # gh workflow run site.yml
+
+concurrency:
+  group: docker-smoke
+  cancel-in-progress: false
+
+env:
+  MODEL: ${{ inputs.model || 'llama3.2:1b' }}
+  IMAGE: ${{ inputs.image || 'ghcr.io/h0ffmann/marola:jvm' }}
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same recipe as marola-e2e.yml: the binary and the model blobs, cached per model.
+      - name: Cache Ollama binary and model
+        id: ollama-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ollama/models
+            ~/.local/bin/ollama
+          key: ollama-${{ runner.os }}-${{ env.MODEL }}-v1
+
+      - name: Install Ollama (cache miss only)
+        if: steps.ollama-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.local/bin
+          curl -fsSL https://ollama.com/download/ollama-linux-amd64.tgz | tar -xz -C /tmp
+          cp /tmp/bin/ollama ~/.local/bin/ollama
+
+      - name: Start Ollama and ensure the model
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          nohup ollama serve >/tmp/ollama.log 2>&1 &
+          for _ in $(seq 1 30); do curl -sf http://localhost:11434/api/tags >/dev/null && break; sleep 1; done
+          ollama list | awk 'NR>1{print $1}' | grep -qx "$MODEL" || ollama pull "$MODEL"
+
+      # `--network host` so the container reaches the runner's Ollama at localhost:11434, the
+      # image's default. The location: a Maps pin (short link expanded here, parsed by the CLI's
+      # --location-url), else lat/lon, else Campeche. Exit code kept, never fatal: a failed run is
+      # recorded as failed and shown as such.
+      - name: Run --summarize in the image
+        id: run
+        env:
+          LAT: ${{ inputs.lat }}
+          LON: ${{ inputs.lon }}
+          MAPS_URL: ${{ inputs.maps_url }}
+        run: |
+          set -o pipefail
+          set -- --summarize
+          if [ -n "$MAPS_URL" ]; then
+            url="$(curl -sIL -o /dev/null -w '%{url_effective}' "$MAPS_URL")"
+            echo "maps url expanded to: $url"
+            set -- "$@" --location-url "$url"
+          elif [ -n "$LAT" ] && [ -n "$LON" ]; then
+            set -- "$@" --lat "$LAT" --lon "$LON"
+          else
+            set -- "$@" --lat -27.6733 --lon -48.47
+          fi
+          docker pull -q "$IMAGE"
+          code=0
+          docker run --rm --network host -e MAROLA_LOCAL_LLM_MODEL="$MODEL" "$IMAGE" "$@" 2>&1 | tee smoke-stdout.txt || code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+
+      # The orphan branch, as a worktree of this checkout (so the checkout's token pushes it);
+      # created empty on the first run.
+      - name: Check out the site-data branch
+        run: |
+          if git ls-remote --exit-code --heads origin site-data >/dev/null; then
+            git fetch --depth=1 origin site-data
+            git worktree add site-data FETCH_HEAD
+            git -C site-data checkout -q -B site-data
+          else
+            git worktree add --detach site-data
+            git -C site-data checkout -q --orphan site-data
+            git -C site-data rm -rfq .
+          fi
+
+      - name: Record the run (smoke/latest.json, history.json, runs/<id>.json)
+        run: |
+          python3 scripts/smoke_record.py record \
+            --stdout smoke-stdout.txt --exit-code "${{ steps.run.outputs.exit_code }}" \
+            --out-dir site-data/smoke \
+            --run-id "${{ github.run_id }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --model "$MODEL" --image "$IMAGE"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ github.run_id }}
+          path: |
+            smoke-stdout.txt
+            site-data/smoke/latest.json
+          retention-days: 30
+
+      - name: Push to site-data
+        run: |
+          cd site-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "smoke: run ${{ github.run_id }} ($MODEL, $IMAGE)"
+          git push -q origin site-data
+
+      # workflow_dispatch is one of the two events GITHUB_TOKEN may trigger from a workflow.
+      - name: Rebuild the site so the panel refreshes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (≤ 3 h) will pick the run up"
+
+      - name: Fail the job if the run was not ok
+        run: |
+          python3 -c 'import json, sys; run = json.load(open("site-data/smoke/latest.json")); print("ok:", run["ok"], "errors:", run["errors"]); sys.exit(0 if run["ok"] else 1)'

@@ -49,12 +49,15 @@ lint:
 # `just quality-fix` applies the auto-fixable ones.
 quality:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll "scalafixAll --check"
-    if command -v ruff >/dev/null; then ruff check dspy finetune && ruff format --check dspy finetune; else echo "ruff not installed — skipping (pip install ruff)"; fi
+    if command -v ruff >/dev/null; then ruff check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py && ruff format --check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py; else echo "ruff not installed — skipping (pip install ruff)"; fi
+    python3 scripts/smoke_record.py --self-test
+    python3 scripts/benchmark_gate.py --self-test
     if command -v actionlint >/dev/null; then actionlint; else echo "actionlint not installed — skipping"; fi
+    if command -v hadolint >/dev/null; then hadolint Dockerfile Dockerfile.local; else echo "hadolint not installed — skipping"; fi
 
 quality-fix:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
-    if command -v ruff >/dev/null; then ruff check --fix dspy finetune && ruff format dspy finetune; fi
+    if command -v ruff >/dev/null; then ruff check --fix dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py && ruff format dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py; fi
 
 # Runs marola's CLI (build.sbt's `cli` project; marola is split into
 # core/local/azure/cli, docs/FUTURE-WORK.md §7.3). `*args` forwards CLI flags to the app
@@ -182,6 +185,40 @@ site-deploy target="github":
             npx --yes wrangler pages deploy site/dist --project-name "${MAROLA_SITE_PROJECT:-marola}" ;;
         *) echo "unknown target '{{target}}' — github | cloudflare" >&2; exit 1 ;;
     esac
+
+# ---------------------------------------------------------------------
+# Docker — MIP-0008: the CLI as an image (Dockerfile, docker-compose.yml)
+# ---------------------------------------------------------------------
+
+# Build one target of the Dockerfile locally as marola:<target> — `jvm` (default), `native`, `dev`,
+# or `local` (Dockerfile.local: Ollama + marola-llama3.2, ~2 GB). Same targets CI pushes to
+# ghcr.io/h0ffmann/marola (docker.yml, docker-local.yml).
+docker-build target="jvm":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "{{target}}" = local ]; then docker build -f Dockerfile.local -t marola:local .; else docker build --target {{target}} -t marola:{{target}} .; fi
+
+# Run the locally built jvm image against the Ollama on this machine (`--network host`, so
+# localhost:11434 is reachable from inside): `just docker-run -- --summarize --lat -27.6733 --lon -48.47`.
+docker-run *args:
+    docker run --rm --network host --env-file <(env | grep '^MAROLA_' || true) marola:jvm {{args}}
+
+# GraalVM native-image of the CLI → cli/target/marola (MIP-0008 task 3). GraalVM (JDK 25 + native-
+# image, ~700 MB) comes from nixpkgs for this one command rather than living in the flake; the
+# arguments/metadata are in cli/src/main/resources/META-INF/native-image/. ~1 min on a big machine.
+native-image:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p "$XDG_RUNTIME_DIR"
+    nix shell nixpkgs#graalvmPackages.graalvm-ce --command bash -c '
+        export GRAALVM_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v native-image)")")")"
+        echo "native-image: $(native-image --version | head -1) at $GRAALVM_HOME"
+        sbt -batch cli/nativeImage'
+    ls -la cli/target/marola
+
+# Run the native binary: `just native-run -- --brief --lat -27.6733 --lon -48.47` (same flags as `just run`).
+native-run *args:
+    ./cli/target/marola {{args}}
 
 # ---------------------------------------------------------------------
 # Browser-session context — repomix.config.json, repomix-instruction.md

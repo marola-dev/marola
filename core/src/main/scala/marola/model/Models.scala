@@ -20,6 +20,40 @@ final case class Coordinates(lat: Double, lon: Double):
       math.cos(la1) * math.cos(la2) * math.sin(dLon / 2) * math.sin(dLon / 2)
     2 * earthRadiusKm * math.asin(math.sqrt(h))
 
+object Coordinates:
+
+  /**
+   * MIP-0008 §5.6: the pin inside a Google Maps URL, or `None`. Understands the shapes Maps hands
+   * out (checked 2026-09-05): the viewport `/maps/@lat,lon,zoom`, the `q=`/`query=`/`ll=` query
+   * parameters (a URL-encoded comma included), and the `!3dlat!4dlon` pin of a place URL — which
+   * wins over the viewport centre, since the viewport is where the map was looking, not the pin.
+   * Short links (`maps.app.goo.gl/...`) are not expanded here (that is a network call; the smoke
+   * workflow follows the redirect with curl); only Google hosts are accepted, so a stray URL with a
+   * `@1,2` in it does not become an origin. Pure, no I/O.
+   */
+  def fromMapsUrl(url: String): Option[Coordinates] =
+    // Host from the raw URL: decoding first would turn a place name's `+` into a space and make
+    // `URI.create` reject the whole thing. The decoded form is only for the number patterns.
+    val host = scala.util.Try(java.net.URI.create(url.trim).getHost).toOption.flatMap(Option(_))
+    val decoded = java.net.URLDecoder.decode(url.trim, "UTF-8")
+    if !host.exists(h => h == "google.com" || h.endsWith(".google.com")) then None
+    else
+      val pin = MapsPin.findFirstMatchIn(decoded).map(m => (m.group(1), m.group(2)))
+      val viewport = MapsViewport.findFirstMatchIn(decoded).map(m => (m.group(1), m.group(2)))
+      val query = MapsQuery.findFirstMatchIn(decoded).map(m => (m.group(1), m.group(2)))
+      pin.orElse(viewport).orElse(query).flatMap {
+        case (lat, lon) =>
+          for
+            la <- lat.toDoubleOption if la >= -90 && la <= 90
+            lo <- lon.toDoubleOption if lo >= -180 && lo <= 180
+          yield Coordinates(la, lo)
+      }
+
+  private val Num = "(-?\\d{1,3}(?:\\.\\d+)?)"
+  private val MapsPin = s"!3d$Num!4d$Num".r
+  private val MapsViewport = s"/@$Num,$Num".r
+  private val MapsQuery = s"[?&](?:q|query|ll)=(?:loc:)?$Num,$Num".r
+
 final case class Beach(name: String, coordinates: Coordinates, distanceKm: Double)
 
 /**

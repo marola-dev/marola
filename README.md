@@ -102,6 +102,12 @@ just site-build floripa && just site-serve                         # the map: ev
 No Telegram token, no Azure account, no API key is needed for any line above. Full walkthrough with
 real output: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md).
 
+Docker and nothing else (no Nix, no sbt, no Ollama install — MIP-0008):
+
+```bash
+docker compose --profile ollama run --rm marola --summarize --lat -27.6733 --lon -48.4700   # pulls llama3.2 once into a volume
+```
+
 ## Where it's going
 
 **Next: the product surface.** The CLI is the workbench; the product is a **Telegram bot** —

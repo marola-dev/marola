@@ -1,0 +1,119 @@
+name: marola-local (the fine-tuned model as an image, gated by the benchmark)
+
+# MIP-0008 §5.3 — LLMOps in the small: the model is versioned like the code. Every run builds
+# Dockerfile.local (Ollama + marola-llama3.2 from finetune/Modelfile) and pushes it as
+# ghcr.io/h0ffmann/marola:local-<sha>; then `just benchmark` runs against that container and
+# scripts/benchmark_gate.py compares its summary table with docs/benchmarks/ — only when the gate
+# passes does the moving `:local` tag advance to this build. A regression leaves `:local` where
+# it was, with the report attached to the run.
+#
+# Cost: the image build pulls the 2 GB llama3.2 weights and pushes them (a few minutes); the
+# benchmark is 22 questions × 3 arms on a 3B model on 4 vCPUs plus embedding the corpus — the
+# expensive part, 20-40 min. That is why this runs only from `main` when the model, the corpus,
+# the prompts or the gate change, or on request — never per PR.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "finetune/Modelfile"
+      - "Dockerfile.local"
+      - "knowledge/**"
+      - "core/src/main/resources/**"
+      - "cli/src/main/resources/benchmark_questions.json"
+      - "scripts/benchmark_gate.py"
+      - "docs/benchmarks/**"
+      - ".github/workflows/docker-local.yml"
+  workflow_dispatch:
+    inputs:
+      tolerance:
+        description: "How far below the best kept rag-general coverage the new run may be"
+        type: string
+        default: "0.05"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: docker-local
+  cancel-in-progress: true
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/marola
+
+jobs:
+  build-gate-promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile.local
+
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: latest=false
+          tags: type=raw,value=local-{{sha}}
+      - name: Build and push :local-<sha> (the candidate)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.local
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=local
+          cache-to: type=gha,scope=local,mode=max
+
+      - name: Start the candidate
+        run: |
+          docker run -d --name ollama-local -p 11434:11434 "$IMAGE:local-${GITHUB_SHA::7}"
+          for _ in $(seq 1 60); do curl -sf http://localhost:11434/api/tags >/dev/null && break; sleep 2; done
+          curl -s http://localhost:11434/api/tags | grep -q marola-llama3.2
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.sbt
+            ~/.ivy2/cache
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt', 'project/**') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+      - uses: sbt/setup-sbt@v1
+
+      # The same `just benchmark`, with the candidate's model; the embedder is the stock
+      # llama3.2 the image also carries (OllamaEmbedder's default).
+      - name: just benchmark against the candidate
+        env:
+          MAROLA_LOCAL_LLM_MODEL: marola-llama3.2
+        run: sbt "cli/run -- --benchmark"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-${{ github.run_id }}
+          path: data/benchmark-*.md
+
+      - name: Gate — compare with docs/benchmarks/
+        run: python3 scripts/benchmark_gate.py check --new data --kept docs/benchmarks --tolerance "${{ inputs.tolerance || '0.05' }}"
+
+      - name: Promote — move :local to this build
+        run: |
+          docker tag "$IMAGE:local-${GITHUB_SHA::7}" "$IMAGE:local"
+          docker push "$IMAGE:local"

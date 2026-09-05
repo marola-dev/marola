@@ -12,6 +12,9 @@ name: site (build the boards, deploy the map)
 #
 # One-time human setup, not a paid resource: repo Settings → Pages → Source = "GitHub Actions".
 # Until that is done the deploy job fails with "Pages not enabled" and nothing else happens.
+# That setting is also what keeps this private repository private: with "Deploy from a branch"
+# Pages runs Jekyll over the whole branch and publishes README, docs/*.md and the source as HTML.
+# Here the only thing that ever reaches Pages is the artifact below — site/dist, allowlisted.
 # Scheduled workflows only run from the default branch, so this file has to be on main. The live
 # site is https://h0ffmann.github.io/marola/ (linked from the README).
 
@@ -76,11 +79,37 @@ jobs:
           AREA: ${{ inputs.area }}
         run: sbt "cli/run -- --site $AREA"
 
+      # MIP-0008 §5.5: the smoke test's results (docker-smoke.yml) live on the orphan `site-data`
+      # branch — copied into the site here, never deployed by that workflow. No branch yet = no
+      # panel; app.js treats a missing smoke/latest.json as "no live run".
+      - name: Add the smoke-test results (site-data branch, if any)
+        run: |
+          if git fetch --depth=1 origin site-data 2>/dev/null; then
+            git archive FETCH_HEAD smoke | tar -x -C site/dist
+          else
+            echo "no site-data branch yet — no smoke panel"
+          fi
+
       - name: Show what was built
         run: |
           find site/dist -type f | sort
           echo
           cat site/dist/data/*/latest.json
+          [ -f site/dist/smoke/latest.json ] && head -c 600 site/dist/smoke/latest.json || true
+
+      # Only the map is public. The artifact is site/dist and nothing more; this step deletes the
+      # one file that is not the page (data/.gitkeep's sibling in site/dist) and fails the build if
+      # anything outside the allowlist is there — a stray copy is caught here, not shipped.
+      # docs/*.md are not on the site by design: they render on GitHub, for people with access.
+      - name: Publish allowlist — index.html, app.js, style.css, vendor/, data/, smoke/ and nothing else
+        run: |
+          cd site/dist
+          rm -f .gitkeep
+          unexpected="$(find . -mindepth 1 \( -path ./data -o -path ./smoke -o -path ./vendor \) -prune -o -type f ! -name index.html ! -name app.js ! -name style.css -print)"
+          if [ -n "$unexpected" ]; then
+            echo "files in site/dist that are not on the publish allowlist:"; echo "$unexpected"; exit 1
+          fi
+          echo "publishing:"; find . -type f | sort
 
       - uses: actions/upload-pages-artifact@v3
         with:

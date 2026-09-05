@@ -51,6 +51,19 @@ just run -- --summarize
 4. Evaluate before trusting it: run `just e2e` and `just run -- --summarize` with the new model,
    and — the real test — compare reviewer scores over a held-out set (`FUTURE-WORK.md` §4.1).
 
+## As an image: `ghcr.io/h0ffmann/marola:local` (MIP-0008)
+
+The Tier 1 model, versioned like the code. `Dockerfile.local` is Ollama with `marola-llama3.2`
+already created from this directory's `Modelfile`; `.github/workflows/docker-local.yml` builds it
+from `main` whenever the Modelfile, the corpus, the prompts or the gate change, pushes it as
+`:local-<sha>`, runs `just benchmark` against that container and lets
+`scripts/benchmark_gate.py` decide: the moving `:local` tag advances only if `rag-general`
+coverage (all) is within 0.05 of the best run kept in `docs/benchmarks/` and above the plain
+prompt's — otherwise `:local` stays where it was and the report is on the run. Use it with
+`docker compose --profile local run --rm marola-local --summarize …` (`docker-compose.yml`) —
+no pull, no `ollama create`. Tier 2 is not in the image until something has trained the
+adapter; the README above is still the honest status.
+
 ## Iterating on a local machine: the small-model ladder
 
 Retraining "from the ground" should cost minutes, not an afternoon. The same script, dataset and
