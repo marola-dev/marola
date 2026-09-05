@@ -99,7 +99,9 @@ real output: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md).
 share a location, get the list; ask a question; send a photo of that thing on the sand
 ([MIP-0002](./docs/mips/MIP-0002-telegram-bot-phase-1.md)), with sub-three-second replies
 ([MIP-0003](./docs/mips/MIP-0003-fast-replies-caching-and-fan-out.md)) and a daily digest for the
-beaches you care about ([MIP-0004](./docs/mips/MIP-0004-daily-digest-subscriptions-and-reach.md)).
+beaches you care about ([MIP-0004](./docs/mips/MIP-0004-daily-digest-subscriptions-and-reach.md)),
+and **a map**: every beach's daily recommendation on a static site the pipeline feeds, so the
+answer is computed once per area and shared as a link ([MIP-0005](./docs/mips/MIP-0005-map-and-static-site.md)).
 
 **Then: the rest of the sea.** Swimming is the first activity, not the only one. The same live data,
 water quality, tides and knowledge corpus serve every sea activity — each is one scoring function
@@ -139,6 +141,7 @@ free local model, step by step. Everything else lives under `docs/`:
 | [`SKILLS.md`](./docs/SKILLS.md) | A skills roadmap — what to practice, in order, using marola as the vehicle |
 | [`SCALA3-JDK-REVIEW.md`](./docs/SCALA3-JDK-REVIEW.md) | Scala 3 / JDK 21-25 features reviewed against this code — what to adopt, in what order |
 | [`AGENT-FRAMEWORKS-SURVEY.md`](./docs/AGENT-FRAMEWORKS-SURVEY.md) | Multi-agent frameworks: Python ideas, JVM/Scala libraries, where Apache Pekko fits marola |
+| [`AGENT-SKILLS.md`](./docs/AGENT-SKILLS.md) | Which Claude Code skills to use here — the in-repo `mip` skill, which superpowers skills fit and how, candidates to write |
 | [`benchmarks/`](./docs/benchmarks/2026-09-05.md) | Kept benchmark runs: marola vs. a plain prompt on ocean questions, and what moved the numbers |
 | [`mips/`](./docs/mips/README.md) | Marola Improvement Proposals — numbered design docs written before a feature is built (`/mip` skill) |
 | [`FABLE_REVIEW.md`](./docs/FABLE_REVIEW.md) | Code and documentation review at the initial import — ranked findings with file:line references |

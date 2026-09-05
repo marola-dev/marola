@@ -10,3 +10,4 @@ Accepted → Implemented (or Rejected / Superseded).
 | [MIP-0002](./MIP-0002-telegram-bot-phase-1.md) | The Telegram bot — marola's first real user surface | Draft | 2026-09-05 |
 | [MIP-0003](./MIP-0003-fast-replies-caching-and-fan-out.md) | Replies in under three seconds — caching, concurrent fetches, precomputed boards | Draft | 2026-09-05 |
 | [MIP-0004](./MIP-0004-daily-digest-subscriptions-and-reach.md) | The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina | Draft | 2026-09-05 |
+| [MIP-0005](./MIP-0005-map-and-static-site.md) | The map — every beach's daily recommendation on a static site the pipeline feeds | Draft | 2026-09-05 |
