@@ -99,6 +99,41 @@ Uses the `MAROLA_LANGFUSE_*` prefix (this repo's env var convention — see `App
 root `.env.example`) rather than Langfuse's own bare `LANGFUSE_*` names directly, so
 `_init_langfuse_tracing()` bridges one to the other internally.
 
+## Optional: logging compile runs to MLflow
+
+Additive to the Langfuse tracing above — both can run at the same time
+([MIP-0010](../docs/mips/MIP-0010-mlflow-experiment-tracking.md) §11 OQ4). Where Langfuse traces
+every individual LLM call made while compiling, this logs one **MLflow run per
+`dspy.teleprompt.Teleprompter.compile()` call** (two per script invocation — "summarize" and
+"review") to the `marola/prompt-compile` experiment: params (`model`, `optimizer`,
+`trainset_size`), the compiled program's own metric score (a fresh `dspy.Evaluate()` pass over
+its trainset, using the same metric it was compiled against), and the artifact JSON it wrote
+(`recommendation_prompt.json` or `review_prompt.json`).
+
+```bash
+export MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000   # e.g. from `just mlflow-up`
+export MAROLA_MLFLOW_EXPERIMENT=marola/prompt-compile      # optional, this is the default
+python compile_recommendation_prompt.py
+```
+
+Omit `MAROLA_MLFLOW_TRACKING_URI` entirely to skip this — no `mlflow` import, no extra LLM calls
+for the evaluation pass, no network, same degrade-silently shape as the Langfuse hook (a stopped
+`mlflow server` prints a warning and continues rather than failing the compile step).
+
+**`mlflow.dspy.autolog()` (MIP-0010 §11 OQ3) exists at the pinned versions but isn't used.**
+Confirmed live against a real `mlflow==3.16.0` + `dspy==3.3.1` install (this repo's own pins):
+`autolog(log_compiles=True)` patches `Teleprompter.compile` to open its own run and log the
+optimizer's hyperparameters plus a `best_model.json`/`trainset.json` artifact pair — but it never
+computes an aggregate metric score, and its artifact names don't match the actual
+`recommendation_prompt.json`/`review_prompt.json` files this step needs on record. Narrower than
+what this script needs on both counts, so it hand-logs instead — see
+`_log_compile_run_to_mlflow()`'s docstring in `compile_recommendation_prompt.py` for the full
+reasoning.
+
+Run `python compile_recommendation_prompt.py --self-test` to check the params/metrics dict this
+logging builds, offline — no LLM call, no MLflow server, no `mlflow` import (only the
+"unconfigured" path is exercised; see the function's own docstring).
+
 ## Status
 
 **Both compile steps have actually been run against a real LLM**, end to end, more than once — a

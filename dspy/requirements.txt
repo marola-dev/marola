@@ -9,3 +9,15 @@ dspy>=3.3,<4
 # not at install time.
 langfuse>=4,<5
 openinference-instrumentation-dspy
+
+# Optional experiment-ledger logging (see compile_recommendation_prompt.py's
+# _log_compile_run_to_mlflow) — installed unconditionally, same rationale as
+# langfuse/openinference above: opt-in at runtime via
+# MAROLA_MLFLOW_TRACKING_URI, not at install time. Pinned to the exact
+# release confirmed installable and importable here: mlflow==3.16.0, PyPI's
+# latest as of 2026-09-05 (https://pypi.org/pypi/mlflow/json), matching the
+# 2026-09-04 GitHub release MIP-0010 itself cites. `mlflow.dspy.autolog()`
+# was confirmed to exist at this version against dspy==3.3.1 (this file's
+# own pin above) but was not adopted — see
+# _log_compile_run_to_mlflow()'s docstring for why.
+mlflow>=3.16,<4

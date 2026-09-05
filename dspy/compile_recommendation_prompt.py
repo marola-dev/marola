@@ -38,11 +38,27 @@ Usage:
     export MAROLA_LANGFUSE_PUBLIC_KEY=pk-lf-...
     export MAROLA_LANGFUSE_SECRET_KEY=sk-lf-...
     export MAROLA_LANGFUSE_BASE_URL=https://cloud.langfuse.com  # or your self-hosted instance
+
+    # Optional, additive — both this and Langfuse tracing above can run together (MIP-0010 §11
+    # OQ4): log this compile run to MLflow. One MLflow run per dspy.teleprompt.Teleprompter.compile()
+    # call (two per script invocation: "summarize" and "review"), each with params (model,
+    # optimiser, trainset size), the compiled program's own metric score (a fresh dspy.Evaluate()
+    # pass over its trainset — see _log_prompt_compile_run()'s docstring), and the artifact JSON it
+    # wrote. See _log_compile_run_to_mlflow()'s docstring for the exact mlflow client calls used.
+    # Omit MAROLA_MLFLOW_TRACKING_URI entirely to skip this — no mlflow import, no extra LLM calls
+    # for the eval pass, no network, same degrade-silently shape as the Langfuse hook above.
+    export MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000  # e.g. from `just mlflow-up`
+
+    # --self-test runs the offline checks below (no LLM call, no MLflow server, no network) and
+    # exits — see dspy/README.md and `just quality`.
+    python compile_recommendation_prompt.py --self-test
 """
 
 from __future__ import annotations
 
+import argparse
 import os
+import sys
 
 import dspy
 
@@ -310,7 +326,179 @@ def _init_langfuse_tracing() -> None:
     )
 
 
-def main() -> None:
+def _mlflow_tracking_configured() -> bool:
+    """Same shape as Langfuse's `MAROLA_LANGFUSE_PUBLIC_KEY` check: unset ⇒ MLflow logging is
+    entirely skipped for this compile run — no mlflow import anywhere, no extra dspy.Evaluate()
+    LLM calls, no network, no error. Set ⇒ MLflow logging is expected to work (mlflow is an
+    unconditional requirements.txt dependency, same rationale as langfuse/openinference there)."""
+    return bool(os.environ.get("MAROLA_MLFLOW_TRACKING_URI"))
+
+
+def _prompt_compile_run_data(
+    *, model: str, optimizer: str, trainset_size: int, metric_score: float
+) -> tuple[dict[str, str], dict[str, float]]:
+    """The params/metrics MLflow logs for one dspy.teleprompt.Teleprompter.compile() run — pure,
+    no mlflow or dspy import, so this is directly assertable against a recorded/fixture compile
+    result with no live MLflow server and no LLM call (see self_test() below)."""
+    params = {
+        "model": model,
+        "optimizer": optimizer,
+        "trainset_size": str(trainset_size),
+    }
+    metrics = {"metric_score": float(metric_score)}
+    return params, metrics
+
+
+def _log_compile_run_to_mlflow(
+    *,
+    experiment: str,
+    run_name: str,
+    params: dict[str, str],
+    metrics: dict[str, float],
+    artifact_path: str,
+) -> None:
+    """Logs one MLflow run via the standard `mlflow` Python client — `mlflow.set_tracking_uri`,
+    `mlflow.set_experiment`, `mlflow.start_run`, `mlflow.log_params`/`log_metrics`/`log_artifact`
+    (https://mlflow.org/docs/latest/python_api/mlflow.html, fetched 2026-09-05; confirmed against
+    a real `mlflow==3.16.0` install — PyPI's latest as of 2026-09-05, matching MIP-0010's own
+    citation of the 2026-09-04 GitHub release — pinned in requirements.txt).
+
+    Called only when `_mlflow_tracking_configured()` is true; broad `except Exception` below is
+    deliberate, matching `_init_langfuse_tracing`'s rationale: an optional observability
+    integration must not fail the compile step it's attached to (a stopped local `mlflow server`
+    shouldn't block writing the prompt JSONs).
+
+    MIP-0010 §11 OQ3 (`mlflow.dspy.autolog()`): exists at the pinned versions (confirmed live,
+    `mlflow==3.16.0` + `dspy==3.3.1`, matching requirements.txt's `dspy>=3.3,<4` pin) — inspected
+    its source directly rather than trusting docs alone, since two MLflow doc pages disagreed
+    (one says the DSPy flavor "only supports autologging for tracing", another describes richer
+    `log_compiles` behavior). `autolog(log_compiles=True)` patches `Teleprompter.compile` to open
+    its own MLflow run and log the optimizer's own hyperparams plus a `best_model.json`/
+    `trainset.json` artifact pair — but it never computes or logs an aggregate metric score (only
+    `Evaluate.__call__` does, via `log_evals`, which this script doesn't otherwise call), and its
+    artifact names don't match the actual files this step needs on record
+    (`recommendation_prompt.json`/`review_prompt.json`, the ones `marola.llm.CompiledPrompt`/
+    `Reviewer` load). Narrower than what task 7 needs on both counts, so this hand-logs instead
+    of enabling autolog.
+    """
+    if not _mlflow_tracking_configured():
+        return
+    import mlflow
+
+    mlflow.set_tracking_uri(os.environ["MAROLA_MLFLOW_TRACKING_URI"])
+    mlflow.set_experiment(experiment)
+    try:
+        with mlflow.start_run(run_name=run_name):
+            mlflow.log_params(params)
+            mlflow.log_metrics(metrics)
+            mlflow.log_artifact(artifact_path)
+        print(f"MLflow: logged run {run_name!r} -> experiment {experiment!r}")
+    except Exception as exc:  # noqa: BLE001 — see docstring: optional observability must degrade,
+        # not fail the compile step that produces the actual prompt artifacts.
+        print(f"warning: MLflow logging raised ({exc!r}) — continuing without it.")
+
+
+def _log_prompt_compile_run(
+    *,
+    model: str,
+    optimizer: str,
+    compiled,
+    trainset: list,
+    metric,
+    artifact_path: str,
+    run_name: str,
+) -> None:
+    """When MLflow tracking is configured, evaluates the compiled program against its own
+    trainset — which doubles as this module's eval set already (see the TRAINSET comment above)
+    — using the exact metric BootstrapFewShot compiled it against, via `dspy.Evaluate`
+    (`EvaluationResult.score`, a 0-100 float — confirmed against a real `dspy==3.3.1` install), and
+    logs params/metrics/artifact as one MLflow run. Gated on tracking being configured so the
+    default (no MAROLA_MLFLOW_TRACKING_URI) path adds zero extra LLM calls versus before this
+    task — same cost profile as today, per dspy/README.md's "Why this needs a real LLM" section.
+    """
+    if not _mlflow_tracking_configured():
+        return
+    result = dspy.Evaluate(devset=trainset, metric=metric, display_progress=False)(compiled)
+    params, metrics = _prompt_compile_run_data(
+        model=model,
+        optimizer=optimizer,
+        trainset_size=len(trainset),
+        metric_score=result.score,
+    )
+    _log_compile_run_to_mlflow(
+        experiment=os.environ.get("MAROLA_MLFLOW_EXPERIMENT", "marola/prompt-compile"),
+        run_name=run_name,
+        params=params,
+        metrics=metrics,
+        artifact_path=artifact_path,
+    )
+
+
+def self_test() -> int:
+    """Offline: no LLM call, no MLflow server, no mlflow import (the "unconfigured" branch is the
+    only one exercised — see _log_compile_run_to_mlflow's docstring for why the "configured"
+    branch needs a real mlflow install this environment may not have, same as a live compile run
+    needs a real LLM this self-test deliberately avoids)."""
+    params, metrics = _prompt_compile_run_data(
+        model="ollama_chat/llama3.2",
+        optimizer="BootstrapFewShot",
+        trainset_size=len(TRAINSET),
+        metric_score=87.5,
+    )
+    assert params == {
+        "model": "ollama_chat/llama3.2",
+        "optimizer": "BootstrapFewShot",
+        "trainset_size": "3",
+    }, params
+    assert metrics == {"metric_score": 87.5}, metrics
+
+    # Recorded/fixture review-program result — different numbers, same shape.
+    review_params, review_metrics = _prompt_compile_run_data(
+        model="ollama_chat/llama3.2",
+        optimizer="BootstrapFewShot",
+        trainset_size=len(REVIEW_TRAINSET),
+        metric_score=64.0,
+    )
+    assert review_params["trainset_size"] == "3", review_params
+    assert review_metrics == {"metric_score": 64.0}, review_metrics
+
+    # Unset MAROLA_MLFLOW_TRACKING_URI: entirely skipped — no mlflow import, no network, no
+    # error, mirroring _init_langfuse_tracing's degrade-silently shape when its own key is unset.
+    saved = os.environ.pop("MAROLA_MLFLOW_TRACKING_URI", None)
+    try:
+        assert _mlflow_tracking_configured() is False
+        _log_compile_run_to_mlflow(
+            experiment="marola/prompt-compile",
+            run_name="summarize",
+            params=params,
+            metrics=metrics,
+            artifact_path="/nonexistent/recommendation_prompt.json",
+        )  # must not raise, must not import mlflow
+
+        os.environ["MAROLA_MLFLOW_TRACKING_URI"] = "http://127.0.0.1:5000"
+        assert _mlflow_tracking_configured() is True
+    finally:
+        os.environ.pop("MAROLA_MLFLOW_TRACKING_URI", None)
+        if saved is not None:
+            os.environ["MAROLA_MLFLOW_TRACKING_URI"] = saved
+
+    print("compile_recommendation_prompt self-test: ok")
+    return 0
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--self-test",
+        action="store_true",
+        help="run the offline self-test (no LLM call, no MLflow server) and exit",
+    )
+    args = ap.parse_args()
+    if args.self_test:
+        return self_test()
+
     _init_langfuse_tracing()  # must run before dspy.configure() — see that function's docstring
 
     # Default is a local Ollama model (ollama_chat/<name>, LiteLLM's Ollama chat-endpoint prefix —
@@ -338,6 +526,15 @@ def main() -> None:
     summary_path = os.path.join(resources_dir, "recommendation_prompt.json")
     compiled.save(summary_path)
     print(f"Compiled prompt artifact written to {os.path.abspath(summary_path)}")
+    _log_prompt_compile_run(
+        model=model,
+        optimizer="BootstrapFewShot",
+        compiled=compiled,
+        trainset=TRAINSET,
+        metric=jellyfish_and_whale_mentioned_when_relevant,
+        artifact_path=summary_path,
+        run_name="summarize",
+    )
 
     # Second program: the reviewer/critic pass — marola.llm.Reviewer replays this artifact against
     # the draft summary the first program produced, before either is shown to a user. See
@@ -354,7 +551,17 @@ def main() -> None:
     review_path = os.path.join(resources_dir, "review_prompt.json")
     compiled_review.save(review_path)
     print(f"Compiled review-prompt artifact written to {os.path.abspath(review_path)}")
+    _log_prompt_compile_run(
+        model=model,
+        optimizer="BootstrapFewShot",
+        compiled=compiled_review,
+        trainset=REVIEW_TRAINSET,
+        metric=review_json_is_well_formed_and_sound,
+        artifact_path=review_path,
+        run_name="review",
+    )
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

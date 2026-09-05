@@ -517,6 +517,12 @@ Scala" as an unrecorded aside.
 over OTLP/HTTP from any language, so the JVM side needs no LLMOps SDK; `ds4s` stays a separate
 project by its own definition above. `docs/README.md` classifies every section of this file.
 
+**Update (2026-09-05, continued):** `MIP-0010.tasks.md` tasks 5-6 (tracing core split,
+`local/MlflowTracing.scala` + `TracedLlmClient`) are the JVM half that actually closes this
+gap — planned/in progress as of this note, not confirmed merged. `dspy/compile_recommendation_prompt.py`
+already logs its own compile runs to MLflow (task 7, the Python-only half, independent of tasks
+5-6) — see `dspy/README.md`'s "Optional: logging compile runs to MLflow" section.
+
 **Update (2026-09-05, later):** the "DSPy stays a Python subprocess indefinitely" conclusion is
 revisited by `docs/mips/MIP-0012-llm4s-adoption-and-dspy-deprecation.md` — marola's actual use of
 DSPy (a three-example `BootstrapFewShot` with a deterministic metric) is small enough to own as a
