@@ -15,7 +15,8 @@ default:
 # One-time, only needed if you're not using `nix develop` (its shellHook
 # does this automatically). Points git at the versioned .githooks/ dir —
 # see .githooks/pre-commit, which blocks committing Scala that won't
-# compile.
+# compile, and .githooks/pre-push, which runs the `just quality` gates
+# before anything leaves the machine.
 install-hooks:
     git config core.hooksPath .githooks
 
@@ -44,21 +45,38 @@ fmt:
 lint:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll
 
-# All free code-quality checks, same as ci.yml: scalafmt, scalafix (semantic lint), compiler
-# unused-warnings-as-errors (part of compile), ruff for the Python, actionlint for the workflows.
-# `just quality-fix` applies the auto-fixable ones.
-quality:
+# All free code-quality checks, same as ci.yml: `quality-scala` (the lint steps of its build-test
+# job) + `quality-other` (its quality-other job). `.githooks/pre-push` runs them before every push,
+# so a lint failure surfaces here and not on GitHub after the merge. `just quality-fix` applies
+# the auto-fixable ones.
+quality: quality-scala quality-other
+
+# scalafmt + scalafix (semantic lint). The compiler's unused-warnings-as-errors are part of `just build`.
+quality-scala:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll "scalafixAll --check"
-    if command -v ruff >/dev/null; then ruff check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py && ruff format --check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py; else echo "ruff not installed — skipping (pip install ruff)"; fi
+
+# The JVM-free gates: ruff on every .py in the repo (no file list — ci.yml's ruff-action lints the
+# checkout root, and a list kept here once drifted from it), the scripts/*.py self-tests,
+# actionlint, hadolint. ruff/actionlint/hadolint are in flake.nix, so a missing one fails instead
+# of skipping — a silent skip is how an unused import reached main. Only the compose check still
+# skips without a Docker CLI (the agent sessions have none).
+quality-other:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for tool in ruff actionlint hadolint; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
+    # One command per line: under `set -e` a failing left side of `a && b` does not stop the
+    # script (errexit exempts it), and the first pre-push run sailed past a ruff finding that way.
+    ruff check .
+    ruff format --check .
     python3 scripts/smoke_record.py --self-test
     python3 scripts/benchmark_gate.py --self-test
-    if command -v actionlint >/dev/null; then actionlint; else echo "actionlint not installed — skipping"; fi
-    if command -v hadolint >/dev/null; then hadolint Dockerfile Dockerfile.local; else echo "hadolint not installed — skipping"; fi
+    actionlint
+    hadolint Dockerfile Dockerfile.local
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
 
 quality-fix:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
-    if command -v ruff >/dev/null; then ruff check --fix dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py && ruff format dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py; fi
+    ruff check --fix . && ruff format .
 
 # Runs marola's CLI (build.sbt's `cli` project; marola is split into
 # core/local/azure/cli, docs/FUTURE-WORK.md §7.3). `*args` forwards CLI flags to the app

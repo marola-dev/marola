@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Blocks a commit if any staged Scala changes don't compile.
+# Blocks a commit if any staged Scala changes don't compile (the lint gates run in .githooks/pre-push).
 #
 # Installed automatically via `core.hooksPath` (set by flake.nix's
 # shellHook every time you enter `nix develop`); run `just install-hooks`

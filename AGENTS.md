@@ -56,7 +56,7 @@ are MIP material; check these before assuming something is undecided or unbuilt:
 
 ```bash
 nix develop          # reproducible dev shell (JDK 25, sbt, scala-cli, coursier,
-                      # just, python3, az, gh, hadolint, actionlint — see flake.nix; Docker itself is the host's)
+                      # just, python3, ruff, az, gh, hadolint, actionlint — see flake.nix; Docker itself is the host's)
 just                  # list all available recipes
 just build            # sbt compile
 just test             # sbt test
@@ -67,8 +67,12 @@ just e2e              # marola's live E2E test (Overpass/Open-Meteo/Ollama) — 
 ```
 
 Always run `just build && just test && just quality` before considering a change done (`quality` =
-scalafmt + scalafix + ruff + actionlint + hadolint on the Dockerfiles + the `scripts/*.py`
-self-tests, the same gates as `ci.yml`). Kyo is
+`quality-scala`, scalafmt + scalafix, plus `quality-other`, ruff on every `.py` in the repo +
+actionlint + hadolint on the Dockerfiles + the `scripts/*.py` self-tests — the same gates as
+`ci.yml`; a missing lint tool fails the run rather than skipping, so use `nix develop`). The
+`.githooks/pre-push` hook runs `quality-other` before every push and `quality-scala` too when a
+pushed commit touches Scala, so the last push before a merge is linted — `git push --no-verify`
+bypasses it, CI does not. Kyo is
 pre-1.0 (currently `1.0.0-RC5`) with no version-specific published docs — when unsure of an API,
 verify against the actual jar (`javap` on the decompiled class) rather than guessing from
 `getkyo.io`'s latest-version docs, which can silently drift from what's pinned. See

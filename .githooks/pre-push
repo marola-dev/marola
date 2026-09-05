@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Blocks a push if the lint gates ci.yml runs would fail on it. The last push before a merge is
+# the one that lands on main, so code is linted before it leaves the machine — not discovered
+# in a red `quality-other` job after the merge (an unused import in scripts/cost-split.py got
+# there that way: `just quality` had skipped ruff and its file list missed the script).
+#
+# Always: `just quality-other` (ruff on every .py, the scripts/*.py self-tests, actionlint,
+# hadolint — seconds, no JVM). When a pushed commit touches Scala/sbt/scalafmt/scalafix config:
+# `just quality-scala` (scalafmt + scalafix, needs sbt) as well.
+#
+# Installed via `core.hooksPath` like .githooks/pre-commit (flake.nix's shellHook, or `just
+# install-hooks` once outside `nix develop`). Bypass: `git push --no-verify` — CI runs the same
+# gates anyway, so a bypass only moves the failure back to GitHub.
+set -euo pipefail
+
+remote="$1"
+cd "$(git rev-parse --show-toplevel)"
+
+# stdin: one "<local ref> <local sha> <remote ref> <remote sha>" line per ref being pushed.
+zero="0000000000000000000000000000000000000000"
+scala_pattern='\.(scala|sbt)$|^project/|^\.scalafmt\.conf$|^\.scalafix\.conf$'
+need_scala=0
+pushing=0
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [[ "$local_sha" == "$zero" ]] && continue      # deleting a remote branch: nothing to lint
+  pushing=1
+  if [[ "$remote_sha" == "$zero" ]]; then
+    # New branch on the remote: what's new relative to origin/main (no origin/main: lint everything).
+    base="$(git merge-base "$local_sha" origin/main 2>/dev/null || true)"
+  else
+    base="$remote_sha"
+  fi
+  if [[ -z "$base" ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null \
+     || git diff --name-only "$base" "$local_sha" | grep -qE "$scala_pattern"; then
+    need_scala=1
+  fi
+done
+[[ "$pushing" == 1 ]] || exit 0
+
+if [[ -n "${IN_NIX_SHELL:-}" ]] || ! command -v nix >/dev/null 2>&1; then
+  run=(just)
+else
+  run=(nix develop --command just)
+fi
+
+echo "pre-push: running 'just quality-other' (ruff, self-tests, actionlint, hadolint)..."
+if ! "${run[@]}" quality-other; then
+  echo "" >&2
+  echo "pre-push: quality-other failed — push to '$remote' blocked." >&2
+  echo "Fix it ('just quality-fix' for the auto-fixable part), or bypass with 'git push --no-verify' if you really need to." >&2
+  exit 1
+fi
+
+if [[ "$need_scala" == 1 ]]; then
+  echo "pre-push: Scala/sbt changes in the pushed commits, running 'just quality-scala' (scalafmt + scalafix)..."
+  if ! "${run[@]}" quality-scala; then
+    echo "" >&2
+    echo "pre-push: quality-scala failed — push to '$remote' blocked." >&2
+    echo "Fix it ('just quality-fix' reformats and applies scalafix), or bypass with 'git push --no-verify' if you really need to." >&2
+    exit 1
+  fi
+else
+  echo "pre-push: no Scala/sbt changes in the pushed commits, skipping quality-scala."
+fi

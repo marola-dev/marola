@@ -18,17 +18,19 @@ Prices: LiteLLM's public price table (the same source ccusage uses), cached one 
 Offline with no cache, the tokens are still split and the dollar column says n/a. On a
 subscription the dollars are not a bill — they are the quota proxy AGENTS.md asks for.
 """
+
 import argparse
 import datetime as dt
 import json
-import os
 import subprocess
 import sys
 import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
-PRICES_URL = "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"
+PRICES_URL = (
+    "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"
+)
 
 
 def sh(*args):
@@ -75,7 +77,10 @@ def price(prices, model, u):
         u.get("input_tokens", 0) * p.get("input_cost_per_token", 0)
         + u.get("output_tokens", 0) * p.get("output_cost_per_token", 0)
         + write_5m * p.get("cache_creation_input_token_cost", 0)
-        + write_1h * p.get("cache_creation_input_token_cost_above_1hr", p.get("cache_creation_input_token_cost", 0))
+        + write_1h
+        * p.get(
+            "cache_creation_input_token_cost_above_1hr", p.get("cache_creation_input_token_cost", 0)
+        )
         + u.get("cache_read_input_tokens", 0) * p.get("cache_read_input_token_cost", 0)
     )
 
@@ -110,7 +115,14 @@ def commits(root, stack):
     out, known = [], set()
     branches = []
     if stack:  # a MIP (mip-0005 → every mip-0005/k-* branch) or one plain branch name
-        branches = [b.strip() for b in sh("git", "branch", "--list", f"{stack}/*", "--format=%(refname:short)").splitlines() if b.strip()]
+        branches = [
+            b.strip()
+            for b in sh(
+                "git", "branch", "--list", f"{stack}/*", "--format=%(refname:short)"
+            ).splitlines()
+            if b.strip()
+        ]
+
         # mip-NNNN/k-slug sorts by k; a branch without a numeric task prefix (mip-0012/llm4s-adoption,
         # a one-PR MIP) sorts after the numbered ones, by name.
         def task_no(b):
@@ -135,7 +147,9 @@ def commits(root, stack):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("stack", nargs="?", help="mip-NNNN: every branch of the stack (default: current branch)")
+    ap.add_argument(
+        "stack", nargs="?", help="mip-NNNN: every branch of the stack (default: current branch)"
+    )
     ap.add_argument("--session", help="session id prefix (default: every session of this project)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
@@ -152,7 +166,18 @@ def main():
 
     # Only sessions that overlap the commit window are relevant: from the first message of any
     # session that produced a commit, up to now.
-    buckets = defaultdict(lambda: {"in": 0, "out": 0, "cache_w": 0, "cache_r": 0, "usd": 0.0, "models": set(), "sessions": set(), "priced": True})
+    buckets = defaultdict(
+        lambda: {
+            "in": 0,
+            "out": 0,
+            "cache_w": 0,
+            "cache_r": 0,
+            "usd": 0.0,
+            "models": set(),
+            "sessions": set(),
+            "priced": True,
+        }
+    )
     order = [c[2] for c in cs] + ["uncommitted"]
     for ts, session, model, u in msgs:
         target = "uncommitted"
@@ -178,22 +203,36 @@ def main():
         b = buckets.get(key)
         if not b:
             continue
-        meta = next(((br, subj) for _w, br, sha, subj in cs if sha == key), ("", "uncommitted (so far)"))
-        rows.append({
-            "commit": key[:7] if key != "uncommitted" else "-", "branch": meta[0], "subject": meta[1],
-            "input": b["in"], "output": b["out"], "cache_write": b["cache_w"], "cache_read": b["cache_r"],
-            "tokens": b["in"] + b["out"] + b["cache_w"] + b["cache_r"],
-            "usd": round(b["usd"], 2) if b["priced"] else None,
-            "models": sorted(b["models"]), "sessions": sorted(b["sessions"]),
-        })
+        meta = next(
+            ((br, subj) for _w, br, sha, subj in cs if sha == key), ("", "uncommitted (so far)")
+        )
+        rows.append(
+            {
+                "commit": key[:7] if key != "uncommitted" else "-",
+                "branch": meta[0],
+                "subject": meta[1],
+                "input": b["in"],
+                "output": b["out"],
+                "cache_write": b["cache_w"],
+                "cache_read": b["cache_r"],
+                "tokens": b["in"] + b["out"] + b["cache_w"] + b["cache_r"],
+                "usd": round(b["usd"], 2) if b["priced"] else None,
+                "models": sorted(b["models"]),
+                "sessions": sorted(b["sessions"]),
+            }
+        )
     if a.json:
         print(json.dumps(rows, indent=1))
         return
     today = dt.date.today().isoformat()
-    print(f"{'commit':8} {'usd':>7} {'tokens':>9} {'in':>7} {'out':>7} {'cache_w':>8} {'cache_r':>9}  branch / subject")
+    print(
+        f"{'commit':8} {'usd':>7} {'tokens':>9} {'in':>7} {'out':>7} {'cache_w':>8} {'cache_r':>9}  branch / subject"
+    )
     for r in rows:
         usd = f"${r['usd']:.2f}" if r["usd"] is not None else "n/a"
-        print(f"{r['commit']:8} {usd:>7} {r['tokens']:>9,} {r['input']:>7,} {r['output']:>7,} {r['cache_write']:>8,} {r['cache_read']:>9,}  {r['branch']} {r['subject'][:60]}")
+        print(
+            f"{r['commit']:8} {usd:>7} {r['tokens']:>9,} {r['input']:>7,} {r['output']:>7,} {r['cache_write']:>8,} {r['cache_read']:>9,}  {r['branch']} {r['subject'][:60]}"
+        )
     per_branch = defaultdict(lambda: [0.0, 0, 0, True, set()])
     for r in rows:
         if r["commit"] == "-":
@@ -208,7 +247,9 @@ def main():
     for br, (usd, tokens, cached, priced, models) in per_branch.items():
         dollars = f"~${usd:.2f}" if priced else "$n/a"
         share = f"{100 * cached / tokens:.0f}% cache reads" if tokens else "no tokens"
-        print(f"  {br}: Cost: {dollars} · {tokens / 1e6:.1f}M tokens, {share} ({', '.join(sorted(models))}) · split by commit time, scripts/cost-split.py {today}")
+        print(
+            f"  {br}: Cost: {dollars} · {tokens / 1e6:.1f}M tokens, {share} ({', '.join(sorted(models))}) · split by commit time, scripts/cost-split.py {today}"
+        )
     total = sum(r["usd"] or 0 for r in rows)
     print(f"\nsession total ${total:.2f} for {len(rows)} buckets (list prices, LiteLLM table)")
 

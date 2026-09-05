@@ -67,6 +67,12 @@ git commit                                         # message ends with the Cost:
 scripts/stack.sh pr                                # push + PR with base = the previous task's branch
 ```
 
+Every push — `scripts/stack.sh pr`, `just uprds`, a plain `git push` — goes through
+`.githooks/pre-push`, which runs `just quality-other` (ruff on every `.py`, the script self-tests,
+actionlint, hadolint) and, when a pushed commit touches Scala, `just quality-scala` (scalafmt +
+scalafix). Code is linted before the last push, not found red in CI after the merge; `git push
+--no-verify` skips the hook, CI does not.
+
 Or, once every branch of the stack is pushed, all PRs at once with their shared "Stack" section:
 
 ```bash
@@ -132,7 +138,8 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 |---|---|
 | Pack docs for a browser MIP session | `just context-mips` |
 | New task branch | `scripts/stack.sh start MIP-NNNN k slug` |
-| Gates | `just build && just test && just quality` |
+| Gates | `just build && just test && just quality` (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part) |
+| Before every push | `.githooks/pre-push` runs `just quality-other`, plus `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
 | Live checks | `just run -- --brief`, `just e2e`; once MIP-0005 lands, `just site-build floripa && just site-serve` |
 | One PR | `scripts/stack.sh pr` (`--dry-run` prints the gh commands) |
 | Every PR of a stack | `just uprds MIP-NNNN` |

@@ -91,6 +91,12 @@
             # (e.g. SC2015) only surfaces once CI runs it. Same failure mode as actionlint above.
             pkgs.shellcheck
 
+            # Python lint/format (`just quality-other`, ci.yml's quality-other job,
+            # .githooks/pre-push). Was missing here too, so `just quality` skipped ruff with a
+            # one-line notice and an unused import in scripts/cost-split.py reached main — CI
+            # lints every .py in the repo, and the local run had been linting a hand-kept list.
+            pkgs.ruff
+
             # ai-jail — sandboxes AI coding agents (Claude Code, ...)
             # behind bubblewrap/Landlock/seccomp on Linux. Not a substitute
             # for the AGENTS.md cost/deploy rules, but a real containment

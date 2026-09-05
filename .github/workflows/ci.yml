@@ -47,6 +47,7 @@ jobs:
               - 'dspy/**'
               - 'finetune/**'
               - 'scripts/*.py'
+              - '**/*.py'           # ruff lints the whole repo, so any .py anywhere counts
               - 'scripts/fixtures/**'
               - 'ruff.toml'
             workflows:
@@ -117,16 +118,22 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: ruff (lint + format check, dspy/ and finetune/)
+      # ruff-action appends its `src` (default: the checkout root) to `args`, so this lints every
+      # .py in the repo — the same `ruff check .` as `just quality-other`. A file list here once
+      # drifted from the local one and an unused import reached main. `version` matches the ruff
+      # flake.nix ships, so format findings don't differ between the two either.
+      - name: ruff check (every .py in the repo)
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
-          args: check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py
+          version: "0.16.5"   # = flake.nix's ruff (nix develop --command ruff --version)
+          args: check
       - name: ruff format --check
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
-          args: format --check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py
+          version: "0.16.5"   # = flake.nix's ruff (nix develop --command ruff --version)
+          args: format --check
       - name: self-tests — smoke_record (the smoke workflow's parser) and benchmark_gate (marola-local's gate)
         if: needs.changes.outputs.python == 'true'
         run: |
