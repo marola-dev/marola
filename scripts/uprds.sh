@@ -14,12 +14,15 @@
 # renamed commit needs no `gh pr edit` by hand.
 # Branches only on the remote (another machine opened them) are included from origin/.
 set -euo pipefail
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/uprd_title.sh
+source "$script_dir/lib/uprd_title.sh"
 dry=0; mip=""
 for a in "$@"; do case "$a" in --dry-run) dry=1 ;; *) mip="$a" ;; esac; done
 cur="$(git branch --show-current)"
 [ -n "$mip" ] || mip="$(sed -n 's#^\(mip-[0-9]\{4\}\)/.*#\1#p' <<<"$cur")"
 [ -n "$mip" ] || { echo "uprds: not on a mip-NNNN/* branch — pass the MIP: just uprds MIP-0005" >&2; exit 1; }
-mip="$(tr 'A-Z' 'a-z' <<<"$mip")"
+mip="$(tr '[:upper:]' '[:lower:]' <<<"$mip")"
 git fetch -q origin 2>/dev/null || true
 
 # Every task branch of the MIP, local or remote, sorted by task number (scripts/stack.sh branches).
@@ -38,7 +41,7 @@ cost_of() {   # sum of the numeric `Cost: ~$N` trailers on one branch, and the r
 
 # --- the shared Stack section ---------------------------------------------------------------
 stack_section() {   # $1 = the branch this body is for
-  local me="$1" total=0 n=0 b pr state line usd
+  local me="$1" total=0 n=0 b pr line usd
   echo "## Stack — ${mip^^} (merge order, base first)"
   echo
   while read -r b; do
@@ -66,7 +69,7 @@ while read -r b; do
   extra="$(mktemp)"; stack_section "$b" > "$extra"
   if [ "$dry" -eq 1 ]; then
     echo "===== $b (base: $base) ====="
-    BRANCH="$b" BASE="$base" EXTRA_FILE="$extra" scripts/uprd.sh --dry-run | sed '1d'
+    BRANCH="$b" BASE="$base" EXTRA_FILE="$extra" scripts/uprd.sh --dry-run
     echo
   else
     if ! gh pr view "$b" --json number -q .number >/dev/null 2>&1; then
@@ -75,8 +78,11 @@ while read -r b; do
     BRANCH="$b" BASE="$base" EXTRA_FILE="$extra" scripts/uprd.sh
     # Base and title follow the branch, not what the PR was opened with: a restacked lane gets its
     # new base, and a retitled tip commit renames the PR (same rule as uprd.sh's create path — the
-    # first commit's subject on base..branch, so every PR of the stack reads "MIP-NNNN task k: …").
-    title="$(git log --reverse --format=%s "origin/$base..$(ref_of "$b")" 2>/dev/null | head -1)"
+    # first commit's subject on base..branch, capped at 70 chars, so every PR of the stack reads
+    # "MIP-NNNN task k: …" without running past a skimmable length).
+    first_subject="$(git log --reverse --format=%s "origin/$base..$(ref_of "$b")" 2>/dev/null | head -1)"
+    title=""
+    [ -n "$first_subject" ] && title="$(cap_title "$first_subject")"
     gh pr edit "$b" --base "$base" ${title:+--title "$title"} >/dev/null 2>&1 || true
   fi
   rm -f "$extra"
