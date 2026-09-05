@@ -51,6 +51,7 @@ quality:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll "scalafixAll --check"
     if command -v ruff >/dev/null; then ruff check dspy finetune && ruff format --check dspy finetune; else echo "ruff not installed — skipping (pip install ruff)"; fi
     if command -v actionlint >/dev/null; then actionlint; else echo "actionlint not installed — skipping"; fi
+    if command -v hadolint >/dev/null; then hadolint Dockerfile; else echo "hadolint not installed — skipping"; fi
 
 quality-fix:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
@@ -182,6 +183,20 @@ site-deploy target="github":
             npx --yes wrangler pages deploy site/dist --project-name "${MAROLA_SITE_PROJECT:-marola}" ;;
         *) echo "unknown target '{{target}}' — github | cloudflare" >&2; exit 1 ;;
     esac
+
+# ---------------------------------------------------------------------
+# Docker — MIP-0008: the CLI as an image (Dockerfile, docker-compose.yml)
+# ---------------------------------------------------------------------
+
+# Build one target of the Dockerfile locally as marola:<target> — `jvm` (default), `dev`; task 3
+# adds `native`. Same targets CI pushes to ghcr.io/h0ffmann/marola (docker.yml).
+docker-build target="jvm":
+    docker build --target {{target}} -t marola:{{target}} .
+
+# Run the locally built jvm image against the Ollama on this machine (`--network host`, so
+# localhost:11434 is reachable from inside): `just docker-run -- --summarize --lat -27.6733 --lon -48.47`.
+docker-run *args:
+    docker run --rm --network host --env-file <(env | grep '^MAROLA_' || true) marola:jvm {{args}}
 
 # ---------------------------------------------------------------------
 # Browser-session context — repomix.config.json, repomix-instruction.md

@@ -11,7 +11,8 @@
 // 3.9 itself requires (17+). This bit a real build with a JDK-24 error:
 // `UnsupportedClassVersionError: kyo/Frame$package$Frame$ ... class file
 // version 69.0 ... this version of the Java Runtime only recognizes class
-// file versions up to 68.0`. See flake.nix, which pins 25 (there is no Dockerfile yet — Phase 3).
+// file versions up to 68.0`. See flake.nix, which pins 25, and the Dockerfile (MIP-0008), whose
+// builder and JRE stages are Temurin 25 for the same reason.
 //
 // This repo is entirely marola — "best hour tomorrow to swim nearby" — split into four sbt
 // modules (core/local/azure/cli) at the repo root (FUTURE-WORK.md §7.3's module-split proposal,

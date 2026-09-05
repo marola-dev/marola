@@ -77,6 +77,10 @@
             pkgs.jq
             pkgs.git
 
+            # Dockerfile lint (`just quality`, docker.yml) — MIP-0008. Docker itself is not in the
+            # flake: it needs a daemon the host runs.
+            pkgs.hadolint
+
             # ai-jail — sandboxes AI coding agents (Claude Code, ...)
             # behind bubblewrap/Landlock/seccomp on Linux. Not a substitute
             # for the AGENTS.md cost/deploy rules, but a real containment

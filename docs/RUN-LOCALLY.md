@@ -283,7 +283,33 @@ Tiles come from OpenStreetMap's public servers, which is fine for a link shared 
 not for a public launch — switch `tiles` in `site/areas.json` to a Protomaps/MapTiler source
 before that (MIP-0005 §8).
 
-## 10. What this guide deliberately doesn't cover
+## 10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)
+
+The same pipeline from a machine that has Docker and nothing else. `docker-compose.yml` runs the
+CLI image with an Ollama sidecar; the model is pulled once into a named volume:
+
+```bash
+docker compose run --rm marola --brief --lat -27.6733 --lon -48.47                         # no LLM
+docker compose --profile ollama run --rm marola --summarize --lat -27.6733 --lon -48.47    # + draft + reviewer (llama3.2, 2 GB pulled once)
+docker compose --profile local run --rm marola-local --summarize --lat -27.6733 --lon -48.47   # the marola-llama3.2 variant, built from finetune/Modelfile
+```
+
+`.env` is read if present (origin, provider switches — `.env.example`) and never copied into
+the image; `MAROLA_LOCAL_LLM_MODEL=llama3.2:1b` picks the small model from §2. Without compose,
+against an Ollama already running on the host:
+
+```bash
+docker run --rm --network host ghcr.io/h0ffmann/marola:jvm --summarize --lat -27.6733 --lon -48.47
+```
+
+`ghcr.io/h0ffmann/marola:jvm` is built by CI from `main` (`docker.yml`); `just docker-build`
+builds the same target here and `just docker-run -- …` runs it with `--network host`. The
+`Dockerfile` is one multi-stage file: `builder` (sbt, Temurin 25) → `jvm` (Temurin 25 JRE on
+Alpine, ~70 MB + the 55 MB jar), and `dev` — the literal `nix develop` in an image, for reading
+or hacking on the code without installing Nix (`docker run -it marola:dev bash`). Lint:
+`just quality` runs hadolint on it (in the flake).
+
+## 11. What this guide deliberately doesn't cover
 
 Telegram bot setup (there is no bot loop yet — see `TELEGRAM-SETUP.md` for credential setup ahead
 of that Phase 1 work) and any Azure integration (`ARCHITECTURE.md` §5/§6, all optional, none needed
