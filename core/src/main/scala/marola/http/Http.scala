@@ -179,3 +179,27 @@ object Http:
       headers.foreach { case (k, v) => builder.header(k, v) }
       check(url, transport.get.send(builder.build()), 500)
     }
+
+  /**
+   * Raw-binary PUT — `MlflowRunLedger.artifact`'s one caller: MLflow's artifact-store proxy
+   * (`mlflow/protos/mlflow_artifacts.proto`, `PUT .../mlflow-artifacts/artifacts/<path>`) takes the
+   * file bytes directly and, unlike every other write in this module, uses `PUT` rather than
+   * `POST`.
+   */
+  def putBytes(
+      url: String,
+      body: Array[Byte],
+      contentType: String = "application/octet-stream",
+      headers: Map[String, String] = Map.empty,
+      timeoutSeconds: Long = 30
+  ): String < Sync =
+    Sync.defer {
+      val builder = HttpRequest
+        .newBuilder(URI.create(url))
+        .timeout(Duration.ofSeconds(timeoutSeconds))
+        .header("User-Agent", userAgent)
+        .header("Content-Type", contentType)
+        .PUT(HttpRequest.BodyPublishers.ofByteArray(body))
+      headers.foreach { case (k, v) => builder.header(k, v) }
+      check(url, transport.get.send(builder.build()), 500)
+    }
