@@ -9,7 +9,9 @@
 # (What changed + Cost from the branch's commits — the same body `just uprd` writes) and a
 # "Stack" section is appended listing every PR of the MIP in merge order with its state, the
 # current one marked, and the stack's summed Cost. A branch with no PR yet gets one created with
-# the right base (task k-1's branch; main for task 1) — so this also opens a whole stack in one go.
+# the right base (task k-1's branch; main for task 1) — so this also opens a whole stack in one go;
+# an existing PR is retargeted to that base and retitled from its first commit, so a restack or a
+# renamed commit needs no `gh pr edit` by hand.
 # Branches only on the remote (another machine opened them) are included from origin/.
 set -euo pipefail
 dry=0; mip=""
@@ -71,7 +73,11 @@ while read -r b; do
       git rev-parse --verify -q "origin/$b" >/dev/null || git push -q -u origin "$b"
     fi
     BRANCH="$b" BASE="$base" EXTRA_FILE="$extra" scripts/uprd.sh
-    gh pr edit "$b" --base "$base" >/dev/null 2>&1 || true
+    # Base and title follow the branch, not what the PR was opened with: a restacked lane gets its
+    # new base, and a retitled tip commit renames the PR (same rule as uprd.sh's create path — the
+    # first commit's subject on base..branch, so every PR of the stack reads "MIP-NNNN task k: …").
+    title="$(git log --reverse --format=%s "origin/$base..$(ref_of "$b")" 2>/dev/null | head -1)"
+    gh pr edit "$b" --base "$base" ${title:+--title "$title"} >/dev/null 2>&1 || true
   fi
   rm -f "$extra"
 done <<<"$branches"
