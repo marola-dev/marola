@@ -95,6 +95,10 @@ def messages(pdir, session_prefix):
                 m = d.get("message")
                 if not isinstance(m, dict) or not m.get("usage") or not d.get("timestamp"):
                     continue
+                # Claude Code writes `<synthetic>` assistant messages (interrupts, tool-result
+                # stand-ins) with a usage block of zeros and no real model — not a priced request.
+                if m.get("model") == "<synthetic>":
+                    continue
                 key = m.get("id") or d.get("requestId") or d.get("uuid")
                 ts = dt.datetime.fromisoformat(d["timestamp"].replace("Z", "+00:00"))
                 seen[key] = (ts, f.stem, m.get("model", "?"), m["usage"])
@@ -107,7 +111,13 @@ def commits(root, stack):
     branches = []
     if stack:  # a MIP (mip-0005 → every mip-0005/k-* branch) or one plain branch name
         branches = [b.strip() for b in sh("git", "branch", "--list", f"{stack}/*", "--format=%(refname:short)").splitlines() if b.strip()]
-        branches.sort(key=lambda b: int(b.split("/")[1].split("-")[0]))
+        # mip-NNNN/k-slug sorts by k; a branch without a numeric task prefix (mip-0012/llm4s-adoption,
+        # a one-PR MIP) sorts after the numbered ones, by name.
+        def task_no(b):
+            head = b.split("/")[1].split("-")[0]
+            return (0, int(head), "") if head.isdigit() else (1, 0, b)
+
+        branches.sort(key=task_no)
         if not branches:
             branches = [stack]
     else:
