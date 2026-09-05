@@ -189,6 +189,19 @@ _clip file:
     fi
 
 # ---------------------------------------------------------------------
+# Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"
+# ---------------------------------------------------------------------
+
+# What Claude Code sessions consumed, from the local session logs (~/.claude/projects), priced at
+# list rates — the quota proxy to paste into a PR's "Cost" line. Uses ccusage (free, npm) via npx.
+#   just claude-cost                 # per-session table (this machine, all projects)
+#   just claude-cost daily           # per-day
+#   just claude-cost session --json  # machine-readable
+# In-session, `/usage` shows the same numbers for the current session only.
+claude-cost *args="session":
+    npx --yes ccusage@latest {{args}}
+
+# ---------------------------------------------------------------------
 # ai-jail — sandbox AI coding agents (bubblewrap/Landlock/seccomp on
 # Linux). https://github.com/akitaonrails/ai-jail
 # Project policy lives in `.ai-jail` (committed, untrusted layer — can

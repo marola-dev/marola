@@ -102,6 +102,32 @@ the requested feature but flag which earlier-phase prerequisite is still missing
   credential is genuinely required, add it to `.env.example` as a
   placeholder — never commit a real value.
 
+## Attribution and cost accounting (hard rule)
+
+- **Commits carry one trailer and nothing else:** `Co-Authored-By: Claude <noreply@anthropic.com>`.
+  No session links, no "Generated with" banners, no PR-body attribution. This is enforced by
+  `.claude/settings.json` (`attribution.commit`, `attribution.pr: ""`, `attribution.sessionUrl:
+  false`) — the shared project settings, so it applies to every Claude Code session in this repo.
+  Don't add attribution text by hand in commit messages or PR descriptions.
+- **Every PR body ends with a `Cost` line** — what the work consumed, so the repo learns what a
+  feature costs in quota, not just in lines:
+  ```
+  Cost: ~$4.10 · 1.9M tokens (llama-free) · 2 sessions · from `just claude-cost` 2026-09-05
+  ```
+  Get the figure from `/usage` (the Session block, current session) or `just claude-cost` (every
+  session on this machine, via ccusage). Both price tokens at list rates; on a subscription that
+  dollar figure is not a bill, it is the best available proxy for *how much of the plan's quota the
+  feature used*, which is the point. Compare it with the PR's scope in one sentence if it's
+  surprising ("mostly the benchmark reruns").
+- **One feature, one session.** Start a feature with `/clear` (or a new session) and `/rename` it
+  to the branch name so `/usage`'s session block and ccusage's per-session rows map to one PR.
+  Re-runs of `just benchmark`/`just e2e` driven by the agent count toward the feature; note them.
+- **Heavier option, when it matters:** Claude Code exports `claude_code.cost.usage` and
+  `claude_code.token.usage` over OpenTelemetry (`CLAUDE_CODE_ENABLE_TELEMETRY=1`,
+  `OTEL_METRICS_EXPORTER=otlp`, `OTEL_EXPORTER_OTLP_ENDPOINT=...`) with `session.id`, `model`,
+  `skill.name`, `mcp_tool.name` attributes — the same OTLP any collector accepts, so a future Phase
+  2 could land agent spend next to marola's own `Telemetry` traces in Application Insights.
+
 ## Code style
 
 - Scala 3.9, direct style preferred over deeply nested combinator chains.

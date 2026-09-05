@@ -69,6 +69,10 @@
             pkgs.wl-clipboard
             pkgs.xclip
 
+            # `just claude-cost`: npx runs ccusage (free, reads ~/.claude session logs) to show
+            # what a Claude Code session/feature consumed — see AGENTS.md "Attribution and cost".
+            pkgs.nodejs
+
             # General
             pkgs.jq
             pkgs.git

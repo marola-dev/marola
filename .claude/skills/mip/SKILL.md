@@ -39,7 +39,9 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
 6. **Link it.** If it supersedes or implements a `FUTURE-WORK.md` section, add a one-line pointer
    there ("see `docs/mips/MIP-NNNN-...md`"). If it closes an exam-mapping gap, note it in the
    relevant mapping row's Status column as "proposed: MIP-NNNN".
-7. **Don't build it in the same change.** A MIP is merged as `Draft` or `Accepted`; implementation
+7. **The implementation PR carries a `Cost` line** (AGENTS.md "Attribution and cost accounting")
+   and updates the MIP's status to Implemented with a link to the PR.
+8. **Don't build it in the same change.** A MIP is merged as `Draft` or `Accepted`; implementation
    is a separate PR that flips the status to `Implemented` and links the PR. If the user asks for
    both, do the MIP first and confirm the design before writing code.
 
