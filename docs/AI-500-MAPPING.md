@@ -67,7 +67,7 @@ per-agent or per-conversation tracing across multiple agents.
 
 **Designed-not-built:**
 
-- A proper multi-agent eval harness — extending `FUTURE-WORK.md` §4.1's evaluation-harness sketch to
+- A proper multi-agent eval harness (its ledger is proposed as MIP-0010) — extending `FUTURE-WORK.md` §4.1's evaluation-harness sketch to
   score not just final output quality but which agent contributed what, and whether the
   escalation agent's false-positive/false-negative rate on real conditions data is acceptable (this
   matters more than usual once an agent can proactively push alerts — see the catastrophe-detection
@@ -86,7 +86,8 @@ can autonomously act (send a proactive alert) rather than only respond to a quer
 
 **Designed-not-built:**
 
-- **An explicit human-confirmation gate for any new autonomous/proactive agent behavior** — the
+- **An explicit human-confirmation gate for any new autonomous/proactive agent behavior** (the
+  developer-side twin — the cost rule as a Claude Code `PreToolUse` hook — is MIP-0011) — the
   escalation agent's alerts are the first place marola would do something without being asked, which
   is a genuinely different risk profile than answering "what's the best hour to swim." This needs
   its own rate-limiting/circuit-breaker design before it ships, not just reusing the existing

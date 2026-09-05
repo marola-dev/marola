@@ -512,6 +512,11 @@ with a Scala equivalent and eliminating the Python subprocess step entirely). Fl
 concrete, named future-work item it deserves to be, rather than leaving "someone should port DSPy to
 Scala" as an unrecorded aside.
 
+**Update (2026-09-05):** the "Langfuse-shaped tracing" half of this section is proposed as
+`docs/mips/MIP-0010-mlflow-experiment-tracking.md` — MLflow's server ingests OpenTelemetry traces
+over OTLP/HTTP from any language, so the JVM side needs no LLMOps SDK; `ds4s` stays a separate
+project by its own definition above. `docs/README.md` classifies every section of this file.
+
 ## 11. Personal history input: Garmin data (FIT-file import first, not a live API integration)
 
 **The pitch:** weight recommendations by a user's own swim history — "you've swum at Praia do

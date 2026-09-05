@@ -86,6 +86,9 @@ use worktrees when two tasks of the same stack are in flight at once.
 
 ## 3. Skills this repo could still write (candidates for `writing-skills`)
 
+Proposed, with hooks, rules, subagents and a permission allowlist, as
+`docs/mips/MIP-0011-claude-code-best-practices.md` (task 8 is these four skills).
+
 - **`fixture-refresh`** — re-record the golden fixtures (`docs/RUN-LOCALLY.md` §7) and bump the
   pinned date in `PipelineGoldenSpec`; the most repeated manual procedure here.
 - **`benchmark-compare`** — run `just benchmark` twice at temperature 0, diff against

@@ -30,7 +30,9 @@ local-only path carries zero Azure SDK dependency:
 - `dspy/` — offline Python DSPy prompt-compile step; produces a JSON artifact the Scala side loads,
   never a runtime dependency.
 
-Docs live under `docs/` — check these before assuming something is undecided or unbuilt:
+`PHILOSOPHY.md` (repo root) holds the reasons behind the rules below — why Scala 3 on the JVM, Nix,
+`just`, ai-jail, MIPs. Docs live under `docs/` — `docs/README.md` indexes them and marks which ideas
+are MIP material; check these before assuming something is undecided or unbuilt:
 
 | Doc | Covers |
 |---|---|

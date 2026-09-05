@@ -15,4 +15,6 @@ Accepted → Implemented (or Rejected / Superseded).
 | [MIP-0007](./MIP-0007-time-series-foundation-models.md) | Time-series foundation models for marola's own series — local open models first, Azure opt-in | Draft | 2026-09-05 |
 | [MIP-0008](./MIP-0008-docker-images-and-smoke-test.md) | Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows | Draft | 2026-09-05 |
 | [MIP-0009](./MIP-0009-map-wave-markers-and-hover-aspects.md) | A richer map — a wave marker per beach and, on hover, every aspect at that point (wind with an emoji, whales, jellyfish, water temperature) | Draft | 2026-09-05 |
+| [MIP-0010](./MIP-0010-mlflow-experiment-tracking.md) | MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first, Azure ML as the opt-in | Draft | 2026-09-05 |
+| [MIP-0011](./MIP-0011-claude-code-best-practices.md) | Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills | Draft | 2026-09-05 |
 
