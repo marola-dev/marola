@@ -102,6 +102,11 @@ share a location, get the list; ask a question; send a photo of that thing on th
 beaches you care about ([MIP-0004](./docs/mips/MIP-0004-daily-digest-subscriptions-and-reach.md)),
 and **a map**: every beach's daily recommendation on a static site the pipeline feeds, so the
 answer is computed once per area and shared as a link ([MIP-0005](./docs/mips/MIP-0005-map-and-static-site.md)).
+After that: a **live look** at each beach from users' own photos, with faces rejected and photos
+expiring ([MIP-0006](./docs/mips/MIP-0006-live-look-user-cameras.md)), and **time-series models**
+(Chronos, TimesFM, Moirai locally; Nixtla on Azure as the opt-in) for the series marola will own —
+water quality between samples, stranding trends — never for the sea forecast itself
+([MIP-0007](./docs/mips/MIP-0007-time-series-foundation-models.md)).
 
 **Then: the rest of the sea.** Swimming is the first activity, not the only one. The same live data,
 water quality, tides and knowledge corpus serve every sea activity — each is one scoring function
