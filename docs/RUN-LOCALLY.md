@@ -270,7 +270,11 @@ Keep it fresh locally with a timer — a plain cron line (`crontab -e`):
 15 */3 * * *  cd /path/to/marola && nix develop -c just site-build >> .tmp/site-build.log 2>&1
 ```
 
-or a `systemd --user` timer with the same command. Publishing: `just site-deploy` triggers
+or a `systemd --user` timer with the same command. Only `site/dist` is ever published, and
+`site.yml` fails if anything outside its allowlist (the page, `vendor/`, `data/`, `smoke/`) is
+in there — the repository is private, the map is public, and `docs/*.md` stay on GitHub rather
+than becoming pages (Pages source must be "GitHub Actions", never "Deploy from a branch", which
+would run Jekyll over the whole branch). Publishing: `just site-deploy` triggers
 `.github/workflows/site.yml` (build on the runner, deploy to GitHub Pages — the same workflow runs
 every 3 h on its own and on every merge to `main` that touches `site/` or the pipeline; the result
 is https://h0ffmann.github.io/marola/), `just site-deploy cloudflare` pushes a local `site/dist` with wrangler.
