@@ -41,3 +41,8 @@ result-*
 /data/
 /finetune/data/
 /finetune/out/
+
+# repomix — `just context-*` writes under /.tmp/ (ignored above); these are repomix's own default
+# output names in case it's run bare from the repo root
+repomix-output.*
+repomix-output/

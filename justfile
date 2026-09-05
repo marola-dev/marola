@@ -153,13 +153,26 @@ finetune-dataset:
 # proposals" — the pack's instruction section tells the assistant the rest (template, numbering,
 # transcript appendix, what not to assert).
 context-mips:
-    mkdir -p .tmp && repomix -c repomix.config.json --quiet
+    mkdir -p .tmp && "$(just _repomix)" -c repomix.config.json
     @just _clip .tmp/marola-context-mips.md
 
 # Same idea for the whole repo (code included, comments stripped) — big; for code questions only.
 context-full:
-    mkdir -p .tmp && repomix --style markdown --compress --remove-comments -o .tmp/marola-context-full.md --quiet
+    mkdir -p .tmp && "$(just _repomix)" --style markdown --compress --remove-comments -o .tmp/marola-context-full.md .
     @just _clip .tmp/marola-context-full.md
+
+# The Node repomix (nixpkgs, flake.nix) — not the unrelated PyPI "repomix" Python port, which a
+# pip/pipx install can put earlier on PATH (it prints an argparse usage and ignores our config).
+# Prefer the /nix/store one whatever the PATH order; fall back to whatever `repomix` is.
+_repomix:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bin="$(command -v -a repomix 2>/dev/null | grep -m1 '^/nix/store/' || command -v repomix || true)"
+    [ -n "$bin" ] || { echo "repomix not found — enter 'nix develop' (flake.nix provides it)" >&2; exit 1; }
+    if ! "$bin" --version 2>/dev/null | grep -qE '^[0-9]+\.[0-9]+'; then
+        echo "warning: $bin does not look like the Node repomix; output may be wrong" >&2
+    fi
+    echo "$bin"
 
 _clip file:
     #!/usr/bin/env bash
