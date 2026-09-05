@@ -5,8 +5,47 @@ on:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # Decide what actually changed so the expensive job only runs when it can matter. A docs-only
+  # push costs one ~10s job. (`dorny/paths-filter` is free; on `push` it diffs against the previous
+  # commit, on `pull_request` against the base.)
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      scala: ${{ steps.filter.outputs.scala }}
+      python: ${{ steps.filter.outputs.python }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            scala:
+              - '**/*.scala'
+              - '**/*.sbt'
+              - 'project/**'
+              - '.scalafmt.conf'
+              - '.scalafix.conf'
+              - '**/src/main/resources/**'
+              - '**/src/test/resources/**'
+              - 'knowledge/**'        # RagOfflineSpec reads the real corpus
+              - '.github/workflows/ci.yml'
+            python:
+              - 'dspy/**'
+              - 'finetune/**'
+              - 'ruff.toml'
+            workflows:
+              - '.github/workflows/**'
+
   build-test:
+    needs: changes
+    if: needs.changes.outputs.scala == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -18,6 +57,7 @@ jobs:
           distribution: temurin
           java-version: "25"
 
+      # Dependencies: keyed on the build definition only, so source edits keep the hit.
       - name: Cache sbt / coursier
         uses: actions/cache@v4
         with:
@@ -29,45 +69,50 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sbt-
 
+      # Compiled classes + zinc's incremental-compile analysis. Exact key = nothing to compile;
+      # a restore-keys hit gives zinc the previous analysis so it recompiles only what changed —
+      # which is the case that matters on every PR. Cache is per Scala/JDK version via the key.
+      - name: Cache compiled classes (zinc incremental)
+        uses: actions/cache@v4
+        with:
+          path: |
+            core/target
+            local/target
+            azure/target
+            cli/target
+            project/target
+            project/project/target
+          key: ${{ runner.os }}-target-jdk25-${{ hashFiles('**/build.sbt', 'project/**') }}-${{ hashFiles('**/*.scala', '**/src/**/resources/**') }}
+          restore-keys: |
+            ${{ runner.os }}-target-jdk25-${{ hashFiles('**/build.sbt', 'project/**') }}-
+            ${{ runner.os }}-target-jdk25-
+
       - name: Set up sbt
         uses: sbt/setup-sbt@v1
 
-      # root aggregates all four submodules (core/local/azure/cli, docs/FUTURE-WORK.md §7.3) and
-      # .aggregate() cascades compile/test/scalafmtCheckAll by default, so this fails if *any* of
-      # the four fails to compile/format/test.
-      - name: Check formatting (scalafmt)
-        run: sbt scalafmtCheckAll
-
-      # Semantic lint: unused imports/locals, import order, banned syntax — .scalafix.conf.
-      # Compiler-level unused warnings are errors too (build.sbt -Wunused + -Wconf).
-      - name: Lint (scalafix)
-        run: sbt "scalafixAll --check"
-
-      - name: Compile
-        run: sbt compile
-
-      # Excludes the E2E suite (see cli/src/test/scala/marola/E2ESpec.scala) via build.sbt's
-      # default Test/testOptions — no network, no Ollama. This *does* include the whole-pipeline
-      # regression check: PipelineGoldenSpec replays recorded Overpass/Open-Meteo/IMA responses
-      # through the production code, and SummarizeFlowSpec/RagOfflineSpec script the LLM/embedder.
-      # The live E2E suite has its own manual, model-cached workflow: marola-e2e.yml.
-      - name: "Test (offline: unit + fixture-replay regression; live E2E is marola-e2e.yml)"
-        run: sbt test
+      # One sbt session for all three so the JVM/zinc warm-up is paid once, not three times.
+      - name: Format check, scalafix, compile, test
+        run: sbt scalafmtCheckAll "scalafixAll --check" compile test
 
   # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/,
   # and a linter for these workflow files themselves.
   quality-other:
+    needs: changes
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - name: ruff (lint + format check, dspy/ and finetune/)
+        if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
           args: check dspy finetune
       - name: ruff format --check
+        if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
           args: format --check dspy finetune
       - name: actionlint (workflow files)
+        if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2
