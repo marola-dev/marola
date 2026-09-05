@@ -113,8 +113,11 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 
 ## 6. Merge, restack, finish
 
-- Merge **bottom-up**, squash (the repo's habit). GitHub retargets the next PR to `main` when the
-  merged branch is deleted; the commits still need a rebase:
+- Approve per PR (GitHub reviews are per PR), then merge either one at a time or the whole stack
+  at once: `just stack-merge <stack#> --squash` merges every PR of the stack bottom-up in one
+  all-or-nothing operation (`gh stack merge`), no restack in between.
+- One at a time: **bottom-up**, squash (the repo's habit). GitHub retargets the next PR to `main`
+  when the merged branch is deleted; the commits still need a rebase:
   `scripts/stack.sh restack` on the next branch, or `just stack-sync MIP-NNNN` for the whole
   stack (it adopts the stack from GitHub first — `gh stack link` keeps no local state).
 - `scripts/stack.sh status` / `just stack-view` until every PR is merged.
@@ -136,5 +139,6 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 | GitHub Stack | `just stack-setup` once, then `just stack-link MIP-NNNN`, `just stack-view`, `just stack-sync MIP-NNNN` |
 | Local stack view | `scripts/stack.sh status [MIP-NNNN]`, `just stack status MIP-NNNN` |
 | After a base merged | `scripts/stack.sh restack` (one branch) or `just stack-sync MIP-NNNN` (whole stack) |
+| Merge the whole stack | `just stack-merge <stack#> --squash` (all-or-nothing, bottom-up) |
 | Cost per PR | `just cost-split MIP-NNNN [--session <id>]`, `just claude-cost` |
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |

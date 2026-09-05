@@ -247,6 +247,13 @@ stack-sync mip="":
     gh stack checkout "$bottom"
     gh stack sync
 
+# Merge a whole stack (or everything up to one PR) in a single all-or-nothing operation — no
+# restack between merges. `just stack-merge 23 --squash` (stack number, purely remote) or
+# `just stack-merge 20 --squash` (up to and including PR #20); no argument = the locally tracked
+# stack, interactive picker. Branch protection still applies; nothing is bypassed.
+stack-merge *args:
+    gh stack merge {{args}}
+
 # ---------------------------------------------------------------------
 # Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"
 # ---------------------------------------------------------------------
