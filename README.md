@@ -7,6 +7,8 @@ bathing-water quality per sampling point, tides, jellyfish and whale odds, and a
 
 <p align="center">
 <a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://github.com/h0ffmann/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+<a href="https://github.com/h0ffmann/marola/actions/workflows/site.yml"><img src="https://github.com/h0ffmann/marola/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
+<a href="https://h0ffmann.github.io/marola/"><img src="https://img.shields.io/badge/live_map-h0ffmann.github.io%2Fmarola-0b6e99?logo=leaflet&logoColor=white" alt="live map" /></a>
 <img src="https://img.shields.io/badge/Scala-3.9_LTS-DC322F?logo=scala&logoColor=white" alt="Scala 3.9" />
 <img src="https://img.shields.io/badge/JDK-25-007396?logo=openjdk&logoColor=white" alt="JDK 25" />
 <img src="https://img.shields.io/badge/effects-Kyo-DC322F" alt="Kyo" />
@@ -15,6 +17,12 @@ bathing-water quality per sampling point, tides, jellyfish and whale odds, and a
 <img src="https://img.shields.io/badge/prompts-DSPy--compiled-B5121B" alt="DSPy" />
 <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT" />
 </p>
+
+**Live map:** [h0ffmann.github.io/marola](https://h0ffmann.github.io/marola/) — every beach around
+Florianópolis and Rio, ranked for today and tomorrow, water quality per sampling point, tides and
+the hour slider; rebuilt every 3 hours and on every merge to `main` that touches the page or the
+pipeline ([`site.yml`](./.github/workflows/site.yml), [MIP-0005](./docs/mips/MIP-0005-map-and-static-site.md)).
+No cookies, no tracking; the JSON behind it is at [`data/floripa/latest.json`](https://h0ffmann.github.io/marola/data/floripa/latest.json).
 
 marola (Portuguese for a small, gentle wave) takes the two things an LLM is bad at on its own —
 knowing what the sea is doing *right now* and not making things up about it — and fixes both.
@@ -101,7 +109,7 @@ share a location, get the list; ask a question; send a photo of that thing on th
 ([MIP-0002](./docs/mips/MIP-0002-telegram-bot-phase-1.md)), with sub-three-second replies
 ([MIP-0003](./docs/mips/MIP-0003-fast-replies-caching-and-fan-out.md)) and a daily digest for the
 beaches you care about ([MIP-0004](./docs/mips/MIP-0004-daily-digest-subscriptions-and-reach.md)),
-and **a map** (built — `just site-build`, deployed every 3 h by `site.yml`): every beach's daily
+and **a map** (live at [h0ffmann.github.io/marola](https://h0ffmann.github.io/marola/), deployed by `site.yml` every 3 h and on merge): every beach's daily
 recommendation on a static site the pipeline feeds, so the answer is computed once per area and
 shared as a link ([MIP-0005](./docs/mips/MIP-0005-map-and-static-site.md)).
 After that: a **live look** at each beach from users' own photos, with faces rejected and photos

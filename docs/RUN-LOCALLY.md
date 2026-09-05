@@ -272,7 +272,8 @@ Keep it fresh locally with a timer — a plain cron line (`crontab -e`):
 
 or a `systemd --user` timer with the same command. Publishing: `just site-deploy` triggers
 `.github/workflows/site.yml` (build on the runner, deploy to GitHub Pages — the same workflow runs
-every 3 h on its own), `just site-deploy cloudflare` pushes a local `site/dist` with wrangler.
+every 3 h on its own and on every merge to `main` that touches `site/` or the pipeline; the result
+is https://h0ffmann.github.io/marola/), `just site-deploy cloudflare` pushes a local `site/dist` with wrangler.
 Tiles come from OpenStreetMap's public servers, which is fine for a link shared among friends and
 not for a public launch — switch `tiles` in `site/areas.json` to a Protomaps/MapTiler source
 before that (MIP-0005 §8).

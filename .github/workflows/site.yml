@@ -12,11 +12,24 @@ name: site (build the boards, deploy the map)
 #
 # One-time human setup, not a paid resource: repo Settings → Pages → Source = "GitHub Actions".
 # Until that is done the deploy job fails with "Pages not enabled" and nothing else happens.
-# Scheduled workflows only run from the default branch, so this file has to be on main.
+# Scheduled workflows only run from the default branch, so this file has to be on main. The live
+# site is https://h0ffmann.github.io/marola/ (linked from the README).
 
 on:
   schedule:
     - cron: "15 */3 * * *" # every 3 h (UTC); :15 avoids the top-of-hour crowd on shared runners
+  # CD: a merge to main that changes the page or the pipeline redeploys right away instead of
+  # waiting up to 3 h. Docs-only merges don't trigger it (one Overpass query per run, §7 fair use).
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "core/**"
+      - "local/**"
+      - "cli/**"
+      - "build.sbt"
+      - "project/**"
+      - ".github/workflows/site.yml"
   workflow_dispatch:
     inputs:
       area:

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Implemented — stack `mip-0005/1-board-json` → `2-site-build` → `3-map-page` → `4-scheduling` (tasks and v1 decisions: [`MIP-0005.tasks.md`](./MIP-0005.tasks.md)); cost per PR in each PR's Cost section |
+| **Status** | Implemented — PRs #17 → #19 → #20 → #21 (GitHub stack #23, merged 2026-09-05; tasks and v1 decisions: [`MIP-0005.tasks.md`](./MIP-0005.tasks.md)); live at https://h0ffmann.github.io/marola/ ; cost ~$12.46 across the four PRs (measured with `just cost-split MIP-0005`) |
 | **Author** | Claude Fable 5.1, for M. Hoffmann; idea from a chat with a friend (5 Sep 2026): "use the bot to feed the site and have the data there, instead of answering everyone" |
 | **Created** | 2026-09-05 |
 | **Phase** | 1 (local build + a manual deploy), 3 for the scheduled deploy (`ARCHITECTURE.md` §11) |
