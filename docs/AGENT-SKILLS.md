@@ -9,6 +9,7 @@ that map to a real step of this repo's workflow and skip the rest.
 | Skill | Use when | Notes |
 |---|---|---|
 | `mip` | Any non-trivial change: new data source, integration, scoring change, user-visible output, autonomous behaviour | The plan layer. Produces `docs/mips/MIP-NNNN-*.md` with verified sources and open questions; implementation is a separate PR with a `Cost:` line |
+| `mip-tasks` | An accepted MIP that is more than one PR of work | The delivery layer: `docs/mips/MIP-NNNN.tasks.md` (ordered tasks, each with its test) and stacked PRs, one per task, via `scripts/stack.sh start / pr / restack / status` |
 
 ## 2. superpowers — what fits, what doesn't
 
@@ -30,6 +31,41 @@ superpowers@claude-plugins-official`) ships workflow skills that activate from c
 | **dispatching-parallel-agents** / **subagent-driven-development** | Selectively | Subagents are where Fable's cost is saved: research, doc review, fixture recording on Sonnet/Haiku. Not for the core scoring/safety code, which the human and the main session should read. |
 | **writing-skills** | Later | When a second in-repo skill is needed — candidates below. |
 | **using-superpowers** | Read once | Framework intro. |
+
+## 2.1 Using superpowers here — one MIP, start to finish
+
+Superpowers activates from context, so mostly you just work; but here is the explicit sequence
+for a MIP, with which skill does what and which session it runs in:
+
+```
+Session A (plan, Fable):
+  /brainstorming            → refine the raw idea until §1-§3 of a MIP have answers
+  /mip                      → write docs/mips/MIP-NNNN-*.md (sources verified, open questions listed)
+  (superpowers: writing-plans is skipped — the MIP is the plan)
+  mip-tasks, step 1         → docs/mips/MIP-NNNN.tasks.md: ordered tasks, each with its test
+  /clear
+
+Session B..N (execute, one per task, Sonnet is usually enough):
+  /rename mip-nnnn/k-slug
+  scripts/stack.sh start MIP-NNNN k slug
+  superpowers: executing-plans     → the task row is the plan; checkpoints = first failing test, before push
+  superpowers: test-driven-development → red (the named test) → green → refactor
+  superpowers: systematic-debugging    → when green won't come: reproduce as a golden/scripted test first
+  superpowers: verification-before-completion → just build && just test && just quality, live check if data changed
+  commit with a Cost: trailer
+  scripts/stack.sh pr              → stacked PR on the previous task (base = mip-nnnn/(k-1)-*)
+  superpowers: requesting-code-review → self-checklist before asking for review
+  /clear
+
+After each merge (bottom of the stack first):
+  scripts/stack.sh restack         → next branch rebased onto main; scripts/stack.sh status
+  superpowers: finishing-a-development-branch → delete the merged branch, flip the MIP when the last task lands
+```
+
+What you don't need to invoke by name: superpowers' skills trigger on phrases like "let's plan",
+"write the test first", "it's still failing" — say what you're doing and the right one loads.
+`using-git-worktrees` is optional: with one task per session, a plain branch switch is enough;
+use worktrees when two tasks of the same stack are in flight at once.
 
 ## 3. Skills this repo could still write (candidates for `writing-skills`)
 
