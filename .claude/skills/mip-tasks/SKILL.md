@@ -95,8 +95,9 @@ branches, and put the summed `Cost:` figures from the PRs into the MIP's status 
   prints the commands; run them from the host if needed.
 - GitHub's native Stacks: `just stack-setup` once (installs the official `gh stack` extension),
   then `just stack-link MIP-NNNN` links the PRs bottom-to-top into a Stack — `just uprds` does
-  it automatically when the extension is present. `just stack-view` shows it; `just stack-sync`
-  is the extension's `restack` for the whole stack. The script stays the source of truth for
+  it automatically when the extension is present (open PRs only — a merged bottom branch is
+  skipped). `just stack-view` shows it; `just stack-sync MIP-NNNN` is the extension's `restack`
+  for the whole stack (it adopts the stack locally first, since `link` keeps no local state). The script stays the source of truth for
   branch naming and bases; the extension is the UI.
 - Review happens **only when the human asks** — per PR, bottom-up, against the PR's own base:
   superpowers `requesting-code-review` (reviewer subagent with BASE/HEAD SHAs and the task row as

@@ -150,7 +150,7 @@ free local model, step by step. Everything else lives under `docs/`:
 | [`benchmarks/`](./docs/benchmarks/2026-09-05.md) | Kept benchmark runs: marola vs. a plain prompt on ocean questions, and what moved the numbers |
 | [`mips/`](./docs/mips/README.md) | Marola Improvement Proposals — numbered design docs written before a feature is built (`/mip` skill) |
 | [`FABLE_REVIEW.md`](./docs/FABLE_REVIEW.md) | Code and documentation review at the initial import — ranked findings with file:line references |
-| [`docs/DEV-FLOW.md`](./docs/DEV-FLOW.md) | The development loop end to end: MIP → acceptance → tasks → stacked PRs → review on request → merge |
+| [`DEV-FLOW.md`](./docs/DEV-FLOW.md) | The development loop end to end: MIP → acceptance → tasks → stacked PRs → review on request → merge |
 
 If you're an AI coding agent (Claude Code, etc.) picking this repo up: read
 [`AGENTS.md`](./AGENTS.md) first.

@@ -1,4 +1,5 @@
 @AGENTS.md
 
-The rules live in AGENTS.md (read by every agent, not just Claude Code); this file only imports
-them so Claude Code sessions and review tools that look for CLAUDE.md see the same text.
+Read AGENTS.md before doing anything in this repository: it holds every rule (phase discipline,
+cost and deployment safety, the Cost: trailer, code style, testing). The line above imports it
+for Claude Code; tools that read this file as plain text must open AGENTS.md themselves.

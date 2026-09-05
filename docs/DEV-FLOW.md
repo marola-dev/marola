@@ -71,8 +71,8 @@ Or, once every branch of the stack is pushed, all PRs at once with their shared 
 
 ```bash
 just uprds MIP-NNNN         # regenerate every PR body (What changed + Cost + Stack), create the missing PRs on the right base
-just stack-link MIP-NNNN    # link them into a GitHub Stack (gh stack link) — the "Preview stack" box in the PR UI, from the CLI
-just stack-view             # the stack as GitHub sees it; scripts/stack.sh status for the local view
+just stack-link MIP-NNNN    # link the open PRs into a GitHub Stack (gh stack link) — the "Preview stack" box in the PR UI, from the CLI
+just stack-view             # the stack as GitHub sees it; just stack status MIP-NNNN for the local view
 ```
 
 What GitHub shows: a stacked PR is a PR whose base is the previous branch; its page says "into
@@ -99,8 +99,9 @@ against its own base**, bottom of the stack first, because that is the diff a re
    review using superpowers".
 2. **`/code-review <PR#>`** (built-in; `--comment` posts the findings as inline PR comments) or the
    `code-review` plugin's `/code-review` (five parallel agents, ≥ 80-confidence findings only,
-   one comment on the PR). Both audit against `CLAUDE.md` — which in this repo is a one-line
-   import of `AGENTS.md`, keep it that way.
+   one comment on the PR). Both look for `CLAUDE.md`; in this repo it imports `AGENTS.md` for
+   Claude Code sessions and tells any tool reading it as plain text to open `AGENTS.md` — the
+   plugin's confidence scorer only credits rules it can read, so keep that instruction there.
 3. **`/code-review ultra <PR#>`** — the multi-agent cloud review, for the riskiest PR of a stack
    (scoring, safety text, a new data source). User-triggered and billed; never launched by the agent.
 
@@ -114,7 +115,8 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 
 - Merge **bottom-up**, squash (the repo's habit). GitHub retargets the next PR to `main` when the
   merged branch is deleted; the commits still need a rebase:
-  `scripts/stack.sh restack` on the next branch (or `just stack-sync` with `gh stack`).
+  `scripts/stack.sh restack` on the next branch, or `just stack-sync MIP-NNNN` for the whole
+  stack (it adopts the stack from GitHub first — `gh stack link` keeps no local state).
 - `scripts/stack.sh status` / `just stack-view` until every PR is merged.
 - Last merge: superpowers `finishing-a-development-branch` — full suite green, delete the task
   branches, flip the MIP to **Implemented** with the PR numbers and the summed Cost in its status
@@ -128,11 +130,11 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 | Pack docs for a browser MIP session | `just context-mips` |
 | New task branch | `scripts/stack.sh start MIP-NNNN k slug` |
 | Gates | `just build && just test && just quality` |
-| Live checks | `just run -- --brief`, `just e2e`, `just site-build floripa && just site-serve` |
+| Live checks | `just run -- --brief`, `just e2e`; once MIP-0005 lands, `just site-build floripa && just site-serve` |
 | One PR | `scripts/stack.sh pr` (`--dry-run` prints the gh commands) |
 | Every PR of a stack | `just uprds MIP-NNNN` |
-| GitHub Stack | `just stack-setup` once, then `just stack-link MIP-NNNN`, `just stack-view`, `just stack-sync` |
+| GitHub Stack | `just stack-setup` once, then `just stack-link MIP-NNNN`, `just stack-view`, `just stack-sync MIP-NNNN` |
 | Local stack view | `scripts/stack.sh status [MIP-NNNN]`, `just stack status MIP-NNNN` |
-| After a base merged | `scripts/stack.sh restack` or `just stack-sync` |
+| After a base merged | `scripts/stack.sh restack` (one branch) or `just stack-sync MIP-NNNN` (whole stack) |
 | Cost per PR | `just cost-split MIP-NNNN [--session <id>]`, `just claude-cost` |
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |

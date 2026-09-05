@@ -219,34 +219,33 @@ stack *args:
     scripts/stack.sh {{args}}
 
 # GitHub's native Stacks (the "Preview stack" box on a PR) via the official `gh stack` extension.
-# One-time: installs the extension and its agent skill (`gh skill install github/gh-stack`);
-# both live under ~/.local/share/gh, not in the flake — gh extensions are per-user.
+# One-time: needs a gh login; installs the extension and its agent skill (`gh skill install
+# github/gh-stack`). Both live under ~/.local/share/gh, not in the flake — gh extensions are per-user.
 stack-setup:
-    gh extension list 2>/dev/null | grep -q 'github/gh-stack' || gh extension install github/gh-stack
-    gh skill install github/gh-stack 2>/dev/null || echo "gh skill install not available in this gh — the extension works without it"
+    gh auth status >/dev/null 2>&1 || { echo "gh is not logged in — run: gh auth login" >&2; exit 1; }
+    gh extension list | grep -q 'github/gh-stack' || gh extension install github/gh-stack
+    gh skill install github/gh-stack || echo "gh skill install failed (older gh?) — the extension works without the skill"
 
-# Link a MIP's PRs into one GitHub Stack, bottom to top (`gh stack link <branches>`): reuses open
-# PRs, fixes any base that doesn't chain, creates missing PRs. Safe to re-run; additive only.
-# `just stack-link MIP-0005` — after `just uprds MIP-0005`, or instead of it.
-stack-link mip:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    mip="$(tr 'A-Z' 'a-z' <<<"{{mip}}")"
-    branches="$( { git branch --list "$mip/*" --format='%(refname:short)'; git branch -r --list "origin/$mip/*" --format='%(refname:short)' | sed 's#^origin/##'; } | sort -u | sort -t/ -k2 -n)"
-    [ -n "$branches" ] || { echo "no $mip/* branches" >&2; exit 1; }
-    gh extension list 2>/dev/null | grep -q 'github/gh-stack' || { echo "gh stack not installed — run: just stack-setup" >&2; exit 1; }
-    echo "linking: $(tr '\n' ' ' <<<"$branches")"
-    # shellcheck disable=SC2086
-    gh stack link $branches
+# Link a MIP's *open* PRs into one GitHub Stack, bottom to top (`scripts/stack.sh link`): merged
+# and closed PRs are skipped, missing PRs are created on the right base, wrong bases are fixed.
+# Safe to re-run; additive only. `just stack-link MIP-0005` — `just uprds` does this too.
+stack-link mip="":
+    scripts/stack.sh link {{mip}}
 
-# The stack as GitHub sees it (PR numbers, states, bases). `scripts/stack.sh status` is the local view.
+# The stack as GitHub sees it (PR numbers, states, bases). `just stack status MIP-0005` is the local view.
 stack-view *args:
     gh stack view {{args}}
 
-# After a bottom PR was squash-merged: rebase the remaining branches and force-push with lease —
-# the gh-stack version of `scripts/stack.sh restack`, for the whole stack at once.
-stack-sync *args:
-    gh stack sync {{args}}
+# After a bottom PR was squash-merged: adopt the stack from GitHub if it isn't tracked locally
+# yet (`gh stack link` stores no local state), then fetch, rebase every remaining branch and
+# force-push with lease — the whole-stack version of `scripts/stack.sh restack`. Interactive on
+# conflicts (`gh stack rebase`). `just stack-sync MIP-0005`.
+stack-sync mip="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bottom="$(scripts/stack.sh branches {{mip}} | head -1)"
+    gh stack checkout "$bottom"
+    gh stack sync
 
 # ---------------------------------------------------------------------
 # Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"

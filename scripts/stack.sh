@@ -6,6 +6,8 @@
 #   scripts/stack.sh pr                               # push + open/update the PR with the right base
 #   scripts/stack.sh restack                          # after a base PR was squash-merged: rebase onto main
 #   scripts/stack.sh status                           # every branch of this MIP with its base and PR
+#   scripts/stack.sh branches [MIP-0005]              # the MIP's task branches, local or remote, bottom to top
+#   scripts/stack.sh link [MIP-0005]                  # GitHub Stack (gh stack link) from the *open* PRs, bottom to top
 #   --dry-run on any subcommand prints what would run.
 #
 # Convention: branch = mip-NNNN/<k>-<slug>; task k's base is task k-1's branch (task 1's is main).
@@ -21,6 +23,15 @@ cur="$(git branch --show-current)"
 mip_of() { sed -n 's#^\(mip-[0-9]\{4\}\)/.*#\1#p' <<<"$1"; }
 task_of() { sed -n 's#^mip-[0-9]\{4\}/\([0-9]*\)-.*#\1#p' <<<"$1"; }
 branch_for() { git branch --list "$1/$2-*" --format='%(refname:short)' | head -1; }
+branches_of() {   # every task branch of a MIP, local or on origin, sorted by task number
+  { git branch --list "$1/*" --format='%(refname:short)'
+    git branch -r --list "origin/$1/*" --format='%(refname:short)' | sed 's#^origin/##'; } | sort -u | sort -t/ -k2 -n
+}
+mip_arg() {       # the MIP from $1 (MIP-0005 / mip-0005) or from the current branch
+  local m; m="$(tr 'A-Z' 'a-z' <<<"${1:-$(mip_of "$cur")}")"
+  [ -n "$m" ] || { echo "not on a mip-NNNN/* branch — pass the MIP: MIP-0005" >&2; exit 1; }
+  echo "$m"
+}
 base_for() {   # base branch of a task branch
   local mip k prev; mip="$(mip_of "$1")"; k="$(task_of "$1")"
   [ -n "$mip" ] || { echo "not a task branch: $1" >&2; exit 1; }
@@ -69,5 +80,27 @@ case "${1:-}" in
       printf '%-40s base=%-28s %s  (%s ahead of main)\n' "$b" "$(base_for "$b")" "$pr" "$(git rev-list --count origin/main.."$b")"
     done
     ;;
-  *) sed -n '2,13p' "$0"; exit 1 ;;
+  branches)
+    branches_of "$(mip_arg "${2:-}")"
+    ;;
+  link)
+    # GitHub's native Stack (the "Preview stack" box on a PR) through the official extension.
+    # Only branches with an open PR go in: `gh stack link` *creates* a PR for a branch without one,
+    # which for an already-merged bottom branch would be a junk PR. Additive and idempotent.
+    mip="$(mip_arg "${2:-}")"
+    gh auth status >/dev/null 2>&1 || { echo "gh is not logged in — run: gh auth login" >&2; exit 1; }
+    gh extension list 2>/dev/null | grep -q 'github/gh-stack' || { echo "gh stack extension not installed — run: just stack-setup" >&2; exit 1; }
+    open=()
+    for b in $(branches_of "$mip"); do
+      state="$(gh pr view "$b" --json state -q .state 2>/dev/null || echo NONE)"
+      case "$state" in
+        MERGED) echo "skip $b (PR merged)" ;;
+        CLOSED) echo "skip $b (PR closed)" ;;
+        *) open+=("$b") ;;
+      esac
+    done
+    [ "${#open[@]}" -ge 1 ] || { echo "nothing to link: no open PR on any $mip/* branch"; exit 0; }
+    run gh stack link "${open[@]}"
+    ;;
+  *) sed -n '2,15p' "$0"; exit 1 ;;
 esac
