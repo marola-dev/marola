@@ -2,9 +2,10 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted — v1 (local server, Phase 0) scoped into tasks 2026-09-05; the Azure ML path (§4.5) stays Draft, blocked on Phase 1 |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "MIP for adding MLflow, and how to deploy it local/azure") |
 | **Created** | 2026-09-05 |
+| **Tasks** | `docs/mips/MIP-0010.tasks.md` — stacked PRs, one per task |
 | **Phase** | 0 for the local server and the Scala/Python logging (developer tooling, no user-visible change); the Azure ML path is Phase 2 and waits on Phase 1 (MIP-0002) like every other Azure opt-in |
 | **Related** | `FUTURE-WORK.md` §10 (the Langfuse-shaped tracing gap this closes for the JVM side), `FUTURE-WORK.md` §4.1 (evaluation harness — the ledger this MIP adds is what a harness writes to), `ARCHITECTURE.md` §5f (`Telemetry.scala`, the existing OpenTelemetry plumbing), `docs/benchmarks/` and `scripts/benchmark_gate.py` (today's Markdown ledger), `dspy/` and `finetune/` (the offline Python steps), `AI-103-MAPPING.md` "Monitor an AI solution", `AI-500-MAPPING.md` §3 |
 
