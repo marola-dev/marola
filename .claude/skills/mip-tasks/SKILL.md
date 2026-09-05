@@ -93,6 +93,12 @@ branches, and put the summed `Cost:` figures from the PRs into the MIP's status 
   child of the old branch (memory: single PR per deliverable). Stacks are for planned task lists.
 - `gh` needs a login (not available inside the ai-jail sandbox): `scripts/stack.sh pr --dry-run`
   prints the commands; run them from the host if needed.
-- Optional tooling: `git-spice` (in nixpkgs) manages stacks natively (`gs branch create`,
-  `gs stack submit`, `gs repo sync`); adopt it if the manual script becomes the bottleneck. Not
-  added yet — the script is enough for a two-to-five-task stack.
+- GitHub's native Stacks: `just stack-setup` once (installs the official `gh stack` extension),
+  then `just stack-link MIP-NNNN` links the PRs bottom-to-top into a Stack — `just uprds` does
+  it automatically when the extension is present. `just stack-view` shows it; `just stack-sync`
+  is the extension's `restack` for the whole stack. The script stays the source of truth for
+  branch naming and bases; the extension is the UI.
+- Review happens **only when the human asks** — per PR, bottom-up, against the PR's own base:
+  superpowers `requesting-code-review` (reviewer subagent with BASE/HEAD SHAs and the task row as
+  the plan), `/code-review <PR#>`, or `/code-review ultra`. The whole loop, with the acceptance
+  step for a MIP, is in `docs/DEV-FLOW.md`.

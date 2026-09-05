@@ -44,6 +44,7 @@ Docs live under `docs/` — check these before assuming something is undecided o
 | `docs/SKILLS.md` | A skills roadmap — what to practice, in order, using marola as the vehicle |
 | `docs/SCALA3-JDK-REVIEW.md` | Scala 3 / JDK 21-25 features reviewed against this code — adopt list and order |
 | `docs/AGENT-FRAMEWORKS-SURVEY.md` | Multi-agent frameworks survey — Python ideas → Scala shapes, Pekko fit, reading list |
+| `docs/DEV-FLOW.md` | The loop end to end: idea → MIP → acceptance → tasks → stacked PRs (verified, costed) → review on request → merge/restack → Implemented; command reference |
 | `docs/AGENT-SKILLS.md` | Which agent skills to use in this repo: `mip` (plan), `mip-tasks` (tasks → stacked PRs, `scripts/stack.sh`), superpowers walkthrough, candidates to write |
 | `docs/benchmarks/` | Kept `just benchmark` runs — re-run and compare before changing prompt/corpus/embedder/model |
 | `docs/mips/` | Marola Improvement Proposals — design a non-trivial change here first, via the `mip` skill (`.claude/skills/mip/SKILL.md`), before building it. `just context-mips` packs what a browser session needs to draft one from voice notes |

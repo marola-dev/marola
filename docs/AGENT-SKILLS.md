@@ -31,7 +31,7 @@ pinned to a version). Opt out on one machine with the same key set to `false` in
 | **test-driven-development** | Yes — this repo's testing rule already | `AGENTS.md` asks for a failing test before a fix; the golden fixture suite and scripted-LLM specs are the harness. Red-green-refactor maps 1:1. |
 | **systematic-debugging** | Yes | Especially for the effect/typing errors Kyo produces and for "works live, fails offline" fixture drift. Phase 1 of it (reproduce) = a golden test. |
 | **verification-before-completion** | Yes — hard rule | Matches "report outcomes faithfully": `just build && just test && just quality`, then a live run when data paths changed, then the `Cost:` line. |
-| **requesting-code-review** / **receiving-code-review** | Yes, lightweight | Pre-PR checklist = the `Cost:` line, docs updated in the same change, MIP status flipped, `FABLE_REVIEW.md` item closed if one applies. |
+| **requesting-code-review** / **receiving-code-review** | Yes — the final review, **on request only** | Reviewer subagent per PR of a stack (BASE = the PR's base branch, HEAD = the task branch, plan = the task row); author verifies findings before acting. Pre-PR checklist = the `Cost:` line, docs updated in the same change, MIP status flipped, `FABLE_REVIEW.md` item closed if one applies. `docs/DEV-FLOW.md` §5. |
 | **using-git-worktrees** | Yes, for parallel work | One worktree per MIP implementation; pairs with "one feature, one session". The ai-jail sandbox maps the repo directory, so worktrees must live *inside* it or be mapped. |
 | **finishing-a-development-branch** | Yes | Squash-merge is the repo's habit; rebuild follow-ups on `origin/main` via cherry-pick rather than stacking (memory: single PR per deliverable). |
 | **dispatching-parallel-agents** / **subagent-driven-development** | Selectively | Subagents are where Fable's cost is saved: research, doc review, fixture recording on Sonnet/Haiku. Not for the core scoring/safety code, which the human and the main session should read. |
@@ -63,10 +63,20 @@ Session B..N (execute, one per task, Sonnet is usually enough):
   superpowers: requesting-code-review → self-checklist before asking for review
   /clear
 
+Review session (only when the human asks — "review the stack", "claude review #21"):
+  per PR, bottom-up, against its own base:
+  superpowers: requesting-code-review → reviewer subagent with BASE_SHA = origin/<base>, HEAD_SHA = origin/<branch>,
+                                        PLAN = the task row + MIP §6/§7; fix Critical/Important, note Minor
+  or /code-review <PR#> [--comment], or /code-review ultra <PR#> for the riskiest PR (user-triggered, billed)
+  superpowers: receiving-code-review  → verify each finding before acting; fix → commit (Cost:) → push → just uprds
+
 After each merge (bottom of the stack first):
-  scripts/stack.sh restack         → next branch rebased onto main; scripts/stack.sh status
+  scripts/stack.sh restack         → next branch rebased onto main; scripts/stack.sh status (or just stack-sync / stack-view)
   superpowers: finishing-a-development-branch → delete the merged branch, flip the MIP when the last task lands
 ```
+
+The whole loop — including how a MIP gets *accepted* and what GitHub shows for a stack — is
+written once in `docs/DEV-FLOW.md`; this section is the skill-by-skill view of it.
 
 What you don't need to invoke by name: superpowers' skills trigger on phrases like "let's plan",
 "write the test first", "it's still failing" — say what you're doing and the right one loads.

@@ -75,3 +75,12 @@ while read -r b; do
   fi
   rm -f "$extra"
 done <<<"$branches"
+
+# GitHub's native Stack (the "Preview stack" box): link the PRs bottom-to-top when the official
+# `gh stack` extension is installed (`just stack-setup`). Additive and idempotent; skipped on --dry-run.
+if [ "$dry" -eq 0 ] && gh extension list 2>/dev/null | grep -q 'github/gh-stack'; then
+  # shellcheck disable=SC2086
+  gh stack link $(tr '\n' ' ' <<<"$branches") || echo "uprds: gh stack link failed — run: just stack-link ${mip^^}" >&2
+else
+  [ "$dry" -eq 1 ] || echo "uprds: gh stack extension not installed — 'just stack-setup' then 'just stack-link ${mip^^}' links the PRs into a GitHub Stack"
+fi
