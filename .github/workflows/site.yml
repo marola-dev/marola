@@ -1,0 +1,85 @@
+name: site (build the boards, deploy the map)
+
+# MIP-0005 §5.4: compute every area's board once on a schedule and publish site/dist as a static
+# site — no server, no LLM, no per-visitor cost. The scheduled deploy is Phase 3's first deploy
+# artefact (ARCHITECTURE.md §11) and it is entirely free: GitHub Pages + Actions minutes.
+#
+# Cost model (verified by the run times, not just estimated): one `just site-build` is ~1-2 min of
+# pipeline (one Overpass query per area in site/areas.json, two Open-Meteo calls per beach, one
+# IMA download) plus JVM/sbt start-up — 3-4 min per run. Every 3 hours = 8 runs/day ≈ 30 min/day,
+# well inside the free tier. Overpass fair use (ARCHITECTURE.md §7): keep areas few and the cron at
+# ≥ 3 h until MIP-0003's cache lands.
+#
+# One-time human setup, not a paid resource: repo Settings → Pages → Source = "GitHub Actions".
+# Until that is done the deploy job fails with "Pages not enabled" and nothing else happens.
+# Scheduled workflows only run from the default branch, so this file has to be on main.
+
+on:
+  schedule:
+    - cron: "15 */3 * * *" # every 3 h (UTC); :15 avoids the top-of-hour crowd on shared runners
+  workflow_dispatch:
+    inputs:
+      area:
+        description: "Area id from site/areas.json (empty = every area)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never two deploys at once; a queued run waits rather than cancelling a build that already paid
+# for its Overpass query.
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.sbt
+            ~/.ivy2/cache
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt', 'project/**') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+      - uses: sbt/setup-sbt@v1
+
+      # `--site` with no id builds every area; the water-quality provider is picked per area
+      # origin (IMA/SC inside Santa Catarina, "no data" elsewhere). No Ollama, no --summarize.
+      - name: Build the boards (one Overpass query per area, no LLM)
+        env:
+          AREA: ${{ inputs.area }}
+        run: sbt "cli/run -- --site $AREA"
+
+      - name: Show what was built
+        run: |
+          find site/dist -type f | sort
+          echo
+          cat site/dist/data/*/latest.json
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

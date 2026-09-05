@@ -67,6 +67,8 @@ core/src/main/scala/marola/
                                   WaterQualityMatcher (pure: agency points → OSM beaches)
   conditions/Tides.scala         §5g — tide turns from Open-Meteo's hourly sea level (pure)
   lore/SeaLore.scala             §5g — curated, sourced "did you know?" paragraph (verbatim)
+  site/Board.scala               MIP-0005 — the per-area, per-day board JSON the static map
+                                  renders (pure serializer; contract: site/board.schema.json)
   knowledge/                     §5h — Embedder + KnowledgeStore (traits), Corpus chunker,
                                   FileKnowledgeStore (JSON vector index), OceanQa (grounded Q&A)
   sightings/                     §5d — SightingStore (trait) + Sighting model
@@ -96,6 +98,8 @@ cli/src/main/scala/marola/       depends on core + local + azure — the one pla
                                   a backend per integration
   Main.scala                     CLI entry point (KyoApp) — see §3.1 for its flags
   Report.scala                   pure text rendering: ranked list, detailed block, lore, answers
+  site/SiteBuilder.scala         MIP-0005 — `--site`: boards for every area of site/areas.json
+                                  into site/dist/ (+ a copy of site/static/, the Leaflet page)
   AppConfig.scala                env config + a llmClient/sightingStore/visionClient/
                                   distanceRefiner factory method per pluggable integration
                                   (each: local default, Azure opt-in, returns None if Azure
@@ -119,6 +123,7 @@ just run -- --analyze-photo <path>                  # §5e
 just run -- --brief                                 # the pre-MIP-0001 one-line list, no block/lore
 just run -- --ask "<question>"                      # §5h — grounded Q&A over knowledge/ (just ask ...)
 just run -- --reindex                               # §5h — re-embed knowledge/ (just knowledge-index)
+just run -- --site [area]                           # MIP-0005 — the map's boards into site/dist (just site-build)
 ```
 
 Since MIP-0001 the default output is the ranked list with a **water-quality column**, a
@@ -482,6 +487,8 @@ default, so the bot is fully testable end-to-end before spending anything on Azu
 | [Ollama](https://ollama.com) | Local LLM (§5a) and multimodal vision (§5e) backends | Free, runs entirely on your own hardware |
 | [ipinfo.io](https://ipinfo.io), [ipwho.is](https://ipwho.is), [ip-api.com](https://ip-api.com) | CLI origin fallback via public-IP geolocation (§3.1), majority vote across the three | Free, no key; ip-api.com's free tier is HTTP-only and non-commercial; each has a modest per-minute/day rate limit, fine for a CLI |
 
+| [OpenStreetMap tile servers](https://operations.osmfoundation.org/policies/tiles/) | Base map behind the static site's markers (MIP-0005; `tiles` in `site/areas.json`) | No key; the usage policy forbids heavy or commercial use — acceptable for a link among friends, not for a public launch. Switch to self-hosted Protomaps PMTiles or a MapTiler/Stadia free tier before going public |
+
 No jellyfish- or whale-specific API exists (checked) — see §8.
 
 ## 8. The jellyfish and whale heuristics — honest limitations
@@ -563,7 +570,9 @@ Full domain-by-domain mapping lives in its own docs now, not inline here:
    want (all optional, none required): Foundry for query synthesis, Azure Maps for real distances,
    Cosmos DB for shared sighting storage, Azure AI Vision, Application Insights. First real Azure
    spend, entirely your choice which pieces.
-4. **Phase 3 — Deploy.** Container App + webhook (Bicep, `azd`).
+4. **Phase 3 — Deploy.** Container App + webhook (Bicep, `azd`). The first deploy artefact is
+   already here and free: `.github/workflows/site.yml` builds MIP-0005's boards every 3 h and
+   publishes the static map to GitHub Pages — no Azure, no server, no per-visitor cost.
 5. **Phase 4 — Harden & calibrate.** Caching, per-user rate limiting, feeding accumulated
    `SightingStore` reports back into the jellyfish/whale heuristics (§8).
 

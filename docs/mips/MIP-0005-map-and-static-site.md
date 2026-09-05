@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — implementation in progress (tasks: [`MIP-0005.tasks.md`](./MIP-0005.tasks.md)) |
+| **Status** | Implemented — stack `mip-0005/1-board-json` → `2-site-build` → `3-map-page` → `4-scheduling` (tasks and v1 decisions: [`MIP-0005.tasks.md`](./MIP-0005.tasks.md)); cost per PR in each PR's Cost section |
 | **Author** | Claude Fable 5.1, for M. Hoffmann; idea from a chat with a friend (5 Sep 2026): "use the bot to feed the site and have the data there, instead of answering everyone" |
 | **Created** | 2026-09-05 |
 | **Phase** | 1 (local build + a manual deploy), 3 for the scheduled deploy (`ARCHITECTURE.md` §11) |
@@ -177,6 +177,11 @@ scheduled workflow is the first deploy artefact. AI-103 §1 "Responsible AI": no
 data provenance and freshness on every page.
 
 ## 11. Open questions
+
+Resolved for v1 in [`MIP-0005.tasks.md`](./MIP-0005.tasks.md) (decisions 1-5): OSM raster tiles
+for the friends-only phase with the Protomaps switch still ahead of any public link; floripa + rio;
+hour slider yes; no LLM summary in the board; GitHub Pages first. Kept here as the record of what
+was open when the MIP was written.
 
 1. Tiles: OSM public tiles for the friends-only phase and Protomaps before any public link, or
    Protomaps from day one? (Proposal: Protomaps from day one; it is also the local-first answer.)

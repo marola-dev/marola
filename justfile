@@ -166,6 +166,23 @@ site-build area="":
 site-serve port="8000":
     python3 -m http.server -d site/dist {{port}}
 
+# Deploy the map. `github` (default) triggers .github/workflows/site.yml, which builds on the
+# runner and publishes to GitHub Pages — the same workflow the 3-hourly schedule runs (one-time:
+# repo Settings → Pages → Source = GitHub Actions). `cloudflare` pushes a local site/dist to
+# Cloudflare Pages with wrangler (`npx wrangler login` first; project name from
+# $MAROLA_SITE_PROJECT, default marola). Both free tiers; neither is an Azure resource.
+site-deploy target="github":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{target}}" in
+        github)
+            gh workflow run site.yml && echo "queued site.yml — watch it: gh run list --workflow site.yml" ;;
+        cloudflare)
+            [ -f site/dist/index.html ] || { echo "site/dist is empty — run: just site-build" >&2; exit 1; }
+            npx --yes wrangler pages deploy site/dist --project-name "${MAROLA_SITE_PROJECT:-marola}" ;;
+        *) echo "unknown target '{{target}}' — github | cloudflare" >&2; exit 1 ;;
+    esac
+
 # ---------------------------------------------------------------------
 # Browser-session context — repomix.config.json, repomix-instruction.md
 # ---------------------------------------------------------------------

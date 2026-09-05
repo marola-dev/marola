@@ -247,7 +247,37 @@ The pack's own instruction section (`repomix-instruction.md`) fixes the template
 transcript appendix and the rule that unverified claims go under "Open questions". Save the
 returned files under `docs/mips/` and let the in-repo agent verify the sources.
 
-## 9. What this guide deliberately doesn't cover
+## 9. The map — build the boards once, serve them as a static site (MIP-0005)
+
+Everything above answers one person at a time. `just site-build` runs the same pipeline once per
+*area* (`site/areas.json`: Florianópolis and Rio by default) and writes what a static map needs:
+
+```bash
+just site-build floripa        # ~70 s live: one Overpass query, two Open-Meteo calls per beach, one IMA download
+just site-serve                # http://localhost:8000 — tap Praia do Campeche, see Ponto 73 flagged
+```
+
+`site/dist/` (git-ignored) then holds `index.html` + `app.js` + vendored Leaflet from
+`site/static/`, and under `data/`: `areas.json`, and per area `<today>.json`, `<tomorrow>.json`
+(the board — `site/board.schema.json` is the contract, checked by `BoardSpec`) and `latest.json`
+pointing at both. The page shows every beach as a marker coloured by score, a card with the same
+numbers the CLI prints, a day picker, an hour slider, the generated-at time and every source. No
+cookies, no analytics; "near me" is the browser's own geolocation, on request, never sent anywhere.
+
+Keep it fresh locally with a timer — a plain cron line (`crontab -e`):
+
+```
+15 */3 * * *  cd /path/to/marola && nix develop -c just site-build >> .tmp/site-build.log 2>&1
+```
+
+or a `systemd --user` timer with the same command. Publishing: `just site-deploy` triggers
+`.github/workflows/site.yml` (build on the runner, deploy to GitHub Pages — the same workflow runs
+every 3 h on its own), `just site-deploy cloudflare` pushes a local `site/dist` with wrangler.
+Tiles come from OpenStreetMap's public servers, which is fine for a link shared among friends and
+not for a public launch — switch `tiles` in `site/areas.json` to a Protomaps/MapTiler source
+before that (MIP-0005 §8).
+
+## 10. What this guide deliberately doesn't cover
 
 Telegram bot setup (there is no bot loop yet — see `TELEGRAM-SETUP.md` for credential setup ahead
 of that Phase 1 work) and any Azure integration (`ARCHITECTURE.md` §5/§6, all optional, none needed
