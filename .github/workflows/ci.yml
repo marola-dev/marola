@@ -46,6 +46,8 @@ jobs:
             python:
               - 'dspy/**'
               - 'finetune/**'
+              - 'scripts/*.py'
+              - 'scripts/fixtures/**'
               - 'ruff.toml'
             workflows:
               - '.github/workflows/**'
@@ -119,12 +121,15 @@ jobs:
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
-          args: check dspy finetune
+          args: check dspy finetune scripts/smoke_record.py
       - name: ruff format --check
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
-          args: format --check dspy finetune
+          args: format --check dspy finetune scripts/smoke_record.py
+      - name: smoke_record self-test (the smoke workflow's parser, on a recorded transcript)
+        if: needs.changes.outputs.python == 'true'
+        run: python3 scripts/smoke_record.py --self-test
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2

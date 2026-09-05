@@ -1,0 +1,26 @@
+marola :: best hour tomorrow to swim nearby (POC)
+config -> telegram=unset llm=Local(http://localhost:11434/v1 llama3.2:1b) embed=llama3.2 knowledge=./knowledge -> ./data/knowledge-index.json lore=on ask=General>=0.0 origin=auto radius=15km water=Auto maps=unset sightings=Local(./data/sightings.jsonl) vision=Local(llava) appinsights=unset
+origin -> lat=-27.6733, lon=-48.4700 (radius 15km, source: --lat/--lon flags)
+water quality -> IMA/SC
+ 1. [ 55/100] Praia da Joaquina      (4.6km)  Sun 6 Sep, 10:00  |  water: PRÓPRIA (1/1 pts, 25 Aug)  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
+ 2. [ 55/100] Praia do Rio Tavares   (2.1km)  Sun 6 Sep, 10:00  |  water: no data  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
+ 3. [ 55/100] Praia do Morro das Pedras (5.1km)  Sun 6 Sep, 08:00  |  water: PRÓPRIA (1/1 pts, 25 Aug)  |  18.8°C, 25km/h, 1.4m  |  jellyfish: Low  |  choppy (1.4m waves), breezy (25km/h), cold water (18.8°C)
+ 4. [ 35/100] Praia da Armação       (7.9km)  Sun 6 Sep, 10:00  |  water: 2/6 PRÓPRIA — avoid Ponto 64, Ponto 01, Ponto 05, Ponto 11 (25 Aug)  |  19.0°C, 23km/h, 1.0m  |  jellyfish: Low  |  whales: Moderate  |  choppy (1.0m waves), breezy (23km/h), cold water (19.0°C)
+ 5. [ 35/100] Praia do Gravatá       (7.6km)  Sun 6 Sep, 10:00  |  water: 2/3 PRÓPRIA — avoid Ponto 04 (25 Aug)  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
+ 6. [ 35/100] Praia do Campeche      (2.1km)  Sun 6 Sep, 08:00  |  water: 4/5 PRÓPRIA — avoid Ponto 73 (25 Aug)  |  18.8°C, 28km/h, 1.4m  |  jellyfish: Low  |  choppy (1.4m waves), breezy (28km/h), cold water (18.8°C)
+
+Top pick — Praia da Joaquina, Sun 6 Sep, 10:00-11:00
+  Water quality   PRÓPRIA (1/1 pts, 25 Aug)
+                  Ponto 33 (Em frente à Avenida Prefeito Acácio Garibaldi São Thiago, n°1416, ao lado do Posto de Guarda-Vidas): PRÓPRIA, 25 Aug, latest 10 enterococci/100mL, rain Ausente, water 15°C
+                  Source: IMA/SC
+  Sea             19.0°C, waves 1.3m every 6s from the S, swell 0.8m/6s, current 0.9 km/h
+  Tide            low 05:00 (-0.1m), high 13:00 (+0.7m), low 18:00 (+0.3m) (hourly resolution, ±30 min)
+  Air             14°C, wind 27 km/h from the S, UV 4, 0% chance of rain
+  Jellyfish       Low — few of the warm-calm signals present
+  Whales          Low at this hour; best daylight odds Low at 07:00 — humpback season
+
+Asking Local LLM to summarize the top pick (this may take a while)...
+Draft summary: Still looks good for a swim in calm conditions and lower wind speeds.
+Reviewer (score 60/100, verdict: revise): Still looks good for a swim in calm conditions and lower wind speeds.
+
+🐋 Sea life: Humpback whales (baleia-jubarte) travel up the Brazilian coast from Antarctic feeding grounds to breed in warmer water, passing Santa Catarina between about July and November. Calm mornings with little wind are when a blow or a breach is easiest to spot from shore. [source: https://en.wikipedia.org/wiki/Humpback_whale]

@@ -322,6 +322,15 @@ just native-run -- --summarize --lat -27.6733 --lon -48.47   # the binary, same 
 just docker-build native                                     # the distroless image, if you have a daemon
 ```
 
+**The smoke test.** GitHub → Actions → "docker smoke test" → Run workflow (`lat`/`lon`, or a
+Google Maps pin in `maps_url`, `model`, `image`) runs `--summarize` in the published image on a
+runner with a cached `llama3.2:1b` — also every morning at 09:30 UTC. `scripts/smoke_record.py`
+turns the transcript into `smoke/latest.json` + `smoke/history.json` on the orphan `site-data`
+branch (never deployed by that workflow: `site.yml` copies it into the map, so two deploys never
+race), the map's footer shows it as "Last live run" and the job fails when the pipeline, the
+model or the reviewer did not answer. `python3 scripts/smoke_record.py --self-test` (in `just
+quality`) parses a recorded transcript, `scripts/fixtures/smoke-stdout-2026-09-05.txt`.
+
 The arguments (`--initialize-at-build-time` for slf4j/logback/Jackson, `-march=compatibility`)
 and the reachability metadata (the `*.json` resources, `sun.misc.Signal` for Kyo's handler) live
 in `cli/src/main/resources/META-INF/native-image/`, read from the classpath, so the sbt task and

@@ -49,13 +49,14 @@ lint:
 # `just quality-fix` applies the auto-fixable ones.
 quality:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll "scalafixAll --check"
-    if command -v ruff >/dev/null; then ruff check dspy finetune && ruff format --check dspy finetune; else echo "ruff not installed — skipping (pip install ruff)"; fi
+    if command -v ruff >/dev/null; then ruff check dspy finetune scripts/smoke_record.py && ruff format --check dspy finetune scripts/smoke_record.py; else echo "ruff not installed — skipping (pip install ruff)"; fi
+    python3 scripts/smoke_record.py --self-test
     if command -v actionlint >/dev/null; then actionlint; else echo "actionlint not installed — skipping"; fi
     if command -v hadolint >/dev/null; then hadolint Dockerfile; else echo "hadolint not installed — skipping"; fi
 
 quality-fix:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
-    if command -v ruff >/dev/null; then ruff check --fix dspy finetune && ruff format dspy finetune; fi
+    if command -v ruff >/dev/null; then ruff check --fix dspy finetune scripts/smoke_record.py && ruff format dspy finetune scripts/smoke_record.py; fi
 
 # Runs marola's CLI (build.sbt's `cli` project; marola is split into
 # core/local/azure/cli, docs/FUTURE-WORK.md §7.3). `*args` forwards CLI flags to the app
