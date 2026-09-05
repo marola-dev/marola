@@ -6,7 +6,7 @@
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "MIP for implementing Claude Code best practices, by Anthropic and community") |
 | **Created** | 2026-09-05 |
 | **Phase** | 0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite |
-| **Related** | `AGENTS.md` (the rules this turns from advisory into enforced), `docs/DEV-FLOW.md`, `docs/AGENT-SKILLS.md` §3 (skill candidates), `docs/FABLE_REVIEW.md` §3 (jail environment notes), `PHILOSOPHY.md` (why constraints, not prose), `.claude/settings.json`, `.claude/skills/`, `justfile` (`jail-claude`, `jcf`, `jcs`) |
+| **Related** | `AGENTS.md` (the rules this turns from advisory into enforced), `docs/DEV-FLOW.md`, `docs/AGENT-SKILLS.md` §3 (skill candidates), `docs/FABLE_REVIEW.md` §3 (jail environment notes), `PHILOSOPHY.md` (why constraints, not prose), `.claude/settings.json`, `.claude/skills/`, `justfile` (`jail-claude`, `jcf`, `jcs`); MIP-0013 (an OpenCode tryout — most of tasks 1-5, 7 and 9 here have a one-config-key equivalent there) |
 
 ## 1. Summary
 

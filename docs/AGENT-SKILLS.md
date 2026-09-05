@@ -4,6 +4,10 @@ Which Claude Code skills to use here, in-repo and from the **superpowers** plugi
 rule of thumb from `AGENTS.md`: every loaded skill costs context on every turn, so adopt the ones
 that map to a real step of this repo's workflow and skip the rest.
 
+Harness note: the in-repo skills (§1) are plain `SKILL.md` files that OpenCode also discovers
+(`.claude/skills/` is on its search path); the superpowers plugin (§2) is Claude Code only — see
+`docs/mips/MIP-0013-opencode-tryout.md`.
+
 ## 1. In-repo skills (`.claude/skills/`)
 
 | Skill | Use when | Notes |

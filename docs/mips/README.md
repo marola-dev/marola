@@ -18,4 +18,5 @@ Accepted → Implemented (or Rejected / Superseded).
 | [MIP-0010](./MIP-0010-mlflow-experiment-tracking.md) | MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first, Azure ML as the opt-in | Draft | 2026-09-05 |
 | [MIP-0011](./MIP-0011-claude-code-best-practices.md) | Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills | Draft | 2026-09-05 |
 | [MIP-0012](./MIP-0012-llm4s-adoption-and-dspy-deprecation.md) | llm4s as marola's Scala-native LLM/agent layer (opt-in module behind marola's traits) — and the deprecation of the Python DSPy step for a Scala prompt compiler | Draft | 2026-09-05 |
+| [MIP-0013](./MIP-0013-opencode-tryout.md) | OpenCode as marola's development agent — a bounded tryout, and what replacing Claude Code would take | Draft | 2026-09-05 |
 
