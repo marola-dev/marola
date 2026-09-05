@@ -355,6 +355,14 @@ cost-split *args:
 claude-cost *args="session":
     npx --yes ccusage@latest {{args}}
 
+# GitHub account usage this month — Actions minutes, GHCR/Packages storage, Copilot — in one call
+# to the consolidated billing-usage API (scripts/billing.sh). This repo is private, so these are
+# real cost, not just hygiene, unlike the "free for public repos" Actions/GHCR quotas docker.yml
+# used to assume. `just billing`, `just billing --month 8`, `just billing --year 2026 --month 8`.
+# Needs `gh auth status` (not available inside ai-jail — run from the host).
+billing *args:
+    scripts/billing.sh {{args}}
+
 # ---------------------------------------------------------------------
 # ai-jail — sandbox AI coding agents (bubblewrap/Landlock/seccomp on
 # Linux). https://github.com/akitaonrails/ai-jail

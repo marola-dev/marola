@@ -295,6 +295,26 @@ before that (MIP-0005 §8).
 
 ## 10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)
 
+**Published tags** (`ghcr.io/h0ffmann/marola:<tag>` — this repo is private, so pulling needs
+`docker login ghcr.io` first: a GitHub PAT with `read:packages`, or `gh auth token | docker login
+ghcr.io -u <user> --password-stdin`):
+
+| Tag | What it is | Built by | Platforms |
+|---|---|---|---|
+| `jvm` | CLI on a Temurin 25 JRE (Alpine) — moving, always the latest `main` | `docker.yml`, every merge touching the Dockerfile/build/`core`/`cli`/etc. | amd64 + arm64 |
+| `jvm-<sha>` | same, pinned to one commit | same | amd64 + arm64 |
+| `native` | the same CLI ahead-of-time compiled (GraalVM native-image), distroless, no JVM — moving | same workflow | amd64 |
+| `native-<sha>` | same, pinned | same | amd64 |
+| `local` | Ollama with the `marola-llama3.2` fine-tune baked in — moving, but only advances when `just benchmark` clears the gate | `docker-local.yml` | amd64 |
+| `local-<sha>` | one benchmark candidate, kept whether or not it was promoted | same | amd64 |
+| `dev` / `dev-<sha>` | the literal `nix develop` shell in a container, for reading/hacking without installing Nix | `docker.yml`, `workflow_dispatch` only | amd64 |
+
+The `-<sha>` tags accumulate on every qualifying push (`local-<sha>` even for rejected candidates,
+which bundle the ~2 GB Ollama model) — `ghcr-retention.yml` prunes them weekly, keeping the last 10
+per target (5 for `local`) and never touching the moving tags above, which is what everything below
+and `docker-compose.yml`/`docker-smoke.yml` actually pull. `just billing` shows current GHCR/Actions
+usage against the account's plan (this repo gets no public-repo free tier).
+
 The same pipeline from a machine that has Docker and nothing else. `docker-compose.yml` runs the
 CLI image with an Ollama sidecar; the model is pulled once into a named volume:
 
@@ -312,12 +332,8 @@ against an Ollama already running on the host:
 docker run --rm --network host ghcr.io/h0ffmann/marola:jvm --summarize --lat -27.6733 --lon -48.47
 ```
 
-`ghcr.io/h0ffmann/marola:local` (profile `local` above) is Ollama with the marola-llama3.2
-variant already inside, built by `docker-local.yml` and promoted only when the benchmark gate
-passes — `finetune/README.md` "As an image". `ghcr.io/h0ffmann/marola:jvm` is built by CI from `main` (`.github/workflows/docker.yml`: a PR
-lints the Dockerfile and builds `jvm` without pushing, a merge pushes `jvm` for amd64 + arm64 and
-`native`, each also tagged `<target>-<sha>`; `dev` on request); `just docker-build`
-builds the same target here and `just docker-run -- …` runs it with `--network host`. The
+`:local` is `finetune/README.md`'s "As an image". `just docker-build` builds any target here and
+`just docker-run -- …` runs it with `--network host`. The
 `Dockerfile` is one multi-stage file: `builder` (sbt, Temurin 25) → `jvm` (Temurin 25 JRE on
 Alpine, ~70 MB + the 55 MB jar), `native-build` → `native` (below), and `dev` — the literal
 `nix develop` in an image, for reading or hacking on the code without installing Nix
