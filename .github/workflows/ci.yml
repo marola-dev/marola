@@ -121,15 +121,17 @@ jobs:
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
-          args: check dspy finetune scripts/smoke_record.py
+          args: check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py
       - name: ruff format --check
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
-          args: format --check dspy finetune scripts/smoke_record.py
-      - name: smoke_record self-test (the smoke workflow's parser, on a recorded transcript)
+          args: format --check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py
+      - name: self-tests — smoke_record (the smoke workflow's parser) and benchmark_gate (marola-local's gate)
         if: needs.changes.outputs.python == 'true'
-        run: python3 scripts/smoke_record.py --self-test
+        run: |
+          python3 scripts/smoke_record.py --self-test
+          python3 scripts/benchmark_gate.py --self-test
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2

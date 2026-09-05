@@ -49,14 +49,15 @@ lint:
 # `just quality-fix` applies the auto-fixable ones.
 quality:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll "scalafixAll --check"
-    if command -v ruff >/dev/null; then ruff check dspy finetune scripts/smoke_record.py && ruff format --check dspy finetune scripts/smoke_record.py; else echo "ruff not installed — skipping (pip install ruff)"; fi
+    if command -v ruff >/dev/null; then ruff check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py && ruff format --check dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py; else echo "ruff not installed — skipping (pip install ruff)"; fi
     python3 scripts/smoke_record.py --self-test
+    python3 scripts/benchmark_gate.py --self-test
     if command -v actionlint >/dev/null; then actionlint; else echo "actionlint not installed — skipping"; fi
-    if command -v hadolint >/dev/null; then hadolint Dockerfile; else echo "hadolint not installed — skipping"; fi
+    if command -v hadolint >/dev/null; then hadolint Dockerfile Dockerfile.local; else echo "hadolint not installed — skipping"; fi
 
 quality-fix:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
-    if command -v ruff >/dev/null; then ruff check --fix dspy finetune scripts/smoke_record.py && ruff format dspy finetune scripts/smoke_record.py; fi
+    if command -v ruff >/dev/null; then ruff check --fix dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py && ruff format dspy finetune scripts/smoke_record.py scripts/benchmark_gate.py; fi
 
 # Runs marola's CLI (build.sbt's `cli` project; marola is split into
 # core/local/azure/cli, docs/FUTURE-WORK.md §7.3). `*args` forwards CLI flags to the app
@@ -189,10 +190,13 @@ site-deploy target="github":
 # Docker — MIP-0008: the CLI as an image (Dockerfile, docker-compose.yml)
 # ---------------------------------------------------------------------
 
-# Build one target of the Dockerfile locally as marola:<target> — `jvm` (default), `native`, `dev`.
-# Same targets CI pushes to ghcr.io/h0ffmann/marola (docker.yml).
+# Build one target of the Dockerfile locally as marola:<target> — `jvm` (default), `native`, `dev`,
+# or `local` (Dockerfile.local: Ollama + marola-llama3.2, ~2 GB). Same targets CI pushes to
+# ghcr.io/h0ffmann/marola (docker.yml, docker-local.yml).
 docker-build target="jvm":
-    docker build --target {{target}} -t marola:{{target}} .
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "{{target}}" = local ]; then docker build -f Dockerfile.local -t marola:local .; else docker build --target {{target}} -t marola:{{target}} .; fi
 
 # Run the locally built jvm image against the Ollama on this machine (`--network host`, so
 # localhost:11434 is reachable from inside): `just docker-run -- --summarize --lat -27.6733 --lon -48.47`.
