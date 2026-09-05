@@ -86,6 +86,11 @@
             # surfaced once CI ran it.
             pkgs.actionlint
 
+            # actionlint shells out to shellcheck to lint the `run:` scripts inside workflow
+            # steps — without it, actionlint still exits 0 locally and a shellcheck-only finding
+            # (e.g. SC2015) only surfaces once CI runs it. Same failure mode as actionlint above.
+            pkgs.shellcheck
+
             # ai-jail — sandboxes AI coding agents (Claude Code, ...)
             # behind bubblewrap/Landlock/seccomp on Linux. Not a substitute
             # for the AGENTS.md cost/deploy rules, but a real containment

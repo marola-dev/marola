@@ -95,7 +95,9 @@ jobs:
           find site/dist -type f | sort
           echo
           cat site/dist/data/*/latest.json
-          [ -f site/dist/smoke/latest.json ] && head -c 600 site/dist/smoke/latest.json || true
+          if [ -f site/dist/smoke/latest.json ]; then
+            head -c 600 site/dist/smoke/latest.json
+          fi
 
       # Only the map is public. The artifact is site/dist and nothing more; this step deletes the
       # one file that is not the page (data/.gitkeep's sibling in site/dist) and fails the build if
