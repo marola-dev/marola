@@ -117,6 +117,7 @@ dspy/
 ```
 just run                                          # ranked list + detailed block + lore, no LLM
 just run -- --lat <lat> --lon <lon>                # explicit location (else env vars, else IP — §3.1)
+just run -- --location-url <google-maps-url>       # the same, from a Google Maps pin (MIP-0008 §5.6)
 just run -- --summarize                            # + LLM natural-language summary (§5a)
 just run -- --report-sighting <jellyfish|whale|pollution> <beach> [note]   # §5d
 just run -- --analyze-photo <path>                  # §5e
@@ -148,8 +149,12 @@ daylight); confirmed against live September daytime data instead: `06:00-10:00` 
 it used on the `origin ->` line:
 
 1. `--lat`/`--lon` flags (both required — one without the other is ignored with a warning).
-2. `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON` env vars (same both-or-neither rule).
-3. **IP geolocation** (`core/location/IpGeolocation.scala`): three free, keyless providers
+2. `--location-url <url>`: a Google Maps pin — the `/@lat,lon` viewport, `q=`/`query=`/`ll=`, or the
+   `!3dlat!4dlon` of a place URL (`Coordinates.fromMapsUrl`, pure, `CoordinatesSpec`). A short
+   `maps.app.goo.gl` link has to be expanded first (`curl -sIL`); an unreadable URL warns and is
+   ignored.
+3. `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON` env vars (same both-or-neither rule).
+4. **IP geolocation** (`core/location/IpGeolocation.scala`): three free, keyless providers
    (ipinfo.io, ipwho.is, ip-api.com) are queried and the medoid answer wins, so a single provider
    mapping a Brazilian ISP's block to its head-office city is outvoted rather than trusted. The
    output says how many providers agreed (`3/3`, `2/3`, ...). Accuracy is city-level at best, so

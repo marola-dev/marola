@@ -126,8 +126,13 @@ wrong (VPN, or an ISP whose block geolocates elsewhere — common in Brazil), pi
 
 ```bash
 just run -- --lat -27.6733 --lon -48.4700 --summarize     # one-off
+just run -- --location-url 'https://www.google.com/maps/@-27.6733,-48.47,15z'   # or paste a Google Maps pin
 export MAROLA_ORIGIN_LAT=-27.6733 MAROLA_ORIGIN_LON=-48.4700   # once per shell
 ```
+
+`--location-url` reads the `@lat,lon`, `q=lat,lon` or `!3dlat!4dlon` part of a Google Maps URL
+(quote it — the URL has `!` and `&` in it). A `maps.app.goo.gl` short link needs expanding first:
+`curl -sIL <short link> | grep -i '^location:' | tail -1`.
 
 ### 4.1 Pinning it permanently: `.env`
 

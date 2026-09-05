@@ -47,14 +47,19 @@ object Main extends KyoApp:
   final private case class Origin(coordinates: Coordinates, radiusKm: Double, source: String)
 
   /**
-   * Precedence: explicit `--lat`/`--lon` flags, then `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON`, then
+   * Precedence: explicit `--lat`/`--lon` flags, then a Google Maps pin given as `--location-url`
+   * (MIP-0008 §5.6, `Coordinates.fromMapsUrl`), then `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON`, then
    * the machine's public-IP geolocation (widened radius, see above), then the built-in Rio default
    * only if the IP lookup found nothing at all (offline). Half a pair — one flag or one env var
-   * without its partner — is ignored, not half-applied; `warnHalfPair` reports it.
+   * without its partner — is ignored, not half-applied; `warnHalfPair` reports it, as it does an
+   * unreadable `--location-url`.
    */
   private def resolveOrigin(args: Array[String], config: AppConfig): Origin < Sync =
-    (flagOrigin(args), config.origin) match
-      case (Some(coords), _) => Origin(coords, config.beachSearchRadiusKm, "--lat/--lon flags")
+    (flagOrigin(args).orElse(urlOrigin(args)), config.origin) match
+      case (Some(coords), _) if flagOrigin(args).isDefined =>
+        Origin(coords, config.beachSearchRadiusKm, "--lat/--lon flags")
+      case (Some(coords), _) =>
+        Origin(coords, config.beachSearchRadiusKm, "--location-url (Google Maps pin)")
       case (None, Some(coords)) =>
         Origin(coords, config.beachSearchRadiusKm, "MAROLA_ORIGIN_LAT/MAROLA_ORIGIN_LON")
       case (None, None) =>
@@ -83,13 +88,22 @@ object Main extends KyoApp:
       lon <- argValue(args, "--lon").flatMap(_.toDoubleOption)
     yield Coordinates(lat, lon)
 
+  private def urlOrigin(args: Array[String]): Option[Coordinates] =
+    argValue(args, "--location-url").flatMap(Coordinates.fromMapsUrl)
+
   private def warnHalfPair(args: Array[String], config: AppConfig): Unit < Async =
     val flagHalf =
       argValue(args, "--lat").isDefined != argValue(args, "--lon").isDefined
     val envHalf = config.originLat.isDefined != config.originLon.isDefined
+    val badUrl = argValue(args, "--location-url").isDefined && urlOrigin(args).isEmpty
     if flagHalf then
       Console.printLine(
         "warning: --lat and --lon must be given together — ignoring the one present"
+      )
+    else if badUrl then
+      Console.printLine(
+        "warning: no pin found in --location-url — expected a google.com/maps URL with @lat,lon, " +
+          "q=lat,lon or !3dlat!4dlon (expand a maps.app.goo.gl short link first); ignoring it"
       )
     else if envHalf then
       Console.printLine(

@@ -13,4 +13,4 @@ Accepted → Implemented (or Rejected / Superseded).
 | [MIP-0005](./MIP-0005-map-and-static-site.md) | The map — every beach's daily recommendation on a static site the pipeline feeds | Implemented | 2026-09-05 |
 | [MIP-0006](./MIP-0006-live-look-user-cameras.md) | "How does it look right now?" — a live look at each beach, fed by users' cameras | Draft | 2026-09-05 |
 | [MIP-0007](./MIP-0007-time-series-foundation-models.md) | Time-series foundation models for marola's own series — local open models first, Azure opt-in | Draft | 2026-09-05 |
-| [MIP-0008](./MIP-0008-docker-images-and-smoke-test.md) | Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows | Draft | 2026-09-05 |
+| [MIP-0008](./MIP-0008-docker-images-and-smoke-test.md) | Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows | Accepted | 2026-09-05 |
