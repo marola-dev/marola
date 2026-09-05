@@ -3,5 +3,8 @@
     "commit": "Co-Authored-By: Claude <noreply@anthropic.com>",
     "pr": "",
     "sessionUrl": false
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
   }
 }

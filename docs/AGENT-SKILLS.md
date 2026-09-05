@@ -12,8 +12,14 @@ that map to a real step of this repo's workflow and skip the rest.
 
 ## 2. superpowers — what fits, what doesn't
 
-The plugin (Jesse Vincent, `obra/superpowers`; install with `/plugin install
-superpowers@claude-plugins-official`) ships workflow skills that activate from context. As of
+The plugin (Jesse Vincent, `obra/superpowers`) ships workflow skills that activate from context.
+It is **declared in the repo**, not installed by hand: `.claude/settings.json` has
+`"enabledPlugins": {"superpowers@claude-plugins-official": true}`, so Claude Code installs and
+enables it for whoever opens this folder and accepts the trust dialog — the nearest thing to
+`nix develop` for plugins (plugin code is cached under `~/.claude/plugins`, not vendored; it is not
+pinned to a version). Opt out on one machine with the same key set to `false` in
+`.claude/settings.local.json`. Verify with `/plugin` → installed list. Manual install elsewhere:
+`/plugin install superpowers@claude-plugins-official`. As of
 2026-09-05 it lists these; the mapping to marola's workflow is ours:
 
 | superpowers skill | Fit for marola | How it slots in |
