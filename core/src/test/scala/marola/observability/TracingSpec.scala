@@ -18,7 +18,12 @@ class TracingSpec extends munit.FunSuite:
 
   test("Noop.llmSpan runs the wrapped effect and returns its result unchanged") {
     val effect: String < Sync = Sync.defer("summary")
-    assertEquals(Sync.Unsafe.evalOrThrow(Tracing.Noop.llmSpan("some-model")(effect)), "summary")
+    assertEquals(
+      Sync.Unsafe.evalOrThrow(
+        Tracing.Noop.llmSpan("some-model", Map.empty)(effect)(_ => Map.empty)
+      ),
+      "summary"
+    )
   }
 
   test("Noop does not evaluate the effect more than once") {

@@ -11,6 +11,7 @@ import marola.knowledge.OceanQa
 import marola.llm.{CompiledPrompt, LlmClient, Reviewer}
 import marola.location.IpGeolocation
 import marola.model.{BestHour, Coordinates}
+import marola.observability.Tracing
 import marola.sightings.{Sighting, SightingKind}
 import marola.site.SiteBuilder
 
@@ -163,8 +164,10 @@ object Main extends KyoApp:
         Console.printLine(
           s"(--ask needs an LLM: llmProvider=${config.llmProvider} is not configured)"
         )
-      case Some(client) =>
+      case Some(untraced) =>
         for
+          tracing <- resolveTracing(config)
+          client = config.tracedLlmClient(tracing).getOrElse(untraced)
           _ <- Console.printLine(
             s"Searching ${config.knowledgeDir} (embedder: ${config.localEmbedModel}) and asking " +
               s"${config.localLlmModel}..."
@@ -366,6 +369,24 @@ object Main extends KyoApp:
             case failure => Console.printLine(s"(failed to record sighting: $failure)")
         yield ()
 
+  /**
+   * `AppConfig.tracing` with its one failure mode handled: an MLflow server that is not up when
+   * `MAROLA_TRACES=mlflow` (the experiment lookup fails) prints a warning and traces nothing,
+   * rather than failing a recommendation over observability.
+   */
+  private def resolveTracing(config: AppConfig): Tracing < Async =
+    for
+      outcome <- Abort.run(Abort.catching[Throwable](config.tracing))
+      tracing <- outcome match
+        case Result.Success(t) => Sync.defer(t)
+        case failure =>
+          Console
+            .printLine(
+              s"(traces disabled: MAROLA_TRACES=${config.tracesBackend} but the backend is unreachable: $failure)"
+            )
+            .andThen(Tracing.Noop)
+    yield tracing
+
   private def runRecommendation(args: Array[String], config: AppConfig): Unit < Async =
     val summarize = args.contains("--summarize")
     val brief = args.contains("--brief")
@@ -382,25 +403,32 @@ object Main extends KyoApp:
       _ <- Console.printLine(
         s"water quality -> ${water.map(_.name).getOrElse("no provider for this region (MIP-0001 §11)")}"
       )
-      results <- config.tracing.withSpan("bestPerBeachTomorrow") {
-        Recommender.bestPerBeachTomorrow(
-          origin.coordinates,
-          origin.radiusKm,
-          distanceRefiner = config.distanceRefiner,
-          waterQuality = water
-        )
+      // MIP-0010 task 6: one trace per run — `marola.recommend` is the root span, the
+      // `bestPerBeachTomorrow` fetch/score step and the two LLM calls (`llm.<model>`) nest under it.
+      tracing <- resolveTracing(config)
+      _ <- tracing.withSpan("marola.recommend", Map("origin.source" -> origin.source.toString)) {
+        for
+          results <- tracing.withSpan("bestPerBeachTomorrow") {
+            Recommender.bestPerBeachTomorrow(
+              origin.coordinates,
+              origin.radiusKm,
+              distanceRefiner = config.distanceRefiner,
+              waterQuality = water
+            )
+          }
+          _ <-
+            if results.isEmpty then
+              Console.printLine("No beaches found nearby, or no forecast data for tomorrow yet.")
+            else printLines(results.zipWithIndex.take(15), brief)
+          _ <- printDetail(results.headOption, brief)
+          _ <- if summarize then summarizeTop(config, tracing, results.headOption) else noop
+          _ <- printLore(
+            results.headOption,
+            origin.coordinates,
+            enabled = !brief && config.seaLoreEnabled && !args.contains("--no-lore")
+          )
+        yield ()
       }
-      _ <-
-        if results.isEmpty then
-          Console.printLine("No beaches found nearby, or no forecast data for tomorrow yet.")
-        else printLines(results.zipWithIndex.take(15), brief)
-      _ <- printDetail(results.headOption, brief)
-      _ <- if summarize then summarizeTop(config, results.headOption) else noop
-      _ <- printLore(
-        results.headOption,
-        origin.coordinates,
-        enabled = !brief && config.seaLoreEnabled && !args.contains("--no-lore")
-      )
     yield ()
 
   private def printDetail(top: Option[BestHour], brief: Boolean): Unit < Async =
@@ -436,8 +464,12 @@ object Main extends KyoApp:
    * the network call — a missing/malformed resource file threw uncaught past an earlier version of
    * this function, since it happened outside the block that was actually being caught.
    */
-  private def summarizeTop(config: AppConfig, top: Option[BestHour]): Unit < Async =
-    (top, config.llmClient) match
+  private def summarizeTop(
+      config: AppConfig,
+      tracing: Tracing,
+      top: Option[BestHour]
+  ): Unit < Async =
+    (top, config.tracedLlmClient(tracing)) match
       case (None, _) => Console.printLine("(nothing to summarize — no results)")
       case (_, None) =>
         Console.printLine(

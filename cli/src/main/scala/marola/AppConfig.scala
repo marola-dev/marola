@@ -5,9 +5,9 @@ import kyo.*
 import marola.beaches.RouteFinder
 import marola.knowledge.{FileKnowledgeStore, OceanQa, OllamaEmbedder}
 import marola.ledger.{MlflowRunLedger, RunLedger}
-import marola.llm.{AzureFoundryLlmClient, LlmClient, LocalLlmClient}
+import marola.llm.{AzureFoundryLlmClient, LlmClient, LocalLlmClient, TracedLlmClient}
 import marola.model.Coordinates
-import marola.observability.{AzureMonitorTracing, Tracing}
+import marola.observability.{AzureMonitorTracing, MlflowTracing, Tracing}
 import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore, SightingStore}
 import marola.vision.{AzureVisionClient, LocalVisionClient, VisionClient}
 import marola.water.{ImaScWaterQualityClient, WaterQualityClient}
@@ -108,7 +108,8 @@ final case class AppConfig(
     appInsightsConnectionString: Option[String],
     mlflowTrackingUri: Option[String],
     mlflowExperiment: String,
-    tracesBackend: TraceBackend
+    tracesBackend: TraceBackend,
+    traceContent: Boolean
 ):
   /**
    * A fixed "current location" for the CLI, from `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON` — both or
@@ -151,7 +152,7 @@ final case class AppConfig(
         })",
       s"appinsights=${secret(appInsightsConnectionString)}",
       s"mlflow=${secret(mlflowTrackingUri)}(experiment=$mlflowExperiment)",
-      s"traces=$tracesBackend"
+      s"traces=$tracesBackend${if traceContent then "(content)" else ""}"
     ).mkString(" ")
 
   /** MIP-0001 §5.2. `None` = no data, which `Swimability.waterVerdict` scores as nothing. */
@@ -183,6 +184,22 @@ final case class AppConfig(
     llmProvider match
       case Provider.Azure => foundryProjectEndpoint.map(AzureFoundryLlmClient(_, foundryApiVersion))
       case Provider.Local => Some(LocalLlmClient(localLlmBaseUrl, localLlmModel))
+
+  /**
+   * `llmClient` behind `TracedLlmClient` (MIP-0010 task 6): one `llm.<model>` span per call on the
+   * given `Tracing` — transparent with `Tracing.Noop`. The model name on the span is the local
+   * model or, for Foundry, the deployment name (the endpoint's last path segment — see
+   * `AzureFoundryLlmClient`'s URL shape). Prompt/completion text only with
+   * `MAROLA_TRACE_CONTENT=1`.
+   */
+  def tracedLlmClient(tracing: Tracing): Option[LlmClient] =
+    llmClient.map(TracedLlmClient(_, llmModelName, tracing, traceContent))
+
+  def llmModelName: String =
+    llmProvider match
+      case Provider.Local => localLlmModel
+      case Provider.Azure =>
+        foundryProjectEndpoint.map(_.stripSuffix("/").split('/').last).getOrElse("foundry")
 
   /**
    * Same shape as `llmClient`: `None` for `sightingStoreProvider = Azure` without both Cosmos
@@ -236,17 +253,21 @@ final case class AppConfig(
     )
 
   /**
-   * The `Tracing` instance `Main` wraps the pipeline in. `Mlflow` has no backend yet (MIP-0010
-   * tracing-lane task 6) so it falls back to `Noop` for now, same as `Off`; `Azure` without a
-   * connection string configured (a `tracesBackend` set by hand while the env var is unset) also
-   * falls back to `Noop` rather than throwing — there's nothing to connect to.
+   * The `Tracing` instance `Main` wraps the pipeline in — resolved once per run, in `Main`, and
+   * passed down (it is an effect: `MlflowTracing` looks the traces experiment up over REST before
+   * the first span). `Mlflow` without a tracking URI, and `Azure` without a connection string (a
+   * `tracesBackend` set by hand while the env var is unset), fall back to `Noop` rather than
+   * throwing — there's nothing to connect to.
    */
-  def tracing: Tracing =
+  def tracing: Tracing < Sync =
     tracesBackend match
       case TraceBackend.Azure =>
-        appInsightsConnectionString.fold(Tracing.Noop)(AzureMonitorTracing(_))
-      case TraceBackend.Mlflow => Tracing.Noop // not implemented yet — MIP-0010 tracing-lane task 6
-      case TraceBackend.Off    => Tracing.Noop
+        Sync.defer(appInsightsConnectionString.fold(Tracing.Noop)(AzureMonitorTracing(_)))
+      case TraceBackend.Mlflow =>
+        mlflowTrackingUri match
+          case Some(uri) => MlflowTracing(uri, mlflowExperiment)
+          case None      => Sync.defer(Tracing.Noop)
+      case TraceBackend.Off => Sync.defer(Tracing.Noop)
 
 object AppConfig:
   def fromEnv: AppConfig =
@@ -302,5 +323,7 @@ object AppConfig:
       // The experiment prefix (`marola/<kind>`), not a full experiment name — see `runLedger`.
       mlflowExperiment = sys.env.getOrElse("MAROLA_MLFLOW_EXPERIMENT", "marola"),
       tracesBackend =
-        TraceBackend.fromEnv(sys.env.get("MAROLA_TRACES"), appInsightsConnectionString)
+        TraceBackend.fromEnv(sys.env.get("MAROLA_TRACES"), appInsightsConnectionString),
+      // Off by default: the prompt carries the swimmer's coordinates (MIP-0010 §5).
+      traceContent = TracedLlmClient.contentFromEnv(sys.env.get("MAROLA_TRACE_CONTENT"))
     )

@@ -1,13 +1,12 @@
 package marola.ledger
 
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 
 import kyo.*
 
 import marola.http.Http
 import marola.json.JsonValue
+import marola.ledger.MlflowApi.field
 import marola.ledger.RunLedger.RunHandle
 
 /**
@@ -88,30 +87,8 @@ final class MlflowRunLedger(
   private def runUrl(experimentId: String, runId: String): String =
     s"$root/#/experiments/$experimentId/runs/$runId"
 
-  /**
-   * `experiments/get-by-name`, falling back to `experiments/create` only on a 404 (not found) — any
-   * other failure (network, 5xx) is surfaced rather than masked as "must not exist yet".
-   */
   private def getOrCreateExperiment(name: String): String < Sync =
-    for
-      outcome <- Abort.run(
-        Abort.catching[Throwable](
-          Http.getString(s"$base/experiments/get-by-name?experiment_name=${encode(name)}")
-        )
-      )
-      experimentId <- outcome match
-        case Result.Success(body) =>
-          Sync.defer(field(JsonValue.parse(body)("experiment"), "experiment_id"))
-        case Result.Failure(e: Http.HttpError) if e.status == 404 => createExperiment(name)
-        case Result.Failure(e)                                    => Sync.defer(throw e)
-        case Result.Panic(e)                                      => Sync.defer(throw e)
-    yield experimentId
-
-  private def createExperiment(name: String): String < Sync =
-    val body = JsonValue.obj("name" -> JsonValue.str(name))
-    Http
-      .postJson(s"$base/experiments/create", body.render)
-      .map(resp => field(JsonValue.parse(resp), "experiment_id"))
+    MlflowApi.getOrCreateExperiment(trackingUri, name)
 
   private def createRun(experimentId: String, name: String): String < Sync =
     val body = JsonValue.obj(
@@ -198,13 +175,6 @@ object MlflowRunLedger:
 
   /** "Metric, param, and tag keys can be up to 250 characters in length" (same source). */
   private val MaxKeyLength = 250
-
-  private def encode(s: String): String = URLEncoder.encode(s, UTF_8)
-
-  private def field(json: JsonValue, key: String): String =
-    json(key).str.getOrElse(
-      throw new RuntimeException(s"mlflow response missing '$key': ${json.render}")
-    )
 
   /**
    * Truncates an oversized param/metric key to `MaxKeyLength` and warns on stderr — there is no

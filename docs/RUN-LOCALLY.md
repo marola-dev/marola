@@ -364,6 +364,19 @@ just mlflow-ui                                   # the run: params model/embed_m
 just mlflow-down                                 # stop it; .tmp/mlflow/ keeps the history, `rm -rf .tmp/mlflow` wipes it
 ```
 
+**Traces too.** The same server ingests OpenTelemetry traces: with `MAROLA_TRACES=mlflow` every
+recommendation is one trace — `marola.recommend` → `bestPerBeachTomorrow` + `llm.<model>` for the
+draft and for the review, each LLM span with `gen_ai.request.model`, message count and prompt/
+completion sizes (latency is the span itself). Prompt and completion *text* are attached only if
+you also set `MAROLA_TRACE_CONTENT=1` — the prompt has your coordinates in it.
+
+```bash
+MAROLA_TRACES=mlflow MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000 just run -- --summarize
+# ... unchanged output; then in the UI: experiment "marola/traces", one trace, 4 spans
+```
+
+If the server is not up, marola prints `(traces disabled: …)` and carries on untraced.
+
 `MAROLA_MLFLOW_EXPERIMENT` (default `marola`) is the experiment *prefix* — runs land in
 `marola/benchmark`, the DSPy compile step's in `marola/prompt-compile`, traces (§5f of
 `ARCHITECTURE.md`, `MAROLA_TRACES=mlflow`) in `marola/traces`. Unset `MAROLA_MLFLOW_TRACKING_URI`

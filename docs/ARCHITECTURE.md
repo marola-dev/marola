@@ -92,7 +92,7 @@ azure/src/main/scala/marola/     every optional Azure integration lives here, no
   vision/AzureVisionClient.scala    §5e — Azure AI Vision
   beaches/RouteFinder.scala         §5b — Azure Maps real travel distance
   sightings/CosmosDbSightingStore.scala   §5d — Cosmos DB
-  observability/Telemetry.scala     §5f — Application Insights via OpenTelemetry
+  observability/AzureMonitorTracing.scala  §5f — Application Insights via OpenTelemetry (the `azure` Tracing backend)
 
 cli/src/main/scala/marola/       depends on core + local + azure — the one place that picks
                                   a backend per integration
@@ -189,8 +189,8 @@ flowchart TD
 entry point to the hardcoded pipeline above — not shown in the diagram since it's a parallel access
 path, not a stage in this one.
 
-Telemetry (§5f) wraps the pipeline in an OpenTelemetry span when configured — cross-cutting,
-not shown as a pipeline stage.
+Tracing (§5f) wraps the pipeline in a `marola.recommend` span and each LLM call in an `llm.<model>`
+span when configured — cross-cutting, not shown as a pipeline stage.
 
 Cross-cutting: rate limiting (per Telegram user ID) and a cost-governor check before any paid call,
 built early, not bolted on.
@@ -209,7 +209,7 @@ configured (so `Main` can fail gracefully with a clear message rather than a sta
 | 5c | Agentic tool access | MCP server over stdio (any local MCP client) | *(same server; a Foundry agent needs the HTTP/SSE transport variant instead — not built, see §5c)* | n/a — always available |
 | 5d | Sighting reports | JSON-lines file | Cosmos DB container | `MAROLA_SIGHTING_STORE_PROVIDER=azure` |
 | 5e | Photo analysis | Multimodal Ollama model (`llava`) | Azure AI Vision Image Analysis | `MAROLA_VISION_PROVIDER=azure` |
-| 5f | Observability | Off (no-op) | Application Insights via OpenTelemetry | set `APPLICATIONINSIGHTS_CONNECTION_STRING` |
+| 5f | Observability | Off (no-op); `MAROLA_TRACES=mlflow` → OTLP traces into the local MLflow server (MIP-0010) | Application Insights via OpenTelemetry | `MAROLA_TRACES=off\|mlflow\|azure` (unset + `APPLICATIONINSIGHTS_CONNECTION_STRING` ⇒ `azure`) |
 | 5g | Bathing-water quality (MIP-0001) | IMA/SC feed, auto-selected when the origin is in Santa Catarina; `none` elsewhere | *(none — regional agencies, not a cloud service; see MIP-0001 §5.2)* | `MAROLA_WATER_QUALITY_PROVIDER=auto\|ima-sc\|none` |
 | 5h | Ocean knowledge Q&A — local RAG (MIP-0001, `FUTURE-WORK.md` §9.1) | `knowledge/*.md` embedded by Ollama (`llama3.2` itself by default), JSON index under `data/` | *(not built — Azure AI Search is the obvious sibling in Phase 2)* | `MAROLA_LOCAL_EMBED_MODEL`, `MAROLA_KNOWLEDGE_DIR` |
 
@@ -374,27 +374,45 @@ found` error surfacing cleanly through the `Abort`/`Result` error handling rathe
 Running `ollama pull llava` would complete the verification. `AzureVisionClient`'s REST shape is
 confirmed against Microsoft's own published docs, unverified against a live account.
 
-### 5f. Observability — `observability/Telemetry.scala`
+### 5f. Observability — `core/observability/Tracing`, `local/…/MlflowTracing`, `azure/…/AzureMonitorTracing`
 
-Application Insights via OpenTelemetry — infra-level tracing (HTTP calls, latency, errors),
-complementing rather than replacing Langfuse's *LLM-specific* tracing in the DSPy compile step
-(§5a). `Telemetry.initialize` returns `None` (no-op) unless `APPLICATIONINSIGHTS_CONNECTION_STRING`
-is set — Azure's own standard env var name, used directly since (unlike Langfuse's Python env
-vars) it already matches how every other Azure Monitor SDK/agent auto-detects it.
-`Telemetry.withSpan` wraps `Recommender.bestPerBeachTomorrow`'s call in `Main`.
+Infra-level tracing (the pipeline, the HTTP-bound steps, latency, errors) plus one span per LLM
+call, behind a vendor-free trait in `core` (`Tracing.withSpan`, `Tracing.llmSpan`; `Tracing.Noop`
+is the default) — MIP-0010 tasks 5-6. `MAROLA_TRACES=off|mlflow|azure` picks the backend in
+`AppConfig.tracing`; unset keeps the pre-MIP behaviour (`azure` when
+`APPLICATIONINSIGHTS_CONNECTION_STRING` is set, off otherwise). `Main` resolves it once per run and
+opens `marola.recommend` as the root span with `bestPerBeachTomorrow` and the two `llm.<model>`
+spans (draft, review) nested under it — one trace per recommendation, three or four spans.
 
-**Deliberately shallow integration, documented as such in the code:** `withSpan` starts and ends a
-span around the two `Sync.defer` boundaries of a Kyo effect rather than a true try/finally — a span
-is left unclosed if the wrapped effect throws. Acceptable for a demonstration plug-in point in a
-CLI (no long-lived process where an orphaned span accumulates), not something to copy into a real
-production service without hardening.
+- **`local/observability/MlflowTracing`** (`mlflow`): OTLP/HTTP to `<MAROLA_MLFLOW_TRACKING_URI>/v1/traces`
+  with the `x-mlflow-experiment-id` header MLflow requires (experiment `<prefix>/traces`, resolved
+  by name over REST at startup through `ledger/MlflowApi`, the same call the run ledger uses).
+  Synchronous export per span (`SimpleSpanProcessor`) — a short-lived CLI has no place to flush a
+  batch. Parent/child nesting is explicit (an `AtomicReference` to the current span, restored on
+  end) rather than OpenTelemetry's thread-local context, which a Kyo effect cannot be trusted to
+  stay on; exact for the CLI's one linear pipeline, documented as wrong for concurrent pipelines.
+  A failing effect closes its span with `ERROR` and rethrows. If the server is down, `Main` prints
+  a warning and traces nothing — observability never fails a recommendation.
+- **`core/llm/TracedLlmClient`** wraps `LocalLlmClient`/`AzureFoundryLlmClient`
+  (`AppConfig.tracedLlmClient`): `gen_ai.operation.name=chat`, `gen_ai.request.model`, message count,
+  prompt/completion character counts. **No token counts** — `LlmClient.complete` returns the text
+  and drops the response's `usage` block; surfacing it means widening the trait (deliberately not
+  done in MIP-0010). Prompt and completion *text* are attached only with `MAROLA_TRACE_CONTENT=1`:
+  the prompt carries the swimmer's coordinates.
+- **`azure/observability/AzureMonitorTracing`** (`azure`): the former `Telemetry.scala` behind the
+  trait, unchanged in behaviour — `withSpan` only; `llmSpan` falls back to the trait default (same
+  span, result attributes dropped). Its shallow try/finally gap stands: a span is left unclosed if
+  the wrapped effect throws.
 
-**Status:** compiles against real `com.azure:azure-monitor-opentelemetry-autoconfigure:1.4.0` and
-`io.opentelemetry:opentelemetry-sdk-extension-autoconfigure:1.49.0` APIs (confirmed via jar
-inspection: `AutoConfiguredOpenTelemetrySdkBuilder implements AutoConfigurationCustomizer`, so it
-passes straight into `AzureMonitorAutoConfigure.customize`). Unverified against a live Application
-Insights resource (none provisioned) — the no-op default path (`otel = None`) was exercised via
-every other live-tested run above, all of which had no connection string set.
+**Status:** `MlflowTracing` verified offline against OpenTelemetry's in-memory exporter
+(`MlflowTracingSpec`: names, attributes, nesting, error status, endpoint/header); the OTLP endpoint
+and header are MLflow's documented contract (MIP-0010 §4.3, fetched 2026-09-05). Not yet verified
+against a live `just mlflow-up` server from this session (no Docker daemon there) — run
+`MAROLA_TRACES=mlflow MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000 just run -- --summarize`
+on the host and expect one trace in experiment `marola/traces`. `AzureMonitorTracing` compiles
+against the real `azure-monitor-opentelemetry-autoconfigure:1.4.0` API on OpenTelemetry 1.65.0
+(one `OpenTelemetryVersion` in `build.sbt` for both modules); unverified against a live Application
+Insights resource (none provisioned).
 
 ### 5g. Bathing-water quality, tides, and sea lore — `water/`, `conditions/Tides`, `lore/`
 
@@ -551,7 +569,7 @@ heuristics' thresholds/weights (the bigger lift) remains future work.
   tests are cheap" convention (`AGENTS.md`'s code style section). Every integration layer was
   instead verified by actually running it against live services/data — see each subsection of §5
   for exactly what was and wasn't exercised.
-- **`Telemetry.withSpan`'s shallow try/finally gap** — see §5f.
+- **`AzureMonitorTracing.withSpan`'s shallow try/finally gap** — see §5f (`MlflowTracing` does close its span on failure).
 - **`CompiledPrompt`'s chat-message replay is a good-faith approximation** of DSPy's own
   `ChatAdapter` formatting, not byte-identical — see §5a.
 

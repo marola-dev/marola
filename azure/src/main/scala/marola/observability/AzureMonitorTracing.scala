@@ -36,9 +36,15 @@ import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
 final class AzureMonitorTracing private (otel: OpenTelemetry) extends Tracing:
   import AzureMonitorTracing.TracerName
 
-  def withSpan[A](name: String)(effect: A < Sync): A < Sync =
+  def withSpan[A, S](name: String, attributes: Map[String, String])(
+      effect: A < (Sync & S)
+  ): A < (Sync & S) =
     for
-      span <- Sync.defer(otel.getTracer(TracerName).spanBuilder(name).startSpan())
+      span <- Sync.defer {
+        val builder = otel.getTracer(TracerName).spanBuilder(name)
+        attributes.foreach((k, v) => builder.setAttribute(k, v))
+        builder.startSpan()
+      }
       result <- effect
       _ <- Sync.defer(span.end())
     yield result

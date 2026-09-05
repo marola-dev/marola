@@ -123,10 +123,29 @@ lazy val core = (project in file("core"))
   .settings(baseSettings)
   .settings(name := "marola-core")
 
+// One OpenTelemetry version for both modules that touch it (MIP-0010 §4.3): `local`'s OTLP/HTTP
+// exporter to MLflow and `azure`'s Application Insights autoconfigure. `azure-monitor-opentelemetry-
+// autoconfigure:1.4.0` itself pulls 1.49.0 transitively (`cs resolve`, 2026-09-05); the explicit
+// 1.65.0 (Maven Central's latest, `cs complete-dep`, 2026-09-05) below evicts that so the assembled
+// CLI never carries two OpenTelemetry SDKs.
+val OpenTelemetryVersion = "1.65.0"
+
 lazy val local = (project in file("local"))
   .dependsOn(core)
   .settings(baseSettings)
-  .settings(name := "marola-local") // deliberately no extra dependencies: java.net.http (JDK) only
+  .settings(
+    name := "marola-local",
+    // Still zero Azure SDK dependency (the module's invariant). The one non-JDK dependency is the
+    // OpenTelemetry SDK + OTLP/HTTP exporter for `observability/MlflowTracing` (MIP-0010 task 6):
+    // MLflow ingests traces over OTLP/HTTP only, and hand-rolling the protobuf payload over
+    // `java.net.http` would be a worse dependency than the reference exporter. Everything else in
+    // this module stays `Http`/`JsonValue` over `java.net.http`.
+    libraryDependencies ++= Seq(
+      "io.opentelemetry" % "opentelemetry-sdk" % OpenTelemetryVersion,
+      "io.opentelemetry" % "opentelemetry-exporter-otlp" % OpenTelemetryVersion,
+      "io.opentelemetry" % "opentelemetry-sdk-testing" % OpenTelemetryVersion % Test
+    )
+  )
 
 lazy val azure = (project in file("azure"))
   .dependsOn(core)
@@ -142,7 +161,9 @@ lazy val azure = (project in file("azure"))
       // --- Cosmos DB (optional sighting-report store) ---
       "com.azure" % "azure-cosmos" % "4.71.0",
       // --- Monitor / Application Insights (optional observability backend, no-op by default) ---
-      "com.azure" % "azure-monitor-opentelemetry-autoconfigure" % "1.4.0"
+      "com.azure" % "azure-monitor-opentelemetry-autoconfigure" % "1.4.0",
+      // Pinned explicitly so it evicts the 1.49.0 the line above pulls — see OpenTelemetryVersion.
+      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % OpenTelemetryVersion
     )
   )
 
