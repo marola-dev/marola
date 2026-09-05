@@ -20,6 +20,15 @@ install-hooks:
     git config core.hooksPath .githooks
 
 # ---------------------------------------------------------------------
+# Git
+# ---------------------------------------------------------------------
+
+# Last 10 commits on the current branch, one line each (short hash, relative age, author, subject,
+# refs). `just log 25` for more; `just log 10 --stat` to see the files each touched.
+log n="10" *args:
+    @git --no-pager log -n {{n}} --abbrev-commit --decorate --date=relative --format='%C(yellow)%h%C(reset) %C(dim)%ad%C(reset) %C(blue)%an%C(reset) %s%C(auto)%d%C(reset)' {{args}}
+
+# ---------------------------------------------------------------------
 # Build / test / lint
 # ---------------------------------------------------------------------
 
