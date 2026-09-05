@@ -71,7 +71,17 @@ object Report:
               case BathingCondition.Proper   => "PRÓPRIA"
               case BathingCondition.Improper => "IMPRÓPRIA"
               case BathingCondition.Unknown  => "unclassified"
-            val count = s.enterococciPer100ml.map(n => s", $n enterococci/100mL").getOrElse("")
+            // CONAMA 274 classifies on the last five samples, so a point can be IMPRÓPRIA while its
+            // latest count is low (Ponto 04 at Praia da Saudade: IMPRÓPRIA, 10/100mL). Say so.
+            val count = s.enterococciPer100ml
+              .map { n =>
+                val why =
+                  if s.condition == BathingCondition.Improper && n <= 100 then
+                    " (classified on the last 5 samples, not this one)"
+                  else ""
+                s", latest $n enterococci/100mL$why"
+              }
+              .getOrElse("")
             val rain = s.rain.map(r => s", rain $r").getOrElse("")
             val temp = s.waterTempC.map(t => f", water $t%.0f°C").getOrElse("")
             s"${p.pointName} (${p.location}): $cond, ${s.sampledOn.format(dateFormat)}$count$rain$temp"

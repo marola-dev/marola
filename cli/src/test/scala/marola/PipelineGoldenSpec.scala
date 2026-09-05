@@ -96,6 +96,10 @@ class PipelineGoldenSpec extends munit.FunSuite:
       )
     )
     assertEquals(results, results.sortBy(-_.score))
+    // never recommend the dark: every beach's best hour is a daylight hour (the fixture has is_day)
+    results.foreach(r =>
+      assertEquals(r.hour.isDaylight, Some(true), s"${r.beach.name} at ${r.hour.time}")
+    )
     results.foreach { r =>
       assert(r.hour.time.toLocalDate.isEqual(LocalDate.of(2026, 9, 6)), r.hour.time.toString)
       assert(r.score >= 0 && r.score <= 100)

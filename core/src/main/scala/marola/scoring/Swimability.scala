@@ -108,6 +108,27 @@ object Swimability:
       case Some(p) if p >= HeavyRainChancePct => (-10, Some(f"${p}%.0f%% chance of rain"))
       case _                                  => (0, None)
 
+  /**
+   * Night is not a swim slot: no lifeguards, no visibility, no way to check the shoreline for
+   * jellyfish. A heavy penalty rather than a veto so a beach with data only for dark hours still
+   * ranks somewhere; in practice any daylight hour beats any dark one. Before this every hour tied
+   * on a flat day and `00:00` "won" by being first (RUN-LOCALLY.md's own sample output).
+   */
+  private val DarkPenalty = -60
+
+  private def daylightDelta(hour: HourlyConditions): (Int, Option[String]) =
+    hour.isDaylight match
+      case Some(false) => (DarkPenalty, Some("dark"))
+      case _           => (0, None)
+
+  /**
+   * Tie-breaker among equally scored hours: distance from 10:00. Mid-morning is when lifeguard
+   * posts are staffed, the light is best and the sea is usually calmest before the afternoon wind —
+   * so a flat forecast recommends 10:00, not 06:00 or 17:00. Lower is better.
+   */
+  def hourPreference(hour: HourlyConditions): Int =
+    math.abs(hour.time.getHour - 10)
+
   private def jellyfishDelta(hour: HourlyConditions): (Int, Option[String]) =
     jellyfishRisk(hour) match
       case JellyfishRisk.High     => (-25, Some("elevated jellyfish likelihood"))
@@ -181,6 +202,7 @@ object Swimability:
       seaTempDelta(hour),
       precipitationDelta(hour),
       jellyfishDelta(hour),
+      daylightDelta(hour),
       (water.delta, water.note)
     )
     val total = if water.veto then 0 else (100 + deltas.map(_._1).sum).max(0).min(100)

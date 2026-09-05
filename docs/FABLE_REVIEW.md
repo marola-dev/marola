@@ -181,6 +181,15 @@ written-not-run" status notes in `ARCHITECTURE.md` §5 matched the code in every
 and correct; `.gitignore` covers `.idea/`, `.bsp/`, `.tmp/`, and `data/`, and none of them leaked
 into the initial commit.
 
+### C8. The "best hour" was always midnight — **fixed**
+
+Found from a real run after merge: every beach's best hour printed as `00:00` and the LLM
+rightly called it "not a good night for swimming". `Swimability.score` ignored `isDaylight`, so on
+a flat day all 24 hours tied and the first one won. Fixed: a −60 "dark" deduction, and equal
+scores now break ties toward 10:00 (`Swimability.hourPreference`) — staffed lifeguard posts, best
+light, calmest sea. Same run showed `Tides.extrema` reporting a 2cm wobble as a high/low pair;
+turns now need ≥ 0.1m of range. Golden test asserts every recommended hour is daylight.
+
 ### Regression mechanism added after the review
 
 `cli/src/test/scala/marola/PipelineGoldenSpec.scala` replays recorded real responses (Overpass,

@@ -166,4 +166,20 @@ class SwimabilitySpec extends munit.FunSuite:
     assertEquals(Swimability.score(calmInSeason), Swimability.score(calmOutOfSeason))
   }
 
+  test("a dark hour scores far below the same conditions in daylight, and says so") {
+    val (day, dayNotes) = Swimability.score(hour(isDaylight = Some(true)))
+    val (night, nightNotes) = Swimability.score(hour(isDaylight = Some(false)))
+    assert(night <= day - 50, s"day=$day night=$night")
+    assert(nightNotes.contains("dark") && !dayNotes.contains("dark"))
+    // unknown daylight is not penalised (Open-Meteo omitted is_day)
+    assertEquals(Swimability.score(hour(isDaylight = None))._1, day)
+  }
+
+  test("hourPreference favours mid-morning: 10:00 beats 07:00 beats 00:00") {
+    def at(h: Int) = hour(time = LocalDateTime.of(2026, 9, 6, h, 0))
+    assert(Swimability.hourPreference(at(10)) < Swimability.hourPreference(at(7)))
+    assert(Swimability.hourPreference(at(7)) < Swimability.hourPreference(at(0)))
+    assertEquals(Swimability.hourPreference(at(10)), 0)
+  }
+
 end SwimabilitySpec

@@ -42,7 +42,7 @@ object Recommender:
       refined <- refineDistances(origin, beaches, distanceRefiner)
       water <- fetchWaterQuality(waterQuality, refined)
       scored <- traverse(refined)(beach => scoreTomorrow(beach, water.get(beach.name), today))
-    yield scored.flatten.sortBy(-_.score)
+    yield scored.flatten.sortBy(b => (-b.score, Swimability.hourPreference(b.hour)))
 
   /**
    * MIP-0001: one call for the whole region, matched to the short list. Same dependency-inversion
@@ -106,9 +106,9 @@ object Recommender:
         all
           .groupBy(_.beach.name)
           .values
-          .map(_.maxBy(_.score))
+          .map(_.minBy(b => (-b.score, Swimability.hourPreference(b.hour))))
           .toList
-          .sortBy(-_.score)
+          .sortBy(b => (-b.score, Swimability.hourPreference(b.hour)))
     }
 
   // `today` is injectable (the one clock read in the pipeline) so the fixture-replay regression
