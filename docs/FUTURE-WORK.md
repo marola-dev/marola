@@ -394,6 +394,10 @@ checkbox exercises.
 
 ### 9.1 "marola knows the ocean": RAG and/or fine-tuning over marine literature
 
+> First concrete step proposed: `docs/mips/MIP-0001-water-quality-and-sea-lore.md` — a curated,
+> sourced sea-lore file shown verbatim in every reply (the seed of this corpus), plus IMA/SC
+> bathing-water quality in the ranking.
+
 **The pitch:** today, if a user asks "what should I do if I get stung by a jellyfish here," marola
 has nothing — it's not a question `Recommender`'s pipeline answers at all. A grounded knowledge base
 turns marola from "a conditions calculator with a sentence generator on top" into something that can

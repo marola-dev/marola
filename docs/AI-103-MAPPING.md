@@ -21,7 +21,7 @@ decoration.
 | Manage costs (budgets, scale-to-zero) | `ARCHITECTURE.md` §6 (Container App scale-to-zero pattern) | Documented, not yet deployed |
 | Implement security for AI solutions (managed identity, no hardcoded keys) | Every Azure client in `azure/` authenticates via `azure-identity`'s `DefaultAzureCredential` | Built |
 | Monitor an AI solution | `azure/observability/Telemetry.scala` — Application Insights via OpenTelemetry | Code complete, no-op by default |
-| Responsible AI: transparency, content safety | `ARCHITECTURE.md` §8/§9 (jellyfish/whale heuristic honesty limitations, known limitations) | Documented; Azure AI Content Safety integration not yet built — real gap, see §4 below |
+| Responsible AI: transparency, content safety | `ARCHITECTURE.md` §8/§9 (jellyfish/whale heuristic honesty limitations, known limitations) | Documented; Azure AI Content Safety integration not yet built — real gap, see §4 below. Proposed: MIP-0001 (deterministic bathing-water veto with sample date/location printed) |
 
 ## 2. Implement generative AI solutions
 

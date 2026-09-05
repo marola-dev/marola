@@ -23,6 +23,7 @@ whole pipeline with a small, free local Ollama model. Full doc set, all centrali
 | [`AI-103-MAPPING.md`](./docs/AI-103-MAPPING.md) | AI-103 exam domain coverage, including honest gaps |
 | [`AI-500-MAPPING.md`](./docs/AI-500-MAPPING.md) | AI-500 (multi-agent) domain coverage — a design target |
 | [`SKILLS.md`](./docs/SKILLS.md) | A skills roadmap — what to practice, in order, using marola as the vehicle |
+| [`mips/`](./docs/mips/README.md) | Marola Improvement Proposals — numbered design docs written before a feature is built (`/mip` skill) |
 | [`FABLE_REVIEW.md`](./docs/FABLE_REVIEW.md) | Code and documentation review at the initial import — ranked findings with file:line references |
 
 If you're an AI coding agent (Claude Code, etc.) picking this repo up: read
