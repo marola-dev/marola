@@ -1,0 +1,1 @@
+# Written by `just site-build` (--site): data/<area>/*.json boards + a copy of site/static/ — deployed by site.yml, never committed.
