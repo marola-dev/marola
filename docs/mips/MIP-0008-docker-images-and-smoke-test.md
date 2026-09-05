@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (2026-09-05, "implement MIP-0008") — tasks and v1 decisions in [`MIP-0008.tasks.md`](./MIP-0008.tasks.md) |
+| **Status** | Implemented — PRs #26 → #27 → #28 → #29 → #30 → #31 → #32 (stack merged 2026-09-05; tasks and v1 decisions: [`MIP-0008.tasks.md`](./MIP-0008.tasks.md)); cost ~$15.08 across the seven PRs (measured with `just cost-split MIP-0008 --session d802fa69`) on top of this document's own $0.90. The native-image spike (§11.1) succeeded: `:native` shipped |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026, during the MIP-0005 implementation session) |
 | **Created** | 2026-09-05 |
 | **Tasks** | `docs/mips/MIP-0008.tasks.md` — stacked PRs, one per task |
