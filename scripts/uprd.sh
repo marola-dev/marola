@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # uprd — update the current branch's pull-request description on GitHub from its commits.
 #
-#   just uprd                 # rewrite the PR body and print its URL
+#   just uprd                 # rewrite the PR body and print its URL — creates the PR if none exists
 #   just uprd --dry-run       # print the body that would be written, change nothing
 #   just uprd path/to/body.md # use that file as the body instead of generating one
 #   BASE=main just uprd       # base branch (default: the PR's base, else main)
@@ -31,10 +31,13 @@ if pr_json="$(gh pr view "$branch" --json number,url,baseRefName 2>/dev/null)"; 
 fi
 [ -n "$base" ] || base=main
 if [ -z "$pr_number" ] && [ "$dry_run" -eq 0 ]; then
-  echo "uprd: no open PR found for '$branch' (or gh is not logged in — run: gh auth status)." >&2
-  echo "       open one first: gh pr create --base $base --head $branch --fill" >&2
-  exit 1
+  if ! gh auth status >/dev/null 2>&1; then
+    echo "uprd: gh is not logged in — run: gh auth login" >&2
+    exit 1
+  fi
+  create_pr=1   # no open PR for this branch: create it with the generated body (see below)
 fi
+create_pr="${create_pr:-0}"
 
 generate_body() {
   local range="origin/$base..HEAD"
@@ -78,5 +81,14 @@ if [ "$dry_run" -eq 1 ]; then
   exit 0
 fi
 
-gh pr edit "$pr_number" --body-file "$tmp" >/dev/null
-echo "updated PR #$pr_number description: $pr_url"
+if [ "$create_pr" -eq 1 ]; then
+  # Title = the first commit's subject on the branch; pass --title in the body-file mode to override
+  # by editing the PR afterwards. The branch must already be pushed.
+  git rev-parse --verify -q "origin/$branch" >/dev/null || git push -q -u origin "$branch"
+  title="$(git log --reverse --format=%s "origin/$base..HEAD" | head -1)"
+  pr_url="$(gh pr create --base "$base" --head "$branch" --title "$title" --body-file "$tmp")"
+  echo "created PR: $pr_url"
+else
+  gh pr edit "$pr_number" --body-file "$tmp" >/dev/null
+  echo "updated PR #$pr_number description: $pr_url"
+fi
