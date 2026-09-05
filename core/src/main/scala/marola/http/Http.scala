@@ -63,6 +63,32 @@ object Http:
     if response.status / 100 == 2 then response.body
     else throw HttpError(response.status, url, response.body.take(snippet))
 
+  /**
+   * Statuses worth another attempt — a rate limit or an overloaded/absent upstream, never a client
+   * error: 429, 502, 503, 504. Overpass's public instance answers 504 (gateway timeout) under load,
+   * observed live on 5 Sep 2026; one such answer on the second area stopped a scheduled site build
+   * after the first area had been written (`site.yml`, `Main.buildSite`).
+   */
+  val RetryableStatuses: Set[Int] = Set(429, 502, 503, 504)
+
+  /** `baseMs · 2^attempt`: 1 s, 2 s, 4 s ... for the default base. */
+  private[http] def backoffFor(baseMs: Long, attempt: Int): Long = baseMs << attempt
+
+  /**
+   * One send, plus up to `retries` more after a retryable status, sleeping `backoffFor` between
+   * them. Blocking, like the send itself (see the class comment on why that is fine here). The last
+   * response is returned whatever its status; `check` turns a non-2xx into `HttpError`.
+   */
+  private def sendRetrying(request: HttpRequest, retries: Int, backoffMs: Long): Response =
+    @annotation.tailrec
+    def loop(attempt: Int): Response =
+      val response = transport.get.send(request)
+      if attempt < retries && RetryableStatuses.contains(response.status) then
+        Thread.sleep(backoffFor(backoffMs, attempt))
+        loop(attempt + 1)
+      else response
+    loop(0)
+
   private def userAgent = "marola/0.1 (+https://github.com/h0ffmann/marola)"
 
   /** `headers`: e.g. an API key that must not go in the URL (`RouteFinder`). */
@@ -83,12 +109,16 @@ object Http:
    * Overpass genuinely takes tens of seconds for relation-aware area queries under load (confirmed:
    * ~29s for a 15km beach query around Florianópolis), which the old fixed 15s cut off with
    * `HttpTimeoutException`; `BeachFinder` passes a value above Overpass's own server-side
-   * `[timeout:...]` so the server's error, not a client abort, is what surfaces.
+   * `[timeout:...]` so the server's error, not a client abort, is what surfaces. `retries` extra
+   * attempts are made after a `RetryableStatuses` answer (none by default), `backoffMs` doubling
+   * each time.
    */
   def postForm(
       url: String,
       form: Map[String, String],
-      timeoutSeconds: Long = 15
+      timeoutSeconds: Long = 15,
+      retries: Int = 0,
+      backoffMs: Long = 1000
   ): String < Sync =
     Sync.defer {
       val encoded = form
@@ -101,7 +131,7 @@ object Http:
         .header("Content-Type", "application/x-www-form-urlencoded")
         .POST(HttpRequest.BodyPublishers.ofString(encoded))
         .build()
-      check(url, transport.get.send(request), 300)
+      check(url, sendRetrying(request, retries, backoffMs), 300)
     }
 
   /**

@@ -33,6 +33,14 @@ object BeachFinder:
   private val OverpassTimeoutSeconds = 45
   private val HttpTimeoutSeconds = 60L
 
+  /**
+   * Extra attempts after a 429/5xx from the public instance (`Http.RetryableStatuses`): a 504 under
+   * load is routine there and transient — one cost a scheduled site build its second area on 5 Sep
+   * 2026. Two retries with 1 s then 2 s back-off; worst case ~3 min, inside site.yml's 20 min job
+   * budget and still well under Overpass's fair-use expectations (one query per area).
+   */
+  private val OverpassRetries = 2
+
   def nearby(origin: Coordinates, radiusKm: Double = 15.0, limit: Int = 6): List[Beach] < Sync =
     val radiusM = (radiusKm * 1000).toInt
     // All three OSM element types: large beaches are very often mapped as multipolygon
@@ -50,19 +58,26 @@ object BeachFinder:
          |);
          |out center $MaxOverpassElements;""".stripMargin
 
-    Http.postForm(OverpassEndpoint, Map("data" -> query), HttpTimeoutSeconds).map { body =>
-      val elements = JsonValue.parse(body)("elements").arr
-      elements
-        .flatMap(parseElement(_, origin))
-        .groupBy(_.name)
-        .values
-        .map(
-          _.minBy(_.distanceKm)
-        ) // dedupe node/way/relation for the same beach, keep the closer one
-        .toList
-        .sortBy(_.distanceKm)
-        .take(limit)
-    }
+    Http
+      .postForm(
+        OverpassEndpoint,
+        Map("data" -> query),
+        HttpTimeoutSeconds,
+        retries = OverpassRetries
+      )
+      .map { body =>
+        val elements = JsonValue.parse(body)("elements").arr
+        elements
+          .flatMap(parseElement(_, origin))
+          .groupBy(_.name)
+          .values
+          .map(
+            _.minBy(_.distanceKm)
+          ) // dedupe node/way/relation for the same beach, keep the closer one
+          .toList
+          .sortBy(_.distanceKm)
+          .take(limit)
+      }
 
   private def parseElement(el: JsonValue, origin: Coordinates): Option[Beach] =
     val name = el("tags")("name").str.getOrElse("")

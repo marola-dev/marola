@@ -97,6 +97,21 @@ jobs:
           cat site/dist/data/*/latest.json
           [ -f site/dist/smoke/latest.json ] && head -c 600 site/dist/smoke/latest.json || true
 
+      # A half-built site must never reach Pages. The CLI now exits non-zero when any area fails
+      # (so the build step above already fails); this is the belt to that suspender: the page, the
+      # areas index and one latest.json per area in site/areas.json must all be there. Without it,
+      # one failed Overpass query on the second area deployed a dist holding the first area's boards
+      # and no index.html — a 404 at the site root (5 Sep 2026, the 18:15 UTC scheduled run).
+      - name: Required files — the page, the areas index, one latest.json per area
+        run: |
+          cd site/dist
+          missing=0
+          for f in index.html app.js style.css vendor/leaflet.js data/areas.json \
+                   $(python3 -c 'import json; [print("data/%s/latest.json" % a["id"]) for a in json.load(open("../areas.json"))]'); do
+            if [ ! -f "$f" ]; then echo "missing: $f"; missing=1; fi
+          done
+          [ "$missing" -eq 0 ] || { echo "site/dist is incomplete — not deploying"; exit 1; }
+
       # Only the map is public. The artifact is site/dist and nothing more; this step deletes the
       # one file that is not the page (data/.gitkeep's sibling in site/dist) and fails the build if
       # anything outside the allowlist is there — a stray copy is caught here, not shipped.

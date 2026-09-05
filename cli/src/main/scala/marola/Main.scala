@@ -226,7 +226,19 @@ object Main extends KyoApp:
               s"wrote ${files.size} files; boards: " +
                 files.filter(_.toString.endsWith(".json")).map(_.toString).mkString(", ")
             )
-          case failure => Console.printLine(s"(site build failed: $failure)")
+          case failure =>
+            // Fail the *process*, not just the line: site.yml deploys whatever this step leaves in
+            // site/dist, and on 5 Sep 2026 that was the first area's boards and no index.html — a
+            // 404 at the site root — because the second area's Overpass query failed after the
+            // first area had been written and the JVM still exited 0. `exit` is KyoApp's own
+            // (`KyoApp.Base.exit(code)(using AllowUnsafe)`, confirmed in the pinned RC5 jar).
+            for
+              _ <- Console.printLine(s"(site build failed: $failure)")
+              _ <- Sync.defer {
+                import AllowUnsafe.embrace.danger
+                exit(1)
+              }
+            yield ()
       yield ()
 
   /** `--benchmark` — marola vs. a plain prompt on ocean questions; see `bench/OceanBenchmark`. */
