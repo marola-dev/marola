@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>marola — best hour to swim, every beach</title>
+  <meta name="description" content="Every beach around the area ranked by swim conditions for today and tomorrow: sea, wind, waves, water quality, tides, jellyfish. Computed once, no tracking.">
+  <link rel="stylesheet" href="vendor/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <h1><span class="wave">🌊</span> marola</h1>
+    <div class="controls">
+      <select id="area" aria-label="Area"></select>
+      <div id="days" class="segmented" role="group" aria-label="Day"></div>
+      <button id="near" type="button" title="Sort the list by distance from you (stays in your browser)">near me</button>
+      <button id="toggle-list" type="button" aria-controls="list" aria-expanded="false">list</button>
+    </div>
+  </header>
+
+  <div id="hourbar" class="hourbar" hidden>
+    <label for="hour"><span id="hour-label">best hour per beach</span></label>
+    <input id="hour" type="range" min="-1" max="-1" value="-1" step="1" aria-label="Hour of the day">
+    <span class="legend" aria-hidden="true">
+      <i class="c70"></i>≥70 <i class="c40"></i>40 <i class="c1"></i>1 <i class="c0"></i>unfit/0 <i class="cna"></i>no data
+    </span>
+  </div>
+
+  <main class="main">
+    <div id="map" role="application" aria-label="Map of beaches"></div>
+    <aside id="list" class="list" hidden></aside>
+    <section id="card" class="card" hidden aria-live="polite"></section>
+  </main>
+
+  <footer id="footer" class="footer">
+    <p id="status">loading…</p>
+  </footer>
+
+  <noscript><p class="nojs">This page needs JavaScript to read the board JSON. The data itself is at <a href="data/">data/</a>.</p></noscript>
+  <script src="vendor/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -100,6 +100,19 @@ class SiteBuilderSpec extends munit.FunSuite:
     assert(board("beaches").arr.forall(_("water")("summary").str.contains("no data")))
   }
 
+  test("the real site/static (index.html, app.js, style.css, vendored Leaflet) lands in dist") {
+    val out = tmpDir("marola-site-real-static")
+    val written = build(out, SiteBuilderSpec.repoFile("site/static"))
+    List("index.html", "app.js", "style.css", "vendor/leaflet.js", "vendor/leaflet.css").foreach(
+      f => assert(Files.exists(out.resolve(f)), s"missing $f in ${written.mkString(", ")}")
+    )
+    val html = Files.readString(out.resolve("index.html"))
+    assert(html.contains("vendor/leaflet.js") && html.contains("app.js"), html)
+    // the page reads what the builder writes: the same relative paths
+    val js = Files.readString(out.resolve("app.js"))
+    assert(js.contains("data/areas.json") && js.contains("latest.json"), "app.js data paths")
+  }
+
   test("site/areas.json parses: slug ids, a zone, tiles, and Florianópolis first") {
     val areas = SiteBuilder.Areas.load(SiteBuilderSpec.repoFile("site/areas.json"))
     assert(areas.nonEmpty)

@@ -1,0 +1,98 @@
+/* marola map — MIP-0005. Plain CSS, mobile first, no framework. Colours = the score scale. */
+:root {
+  --c70: #1b9e77;   /* ≥70 good */
+  --c40: #e6ab02;   /* 40-69 fair */
+  --c1:  #d95f02;   /* 1-39 poor */
+  --c0:  #d7191c;   /* 0 / water unfit */
+  --cna: #8c8c8c;   /* no data */
+  --ink: #1d2b36;
+  --muted: #5c6b78;
+  --bg: #f6f8fa;
+  --panel: #ffffff;
+  --line: #dde3e8;
+  --accent: #0b6e99;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink); background: var(--bg);
+  display: flex; flex-direction: column; min-height: 100vh;
+}
+a { color: var(--accent); }
+[hidden] { display: none !important; }
+
+.bar {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  padding: .5rem .75rem; background: var(--panel); border-bottom: 1px solid var(--line);
+}
+.bar h1 { font-size: 1.15rem; margin: 0; white-space: nowrap; }
+.controls { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-left: auto; }
+select, button {
+  font: inherit; padding: .35rem .6rem; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--panel); color: var(--ink); cursor: pointer;
+}
+button[aria-pressed="true"], .segmented button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.segmented { display: inline-flex; }
+.segmented button { border-radius: 0; }
+.segmented button:first-child { border-radius: 6px 0 0 6px; }
+.segmented button:last-child { border-radius: 0 6px 6px 0; }
+
+.hourbar {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  padding: .4rem .75rem; background: var(--panel); border-bottom: 1px solid var(--line);
+  font-size: .9rem; color: var(--muted);
+}
+.hourbar input[type=range] { flex: 1 1 12rem; min-width: 8rem; }
+.hourbar label { min-width: 11rem; color: var(--ink); }
+.legend { white-space: nowrap; }
+.legend i { display: inline-block; width: .8em; height: .8em; border-radius: 50%; margin: 0 .2em 0 .5em; vertical-align: -1px; }
+.c70 { background: var(--c70); } .c40 { background: var(--c40); } .c1 { background: var(--c1); }
+.c0 { background: var(--c0); } .cna { background: var(--cna); }
+
+.main { position: relative; flex: 1 1 auto; min-height: 60vh; }
+#map { position: absolute; inset: 0; background: #dfe9ef; }
+
+.list, .card {
+  position: absolute; z-index: 1000; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.15); overflow: auto;
+}
+.list { top: .5rem; left: .5rem; bottom: .5rem; width: min(22rem, 90vw); padding: .5rem; }
+.list ol { margin: 0; padding-left: 1.6rem; }
+.list li { padding: .3rem 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.list li:last-child { border-bottom: 0; }
+.list .score { display: inline-block; min-width: 2.4em; text-align: center; color: #fff;
+  border-radius: 4px; padding: 0 .3em; font-weight: 600; margin-right: .4em; }
+.list .dist { color: var(--muted); font-size: .85em; }
+.list .water { display: block; font-size: .85em; color: var(--muted); }
+.list .water.unfit { color: var(--c0); font-weight: 600; }
+
+.card { right: .5rem; bottom: .5rem; width: min(26rem, calc(100vw - 1rem)); max-height: 70%; padding: .75rem .9rem; }
+.card h2 { margin: 0 1.5rem .25rem 0; font-size: 1.1rem; }
+.card .close { position: absolute; top: .4rem; right: .5rem; border: 0; background: none; font-size: 1.2rem; }
+.card .headline { font-size: 1.05rem; margin: .2rem 0 .5rem; }
+.card .headline .score { color: #fff; border-radius: 6px; padding: .05em .4em; font-weight: 700; }
+.card dl { margin: 0; display: grid; grid-template-columns: 6.5rem 1fr; gap: .25rem .6rem; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; }
+.card ul { margin: 0; padding-left: 1.1rem; }
+.card .unfit { color: var(--c0); font-weight: 600; }
+.card .improper { color: var(--c0); }
+.card .proper { color: var(--c70); }
+.card .past { color: var(--muted); }
+
+.footer { padding: .6rem .75rem 1rem; font-size: .85rem; color: var(--muted); background: var(--panel); border-top: 1px solid var(--line); }
+.footer p { margin: .25rem 0; }
+.footer .lore { color: var(--ink); }
+.nojs { padding: 1rem; }
+
+.leaflet-container { font: inherit; }
+.marker-label { background: none; border: 0; box-shadow: none; font-weight: 700; color: #fff;
+  text-shadow: 0 0 3px rgba(0,0,0,.8); font-size: 11px; text-align: center; }
+
+@media (max-width: 640px) {
+  .list { top: auto; left: .5rem; right: .5rem; bottom: .5rem; width: auto; max-height: 55%; }
+  .card { left: .5rem; right: .5rem; width: auto; max-height: 60%; }
+  .card dl { grid-template-columns: 5.5rem 1fr; }
+  .hourbar label { min-width: 0; }
+}
