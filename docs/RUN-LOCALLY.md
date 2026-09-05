@@ -77,26 +77,43 @@ mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --summarize"
 ...
 [info] running marola.Main -- --summarize
 marola :: best hour tomorrow to swim nearby (POC)
-config -> AppConfig(None,None,gpt-4o-mini,2026-01-01-preview,15.0,Some(-27.6733),Some(-48.47),Local,http://localhost:11434/v1,llama3.2,None,Local,./data/sightings.jsonl,None,None,marola,sightings,Local,llava,None,None,None)
+config -> telegram=unset llm=Local(http://localhost:11434/v1 llama3.2) embed=llama3.2 knowledge=./knowledge -> ./data/knowledge-index.json lore=on ask=General>=0.0 origin=-27.6733,-48.4700 radius=15km water=Auto maps=unset sightings=Local(./data/sightings.jsonl) vision=Local(llava) appinsights=unset
 origin -> lat=-27.6733, lon=-48.4700 (radius 15km, source: MAROLA_ORIGIN_LAT/MAROLA_ORIGIN_LON)
- 1. [ 55/100] Praia da Armação       (7.9km away)  best at Sun 6 Sep, 00:00  |  19.3°C sea, 19km/h wind  |  jellyfish: Low  |  choppy (0.7m waves), breezy (19km/h), cold water (19.3°C)
- 2. [ 55/100] Praia da Joaquina      (4.6km away)  best at Sun 6 Sep, 00:00  |  19.0°C sea, 20km/h wind  |  jellyfish: Low  |  choppy (0.9m waves), breezy (20km/h), cold water (19.0°C)
- 3. [ 55/100] Praia do Rio Tavares   (2.1km away)  best at Sun 6 Sep, 00:00  |  19.0°C sea, 20km/h wind  |  jellyfish: Low  |  choppy (0.9m waves), breezy (20km/h), cold water (19.0°C)
- 4. [ 55/100] Praia do Morro das Pedras (5.1km away)  best at Sun 6 Sep, 00:00  |  18.9°C sea, 19km/h wind  |  jellyfish: Low  |  choppy (1.0m waves), breezy (19km/h), cold water (18.9°C)
- 5. [ 55/100] Praia do Campeche      (2.1km away)  best at Sun 6 Sep, 00:00  |  18.9°C sea, 20km/h wind  |  jellyfish: Low  |  choppy (1.0m waves), breezy (20km/h), cold water (18.9°C)
- 6. [ 55/100] Praia do Gravatá       (7.6km away)  best at Sun 6 Sep, 00:00  |  19.0°C sea, 20km/h wind  |  jellyfish: Low  |  choppy (0.9m waves), breezy (20km/h), cold water (19.0°C)
+water quality -> IMA/SC
+ 1. [ 55/100] Praia da Joaquina      (4.6km)  Sun 6 Sep, 10:00  |  water: PRÓPRIA (1/1 pts, 25 Aug)  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
+ 2. [ 55/100] Praia do Rio Tavares   (2.1km)  Sun 6 Sep, 10:00  |  water: no data  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
+ 3. [ 55/100] Praia do Morro das Pedras (5.1km)  Sun 6 Sep, 08:00  |  water: PRÓPRIA (1/1 pts, 25 Aug)  |  18.8°C, 27km/h, 1.4m  |  jellyfish: Low  |  choppy (1.4m waves), breezy (27km/h), cold water (18.8°C)
+ 4. [ 35/100] Praia da Armação       (7.9km)  Sun 6 Sep, 10:00  |  water: 2/6 PRÓPRIA — avoid Ponto 64, Ponto 01, Ponto 05, Ponto 11 (25 Aug)  |  19.0°C, 24km/h, 1.0m  |  jellyfish: Low  |  whales: Moderate  |  choppy (1.0m waves), breezy (24km/h), cold water (19.0°C)
+ 5. [ 35/100] Praia do Gravatá       (7.6km)  Sun 6 Sep, 10:00  |  water: 2/3 PRÓPRIA — avoid Ponto 04 (25 Aug)  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
+ 6. [ 35/100] Praia do Campeche      (2.1km)  Sun 6 Sep, 08:00  |  water: 4/5 PRÓPRIA — avoid Ponto 73 (25 Aug)  |  18.8°C, 28km/h, 1.4m  |  jellyfish: Low  |  choppy (1.4m waves), breezy (28km/h), cold water (18.8°C)
+
+Top pick — Praia da Joaquina, Sun 6 Sep, 10:00-11:00
+  Water quality   PRÓPRIA (1/1 pts, 25 Aug)
+                  Ponto 33 (Em frente à Avenida Prefeito Acácio Garibaldi São Thiago, n°1416, ao lado do Posto de Guarda-Vidas): PRÓPRIA, 25 Aug, latest 10 enterococci/100mL, rain Ausente, water 15°C
+                  Source: IMA/SC
+  Sea             19.0°C, waves 1.3m every 6s from the S, swell 0.8m/6s, current 0.9 km/h
+  Tide            low 05:00 (-0.1m), high 13:00 (+0.7m), low 18:00 (+0.3m) (hourly resolution, ±30 min)
+  Air             14°C, wind 27 km/h from the S, UV 4, 0% chance of rain
+  Jellyfish       Low — few of the warm-calm signals present
+  Whales          Low at this hour; best daylight odds Low at 07:00 — humpback season
 
 Asking Local LLM to summarize the top pick (this may take a while)...
-Draft summary: It's dark and rough at Praia da Armação tonight; with high wind speeds, it's not the best time for a swim in these conditions.
-Reviewer (score 30/100, verdict: revise): Avoid Praia da Armação tonight due to high wind speeds and rough seas.
-[success] Total time: 47 s, completed Sep 5, 2026, 1:18:20 AM
+Draft summary: Mild conditions all around, so Praia da Joaquina looks like a great spot for swimming today.
+Reviewer (score 75/100, verdict: approve): Praia da Joaquina is a great spot for swimming with mild conditions and low jellyfish risk.
+
+🐋 Sea life: Humpback whales (baleia-jubarte) travel up the Brazilian coast from Antarctic feeding grounds to breed in warmer water, passing Santa Catarina between about July and November. Calm mornings with little wind are when a blow or a breach is easiest to spot from shore. [source: https://en.wikipedia.org/wiki/Humpback_whale]
+[success] Total time: 41 s, completed Sep 5, 2026, 9:12:57 AM
 ```
 
-Three things in that output worth knowing: the six-way tie at 55 and the identical `00:00` best hour
-are real (a windy, cold-water day scores the same everywhere, and Open-Meteo's grid gives nearby
-beaches the same cell — `ARCHITECTURE.md` §9); "2.1km away" for a beach 200m from the origin is the
-distance to the beach polygon's centroid, not its shoreline (same section); and most of the 47s is
-Overpass's relation query, not the LLM.
+Things in that output worth knowing: Campeche, Armação and Gravatá lost 20 points because one or
+more of IMA's sampling points on them was IMPRÓPRIA on 25 Aug — the column names the points, the
+detail block (for the top pick) lists every point with its latest count — see `ARCHITECTURE.md`
+§5g; best hours are daylight hours, and on a flat day ties resolve toward 10:00 (staffed lifeguard
+posts, best light) — `Swimability.hourPreference`; "2.1km" for a beach 200m from the origin is the
+distance to the beach polygon's centroid, not its shoreline (§9); most of the 41s is Overpass's
+relation query, not the LLM; and the closing paragraph is one of the sourced entries in
+`core/src/main/resources/sea_lore.json`, rotated daily, never touched by the LLM. `--brief` gives
+the old one-line list; `--no-lore` drops the paragraph.
 
 If you see a `Draft summary:` line followed by a `Reviewer (score .../100, ...)` line, the full
 pipeline worked: beach discovery → conditions → scoring → summarization → review, all live, all
