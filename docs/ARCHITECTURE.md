@@ -54,7 +54,8 @@ why, and the dependency-inversion fix that keeps `core` free of any Azure refere
 ```
 core/src/main/scala/marola/
   Recommender.scala              orchestrates the core pipeline, scores every nearby beach
-  beaches/BeachFinder.scala      nearby beaches via OpenStreetMap Overpass (free, no key)
+  beaches/BeachFinder.scala      nearby beaches via OpenStreetMap Overpass (free, no key) —
+                                  nodes, ways AND relations (most large beaches are relations)
   conditions/OpenMeteoClient.scala   hourly sea temp / wave height / wind / current / daylight
                                       via Open-Meteo (free, no key)
   scoring/Swimability.scala      pure heuristic scoring — jellyfish risk + whale sighting
@@ -120,6 +121,20 @@ origin -> lat=-22.9878, lon=-43.1913 (radius 15km)
 
 The whale-sighting field only shows up when non-`Low` (suppressed above because midnight has no
 daylight); confirmed against live September daytime data instead: `06:00-10:00` all show `High`.
+
+**Where "nearby" is measured from.** `Main` resolves the origin in this order and prints which one
+it used on the `origin ->` line:
+
+1. `--lat`/`--lon` flags (both required — one without the other is ignored with a warning).
+2. `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON` env vars (same both-or-neither rule).
+3. **IP geolocation** (`core/location/IpGeolocation.scala`): three free, keyless providers
+   (ipinfo.io, ipwho.is, ip-api.com) are queried and the medoid answer wins, so a single provider
+   mapping a Brazilian ISP's block to its head-office city is outvoted rather than trusted. The
+   output says how many providers agreed (`3/3`, `2/3`, ...). Accuracy is city-level at best, so
+   the search radius is widened to at least 20km (never narrowed below `MAROLA_BEACH_SEARCH_RADIUS_KM`
+   if that's larger). Verified live from Florianópolis: all three providers agreed, the medoid
+   landed in the centro, and the island's beaches came back.
+4. The built-in Arpoador default, only if no provider answered at all (offline).
 
 No Azure setup, no Telegram token are needed for any of the above — every integration defaults to
 free/local, see §5's table.
@@ -386,6 +401,7 @@ default, so the bot is fully testable end-to-end before spending anything on Azu
 | [Open-Meteo Forecast API](https://open-meteo.com/en/docs/) | Air temperature, wind, precipitation probability, daylight (`is_day`) | Same terms as above |
 | [Telegram Bot API](https://core.telegram.org/bots/api) | Location sharing, photos, sending/receiving messages | Free; rate-limited per Telegram's own bot API limits |
 | [Ollama](https://ollama.com) | Local LLM (§5a) and multimodal vision (§5e) backends | Free, runs entirely on your own hardware |
+| [ipinfo.io](https://ipinfo.io), [ipwho.is](https://ipwho.is), [ip-api.com](https://ip-api.com) | CLI origin fallback via public-IP geolocation (§3.1), majority vote across the three | Free, no key; ip-api.com's free tier is HTTP-only and non-commercial; each has a modest per-minute/day rate limit, fine for a CLI |
 
 No jellyfish- or whale-specific API exists (checked) — see §8.
 
@@ -421,6 +437,14 @@ heuristics' thresholds/weights (the bigger lift) remains future work.
 - **Beach distance defaults to haversine** ("as the crow flies") unless `AZURE_MAPS_SUBSCRIPTION_KEY`
   is set (§5b) — confirmed on real data: beaches across Guanabara Bay from Arpoador show up within
   the 15km radius despite not being reachable without a boat or a long drive around the bay.
+- **A beach's distance is measured to its OSM centroid, not its nearest shoreline.** Large beaches
+  are multipolygon relations and Overpass's `out center` gives the polygon's centre, so a 4km-long
+  beach you live 200m from can show as "2.1km away" (confirmed: Praia do Campeche). Ranking is
+  unaffected in practice — it's the same beach — but the printed distance undersells how close it is.
+  Nearest-edge distance would need the full geometry (`out geom`), a much bigger payload.
+- **Overpass relation queries are slow** — ~30s observed for a 15km radius on the public instance,
+  and it enforces a per-IP slot/rate limit (2 concurrent), so hammering `just run` back-to-back can
+  return 429s. `BeachFinder` allows 45s server-side / 60s client-side; caching (Phase 4) is the real fix.
 - **Nearby beaches often show near-identical numbers.** Open-Meteo's underlying weather models
   have finite grid resolution, so beaches a few km apart genuinely get the same or near-same
   forecast cell. Real, not a bug.

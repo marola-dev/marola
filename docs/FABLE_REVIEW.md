@@ -76,8 +76,19 @@ which is what `docs/TELEGRAM-SETUP.md` §3 correctly shows. Align `.env.example`
 | `local/.../LocalFileSightingStore.scala:26` `recentFor` | One malformed JSON line throws `JsonParseException` and fails the whole read | Skip bad lines (`Try(...).toOption`) |
 | `cli/.../SwimConditionsMcpServer.scala:40` `numberArg` | `s.toDouble` throws `NumberFormatException` on non-numeric input, surfacing as an MCP error | Use `toDoubleOption` |
 | `core/.../Json.scala:53` `render` for `JNumber` | `NaN`/`Infinity` render as bare `NaN`/`Infinity`, which is not valid JSON | Render as `null` |
-| `cli/.../Main.scala` `parseOrigin` | If only one of `--lat`/`--lon` is given, it silently falls back to the default origin | Print a warning or fail |
+| `cli/.../Main.scala` `parseOrigin` | If only one of `--lat`/`--lon` is given, it silently falls back to the default origin | **Fixed** — `resolveOrigin`/`warnHalfPair` now warn and fall through to env vars / IP geolocation |
 | `core/.../Recommender.scala:89` | `LocalDate.now(...)` is a clock read inside the effect chain — harmless, but `EFFECTS-MAP.md` classes `Recommender` as pure control flow | Note it in `EFFECTS-MAP.md` |
+
+### C7. `BeachFinder` missed every beach mapped as an OSM relation — **fixed**
+
+Found after the review, from a live run near Praia do Campeche that returned only two beaches
+within 20km. The Overpass query asked for `node` and `way` only; Campeche, Joaquina, Armação,
+Matadeiro and ~40 other beaches around Florianópolis are multipolygon **relations**. Two further
+problems compounded it: the element cap was `limit * 4` (24) applied in Overpass's database order,
+i.e. *before* marola sorts by distance, so the nearest beaches could be truncated arbitrarily; and
+`Http.postForm`'s fixed 15s timeout was below what relation-aware Overpass queries actually take
+(~29s observed). All three are fixed in `BeachFinder`/`Http.postForm`; see `ARCHITECTURE.md` §9 for
+the two residual limitations (centroid distance, Overpass slowness).
 
 ## 2. Documentation findings
 

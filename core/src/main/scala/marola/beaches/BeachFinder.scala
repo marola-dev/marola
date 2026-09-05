@@ -15,23 +15,49 @@ object BeachFinder:
 
   private val OverpassEndpoint = "https://overpass-api.de/api/interpreter"
 
+  /**
+   * Upper bound on elements Overpass returns *before* marola sorts them by distance — Overpass's
+   * `out N` truncation is in database order, not by distance, so this has to be comfortably larger
+   * than the number of named beaches any plausible radius contains, or the nearest ones can be cut
+   * arbitrarily. An earlier version used `limit * 4` (24) and, around Florianópolis at 20km with
+   * relations included (~40 named beaches), that silently dropped beaches 200m away.
+   */
+  private val MaxOverpassElements = 500
+
+  /**
+   * Overpass's server-side query budget, and the client-side HTTP timeout kept above it so a slow
+   * query surfaces as Overpass's own error rather than a client abort. Relation-aware `around`
+   * queries are slow on the public instance (~29s observed) — see `Http.postForm`.
+   */
+  private val OverpassTimeoutSeconds = 45
+  private val HttpTimeoutSeconds = 60L
+
   def nearby(origin: Coordinates, radiusKm: Double = 15.0, limit: Int = 6): List[Beach] < Sync =
     val radiusM = (radiusKm * 1000).toInt
+    // All three OSM element types: large beaches are very often mapped as multipolygon
+    // *relations*, not ways — confirmed on real data: Praia do Campeche, Joaquina, Armação,
+    // Matadeiro and ~40 others around Florianópolis are relations, and a node+way-only query
+    // returned just two beaches within 20km of Campeche. `["name"]` drops unnamed fragments up
+    // front (parseElement would discard them anyway) so the element cap isn't spent on them.
+    val around = s"""["natural"="beach"]["name"](around:$radiusM,${origin.lat},${origin.lon})"""
     val query =
-      s"""[out:json][timeout:20];
+      s"""[out:json][timeout:$OverpassTimeoutSeconds];
          |(
-         |  node["natural"="beach"](around:$radiusM,${origin.lat},${origin.lon});
-         |  way["natural"="beach"](around:$radiusM,${origin.lat},${origin.lon});
+         |  node$around;
+         |  way$around;
+         |  relation$around;
          |);
-         |out center ${limit * 4};""".stripMargin
+         |out center $MaxOverpassElements;""".stripMargin
 
-    Http.postForm(OverpassEndpoint, Map("data" -> query)).map { body =>
+    Http.postForm(OverpassEndpoint, Map("data" -> query), HttpTimeoutSeconds).map { body =>
       val elements = JsonValue.parse(body)("elements").arr
       elements
         .flatMap(parseElement(_, origin))
         .groupBy(_.name)
         .values
-        .map(_.minBy(_.distanceKm)) // dedupe node+way pairs for the same beach, keep the closer one
+        .map(
+          _.minBy(_.distanceKm)
+        ) // dedupe node/way/relation for the same beach, keep the closer one
         .toList
         .sortBy(_.distanceKm)
         .take(limit)
@@ -46,22 +72,4 @@ object BeachFinder:
         lon <- el("lon").num.orElse(el("center")("lon").num)
       yield
         val coords = Coordinates(lat, lon)
-        Beach(name, coords, haversineKm(origin, coords))
-
-  /**
-   * Straight-line ("as the crow flies") distance — cheap, no extra API call, but can rank a beach
-   * across a bay/headland as "nearby" when it's actually a long drive or not reachable at all
-   * without a boat (confirmed on real data: Icaraí/Camboinhas in Niterói show up within 15km of
-   * Arpoador, straight across Guanabara Bay). A real routing-distance/travel-time call (e.g. OSRM,
-   * also free/self-hostable) would fix this; not done here to keep the POC to one dependency-free
-   * API family. See docs/ARCHITECTURE.md's "Future work".
-   */
-  private def haversineKm(a: Coordinates, b: Coordinates): Double =
-    val earthRadiusKm = 6371.0
-    val dLat = math.toRadians(b.lat - a.lat)
-    val dLon = math.toRadians(b.lon - a.lon)
-    val la1 = math.toRadians(a.lat)
-    val la2 = math.toRadians(b.lat)
-    val h = math.sin(dLat / 2) * math.sin(dLat / 2) +
-      math.cos(la1) * math.cos(la2) * math.sin(dLon / 2) * math.sin(dLon / 2)
-    2 * earthRadiusKm * math.asin(math.sqrt(h))
+        Beach(name, coords, origin.distanceKm(coords))

@@ -2,7 +2,23 @@ package marola.model
 
 import java.time.LocalDateTime
 
-final case class Coordinates(lat: Double, lon: Double)
+final case class Coordinates(lat: Double, lon: Double):
+  /**
+   * Straight-line ("as the crow flies") great-circle distance in km, via the haversine formula —
+   * cheap, no API call, but it can rank a beach across a bay/headland as "nearby" when it's
+   * actually a long drive or not reachable at all without a boat (confirmed on real data:
+   * Icaraí/Camboinhas in Niterói show up within 15km of Arpoador, straight across Guanabara Bay).
+   * `RouteFinder` (Azure Maps, opt-in) is the real-routing fix — see `ARCHITECTURE.md` §5b/§9.
+   */
+  def distanceKm(other: Coordinates): Double =
+    val earthRadiusKm = 6371.0
+    val dLat = math.toRadians(other.lat - lat)
+    val dLon = math.toRadians(other.lon - lon)
+    val la1 = math.toRadians(lat)
+    val la2 = math.toRadians(other.lat)
+    val h = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(la1) * math.cos(la2) * math.sin(dLon / 2) * math.sin(dLon / 2)
+    2 * earthRadiusKm * math.asin(math.sqrt(h))
 
 final case class Beach(name: String, coordinates: Coordinates, distanceKm: Double)
 

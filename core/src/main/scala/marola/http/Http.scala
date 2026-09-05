@@ -45,16 +45,24 @@ object Http:
 
   /**
    * `application/x-www-form-urlencoded` POST — Overpass's query API and Telegram's Bot API both
-   * accept this for their respective single-field payloads.
+   * accept this for their respective single-field payloads. `timeoutSeconds` exists because
+   * Overpass genuinely takes tens of seconds for relation-aware area queries under load (confirmed:
+   * ~29s for a 15km beach query around Florianópolis), which the old fixed 15s cut off with
+   * `HttpTimeoutException`; `BeachFinder` passes a value above Overpass's own server-side
+   * `[timeout:...]` so the server's error, not a client abort, is what surfaces.
    */
-  def postForm(url: String, form: Map[String, String]): String < Sync =
+  def postForm(
+      url: String,
+      form: Map[String, String],
+      timeoutSeconds: Long = 15
+  ): String < Sync =
     Sync.defer {
       val encoded = form
         .map { case (k, v) => s"${URLEncoder.encode(k, UTF_8)}=${URLEncoder.encode(v, UTF_8)}" }
         .mkString("&")
       val request = HttpRequest
         .newBuilder(URI.create(url))
-        .timeout(Duration.ofSeconds(15))
+        .timeout(Duration.ofSeconds(timeoutSeconds))
         .header("User-Agent", userAgent)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .POST(HttpRequest.BodyPublishers.ofString(encoded))

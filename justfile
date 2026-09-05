@@ -50,6 +50,37 @@ mcp-server:
 watch:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "~compile"
 
+# ---------------------------------------------------------------------
+# Ollama — marola's default local LLM backend (LocalLlmClient, docs/RUN-LOCALLY.md)
+# ---------------------------------------------------------------------
+
+# Make sure an Ollama server is reachable and has `model` pulled. Starts `ollama serve` in the
+# background (logging to .tmp/ollama.log) if nothing answers on localhost:11434, waits for it,
+# then pulls the model only if `ollama list` doesn't already have it. Idempotent: safe to run
+# before every `just run -- --summarize`. The model defaults to $MAROLA_LOCAL_LLM_MODEL if set,
+# else `llama3.2` (LocalLlmClient.DefaultModel) — pass e.g. `just ollama-up llama3.2:1b` to
+# override. Note Ollama treats `llama3.2` and `llama3.2:1b` as different models.
+ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2"):
+    #!/usr/bin/env bash
+    set -euo pipefail
+    api=http://localhost:11434/api/tags
+    if ! curl -sf -m 2 "$api" >/dev/null; then
+        mkdir -p "{{justfile_directory()}}/.tmp"
+        echo "ollama: not reachable on localhost:11434 — starting 'ollama serve' in the background"
+        nohup ollama serve >"{{justfile_directory()}}/.tmp/ollama.log" 2>&1 &
+        for _ in $(seq 1 30); do
+            curl -sf -m 1 "$api" >/dev/null && break
+            sleep 1
+        done
+        curl -sf -m 2 "$api" >/dev/null || { echo "ollama: server did not come up — see .tmp/ollama.log" >&2; exit 1; }
+    fi
+    if ollama list | awk 'NR>1 {print $1}' | grep -qx "{{model}}"; then
+        echo "ollama: serving, model '{{model}}' already pulled"
+    else
+        echo "ollama: pulling '{{model}}'..."
+        ollama pull "{{model}}"
+    fi
+
 # Runs marola's E2E test (cli/src/test/scala/marola/E2ESpec.scala) against live
 # Overpass/Open-Meteo, plus a local Ollama server if one's reachable (skipped gracefully
 # otherwise — see that file's own `assume(...)` checks). Excluded from `just test`'s default run

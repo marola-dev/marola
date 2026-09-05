@@ -2,6 +2,7 @@ package marola
 
 import kyo.*
 import marola.llm.{CompiledPrompt, LlmClient, Reviewer}
+import marola.location.IpGeolocation
 import marola.model.{BestHour, Coordinates, WhaleSightingLikelihood}
 import marola.observability.Telemetry
 import marola.sightings.{Sighting, SightingKind}
@@ -13,9 +14,9 @@ import java.time.format.DateTimeFormatter
  *
  * Phase 0 of marola (see docs/ARCHITECTURE.md): this runs the real pipeline (nearby beaches via
  * Overpass, forecasts via Open-Meteo, heuristic scoring) end to end from the command line, with no
- * Azure/Telegram setup required — `origin` is a hardcoded coordinate (or `--lat`/`--lon` CLI args)
- * standing in for "the user's shared location", which the real Telegram bot will supply once it
- * exists.
+ * Azure/Telegram setup required — the origin comes from `--lat`/`--lon`, else
+ * `MAROLA_ORIGIN_LAT/LON`, else the machine's IP geolocation (see `resolveOrigin`), standing in for
+ * "the user's shared location", which the real Telegram bot will supply once it exists.
  *
  * `--summarize` additionally calls `AppConfig.llmClient` (local Ollama-compatible by default, no
  * Azure needed — see ARCHITECTURE.md §5/§6) to turn the #1 result into a natural-language summary,
@@ -29,12 +30,67 @@ object Main extends KyoApp:
   // until location comes from the Telegram bot's native location-sharing (see ARCHITECTURE.md).
   private val DefaultOrigin = Coordinates(lat = -22.9878, lon = -43.1913)
 
-  private def parseOrigin(args: Array[String]): Coordinates =
-    val lat = argValue(args, "--lat").flatMap(_.toDoubleOption)
-    val lon = argValue(args, "--lon").flatMap(_.toDoubleOption)
-    (lat, lon) match
-      case (Some(la), Some(lo)) => Coordinates(la, lo)
-      case _                    => DefaultOrigin
+  /**
+   * IP geolocation is city-level at best (`IpGeolocation`'s doc comment on why, and why Brazil in
+   * particular): when the origin comes from it, search at least this far so the residual error
+   * doesn't push real nearby beaches outside the radius. Never *narrows* a larger configured
+   * `MAROLA_BEACH_SEARCH_RADIUS_KM`.
+   */
+  private val IpGeolocationMinRadiusKm = 20.0
+
+  /** Where to search from, how far, and a human-readable note on where that answer came from. */
+  final private case class Origin(coordinates: Coordinates, radiusKm: Double, source: String)
+
+  /**
+   * Precedence: explicit `--lat`/`--lon` flags, then `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON`, then
+   * the machine's public-IP geolocation (widened radius, see above), then the built-in Rio default
+   * only if the IP lookup found nothing at all (offline). Half a pair — one flag or one env var
+   * without its partner — is ignored, not half-applied; `warnHalfPair` reports it.
+   */
+  private def resolveOrigin(args: Array[String], config: AppConfig): Origin < Sync =
+    (flagOrigin(args), config.origin) match
+      case (Some(coords), _) => Origin(coords, config.beachSearchRadiusKm, "--lat/--lon flags")
+      case (None, Some(coords)) =>
+        Origin(coords, config.beachSearchRadiusKm, "MAROLA_ORIGIN_LAT/MAROLA_ORIGIN_LON")
+      case (None, None) =>
+        IpGeolocation.locate.map {
+          case Some(loc) =>
+            val radius = math.max(config.beachSearchRadiusKm, IpGeolocationMinRadiusKm)
+            val agreement = s"${loc.agreeingSources.size}/${loc.totalSources} providers agree"
+            Origin(
+              loc.coordinates,
+              radius,
+              s"IP geolocation: ${loc.city.getOrElse("unknown city")}, $agreement " +
+                s"(${loc.agreeingSources.mkString(", ")}); city-level accuracy, radius widened to " +
+                f"$radius%.0fkm — pass --lat/--lon or set MAROLA_ORIGIN_LAT/LON to pin it"
+            )
+          case None =>
+            Origin(
+              DefaultOrigin,
+              config.beachSearchRadiusKm,
+              "built-in default (Arpoador, Rio) — IP geolocation unavailable, pass --lat/--lon"
+            )
+        }
+
+  private def flagOrigin(args: Array[String]): Option[Coordinates] =
+    for
+      lat <- argValue(args, "--lat").flatMap(_.toDoubleOption)
+      lon <- argValue(args, "--lon").flatMap(_.toDoubleOption)
+    yield Coordinates(lat, lon)
+
+  private def warnHalfPair(args: Array[String], config: AppConfig): Unit < Async =
+    val flagHalf =
+      argValue(args, "--lat").isDefined != argValue(args, "--lon").isDefined
+    val envHalf = config.originLat.isDefined != config.originLon.isDefined
+    if flagHalf then
+      Console.printLine(
+        "warning: --lat and --lon must be given together — ignoring the one present"
+      )
+    else if envHalf then
+      Console.printLine(
+        "warning: MAROLA_ORIGIN_LAT and MAROLA_ORIGIN_LON must be set together — ignoring the one set"
+      )
+    else noop
 
   private def argValue(args: Array[String], flag: String): Option[String] =
     val idx = args.indexOf(flag)
@@ -129,19 +185,21 @@ object Main extends KyoApp:
         yield ()
 
   private def runRecommendation(args: Array[String], config: AppConfig): Unit < Async =
-    val origin = parseOrigin(args)
     val summarize = args.contains("--summarize")
     for
       _ <- Console.printLine("marola :: best hour tomorrow to swim nearby (POC)")
       _ <- Console.printLine(s"config -> $config")
+      _ <- warnHalfPair(args, config)
+      origin <- resolveOrigin(args, config)
       _ <- Console.printLine(
-        f"origin -> lat=${origin.lat}%.4f, lon=${origin.lon}%.4f (radius ${config.beachSearchRadiusKm}%.0fkm)"
+        f"origin -> lat=${origin.coordinates.lat}%.4f, lon=${origin.coordinates.lon}%.4f " +
+          f"(radius ${origin.radiusKm}%.0fkm, source: ${origin.source})"
       )
       otel = Telemetry.initialize(config.appInsightsConnectionString)
       results <- Telemetry.withSpan(otel, "bestPerBeachTomorrow") {
         Recommender.bestPerBeachTomorrow(
-          origin,
-          config.beachSearchRadiusKm,
+          origin.coordinates,
+          origin.radiusKm,
           distanceRefiner = config.distanceRefiner
         )
       }

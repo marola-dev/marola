@@ -41,6 +41,8 @@ final case class AppConfig(
     foundryModelDeployment: String,
     foundryApiVersion: String,
     beachSearchRadiusKm: Double,
+    originLat: Option[Double],
+    originLon: Option[Double],
     llmProvider: Provider,
     localLlmBaseUrl: String,
     localLlmModel: String,
@@ -57,6 +59,17 @@ final case class AppConfig(
     azureVisionKey: Option[String],
     appInsightsConnectionString: Option[String]
 ):
+  /**
+   * A fixed "current location" for the CLI, from `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON` — both or
+   * neither: one without the other is ignored (and `Main` says so) rather than half-applied. Sits
+   * between `--lat/--lon` (wins) and IP geolocation (fallback) in `Main.resolveOrigin`.
+   */
+  def origin: Option[Coordinates] =
+    for
+      lat <- originLat
+      lon <- originLon
+    yield Coordinates(lat, lon)
+
   /**
    * `None` for `llmProvider = Azure` without `foundryProjectEndpoint` set — there's no reasonable
    * Azure default to fall back to, unlike the local provider's `localhost` default.
@@ -111,6 +124,8 @@ object AppConfig:
       foundryApiVersion = sys.env.getOrElse("FOUNDRY_API_VERSION", "2026-01-01-preview"),
       beachSearchRadiusKm =
         sys.env.get("MAROLA_BEACH_SEARCH_RADIUS_KM").flatMap(_.toDoubleOption).getOrElse(15.0),
+      originLat = sys.env.get("MAROLA_ORIGIN_LAT").flatMap(_.toDoubleOption),
+      originLon = sys.env.get("MAROLA_ORIGIN_LON").flatMap(_.toDoubleOption),
       llmProvider = Provider.fromEnv(sys.env.get("MAROLA_LLM_PROVIDER")),
       localLlmBaseUrl =
         sys.env.getOrElse("MAROLA_LOCAL_LLM_BASE_URL", LocalLlmClient.DefaultBaseUrl),

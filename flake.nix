@@ -94,6 +94,15 @@
           shellHook = ''
             echo "marola dev shell"
             git config core.hooksPath .githooks 2>/dev/null || true
+            # Load the repo's gitignored .env (MAROLA_ORIGIN_LAT/LON, provider switches — see
+            # .env.example) into this shell, so plain `nix develop` matches what direnv's
+            # `dotenv_if_exists` in .envrc already does. `set -a` exports every assignment; the
+            # file must be plain KEY=VALUE lines (shell syntax, no spaces around `=`).
+            marola_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+            if [ -f "$marola_root/.env" ]; then
+              set -a; . "$marola_root/.env"; set +a
+              echo "loaded $marola_root/.env"
+            fi
             java -version
             curl -s -m 1 http://localhost:11434/api/tags >/dev/null 2>&1 \
               || echo "ollama not running — start it with 'ollama serve' (see docs/RUN-LOCALLY.md)"

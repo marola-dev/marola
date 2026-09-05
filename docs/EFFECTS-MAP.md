@@ -27,6 +27,7 @@ rest gets migrated to richer Kyo effects.
 | `http/Http.scala` (all 4 methods) | `< Sync` | Honest — every caller sees `< Sync` and knows real network I/O happens |
 | `beaches/BeachFinder`, `beaches/RouteFinder` | `< Sync` | Composed from `Http`, correctly propagates |
 | `conditions/OpenMeteoClient` | `< Sync` | Same |
+| `location/IpGeolocation.locate` | `< Sync` | Same; each provider call is individually `Abort.catching`-wrapped so a dead provider drops out of the vote. `consensus` (the vote itself) is pure and unit-tested |
 | `llm/LocalLlmClient`, `llm/AzureFoundryLlmClient`, `vision/*Client` | `< Sync` | Same; `AzureFoundryLlmClient` additionally wraps `azure-identity`'s blocking `getTokenSync` in `Sync.defer` — correctly tracked |
 | `llm/CompiledPrompt.loadFromFile`/`loadFromString` | Hidden effect ⚠️ (I/O + partial) | `loadFromFile` reads a file with **no effect type at all** — not even `< Sync`. `loadFromString` throws on malformed JSON. See §2 |
 | `llm/Reviewer.review` | `< Sync` | Correctly tracked; the `JsonValue.parse` it calls internally is where a hidden partiality lives (see above) |
