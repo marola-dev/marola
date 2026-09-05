@@ -5,6 +5,7 @@
 #   docker compose --profile ollama run --rm marola --summarize --lat -27.6733 --lon -48.47     # + draft + reviewer on llama3.2 (pulled once)
 #   docker compose --profile local run --rm marola-local --summarize --lat -27.6733 --lon -48.47  # marola-llama3.2, from the :local image (Dockerfile.local)
 #   docker compose --profile ollama run --rm marola --ask "what if I'm caught in a rip current?"
+#   docker compose --profile mlflow up -d mlflow                                                # MIP-0010: the experiment ledger, http://127.0.0.1:5000
 #
 # The image is ghcr.io/h0ffmann/marola:jvm; `docker compose build` rebuilds it from this checkout.
 # `.env` (gitignored, see .env.example) is read if present — MAROLA_ORIGIN_LAT/LON, provider
@@ -24,6 +25,13 @@ services:
     environment:
       MAROLA_LOCAL_LLM_BASE_URL: http://ollama:11434/v1
       MAROLA_LOCAL_LLM_MODEL: ${MAROLA_LOCAL_LLM_MODEL:-llama3.2}
+      # MIP-0010: unset unless the caller's shell/.env actually sets it — a bare key with no value
+      # passes the host variable through when present and omits it entirely otherwise, so
+      # `AppConfig.fromEnv` sees `None` (RunLedger.Noop) exactly as it does without this profile at
+      # all. No default here: there's no meaningful default tracking URI the way there is a stock
+      # LLM model.
+      MAROLA_MLFLOW_TRACKING_URI:
+      MAROLA_MLFLOW_EXPERIMENT:
     volumes:
       - marola-data:/app/data
     depends_on:
@@ -77,6 +85,52 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
+
+  # MIP-0010 (mlflow-compose): a local `mlflow server` — SQLite backend store, artifacts on the
+  # bind mount below, both under `.tmp/mlflow/` so `rm -rf .tmp/mlflow` resets the whole ledger
+  # (same convention as `.tmp/sbt-runtime`, already gitignored). `ghcr.io/mlflow/mlflow:v3.16.0`:
+  # the latest tag on GHCR as of 2026-09-05 (`v3.16.0`, released 2026-09-04 per the MLflow GitHub
+  # releases API — MIP-0010 §4.1/Appendix) — the plain (non-`-full`) variant, since this server only
+  # needs SQLite + local-filesystem artifacts, not the `-full` image's bundled cloud-storage/DB
+  # drivers. That image's own Dockerfile installs `mlflow` with no ENTRYPOINT/CMD of its own
+  # (confirmed against `docker/Dockerfile` in the mlflow/mlflow repo, 2026-09-05: `FROM
+  # python:3.11-slim… RUN pip install mlflow==$VERSION`, nothing else) — the full `mlflow server …`
+  # invocation below is required, not optional. Flags confirmed current against MLflow's own
+  # self-hosting docs (fetched 2026-09-05): `--backend-store-uri`, `--artifacts-destination` and
+  # `--serve-artifacts` (default-on in current MLflow, passed explicitly anyway per MIP §4.1) are
+  # all still the documented names, none renamed. Bound to 127.0.0.1 only — MIP-0010 §8: no auth by
+  # default, so this must never be reachable from outside the host.
+  #
+  # Deliberately NOT wired via `depends_on` from `marola`/`marola-local`: those two services already
+  # behave correctly with `MAROLA_MLFLOW_TRACKING_URI` unset (`RunLedger.Noop`, MIP §3's "without
+  # it nothing changes"), and a user may want `mlflow` up without ever running the CLI service (the
+  # `dspy/` compile step, task 7, or just browsing past runs), or `--profile mlflow --profile ollama`
+  # together. A hard dependency would force the two profiles to always start together for no
+  # benefit — the env var above is the only coupling, and it's opt-in.
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.16.0
+    profiles: [mlflow]
+    command:
+      - mlflow
+      - server
+      - --backend-store-uri
+      - sqlite:////mlflow/mlflow.db
+      - --artifacts-destination
+      - /mlflow/artifacts
+      - --serve-artifacts
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+    volumes:
+      - ./.tmp/mlflow:/mlflow
+    ports:
+      - 127.0.0.1:5000:5000
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:5000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
 volumes:
   ollama-models:

@@ -4,6 +4,7 @@ import kyo.*
 
 import marola.beaches.RouteFinder
 import marola.knowledge.{FileKnowledgeStore, OceanQa, OllamaEmbedder}
+import marola.ledger.{MlflowRunLedger, RunLedger}
 import marola.llm.{AzureFoundryLlmClient, LlmClient, LocalLlmClient}
 import marola.model.Coordinates
 import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore, SightingStore}
@@ -81,7 +82,9 @@ final case class AppConfig(
     localVisionModel: String,
     azureVisionEndpoint: Option[String],
     azureVisionKey: Option[String],
-    appInsightsConnectionString: Option[String]
+    appInsightsConnectionString: Option[String],
+    mlflowTrackingUri: Option[String],
+    mlflowExperiment: String
 ):
   /**
    * A fixed "current location" for the CLI, from `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON` — both or
@@ -122,7 +125,8 @@ final case class AppConfig(
           if visionProvider == Provider.Local then localVisionModel
           else s"endpoint=${secret(azureVisionEndpoint)} key=${secret(azureVisionKey)}"
         })",
-      s"appinsights=${secret(appInsightsConnectionString)}"
+      s"appinsights=${secret(appInsightsConnectionString)}",
+      s"mlflow=${secret(mlflowTrackingUri)}(experiment=$mlflowExperiment)"
     ).mkString(" ")
 
   /** MIP-0001 §5.2. `None` = no data, which `Swimability.waterVerdict` scores as nothing. */
@@ -177,6 +181,21 @@ final case class AppConfig(
           key <- azureVisionKey
         yield AzureVisionClient(endpoint, key)
       case Provider.Local => Some(LocalVisionClient(localLlmBaseUrl, localVisionModel))
+
+  /**
+   * `RunLedger.Noop` (MIP-0010) unless `MAROLA_MLFLOW_TRACKING_URI` is set — no network call, no
+   * mlflow server needed, matches every other pluggable integration's local-by-nothing default
+   * except this one has no Azure sibling yet (MIP §4.5 is still Draft). Unlike `llmClient`/
+   * `sightingStore`/`visionClient`, there's no `Provider` enum here: the ledger is either off or on
+   * a tracking URI, there's no local-vs-Azure choice to make yet. `mlflowExperiment` is the
+   * experiment *prefix* (`marola` ⇒ `marola/benchmark`, `marola/prompt-compile`, `marola/traces` —
+   * MIP §11 OQ6); each caller appends its own kind. Unused until task 4 wires `OceanBenchmark.run`
+   * to call it.
+   */
+  def runLedger: RunLedger =
+    mlflowTrackingUri match
+      case Some(uri) => MlflowRunLedger(uri)
+      case None      => RunLedger.Noop
 
   /**
    * `Recommender` (in `marola-core`) can't reference `RouteFinder` (in `marola-azure`) directly —
@@ -238,5 +257,9 @@ object AppConfig:
       // Azure's own standard env var name (every Azure Monitor SDK/agent auto-detects it) — used
       // directly rather than bridged through a MAROLA_-prefixed name, unlike Langfuse's Python env
       // vars (which don't share this repo's naming convention to begin with).
-      appInsightsConnectionString = sys.env.get("APPLICATIONINSIGHTS_CONNECTION_STRING")
+      appInsightsConnectionString = sys.env.get("APPLICATIONINSIGHTS_CONNECTION_STRING"),
+      // MIP-0010 §5: unset ⇒ RunLedger.Noop (`just mlflow-up` prints the tracking URI to export).
+      mlflowTrackingUri = sys.env.get("MAROLA_MLFLOW_TRACKING_URI"),
+      // The experiment prefix (`marola/<kind>`), not a full experiment name — see `runLedger`.
+      mlflowExperiment = sys.env.getOrElse("MAROLA_MLFLOW_EXPERIMENT", "marola")
     )

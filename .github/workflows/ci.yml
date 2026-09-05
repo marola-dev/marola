@@ -140,3 +140,9 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
+
+      # MIP-0010: every compose profile must still render — the mlflow profile included. Needs no
+      # daemon; `docker compose config` is client-side. Same check as `just quality`.
+      - name: docker compose config (all profiles)
+        if: needs.changes.outputs.docker == 'true'
+        run: docker compose --profile mlflow --profile ollama --profile local config --quiet

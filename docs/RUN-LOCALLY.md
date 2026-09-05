@@ -348,7 +348,32 @@ and the reachability metadata (the `*.json` resources, `sun.misc.Signal` for Kyo
 in `cli/src/main/resources/META-INF/native-image/`, read from the classpath, so the sbt task and
 the Dockerfile's `native-image -jar` build the same thing.
 
-## 11. What this guide deliberately doesn't cover
+## 11. The MLflow ledger — every benchmark run on record (MIP-0010)
+
+Optional, developer-only, off unless you ask for it. `just benchmark` writes a Markdown report under
+`data/` and that stays the canonical result (`scripts/benchmark_gate.py` reads it); with a tracking
+URI set, the same run is *also* logged to a local MLflow server — params, per-arm metrics, the
+report as an artifact — so runs can be compared in a UI instead of by diffing tables. Needs Docker
+(the server is a compose profile, never part of the Nix shell or the runtime image):
+
+```bash
+just mlflow-up                                   # ghcr.io/mlflow/mlflow, SQLite + artifacts under .tmp/mlflow/, http://127.0.0.1:5000
+export MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000
+just benchmark                                   # the usual report under data/ — plus one run in experiment "marola/benchmark"
+just mlflow-ui                                   # the run: params model/embed_model/min_score/corpus_sha/git_sha, metrics per arm, the .md attached
+just mlflow-down                                 # stop it; .tmp/mlflow/ keeps the history, `rm -rf .tmp/mlflow` wipes it
+```
+
+`MAROLA_MLFLOW_EXPERIMENT` (default `marola`) is the experiment *prefix* — runs land in
+`marola/benchmark`, the DSPy compile step's in `marola/prompt-compile`, traces (§5f of
+`ARCHITECTURE.md`, `MAROLA_TRACES=mlflow`) in `marola/traces`. Unset `MAROLA_MLFLOW_TRACKING_URI`
+and nothing changes: no network call, `RunLedger.Noop`, the report is still written. The server is
+bound to `127.0.0.1` only and has no authentication — do not expose the port. `docker compose run`
+of the `marola` services passes the two variables through from your shell/`.env` when they are set
+and omits them otherwise (the `mlflow` profile is independent: `--profile mlflow --profile ollama`
+starts both, neither depends on the other).
+
+## 12. What this guide deliberately doesn't cover
 
 Telegram bot setup (there is no bot loop yet — see `TELEGRAM-SETUP.md` for credential setup ahead
 of that Phase 1 work) and any Azure integration (`ARCHITECTURE.md` §5/§6, all optional, none needed

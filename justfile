@@ -54,6 +54,7 @@ quality:
     python3 scripts/benchmark_gate.py --self-test
     if command -v actionlint >/dev/null; then actionlint; else echo "actionlint not installed — skipping"; fi
     if command -v hadolint >/dev/null; then hadolint Dockerfile Dockerfile.local; else echo "hadolint not installed — skipping"; fi
+    if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
 
 quality-fix:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
@@ -219,6 +220,29 @@ native-image:
 # Run the native binary: `just native-run -- --brief --lat -27.6733 --lon -48.47` (same flags as `just run`).
 native-run *args:
     ./cli/target/marola {{args}}
+
+# MIP-0010: the experiment ledger — `mlflow server` on SQLite with local artifacts, both under
+# .tmp/mlflow/ (gitignored; `rm -rf .tmp/mlflow` resets it), bound to 127.0.0.1:5000 only (no auth).
+# Opt in per command: `MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000 just benchmark`. Unset, every
+# marola command behaves as before (RunLedger.Noop) — see RUN-LOCALLY.md §11.
+mlflow-up:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p .tmp/mlflow
+    docker compose --profile mlflow up -d --wait mlflow
+    echo "mlflow: http://127.0.0.1:5000 — export MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000 to log runs"
+
+# Open the MLflow UI (or print the URL when no opener is around).
+mlflow-ui:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    url=http://127.0.0.1:5000
+    curl -fsS "$url/health" >/dev/null 2>&1 || echo "mlflow is not answering at $url — run 'just mlflow-up' first" >&2
+    if command -v xdg-open >/dev/null; then xdg-open "$url"; elif command -v open >/dev/null; then open "$url"; else echo "$url"; fi
+
+# Stop the ledger; the SQLite store and artifacts stay in .tmp/mlflow/.
+mlflow-down:
+    docker compose --profile mlflow down
 
 # ---------------------------------------------------------------------
 # Browser-session context — repomix.config.json, repomix-instruction.md
