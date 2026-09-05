@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://marola.example/board.schema.json",
+  "title": "marola board",
+  "description": "One area, one day: every nearby beach with every daylight hour scored (MIP-0005 §5.2). Written by marola.site.Board, read by site/static/app.js. Numbers are the same the CLI prints; null means the upstream had no value.",
+  "type": "object",
+  "required": ["schema", "area", "day", "today", "generated_at", "sources", "lore", "beaches"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "type": "integer", "enum": [1] },
+    "area": { "type": "string" },
+    "day": { "type": "string", "description": "ISO date the hours belong to, in the area's zone" },
+    "today": { "type": "string", "description": "ISO date the board was computed for ('today' in the area's zone) — water-quality freshness is judged against it" },
+    "generated_at": { "type": "string", "description": "ISO-8601 with offset; shown on the page so a stale board is visible" },
+    "sources": {
+      "type": "object",
+      "required": ["beaches", "forecast", "water"],
+      "additionalProperties": false,
+      "properties": {
+        "beaches": { "type": "string" },
+        "forecast": { "type": "string" },
+        "water": { "type": ["string", "null"] }
+      }
+    },
+    "lore": {
+      "description": "The day's sea-lore paragraph, verbatim, with its source (MIP-0001 §5.4); null when none is eligible",
+      "type": ["object", "null"],
+      "required": ["kind", "text", "source", "lang"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "enum": ["secret", "creature"] },
+        "text": { "type": "string" },
+        "source": { "type": "string" },
+        "lang": { "type": "string" }
+      }
+    },
+    "beaches": { "type": "array", "items": { "$ref": "#/$defs/beach" } }
+  },
+  "$defs": {
+    "likelihood": { "type": "string", "enum": ["Low", "Moderate", "High"] },
+    "hhmm": { "type": "string", "description": "local time, HH:mm" },
+    "beach": {
+      "type": "object",
+      "required": ["name", "lat", "lon", "best", "hours", "water", "tides", "sea", "jellyfish", "whales"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "lat": { "type": "number" },
+        "lon": { "type": "number" },
+        "best": {
+          "type": "object",
+          "required": ["hour", "score", "notes"],
+          "additionalProperties": false,
+          "properties": {
+            "hour": { "$ref": "#/$defs/hhmm" },
+            "score": { "type": "integer", "description": "0-100; 0 with water.unfit=true is a veto" },
+            "notes": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "hours": {
+          "type": "array",
+          "description": "every daylight hour of the day, chronological (the slider)",
+          "items": {
+            "type": "object",
+            "required": ["h", "score", "notes", "sea_temp_c", "wave_m", "wind_kmh", "jellyfish", "whales"],
+            "additionalProperties": false,
+            "properties": {
+              "h": { "$ref": "#/$defs/hhmm" },
+              "score": { "type": "integer" },
+              "notes": { "type": "array", "items": { "type": "string" } },
+              "sea_temp_c": { "type": ["number", "null"] },
+              "wave_m": { "type": ["number", "null"] },
+              "wind_kmh": { "type": ["number", "null"] },
+              "jellyfish": { "$ref": "#/$defs/likelihood" },
+              "whales": { "$ref": "#/$defs/likelihood" }
+            }
+          }
+        },
+        "water": {
+          "type": "object",
+          "required": ["summary", "unfit", "note", "source", "points"],
+          "additionalProperties": false,
+          "properties": {
+            "summary": { "type": "string", "description": "the CLI's water column, e.g. '4/5 PRÓPRIA — avoid Ponto 73 (25 Aug)' or 'no data'" },
+            "unfit": { "type": "boolean", "description": "true = every fresh point IMPRÓPRIA: red marker, score 0" },
+            "note": { "type": ["string", "null"] },
+            "source": { "type": ["string", "null"] },
+            "points": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["point", "location", "lat", "lon", "condition", "sampled_on", "enterococci_per_100ml", "rain"],
+                "additionalProperties": false,
+                "properties": {
+                  "point": { "type": "string" },
+                  "location": { "type": "string" },
+                  "lat": { "type": "number" },
+                  "lon": { "type": "number" },
+                  "condition": { "type": "string", "enum": ["proper", "improper", "unknown"] },
+                  "sampled_on": { "type": "string" },
+                  "enterococci_per_100ml": { "type": ["integer", "null"] },
+                  "rain": { "type": ["string", "null"] }
+                }
+              }
+            }
+          }
+        },
+        "tides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["time", "m", "high"],
+            "additionalProperties": false,
+            "properties": {
+              "time": { "$ref": "#/$defs/hhmm" },
+              "m": { "type": "number" },
+              "high": { "type": "boolean" }
+            }
+          }
+        },
+        "sea": {
+          "type": "object",
+          "description": "conditions at the best hour",
+          "required": ["temp_c", "wave_m", "period_s", "wave_dir_deg", "swell_m", "swell_period_s", "current_kmh", "wind_kmh", "wind_dir_deg", "air_temp_c", "uv", "rain_pct"],
+          "additionalProperties": false,
+          "properties": {
+            "temp_c": { "type": ["number", "null"] },
+            "wave_m": { "type": ["number", "null"] },
+            "period_s": { "type": ["number", "null"] },
+            "wave_dir_deg": { "type": ["number", "null"] },
+            "swell_m": { "type": ["number", "null"] },
+            "swell_period_s": { "type": ["number", "null"] },
+            "current_kmh": { "type": ["number", "null"] },
+            "wind_kmh": { "type": ["number", "null"] },
+            "wind_dir_deg": { "type": ["number", "null"] },
+            "air_temp_c": { "type": ["number", "null"] },
+            "uv": { "type": ["number", "null"] },
+            "rain_pct": { "type": ["number", "null"] }
+          }
+        },
+        "jellyfish": { "$ref": "#/$defs/likelihood" },
+        "whales": {
+          "type": "object",
+          "required": ["now", "peak", "season"],
+          "additionalProperties": false,
+          "properties": {
+            "now": { "$ref": "#/$defs/likelihood" },
+            "peak": { "type": ["string", "null"] },
+            "season": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

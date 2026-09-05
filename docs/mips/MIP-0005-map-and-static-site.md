@@ -2,10 +2,11 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted — implementation in progress (tasks: [`MIP-0005.tasks.md`](./MIP-0005.tasks.md)) |
 | **Author** | Claude Fable 5.1, for M. Hoffmann; idea from a chat with a friend (5 Sep 2026): "use the bot to feed the site and have the data there, instead of answering everyone" |
 | **Created** | 2026-09-05 |
 | **Phase** | 1 (local build + a manual deploy), 3 for the scheduled deploy (`ARCHITECTURE.md` §11) |
+| **Tasks** | `docs/mips/MIP-0005.tasks.md` — 4 stacked PRs: board-json, site-build, map-page, scheduling |
 | **Related** | MIP-0003 (precomputed boards — this is their first consumer), MIP-0002 (the bot links here), MIP-0001 (what a beach card shows), `ARCHITECTURE.md` §7 (Overpass fair use), `FUTURE-WORK.md` §1 (other activities become layers on the same map) |
 
 ## 1. Summary

@@ -48,8 +48,9 @@ object Http:
 
   /**
    * Test seam: runs `body` with `t` installed, restoring the previous transport afterwards. A
-   * process-wide switch, so test suites that use it must not run concurrently with each other
-   * (munit runs suites sequentially by default — keep it that way in `build.sbt`).
+   * process-wide switch, so test suites that use it must not run concurrently with each other (sbt
+   * runs a project's suites in parallel by default; `build.sbt` sets `Test / parallelExecution :=
+   * false` for exactly this reason — keep it).
    */
   def withTransport[A](t: Transport)(body: => A): A =
     val previous = transport.getAndSet(t)

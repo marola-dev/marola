@@ -111,6 +111,35 @@ object Recommender:
           .sortBy(b => (-b.score, Swimability.hourPreference(b.hour)))
     }
 
+  /**
+   * MIP-0005: every scored (beach, hour) for `days` consecutive days starting today — index 0 is
+   * today, 1 tomorrow — from **one** forecast fetch per beach (the site builder needs both days;
+   * calling `bestHoursTomorrow` twice would double the Open-Meteo calls). Same ranking rule as
+   * `bestHoursTomorrow`; `marola.site.Board` groups the result per beach and per day.
+   */
+  def scoreDays(
+      origin: Coordinates,
+      radiusKm: Double = 15.0,
+      beachLimit: Int = 6,
+      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
+      waterQuality: Option[WaterQualityClient] = None,
+      today: ZoneId => LocalDate = LocalDate.now(_),
+      days: Int = 2
+  ): List[BestHour] < Sync =
+    for
+      beaches <- BeachFinder.nearby(origin, radiusKm, beachLimit)
+      refined <- refineDistances(origin, beaches, distanceRefiner)
+      water <- fetchWaterQuality(waterQuality, refined)
+      scored <- traverse(refined) { beach =>
+        OpenMeteoClient.forecastFor(beach, forecastDays = days).map { forecast =>
+          val start = today(ZoneId.of(forecast.timezoneId))
+          (0 until days).toList.flatMap(i =>
+            scoreDay(beach, forecast, water.get(beach.name), start, start.plusDays(i))
+          )
+        }
+      }
+    yield scored.flatten.sortBy(b => (-b.score, Swimability.hourPreference(b.hour)))
+
   // `today` is injectable (the one clock read in the pipeline) so the fixture-replay regression
   // test can pin "tomorrow" to the day its recorded forecasts cover.
   private def scoreTomorrow(
@@ -120,28 +149,37 @@ object Recommender:
   ): List[BestHour] < Sync =
     OpenMeteoClient.forecastFor(beach).map { forecast =>
       val today = todayIn(ZoneId.of(forecast.timezoneId))
-      val tomorrow = today.plusDays(1)
-      val hours = forecast.hours.filter(_.time.toLocalDate.isEqual(tomorrow))
-      // Per-beach, not per-hour: computed once here, carried on every BestHour (MIP-0001 §5.3).
-      val verdict = Swimability.waterVerdict(water, today)
-      val tides = Tides.extrema(hours)
-      val whalePeak = hours
-        .filter(_.isDaylight.contains(true))
-        .maxByOption(h => Swimability.whaleSightingLikelihood(h).ordinal)
-      hours.map { hour =>
-        val (score, notes) = Swimability.score(hour, verdict)
-        BestHour(
-          beach,
-          hour,
-          score,
-          Swimability.jellyfishRisk(hour),
-          Swimability.whaleSightingLikelihood(hour),
-          notes,
-          waterQuality = water,
-          dayTides = tides,
-          whalePeak = whalePeak
-        )
-      }
+      scoreDay(beach, forecast, water, today, today.plusDays(1))
+    }
+
+  /** Pure: score every hour of `day` in `forecast`; tides and whale peak are per day. */
+  private def scoreDay(
+      beach: Beach,
+      forecast: BeachForecast,
+      water: Option[WaterQuality],
+      today: LocalDate,
+      day: LocalDate
+  ): List[BestHour] =
+    val hours = forecast.hours.filter(_.time.toLocalDate.isEqual(day))
+    // Per-beach, not per-hour: computed once here, carried on every BestHour (MIP-0001 §5.3).
+    val verdict = Swimability.waterVerdict(water, today)
+    val tides = Tides.extrema(hours)
+    val whalePeak = hours
+      .filter(_.isDaylight.contains(true))
+      .maxByOption(h => Swimability.whaleSightingLikelihood(h).ordinal)
+    hours.map { hour =>
+      val (score, notes) = Swimability.score(hour, verdict)
+      BestHour(
+        beach,
+        hour,
+        score,
+        Swimability.jellyfishRisk(hour),
+        Swimability.whaleSightingLikelihood(hour),
+        notes,
+        waterQuality = water,
+        dayTides = tides,
+        whalePeak = whalePeak
+      )
     }
 
   /**

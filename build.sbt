@@ -95,6 +95,12 @@ lazy val baseSettings = Seq(
   // passed together, so simple layering doesn't work.
   Test / testOptions += Tests.Argument(munitFramework, "--exclude-tags=E2E"),
 
+  // `Http.withTransport` is a process-wide switch (core/.../Http.scala), so two suites replaying
+  // fixtures at the same time see each other's transport. sbt runs a project's suites in parallel
+  // by default — confirmed the hard way: BoardSpec's call-count assertion failed only when it ran
+  // next to PipelineGoldenSpec. Sequential suites cost nothing here (the whole run is seconds).
+  Test / parallelExecution := false,
+
   assembly / assemblyMergeStrategy := {
     // ServiceLoader registrations (e.g. the MCP Java SDK's JsonSchemaValidatorSupplier — see
     // cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala) live under
