@@ -102,8 +102,11 @@ generate_mip() {
   if [[ "$branch" =~ ^[Mm][Ii][Pp]-([0-9]{4})/ ]]; then
     mip_ref="MIP-${BASH_REMATCH[1]}"
   else
-    mip_ref="$(git log --format='%s%n%b' "$range" 2>/dev/null \
-      | grep -ioE 'MIP-[0-9]{4}' | head -1 | tr '[:lower:]' '[:upper:]')"
+    # Subjects only, not bodies: this repo's convention is that a MIP-scoped commit's *subject*
+    # starts with "MIP-NNNN..." — a body can mention another MIP in passing (a cross-reference,
+    # an example command) without this commit being scoped to it.
+    mip_ref="$(git log --format='%s' "$range" 2>/dev/null \
+      | { grep -ioE '^MIP-[0-9]{4}' || true; } | head -1 | tr '[:lower:]' '[:upper:]')"
   fi
   if [ -z "$mip_ref" ]; then
     echo "none — not MIP-scoped"
