@@ -213,6 +213,41 @@ uprd *args:
 uprds *args:
     scripts/uprds.sh {{args}}
 
+# scripts/stack.sh passthrough: `just stack start MIP-0005 2 site-build`, `just stack pr`,
+# `just stack restack`, `just stack status` — the local, script-only view of a MIP stack.
+stack *args:
+    scripts/stack.sh {{args}}
+
+# GitHub's native Stacks (the "Preview stack" box on a PR) via the official `gh stack` extension.
+# One-time: installs the extension and its agent skill (`gh skill install github/gh-stack`);
+# both live under ~/.local/share/gh, not in the flake — gh extensions are per-user.
+stack-setup:
+    gh extension list 2>/dev/null | grep -q 'github/gh-stack' || gh extension install github/gh-stack
+    gh skill install github/gh-stack 2>/dev/null || echo "gh skill install not available in this gh — the extension works without it"
+
+# Link a MIP's PRs into one GitHub Stack, bottom to top (`gh stack link <branches>`): reuses open
+# PRs, fixes any base that doesn't chain, creates missing PRs. Safe to re-run; additive only.
+# `just stack-link MIP-0005` — after `just uprds MIP-0005`, or instead of it.
+stack-link mip:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mip="$(tr 'A-Z' 'a-z' <<<"{{mip}}")"
+    branches="$( { git branch --list "$mip/*" --format='%(refname:short)'; git branch -r --list "origin/$mip/*" --format='%(refname:short)' | sed 's#^origin/##'; } | sort -u | sort -t/ -k2 -n)"
+    [ -n "$branches" ] || { echo "no $mip/* branches" >&2; exit 1; }
+    gh extension list 2>/dev/null | grep -q 'github/gh-stack' || { echo "gh stack not installed — run: just stack-setup" >&2; exit 1; }
+    echo "linking: $(tr '\n' ' ' <<<"$branches")"
+    # shellcheck disable=SC2086
+    gh stack link $branches
+
+# The stack as GitHub sees it (PR numbers, states, bases). `scripts/stack.sh status` is the local view.
+stack-view *args:
+    gh stack view {{args}}
+
+# After a bottom PR was squash-merged: rebase the remaining branches and force-push with lease —
+# the gh-stack version of `scripts/stack.sh restack`, for the whole stack at once.
+stack-sync *args:
+    gh stack sync {{args}}
+
 # ---------------------------------------------------------------------
 # Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"
 # ---------------------------------------------------------------------
