@@ -54,7 +54,7 @@ services:
     # deploy: { resources: { reservations: { devices: [{ driver: nvidia, count: all, capabilities: [gpu] }] } } }
 
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.33.3
     profiles: [ollama]
     volumes:
       - ollama-models:/root/.ollama
@@ -68,7 +68,7 @@ services:
 
   # One-shot: make sure the stock model is in the volume (no-op after the first run).
   ollama-pull:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.33.3
     profiles: [ollama]
     environment:
       OLLAMA_HOST: http://ollama:11434

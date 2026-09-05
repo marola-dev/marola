@@ -8,8 +8,9 @@
 # v1 (MIP-0008.tasks.md decision 5).
 #
 # Lint: `just quality` runs hadolint on this file too.
-ARG OLLAMA_IMAGE=ollama/ollama:latest
-FROM ${OLLAMA_IMAGE}
+# Pinned (hadolint DL3006/DL3007; 0.33.3 is the newest stable tag on Docker Hub, 2026-09-03 —
+# bump here and in docker-compose.yml together).
+FROM ollama/ollama:0.33.3
 
 # The model store goes to a path of our own rather than /root/.ollama, so nothing depends on
 # whether the base image declares that directory a volume (files written under a declared

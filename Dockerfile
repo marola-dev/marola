@@ -11,16 +11,14 @@
 # decision 2). Secrets are never copied: `.dockerignore` is an allowlist and `.env` is not on it —
 # mount it (`docker compose` does) or pass `-e MAROLA_…`. Lint: `just quality` runs hadolint.
 
-ARG SBT_IMAGE=sbtscala/scala-sbt:eclipse-temurin-25.0.4_7_1.13.0_3.8.4
-ARG JRE_IMAGE=eclipse-temurin:25-jre-alpine
-ARG NIX_IMAGE=nixos/nix:latest
-ARG GRAAL_IMAGE=ghcr.io/graalvm/native-image-community:25
-ARG DISTROLESS_IMAGE=gcr.io/distroless/base-debian12:nonroot
+# Base images are written literally, with a tag, on every FROM line: hadolint's DL3006 (in the
+# CI action's hadolint version) does not resolve an ARG default, and a pinned tag is what we
+# want anyway. Bump them here, one place.
 
 # --- builder ---------------------------------------------------------------------------------
 # Built once, on the build platform: the jar is the same bytes for every target platform, so a
 # multi-platform build of `jvm` does not run sbt per architecture.
-FROM --platform=$BUILDPLATFORM ${SBT_IMAGE} AS builder
+FROM --platform=$BUILDPLATFORM sbtscala/scala-sbt:eclipse-temurin-25.0.4_7_1.13.0_3.8.4 AS builder
 WORKDIR /src
 # Build definition first, sources later: dependency resolution is the slow, rarely-changing layer.
 COPY build.sbt ./
@@ -34,7 +32,7 @@ RUN sbt --batch cli/assembly \
  && cp cli/target/scala-3.9.0/marola-cli-assembly-*.jar /marola.jar
 
 # --- jvm -------------------------------------------------------------------------------------
-FROM ${JRE_IMAGE} AS jvm
+FROM eclipse-temurin:25-jre-alpine AS jvm
 RUN addgroup -S marola && adduser -S marola -G marola \
  && mkdir -p /app/data && chown -R marola:marola /app
 WORKDIR /app
@@ -59,7 +57,7 @@ CMD ["--brief"]
 # `sbt cli/nativeImage` uses, so the two builds cannot drift. amd64 only: native-image does not
 # cross-compile (MIP-0008.tasks.md decision 7). ~45 s and ~4 GB RSS on 32 cores; a few minutes on
 # a 4-vCPU runner.
-FROM ${GRAAL_IMAGE} AS native-build
+FROM ghcr.io/graalvm/native-image-community:25 AS native-build
 WORKDIR /build
 COPY --from=builder /marola.jar /build/marola.jar
 RUN native-image -jar /build/marola.jar -o /build/marola
@@ -67,7 +65,7 @@ RUN native-image -jar /build/marola.jar -o /build/marola
 # --- native ----------------------------------------------------------------------------------
 # distroless base: glibc + CA certificates + tzdata, no shell, non-root — everything the binary
 # links against (ldd: libc, libdl, libpthread, librt) and nothing else.
-FROM ${DISTROLESS_IMAGE} AS native
+FROM gcr.io/distroless/base-debian12:nonroot AS native
 WORKDIR /app
 COPY --from=native-build /build/marola /app/marola
 COPY --chown=nonroot:nonroot knowledge /app/knowledge
@@ -80,7 +78,7 @@ CMD ["--brief"]
 # --- dev -------------------------------------------------------------------------------------
 # `nix develop` frozen into an image: JDK 25, sbt, just, ollama and the rest of flake.nix, for a
 # machine that has Docker but not Nix. Big (a few GB) and rebuilt only when the flake changes.
-FROM ${NIX_IMAGE} AS dev
+FROM nixos/nix:2.35.2 AS dev
 RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
 WORKDIR /src
 COPY flake.nix flake.lock ./
