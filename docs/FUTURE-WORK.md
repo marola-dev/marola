@@ -517,6 +517,13 @@ Scala" as an unrecorded aside.
 over OTLP/HTTP from any language, so the JVM side needs no LLMOps SDK; `ds4s` stays a separate
 project by its own definition above. `docs/README.md` classifies every section of this file.
 
+**Update (2026-09-05, later):** the "DSPy stays a Python subprocess indefinitely" conclusion is
+revisited by `docs/mips/MIP-0012-llm4s-adoption-and-dspy-deprecation.md` — marola's actual use of
+DSPy (a three-example `BootstrapFewShot` with a deterministic metric) is small enough to own as a
+Scala step in `core/prompt/` over the existing `LlmClient`, with the held-out eval §4.1 asks for;
+`ds4s` as a *general library* remains a non-marola idea. The same MIP checks llm4s against its jar
+(agent loop, MCP client/server, guardrails, structured output — and no prompt optimiser).
+
 ## 11. Personal history input: Garmin data (FIT-file import first, not a live API integration)
 
 **The pitch:** weight recommendations by a user's own swim history — "you've swum at Praia do

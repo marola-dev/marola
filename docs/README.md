@@ -17,7 +17,7 @@ big enough for a Marola Improvement Proposal (`mips/`, the `mip` skill) and wher
 | [`AI-500-MAPPING.md`](./AI-500-MAPPING.md) | roadmap | §3 multi-agent eval harness (candidate; MIP-0010 is its ledger); §3 cross-agent tracing (MIP-0010, first step); §4 human-confirmation gate for proactive agents (candidate — must precede any escalation agent; MIP-0011 makes the *developer-side* gate a hook); §4 Content Safety on alert text (candidate, with §9.2 below) |
 | [`SKILLS.md`](./SKILLS.md) | roadmap | an exam-skills ladder, not features; Stage 6 items (typed `Abort` channels, `Async.foreach`) are refactors |
 | [`SCALA3-JDK-REVIEW.md`](./SCALA3-JDK-REVIEW.md) | review | the adopt list — direct PRs in the order §4 gives, no MIP |
-| [`AGENT-FRAMEWORKS-SURVEY.md`](./AGENT-FRAMEWORKS-SURVEY.md) | review | §2 Python ideas → Scala shapes and §3 Pekko for the multi-agent core: **candidate MIP** ("marola as actors: escalation, digest and answer agents on Pekko") once MIP-0002/0004 exist to orchestrate |
+| [`AGENT-FRAMEWORKS-SURVEY.md`](./AGENT-FRAMEWORKS-SURVEY.md) | review | §1.2 llm4s → **MIP-0012** (opt-in module: agent loop, MCP client/server, guardrails, structured output); §2 Python ideas → Scala shapes and §3 Pekko for the multi-agent core: **candidate MIP** ("marola as actors: escalation, digest and answer agents on Pekko") once MIP-0002/0004 exist to orchestrate |
 | [`DEV-FLOW.md`](./DEV-FLOW.md) | how-to | none; MIP-0011 turns parts of it into hooks/agents |
 | [`AGENT-SKILLS.md`](./AGENT-SKILLS.md) | how-to | §3 four skill candidates → MIP-0011 task 8 |
 | [`FABLE_REVIEW.md`](./FABLE_REVIEW.md) | review | D1 managed identity for Cosmos/Vision/Maps — **candidate MIP** (Phase 2 prerequisite; small but security-relevant); §3 jail notes → MIP-0011 task 5 |
@@ -39,7 +39,7 @@ big enough for a Marola Improvement Proposal (`mips/`, the `mip` skill) and wher
 | 8 | Smaller items | Direct fixes |
 | 9.1 | RAG and fine-tuning over marine literature | Shipped as MIP-0001 (RAG) and `finetune/` tiers; Azure AI Search sibling still a candidate (Phase 2) |
 | 9.2 | Catastrophe/hazard detection agent competing with public alerts | **Candidate MIP**, gated by `AI-500-MAPPING.md` §4's human-confirmation design — write that gate first |
-| 10 | Scala/JVM LLMOps gap; `ds4s` (DSPy for Scala) | `ds4s` is **not a marola MIP by its own definition** — "a separate library-shaped project … large enough to be its own repo" that marola would consume. The other half of §10, Langfuse-shaped LLM tracing on the JVM, **is MIP-0010** |
+| 10 | Scala/JVM LLMOps gap; `ds4s` (DSPy for Scala) | `ds4s` is **not a marola MIP by its own definition** — "a separate library-shaped project … large enough to be its own repo" that marola would consume. The other half of §10, Langfuse-shaped LLM tracing on the JVM, **is MIP-0010**. The "DSPy stays Python" conclusion is revisited by **MIP-0012** (marola's small bootstrap becomes a Scala step in `core/prompt/`; `dspy/` deprecated) |
 | 11 | Garmin data: FIT-file import first | **Candidate MIP** (Phase 4, personalisation); the doc already decided the shape (files, never the unofficial API) |
 
 ## How a candidate becomes a MIP

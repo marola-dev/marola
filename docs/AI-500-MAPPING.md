@@ -23,7 +23,9 @@ all by design), not an orchestrated, addressable multi-agent system.
   (extending `cli/agent/SwimConditionsMcpServer.scala`, which today exposes only
   `BeachFinder`/`Recommender` as tools, not the LLM roles themselves): a `summarize_conditions` tool
   and a `review_summary` tool, callable independently by an external orchestrator, not just chained
-  internally by `Recommender`.
+  internally by `Recommender`. Proposed substrate: MIP-0012 (llm4s `Agent` + `Handoff.to(...)` for
+  the `/ask` agent and the escalation agent, HTTP MCP server for the remote-tool side; the §4 human
+  gate stays marola code — a `Block` guardrail is not a human gate).
 - **Add a third agent with a genuinely different responsibility** rather than another summarizer
   variant — the natural candidate is a **safety/escalation agent** (see the catastrophe-detection
   idea in `FUTURE-WORK.md` §9's second half): it consumes the same live conditions data but asks a

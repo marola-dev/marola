@@ -31,7 +31,7 @@ decoration.
 |---|---|---|
 | Integrate a generative AI model into an app | `core/llm/LlmClient` trait + `local/llm/LocalLlmClient` (Ollama) + `azure/llm/AzureFoundryLlmClient` | Built, local path live-verified end-to-end |
 | Prompt engineering | `dspy/compile_recommendation_prompt.py` — `dspy.Signature` + `BootstrapFewShot`-compiled few-shot prompt, not hand-tuned text | Built, compiled artifacts checked into `core/src/main/resources/` |
-| Optimize prompts systematically (not just "try wording") | The whole DSPy step exists specifically to cover this — see §2 of `FUTURE-WORK.md` for what was reviewed (kyo-http/kyo-schema) while building it | Built |
+| Optimize prompts systematically (not just "try wording") | The whole DSPy step exists specifically to cover this — see §2 of `FUTURE-WORK.md` for what was reviewed (kyo-http/kyo-schema) while building it | Built; proposed: MIP-0012 (the same metric-gated bootstrap as a Scala step in `core/prompt/`, plus the held-out eval `FUTURE-WORK.md` §4.1 asks for; `dspy/` deprecated) |
 | Structured output / function calling | `CompiledPrompt.buildMessages` replays the compiled artifact and `LlmClient.extractContent` reads the reply; `Reviewer` parses a compact JSON verdict from a second pass | Built, live-verified against Ollama |
 | RAG (retrieval-augmented generation) | `core/knowledge/` + `local/knowledge/OllamaEmbedder` — a curated corpus embedded locally, cosine retrieval, answers grounded on the retrieved passages with citations (`just ask`, MCP `ask_ocean_question`) | Built, local-only, live-verified with Ollama (MIP-0001); Azure AI Search sibling not built |
 | Fine-tuning a model | `finetune/` — dataset builder from the repo's own examples, QLoRA recipe (peft/trl), Ollama `ADAPTER` Modelfile; Tier 1 Modelfile variant `marola-llama3.2` | Recipe written, not run (no GPU); Tier 1 built and used live |
@@ -42,7 +42,7 @@ decoration.
 |---|---|---|
 | Build an agent that calls tools | `cli/agent/SwimConditionsMcpServer.scala` — exposes `BeachFinder`/`Recommender` as MCP tools over the official Java MCP SDK | Built, live-verified via raw JSON-RPC over stdio |
 | Multi-step agentic reasoning (plan → act → observe) | `Recommender.bestPerBeachTomorrow` → `Reviewer.review` is a two-stage pipeline (summarize, then critique/revise) — a real if simple instance of the pattern | Built, live-verified end-to-end with Ollama |
-| Agent orchestration frameworks | Not adopted — reviewed `workflows4s`/`decisions4s` (`FUTURE-WORK.md` §5), not a fit yet at this scale | Reviewed, deferred |
+| Agent orchestration frameworks | Not adopted — reviewed `workflows4s`/`decisions4s` (`FUTURE-WORK.md` §5), not a fit yet at this scale | Reviewed, deferred; proposed: MIP-0012 (llm4s as an opt-in module — agent loop, handoffs, guardrails, HTTP MCP server — behind marola's own traits) |
 | Multi-agent collaboration | Out of scope for AI-103 itself; this is exactly where AI-500 picks up — see `AI-500-MAPPING.md` | Deferred to AI-500 scope by design |
 
 ## 4. Implement computer vision solutions
