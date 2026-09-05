@@ -11,7 +11,6 @@ import marola.knowledge.OceanQa
 import marola.llm.{CompiledPrompt, LlmClient, Reviewer}
 import marola.location.IpGeolocation
 import marola.model.{BestHour, Coordinates}
-import marola.observability.Telemetry
 import marola.sightings.{Sighting, SightingKind}
 import marola.site.SiteBuilder
 
@@ -383,8 +382,7 @@ object Main extends KyoApp:
       _ <- Console.printLine(
         s"water quality -> ${water.map(_.name).getOrElse("no provider for this region (MIP-0001 §11)")}"
       )
-      otel = Telemetry.initialize(config.appInsightsConnectionString)
-      results <- Telemetry.withSpan(otel, "bestPerBeachTomorrow") {
+      results <- config.tracing.withSpan("bestPerBeachTomorrow") {
         Recommender.bestPerBeachTomorrow(
           origin.coordinates,
           origin.radiusKm,

@@ -7,6 +7,7 @@ import marola.knowledge.{FileKnowledgeStore, OceanQa, OllamaEmbedder}
 import marola.ledger.{MlflowRunLedger, RunLedger}
 import marola.llm.{AzureFoundryLlmClient, LlmClient, LocalLlmClient}
 import marola.model.Coordinates
+import marola.observability.{AzureMonitorTracing, Tracing}
 import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore, SightingStore}
 import marola.vision.{AzureVisionClient, LocalVisionClient, VisionClient}
 import marola.water.{ImaScWaterQualityClient, WaterQualityClient}
@@ -41,6 +42,28 @@ object WaterProvider:
       case Some("ima-sc") | Some("ima_sc") | Some("imasc") => ImaSc
       case Some("none") | Some("off")                      => None
       case _                                               => Auto
+
+/**
+ * Which `Tracing` backend `Main` wraps the pipeline in — `MAROLA_TRACES=off|mlflow|azure` (MIP-0010
+ * §5). `Off` and `Mlflow` both currently resolve to `Tracing.Noop` in `AppConfig.tracing`
+ * (`Mlflow`'s real backend is a later task in the tracing lane; parsing it now keeps the env var's
+ * contract stable once it lands, rather than rejecting the value today). Unset — or any value this
+ * doesn't recognize — falls back to *today's implicit behavior*, same "don't fail to start on a
+ * typo" spirit as `Provider`/`WaterProvider` above: `Azure` if
+ * `APPLICATIONINSIGHTS_CONNECTION_STRING` is set (this repo's tracing existed before this switch
+ * did), `Off` otherwise. `fromEnv` takes that connection string explicitly rather than reading
+ * `sys.env` itself, so it stays a pure, directly testable function (see `AppConfigSpec`).
+ */
+enum TraceBackend derives CanEqual:
+  case Off, Mlflow, Azure
+
+object TraceBackend:
+  def fromEnv(value: Option[String], appInsightsConnectionString: Option[String]): TraceBackend =
+    value.map(_.trim.toLowerCase) match
+      case Some("off")    => Off
+      case Some("mlflow") => Mlflow
+      case Some("azure")  => Azure
+      case _              => if appInsightsConnectionString.isDefined then Azure else Off
 
 /**
  * Minimal env-driven config: plain Scala, no Kyo `Env` effect yet (nothing to inject it into at POC
@@ -84,7 +107,8 @@ final case class AppConfig(
     azureVisionKey: Option[String],
     appInsightsConnectionString: Option[String],
     mlflowTrackingUri: Option[String],
-    mlflowExperiment: String
+    mlflowExperiment: String,
+    tracesBackend: TraceBackend
 ):
   /**
    * A fixed "current location" for the CLI, from `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON` — both or
@@ -126,7 +150,8 @@ final case class AppConfig(
           else s"endpoint=${secret(azureVisionEndpoint)} key=${secret(azureVisionKey)}"
         })",
       s"appinsights=${secret(appInsightsConnectionString)}",
-      s"mlflow=${secret(mlflowTrackingUri)}(experiment=$mlflowExperiment)"
+      s"mlflow=${secret(mlflowTrackingUri)}(experiment=$mlflowExperiment)",
+      s"traces=$tracesBackend"
     ).mkString(" ")
 
   /** MIP-0001 §5.2. `None` = no data, which `Swimability.waterVerdict` scores as nothing. */
@@ -210,8 +235,22 @@ final case class AppConfig(
       (origin, dest) => RouteFinder.travelDistanceKm(key, origin, dest)
     )
 
+  /**
+   * The `Tracing` instance `Main` wraps the pipeline in. `Mlflow` has no backend yet (MIP-0010
+   * tracing-lane task 6) so it falls back to `Noop` for now, same as `Off`; `Azure` without a
+   * connection string configured (a `tracesBackend` set by hand while the env var is unset) also
+   * falls back to `Noop` rather than throwing — there's nothing to connect to.
+   */
+  def tracing: Tracing =
+    tracesBackend match
+      case TraceBackend.Azure =>
+        appInsightsConnectionString.fold(Tracing.Noop)(AzureMonitorTracing(_))
+      case TraceBackend.Mlflow => Tracing.Noop // not implemented yet — MIP-0010 tracing-lane task 6
+      case TraceBackend.Off    => Tracing.Noop
+
 object AppConfig:
   def fromEnv: AppConfig =
+    val appInsightsConnectionString = sys.env.get("APPLICATIONINSIGHTS_CONNECTION_STRING")
     AppConfig(
       telegramBotToken = sys.env.get("MAROLA_TELEGRAM_BOT_TOKEN"),
       foundryProjectEndpoint = sys.env.get("FOUNDRY_PROJECT_ENDPOINT"),
@@ -257,9 +296,11 @@ object AppConfig:
       // Azure's own standard env var name (every Azure Monitor SDK/agent auto-detects it) — used
       // directly rather than bridged through a MAROLA_-prefixed name, unlike Langfuse's Python env
       // vars (which don't share this repo's naming convention to begin with).
-      appInsightsConnectionString = sys.env.get("APPLICATIONINSIGHTS_CONNECTION_STRING"),
+      appInsightsConnectionString = appInsightsConnectionString,
       // MIP-0010 §5: unset ⇒ RunLedger.Noop (`just mlflow-up` prints the tracking URI to export).
       mlflowTrackingUri = sys.env.get("MAROLA_MLFLOW_TRACKING_URI"),
       // The experiment prefix (`marola/<kind>`), not a full experiment name — see `runLedger`.
-      mlflowExperiment = sys.env.getOrElse("MAROLA_MLFLOW_EXPERIMENT", "marola")
+      mlflowExperiment = sys.env.getOrElse("MAROLA_MLFLOW_EXPERIMENT", "marola"),
+      tracesBackend =
+        TraceBackend.fromEnv(sys.env.get("MAROLA_TRACES"), appInsightsConnectionString)
     )
