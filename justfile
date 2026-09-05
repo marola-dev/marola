@@ -98,6 +98,29 @@ e2e:
         'cli/testOnly marola.E2ESpec'
 
 # ---------------------------------------------------------------------
+# Knowledge (local RAG) and fine-tuning — MIP-0001, docs/FUTURE-WORK.md §9.1
+# ---------------------------------------------------------------------
+
+# Ask marola's curated ocean notes (knowledge/*.md) a question — local RAG: Ollama embeds the
+# corpus (first run only, cached under data/), retrieves the best passages, the local LLM answers
+# from them with [n] citations. e.g. `just ask "what should I do if I'm caught in a rip current?"`
+ask question:
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --ask \"{{question}}\""
+
+# Force a re-embed of knowledge/ (normally automatic when a file or the embed model changes).
+knowledge-index:
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --reindex"
+
+# Tier 1 "fine-tune": llama3.2 + marola's persona/decoding settings, as an Ollama model named
+# marola-llama3.2 (finetune/Modelfile). Then: MAROLA_LOCAL_LLM_MODEL=marola-llama3.2 just run ...
+finetune-model:
+    ollama create marola-llama3.2 -f finetune/Modelfile
+
+# Tier 2 prep: chat-format JSONL from the DSPy demos, sea lore and knowledge/ (stdlib only).
+finetune-dataset:
+    python3 finetune/build_dataset.py
+
+# ---------------------------------------------------------------------
 # ai-jail — sandbox AI coding agents (bubblewrap/Landlock/seccomp on
 # Linux). https://github.com/akitaonrails/ai-jail
 # Project policy lives in `.ai-jail` (committed, untrusted layer — can

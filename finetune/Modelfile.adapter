@@ -1,0 +1,12 @@
+# marola-llama3.2 — Tier 2: llama3.2 + a QLoRA adapter trained by train_lora.py and converted to
+# GGUF with llama.cpp's convert_lora_to_gguf.py (see README.md). NOT RUN yet: no adapter file
+# exists in this repo. Build only after out/marola-adapter.gguf exists:
+#   ollama create marola-llama3.2 -f finetune/Modelfile.adapter
+
+FROM llama3.2
+ADAPTER ./out/marola-adapter.gguf
+
+SYSTEM """You are marola, a swim-conditions assistant for open-water swimmers in Brazil. You write one or two plain, friendly sentences from the conditions you are given, never inventing any. Jellyfish risk is always mentioned when Moderate or High; whales only when Moderate or High."""
+
+PARAMETER temperature 0.3
+PARAMETER num_ctx 4096

@@ -1,0 +1,10 @@
+# Tier 2 (QLoRA) only — build_dataset.py needs nothing beyond the standard library.
+# Loosely pinned, same caveat as dspy/requirements.txt: these move fast; re-check before trusting.
+torch>=2.4
+transformers>=4.45
+peft>=0.13
+trl>=0.12
+datasets>=3
+accelerate>=1
+# CUDA only — omit on CPU and pass --no-4bit to train_lora.py
+bitsandbytes>=0.44; sys_platform == "linux"

@@ -126,8 +126,8 @@ that swallows the "Cross-cutting: rate limiting..." paragraph and §5's table on
 
 | File:line | Says | Should say |
 |---|---|---|
-| `docs/ARCHITECTURE.md:104-108`, `:227` | `just run marola -- ...` | `just run -- ...` (the extra `marola` is forwarded as a CLI arg to `Main`) |
-| `docs/ARCHITECTURE.md:291` | `sbt marola/runMain marola.agent.SwimConditionsMcpServer` | `sbt cli/runMain ...` (or `just mcp-server`) |
+| `docs/ARCHITECTURE.md:104-108`, `:227` | `just run marola -- ...` | **Fixed** with MIP-0001 |
+| `docs/ARCHITECTURE.md:291` | `sbt marola/runMain marola.agent.SwimConditionsMcpServer` | **Fixed** with MIP-0001 |
 | `cli/src/test/scala/marola/E2ESpec.scala:15` | `just e2e-marola` | `just e2e` |
 | `cli/src/test/scala/marola/E2ESpec.scala:35` | "the `just run marola` default path" | `just run` |
 | `docs/ARCHITECTURE.md:188` | artifact at `marola/src/main/resources/recommendation_prompt.json` | `core/src/main/resources/...` |

@@ -36,6 +36,7 @@ If you're an AI coding agent (Claude Code, etc.) picking this repo up: read
 - **Local-first:** [Ollama](https://ollama.com) for the default LLM/vision backend — no Azure account needed for anything
 - **Azure AI (all optional, per-integration):** Foundry Java SDK, Azure Maps, Cosmos DB, Azure AI Vision, Azure Monitor/Application Insights, `azure-identity` (managed identity, no API keys)
 - **Agent tools:** official [MCP Java SDK](https://github.com/modelcontextprotocol/java-sdk) — marola exposes its pipeline as MCP tools (`cli/src/main/scala/marola/agent/`)
+- **Local RAG + fine-tuning scaffold:** `knowledge/` corpus embedded by Ollama, grounded Q&A with citations (`just ask`); `finetune/` Modelfile variant + QLoRA recipe — see `docs/ARCHITECTURE.md` §5h
 - **Offline prompt optimization:** [DSPy](https://dspy.ai) (Python — see `dspy/`), compiled once into portable JSON artifacts the Scala service loads; never a runtime dependency
 - **Dev environment:** Nix flake (works on Ubuntu, not NixOS-specific)
 - **Task runner:** [`just`](https://github.com/casey/just)

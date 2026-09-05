@@ -2,6 +2,8 @@ package marola
 
 import kyo.*
 import marola.beaches.RouteFinder
+import marola.knowledge.{FileKnowledgeStore, OllamaEmbedder}
+import marola.water.{ImaScWaterQualityClient, WaterQualityClient}
 import marola.llm.{AzureFoundryLlmClient, LlmClient, LocalLlmClient}
 import marola.model.Coordinates
 import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore, SightingStore}
@@ -24,6 +26,21 @@ object Provider:
       case _                                      => Local
 
 /**
+ * Bathing-water data is regional, so its "provider" is an agency, not local-vs-Azure (MIP-0001
+ * §5.2: there is no Azure water-quality service, and none is invented). `Auto` (default) picks
+ * IMA/SC when the origin is inside Santa Catarina and `None` elsewhere, printing which.
+ */
+enum WaterProvider derives CanEqual:
+  case Auto, ImaSc, None
+
+object WaterProvider:
+  def fromEnv(value: Option[String]): WaterProvider =
+    value.map(_.trim.toLowerCase) match
+      case Some("ima-sc") | Some("ima_sc") | Some("imasc") => ImaSc
+      case Some("none") | Some("off")                      => None
+      case _                                               => Auto
+
+/**
  * Minimal env-driven config: plain Scala, no Kyo `Env` effect yet (nothing to inject it into at POC
  * stage). `telegramBotToken` and `foundryProjectEndpoint` are both `None` until you actually set
  * them up — see docs/ARCHITECTURE.md and `.env.example`. `Main` runs the CLI/local-coordinates path
@@ -43,6 +60,11 @@ final case class AppConfig(
     beachSearchRadiusKm: Double,
     originLat: Option[Double],
     originLon: Option[Double],
+    waterQualityProvider: WaterProvider,
+    localEmbedModel: String,
+    knowledgeDir: String,
+    knowledgeIndexPath: String,
+    seaLoreEnabled: Boolean,
     llmProvider: Provider,
     localLlmBaseUrl: String,
     localLlmModel: String,
@@ -69,6 +91,27 @@ final case class AppConfig(
       lat <- originLat
       lon <- originLon
     yield Coordinates(lat, lon)
+
+  /** MIP-0001 §5.2. `None` = no data, which `Swimability.waterVerdict` scores as nothing. */
+  def waterQualityClient(origin: Coordinates): Option[WaterQualityClient] =
+    waterQualityProvider match
+      case WaterProvider.ImaSc => Some(ImaScWaterQualityClient())
+      case WaterProvider.None  => scala.None
+      case WaterProvider.Auto =>
+        if ImaScWaterQualityClient.coversOrigin(origin) then Some(ImaScWaterQualityClient())
+        else scala.None
+
+  /**
+   * Local-only RAG (`FUTURE-WORK.md` §9.1, first cut): the corpus under `knowledgeDir`, embedded by
+   * the same Ollama server as the LLM, indexed on disk. No Azure alternative yet — Azure AI Search
+   * is the obvious sibling when Phase 2 comes.
+   */
+  def knowledgeStore: FileKnowledgeStore =
+    FileKnowledgeStore(
+      knowledgeDir,
+      knowledgeIndexPath,
+      OllamaEmbedder(OllamaEmbedder.nativeBaseUrl(localLlmBaseUrl), localEmbedModel)
+    )
 
   /**
    * `None` for `llmProvider = Azure` without `foundryProjectEndpoint` set — there's no reasonable
@@ -126,6 +169,13 @@ object AppConfig:
         sys.env.get("MAROLA_BEACH_SEARCH_RADIUS_KM").flatMap(_.toDoubleOption).getOrElse(15.0),
       originLat = sys.env.get("MAROLA_ORIGIN_LAT").flatMap(_.toDoubleOption),
       originLon = sys.env.get("MAROLA_ORIGIN_LON").flatMap(_.toDoubleOption),
+      waterQualityProvider = WaterProvider.fromEnv(sys.env.get("MAROLA_WATER_QUALITY_PROVIDER")),
+      localEmbedModel = sys.env.getOrElse("MAROLA_LOCAL_EMBED_MODEL", OllamaEmbedder.DefaultModel),
+      knowledgeDir = sys.env.getOrElse("MAROLA_KNOWLEDGE_DIR", FileKnowledgeStore.DefaultCorpusDir),
+      knowledgeIndexPath =
+        sys.env.getOrElse("MAROLA_KNOWLEDGE_INDEX_PATH", FileKnowledgeStore.DefaultIndexPath),
+      seaLoreEnabled =
+        !sys.env.get("MAROLA_SEA_LORE").exists(v => v.equalsIgnoreCase("off") || v == "0"),
       llmProvider = Provider.fromEnv(sys.env.get("MAROLA_LLM_PROVIDER")),
       localLlmBaseUrl =
         sys.env.getOrElse("MAROLA_LOCAL_LLM_BASE_URL", LocalLlmClient.DefaultBaseUrl),

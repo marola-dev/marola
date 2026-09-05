@@ -38,7 +38,13 @@ final case class HourlyConditions(
     currentVelocityKmh: Option[Double],
     uvIndex: Option[Double],
     precipitationProbabilityPct: Option[Double],
-    isDaylight: Option[Boolean]
+    isDaylight: Option[Boolean],
+    // MIP-0001 additions — all from Open-Meteo's Marine API, all optional like everything above.
+    wavePeriodS: Option[Double] = None,
+    waveDirectionDeg: Option[Double] = None,
+    swellWaveHeightM: Option[Double] = None,
+    swellWavePeriodS: Option[Double] = None,
+    seaLevelM: Option[Double] = None // tide: height above mean sea level, `Tides.extrema` reads it
 )
 
 enum JellyfishRisk derives CanEqual:
@@ -60,5 +66,12 @@ final case class BestHour(
     score: Int,
     jellyfishRisk: JellyfishRisk,
     whaleSightingLikelihood: WhaleSightingLikelihood,
-    notes: List[String]
+    notes: List[String],
+    // MIP-0001: per-beach bathing-water verdict (None when no provider/no matched point), the
+    // day's tide turns, and the daylight hour with the best whale-spotting odds — all computed
+    // once per beach in `Recommender.scoreTomorrow`, carried here so `Main`'s detailed block and
+    // the MCP server can print them without re-fetching.
+    waterQuality: Option[marola.water.WaterQuality] = None,
+    dayTides: List[marola.conditions.TideEvent] = Nil,
+    whalePeak: Option[HourlyConditions] = None
 )

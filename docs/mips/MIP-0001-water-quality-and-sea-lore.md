@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Implemented — `ARCHITECTURE.md` §5g/§5h; branch `feat/mip-0001-water-quality-rag-finetune` |
 | **Author** | Claude Fable 5.1, for M. Hoffmann |
 | **Created** | 2026-09-05 |
 | **Phase** | 0 (CLI) now; the reply format is designed for Phase 1 (Telegram) |

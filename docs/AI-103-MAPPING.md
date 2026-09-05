@@ -31,8 +31,8 @@ decoration.
 | Prompt engineering | `dspy/compile_recommendation_prompt.py` — `dspy.Signature` + `BootstrapFewShot`-compiled few-shot prompt, not hand-tuned text | Built, compiled artifact checked into `dspy/` |
 | Optimize prompts systematically (not just "try wording") | The whole DSPy step exists specifically to cover this — see §2 of `FUTURE-WORK.md` for what was reviewed (kyo-http/kyo-schema) while building it | Built |
 | Structured output / function calling | `CompiledPrompt.replay` parses the model's structured summary field; `Reviewer` parses a compact JSON verdict from a second pass | Built, live-verified against Ollama |
-| RAG (retrieval-augmented generation) | Not built — marola's factual grounding today is live API data (Overpass, Open-Meteo), not a vector-retrieved corpus | **Gap.** See "Ocean-knowledge grounding" idea below for the concrete way to close this |
-| Fine-tuning a model | Not built | **Gap.** See "Ocean-knowledge grounding" idea below |
+| RAG (retrieval-augmented generation) | `core/knowledge/` + `local/knowledge/OllamaEmbedder` — a curated corpus embedded locally, cosine retrieval, answers grounded on the retrieved passages with citations (`just ask`, MCP `ask_ocean_question`) | Built, local-only, live-verified with Ollama (MIP-0001); Azure AI Search sibling not built |
+| Fine-tuning a model | `finetune/` — dataset builder from the repo's own examples, QLoRA recipe (peft/trl), Ollama `ADAPTER` Modelfile; Tier 1 Modelfile variant `marola-llama3.2` | Recipe written, not run (no GPU); Tier 1 built and used live |
 
 ## 3. Implement agentic solutions
 

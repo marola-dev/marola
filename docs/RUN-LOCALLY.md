@@ -143,6 +143,27 @@ export MAROLA_LOCAL_VISION_MODEL=llava
 just run -- --analyze-photo ./some-beach-photo.jpg
 ```
 
+## 5.1 Ask the ocean notes (local RAG) and the marola model variant
+
+```bash
+# Grounded Q&A over knowledge/*.md — first run embeds the corpus with llama3.2 (seconds on a GPU,
+# a few minutes on CPU), later runs reuse ./data/knowledge-index.json:
+just ask "what should I do if I get caught in a rip current?"
+
+# Expected shape: an answer with [n] citations, then the passages' sources
+#   If you are caught in a rip current, stay calm and float to conserve energy [3]. Swim parallel to
+#   the shoreline ... [3].
+#   Sources:
+#     [1] Rip currents — https://www.weather.gov/safety/ripcurrent (score 0.40)
+#     ...
+
+# Tier-1 "fine-tune": llama3.2 with marola's persona/decoding baked in (finetune/Modelfile):
+just finetune-model
+MAROLA_LOCAL_LLM_MODEL=marola-llama3.2 just run -- --summarize
+```
+
+See `finetune/README.md` for the QLoRA (Tier 2) recipe, which is written but not run here.
+
 ## 6. Troubleshooting
 
 - **`HTTP 404 ... model 'X' not found`** — the model named in `MAROLA_LOCAL_LLM_MODEL` (or

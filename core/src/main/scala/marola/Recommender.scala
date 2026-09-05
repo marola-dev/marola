@@ -2,9 +2,10 @@ package marola
 
 import kyo.*
 import marola.beaches.BeachFinder
-import marola.conditions.OpenMeteoClient
+import marola.conditions.{OpenMeteoClient, Tides}
 import marola.model.*
 import marola.scoring.Swimability
+import marola.water.{WaterQuality, WaterQualityClient, WaterQualityMatcher}
 import java.time.{LocalDate, ZoneId}
 
 /**
@@ -30,13 +31,33 @@ object Recommender:
       origin: Coordinates,
       radiusKm: Double = 15.0,
       beachLimit: Int = 6,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None
+      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
+      waterQuality: Option[WaterQualityClient] = None
   ): List[BestHour] < Sync =
     for
       beaches <- BeachFinder.nearby(origin, radiusKm, beachLimit)
       refined <- refineDistances(origin, beaches, distanceRefiner)
-      scored <- traverse(refined)(scoreTomorrow)
+      water <- fetchWaterQuality(waterQuality, refined)
+      scored <- traverse(refined)(beach => scoreTomorrow(beach, water.get(beach.name)))
     yield scored.flatten.sortBy(-_.score)
+
+  /**
+   * MIP-0001: one call for the whole region, matched to the short list. Same dependency-inversion
+   * shape as `distanceRefiner` — `marola-core` knows the trait, `marola-cli` picks the provider.
+   * Any failure (portal down, shape changed) yields no data for every beach, never a crash: absence
+   * of data is scored as nothing, and the column says "no data".
+   */
+  private def fetchWaterQuality(
+      client: Option[WaterQualityClient],
+      beaches: List[Beach]
+  ): Map[String, WaterQuality] < Sync =
+    client match
+      case None => Map.empty[String, WaterQuality]
+      case Some(c) =>
+        Abort.run(Abort.catching[Throwable](c.samplingPoints)).map {
+          case Result.Success(points) => WaterQualityMatcher.assign(beaches, points, c.name)
+          case _                      => Map.empty[String, WaterQuality]
+        }
 
   /**
    * Upgrades each beach's haversine distance (`BeachFinder`'s "as the crow flies" default) to
@@ -73,9 +94,10 @@ object Recommender:
       origin: Coordinates,
       radiusKm: Double = 15.0,
       beachLimit: Int = 6,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None
+      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
+      waterQuality: Option[WaterQualityClient] = None
   ): List[BestHour] < Sync =
-    bestHoursTomorrow(origin, radiusKm, beachLimit, distanceRefiner).map { all =>
+    bestHoursTomorrow(origin, radiusKm, beachLimit, distanceRefiner, waterQuality).map { all =>
       all
         .groupBy(_.beach.name)
         .values
@@ -84,22 +106,31 @@ object Recommender:
         .sortBy(-_.score)
     }
 
-  private def scoreTomorrow(beach: Beach): List[BestHour] < Sync =
+  private def scoreTomorrow(beach: Beach, water: Option[WaterQuality]): List[BestHour] < Sync =
     OpenMeteoClient.forecastFor(beach).map { forecast =>
-      val tomorrow = LocalDate.now(ZoneId.of(forecast.timezoneId)).plusDays(1)
-      forecast.hours
-        .filter(_.time.toLocalDate.isEqual(tomorrow))
-        .map { hour =>
-          val (score, notes) = Swimability.score(hour)
-          BestHour(
-            beach,
-            hour,
-            score,
-            Swimability.jellyfishRisk(hour),
-            Swimability.whaleSightingLikelihood(hour),
-            notes
-          )
-        }
+      val today = LocalDate.now(ZoneId.of(forecast.timezoneId))
+      val tomorrow = today.plusDays(1)
+      val hours = forecast.hours.filter(_.time.toLocalDate.isEqual(tomorrow))
+      // Per-beach, not per-hour: computed once here, carried on every BestHour (MIP-0001 §5.3).
+      val verdict = Swimability.waterVerdict(water, today)
+      val tides = Tides.extrema(hours)
+      val whalePeak = hours
+        .filter(_.isDaylight.contains(true))
+        .maxByOption(h => Swimability.whaleSightingLikelihood(h).ordinal)
+      hours.map { hour =>
+        val (score, notes) = Swimability.score(hour, verdict)
+        BestHour(
+          beach,
+          hour,
+          score,
+          Swimability.jellyfishRisk(hour),
+          Swimability.whaleSightingLikelihood(hour),
+          notes,
+          waterQuality = water,
+          dayTides = tides,
+          whalePeak = whalePeak
+        )
+      }
     }
 
   /**

@@ -27,6 +27,10 @@ rest gets migrated to richer Kyo effects.
 | `http/Http.scala` (all 4 methods) | `< Sync` | Honest — every caller sees `< Sync` and knows real network I/O happens |
 | `beaches/BeachFinder`, `beaches/RouteFinder` | `< Sync` | Composed from `Http`, correctly propagates |
 | `conditions/OpenMeteoClient` | `< Sync` | Same |
+| `water/WaterQualityMatcher`, `scoring/Swimability.waterVerdict`, `conditions/Tides`, `lore/SeaLore.pick` | Pure | MIP-0001's logic; all unit-tested |
+| `water/ImaScWaterQualityClient.samplingPoints`, `knowledge/OllamaEmbedder.embed` | `< Sync` | HTTP via `Http` |
+| `knowledge/FileKnowledgeStore` | `< Sync` | File I/O and embedding wrapped in `Sync.defer`/`Embedder`; `Corpus.chunkDocument`/`cosine` are pure |
+| `lore/SeaLore.loadDefault` | Hidden effect ⚠️ (minor) | Classpath read with no effect type — same class as `CompiledPrompt.loadFromFile` above |
 | `location/IpGeolocation.locate` | `< Sync` | Same; each provider call is individually `Abort.catching`-wrapped so a dead provider drops out of the vote. `consensus` (the vote itself) is pure and unit-tested |
 | `llm/LocalLlmClient`, `llm/AzureFoundryLlmClient`, `vision/*Client` | `< Sync` | Same; `AzureFoundryLlmClient` additionally wraps `azure-identity`'s blocking `getTokenSync` in `Sync.defer` — correctly tracked |
 | `llm/CompiledPrompt.loadFromFile`/`loadFromString` | Hidden effect ⚠️ (I/O + partial) | `loadFromFile` reads a file with **no effect type at all** — not even `< Sync`. `loadFromString` throws on malformed JSON. See §2 |

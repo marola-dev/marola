@@ -1,9 +1,10 @@
 package marola
 
 import kyo.*
+import marola.knowledge.OceanQa
 import marola.llm.{CompiledPrompt, LlmClient, Reviewer}
 import marola.location.IpGeolocation
-import marola.model.{BestHour, Coordinates, WhaleSightingLikelihood}
+import marola.model.{BestHour, Coordinates}
 import marola.observability.Telemetry
 import marola.sightings.{Sighting, SightingKind}
 import java.time.Instant
@@ -98,17 +99,6 @@ object Main extends KyoApp:
 
   private val hourFormat = DateTimeFormatter.ofPattern("EEE d MMM, HH:mm")
 
-  private def formatLine(rank: Int, best: BestHour): String =
-    val when = best.hour.time.format(hourFormat)
-    val dist = f"${best.beach.distanceKm}%.1fkm away"
-    val temp = best.hour.seaTempC.map(t => f"$t%.1f°C sea").getOrElse("sea temp n/a")
-    val wind = best.hour.windSpeedKmh.map(w => f"$w%.0fkm/h wind").getOrElse("wind n/a")
-    val notes = if best.notes.isEmpty then "good conditions" else best.notes.mkString(", ")
-    val whale =
-      if best.whaleSightingLikelihood == WhaleSightingLikelihood.Low then ""
-      else s"  |  whale sighting: ${best.whaleSightingLikelihood}"
-    f"${rank}%2d. [${best.score}%3d/100] ${best.beach.name}%-22s ($dist)  best at $when  |  $temp, $wind  |  jellyfish: ${best.jellyfishRisk}$whale  |  $notes"
-
   private val SummaryPromptResource = "recommendation_prompt.json"
   private val ReviewPromptResource = "review_prompt.json"
 
@@ -134,10 +124,49 @@ object Main extends KyoApp:
 
   private def bootstrap(args: Array[String]): Unit < Async =
     val config = AppConfig.fromEnv
-    (parseSightingReport(args), argValue(args, "--analyze-photo")) match
-      case (Some((kind, beachName, note)), _) => reportSighting(config, kind, beachName, note)
-      case (None, Some(photoPath))            => analyzePhoto(config, photoPath)
-      case (None, None)                       => runRecommendation(args, config)
+    (parseSightingReport(args), argValue(args, "--analyze-photo"), argValue(args, "--ask")) match
+      case (Some((kind, beachName, note)), _, _) => reportSighting(config, kind, beachName, note)
+      case (None, Some(photoPath), _)            => analyzePhoto(config, photoPath)
+      case (None, None, Some(question))          => askOcean(config, question)
+      case (None, None, None) if args.contains("--reindex") => reindexKnowledge(config)
+      case (None, None, None)                               => runRecommendation(args, config)
+
+  /**
+   * `--ask "<question>"` — local RAG over the Markdown corpus in `knowledge/` (MIP-0001 /
+   * `FUTURE-WORK.md` §9.1): retrieve with the Ollama embedder, answer with the local LLM from those
+   * passages only, print the passages' sources. First run embeds the corpus (minutes on CPU); later
+   * runs hit the index.
+   */
+  private def askOcean(config: AppConfig, question: String): Unit < Async =
+    config.llmClient match
+      case None =>
+        Console.printLine(
+          s"(--ask needs an LLM: llmProvider=${config.llmProvider} is not configured)"
+        )
+      case Some(client) =>
+        for
+          _ <- Console.printLine(
+            s"Searching ${config.knowledgeDir} (embedder: ${config.localEmbedModel}) and asking " +
+              s"${config.localLlmModel}..."
+          )
+          outcome <- Abort.run(
+            Abort.catching[Throwable](OceanQa.answer(question, config.knowledgeStore, client))
+          )
+          _ <- outcome match
+            case Result.Success(answer) => Console.printLine("\n" + Report.answer(answer))
+            case failure                => Console.printLine(s"(ask failed: $failure)")
+        yield ()
+
+  private def reindexKnowledge(config: AppConfig): Unit < Async =
+    for
+      _ <- Console.printLine(
+        s"Re-embedding ${config.knowledgeDir} with ${config.localEmbedModel} -> ${config.knowledgeIndexPath}"
+      )
+      outcome <- Abort.run(Abort.catching[Throwable](config.knowledgeStore.rebuild))
+      _ <- outcome match
+        case Result.Success(n) => Console.printLine(s"Indexed $n chunks.")
+        case failure           => Console.printLine(s"(reindex failed: $failure)")
+    yield ()
 
   private def analyzePhoto(config: AppConfig, photoPath: String): Unit < Async =
     config.visionClient match
@@ -186,6 +215,7 @@ object Main extends KyoApp:
 
   private def runRecommendation(args: Array[String], config: AppConfig): Unit < Async =
     val summarize = args.contains("--summarize")
+    val brief = args.contains("--brief")
     for
       _ <- Console.printLine("marola :: best hour tomorrow to swim nearby (POC)")
       _ <- Console.printLine(s"config -> $config")
@@ -195,20 +225,45 @@ object Main extends KyoApp:
         f"origin -> lat=${origin.coordinates.lat}%.4f, lon=${origin.coordinates.lon}%.4f " +
           f"(radius ${origin.radiusKm}%.0fkm, source: ${origin.source})"
       )
+      water = config.waterQualityClient(origin.coordinates)
+      _ <- Console.printLine(
+        s"water quality -> ${water.map(_.name).getOrElse("no provider for this region (MIP-0001 §11)")}"
+      )
       otel = Telemetry.initialize(config.appInsightsConnectionString)
       results <- Telemetry.withSpan(otel, "bestPerBeachTomorrow") {
         Recommender.bestPerBeachTomorrow(
           origin.coordinates,
           origin.radiusKm,
-          distanceRefiner = config.distanceRefiner
+          distanceRefiner = config.distanceRefiner,
+          waterQuality = water
         )
       }
       _ <-
         if results.isEmpty then
           Console.printLine("No beaches found nearby, or no forecast data for tomorrow yet.")
-        else printLines(results.zipWithIndex.take(15))
+        else printLines(results.zipWithIndex.take(15), brief)
+      _ <- printDetail(results.headOption, brief)
       _ <- if summarize then summarizeTop(config, results.headOption) else noop
+      _ <- printLore(
+        results.headOption,
+        origin.coordinates,
+        enabled = !brief && config.seaLoreEnabled && !args.contains("--no-lore")
+      )
     yield ()
+
+  private def printDetail(top: Option[BestHour], brief: Boolean): Unit < Async =
+    top match
+      case Some(best) if !brief => Console.printLine("\n" + Report.detail(best))
+      case _                    => ()
+
+  /** MIP-0001 §5.4 — the sourced paragraph, verbatim, last. */
+  private def printLore(top: Option[BestHour], origin: Coordinates, enabled: Boolean): Unit <
+    Async =
+    top
+      .filter(_ => enabled)
+      .flatMap(best => Report.lore(Report.todayFor(best), best.beach.name, origin)) match
+      case Some(text) => Console.printLine("\n" + text)
+      case None       => ()
 
   private def factInputsFor(best: BestHour): Map[String, String] =
     Map(
@@ -281,13 +336,15 @@ object Main extends KyoApp:
 
   // Sequential effect loop, hand-rolled for the same reason as Recommender.traverse: only
   // map/flatMap on `< Async` are confirmed against the pinned Kyo 1.0.0-RC5 build.
-  private def printLines(items: List[(BestHour, Int)]): Unit < Async =
+  private def printLines(items: List[(BestHour, Int)], brief: Boolean): Unit < Async =
     items match
       case Nil => ()
       case (best, i) :: rest =>
         for
-          _ <- Console.printLine(formatLine(i + 1, best))
-          _ <- printLines(rest)
+          _ <- Console.printLine(
+            if brief then Report.briefLine(i + 1, best) else Report.line(i + 1, best)
+          )
+          _ <- printLines(rest, brief)
         yield ()
 
   run(bootstrap(args.toArray))

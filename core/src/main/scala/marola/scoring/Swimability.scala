@@ -1,6 +1,19 @@
 package marola.scoring
 
 import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood}
+import marola.water.{BathingCondition, WaterQuality}
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+/**
+ * The bathing-water contribution to a beach's score (MIP-0001 §6): `delta` is added like any other
+ * deduction, `veto` forces the score to 0 regardless, `note` (if any) joins the notes list, and
+ * `summary` is the always-present short text for the ranked list's water column.
+ */
+final case class WaterVerdict(delta: Int, veto: Boolean, note: Option[String], summary: String)
+
+object WaterVerdict:
+  val NoData: WaterVerdict = WaterVerdict(0, veto = false, None, "no data")
 
 /**
  * Pure decision logic over one already-fetched hourly forecast slice — no I/O, no Kyo effect type,
@@ -33,6 +46,9 @@ object Swimability:
   private val WhaleSeasonMonths: Set[Int] = Set(7, 8, 9, 10, 11)
   private val WhaleCalmWaveHeightM = 1.0 // rougher than the swim-comfort threshold: you just
   private val WhaleCalmWindKmh = 20.0 // need to *spot* a blow/breach, not swim in it
+
+  def isWhaleSeason(time: java.time.LocalDateTime): Boolean =
+    WhaleSeasonMonths.contains(time.getMonthValue)
 
   def jellyfishRisk(hour: HourlyConditions): JellyfishRisk =
     val signals = List(
@@ -97,17 +113,74 @@ object Swimability:
       case JellyfishRisk.Moderate => (-10, Some("some jellyfish likelihood"))
       case JellyfishRisk.Low      => (0, None)
 
+  private val MixedWaterPenalty = -20
+  private val sampleDateFormat = DateTimeFormatter.ofPattern("d MMM")
+
+  /**
+   * MIP-0001 §6, verbatim: every fresh matched point IMPRÓPRIA → veto (score 0); some IMPRÓPRIA →
+   * −20 and name the spots to avoid; all PRÓPRIA → nothing; no match / provider `none` → nothing
+   * (absence of data is not evidence of pollution); every sample older than 45 days → treated as no
+   * data, but say so. Uses the agency's own classification (`condition`), never the raw count.
+   */
+  def waterVerdict(water: Option[WaterQuality], today: LocalDate): WaterVerdict =
+    water match
+      case None => WaterVerdict.NoData
+      case Some(w) =>
+        val fresh = w.fresh(today)
+        if fresh.isEmpty then
+          w.newestSampleDate match
+            case Some(d) =>
+              val when = d.format(sampleDateFormat)
+              WaterVerdict(
+                0,
+                veto = false,
+                Some(s"water quality data stale ($when)"),
+                s"stale ($when)"
+              )
+            case None => WaterVerdict.NoData
+        else
+          val improper = fresh.filter { case (_, s) => s.condition == BathingCondition.Improper }
+          val proper = fresh.filter { case (_, s) => s.condition == BathingCondition.Proper }
+          val when = fresh.map(_._2.sampledOn).maxBy(_.toEpochDay).format(sampleDateFormat)
+          if improper.nonEmpty && proper.isEmpty then
+            val (point, sample) = improper.maxBy(_._2.enterococciPer100ml.getOrElse(0))
+            val count =
+              sample.enterococciPer100ml.map(n => s"$n enterococci/100mL").getOrElse("count n/a")
+            WaterVerdict(
+              0,
+              veto = true,
+              Some(
+                s"water unfit for bathing — ${w.source} $when, ${point.pointName} (${point.location}), $count"
+              ),
+              s"IMPRÓPRIA (${improper.size}/${fresh.size} pts, $when)"
+            )
+          else if improper.nonEmpty then
+            val avoid = improper.map { case (p, _) => p.location }.mkString("; ")
+            WaterVerdict(
+              MixedWaterPenalty,
+              veto = false,
+              Some(s"${proper.size}/${fresh.size} points PRÓPRIA — avoid $avoid"),
+              s"${proper.size}/${fresh.size} PRÓPRIA — avoid ${improper.map(_._1.pointName).mkString(", ")} ($when)"
+            )
+          else
+            WaterVerdict(0, veto = false, None, s"PRÓPRIA (${fresh.size}/${fresh.size} pts, $when)")
+
   /**
    * 0-100, higher = better conditions for open-water swimming, plus the reasons behind any
-   * deduction (empty when conditions are simply good).
+   * deduction (empty when conditions are simply good). `water` is per-beach, not per-hour
+   * (MIP-0001): a veto zeroes the hour whatever the sea is doing.
    */
-  def score(hour: HourlyConditions): (Int, List[String]) =
+  def score(
+      hour: HourlyConditions,
+      water: WaterVerdict = WaterVerdict.NoData
+  ): (Int, List[String]) =
     val deltas = List(
       waveDelta(hour),
       windDelta(hour),
       seaTempDelta(hour),
       precipitationDelta(hour),
-      jellyfishDelta(hour)
+      jellyfishDelta(hour),
+      (water.delta, water.note)
     )
-    val total = (100 + deltas.map(_._1).sum).max(0).min(100)
+    val total = if water.veto then 0 else (100 + deltas.map(_._1).sum).max(0).min(100)
     (total, deltas.flatMap(_._2))
