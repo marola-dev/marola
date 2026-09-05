@@ -34,7 +34,12 @@ def try_cut(sep):
     return None
 
 
-cut = try_cut(" — ") or try_cut(": ")
+cut = try_cut(" — ")
+# Only treat a second ": " as a break point when the subject actually starts with a MIP-style
+# prefix — otherwise an ordinary "scope: description" commit subject (very common outside MIPs)
+# would get chopped down to just its scope, e.g. "docs: fix broken links..." -> "docs".
+if not cut and prefix_len:
+    cut = try_cut(": ")
 if not cut:
     for sep in (". ", "; ", ", "):
         cut = try_cut(sep)
