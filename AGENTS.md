@@ -119,6 +119,10 @@ the requested feature but flag which earlier-phase prerequisite is still missing
   dollar figure is not a bill, it is the best available proxy for *how much of the plan's quota the
   feature used*, which is the point. Compare it with the PR's scope in one sentence if it's
   surprising ("mostly the benchmark reruns").
+- **`just uprd` writes the PR description** from the branch's commits: a "What changed" entry per
+  commit and a "Cost" section built from the commits' `Cost:` trailers — so the trailer in each
+  commit is the source of truth and the PR body never drifts from it. Run it after every push to
+  a PR branch (`just uprd --dry-run` to preview).
 - **One feature, one session.** Start a feature with `/clear` (or a new session) and `/rename` it
   to the branch name so `/usage`'s session block and ccusage's per-session rows map to one PR.
   Re-runs of `just benchmark`/`just e2e` driven by the agent count toward the feature; note them.

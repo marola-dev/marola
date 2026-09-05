@@ -188,6 +188,12 @@ _clip file:
         echo "no clipboard tool/display found — open the file instead: {{file}} ($size bytes)"
     fi
 
+# Update the current branch's PR description on GitHub from its commits — "What changed" (one
+# entry per commit) + "Cost" (the Cost: trailers). `just uprd --dry-run` prints without editing;
+# `just uprd body.md` uses a file. Needs `gh auth status` OK. See scripts/uprd.sh.
+uprd *args:
+    scripts/uprd.sh {{args}}
+
 # ---------------------------------------------------------------------
 # Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"
 # ---------------------------------------------------------------------
