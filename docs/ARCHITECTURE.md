@@ -579,8 +579,8 @@ Full domain-by-domain mapping lives in its own docs now, not inline here:
    already here and free: `.github/workflows/site.yml` builds MIP-0005's boards every 3 h and
    publishes the static map to GitHub Pages — no Azure, no server, no per-visitor cost. The
    second is the image the Container App will run: `Dockerfile` (`jvm` = Temurin 25 JRE + the
-   fat jar, `dev` = the Nix dev shell) and `docker-compose.yml` (marola + an Ollama sidecar) —
-   MIP-0008, `RUN-LOCALLY.md` §10.
+   fat jar, `native` = the GraalVM binary on distroless, `dev` = the Nix dev shell) and
+   `docker-compose.yml` (marola + an Ollama sidecar) — MIP-0008, `RUN-LOCALLY.md` §10.
 5. **Phase 4 — Harden & calibrate.** Caching, per-user rate limiting, feeding accumulated
    `SightingStore` reports back into the jellyfish/whale heuristics (§8).
 

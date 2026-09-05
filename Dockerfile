@@ -4,7 +4,8 @@
 #   builder  sbt cli/assembly on Temurin 25 → /marola.jar (never shipped)
 #   jvm      Temurin 25 JRE (alpine) + the jar — `docker run --rm ghcr.io/h0ffmann/marola:jvm --brief --lat … --lon …`
 #   dev      the literal `nix develop`, for people without Nix: `docker run -it … marola:dev` drops you in the dev shell
-#   (native-build / native — the GraalVM binary — arrive with task 3 of docs/mips/MIP-0008.tasks.md)
+#   native-build  GraalVM native-image over the same jar (never shipped)
+#   native   one static-ish binary on distroless — `docker run --rm ghcr.io/h0ffmann/marola:native --brief --lat … --lon …`
 #
 # Every base image tag below was checked on its registry on 2026-09-05 (sizes in the tasks file,
 # decision 2). Secrets are never copied: `.dockerignore` is an allowlist and `.env` is not on it —
@@ -13,6 +14,8 @@
 ARG SBT_IMAGE=sbtscala/scala-sbt:eclipse-temurin-25.0.4_7_1.13.0_3.8.4
 ARG JRE_IMAGE=eclipse-temurin:25-jre-alpine
 ARG NIX_IMAGE=nixos/nix:latest
+ARG GRAAL_IMAGE=ghcr.io/graalvm/native-image-community:25
+ARG DISTROLESS_IMAGE=gcr.io/distroless/base-debian12:nonroot
 
 # --- builder ---------------------------------------------------------------------------------
 # Built once, on the build platform: the jar is the same bytes for every target platform, so a
@@ -49,6 +52,30 @@ ENTRYPOINT ["java", "-jar", "/app/marola.jar"]
 CMD ["--brief"]
 # The MCP server is the other main class in the same jar (build.sbt):
 #   docker run --rm -i --entrypoint java ghcr.io/h0ffmann/marola:jvm -cp /app/marola.jar marola.agent.SwimConditionsMcpServer
+
+# --- native-build ----------------------------------------------------------------------------
+# The same jar, compiled ahead of time. The arguments and reachability metadata come from the jar
+# itself (cli/src/main/resources/META-INF/native-image/com.marola/marola-cli/), the same ones
+# `sbt cli/nativeImage` uses, so the two builds cannot drift. amd64 only: native-image does not
+# cross-compile (MIP-0008.tasks.md decision 7). ~45 s and ~4 GB RSS on 32 cores; a few minutes on
+# a 4-vCPU runner.
+FROM ${GRAAL_IMAGE} AS native-build
+WORKDIR /build
+COPY --from=builder /marola.jar /build/marola.jar
+RUN native-image -jar /build/marola.jar -o /build/marola
+
+# --- native ----------------------------------------------------------------------------------
+# distroless base: glibc + CA certificates + tzdata, no shell, non-root — everything the binary
+# links against (ldd: libc, libdl, libpthread, librt) and nothing else.
+FROM ${DISTROLESS_IMAGE} AS native
+WORKDIR /app
+COPY --from=native-build /build/marola /app/marola
+COPY --chown=nonroot:nonroot knowledge /app/knowledge
+COPY --chown=nonroot:nonroot site/areas.json site/board.schema.json /app/site/
+COPY --chown=nonroot:nonroot site/static /app/site/static
+VOLUME ["/app/data"]
+ENTRYPOINT ["/app/marola"]
+CMD ["--brief"]
 
 # --- dev -------------------------------------------------------------------------------------
 # `nix develop` frozen into an image: JDK 25, sbt, just, ollama and the rest of flake.nix, for a

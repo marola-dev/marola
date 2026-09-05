@@ -7,3 +7,9 @@ addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
 // `sbt scalafixAll --check` — semantic lint (unused, import order, banned syntax); see .scalafix.conf
 // and `just quality`. Free, runs in ci.yml.
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.3")
+
+// `sbt cli/nativeImage` — GraalVM native-image of the CLI (MIP-0008 task 3, `just native-image`).
+// The native-image arguments and reachability metadata live in cli/src/main/resources/META-INF/
+// native-image/com.marola/marola-cli/, read from the classpath, so the Dockerfile's
+// `native-image -jar marola.jar` builds the same binary.
+addSbtPlugin("org.scalameta" % "sbt-native-image" % "0.5.0")

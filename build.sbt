@@ -110,7 +110,11 @@ lazy val baseSettings = Seq(
     // real `ServiceConfigurationError: No JsonSchemaValidatorSupplier available` at runtime in the
     // assembled jar, even though the same code ran fine under `sbt run`'s unmerged classpath.
     case PathList("META-INF", "services", xs @ _*) => MergeStrategy.concat
-    case PathList("META-INF", xs @ _*)             => MergeStrategy.discard
+    // GraalVM reachability metadata (ours under com.marola/marola-cli, and every dependency's) must
+    // survive into the fat jar too: the Dockerfile's `native-image -jar marola.jar` reads it from
+    // there. Paths are per artifact, so nothing collides; `first` is only for a duplicate jar.
+    case PathList("META-INF", "native-image", xs @ _*) => MergeStrategy.first
+    case PathList("META-INF", xs @ _*)                 => MergeStrategy.discard
     case _                                         => MergeStrategy.first
   }
 )
@@ -144,9 +148,22 @@ lazy val azure = (project in file("azure"))
 
 lazy val cli = (project in file("cli"))
   .dependsOn(core, local, azure)
+  .enablePlugins(NativeImagePlugin)
   .settings(baseSettings)
   .settings(
     name := "marola-cli",
+    // --- GraalVM native-image (MIP-0008 task 3): `sbt cli/nativeImage` → cli/target/marola ---
+    // `nativeImageInstalled`: use the native-image of $GRAALVM_HOME (or JAVA_HOME) instead of
+    // letting the plugin download a GraalVM — `just native-image` provides one from nixpkgs. The
+    // arguments (build-time initialisation of slf4j/logback/Jackson, -march=compatibility) and the
+    // reachability metadata (the root *.json resources, sun.misc.Signal for Kyo's handler) are in
+    // cli/src/main/resources/META-INF/native-image/com.marola/marola-cli/, read from the
+    // classpath, so the Dockerfile's `native-image -jar marola.jar` builds the same binary.
+    // Verified 2026-09-05 (GraalVM CE 25.2.4 = JDK 25.0.4): 69 MB binary, --brief and --summarize
+    // live — see docs/mips/MIP-0008.tasks.md, decision 1.
+    Compile / mainClass := Some("marola.Main"),
+    nativeImageInstalled := true,
+    nativeImageOutput := target.value / "marola",
     // --- MCP (agent tool wiring — see agent/SwimConditionsMcpServer.scala) ---
     libraryDependencies += "io.modelcontextprotocol.sdk" % "mcp" % "2.0.0",
     assembly / mainClass := Some("marola.Main"),

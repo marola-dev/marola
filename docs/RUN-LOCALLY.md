@@ -305,9 +305,25 @@ docker run --rm --network host ghcr.io/h0ffmann/marola:jvm --summarize --lat -27
 `ghcr.io/h0ffmann/marola:jvm` is built by CI from `main` (`docker.yml`); `just docker-build`
 builds the same target here and `just docker-run -- …` runs it with `--network host`. The
 `Dockerfile` is one multi-stage file: `builder` (sbt, Temurin 25) → `jvm` (Temurin 25 JRE on
-Alpine, ~70 MB + the 55 MB jar), and `dev` — the literal `nix develop` in an image, for reading
-or hacking on the code without installing Nix (`docker run -it marola:dev bash`). Lint:
-`just quality` runs hadolint on it (in the flake).
+Alpine, ~70 MB + the 55 MB jar), `native-build` → `native` (below), and `dev` — the literal
+`nix develop` in an image, for reading or hacking on the code without installing Nix
+(`docker run -it marola:dev bash`). Lint: `just quality` runs hadolint on it (in the flake).
+
+**Native binary (GraalVM).** The same CLI compiled ahead of time — one 69 MB executable, no JVM,
+~75 MB of RSS, on a distroless image (`ghcr.io/h0ffmann/marola:native`, amd64). Everything
+`just run` does works, `--summarize` and the reviewer included (verified live 2026-09-05 with
+`llama3.2:1b`); the MCP server stays on the JVM image. Locally:
+
+```bash
+just native-image                                            # GraalVM from nixpkgs, sbt cli/nativeImage → cli/target/marola (~1 min)
+just native-run -- --summarize --lat -27.6733 --lon -48.47   # the binary, same flags as `just run`
+just docker-build native                                     # the distroless image, if you have a daemon
+```
+
+The arguments (`--initialize-at-build-time` for slf4j/logback/Jackson, `-march=compatibility`)
+and the reachability metadata (the `*.json` resources, `sun.misc.Signal` for Kyo's handler) live
+in `cli/src/main/resources/META-INF/native-image/`, read from the classpath, so the sbt task and
+the Dockerfile's `native-image -jar` build the same thing.
 
 ## 11. What this guide deliberately doesn't cover
 

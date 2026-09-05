@@ -188,8 +188,8 @@ site-deploy target="github":
 # Docker — MIP-0008: the CLI as an image (Dockerfile, docker-compose.yml)
 # ---------------------------------------------------------------------
 
-# Build one target of the Dockerfile locally as marola:<target> — `jvm` (default), `dev`; task 3
-# adds `native`. Same targets CI pushes to ghcr.io/h0ffmann/marola (docker.yml).
+# Build one target of the Dockerfile locally as marola:<target> — `jvm` (default), `native`, `dev`.
+# Same targets CI pushes to ghcr.io/h0ffmann/marola (docker.yml).
 docker-build target="jvm":
     docker build --target {{target}} -t marola:{{target}} .
 
@@ -197,6 +197,23 @@ docker-build target="jvm":
 # localhost:11434 is reachable from inside): `just docker-run -- --summarize --lat -27.6733 --lon -48.47`.
 docker-run *args:
     docker run --rm --network host --env-file <(env | grep '^MAROLA_' || true) marola:jvm {{args}}
+
+# GraalVM native-image of the CLI → cli/target/marola (MIP-0008 task 3). GraalVM (JDK 25 + native-
+# image, ~700 MB) comes from nixpkgs for this one command rather than living in the flake; the
+# arguments/metadata are in cli/src/main/resources/META-INF/native-image/. ~1 min on a big machine.
+native-image:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p "$XDG_RUNTIME_DIR"
+    nix shell nixpkgs#graalvmPackages.graalvm-ce --command bash -c '
+        export GRAALVM_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v native-image)")")")"
+        echo "native-image: $(native-image --version | head -1) at $GRAALVM_HOME"
+        sbt -batch cli/nativeImage'
+    ls -la cli/target/marola
+
+# Run the native binary: `just native-run -- --brief --lat -27.6733 --lon -48.47` (same flags as `just run`).
+native-run *args:
+    ./cli/target/marola {{args}}
 
 # ---------------------------------------------------------------------
 # Browser-session context — repomix.config.json, repomix-instruction.md
