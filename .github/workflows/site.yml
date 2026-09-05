@@ -76,11 +76,23 @@ jobs:
           AREA: ${{ inputs.area }}
         run: sbt "cli/run -- --site $AREA"
 
+      # MIP-0008 §5.5: the smoke test's results (docker-smoke.yml) live on the orphan `site-data`
+      # branch — copied into the site here, never deployed by that workflow. No branch yet = no
+      # panel; app.js treats a missing smoke/latest.json as "no live run".
+      - name: Add the smoke-test results (site-data branch, if any)
+        run: |
+          if git fetch --depth=1 origin site-data 2>/dev/null; then
+            git archive FETCH_HEAD smoke | tar -x -C site/dist
+          else
+            echo "no site-data branch yet — no smoke panel"
+          fi
+
       - name: Show what was built
         run: |
           find site/dist -type f | sort
           echo
           cat site/dist/data/*/latest.json
+          [ -f site/dist/smoke/latest.json ] && head -c 600 site/dist/smoke/latest.json || true
 
       - uses: actions/upload-pages-artifact@v3
         with:

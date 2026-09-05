@@ -268,6 +268,12 @@ just site-serve                # http://localhost:8000 — tap Praia do Campeche
 pointing at both. The page shows every beach as a marker coloured by score, a card with the same
 numbers the CLI prints, a day picker, an hour slider, the generated-at time and every source. No
 cookies, no analytics; "near me" is the browser's own geolocation, on request, never sent anywhere.
+If `site/dist/smoke/latest.json` exists (the docker smoke test's last run, §10 — `site.yml` copies
+it from the `site-data` branch; locally `git archive origin/site-data smoke | tar -x -C site/dist`,
+or `python3 scripts/smoke_record.py record …` on any `--summarize` transcript) the footer adds a
+"Last live run" panel — model, image, top pick, the reviewed sentence labelled as model text with
+the reviewer's verdict (hidden on `reject`), the last ten runs — and a dashed marker at the run's
+origin.
 
 Keep it fresh locally with a timer — a plain cron line (`crontab -e`):
 

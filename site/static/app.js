@@ -2,7 +2,9 @@
  *
  * Reads data/areas.json → data/<area>/latest.json → data/<area>/<day>.json (schema:
  * site/board.schema.json, written by marola.site.Board) and draws one marker per beach coloured by
- * score. Nothing leaves the browser: no analytics, no cookies; "near me" uses the Geolocation API
+ * score. smoke/latest.json + smoke/history.json (MIP-0008 §5.5, written by scripts/smoke_record.py
+ * from the docker-smoke workflow, copied in by site.yml) feed the "Last live run" panel in the
+ * footer and one dashed marker at the run's origin; absent = no panel. Nothing leaves the browser: no analytics, no cookies; "near me" uses the Geolocation API
  * client-side only, when you press the button. The page refuses a board with an unknown schema
  * version rather than guessing.
  */
@@ -21,7 +23,7 @@
   var el = {
     area: $('area'), days: $('days'), near: $('near'), toggleList: $('toggle-list'),
     hourbar: $('hourbar'), hour: $('hour'), hourLabel: $('hour-label'),
-    list: $('list'), card: $('card'), footer: $('footer'), status: $('status')
+    list: $('list'), card: $('card'), footer: $('footer'), status: $('status'), smoke: $('smoke')
   };
 
   var state = {
@@ -30,7 +32,8 @@
     hourIndex: -1,      // -1 = each beach at its own best hour
     selected: null,     // beach name
     here: null,         // {lat, lon} after "near me"
-    markers: {}, tiles: null, map: null
+    markers: {}, tiles: null, map: null,
+    smoke: null, smokeHistory: null, smokeMarker: null   // the last live run (MIP-0008)
   };
 
   // --- helpers -------------------------------------------------------------------------------
@@ -275,6 +278,66 @@
     el.status = document.getElementById('status');
   }
 
+  // --- last live run (MIP-0008 §5.5) -----------------------------------------------------------
+  var SMOKE_SCHEMA = 1;
+  function loadSmoke() {
+    return fetchJson('smoke/latest.json').then(function (run) {
+      if (run.schema !== SMOKE_SCHEMA) throw new Error('smoke schema ' + run.schema);
+      state.smoke = run;
+      return fetchJson('smoke/history.json').catch(function () { return null; });
+    }).then(function (h) {
+      state.smokeHistory = h && h.schema === SMOKE_SCHEMA ? h : null;
+      renderSmoke();
+    }).catch(function () { el.smoke.hidden = true; }); // no run yet, or unreadable: no panel
+  }
+
+  function renderSmoke() {
+    var r = state.smoke; if (!r) return;
+    var when = String(r.when).replace('T', ' ').slice(0, 16) + ' UTC';
+    var top = r.top_pick, rev = r.review;
+    var verdict = rev ? String(rev.verdict).toLowerCase() : '';
+    var where = r.lat !== null && r.lat !== undefined
+      ? '<a href="#" id="smoke-goto">' + r.lat.toFixed(4) + ', ' + r.lon.toFixed(4) + '</a>' : 'unknown location';
+    var image = String(r.image || '').replace(/^ghcr\.io\//, '');
+    var html = '<h3>Last live run <small>— ' + esc(r.model) + ' in ' + esc(image) + ', ' + esc(when) +
+      ' · <a href="' + esc(r.run_url) + '" target="_blank" rel="noopener">log</a></small></h3>';
+    if (!r.ok) {
+      html += '<p class="bad">This run did not complete: ' + esc((r.errors && r.errors[0]) || ('exit code ' + r.exit_code)) + '.</p>';
+    }
+    if (top) {
+      html += '<p>From ' + where + ' the pipeline picked <b>' + esc(top.name) + '</b>: score ' + top.score + '/100 at ' + esc(top.when) +
+        ', ' + top.distance_km + ' km away' + (r.ranked && r.ranked.length > 1 ? ' (' + r.ranked.length + ' beaches ranked)' : '') + '.</p>';
+    }
+    // MIP-0008 §6/§8: the sentence is model text, shown only with the reviewer's verdict next to
+    // it, and not at all when the reviewer rejected it — the numbers above are the source of truth.
+    if (r.ok && rev && verdict !== 'reject' && rev.summary) {
+      html += '<p class="llm">“' + esc(rev.summary) + '”</p>' +
+        '<p><small>Model text (' + esc(r.model) + '), reviewed by a second pass: <span class="verdict ' + esc(verdict) + '">' +
+        esc(verdict) + ' · ' + rev.score + '/100</span>. The ranked numbers are the source of truth.</small></p>';
+    } else if (rev && verdict === 'reject') {
+      html += '<p><small>The reviewer <span class="verdict reject">rejected</span> the model\'s sentence (' + rev.score + '/100) — numbers only.</small></p>';
+    }
+    var runs = state.smokeHistory && state.smokeHistory.runs ? state.smokeHistory.runs.slice(0, 10) : [];
+    if (runs.length > 1) {
+      html += '<details><summary>last ' + runs.length + ' runs</summary><ul>' + runs.map(function (e) {
+        var w = String(e.when).replace('T', ' ').slice(0, 16);
+        var what = e.ok && e.top_pick
+          ? esc(e.top_pick.name) + ' ' + e.top_pick.score + (e.review ? ', reviewer ' + e.review.score + ' <span class="verdict ' + esc(e.review.verdict) + '">' + esc(e.review.verdict) + '</span>' : '')
+          : '<span class="bad">failed</span>';
+        return '<li><a href="' + esc(e.run_url) + '" target="_blank" rel="noopener">' + esc(w) + '</a> · ' + esc(e.model) + ' · ' + what + '</li>';
+      }).join('') + '</ul></details>';
+    }
+    el.smoke.innerHTML = html;
+    el.smoke.hidden = false;
+    if (r.lat !== null && r.lat !== undefined && state.map) {
+      if (state.smokeMarker) state.map.removeLayer(state.smokeMarker);
+      state.smokeMarker = L.circleMarker([r.lat, r.lon], { radius: 7, color: '#0b6e99', dashArray: '3 3', weight: 2, fillColor: '#fff', fillOpacity: .9 })
+        .addTo(state.map).bindTooltip('last live run: ' + (top ? top.name + ' ' + top.score : 'failed') + ', ' + when, { direction: 'top', offset: [0, -6] });
+      var go = document.getElementById('smoke-goto');
+      if (go) go.addEventListener('click', function (e) { e.preventDefault(); state.map.setView([r.lat, r.lon], 12); });
+    }
+  }
+
   // --- events --------------------------------------------------------------------------------
   el.area.addEventListener('change', function () {
     var area = state.areas.filter(function (a) { return a.id === el.area.value; })[0];
@@ -310,5 +373,5 @@
     console.error(err);
   }
 
-  loadAreas().catch(fail);
+  loadAreas().then(loadSmoke).catch(fail);
 })();

@@ -84,6 +84,15 @@ button[aria-pressed="true"], .segmented button.on { background: var(--accent); c
 .footer { padding: .6rem .75rem 1rem; font-size: .85rem; color: var(--muted); background: var(--panel); border-top: 1px solid var(--line); }
 .footer p { margin: .25rem 0; }
 .footer .lore { color: var(--ink); }
+.smoke { margin-top: .5rem; padding-top: .5rem; border-top: 1px dashed var(--line); }
+.smoke h3 { font-size: .95rem; margin: 0 0 .25rem; color: var(--ink); }
+.smoke h3 small { font-weight: 400; color: var(--muted); }
+.smoke .llm { color: var(--ink); font-style: italic; margin: .35rem 0 .1rem; }
+.smoke .bad { color: var(--c0); font-weight: 600; }
+.smoke .verdict { display: inline-block; padding: 0 .35em; border-radius: 4px; color: #fff; background: var(--cna); font-weight: 600; }
+.smoke .verdict.approve { background: var(--c70); } .smoke .verdict.revise { background: var(--c40); } .smoke .verdict.reject { background: var(--c0); }
+.smoke details { margin-top: .25rem; } .smoke summary { cursor: pointer; }
+.smoke ul { margin: .25rem 0 0; padding-left: 1.2rem; } .smoke li { padding: .1rem 0; }
 .nojs { padding: 1rem; }
 
 .leaflet-container { font: inherit; }
