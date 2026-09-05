@@ -54,7 +54,7 @@ Docs live under `docs/` — check these before assuming something is undecided o
 
 ```bash
 nix develop          # reproducible dev shell (JDK 25, sbt, scala-cli, coursier,
-                      # just, python3, az, gh — see flake.nix)
+                      # just, python3, az, gh, hadolint — see flake.nix; Docker itself is the host's)
 just                  # list all available recipes
 just build            # sbt compile
 just test             # sbt test
@@ -65,7 +65,8 @@ just e2e              # marola's live E2E test (Overpass/Open-Meteo/Ollama) — 
 ```
 
 Always run `just build && just test && just quality` before considering a change done (`quality` =
-scalafmt + scalafix + ruff + actionlint, the same gates as `ci.yml`). Kyo is
+scalafmt + scalafix + ruff + actionlint + hadolint on the Dockerfiles + the `scripts/*.py`
+self-tests, the same gates as `ci.yml`). Kyo is
 pre-1.0 (currently `1.0.0-RC5`) with no version-specific published docs — when unsure of an API,
 verify against the actual jar (`javap` on the decompiled class) rather than guessing from
 `getkyo.io`'s latest-version docs, which can silently drift from what's pinned. See

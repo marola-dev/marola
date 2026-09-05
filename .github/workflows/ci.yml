@@ -26,6 +26,7 @@ jobs:
       scala: ${{ steps.filter.outputs.scala }}
       python: ${{ steps.filter.outputs.python }}
       workflows: ${{ steps.filter.outputs.workflows }}
+      docker: ${{ steps.filter.outputs.docker }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -48,6 +49,10 @@ jobs:
               - 'ruff.toml'
             workflows:
               - '.github/workflows/**'
+            docker:
+              - 'Dockerfile*'
+              - 'docker-compose.yml'
+              - '.dockerignore'
 
   build-test:
     needs: changes
@@ -101,10 +106,11 @@ jobs:
         run: sbt scalafmtCheckAll "scalafixAll --check" compile test
 
   # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/,
-  # and a linter for these workflow files themselves.
+  # a linter for these workflow files themselves, and hadolint for the Dockerfiles — the same
+  # gates as `just quality`.
   quality-other:
     needs: changes
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true'
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -122,3 +128,8 @@ jobs:
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2
+      - name: hadolint (Dockerfiles)
+        if: needs.changes.outputs.docker == 'true'
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
