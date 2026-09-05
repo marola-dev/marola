@@ -46,3 +46,6 @@ result-*
 # output names in case it's run bare from the repo root
 repomix-output.*
 repomix-output/
+
+# MIP-0005: `just site-build` output (boards + a copy of site/static/) — derived, deployed, not committed
+/site/dist/

@@ -12,6 +12,7 @@ import marola.location.IpGeolocation
 import marola.model.{BestHour, Coordinates}
 import marola.observability.Telemetry
 import marola.sightings.{Sighting, SightingKind}
+import marola.site.SiteBuilder
 
 /**
  * POC entry point for "what's the best hour tomorrow to swim nearby?".
@@ -133,6 +134,7 @@ object Main extends KyoApp:
       case (None, None, Some(question))          => askOcean(config, question)
       case (None, None, None) if args.contains("--reindex")   => reindexKnowledge(config)
       case (None, None, None) if args.contains("--benchmark") => runBenchmark(config)
+      case (None, None, None) if args.contains("--site")      => buildSite(args, config)
       case (None, None, None)                                 => runRecommendation(args, config)
 
   /**
@@ -168,6 +170,50 @@ object Main extends KyoApp:
             case Result.Success(answer) => Console.printLine("\n" + Report.answer(answer))
             case failure                => Console.printLine(s"(ask failed: $failure)")
         yield ()
+
+  /**
+   * `--site [area-id]` (MIP-0005): build the static map's data for one area of `site/areas.json`,
+   * or every area when no id is given, into `site/dist/` (`--site-out <dir>` to change it, `--areas
+   * <file>` for another areas file). One Overpass query per area; no LLM call.
+   */
+  private def buildSite(args: Array[String], config: AppConfig): Unit < Async =
+    val areasPath = argValue(args, "--areas")
+      .map(java.nio.file.Path.of(_))
+      .getOrElse(SiteBuilder.Areas.DefaultPath)
+    val out =
+      argValue(args, "--site-out").map(java.nio.file.Path.of(_)).getOrElse(SiteBuilder.DefaultOut)
+    val wanted = argValue(args, "--site").filterNot(_.startsWith("--"))
+    val all = SiteBuilder.Areas.load(areasPath)
+    val areas = wanted.fold(all)(id => all.filter(_.id == id))
+    if areas.isEmpty then
+      Console.printLine(
+        s"(no area ${wanted.getOrElse("")} in $areasPath — known: ${all.map(_.id).mkString(", ")})"
+      )
+    else
+      for
+        _ <- Console.printLine(
+          s"marola :: building the site boards for ${areas.map(_.id).mkString(", ")} -> $out"
+        )
+        outcome <- Abort.run(
+          Abort.catching[Throwable](
+            SiteBuilder.build(
+              areas,
+              out,
+              SiteBuilder.DefaultStatic,
+              water = config.waterQualityClient,
+              now = java.time.OffsetDateTime.now(),
+              distanceRefiner = config.distanceRefiner
+            )
+          )
+        )
+        _ <- outcome match
+          case Result.Success(files) =>
+            Console.printLine(
+              s"wrote ${files.size} files; boards: " +
+                files.filter(_.toString.endsWith(".json")).map(_.toString).mkString(", ")
+            )
+          case failure => Console.printLine(s"(site build failed: $failure)")
+      yield ()
 
   /** `--benchmark` — marola vs. a plain prompt on ocean questions; see `bench/OceanBenchmark`. */
   private def runBenchmark(config: AppConfig): Unit < Async =

@@ -1,0 +1,24 @@
+[
+  {
+    "id": "floripa",
+    "name": "Florianópolis",
+    "lat": -27.60,
+    "lon": -48.48,
+    "radius_km": 30,
+    "beach_limit": 80,
+    "tz": "America/Sao_Paulo",
+    "tiles": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "tiles_attribution": "© OpenStreetMap contributors"
+  },
+  {
+    "id": "rio",
+    "name": "Rio de Janeiro",
+    "lat": -22.9878,
+    "lon": -43.1913,
+    "radius_km": 20,
+    "beach_limit": 60,
+    "tz": "America/Sao_Paulo",
+    "tiles": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "tiles_attribution": "© OpenStreetMap contributors"
+  }
+]

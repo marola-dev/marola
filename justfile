@@ -153,6 +153,20 @@ finetune-dataset:
     python3 finetune/build_dataset.py
 
 # ---------------------------------------------------------------------
+# The map — MIP-0005: precomputed boards on a static site (site/)
+# ---------------------------------------------------------------------
+
+# Build the static map's data: one pipeline run per area in site/areas.json (or just `area`),
+# writing site/dist/data/<area>/{today,tomorrow}.json + latest.json and copying site/static/.
+# One Overpass query per area, no LLM. `just site-build floripa`.
+site-build area="":
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --site {{area}}"
+
+# Serve site/dist at http://localhost:8000 (python3 is in the flake). Ctrl-C to stop.
+site-serve port="8000":
+    python3 -m http.server -d site/dist {{port}}
+
+# ---------------------------------------------------------------------
 # Browser-session context — repomix.config.json, repomix-instruction.md
 # ---------------------------------------------------------------------
 

@@ -30,6 +30,9 @@ object Board:
 
   private val hhmm = DateTimeFormatter.ofPattern("HH:mm")
 
+  /** ISO-8601 with offset, e.g. `2026-09-05T18:00:00-03:00` — the page shows it verbatim. */
+  def stamp(t: OffsetDateTime): String = t.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
   def build(
       area: String,
       day: LocalDate,
@@ -54,7 +57,7 @@ object Board:
       "area" -> JsonValue.str(area),
       "day" -> JsonValue.str(day.toString),
       "today" -> JsonValue.str(today.toString),
-      "generated_at" -> JsonValue.str(generatedAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)),
+      "generated_at" -> JsonValue.str(stamp(generatedAt)),
       "sources" -> JsonValue.obj(
         "beaches" -> JsonValue.str(sources.beaches),
         "forecast" -> JsonValue.str(sources.forecast),
