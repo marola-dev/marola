@@ -163,8 +163,8 @@ the requested feature but flag which earlier-phase prerequisite is still missing
   path. (Unlike Kyo's guide, this repo does track deferred work explicitly, in
   `docs/FUTURE-WORK.md` — that's a real, load-bearing doc here, not a banned excuse.)
 - Prefer running agent tools (Claude Code, etc.) through
-  [ai-jail](https://github.com/akitaonrails/ai-jail) — `just jail-claude`
-  — rather than bare. It sandboxes the agent process (bubblewrap/Landlock/
+  [ai-jail](https://github.com/akitaonrails/ai-jail) — `just jail-claude`, or `just jcf` /
+  `just jcs` for the same jail pinned to the fable / sonnet model — rather than bare. It sandboxes the agent process (bubblewrap/Landlock/
   seccomp on Linux); it does not replace the rules above: still no
   unattended `azd up`/`az deployment group create`, and it does not stop
   an agent from writing bad code or spending API budget, only from

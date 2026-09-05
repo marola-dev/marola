@@ -362,5 +362,15 @@ jail-dry-run *cmd:
 # the committed .ai-jail with the last-run command otherwise (see the
 # warning at the top of that file).
 
-jail-claude:
-    ai-jail --no-save-config --rw-map ~/.claude --rw-map ~/.claude.json --map ~/.ssh --network --terminal-passthrough claude
+# Claude Code in the jail; extra args go to `claude` itself (`just jail-claude --model opus`, `--resume`)
+jail-claude *args:
+    ai-jail --no-save-config --rw-map ~/.claude --rw-map ~/.claude.json --map ~/.ssh --network --terminal-passthrough claude {{args}}
+
+# The two below pin the model via Claude Code's own alias (always the latest of that line), and
+# still forward any further args to `claude`, e.g. `just jcs --resume`.
+
+# jail-claude with --model fable
+jcf *args: (jail-claude "--model" "fable" args)
+
+# jail-claude with --model sonnet
+jcs *args: (jail-claude "--model" "sonnet" args)
