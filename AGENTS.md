@@ -43,6 +43,7 @@ Docs live under `docs/` — check these before assuming something is undecided o
 | `docs/AI-500-MAPPING.md` | AI-500 (multi-agent) domain coverage — a design target, not a build record |
 | `docs/SKILLS.md` | A skills roadmap — what to practice, in order, using marola as the vehicle |
 | `docs/SCALA3-JDK-REVIEW.md` | Scala 3 / JDK 21-25 features reviewed against this code — adopt list and order |
+| `docs/AGENT-FRAMEWORKS-SURVEY.md` | Multi-agent frameworks survey — Python ideas → Scala shapes, Pekko fit, reading list |
 | `docs/benchmarks/` | Kept `just benchmark` runs — re-run and compare before changing prompt/corpus/embedder/model |
 | `docs/mips/` | Marola Improvement Proposals — design a non-trivial change here first, via the `mip` skill (`.claude/skills/mip/SKILL.md`), before building it. `just context-mips` packs what a browser session needs to draft one from voice notes |
 | `docs/FABLE_REVIEW.md` | Code and documentation review at the initial import — open findings, ranked, with file:line references |

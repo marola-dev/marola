@@ -138,6 +138,7 @@ free local model, step by step. Everything else lives under `docs/`:
 | [`AI-500-MAPPING.md`](./docs/AI-500-MAPPING.md) | AI-500 (multi-agent) domain coverage — a design target |
 | [`SKILLS.md`](./docs/SKILLS.md) | A skills roadmap — what to practice, in order, using marola as the vehicle |
 | [`SCALA3-JDK-REVIEW.md`](./docs/SCALA3-JDK-REVIEW.md) | Scala 3 / JDK 21-25 features reviewed against this code — what to adopt, in what order |
+| [`AGENT-FRAMEWORKS-SURVEY.md`](./docs/AGENT-FRAMEWORKS-SURVEY.md) | Multi-agent frameworks: Python ideas, JVM/Scala libraries, where Apache Pekko fits marola |
 | [`benchmarks/`](./docs/benchmarks/2026-09-05.md) | Kept benchmark runs: marola vs. a plain prompt on ocean questions, and what moved the numbers |
 | [`mips/`](./docs/mips/README.md) | Marola Improvement Proposals — numbered design docs written before a feature is built (`/mip` skill) |
 | [`FABLE_REVIEW.md`](./docs/FABLE_REVIEW.md) | Code and documentation review at the initial import — ranked findings with file:line references |
