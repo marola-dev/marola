@@ -1,14 +1,17 @@
 package marola
 
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+
 import kyo.*
+
+import marola.bench.OceanBenchmark
 import marola.knowledge.OceanQa
 import marola.llm.{CompiledPrompt, LlmClient, Reviewer}
 import marola.location.IpGeolocation
 import marola.model.{BestHour, Coordinates}
 import marola.observability.Telemetry
 import marola.sightings.{Sighting, SightingKind}
-import java.time.Instant
-import java.time.format.DateTimeFormatter
 
 /**
  * POC entry point for "what's the best hour tomorrow to swim nearby?".
@@ -128,8 +131,9 @@ object Main extends KyoApp:
       case (Some((kind, beachName, note)), _, _) => reportSighting(config, kind, beachName, note)
       case (None, Some(photoPath), _)            => analyzePhoto(config, photoPath)
       case (None, None, Some(question))          => askOcean(config, question)
-      case (None, None, None) if args.contains("--reindex") => reindexKnowledge(config)
-      case (None, None, None)                               => runRecommendation(args, config)
+      case (None, None, None) if args.contains("--reindex")   => reindexKnowledge(config)
+      case (None, None, None) if args.contains("--benchmark") => runBenchmark(config)
+      case (None, None, None)                                 => runRecommendation(args, config)
 
   /**
    * `--ask "<question>"` — local RAG over the Markdown corpus in `knowledge/` (MIP-0001 /
@@ -150,11 +154,44 @@ object Main extends KyoApp:
               s"${config.localLlmModel}..."
           )
           outcome <- Abort.run(
-            Abort.catching[Throwable](OceanQa.answer(question, config.knowledgeStore, client))
+            Abort.catching[Throwable](
+              OceanQa.answer(
+                question,
+                config.knowledgeStore,
+                client,
+                fallback = config.askFallback,
+                minScore = config.askMinScore
+              )
+            )
           )
           _ <- outcome match
             case Result.Success(answer) => Console.printLine("\n" + Report.answer(answer))
             case failure                => Console.printLine(s"(ask failed: $failure)")
+        yield ()
+
+  /** `--benchmark` — marola vs. a plain prompt on ocean questions; see `bench/OceanBenchmark`. */
+  private def runBenchmark(config: AppConfig): Unit < Async =
+    config.llmClient match
+      case None => Console.printLine("(--benchmark needs a configured local LLM)")
+      case Some(client) =>
+        for
+          _ <- Console.printLine(
+            s"Benchmarking ${OceanBenchmark.load().size} questions x 3 arms on ${config.localLlmModel} " +
+              s"(embedder ${config.localEmbedModel}) - a few minutes on CPU..."
+          )
+          outcome <- Abort.run(
+            Abort.catching[Throwable](
+              OceanBenchmark.run(config.knowledgeStore, client, config.askMinScore)
+            )
+          )
+          _ <- outcome match
+            case Result.Success(report) =>
+              for
+                path <- Sync.defer(OceanBenchmark.save(report))
+                _ <- Console.printLine("\n" + report.markdown)
+                _ <- Console.printLine(s"\nSaved to $path")
+              yield ()
+            case failure => Console.printLine(s"(benchmark failed: $failure)")
         yield ()
 
   private def reindexKnowledge(config: AppConfig): Unit < Async =
@@ -218,7 +255,7 @@ object Main extends KyoApp:
     val brief = args.contains("--brief")
     for
       _ <- Console.printLine("marola :: best hour tomorrow to swim nearby (POC)")
-      _ <- Console.printLine(s"config -> $config")
+      _ <- Console.printLine(s"config -> ${config.redacted}")
       _ <- warnHalfPair(args, config)
       origin <- resolveOrigin(args, config)
       _ <- Console.printLine(

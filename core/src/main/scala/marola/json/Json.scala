@@ -50,9 +50,14 @@ enum JsonValue derives CanEqual:
         .mkString("{", ",", "}")
     case JsonValue.JArray(items) => items.map(_.render).mkString("[", ",", "]")
     case JsonValue.JString(s)    => JsonValue.renderString(s)
-    case JsonValue.JNumber(n)    => if n == n.toLong then n.toLong.toString else n.toString
-    case JsonValue.JBool(b)      => b.toString
-    case JsonValue.JNull         => "null"
+    case JsonValue.JNumber(
+          n
+        ) => // NaN/Infinity aren't JSON; render as null rather than emit an invalid document
+      if n.isNaN || n.isInfinite then "null"
+      else if n == n.toLong then n.toLong.toString
+      else n.toString
+    case JsonValue.JBool(b) => b.toString
+    case JsonValue.JNull    => "null"
 
 object JsonValue:
 

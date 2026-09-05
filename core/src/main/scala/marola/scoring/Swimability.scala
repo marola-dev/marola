@@ -1,9 +1,10 @@
 package marola.scoring
 
-import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood}
-import marola.water.{BathingCondition, WaterQuality}
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
+import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood}
+import marola.water.{BathingCondition, WaterQuality}
 
 /**
  * The bathing-water contribution to a beach's score (MIP-0001 §6): `delta` is added like any other

@@ -11,10 +11,10 @@
 // 3.9 itself requires (17+). This bit a real build with a JDK-24 error:
 // `UnsupportedClassVersionError: kyo/Frame$package$Frame$ ... class file
 // version 69.0 ... this version of the Java Runtime only recognizes class
-// file versions up to 68.0`. See flake.nix and Dockerfile — both pin 25.
+// file versions up to 68.0`. See flake.nix, which pins 25 (there is no Dockerfile yet — Phase 3).
 //
 // This repo is entirely marola — "best hour tomorrow to swim nearby" — split into four sbt
-// modules (core/local/azure/cli) at the repo root (FUTURE-WORK.md §7.2's module-split proposal,
+// modules (core/local/azure/cli) at the repo root (FUTURE-WORK.md §7.3's module-split proposal,
 // implemented, then hoisted out of a marola/ subdirectory once this repo became marola's own
 // repo rather than a shared monorepo). core carries the pure pipeline and shared HTTP/JSON
 // helpers; local is the always-needed Ollama path with ZERO Azure SDK dependency; azure holds
@@ -24,6 +24,10 @@
 ThisBuild / scalaVersion := "3.9.0" // Scala 3.9 LTS itself needs JDK 17+, but Kyo 1.0.0-RC5 requires JDK 25 (see build note above) — the JVM running sbt/scalac must be 25+
 ThisBuild / version      := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "com.marola"
+
+// scalafix's semantic rules (RemoveUnused, OrganizeImports) need SemanticDB.
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 
 val kyoVersion = "1.0.0-RC5"
 
@@ -42,11 +46,14 @@ lazy val baseSettings = Seq(
   scalacOptions ++= Seq(
     "-Wvalue-discard",
     "-Wnonunit-statement",
-    "-Wconf:msg=(unused.*value|discarded.*value|pure.*statement):error",
+    "-Wconf:msg=(unused.*value|discarded.*value|pure.*statement|unused import|is never used):error",
     "-language:strictEquality",
     "-deprecation",
     "-unchecked",
-    "-feature"
+    "-feature",
+    // Unused imports/locals/privates are errors (via the -Wconf rule below); `params` is left out on
+    // purpose — the MCP SDK's BiFunction handlers take an `exchange` they don't use.
+    "-Wunused:imports,locals,privates,implicits"
   ),
 
   libraryDependencies ++= Seq(
@@ -118,8 +125,9 @@ lazy val azure = (project in file("azure"))
     libraryDependencies ++= Seq(
       // --- managed identity everywhere, no API keys ---
       "com.azure" % "azure-identity" % "1.18.1",
-      // --- Foundry agents / models (Java SDK — officially supported, JVM-native) ---
-      "com.azure" % "azure-ai-agents" % "2.2.0",
+      // NOTE: `com.azure:azure-ai-agents` was declared here from the bootstrap onward but nothing
+      // imports it (`AzureFoundryLlmClient` is plain REST) — removed (FABLE_REVIEW C5). Add it back
+      // when a Foundry Agent Service integration actually uses it (AI-500-MAPPING.md §2).
       // --- Cosmos DB (optional sighting-report store) ---
       "com.azure" % "azure-cosmos" % "4.71.0",
       // --- Monitor / Application Insights (optional observability backend, no-op by default) ---

@@ -19,7 +19,7 @@ decoration.
 | Plan for a solution's resource requirements (compute, cost tiers) | `ARCHITECTURE.md` §6, `AGENTS.md`'s cost-safety rules | Built |
 | Use Azure AI Foundry to explore/deploy models | `azure/llm/AzureFoundryLlmClient.scala` | Code complete, not yet run against a live Foundry account (no Azure resources provisioned — see AGENTS.md phase discipline) |
 | Manage costs (budgets, scale-to-zero) | `ARCHITECTURE.md` §6 (Container App scale-to-zero pattern) | Documented, not yet deployed |
-| Implement security for AI solutions (managed identity, no hardcoded keys) | Every Azure client in `azure/` authenticates via `azure-identity`'s `DefaultAzureCredential` | Built |
+| Implement security for AI solutions (managed identity, no hardcoded keys) | `AzureFoundryLlmClient` authenticates via `DefaultAzureCredential`; Cosmos DB / AI Vision / Azure Maps clients still take keys from env (no key is ever committed) | Partial — migrate the three key-based clients before Phase 2 (FABLE_REVIEW D1) |
 | Monitor an AI solution | `azure/observability/Telemetry.scala` — Application Insights via OpenTelemetry | Code complete, no-op by default |
 | Responsible AI: transparency, content safety | `ARCHITECTURE.md` §8/§9 (jellyfish/whale heuristic honesty limitations, known limitations) | Documented; Azure AI Content Safety integration not yet built — real gap, see §4 below. Proposed: MIP-0001 (deterministic bathing-water veto with sample date/location printed) |
 
@@ -28,9 +28,9 @@ decoration.
 | Skill | marola artifact | Status |
 |---|---|---|
 | Integrate a generative AI model into an app | `core/llm/LlmClient` trait + `local/llm/LocalLlmClient` (Ollama) + `azure/llm/AzureFoundryLlmClient` | Built, local path live-verified end-to-end |
-| Prompt engineering | `dspy/compile_recommendation_prompt.py` — `dspy.Signature` + `BootstrapFewShot`-compiled few-shot prompt, not hand-tuned text | Built, compiled artifact checked into `dspy/` |
+| Prompt engineering | `dspy/compile_recommendation_prompt.py` — `dspy.Signature` + `BootstrapFewShot`-compiled few-shot prompt, not hand-tuned text | Built, compiled artifacts checked into `core/src/main/resources/` |
 | Optimize prompts systematically (not just "try wording") | The whole DSPy step exists specifically to cover this — see §2 of `FUTURE-WORK.md` for what was reviewed (kyo-http/kyo-schema) while building it | Built |
-| Structured output / function calling | `CompiledPrompt.replay` parses the model's structured summary field; `Reviewer` parses a compact JSON verdict from a second pass | Built, live-verified against Ollama |
+| Structured output / function calling | `CompiledPrompt.buildMessages` replays the compiled artifact and `LlmClient.extractContent` reads the reply; `Reviewer` parses a compact JSON verdict from a second pass | Built, live-verified against Ollama |
 | RAG (retrieval-augmented generation) | `core/knowledge/` + `local/knowledge/OllamaEmbedder` — a curated corpus embedded locally, cosine retrieval, answers grounded on the retrieved passages with citations (`just ask`, MCP `ask_ocean_question`) | Built, local-only, live-verified with Ollama (MIP-0001); Azure AI Search sibling not built |
 | Fine-tuning a model | `finetune/` — dataset builder from the repo's own examples, QLoRA recipe (peft/trl), Ollama `ADAPTER` Modelfile; Tier 1 Modelfile variant `marola-llama3.2` | Recipe written, not run (no GPU); Tier 1 built and used live |
 

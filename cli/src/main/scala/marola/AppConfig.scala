@@ -1,13 +1,14 @@
 package marola
 
 import kyo.*
+
 import marola.beaches.RouteFinder
-import marola.knowledge.{FileKnowledgeStore, OllamaEmbedder}
-import marola.water.{ImaScWaterQualityClient, WaterQualityClient}
+import marola.knowledge.{FileKnowledgeStore, OceanQa, OllamaEmbedder}
 import marola.llm.{AzureFoundryLlmClient, LlmClient, LocalLlmClient}
 import marola.model.Coordinates
 import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore, SightingStore}
 import marola.vision.{AzureVisionClient, LocalVisionClient, VisionClient}
+import marola.water.{ImaScWaterQualityClient, WaterQualityClient}
 
 /**
  * Which backend a pluggable integration uses — `Local` is always the zero-Azure default. A real
@@ -55,7 +56,6 @@ object WaterProvider:
 final case class AppConfig(
     telegramBotToken: Option[String],
     foundryProjectEndpoint: Option[String],
-    foundryModelDeployment: String,
     foundryApiVersion: String,
     beachSearchRadiusKm: Double,
     originLat: Option[Double],
@@ -65,6 +65,8 @@ final case class AppConfig(
     knowledgeDir: String,
     knowledgeIndexPath: String,
     seaLoreEnabled: Boolean,
+    askFallback: OceanQa.Fallback,
+    askMinScore: Double,
     llmProvider: Provider,
     localLlmBaseUrl: String,
     localLlmModel: String,
@@ -91,6 +93,37 @@ final case class AppConfig(
       lat <- originLat
       lon <- originLon
     yield Coordinates(lat, lon)
+
+  /**
+   * What `Main` prints instead of the raw case class (FABLE_REVIEW C1: the raw `toString` echoed
+   * every key/token to stdout). Secrets show as set/unset; everything else verbatim.
+   */
+  def redacted: String =
+    def secret(v: Option[String]) = if v.isDefined then "<set>" else "unset"
+    List(
+      s"telegram=${secret(telegramBotToken)}",
+      s"llm=$llmProvider(${
+          if llmProvider == Provider.Local then s"$localLlmBaseUrl $localLlmModel"
+          else foundryProjectEndpoint.getOrElse("no endpoint") + " " + foundryApiVersion
+        })",
+      s"embed=$localEmbedModel",
+      s"knowledge=$knowledgeDir -> $knowledgeIndexPath",
+      s"lore=${if seaLoreEnabled then "on" else "off"}",
+      s"ask=$askFallback>=$askMinScore",
+      s"origin=${origin.map(o => f"${o.lat}%.4f,${o.lon}%.4f").getOrElse("auto")}",
+      f"radius=${beachSearchRadiusKm}%.0fkm",
+      s"water=$waterQualityProvider",
+      s"maps=${secret(azureMapsSubscriptionKey)}",
+      s"sightings=$sightingStoreProvider(${
+          if sightingStoreProvider == Provider.Local then localSightingStorePath
+          else s"$cosmosDbDatabase/$cosmosDbContainer key=${secret(cosmosDbKey)}"
+        })",
+      s"vision=$visionProvider(${
+          if visionProvider == Provider.Local then localVisionModel
+          else s"endpoint=${secret(azureVisionEndpoint)} key=${secret(azureVisionKey)}"
+        })",
+      s"appinsights=${secret(appInsightsConnectionString)}"
+    ).mkString(" ")
 
   /** MIP-0001 §5.2. `None` = no data, which `Swimability.waterVerdict` scores as nothing. */
   def waterQualityClient(origin: Coordinates): Option[WaterQualityClient] =
@@ -147,7 +180,7 @@ final case class AppConfig(
 
   /**
    * `Recommender` (in `marola-core`) can't reference `RouteFinder` (in `marola-azure`) directly —
-   * `marola-core` has zero Azure SDK dependency by design (`FUTURE-WORK.md` §7.2). This is the
+   * `marola-core` has zero Azure SDK dependency by design (`FUTURE-WORK.md` §7.3). This is the
    * dependency-inversion seam: `Recommender.bestPerBeachTomorrow`'s `distanceRefiner` parameter
    * takes a plain function, and only `marola-cli` (which depends on both `core` and `azure`) is in
    * a position to build one backed by `RouteFinder`. `None` when no Azure Maps key is configured —
@@ -163,7 +196,6 @@ object AppConfig:
     AppConfig(
       telegramBotToken = sys.env.get("MAROLA_TELEGRAM_BOT_TOKEN"),
       foundryProjectEndpoint = sys.env.get("FOUNDRY_PROJECT_ENDPOINT"),
-      foundryModelDeployment = sys.env.getOrElse("FOUNDRY_MODEL_DEPLOYMENT", "gpt-4o-mini"),
       foundryApiVersion = sys.env.getOrElse("FOUNDRY_API_VERSION", "2026-01-01-preview"),
       beachSearchRadiusKm =
         sys.env.get("MAROLA_BEACH_SEARCH_RADIUS_KM").flatMap(_.toDoubleOption).getOrElse(15.0),
@@ -176,6 +208,16 @@ object AppConfig:
         sys.env.getOrElse("MAROLA_KNOWLEDGE_INDEX_PATH", FileKnowledgeStore.DefaultIndexPath),
       seaLoreEnabled =
         !sys.env.get("MAROLA_SEA_LORE").exists(v => v.equalsIgnoreCase("off") || v == "0"),
+      // `general` (default): off-corpus questions get a labelled unsourced answer instead of a
+      // refusal; `strict` keeps the pure-RAG behaviour. See OceanQa.Fallback and `just benchmark`.
+      askFallback =
+        if sys.env.get("MAROLA_ASK_FALLBACK").exists(_.equalsIgnoreCase("strict")) then
+          OceanQa.Fallback.Strict
+        else OceanQa.Fallback.General,
+      askMinScore = sys.env
+        .get("MAROLA_ASK_MIN_SCORE")
+        .flatMap(_.toDoubleOption)
+        .getOrElse(OceanQa.DefaultMinScore),
       llmProvider = Provider.fromEnv(sys.env.get("MAROLA_LLM_PROVIDER")),
       localLlmBaseUrl =
         sys.env.getOrElse("MAROLA_LOCAL_LLM_BASE_URL", LocalLlmClient.DefaultBaseUrl),

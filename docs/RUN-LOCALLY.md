@@ -164,6 +164,18 @@ MAROLA_LOCAL_LLM_MODEL=marola-llama3.2 just run -- --summarize
 
 See `finetune/README.md` for the QLoRA (Tier 2) recipe, which is written but not run here.
 
+`--ask` answers from the corpus when a passage scores above `MAROLA_ASK_MIN_SCORE` (default 0.3)
+and otherwise, by default, from the model's general knowledge with a visible "(unsourced)" label —
+`MAROLA_ASK_FALLBACK=strict` makes it abstain instead. Which is better, and by how much, is what
+the benchmark measures:
+
+```bash
+just benchmark        # 22 ocean questions × {plain prompt, marola strict, marola general}
+                      # → coverage / citations / abstentions / latency, verdict, data/benchmark-*.md
+```
+
+Compare with `docs/benchmarks/2026-09-05.md` — the kept reference run and what it taught.
+
 ## 6. Troubleshooting
 
 - **`HTTP 404 ... model 'X' not found`** — the model named in `MAROLA_LOCAL_LLM_MODEL` (or
@@ -185,7 +197,30 @@ See `finetune/README.md` for the QLoRA (Tier 2) recipe, which is written but not
   Confirms `llama3.2:1b`'s instruction-following limits, not a marola bug — try a larger model if
   this happens consistently.
 
-## 7. What this guide deliberately doesn't cover
+## 7. Regression checks without the network (and how to re-record them)
+
+`just test` runs a full-pipeline regression with **no** network and **no** Ollama:
+`cli/src/test/scala/marola/PipelineGoldenSpec.scala` replays real responses recorded on 2026-09-05
+(`cli/src/test/resources/fixtures/`: Overpass for Campeche, Open-Meteo for two beaches, IMA's
+points) through the unchanged production code, and asserts the ranking, the water-quality verdicts,
+the tide turns and the exact number of HTTP calls. `SummarizeFlowSpec` and `RagOfflineSpec` do the
+same for the LLM and RAG plumbing with scripted models. This is what CI runs on every push.
+
+When an upstream format changes, re-record — the fixture diff is the change report:
+
+```bash
+# Overpass (the exact query BeachFinder builds, 15km around Campeche)
+q='[out:json][timeout:45];(node["natural"="beach"]["name"](around:15000,-27.6733,-48.47);way["natural"="beach"]["name"](around:15000,-27.6733,-48.47);relation["natural"="beach"]["name"](around:15000,-27.6733,-48.47););out center 500;'
+curl -s --data-urlencode "data=$q" https://overpass-api.de/api/interpreter > cli/src/test/resources/fixtures/overpass-campeche.json
+# Open-Meteo (same variables OpenMeteoClient asks for), one weather + one marine per fixture beach
+# IMA: curl -s -X POST https://balneabilidade.ima.sc.gov.br/relatorio/mapa, trimmed to the points near Campeche
+```
+
+Then update the pinned date in `PipelineGoldenSpec` (`fixedToday`) to the day the forecasts cover.
+The live equivalents run on demand only: `just e2e` locally, or the manual `marola-e2e.yml`
+workflow (its network job needs no Ollama; the LLM job is opt-in and caches the model).
+
+## 8. What this guide deliberately doesn't cover
 
 Telegram bot setup (there is no bot loop yet — see `TELEGRAM-SETUP.md` for credential setup ahead
 of that Phase 1 work) and any Azure integration (`ARCHITECTURE.md` §5/§6, all optional, none needed

@@ -48,7 +48,7 @@ Telegram wins on every axis that matters for this use case. **Decision: Telegram
 A real, runnable pipeline plus six independently pluggable local/Azure integrations — no mocks,
 no stubs pretending to be real:
 
-Four sbt modules at the repo root — `core`, `local`, `azure`, `cli` (see `FUTURE-WORK.md` §7.2 for
+Four sbt modules at the repo root — `core`, `local`, `azure`, `cli` (see `FUTURE-WORK.md` §7.3 for
 why, and the dependency-inversion fix that keeps `core` free of any Azure reference):
 
 ```
@@ -179,9 +179,8 @@ flowchart TD
 entry point to the hardcoded pipeline above — not shown in the diagram since it's a parallel access
 path, not a stage in this one.
 
-  Telemetry (§5f) wraps the pipeline in an OpenTelemetry span when configured — cross-cutting,
-  not shown as a pipeline stage.
-```
+Telemetry (§5f) wraps the pipeline in an OpenTelemetry span when configured — cross-cutting,
+not shown as a pipeline stage.
 
 Cross-cutting: rate limiting (per Telegram user ID) and a cost-governor check before any paid call,
 built early, not bolted on.
@@ -219,7 +218,7 @@ small hand-labeled trainset, using a metric that rewards mentioning jellyfish ri
 Moderate/High (weighted heavily) and whale sighting likelihood when Moderate/High (weighted lower —
 a nice-to-know, per the Signature's own instruction not to let it crowd out the jellyfish/
 conditions takeaway). `.compile(...).save(...)` produces a JSON artifact (instructions + few-shot
-demos, not weights) at `marola/src/main/resources/recommendation_prompt.json`.
+demos, not weights) at `core/src/main/resources/recommendation_prompt.json`.
 
 **`llm/CompiledPrompt.scala`** loads that JSON and turns it into a plain chat message list any
 `LlmClient` can replay — a good-faith replication of DSPy's own `ChatAdapter` format (instructions
@@ -426,7 +425,20 @@ scaffold.**
   no extra model to pull; `nomic-embed-text` is a one-env-var upgrade), stored as a JSON vector
   index under `data/` by `FileKnowledgeStore`, and searched by cosine. `OceanQa` has the local LLM
   answer **only** from the top passages, citing `[n]`, and never calls the model when nothing was
-  retrieved. Surfaces: `just ask "..."` / `--ask`, MCP `ask_ocean_question`.
+  retrieved — in `strict` mode. The default `--ask` mode is `general` (`MAROLA_ASK_FALLBACK`):
+  when no passage clears `MAROLA_ASK_MIN_SCORE` the model answers from its own knowledge with a
+  visible "(unsourced)" label rather than refusing — the corpus covers swim safety, users ask
+  about the whole ocean. Surfaces: `just ask "..."` / `--ask`, MCP `ask_ocean_question`.
+- **Benchmark.** `just benchmark` (`cli/bench/OceanBenchmark`) runs 22 ocean questions — science,
+  history, animals, nature, safety; ten inside the corpus, twelve deliberately outside — through
+  three arms on the same local model: the plain prompt, marola strict, marola general. Scores are
+  deterministic (keyword coverage, citation present, abstained, latency) and the report ends with a
+  computed verdict and what would beat the baseline where it loses (more corpus documents on the
+  topics where strict abstained; a sharper embedder). Output under `data/benchmark-*.md`; the
+  2026-09-05 baseline is kept in [`benchmarks/2026-09-05.md`](./benchmarks/2026-09-05.md): the
+  default mode beat the plain prompt 0.84 vs 0.75 overall, 0.92 vs 0.55 inside the corpus, citing
+  on 41% of answers — after adding the `NO_ANSWER_IN_PASSAGES` two-stage fallback, without which
+  `llama3.2`'s own embeddings could not tell relevant passages from irrelevant ones.
 - **Fine-tuning.** `finetune/` (README there is the honest status): Tier 1 is an Ollama
   `Modelfile` variant `marola-llama3.2` (persona + decoding parameters, no weight change) — built
   and run. Tier 2 is a QLoRA recipe (`build_dataset.py` → 41 chat examples from the DSPy demos,
@@ -448,7 +460,7 @@ your explicit go-ahead. When it's time, per integration:
 | Azure AI Vision resource | §5e | |
 | Application Insights resource | §5f | |
 | Container App (scale-to-zero) | Hosting the Telegram bot process | Only needed once running as a **webhook**; long-polling can run anywhere with outbound HTTPS, including a laptop |
-| Budget + Action Group | Cost guardrail across all of the above | Same email-alert pattern as `infra/main.bicep`, not a hard cap (see that file's own caveat) — factor shared Bicep if/when actually provisioned |
+| Budget + Action Group | Cost guardrail across all of the above | An email-alert budget, not a hard cap — write the Bicep when Phase 3 actually provisions anything |
 
 **Not needed yet:** Document Intelligence (IMA has a JSON feed; the PDF bulletin is only the
 fallback), Azure AI Search (the RAG corpus is local, §5h — Search is its Phase 2 sibling), Event
@@ -533,7 +545,7 @@ Full domain-by-domain mapping lives in its own docs now, not inline here:
 
 - [`AI-103-MAPPING.md`](./AI-103-MAPPING.md) — every AI-103 skill area against what marola actually
   builds, including an honest list of remaining gaps (RAG/fine-tuning, first-class text analysis).
-- [`AI-500-MAPPING.md`](./AI-500-MAPPING.md) — AI-103's mandatory-prerequisite follow-on exam
+- [`AI-500-MAPPING.md`](./AI-500-MAPPING.md) — the follow-on exam for which AI-103 is the mandatory prerequisite
   (multi-agent solutions); a design target for where marola's summarizer/reviewer pipeline grows
   into a real multi-agent architecture, not a record of what's built yet.
 

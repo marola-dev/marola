@@ -1,7 +1,8 @@
 package marola.conditions
 
-import marola.model.HourlyConditions
 import java.time.LocalDateTime
+
+import marola.model.HourlyConditions
 
 class TidesSpec extends munit.FunSuite:
 

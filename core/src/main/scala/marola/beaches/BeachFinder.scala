@@ -1,6 +1,7 @@
 package marola.beaches
 
 import kyo.*
+
 import marola.http.Http
 import marola.json.JsonValue
 import marola.model.{Beach, Coordinates}

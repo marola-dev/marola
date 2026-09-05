@@ -1,7 +1,8 @@
 package marola.lore
 
-import marola.model.Coordinates
 import java.time.LocalDate
+
+import marola.model.Coordinates
 
 class SeaLoreSpec extends munit.FunSuite:
 

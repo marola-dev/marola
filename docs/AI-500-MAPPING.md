@@ -14,7 +14,8 @@ AI-500's four published domains, and where marola's current or planned architect
 **Current state:** marola has one implicit two-agent pipeline today — a summarizer (DSPy-compiled
 `CompiledPrompt`) and a reviewer/critic (`Reviewer.review`, a second LLM pass that grades and can
 override the first). This is a real instance of the generator-critic pattern, but it's hardcoded as
-two sequential calls in `Recommender`, not an orchestrated, addressable multi-agent system.
+two sequential calls in `Main` (`summarizeTop` → `reviewAndPrint`; `Recommender` has no LLM call at
+all by design), not an orchestrated, addressable multi-agent system.
 
 **Designed-not-built, to actually cover this domain:**
 
@@ -42,10 +43,10 @@ capabilities to other agents/orchestrators, not just to a chat UI.
 
 **Designed-not-built:**
 
-- **Azure AI Foundry Agent Service** (`azure/llm/AzureFoundryLlmClient.scala` already depends on
-  `com.azure:azure-ai-agents`, currently used only for single-turn structured-output calls, not
-  Foundry's actual multi-agent orchestration features) — the concrete next step is using that same
-  SDK dependency for what it's actually for: registering marola's summarizer/reviewer/escalation
+- **Azure AI Foundry Agent Service** (`azure/llm/AzureFoundryLlmClient.scala` is a plain REST
+  chat-completions call; the `com.azure:azure-ai-agents` SDK is *not* a dependency yet — it was
+  declared unused and removed, FABLE_REVIEW C5) — the concrete next step is adding that SDK for
+  what it's actually for: registering marola's summarizer/reviewer/escalation
   agents as Foundry Agents and letting Foundry's own orchestration route between them, rather than
   marola's Scala code hardcoding the call sequence.
 - **Agent-to-agent protocols beyond MCP** — MCP covers tool exposure; multi-agent-to-multi-agent
@@ -77,7 +78,7 @@ per-agent or per-conversation tracing across multiple agents.
 
 ## 4. Secure, govern, and deploy multi-agent solutions (20-25%)
 
-**Current state:** managed identity everywhere (`DefaultAzureCredential`, no hardcoded keys),
+**Current state:** managed identity on the Foundry client (`DefaultAzureCredential`; the other Azure clients still use keys — FABLE_REVIEW D1), no hardcoded keys anywhere,
 `AGENTS.md`'s cost/deploy safety rules, and the existing single-agent phase-discipline pattern
 (`ARCHITECTURE.md` §11) are the direct foundations — the same discipline that's kept this repo from
 ever provisioning a paid resource without explicit sign-off applies with higher stakes once an agent

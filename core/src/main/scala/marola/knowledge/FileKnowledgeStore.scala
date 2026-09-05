@@ -1,9 +1,12 @@
 package marola.knowledge
 
-import kyo.*
-import marola.json.JsonValue
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, Paths}
+
 import scala.jdk.CollectionConverters.*
+
+import kyo.*
+
+import marola.json.JsonValue
 
 /**
  * Local-first RAG index: embeds every corpus chunk once, stores the vectors as JSON under

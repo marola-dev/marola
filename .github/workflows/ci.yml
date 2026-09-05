@@ -8,6 +8,7 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -31,17 +32,42 @@ jobs:
       - name: Set up sbt
         uses: sbt/setup-sbt@v1
 
-      # root aggregates all four submodules (core/local/azure/cli, docs/FUTURE-WORK.md §7.2) and
+      # root aggregates all four submodules (core/local/azure/cli, docs/FUTURE-WORK.md §7.3) and
       # .aggregate() cascades compile/test/scalafmtCheckAll by default, so this fails if *any* of
       # the four fails to compile/format/test.
-      - name: Check formatting
+      - name: Check formatting (scalafmt)
         run: sbt scalafmtCheckAll
+
+      # Semantic lint: unused imports/locals, import order, banned syntax — .scalafix.conf.
+      # Compiler-level unused warnings are errors too (build.sbt -Wunused + -Wconf).
+      - name: Lint (scalafix)
+        run: sbt "scalafixAll --check"
 
       - name: Compile
         run: sbt compile
 
       # Excludes the E2E suite (see cli/src/test/scala/marola/E2ESpec.scala) via build.sbt's
-      # default Test/testOptions — this only runs the pure, no-network unit tests. The E2E suite
-      # has its own manually-triggered workflow: marola-e2e.yml.
-      - name: Test (unit tests only — E2E excluded by default, see marola-e2e.yml)
+      # default Test/testOptions — no network, no Ollama. This *does* include the whole-pipeline
+      # regression check: PipelineGoldenSpec replays recorded Overpass/Open-Meteo/IMA responses
+      # through the production code, and SummarizeFlowSpec/RagOfflineSpec script the LLM/embedder.
+      # The live E2E suite has its own manual, model-cached workflow: marola-e2e.yml.
+      - name: "Test (offline: unit + fixture-replay regression; live E2E is marola-e2e.yml)"
         run: sbt test
+
+  # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/,
+  # and a linter for these workflow files themselves.
+  quality-other:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: ruff (lint + format check, dspy/ and finetune/)
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: check dspy finetune
+      - name: ruff format --check
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: format --check dspy finetune
+      - name: actionlint (workflow files)
+        uses: raven-actions/actionlint@v2

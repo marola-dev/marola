@@ -51,6 +51,26 @@ just run -- --summarize
 4. Evaluate before trusting it: run `just e2e` and `just run -- --summarize` with the new model,
    and — the real test — compare reviewer scores over a held-out set (`FUTURE-WORK.md` §4.1).
 
+## Iterating on a local machine: the small-model ladder
+
+Retraining "from the ground" should cost minutes, not an afternoon. The same script, dataset and
+Modelfile steps work at three sizes — change only `--preset`:
+
+| preset | base model | gated? | CPU training time (41 examples, 3 epochs, rough) | Ollama `FROM` for the adapter |
+|---|---|---|---|---|
+| `tiny` | SmolLM2-360M-Instruct | no | minutes | `smollm2:360m` |
+| `small` (default) | Llama-3.2-1B-Instruct (unsloth mirror) | no | tens of minutes | `llama3.2:1b` |
+| `base` | Llama-3.2-3B-Instruct | yes (HF login) | hours; use a GPU | `llama3.2` |
+
+Loop: `just finetune-dataset` → `just finetune-train preset=tiny` → convert → `ollama create` →
+`just benchmark` / `just run -- --summarize` → edit the dataset → repeat. Only when the tiny model
+shows the format/tone you want is it worth paying for `small` or `base`. Tier 1 has the same knob:
+`just finetune-model base=llama3.2:1b` builds the persona variant on the 1B model.
+
+The same ladder applies to the RAG embedder (`knowledge/README.md`): `all-minilm` (45MB) re-indexes
+the corpus in seconds, `nomic-embed-text` (274MB) is the quality option, `llama3.2` itself needs no
+extra download.
+
 ## What is deliberately not here
 
 - No cloud training. Azure ML / Foundry fine-tuning is the Phase 2 opt-in (`AGENTS.md` cost rule).

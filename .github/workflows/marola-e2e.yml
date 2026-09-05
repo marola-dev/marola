@@ -1,28 +1,49 @@
 name: marola E2E (manual)
 
-# Manual trigger ONLY — no `push`/`pull_request` trigger, deliberately. This hits live
-# Overpass/Open-Meteo and a real (if free, local) Ollama model, which makes it slower and more
-# flake-prone than the fast unit-test suite ci.yml runs on every push — exactly why
-# cli/src/test/scala/marola/E2ESpec.scala is tagged E2E and excluded from `sbt test`'s
-# default run in the first place (see build.sbt). Run it from the Actions tab ("Run workflow"),
-# or `gh workflow run marola-e2e.yml`.
+# Manual trigger ONLY — no `push`/`pull_request`, deliberately: this hits live Overpass/Open-Meteo/
+# IMA and (optionally) a real local Ollama model. The cheap, always-on regression check is the
+# offline fixture-replay suite in ci.yml (cli/src/test/scala/marola/PipelineGoldenSpec.scala) —
+# run this only when you want to know the *live* APIs still behave.
+#
+# Cost controls, in order of impact:
+#   1. Two jobs. `network` needs no Ollama at all (the E2E tests that only need Overpass/Open-Meteo/
+#      IMA). `llm` is opt-in via the `with_llm` input, default off — most regressions are in the
+#      data path, not the model path.
+#   2. `~/.ollama/models` and the ollama binary are cached by actions/cache, keyed on the model
+#      name, so the 1.3GB pull happens once per model, not per run.
+#   3. `timeout-minutes` on both jobs so a hung Overpass slot can't burn an hour.
+#   4. `concurrency` cancels a superseded run.
+#   5. The smallest model that produces well-formed reviewer JSON (`llama3.2:1b`, RUN-LOCALLY.md).
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      with_llm:
+        description: "Also run the Ollama-backed tests (installs/caches a 1.3GB model)"
+        type: boolean
+        default: false
+      model:
+        description: "Ollama model for the llm job"
+        type: string
+        default: "llama3.2:1b"
+
+concurrency:
+  group: marola-e2e
+  cancel-in-progress: true
+
+env:
+  SBT_E2E: sbt 'set cli/Test/testOptions := Seq(Tests.Argument(new TestFramework("munit.Framework"), "--include-tags=E2E"))'
 
 jobs:
-  e2e:
+  network:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "25"
-
-      - name: Cache sbt / coursier
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.cache/coursier
@@ -31,25 +52,60 @@ jobs:
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt', 'project/**') }}
           restore-keys: |
             ${{ runner.os }}-sbt-
-
-      - name: Set up sbt
-        uses: sbt/setup-sbt@v1
-
-      # "Cheap" E2E: a real local LLM, not a paid API call — llama3.2:1b is a 1.3GB download and
-      # runs fine on a GitHub-hosted runner's CPU (no GPU needed, confirmed while writing
-      # docs/RUN-LOCALLY.md: a full pipeline run including both LLM passes took well under a
-      # minute on ordinary hardware). Zero API cost either way — the only cost here is CI minutes.
-      - name: Install Ollama and pull a small model
-        run: |
-          curl -fsSL https://ollama.com/install.sh | sh
-          ollama serve &
-          for i in $(seq 1 30); do
-            curl -s http://localhost:11434/api/tags >/dev/null 2>&1 && break
-            sleep 1
-          done
-          ollama pull llama3.2:1b
-
-      - name: Run E2E suite
+      - uses: sbt/setup-sbt@v1
+      # Only the tests that need no LLM: `MAROLA_E2E_SKIP_LLM=1` makes the Ollama-backed test
+      # `assume(false)` immediately instead of probing localhost:11434.
+      - name: E2E — live Overpass / Open-Meteo / IMA, no LLM
         env:
-          MAROLA_LOCAL_LLM_MODEL: llama3.2:1b
-        run: sbt 'set cli/Test/testOptions := Seq(Tests.Argument(new TestFramework("munit.Framework"), "--include-tags=E2E"))' 'cli/testOnly marola.E2ESpec'
+          MAROLA_E2E_SKIP_LLM: "1"
+        run: ${{ env.SBT_E2E }} 'cli/testOnly marola.E2ESpec'
+
+  llm:
+    if: ${{ inputs.with_llm }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.sbt
+            ~/.ivy2/cache
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt', 'project/**') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+      - uses: sbt/setup-sbt@v1
+
+      # The expensive part, cached: the model blobs (~1.3GB for llama3.2:1b) and the binary.
+      - name: Cache Ollama binary and model
+        id: ollama-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ollama/models
+            ~/.local/bin/ollama
+          key: ollama-${{ runner.os }}-${{ inputs.model }}-v1
+
+      - name: Install Ollama (cache miss only)
+        if: steps.ollama-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.local/bin
+          curl -fsSL https://ollama.com/download/ollama-linux-amd64.tgz | tar -xz -C /tmp
+          cp /tmp/bin/ollama ~/.local/bin/ollama
+
+      - name: Start Ollama and ensure the model
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          nohup ollama serve >/tmp/ollama.log 2>&1 &
+          for _ in $(seq 1 30); do curl -sf http://localhost:11434/api/tags >/dev/null && break; sleep 1; done
+          ollama list | awk 'NR>1{print $1}' | grep -qx "${{ inputs.model }}" || ollama pull "${{ inputs.model }}"
+
+      - name: E2E — full, including the Ollama-backed summarize/review test
+        env:
+          MAROLA_LOCAL_LLM_MODEL: ${{ inputs.model }}
+        run: ${{ env.SBT_E2E }} 'cli/testOnly marola.E2ESpec'

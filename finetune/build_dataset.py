@@ -35,8 +35,14 @@ SYSTEM = (
 )
 
 INPUT_FIELDS = (
-    "beach_name", "hour_local", "sea_temp_c", "wind_kmh", "wave_height_m",
-    "jellyfish_risk", "whale_sighting_likelihood", "score",
+    "beach_name",
+    "hour_local",
+    "sea_temp_c",
+    "wind_kmh",
+    "wave_height_m",
+    "jellyfish_risk",
+    "whale_sighting_likelihood",
+    "score",
 )
 
 
@@ -49,21 +55,27 @@ def render_inputs(demo: dict, fields: tuple[str, ...]) -> str:
 
 
 def example(user: str, assistant: str) -> dict:
-    return {"messages": [
-        {"role": "system", "content": SYSTEM},
-        {"role": "user", "content": user},
-        {"role": "assistant", "content": assistant},
-    ]}
+    return {
+        "messages": [
+            {"role": "system", "content": SYSTEM},
+            {"role": "user", "content": user},
+            {"role": "assistant", "content": assistant},
+        ]
+    }
 
 
-def from_compiled_prompt(path: Path, output_field: str, extra_inputs: tuple[str, ...] = ()) -> list[dict]:
+def from_compiled_prompt(
+    path: Path, output_field: str, extra_inputs: tuple[str, ...] = ()
+) -> list[dict]:
     doc = json.loads(path.read_text(encoding="utf-8"))
     instructions = doc.get("signature", {}).get("instructions", "").strip()
     rows = []
     for demo in doc.get("demos", []):
         if output_field not in demo:
             continue
-        user = (instructions + "\n\n" if instructions else "") + render_inputs(demo, INPUT_FIELDS + extra_inputs)
+        user = (instructions + "\n\n" if instructions else "") + render_inputs(
+            demo, INPUT_FIELDS + extra_inputs
+        )
         rows.append(example(user, demo[output_field]))
     return rows
 
@@ -80,9 +92,11 @@ def from_sea_lore(path: Path) -> list[dict]:
 def chunk_markdown(md: str, max_chars: int = 700) -> tuple[str, str, list[str]]:
     """Mirror of marola.knowledge.Corpus.chunkDocument: title, source, merged paragraphs."""
     lines = md.splitlines()
-    title = next((l[2:].strip() for l in lines if l.startswith("# ")), "")
-    source = next((l[7:].strip() for l in lines if l.lower().startswith("source:")), "")
-    body = "\n".join(l for l in lines if not (l.startswith("# ") or l.lower().startswith("source:")))
+    title = next((ln[2:].strip() for ln in lines if ln.startswith("# ")), "")
+    source = next((ln[7:].strip() for ln in lines if ln.lower().startswith("source:")), "")
+    body = "\n".join(
+        ln for ln in lines if not (ln.startswith("# ") or ln.lower().startswith("source:"))
+    )
     paras = [p.strip() for p in re.split(r"\n\s*\n", body) if p.strip()]
     chunks: list[str] = []
     for p in paras:
@@ -108,7 +122,9 @@ def from_knowledge(dir_: Path) -> list[dict]:
 def main() -> None:
     rows: list[dict] = []
     rows += from_compiled_prompt(RESOURCES / "recommendation_prompt.json", "summary")
-    rows += from_compiled_prompt(RESOURCES / "review_prompt.json", "review_json", extra_inputs=("summary",))
+    rows += from_compiled_prompt(
+        RESOURCES / "review_prompt.json", "review_json", extra_inputs=("summary",)
+    )
     rows += from_sea_lore(RESOURCES / "sea_lore.json")
     rows += from_knowledge(KNOWLEDGE)
 

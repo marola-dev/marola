@@ -1,0 +1,6 @@
+# Free Python lint/format for dspy/ and finetune/ (`just quality`, ci.yml).
+target-version = "py312"
+line-length = 100
+[lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501"]  # long doc/comment lines are deliberate in this repo

@@ -1,12 +1,13 @@
 package marola
 
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 import marola.knowledge.OceanQa
 import marola.lore.{LoreEntry, SeaLore}
 import marola.model.{BestHour, Coordinates, WhaleSightingLikelihood}
 import marola.scoring.Swimability
 import marola.water.BathingCondition
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 /**
  * Pure text rendering for `Main` (MIP-0001 §3): the ranked list (with its water column), the

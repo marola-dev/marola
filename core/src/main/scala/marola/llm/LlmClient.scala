@@ -1,6 +1,7 @@
 package marola.llm
 
 import kyo.*
+
 import marola.json.JsonValue
 
 final case class ChatMessage(role: String, content: String)

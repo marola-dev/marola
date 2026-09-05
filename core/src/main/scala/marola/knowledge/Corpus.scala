@@ -1,8 +1,10 @@
 package marola.knowledge
 
-import kyo.*
 import java.nio.file.{Files, Path}
+
 import scala.jdk.CollectionConverters.*
+
+import kyo.*
 
 /**
  * One indexable unit: a paragraph-ish slice of a corpus document, with the document's provenance.

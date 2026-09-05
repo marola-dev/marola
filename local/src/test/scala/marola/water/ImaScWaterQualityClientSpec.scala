@@ -1,8 +1,9 @@
 package marola.water
 
+import java.time.LocalDate
+
 import marola.json.JsonValue
 import marola.model.Coordinates
-import java.time.LocalDate
 
 /**
  * Parses a payload trimmed from the real `relatorio/mapa` feed of 2026-09-05 (the 14 points nearest

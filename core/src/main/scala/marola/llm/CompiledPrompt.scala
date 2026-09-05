@@ -1,7 +1,8 @@
 package marola.llm
 
-import marola.json.JsonValue
 import scala.io.Source
+
+import marola.json.JsonValue
 
 /**
  * Loads a DSPy-compiled prompt artifact (`dspy/compile_recommendation_prompt.py` produces two:

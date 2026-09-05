@@ -14,7 +14,7 @@ AI-103 first (it's the prerequisite), then AI-500.
 | Skill | Practice it via | Ready now? |
 |---|---|---|
 | Choosing a model/service tier for a cost-sensitive scenario | Compare `local/llm/LocalLlmClient` (free) vs. `azure/llm/AzureFoundryLlmClient` (paid) for the same `LlmClient` trait — read `ARCHITECTURE.md` §5a's tradeoff writeup, then articulate it yourself before reading it | Yes |
-| Managed identity end-to-end, no keys | Every client in `azure/` — read `AzureFoundryLlmClient`/`CosmosDbSightingStore`/`AzureVisionClient`, then trace how `DefaultAzureCredential` reaches each one from `AppConfig` | Yes |
+| Managed identity end-to-end, no keys | `AzureFoundryLlmClient` is the one client on `DefaultAzureCredential`; the exercise is to migrate `CosmosDbSightingStore`/`AzureVisionClient`/`RouteFinder` to it (FABLE_REVIEW D1) | Yes — as a task, not a reading |
 | Reasoning about scale-to-zero cost | `ARCHITECTURE.md` §6, §11 Phase 3 (Container App deployment, not yet done) | Design-only until Phase 3 |
 | Responsible AI: stating limitations honestly | `ARCHITECTURE.md` §8/§9 — write your own one-paragraph "known limitations" section for a feature you add, in that style, before calling it done | Yes |
 
@@ -24,7 +24,7 @@ AI-103 first (it's the prerequisite), then AI-500.
 |---|---|---|
 | Calling a model through an OpenAI-compatible endpoint | `LocalLlmClient.complete` (Ollama's `/v1/chat/completions`) | Yes |
 | Calling a model through Azure AI Foundry's SDK | `AzureFoundryLlmClient` | Yes (code), needs a real Foundry deployment to run live |
-| Structured/parsed output from a model | `CompiledPrompt.replay` (summary field), `Reviewer.extractJsonObject` (JSON-from-prose fallback) | Yes |
+| Structured/parsed output from a model | `CompiledPrompt.buildMessages` + `LlmClient.extractContent` (summary field), `Reviewer.extractJsonObject` (JSON-from-prose fallback) | Yes |
 | Systematic prompt optimization (not hand-tuning) | `dspy/compile_recommendation_prompt.py` — run it yourself against `llama3.2:1b`, inspect the compiled `recommendation_prompt.json`, then hand-edit the trainset and re-run to see the artifact change | Yes — see `RUN-LOCALLY.md` |
 | RAG | Not built. First real exercise: implement `core/knowledge/KnowledgeStore` per `FUTURE-WORK.md` §9.1 against a small local corpus | Design only — build it to practice this |
 | Fine-tuning a small open model | `FUTURE-WORK.md` §9.1 step 4 (Ollama `Modelfile` + QLoRA-style adapter) | Design only |
@@ -34,7 +34,7 @@ AI-103 first (it's the prerequisite), then AI-500.
 | Skill | Practice it via | Ready now? |
 |---|---|---|
 | Exposing app logic as MCP tools | `cli/agent/SwimConditionsMcpServer.scala` — read it, then add a new tool (e.g. `ask_ocean_question` once §9.1 exists) yourself | Yes |
-| Testing an MCP server without a full agent client | Pipe raw JSON-RPC to the server's stdin yourself (`ARCHITECTURE.md` §5b's Status note describes how this was verified) — do this once by hand before trusting any higher-level client | Yes |
+| Testing an MCP server without a full agent client | Pipe raw JSON-RPC to the server's stdin yourself (`ARCHITECTURE.md` §5c's Status note describes how this was verified) — do this once by hand before trusting any higher-level client | Yes |
 | Multi-step agent pipelines (plan → act → critique) | `Recommender.bestPerBeachTomorrow` → `Reviewer.review` — trace one real request through both LLM calls end to end with `just run -- --summarize` | Yes |
 | Recognizing when orchestration frameworks are and aren't worth adopting | `FUTURE-WORK.md` §5 (`workflows4s` review) — do your own version of this exercise on a framework not yet reviewed here before adding one | Yes, as a practice exercise |
 

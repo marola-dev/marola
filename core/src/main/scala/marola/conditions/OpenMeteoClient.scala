@@ -1,10 +1,12 @@
 package marola.conditions
 
+import java.time.LocalDateTime
+
 import kyo.*
+
 import marola.http.Http
 import marola.json.JsonValue
-import marola.model.{BeachForecast, Beach, HourlyConditions}
-import java.time.LocalDateTime
+import marola.model.{Beach, BeachForecast, HourlyConditions}
 
 /**
  * Open-Meteo (open-meteo.com) — free, no API key for non-commercial use

@@ -1,6 +1,7 @@
 package marola.beaches
 
 import kyo.*
+
 import marola.http.Http
 import marola.json.JsonValue
 import marola.model.Coordinates
@@ -13,10 +14,10 @@ import marola.model.Coordinates
  * unset, `Recommender` keeps the haversine distance `BeachFinder` already computed — see that
  * file's own doc comment for the confirmed real-world case this fixes.
  *
- * REST shape (`GET .../route/directions/json?api-version=1.0&query={lat1},{lon1}:{lat2},{lon2}
- * &subscription-key=...`, response `routes[0].summary.lengthInMeters`) confirmed against Azure's
- * own published API reference — not exercised against a live Azure Maps account (none provisioned;
- * see `AGENTS.md`'s cost-safety rule).
+ * REST shape (`GET .../route/directions/json?api-version=1.0&query={lat1},{lon1}:{lat2},{lon2}`
+ * with the key in a `subscription-key` header, response `routes[0].summary.lengthInMeters`)
+ * confirmed against Azure's own published API reference — not exercised against a live Azure Maps
+ * account (none provisioned; see `AGENTS.md`'s cost-safety rule).
  */
 object RouteFinder:
 
@@ -27,8 +28,10 @@ object RouteFinder:
   def travelDistanceKm(subscriptionKey: String, origin: Coordinates, dest: Coordinates): Double <
     Sync =
     val query = f"${origin.lat}%.6f,${origin.lon}%.6f:${dest.lat}%.6f,${dest.lon}%.6f"
-    val url = s"$Endpoint?api-version=1.0&query=$query&subscription-key=$subscriptionKey"
-    Http.getString(url).map { body =>
+    // Key in a header, not the query string: `Http.HttpError` embeds the URL in its message and
+    // that message gets printed/logged (FABLE_REVIEW C2). Azure Maps accepts either form.
+    val url = s"$Endpoint?api-version=1.0&query=$query"
+    Http.getString(url, headers = Map("subscription-key" -> subscriptionKey)).map { body =>
       JsonValue
         .parse(body)("routes")
         .arr

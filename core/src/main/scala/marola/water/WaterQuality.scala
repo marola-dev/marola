@@ -1,9 +1,11 @@
 package marola.water
 
-import kyo.*
-import marola.model.Coordinates
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+
+import kyo.*
+
+import marola.model.Coordinates
 
 /**
  * Bathing-water fitness as the monitoring agency classifies it — `Proper`/`Improper` are CONAMA

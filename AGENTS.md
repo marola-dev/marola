@@ -12,7 +12,7 @@ with a free Ollama model, zero Azure account needed**, with Azure Maps/Foundry/C
 Application Insights available as opt-in upgrades per integration, never a package deal. Also built
 as hands-on coverage of every [AI-103](https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-apps-and-agents-developer-associate/)
 exam domain, and a design target for [AI-500](https://learn.microsoft.com/en-us/credentials/certifications/)
-(multi-agent solutions, AI-103's mandatory prerequisite) — see `docs/AI-103-MAPPING.md` and
+(multi-agent solutions, for which AI-103 is the mandatory prerequisite) — see `docs/AI-103-MAPPING.md` and
 `docs/AI-500-MAPPING.md`.
 
 One sbt multi-project build (root `build.sbt`), split into four modules at the repo root so the
@@ -42,6 +42,8 @@ Docs live under `docs/` — check these before assuming something is undecided o
 | `docs/AI-103-MAPPING.md` | AI-103 exam domain coverage, including honest gaps |
 | `docs/AI-500-MAPPING.md` | AI-500 (multi-agent) domain coverage — a design target, not a build record |
 | `docs/SKILLS.md` | A skills roadmap — what to practice, in order, using marola as the vehicle |
+| `docs/SCALA3-JDK-REVIEW.md` | Scala 3 / JDK 21-25 features reviewed against this code — adopt list and order |
+| `docs/benchmarks/` | Kept `just benchmark` runs — re-run and compare before changing prompt/corpus/embedder/model |
 | `docs/mips/` | Marola Improvement Proposals — design a non-trivial change here first, via the `mip` skill (`.claude/skills/mip/SKILL.md`), before building it |
 | `docs/FABLE_REVIEW.md` | Code and documentation review at the initial import — open findings, ranked, with file:line references |
 
@@ -59,7 +61,8 @@ just mcp-server       # marola's MCP tool server
 just e2e              # marola's live E2E test (Overpass/Open-Meteo/Ollama) — excluded from `just test`
 ```
 
-Always run `just build && just test` before considering a change done. Kyo is
+Always run `just build && just test && just quality` before considering a change done (`quality` =
+scalafmt + scalafix + ruff + actionlint, the same gates as `ci.yml`). Kyo is
 pre-1.0 (currently `1.0.0-RC5`) with no version-specific published docs — when unsure of an API,
 verify against the actual jar (`javap` on the decompiled class) rather than guessing from
 `getkyo.io`'s latest-version docs, which can silently drift from what's pinned. See
@@ -92,8 +95,9 @@ the requested feature but flag which earlier-phase prerequisite is still missing
   go-ahead. This applies to `azd up`, `azd provision`, and `az deployment
   group create` alike.
 - Never hardcode an API key, connection string, or secret. Every Azure
-  client in this repo authenticates via `azure-identity`'s
-  `DefaultAzureCredential` against a managed identity. If a new
+  client *should* authenticate via `azure-identity`'s `DefaultAzureCredential` against a
+  managed identity — today only `AzureFoundryLlmClient` does; Cosmos DB, AI Vision and Azure Maps
+  still take a key from the environment (FABLE_REVIEW D1 — migrate before Phase 2). If a new
   credential is genuinely required, add it to `.env.example` as a
   placeholder — never commit a real value.
 

@@ -1,11 +1,11 @@
 package marola.http
 
-import kyo.*
-import java.net.URI
-import java.net.URLEncoder
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import java.net.{URI, URLEncoder}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Duration
+
+import kyo.*
 
 /**
  * Thin `java.net.http.HttpClient` wrapper at the Kyo effect boundary, kept deliberately instead of
@@ -24,23 +24,56 @@ object Http:
   final case class HttpError(status: Int, url: String, bodySnippet: String)
       extends Exception(s"HTTP $status for $url: $bodySnippet")
 
-  private val client: HttpClient =
-    HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()
+  /** What a transport returns — just the two things every caller here reads. */
+  final case class Response(status: Int, body: String)
 
-  // TODO: point this at the real repo URL once marola is pushed to its own GitHub repo.
-  private def userAgent = "marola-poc/0.1"
+  /**
+   * The one seam between marola and the network. `Transport.Live` is `java.net.http`; tests install
+   * a replay transport that serves recorded real responses by URL
+   * (`cli/src/test/scala/marola/PipelineGoldenSpec.scala`), which is how the whole pipeline is
+   * regression-tested offline — no Overpass, no Open-Meteo, no Ollama, no CI minutes.
+   */
+  trait Transport:
+    def send(request: HttpRequest): Response
 
-  def getString(url: String): String < Sync =
+  object Transport:
+    val Live: Transport = new Transport:
+      private val client: HttpClient =
+        HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()
+      def send(request: HttpRequest): Response =
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        Response(response.statusCode(), response.body())
+
+  private val transport = new java.util.concurrent.atomic.AtomicReference[Transport](Transport.Live)
+
+  /**
+   * Test seam: runs `body` with `t` installed, restoring the previous transport afterwards. A
+   * process-wide switch, so test suites that use it must not run concurrently with each other
+   * (munit runs suites sequentially by default — keep it that way in `build.sbt`).
+   */
+  def withTransport[A](t: Transport)(body: => A): A =
+    val previous = transport.getAndSet(t)
+    try body
+    finally
+      transport.set(previous)
+      ()
+
+  private def check(url: String, response: Response, snippet: Int): String =
+    if response.status / 100 == 2 then response.body
+    else throw HttpError(response.status, url, response.body.take(snippet))
+
+  private def userAgent = "marola/0.1 (+https://github.com/h0ffmann/marola)"
+
+  /** `headers`: e.g. an API key that must not go in the URL (`RouteFinder`). */
+  def getString(url: String, headers: Map[String, String] = Map.empty): String < Sync =
     Sync.defer {
-      val request = HttpRequest
+      val builder = HttpRequest
         .newBuilder(URI.create(url))
         .timeout(Duration.ofSeconds(15))
         .header("User-Agent", userAgent)
         .GET()
-        .build()
-      val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-      if response.statusCode() / 100 == 2 then response.body()
-      else throw HttpError(response.statusCode(), url, response.body().take(300))
+      headers.foreach { case (k, v) => builder.header(k, v) }
+      check(url, transport.get.send(builder.build()), 300)
     }
 
   /**
@@ -67,9 +100,7 @@ object Http:
         .header("Content-Type", "application/x-www-form-urlencoded")
         .POST(HttpRequest.BodyPublishers.ofString(encoded))
         .build()
-      val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-      if response.statusCode() / 100 == 2 then response.body()
-      else throw HttpError(response.statusCode(), url, response.body().take(300))
+      check(url, transport.get.send(request), 300)
     }
 
   /**
@@ -92,9 +123,7 @@ object Http:
         .header("Content-Type", "application/json")
         .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
       headers.foreach { case (k, v) => builder.header(k, v) }
-      val response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString())
-      if response.statusCode() / 100 == 2 then response.body()
-      else throw HttpError(response.statusCode(), url, response.body().take(500))
+      check(url, transport.get.send(builder.build()), 500)
     }
 
   /**
@@ -117,7 +146,5 @@ object Http:
         .header("Content-Type", contentType)
         .POST(HttpRequest.BodyPublishers.ofByteArray(body))
       headers.foreach { case (k, v) => builder.header(k, v) }
-      val response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString())
-      if response.statusCode() / 100 == 2 then response.body()
-      else throw HttpError(response.statusCode(), url, response.body().take(500))
+      check(url, transport.get.send(builder.build()), 500)
     }

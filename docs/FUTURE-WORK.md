@@ -177,6 +177,9 @@ product features:
 
 ### 4.1 An actual evaluation harness, not just a training set
 
+> Partly built: `just benchmark` (`ARCHITECTURE.md` §5h) is a deterministic held-out check for the
+> *answering* path (RAG vs. plain prompt). The summarizer/reviewer path still has only its trainset.
+
 `dspy/compile_recommendation_prompt.py`'s `TRAINSET` currently does double duty as both the
 few-shot demo source *and* the only quality check (`jellyfish_and_whale_mentioned_when_relevant`,
 a crude keyword-match metric — literally `"jelly" not in text.lower()`). DSPy has a dedicated
@@ -307,7 +310,7 @@ syntax** from the parent's session — `sbt "subBuild/compile"`, `sbt "sub/compi
 in it is a separate `cd <dir> && sbt <task>` invocation — a real limitation to know about if a
 similar monorepo-split situation comes up again elsewhere.
 
-### 7.3 CI
+### 7.2 CI
 
 `.github/workflows/ci.yml` now runs one job (`build-test`) doing unscoped `sbt scalafmtCheckAll` /
 `sbt compile` / `sbt test` at the repo root — `.aggregate()` cascades these to all four modules
@@ -323,7 +326,7 @@ The YAML was validated (parses correctly, the install script URL resolves to Oll
 release asset) but **the workflow itself has not been run through an actual GitHub Actions
 execution** — that requires pushing it and triggering it for real, which wasn't done here.
 
-### 7.2 Splitting marola *itself* into multiple sbt modules — DONE
+### 7.3 Splitting marola *itself* into multiple sbt modules — DONE
 
 Executed. Root `build.sbt` defines four subprojects — sbt project IDs `core`, `local`, `azure`,
 `cli` (artifact names `marola-core`/`marola-local`/`marola-azure`/`marola-cli`), aggregated
@@ -360,7 +363,7 @@ the original hardcoded-call version, not just a workaround forced by the module 
 local-vs-Azure choice for distance refinement is now visible in `Recommender`'s own signature
 instead of hidden behind a string key's presence/absence.
 
-**Verified, not just compiled:** full `sbt compile`/`sbt test` (all 16 tests pass across the new
+**Verified, not just compiled:** full `sbt compile`/`sbt test` (every unit test passed across the new
 module boundaries), `sbt cli/run` and `sbt cli/run -- --summarize` against live
 Overpass/Open-Meteo/Ollama (including the Reviewer pass), both `E2ESpec` tests, and
 `sbt cli/assembly` producing a working fat jar (`java -jar

@@ -8,12 +8,11 @@ demos) — not model weights, just an optimized prompt. The Kyo/Scala service (`
 time via a plain structured-output call, with no Python in the runtime path — see
 docs/ARCHITECTURE.md §5a.
 
-NOT RUN as part of writing this: it calls a real LLM repeatedly to bootstrap few-shot demos, so it
-costs real (if small) money and does nothing useful against a missing/fake API key. Point
-`MAROLA_DSPY_MODEL` at whichever model marola will actually run at request time — likely
-the same Azure Foundry deployment `FOUNDRY_MODEL_DEPLOYMENT` names elsewhere in this repo — so the
-optimized prompt matches the model that'll replay it; plain OpenAI works fine too for local
-experimentation before Foundry is provisioned.
+Run for real against a local Ollama model (see README.md's Status section) — zero cost by default.
+It calls the model repeatedly to bootstrap few-shot demos, so against a paid endpoint it costs real
+(if small) money. Point `MAROLA_DSPY_MODEL` at whichever model marola will actually run at request
+time so the optimized prompt matches the model that'll replay it; the default is the same local
+`llama3.2` the Scala side defaults to.
 
 Usage:
     cd dspy
@@ -180,7 +179,7 @@ REVIEW_TRAINSET = [
         review_json=(
             '{"score": 95, "verdict": "approve", "final_summary": "Great pick — calm, warm '
             "water and light wind at 7am, with low jellyfish risk. Conditions are also calm "
-            'enough that you\'ve got a real shot at spotting a whale this time of year."}'
+            "enough that you've got a real shot at spotting a whale this time of year.\"}"
         ),
     ).with_inputs(*REVIEW_INPUT_FIELDS),
     dspy.Example(
@@ -306,7 +305,9 @@ def _init_langfuse_tracing() -> None:
     from openinference.instrumentation.dspy import DSPyInstrumentor
 
     DSPyInstrumentor().instrument()
-    print(f"Langfuse tracing enabled -> {os.environ.get('LANGFUSE_BASE_URL', 'https://cloud.langfuse.com')}")
+    print(
+        f"Langfuse tracing enabled -> {os.environ.get('LANGFUSE_BASE_URL', 'https://cloud.langfuse.com')}"
+    )
 
 
 def main() -> None:
@@ -331,7 +332,9 @@ def main() -> None:
     )
     compiled = optimizer.compile(student=program, trainset=TRAINSET)
 
-    resources_dir = os.path.join(os.path.dirname(__file__), "..", "src", "main", "resources")
+    resources_dir = os.path.join(
+        os.path.dirname(__file__), "..", "core", "src", "main", "resources"
+    )
     summary_path = os.path.join(resources_dir, "recommendation_prompt.json")
     compiled.save(summary_path)
     print(f"Compiled prompt artifact written to {os.path.abspath(summary_path)}")

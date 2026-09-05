@@ -1,6 +1,7 @@
 package marola.knowledge
 
 import kyo.*
+
 import marola.llm.{ChatMessage, LlmClient}
 
 /**
@@ -19,20 +20,87 @@ object OceanQa:
     "I don't have anything in my ocean notes about that yet — try asking about rip currents, " +
       "jellyfish stings, bathing-water quality, whales, tides or wave conditions."
 
+  /**
+   * `Strict`: below `minScore` (or nothing retrieved) → abstain with `NoPassagesReply`. `General`:
+   * below `minScore` → answer from the model's own knowledge, prefixed with `GeneralKnowledgeLabel`
+   * so the user sees it is unsourced. The corpus covers a handful of swim-safety topics; ocean
+   * history/science questions land here. `just benchmark` measures what each mode costs and buys.
+   */
+  enum Fallback derives CanEqual:
+    case Strict, General
+
+  val GeneralKnowledgeLabel =
+    "(From the model's general knowledge — unsourced; verify before relying on it.) "
+
+  /**
+   * Cosine score under which the best passage is treated as "not about this". Default 0 (off):
+   * `just benchmark` on 2026-09-05 showed `llama3.2`'s own embeddings put *irrelevant* passages at
+   * 0.49-0.50 and relevant ones at 0.36-0.40 — the score carries almost no signal with that
+   * embedder, so a threshold either never fires or always does. Relevance is decided by the model
+   * via `NoAnswerSentinel` instead; set `MAROLA_ASK_MIN_SCORE` (≈0.5) only with a real embedding
+   * model such as `nomic-embed-text`, where cosine means something.
+   */
+  val DefaultMinScore = 0.0
+
+  /**
+   * What the grounded prompt asks the model to reply when the passages don't cover the question.
+   */
+  val NoAnswerSentinel = "NO_ANSWER_IN_PASSAGES"
+
+  /** True for the sentinel and for the free-text ways small models say the same thing. */
+  def saysNoAnswer(reply: String): Boolean =
+    val r = reply.trim.toLowerCase
+    r.startsWith(NoAnswerSentinel.toLowerCase) ||
+    r.contains("none of the passages") || r.contains("passages do not") ||
+    r.contains("passages don't") || r.contains("not covered by the passages") ||
+    r.contains("no passage")
+
   def answer(
       question: String,
       store: KnowledgeStore,
       llm: LlmClient,
-      k: Int = 4
+      k: Int = 4,
+      fallback: Fallback = Fallback.Strict,
+      minScore: Double = DefaultMinScore
   ): Answer < Sync =
     for
       passages <- store.search(question, k)
-      reply <- complete(llm, question, passages)
-    yield Answer(reply, passages)
+      relevant = passages.filter(_.score >= minScore)
+      reply <- complete(llm, question, relevant, fallback)
+    yield Answer(reply, relevant)
 
-  private def complete(llm: LlmClient, question: String, passages: List[Passage]): String < Sync =
-    if passages.isEmpty then NoPassagesReply
-    else llm.complete(buildMessages(question, passages))
+  private def complete(
+      llm: LlmClient,
+      question: String,
+      passages: List[Passage],
+      fallback: Fallback
+  ): String < Sync =
+    if passages.isEmpty then unanswered(llm, question, fallback)
+    else
+      // Two-stage: try grounded; if the model itself says the passages don't cover it, fall back.
+      // This is what makes `General` work even when the embedder can't tell relevant from not.
+      llm.complete(buildMessages(question, passages)).flatMap { grounded =>
+        if saysNoAnswer(grounded) then unanswered(llm, question, fallback)
+        else grounded: String < Sync
+      }
+
+  private def unanswered(llm: LlmClient, question: String, fallback: Fallback): String < Sync =
+    fallback match
+      case Fallback.Strict => NoPassagesReply
+      case Fallback.General =>
+        llm.complete(generalMessages(question)).map(GeneralKnowledgeLabel + _)
+
+  /** The "manual prompt" baseline — also what `just benchmark` compares marola against. */
+  def generalMessages(question: String): List[ChatMessage] =
+    List(
+      ChatMessage(
+        "system",
+        "You are a knowledgeable, careful assistant answering questions about the ocean — its " +
+          "science, history, animals and nature. Answer in at most four plain sentences. If you " +
+          "are not sure, say so."
+      ),
+      ChatMessage("user", question)
+    )
 
   def buildMessages(question: String, passages: List[Passage]): List[ChatMessage] =
     val numbered = passages.zipWithIndex
@@ -43,8 +111,8 @@ object OceanQa:
         "system",
         "You are marola, a swim-conditions assistant. Answer the question using ONLY the numbered " +
           "passages provided. Cite the passage number in square brackets after each fact, like [2]. " +
-          "If the passages don't cover the question, say so plainly in one sentence and do not " +
-          "guess. Keep it to at most four sentences. Never give medical or safety advice beyond " +
+          s"If the passages don't cover the question, reply with exactly $NoAnswerSentinel and " +
+          "nothing else. Keep it to at most four sentences. Never give medical or safety advice beyond " +
           "what the passages state."
       ),
       ChatMessage("user", s"Passages:\n\n$numbered\n\nQuestion: $question")

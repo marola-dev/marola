@@ -1,6 +1,7 @@
 package marola
 
 import kyo.*
+
 import marola.llm.{CompiledPrompt, Reviewer}
 import marola.model.Coordinates
 
@@ -12,11 +13,14 @@ import marola.model.Coordinates
  * (see `build.sbt`'s `Test / testOptions` — hitting live network on every `just test` would make
  * the fast unit-test suite flaky and slow), run explicitly with:
  * {{{
- * just e2e-marola
+ * just e2e
  * }}}
- * (overrides `Test/testOptions` for that one invocation to `--include-tags=E2E` — see `justfile`'s
- * own comment on why a plain `testOnly -- --include-tags=E2E` doesn't work: munit applies an
- * exclude over a same-tag include when both are passed together, confirmed directly, so the default
+ * On CI (`.github/workflows/marola-e2e.yml`) the network-only job sets `MAROLA_E2E_SKIP_LLM=1` so
+ * the Ollama-backed test skips without probing localhost; the offline regression suite that runs on
+ * every push is `PipelineGoldenSpec` (fixture replay, no network at all). (overrides
+ * `Test/testOptions` for that one invocation to `--include-tags=E2E` — see `justfile`'s own comment
+ * on why a plain `testOnly -- --include-tags=E2E` doesn't work: munit applies an exclude over a
+ * same-tag include when both are passed together, confirmed directly, so the default
  * `--exclude-tags=E2E` has to be replaced, not appended to). No bash scripting, no separate runner:
  * the same `sbt`/munit tooling every other test in this repo uses, one command away.
  *
@@ -32,7 +36,7 @@ class E2ESpec extends munit.FunSuite:
   private given unsafe: AllowUnsafe = AllowUnsafe.embrace.danger
 
   // Arpoador, Rio de Janeiro — the same default location `Main` uses, so this test exercises
-  // exactly the "just run marola" default path, not a special-cased test-only coordinate.
+  // exactly the "just run" default path, not a special-cased test-only coordinate.
   private val Arpoador = Coordinates(lat = -22.9878, lon = -43.1913)
 
   test(
@@ -57,6 +61,10 @@ class E2ESpec extends munit.FunSuite:
   test(
     "--summarize path: local Ollama produces a draft, Reviewer produces a scored verdict".tag(E2E)
   ) {
+    assume(
+      sys.env.get("MAROLA_E2E_SKIP_LLM").isEmpty,
+      "MAROLA_E2E_SKIP_LLM set — skipping the LLM test"
+    )
     val ollamaReachable =
       try
         val _ =
@@ -101,6 +109,15 @@ class E2ESpec extends munit.FunSuite:
       s"unexpected verdict: ${result.verdict}"
     )
     assert(result.finalSummary.trim.nonEmpty, "reviewer returned an empty final_summary")
+  }
+
+  test(
+    "IMA/SC bathing-water feed: live, undocumented — shape still parses (MIP-0001 §8)".tag(E2E)
+  ) {
+    val points = Sync.Unsafe.evalOrThrow(marola.water.ImaScWaterQualityClient().samplingPoints)
+    assert(points.size >= 200, s"expected ~260 sampling points, got ${points.size}")
+    assert(points.forall(_.samples.nonEmpty), "a point with no samples")
+    assert(points.exists(_.beachName == "PRAIA DO CAMPECHE"), "no Campeche points")
   }
 
   private def loadResource(name: String, outputField: String): CompiledPrompt =

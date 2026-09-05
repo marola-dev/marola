@@ -1,7 +1,8 @@
 package marola.conditions
 
-import marola.model.HourlyConditions
 import java.time.LocalDateTime
+
+import marola.model.HourlyConditions
 
 /** A high or low water, read off Open-Meteo's hourly `sea_level_height_msl` series. */
 final case class TideEvent(time: LocalDateTime, heightM: Double, isHigh: Boolean)

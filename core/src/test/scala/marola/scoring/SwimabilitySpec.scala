@@ -1,7 +1,8 @@
 package marola.scoring
 
-import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood}
 import java.time.LocalDateTime
+
+import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood}
 
 class SwimabilitySpec extends munit.FunSuite:
 

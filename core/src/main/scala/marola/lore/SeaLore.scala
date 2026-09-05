@@ -1,9 +1,11 @@
 package marola.lore
 
+import java.time.LocalDate
+
+import scala.io.Source
+
 import marola.json.JsonValue
 import marola.model.Coordinates
-import java.time.LocalDate
-import scala.io.Source
 
 enum LoreKind derives CanEqual:
   case Secret, Creature

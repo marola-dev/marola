@@ -1,8 +1,9 @@
 package marola.scoring
 
+import java.time.{LocalDate, LocalDateTime}
+
 import marola.model.{Coordinates, HourlyConditions}
 import marola.water.{BathingCondition, SamplingPoint, WaterQuality, WaterSample}
-import java.time.{LocalDate, LocalDateTime}
 
 /** MIP-0001 §6, row by row. */
 class WaterVerdictSpec extends munit.FunSuite:

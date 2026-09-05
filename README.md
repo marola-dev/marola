@@ -7,7 +7,7 @@ with a free Ollama model, zero Azure account needed** — with Azure Maps/Foundr
 Application Insights available as opt-in upgrades per integration, never a package deal. Also built
 as hands-on coverage of every [AI-103: Developing AI Apps and Agents on Azure](https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-apps-and-agents-developer-associate/)
 exam domain, and a design target for [AI-500: Designing and Implementing Multi-Agent AI Solutions](https://learn.microsoft.com/en-us/credentials/certifications/)
-(AI-103's mandatory prerequisite) — see [`docs/AI-103-MAPPING.md`](./docs/AI-103-MAPPING.md) and
+(for which AI-103 is the mandatory prerequisite) — see [`docs/AI-103-MAPPING.md`](./docs/AI-103-MAPPING.md) and
 [`docs/AI-500-MAPPING.md`](./docs/AI-500-MAPPING.md).
 
 **Start here:** [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md) — a step-by-step guide to running the
@@ -23,6 +23,8 @@ whole pipeline with a small, free local Ollama model. Full doc set, all centrali
 | [`AI-103-MAPPING.md`](./docs/AI-103-MAPPING.md) | AI-103 exam domain coverage, including honest gaps |
 | [`AI-500-MAPPING.md`](./docs/AI-500-MAPPING.md) | AI-500 (multi-agent) domain coverage — a design target |
 | [`SKILLS.md`](./docs/SKILLS.md) | A skills roadmap — what to practice, in order, using marola as the vehicle |
+| [`SCALA3-JDK-REVIEW.md`](./docs/SCALA3-JDK-REVIEW.md) | Scala 3 / JDK 21-25 features reviewed against this code — what to adopt, in what order |
+| [`benchmarks/`](./docs/benchmarks/2026-09-05.md) | Kept benchmark runs: marola vs. a plain prompt on ocean questions, and what moved the numbers |
 | [`mips/`](./docs/mips/README.md) | Marola Improvement Proposals — numbered design docs written before a feature is built (`/mip` skill) |
 | [`FABLE_REVIEW.md`](./docs/FABLE_REVIEW.md) | Code and documentation review at the initial import — ranked findings with file:line references |
 
@@ -40,7 +42,7 @@ If you're an AI coding agent (Claude Code, etc.) picking this repo up: read
 - **Offline prompt optimization:** [DSPy](https://dspy.ai) (Python — see `dspy/`), compiled once into portable JSON artifacts the Scala service loads; never a runtime dependency
 - **Dev environment:** Nix flake (works on Ubuntu, not NixOS-specific)
 - **Task runner:** [`just`](https://github.com/casey/just)
-- **Build:** sbt multi-project — `core`/`local`/`azure`/`cli` (see `docs/FUTURE-WORK.md` §7.2) so the local-only path carries zero Azure SDK dependency
+- **Build:** sbt multi-project — `core`/`local`/`azure`/`cli` (see `docs/FUTURE-WORK.md` §7.3) so the local-only path carries zero Azure SDK dependency
 
 ## Quick start
 
@@ -83,4 +85,4 @@ docs/                           All project documentation — see the table abov
 
 [`docs/AI-103-MAPPING.md`](./docs/AI-103-MAPPING.md) maps every AI-103 skill area to what's actually
 built, including an honest list of remaining gaps. [`docs/AI-500-MAPPING.md`](./docs/AI-500-MAPPING.md)
-does the same for AI-500 (multi-agent solutions, AI-103's mandatory prerequisite) as a design target.
+does the same for AI-500 (multi-agent solutions; AI-103 is its mandatory prerequisite) as a design target.

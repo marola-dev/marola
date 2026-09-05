@@ -1,6 +1,7 @@
 package marola.observability
 
 import kyo.*
+
 import com.azure.monitor.opentelemetry.autoconfigure.AzureMonitorAutoConfigure
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk

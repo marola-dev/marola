@@ -73,7 +73,7 @@ MAROLA_TELEGRAM_BOT_TOKEN=123456789:AAH...
 # Query synthesis via a provisioned Foundry/Azure OpenAI deployment instead of local Ollama:
 MAROLA_LLM_PROVIDER=azure
 FOUNDRY_PROJECT_ENDPOINT=https://<your-resource>.openai.azure.com/openai/deployments/<deployment>
-FOUNDRY_MODEL_DEPLOYMENT=gpt-4o-mini
+# (the deployment name is part of the endpoint URL — there is no separate FOUNDRY_MODEL_DEPLOYMENT)
 FOUNDRY_API_VERSION=2026-01-01-preview
 # auth is DefaultAzureCredential (az login locally, managed identity once deployed) —
 # no API key env var, per AGENTS.md's "no API keys" rule.

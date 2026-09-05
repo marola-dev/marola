@@ -1,10 +1,12 @@
 package marola.sightings
 
-import kyo.*
-import marola.json.JsonValue
 import java.io.{File, FileWriter, PrintWriter}
 import java.nio.file.{Files, Paths}
 import java.time.Instant
+
+import kyo.*
+
+import marola.json.JsonValue
 
 /**
  * Default `SightingStore` — one JSON object per line, appended to a local file. No Azure account,
@@ -52,13 +54,15 @@ object LocalFileSightingStore:
       "reported_at" -> JsonValue.str(sighting.reportedAt.toString)
     )
 
+  // One malformed line (a hand edit, a crash mid-write) must not hide every other report.
   private def parseLine(line: String): Option[Sighting] =
     if line.isBlank then None
-    else
-      val json = JsonValue.parse(line)
-      for
-        beachName <- json("beach_name").str
-        kindStr <- json("kind").str
-        kind <- SightingKind.values.find(_.toString == kindStr)
-        reportedAtStr <- json("reported_at").str
-      yield Sighting(beachName, kind, json("note").str, Instant.parse(reportedAtStr))
+    else scala.util.Try(JsonValue.parse(line)).toOption.flatMap(parseJson)
+
+  private def parseJson(json: JsonValue): Option[Sighting] =
+    for
+      beachName <- json("beach_name").str
+      kindStr <- json("kind").str
+      kind <- SightingKind.values.find(_.toString == kindStr)
+      reportedAtStr <- json("reported_at").str
+    yield Sighting(beachName, kind, json("note").str, Instant.parse(reportedAtStr))

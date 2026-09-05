@@ -1,13 +1,16 @@
 package marola.water
 
-import kyo.*
-import marola.http.Http
-import marola.json.JsonValue
-import marola.model.Coordinates
 import java.text.Normalizer
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
 import scala.util.Try
+
+import kyo.*
+
+import marola.http.Http
+import marola.json.JsonValue
+import marola.model.Coordinates
 
 /**
  * Santa Catarina's bathing-water programme (IMA — Instituto do Meio Ambiente), via the JSON feed

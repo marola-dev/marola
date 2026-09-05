@@ -1,7 +1,8 @@
 package marola.water
 
-import marola.model.Beach
 import java.text.Normalizer
+
+import marola.model.Beach
 
 /**
  * Assigns each provider sampling point to (at most) one OSM beach. Pure, so it's unit-tested on a

@@ -1,10 +1,12 @@
 package marola.vision
 
+import java.util.Base64
+
 import kyo.*
+
 import marola.http.Http
 import marola.json.JsonValue
 import marola.llm.LlmClient
-import java.util.Base64
 
 /**
  * Talks to a multimodal Ollama model (`llava`, `moondream`, ...) over the same OpenAI-compatible

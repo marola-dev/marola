@@ -1,7 +1,8 @@
 package marola.water
 
-import marola.model.{Beach, Coordinates}
 import java.time.LocalDate
+
+import marola.model.{Beach, Coordinates}
 
 class WaterQualityMatcherSpec extends munit.FunSuite:
 

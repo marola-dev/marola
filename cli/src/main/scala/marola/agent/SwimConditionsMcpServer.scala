@@ -1,16 +1,18 @@
 package marola.agent
 
 import kyo.*
-import marola.model.{Beach, BestHour, Coordinates}
-import marola.json.JsonValue
-import marola.{AppConfig, Recommender}
+
 import marola.beaches.BeachFinder
+import marola.json.JsonValue
 import marola.knowledge.OceanQa
+import marola.model.{Beach, BestHour, Coordinates}
 import marola.water.{BathingCondition, SamplingPoint, WaterQuality, WaterQualityMatcher}
-import io.modelcontextprotocol.server.{McpServer, McpSyncServerExchange}
-import io.modelcontextprotocol.server.transport.StdioServerTransportProvider
-import io.modelcontextprotocol.spec.McpSchema
+import marola.{AppConfig, Recommender}
+
 import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper
+import io.modelcontextprotocol.server.transport.StdioServerTransportProvider
+import io.modelcontextprotocol.server.{McpServer, McpSyncServerExchange}
+import io.modelcontextprotocol.spec.McpSchema
 import tools.jackson.databind.json.JsonMapper
 
 /**
@@ -40,10 +42,9 @@ object SwimConditionsMcpServer:
   private def runSync[A](effect: A < Sync): A = Sync.Unsafe.evalOrThrow(effect)
 
   private def numberArg(args: java.util.Map[String, Object], key: String): Option[Double] =
-    Option(args.get(key)).map {
-      case n: java.lang.Number => n.doubleValue()
-      case s: String           => s.toDouble
-      case other               => other.toString.toDouble
+    Option(args.get(key)).flatMap {
+      case n: java.lang.Number => Some(n.doubleValue())
+      case other => other.toString.trim.toDoubleOption // bad input → default, not a crash
     }
 
   private def beachToJson(beach: Beach): JsonValue =

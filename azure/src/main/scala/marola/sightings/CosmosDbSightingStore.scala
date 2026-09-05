@@ -1,17 +1,20 @@
 package marola.sightings
 
+import java.time.Instant
+import java.util.UUID
+
+import scala.jdk.CollectionConverters.*
+
 import kyo.*
-import com.azure.cosmos.{CosmosClientBuilder, CosmosContainer}
+
 import com.azure.cosmos.models.{
   CosmosItemRequestOptions,
   CosmosQueryRequestOptions,
   PartitionKey,
-  SqlQuerySpec,
-  SqlParameter
+  SqlParameter,
+  SqlQuerySpec
 }
-import java.time.Instant
-import java.util.UUID
-import scala.jdk.CollectionConverters.*
+import com.azure.cosmos.{CosmosClientBuilder, CosmosContainer}
 
 /**
  * Optional `SightingStore` backend for an actually-provisioned, shared Cosmos DB container — needed

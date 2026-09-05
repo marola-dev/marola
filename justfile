@@ -35,8 +35,20 @@ fmt:
 lint:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll
 
+# All free code-quality checks, same as ci.yml: scalafmt, scalafix (semantic lint), compiler
+# unused-warnings-as-errors (part of compile), ruff for the Python, actionlint for the workflows.
+# `just quality-fix` applies the auto-fixable ones.
+quality:
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll "scalafixAll --check"
+    if command -v ruff >/dev/null; then ruff check dspy finetune && ruff format --check dspy finetune; else echo "ruff not installed — skipping (pip install ruff)"; fi
+    if command -v actionlint >/dev/null; then actionlint; else echo "actionlint not installed — skipping"; fi
+
+quality-fix:
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
+    if command -v ruff >/dev/null; then ruff check --fix dspy finetune && ruff format dspy finetune; fi
+
 # Runs marola's CLI (build.sbt's `cli` project; marola is split into
-# core/local/azure/cli, docs/FUTURE-WORK.md §7.2). `*args` forwards CLI flags to the app
+# core/local/azure/cli, docs/FUTURE-WORK.md §7.3). `*args` forwards CLI flags to the app
 # itself, e.g. `just run -- --summarize`.
 run *args:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run {{args}}"
@@ -60,7 +72,7 @@ watch:
 # before every `just run -- --summarize`. The model defaults to $MAROLA_LOCAL_LLM_MODEL if set,
 # else `llama3.2` (LocalLlmClient.DefaultModel) — pass e.g. `just ollama-up llama3.2:1b` to
 # override. Note Ollama treats `llama3.2` and `llama3.2:1b` as different models.
-ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2"):
+ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2") embed=env_var_or_default("MAROLA_LOCAL_EMBED_MODEL", "llama3.2"):
     #!/usr/bin/env bash
     set -euo pipefail
     api=http://localhost:11434/api/tags
@@ -74,12 +86,14 @@ ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2"):
         done
         curl -sf -m 2 "$api" >/dev/null || { echo "ollama: server did not come up — see .tmp/ollama.log" >&2; exit 1; }
     fi
-    if ollama list | awk 'NR>1 {print $1}' | grep -qx "{{model}}"; then
-        echo "ollama: serving, model '{{model}}' already pulled"
-    else
-        echo "ollama: pulling '{{model}}'..."
-        ollama pull "{{model}}"
-    fi
+    for m in "{{model}}" "{{embed}}"; do
+        if ollama list | awk 'NR>1 {print $1}' | grep -qx "$m"; then
+            echo "ollama: serving, model '$m' already pulled"
+        else
+            echo "ollama: pulling '$m'..."
+            ollama pull "$m"
+        fi
+    done
 
 # Runs marola's E2E test (cli/src/test/scala/marola/E2ESpec.scala) against live
 # Overpass/Open-Meteo, plus a local Ollama server if one's reachable (skipped gracefully
@@ -113,8 +127,17 @@ knowledge-index:
 
 # Tier 1 "fine-tune": llama3.2 + marola's persona/decoding settings, as an Ollama model named
 # marola-llama3.2 (finetune/Modelfile). Then: MAROLA_LOCAL_LLM_MODEL=marola-llama3.2 just run ...
-finetune-model:
-    ollama create marola-llama3.2 -f finetune/Modelfile
+finetune-model base="llama3.2":
+    mkdir -p .tmp && sed 's/^FROM .*/FROM {{base}}/' finetune/Modelfile > .tmp/Modelfile && ollama create marola-llama3.2 -f .tmp/Modelfile
+
+# Tier 2: QLoRA adapter (needs `pip install -r finetune/requirements.txt`; written, not run here —
+# see finetune/README.md). preset=tiny trains on CPU in minutes; small|base need more.
+finetune-train preset="tiny" *args:
+    python3 finetune/train_lora.py --preset {{preset}} {{args}}
+
+# marola vs. a plain prompt on 22 ocean questions, 3 arms, same local model — writes data/benchmark-*.md
+benchmark:
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --benchmark"
 
 # Tier 2 prep: chat-format JSONL from the DSPy demos, sea lore and knowledge/ (stdlib only).
 finetune-dataset:
