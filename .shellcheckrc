@@ -1,0 +1,3 @@
+# scripts/uprd.sh and scripts/uprds.sh source scripts/lib/uprd_title.sh — follow it by default so
+# a plain `shellcheck scripts/*.sh` (no -x) doesn't warn SC1091 "not following".
+external-sources=true

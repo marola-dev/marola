@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in marola's pipeline, CLI, or docs is broken or wrong.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, including the exact error or wrong output.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: The `just` command or Telegram message that triggers it.
+      placeholder: |
+        just run -- --summarize --lat -27.6733 --lon -48.4700
+    validations:
+      required: true
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Backend
+      description: Which LLM/vision/storage backend were you running?
+      options:
+        - Local (Ollama) — the default
+        - Azure Foundry / Azure OpenAI
+        - Azure Maps
+        - Azure Cosmos DB
+        - Azure AI Vision
+        - Not sure / not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or output
+      render: shell

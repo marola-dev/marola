@@ -1,0 +1,19 @@
+# Scala/sbt dependencies (core/local/azure/cli) are watched by scala-steward.yml instead — see
+# CONTRIBUTING.md. Dependabot here covers what Steward doesn't: the workflow actions themselves,
+# and the two Python offline steps (dspy/, finetune/), each with its own requirements.txt.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "pip"
+    directory: "/dspy"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "pip"
+    directory: "/finetune"
+    schedule:
+      interval: "weekly"

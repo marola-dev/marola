@@ -1,0 +1,38 @@
+name: MIP proposal
+description: Sketch a Marola Improvement Proposal before writing the full doc.
+labels: ["mip"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A quick sketch before the real thing — the `mip` skill (`.claude/skills/mip/SKILL.md`)
+        turns this into `docs/mips/MIP-NNNN-<slug>.md` using the fields below plus the full
+        template (sources reviewed, design, scoring/safety impact, verification plan).
+  - type: input
+    id: title
+    attributes:
+      label: Title
+      placeholder: A short, specific name for the change
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: The concrete gap this closes. Quote real output or a real limitation if you can.
+    validations:
+      required: true
+  - type: textarea
+    id: sketch
+    attributes:
+      label: Sketch
+      description: What changes for the user, and roughly how (new module, new integration, new trait...).
+    validations:
+      required: true
+  - type: textarea
+    id: effort-gain
+    attributes:
+      label: Effort / gain guess
+      description: Rough size (small/medium/large) and what it buys — used to prioritise, not a commitment.
+    validations:
+      required: false

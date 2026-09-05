@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Run it locally
+    url: https://github.com/h0ffmann/marola/blob/main/docs/RUN-LOCALLY.md
+    about: Set up and run the pipeline with Ollama, no Telegram/Azure needed.
+  - name: Architecture and integrations
+    url: https://github.com/h0ffmann/marola/blob/main/docs/ARCHITECTURE.md
+    about: How the pipeline and its six pluggable local/Azure integrations fit together.
