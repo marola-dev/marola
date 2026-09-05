@@ -10,6 +10,7 @@ that map to a real step of this repo's workflow and skip the rest.
 |---|---|---|
 | `mip` | Any non-trivial change: new data source, integration, scoring change, user-visible output, autonomous behaviour | The plan layer. Produces `docs/mips/MIP-NNNN-*.md` with verified sources and open questions; implementation is a separate PR with a `Cost:` line |
 | `mip-tasks` | An accepted MIP that is more than one PR of work | The delivery layer: `docs/mips/MIP-NNNN.tasks.md` (ordered tasks, each with its test) and stacked PRs, one per task, via `scripts/stack.sh start / pr / restack / status` |
+| `site-frontend` | Any change to what a visitor sees on the static map (`site/static/`), or a request to make it "modern", "appealing", a better first impression | The product layer for the page: look at the built page first (its `site_check.js` stub-DOM harness runs `app.js` against `site/dist`), one type scale, the data colours untouched, a red-flags list for the generated look. Written with `writing-skills`: a baseline agent produced a gradient header, frosted pills, Tailwind hex codes and 250 unrendered CSS lines; the recipe targets exactly that |
 
 ## 2. superpowers — what fits, what doesn't
 
@@ -35,7 +36,7 @@ pinned to a version). Opt out on one machine with the same key set to `false` in
 | **using-git-worktrees** | Yes, for parallel work | One worktree per MIP implementation; pairs with "one feature, one session". The ai-jail sandbox maps the repo directory, so worktrees must live *inside* it or be mapped. |
 | **finishing-a-development-branch** | Yes | Squash-merge is the repo's habit; rebuild follow-ups on `origin/main` via cherry-pick rather than stacking (memory: single PR per deliverable). |
 | **dispatching-parallel-agents** / **subagent-driven-development** | Selectively | Subagents are where Fable's cost is saved: research, doc review, fixture recording on Sonnet/Haiku. Not for the core scoring/safety code, which the human and the main session should read. |
-| **writing-skills** | Later | When a second in-repo skill is needed — candidates below. |
+| **writing-skills** | Used | `site-frontend` was the second in-repo skill (a baseline run without it, then with it); candidates for more below. |
 | **using-superpowers** | Read once | Framework intro. |
 
 ## 2.1 Using superpowers here — one MIP, start to finish
