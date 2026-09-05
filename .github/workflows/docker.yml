@@ -1,0 +1,189 @@
+name: docker (build the images, push from main)
+
+# MIP-0008 §5.4: the Dockerfile's targets, built in CI and pushed to GHCR from `main` — the
+# artefacts `docker compose`, the smoke test (docker-smoke.yml) and, later, the Container App run.
+#
+# Cost model: a PR run lints and builds `jvm` for amd64 only, without pushing — sbt resolution and
+# the jar are cached in GitHub's build cache (`type=gha`), so a code change is ~4-6 min. A push to
+# `main` builds and pushes `jvm` (amd64 + arm64: the jar is built once on the build platform, see
+# the Dockerfile) and `native` (amd64, several minutes of native-image on 4 vCPUs). `dev` (the
+# Nix shell, a few GB, builds ai-jail from source) only on request. GHCR is free for a public
+# repository; the token is the workflow's own GITHUB_TOKEN (`packages: write`), nothing to add.
+#
+# The start-up check after each build needs no network: `--site nope` makes the CLI list the
+# known areas from site/areas.json and exit — Kyo, the jar/binary and the copied files all had to
+# work for that line to print.
+
+on:
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "docker-compose.yml"
+      - "build.sbt"
+      - "project/**"
+      - "core/**"
+      - "local/**"
+      - "azure/**"
+      - "cli/**"
+      - "knowledge/**"
+      - "site/static/**"
+      - "site/areas.json"
+      - ".github/workflows/docker.yml"
+  push:
+    branches: [main]
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "docker-compose.yml"
+      - "build.sbt"
+      - "project/**"
+      - "core/**"
+      - "local/**"
+      - "azure/**"
+      - "cli/**"
+      - "knowledge/**"
+      - "site/static/**"
+      - "site/areas.json"
+      - ".github/workflows/docker.yml"
+  workflow_dispatch:
+    inputs:
+      dev:
+        description: "Also build and push the :dev image (the Nix dev shell, slow and big)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/marola
+  # Push only from main (and on request); a PR builds and runs the image, never publishes it.
+  PUSH: ${{ github.event_name != 'pull_request' }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+      - name: docker compose config (every profile)
+        run: docker compose --profile ollama --profile local config --quiet
+
+  jvm:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+        if: env.PUSH == 'true'
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: env.PUSH == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=jvm
+            type=raw,value=jvm-{{sha}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: jvm
+          platforms: ${{ env.PUSH == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          push: ${{ env.PUSH == 'true' }}
+          load: ${{ env.PUSH != 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=jvm
+          cache-to: type=gha,scope=jvm,mode=max
+      - name: Start-up check (no network)
+        run: |
+          docker run --rm "$IMAGE:jvm" --site nope | tee /tmp/out.txt
+          grep -q "known: floripa, rio" /tmp/out.txt
+
+  native:
+    needs: lint
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=native
+            type=raw,value=native-{{sha}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: native
+          platforms: linux/amd64
+          push: true
+          load: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: |
+            type=gha,scope=jvm
+            type=gha,scope=native
+          cache-to: type=gha,scope=native,mode=max
+      - name: Start-up check (no network)
+        run: |
+          docker run --rm "$IMAGE:native" --site nope | tee /tmp/out.txt
+          grep -q "known: floripa, rio" /tmp/out.txt
+
+  dev:
+    needs: lint
+    if: github.event_name == 'workflow_dispatch' && inputs.dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=dev
+            type=raw,value=dev-{{sha}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: dev
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=dev
+          cache-to: type=gha,scope=dev,mode=max

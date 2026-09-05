@@ -19,6 +19,7 @@ decoration.
 | Plan for a solution's resource requirements (compute, cost tiers) | `ARCHITECTURE.md` §6, `AGENTS.md`'s cost-safety rules | Built |
 | Use Azure AI Foundry to explore/deploy models | `azure/llm/AzureFoundryLlmClient.scala` | Code complete, not yet run against a live Foundry account (no Azure resources provisioned — see AGENTS.md phase discipline) |
 | Manage costs (budgets, scale-to-zero) | `ARCHITECTURE.md` §6 (Container App scale-to-zero pattern) | Documented, not yet deployed |
+| Containerise and deploy the solution | `Dockerfile` (`jvm`, `native`, `dev`), `docker-compose.yml`, `.github/workflows/docker.yml` → `ghcr.io/h0ffmann/marola` (MIP-0008) | Built and published from CI; the Container App itself is Phase 3 |
 | Implement security for AI solutions (managed identity, no hardcoded keys) | `AzureFoundryLlmClient` authenticates via `DefaultAzureCredential`; Cosmos DB / AI Vision / Azure Maps clients still take keys from env (no key is ever committed) | Partial — migrate the three key-based clients before Phase 2 (FABLE_REVIEW D1) |
 | Monitor an AI solution | `azure/observability/Telemetry.scala` — Application Insights via OpenTelemetry | Code complete, no-op by default |
 | Responsible AI: transparency, content safety | `ARCHITECTURE.md` §8/§9 (jellyfish/whale heuristic honesty limitations, known limitations) | Documented; Azure AI Content Safety integration not yet built — real gap, see §4 below. Proposed: MIP-0001 (deterministic bathing-water veto with sample date/location printed) |

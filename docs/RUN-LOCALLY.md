@@ -302,7 +302,9 @@ against an Ollama already running on the host:
 docker run --rm --network host ghcr.io/h0ffmann/marola:jvm --summarize --lat -27.6733 --lon -48.47
 ```
 
-`ghcr.io/h0ffmann/marola:jvm` is built by CI from `main` (`docker.yml`); `just docker-build`
+`ghcr.io/h0ffmann/marola:jvm` is built by CI from `main` (`.github/workflows/docker.yml`: a PR
+lints the Dockerfile and builds `jvm` without pushing, a merge pushes `jvm` for amd64 + arm64 and
+`native`, each also tagged `<target>-<sha>`; `dev` on request); `just docker-build`
 builds the same target here and `just docker-run -- …` runs it with `--network host`. The
 `Dockerfile` is one multi-stage file: `builder` (sbt, Temurin 25) → `jvm` (Temurin 25 JRE on
 Alpine, ~70 MB + the 55 MB jar), `native-build` → `native` (below), and `dev` — the literal
