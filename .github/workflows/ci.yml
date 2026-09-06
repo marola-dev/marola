@@ -214,6 +214,9 @@ jobs:
         run: |
           python3 scripts/smoke_record.py --self-test
           python3 scripts/benchmark_gate.py --self-test
+      - name: "self-test — cost-split (Cost: trailer parser + diff-size estimator)"
+        if: needs.changes.outputs.python == 'true'
+        run: python3 scripts/cost-split.py --self-test
       - name: self-test — gh-billing (GitHub billing-usage response shaping)
         if: needs.changes.outputs.python == 'true'
         run: scripts/gh-billing.sh --self-test
