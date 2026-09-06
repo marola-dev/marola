@@ -180,9 +180,13 @@ finetune-dataset:
 
 # Build the static map's data: one pipeline run per area in site/areas.json (or just `area`),
 # writing site/dist/data/<area>/{today,tomorrow}.json + latest.json and copying site/static/.
-# One Overpass query per area, no LLM. `just site-build floripa`.
+# One Overpass query per area, no LLM. `just site-build floripa`. Then stamps a `?v=<sha>` cache
+# buster onto index.html's app.js/style.css tags in site/dist (never in the source under
+# site/static/) so a CDN or browser can never mix index.html from one build with app.js from
+# another — fix/site-smoke-panel-null, scripts/stamp_site_version.sh.
 site-build area="":
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --site {{area}}"
+    scripts/stamp_site_version.sh site/dist
 
 # Serve site/dist at http://localhost:8000 (python3 is in the flake). Ctrl-C to stop.
 site-serve port="8000":

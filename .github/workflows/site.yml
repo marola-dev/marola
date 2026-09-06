@@ -79,6 +79,14 @@ jobs:
           AREA: ${{ inputs.area }}
         run: sbt "cli/run -- --site $AREA"
 
+      # fix/site-smoke-panel-null: stamp index.html's app.js/style.css tags with `?v=<sha>` so
+      # Pages' CDN (each file cached independently, `cache-control: max-age=600` per file,
+      # confirmed live) can never serve a fresh index.html next to a stale-cached app.js or the
+      # reverse — the exact skew that let a page missing `#smoke` (PR #37) mismatch app.js's
+      # still-current smoke-panel code and take the whole status line down with it.
+      - name: Cache-bust index.html's script/stylesheet tags
+        run: scripts/stamp_site_version.sh site/dist
+
       # MIP-0008 §5.5: the smoke test's results (docker-smoke.yml) live on the orphan `site-data`
       # branch — copied into the site here, never deployed by that workflow. No branch yet = no
       # panel; app.js treats a missing smoke/latest.json as "no live run".
