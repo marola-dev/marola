@@ -5,8 +5,9 @@
 | **Status** | Draft |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "MIP for implementing Claude Code best practices, by Anthropic and community") |
 | **Created** | 2026-09-05 |
+| **Tasks** | `docs/mips/MIP-0011.tasks.md` — stacked PRs, one per task |
 | **Phase** | 0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite |
-| **Related** | `AGENTS.md` (the rules this turns from advisory into enforced), `docs/DEV-FLOW.md`, `docs/AGENT-SKILLS.md` §3 (skill candidates), `docs/FABLE_REVIEW.md` §3 (jail environment notes), `PHILOSOPHY.md` (why constraints, not prose), `.claude/settings.json`, `.claude/skills/`, `justfile` (`jail-claude`, `jcf`, `jcs`); MIP-0013 (an OpenCode tryout — most of tasks 1-5, 7 and 9 here have a one-config-key equivalent there) |
+| **Related** | `AGENTS.md` (the rules this turns from advisory into enforced), `docs/DEV-FLOW.md`, `docs/AGENT-SKILLS.md` §3 (skill candidates), `docs/FABLE_REVIEW.md` §3 (jail environment notes), `PHILOSOPHY.md` (why constraints, not prose), `.claude/settings.json`, `.claude/skills/`, `justfile` (`jail-claude`, `jcf`, `jcs`); MIP-0013 (an OpenCode tryout — most of tasks 1-5, 7 and 9 here have a one-config-key equivalent there); `docs/en/interactive-mode`, `docs/en/routines` (background/overnight execution, task 11) |
 | **Effort** | M — ten small, independent config/hook PRs; each individually small, but ten of them |
 | **Gain** | infra/dev-loop (turns "never `azd up`" from prose into a hook); cost/ops (fewer permission prompts, a shorter `AGENTS.md`) |
 | **Effort vs Gain** | do next — the cost gate (task 2) is "the rule that must be a hook, not prose" per AI-500 §4; cheap and overdue |
@@ -42,6 +43,14 @@ Quoted from the docs fetched 2026-09-05 (`code.claude.com/docs/en/…`):
 - Local evidence: `docs/FABLE_REVIEW.md` §3 — `gh` unauthenticated inside the jail, `.env.example`
   reading as empty — is re-discovered per session; auto-memory currently carries it. A
   `SessionStart` hook can print it once.
+- *"When a claude.ai usage limit stops Claude mid-task, Claude Code waits in the open session
+  and continues the task on its own after the limit resets... automatic continue is on by
+  default."* (`interactive-mode`, fetched 2026-09-05). This closes what was, until recently, a
+  well-documented gap — `anthropics/claude-code` issues #35744, #26775, #18980, #36320, #38263,
+  #62788 all requested exactly this, several as late as March 2026, with a small ecosystem of
+  third-party wrappers (`claude-auto-retry`, `claude-auto-resume`, `claude-delayed-message`)
+  built to work around its absence. What it does and doesn't cover matters before relying on it
+  for an unattended overnight run — see the new risks below.
 
 ## 3. User-visible change
 
@@ -168,6 +177,12 @@ self-test the `quality` recipe runs (`scripts/hooks/*.sh --self-test`, like the 
     "preserve the list of modified files, the test commands run, and the Cost figure"; a
     `CLAUDE.local.md` mention. Optional: a statusline showing context use and branch (`statusline`
     skill), personal, not committed.
+11. **Background/overnight MIP execution.** `/goal` + `/loop` locally, or a cloud
+    [routine](https://code.claude.com/docs/en/routines) for something that survives the laptop
+    sleeping, to run a `MIP-NNNN.tasks.md` row-by-row unattended, stopping at a stated condition
+    rather than running indefinitely. Same guard rails as a daytime session, not fewer: the
+    branch/PR boundaries tasks 1-2 already set, and the `gh pr merge` deny rule from the earlier
+    GitHub-hygiene work — an overnight run still never merges itself.
 
 Not adopted: `claude -p` in CI (a paid run per PR with no reviewer — revisit with MIP-0010's
 ledger measuring it); `/batch` fan-out (nothing here is a 2 000-file migration); agent teams
@@ -206,6 +221,20 @@ None. No product code changes.
   for the sentinel sentences.
 - Docs quoted here are a moving target (the hooks page lists events that did not exist months
   ago); each task re-fetches the page it relies on and notes the date in its PR.
+- **Auto-continue is reactive, not a throttle.** It waits out a hit limit and resumes — nothing
+  in the docs describes pacing usage to avoid hitting the wall mid-task. A long unattended run
+  can still burn the 5-hour window in one uncontrolled burst. (The community `heavy-usage`
+  plugin claims to "stop safely before the wall" — **not verified against its source**, treat as
+  an unconfirmed community claim, not confirmed Claude Code behavior, until checked.)
+- **It needs a session that stays alive.** The doc says it "waits in the *open* session" — a
+  closed terminal or a sleeping laptop breaks this, the same gap the OS-level community
+  schedulers exist to work around. A [routine](https://code.claude.com/docs/en/routines) doesn't
+  depend on the local machine staying awake and is the safer default for a genuine walk-away
+  run — check its own cost model first (§11).
+- **A 7-day reset is not an overnight wait.** Same mechanism, different practical meaning — a
+  task that exhausts the weekly window stops for up to a week. Check which window
+  (`rate_limits.five_hour` vs. `.seven_day`, per the statusline schema) is actually at risk
+  before planning an overnight run around it.
 
 ## 9. Alternatives considered
 
@@ -234,6 +263,12 @@ Otherwise none: this is how the repo is built, not what it does.
 5. Statusline: worth committing a project default, or personal only?
 6. Should `.mcp.json` also register a local MLflow (MIP-0010) or Overpass helper — or nothing
    beyond marola's own server?
+7. Routines vs. local `/goal`+`/loop` for overnight MIP runs — routines don't need the laptop on,
+   but need Claude Code on the web / a cloud environment, which MIP-0013's OpenCode tryout
+   doesn't cover. Worth a small spike before task 11 is built, not assumed.
+8. Is `heavy-usage`'s "stop before the wall" claim real proactive throttling, or just an early
+   warning? Not checked here — verify its source before trusting it for an unattended run
+   against `main`.
 
 ## Appendix
 

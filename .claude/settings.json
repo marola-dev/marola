@@ -25,9 +25,30 @@
       "Bash(just uprds:*)",
       "Bash(scripts/uprd.sh:*)",
       "Bash(scripts/uprds.sh:*)",
-      "Bash(scripts/stack.sh:*)"
+      "Bash(scripts/stack.sh:*)",
+      "Bash(just build*)",
+      "Bash(just test*)",
+      "Bash(just quality*)",
+      "Bash(just fmt*)",
+      "Bash(sbt *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git fetch*)",
+      "Bash(javap*)",
+      "Bash(jar tf*)",
+      "Bash(unzip -l*)",
+      "Bash(command -v *)",
+      "Bash(python3 scripts/cost-split.py *)"
     ],
     "deny": [
+      "Bash(azd up*)",
+      "Bash(azd provision*)",
+      "Bash(az deployment *)",
+      "Bash(az group create*)",
+      "Read(.env)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
       "Bash(gh pr merge*)",
       "Bash(gh pr close*)"
     ]
