@@ -27,6 +27,7 @@ jobs:
       python: ${{ steps.filter.outputs.python }}
       workflows: ${{ steps.filter.outputs.workflows }}
       docker: ${{ steps.filter.outputs.docker }}
+      site: ${{ steps.filter.outputs.site }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -51,6 +52,9 @@ jobs:
               - 'scripts/*.sh'      # gh-billing.sh's self-test lives in the same quality-other job
               - 'scripts/fixtures/**'
               - 'ruff.toml'
+            site:
+              - 'site/**'            # app.js/CSS/schema/fixtures → scripts/site_check.js (MIP-0009 task 2)
+              - 'scripts/site_check.js'
             workflows:
               - '.github/workflows/**'
             docker:
@@ -188,7 +192,7 @@ jobs:
   # gates as `just quality`.
   quality-other:
     needs: changes
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -235,6 +239,12 @@ jobs:
       - name: self-test — mip_index_merge (docs/mips/README.md row conflict auto-resolve)
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/mip_index_merge.py --self-test
+      - name: site harness — app.js against site/fixtures in a stub DOM (MIP-0009)
+        if: needs.changes.outputs.site == 'true'
+        run: |
+          node --version
+          node --check site/static/app.js
+          node scripts/site_check.js
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2

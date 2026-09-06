@@ -88,6 +88,8 @@ quality-other:
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
     .claude/hooks/session-start.sh --self-test
+    node --check site/static/app.js
+    node scripts/site_check.js
     actionlint
     hadolint Dockerfile Dockerfile.local
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
