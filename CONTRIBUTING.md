@@ -25,11 +25,13 @@ or what a user sees goes through one first.
 
 - **Small PRs, one topic.** `scripts/stack.sh` and `just uprds` exist so a MIP ships as several
   reviewable PRs instead of one large one.
-- **Every commit ends with exactly one trailer:** `Co-Authored-By: Claude <noreply@anthropic.com>`
-  — no session links, no "Generated with" banners (`AGENTS.md`, "Attribution and cost accounting").
-- **Every PR body ends with a `Cost` line** — what the work consumed in quota, from `/usage` or
-  `just claude-cost` (`just cost-split` for a multi-PR session). `.github/PULL_REQUEST_TEMPLATE.md`
-  has the shape; `just uprd` / `just uprds` fill in "What changed" and "Cost" from the commits.
+- **Every commit ends with three trailers and nothing else:** `Tested: gates, e2e — <not run,
+  why>`, `Cost: ~$… · … tokens · …` (from `just cost-split`) and
+  `Co-Authored-By: Claude <noreply@anthropic.com>` — no session links, no "Generated with"
+  banners (`AGENTS.md`, "Attribution and cost accounting").
+- **The PR body is generated from those commits** by `just uprd` / `just uprds`
+  (`.github/PULL_REQUEST_TEMPLATE.md` has the shape): Summary from the first commit's body,
+  the Tested and Cost rows from the trailers. Write the commit right and there is nothing to fill.
 - **`just build && just test && just quality`** must be green before a PR is opened (`quality` =
   scalafmt + scalafixAll + ruff + actionlint + hadolint on the Dockerfiles + the Python scripts'
   self-tests — the same gates `ci.yml` runs). Dependency freshness: Scala/sbt deps are watched by
