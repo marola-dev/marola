@@ -5,9 +5,10 @@ this before writing, modifying, or deploying anything. Humans should read it too
 
 ## What this repo is
 
-**marola** — a Telegram assistant answering "what's the best hour tomorrow to swim nearby?" — real
-nearby beach discovery (OpenStreetMap), live sea/weather conditions (Open-Meteo), a jellyfish/whale
-heuristic, an LLM-generated summary reviewed by a second LLM pass, all runnable **entirely locally
+**marola** — the ocean intelligence layer for a stretch of coast, reachable as a Telegram
+assistant: real nearby beach discovery (OpenStreetMap), live sea/weather conditions (Open-Meteo), a
+jellyfish/whale heuristic, an LLM-generated summary reviewed by a second LLM pass — its first case
+is "what's the best hour tomorrow to swim nearby?" — all runnable **entirely locally
 with a free Ollama model, zero Azure account needed**, with Azure Maps/Foundry/Cosmos DB/Vision/
 Application Insights as opt-in upgrades per integration, never a package deal. Also hands-on
 coverage of every [AI-103](https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-apps-and-agents-developer-associate/)

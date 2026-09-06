@@ -16,7 +16,8 @@ import marola.sightings.{Sighting, SightingKind}
 import marola.site.SiteBuilder
 
 /**
- * POC entry point for "what's the best hour tomorrow to swim nearby?".
+ * POC entry point for marola, the ocean intelligence layer — its first case, "what's the best hour
+ * tomorrow to swim nearby?".
  *
  * Phase 0 of marola (see docs/ARCHITECTURE.md): this runs the real pipeline (nearby beaches via
  * Overpass, forecasts via Open-Meteo, heuristic scoring) end to end from the command line, with no
@@ -391,7 +392,9 @@ object Main extends KyoApp:
     val summarize = args.contains("--summarize")
     val brief = args.contains("--brief")
     for
-      _ <- Console.printLine("marola :: best hour tomorrow to swim nearby (POC)")
+      _ <- Console.printLine(
+        "marola :: the ocean intelligence layer (POC) — first case: best hour tomorrow to swim nearby"
+      )
       _ <- Console.printLine(s"config -> ${config.redacted}")
       _ <- warnHalfPair(args, config)
       origin <- resolveOrigin(args, config)

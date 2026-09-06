@@ -1,10 +1,10 @@
 <h1 align="center">🌊 marola</h1>
 
-<p align="center"><b>When LLMs meet the ocean.</b><br/>
-Local-first ocean intelligence for open-water swimmers: the best hour to swim tomorrow, official
-bathing-water quality per sampling point, tides, jellyfish and whale odds, and a grounded
-"ask the ocean" — all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or
-clearly labelled, never invented.</p>
+<p align="center"><b>marola — the ocean intelligence layer.</b><br/>
+The ocean near you: conditions, official bathing-water quality per sampling point, tides,
+jellyfish and whale odds, and a grounded "ask the ocean" — first case, the best hour tomorrow to
+swim, all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or clearly
+labelled, never invented.</p>
 
 <p align="center">
 <a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://github.com/h0ffmann/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>

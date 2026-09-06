@@ -20,10 +20,13 @@ answer stops instead of shipping. The model then does the part only it is good a
 
 ## Why marola
 
-The question "what is the best hour tomorrow to swim nearby?" is small enough to finish and hard
-enough to be honest about. It needs live data (Overpass, Open-Meteo, a bathing-water agency), a
-decision that can get someone hurt if it is wrong (rough sea, contaminated water, darkness), and a
-sentence a person will actually read. That mix is exactly where an LLM alone fails and where an
+marola — the ocean intelligence layer: the question it answers first, "what is the best hour
+tomorrow to swim nearby?", is small enough to finish and hard enough to be honest about — and the
+same layer (live data, a decision that can hurt someone if wrong, a sentence a person will read) is
+what any other question about the sea near you needs too. It needs live data (Overpass, Open-Meteo,
+a bathing-water agency), a decision that can get someone hurt if it is wrong (rough sea,
+contaminated water, darkness), and a sentence a person will actually read. That mix is exactly
+where an LLM alone fails and where an
 LLM inside a constrained pipeline is genuinely better than either alone. It also happens to
 exercise every AI-103 domain and most of AI-500 (`docs/AI-103-MAPPING.md`, `docs/AI-500-MAPPING.md`)
 without inventing a use case for the sake of an exam.
