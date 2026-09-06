@@ -2,7 +2,7 @@
 # pr — the one-command agent path from a finished commit to a filled, pushed PR (AGENTS.md
 # "Attribution and cost accounting" — "write the commit, run `just pr`, nothing else"):
 #
-#   1. refuse on main or with a dirty working tree — commit first
+#   1. refuse on main or with a dirty working tree (tracked changes; untracked files are ignored) — commit first
 #   2. fill any missing Cost:/Tested: trailer (scripts/cost-fill.sh, itself idempotent)
 #   3. push — a mip-NNNN/k-* task branch goes through `scripts/stack.sh pr` (it already knows the
 #      right base: the previous task's branch); anything else is a plain `git push`, with
@@ -24,7 +24,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 branch="$(git branch --show-current)"
 [ -n "$branch" ] || { echo "pr: detached HEAD — check out a branch first" >&2; exit 1; }
 [ "$branch" != main ] || { echo "pr: refusing to open a PR from main" >&2; exit 1; }
-if [ -n "$(git status --porcelain)" ]; then
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then   # untracked scratch files are not a reason to block a PR
   echo "pr: working tree is dirty — commit or stash first" >&2
   exit 1
 fi
