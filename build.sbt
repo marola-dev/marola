@@ -192,7 +192,23 @@ lazy val cli = (project in file("cli"))
     // this, `sbt run` prompts interactively to pick one, which hangs in batch mode (confirmed:
     // `No main class detected` under a non-interactive run). Use
     // `sbt cli/runMain marola.agent.SwimConditionsMcpServer` to run the MCP server instead.
-    Compile / run / mainClass := Some("marola.Main")
+    Compile / run / mainClass := Some("marola.Main"),
+    // Fork `run`/`runMain` into their own JVM and hand them sbt's stdin. The MCP server's `main`
+    // returns as soon as the stdio transport is registered and relies on the SDK's non-daemon
+    // reader thread to keep the process alive — fine under plain `java`, but sbt's in-process run
+    // treats `main` returning as task completion and exits, killing that thread: `.mcp.json`'s
+    // `just mcp-server` answered 0 bytes and exited ~2 s after start (MIP-0011 task 9 review,
+    // 2026-09-06, reproduced with a real initialize → tools/list handshake). A forked JVM lives
+    // until its non-daemon threads end and, with `connectInput`, actually receives the client's
+    // frames. `just run` forks too now — a stricter, more production-like isolation, not a loss.
+    // `StdoutOutput` is the other half: by default sbt captures a forked child's stdout and stderr
+    // and re-logs them through its own logger — child stdout as `[info]` (which `sbt -error`
+    // then drops: the initialize result vanished) and child stderr as `[error]` lines written to
+    // sbt's *stdout* (the server's INFO log line surfaced there, corrupting the transport again).
+    // Passthrough keeps child stdout on stdout and child stderr on stderr, unwrapped.
+    Compile / run / fork := true,
+    Compile / run / connectInput := true,
+    Compile / run / outputStrategy := Some(StdoutOutput)
   )
 
 lazy val root = (project in file("."))
