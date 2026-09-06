@@ -1,0 +1,74 @@
+# pr-body — fill a pull request's description from its commits the moment it exists, so a PR
+# opened from the GitHub UI (or `gh pr create` without `just uprd`) never sits on the raw template
+# with its `<!-- fill -->` placeholders. Runs `scripts/uprd.sh <PR#>` — the same generator
+# `just uprd`/`just uprds` use locally (docs/DEV-FLOW.md §4) — with the repo's own token.
+#
+# When it rewrites, and when it does not: the body is regenerated on open/reopen/ready-for-review
+# and on every push of new commits (What changed, Tested and Cost drift otherwise), but only while
+# the body is empty, still the untouched template (a `<!-- fill` placeholder is present), or was
+# written by uprd (its first-line `<!-- uprd:` marker is present). A body someone rewrote by hand
+# has none of those and is left alone — delete the marker line to opt out of regeneration.
+# The title is set from the first commit's subject (capped, scripts/lib/uprd_title.sh) only when
+# GitHub's default was kept — the branch name, or its "Fix/dockerfile numeric uid" spelling.
+#
+# Skipped for PRs from forks (the token is read-only there) and for bot PRs (dependabot and
+# scala-steward write their own bodies).
+name: PR body
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  fill:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && !contains(fromJSON('["dependabot[bot]", "github-actions[bot]"]'), github.actor)
+      && !startsWith(github.event.pull_request.head.ref, 'dependabot/')
+      && !startsWith(github.event.pull_request.head.ref, 'update/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # uprd reads the whole branch range and both branches' tips
+      - name: fill the description from the commits (scripts/uprd.sh)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          body="$(gh pr view "$PR" --json body -q .body)"
+          if [ -n "$body" ] && ! grep -q '<!-- fill' <<<"$body" && ! grep -q '^<!-- uprd:' <<<"$body"; then
+            echo "PR #$PR has a hand-written body — leaving it alone"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"   # uprd never commits; git only needs an identity for `fetch` warnings to stay quiet
+          scripts/uprd.sh "$PR"
+      - name: title from the first commit, when GitHub's default was kept
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          # shellcheck source=scripts/lib/uprd_title.sh
+          source scripts/lib/uprd_title.sh
+          current="$(gh pr view "$PR" --json title -q .title)"
+          norm() { tr '[:upper:]' '[:lower:]' <<<"$1" | sed -E 's/[^a-z0-9]+/ /g; s/^ //; s/ $//'; }
+          if [ "$(norm "$current")" != "$(norm "$HEAD_REF")" ]; then
+            echo "PR #$PR title was set by a human — leaving it: $current"
+            exit 0
+          fi
+          first="$(git log --reverse --format=%s "origin/$BASE_REF..origin/$HEAD_REF" | head -1)"
+          [ -n "$first" ] || { echo "no commits past the base — nothing to title"; exit 0; }
+          title="$(cap_title "$first")"
+          gh pr edit "$PR" --title "$title"
+          echo "PR #$PR title: $title"

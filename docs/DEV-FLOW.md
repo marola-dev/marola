@@ -90,6 +90,13 @@ What GitHub shows: a stacked PR is a PR whose base is the previous branch; its p
 feature, `gh stack`) adds the ordered list at the top of each PR; `just uprds` writes the same list
 at the end of each body, with the summed Cost, for readers without the feature.
 
+A PR opened any other way — the GitHub UI's "Compare & pull request", a bare `gh pr create` — gets
+the same body without anyone running `just uprd`: `.github/workflows/pr-body.yml` runs
+`scripts/uprd.sh <PR#>` when the PR is opened, reopened, marked ready, or gets new commits, as long
+as the body is empty, still the raw template, or carries uprd's own first-line marker (a
+hand-written body is left alone; delete the marker line to stop regeneration). It also replaces a
+title that is still the branch name with the first commit's subject. Forks and bot PRs are skipped.
+
 The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape — bold labels, a compact
 MIP/Tested/Cost table, no `#` headings, one screen for a typical two-commit PR; the PR title is
 the first commit's subject on the branch, capped at 70 characters (`scripts/lib/uprd_title.sh`) so
