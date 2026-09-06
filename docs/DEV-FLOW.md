@@ -158,12 +158,17 @@ than merging bumps one at a time. A PR's head branch can't be moved after it's o
 default (and only implemented) path opens one *new* PR per chain branch, stacked on the previous,
 and closes each original dependabot PR with a pointer comment — dependabot's own branches are
 never touched, so an abandoned stack doesn't stop dependabot from re-opening or updating them
-normally. Two Actions bumps touching the same workflow line is the usual conflict: the script
-stops with the branch left mid-cherry-pick and prints the exact `git status` / resolve / `git
-cherry-pick --continue` / `just deps-stack --resume` steps. Once the chain is up, it's a normal
-stack: `gh stack link` runs automatically, `just stack-merge <stack#> --squash` merges it
-bottom-up in one CI run instead of one-per-bump, and `just deps-stack clean` deletes the chain
-branches once every stacked PR shows MERGED.
+normally. The whole chain is built in a dedicated worktree, `.tmp/wt-deps-stack`, never your own
+checkout — a run of `just deps-stack` (`status`, `clean`, `--resume`, or a conflict mid-run
+included) never switches your branch or touches your index. Two dependency bumps landing on
+adjacent lines of the same `*requirements*.txt` file is the most common conflict shape and now
+resolves itself (keeps the higher lower bound per package, `scripts/lib/req_merge.py`); anything
+else — two Actions bumps touching the same workflow line, most often — still stops the script
+with the branch left mid-cherry-pick in that worktree and prints the exact `cd .tmp/wt-deps-stack
+&& git status` / resolve / `git cherry-pick --continue` / `just deps-stack --resume` steps. Once
+the chain is up, it's a normal stack: `gh stack link` runs automatically, `just stack-merge
+<stack#> --squash` merges it bottom-up in one CI run instead of one-per-bump, and `just deps-stack
+clean` deletes the chain branches (and the worktree) once every stacked PR shows MERGED.
 
 ## 7. Command reference
 

@@ -12,6 +12,20 @@
 #   just deps-stack clean              # delete deps/* chain branches whose stacked PR is MERGED
 #   just deps-stack --self-test        # parse scripts/fixtures/deps-stack-prs.json, assert order
 #
+# Isolation: the whole local chain is built in a dedicated worktree, `.tmp/wt-deps-stack`
+# (`.tmp/` is gitignored; same convention scripts/cost-split.py already documents for stack
+# worktrees) — never in the caller's own checkout. Every `checkout -b`/cherry-pick/`branch
+# --show-current`/CHERRY_PICK_HEAD lookup runs `git -C .tmp/wt-deps-stack ...` against it, so
+# a run of this script never switches the caller's branch or touches its index, even mid-conflict
+# or across `--resume`/`status`/`clean`. A first (non-`--resume`) run removes and recreates the
+# worktree fresh off `origin/main` — including a stale one left over from an earlier date's run;
+# `clean` removes it (`git worktree remove --force`) once every chain branch is confirmed MERGED
+# and deleted. On a conflict, the printed instructions `cd` into that worktree, not the caller's
+# tree. Two dependency-bump commits landing on adjacent lines of the same `*requirements*.txt`
+# file is the single most common conflict shape here (`scripts/lib/req_merge.py`'s docstring) —
+# it's auto-resolved (kept lower-bound = the higher of the two, per package) before this script
+# ever prints a human-resolve message; anything else still stops for a human.
+#
 # ---------------------------------------------------------------------------------------------
 # 1. Discovery (scripts/fixtures/deps-stack-prs.json shapes the same fields):
 #      gh pr list --state open --search "author:app/dependabot" \
@@ -35,15 +49,18 @@
 #    separable by author query with the default token, and this repo's own scala-steward.yml
 #    header may need the same caveat added once you know.
 #
-# 2. Local chain build (like `scripts/stack.sh start` for MIP tasks): branch k is
+# 2. Local chain build (like `scripts/stack.sh start` for MIP tasks), in the dedicated worktree
+#    `.tmp/wt-deps-stack` (see "Isolation" above, not the caller's checkout): branch k is
 #    `deps/<YYYY-MM-DD>/<k>-<slug>`, created from branch k-1 (k=1 from `origin/main`), then that
 #    PR's own commits (`<base>..<head>` of the *original* dependabot branch) are cherry-picked
-#    onto it. A conflict (two Actions bumps touching the same workflow line, most often) stops the
-#    script with the branch left mid-cherry-pick: resolve with `git status`, fix, `git add`,
-#    `git cherry-pick --continue`, then re-run with `--resume` to build the remaining branches.
-#    The plan (which PRs, in what order, on what date) is cached at .tmp/deps-stack/plan.json so
-#    `--resume` continues the *same* chain rather than re-discovering (and possibly reordering)
-#    from a fresh `gh pr list`; run from the same working copy you started in.
+#    onto it. A requirements-file bump-vs-bump conflict auto-resolves (scripts/lib/req_merge.py);
+#    anything else (two Actions bumps touching the same workflow line, most often) stops the
+#    script with the branch left mid-cherry-pick in that worktree: resolve with `cd
+#    .tmp/wt-deps-stack && git status`, fix, `git add`, `git cherry-pick --continue`, `cd -`, then
+#    re-run with `--resume` to build the remaining branches. The plan (which PRs, in what order,
+#    on what date) is cached at .tmp/deps-stack/plan.json so `--resume` continues the *same* chain
+#    rather than re-discovering (and possibly reordering) from a fresh `gh pr list`; run from the
+#    same working copy you started in.
 #
 # 3. Publish — design choice, see also docs/DEV-FLOW.md:
 #    A PR's head branch cannot be changed after creation (`gh pr edit` has no `--head`; a PR is
@@ -86,6 +103,91 @@ source "$script_dir/lib/uprd_title.sh"
 
 plan_dir="$repo_root/.tmp/deps-stack"
 plan_file="$plan_dir/plan.json"
+
+# --- the dedicated build worktree — never the caller's own checkout (see header, "Isolation") --
+wt_rel=".tmp/wt-deps-stack"
+wt_dir="$repo_root/$wt_rel"
+
+worktree_registered() {
+  git -C "$repo_root" worktree list --porcelain | grep -qx "worktree $wt_dir"
+}
+
+remove_worktree() {   # best-effort: also cleans up a worktree whose directory was hand-deleted
+  if worktree_registered; then
+    git -C "$repo_root" worktree remove --force "$wt_dir" 2>/dev/null || true
+  fi
+  rm -rf "$wt_dir"
+  git -C "$repo_root" worktree prune 2>/dev/null || true
+}
+
+# $1 = fresh|resume. A fresh (non-`--resume`) invocation always starts the chain over (discovery
+# is re-run, plan.json is overwritten below), so the worktree is rebuilt from origin/main too —
+# this is also what clears out a stale worktree left over from an earlier date's abandoned run.
+# `--resume` reuses whatever the previous run left in place; it errors out rather than silently
+# building a fresh (and therefore wrong) worktree if that one is gone.
+ensure_worktree() {
+  mkdir -p "$repo_root/.tmp"
+  if [ "$1" = fresh ]; then
+    if [ -d "$wt_dir" ] || worktree_registered; then
+      echo "deps-stack: removing worktree at $wt_rel from a previous run"
+      remove_worktree
+    fi
+    run git -C "$repo_root" worktree add --detach "$wt_dir" origin/main
+  else
+    if ! worktree_registered; then
+      echo "deps-stack: --resume needs the worktree from the previous run at $wt_rel — it's missing (removed by hand? already cleaned?); run 'just deps-stack' without --resume to start over" >&2
+      exit 1
+    fi
+  fi
+}
+
+# Printed on a cherry-pick conflict this script can't auto-resolve — names the worktree, never
+# the caller's own checkout, so following these steps can't touch the caller's branch or index.
+print_conflict_instructions() {   # $1 = branch left mid-cherry-pick
+  echo
+  echo "deps-stack: CONFLICT cherry-picking onto $1 in $wt_rel — resolve it:"
+  echo "  cd $wt_rel && git status"
+  echo "  # fix conflicts, then:"
+  echo "  git add <files>"
+  echo "  git cherry-pick --continue"
+  echo "  cd -"
+  echo "  just deps-stack --resume"
+}
+
+# Auto-resolve one conflict class: every file `git diff --name-only --diff-filter=U` reports in
+# the worktree matches `*requirements*.txt`, and scripts/lib/req_merge.py can reduce every hunk in
+# each of them to "keep the higher lower bound per package" (its own docstring/self-test cover the
+# exact shapes it accepts and refuses). Returns 0 and leaves the resolved files `git add`ed (ready
+# for `cherry-pick --continue`) only when *every* conflicted file qualified and resolved; otherwise
+# returns 1 and touches nothing, so the ordinary conflict-stop path still applies.
+auto_resolve_requirements() {
+  local conflicted f
+  conflicted="$(git -C "$wt_dir" diff --name-only --diff-filter=U)"
+  [ -n "$conflicted" ] || return 1
+  while read -r f; do
+    [ -n "$f" ] || continue
+    case "$f" in
+      *requirements*.txt) ;;
+      *) return 1 ;;
+    esac
+  done <<<"$conflicted"
+  local -a abspaths=()
+  while read -r f; do
+    [ -n "$f" ] || continue
+    abspaths+=("$wt_dir/$f")
+  done <<<"$conflicted"
+  local out
+  if ! out="$(python3 "$script_dir/lib/req_merge.py" "${abspaths[@]}" 2>&1)"; then
+    [ -z "$out" ] || echo "$out" >&2
+    return 1
+  fi
+  [ -z "$out" ] || echo "$out"
+  while read -r f; do
+    [ -n "$f" ] || continue
+    git -C "$wt_dir" add "$f"
+  done <<<"$conflicted"
+  return 0
+}
 
 dry=0; resume=0; include_steward=0; from_json=""; self_test=0; retarget=0
 skip_nums=()
@@ -205,7 +307,7 @@ self_test() {
 # doesn't have the ref at all — the case for a not-yet-pushed chain branch, or a hand-made local
 # stand-in for a dependabot branch (as in this script's own test setup).
 resolve_ref() {
-  if git rev-parse --verify -q "refs/remotes/origin/$1" >/dev/null; then echo "origin/$1"; else echo "$1"; fi
+  if git -C "$repo_root" rev-parse --verify -q "refs/remotes/origin/$1" >/dev/null; then echo "origin/$1"; else echo "$1"; fi
 }
 
 # --- build the local branch chain -----------------------------------------------------------
@@ -252,9 +354,10 @@ build_chain() {   # $1 = plan JSON -> builds/continues the local branch chain
   [ "$n" -gt 0 ] || { echo "deps-stack: nothing to build (no PRs after discovery/--skip)"; return 0; }
 
   if [ "$dry" -eq 1 ]; then
-    # Simulated preview only: no real branch exists yet to resolve heads/bases against, so this
-    # never touches git beyond the (printed, not run) fetch/checkout/cherry-pick commands below.
-    echo "+ git fetch -q origin"
+    # Simulated preview only: no real worktree/branch exists yet to resolve heads/bases against,
+    # so this never touches git beyond the (printed, not run) commands below.
+    echo "+ git worktree add --detach $wt_rel origin/main   # (removed and recreated first if stale)"
+    echo "+ git -C $wt_rel fetch -q origin"
     k=1
     while [ "$k" -le "$n" ]; do
       local entry branch base_name head_ref pr_base
@@ -264,27 +367,30 @@ build_chain() {   # $1 = plan JSON -> builds/continues the local branch chain
       head_ref="$(jq -r '.headRefName' <<<"$entry")"
       pr_base="$(jq -r '.baseRefName' <<<"$entry")"
       echo "building $branch (base: $base_name)"
-      echo "+ git checkout -q -b $branch $base_name"
-      echo "+ git cherry-pick \$(git rev-list --reverse origin/$pr_base..origin/$head_ref)  # PR #$(jq -r '.number' <<<"$entry")'s own commit(s)"
+      echo "+ git -C $wt_rel checkout -q -b $branch $base_name"
+      echo "+ git -C $wt_rel cherry-pick \$(git rev-list --reverse origin/$pr_base..origin/$head_ref)  # PR #$(jq -r '.number' <<<"$entry")'s own commit(s)"
       k=$((k + 1))
     done
     return 0
   fi
 
-  run git fetch -q origin || true
+  ensure_worktree "$([ "$resume" -eq 1 ] && echo resume || echo fresh)"
+  run git -C "$wt_dir" fetch -q origin || true
   k=1
   while [ "$k" -le "$n" ]; do
     local entry branch base_name base_ref head_ref pr_base
     entry="$(jq -c --argjson k "$k" '.prs[] | select(.k == $k)' <<<"$plan")"
     branch="$(jq -r '.branch' <<<"$entry")"
     base_name="$(base_branch_of "$plan" "$k")"
-    if git rev-parse --verify -q "refs/heads/$branch" >/dev/null; then
-      if [ -e "$(git rev-parse --git-path CHERRY_PICK_HEAD)" ] && [ "$(git branch --show-current)" = "$branch" ]; then
-        echo "deps-stack: $branch has an unresolved cherry-pick — finish it first:"
-        echo "  git status"
-        echo "  # fix conflicts, then: git add <files> && git cherry-pick --continue"
-        echo "  just deps-stack --resume"
-        exit 1
+    if git -C "$wt_dir" rev-parse --verify -q "refs/heads/$branch" >/dev/null; then
+      if [ -e "$(git -C "$wt_dir" rev-parse --git-path CHERRY_PICK_HEAD)" ] && [ "$(git -C "$wt_dir" branch --show-current)" = "$branch" ]; then
+        if auto_resolve_requirements && git -C "$wt_dir" cherry-pick --continue; then
+          echo "deps-stack: auto-resolved a requirements-bound conflict left over on $branch"
+        else
+          echo "deps-stack: $branch has an unresolved cherry-pick — finish it first:"
+          print_conflict_instructions "$branch"
+          exit 1
+        fi
       fi
       echo "have $branch (base: $base_name) — skipping build"
       k=$((k + 1))
@@ -292,26 +398,24 @@ build_chain() {   # $1 = plan JSON -> builds/continues the local branch chain
     fi
     base_ref="$(resolve_ref "$base_name")"
     echo "building $branch (base: $base_ref)"
-    run git checkout -q -b "$branch" "$base_ref"
+    run git -C "$wt_dir" checkout -q -b "$branch" "$base_ref"
     head_ref="$(resolve_ref "$(jq -r '.headRefName' <<<"$entry")")"
     pr_base="$(resolve_ref "$(jq -r '.baseRefName' <<<"$entry")")"
     local commits
-    commits="$(git rev-list --reverse "$pr_base..$head_ref" 2>/dev/null || true)"
+    commits="$(git -C "$wt_dir" rev-list --reverse "$pr_base..$head_ref" 2>/dev/null || true)"
     if [ -z "$commits" ]; then
-      echo "deps-stack: no commits found on $head_ref past $pr_base — is it fetched? (git fetch origin $branch)" >&2
+      echo "deps-stack: no commits found on $head_ref past $pr_base — is it fetched? (git -C $wt_rel fetch origin $branch)" >&2
       exit 1
     fi
     while read -r c; do
       [ -n "$c" ] || continue
-      if ! git cherry-pick "$c"; then
-        echo
-        echo "deps-stack: CONFLICT cherry-picking $c onto $branch — resolve it:"
-        echo "  git status"
-        echo "  # fix conflicts, then:"
-        echo "  git add <files>"
-        echo "  git cherry-pick --continue"
-        echo "  just deps-stack --resume"
-        exit 1
+      if ! git -C "$wt_dir" cherry-pick "$c"; then
+        if auto_resolve_requirements && git -C "$wt_dir" cherry-pick --continue; then
+          echo "deps-stack: auto-resolved a requirements-bound conflict cherry-picking $c onto $branch"
+        else
+          print_conflict_instructions "$branch"
+          exit 1
+        fi
       fi
     done <<<"$commits"
     k=$((k + 1))
@@ -335,11 +439,11 @@ publish_chain() {
     orig_num="$(jq -r '.number' <<<"$entry")"
     orig_title="$(jq -r '.title' <<<"$entry")"
 
-    if git rev-parse --verify -q "refs/heads/$branch" >/dev/null; then
-      if git rev-parse --verify -q "refs/remotes/origin/$branch" >/dev/null; then
-        run git push -q --force-with-lease origin "$branch"
+    if git -C "$repo_root" rev-parse --verify -q "refs/heads/$branch" >/dev/null; then
+      if git -C "$repo_root" rev-parse --verify -q "refs/remotes/origin/$branch" >/dev/null; then
+        run git -C "$repo_root" push -q --force-with-lease origin "$branch"
       else
-        run git push -q -u origin "$branch"
+        run git -C "$repo_root" push -q -u origin "$branch"
       fi
     fi
 
@@ -381,10 +485,15 @@ chain_branches_of() {   # $1 = plan JSON -> branch names, bottom to top
   jq -r '.prs | sort_by(.k) | .[].branch' <<<"$1"
 }
 
-cmd_status() {
+cmd_status() {   # read-only: never checks out anything, in this checkout or the worktree
   [ -f "$plan_file" ] || { echo "deps-stack: no chain built yet — run 'just deps-stack' first"; return 0; }
   local plan; plan="$(cat "$plan_file")"
   echo "chain date: $(jq -r '.date' <<<"$plan")"
+  if worktree_registered; then
+    echo "worktree: $wt_rel"
+  else
+    echo "worktree: $wt_rel (not present — removed by 'clean', or not built yet)"
+  fi
   local k n
   n="$(jq '.prs | length' <<<"$plan")"
   k=1
@@ -397,7 +506,7 @@ cmd_status() {
     printf '%-40s base=%-28s %s  (orig #%s, ahead of main: %s)\n' \
       "$branch" "$base_name" "$pr" \
       "$(jq -r '.number' <<<"$entry")" \
-      "$(git rev-list --count origin/main.."$branch" 2>/dev/null || echo '?')"
+      "$(git -C "$repo_root" rev-list --count origin/main.."$branch" 2>/dev/null || echo '?')"
     k=$((k + 1))
   done
 }
@@ -406,22 +515,34 @@ cmd_clean() {
   [ -f "$plan_file" ] || { echo "deps-stack: no chain built yet — nothing to clean"; return 0; }
   gh auth status >/dev/null 2>&1 || { echo "gh is not logged in — run: gh auth login" >&2; exit 1; }
   local plan; plan="$(cat "$plan_file")"
-  local b state
+  # A chain branch is very likely checked out in the worktree right now (build_chain leaves it on
+  # the tip) — `git branch -D` refuses to delete a branch checked out anywhere, so detach the
+  # worktree first. This only ever touches $wt_dir, never the caller's own checkout.
+  if [ "$dry" -eq 0 ] && worktree_registered; then
+    git -C "$wt_dir" checkout -q --detach origin/main 2>/dev/null || true
+  fi
+  local b state all_merged=1
   while read -r b; do
     [ -n "$b" ] || continue
     state="$(gh pr view "$b" --json state -q .state 2>/dev/null || echo NONE)"
     if [ "$state" = MERGED ]; then
       echo "deleting $b (PR merged)"
-      run git branch -D "$b"
-      if git rev-parse --verify -q "origin/$b" >/dev/null 2>&1; then
-        run git push -q origin --delete "$b" || echo "  (already gone on origin)"
+      run git -C "$repo_root" branch -D "$b"
+      if git -C "$repo_root" rev-parse --verify -q "origin/$b" >/dev/null 2>&1; then
+        run git -C "$repo_root" push -q origin --delete "$b" || echo "  (already gone on origin)"
       fi
     else
       echo "keep $b (PR: $state)"
+      all_merged=0
     fi
   done <<<"$(chain_branches_of "$plan")"
   if [ "$dry" -eq 0 ]; then
     rm -f "$plan_file"
+    if [ "$all_merged" -eq 1 ] && worktree_registered; then
+      echo "deps-stack: every chain branch merged — removing worktree $wt_rel"
+      git -C "$repo_root" worktree remove --force "$wt_dir"
+      git -C "$repo_root" worktree prune 2>/dev/null || true
+    fi
   fi
 }
 

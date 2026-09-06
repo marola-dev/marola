@@ -223,6 +223,9 @@ jobs:
       - name: self-test — deps-stack (dependency-PR discovery ordering)
         if: needs.changes.outputs.python == 'true'
         run: scripts/deps-stack.sh --self-test
+      - name: self-test — req_merge (requirements-file conflict auto-resolve)
+        if: needs.changes.outputs.python == 'true'
+        run: python3 scripts/lib/req_merge.py --self-test
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2

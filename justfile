@@ -79,6 +79,7 @@ quality-other:
     python3 scripts/cost-split.py --self-test
     scripts/gh-billing.sh --self-test
     scripts/deps-stack.sh --self-test
+    python3 scripts/lib/req_merge.py --self-test
     actionlint
     hadolint Dockerfile Dockerfile.local
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
@@ -364,7 +365,10 @@ stack *args:
 # github-actions PRs first, then pip, each group by PR number. Opens one new PR per chain branch
 # stacked on the previous (dependabot's own branches are left untouched, and their PRs are closed
 # with a pointer to the new ones — see scripts/deps-stack.sh's header for why, and the
-# `--retarget-dependabot` non-goal), then links them into a GitHub Stack.
+# `--retarget-dependabot` non-goal), then links them into a GitHub Stack. The whole chain is built
+# in a dedicated worktree (.tmp/wt-deps-stack) so this never switches your own checkout's branch;
+# a requirements-file bump-vs-bump conflict (adjacent lines of the same *requirements*.txt)
+# resolves itself to the higher lower bound before anything stops for a human.
 #   just deps-stack                    # discover, build, publish, link
 #   just deps-stack --dry-run          # print every git/gh command; no push, no gh mutation
 #   just deps-stack --resume           # continue after a conflict (prints the resolve steps)
