@@ -41,6 +41,7 @@ subscription the dollars are not a bill — they are the quota proxy AGENTS.md a
 import argparse
 import datetime as dt
 import json
+import os
 import re
 import statistics
 import subprocess
@@ -75,7 +76,17 @@ USD_TRAILER_RE = re.compile(r"\$([\d.]+)")
 
 
 def sh(*args, cwd=None):
-    return subprocess.run(args, check=True, capture_output=True, text=True, cwd=cwd).stdout
+    env = None
+    if cwd is not None:
+        # A cwd means "operate on this repo, not whatever GIT_DIR/GIT_WORK_TREE/etc. the
+        # environment already points at" — a git hook (pre-push, pre-commit) sets those for its
+        # own repo, and without stripping them a subprocess git call here follows the env instead
+        # of cwd: with GIT_DIR set but not GIT_WORK_TREE, git treats cwd as the work tree and
+        # happily commits its content into the *real* repo's history, while the real working tree
+        # never receives the files — surfacing afterward as spurious "deleted: <file>" entries.
+        # See the self-test below, which reproduces this exact scenario.
+        env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    return subprocess.run(args, check=True, capture_output=True, text=True, cwd=cwd, env=env).stdout
 
 
 def repo_root():
@@ -528,6 +539,45 @@ def self_test():
             fallback_coeff, fallback_stats = calibrate(ref="main", cwd=empty_repo)
             assert fallback_stats["n"] == 0
             assert fallback_coeff == DEFAULT_TOKENS_PER_LINE
+
+    # --- regression: sh(cwd=...) must not leak into a GIT_DIR the environment already points at.
+    # A git hook (pre-push, pre-commit) sets GIT_DIR (and friends) for its own repo; before this
+    # was fixed, the calibration commits above landed for real on whatever repo triggered the
+    # hook instead of staying inside their own tempdir. Reproduced here with a decoy "outer" repo
+    # standing in for the real one, GIT_DIR pointed at it, and an inner tempdir repo built the same
+    # way self_test() builds its calibration fixtures. ---
+    with tempfile.TemporaryDirectory() as outer_tmp:
+        outer = Path(outer_tmp)
+        sh("git", "init", "-q", "-b", "main", cwd=outer)
+        sh("git", "config", "user.email", "outer@example.com", cwd=outer)
+        sh("git", "config", "user.name", "Outer", cwd=outer)
+        (outer / "seed.txt").write_text("seed\n")
+        sh("git", "add", "seed.txt", cwd=outer)
+        sh("git", "commit", "-q", "-m", "seed", cwd=outer)
+        outer_head_before = sh("git", "rev-parse", "HEAD", cwd=outer).strip()
+
+        saved_git_dir = os.environ.get("GIT_DIR")
+        try:
+            os.environ["GIT_DIR"] = str(outer / ".git")
+            with tempfile.TemporaryDirectory() as inner_tmp:
+                inner = Path(inner_tmp)
+                sh("git", "init", "-q", "-b", "main", cwd=inner)
+                sh("git", "config", "user.email", "test@example.com", cwd=inner)
+                sh("git", "config", "user.name", "Test", cwd=inner)
+                (inner / "x.txt").write_text("x\n")
+                sh("git", "add", "x.txt", cwd=inner)
+                sh("git", "commit", "-q", "-m", "should stay inside tempdir", cwd=inner)
+        finally:
+            if saved_git_dir is None:
+                os.environ.pop("GIT_DIR", None)
+            else:
+                os.environ["GIT_DIR"] = saved_git_dir
+
+        outer_head_after = sh("git", "rev-parse", "HEAD", cwd=outer).strip()
+        assert outer_head_after == outer_head_before, (
+            "sh(cwd=...) leaked into the ambient GIT_DIR instead of staying in cwd"
+        )
+        assert not (outer / "x.txt").exists(), "inner repo's file leaked into the outer repo"
 
     print(
         f"cost-split self-test: ok (parser {len(cases)} cases, synthetic calibration "
