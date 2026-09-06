@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "marola": {
+      "command": "just",
+      "args": ["mcp-server"],
+      "type": "stdio"
+    }
+  }
+}

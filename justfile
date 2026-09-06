@@ -100,9 +100,13 @@ run *args:
 
 # Runs marola's MCP tool server (cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala)
 # — a separate main class from `run`'s (see build.sbt's Compile/run/mainClass note on why plain
-# `sbt run` can't pick this one).
+# `sbt run` can't pick this one). `-error` silences sbt's own banner/task logging on stdout —
+# required for stdio MCP transport, which allows nothing but JSON-RPC frames there; confirmed
+# live that sbt's default log level otherwise writes "[info] welcome to sbt..." etc. straight
+# into the same stream a client reads as protocol data. cli/src/main/resources/logback.xml
+# handles the app's own logging the same way (routes it to stderr).
 mcp-server:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/runMain marola.agent.SwimConditionsMcpServer"
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt -error "cli/runMain marola.agent.SwimConditionsMcpServer"
 
 watch:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "~compile"
