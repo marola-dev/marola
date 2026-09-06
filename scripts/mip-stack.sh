@@ -37,9 +37,14 @@
 #    that belong to an earlier draft are excluded by ancestry, a rebased *copy* of a commit the
 #    chain already carries (same author date and subject under a new SHA) is skipped, and a
 #    cherry-pick that turns out empty is dropped. A conflict in
-#    `docs/mips/README.md` alone — the two-rows-at-the-same-place shape — auto-resolves through
+#    `docs/mips/README.md` — the two-rows-at-the-same-place shape — auto-resolves through
 #    scripts/lib/mip_index_merge.py (union of both sides' rows, one per MIP, in number order; a
-#    row that differs on both sides is a real edit and stops for a human). Anything else stops
+#    row that differs on both sides is a real edit and stops for a human), and a conflicted file
+#    whose content in the commit is byte-identical to origin/main's ("the same change already
+#    landed": squash-merged under another PR, or made on main too) takes main's version. A PR
+#    whose MIP file(s) are already identical on main is skipped altogether as superseded — the
+#    draft was squash-merged and its PR left open — recorded in the plan, shown by `status`,
+#    never published; close that PR by hand. Anything else stops
 #    with the branch left mid-cherry-pick in the worktree and prints the resolve steps; the plan
 #    is cached at .tmp/mip-stack/plan.json so `--resume` continues the same chain.
 # 3. Publish — option (b) of deps-stack.sh, for the same reason (a PR's head branch cannot be
@@ -115,6 +120,36 @@ auto_resolve_index() {
   git -C "$wt_dir" add docs/mips/README.md
 }
 
+# Two conflict shapes resolve by themselves; anything else stops for a human. $1 = the commit
+# being cherry-picked. (1) "Same change already landed": a conflicted file whose content in that
+# commit is byte-identical to origin/main's — the draft's change was squash-merged under another
+# PR, or the same edit was made on main — takes origin/main's version. (2) docs/mips/README.md,
+# the row conflict, through auto_resolve_index. A conflicted file that is neither leaves the
+# cherry-pick as it is (files already resolved stay resolved — less for the human to do).
+auto_resolve_conflicts() {
+  local c="$1" f other=0 readme=0
+  while read -r f; do
+    [ -n "$f" ] || continue
+    if [ "$f" = "docs/mips/README.md" ]; then readme=1; continue; fi
+    if git -C "$wt_dir" cat-file -e "origin/main:$f" 2>/dev/null && git -C "$wt_dir" diff --quiet "$c" origin/main -- "$f" 2>/dev/null; then
+      git -C "$wt_dir" checkout -q origin/main -- "$f"
+      echo "mip-stack: $f — this commit's version is already on main, keeping main's"
+    else
+      other=1
+    fi
+  done <<<"$(git -C "$wt_dir" diff --name-only --diff-filter=U)"
+  [ "$other" -eq 0 ] || return 1
+  if [ "$readme" -eq 1 ]; then auto_resolve_index || return 1; fi
+  return 0
+}
+# `cherry-pick --continue` after a resolution that left nothing to commit (the whole change was
+# already on main) refuses with "now empty" — that commit is simply skipped.
+continue_or_skip() {
+  if git -C "$wt_dir" cherry-pick --continue >/dev/null 2>&1; then return 0; fi
+  if git -C "$wt_dir" diff --cached --quiet && git -C "$wt_dir" diff --quiet; then git -C "$wt_dir" cherry-pick --skip >/dev/null 2>&1; return $?; fi
+  return 1
+}
+
 dry=0; resume=0; from_json=""; self_test=0
 skip_nums=()
 subcommand=""
@@ -139,10 +174,15 @@ order_prs() {   # stdin: gh-pr-list-shaped JSON array -> stdout: MIP draft PRs, 
     skip_json="$(printf '%s\n' "${skip_nums[@]}" | jq -R 'tonumber' | jq -s .)"
   fi
   jq --argjson skip "$skip_json" '
-    def mip_from_files: [(.files // [])[] | .path | capture("^docs/mips/MIP-(?<n>[0-9]{4})-[^/]*\\.md$") | .n] | first // null;
-    def mip_from_head: (.headRefName | capture("mip-(?<n>[0-9]{4})") | .n) // null;
+    # The number in the head branch name wins (docs/mip-0023-... is MIP-0023 whatever files it
+    # carries); a PR whose head has no number is placed by the HIGHEST MIP file it touches — a
+    # draft that merged the branch of an earlier draft to stay mergeable carries that file too,
+    # and "first file in the list" put three drafts under MIP-0020 on 2026-09-06. (No apostrophes
+    # here: this comment sits inside the single-quoted jq program.)
+    def mip_from_files: [(.files // [])[] | .path | capture("^docs/mips/MIP-(?<n>[0-9]{4})-[^/]*\\.md$") | .n] | max // null;
+    def mip_from_head: (.headRefName | capture("^(?:docs/)?mip-(?<n>[0-9]{4})") | .n) // null;
     def is_task_branch: .headRefName | test("^mip-[0-9]{4}/[0-9]+-");
-    def mip: (mip_from_files // mip_from_head);
+    def mip: (mip_from_head // mip_from_files);
     map(select(.number as $n | ($skip | index($n)) == null))
     | map(select(is_task_branch | not))
     | map(select((.headRefName | startswith("docs/mip-")) or (mip_from_files != null)))
@@ -179,12 +219,15 @@ self_test() {
   local skip_nums=() ordered got expected
   ordered="$(order_prs <"$fixture")"
   got="$(jq -c '[.[].number]' <<<"$ordered")"
-  # 201 (MIP-0020, head docs/mip-…), 208 (MIP-0023 by file, head not docs/) ; 210 (MIP-0025);
+  # 201 (MIP-0020, head docs/mip-…), 208 (MIP-0023 by file, head not docs/), 210 (MIP-0025),
+  # 211 (head docs/mip-0025-… although its files list MIP-0020's file first — the head wins);
   # 205 is a task branch (excluded), 212 touches no MIP file (excluded).
-  expected="[201,208,210]"
+  expected="[201,208,210,211]"
   echo "order: $got"
   jq -r '.[] | "  #\(.number) MIP-\(.mip) \(.headRefName)"' <<<"$ordered"
   [ "$got" = "$expected" ] || { echo "mip-stack self-test: FAILED — order $got, expected $expected" >&2; exit 1; }
+  local m211; m211="$(jq -r '.[] | select(.number == 211) | .mip' <<<"$ordered")"
+  [ "$m211" = "0025" ] || { echo "mip-stack self-test: FAILED — #211 classified as MIP-$m211, expected 0025 (head branch number must win over a merged-in MIP-0020 file)" >&2; exit 1; }
   local slug; slug="$(slug_of "docs/mip-0020-instagram-pipeline")"
   [ "$slug" = "mip-0020-instagram-pipeline" ] || { echo "mip-stack self-test: FAILED — slug_of gave '$slug'" >&2; exit 1; }
   echo "mip-stack self-test: PASSED"
@@ -211,9 +254,13 @@ compute_plan() {   # $1 = ordered JSON -> {date, prs:[... + slug, k, branch]}
     | {date: $date, prs: $e}' <<<"$slugged"
 }
 write_plan() { mkdir -p "$plan_dir"; compute_plan "$1" | tee "$plan_file"; }
-base_branch_of() {   # $1 = plan, $2 = k
-  if [ "$2" -le 1 ]; then echo main; return; fi
-  jq -r --argjson k "$(($2 - 1))" '.prs[] | select(.k == $k) | .branch' <<<"$1"
+base_branch_of() {   # $1 = plan, $2 = k -> the nearest earlier link that was actually built, else main
+  jq -r --argjson k "$2" '[.prs[] | select(.k < $k and ((.superseded // false) | not))] | last | .branch // "main"' <<<"$1"
+}
+mark_superseded() {   # $1 = k — record it in the plan (variable + file) so publish/status skip the link
+  plan="$(jq --argjson k "$1" '(.prs[] | select(.k == $k)) += {superseded: true}' <<<"$plan")"
+  [ -f "$plan_file" ] && printf '%s\n' "$plan" > "$plan_file"
+  return 0
 }
 
 build_chain() {
@@ -258,8 +305,8 @@ build_chain() {
     base_name="$(base_branch_of "$plan" "$k")"
     if git -C "$wt_dir" rev-parse --verify -q "refs/heads/$branch" >/dev/null; then
       if [ -e "$(git -C "$wt_dir" rev-parse --git-path CHERRY_PICK_HEAD)" ] && [ "$(git -C "$wt_dir" branch --show-current)" = "$branch" ]; then
-        if auto_resolve_index && git -C "$wt_dir" cherry-pick --continue; then
-          echo "mip-stack: auto-resolved an index-row conflict left over on $branch"
+        if auto_resolve_conflicts "$(git -C "$wt_dir" rev-parse CHERRY_PICK_HEAD)" && continue_or_skip; then
+          echo "mip-stack: auto-resolved the conflict left over on $branch"
         else
           echo "mip-stack: $branch has an unresolved cherry-pick — finish it first:"
           print_conflict_instructions "$branch"; exit 1
@@ -269,8 +316,6 @@ build_chain() {
       k=$((k + 1)); continue
     fi
     base_ref="$(resolve_ref "$base_name")"
-    echo "building $branch (base: $base_ref)"
-    git -C "$wt_dir" checkout -q -b "$branch" "$base_ref"
     head_ref="$(resolve_ref "$(jq -r '.headRefName' <<<"$entry")")"
     # The PR's *own* commits: reachable from its head, not from main and not from any earlier
     # draft's head — a draft that merged another draft's branch (to stay mergeable) carries that
@@ -286,9 +331,27 @@ build_chain() {
     local commits
     commits="$(git -C "$wt_dir" rev-list --reverse --no-merges "$head_ref" --not "${not_refs[@]}" 2>/dev/null || true)"
     if [ -z "$commits" ]; then
-      echo "mip-stack: $head_ref has no commit the chain does not already carry — its content is on $base_ref; skipping (PR #$(jq -r '.number' <<<"$entry") is probably superseded)"
-      k=$((k + 1)); continue
+      echo "mip-stack: skipping $head_ref — no commit the chain does not already carry (PR #$(jq -r '.number' <<<"$entry") is superseded; close it by hand)"
+      mark_superseded "$k"; k=$((k + 1)); continue
     fi
+    # Already on main by content: every docs/mips/MIP-*.md the PR's own commits touch exists on
+    # origin/main with the same blob as on the PR head — the draft was squash-merged under another
+    # PR number (today: docs/mip-0021-beach-accessibility, merged as #134, still open as #135).
+    # Its commits are not ancestors of main, so ancestry cannot see it; the content can.
+    local mip_paths landed=1
+    mip_paths="$(while read -r cc; do [ -n "$cc" ] && git -C "$wt_dir" diff-tree --no-commit-id --name-only -r "$cc"; done <<<"$commits" 2>/dev/null | grep -E '^docs/mips/MIP-[0-9]{4}-[^/]*\.md$' | sort -u || true)"
+    if [ -n "$mip_paths" ]; then
+      while read -r mp; do
+        [ -n "$mp" ] || continue
+        git -C "$wt_dir" cat-file -e "origin/main:$mp" 2>/dev/null && git -C "$wt_dir" diff --quiet origin/main "$head_ref" -- "$mp" 2>/dev/null || landed=0
+      done <<<"$mip_paths"
+      if [ "$landed" -eq 1 ]; then
+        echo "mip-stack: skipping $head_ref — its MIP file(s) are identical on main ($(tr '\n' ' ' <<<"$mip_paths")— squash-merged? close PR #$(jq -r '.number' <<<"$entry") by hand)"
+        mark_superseded "$k"; k=$((k + 1)); continue
+      fi
+    fi
+    echo "building $branch (base: $base_ref)"
+    git -C "$wt_dir" checkout -q -b "$branch" "$base_ref"
     # Second filter, by identity rather than ancestry: a draft that was *rebased* onto another
     # draft (rather than merging it) carries copies of that draft's commits under new SHAs, with
     # the author date and subject intact — and once the copy's README row was resolved differently
@@ -304,9 +367,9 @@ build_chain() {
         echo "mip-stack: skipping ${c:0:7} — the chain already carries this commit (same author date and subject, a rebased copy)"
         continue
       fi
-      if ! git -C "$wt_dir" cherry-pick --allow-empty --empty=drop "$c" >/dev/null; then
-        if auto_resolve_index && git -C "$wt_dir" cherry-pick --continue >/dev/null; then
-          echo "mip-stack: auto-resolved the README row conflict cherry-picking ${c:0:7} onto $branch"
+      if ! git -C "$wt_dir" cherry-pick --allow-empty --empty=drop "$c" >/dev/null 2>&1; then
+        if auto_resolve_conflicts "$c" && continue_or_skip; then
+          echo "mip-stack: auto-resolved the conflict cherry-picking ${c:0:7} onto $branch"
         else
           print_conflict_instructions "$branch"; exit 1
         fi
@@ -327,6 +390,10 @@ publish_chain() {
     entry="$(jq -c --argjson k "$k" '.prs[] | select(.k == $k)' <<<"$plan")"
     branch="$(jq -r '.branch' <<<"$entry")"; base_name="$(base_branch_of "$plan" "$k")"
     orig_num="$(jq -r '.number' <<<"$entry")"; orig_title="$(jq -r '.title' <<<"$entry")"
+    if [ "$(jq -r '.superseded // false' <<<"$entry")" = true ]; then
+      echo "mip-stack: $branch — superseded, not published; close PR #$orig_num by hand (its content is on main)"
+      k=$((k + 1)); continue
+    fi
     if git -C "$repo_root" rev-parse --verify -q "refs/heads/$branch" >/dev/null; then
       if git -C "$repo_root" rev-parse --verify -q "refs/remotes/origin/$branch" >/dev/null; then
         run git -C "$repo_root" push -q --force-with-lease origin "$branch"
@@ -376,6 +443,7 @@ cmd_status() {
     entry="$(jq -c --argjson k "$k" '.prs[] | select(.k == $k)' <<<"$plan")"
     branch="$(jq -r '.branch' <<<"$entry")"
     pr="$(gh pr view "$branch" --json number,state -q '"#\(.number) \(.state)"' 2>/dev/null || echo "no PR")"
+    if [ "$(jq -r '.superseded // false' <<<"$entry")" = true ]; then pr="superseded — content on main, close the original PR"; fi
     printf '%-44s base=%-30s %s  (MIP-%s, orig #%s)\n' "$branch" "$(base_branch_of "$plan" "$k")" "$pr" \
       "$(jq -r '.mip' <<<"$entry")" "$(jq -r '.number' <<<"$entry")"
     k=$((k + 1))
@@ -435,6 +503,7 @@ else
 fi
 
 build_chain "$plan"
+[ -f "$plan_file" ] && plan="$(cat "$plan_file")"   # build_chain may have marked links superseded
 if [ "$dry" -eq 1 ]; then echo "dry-run: stopping before publish (push/PR creation/close) and link — no gh mutation."; exit 0; fi
 publish_chain "$plan"
 mapfile -t chain_brs < <(chain_branches_of "$plan")
