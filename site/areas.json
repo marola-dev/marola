@@ -20,5 +20,16 @@
     "tz": "America/Sao_Paulo",
     "tiles": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     "tiles_attribution": "© OpenStreetMap contributors"
+  },
+  {
+    "id": "salvador",
+    "name": "Salvador, BA",
+    "lat": -12.9777,
+    "lon": -38.5016,
+    "radius_km": 25,
+    "beach_limit": 70,
+    "tz": "America/Bahia",
+    "tiles": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "tiles_attribution": "© OpenStreetMap contributors"
   }
 ]
