@@ -7,7 +7,7 @@ dspy>=3.3,<4
 # _init_langfuse_tracing) — both installed unconditionally since the
 # tracing itself is opt-in at runtime via MAROLA_LANGFUSE_PUBLIC_KEY,
 # not at install time.
-langfuse>=4,<5
+langfuse>=4.15.1,<5
 openinference-instrumentation-dspy
 
 # Optional experiment-ledger logging (see compile_recommendation_prompt.py's
