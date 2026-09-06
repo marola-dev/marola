@@ -1,0 +1,52 @@
+{
+  "usageItems": [
+    {
+      "date": "2026-08-01",
+      "product": "actions",
+      "sku": "Actions Linux",
+      "quantity": 1500,
+      "unitType": "minutes",
+      "pricePerUnit": 0.008,
+      "grossAmount": 12.0,
+      "discountAmount": 12.0,
+      "netAmount": 0.0,
+      "repositoryName": "marola"
+    },
+    {
+      "date": "2026-08-10",
+      "product": "actions",
+      "sku": "Actions Linux",
+      "quantity": 500,
+      "unitType": "minutes",
+      "pricePerUnit": 0.008,
+      "grossAmount": 4.0,
+      "discountAmount": 0.0,
+      "netAmount": 4.0,
+      "repositoryName": "marola"
+    },
+    {
+      "date": "2026-08-03",
+      "product": "packages",
+      "sku": "Shared Storage",
+      "quantity": 3,
+      "unitType": "GigabyteHours",
+      "pricePerUnit": 0.25,
+      "grossAmount": 0.75,
+      "discountAmount": 0.0,
+      "netAmount": 0.75,
+      "repositoryName": "marola"
+    },
+    {
+      "date": "2026-08-15",
+      "product": "copilot",
+      "sku": "Copilot Individual",
+      "quantity": 1,
+      "unitType": "Seats",
+      "pricePerUnit": 0.0,
+      "grossAmount": 0.0,
+      "discountAmount": 0.0,
+      "netAmount": 0.0,
+      "repositoryName": null
+    }
+  ]
+}

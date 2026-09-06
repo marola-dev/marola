@@ -56,10 +56,10 @@ quality-scala:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll "scalafixAll --check"
 
 # The JVM-free gates: ruff on every .py in the repo (no file list — ci.yml's ruff-action lints the
-# checkout root, and a list kept here once drifted from it), the scripts/*.py self-tests,
-# actionlint, hadolint. ruff/actionlint/hadolint are in flake.nix, so a missing one fails instead
-# of skipping — a silent skip is how an unused import reached main. Only the compose check still
-# skips without a Docker CLI (the agent sessions have none).
+# checkout root, and a list kept here once drifted from it), the scripts/*.py self-tests, the
+# gh-billing.sh self-test, actionlint, hadolint. ruff/actionlint/hadolint are in flake.nix, so a
+# missing one fails instead of skipping — a silent skip is how an unused import reached main. Only
+# the compose check still skips without a Docker CLI (the agent sessions have none).
 quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -70,6 +70,7 @@ quality-other:
     ruff format --check .
     python3 scripts/smoke_record.py --self-test
     python3 scripts/benchmark_gate.py --self-test
+    scripts/gh-billing.sh --self-test
     actionlint
     hadolint Dockerfile Dockerfile.local
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
@@ -397,13 +398,18 @@ cost-split *args:
 claude-cost *args="session":
     npx --yes ccusage@latest {{args}}
 
-# GitHub account usage this month — Actions minutes, GHCR/Packages storage, Copilot — in one call
-# to the consolidated billing-usage API (scripts/billing.sh). This repo is private, so these are
-# real cost, not just hygiene, unlike the "free for public repos" Actions/GHCR quotas docker.yml
-# used to assume. `just billing`, `just billing --month 8`, `just billing --year 2026 --month 8`.
-# Needs `gh auth status` (not available inside ai-jail — run from the host).
-billing *args:
-    scripts/billing.sh {{args}}
+# GitHub's own bill this month — Actions minutes, GHCR/Packages storage and transfer, Copilot —
+# in one call to the consolidated billing-usage API (scripts/gh-billing.sh). This repo is private,
+# so these are real cost, not just hygiene, unlike the "free for public repos" Actions/GHCR quotas
+# docker.yml used to assume. `just gh-billing`, `just gh-billing --month 8`,
+# `just gh-billing --year 2026 --month 8`. Needs `gh auth status` with a classic PAT carrying the
+# `user` scope (not available inside ai-jail — run from the host); `scripts/gh-billing.sh
+# --self-test` shapes a saved fixture with no `gh` call at all.
+#
+# This is a different bill from `claude-cost`/`cost-split` above: those two account for Claude
+# Code's own token quota (what a feature cost to build), not anything GitHub charges for.
+gh-billing *args:
+    scripts/gh-billing.sh {{args}}
 
 # ---------------------------------------------------------------------
 # ai-jail — sandbox AI coding agents (bubblewrap/Landlock/seccomp on

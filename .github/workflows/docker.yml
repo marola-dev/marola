@@ -11,7 +11,7 @@ name: docker (build the images, push from main)
 # GITHUB_TOKEN (`packages: write`), nothing to add.
 #
 # This repo is currently private, so none of this is free: Actions minutes and GHCR storage both
-# count against the account's plan (`just billing` shows current usage; ghcr-retention.yml prunes
+# count against the account's plan (`just gh-billing` shows current usage; ghcr-retention.yml prunes
 # the `*-<sha>` tags this workflow accumulates — the moving tags jvm/native/dev are what everything
 # else actually references, see docs/RUN-LOCALLY.md §10).
 #

@@ -48,6 +48,7 @@ jobs:
               - 'finetune/**'
               - 'scripts/*.py'
               - '**/*.py'           # ruff lints the whole repo, so any .py anywhere counts
+              - 'scripts/*.sh'      # gh-billing.sh's self-test lives in the same quality-other job
               - 'scripts/fixtures/**'
               - 'ruff.toml'
             workflows:
@@ -139,6 +140,9 @@ jobs:
         run: |
           python3 scripts/smoke_record.py --self-test
           python3 scripts/benchmark_gate.py --self-test
+      - name: self-test — gh-billing (GitHub billing-usage response shaping)
+        if: needs.changes.outputs.python == 'true'
+        run: scripts/gh-billing.sh --self-test
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2

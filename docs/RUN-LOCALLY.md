@@ -312,7 +312,7 @@ ghcr.io -u <user> --password-stdin`):
 The `-<sha>` tags accumulate on every qualifying push (`local-<sha>` even for rejected candidates,
 which bundle the ~2 GB Ollama model) — `ghcr-retention.yml` prunes them weekly, keeping the last 10
 per target (5 for `local`) and never touching the moving tags above, which is what everything below
-and `docker-compose.yml`/`docker-smoke.yml` actually pull. `just billing` shows current GHCR/Actions
+and `docker-compose.yml`/`docker-smoke.yml` actually pull. `just gh-billing` shows current GHCR/Actions
 usage against the account's plan (this repo gets no public-repo free tier).
 
 The same pipeline from a machine that has Docker and nothing else. `docker-compose.yml` runs the
