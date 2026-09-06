@@ -58,3 +58,7 @@ repomix-output/
 # Claude Code agent worktrees (Agent tool, isolation: worktree) — ephemeral nested checkouts
 .claude/worktrees/
 .claude/settings.local.json
+
+# mip-solve-perpetual's gh-unauthenticated fallback log — commands for a human to replay
+# (PR creation, stack linking) when the session had no gh auth. Never committed.
+/GH_POST_MORTEM.md

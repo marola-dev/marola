@@ -37,8 +37,28 @@ task, then the next file, one task at a time.
   circumstances, even if a PR looks trivially safe — merging is the human's to do, on waking up.
 - Never run `azd up`/`provision` or `az deployment` — the cost/deployment safety gate stays
   absolute, no exception for being unattended.
-- If `gh` isn't authenticated, still push the branch and print the exact `gh pr create` command
-  instead of guessing or skipping the PR step.
+- **If `gh` isn't authenticated, do not stop the loop and do not skip the PR step — degrade and
+  keep going.** Check once per task with `gh auth status`, then:
+  1. Still `git push -u origin <branch>` (and force-push with `--force-with-lease` if the branch
+     needed a restack — `git merge-base --is-ancestor origin/main <branch>` before touching
+     anything destructive, per the repo-wide git safety rules).
+  2. Append a block to `GH_POST_MORTEM.md` at the repo root (if it doesn't exist yet, create it
+     with a one-paragraph header explaining why it exists and how to use it — see the file's own
+     history for the shape; never overwrite an existing one, always append) with the exact
+     `gh pr create --base <base> --head <branch> --title ... --body-file <(git log -1
+     --format=%B <branch>)` command for the task, headed by today's date and which MIP/task it's
+     for. Every branch in the stack gets its own block, even ones from earlier tasks that were
+     already pushed — the file is the one place a human reads to catch every pending `gh` call,
+     not just the latest.
+  3. Once every task in the current run is done, append one `scripts/stack.sh link MIP-NNNN`
+     command to link the whole stack, after the human has created the PRs above.
+  4. Treat the task as done for `/goal` purposes — "an open PR" is satisfied by "pushed + its
+     exact `gh pr create` logged in `GH_POST_MORTEM.md`" when `gh` has no session auth. This is
+     not a blocker on the human's decision (nothing risky is being skipped — merge/close stay
+     denied regardless of `gh` auth via `.claude/settings.json`), so it must never end the run.
+  5. `GH_POST_MORTEM.md` is gitignored — never add it to a commit; it's a local operator log, not
+     a deliverable. If a task's own commit touches `.gitignore`, that's fine (the entry belongs in
+     source), just don't stage the post-mortem file itself.
 
 **Throttle — cheapest lever first, log which one was used in the PR body:**
 1. Default: current model, default effort. Most tasks belong here.
