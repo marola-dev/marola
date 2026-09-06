@@ -161,9 +161,11 @@ never touched, so an abandoned stack doesn't stop dependabot from re-opening or 
 normally. The whole chain is built in a dedicated worktree, `.tmp/wt-deps-stack`, never your own
 checkout — a run of `just deps-stack` (`status`, `clean`, `--resume`, or a conflict mid-run
 included) never switches your branch or touches your index. Two dependency bumps landing on
-adjacent lines of the same `*requirements*.txt` file is the most common conflict shape and now
-resolves itself (keeps the higher lower bound per package, `scripts/lib/req_merge.py`); anything
-else — two Actions bumps touching the same workflow line, most often — still stops the script
+adjacent lines of the same file — the only conflict shape dependabot produces — resolve
+themselves: `*requirements*.txt` keeps the higher lower bound per package
+(`scripts/lib/req_merge.py`), a workflow's `uses: owner/action@vN` steps keep the higher version
+per action (`scripts/lib/uses_merge.py`, the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0`
+case); anything else still stops the script
 with the branch left mid-cherry-pick in that worktree and prints the exact `cd .tmp/wt-deps-stack
 && git status` / resolve / `git cherry-pick --continue` / `just deps-stack --resume` steps. Once
 the chain is up, it's a normal stack: `gh stack link` runs automatically, `just stack-merge
