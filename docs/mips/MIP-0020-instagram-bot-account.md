@@ -59,6 +59,25 @@ Live map (updated daily, link in bio): h0ffmann.github.io/marola
 The URL in the caption is plain text — Instagram does not make caption links clickable — which is
 why it is also the bio link.
 
+**Daily-digest variant** (from the maintainer's pasted "Daily Ocean Intelligence" draft, 2026-09-06,
+kept as a template, not a promise of daily cadence — §11 q4): every field below is read from the
+day's board JSON (`site/dist/data/<area>/latest.json`) by the exporter; the emoji, labels and
+hashtags are fixed strings in the template; nothing is model prose.
+
+```
+🌊 marola — Florianópolis, 2026-09-07
+📍 Best window: Praia da Joaquina, 09:00–11:00 (72/100)        ← best.beach / hours[] ≥ best−5
+💧 Water: PRÓPRIA (IMA/SC, sampled 25 Aug)                        ← water.summary
+🪼 Jellyfish: Low   🐋 Whales: High (best 07:00)                 ← hours[].jellyfish / whales, whales.peak
+Live map, link in bio: h0ffmann.github.io/marola
+#Florianópolis #praia #natação #openwater #swimming #marola
+```
+
+Dropped from the pasted draft on purpose: "Rip Current Risk" (marola has no rip-current signal —
+inventing one would be unsourced safety text, the one thing the `mip` skill forbids), "Powered by
+local ocean models & RAG" and `#MadeWithAI` (marketing copy, not data; the repo's tone is the
+number and its source).
+
 ## 4. Data sources and dependencies reviewed
 
 ### 4.1 Instagram Platform — content publishing (Meta developer docs, fetched 2026-09-06)
@@ -145,6 +164,22 @@ single-image posts, image served by GitHub Pages itself. v1 needs none of it.
   network — same stance as `cost-split.py --self-test`). Token from `IG_ACCESS_TOKEN` in the
   gitignored `.env` locally or a GitHub Actions secret; `IG_USER_ID` likewise. Never a default,
   never committed (`AGENTS.md` secret rule; `.env.example` gets both as placeholders).
+- **Container status is polled before publishing** — the pasted reference sketch (appendix D)
+  gets this right and the first draft of this section left it implicit: after `POST …/media`,
+  `GET /<CONTAINER_ID>?fields=status_code` every ~3 s until `FINISHED`; `ERROR` (or `EXPIRED`)
+  aborts with the response body in the message; a ceiling of ~2 min before giving up. Meta
+  documents the async processing for video/Reels; images usually return `FINISHED` at once, but
+  publishing a container that is not `FINISHED` is the documented failure, so the poll is
+  unconditional and cheap. `--self-test` covers `FINISHED`, `IN_PROGRESS`→`FINISHED`, and `ERROR`
+  from the fixture.
+- **Who pulls the trigger — spelled out** (`AGENTS.md` → `AI-500-MAPPING.md` §4, the
+  human-confirmation rule for any proactive behaviour): the script never runs on a schedule. v1
+  is a human posting from a phone. v2's `just ig-post` is run by a human, and its default is
+  `--dry-run`; the real post needs `--publish`, which prints the caption and the image URL and
+  waits for a typed `yes`. The only unattended job is the token *refresh* (below), which posts
+  nothing. "Autonomous daily posting", as the pasted draft calls it, is exactly what this MIP does
+  not build — the day a fully unattended post is wanted, that is a new MIP with a kill switch,
+  a per-day cap and a consent story, not a flag on this script.
 - `just ig-post <caption-file>` wraps it; `just ig-post --dry-run` is the default form in docs.
 - `.github/workflows/ig-token-refresh.yml`: cron every 45 days, `GET /refresh_access_token`,
   writes the new token back to the repo secret (`gh secret set`) — the one piece of automation
@@ -162,6 +197,25 @@ single-image posts, image served by GitHub Pages itself. v1 needs none of it.
 | **A. One committed JPEG**, human screenshot, refreshed by hand when the map changes visibly | zero code, one 200 kB file | **v1 and v2's default** — the first post and most weekly posts don't need a fresh render |
 | B. Render from `latest.json` with a tiny raster (a Python drawing of dots on a basemap tile) | a new dependency (Pillow) and a basemap-tile licence question | rejected for now — a worse picture than the real map, for licence homework |
 | C. Headless Chromium in `site.yml` screenshotting `site/dist` | Playwright in CI, minutes per run | not a site build step (MIP-0005's rule is about the *page*), but a heavy dependency for a weekly image; revisit only if posts become daily |
+
+### 5.4 Setup checklist (human clicking, once) — from the pasted draft, corrected against §4
+
+1. Create the account; switch it to **Creator or Business** (Settings → Account type and tools).
+2. ~~Attach a Facebook Page~~ — **not needed** on the Instagram-Login path this MIP uses (§4.1:
+   "does not require a Facebook Page"). Only the Facebook-Login variant (`graph.facebook.com`,
+   `instagram_basic` + `instagram_content_publish` + `pages_read_engagement`) needs one; marola
+   would switch to it only for features Instagram Login "cannot access" — ads, tagging — none of
+   which this MIP wants (§9).
+3. `developers.facebook.com` → create an app → add the **Instagram** product → "API setup with
+   Instagram login"; add the account as an Instagram tester and accept the invite in the app.
+4. Generate a token, exchange it for a **long-lived** one (60 days, `GET /access_token?
+   grant_type=ig_exchange_token`), store it as `IG_ACCESS_TOKEN` (repo Actions secret or the
+   gitignored `.env`; `.env.example` gets the placeholder) with `IG_USER_ID` from `GET /me`.
+5. Image hosting: ~~S3/R2/CDN~~ — **not needed**: GitHub Pages already serves
+   `https://h0ffmann.github.io/marola/social/marola-map.jpg` (§5.1 step 2), a public HTTPS JPEG,
+   which is all the container endpoint asks for. No new vendor, no new cost.
+6. First `just ig-post --dry-run`, then `--check-limit`, then one real publish with a human
+   watching (§7).
 
 ## 6. Scoring / safety impact
 
@@ -269,3 +323,59 @@ POST https://graph.instagram.com/v21.0/<IG_USER_ID>/media_publish
 ```
 
 (API version `v21.0` is illustrative — pin whatever the dashboard offers when v2 is built.)
+
+**D. The maintainer's pasted reference sketch (2026-09-06), annotated — the shape, not the spec**
+
+Received as "MIP-0005: Instagram Autonomous Daily Posting Agent" (0005 is MIP-0005, the map; this
+MIP is 0020). Kept for its three-step loop; every `←` note is a correction the §4 research forces.
+(Fenced as `text`, not `python`: ruff 0.16 formats Python fences inside Markdown, and this is an
+annotated sketch, not code to format.)
+
+```text
+INSTAGRAM_ACCOUNT_ID = os.getenv("INSTAGRAM_ACCOUNT_ID")   # ← IG_USER_ID here; from GET /me
+ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")         # ← IG_ACCESS_TOKEN, long-lived, refreshed by the 45-day workflow
+IMAGE_URL = "https://cdn.marola.app.br/digests/today.jpg"  # ← no CDN/S3/R2: https://h0ffmann.github.io/marola/social/marola-map.jpg (Pages, free)
+CAPTION = """🌊 Daily Ocean Intelligence by Marola ..."""   # ← §3's template: board fields only; no "Rip Current Risk" (no such signal), no "#MadeWithAI"
+
+def publish_daily_digest():                                # ← not daily, not scheduled: a human runs `just ig-post --publish` and types yes (§5.2)
+    # 1. Create Media Container
+    container_url = f"https://graph.facebook.com/v20.0/{INSTAGRAM_ACCOUNT_ID}/media"
+    # ← graph.instagram.com on the Instagram-Login path (no Facebook Page); v20.0 illustrative
+    res = requests.post(container_url, data={"image_url": IMAGE_URL, "caption": CAPTION,
+                                             "access_token": ACCESS_TOKEN}).json()
+    container_id = res.get("id")                           # ← keep; abort with the body if absent
+    # 2. Poll status until FINISHED                        # ← keep — this is the step §5.2 now states explicitly
+    while True:
+        status = requests.get(f".../{container_id}", params={"fields": "status_code",
+                                                              "access_token": ACCESS_TOKEN}).json().get("status_code")
+        if status == "FINISHED": break
+        elif status == "ERROR": raise RuntimeError(...)    # ← also EXPIRED; and a ~2 min ceiling — the sketch loops forever
+        time.sleep(3)
+    # 3. Publish                                           # ← keep; preceded by --check-limit (quota_usage < 90) in the real script
+    requests.post(f".../{INSTAGRAM_ACCOUNT_ID}/media_publish",
+                  data={"creation_id": container_id, "access_token": ACCESS_TOKEN})
+```
+
+Also from the pasted setup list: "convert to Business/Creator" (kept, §5.4 step 1); "attach a
+Facebook Page" (dropped — not required on this path, §5.4 step 2); "`instagram_basic` +
+`instagram_content_publish`" (those are the Facebook-Login permission names; Instagram Login uses
+`instagram_business_basic` + `instagram_business_content_publish`, §4.1). `requests` → stdlib
+`urllib`, matching `scripts/arxiv_digest.py`; no new Python dependency.
+
+**E. Brand & domain — notes for a human decision, no recommendation**
+
+Pasted by the maintainer on 2026-09-06; what could be checked cheaply is marked, the rest is
+carried as given. A domain is a purchase, so this is the human's call (`AGENTS.md` cost rule in
+spirit — it's not Azure, but it is money).
+
+| Option | Pasted note | Checked 2026-09-06 |
+|---|---|---|
+| `marola.ai` | taken | not re-checked |
+| `.ocean`, `.sea` | not ICANN TLDs | consistent with the IANA root zone (no such entries) — not fetched individually |
+| `.br` bare | needs a category prefix (`.com.br`, `.app.br`, …) | Registro.br rule as stated; site is JavaScript-rendered, its pages fetched empty here — not re-verified |
+| `marola.app.br` | ~R$40/yr on Registro.br, available, needs CPF/CNPJ | price/availability **not verified** (same empty fetch); the CPF/CNPJ requirement is Registro.br's standing rule |
+| `marola.bot` / `marola.bot.br` | "official ICANN TLD via Google Registry" | `.bot` **is** a delegated gTLD (IANA root db, record updated 2025-02-14) — but the registry is **Amazon Registry Services, Inc.**, not Google; `.bot` has historically been a restricted TLD (registrant must demonstrate a bot) — check current policy before assuming it's a plain purchase |
+| `marola.io`, `marola.dev`, `marolaagent.ai` | tech/ecosystem options | not checked |
+
+Where the site lives today — `https://h0ffmann.github.io/marola/` — needs none of these; a custom
+domain would be a `CNAME` in `site/` plus DNS, a one-line change to `site.yml` once decided.
