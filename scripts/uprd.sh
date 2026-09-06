@@ -233,7 +233,11 @@ generate_cost() {
   printf '%s\n' "$out"
 }
 
+# The first line is a marker for .github/workflows/pr-body.yml: while it is present the workflow
+# regenerates the body on every push to the PR (new commits change What changed / Cost / Tested);
+# a human who rewrites the body by hand removes the line and the workflow leaves the PR alone.
 generate_body() {
+  echo "<!-- uprd: generated from the branch's commits — delete this line to stop pr-body.yml from regenerating it -->"
   echo "**Summary** — $(generate_summary)"
   echo
   echo "| | |"

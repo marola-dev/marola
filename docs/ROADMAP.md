@@ -73,19 +73,19 @@ MIP-0003 (fast replies, M) follows it — a bot that takes ten seconds loses the
 ## 5. AI-500 — domain by domain, what's missing and which MIP closes it
 
 `docs/AI-500-MAPPING.md`'s own verdicts, quoted where it is explicit. New MIP numbers proposed
-here start at 0021 (0020 is the Instagram bot, in draft). None is built; each is design-first.
+here start at 0023 (0020 is the Instagram bot, in draft; 0021 accessibility and 0022 the safety footer were drafted from §7 on 2026-09-06). None is built; each is design-first.
 
 | Domain (weight) | What the mapping says is missing | Proposed MIP | Local-first? |
 |---|---|---|---|
-| §1 Architect multi-agent (15-20%) | "one implicit two-agent pipeline… hardcoded as two sequential calls in `Main`… not an orchestrated, addressable multi-agent system"; "**add a third agent with a genuinely different responsibility**"; "document the orchestration topology explicitly" | **MIP-0021 — hazard/escalation agent**, `FUTURE-WORK.md` §9.2 word for word: trend/anomaly detection over the Open-Meteo series marola already fetches, false-positive-averse thresholds, a *human-confirmation gate on the alerting itself* (AI-500 §4, `AGENTS.md`), explicit non-replacement of official alerts. The single highest-value unbuilt AI-500 item; deterministic core in `scoring/`, no Azure needed | yes |
-| §1, topology | same row | **MIP-0022 — roles as addressable units**: summarizer / reviewer / escalation as Pekko typed actors with supervision and mailboxes, the concrete Scala shape `docs/AGENT-FRAMEWORKS-SURVEY.md` already picked; each also exposed as an MCP tool so the topology is *observable*, not prose | yes |
-| §2 Develop in Azure (30-35%, largest) | `azure-ai-agents` "is *not* a dependency yet — declared unused and removed (FABLE_REVIEW C5)"; Foundry Agent Service registration; "agent-to-agent protocols beyond MCP… currently unreviewed"; shared multi-agent state/memory store | **MIP-0023 — Foundry Agent Service + A2A review**: register the three roles as Foundry agents behind the existing `LlmClient` trait, review A2A vs MCP for the inter-agent hop, a shared-state store behind `SightingStore`'s pattern (Cosmos opt-in). **Phase 2** — design now, provision only after MIP-0002 and a costed go-ahead | design yes, build no |
-| §3 Evaluate / monitor (20-25%) | `Reviewer` covers "one agent evaluating another's output" but is "not yet framed as a formal eval harness"; "Langfuse-style multi-agent tracing has no direct JVM/Scala equivalent today" | **MIP-0024 — multi-agent eval harness + cross-agent traces**: per-agent contribution scoring on top of `just benchmark`, traces with a shared run id across summarizer/reviewer/escalation into MIP-0010's MLflow ledger (local) with the App Insights sink as the opt-in | yes |
-| §4 Secure / govern (20-25%) | managed identity only on the Foundry client, "the other Azure clients still use keys"; Content Safety on escalation output; governance/audit-trail docs | **MIP-0025 — managed identity everywhere + Content Safety on the escalation path** (FABLE_REVIEW D1, "migrate before Phase 2"); the audit trail is MIP-0017 §5.1's run log generalised to product agents | identity: pre-Phase 2 prep; Content Safety: Phase 2 |
+| §1 Architect multi-agent (15-20%) | "one implicit two-agent pipeline… hardcoded as two sequential calls in `Main`… not an orchestrated, addressable multi-agent system"; "**add a third agent with a genuinely different responsibility**"; "document the orchestration topology explicitly" | **MIP-0023 — hazard/escalation agent**, `FUTURE-WORK.md` §9.2 word for word: trend/anomaly detection over the Open-Meteo series marola already fetches, false-positive-averse thresholds, a *human-confirmation gate on the alerting itself* (AI-500 §4, `AGENTS.md`), explicit non-replacement of official alerts. The single highest-value unbuilt AI-500 item; deterministic core in `scoring/`, no Azure needed | yes |
+| §1, topology | same row | **MIP-0024 — roles as addressable units**: summarizer / reviewer / escalation as Pekko typed actors with supervision and mailboxes, the concrete Scala shape `docs/AGENT-FRAMEWORKS-SURVEY.md` already picked; each also exposed as an MCP tool so the topology is *observable*, not prose | yes |
+| §2 Develop in Azure (30-35%, largest) | `azure-ai-agents` "is *not* a dependency yet — declared unused and removed (FABLE_REVIEW C5)"; Foundry Agent Service registration; "agent-to-agent protocols beyond MCP… currently unreviewed"; shared multi-agent state/memory store | **MIP-0025 — Foundry Agent Service + A2A review**: register the three roles as Foundry agents behind the existing `LlmClient` trait, review A2A vs MCP for the inter-agent hop, a shared-state store behind `SightingStore`'s pattern (Cosmos opt-in). **Phase 2** — design now, provision only after MIP-0002 and a costed go-ahead | design yes, build no |
+| §3 Evaluate / monitor (20-25%) | `Reviewer` covers "one agent evaluating another's output" but is "not yet framed as a formal eval harness"; "Langfuse-style multi-agent tracing has no direct JVM/Scala equivalent today" | **MIP-0026 — multi-agent eval harness + cross-agent traces**: per-agent contribution scoring on top of `just benchmark`, traces with a shared run id across summarizer/reviewer/escalation into MIP-0010's MLflow ledger (local) with the App Insights sink as the opt-in | yes |
+| §4 Secure / govern (20-25%) | managed identity only on the Foundry client, "the other Azure clients still use keys"; Content Safety on escalation output; governance/audit-trail docs | **MIP-0027 — managed identity everywhere + Content Safety on the escalation path** (FABLE_REVIEW D1, "migrate before Phase 2"); the audit trail is MIP-0017 §5.1's run log generalised to product agents | identity: pre-Phase 2 prep; Content Safety: Phase 2 |
 
 **AI-103, the prerequisite.** Broadly built and live-verified; two named gaps — the Azure AI Search
 RAG sibling (local RAG is built) and a first-class Azure AI Language use — both point at
-`FUTURE-WORK.md` §9 "ocean-knowledge grounding". One MIP, **MIP-0026**, Phase 2. Also fix the
+`FUTURE-WORK.md` §9 "ocean-knowledge grounding". One MIP, **MIP-0028**, Phase 2. Also fix the
 internal inconsistency: the RAG table row says "Built, local-only, live-verified" while the
 summary still calls RAG "a real gap" — the gap is Search-specific.
 
@@ -99,8 +99,8 @@ MIP-0011 delivered gates-as-hooks, path-scoped rules, two subagents, a proactive
 MCP registration. Still missing, per `docs/AGENT-FRAMEWORKS-SURVEY.md` and `AGENT-SKILLS.md`:
 
 - **Product agents as addressable units** — `.claude/agents/` holds only dev-tooling reviewers;
-  nothing represents summarizer/reviewer/escalation. MIP-0022 closes it.
-- **A2A is unreviewed** — the mapping says so itself; MIP-0023's review section.
+  nothing represents summarizer/reviewer/escalation. MIP-0024 closes it.
+- **A2A is unreviewed** — the mapping says so itself; MIP-0025's review section.
 - **Adversarial self-tests for gates** — today's fail-open finding is the argument; extend the
   pattern to `stop-gate.sh` and any future `PreToolUse` hook.
 - **The three remaining `AGENT-SKILLS.md` §3 skills** (`fixture-refresh`, `benchmark-compare`,
@@ -112,24 +112,24 @@ MCP registration. Still missing, per `docs/AGENT-FRAMEWORKS-SURVEY.md` and `AGEN
 
 Ten ideas handed in by the maintainer from a Kimi session, kept verbatim in intent, triaged here
 against what already exists. **No numbers claimed**: per the `mip` skill a number is taken when
-the file is written (0020 is the Instagram bot, in draft; 0021–0026 are §5's AI-500 proposals),
+the file is written (0020 is the Instagram bot, in draft; 0023–0028 are §5's AI-500 proposals; 0021/0022 are K4/K6, now drafted),
 so these are candidates until someone drafts one. "Verdict" uses the index's vocabulary.
 
 | # | Candidate | Overlaps / builds on | Phase | Verdict |
 |---|---|---|---|---|
 | K1 | **Activity-aware scoring** — `Swimability` → an `ActivityScoring` trait: swim, surf (period + swell dir + tide), dive (Copernicus chlorophyll/turbidity), kayak (wind + current + entry); board gains `activity`; the bot asks first | `FUTURE-WORK.md` §1.3/§1.4 already sketch surf/dive; MIP-0005's map is the layer switch | 1 → 2 (Copernicus) | do when MIP-0002 lands — the "what are you doing?" turn needs the bot |
-| K2 | **Proactive hazard alerts** — IMA flips PRÓPRIA→IMPRÓPRIA or a storm surge inside 6 h → unsolicited Telegram push to that beach's subscribers, behind a human-confirmation gate | **Same idea as §5's MIP-0021** (hazard/escalation agent, `FUTURE-WORK.md` §9.2); K2 adds the *delivery* half (consent, rate limit, kill switch) that needs MIP-0004's subscriber store | 2 | fold into MIP-0021 as its Phase-2 delivery section — one design doc, not two |
+| K2 | **Proactive hazard alerts** — IMA flips PRÓPRIA→IMPRÓPRIA or a storm surge inside 6 h → unsolicited Telegram push to that beach's subscribers, behind a human-confirmation gate | **Same idea as §5's MIP-0023** (hazard/escalation agent, `FUTURE-WORK.md` §9.2); K2 adds the *delivery* half (consent, rate limit, kill switch) that needs MIP-0004's subscriber store | 2 | fold into MIP-0023 as its Phase-2 delivery section — one design doc, not two |
 | K3 | **Calendar export** — `/calendario` + an `.ics` link on the card: best hour as an event with tide, water verdict, "leave now" reminder; pure formatter | MIP-0002 (bot), MIP-0005 (card), MIP-0004 (the digest habit it extends) | 1 | cheap win once the bot exists — one pure function, one spec |
 | K4 | **Beach accessibility** — `AccessibilityClient` over Overpass tags (`wheelchair`, `parking`, `shower`, `lifeguard`), matched like `BeachFinder`, shown in notes/card; deterministic | `BeachFinder`'s Overpass path; `docs/ARCHITECTURE.md` §5 pluggable pattern | 0 → 1 | cheap win — the one candidate buildable *today* with no new provider |
 | K5 | **Forecast verification** — store each served forecast, compare with next-day Open-Meteo past observations (or MIP-0006 `Look`s); weekly per-beach accuracy | `ARCHITECTURE.md` §8's calibration promise; feeds MIP-0007; reuses MIP-0010's ledger | 4 | park until there is a month of served boards to compare |
 | K6 | **Safety RAG corpus** — `knowledge/safety/` (rip-current escape, jellyfish first aid, fishing-zone limits), retrieved first, standard lifeguard/SAMU footer | MIP-0001's corpus rules; the `corpus-doc` skill (MIP-0011 task 8) is the tool for exactly this | 0 → 1 | do next, via `corpus-doc`, one sourced doc per PR — no MIP needed for the corpus itself; the "safety footer always" rule *is* MIP material (touches safety text) |
-| K7 | **Operational metrics/SLOs** — reply p99, cache hit rate, board freshness, Overpass 429s, IMA parse failures; `/metrics`, local `metrics.jsonl`, Azure Monitor opt-in | **Overlaps §5's MIP-0024** (eval + traces) and `AI-500-MAPPING.md` §3; MIP-0010 covers experiments, not production health | 3 | fold into MIP-0024 as its "operational" half, or split after MIP-0002 |
+| K7 | **Operational metrics/SLOs** — reply p99, cache hit rate, board freshness, Overpass 429s, IMA parse failures; `/metrics`, local `metrics.jsonl`, Azure Monitor opt-in | **Overlaps §5's MIP-0026** (eval + traces) and `AI-500-MAPPING.md` §3; MIP-0010 covers experiments, not production health | 3 | fold into MIP-0026 as its "operational" half, or split after MIP-0002 |
 | K8 | **PWA for the map** — service worker caching last board + assets, manifest, install prompt, refresh button | MIP-0005's "plain files, no build" constraint — a service worker is plain JS, still no build | 1 | cheap win after MIP-0009 (same `app.js`, avoid two hands in one file) |
 | K9 | **Route planning** — start/end (or Maps URL via `Coordinates.fromMapsUrl`), corridor sampling, score at arrival hour, ranked itinerary | `BeachFinder` gains a corridor mode; no new source | 1 | do when X lands (X = MIP-0003 — a corridor multiplies fetches; caching first) |
 | K10 | **i18n framework** — `MessageBundle` trait, per-language JSON, plurals, CI gate for missing `pt-BR` | MIP-0002/0004 both mention pt-BR with no plumbing | 1 | do with MIP-0002, not before — the first user-facing strings are its |
 
 **Where they slot into §3–§5's order:** K4 and K6 now (Phase 0, no new provider, `corpus-doc`
-exists); K3, K8, K10 ride with MIP-0002/0009; K2 and K7 are absorbed into MIP-0021 and MIP-0024
+exists); K3, K8, K10 ride with MIP-0002/0009; K2 and K7 are absorbed into MIP-0023 and MIP-0026
 rather than becoming separate docs; K1, K9 after Phase 1; K5 parked.
 
 ### Provider-query checklist — verify before any of these becomes a MIP
@@ -175,7 +175,7 @@ Tick with the date and the URL you actually read.
 
 MIP-0007 (time-series foundation models), MIP-0015 (Interação matching — a social feature, weak
 AI-500 tie despite its tag), MIP-0014 (the book, XL), MIP-0012 (llm4s, XL — revisit when
-MIP-0022's actor shape shows what the LLM layer needs), MIP-0013 (OpenCode tryout, S — cheap, but
+MIP-0024's actor shape shows what the LLM layer needs), MIP-0013 (OpenCode tryout, S — cheap, but
 only worth running once the hooks it would compare against have a month of use).
 
 ## 9. How this file stays true

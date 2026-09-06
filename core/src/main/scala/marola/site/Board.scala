@@ -115,6 +115,11 @@ object Board:
       "sea_temp_c" -> optNum(r.hour.seaTempC),
       "wave_m" -> optNum(r.hour.waveHeightM),
       "wind_kmh" -> optNum(r.hour.windSpeedKmh),
+      // The band the CLI's note uses, lower-cased for the page; optional in the schema so an
+      // already-published board without it still validates (MIP-0009 §5).
+      "wind_level" -> optStr(
+        Swimability.windLevel(r.hour.windSpeedKmh).map(_.toString.toLowerCase)
+      ),
       "jellyfish" -> JsonValue.str(r.jellyfishRisk.toString),
       "whales" -> JsonValue.str(r.whaleSightingLikelihood.toString)
     )

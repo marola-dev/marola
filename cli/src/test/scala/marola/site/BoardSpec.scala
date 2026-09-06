@@ -166,6 +166,42 @@ class BoardSpec extends munit.FunSuite:
     assert(SchemaCheck.validate(schema, broken).exists(_.contains("beaches")))
   }
 
+  test("board: every hour carries wind_level, consistent with its wind_kmh (MIP-0009 task 1)") {
+    val b = board(tomorrow)
+    val hours = b("beaches").arr.flatMap(_("hours").arr)
+    assert(hours.nonEmpty)
+    hours.foreach { h =>
+      val expected =
+        marola.scoring.Swimability.windLevel(h("wind_kmh").num).map(_.toString.toLowerCase)
+      assertEquals(h("wind_level").str, expected, h.render)
+    }
+    // the fixture must exercise at least one real band, or this test proves nothing
+    assert(hours.exists(_("wind_level").str.isDefined), "no hour had a wind_level")
+  }
+
+  test(
+    "board: schema accepts a board with wind_level and one without it (optional, schema stays 1)"
+  ) {
+    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    val b = board(tomorrow)
+    assertEquals(SchemaCheck.validate(schema, b), Nil)
+    def strip(v: JsonValue): JsonValue = v match
+      case JsonValue.JObject(fields) =>
+        JsonValue.JObject((fields - "wind_level").map { case (k, x) => k -> strip(x) })
+      case JsonValue.JArray(items) => JsonValue.JArray(items.map(strip))
+      case other                   => other
+    val old = strip(b)
+    assert(old.render != b.render, "strip must have removed something")
+    assertEquals(SchemaCheck.validate(schema, old), Nil)
+    // and a wrong band is rejected — the enum bites
+    val bad =
+      b.render.replaceFirst(
+        "\"wind_level\":\\s*\"(calm|breezy|strong)\"",
+        "\"wind_level\":\"gale\""
+      )
+    assert(SchemaCheck.validate(schema, JsonValue.parse(bad)).exists(_.contains("not in enum")))
+  }
+
 end BoardSpec
 
 object BoardSpec:

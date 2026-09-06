@@ -149,6 +149,63 @@
     state.map.setView([area.lat, area.lon], 11);
   }
 
+  // --- wave markers + hover aspects (MIP-0009) -------------------------------------------------
+  var WIND_EMOJI = { calm: '🍃', breezy: '🌬️', strong: '💨' };
+  var COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  function compass(deg) { return deg === null || deg === undefined ? '' : COMPASS[Math.round(deg / 45) % 8]; }
+
+  /**
+   * One wave, filled with the score colour. A single path with a body — a crest over a flat base —
+   * so the colour has area the way the old 10 px dot did: two thin ribbons plus a white halo read
+   * as white smudges once eighty beaches sit close together. Keep this `d` and index.html's legend
+   * key in step. The selected beach's is larger and drawn on top; a past hour fades the fill and
+   * dashes the outline in CSS, so the shape stays legible over the tiles.
+   */
+  var WAVE_PATH = 'M3 10c2.6-7 6.4-7 9 0s6.4 5 9 0v10H3z';
+  function waveIcon(fill, selected, past) {
+    var size = selected ? 32 : 24;
+    return L.divIcon({
+      className: 'wave' + (selected ? ' selected' : '') + (past ? ' past' : ''),
+      iconSize: [size, size], iconAnchor: [size / 2, size / 2], tooltipAnchor: [0, -size / 2],
+      html: '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" aria-hidden="true">' +
+        '<path d="' + WAVE_PATH + '" fill="' + esc(fill) + '" stroke="#fff" stroke-width="1" stroke-linejoin="round"/></svg>'
+    });
+  }
+
+  /** The full hours[] entry behind what `shown()` returns (the best-hour shape carries no numbers). */
+  function hourEntry(beach, s) {
+    if (!s) return null;
+    for (var i = 0; i < beach.hours.length; i++) if (beach.hours[i].h === s.h) return beach.hours[i];
+    return null;
+  }
+
+  /**
+   * The six aspects at the shown hour — every value a number or an enum from the board, every
+   * emoji followed by its word (older fonts lack 🪼). Used by the marker tooltip and, in task 4,
+   * as the first block of the card, so hover and tap see the same thing.
+   */
+  function aspectsHtml(beach, s) {
+    var head = '<div class="head">🌊 ' + esc(beach.name) + (s ? ' · ' + s.score + '/100 at ' + esc(s.h) : ' · dark at this hour') + '</div>';
+    var e = hourEntry(beach, s);
+    if (!e) return head;
+    var level = e.wind_level || null; // an older board has no band: number only, no word
+    var wind = (level ? WIND_EMOJI[level] + ' ' + level + ', ' : '🌬️ wind ') + fmt(e.wind_kmh, ' km/h', 0) +
+      (s.best && beach.sea.wind_dir_deg !== null ? ' ' + compass(beach.sea.wind_dir_deg) : '');
+    var waves = '〰️ waves ' + fmt(e.wave_m, ' m') + (s.best && beach.sea.period_s !== null ? ' every ' + fmt(beach.sea.period_s, ' s', 0) : '');
+    var whales = '🐋 whales ' + esc(e.whales) + (beach.whales.peak && beach.whales.peak !== e.h ? ' (best ' + esc(beach.whales.peak) + ')' : '');
+    // The verdict is a sentence ("8/9 PRÓPRIA — avoid Ponto 98 (25 Aug)"), not a reading: it gets
+    // the full width and wraps (.wide), while the five short cells stay on one line each.
+    var water = '<span class="wide ' + (beach.water.unfit ? 'unfit' : 'water') + '">💧 ' + esc(beach.water.summary) + '</span>';
+    return head + '<div class="grid">' +
+      '<span>' + wind + '</span>' +
+      '<span>🌡️ water ' + fmt(e.sea_temp_c, ' °C') + '</span>' +
+      '<span>' + waves + '</span>' +
+      '<span>🪼 jellyfish ' + esc(e.jellyfish) + '</span>' +
+      '<span>' + whales + '</span>' +
+      water +
+      '</div>';
+  }
+
   function render() {
     var board = state.board;
     Object.keys(state.markers).forEach(function (k) { state.map.removeLayer(state.markers[k]); });
@@ -157,10 +214,15 @@
     board.beaches.forEach(function (beach) {
       var s = shown(beach);
       var c = colour(s ? s.score : null, beach.water.unfit);
-      var m = L.circleMarker([beach.lat, beach.lon], {
-        radius: state.selected === beach.name ? 13 : 10, color: '#fff', weight: 2, fillColor: c, fillOpacity: s && isPast(s.h) ? 0.45 : 0.9
+      var selected = state.selected === beach.name;
+      var m = L.marker([beach.lat, beach.lon], {
+        icon: waveIcon(c, selected, !!(s && isPast(s.h))), zIndexOffset: selected ? 1000 : 0, keyboard: true
       }).addTo(state.map);
-      m.bindTooltip(beach.name + (s ? ' · ' + s.score + ' at ' + s.h : ' · dark'), { direction: 'top', offset: [0, -8] });
+      // No `title`: the browser would draw its own tooltip on top of Leaflet's after ~1 s. keyboard:
+      // true already makes the icon focusable (tabindex + role=button); name it for a screen reader
+      // directly instead. Guarded — the stub Leaflet in scripts/site_check.js has no element.
+      if (m.getElement) { var mel = m.getElement(); if (mel) mel.setAttribute('aria-label', beach.name); }
+      m.bindTooltip(aspectsHtml(beach, s), { sticky: true, direction: 'top', className: 'aspects', opacity: 0.97 });
       m.on('click', function (e) { L.DomEvent.stopPropagation(e); select(beach.name, false); });
       state.markers[beach.name] = m;
       bounds.push([beach.lat, beach.lon]);
@@ -249,7 +311,10 @@
     var whales = b.whales.now + (b.whales.peak ? ', best daylight odds at ' + esc(b.whales.peak) : '') + (b.whales.season ? ' — humpback season' : ' — outside July-November');
     el.card.innerHTML =
       '<button class="close" type="button" aria-label="Close">×</button>' +
-      '<h2>' + esc(b.name) + '</h2>' + head +
+      '<h2>' + esc(b.name) + '</h2>' +
+      // Touch has no hover: the same aspect row the tooltip shows, first, so a tap sees what a
+      // mouse sees (MIP-0009 §3). Its .head repeats the h2 and is hidden by CSS inside the card.
+      '<div class="aspects">' + aspectsHtml(b, s) + '</div>' + head +
       '<dl>' +
       '<dt>Why</dt><dd>' + notes + '</dd>' +
       '<dt>Water quality</dt><dd>' + water + '</dd>' +

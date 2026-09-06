@@ -71,6 +71,7 @@
               "sea_temp_c": { "type": ["number", "null"] },
               "wave_m": { "type": ["number", "null"] },
               "wind_kmh": { "type": ["number", "null"] },
+              "wind_level": { "type": ["string", "null"], "enum": ["calm", "breezy", "strong", null] },
               "jellyfish": { "$ref": "#/$defs/likelihood" },
               "whales": { "$ref": "#/$defs/likelihood" }
             }

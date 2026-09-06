@@ -285,7 +285,10 @@ object SwimConditionsMcpServer:
       .toolCall(waterQualityTool, waterQualityHandler(_, _))
       .toolCall(askTool, askHandler(_, _))
       .build()
-    // Blocks forever serving stdio requests, per StdioServerTransportProvider's own design — this
-    // main is meant to be launched by an MCP client (Claude Desktop, an agent framework), not run
-    // interactively.
+    // `main` returns here. What keeps the process serving stdio is the SDK's non-daemon reader
+    // thread, which ends on stdin EOF — so under plain `java` the JVM lives exactly as long as the
+    // client's pipe. Under sbt's *in-process* run that is not enough: sbt treats `main` returning
+    // as task completion and exits, which is why `build.sbt` forks `run` (`.mcp.json` launches
+    // this via `just mcp-server`; MIP-0011 task 9 review, 2026-09-06). Launched by an MCP client
+    // (Claude Code, Claude Desktop), never interactively.
     Runtime.getRuntime.addShutdownHook(Thread(() => server.closeGracefully()))

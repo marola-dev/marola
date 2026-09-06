@@ -85,6 +85,14 @@ enum JellyfishRisk derives CanEqual:
   case Low, Moderate, High
 
 /**
+ * The wind band `Swimability.windDelta` scores and names ("breezy", "strong wind"), exposed so the
+ * map can show the same word without re-deriving a threshold in JavaScript (MIP-0009 §5). Absent
+ * wind data is `None` at the call site, not a fourth case — "no wind data" is a different note.
+ */
+enum WindLevel derives CanEqual:
+  case Calm, Breezy, Strong
+
+/**
  * Humpback whales migrate along the Brazilian coast in austral winter/spring (roughly
  * July-November, see Swimability.whaleSightingLikelihood) — informational, not a safety/scoring
  * signal like `JellyfishRisk`, so it never affects `swimabilityScore`.

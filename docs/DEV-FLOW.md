@@ -90,6 +90,13 @@ What GitHub shows: a stacked PR is a PR whose base is the previous branch; its p
 feature, `gh stack`) adds the ordered list at the top of each PR; `just uprds` writes the same list
 at the end of each body, with the summed Cost, for readers without the feature.
 
+A PR opened any other way — the GitHub UI's "Compare & pull request", a bare `gh pr create` — gets
+the same body without anyone running `just uprd`: `.github/workflows/pr-body.yml` runs
+`scripts/uprd.sh <PR#>` when the PR is opened, reopened, marked ready, or gets new commits, as long
+as the body is empty, still the raw template, or carries uprd's own first-line marker (a
+hand-written body is left alone; delete the marker line to stop regeneration). It also replaces a
+title that is still the branch name with the first commit's subject. Forks and bot PRs are skipped.
+
 The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape — bold labels, a compact
 MIP/Tested/Cost table, no `#` headings, one screen for a typical two-commit PR; the PR title is
 the first commit's subject on the branch, capped at 70 characters (`scripts/lib/uprd_title.sh`) so
@@ -161,14 +168,33 @@ never touched, so an abandoned stack doesn't stop dependabot from re-opening or 
 normally. The whole chain is built in a dedicated worktree, `.tmp/wt-deps-stack`, never your own
 checkout — a run of `just deps-stack` (`status`, `clean`, `--resume`, or a conflict mid-run
 included) never switches your branch or touches your index. Two dependency bumps landing on
-adjacent lines of the same `*requirements*.txt` file is the most common conflict shape and now
-resolves itself (keeps the higher lower bound per package, `scripts/lib/req_merge.py`); anything
-else — two Actions bumps touching the same workflow line, most often — still stops the script
+adjacent lines of the same file — the only conflict shape dependabot produces — resolve
+themselves: `*requirements*.txt` keeps the higher lower bound per package
+(`scripts/lib/req_merge.py`), a workflow's `uses: owner/action@vN` steps keep the higher version
+per action (`scripts/lib/uses_merge.py`, the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0`
+case); anything else still stops the script
 with the branch left mid-cherry-pick in that worktree and prints the exact `cd .tmp/wt-deps-stack
 && git status` / resolve / `git cherry-pick --continue` / `just deps-stack --resume` steps. Once
 the chain is up, it's a normal stack: `gh stack link` runs automatically, `just stack-merge
 <stack#> --squash` merges it bottom-up in one CI run instead of one-per-bump, and `just deps-stack
 clean` deletes the chain branches (and the worktree) once every stacked PR shows MERGED.
+
+### MIP draft PRs
+
+Drafts pile up the same way bumps do — one `docs/mip-NNNN-*` branch per proposal, each open for
+days — and they fight over one line: every draft appends its row to `docs/mips/README.md` at the
+same place, so the moment one merges the rest conflict there. `just mip-stack` chains the open
+draft PRs (any PR whose head is `docs/mip-*` or that adds a `docs/mips/MIP-NNNN-*.md`; task
+branches `mip-NNNN/k-*` are left to `scripts/stack.sh`) into one `mips/<date>/k-slug` stack
+ordered by MIP number, the exact shape `just deps-stack` gives dependabot: built in its own
+worktree (`.tmp/wt-mip-stack`), one new PR per chain branch stacked on the previous, the original
+PR closed with a pointer, `gh stack link` at the end, `just mip-stack status` / `clean` /
+`--resume` / `--skip` / `--dry-run` as for deps. The index-row conflict resolves itself
+(`scripts/lib/mip_index_merge.py`: both sides' rows, one per MIP, in number order; the same row
+edited differently on both sides is a real edit and stops for a human). A draft that merged
+another draft's branch to stay mergeable is fine — merge commits are skipped and commits the
+chain already carries are dropped by patch-id. Then `just stack-merge <stack#> --squash` lands
+the lot bottom-up.
 
 ## 7. Overnight/unattended runs
 
@@ -177,11 +203,15 @@ a time, unattended, via a `/goal` + `/loop`. Two mechanics can drive the recurri
 pick one per run, don't build both (MIP-0011 §11's OQ7 spike, resolved below):
 
 - **Local `/goal` + `/loop`** (the one actually run, end to end, while writing this MIP's own
-  task stack): `CronCreate` schedules a recurring prompt (`*/15 * * * *` for every 15 minutes) that
-  re-invokes the skill; it fires only while this session stays open, auto-expires after 7 days, and
-  needs nothing beyond what's already in this repo/session. **Chosen as the default** — it needs no
-  extra environment setup and was demonstrated working for real (a real MIP-0011 task stack, real
-  pushed branches, real `GH_POST_MORTEM.md` entries when `gh` had no session auth).
+  task stack): the human types `/mip-solve-perpetual NNNN` once and that single turn works through
+  the whole task file, checkpointing per task. **Chosen as the default** — no extra setup, and
+  demonstrated for real (eleven MIP-0011 tasks, real pushed branches, real `GH_POST_MORTEM.md`
+  entries when `gh` had no session auth). **What it cannot do, verified 2026-09-06 05:01:** start
+  itself later. A `CronCreate`/wakeup whose prompt is the slash command arrives as plain text — the
+  harness does not expand it and the Skill tool refuses it (`disable-model-invocation`). The
+  earlier claim here that a 15-minute cron "re-invokes the skill" was never exercised (the stack
+  finished inside the one typed turn) and is wrong. For a start at a fixed hour, the human types
+  the command at that hour, or creates a cloud routine themselves — the agent's job is staging.
 - **A cloud [routine](https://code.claude.com/docs/en/routines)** runs even after the laptop closes,
   but needs Claude Code on the web / a cloud environment — not confirmed available in every
   contributor's setup, and MIP-0013's OpenCode tryout doesn't cover it either. Worth adopting once
@@ -243,7 +273,9 @@ waking up, full stop.
 | Delete merged branches | `just branches-clean` (local + remote ref, skips current branch/main) |
 | PR for a stray plain branch | `just branches-open` (base=main; stack branches point at `scripts/stack.sh pr`) |
 | Stack the open dependency PRs | `just deps-stack` (`--dry-run`, `--resume`, `--skip <PR#>`, `--include-steward`); `just deps-stack status` / `just deps-stack clean` |
+| Stack the open MIP draft PRs | `just mip-stack` (`--dry-run`, `--resume`, `--skip <PR#>`); `just mip-stack status` / `just mip-stack clean` |
 | Cost per PR | `just cost-split MIP-NNNN [--session <id>] [--estimate]`, `just claude-cost` |
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |
 | Status line | `.claude/statusline.sh`, shared via `.claude/settings.json` |
 | Push text to the clipboard (write-only) | `just clip` — needs `MAROLA_JAIL_CLIPBOARD=1 just jail-claude` inside the jail, works directly outside it |
+| Claude Code's own image paste (Ctrl+V) inside the jail | `MAROLA_JAIL_CLIPBOARD_PASTE=1 just jail-claude` — opt-in X11/Wayland display passthrough, off by default (bigger grant than the write-only bridge, see justfile's `jail-claude` comment) |

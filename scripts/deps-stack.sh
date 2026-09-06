@@ -21,10 +21,12 @@
 # worktree fresh off `origin/main` — including a stale one left over from an earlier date's run;
 # `clean` removes it (`git worktree remove --force`) once every chain branch is confirmed MERGED
 # and deleted. On a conflict, the printed instructions `cd` into that worktree, not the caller's
-# tree. Two dependency-bump commits landing on adjacent lines of the same `*requirements*.txt`
-# file is the single most common conflict shape here (`scripts/lib/req_merge.py`'s docstring) —
-# it's auto-resolved (kept lower-bound = the higher of the two, per package) before this script
-# ever prints a human-resolve message; anything else still stops for a human.
+# tree. Two dependency-bump commits landing on adjacent lines of the same file are the conflict
+# shapes here, and both auto-resolve before this script ever prints a human-resolve message:
+# `*requirements*.txt` (`scripts/lib/req_merge.py`, kept lower-bound = the higher of the two, per
+# package) and `.github/workflows/*.yml` `uses:` steps (`scripts/lib/uses_merge.py`, kept ref =
+# the higher version per action — actions/checkout@v7 next to hadolint-action@v3.5.0, the
+# 2026-09-06 case). Anything else still stops for a human.
 #
 # ---------------------------------------------------------------------------------------------
 # 1. Discovery (scripts/fixtures/deps-stack-prs.json shapes the same fields):
@@ -53,9 +55,9 @@
 #    `.tmp/wt-deps-stack` (see "Isolation" above, not the caller's checkout): branch k is
 #    `deps/<YYYY-MM-DD>/<k>-<slug>`, created from branch k-1 (k=1 from `origin/main`), then that
 #    PR's own commits (`<base>..<head>` of the *original* dependabot branch) are cherry-picked
-#    onto it. A requirements-file bump-vs-bump conflict auto-resolves (scripts/lib/req_merge.py);
-#    anything else (two Actions bumps touching the same workflow line, most often) stops the
-#    script with the branch left mid-cherry-pick in that worktree: resolve with `cd
+#    onto it. A bump-vs-bump conflict auto-resolves — requirements files via
+#    scripts/lib/req_merge.py, workflow `uses:` lines via scripts/lib/uses_merge.py; anything
+#    else stops the script with the branch left mid-cherry-pick in that worktree: resolve with `cd
 #    .tmp/wt-deps-stack && git status`, fix, `git add`, `git cherry-pick --continue`, `cd -`, then
 #    re-run with `--resume` to build the remaining branches. The plan (which PRs, in what order,
 #    on what date) is cached at .tmp/deps-stack/plan.json so `--resume` continues the *same* chain
@@ -154,34 +156,45 @@ print_conflict_instructions() {   # $1 = branch left mid-cherry-pick
   echo "  just deps-stack --resume"
 }
 
-# Auto-resolve one conflict class: every file `git diff --name-only --diff-filter=U` reports in
-# the worktree matches `*requirements*.txt`, and scripts/lib/req_merge.py can reduce every hunk in
-# each of them to "keep the higher lower bound per package" (its own docstring/self-test cover the
-# exact shapes it accepts and refuses). Returns 0 and leaves the resolved files `git add`ed (ready
-# for `cherry-pick --continue`) only when *every* conflicted file qualified and resolved; otherwise
-# returns 1 and touches nothing, so the ordinary conflict-stop path still applies.
-auto_resolve_requirements() {
+# Auto-resolve the two bump-vs-bump conflict classes: every file `git diff --name-only
+# --diff-filter=U` reports in the worktree is either a `*requirements*.txt` (scripts/lib/
+# req_merge.py: keep the higher lower bound per package) or a `.github/workflows/*.yml|yaml`
+# (scripts/lib/uses_merge.py: keep the higher `uses: owner/action@vN` per step — the
+# actions/checkout-bump-next-to-a-hadolint-bump shape). Each module's docstring/self-test covers
+# the exact hunks it accepts and refuses. Returns 0 and leaves the resolved files `git add`ed
+# (ready for `cherry-pick --continue`) only when *every* conflicted file qualified and resolved;
+# otherwise returns 1 and stages nothing, so the ordinary conflict-stop path still applies. (Each
+# module is itself all-or-nothing over the files it gets; when the requirements files resolve and
+# a workflow file then refuses, the requirements files stay resolved on disk but unstaged — the
+# human-resolve step that follows only has the workflow file left to fix.)
+auto_resolve_bumps() {
   local conflicted f
   conflicted="$(git -C "$wt_dir" diff --name-only --diff-filter=U)"
   [ -n "$conflicted" ] || return 1
+  local -a reqs=() flows=()
   while read -r f; do
     [ -n "$f" ] || continue
     case "$f" in
-      *requirements*.txt) ;;
+      *requirements*.txt) reqs+=("$wt_dir/$f") ;;
+      .github/workflows/*.yml|.github/workflows/*.yaml) flows+=("$wt_dir/$f") ;;
       *) return 1 ;;
     esac
   done <<<"$conflicted"
-  local -a abspaths=()
-  while read -r f; do
-    [ -n "$f" ] || continue
-    abspaths+=("$wt_dir/$f")
-  done <<<"$conflicted"
   local out
-  if ! out="$(python3 "$script_dir/lib/req_merge.py" "${abspaths[@]}" 2>&1)"; then
-    [ -z "$out" ] || echo "$out" >&2
-    return 1
+  if [ "${#reqs[@]}" -gt 0 ]; then
+    if ! out="$(python3 "$script_dir/lib/req_merge.py" "${reqs[@]}" 2>&1)"; then
+      [ -z "$out" ] || echo "$out" >&2
+      return 1
+    fi
+    [ -z "$out" ] || echo "$out"
   fi
-  [ -z "$out" ] || echo "$out"
+  if [ "${#flows[@]}" -gt 0 ]; then
+    if ! out="$(python3 "$script_dir/lib/uses_merge.py" "${flows[@]}" 2>&1)"; then
+      [ -z "$out" ] || echo "$out" >&2
+      return 1
+    fi
+    [ -z "$out" ] || echo "$out"
+  fi
   while read -r f; do
     [ -n "$f" ] || continue
     git -C "$wt_dir" add "$f"
@@ -384,8 +397,8 @@ build_chain() {   # $1 = plan JSON -> builds/continues the local branch chain
     base_name="$(base_branch_of "$plan" "$k")"
     if git -C "$wt_dir" rev-parse --verify -q "refs/heads/$branch" >/dev/null; then
       if [ -e "$(git -C "$wt_dir" rev-parse --git-path CHERRY_PICK_HEAD)" ] && [ "$(git -C "$wt_dir" branch --show-current)" = "$branch" ]; then
-        if auto_resolve_requirements && git -C "$wt_dir" cherry-pick --continue; then
-          echo "deps-stack: auto-resolved a requirements-bound conflict left over on $branch"
+        if auto_resolve_bumps && git -C "$wt_dir" cherry-pick --continue; then
+          echo "deps-stack: auto-resolved a bump-vs-bump conflict left over on $branch"
         else
           echo "deps-stack: $branch has an unresolved cherry-pick — finish it first:"
           print_conflict_instructions "$branch"
@@ -410,8 +423,8 @@ build_chain() {   # $1 = plan JSON -> builds/continues the local branch chain
     while read -r c; do
       [ -n "$c" ] || continue
       if ! git -C "$wt_dir" cherry-pick "$c"; then
-        if auto_resolve_requirements && git -C "$wt_dir" cherry-pick --continue; then
-          echo "deps-stack: auto-resolved a requirements-bound conflict cherry-picking $c onto $branch"
+        if auto_resolve_bumps && git -C "$wt_dir" cherry-pick --continue; then
+          echo "deps-stack: auto-resolved a bump-vs-bump conflict cherry-picking $c onto $branch"
         else
           print_conflict_instructions "$branch"
           exit 1
