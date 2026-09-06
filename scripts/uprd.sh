@@ -46,6 +46,11 @@ done
 
 branch="${BRANCH:-$(git branch --show-current)}"
 [ -n "$branch" ] || { echo "uprd: detached HEAD — check out the PR branch first" >&2; exit 1; }
+# Refuse on the base branch itself, before any gh call — `gh pr create --head main --base main`
+# fails confusingly ("head branch is the same as base branch"). ${BASE:-main} is only a guess
+# here (the PR's real base is resolved below via `gh pr view`), but it catches the common case.
+guard_base="${BASE:-main}"
+[ "$branch" != "$guard_base" ] || { echo "uprd: you are on '$branch' — check out the PR branch first (git switch <branch>), or BRANCH=<branch> just uprd" >&2; exit 1; }
 # The branch's tip: local if it exists here, else the remote-tracking one (uprds on a stack that
 # was pushed from another machine).
 if git rev-parse --verify -q "$branch" >/dev/null; then head_ref="$branch"; else head_ref="origin/$branch"; fi
