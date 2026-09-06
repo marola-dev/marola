@@ -54,6 +54,10 @@ check_stop() {
 }
 
 self_test() {
+  # Hooks run with the harness's GIT_DIR/GIT_WORK_TREE in the environment; `git -C <tmp>` does NOT
+  # override GIT_DIR, so the throwaway `git init/config/commit` below landed in the real repo
+  # (core.bare=true, a test identity, a stray "init" commit) on every push — seen 2026-09-06.
+  unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
   local fails=0
   local tmp; tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN

@@ -44,6 +44,9 @@ print_context() {
 }
 
 self_test() {
+  # Same leak as stop-gate.sh: under the harness's GIT_DIR, `git -C <tmp>` still targets the real
+  # repo — its `config user.email test@example.com` overwrote .git/config on every push.
+  unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
   local fails=0
   local tmp; tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
