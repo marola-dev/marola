@@ -289,6 +289,38 @@ context-mips:
     mkdir -p .tmp && "$(just _repomix)" -c repomix.config.json
     @just _clip .tmp/marola-context-mips.md
 
+# A second opinion on one already-written MIP, for a reviewer who is NOT this project's own coding
+# agent (a different LLM, or a human) — the point is independence from same-model review bias.
+# Packs README.md, AGENTS.md, PHILOSOPHY.md and docs/mips/MIP-NNNN-*.md (+ its .tasks.md if one
+# exists) plus a "this is a MIP review request" framing (repomix-instruction-mip-review.md) into
+# .tmp/marola-context-mip-MIP-NNNN.md and copies it to the clipboard. `just context-mip MIP-0010`.
+# Deliberately narrow: it does NOT pull whatever the MIP's own "Related" row points at (other
+# MIPs, ARCHITECTURE.md sections) — every existing MIP's Related row names at least one doc this
+# pack omits, so for a MIP that leans heavily on one of those, ask the reviewer to flag the gap
+# (the instruction file asks them to) rather than assuming three fixed docs are always enough.
+context-mip mip:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    num="$(grep -oE '[0-9]{4}' <<<"{{mip}}" | head -1)"
+    if [ -z "$num" ]; then echo "usage: just context-mip MIP-NNNN" >&2; exit 1; fi
+    mip_file="$(ls docs/mips/MIP-"$num"-*.md 2>/dev/null | head -1)"
+    if [ -z "$mip_file" ]; then echo "no docs/mips/MIP-$num-*.md found" >&2; exit 1; fi
+    include="\"README.md\", \"AGENTS.md\", \"PHILOSOPHY.md\", \"$mip_file\""
+    tasks_file="docs/mips/MIP-$num.tasks.md"
+    [ -f "$tasks_file" ] && include="$include, \"$tasks_file\""
+    mkdir -p .tmp
+    out=".tmp/marola-context-mip-MIP-$num.md"
+    cfg=".tmp/repomix-mip-review-MIP-$num.config.json"
+    header="marola — MIP-$num review request pack for a reviewer outside this project's own coding agent (a different model, or a human). README, AGENTS.md, PHILOSOPHY.md plus this one MIP — no other code or docs. See the instruction section for what is being asked."
+    # A dedicated config, not --include on the CLI: repomix auto-loads repomix.config.json from
+    # the repo root regardless (its `include: docs/mips/**` pulls in every MIP), and CLI --include
+    # does not override that — confirmed by testing, not assumed. -c fully replaces it. Built with
+    # printf (one indented line), not a heredoc: an unindented heredoc body reads to `just` itself
+    # as the recipe having ended, not as bash script content.
+    printf '{\n  "$schema": "https://repomix.com/schemas/latest/schema.json",\n  "output": {\n    "filePath": "%s",\n    "style": "markdown",\n    "headerText": "%s",\n    "instructionFilePath": "repomix-instruction-mip-review.md"\n  },\n  "include": [%s],\n  "ignore": { "useGitignore": true, "useDefaultPatterns": true }\n}\n' "$out" "$header" "$include" > "$cfg"
+    "$(just _repomix)" -c "$cfg"
+    just _clip "$out"
+
 # Same idea for the whole repo (code included, comments stripped) — big; for code questions only.
 context-full:
     mkdir -p .tmp && "$(just _repomix)" --style markdown --compress --remove-comments -o .tmp/marola-context-full.md .
