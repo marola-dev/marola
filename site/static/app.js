@@ -311,7 +311,10 @@
     var whales = b.whales.now + (b.whales.peak ? ', best daylight odds at ' + esc(b.whales.peak) : '') + (b.whales.season ? ' — humpback season' : ' — outside July-November');
     el.card.innerHTML =
       '<button class="close" type="button" aria-label="Close">×</button>' +
-      '<h2>' + esc(b.name) + '</h2>' + head +
+      '<h2>' + esc(b.name) + '</h2>' +
+      // Touch has no hover: the same aspect row the tooltip shows, first, so a tap sees what a
+      // mouse sees (MIP-0009 §3). Its .head repeats the h2 and is hidden by CSS inside the card.
+      '<div class="aspects">' + aspectsHtml(b, s) + '</div>' + head +
       '<dl>' +
       '<dt>Why</dt><dd>' + notes + '</dd>' +
       '<dt>Water quality</dt><dd>' + water + '</dd>' +

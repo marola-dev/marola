@@ -192,6 +192,11 @@ async function runPage(board) {
     joaq.handlers.click({});
     ok(els.card.hidden === false && els.card.innerHTML.includes('Praia da Joaquina') && els.card.innerHTML.includes('55/100'),
       'clicking Joaquina\'s wave opens its card with the score');
+    // task 4: the card's first block is the very same aspect row the tooltip shows (touch parity)
+    const card = els.card.innerHTML;
+    const rowAt = card.indexOf('<div class="aspects">' + tip + '</div>');
+    ok(rowAt >= 0 && rowAt < card.indexOf('<dl>') && rowAt > card.indexOf('</h2>'),
+      'the card starts (after the h2) with the tooltip\'s exact aspect row, before the details', card.slice(0, 300));
     const sel = L.created.filter(l => l.added && isWave(l)).find(m => String(m.tooltip).includes('Praia da Joaquina'));
     ok(sel && /\bselected\b/.test(sel.opts.icon.options.className) && sel.opts.icon.options.iconSize[0] === 32 && sel.opts.zIndexOffset === 1000,
       'after selection the wave is re-drawn larger (32 px), marked selected, on top', sel && JSON.stringify(sel.opts.icon.options.iconSize));

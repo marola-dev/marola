@@ -265,7 +265,7 @@ just site-serve                # http://localhost:8000 — tap Praia do Campeche
 `site/dist/` (git-ignored) then holds `index.html` + `app.js` + vendored Leaflet from
 `site/static/`, and under `data/`: `areas.json`, and per area `<today>.json`, `<tomorrow>.json`
 (the board — `site/board.schema.json` is the contract, checked by `BoardSpec`) and `latest.json`
-pointing at both. The page shows every beach as a marker coloured by score, a card with the same
+pointing at both. The page shows every beach as a wave marker coloured by score — hover it (tap, on a phone: the same row opens first in the card) for the six aspects at that hour: wind band with its emoji and km/h, water temperature, waves, jellyfish, whales, water verdict (MIP-0009) — a card with the same
 numbers the CLI prints, a day picker, an hour slider, the generated-at time and every source. No
 cookies, no analytics; "near me" is the browser's own geolocation, on request, never sent anywhere.
 If `site/dist/smoke/latest.json` exists (the docker smoke test's last run, §10 — `site.yml` copies

@@ -143,6 +143,10 @@ button[aria-pressed="true"], .segmented button.on { background: var(--accent); c
 .aspects .unfit { color: var(--c0); font-weight: 600; }
 .legend .wave-key { color: var(--ink); }
 .legend .wave-key svg { width: 18px; height: 18px; vertical-align: -4px; margin-right: .3em; }
+/* the same row as the first block of the card (touch has no hover); the head repeats the h2 */
+.card .aspects { margin: .1rem 0 .6rem; font-size: 13px; }
+.card .aspects .head { display: none; }
+.card .aspects .grid { gap: .1rem .6rem; }
 
 @media (prefers-reduced-motion: no-preference) {
   select, button, .list li { transition: background-color .15s, border-color .15s, color .15s; }
