@@ -171,5 +171,10 @@ trap - EXIT
 git checkout -q "$branch"
 git branch -D "$tmp_branch" >/dev/null
 
-echo "cost-fill: added ${#new_tested[@]} Tested: and ${#new_cost[@]} Cost: trailer(s) across ${#shas[@]} commit(s) on $branch"
+# `${#assoc[@]}` on an empty associative array trips `set -u` ("new_tested: unbound variable" —
+# seen on bash 5.3 after a run that only added Cost: trailers), so count without expanding it.
+n_tested=0; n_cost=0
+for _ in "${!new_tested[@]}"; do n_tested=$((n_tested + 1)); done 2>/dev/null || true
+for _ in "${!new_cost[@]}"; do n_cost=$((n_cost + 1)); done 2>/dev/null || true
+echo "cost-fill: added $n_tested Tested: and $n_cost Cost: trailer(s) across ${#shas[@]} commit(s) on $branch"
 echo "next: git push --force-with-lease origin $branch"
