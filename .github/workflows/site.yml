@@ -16,7 +16,14 @@ name: site (build the boards, deploy the map)
 # Pages runs Jekyll over the whole branch and publishes README, docs/*.md and the source as HTML.
 # Here the only thing that ever reaches Pages is the artifact below — site/dist, allowlisted.
 # Scheduled workflows only run from the default branch, so this file has to be on main. The live
-# site is https://h0ffmann.github.io/marola/ (linked from the README).
+# site is https://marola.dev/ (linked from the README; h0ffmann.github.io/marola/ still resolves
+# and redirects once the custom domain is verified in Settings → Pages).
+#
+# Custom domain (marola.dev): because this deploys via actions/deploy-pages, not "Deploy from a
+# branch", GitHub never reads a CNAME file from the repo itself — it has to be inside the uploaded
+# artifact, so the "write the CNAME file" step below puts one in site/dist on every deploy. The
+# domain's own DNS (four A records to GitHub Pages' IPs, or a CNAME to h0ffmann.github.io for a
+# subdomain) and ticking "Enforce HTTPS" in Settings → Pages are one-time, done outside this repo.
 
 on:
   schedule:
@@ -142,15 +149,21 @@ jobs:
           done
           [ "$missing" -eq 0 ] || { echo "site/dist is incomplete — not deploying"; exit 1; }
 
+      # GitHub Pages custom domain (marola.dev): with actions/deploy-pages (not "Deploy from a
+      # branch"), the CNAME file has to travel inside the artifact — there's no branch for GitHub
+      # to read it from. Plain text, one line, no scheme/path (github.io/CNAME.html docs).
+      - name: Write the custom-domain CNAME file
+        run: echo "marola.dev" > site/dist/CNAME
+
       # Only the map is public. The artifact is site/dist and nothing more; this step deletes the
       # one file that is not the page (data/.gitkeep's sibling in site/dist) and fails the build if
       # anything outside the allowlist is there — a stray copy is caught here, not shipped.
       # docs/*.md are not on the site by design: they render on GitHub, for people with access.
-      - name: Publish allowlist — index.html, app.js, style.css, vendor/, data/, smoke/, coverage/ and nothing else
+      - name: Publish allowlist — index.html, app.js, style.css, CNAME, vendor/, data/, smoke/, coverage/ and nothing else
         run: |
           cd site/dist
           rm -f .gitkeep
-          unexpected="$(find . -mindepth 1 \( -path ./data -o -path ./smoke -o -path ./coverage -o -path ./vendor \) -prune -o -type f ! -name index.html ! -name app.js ! -name style.css -print)"
+          unexpected="$(find . -mindepth 1 \( -path ./data -o -path ./smoke -o -path ./coverage -o -path ./vendor \) -prune -o -type f ! -name index.html ! -name app.js ! -name style.css ! -name CNAME -print)"
           if [ -n "$unexpected" ]; then
             echo "files in site/dist that are not on the publish allowlist:"; echo "$unexpected"; exit 1
           fi

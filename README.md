@@ -10,8 +10,8 @@ clearly labelled, never invented.</p>
 <a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://github.com/h0ffmann/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 <a href="https://github.com/h0ffmann/marola/actions/workflows/site.yml"><img src="https://github.com/h0ffmann/marola/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
 <!-- Aggregated statement coverage: ci.yml measures it (sbt-scoverage) on pushes to main and writes this shields.io endpoint JSON to Pages via the site-data branch. -->
-<a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fh0ffmann.github.io%2Fmarola%2Fcoverage%2Flatest.json" alt="coverage" /></a>
-<a href="https://h0ffmann.github.io/marola/"><img src="https://img.shields.io/badge/live_map-h0ffmann.github.io%2Fmarola-0b6e99?logo=leaflet&logoColor=white" alt="live map" /></a>
+<a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fcoverage%2Flatest.json" alt="coverage" /></a>
+<a href="https://marola.dev/"><img src="https://img.shields.io/badge/live_map-marola.dev-0b6e99?logo=leaflet&logoColor=white" alt="live map" /></a>
 <img src="https://img.shields.io/badge/Scala-3.9_LTS-DC322F?logo=scala&logoColor=white" alt="Scala 3.9" />
 <img src="https://img.shields.io/badge/JDK-25-007396?logo=openjdk&logoColor=white" alt="JDK 25" />
 <img src="https://img.shields.io/badge/runs_on-Ollama_%C2%B7_llama3.2-000000?logo=ollama&logoColor=white" alt="Ollama" />
