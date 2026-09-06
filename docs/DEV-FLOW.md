@@ -182,3 +182,4 @@ branches once every stacked PR shows MERGED.
 | Cost per PR | `just cost-split MIP-NNNN [--session <id>]`, `just claude-cost` |
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |
 | Status line | `.claude/statusline.sh`, shared via `.claude/settings.json` |
+| Push text to the clipboard (write-only) | `just clip` — needs `MAROLA_JAIL_CLIPBOARD=1 just jail-claude` inside the jail, works directly outside it |

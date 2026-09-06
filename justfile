@@ -471,7 +471,49 @@ jail-dry-run *cmd:
 # read, Metadata: read — so what the agent may do on GitHub is bounded by the token, not by the
 # sandbox: pr view/create/edit/list and read-only `gh api` work, merge/issues/workflows/secrets
 # fail by permission. Unset in the host shell → nothing is passed, same as before.
+#
+# MAROLA_JAIL_CLIPBOARD=1 just jail-claude: opt-in, write-only clipboard bridge — default off, so
+# a plain `just jail-claude` behaves exactly as before this existed. Before ai-jail starts, this
+# creates a FIFO at .tmp/clip.fifo (the repo dir is already rw-mapped into the jail, so the FIFO
+# is visible inside; .tmp/ is gitignored) and backgrounds scripts/clip-relay.sh, which reads that
+# FIFO and pipes each payload into wl-copy or xclip — same host-tool detection as the `_clip`
+# recipe below. Inside the jail, `just clip` / `scripts/clip.sh` write into the FIFO; there is no
+# read/paste counterpart on either side. The relay is stopped (which removes the FIFO) when
+# `claude` exits for any reason via this recipe's own EXIT/INT/TERM trap; see clip-relay.sh's
+# header for why *it* additionally needs `set -m` and a process-group kill rather than a plain
+# `kill $pid` (a plain kill leaves an orphaned reader blocked on the now-deleted FIFO — confirmed
+# empirically while building this). If the host has no clipboard tool/display, clip-relay.sh says
+# so on stderr and exits immediately; this recipe carries on without a relay either way.
+#
+# Security: write-only by construction — the jail can only push bytes into a host process that
+# calls wl-copy, it has no path to wl-paste and so cannot read the clipboard. Off by default, and
+# announces itself with one line when on, so it's never silently active. Residual risk: anything
+# the agent copies replaces what you had in the clipboard, and a malicious payload could be a
+# shell command you then paste — read before you paste.
 jail-claude *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    relay_pid=""
+    cleanup() {
+        if [ -n "$relay_pid" ]; then
+            kill -TERM "$relay_pid" 2>/dev/null || true
+            wait "$relay_pid" 2>/dev/null || true
+        fi
+    }
+    trap cleanup EXIT INT TERM
+    if [ "${MAROLA_JAIL_CLIPBOARD:-0}" = "1" ]; then
+        mkdir -p .tmp
+        fifo=".tmp/clip.fifo"
+        rm -f "$fifo"
+        mkfifo "$fifo"
+        scripts/clip-relay.sh "$fifo" &
+        relay_pid=$!
+        sleep 0.2
+        if ! kill -0 "$relay_pid" 2>/dev/null; then
+            wait "$relay_pid" 2>/dev/null || true
+            relay_pid=""
+        fi
+    fi
     ai-jail --no-save-config --rw-map ~/.claude --rw-map ~/.claude.json --map ~/.ssh --network --terminal-passthrough --env GH_TOKEN claude {{args}}
 
 # The two below pin the model via Claude Code's own alias (always the latest of that line), and
@@ -482,3 +524,11 @@ jcf *args: (jail-claude "--model" "fable" args)
 
 # jail-claude with --model sonnet
 jcs *args: (jail-claude "--model" "sonnet" args)
+
+# Push stdin (or --text "…") to the clipboard — write-only, no paste counterpart; see
+# scripts/clip.sh's header and this file's `jail-claude` comment. Inside a session started with
+# `MAROLA_JAIL_CLIPBOARD=1 just jail-claude`, goes through the host relay via .tmp/clip.fifo;
+# outside the jail it falls back to calling wl-copy/xclip directly, so `just clip` is one command
+# either way. `printf 'hello' | just clip`, `just clip --text hello`.
+clip *args:
+    scripts/clip.sh {{args}}

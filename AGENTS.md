@@ -192,6 +192,12 @@ the requested feature but flag which earlier-phase prerequisite is still missing
   metadata read; put it in the gitignored `.env`) so the agent opens and updates PRs itself with
   `just uprd` and the template never lands empty. What the agent may do on GitHub is bounded by
   that token's permissions, not by the sandbox (see the `jail-claude` recipe's comment).
+  `MAROLA_JAIL_CLIPBOARD=1 just jail-claude` opts into a write-only clipboard bridge (`just clip`
+  inside the jail, `scripts/clip.sh`/`scripts/clip-relay.sh`) so the agent can hand you a value
+  without ever gaining `wl-paste`/read access to what's already on it — off by default, and it
+  prints a line when active so it's never silently on. The residual risk is what write access
+  alone still allows: whatever the agent copies replaces your clipboard, and a malicious payload
+  could be a shell command, so read before you paste.
   **Ubuntu 24.04 caveat:** `just jail-claude` can fail with `bwrap: setting up uid map: Permission
   denied` — Ubuntu 23.10+ blocks unprivileged user namespaces by default
   (`kernel.apparmor_restrict_unprivileged_userns=1`), which bubblewrap needs. Confirmed as host
