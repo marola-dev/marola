@@ -60,26 +60,93 @@ task, then the next file, one task at a time.
      a deliverable. If a task's own commit touches `.gitignore`, that's fine (the entry belongs in
      source), just don't stage the post-mortem file itself.
 
-**Throttle — cheapest lever first, log which one was used in the PR body:**
-1. Default: current model, default effort. Most tasks belong here.
-2. One failure: `/effort high`, same model, before anything else — no context-reprocessing
-   cost, and cache-friendly on Fable 5.1 specifically (recent fix). Cheaper than a model switch.
-3. Two failures at raised effort: `/model fable` for that one task only. The moment its PR is
-   open, `/model sonnet` (or whatever the default was) and default effort — don't carry the
-   escalation into the next task "just in case."
-4. Note in each PR body which of 1-3 was used. If the actual model used doesn't match what was
-   requested, say so explicitly — silent model downgrading on hitting a cap is a known, reported
-   Claude Code behavior, not something to assume didn't happen.
+**Ground truth this section relies on (verify before trusting it — plugins and docs drift):**
+Claude Code meters against two official windows — a rolling 5-hour session window and a fixed
+weekly window — each with its own `used_percentage` (0-100) and `resets_at` (epoch seconds). That
+`rate_limits` data is delivered **only to the statusLine command**, not to hooks, the API, or a
+plain `/usage` call by itself — which is why the `heavy-usage` plugin exists: its statusLine
+script captures the numbers to `~/.claude/heavy-usage/usage-live.json` so its own `/usage`
+command (invoke it as `/heavy-usage:usage` — a bare `/usage` may collide with the built-in
+command depending on what else is installed) and its `UserPromptSubmit` hook can read them. **If
+`heavy-usage`'s statusLine was never wired (`/usage setup`), there is no data — check for this
+once at the start of a run** (this session's own `SessionStart` hook already reported "Not wired
+yet" once; don't assume a later run is different without checking). Both windows are metered in
+aggregate across models — there is no separate per-model quota — so a heavier/pricier model burns
+the *same* shared percentage faster per token, it doesn't get its own ceiling. "Fable" here is
+Anthropic's flagship, highest-cost model tier (priced above Opus), not a cheap/fast one — treat an
+escalation to it as buying *quality per token*, not *tokens per dollar*: it depletes both windows
+faster, which is exactly the "will for sure hit the API limits" risk this section exists to guard
+against, not a myth to dismiss.
 
-**Usage guard — two independent layers, more conservative one wins:**
-- Primary: check `/usage` before starting each new task. Under 15% of the 5-hour window left →
-  finish the current task's PR and stop, don't start another.
-- Backup: if `heavy-usage`'s wind-down hook fires (WARN/WIND DOWN, via `/usage` or the
-  statusline) before the primary check would have caught it, follow its instruction — commit,
-  write its expected resume note, stop the loop cleanly.
-- A 7-day/weekly warning from either layer is not an overnight wait — stop entirely and report,
-  don't treat a multi-day cap like a five-hour one.
+**Model & effort routing — decide before starting each task, not only after it fails:**
+1. Before every task, classify it as *mechanical* (single small file, wiring/config, no design
+   judgment — e.g. adding a hook stanza to `.claude/settings.json`) or *substantive* (anything
+   needing multi-file reasoning, a new algorithm, or judgment calls). Mechanical tasks start at
+   `/effort low` on the default model — most of this MIP's early hook/config tasks qualify;
+   spending default effort on them is the "Sonnet wastes tokens on basic things" failure mode the
+   design is meant to avoid. Substantive tasks start at default effort. Never start a task above
+   default effort speculatively — only a real failure earns that (rule 2).
+2. One failure on a substantive task (or any failure on a mechanical one): raise to `/effort
+   high` on the same model before anything else — no context-reprocessing cost, cache-friendly on
+   Fable 5.1 specifically. Cheaper than a model switch.
+3. Two failures at raised effort: only *then* is `/model fable` for that one task on the table —
+   and only if the budget check below clears it. The moment its PR is open (or logged in
+   `GH_POST_MORTEM.md` per the gh-fallback rule), `/model sonnet` (or whatever the default was)
+   and default effort — don't carry the escalation into the next task "just in case."
+4. **Budget-gate the Fable escalation explicitly** — this is the fix for the reactive-only
+   design: before switching, estimate this task's likely cost at Fable rates (use the measured
+   `Cost:` trailers already on this MIP's earlier task commits, e.g. `git log --grep "^Cost:" -F
+   --all -- docs/mips/MIP-$ARGUMENTS.tasks.md`'s sibling branches, or `python3
+   scripts/cost-split.py --estimate`, as a per-task baseline, then scale by Fable's list price
+   vs. the default model's from the `claude-api` skill reference) and check it against the
+   **projected remaining headroom** computed in the usage guard below for whichever window is
+   more constraining. If Fable's estimated burn would push that window's projected end-of-window
+   usage past its wind-down threshold, **stay on the default model even if slower** — a stranded
+   Fable run mid-task with no clean stop is worse than a slow-but-complete Sonnet run. Log the
+   budget numbers you computed in the PR body next to which throttle level was used.
+5. Note in each PR body which of 1-3 was used and the budget check from rule 4. If the actual
+   model used doesn't match what was requested, say so explicitly — silent model downgrading on
+   hitting a cap is a known, reported Claude Code behavior, not something to assume didn't happen.
+
+**Usage guard — real math before every task, not a single flat threshold:**
+- Primary, run before *every* task (not just once): read the current `used_percentage` and
+  `resets_at` for both windows (`/heavy-usage:usage --json` if wired; otherwise fall back to
+  `python3 scripts/cost-split.py --estimate`'s running session total against a dollar budget
+  stated when this run was started, and treat the 5-hour/weekly window math below as unavailable
+  until `/usage setup` is run). For whichever window is more constraining, compute:
+  - `elapsed_frac = (window_seconds - (resets_at - now)) / window_seconds` (5h = 18000s, weekly =
+    604800s),
+  - `projected_end_pct = used_pct / elapsed_frac` (linear extrapolation from current burn — this
+    is the same formula `heavy-usage` itself uses internally; verify against its installed
+    `scripts/usage-lib.js` if the numbers look off, since a plugin update can change it).
+  - Add this task's estimated cost (rule 4's baseline) to `used_pct` before projecting, so the
+    check answers "can *this* task finish inside budget," not just "was the window fine a moment
+    ago."
+- Decision, per window, most conservative wins:
+  - `projected_end_pct < warn` (default 75% five-hour / 85% weekly) → proceed normally.
+  - `warn ≤ projected_end_pct < wind-down` (90% five-hour / 95% weekly) → finish the current
+    task's PR, then stop — don't start a new one, even a mechanical one.
+  - `projected_end_pct ≥ wind-down`, or `hits 100% before resets_at` → stop **now**, before
+    starting the in-progress task's remaining work, once the checkpoint contract below is met.
+- Backup, always wins if more conservative: `heavy-usage`'s `UserPromptSubmit`-injected
+  `[heavy-usage]` WIND DOWN line is live/fresher data — treat it as authoritative the instant it
+  appears, regardless of what the primary math concluded a task ago.
+- A weekly-window warning is not an overnight wait — stop entirely and report, don't treat a
+  multi-day cap like a five-hour one it'll recover from by morning.
+
+**Checkpointing contract — required before the loop is allowed to stop for a usage reason:**
+The current task must land in exactly one of two states, never a third:
+1. **Done**: `just build && just test && just quality` green, committed with `Tested:`/`Cost:`
+   trailers, pushed, and `gh pr create` either run or — if `gh` has no session auth — its exact
+   command appended to `GH_POST_MORTEM.md` at the repo root (gitignored; create it if absent) so
+   a human can replay it. This satisfies the task's `/goal` row either way.
+2. **Abandoned this run**: working tree returned to clean (stash or discard only what this task's
+   attempt added — never touch unrelated uncommitted state) with one line in the stop report
+   naming the task and why it didn't land, so the *next* run starts it fresh rather than
+   inheriting a half-finished tree.
+Never stop with uncommitted, half-built state and no note — that silently corrupts the next run's
+starting point.
 
 **Stop and report** once every row in every given task file has an open PR (or has failed
-twice), the usage guard triggers, or a decision only the human can make comes up. Don't guess
-past a real blocker — report it and stop.
+twice), the usage guard triggers *and* the checkpointing contract above is satisfied, or a
+decision only the human can make comes up. Don't guess past a real blocker — report it and stop.
