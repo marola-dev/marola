@@ -18,7 +18,26 @@ stop and add it before using this command unattended.
 ## Arguments
 
 `$ARGUMENTS` — one or more MIP numbers to work through, in order, e.g. `/mip-solve-perpetual
-0011 0013`. If empty, stop and ask which MIP(s) rather than guessing which one was meant.
+0011 0013`.
+
+**If empty: auto-pick the single easiest actionable MIP, don't ask.** This is a deliberate,
+explicit mode — not a fallback to guess quietly — so state the pick out loud before doing
+anything else, and again in every PR body this run produces (e.g. "auto-picked MIP-0017: S
+effort, 'cheap win', no earlier-phase gap"). Selection, in order:
+1. Read `docs/mips/README.md`'s index. Candidates are every row with `Status` = `Draft` (not
+   `Implemented`/`Rejected`/`Superseded`, and not a MIP already fully merged whose README row is
+   simply stale — check `git log --oneline main | grep -i "MIP-NNNN"` if a Draft row looks
+   suspicious, per this doc's own "evidence-based status" convention).
+2. Drop any candidate blocked by `AGENTS.md`'s phase discipline — a Phase 2+ MIP is not
+   actionable before Phase 1 (the Telegram bot) ships; a Phase 0 (dev-tooling) MIP is always fair
+   game regardless of product phase.
+3. Rank the rest by `Effort` (S, then M, then L, then XL) and prefer a `Verdict` of "cheap win"
+   over "do next"/"park"/"do when X lands"/"expensive, defer". Tie-break by lowest MIP number
+   (oldest waiting first) — deterministic, not a coin flip.
+4. If the picked MIP has no `docs/mips/MIP-NNNN.tasks.md` yet, run the `mip-tasks` skill on it
+   first, in this same invocation, before starting task 1 — the loop below needs that file to
+   exist. Note in the first PR's body that the tasks file was generated this run, not pre-existing.
+5. Proceed exactly as below with the picked number substituted for `$ARGUMENTS`.
 
 ## What to do
 
