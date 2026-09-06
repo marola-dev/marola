@@ -10,6 +10,20 @@ A MIP says *what* and *why*. This skill produces the *how, in order*, and keeps 
 every task is a branch stacked on the previous one, with its own small PR, so review happens in
 pieces and `main` only ever receives green, tested steps. Mechanics live in `scripts/stack.sh`.
 
+## Arguments
+
+`$ARGUMENTS` — **one** MIP number, the same shape `/mip-solve-perpetual` takes: `/mip-tasks 0009`.
+Accept the sloppy forms too and normalise before anything else: `9`, `009`, `0009`, `MIP-009`,
+`MIP-0009`, `mip-0009` all mean `MIP-0009` (digits only, zero-padded to four, `MIP-` prefix
+restored). Say the normalised number out loud in the first line, then confirm
+`docs/mips/MIP-0009-*.md` exists — if it doesn't, stop and say so; never pick a neighbour.
+
+- **Empty → stop and ask** which MIP. Unlike `/mip-solve-perpetual`, this skill has no auto-pick:
+  slicing a MIP into reviewable PRs is the human decision the perpetual loop defers to, so it does
+  not guess which MIP to slice either.
+- **More than one number → stop and ask** for one. A planning session produces one tasks file;
+  stacking two MIPs' tasks into one chain is exactly the "never stack by accident" rule below.
+
 ## When to use it
 
 - A MIP's status is Accepted (or the user says "implement MIP-NNNN") and the work is more than one
