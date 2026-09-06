@@ -215,6 +215,21 @@ None. No product code changes.
   silently imply every future review is free. Findings tracked separately, not folded into this
   MIP's own scope (a design doc doesn't get rewritten post-hoc for review findings — those become
   new fix commits/PRs against `main`, referencing this MIP for context).
+- **How to refresh the Cost so far figure above**, since all eleven PRs are already merged (the
+  normal `just uprds MIP-0011` flow only updates *open* PR bodies, not this row):
+  1. `git log --oneline main | grep 'mip-0011 task'` — the eleven merged commit SHAs.
+  2. `for c in <shas>; do git show -s --format=%B "$c" | grep '^Cost:'; done` — pull each
+     commit's own `Cost:` trailer (already measured via `scripts/cost-split.py` at PR time,
+     except task 6, still the one diff-size `est.`) and sum the dollar figures by hand; there is
+     no single command that re-sums an already-merged, cross-session stack's trailers today
+     (`just cost-split MIP-0011` is for an *open*, unmerged stack in one session's own log).
+  3. Edit this row and the matching one in `docs/mips/README.md` together — they must always
+     agree; `docs/DEV-FLOW.md` has no automation for that agreement, so it's a manual pair-edit.
+  4. If task 6's `est.` figure is ever superseded by a real measured one (e.g. a later session
+     finds the original log), update this row's total — the merged commit's own `Cost:` trailer
+     stays as originally written (commit messages are historical, not corrected in place) — and
+     note in the doc edit that the figure changed from estimate to measured, so a reader doesn't
+     assume it was always precise.
 
 ## 8. Risks, limitations, and honest caveats
 
