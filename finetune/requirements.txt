@@ -7,4 +7,4 @@ trl>=1.12.0
 datasets>=5.0.1
 accelerate>=1.14.0
 # CUDA only — omit on CPU and pass --no-4bit to train_lora.py
-bitsandbytes>=0.44; sys_platform == "linux"
+bitsandbytes>=0.50.2; sys_platform == "linux"
