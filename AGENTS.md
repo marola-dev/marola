@@ -120,27 +120,12 @@ the requested feature but flag which earlier-phase prerequisite is still missing
   `.claude/settings.json` (`attribution.commit`, `attribution.pr: ""`, `attribution.sessionUrl:
   false`) — the shared project settings, so it applies to every Claude Code session in this repo.
   Don't add attribution text by hand in commit messages or PR descriptions.
-- **Every PR body ends with a `Cost` line** — what the work consumed, so the repo learns what a
-  feature costs in quota, not just in lines:
-  ```
-  Cost: ~$4.10 · 1.9M tokens (llama-free) · 2 sessions · from `just claude-cost` 2026-09-05
-  ```
-  Get the figure from `/usage` (the Session block, current session) or `just claude-cost` (every
-  session on this machine, via ccusage). Both price tokens at list rates; on a subscription that
-  dollar figure is not a bill, it is the best available proxy for *how much of the plan's quota the
-  feature used*, which is the point. Compare it with the PR's scope in one sentence if it's
-  surprising ("mostly the benchmark reruns").
-- **`just uprd` writes the PR description** from the branch's commits: a "What changed" bullet per
-  commit and a Cost row built from the commits' `Cost:` trailers — so the trailer in each
-  commit is the source of truth and the PR body never drifts from it. The body follows
-  `.github/PULL_REQUEST_TEMPLATE.md`'s shape — bold labels and a compact table, no `#` headings —
-  and the PR title is the first commit's subject capped at 70 characters. Run it after every push
-  to a PR branch (`just uprd --dry-run` to preview).
-- **Every commit carries a `Tested:` trailer** — one line, written once at commit time, so the
-  PR's Tested row is filled without a second pass: tokens `gates` (= `just build && just
-  test && just quality`), `e2e`, `live` (a `just run -- --brief`), `ci-only`, then free text
-  for what was *not* run and why, e.g. `Tested: gates — no e2e, no data path touched`. `just
-  uprd` turns the tokens into ✅/⬜ glyphs and quotes the text; it never guesses from prose.
+- **The whole PR workflow is one command.** Write the commit — a body paragraph plus `Tested:`
+  and `Cost:` trailers — then run `just pr`: it fills any missing trailer (`just cost-fill`),
+  pushes, and writes the PR from `.github/PULL_REQUEST_TEMPLATE.md` (`just uprd`, or
+  `scripts/stack.sh pr`'s base logic on a `mip-NNNN/k-*` branch). `Cost:` prefers a measured
+  figure (`just cost-split`) over `scripts/cost-split.py --estimate`'s diff-size fallback,
+  always labelled `est.` — a subagent commit gets one too unless its own usage log is found.
 - **One feature, one session.** Start a feature with `/clear` (or a new session) and `/rename` it
   to the branch name so `/usage`'s session block and ccusage's per-session rows map to one PR.
   Re-runs of `just benchmark`/`just e2e` driven by the agent count toward the feature; note them.

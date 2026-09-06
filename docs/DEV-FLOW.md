@@ -64,8 +64,12 @@ scripts/stack.sh start MIP-NNNN <k> <slug>        # branch mip-nnnn/k-slug off t
 # red → green → refactor  (superpowers test-driven-development; systematic-debugging when green won't come)
 just build && just test && just quality           # + a live check whenever a data path changed (superpowers verification-before-completion: evidence, then the claim)
 git commit                                         # message ends with Tested: and Cost: trailers (AGENTS.md) — the PR's Tested/Cost sections come from them
-scripts/stack.sh pr                                # push + PR with base = the previous task's branch
+just pr                                            # fills any missing trailer (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch
 ```
+
+`just pr --dry-run` prints every step (the trailers `cost-fill` would add, the body `uprd` would
+write) without pushing or touching `gh` — refuses the same way the real run would (on `main`, or a
+dirty tree) so the preview matches what actually happens.
 
 Every push — `scripts/stack.sh pr`, `just uprds`, a plain `git push` — goes through
 `.githooks/pre-push`, which runs `just quality-other` (ruff on every `.py`, the script self-tests,
@@ -92,10 +96,14 @@ the first commit's subject on the branch, capped at 70 characters (`scripts/lib/
 it stays skimmable — `just uprd`/`just uprds` print a warning when a title had to be cut, worth a
 manual retitle if the cut reads awkwardly.
 
-Cost: `Cost:` is measured, not guessed. One session per task → `/usage` or `just claude-cost`.
-One session for several tasks → `just cost-split MIP-NNNN` splits the session log by commit time
-and prints the trailer per branch; amend with `GIT_COMMITTER_DATE` preserved so the split stays
-stable, re-stack, force-push with lease, `just uprds`.
+Cost: a measured figure is always preferred over an estimate. One session per task → `/usage` or
+`just claude-cost`. One session for several tasks → `just cost-split MIP-NNNN` splits the session
+log by commit time (subagent transcripts included — `<session>/subagents/*.jsonl`) and prints the
+trailer per branch; amend with `GIT_COMMITTER_DATE` preserved so the split stays stable, re-stack,
+force-push with lease, `just uprds`. Nothing logged at all for a commit (a subagent whose worktree
+session never re-attached, a commit from another machine) → `just cost-fill` (or plain `just pr`)
+adds `scripts/cost-split.py --estimate`'s diff-size estimate instead, always labelled `est.` so it
+reads differently from a measured number at a glance.
 
 ## 5. Final review — only when asked
 
@@ -167,11 +175,14 @@ branches once every stacked PR shows MERGED.
 | Before every push | `.githooks/pre-push` runs `just quality-other`, plus `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
 | Statement coverage (aggregated core/local/azure/cli) | `just coverage`; published to the README badge by ci.yml on pushes to `main` |
 | Live checks | `just run -- --brief`, `just e2e`; once MIP-0005 lands, `just site-build floripa && just site-serve` |
-| One PR | `scripts/stack.sh pr` (`--dry-run` prints the gh commands) |
-| gh inside the jail | `GH_TOKEN` in `.env` (fine-grained, this repo, PRs read/write) — `just jail-claude` passes it through, so the agent runs `just uprd` itself |
+| One PR, start to finish | `just pr` (`--dry-run` prints every step and the body, no push, no `gh`) — fills missing trailers, pushes, opens/updates the PR |
+| Fill missing trailers only | `just cost-fill` (`--dry-run` to preview) — adds a measured or `est.` `Cost:` and a `ci-only` `Tested:` to any commit missing one, dates preserved |
+| Diff-size Cost estimate | `scripts/cost-split.py --estimate [--verbose]` (whole branch), `--estimate-commit <sha>` (one commit) — used automatically by `cost-fill`/`uprd` when nothing was logged |
+| One PR (lower-level) | `scripts/stack.sh pr` (`--dry-run` prints the gh commands) — what `just pr` calls for a `mip-NNNN/k-*` branch |
+| gh inside the jail | `GH_TOKEN` in `.env` (fine-grained, this repo, PRs read/write) — `just jail-claude` passes it through, so the agent runs `just pr` itself |
 | Every PR of a stack | `just uprds MIP-NNNN` |
 | PR body shape / title length | `.github/PULL_REQUEST_TEMPLATE.md`; title capped at 70 chars, cut point printed as a warning |
-| Tested row | `Tested: gates, e2e, live, ci-only — <not run, why>` trailer per commit; `just uprd` sets the ✅/⬜ glyphs, never guesses |
+| Tested row | `Tested: gates, e2e, live, ci-only — <not run, why>` trailer per commit (`just cost-fill` adds `ci-only` if one is missing); `just uprd` sets the ✅/⬜ glyphs, never guesses |
 | GitHub Stack | `just stack-setup` once, then `just stack-link MIP-NNNN`, `just stack-view`, `just stack-sync MIP-NNNN` |
 | Local stack view | `scripts/stack.sh status [MIP-NNNN]`, `just stack status MIP-NNNN` |
 | After a base merged | `scripts/stack.sh restack` (one branch) or `just stack-sync MIP-NNNN` (whole stack) |
@@ -179,6 +190,6 @@ branches once every stacked PR shows MERGED.
 | Delete merged branches | `just branches-clean` (local + remote ref, skips current branch/main) |
 | PR for a stray plain branch | `just branches-open` (base=main; stack branches point at `scripts/stack.sh pr`) |
 | Stack the open dependency PRs | `just deps-stack` (`--dry-run`, `--resume`, `--skip <PR#>`, `--include-steward`); `just deps-stack status` / `just deps-stack clean` |
-| Cost per PR | `just cost-split MIP-NNNN [--session <id>]`, `just claude-cost` |
+| Cost per PR | `just cost-split MIP-NNNN [--session <id>] [--estimate]`, `just claude-cost` |
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |
 | Status line | `.claude/statusline.sh`, shared via `.claude/settings.json` |
