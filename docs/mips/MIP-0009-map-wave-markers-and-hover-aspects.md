@@ -2,9 +2,10 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted — auto-picked by `/mip-solve-perpetual` on 2026-09-06 (S effort, "cheap win", no earlier-phase gap), task list requested via `/mip-tasks` |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "for now it just displays dots… hovering the dot should display each aspect: wind level with emoji, whale probability, jellyfish probability, water temperature — a wave icon, not a heat map") |
 | **Created** | 2026-09-05 |
+| **Tasks** | `docs/mips/MIP-0009.tasks.md` — four stacked PRs, one per task; note its decision #1: the §5 test harness (`scripts/site_check.js`) did not exist on 2026-09-06 and is task 2 |
 | **Phase** | 1 — the map exists (MIP-0005) and this only changes what it draws; no earlier-phase prerequisite is missing for it |
 | **Related** | MIP-0005 (the map and its board JSON), MIP-0008 task 6 (the footer panel; same `app.js`), `FUTURE-WORK.md` §1 (other activities as layers on the same map), `AI-103-MAPPING.md` §1 "Responsible AI: transparency" |
 | **Effort** | S — no new data; one pure Scala function (`windLevel`) plus a JS/CSS-only marker and tooltip change |
