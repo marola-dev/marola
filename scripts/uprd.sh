@@ -3,6 +3,8 @@
 #
 #   just uprd                 # rewrite the PR body and print its URL — creates the PR if none exists
 #   just uprd --dry-run       # print the body that would be written, change nothing
+#   just uprd 84               # that PR by number (also `#84`): its head branch and base are
+#                             # taken from GitHub, so it works from any checkout — needs gh
 #   just uprd path/to/body.md # use that file as the body instead of generating one
 #   BASE=main just uprd       # base branch (default: the PR's base, else main)
 #   BRANCH=x EXTRA_FILE=f     # (scripts/uprds.sh) another branch than the checked-out one, and a
@@ -35,14 +37,31 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/uprd_title.sh
 source "$script_dir/lib/uprd_title.sh"
 
-dry_run=0; body_file=""
+dry_run=0; body_file=""; pr_arg=""
 for arg in "$@"; do
   case "$arg" in
     --dry-run) dry_run=1 ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+    [0-9]*|\#[0-9]*) pr_arg="${arg#\#}" ;;
     *) body_file="$arg" ;;
   esac
 done
+
+# A PR number resolves the branch and base from GitHub — the checkout can be on anything.
+pr_number=""; pr_url=""; base="${BASE:-}"
+if [ -n "$pr_arg" ]; then
+  if ! pr_json="$(gh pr view "$pr_arg" --json number,url,baseRefName,headRefName,state 2>/dev/null)"; then
+    echo "uprd: cannot resolve PR #$pr_arg — gh not logged in (gh auth status), or no such PR" >&2
+    exit 1
+  fi
+  state="$(printf '%s' "$pr_json" | sed -n 's/.*"state":"\([^"]*\)".*/\1/p')"
+  [ "$state" = "OPEN" ] || { echo "uprd: PR #$pr_arg is $state — only open PRs are rewritten" >&2; exit 1; }
+  pr_number="$(printf '%s' "$pr_json" | sed -n 's/.*"number":\([0-9]*\).*/\1/p')"
+  pr_url="$(printf '%s' "$pr_json" | sed -n 's/.*"url":"\([^"]*\)".*/\1/p')"
+  [ -n "$base" ] || base="$(printf '%s' "$pr_json" | sed -n 's/.*"baseRefName":"\([^"]*\)".*/\1/p')"
+  BRANCH="$(printf '%s' "$pr_json" | sed -n 's/.*"headRefName":"\([^"]*\)".*/\1/p')"
+  git fetch -q origin "$BRANCH" 2>/dev/null || true
+fi
 
 branch="${BRANCH:-$(git branch --show-current)}"
 [ -n "$branch" ] || { echo "uprd: detached HEAD — check out the PR branch first" >&2; exit 1; }
@@ -55,8 +74,7 @@ guard_base="${BASE:-main}"
 # was pushed from another machine).
 if git rev-parse --verify -q "$branch" >/dev/null; then head_ref="$branch"; else head_ref="origin/$branch"; fi
 
-pr_number=""; pr_url=""; base="${BASE:-}"
-if pr_json="$(gh pr view "$branch" --json number,url,baseRefName 2>/dev/null)"; then
+if [ -z "$pr_number" ] && pr_json="$(gh pr view "$branch" --json number,url,baseRefName 2>/dev/null)"; then
   pr_number="$(printf '%s' "$pr_json" | sed -n 's/.*"number":\([0-9]*\).*/\1/p')"
   pr_url="$(printf '%s' "$pr_json" | sed -n 's/.*"url":"\([^"]*\)".*/\1/p')"
   [ -n "$base" ] || base="$(printf '%s' "$pr_json" | sed -n 's/.*"baseRefName":"\([^"]*\)".*/\1/p')"

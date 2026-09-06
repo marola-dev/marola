@@ -180,6 +180,7 @@ branches once every stacked PR shows MERGED.
 | Diff-size Cost estimate | `scripts/cost-split.py --estimate [--verbose]` (whole branch), `--estimate-commit <sha>` (one commit) — used automatically by `cost-fill`/`uprd` when nothing was logged |
 | One PR (lower-level) | `scripts/stack.sh pr` (`--dry-run` prints the gh commands) — what `just pr` calls for a `mip-NNNN/k-*` branch |
 | gh inside the jail | `GH_TOKEN` in `.env` (fine-grained, this repo, PRs read/write) — `just jail-claude` passes it through, so the agent runs `just pr` itself |
+| One PR by number | `just uprd 84` — head branch and base come from GitHub, so it works from any checkout |
 | Every PR of a stack | `just uprds MIP-NNNN` |
 | PR body shape / title length | `.github/PULL_REQUEST_TEMPLATE.md`; title capped at 70 chars, cut point printed as a warning |
 | Tested row | `Tested: gates, e2e, live, ci-only — <not run, why>` trailer per commit (`just cost-fill` adds `ci-only` if one is missing); `just uprd` sets the ✅/⬜ glyphs, never guesses |
