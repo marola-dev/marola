@@ -174,7 +174,7 @@ generate_tested() {
   # path untouched" cannot flip one by accident. Unknown words before the separator and the note
   # itself join every trailer's note with `; `, so the cell stays one line no matter how many
   # commits carry one.
-  local trailers gate=⬜ e2e=⬜ live=⬜ ci=⬜ notes="" sep="" line head note tok extra
+  local trailers gate=⬜ e2e=⬜ live=⬜ ci=⬜ notes="" n_notes=0 line head note tok extra
   trailers="$(git log --format='%(trailers:key=Tested,valueonly,unfold)' "$range" 2>/dev/null | sed '/^[[:space:]]*$/d')"
   if [ -z "$trailers" ]; then
     echo "not recorded — add a \`Tested:\` trailer (AGENTS.md)"
@@ -195,10 +195,13 @@ generate_tested() {
       esac
     done
     note="$(printf '%s' "${extra:+$extra — }$note" | sed -E 's/^[[:space:]—-]+//; s/[[:space:]]+$//')"
-    if [ -n "$note" ]; then notes="${notes}${sep}${note}"; sep="; "; fi
+    # Newest commit's note only (git log order): a six-commit branch otherwise turns the cell
+    # into a wall of text; the earlier notes are one click away in the commits.
+    if [ -n "$note" ]; then n_notes=$((n_notes + 1)); [ -n "$notes" ] || notes="$note"; fi
   done <<<"$trailers"
   local cell="$gate gates · $e2e e2e · $live live · $ci ci-only"
   [ -n "$notes" ] && cell="$cell — $notes"
+  [ "$n_notes" -gt 1 ] && cell="$cell (+$((n_notes - 1)) earlier notes in the commits)"
   echo "$cell"
 }
 

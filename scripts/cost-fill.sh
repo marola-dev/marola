@@ -87,6 +87,14 @@ for sha in "${shas[@]}"; do
       new_cost["$sha"]="$line"
       any=1
     fi
+  elif grep -q '^Cost:.* est\. ' <<<"$body"; then
+    # An estimate written before the session log covered the commit (a subagent's own commit,
+    # say) is upgraded to the measured figure once one exists — never the other way round.
+    line="$(measured_trailer "$short" "$json_file")"
+    if [ -n "$line" ]; then
+      new_cost["$sha"]="$line"
+      any=1
+    fi
   fi
   if ! grep -q '^Tested:' <<<"$body"; then
     new_tested["$sha"]="$TESTED_FALLBACK"

@@ -159,8 +159,54 @@ def messages(pdir, session_prefix):
                     continue
                 key = m.get("id") or d.get("requestId") or d.get("uuid")
                 ts = dt.datetime.fromisoformat(d["timestamp"].replace("Z", "+00:00"))
-                seen[key] = (ts, sid, m.get("model", "?"), m["usage"])
+                # `gitBranch` is the checkout's branch when the message was made — a subagent
+                # transcript carries its worktree's branch. It is what lets usage follow the
+                # branch instead of the clock (see the attribution loop in main()).
+                seen[key] = (ts, sid, m.get("model", "?"), m["usage"], d.get("gitBranch") or "")
     return sorted(seen.values(), key=lambda x: x[0])
+
+
+_equivalents = None
+
+
+def branches_with_equivalent(sha):
+    """Branches holding a commit with the same author date and subject as `sha` — the same
+    commit after a rebase, cherry-pick or `just cost-fill` rewrite gave it a new hash. Without
+    this, the branch a subagent authored on stops "containing" its own commits the moment
+    they are rewritten, and its usage would no longer match them."""
+    global _equivalents
+    if _equivalents is None:
+        _equivalents = defaultdict(set)
+        refs = sh(
+            "git", "for-each-ref", "--format=%(refname:short)", "refs/heads", "refs/remotes/origin"
+        )
+        for ref in refs.splitlines():
+            ref = ref.strip()
+            if not ref or ref in ("main", "origin/main", "origin/HEAD"):
+                continue
+            name = ref[7:] if ref.startswith("origin/") else ref
+            try:
+                log = sh("git", "log", "--format=%aI%x00%s", f"origin/main..{ref}")
+            except subprocess.CalledProcessError:
+                continue
+            for line in log.splitlines():
+                if "\x00" in line:
+                    _equivalents[tuple(line.split("\x00", 1))].add(name)
+    when, subject = sh("git", "log", "-1", "--format=%aI%x00%s", sha).rstrip("\n").split("\x00", 1)
+    return set(_equivalents.get((when, subject), set()))
+
+
+def branches_containing(sha):
+    """Local and origin branch names that contain `sha` (origin/ prefix stripped)."""
+    out = set()
+    for line in sh(
+        "git", "branch", "-a", "--contains", sha, "--format=%(refname:short)"
+    ).splitlines():
+        b = line.strip()
+        if not b or b == "origin/HEAD" or " -> " in b:
+            continue
+        out.add(b[7:] if b.startswith("origin/") else b)
+    return out
 
 
 def commits(root, stack):
@@ -188,7 +234,10 @@ def commits(root, stack):
     else:
         branches = [sh("git", "branch", "--show-current").strip()]
     for b in branches:
-        log = sh("git", "log", "--reverse", "--format=%H%x00%cI%x00%s", f"origin/main..{b}")
+        # Author date, not committer date: a rebase, cherry-pick or `just cost-fill` rewrite
+        # restamps the committer date of every commit to the same second, and the time split
+        # then hands the whole branch's usage to its first commit. Author dates survive all three.
+        log = sh("git", "log", "--reverse", "--format=%H%x00%aI%x00%s", f"origin/main..{b}")
         for line in log.splitlines():
             sha, when, subject = line.split("\x00")
             if sha in known:
@@ -621,9 +670,25 @@ def main():
         }
     )
     order = [c[2] for c in cs] + ["uncommitted"]
-    for ts, session, model, u in msgs:
+    # A message counts toward a branch only if it was made *on* that branch (its `gitBranch`),
+    # then falls into the first commit whose author date is after it. Without the branch test,
+    # every session on the machine that ran before a branch's first commit — other agents,
+    # other features — landed on that commit (seen: 335M tokens on a 500-line commit). A message
+    # with no `gitBranch` (older logs) keeps the time-only rule.
+    # "On that branch" means: the message's branch contains the commit — a commit authored on
+    # feat/a and now priced from feat/b (stacked on a) is still paid for by the messages made on
+    # feat/a. Computed once per commit from `git branch -a --contains`.
+    contains = {
+        sha: branches_containing(sha) | branches_with_equivalent(sha) for _w, _b, sha, _s in cs
+    }
+    ours = {c[1] for c in cs}.union(*contains.values()) if cs else set()
+    for ts, session, model, u, mbranch in msgs:
+        if mbranch and mbranch not in ours:
+            continue
         target = "uncommitted"
-        for when, _b, sha, _s in cs:
+        for when, _cbranch, sha, _s in cs:
+            if mbranch and mbranch not in contains[sha]:
+                continue
             if ts <= when:
                 target = sha
                 break
@@ -681,7 +746,7 @@ def main():
         dollars = f"~${usd:.2f}" if priced else "$n/a"
         share = f"{100 * cached / tokens:.0f}% cache reads" if tokens else "no tokens"
         print(
-            f"  {br}: Cost: {dollars} · {tokens / 1e6:.1f}M tokens, {share} ({', '.join(sorted(models))}) · split by commit time, scripts/cost-split.py {today}"
+            f"  {br}: Cost: {dollars} · {tokens / 1e6:.1f}M tokens, {share} ({', '.join(sorted(models))}) · split by branch and author date, scripts/cost-split.py {today}"
         )
 
     estimated_rows = [r for r in rows if r.get("estimated")]
