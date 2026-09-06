@@ -170,7 +170,54 @@ the chain is up, it's a normal stack: `gh stack link` runs automatically, `just 
 <stack#> --squash` merges it bottom-up in one CI run instead of one-per-bump, and `just deps-stack
 clean` deletes the chain branches (and the worktree) once every stacked PR shows MERGED.
 
-## 7. Command reference
+## 7. Overnight/unattended runs
+
+`.claude/skills/mip-solve-perpetual/SKILL.md` works through a `MIP-NNNN.tasks.md` file one task at
+a time, unattended, via a `/goal` + `/loop`. Two mechanics can drive the recurring re-invocation —
+pick one per run, don't build both (MIP-0011 §11's OQ7 spike, resolved below):
+
+- **Local `/goal` + `/loop`** (the one actually run, end to end, while writing this MIP's own
+  task stack): `CronCreate` schedules a recurring prompt (`*/15 * * * *` for every 15 minutes) that
+  re-invokes the skill; it fires only while this session stays open, auto-expires after 7 days, and
+  needs nothing beyond what's already in this repo/session. **Chosen as the default** — it needs no
+  extra environment setup and was demonstrated working for real (a real MIP-0011 task stack, real
+  pushed branches, real `GH_POST_MORTEM.md` entries when `gh` had no session auth).
+- **A cloud [routine](https://code.claude.com/docs/en/routines)** runs even after the laptop closes,
+  but needs Claude Code on the web / a cloud environment — not confirmed available in every
+  contributor's setup, and MIP-0013's OpenCode tryout doesn't cover it either. Worth adopting once
+  that access is confirmed; not assumed as a prerequisite here.
+
+**The `heavy-usage` plugin's "stop before the wall" claim, verified against its actual source**
+(MIP-0011 §11's OQ8 — this needed reading `~/.claude/plugins/cache/heavy-usage`'s scripts, not
+trusting its marketplace description): it is **real, but soft, not a hard block**.
+`usage-meter.js`'s `UserPromptSubmit` hook computes a linear projection (`used% / elapsed_frac`)
+against the official 5-hour/weekly `rate_limits` percentages, and at the `windDown` threshold
+(90% five-hour / 95% weekly, `usage-lib.js`'s `STATE_DEFAULTS.thresholds`) injects: *"Do not start
+new work. Finish the current step, commit what is done, write a brief state summary, then stop the
+loop."* That is a **strongly worded prompt injection Claude is asked to comply with**, not a
+`PreToolUse` block — nothing in the plugin's `hooks` (`SessionStart` + `UserPromptSubmit` only,
+`.claude-plugin/plugin.json`) can actually stop a tool call the way `guard-azure.sh`'s `PreToolUse`
+exit-2 does. Its data source (`usage-live.json`) is populated only while the interactive statusLine
+renders — the plugin's own comment says as much: *"the statusLine refreshes usage-live.json only
+when the UI renders; if it stops (headless/unattended run) the hook would otherwise act on old data
+silently. We annotate — never suppress a wind-down."* A cron-fired prompt inside a still-open
+interactive session (this repo's chosen mechanic above) keeps the statusLine rendering, so this
+staleness risk is mainly a concern for a genuinely headless/detached invocation, not the local
+`/goal`+`/loop` mechanic chosen here. **Conclusion: treat `heavy-usage` as the backup layer
+`mip-solve-perpetual`'s own usage guard already does** (`SKILL.md`'s "more conservative wins" rule)
+— never as the sole or primary stop condition, since compliance is advisory and its data can be
+stale exactly when unattended.
+
+**Stated stop condition for any overnight run**, regardless of mechanic: every task in the given
+file has an open PR (or is logged blocked, per `GH_POST_MORTEM.md`'s convention when `gh` has no
+session auth) or a real usage/blocker limit is hit — see `mip-solve-perpetual`'s own "Stop and
+report" and checkpointing-contract sections for the exact contract. **Merging and closing PRs stay
+denied at the permission layer regardless of mechanic** — `.claude/settings.json`'s
+`permissions.deny` blocks `Bash(gh pr merge*)`/`Bash(gh pr close*)` project-wide, with no override
+flag (unlike the Azure cost gate's `MAROLA_ALLOW_AZURE_DEPLOY`) — merging is a human decision, on
+waking up, full stop.
+
+## 8. Command reference
 
 | Step | Command |
 |---|---|

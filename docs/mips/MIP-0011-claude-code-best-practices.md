@@ -263,12 +263,22 @@ Otherwise none: this is how the repo is built, not what it does.
 5. Statusline: worth committing a project default, or personal only?
 6. Should `.mcp.json` also register a local MLflow (MIP-0010) or Overpass helper — or nothing
    beyond marola's own server?
-7. Routines vs. local `/goal`+`/loop` for overnight MIP runs — routines don't need the laptop on,
-   but need Claude Code on the web / a cloud environment, which MIP-0013's OpenCode tryout
-   doesn't cover. Worth a small spike before task 11 is built, not assumed.
-8. Is `heavy-usage`'s "stop before the wall" claim real proactive throttling, or just an early
-   warning? Not checked here — verify its source before trusting it for an unattended run
-   against `main`.
+7. **Resolved by task 11's spike, see `docs/DEV-FLOW.md` §7.** Routines vs. local `/goal`+`/loop`
+   for overnight MIP runs — local `/goal`+`/loop` (via `CronCreate`) was run for real this session
+   to work through this very MIP's own task stack (real pushed branches, real `GH_POST_MORTEM.md`
+   entries), and is the chosen default: no extra environment setup, demonstrated working. A cloud
+   routine survives the laptop closing but needs Claude Code on the web/a cloud environment, not
+   confirmed available in every setup — adopt it once that's confirmed, not assumed as a
+   prerequisite.
+8. **Resolved by task 11's spike, see `docs/DEV-FLOW.md` §7.** `heavy-usage`'s "stop before the
+   wall" claim, checked against its actual source (`~/.claude/plugins/cache/heavy-usage`): real,
+   but soft — a `UserPromptSubmit` prompt injection at a linear-projection threshold (90%
+   five-hour / 95% weekly), not a `PreToolUse` block, so compliance is advisory; its data source
+   (`usage-live.json`) is populated only while the interactive statusLine renders and can go
+   stale in a genuinely headless run (the plugin's own comment: "never suppress a wind-down" even
+   on stale data). Treat it as `mip-solve-perpetual`'s own backup usage-guard layer, never the
+   sole or primary stop condition — consistent with how the skill already used it before this
+   check.
 
 ## Appendix
 
