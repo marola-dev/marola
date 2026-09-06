@@ -187,7 +187,11 @@ the requested feature but flag which earlier-phase prerequisite is still missing
   (committed, tightens only); `.env`/`*.pem`/`*.key` are masked from the
   sandbox regardless of what's on disk. Run `just jail-dry-run <cmd>`
   first if you're unsure what a jailed command would actually be allowed
-  to do.
+  to do. The jail has no gh login of its own: `just jail-claude` passes `GH_TOKEN` from the host
+  shell (a fine-grained token scoped to this repo — pull requests read/write, contents and
+  metadata read; put it in the gitignored `.env`) so the agent opens and updates PRs itself with
+  `just uprd` and the template never lands empty. What the agent may do on GitHub is bounded by
+  that token's permissions, not by the sandbox (see the `jail-claude` recipe's comment).
   **Ubuntu 24.04 caveat:** `just jail-claude` can fail with `bwrap: setting up uid map: Permission
   denied` — Ubuntu 23.10+ blocks unprivileged user namespaces by default
   (`kernel.apparmor_restrict_unprivileged_userns=1`), which bubblewrap needs. Confirmed as host

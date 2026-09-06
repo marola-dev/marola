@@ -10,5 +10,22 @@
   "statusLine": {
     "type": "command",
     "command": "bash \"$(git rev-parse --show-toplevel)/.claude/statusline.sh\""
+  },
+  "permissions": {
+    "allow": [
+      "Bash(gh auth status:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr edit:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh stack:*)",
+      "Bash(just uprd:*)",
+      "Bash(just uprds:*)",
+      "Bash(scripts/uprd.sh:*)",
+      "Bash(scripts/uprds.sh:*)",
+      "Bash(scripts/stack.sh:*)"
+    ]
   }
 }

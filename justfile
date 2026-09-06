@@ -442,8 +442,19 @@ jail-dry-run *cmd:
 # warning at the top of that file).
 
 # Claude Code in the jail; extra args go to `claude` itself (`just jail-claude --model opus`, `--resume`)
+#
+# `--env GH_TOKEN`: the sandbox gets a private home, so the host's `gh auth login` credentials
+# never exist inside it and every `gh pr …` the agent runs fails — PR bodies then stay at the
+# template's placeholders because `just uprd` never ran. ai-jail has no per-host network or
+# per-subcommand allowlist (v1.20.2), and the committed .ai-jail can only tighten, so the
+# credential goes in as an env var from the host shell: put `GH_TOKEN=github_pat_…` in the
+# gitignored .env (flake.nix's shellHook exports it; the file itself stays masked in the jail).
+# Make it a fine-grained token scoped to this one repo — Pull requests: read/write, Contents:
+# read, Metadata: read — so what the agent may do on GitHub is bounded by the token, not by the
+# sandbox: pr view/create/edit/list and read-only `gh api` work, merge/issues/workflows/secrets
+# fail by permission. Unset in the host shell → nothing is passed, same as before.
 jail-claude *args:
-    ai-jail --no-save-config --rw-map ~/.claude --rw-map ~/.claude.json --map ~/.ssh --network --terminal-passthrough claude {{args}}
+    ai-jail --no-save-config --rw-map ~/.claude --rw-map ~/.claude.json --map ~/.ssh --network --terminal-passthrough --env GH_TOKEN claude {{args}}
 
 # The two below pin the model via Claude Code's own alias (always the latest of that line), and
 # still forward any further args to `claude`, e.g. `just jcs --resume`.
