@@ -17,6 +17,7 @@ const ROOT = path.resolve(__dirname, '..');
 const APP = fs.readFileSync(path.join(ROOT, 'site/static/app.js'), 'utf8');
 const SCHEMA = JSON.parse(fs.readFileSync(path.join(ROOT, 'site/board.schema.json'), 'utf8'));
 const BOARD = JSON.parse(fs.readFileSync(path.join(ROOT, 'site/fixtures/board.json'), 'utf8'));
+const INDEX = fs.readFileSync(path.join(ROOT, 'site/static/index.html'), 'utf8');
 
 let fails = 0;
 function ok(cond, label, detail) {
@@ -78,6 +79,10 @@ function makeLeaflet() {
   const layer = (kind, latlng, opts) => {
     const l = { kind, latlng, opts, tooltip: null, tooltipOpts: null, handlers: {}, added: false };
     l.addTo = function (m) { this.added = true; m.layers.push(this); return this; };
+    // Leaflet hands back the marker's DOM node once it is on the map; app.js names it for a screen
+    // reader through this (it dropped `title`, which drew a second, native tooltip over Leaflet's).
+    l.element = { attrs: {}, setAttribute(k, v) { this.attrs[k] = String(v); } };
+    l.getElement = function () { return this.added ? this.element : null; };
     l.bindTooltip = function (c, o) { this.tooltip = c; this.tooltipOpts = o; return this; };
     l.on = function (ev, fn) { this.handlers[ev] = fn; return this; };
     created.push(l);
@@ -163,7 +168,22 @@ async function runPage(board) {
   ok(joaq && joaq.opts.icon.options.html.includes('#e0a800'), 'Joaquina\'s wave is filled with the 40-69 colour', joaq && joaq.opts.icon.options.html);
   const brava = markers.find(m => String(m.tooltip).includes('Praia Brava'));
   ok(brava && brava.opts.icon.options.html.includes('#c0392b'), 'the unfit beach\'s wave is the red (score-0) colour', brava && brava.opts.icon.options.html);
-  ok(brava && /class="unfit">💧 0\/1 IMPRÓPRIA/.test(String(brava.tooltip)), 'the unfit beach\'s water cell carries the unfit class', brava && String(brava.tooltip));
+  ok(brava && /class="wide unfit">💧 0\/1 IMPRÓPRIA/.test(String(brava.tooltip)), 'the unfit beach\'s water cell carries the unfit class', brava && String(brava.tooltip));
+  // the water verdict is a sentence and gets the full width (CSS: .aspects .grid .wide spans both
+  // columns and wraps) — nowrap in one column ran it past the 21 rem tooltip and clipped the card
+  ok(/<span class="wide (water|unfit)">💧/.test(tip), 'the water cell is the spanning, wrapping one', tip);
+  ok((tip.match(/class="wide /g) || []).length === 1, 'only the water cell spans both columns', tip);
+  // one filled path, not two thin ribbons and a halo: the score colour needs area at area zoom
+  ok(joaq && (joaq.opts.icon.options.html.match(/<path /g) || []).length === 1, 'the wave is a single filled path', joaq && joaq.opts.icon.options.html);
+  ok(joaq && !/opacity=|drop-shadow|transform=/.test(joaq.opts.icon.options.html), 'no per-path opacity, halo transform or drop-shadow in the marker SVG', joaq && joaq.opts.icon.options.html);
+  ok(joaq && joaq.opts.title === undefined && joaq.opts.keyboard === true,
+    'the marker has no `title` (no native tooltip over Leaflet\'s) but stays keyboard-reachable');
+  ok(joaq && joaq.element.attrs['aria-label'] === 'Praia da Joaquina',
+    'the marker element is named for a screen reader with aria-label', joaq && JSON.stringify(joaq.element.attrs));
+  // the legend key is the same glyph, or the key stops meaning "this shape on the map is a beach"
+  const keyPath = (/<span class="wave-key">.*?<path d="([^"]+)"/.exec(INDEX) || [])[1];
+  const iconPath = (/<path d="([^"]+)"/.exec((joaq && joaq.opts.icon.options.html) || '') || [])[1];
+  ok(!!keyPath && keyPath === iconPath, 'index.html\'s legend key draws the same path as the marker', keyPath + ' vs ' + iconPath);
   ok((els.list.innerHTML.match(/<li /g) || []).length === 2 && els.list.innerHTML.indexOf('Joaquina') < els.list.innerHTML.indexOf('Brava'),
     'the list has two entries, best score first');
   ok(els.card.hidden === true || els.card.innerHTML === '', 'the card starts closed');

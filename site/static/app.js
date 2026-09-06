@@ -154,16 +154,21 @@
   var COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   function compass(deg) { return deg === null || deg === undefined ? '' : COMPASS[Math.round(deg / 45) % 8]; }
 
-  /** One wave, filled with the score colour; the selected beach's is larger and drawn on top. */
+  /**
+   * One wave, filled with the score colour. A single path with a body — a crest over a flat base —
+   * so the colour has area the way the old 10 px dot did: two thin ribbons plus a white halo read
+   * as white smudges once eighty beaches sit close together. Keep this `d` and index.html's legend
+   * key in step. The selected beach's is larger and drawn on top; a past hour fades the fill and
+   * dashes the outline in CSS, so the shape stays legible over the tiles.
+   */
+  var WAVE_PATH = 'M3 10c2.6-7 6.4-7 9 0s6.4 5 9 0v10H3z';
   function waveIcon(fill, selected, past) {
     var size = selected ? 32 : 24;
-    var path = 'M2 14c3-4 6-4 9 0s6 4 9 0l2 2c-3 4-6 4-9 0s-6-4-9 0z';
     return L.divIcon({
       className: 'wave' + (selected ? ' selected' : '') + (past ? ' past' : ''),
       iconSize: [size, size], iconAnchor: [size / 2, size / 2], tooltipAnchor: [0, -size / 2],
       html: '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" aria-hidden="true">' +
-        '<path d="' + path + '" transform="translate(0 -5)" fill="' + esc(fill) + '" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" opacity=".7"/>' +
-        '<path d="' + path + '" fill="' + esc(fill) + '" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>'
+        '<path d="' + WAVE_PATH + '" fill="' + esc(fill) + '" stroke="#fff" stroke-width="1" stroke-linejoin="round"/></svg>'
     });
   }
 
@@ -188,7 +193,9 @@
       (s.best && beach.sea.wind_dir_deg !== null ? ' ' + compass(beach.sea.wind_dir_deg) : '');
     var waves = '〰️ waves ' + fmt(e.wave_m, ' m') + (s.best && beach.sea.period_s !== null ? ' every ' + fmt(beach.sea.period_s, ' s', 0) : '');
     var whales = '🐋 whales ' + esc(e.whales) + (beach.whales.peak && beach.whales.peak !== e.h ? ' (best ' + esc(beach.whales.peak) + ')' : '');
-    var water = '<span class="' + (beach.water.unfit ? 'unfit' : 'water') + '">💧 ' + esc(beach.water.summary) + '</span>';
+    // The verdict is a sentence ("8/9 PRÓPRIA — avoid Ponto 98 (25 Aug)"), not a reading: it gets
+    // the full width and wraps (.wide), while the five short cells stay on one line each.
+    var water = '<span class="wide ' + (beach.water.unfit ? 'unfit' : 'water') + '">💧 ' + esc(beach.water.summary) + '</span>';
     return head + '<div class="grid">' +
       '<span>' + wind + '</span>' +
       '<span>🌡️ water ' + fmt(e.sea_temp_c, ' °C') + '</span>' +
@@ -209,8 +216,12 @@
       var c = colour(s ? s.score : null, beach.water.unfit);
       var selected = state.selected === beach.name;
       var m = L.marker([beach.lat, beach.lon], {
-        icon: waveIcon(c, selected, !!(s && isPast(s.h))), zIndexOffset: selected ? 1000 : 0, title: beach.name, keyboard: true
+        icon: waveIcon(c, selected, !!(s && isPast(s.h))), zIndexOffset: selected ? 1000 : 0, keyboard: true
       }).addTo(state.map);
+      // No `title`: the browser would draw its own tooltip on top of Leaflet's after ~1 s. keyboard:
+      // true already makes the icon focusable (tabindex + role=button); name it for a screen reader
+      // directly instead. Guarded — the stub Leaflet in scripts/site_check.js has no element.
+      if (m.getElement) { var mel = m.getElement(); if (mel) mel.setAttribute('aria-label', beach.name); }
       m.bindTooltip(aspectsHtml(beach, s), { sticky: true, direction: 'top', className: 'aspects', opacity: 0.97 });
       m.on('click', function (e) { L.DomEvent.stopPropagation(e); select(beach.name, false); });
       state.markers[beach.name] = m;

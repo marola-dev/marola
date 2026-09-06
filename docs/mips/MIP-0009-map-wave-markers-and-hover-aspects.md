@@ -55,7 +55,9 @@ Hover (desktop) or tap (touch) on a beach:
   there is no hover: a tap opens the card as today, and the **same aspect row is the first block
   of the card**, so both inputs see the same thing.
 - Every emoji is followed by its word ("🪼 jellyfish Low"), so a platform without the glyph still
-  reads correctly; the legend gains "🌊 a beach — hover or tap".
+  reads correctly; the legend gains a wave key — the same path the markers draw, at 18 px in
+  `--ink`, labelled "hover a wave". It is hidden under 640 px: a phone has no hover to offer and
+  the hour bar has no room for the line (it clipped at 390 px).
 - The card, the list, the day picker and the footer panel (MIP-0008) are unchanged.
 
 ## 4. Data sources and dependencies reviewed
