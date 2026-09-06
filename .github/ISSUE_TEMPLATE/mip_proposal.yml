@@ -19,7 +19,7 @@ body:
     id: motivation
     attributes:
       label: Motivation
-      description: The concrete gap this closes. Quote real output or a real limitation if you can.
+      description: The concrete gap this closes — quote real output or a real limitation if you can.
     validations:
       required: true
   - type: textarea

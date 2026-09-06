@@ -42,7 +42,7 @@ cost_of() {   # sum of the numeric `Cost: ~$N` trailers on one branch, and the r
 # --- the shared Stack section ---------------------------------------------------------------
 stack_section() {   # $1 = the branch this body is for
   local me="$1" total=0 n=0 b pr line usd
-  echo "## Stack — ${mip^^} (merge order, base first)"
+  echo "**Stack — ${mip^^}** (merge order, base first)"
   echo
   while read -r b; do
     [ -n "$b" ] || continue

@@ -8,21 +8,25 @@
 #   BRANCH=x EXTRA_FILE=f     # (scripts/uprds.sh) another branch than the checked-out one, and a
 #                             # file appended to the generated body — the stack section
 #
-# Generated body follows .github/PULL_REQUEST_TEMPLATE.md's shape (same headings, same order):
-#   Summary   — the first (oldest) commit's body paragraph, trimmed to ~2 sentences, or a
-#               `<!-- fill -->` placeholder when that commit has no body.
-#   MIP       — auto-detected, in order: a `mip-NNNN` token anywhere in the branch name
-#               (`mip-0010/3-…`, `docs/mip-0014-book`), a commit subject starting with `MIP-NNNN`,
-#               a `docs/mips/MIP-NNNN-*.md` file touched on the branch; linked to that file on
-#               the branch's tip. "none — not MIP-scoped" otherwise.
+# Generated body follows .github/PULL_REQUEST_TEMPLATE.md's shape (bold labels + a table, no `#`
+# headings — see AGENTS.md "Attribution and cost accounting"):
+#   Summary — the first (oldest) commit's body paragraph, trimmed to ~2 sentences, or a
+#             `<!-- fill -->` placeholder when that commit has no body.
+#   MIP     — auto-detected, in order: a `mip-NNNN` token anywhere in the branch name
+#             (`mip-0010/3-…`, `docs/mip-0014-book`), a commit subject starting with `MIP-NNNN`,
+#             a `docs/mips/MIP-NNNN-*.md` file touched on the branch; linked to that file on
+#             the branch's tip. "none — not MIP-scoped" otherwise.
+#   Tested  — one line: the four gates (AGENTS.md tokens `gates` = just build && just test &&
+#             just quality, `e2e`, `live` = a `just run -- --brief`, `ci-only`) each as ✅/⬜,
+#             then ` — ` and the note(s) from the commits' `Tested:` trailers (joined `; ` when
+#             more than one). No trailer at all → "not recorded — add a `Tested:` trailer
+#             (AGENTS.md)". Nothing is guessed from prose: an agent writes the trailer once at
+#             commit time.
+#   Cost    — every `Cost:` trailer found in those commits, one per commit, joined with `<br>`
+#             when there's more than one (AGENTS.md "Attribution and cost accounting" — the
+#             trailer is the source of truth, this section never drifts from it). No trailer →
+#             "not recorded — add a `Cost:` trailer".
 #   What changed — one bullet per commit subject.
-#   Tested    — this repo's gates as a checklist, ticked from the commits' `Tested:` trailers
-#               (AGENTS.md): tokens `gates` (= just build && just test && just quality), `e2e`,
-#               `live` (a `just run -- --brief`), `ci-only`; anything else on the line is quoted
-#               under the list as the note. No trailer → nothing ticked, a "not recorded" line.
-#               Nothing is guessed from prose: an agent writes the trailer once at commit time.
-#   Cost      — every `Cost:` trailer found in those commits (AGENTS.md "Attribution and cost
-#               accounting" — the trailer is the source of truth, this section never drifts from it).
 # The PR title is the first commit's subject, capped at 70 chars (scripts/lib/uprd_title.sh) —
 # a warning is printed to stderr when a title had to be cut.
 # Needs `gh` logged in (gh auth status) except for --dry-run.
@@ -140,12 +144,19 @@ repo_web_url() {   # git@github.com:o/r.git | https://github.com/o/r(.git) → h
 }
 
 generate_tested() {
-  # Union of every `Tested:` trailer on the branch. Format: `Tested: <tokens> — <note>` — tokens
-  # (comma-separated: gates, e2e, live, ci-only) tick boxes and are read only before the ` — `
-  # (or ` -- `) separator, so a note like "no e2e, data path untouched" cannot tick anything.
-  # Unknown words before the separator and the whole note are quoted verbatim under the list.
-  local trailers gate=" " e2e=" " live=" " ci=" " notes="" line head note tok extra
+  # One line for the Tested table cell: the four gates as glyph + short name, then ` — ` and the
+  # note(s) from every `Tested:` trailer on the branch (AGENTS.md). Format per trailer:
+  # `Tested: <tokens> — <note>` — tokens (comma-separated: gates, e2e, live, ci-only) flip a gate
+  # to ✅ and are read only before the ` — ` (or ` -- `) separator, so a note like "no e2e, data
+  # path untouched" cannot flip one by accident. Unknown words before the separator and the note
+  # itself join every trailer's note with `; `, so the cell stays one line no matter how many
+  # commits carry one.
+  local trailers gate=⬜ e2e=⬜ live=⬜ ci=⬜ notes="" sep="" line head note tok extra
   trailers="$(git log --format='%(trailers:key=Tested,valueonly,unfold)' "$range" 2>/dev/null | sed '/^[[:space:]]*$/d')"
+  if [ -z "$trailers" ]; then
+    echo "not recorded — add a \`Tested:\` trailer (AGENTS.md)"
+    return
+  fi
   while IFS= read -r line; do
     [ -n "$line" ] || continue
     case "$line" in
@@ -156,54 +167,52 @@ generate_tested() {
     extra=""
     for tok in $(printf '%s' "$head" | tr ',;' '  '); do
       case "$tok" in
-        gates) gate=x ;; e2e) e2e=x ;; live) live=x ;; ci-only) ci=x ;;
+        gates) gate=✅ ;; e2e) e2e=✅ ;; live) live=✅ ;; ci-only) ci=✅ ;;
         *) extra="${extra:+$extra }$tok" ;;
       esac
     done
     note="$(printf '%s' "${extra:+$extra — }$note" | sed -E 's/^[[:space:]—-]+//; s/[[:space:]]+$//')"
-    [ -n "$note" ] && notes="${notes}- ${note}"$'\n'
+    if [ -n "$note" ]; then notes="${notes}${sep}${note}"; sep="; "; fi
   done <<<"$trailers"
-  echo "- [$gate] \`just build && just test && just quality\`"
-  echo "- [$e2e] \`just e2e\`"
-  echo "- [$live] a live \`just run -- --brief\`"
-  echo "- [$ci] CI only (not run locally)"
-  if [ -n "$trailers" ]; then
-    [ -n "$notes" ] && { echo; printf '%s' "$notes"; }
-  else
-    echo
-    echo "- not recorded — no \`Tested:\` trailer in this branch's commits (AGENTS.md: \`Tested: gates, e2e — <not run, why>\` ticks the boxes and quotes the note)"
-  fi
+  local cell="$gate gates · $e2e e2e · $live live · $ci ci-only"
+  [ -n "$notes" ] && cell="$cell — $notes"
+  echo "$cell"
 }
 
-generate_body() {
-  echo "## Summary"
-  echo
-  generate_summary
-  echo
-  echo "## MIP"
-  echo
-  generate_mip
-  echo
-  echo "## What changed"
-  echo
-  # shellcheck disable=SC2016  # the backticks are literal markdown, not command substitution
-  git log --reverse --format='- %s (`%h`)' "$range" 2>/dev/null
-  echo
-  echo "## Tested"
-  echo
-  generate_tested
-  echo
-  echo "## Cost"
-  echo
+generate_cost() {
+  # Every `Cost:` trailer on the branch, one per commit, newest last, joined with `<br>` (a
+  # markdown table cell can't hold a raw newline) — or a "not recorded" fallback when none exist.
   local costs
   costs="$(git log --reverse --format='%h%x00%b%x00' "$range" | awk -v RS='\0' '
     NR % 2 == 1 { sha = $0; gsub(/^\n+|\n+$/, "", sha) }
-    NR % 2 == 0 { n = split($0, lines, "\n"); for (i = 1; i <= n; i++) if (lines[i] ~ /^Cost:/) printf "- %s (`%s`)\n", substr(lines[i], 6), sha }')"
-  if [ -n "$costs" ]; then
-    printf '%s\n' "$costs" | sed 's/^- \s*/- /'
-  else
-    echo "- not recorded in this branch's commits — add a \`Cost:\` trailer (AGENTS.md, \"Attribution and cost accounting\"); \`just claude-cost\` shows the sessions"
+    NR % 2 == 0 {
+      n = split($0, lines, "\n")
+      for (i = 1; i <= n; i++) if (lines[i] ~ /^Cost:/) {
+        txt = substr(lines[i], 6)
+        gsub(/^[ \t]+/, "", txt)
+        printf "%s (`%s`)\n", txt, sha
+      }
+    }')"
+  if [ -z "$costs" ]; then
+    echo "not recorded — add a \`Cost:\` trailer"
+    return
   fi
+  printf '%s' "$costs" | sed -z 's/\n/<br>/g; s/<br>$//'
+  echo
+}
+
+generate_body() {
+  echo "**Summary** — $(generate_summary)"
+  echo
+  echo "| | |"
+  echo "|---|---|"
+  echo "| **MIP** | $(generate_mip) |"
+  echo "| **Tested** | $(generate_tested) |"
+  echo "| **Cost** | $(generate_cost) |"
+  echo
+  echo "**What changed**"
+  # shellcheck disable=SC2016  # the backticks are literal markdown, not command substitution
+  git log --reverse --format='- %s (`%h`)' "$range" 2>/dev/null
   if [ -n "${EXTRA_FILE:-}" ] && [ -s "$EXTRA_FILE" ]; then echo; cat "$EXTRA_FILE"; fi
 }
 

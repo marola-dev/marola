@@ -86,10 +86,11 @@ What GitHub shows: a stacked PR is a PR whose base is the previous branch; its p
 feature, `gh stack`) adds the ordered list at the top of each PR; `just uprds` writes the same list
 at the end of each body, with the summed Cost, for readers without the feature.
 
-The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape (Summary/MIP/What
-changed/Tested/Cost); the PR title is the first commit's subject on the branch, capped at 70
-characters (`scripts/lib/uprd_title.sh`) so it stays skimmable — `just uprd`/`just uprds` print a
-warning when a title had to be cut, worth a manual retitle if the cut reads awkwardly.
+The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape — bold labels, a compact
+MIP/Tested/Cost table, no `#` headings, one screen for a typical two-commit PR; the PR title is
+the first commit's subject on the branch, capped at 70 characters (`scripts/lib/uprd_title.sh`) so
+it stays skimmable — `just uprd`/`just uprds` print a warning when a title had to be cut, worth a
+manual retitle if the cut reads awkwardly.
 
 Cost: `Cost:` is measured, not guessed. One session per task → `/usage` or `just claude-cost`.
 One session for several tasks → `just cost-split MIP-NNNN` splits the session log by commit time
@@ -149,7 +150,7 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 | One PR | `scripts/stack.sh pr` (`--dry-run` prints the gh commands) |
 | Every PR of a stack | `just uprds MIP-NNNN` |
 | PR body shape / title length | `.github/PULL_REQUEST_TEMPLATE.md`; title capped at 70 chars, cut point printed as a warning |
-| Tested section | `Tested: gates, e2e, live, ci-only — <not run, why>` trailer per commit; `just uprd` ticks the boxes, never guesses |
+| Tested row | `Tested: gates, e2e, live, ci-only — <not run, why>` trailer per commit; `just uprd` sets the ✅/⬜ glyphs, never guesses |
 | GitHub Stack | `just stack-setup` once, then `just stack-link MIP-NNNN`, `just stack-view`, `just stack-sync MIP-NNNN` |
 | Local stack view | `scripts/stack.sh status [MIP-NNNN]`, `just stack status MIP-NNNN` |
 | After a base merged | `scripts/stack.sh restack` (one branch) or `just stack-sync MIP-NNNN` (whole stack) |
