@@ -35,3 +35,4 @@ as an unfilled placeholder).
 | [MIP-0013](./MIP-0013-opencode-tryout.md) | OpenCode as marola's development agent — a bounded tryout, and what replacing Claude Code would take | Draft | 2026-09-05 | S | infra/dev-loop | cheap win | ~289k tok (unpriced) |
 | [MIP-0014](./MIP-0014-marola-book.md) | A marola book — *The Compiler Pushes Back*, written in LaTeX, versioned in a repo, built in CI | Draft | 2026-09-05 | XL | community/outreach; exam-prep artifact | expensive, defer | — |
 | [MIP-0015](./MIP-0015-interacao-swim-matching.md) | Interação — opt-in "who else is swimming here" matching between marola users | Draft | 2026-09-05 | L | user value; exam coverage | park | — |
+| [MIP-0016](./MIP-0016-water-quality-map-markers.md) | Water-quality points on the map — OK / not-OK marks, placed in the sea off the OSM coastline, not on the land where the agency and OSM centres put them | Draft | 2026-09-06 | M | user value; exam coverage | do next | — |
