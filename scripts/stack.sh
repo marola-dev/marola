@@ -85,22 +85,13 @@ case "${1:-}" in
     ;;
   link)
     # GitHub's native Stack (the "Preview stack" box on a PR) through the official extension.
-    # Only branches with an open PR go in: `gh stack link` *creates* a PR for a branch without one,
-    # which for an already-merged bottom branch would be a junk PR. Additive and idempotent.
+    # stack_link (scripts/lib/stack_link.sh, shared with scripts/deps-stack.sh) does the
+    # open-PR filtering and the actual `gh stack link` call.
     mip="$(mip_arg "${2:-}")"
-    gh auth status >/dev/null 2>&1 || { echo "gh is not logged in — run: gh auth login" >&2; exit 1; }
-    gh extension list 2>/dev/null | grep -q 'github/gh-stack' || { echo "gh stack extension not installed — run: just stack-setup" >&2; exit 1; }
-    open=()
-    for b in $(branches_of "$mip"); do
-      state="$(gh pr view "$b" --json state -q .state 2>/dev/null || echo NONE)"
-      case "$state" in
-        MERGED) echo "skip $b (PR merged)" ;;
-        CLOSED) echo "skip $b (PR closed)" ;;
-        *) open+=("$b") ;;
-      esac
-    done
-    [ "${#open[@]}" -ge 1 ] || { echo "nothing to link: no open PR on any $mip/* branch"; exit 0; }
-    run gh stack link "${open[@]}"
+    # shellcheck source=scripts/lib/stack_link.sh
+    source "$(dirname "${BASH_SOURCE[0]}")/lib/stack_link.sh"
+    mapfile -t brs < <(branches_of "$mip")
+    stack_link "$dry" "${brs[@]}"
     ;;
   *) sed -n '2,15p' "$0"; exit 1 ;;
 esac

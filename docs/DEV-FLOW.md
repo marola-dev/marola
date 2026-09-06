@@ -138,6 +138,25 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
   row, update `docs/mips/README.md`. A follow-up after a merge is a new branch off `main`, never a
   child of the old one.
 
+### Dependency PRs
+
+dependabot (`.github/dependabot.yml`) and scala-steward (`.github/workflows/scala-steward.yml`)
+each open their own one-off PR per bump. Left alone, ten open bumps cost ten separate CI runs to
+land. `just deps-stack` chains the open **dependabot** PRs (`--include-steward` adds
+scala-steward's, once its author identity on this repo is confirmed — see
+`scripts/deps-stack.sh`'s header) into one `deps/<date>/k-slug` stack, github-actions PRs first
+then pip, same shape as a MIP's task branches: run it weekly, or right before a release, rather
+than merging bumps one at a time. A PR's head branch can't be moved after it's opened, so the
+default (and only implemented) path opens one *new* PR per chain branch, stacked on the previous,
+and closes each original dependabot PR with a pointer comment — dependabot's own branches are
+never touched, so an abandoned stack doesn't stop dependabot from re-opening or updating them
+normally. Two Actions bumps touching the same workflow line is the usual conflict: the script
+stops with the branch left mid-cherry-pick and prints the exact `git status` / resolve / `git
+cherry-pick --continue` / `just deps-stack --resume` steps. Once the chain is up, it's a normal
+stack: `gh stack link` runs automatically, `just stack-merge <stack#> --squash` merges it
+bottom-up in one CI run instead of one-per-bump, and `just deps-stack clean` deletes the chain
+branches once every stacked PR shows MERGED.
+
 ## 7. Command reference
 
 | Step | Command |
@@ -158,6 +177,7 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 | Merge the whole stack | `just stack-merge <stack#> --squash` (all-or-nothing, bottom-up) |
 | Delete merged branches | `just branches-clean` (local + remote ref, skips current branch/main) |
 | PR for a stray plain branch | `just branches-open` (base=main; stack branches point at `scripts/stack.sh pr`) |
+| Stack the open dependency PRs | `just deps-stack` (`--dry-run`, `--resume`, `--skip <PR#>`, `--include-steward`); `just deps-stack status` / `just deps-stack clean` |
 | Cost per PR | `just cost-split MIP-NNNN [--session <id>]`, `just claude-cost` |
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |
 | Status line | `.claude/statusline.sh`, shared via `.claude/settings.json` |

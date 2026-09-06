@@ -77,6 +77,7 @@ quality-other:
     python3 scripts/smoke_record.py --self-test
     python3 scripts/benchmark_gate.py --self-test
     scripts/gh-billing.sh --self-test
+    scripts/deps-stack.sh --self-test
     actionlint
     hadolint Dockerfile Dockerfile.local
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
@@ -338,6 +339,23 @@ uprds *args:
 # `just stack restack`, `just stack status` — the local, script-only view of a MIP stack.
 stack *args:
     scripts/stack.sh {{args}}
+
+# Stack every open dependency-update PR (dependabot; `--include-steward` adds scala-steward's)
+# into one chain of `deps/<date>/k-slug` branches, the same shape a MIP's task branches get —
+# github-actions PRs first, then pip, each group by PR number. Opens one new PR per chain branch
+# stacked on the previous (dependabot's own branches are left untouched, and their PRs are closed
+# with a pointer to the new ones — see scripts/deps-stack.sh's header for why, and the
+# `--retarget-dependabot` non-goal), then links them into a GitHub Stack.
+#   just deps-stack                    # discover, build, publish, link
+#   just deps-stack --dry-run          # print every git/gh command; no push, no gh mutation
+#   just deps-stack --resume           # continue after a conflict (prints the resolve steps)
+#   just deps-stack --skip 123         # drop PR #123 from the chain
+#   just deps-stack status             # the local chain + each PR's state
+#   just deps-stack clean              # delete deps/* branches whose stacked PR is MERGED
+# Needs `gh auth status` OK for anything beyond --dry-run/--from-json/--self-test/status/clean's
+# local listing. Not available inside ai-jail (AGENTS.md) — run from the host.
+deps-stack *args:
+    scripts/deps-stack.sh {{args}}
 
 # Delete every local branch whose PR gh confirms MERGED (local branch + remote ref, if still
 # there) — never the current branch or main. Safe for mip-NNNN/k-slug branches too.
