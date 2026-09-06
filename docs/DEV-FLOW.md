@@ -63,7 +63,7 @@ Per task, in its own session (superpowers `executing-plans`: the task row is the
 scripts/stack.sh start MIP-NNNN <k> <slug>        # branch mip-nnnn/k-slug off task k-1's branch (main for k = 1)
 # red → green → refactor  (superpowers test-driven-development; systematic-debugging when green won't come)
 just build && just test && just quality           # + a live check whenever a data path changed (superpowers verification-before-completion: evidence, then the claim)
-git commit                                         # message ends with the Cost: trailer (AGENTS.md)
+git commit                                         # message ends with Tested: and Cost: trailers (AGENTS.md) — the PR's Tested/Cost sections come from them
 scripts/stack.sh pr                                # push + PR with base = the previous task's branch
 ```
 
@@ -149,6 +149,7 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 | One PR | `scripts/stack.sh pr` (`--dry-run` prints the gh commands) |
 | Every PR of a stack | `just uprds MIP-NNNN` |
 | PR body shape / title length | `.github/PULL_REQUEST_TEMPLATE.md`; title capped at 70 chars, cut point printed as a warning |
+| Tested section | `Tested: gates, e2e, live, ci-only — <not run, why>` trailer per commit; `just uprd` ticks the boxes, never guesses |
 | GitHub Stack | `just stack-setup` once, then `just stack-link MIP-NNNN`, `just stack-view`, `just stack-sync MIP-NNNN` |
 | Local stack view | `scripts/stack.sh status [MIP-NNNN]`, `just stack status MIP-NNNN` |
 | After a base merged | `scripts/stack.sh restack` (one branch) or `just stack-sync MIP-NNNN` (whole stack) |

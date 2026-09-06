@@ -113,7 +113,8 @@ the requested feature but flag which earlier-phase prerequisite is still missing
 
 ## Attribution and cost accounting (hard rule)
 
-- **Commits carry one trailer and nothing else:** `Co-Authored-By: Claude <noreply@anthropic.com>`.
+- **Commits carry three trailers and nothing else:** `Tested:`, `Cost:` (both below) and
+  `Co-Authored-By: Claude <noreply@anthropic.com>`.
   No session links, no "Generated with" banners, no PR-body attribution. This is enforced by
   `.claude/settings.json` (`attribution.commit`, `attribution.pr: ""`, `attribution.sessionUrl:
   false`) — the shared project settings, so it applies to every Claude Code session in this repo.
@@ -134,6 +135,11 @@ the requested feature but flag which earlier-phase prerequisite is still missing
   `.github/PULL_REQUEST_TEMPLATE.md`'s shape (Summary/MIP/What changed/Tested/Cost), and the PR
   title is the first commit's subject capped at 70 characters. Run it after every push to
   a PR branch (`just uprd --dry-run` to preview).
+- **Every commit carries a `Tested:` trailer** — one line, written once at commit time, so the
+  PR's Tested checklist is filled without a second pass: tokens `gates` (= `just build && just
+  test && just quality`), `e2e`, `live` (a `just run -- --brief`), `ci-only`, then free text
+  for what was *not* run and why, e.g. `Tested: gates — no e2e, no data path touched`. `just
+  uprd` ticks the boxes from the tokens and quotes the text; it never guesses from prose.
 - **One feature, one session.** Start a feature with `/clear` (or a new session) and `/rename` it
   to the branch name so `/usage`'s session block and ccusage's per-session rows map to one PR.
   Re-runs of `just benchmark`/`just e2e` driven by the agent count toward the feature; note them.
