@@ -37,3 +37,4 @@ as an unfilled placeholder).
 | [MIP-0015](./MIP-0015-interacao-swim-matching.md) | Interação — opt-in "who else is swimming here" matching between marola users | Draft | 2026-09-05 | L | user value; exam coverage | park | — |
 | [MIP-0016](./MIP-0016-water-quality-map-markers.md) | Water-quality points on the map — OK / not-OK marks, placed in the sea off the OSM coastline, not on the land where the agency and OSM centres put them | Draft | 2026-09-06 | M | user value; exam coverage | do next | — |
 | [MIP-0017](./MIP-0017-agentic-tooling-survey.md) | Agentic tooling ideas from `ai-job-search` and September 2026's trending agent repos | Draft | 2026-09-06 | S | infra/dev-loop | cheap win (§5.1/§5.2); §5.3 no urgency | — |
+| [MIP-0018](./MIP-0018-self-documentation-and-media-exporter.md) | Marola self-documentation — weekly post-planner and multi-platform exporter (LinkedIn, blog repo, Substack, Reddit) | Draft | 2026-09-06 | M | infra/dev-loop | cheap win | — |
