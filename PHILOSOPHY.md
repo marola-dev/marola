@@ -56,21 +56,21 @@ reviewer be strict without being verbose:
   jar" rule exists because Kyo is pre-1.0 and its docs drift), GraalVM native images, a container
   that is a fat jar and nothing else.
 
-**The Python question, answered honestly.** The premise "Python barely has type checking" is
-too strong, and this file should not repeat it. Python has had gradual typing since 3.5 and an
-active tool ecosystem (mypy, pyright, and newer checkers); typed Python is common in modern
-libraries. What is true, and is the actual point, is narrower and matters more for agent-written
-code: the annotations are **optional and unenforced by the language** — the `typing` module's own
+**The Python question.** Python is not short of types: gradual typing since 3.5, mypy and
+pyright, and typed code is the norm in modern libraries. The point is where the gate lives. In
+Python the annotations are optional and unenforced by the language — the `typing` module's own
 documentation opens with "The Python runtime does not enforce function and variable type
 annotations. They can be used by third party tools such as type checkers, IDEs, linters, etc."
-(docs.python.org, fetched 2026-09-05). So the gate exists only if every contributor, including
-the agent, installs it, configures it, and never types `Any` to make it pass; large parts of the
-ecosystem are untyped or loosely typed; there is no exhaustiveness check on a `match`; and a wrong
-type is discovered when that line runs. On the JVM the gate is the build. That difference — a
-check that is *there by construction* versus one that is *there by discipline* — is the whole
-argument for putting an LLM's output through Scala rather than through Python. It is not an
-argument against Python: marola's offline steps (`dspy/`, `finetune/`) are Python, chosen because
-the libraries only exist there, and kept out of the runtime path on purpose.
+(docs.python.org, fetched 2026-09-05) — so the check is there by discipline: every contributor,
+including the agent, installs the checker, configures it, and never reaches for `Any` to make it
+pass; a `match` has no exhaustiveness check; a wrong type surfaces when that line runs. On the JVM
+the gate is the build — there by construction — and Scala 3 makes it strict without ceremony
+(strict equality, warnings as errors, `enum` with exhaustive `match`, effects at the boundary).
+For a backend system that will live for years and be written largely by agents, that is the bet
+this repo makes: compile-time safety, one build tool with pinned resolution, and ergonomics that
+hold up as the codebase grows beat Python's faster start over the long term. Python keeps the
+places where its libraries are the only ones — the offline steps (`dspy/`, `finetune/`) — and
+stays out of the runtime path on purpose.
 
 ## Why Nix
 
