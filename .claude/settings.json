@@ -26,6 +26,10 @@
       "Bash(scripts/uprd.sh:*)",
       "Bash(scripts/uprds.sh:*)",
       "Bash(scripts/stack.sh:*)"
+    ],
+    "deny": [
+      "Bash(gh pr merge*)",
+      "Bash(gh pr close*)"
     ]
   }
 }

@@ -57,3 +57,4 @@ repomix-output/
 
 # Claude Code agent worktrees (Agent tool, isolation: worktree) — ephemeral nested checkouts
 .claude/worktrees/
+.claude/settings.local.json
