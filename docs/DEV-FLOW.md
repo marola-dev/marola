@@ -274,4 +274,4 @@ waking up, full stop.
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |
 | Status line | `.claude/statusline.sh`, shared via `.claude/settings.json` |
 | Push text to the clipboard (write-only) | `just clip` — needs `MAROLA_JAIL_CLIPBOARD=1 just jail-claude` inside the jail, works directly outside it |
-| Claude Code's own image paste (Ctrl+V) inside the jail | `MAROLA_JAIL_CLIPBOARD_PASTE=1 just jail-claude` — opt-in X11/Wayland display passthrough, off by default (bigger grant than the write-only bridge, see justfile's `jail-claude` comment) |
+| Claude Code's own image paste (Ctrl+V) inside the jail | Works by default — `jail-claude` passes X11/Wayland display passthrough on every session; `MAROLA_JAIL_NO_DISPLAY=1 just jail-claude` opts back out for a stricter session (no image paste), see justfile's `jail-claude` comment for what the default grants |

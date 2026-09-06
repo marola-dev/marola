@@ -574,40 +574,34 @@ jail-dry-run *cmd:
 # invocation below `--exec` doesn't touch). Confirmed via `ai-jail --help`: "`--exec` Direct
 # execution mode (no PTY proxy, no status bar)".
 #
-# MAROLA_JAIL_CLIPBOARD=1 just jail-claude: opt-in, write-only clipboard bridge — default off, so
-# a plain `just jail-claude` behaves exactly as before this existed. Before ai-jail starts, this
-# creates a FIFO at .tmp/clip.fifo (the repo dir is already rw-mapped into the jail, so the FIFO
-# is visible inside; .tmp/ is gitignored) and backgrounds scripts/clip-relay.sh, which reads that
-# FIFO and pipes each payload into wl-copy or xclip — same host-tool detection as the `_clip`
-# recipe below. Inside the jail, `just clip` / `scripts/clip.sh` write into the FIFO; there is no
-# read/paste counterpart on either side. The relay is stopped (which removes the FIFO) when
-# `claude` exits for any reason via this recipe's own EXIT/INT/TERM trap; see clip-relay.sh's
-# header for why *it* additionally needs `set -m` and a process-group kill rather than a plain
-# `kill $pid` (a plain kill leaves an orphaned reader blocked on the now-deleted FIFO — confirmed
-# empirically while building this). If the host has no clipboard tool/display, clip-relay.sh says
-# so on stderr and exits immediately; this recipe carries on without a relay either way.
+# Display/clipboard passthrough is ON BY DEFAULT (`--display`, plus DISPLAY/WAYLAND_DISPLAY
+# forwarded and XDG_RUNTIME_DIR pinned to the real /run/user/<uid>) so Ctrl+V — Claude Code's own
+# image-paste feature, which shells out to xclip/wl-paste itself — works the same as bare `claude`.
+# Without a real X11/Wayland socket inside the sandbox (the jail's underlying default is
+# `--no-display`), that subprocess has nothing to talk to and paste silently does nothing; plain
+# text Ctrl+V doesn't need this (the terminal emulator injects it as ordinary input bytes — `--exec`
+# above is what keeps that path intact), only the image case does.
 #
-# Security: write-only by construction — the jail can only push bytes into a host process that
-# calls wl-copy, it has no path to wl-paste and so cannot read the clipboard. Off by default, and
-# announces itself with one line when on, so it's never silently active. Residual risk: anything
-# the agent copies replaces what you had in the clipboard, and a malicious payload could be a
-# shell command you then paste — read before you paste.
+# What this grants, plainly: the sandboxed `claude` process gets a real display socket, not a
+# one-way byte pipe. On Wayland, compositors isolate clients from each other reasonably well — a
+# client can read the clipboard but not another window's contents. On X11 (this repo's own dev
+# host: `XDG_SESSION_TYPE=x11`) there is no such isolation — any client on the socket can read
+# other windows' contents and inject synthetic input, not just the clipboard. This is a materially
+# bigger default grant than a purely filesystem/network sandbox; it's the trade the maintainer
+# chose so Ctrl+C and Ctrl+V behave exactly like a bare `claude` session.
 #
-# MAROLA_JAIL_CLIPBOARD_PASTE=1 just jail-claude: opt-in, real clipboard *read* — separate from
-# the bridge above and off by default. Plain text Ctrl+V is unaffected by any of this (the
-# terminal emulator injects pasted text as ordinary input bytes; `--exec` above is what keeps that
-# path intact) — this flag is only for Claude Code's own image-paste feature, which shells out to
-# xclip/wl-paste itself and needs a real X11/Wayland socket inside the sandbox to do it, which
-# `--no-display` (the jail's default) denies. Setting it adds `--display` (ai-jail's X11/Wayland
-# passthrough) plus forwards `DISPLAY`/`WAYLAND_DISPLAY`, and pins `XDG_RUNTIME_DIR` to the real
-# `/run/user/<uid>` (not this file's own `XDG_RUNTIME_DIR` override two lines up, which points at
-# a repo-local dir for sbt's boot socket and would otherwise make wl-paste look in the wrong
-# place). Security: this is a materially bigger grant than the write-only bridge — a full display
-# socket, not a one-way byte pipe. Wayland compositors isolate clients from each other reasonably
-# well; X11 (this repo's dev host: `XDG_SESSION_TYPE=x11`) has no such isolation — any client on
-# the socket can read other windows' contents and inject synthetic input, not just the clipboard.
-# Off by default; only turn it on if you need image paste and accept that broader exposure for the
-# session.
+# `MAROLA_JAIL_NO_DISPLAY=1 just jail-claude` opts back OUT for a stricter session — falls back to
+# the jail's `--no-display` default, so `xclip`/`wl-paste` (and Claude Code's own image-paste) get
+# nothing to talk to. `.env`/`*.pem`/`*.key` stay masked either way — this flag only affects the
+# display socket.
+#
+# The write-only clipboard-push bridge below (`MAROLA_JAIL_CLIPBOARD=1`, `just clip`) stays,
+# separate from the above: it still gives you a way to hand data out to the host clipboard under
+# `MAROLA_JAIL_NO_DISPLAY=1` (no display socket, so no xclip/wl-copy access from inside the jail at
+# all) without granting the broader read/inject surface display passthrough implies. With the
+# default (display on), it's redundant for the *jail-side* half — `xclip`/`wl-copy` inside the jail
+# can already write the host clipboard directly — but it's kept as-is (not folded in) since it
+# still matters for the opt-out case and nothing about it changed.
 jail-claude *args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -632,10 +626,10 @@ jail-claude *args:
             relay_pid=""
         fi
     fi
-    paste_flags=()
-    if [ "${MAROLA_JAIL_CLIPBOARD_PASTE:-0}" = "1" ]; then
-        echo "jail-claude: MAROLA_JAIL_CLIPBOARD_PASTE=1 — real X11/Wayland display passthrough is on, the jail can read your clipboard (and, on X11, more)" >&2
-        paste_flags=(--display --env DISPLAY --env WAYLAND_DISPLAY --env "XDG_RUNTIME_DIR=/run/user/$(id -u)")
+    paste_flags=(--display --env DISPLAY --env WAYLAND_DISPLAY --env "XDG_RUNTIME_DIR=/run/user/$(id -u)")
+    if [ "${MAROLA_JAIL_NO_DISPLAY:-0}" = "1" ]; then
+        echo "jail-claude: MAROLA_JAIL_NO_DISPLAY=1 — no X11/Wayland display passthrough this session (stricter than the default; Ctrl+V image paste will not work)" >&2
+        paste_flags=()
     fi
     ai-jail --no-save-config --rw-map ~/.claude --rw-map ~/.claude.json --map ~/.ssh --network --terminal-passthrough --exec --env GH_TOKEN "${paste_flags[@]}" claude {{args}}
 

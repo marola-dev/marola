@@ -132,15 +132,20 @@ passes `GH_TOKEN` from the host shell (fine-grained, gitignored `.env`) so PRs w
 `just uprd`. `jail-claude` runs `ai-jail --exec` — direct execution, no PTY proxy/status bar —
 because the proxy is what broke Ctrl+C (it owns the raw terminal and must relay the interrupt
 byte itself) and mangled multi-line/bracketed pastes; see the justfile comment above `jail-claude`
-for the full diagnosis. `MAROLA_JAIL_CLIPBOARD=1` opts into a write-only clipboard bridge
-(`just clip`), off by default. Plain text Ctrl+V paste needs nothing extra (the terminal emulator
-injects it as ordinary input); Claude Code's own image-paste needs a real X11/Wayland socket,
-which `MAROLA_JAIL_CLIPBOARD_PASTE=1` opts into — off by default, and a bigger grant than the
-write-only bridge (a full display socket, not a one-way pipe; on X11 specifically, any client on
-that socket can read other windows and inject input, not just read the clipboard). **Ubuntu
-24.04:** `bwrap: setting up uid map: Permission denied` means unprivileged user namespaces are
-blocked by default — fix via a scoped AppArmor profile, or disable the sysctl (weakens the
-protection globally).
+for the full diagnosis. **By default it also passes `--display`** (X11/Wayland passthrough) plus
+`DISPLAY`/`WAYLAND_DISPLAY` and a real `XDG_RUNTIME_DIR`, so Ctrl+V for Claude Code's own
+image-paste (which shells out to `xclip`/`wl-paste` itself) works the same as bare `claude` —
+plain text Ctrl+V needed nothing (the terminal emulator injects it as ordinary input) and still
+doesn't. This is a real grant, not cosmetic: the sandboxed process gets a real display socket.
+Wayland compositors isolate clients from each other reasonably well; X11 (this repo's own dev
+host) does not — any client on the socket can read other windows and inject input, not just the
+clipboard. `MAROLA_JAIL_NO_DISPLAY=1` opts back OUT for a stricter session (no display socket at
+all, so no image paste). `MAROLA_JAIL_CLIPBOARD=1` separately opts into a write-only clipboard-push
+bridge (`just clip`), off by default — still useful under `MAROLA_JAIL_NO_DISPLAY=1` to hand data
+out without the broader display grant; with the display default it's redundant for the jail side
+(kept as-is, not folded in). **Ubuntu 24.04:** `bwrap: setting up uid map: Permission denied`
+means unprivileged user namespaces are blocked by default — fix via a scoped AppArmor profile, or
+disable the sysctl (weakens the protection globally).
 
 ## Before implementing a feature
 
