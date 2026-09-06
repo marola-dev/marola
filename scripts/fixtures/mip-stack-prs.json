@@ -1,0 +1,42 @@
+[
+  {
+    "number": 210,
+    "headRefName": "docs/mip-0025-marola-sea-model",
+    "title": "MIP-0025 (Draft): marola-sea-1.0",
+    "baseRefName": "main",
+    "mergeable": "MERGEABLE",
+    "files": [{ "path": "docs/mips/MIP-0025-marola-sea-domain-model.md" }, { "path": "docs/mips/README.md" }]
+  },
+  {
+    "number": 205,
+    "headRefName": "mip-0009/3-wave-marker-tooltip",
+    "title": "mip-0009 task 3: wave markers",
+    "baseRefName": "mip-0009/2-site-check-harness",
+    "mergeable": "MERGEABLE",
+    "files": [{ "path": "site/static/app.js" }, { "path": "docs/mips/MIP-0009-map-wave-markers-and-hover-aspects.md" }]
+  },
+  {
+    "number": 201,
+    "headRefName": "docs/mip-0020-instagram-pipeline",
+    "title": "MIP-0020: an Instagram account for marola",
+    "baseRefName": "docs/mip-0020-instagram-bot",
+    "mergeable": "MERGEABLE",
+    "files": [{ "path": "docs/mips/MIP-0020-instagram-bot-account.md" }, { "path": "docs/mips/README.md" }]
+  },
+  {
+    "number": 208,
+    "headRefName": "feat/positioning-notes",
+    "title": "MIP-0023 (Draft): product expansion",
+    "baseRefName": "main",
+    "mergeable": "MERGEABLE",
+    "files": [{ "path": "docs/mips/MIP-0023-waitlist-promotion-and-maintenance.md" }, { "path": "docs/mips/README.md" }]
+  },
+  {
+    "number": 212,
+    "headRefName": "fix/uprd-mip-link",
+    "title": "uprd: fix the MIP link",
+    "baseRefName": "main",
+    "mergeable": "MERGEABLE",
+    "files": [{ "path": "scripts/uprd.sh" }]
+  }
+]

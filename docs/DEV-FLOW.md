@@ -172,6 +172,23 @@ the chain is up, it's a normal stack: `gh stack link` runs automatically, `just 
 <stack#> --squash` merges it bottom-up in one CI run instead of one-per-bump, and `just deps-stack
 clean` deletes the chain branches (and the worktree) once every stacked PR shows MERGED.
 
+### MIP draft PRs
+
+Drafts pile up the same way bumps do — one `docs/mip-NNNN-*` branch per proposal, each open for
+days — and they fight over one line: every draft appends its row to `docs/mips/README.md` at the
+same place, so the moment one merges the rest conflict there. `just mip-stack` chains the open
+draft PRs (any PR whose head is `docs/mip-*` or that adds a `docs/mips/MIP-NNNN-*.md`; task
+branches `mip-NNNN/k-*` are left to `scripts/stack.sh`) into one `mips/<date>/k-slug` stack
+ordered by MIP number, the exact shape `just deps-stack` gives dependabot: built in its own
+worktree (`.tmp/wt-mip-stack`), one new PR per chain branch stacked on the previous, the original
+PR closed with a pointer, `gh stack link` at the end, `just mip-stack status` / `clean` /
+`--resume` / `--skip` / `--dry-run` as for deps. The index-row conflict resolves itself
+(`scripts/lib/mip_index_merge.py`: both sides' rows, one per MIP, in number order; the same row
+edited differently on both sides is a real edit and stops for a human). A draft that merged
+another draft's branch to stay mergeable is fine — merge commits are skipped and commits the
+chain already carries are dropped by patch-id. Then `just stack-merge <stack#> --squash` lands
+the lot bottom-up.
+
 ## 7. Overnight/unattended runs
 
 `.claude/skills/mip-solve-perpetual/SKILL.md` works through a `MIP-NNNN.tasks.md` file one task at
@@ -245,6 +262,7 @@ waking up, full stop.
 | Delete merged branches | `just branches-clean` (local + remote ref, skips current branch/main) |
 | PR for a stray plain branch | `just branches-open` (base=main; stack branches point at `scripts/stack.sh pr`) |
 | Stack the open dependency PRs | `just deps-stack` (`--dry-run`, `--resume`, `--skip <PR#>`, `--include-steward`); `just deps-stack status` / `just deps-stack clean` |
+| Stack the open MIP draft PRs | `just mip-stack` (`--dry-run`, `--resume`, `--skip <PR#>`); `just mip-stack status` / `just mip-stack clean` |
 | Cost per PR | `just cost-split MIP-NNNN [--session <id>] [--estimate]`, `just claude-cost` |
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |
 | Status line | `.claude/statusline.sh`, shared via `.claude/settings.json` |

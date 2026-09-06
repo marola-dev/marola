@@ -82,6 +82,8 @@ quality-other:
     scripts/deps-stack.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
+    scripts/mip-stack.sh --self-test
+    python3 scripts/lib/mip_index_merge.py --self-test
     .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
@@ -421,6 +423,24 @@ stack *args:
 # local listing. Not available inside ai-jail (AGENTS.md) — run from the host.
 deps-stack *args:
     scripts/deps-stack.sh {{args}}
+
+# Stack every open MIP *draft* PR (a `docs/mip-NNNN-*` branch, or any PR adding a
+# `docs/mips/MIP-NNNN-*.md`; task branches `mip-NNNN/k-*` are excluded) into one chain of
+# `mips/<date>/k-slug` branches ordered by MIP number — different proposals, one stack that merges
+# bottom-up in one CI run. Every draft appends its own row to docs/mips/README.md at the same
+# spot, so after the first one lands the rest conflict on that line: the chain build resolves that
+# by itself (scripts/lib/mip_index_merge.py keeps both rows, in MIP order). Same shape as
+# `just deps-stack`: a dedicated worktree (.tmp/wt-mip-stack), one new PR per chain branch, the
+# original PR closed with a pointer, `gh stack link` at the end. See scripts/mip-stack.sh's header.
+#   just mip-stack                     # discover, build, publish, link
+#   just mip-stack --dry-run           # print every git/gh command; no push, no gh mutation
+#   just mip-stack --resume            # continue after a conflict it could not resolve
+#   just mip-stack --skip 123          # drop PR #123 from the chain
+#   just mip-stack status              # the local chain + each PR's state
+#   just mip-stack clean               # delete mips/* branches whose stacked PR is MERGED
+# Needs `gh auth status` OK beyond --dry-run/--from-json/--self-test. Run from the host, not ai-jail.
+mip-stack *args:
+    scripts/mip-stack.sh {{args}}
 
 # Delete every local branch whose PR gh confirms MERGED (local branch + remote ref, if still
 # there) — never the current branch or main. Safe for mip-NNNN/k-slug branches too.
