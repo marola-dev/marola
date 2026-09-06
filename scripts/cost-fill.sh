@@ -148,10 +148,20 @@ sys.stdout.write("\n".join(body) + "\n\n" + "\n".join(ordered) + "\n")
 PY
 }
 
+# The rewrite replays the branch onto origin/main. If main moved past this branch's base since
+# it was pushed (a PR it stacked on got merged), every replayed commit turns into an add/add
+# conflict against the squash — refuse up front instead of discovering it mid-replay.
+git fetch -q origin main 2>/dev/null || true
+if ! git merge-base --is-ancestor origin/main "$branch"; then
+  echo "cost-fill: $branch is behind origin/main — rebase it first (git rebase origin/main), then re-run" >&2
+  exit 1
+fi
 tmp_branch="cost-fill-tmp-$$"
 git branch -f "$tmp_branch" origin/main >/dev/null
 git checkout -q "$tmp_branch"
-trap 'git checkout -q "$branch" 2>/dev/null; git branch -D "$tmp_branch" >/dev/null 2>&1 || true' EXIT
+# Whatever happens mid-replay (a conflict, Ctrl-C), leave the caller on their own branch with a
+# clean tree, not on the temp branch in a half-done cherry-pick.
+trap 'git cherry-pick --abort >/dev/null 2>&1 || true; git checkout -q -f "$branch" 2>/dev/null || git checkout -q "$branch" 2>/dev/null; git branch -D "$tmp_branch" >/dev/null 2>&1 || true' EXIT
 
 for sha in "${shas[@]}"; do
   cdate="$(git log -1 --format=%cI "$sha")"
