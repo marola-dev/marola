@@ -6,12 +6,12 @@
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-05: "a MIP for a marola-related book, technical, in LaTeX, versioned in a repository, built in CI, in the tradition of self-published FP books") |
 | **Created** | 2026-09-05 |
 | **Phase** | 0 — a documentation/tooling project, nothing a swimmer sees; independent of the app's own phase gate, but see Effort vs Gain below for why it should still wait |
-| **Related** | `PHILOSOPHY.md` (the book's own thesis — "the one decision" — is the book's spine); `docs/SKILLS.md` (the roadmap this book turns into a narrative); `docs/AI-103-MAPPING.md`, `docs/AI-500-MAPPING.md` (the exam framing, one audience option); `docs/DEV-FLOW.md` (the MIP/agent loop chapter); `docs/FUTURE-WORK.md` §10 ("the Scala/JVM gap in the prompt-engineering ecosystem" — a marola book is a small dent in the literature gap, not just the code gap); `docs/mips/MIP-0005` (map site), `MIP-0008` (Docker images), `MIP-0010` (MLflow), `MIP-0012` (llm4s/DSPy deprecation) — each is a chapter's grounding |
-| **Effort** | XL — an 11-chapter first edition, a LaTeX/Nix/CI toolchain built from scratch, and a listing-extraction pipeline kept honest against a fast-moving codebase (see §7 estimate) |
-| **Gain** | community/outreach (a citable, dated, verified account of a real local-first LLM product, in a genre — self-published FP books — that currently has zero Scala-native-LLM entries per `FUTURE-WORK.md` §10); exam-prep artifact (turns `docs/SKILLS.md`'s roadmap into a narrative); no direct product value for the swimmer |
-| **Effort vs Gain** | expensive, defer — real value, but XL effort competing for the same author-hours as Phase 1 (the Telegram bot, MIP-0002, still Draft); write one chapter and the build pipeline first as a spike, not the whole outline, and don't let it displace Phase 1 |
-| **Depends on** | Nothing technically (the book's toolchain is independent of the app); a stronger chapter 2 ("does it work for a real user") needs MIP-0002 (Telegram bot) shipped first — not a hard blocker, an honesty one |
-| **Risk** | marola's own code changes fast (dozens of commits, several whole MIPs' worth of tasks, landed on `main` inside 2026-09-05 alone — confirmed via `git log`) — listings extracted today are stale by the next PR unless the extraction is pinned and CI-checked, not hand-copied once and forgotten |
+| **Related** | `PHILOSOPHY.md` (the book's own thesis — "the one decision" — is the book's spine); `docs/SKILLS.md` (the roadmap this book turns into a narrative); `docs/AI-103-MAPPING.md`, `docs/AI-500-MAPPING.md` (the exam framing, one audience option); `docs/DEV-FLOW.md` (the MIP/agent loop chapter); `docs/FUTURE-WORK.md` §10 ("the Scala/JVM gap in the prompt-engineering ecosystem" — a marola book is a small dent in the literature gap, not just the code gap); `docs/mips/MIP-0005` (map site), `MIP-0008` (Docker images), `MIP-0010` (MLflow), `MIP-0012` (llm4s/DSPy deprecation) — each is a chapter's grounding; [h0ffmann/forecast-energy-demand](https://github.com/h0ffmann/forecast-energy-demand) (the author's own LaTeX-thesis-with-CI-translation pipeline — reviewed in §4.6 as prior art and a token-efficiency case study) |
+| **Effort** | XL — an 11-chapter first edition in English plus a pt-BR translation build, a LaTeX/Nix/CI toolchain built from scratch, a listing-extraction pipeline kept honest against a fast-moving codebase (see §7 estimate), and a segment-level translation pipeline with its own translation-memory store and CI gate (§5.8) |
+| **Gain** | community/outreach (a citable, dated, verified account of a real local-first LLM product, in a genre — self-published FP books — that currently has zero Scala-native-LLM entries per `FUTURE-WORK.md` §10); exam-prep artifact (turns `docs/SKILLS.md`'s roadmap into a narrative); reach (a pt-BR edition, §5.8, for the author's own first-language reviewers and a Brazilian Scala/AI audience); no direct product value for the swimmer |
+| **Effort vs Gain** | expensive, defer — real value, but XL effort competing for the same author-hours as Phase 1 (the Telegram bot, MIP-0002, still Draft); write one chapter, the build pipeline, and a translated sample chapter first as a spike, not the whole outline or both full editions, and don't let it displace Phase 1 |
+| **Depends on** | Nothing technically (the book's toolchain is independent of the app); a stronger chapter 2 ("does it work for a real user") needs MIP-0002 (Telegram bot) shipped first — not a hard blocker, an honesty one; the translation pipeline (§5.8) defaults to Ollama (this repo's own `local/` module) specifically so it depends on no paid or third-party-hosted service — see §8's GitHub-Models-retirement finding for why that default matters |
+| **Risk** | marola's own code changes fast (dozens of commits, several whole MIPs' worth of tasks, landed on `main` inside 2026-09-05 alone — confirmed via `git log`) — listings extracted today are stale by the next PR unless the extraction is pinned and CI-checked, not hand-copied once and forgotten; translation adds a second copy of the same risk on the pt-BR side (see §8) |
 | **Cost so far** | — (nothing merged yet; the writing itself won't fit the existing `Cost:` trailer cleanly — see §11 open question 6) |
 
 ## 1. Summary
@@ -56,13 +56,17 @@ $ git clone <marola-book repo> && cd marola-book
 $ nix develop
 $ just book-build                         # latexmk -xelatex, TeX Live via Nix, no local install
   extracting listings @ marola-src bd83a1f (12 files, 340 lines) ... ok
+  translating (pt-BR): 2 segment(s) changed, 214 unchanged (translation-memory hit) ... ok
   chapter 05-review-pass.tex ... ok
-  → dist/marola-book.pdf (187 pages)
+  → dist/en/marola-book.pdf (187 pages)
+  → dist/pt-BR/marola-book.pdf (191 pages)
 $ just book-watch                         # latexmk -pvc, rebuild on save
 
-# CI, on every push to main: the same `just book-build`, PDF attached as a workflow artifact
-# CI, on a tag (v0.1.0): matrix build (screen + print variants) → draft GitHub Release with
-#   marola-book--v0.1.0.pdf, marola-book-print--v0.1.0.pdf attached
+# CI, on every push to main: the same `just book-build`, both language PDFs attached as
+#   workflow artifacts
+# CI, on a tag (v0.1.0): matrix build (en × pt-BR, screen × print) → draft GitHub Release with
+#   marola-book--v0.1.0.pdf, marola-book-print--v0.1.0.pdf, marola-book-pt-BR--v0.1.0.pdf,
+#   marola-book-pt-BR-print--v0.1.0.pdf attached
 ```
 
 ## 4. Prior art reviewed — self-published FP books with public source
@@ -165,6 +169,80 @@ sibling formats — the Make-target-per-variant idea, not the specific six.
   combination, copying §4.3's flake almost directly.** It is the only option of the three that is
   both proven at this exact job (Milewski, Maguire, HoTT all ship this way) and compatible with
   `\inputminted`/`\lstinputlisting` pulling a real file path, verbatim, at build time.
+
+### 4.6 The maintainer's own `forecast-energy-demand` repo — prior art and a token-efficiency case study
+
+Fetched 2026-09-05. The repo meant is
+[`h0ffmann/forecast-energy-demand`](https://github.com/h0ffmann/forecast-energy-demand) —
+"forecasting-energy-demand" (the name given in the request) 404s on the GitHub API; confirmed via
+`api.github.com/users/h0ffmann/repos`. A UFRJ/Escola Politécnica undergraduate thesis that builds a
+LaTeX thesis and machine-translates it PT-BR → EN-US in CI, the closest prior art to this MIP's own
+multi-language ask (all paths below confirmed via the GitHub API and raw file fetches, `main`).
+
+**Layout**: `docs/project/pt/` (source of truth — `cover.tex`, `project_main.tex`; `cap1.tex`…
+`cap6.tex` planned per its `AGENTS.md`, not yet written), `docs/project/en/` (generated, never
+hand-edited), `docs/project/shared/` (preamble/style/`refs.bib`, symlinked into both). **Translation**:
+[`scripts/translate_latex.py`](https://github.com/h0ffmann/forecast-energy-demand/blob/main/scripts/translate_latex.py)
+calls `meta/llama-3.3-70b-instruct` over the GitHub Models inference endpoint with the
+Actions-provided `GITHUB_TOKEN` — one whole `.tex` file is one prompt, and a fixed system prompt
+("never modify LaTeX commands... return only the translated LaTeX") is the *only*
+markup-preservation mechanism, nothing strips markup first. Change detection: a SHA-256 hash of
+each *whole file* against a committed
+[`.translation-cache.json`](https://github.com/h0ffmann/forecast-energy-demand/blob/main/docs/project/.translation-cache.json)
+(confirmed content: `cover.tex`, `project_main.tex`, and — because `ensure_symlinks()` links
+`thesis_pack.tex` into `pt/` too and the glob is unconditional — `thesis_pack.tex`, a 25-line,
+zero-prose preamble file "translated" anyway). **Build**: `.github/workflows/thesis-pdf.yml`
+installs Tectonic via a GitHub Action (not Nix — no `flake.nix` anywhere here), runs the
+translator, builds PT-BR/EN-US as two independent `tectonic` invocations, commits both PDFs plus
+the cache back on `main`. **A confirmed gap**: the translation call sits in a bare
+`except Exception` that prints `FAILED` and skips the cache update but does **not** exit non-zero —
+the workflow builds `en/...` regardless, from a stale or missing file; nothing in CI fails when a
+translation silently didn't happen. Not reviewed (out of scope): `packages/`, `main.py`, the
+forecasting code itself.
+
+#### 4.6.1 Token-efficiency review, and concrete improvements
+
+Where the tokens go, worst first: whole-file granularity (a one-word fix re-sends the whole
+chapter); markup protected by instruction, not removed (`\label{}`/`\cite{}`/`\ref{}`/comments
+ride along as billed input *and* output); the symlinked, zero-prose `thesis_pack.tex` gets
+"translated" on every hash change; no pinned glossary (a planned review agent catches term drift
+after the fact instead); one call per file, so the fixed system-prompt cost never amortizes as
+chapter count grows; no placeholder-survival check or stronger-model review pass — a human reading
+the PDF is the only gate; no CI gate for a missing translation, per the confirmed gap above.
+Fixes, each tied to the waste it targets: a **translation memory keyed by segment content hash**
+(one JSON entry per paragraph, gettext-`.po` style) so a one-paragraph edit re-translates one
+paragraph, not a chapter; **placeholder-protect markup before the model sees it** — swap
+`\cite{}`/`\label{}`/`\ref{}`/math and, for marola, every `\lstinputlisting`/`\inputminted` line
+(§5.3: these reference a real file path, so code text never needs to reach a prompt at all) for
+short numbered placeholders — fewer tokens, and "model touched a label" is prevented structurally;
+**pin a glossary once** instead of a post-hoc checker; **batch every changed segment per chapter
+into one call** — not per-file (too coarse), not per-paragraph (the fixed prompt cost then
+dominates); **Ollama by default, a stronger model only for reviewer-flagged segments** — this
+repo's own local-first pattern (`ARCHITECTURE.md` §5) and not just an efficiency call: GitHub
+Models, the free tier this sibling repo depends on, **was fully retired 2026-07-30** (§8 has the
+citation and what it means for the script as committed); **a mechanical placeholder-survival
+check** (count placeholders source vs. translation, diff — zero LLM calls) instead of re-translating
+to verify correctness; **a CI gate failing on any segment hash with no translation-memory entry**,
+the role `check_listings.py` (§5.3) already plays for code drift.
+
+#### 4.6.2 Token estimate: naive whole-file vs. segment-level, for a book this size
+
+Assumptions: **~5,000 words** English prose/chapter; **~1.33 tokens/word**; raw markup sent whole
+adds **~30%** overhead (placeholders add **~8%**); translated output ≈ source token count;
+**~3,600 tokens** stands in for markup/short-listing overhead the naive approach still pays even
+though `\lstinputlisting` never embeds code inline (§5.3); 12 units (11 chapters + conclusion,
+§5.2); **8 revisions/chapter** after the first pass (96 events book-wide).
+
+| | Naive whole-file | Segment-level + placeholders |
+|---|---|---|
+| Per-chapter first pass | 5,000×1.33×1.30 + 3,600 ≈ 12,245 in, ≈12,245 out → **≈24,500** | 5,000×1.33×1.08 ≈ 7,182 in, ≈7,182 out → **≈14,364** |
+| Book-wide first pass (×12) | **≈294,000** | **≈172,368** (**~41% less**, markup/listing cuts alone) |
+| Per revision (96 total) | whole chapter resent: **≈24,500** | 1 paragraph (≈180 tok w/ placeholders) + ~800 fixed ≈ **≈1,000** |
+| 96 revisions | **2,352,000** | **96,000** |
+| **Lifecycle total** | **≈2.65M tokens** | **≈268,000 tokens (~10× less)** |
+
+Most of the saving is segment-level caching turning a one-paragraph edit into a one-paragraph
+re-send — markup stripping alone drives only the ~41% cold-start win.
 
 ## 5. Design
 
@@ -271,6 +349,41 @@ than the source already is.
   researched here): matches this repo's existing "free by default, paid tier opt-in" pattern
   (`ARCHITECTURE.md` §5's local/Azure split) applied to distribution instead of infrastructure.
 
+### 5.8 Multi-language build
+
+**Source: English; pt-BR the first target** — proposed. §5.1 already picked "working Scala
+developers" globally and drafted every chapter title in English, so sourcing in English keeps that
+consistent; the trade-off is Brazilian readers — a real secondary audience, and the author's own
+first-language reviewers — wait for a translated edition, the mirror of `forecast-energy-demand`'s
+choice (pt-BR source, a UFRJ requirement, translated to EN-US for its cited literature).
+
+**Layout**, replacing §5.2's implicit single-language assumption: `src/en/chNN-slug.tex` (source of
+truth), `src/pt-BR/chNN-slug.tex` (generated only), `src/shared/` (preamble/figures/`refs.bib`,
+never duplicated), `i18n/translation-memory.json` (segment hash → `{source_hash, translated,
+reviewed}`), `i18n/glossary.json` (pinned EN→pt-BR terms). Mirrors `forecast-energy-demand`'s
+`pt/`/`en/`/`shared/` split (§4.6) with source/target reversed and the whole-file cache replaced by
+the segment-keyed memory (§4.6.1).
+
+**Build matrix.** `just book-build` runs one `latexmk -xelatex` per language directory →
+`dist/en/marola-book.pdf`, `dist/pt-BR/marola-book.pdf`; listing extraction and
+`check_listings.py` (§5.3) run once, not per language. The CI release job (§5.5) becomes a
+2-language × 2-variant matrix — four PDFs per tag (§3).
+
+**Translation pipeline** — §4.6.1 applied: a chapter is segmented once stable (after English
+review, so translating mid-draft doesn't churn the memory); each segment is placeholder-protected,
+hashed, looked up in the memory; unmatched or `reviewed: false` segments are batched one call per
+chapter to Ollama by default (zero-cost, no vendor free tier to retire out from under the build); a
+stronger hosted model is opt-in, reserved for reviewer-flagged segments only.
+
+**Hand-reviewed vs. automated.** Automated: segmentation, hashing, placeholder swap/restore, the
+batched call, the placeholder-survival check, and a CI gate failing on any un-translated or
+unreviewed hash. Always hand-reviewed: a `reviewed` flag starts `false` and is flipped only by a
+human reading pt-BR against English — `mip`'s "no unsourced facts reach a user" rule, for prose.
+
+**`Cost:` accounting.** A hosted-model flagged-segment pass gets the usual `Cost:` trailer
+(`AGENTS.md`) on the commit updating the translation memory; an Ollama-only run reads
+`Cost: $0 · Ollama local · N segments retranslated`.
+
 ## 6. Scoring / safety impact
 
 None. No product code, no scoring logic, no user-facing output changes.
@@ -311,6 +424,15 @@ None. No product code, no scoring logic, no user-facing output changes.
   The whole pitch is that this book is as verified as the MIPs it's based on — a chapter that
   overclaims Azure paths that are "written, not run" (most of them, per `ARCHITECTURE.md` §5) would
   undercut the book's own thesis.
+- **A stale or partial pt-BR PDF shipped silently is worse than no translation at all** — §5.8's CI
+  gate (fail on any un-translated/unreviewed segment hash) exists to make that impossible, the same
+  role `check_listings.py` (§5.3) plays for code drift. Not hypothetical: `forecast-energy-demand`'s
+  own pipeline (§4.6) depends on GitHub Models, which GitHub **fully retired 2026-07-30**
+  ([confirmed](https://docs.github.com/en/github-models/prototyping-with-ai-models), fetched
+  2026-09-05) — its translation script, last touched 2026-04-17, now calls a dead endpoint. A vendor
+  free tier can vanish with no warning; §5.8's Ollama default exists so this path can't fail the
+  same way (a repo-wide grep found marola references it nowhere today — not an existing exposure,
+  just the argument for the default).
 
 ## 9. Alternatives considered
 
@@ -340,7 +462,8 @@ this repo as the vehicle" for a reader who isn't the repo's own author.
 
 1. **Spike first.** Write chapter 1 plus the Nix/CI toolchain (§5.5) as a single bounded task before
    committing to all eleven chapters — the Effort-vs-Gain verdict above is conditional on that spike
-   actually being worth continuing.
+   actually being worth continuing. If the spike includes a translated sample (§5.8), keep it to one
+   chapter, not the full outline.
 2. **Title and audience — human decision.** The working title/audience in §5.1 is this MIP's
    proposal, not a settled choice; confirm before the spike's cover page is drawn.
 3. **`listings` (a hand-rolled Scala language definition) vs `minted`/Pygments** — try the former
@@ -358,6 +481,10 @@ this repo as the vehicle" for a reader who isn't the repo's own author.
 8. **Whether to freeze a marola commit per book "edition"** (like a Leanpub version) or track `main`
    continuously via the submodule bump — affects how often `check_listings.py` needs re-running and
    how a reader's PDF page numbers stay stable across printings.
+9. **When to start pt-BR translation** (§5.8) — per-chapter as English lands, or only once the
+   first edition is stable — affects how much the translation memory churns mid-draft; the spike
+   (OQ1) should pick one. A second language beyond pt-BR is a scope decision, not a redesign,
+   if it comes up later — `src/<lang>/` adds one by adding a directory.
 
 ## Appendix
 
@@ -382,3 +509,7 @@ Not fetched/verified: Leanpub's or Gumroad's terms of service in full; any print
 whether `nixpkgs`' current `texlive.combine` closure size has grown materially since
 `milewski-ctfp-pdf`'s flake was last updated; a live `nix build` of that flake was not run in this
 session (no such toolchain installed here) — the flake's contents were read, not executed.
+§4.6/§8 additionally fetched: [h0ffmann/forecast-energy-demand](https://github.com/h0ffmann/forecast-energy-demand)
+(full tree, `AGENTS.md`, `README.md`, `justfile`, `.github/workflows/thesis-pdf.yml`,
+`scripts/translate_latex.py`, `.translation-cache.json`, `cover.tex`, `project_main.tex`,
+`thesis_pack.tex`); [GitHub Models retirement notice](https://docs.github.com/en/github-models/prototyping-with-ai-models).
