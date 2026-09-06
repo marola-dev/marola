@@ -34,9 +34,14 @@ effort, 'cheap win', no earlier-phase gap"). Selection, in order:
 3. Rank the rest by `Effort` (S, then M, then L, then XL) and prefer a `Verdict` of "cheap win"
    over "do next"/"park"/"do when X lands"/"expensive, defer". Tie-break by lowest MIP number
    (oldest waiting first) — deterministic, not a coin flip.
-4. If the picked MIP has no `docs/mips/MIP-NNNN.tasks.md` yet, run the `mip-tasks` skill on it
-   first, in this same invocation, before starting task 1 — the loop below needs that file to
-   exist. Note in the first PR's body that the tasks file was generated this run, not pre-existing.
+4. If the picked MIP has no `docs/mips/MIP-NNNN.tasks.md` yet, **prefer the next-ranked
+   candidate that already has one**. If no candidate has a tasks file, stop and print
+   `GOAL_FAILED: MIP-NNNN picked but has no tasks file — run /mip-tasks MIP-NNNN, then
+   /mip-solve-perpetual NNNN`. The agent cannot generate that file itself: `mip-tasks` also has
+   `disable-model-invocation: true` (MIP-0011 task 8), so it refuses the Skill tool from inside
+   this run exactly as it would from a bare prompt — and replicating its workflow by hand is
+   forbidden for the same reason. That is a deliberate boundary (a task breakdown is a human
+   decision about how a MIP gets sliced into reviewable PRs), not a gap to route around.
 5. Proceed exactly as below with the picked number substituted for `$ARGUMENTS`.
 
 ## What to do
