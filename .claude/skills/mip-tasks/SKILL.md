@@ -1,6 +1,7 @@
 ---
 name: mip-tasks
 description: Turn an accepted MIP into an ordered task list and deliver it as small stacked PRs (one task = one branch = one PR, each based on the previous). Use when the user says "break down MIP-NNNN", "plan the tasks for", "stack the PRs", "restack", or wants a MIP implemented in reviewable pieces. Pairs with the mip skill (design) and superpowers' executing-plans / test-driven-development (doing each task).
+disable-model-invocation: true
 ---
 
 # From a MIP to stacked PRs
