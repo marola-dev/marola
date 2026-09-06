@@ -4,9 +4,13 @@
  * site/board.schema.json, written by marola.site.Board) and draws one marker per beach coloured by
  * score. smoke/latest.json + smoke/history.json (MIP-0008 §5.5, written by scripts/smoke_record.py
  * from the docker-smoke workflow, copied in by site.yml) feed the "Last live run" panel in the
- * footer and one dashed marker at the run's origin; absent = no panel. Nothing leaves the browser: no analytics, no cookies; "near me" uses the Geolocation API
- * client-side only, when you press the button. The page refuses a board with an unknown schema
- * version rather than guessing.
+ * footer and one dashed marker at the run's origin; absent = no panel, and so is a served
+ * index.html with no #smoke element (a build without the panel, or one still propagating across
+ * GitHub Pages' CDN, `cache-control: max-age=600` per file — see fix/site-smoke-panel-null) —
+ * el.smoke is then null and every use of it is guarded so the board still loads. Nothing leaves
+ * the browser: no analytics, no cookies; "near me" uses the Geolocation API client-side only, when
+ * you press the button. The page refuses a board with an unknown schema version rather than
+ * guessing.
  */
 (function () {
   'use strict';
@@ -281,6 +285,11 @@
   // --- last live run (MIP-0008 §5.5) -----------------------------------------------------------
   var SMOKE_SCHEMA = 1;
   function loadSmoke() {
+    // This build's index.html may not have the panel at all (an older/newer deploy than app.js —
+    // GitHub Pages caches each file independently, `cache-control: max-age=600`). Optional panel,
+    // never the board's problem: skip it before ever touching el.smoke, and never let anything in
+    // here reject — a smoke-panel failure must not reach the top-level `fail()`.
+    if (!el.smoke) return Promise.resolve();
     return fetchJson('smoke/latest.json').then(function (run) {
       if (run.schema !== SMOKE_SCHEMA) throw new Error('smoke schema ' + run.schema);
       state.smoke = run;
@@ -288,11 +297,14 @@
     }).then(function (h) {
       state.smokeHistory = h && h.schema === SMOKE_SCHEMA ? h : null;
       renderSmoke();
-    }).catch(function () { el.smoke.hidden = true; }); // no run yet, or unreadable: no panel
+    }).catch(function (err) {
+      if (el.smoke) el.smoke.hidden = true; // no run yet, or unreadable: no panel
+      console.error('smoke panel:', err);
+    });
   }
 
   function renderSmoke() {
-    var r = state.smoke; if (!r) return;
+    var r = state.smoke; if (!r || !el.smoke) return;
     var when = String(r.when).replace('T', ' ').slice(0, 16) + ' UTC';
     var top = r.top_pick, rev = r.review;
     var verdict = rev ? String(rev.verdict).toLowerCase() : '';
@@ -368,8 +380,16 @@
     }, function () { alert('Location not granted — the list stays ranked by score.'); });
   });
 
+  // The hint is only right when the board JSON itself is missing (a fresh checkout, or a build
+  // that never ran) — fetchJson's own error is "<status> <path>", e.g. "404 data/areas.json".
+  // Any other failure here (a JS bug, a malformed file, a network hiccup) is not fixed by
+  // rebuilding the site, so don't tell people to run a command that won't help.
+  function isMissingBoardJson(err) {
+    return /^404 data\/.*\.json$/.test((err && err.message) || '');
+  }
   function fail(err) {
-    status('could not load the board: ' + err.message + ' — run `just site-build` first?');
+    var hint = isMissingBoardJson(err) ? ' — run `just site-build` first?' : '';
+    status('could not load the board: ' + err.message + hint);
     console.error(err);
   }
 
