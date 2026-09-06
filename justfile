@@ -336,6 +336,24 @@ uprd *args:
 uprds *args:
     scripts/uprds.sh {{args}}
 
+# Add a missing Cost:/Tested: trailer to every commit of the current branch that lacks one
+# (AGENTS.md), without git filter-branch — commits are replayed with `git cherry-pick`, author/
+# committer dates preserved. Cost prefers a measured figure (scripts/cost-split.py's session
+# logs, subagent transcripts included); nothing logged at all falls back to
+# `scripts/cost-split.py --estimate-commit`, always labelled `est.`. Idempotent: a commit that
+# already carries both trailers is untouched. `just cost-fill --dry-run` to preview.
+# See scripts/cost-fill.sh.
+cost-fill *args:
+    scripts/cost-fill.sh {{args}}
+
+# The whole agent PR workflow in one command (AGENTS.md "Attribution and cost accounting"):
+# refuses on main or a dirty tree, `just cost-fill`s any commit missing a trailer, pushes (a
+# mip-NNNN/k-* branch goes through `scripts/stack.sh pr` for the right base), then `just uprd`
+# writes or updates the PR body and this prints its URL. `just pr --dry-run` prints every step
+# and the generated body — no push, no `gh`. See scripts/pr.sh.
+pr *args:
+    scripts/pr.sh {{args}}
+
 # scripts/stack.sh passthrough: `just stack start MIP-0005 2 site-build`, `just stack pr`,
 # `just stack restack`, `just stack status` — the local, script-only view of a MIP stack.
 stack *args:

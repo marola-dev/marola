@@ -1,0 +1,175 @@
+#!/usr/bin/env bash
+# cost-fill — add a missing `Cost:` and/or `Tested:` trailer to every commit of the current
+# branch that lacks one (AGENTS.md "Attribution and cost accounting"), without git filter-branch:
+# each commit is replayed with `git cherry-pick` onto a scratch branch, only commits missing a
+# trailer are amended, and author/committer dates are preserved (`GIT_COMMITTER_DATE` set from the
+# original commit before every cherry-pick and every amend — cherry-pick already keeps the author
+# date on its own).
+#
+#   just cost-fill               # fill missing trailers on the current branch, in place
+#   just cost-fill --dry-run     # print what would be added per commit, change nothing
+#
+# `Cost:` prefers a measured figure from `scripts/cost-split.py`'s session logs (the same numbers
+# `just cost-split` would print); when nothing was logged for that commit at all — a subagent
+# whose worktree session was never re-attached, a commit made on another machine — it falls back
+# to `scripts/cost-split.py --estimate-commit`, always labelled `est.` so it can't be mistaken for
+# a measurement. `Tested:` is never invented: a missing one gets exactly
+# `Tested: ci-only — trailer added by just cost-fill, gates not re-run` — it never claims a gate
+# that was not actually run.
+#
+# Trailer order is fixed (AGENTS.md): Tested, then Cost, then Co-Authored-By (and anything else),
+# nothing after — an existing trailer of one kind and a newly-added one of another are reordered
+# into that shape, not just appended.
+#
+# Used by `scripts/pr.sh` before every push. Idempotent: a commit that already carries both
+# trailers is left untouched, and the branch isn't rewritten at all when nothing is missing.
+set -euo pipefail
+
+dry_run=0
+for a in "$@"; do [ "$a" = "--dry-run" ] && dry_run=1; done
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+branch="$(git branch --show-current)"
+[ -n "$branch" ] || { echo "cost-fill: detached HEAD — check out a branch first" >&2; exit 1; }
+[ "$branch" != main ] || { echo "cost-fill: refusing to rewrite main" >&2; exit 1; }
+git fetch -q origin main 2>/dev/null || true
+
+mapfile -t shas < <(git log --reverse --format=%H origin/main..HEAD)
+if [ "${#shas[@]}" -eq 0 ]; then
+  echo "cost-fill: no commits ahead of origin/main on $branch"
+  exit 0
+fi
+
+TESTED_FALLBACK="Tested: ci-only — trailer added by just cost-fill, gates not re-run"
+
+# Precompute what each commit needs before touching history at all — a diff's size (and hence its
+# estimate) doesn't change when its message gains a trailer, so it's safe to ask cost-split.py
+# about the *original* shas up front, once, rather than mid-rewrite. Written to a temp file, not
+# piped: `python3 - <<'PY'` below already claims stdin to carry the script's own source, so a
+# second use of stdin for data would just read EOF.
+json_file="$(mktemp)"
+python3 "$script_dir/cost-split.py" --estimate --json >"$json_file" 2>/dev/null || echo '[]' >"$json_file"
+
+measured_trailer() {   # $1 = short (7-char) sha, $2 = the cost-split.py --json file -> "Cost: ..." or empty
+  python3 - "$1" "$2" <<'PY'
+import json
+import sys
+
+sha, path = sys.argv[1], sys.argv[2]
+try:
+    with open(path, encoding="utf-8") as fh:
+        rows = json.load(fh)
+except (json.JSONDecodeError, OSError):
+    rows = []
+for r in rows:
+    if r.get("commit") != sha or r.get("estimated") or not r.get("tokens"):
+        continue
+    usd = f"~${r['usd']:.2f}" if r.get("usd") is not None else "$n/a"
+    tokens = r["tokens"]
+    tok = f"{tokens / 1e6:.1f}M tokens" if tokens >= 1_000_000 else f"{tokens / 1e3:.0f}k tokens"
+    cache_read = r.get("cache_read", 0)
+    share = f"{100 * cache_read / tokens:.0f}% cache reads" if tokens else "no tokens"
+    models = ", ".join(r.get("models", []))
+    print(f"Cost: {usd} · {tok}, {share} ({models}) · scripts/cost-split.py, just cost-fill")
+    break
+PY
+}
+
+declare -A new_cost new_tested
+any=0
+for sha in "${shas[@]}"; do
+  body="$(git log -1 --format=%B "$sha")"
+  short="${sha:0:7}"
+  if ! grep -q '^Cost:' <<<"$body"; then
+    line="$(measured_trailer "$short" "$json_file")"
+    [ -n "$line" ] || line="$(python3 "$script_dir/cost-split.py" --estimate-commit "$sha" 2>/dev/null || true)"
+    if [ -n "$line" ]; then
+      new_cost["$sha"]="$line"
+      any=1
+    fi
+  fi
+  if ! grep -q '^Tested:' <<<"$body"; then
+    new_tested["$sha"]="$TESTED_FALLBACK"
+    any=1
+  fi
+done
+rm -f "$json_file"
+
+if [ "$any" -eq 0 ]; then
+  echo "cost-fill: every commit on $branch already carries Cost: and Tested: trailers"
+  exit 0
+fi
+
+if [ "$dry_run" -eq 1 ]; then
+  echo "cost-fill --dry-run: would rewrite these commits on $branch (author/committer dates preserved):"
+  for sha in "${shas[@]}"; do
+    [ -n "${new_cost[$sha]:-}${new_tested[$sha]:-}" ] || continue
+    echo "  $(git log -1 --format='%h %s' "$sha")"
+    [ -n "${new_tested[$sha]:-}" ] && echo "    + ${new_tested[$sha]}"
+    [ -n "${new_cost[$sha]:-}" ] && echo "    + ${new_cost[$sha]}"
+  done
+  exit 0
+fi
+
+# Rebuilds the trailer block in AGENTS.md's fixed order (Tested, Cost, then whatever else was
+# already there — Co-Authored-By included) instead of just appending: a commit that already has a
+# Tested: trailer and is only missing Cost: must end up Tested/Cost/Co-Authored-By, not
+# Tested/Co-Authored-By/Cost.
+insert_trailers() {   # $1 = old message, $2 = new Tested line or "", $3 = new Cost line or ""
+  python3 - "$1" "$2" "$3" <<'PY'
+import re
+import sys
+
+msg, tested_new, cost_new = sys.argv[1], sys.argv[2], sys.argv[3]
+lines = msg.rstrip("\n").split("\n")
+trailer_re = re.compile(r"^[A-Za-z][A-Za-z0-9-]*:\s")
+i = len(lines)
+while i > 0 and trailer_re.match(lines[i - 1]):
+    i -= 1
+existing = lines[i:]
+body = lines[:i]
+while body and body[-1].strip() == "":
+    body.pop()
+
+tested_line = tested_new or next((line for line in existing if line.startswith("Tested:")), None)
+cost_line = cost_new or next((line for line in existing if line.startswith("Cost:")), None)
+others = [line for line in existing if not line.startswith("Tested:") and not line.startswith("Cost:")]
+ordered = [line for line in (tested_line, cost_line) if line] + others
+
+sys.stdout.write("\n".join(body) + "\n\n" + "\n".join(ordered) + "\n")
+PY
+}
+
+tmp_branch="cost-fill-tmp-$$"
+git branch -f "$tmp_branch" origin/main >/dev/null
+git checkout -q "$tmp_branch"
+trap 'git checkout -q "$branch" 2>/dev/null; git branch -D "$tmp_branch" >/dev/null 2>&1 || true' EXIT
+
+for sha in "${shas[@]}"; do
+  cdate="$(git log -1 --format=%cI "$sha")"
+  prev_head="$(git rev-parse HEAD)"
+  # --allow-empty preserves a commit that was already empty at authoring time; --empty=drop
+  # instead skips one that becomes empty here because its content is already on this branch's new
+  # base (e.g. the PR this branch was stacked on has since been squash-merged into main under a
+  # different sha) — a stale-base symptom cost-fill should not crash on. No `-q`: some git builds
+  # (confirmed: 2.55.0) reject `cherry-pick -q` outright with a bare usage dump — redirect instead.
+  GIT_COMMITTER_DATE="$cdate" git cherry-pick --allow-empty --empty=drop "$sha" >/dev/null
+  if [ "$(git rev-parse HEAD)" = "$prev_head" ]; then
+    echo "cost-fill: $sha's diff is already on $branch's base — skipped (rebase this branch onto origin/main)" >&2
+    continue
+  fi
+  tested="${new_tested[$sha]:-}"
+  cost="${new_cost[$sha]:-}"
+  if [ -n "$tested$cost" ]; then
+    old_msg="$(git log -1 --format=%B)"
+    new_msg="$(insert_trailers "$old_msg" "$tested" "$cost")"
+    GIT_COMMITTER_DATE="$cdate" git commit -q --amend -m "$new_msg"
+  fi
+done
+git branch -f "$branch" "$tmp_branch"
+trap - EXIT
+git checkout -q "$branch"
+git branch -D "$tmp_branch" >/dev/null
+
+echo "cost-fill: added ${#new_tested[@]} Tested: and ${#new_cost[@]} Cost: trailer(s) across ${#shas[@]} commit(s) on $branch"
+echo "next: git push --force-with-lease origin $branch"

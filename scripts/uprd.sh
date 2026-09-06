@@ -185,25 +185,28 @@ generate_tested() {
 }
 
 generate_cost() {
-  # Every `Cost:` trailer on the branch, one per commit, newest last, joined with `<br>` (a
-  # markdown table cell can't hold a raw newline) — or a "not recorded" fallback when none exist.
-  local costs
-  costs="$(git log --reverse --format='%h%x00%b%x00' "$range" | awk -v RS='\0' '
-    NR % 2 == 1 { sha = $0; gsub(/^\n+|\n+$/, "", sha) }
-    NR % 2 == 0 {
-      n = split($0, lines, "\n")
-      for (i = 1; i <= n; i++) if (lines[i] ~ /^Cost:/) {
-        txt = substr(lines[i], 6)
-        gsub(/^[ \t]+/, "", txt)
-        printf "%s (`%s`)\n", txt, sha
-      }
-    }')"
-  if [ -z "$costs" ]; then
-    echo "not recorded — add a \`Cost:\` trailer"
-    return
-  fi
-  printf '%s' "$costs" | sed -z 's/\n/<br>/g; s/<br>$//'
-  echo
+  # One line per commit, oldest first, joined with `<br>` (a markdown table cell can't hold a raw
+  # newline): the commit's own `Cost:` trailer when it has one; otherwise
+  # `scripts/cost-split.py --estimate-commit` for that commit, labelled `est.` and never mistaken
+  # for a measurement; "not recorded" only for a commit where even the estimator has nothing (an
+  # empty diff, or no calibratable history) — never a blanket fallback for the whole branch.
+  local sha short body line text out="" sep=""
+  while IFS= read -r sha; do
+    [ -n "$sha" ] || continue
+    short="$(git rev-parse --short "$sha")"
+    body="$(git log -1 --format=%B "$sha")"
+    line="$(grep '^Cost:' <<<"$body" | head -1)"
+    if [ -n "$line" ]; then
+      text="${line#Cost: }"
+    else
+      text="$(python3 "$script_dir/cost-split.py" --estimate-commit "$sha" 2>/dev/null || true)"
+      text="${text#Cost: }"
+    fi
+    [ -n "$text" ] || text="not recorded — add a \`Cost:\` trailer"
+    out="${out}${sep}${text} (\`${short}\`)"
+    sep="<br>"
+  done < <(git log --reverse --format=%H "$range" 2>/dev/null)
+  printf '%s\n' "$out"
 }
 
 generate_body() {
