@@ -50,16 +50,19 @@ done
 # A PR number resolves the branch and base from GitHub — the checkout can be on anything.
 pr_number=""; pr_url=""; base="${BASE:-}"
 if [ -n "$pr_arg" ]; then
-  if ! pr_json="$(gh pr view "$pr_arg" --json number,url,baseRefName,headRefName,state 2>/dev/null)"; then
+  # gh's own --jq, not sed over the JSON: gh pretty-prints when stdout is a terminal and a
+  # `"key": "value"` with a space silently matched nothing, which made a valid number fall
+  # through to the "you are on main" guard.
+  if ! pr_tsv="$(gh pr view "$pr_arg" --json number,url,baseRefName,headRefName,state \
+        --jq '[.number, .url, .baseRefName, .headRefName, .state] | @tsv' 2>/dev/null)"; then
     echo "uprd: cannot resolve PR #$pr_arg — gh not logged in (gh auth status), or no such PR" >&2
     exit 1
   fi
-  state="$(printf '%s' "$pr_json" | sed -n 's/.*"state":"\([^"]*\)".*/\1/p')"
-  [ "$state" = "OPEN" ] || { echo "uprd: PR #$pr_arg is $state — only open PRs are rewritten" >&2; exit 1; }
-  pr_number="$(printf '%s' "$pr_json" | sed -n 's/.*"number":\([0-9]*\).*/\1/p')"
-  pr_url="$(printf '%s' "$pr_json" | sed -n 's/.*"url":"\([^"]*\)".*/\1/p')"
-  [ -n "$base" ] || base="$(printf '%s' "$pr_json" | sed -n 's/.*"baseRefName":"\([^"]*\)".*/\1/p')"
-  BRANCH="$(printf '%s' "$pr_json" | sed -n 's/.*"headRefName":"\([^"]*\)".*/\1/p')"
+  IFS=$'\t' read -r pr_number pr_url pr_base pr_head state <<<"$pr_tsv"
+  [ "$state" = "OPEN" ] || { echo "uprd: PR #$pr_arg is ${state:-unknown} — only open PRs are rewritten" >&2; exit 1; }
+  [ -n "$pr_head" ] || { echo "uprd: PR #$pr_arg has no head branch in gh's answer: $pr_tsv" >&2; exit 1; }
+  [ -n "$base" ] || base="$pr_base"
+  BRANCH="$pr_head"
   git fetch -q origin "$BRANCH" 2>/dev/null || true
 fi
 
@@ -74,10 +77,10 @@ guard_base="${BASE:-main}"
 # was pushed from another machine).
 if git rev-parse --verify -q "$branch" >/dev/null; then head_ref="$branch"; else head_ref="origin/$branch"; fi
 
-if [ -z "$pr_number" ] && pr_json="$(gh pr view "$branch" --json number,url,baseRefName 2>/dev/null)"; then
-  pr_number="$(printf '%s' "$pr_json" | sed -n 's/.*"number":\([0-9]*\).*/\1/p')"
-  pr_url="$(printf '%s' "$pr_json" | sed -n 's/.*"url":"\([^"]*\)".*/\1/p')"
-  [ -n "$base" ] || base="$(printf '%s' "$pr_json" | sed -n 's/.*"baseRefName":"\([^"]*\)".*/\1/p')"
+if [ -z "$pr_number" ] && pr_tsv="$(gh pr view "$branch" --json number,url,baseRefName \
+      --jq '[.number, .url, .baseRefName] | @tsv' 2>/dev/null)"; then
+  IFS=$'\t' read -r pr_number pr_url pr_base <<<"$pr_tsv"
+  [ -n "$base" ] || base="$pr_base"
 fi
 [ -n "$base" ] || base=main
 if [ -z "$pr_number" ] && [ "$dry_run" -eq 0 ]; then
