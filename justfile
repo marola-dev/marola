@@ -401,6 +401,19 @@ cost-fill *args:
 pr *args:
     scripts/pr.sh {{args}}
 
+# Apply the deterministic label taxonomy (scripts/lib/pr_labels.sh) to one PR — the current
+# branch's, or `just pr-label 168`. `--dry-run` prints without calling `gh pr edit`. No LLM, no
+# cost: labels come from the PR's MIP number, changed top-level dirs, and author. See
+# scripts/pr-label.sh.
+pr-label *args:
+    scripts/pr-label.sh {{args}}
+
+# Backfill labels onto every merged/closed PR that has none yet (never touches an open PR, and
+# never a PR that already has a label — re-running is a no-op scan). `--dry-run` to preview,
+# `--limit N` to cap a first cautious run. See scripts/backfill-pr-labels.sh.
+pr-labels-backfill *args:
+    scripts/backfill-pr-labels.sh {{args}}
+
 # scripts/stack.sh passthrough: `just stack start MIP-0005 2 site-build`, `just stack pr`,
 # `just stack restack`, `just stack status` — the local, script-only view of a MIP stack.
 stack *args:
@@ -647,6 +660,9 @@ jcf *args: (jail-claude "--model" "fable" args)
 
 # jail-claude with --model sonnet
 jcs *args: (jail-claude "--model" "sonnet" args)
+
+# jail-claude with --model opus
+jco *args: (jail-claude "--model" "opus" args)
 
 # Push stdin (or --text "…") to the clipboard — write-only, no paste counterpart; see
 # scripts/clip.sh's header and this file's `jail-claude` comment. Inside a session started with
