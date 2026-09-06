@@ -21,11 +21,13 @@ marola is already, in substance, more than a swim-time answer: MIP-0001 grounds 
 quality and a sourced sea-lore corpus, MIP-0009/0016 put tides, wind, jellyfish and water-quality
 marks on the map, MIP-0021/0022 add accessibility and a safety footer, and `FUTURE-WORK.md` §1
 already argues the scoring engine should generalize past swimming to surf, dive, sailing, fishing,
-whale watching. This MIP proposes making that explicit in the one-liner: marola is **the ocean
-intelligence layer** — the deterministic, sourced layer that knows the sea near you (conditions,
-water quality, sea life, tides, hazards, lore) and answers questions about it — and "what's the
-best hour tomorrow to swim nearby" is its first and reference use case, not the whole product. No
-scoring, safety text, or architecture changes; only the strings and docs that describe the product.
+whale watching. **The product name doesn't change — marola stays marola everywhere (the README and
+site `<h1>`, the repo, the bot, the CLI banner).** What changes is the slogan paired with the name:
+**"marola — the ocean intelligence layer,"** the deterministic, sourced layer that knows the sea
+near you (conditions, water quality, sea life, tides, hazards, lore) and answers questions about
+it — with "what's the best hour tomorrow to swim nearby" named as its first case, not the whole
+product. No scoring, safety text, or architecture changes; only the strings and docs that describe
+the product.
 
 ## 2. Motivation — where the current, swim-only positioning lives
 
@@ -59,11 +61,12 @@ architecture, when the actual justification (live data + a decision that can hur
 
 **Before:** marola is a swim-time app that also happens to know about water quality and jellyfish.
 
-**After:** marola is the ocean intelligence layer for a stretch of coast — the sourced, deterministic
-layer that knows what the sea near you is doing (conditions, water quality, sea life, tides,
-hazards, lore) and answers questions about it. "The best hour tomorrow to swim nearby" is the first
-question it answers well, and the one every current MIP was built against — not a ceiling on what
-the layer can be asked.
+**After:** the product name doesn't change — it's still marola, everywhere (README/site `<h1>`,
+repo, bot, CLI). What changes is the slogan that now sits next to the name: **"marola — the ocean
+intelligence layer"** — the sourced, deterministic layer that knows what the sea near you is doing
+(conditions, water quality, sea life, tides, hazards, lore) and answers questions about it. "The
+best hour tomorrow to swim nearby" is named as its first case — the one every current MIP was
+built against — not a ceiling on what the layer can be asked, and not a rename.
 
 ### 3.2 On "OIA"
 
@@ -83,42 +86,52 @@ data," not an acronym).
 No marketing adjectives anywhere below ("smart", "AI-powered", "seamless", "revolutionary") — the
 repo's tone, per `PHILOSOPHY.md` and the site-frontend skill, is the number and its source.
 
-**One-line description** (≤ 12 words, concrete nouns, site-frontend skill rule):
+**Name — slogan pair** (the name never changes; this string is the pairing used wherever a title
+line appears): **"marola — the ocean intelligence layer."** Used for the README title line (the
+bold subtitle directly under the `<h1>🌊 marola</h1>` wordmark, which stays as-is) and the site's
+`<title>` tag (the browser-tab text, distinct from the on-page `<h1>marola</h1>` wordmark, which
+also stays as-is).
+
+**One-line description** (≤ 12 words, concrete nouns, site-frontend skill rule) — sits *under* the
+name—slogan pair, e.g. as the on-page tagline:
 
 - Before (`site/static/index.html:16`): "Best hour to swim at every beach: sea, wind, tide, water quality." (11 words, already compliant, but swim-only)
-- After: "The ocean near you: conditions, water quality, sea life, tides, hazards." (11 words)
+- After: "The ocean near you: conditions, water quality, sea life, tides, hazards." (11 words, unchanged from the earlier draft of this MIP)
 
-**README hero paragraph** (`README.md:3-7`):
+**README title line + hero paragraph** (`README.md:1-7`):
 
-- Before: "**When LLMs meet the ocean.** Local-first ocean intelligence for open-water swimmers: the best hour to swim tomorrow, official bathing-water quality per sampling point, tides, jellyfish and whale odds, and a grounded 'ask the ocean' — all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or clearly labelled, never invented."
-- After: "**When LLMs meet the ocean.** A local-first ocean intelligence layer: conditions, official bathing-water quality, tides, jellyfish and whale odds, and a grounded 'ask the ocean' for the sea near you — starting with its first question, the best hour tomorrow to swim, all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or clearly labelled, never invented."
+- Before: `<h1>🌊 marola</h1>` then "**When LLMs meet the ocean.** Local-first ocean intelligence for open-water swimmers: the best hour to swim tomorrow, official bathing-water quality per sampling point, tides, jellyfish and whale odds, and a grounded 'ask the ocean' — all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or clearly labelled, never invented."
+- After: `<h1>🌊 marola</h1>` (unchanged) then "**marola — the ocean intelligence layer.** The ocean near you: conditions, official bathing-water quality per sampling point, tides, jellyfish and whale odds, and a grounded 'ask the ocean' — first case, the best hour tomorrow to swim, all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or clearly labelled, never invented."
 
-**Site tagline** (`site/static/index.html:16`): see one-line description above — same string serves
-both. Site `<title>` (`site/static/index.html:6`) changes from "marola — best hour to swim, every
-beach" to "marola — the ocean near you, every beach" (keeps the pattern the skill's title-length
-convention already uses). Meta description (`index.html:7`) drops "swim conditions" for "conditions"
-and keeps the rest verbatim (jellyfish, tides, water quality already read as more than swimming).
+**Site `<title>` and on-page tagline** (`site/static/index.html:6,16`): `<title>` changes from
+"marola — best hour to swim, every beach" to **"marola — the ocean intelligence layer"** (the
+name—slogan pair, browser tab only). The on-page `<h1>marola</h1>` wordmark is unchanged; the
+`<p class="tagline">` under it becomes the one-line description above: "The ocean near you:
+conditions, water quality, sea life, tides, hazards." Meta description (`index.html:7`) drops
+"swim conditions" for "conditions" and keeps the rest verbatim (jellyfish, tides, water quality
+already read as more than swimming), and gains a closing clause naming the first case: "…Computed
+once, no tracking. First case: the best hour tomorrow to swim."
 
 **Bot description** (`docs/TELEGRAM-SETUP.md:22`'s example, cosmetic, set via BotFather):
 
 - Before: `swim - best hour to swim nearby`
 - After: `swim - best hour to swim nearby` stays as the *command* description (the command is
   literally about swimming — no reason to rename it), but the bot's own `/setdescription` text
-  (not yet written, since Phase 1 isn't built) should read: "The sea near you: conditions, water
-  quality, tides, sea life. `/swim` for the best hour tomorrow." — documented in
-  `docs/TELEGRAM-SETUP.md` as guidance for whoever registers the description at Phase 1, since the
-  bot isn't live to set it today.
+  (not yet written, since Phase 1 isn't built) should read: "marola — the ocean intelligence
+  layer: conditions, water quality, tides, sea life. First case, `/swim`, the best hour tomorrow."
+  — documented in `docs/TELEGRAM-SETUP.md` as guidance for whoever registers the description at
+  Phase 1, since the bot isn't live to set it today.
 
-**CLI top help line** (`cli/src/main/scala/marola/Main.scala:394`):
+**CLI top banner** (`cli/src/main/scala/marola/Main.scala:394`) — the name stays first, unchanged:
 
 - Before: `"marola :: best hour tomorrow to swim nearby (POC)"`
-- After: `"marola :: the ocean near you (POC) — first case: best hour tomorrow to swim nearby"`
+- After: `"marola :: the ocean intelligence layer (POC) — first case: best hour tomorrow to swim nearby"`
 
 **PHILOSOPHY.md's "Why marola" opening** (`PHILOSOPHY.md:23`):
 
 - Before: "The question 'what is the best hour tomorrow to swim nearby?' is small enough to finish
   and hard enough to be honest about."
-- After: "marola is an ocean intelligence layer: the question it answers first, 'what is the best
+- After: "marola — the ocean intelligence layer: the question it answers first, 'what is the best
   hour tomorrow to swim nearby?', is small enough to finish and hard enough to be honest about —
   and the same layer (live data, a decision that can hurt someone if wrong, a sentence a person
   will read) is what any other question about the sea near you needs too."
@@ -127,10 +140,10 @@ and keeps the rest verbatim (jellyfish, tides, water quality already read as mor
 
 - Before: "**marola** — a Telegram assistant answering 'what's the best hour tomorrow to swim
   nearby?' — real nearby beach discovery…"
-- After: "**marola** — an ocean intelligence layer for a stretch of coast, reachable as a Telegram
-  assistant: real nearby beach discovery… Its first and reference use case is 'what's the best
-  hour tomorrow to swim nearby?'…" (rest of the paragraph unchanged — it already lists water
-  quality, jellyfish/whale, corpus, local-first, unchanged by this MIP).
+- After: "**marola** — the ocean intelligence layer for a stretch of coast, reachable as a
+  Telegram assistant: real nearby beach discovery… Its first case is 'what's the best hour
+  tomorrow to swim nearby?'…" (rest of the paragraph unchanged — it already lists water quality,
+  jellyfish/whale, corpus, local-first, unchanged by this MIP).
 
 ## 4. MIP-by-MIP fit — every planned or drafted MIP as part of one ocean-intelligence project
 
@@ -272,11 +285,12 @@ None. This is a product-positioning change; it does not touch any AI-103 or AI-5
   A human decision is needed on whether to hold those MIPs' identity sections for this MIP to
   merge first, or let them proceed and reconcile wording only (not the handle/domain itself, which
   has its own registration-cost and availability constraints unrelated to naming taste).
-- **Does the map's `<h1>` stay "marola" with only the tagline changing?** §3.3 assumes yes — the
-  wordmark (`site/static/index.html:14`, the wave-icon `<h1>`) is unchanged, only the `<p
-  class="tagline">` text under it. This matches the site-frontend skill's guidance (bigger
-  wordmark, same panel, not a redesign) but is worth a maintainer confirmation before the
-  implementation PR touches `index.html`.
+- **Does the map's `<h1>` stay "marola"?** Resolved by the maintainer, 2026-09-06: yes — the
+  product name stays marola everywhere (README/site `<h1>`, repo, bot, CLI banner); "the ocean
+  intelligence layer" is a slogan paired with the name (in the site's `<title>` and the README's
+  title line), not a replacement for the wordmark. §3.3 reflects this; the on-page `<h1>` and
+  `site/static/index.html:14`'s wave icon are unchanged, only `<title>` (browser tab) and the
+  `<p class="tagline">` text change.
 - **Who resolves the 0023/0025 numbering collision noted in the metadata table?** Not this MIP's
   job, but the collision (ROADMAP's proposed AI-500 numbers vs. the waitlist/sea-model drafts that
   already claimed them) should be settled before either set of drafts merges, to avoid two MIPs
