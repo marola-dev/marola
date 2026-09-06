@@ -157,3 +157,4 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 | PR for a stray plain branch | `just branches-open` (base=main; stack branches point at `scripts/stack.sh pr`) |
 | Cost per PR | `just cost-split MIP-NNNN [--session <id>]`, `just claude-cost` |
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |
+| Status line | `.claude/statusline.sh`, shared via `.claude/settings.json` |

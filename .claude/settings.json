@@ -6,5 +6,9 @@
   },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"$(git rev-parse --show-toplevel)/.claude/statusline.sh\""
   }
 }
