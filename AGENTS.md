@@ -105,6 +105,10 @@ the requested feature but flag which earlier-phase prerequisite is still missing
   first.** Propose the change, state the expected cost, and wait for a
   go-ahead. This applies to `azd up`, `azd provision`, and `az deployment
   group create` alike.
+  The rule is also a hook, not only prose: `.claude/hooks/guard-azure.sh` (`PreToolUse` on `Bash`,
+  wired in `.claude/settings.json`) blocks `azd up|provision|deploy` and `az deployment …` with exit 2
+  unless `MAROLA_ALLOW_AZURE_DEPLOY=1` is set for that one command after a human go-ahead; its
+  `--self-test` runs in `just quality`. ai-jail stays the second layer.
 - Never hardcode an API key, connection string, or secret. Every Azure
   client *should* authenticate via `azure-identity`'s `DefaultAzureCredential` against a
   managed identity — today only `AzureFoundryLlmClient` does; Cosmos DB, AI Vision and Azure Maps
