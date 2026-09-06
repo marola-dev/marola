@@ -81,6 +81,7 @@ quality-other:
     scripts/gh-billing.sh --self-test
     scripts/deps-stack.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
+    python3 scripts/lib/uses_merge.py --self-test
     .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
