@@ -218,7 +218,7 @@ training run, before automating any of it.
 no per-repo size cap, only a 50GB per-file LFS ceiling (guidance: keep files under ~20GB) — a 3B
 model's F16 GGUF (~6GB) and Q4_K_M/Q8_0 quants (~2–3GB) fit easily, and public storage is free.
 Ollama registry hosting cost was **not found priced anywhere** (docs describe the push mechanism,
-not pricing) — treated as free by the same "no fee mentioned" reasoning `MIP-0024` applied to Meta's
+not pricing) — treated as free by the same "no fee mentioned" reasoning `MIP-0020` §5.5 applied to Meta's
 Graph API, not a fetched confirmation. No paid resource is required for distribution; §4.4's training
 compute remains the only real cost.
 
