@@ -149,6 +149,56 @@
     state.map.setView([area.lat, area.lon], 11);
   }
 
+  // --- wave markers + hover aspects (MIP-0009) -------------------------------------------------
+  var WIND_EMOJI = { calm: '🍃', breezy: '🌬️', strong: '💨' };
+  var COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  function compass(deg) { return deg === null || deg === undefined ? '' : COMPASS[Math.round(deg / 45) % 8]; }
+
+  /** One wave, filled with the score colour; the selected beach's is larger and drawn on top. */
+  function waveIcon(fill, selected, past) {
+    var size = selected ? 32 : 24;
+    var path = 'M2 14c3-4 6-4 9 0s6 4 9 0l2 2c-3 4-6 4-9 0s-6-4-9 0z';
+    return L.divIcon({
+      className: 'wave' + (selected ? ' selected' : '') + (past ? ' past' : ''),
+      iconSize: [size, size], iconAnchor: [size / 2, size / 2], tooltipAnchor: [0, -size / 2],
+      html: '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" aria-hidden="true">' +
+        '<path d="' + path + '" transform="translate(0 -5)" fill="' + esc(fill) + '" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" opacity=".7"/>' +
+        '<path d="' + path + '" fill="' + esc(fill) + '" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>'
+    });
+  }
+
+  /** The full hours[] entry behind what `shown()` returns (the best-hour shape carries no numbers). */
+  function hourEntry(beach, s) {
+    if (!s) return null;
+    for (var i = 0; i < beach.hours.length; i++) if (beach.hours[i].h === s.h) return beach.hours[i];
+    return null;
+  }
+
+  /**
+   * The six aspects at the shown hour — every value a number or an enum from the board, every
+   * emoji followed by its word (older fonts lack 🪼). Used by the marker tooltip and, in task 4,
+   * as the first block of the card, so hover and tap see the same thing.
+   */
+  function aspectsHtml(beach, s) {
+    var head = '<div class="head">🌊 ' + esc(beach.name) + (s ? ' · ' + s.score + '/100 at ' + esc(s.h) : ' · dark at this hour') + '</div>';
+    var e = hourEntry(beach, s);
+    if (!e) return head;
+    var level = e.wind_level || null; // an older board has no band: number only, no word
+    var wind = (level ? WIND_EMOJI[level] + ' ' + level + ', ' : '🌬️ wind ') + fmt(e.wind_kmh, ' km/h', 0) +
+      (s.best && beach.sea.wind_dir_deg !== null ? ' ' + compass(beach.sea.wind_dir_deg) : '');
+    var waves = '〰️ waves ' + fmt(e.wave_m, ' m') + (s.best && beach.sea.period_s !== null ? ' every ' + fmt(beach.sea.period_s, ' s', 0) : '');
+    var whales = '🐋 whales ' + esc(e.whales) + (beach.whales.peak && beach.whales.peak !== e.h ? ' (best ' + esc(beach.whales.peak) + ')' : '');
+    var water = '<span class="' + (beach.water.unfit ? 'unfit' : 'water') + '">💧 ' + esc(beach.water.summary) + '</span>';
+    return head + '<div class="grid">' +
+      '<span>' + wind + '</span>' +
+      '<span>🌡️ water ' + fmt(e.sea_temp_c, ' °C') + '</span>' +
+      '<span>' + waves + '</span>' +
+      '<span>🪼 jellyfish ' + esc(e.jellyfish) + '</span>' +
+      '<span>' + whales + '</span>' +
+      water +
+      '</div>';
+  }
+
   function render() {
     var board = state.board;
     Object.keys(state.markers).forEach(function (k) { state.map.removeLayer(state.markers[k]); });
@@ -157,10 +207,11 @@
     board.beaches.forEach(function (beach) {
       var s = shown(beach);
       var c = colour(s ? s.score : null, beach.water.unfit);
-      var m = L.circleMarker([beach.lat, beach.lon], {
-        radius: state.selected === beach.name ? 13 : 10, color: '#fff', weight: 2, fillColor: c, fillOpacity: s && isPast(s.h) ? 0.45 : 0.9
+      var selected = state.selected === beach.name;
+      var m = L.marker([beach.lat, beach.lon], {
+        icon: waveIcon(c, selected, !!(s && isPast(s.h))), zIndexOffset: selected ? 1000 : 0, title: beach.name, keyboard: true
       }).addTo(state.map);
-      m.bindTooltip(beach.name + (s ? ' · ' + s.score + ' at ' + s.h : ' · dark'), { direction: 'top', offset: [0, -8] });
+      m.bindTooltip(aspectsHtml(beach, s), { sticky: true, direction: 'top', className: 'aspects', opacity: 0.97 });
       m.on('click', function (e) { L.DomEvent.stopPropagation(e); select(beach.name, false); });
       state.markers[beach.name] = m;
       bounds.push([beach.lat, beach.lon]);

@@ -127,6 +127,18 @@ button[aria-pressed="true"], .segmented button.on { background: var(--accent); c
 .marker-label { background: none; border: 0; box-shadow: none; font-weight: 600; color: #fff;
   text-shadow: 0 0 3px rgba(0,0,0,.8); font-size: 11px; text-align: center; }
 
+/* wave markers + hover aspects (MIP-0009): the wave is the score colour, the tooltip is the six
+ * aspects at the shown hour, two columns, one at a time, follows the mouse (sticky). */
+.leaflet-marker-icon.wave { background: none; border: 0; cursor: pointer; }
+.wave svg { display: block; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+.wave.past svg { opacity: .5; }
+.leaflet-tooltip.aspects { padding: .45rem .65rem; font-size: 13px; line-height: 1.35; max-width: 21rem; white-space: normal; }
+.aspects .head { font-weight: 600; margin-bottom: .3rem; }
+.aspects .grid { display: grid; grid-template-columns: 1fr 1fr; gap: .15rem .8rem; }
+.aspects .grid span { white-space: nowrap; }
+.aspects .unfit { color: var(--c0); font-weight: 600; }
+.legend .wave-key svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: .25em; }
+
 @media (prefers-reduced-motion: no-preference) {
   select, button, .list li { transition: background-color .15s, border-color .15s, color .15s; }
 }
