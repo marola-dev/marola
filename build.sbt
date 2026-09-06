@@ -199,5 +199,11 @@ lazy val root = (project in file("."))
   .aggregate(core, local, azure, cli)
   .settings(
     name := "marola",
-    publish / skip := true
+    publish / skip := true,
+    // sbt-scoverage (`just coverage`, or `sbt clean coverage test coverageReport
+    // coverageAggregate` directly): instruments core/local/azure/cli, runs the suite, and
+    // `coverageAggregate` sums one statement-coverage number across all four for the README
+    // badge (ci.yml, main only). Descriptive for now, not a merge gate — no minimum enforced.
+    coverageMinimumStmtTotal := 0,
+    coverageFailOnMinimum := false
   )

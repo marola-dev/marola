@@ -39,6 +39,12 @@ build:
 test:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt test
 
+# Statement coverage across core/local/azure/cli (sbt-scoverage, project/plugins.sbt). `clean`
+# first: an instrumented compile must not reuse a plain one's classfiles. Same recipe ci.yml runs
+# on main to publish the README badge (see .github/workflows/ci.yml, site.yml).
+coverage:
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt clean coverage test coverageReport coverageAggregate
+
 fmt:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll
 

@@ -61,7 +61,15 @@ jobs:
     needs: changes
     if: needs.changes.outputs.scala == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    # Elevated past the workflow-level `contents: read` only for this job's main-only coverage
+    # steps below: pushing coverage/latest.json to the orphan site-data branch, and re-triggering
+    # site.yml so the badge refreshes right away. Same mechanism docker-smoke.yml uses for the
+    # smoke panel. Both are inert on pull_request — GitHub already read-only-caps a fork PR's
+    # token regardless of what's declared here.
+    permissions:
+      contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
 
@@ -107,6 +115,72 @@ jobs:
       # One sbt session for all three so the JVM/zinc warm-up is paid once, not three times.
       - name: Format check, scalafix, compile, test
         run: sbt scalafmtCheckAll "scalafixAll --check" compile test
+
+      # Main only, and only after the checks above pass: `sbt-scoverage` (project/plugins.sbt)
+      # re-instruments core/local/azure/cli, reruns the suite, and coverageAggregate sums one
+      # statement-coverage number across all four for the README badge. `just coverage` runs the
+      # same recipe locally. The aggregate report lands at
+      # target/scala-*/scoverage-report/scoverage.xml with a `statement-rate="NN.NN"` attribute
+      # on the root <scoverage> element — parsed below into a shields.io "endpoint" JSON.
+      - name: Coverage (main only) — instrumented build, statement %, shields.io endpoint JSON
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          sbt clean coverage test coverageReport coverageAggregate
+          xml="$(find target -maxdepth 3 -path '*/scoverage-report/scoverage.xml')"
+          python3 - "$xml" > coverage.json <<'PY'
+          import json, re, sys
+          xml = open(sys.argv[1]).read()
+          pct = float(re.search(r'statement-rate="([0-9.]+)"', xml).group(1))
+          color = "red" if pct < 50 else "yellow" if pct < 80 else "green"
+          json.dump(
+              {"schemaVersion": 1, "label": "coverage", "message": f"{pct:.0f}%", "color": color},
+              sys.stdout,
+          )
+          PY
+          echo && cat coverage.json
+          # `sbt clean` above wiped the target/ dirs the "Cache compiled classes" step keys on.
+          # A plain, non-instrumented recompile puts them back the way a normal build leaves them,
+          # so the cache-save at the end of this job doesn't warm the cache with scoverage's
+          # instrumented classfiles for the next (non-coverage) run to restore.
+          sbt coverageOff compile test
+
+      # site.yml's build job copies this branch's `smoke/` and `coverage/` directories into
+      # site/dist (see site.yml) — same orphan-branch mechanism docker-smoke.yml uses for the
+      # smoke panel, reused here so both features share one publish path and one permissions
+      # story (GITHUB_TOKEN only, no secret, safe once the repo is public).
+      - name: Publish the coverage JSON to the site-data branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if git ls-remote --exit-code --heads origin site-data >/dev/null; then
+            git fetch --depth=1 origin site-data
+            git worktree add site-data FETCH_HEAD
+            git -C site-data checkout -q -B site-data
+          else
+            git worktree add --detach site-data
+            git -C site-data checkout -q --orphan site-data
+            git -C site-data rm -rfq .
+          fi
+          mkdir -p site-data/coverage
+          cp coverage.json site-data/coverage/latest.json
+          git -C site-data config user.name "github-actions[bot]"
+          git -C site-data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C site-data add coverage/latest.json
+          if git -C site-data diff --cached --quiet; then
+            echo "coverage unchanged — nothing to push"
+          else
+            git -C site-data commit -q -m "coverage: ${{ github.sha }}"
+            git -C site-data push -q origin site-data
+          fi
+
+      # workflow_dispatch is one of the two events GITHUB_TOKEN may trigger from a workflow.
+      # Belt-and-suspenders: most scala-touching main pushes already retrigger site.yml on their
+      # own (its push filters include core/local/cli/build.sbt/project), this just covers the
+      # gap (e.g. an azure/-only change) and shaves the wait off the rest.
+      - name: Rebuild the site so the coverage badge refreshes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (≤ 3 h) will pick the coverage number up"
 
   # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/,
   # a linter for these workflow files themselves, and hadolint for the Dockerfiles — the same

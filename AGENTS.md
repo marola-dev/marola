@@ -64,6 +64,7 @@ just fmt              # scalafmtAll
 just run              # marola CLI (just run -- --summarize forwards flags)
 just mcp-server       # marola's MCP tool server
 just e2e              # marola's live E2E test (Overpass/Open-Meteo/Ollama) — excluded from `just test`
+just coverage         # sbt-scoverage: statement coverage across core/local/azure/cli (README badge, main only)
 ```
 
 Always run `just build && just test && just quality` before considering a change done (`quality` =

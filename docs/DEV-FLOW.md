@@ -145,6 +145,7 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 | New task branch | `scripts/stack.sh start MIP-NNNN k slug` |
 | Gates | `just build && just test && just quality` (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part) |
 | Before every push | `.githooks/pre-push` runs `just quality-other`, plus `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
+| Statement coverage (aggregated core/local/azure/cli) | `just coverage`; published to the README badge by ci.yml on pushes to `main` |
 | Live checks | `just run -- --brief`, `just e2e`; once MIP-0005 lands, `just site-build floripa && just site-serve` |
 | One PR | `scripts/stack.sh pr` (`--dry-run` prints the gh commands) |
 | Every PR of a stack | `just uprds MIP-NNNN` |
