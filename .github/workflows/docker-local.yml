@@ -65,7 +65,7 @@ jobs:
           flavor: latest=false
           tags: type=raw,value=local-{{sha}}
       - name: Build and push :local-<sha> (the candidate)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile.local
