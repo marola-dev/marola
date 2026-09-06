@@ -177,11 +177,15 @@ a time, unattended, via a `/goal` + `/loop`. Two mechanics can drive the recurri
 pick one per run, don't build both (MIP-0011 §11's OQ7 spike, resolved below):
 
 - **Local `/goal` + `/loop`** (the one actually run, end to end, while writing this MIP's own
-  task stack): `CronCreate` schedules a recurring prompt (`*/15 * * * *` for every 15 minutes) that
-  re-invokes the skill; it fires only while this session stays open, auto-expires after 7 days, and
-  needs nothing beyond what's already in this repo/session. **Chosen as the default** — it needs no
-  extra environment setup and was demonstrated working for real (a real MIP-0011 task stack, real
-  pushed branches, real `GH_POST_MORTEM.md` entries when `gh` had no session auth).
+  task stack): the human types `/mip-solve-perpetual NNNN` once and that single turn works through
+  the whole task file, checkpointing per task. **Chosen as the default** — no extra setup, and
+  demonstrated for real (eleven MIP-0011 tasks, real pushed branches, real `GH_POST_MORTEM.md`
+  entries when `gh` had no session auth). **What it cannot do, verified 2026-09-06 05:01:** start
+  itself later. A `CronCreate`/wakeup whose prompt is the slash command arrives as plain text — the
+  harness does not expand it and the Skill tool refuses it (`disable-model-invocation`). The
+  earlier claim here that a 15-minute cron "re-invokes the skill" was never exercised (the stack
+  finished inside the one typed turn) and is wrong. For a start at a fixed hour, the human types
+  the command at that hour, or creates a cloud routine themselves — the agent's job is staging.
 - **A cloud [routine](https://code.claude.com/docs/en/routines)** runs even after the laptop closes,
   but needs Claude Code on the web / a cloud environment — not confirmed available in every
   contributor's setup, and MIP-0013's OpenCode tryout doesn't cover it either. Worth adopting once
