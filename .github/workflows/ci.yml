@@ -231,7 +231,7 @@ jobs:
         uses: raven-actions/actionlint@v2
       - name: hadolint (Dockerfiles)
         if: needs.changes.outputs.docker == 'true'
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.5.0
         with:
           dockerfile: Dockerfile
 
