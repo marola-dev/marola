@@ -77,6 +77,7 @@ quality-other:
     python3 scripts/smoke_record.py --self-test
     python3 scripts/benchmark_gate.py --self-test
     python3 scripts/cost-split.py --self-test
+    python3 scripts/repo_stats.py --self-test
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test

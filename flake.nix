@@ -85,6 +85,11 @@
             pkgs.jq
             pkgs.git
 
+            # Line counter behind the README's Scala/Python LOC badges (scripts/repo_stats.py;
+            # ci.yml's repo-stats job apt-installs it on the runner). Confirmed present in
+            # nixpkgs (`cloc 2.10`, checked 2026-09-07 via `nix run nixpkgs#cloc -- --version`).
+            pkgs.cloc
+
             # Dockerfile lint (`just quality`, docker.yml) — MIP-0008. Docker itself is not in the
             # flake: it needs a daemon the host runs.
             pkgs.hadolint

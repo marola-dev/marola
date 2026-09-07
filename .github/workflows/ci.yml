@@ -187,6 +187,68 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (≤ 3 h) will pick the coverage number up"
 
+  # README badges that describe this repo rather than one job's pass/fail: how many of *this*
+  # run's steps went green (step-level — ci.yml has three jobs but ~20 named steps, and
+  # "build-test passed" hides which of them ran at all), plus the Scala and Python line counts.
+  # Same publish path as the coverage badge: a shields.io endpoint JSON on the orphan `site-data`
+  # branch, copied into the site by site.yml, read live by the README.
+  #
+  # A separate job rather than one more step inside build-test, because a step can only see the
+  # conclusions of steps that have already finished — from here, every other job of the run is
+  # done and its steps carry a real `conclusion`. `always()` so a run where build-test is skipped
+  # (a docs-only push) or failing still reports; `scripts/repo_stats.py` counts only steps that
+  # actually ran, so a docs-only push reads "8/8 green" instead of a misleading "8/20".
+  repo-stats:
+    needs: [changes, build-test, quality-other]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # push the badge JSONs to the site-data branch
+      actions: read # read this run's own jobs/steps (the default token is contents-only)
+    steps:
+      - uses: actions/checkout@v7
+
+      # flake.nix ships cloc for the local run of the same script; the runner image does not
+      # promise it, so install it when it is missing (seconds, from Ubuntu's own archive).
+      - name: cloc (only if the runner image does not already have it)
+        run: command -v cloc >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends cloc; }
+
+      - name: Badge JSONs — CI health (steps green/ran) and Scala/Python LOC
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: python3 scripts/repo_stats.py write --out-dir stats --repo "$REPO" --run-id "$RUN_ID" --exclude-job repo-stats
+
+      # Same orphan-branch mechanism as the coverage JSON above (and docker-smoke.yml's smoke
+      # panel). This job `needs:` build-test, so the two never push to site-data concurrently.
+      - name: Publish the stats JSONs to the site-data branch
+        run: |
+          if git ls-remote --exit-code --heads origin site-data >/dev/null; then
+            git fetch --depth=1 origin site-data
+            git worktree add site-data FETCH_HEAD
+            git -C site-data checkout -q -B site-data
+          else
+            git worktree add --detach site-data
+            git -C site-data checkout -q --orphan site-data
+            git -C site-data rm -rfq .
+          fi
+          mkdir -p site-data/stats
+          cp stats/*.json site-data/stats/
+          git -C site-data config user.name "github-actions[bot]"
+          git -C site-data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C site-data add stats
+          if git -C site-data diff --cached --quiet; then
+            echo "stats unchanged — nothing to push"
+          else
+            git -C site-data commit -q -m "stats: ${{ github.sha }}"
+            git -C site-data push -q origin site-data
+          fi
+          # No site.yml trigger here on purpose: the ≤ 3 h scheduled build picks these up, and a
+          # docs-only push must not spend an Overpass query just to refresh a line count
+          # (site.yml's own push filters and build-test's trigger already cover code changes).
+
   # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/,
   # a linter for these workflow files themselves, and hadolint for the Dockerfiles — the same
   # gates as `just quality`.
@@ -221,6 +283,9 @@ jobs:
       - name: "self-test — cost-split (Cost: trailer parser + diff-size estimator)"
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/cost-split.py --self-test
+      - name: self-test — repo_stats (CI-health step counting + LOC badge shaping)
+        if: needs.changes.outputs.python == 'true'
+        run: python3 scripts/repo_stats.py --self-test
       - name: self-test — gh-billing (GitHub billing-usage response shaping)
         if: needs.changes.outputs.python == 'true'
         run: scripts/gh-billing.sh --self-test

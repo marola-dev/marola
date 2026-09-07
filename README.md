@@ -4,13 +4,20 @@
 The ocean near you: conditions, official bathing-water quality per sampling point, tides,
 jellyfish and whale odds, and a grounded "ask the ocean" — first case, the best hour tomorrow to
 swim, all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or clearly
-labelled, never invented.</p>
+labelled, never invented.<br/>
+Not what a weather or surf app gives you: the safety veto is code, not a prompt — a sampling point
+rated unfit by the official feed zeroes that beach's score outright — and the whole pipeline, model
+included, runs on your own machine at no cost.</p>
 
 <p align="center">
 <a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://github.com/h0ffmann/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 <a href="https://github.com/h0ffmann/marola/actions/workflows/site.yml"><img src="https://github.com/h0ffmann/marola/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
 <!-- Aggregated statement coverage: ci.yml measures it (sbt-scoverage) on pushes to main and writes this shields.io endpoint JSON to Pages via the site-data branch. -->
 <a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fcoverage%2Flatest.json" alt="coverage" /></a>
+<!-- Same mechanism, ci.yml's repo-stats job (scripts/repo_stats.py): how many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line counts for the four Scala modules and the Python trees. -->
+<a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fci.json" alt="CI steps green on the last main run" /></a>
+<img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fscala-loc.json" alt="Scala lines of code" />
+<img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fpython-loc.json" alt="Python lines of code" />
 <a href="https://marola.dev/"><img src="https://img.shields.io/badge/live_map-marola.dev-0b6e99?logo=leaflet&logoColor=white" alt="live map" /></a>
 <img src="https://img.shields.io/badge/Scala-3.9_LTS-DC322F?logo=scala&logoColor=white" alt="Scala 3.9" />
 <img src="https://img.shields.io/badge/JDK-25-007396?logo=openjdk&logoColor=white" alt="JDK 25" />
@@ -28,6 +35,16 @@ deterministic rules decide anything safety-related, a sourced corpus decides wha
 say, and a second model reviews the first — the reasoning behind each choice: [`PHILOSOPHY.md`](./PHILOSOPHY.md).
 
 <p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view.png" alt="marola.dev — best hour per beach, ranked, with the water-quality popup for a sampling point" width="720" /></a></p>
+
+```console
+$ just run -- --brief --lat -27.6733 --lon -48.4700   # real run, 7 Sep 2026; header lines and the last 2 of 6 beaches trimmed
+origin -> lat=-27.6733, lon=-48.4700 (radius 15km, source: --lat/--lon flags)
+water quality -> IMA/SC
+ 1. [ 55/100] Praia da Joaquina      (4.6km away)  best at Tue 8 Sep, 10:00  |  18.3°C sea, 11km/h wind  |  jellyfish: Moderate  |  whale sighting: High  |  choppy (0.6m waves), cold water (18.3°C), some jellyfish likelihood  · facilities: no data
+ 2. [ 55/100] Praia do Rio Tavares   (2.1km away)  best at Tue 8 Sep, 10:00  |  18.3°C sea, 11km/h wind  |  jellyfish: Moderate  |  whale sighting: High  |  choppy (0.6m waves), cold water (18.3°C), some jellyfish likelihood  · lifeguard post: yes
+ 3. [ 55/100] Praia do Morro das Pedras (5.1km away)  best at Tue 8 Sep, 10:00  |  17.9°C sea, 13km/h wind  |  jellyfish: Moderate  |  whale sighting: High  |  choppy (0.8m waves), cold water (17.9°C), some jellyfish likelihood  · facilities: no data
+ 4. [ 40/100] Praia da Armação       (7.9km away)  best at Tue 8 Sep, 11:00  |  18.2°C sea, 15km/h wind  |  jellyfish: Moderate  |  whale sighting: High  |  breezy (15km/h), cold water (18.2°C), some jellyfish likelihood, 2/6 points PRÓPRIA — avoid Em frente à Avenida Antônio Borges dos Santos, n°792, Foz do Rio Sangradouro; Em frente à Rua Francisco Fagundes; Em frente à Rua Maria Emília de Costa, n°62; Em frente à Rua Antônio Aniceto da Costa  · facilities: no data
+```
 
 ## What you get
 

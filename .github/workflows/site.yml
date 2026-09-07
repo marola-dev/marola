@@ -109,12 +109,13 @@ jobs:
       # branch — copied into the site here, never deployed by that workflow. No branch yet = no
       # panel; app.js treats a missing smoke/latest.json as "no live run". ci.yml's coverage step
       # writes to the same branch, under `coverage/` — the shields.io endpoint JSON the README
-      # badge reads. Each directory is archived only if it exists on the branch yet, so the first
+      # badge reads, and its repo-stats job writes `stats/` the same way (CI health, Scala/Python
+      # LOC). Each directory is archived only if it exists on the branch yet, so the first
       # coverage run (site-data pushed with only `smoke/` so far, or vice versa) doesn't fail.
-      - name: Add the smoke-test results and coverage badge data (site-data branch, if any)
+      - name: Add the smoke-test results and badge data — coverage, stats (site-data branch, if any)
         run: |
           if git fetch --depth=1 origin site-data 2>/dev/null; then
-            for dir in smoke coverage; do
+            for dir in smoke coverage stats; do
               if git cat-file -e "FETCH_HEAD:$dir" 2>/dev/null; then
                 git archive FETCH_HEAD "$dir" | tar -x -C site/dist
               else
@@ -122,7 +123,7 @@ jobs:
               fi
             done
           else
-            echo "no site-data branch yet — no smoke/coverage panel"
+            echo "no site-data branch yet — no smoke/coverage/stats panel"
           fi
 
       - name: Show what was built
@@ -159,11 +160,11 @@ jobs:
       # one file that is not the page (data/.gitkeep's sibling in site/dist) and fails the build if
       # anything outside the allowlist is there — a stray copy is caught here, not shipped.
       # docs/*.md are not on the site by design: they render on GitHub, for people with access.
-      - name: Publish allowlist — index.html, app.js, style.css, chat.js, chatbot-config.js, CNAME, vendor/, data/, smoke/, coverage/ and nothing else
+      - name: Publish allowlist — index.html, app.js, style.css, chat.js, chatbot-config.js, CNAME, vendor/, data/, smoke/, coverage/, stats/ and nothing else
         run: |
           cd site/dist
           rm -f .gitkeep
-          unexpected="$(find . -mindepth 1 \( -path ./data -o -path ./smoke -o -path ./coverage -o -path ./vendor \) -prune -o -type f ! -name index.html ! -name app.js ! -name style.css ! -name chat.js ! -name chatbot-config.js ! -name CNAME -print)"
+          unexpected="$(find . -mindepth 1 \( -path ./data -o -path ./smoke -o -path ./coverage -o -path ./stats -o -path ./vendor \) -prune -o -type f ! -name index.html ! -name app.js ! -name style.css ! -name chat.js ! -name chatbot-config.js ! -name CNAME -print)"
           if [ -n "$unexpected" ]; then
             echo "files in site/dist that are not on the publish allowlist:"; echo "$unexpected"; exit 1
           fi
