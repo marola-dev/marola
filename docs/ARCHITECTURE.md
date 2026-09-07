@@ -168,6 +168,44 @@ it used on the `origin ->` line:
 No Azure setup, no Telegram token are needed for any of the above — every integration defaults to
 free/local, see §5's table.
 
+## 3b. Two different uses of AI, deliberately not one
+
+marola runs AI in two places that answer to different rules, and conflating them is the easiest way
+to misread the codebase. The distinction is not stylistic — it decides what may be wrong, and how
+you would find out.
+
+**The map is deterministic. No model writes any number a visitor sees.** The board is built by
+`cli/src/main/scala/marola/site/SiteBuilder.scala`, which contains no LLM reference at all — grep
+it. Every value on the map comes from a measured source or a pure function over one: Open-Meteo
+for sea temperature, wind and waves, OSM/Overpass for the beaches, trails and facilities, the
+agency PDF parsers (INEA/RJ, INEMA/BA, IMA/SC) for water quality, and `Tides` for the tide curve.
+The score and the water sentence in each card come from `core/.../scoring/Swimability.scala`'s
+`score`, an ordinary function with no effect type — the same inputs give the same board, on any
+machine, forever. A wrong number there is a bug with a stack trace, not a hallucination, and
+`SwimabilitySpec` can pin it.
+
+**The chat app is a fine-tuned open model.** `cli/src/main/scala/marola/agent/ChatServer.scala`
+answers questions through `config.llmClient` grounded on `config.knowledgeStore` (RAG over
+`knowledge/*.md`), and the model behind it can be marola's own: marola-sea, a QLoRA SFT + tool-call
+SFT + DPO fine-tune of an open base, served through Ollama (MIP-0025, `finetune/`). Point
+`MAROLA_LOCAL_LLM_MODEL` at it and the chat runs on a model trained on marola's corpus. This half
+*is* generative, so it gets the treatment generative output needs — which is the third piece:
+
+**Around that model sit a judge and tools, not trust.** `core/.../llm/Reviewer.scala` is a second,
+separate LLM pass whose only job is to grade the first one's draft before a user sees it — the
+LLM-as-judge pattern, and its own docstring explains why a model grading itself in the same call
+catches less. `cli/.../agent/SwimConditionsMcpServer.scala` exposes the deterministic half to
+agents as four MCP tools (`find_nearby_beaches`, `get_swim_recommendation`, `get_water_quality`,
+`ask_ocean_question`), so an assistant asking about conditions gets measured data through a tool
+call rather than a model's recollection. The safety footer and the corpus's "sourced or clearly
+labelled, never invented" rule are the same instinct.
+
+So: **measured data rendered deterministically on the map; a fine-tuned open model in the chat,
+fenced by a judge, a corpus and tools.** When something looks wrong, that split tells you where to
+look — a bad map value is a parser or a scoring bug, a bad chat answer is a model, a retrieval or a
+prompt problem. It is also why the map needs no GPU, no token and no network beyond the free APIs,
+while the chat is the only part that depends on a model at all.
+
 ## 4. Target architecture (Telegram bot, once built)
 
 ```mermaid
