@@ -217,9 +217,10 @@ The tryout adds files next to `.claude/`, deletes nothing, and is one PR per bul
    OpenCode — one trailer, whichever harness made the commit; `scripts/uprd.sh` keeps working (it
    reads `Cost:` trailers, not the co-author). If OpenCode's trailer cannot be pinned to that exact
    text (§11 OQ1), the `opencode-git-trailers` plugin sets it.
-5. **Docs.** `DEV-FLOW.md` §7 gains an OpenCode column for the three harness-specific rows (`/usage`
-   → `opencode stats`, `just claude-cost` → `just opencode-cost`, `/code-review` → the
-   `mip-reviewer` agent); `AGENT-SKILLS.md` notes which skills load under OpenCode (all three) and
+5. **Docs.** `DEV-FLOW.md` §8 (Command reference) gains an OpenCode column for the three
+   harness-specific rows (`/usage` → `opencode stats`, `just claude-cost` → `just opencode-cost`,
+   `/code-review` → the `mip-reviewer` agent); `AGENT-SKILLS.md` notes which skills load under
+   OpenCode (all three) and
    that superpowers (a Claude Code plugin) does not.
 6. **The experiment itself** (no code): two tasks from an accepted MIP's task list — one Scala
    task with a named test, one docs/config task — each in a fresh OpenCode session, `just jo`,

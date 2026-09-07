@@ -35,6 +35,7 @@
       "Bash(git diff*)",
       "Bash(git log*)",
       "Bash(git fetch*)",
+      "Bash(git rev-parse*)",
       "Bash(javap*)",
       "Bash(jar tf*)",
       "Bash(unzip -l*)",
