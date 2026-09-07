@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted — §5.1/§5.2/§5.3 all implemented, pending merge on `docs/mip-0017-agentic-tooling` (single-PR, no `.tasks.md` needed) |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: survey `ai-job-search`'s agentic tooling and this week's trending agent repos for ideas marola could use) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite |

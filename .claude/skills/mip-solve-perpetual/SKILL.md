@@ -174,6 +174,23 @@ The current task must land in exactly one of two states, never a third:
 Never stop with uncommitted, half-built state and no note — that silently corrupts the next run's
 starting point.
 
+**Run tracker (MIP-0017 §5.1) — append one row per task attempt, including failed attempts.**
+For each MIP being worked, append to `docs/mips/MIP-NNNN.run-log.csv` at the repo root (create
+with a header row if absent; gitignored like `GH_POST_MORTEM.md` — an operator artifact, not a
+deliverable, never staged or committed):
+
+```
+timestamp,task_k,branch,throttle_level,model,effort,outcome,cost_usd,pr_status
+```
+
+One row every time a task attempt ends, in any of the four states this section already produces:
+succeeded, failed once (about to raise effort), failed twice (about to consider Fable, or logging
+blocked), or abandoned this run (the checkpointing contract's state 2). `throttle_level` is which
+of the "Model & effort routing" rules 1-3 applied; `pr_status` is `open`/`logged-in-post-mortem`/
+`blocked`. This is strictly additive to the checkpointing contract above — that contract defines
+*when* the loop may stop; this file records *what happened*, in one place a human (or the next
+run) can read without reconstructing it from git log and `GH_POST_MORTEM.md` by hand.
+
 **Stop and report** once every row in every given task file has an open PR (or has failed
 twice), the usage guard triggers *and* the checkpointing contract above is satisfied, or a
 decision only the human can make comes up. Don't guess past a real blocker — report it and stop.

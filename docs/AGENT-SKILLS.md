@@ -18,6 +18,19 @@ Harness note: the in-repo skills (§1) are plain `SKILL.md` files that OpenCode 
 | `voice-note-ingest` | A MIP or task references audio that needs a real transcript, or asked explicitly to transcribe a voice memo | Local Whisper only (`faster_whisper` preferred, `whisper` fallback), pt-BR default; writes `<audio>.txt` next to the file, never commits the audio, translates separately rather than via Whisper's `--task translate`, and anonymizes every name but the repo owner's by hand before the transcript reaches a tracked file. `scripts/transcribe.py --self-test` checks its own arg-parsing/output-path logic, not wired into `just quality` |
 | `voice-to-feature` | Explicitly demoing "voice note to feature" end-to-end, or `/voice-to-feature` | **Demo-only, not the normal dev flow** (its own description says so): collapses transcribe → draft MIP → scaffold → Draft PR into one pass, gated at the one point that matters — `gh pr merge`/close are tool-level `disallowed-tools`, so nothing it does can reach `main` unattended. Real feature work still goes through `mip` then `mip-tasks` |
 
+**Frontmatter audit (MIP-0017 §5.3, 2026-09-07):** checked `anthropics/skills`' published README
+against this repo's seven `.claude/skills/*/SKILL.md` files (`corpus-doc`, `mip`,
+`mip-solve-perpetual`, `mip-tasks`, `site-frontend`, `voice-note-ingest`, `voice-to-feature`).
+Anthropic's own documented convention names only two required fields, `name` and `description`
+("a clear description of what this skill does and when to use it") — every marola skill has both,
+consistently phrased (what it's for, then explicit trigger phrases). `allowed-tools`/
+`disallowed-tools`/`disable-model-invocation` are not part of that published convention at all —
+they're Claude-Code-specific extensions this repo already uses correctly (MIP-0011 task 8):
+`disable-model-invocation: true` on the three skills meant to be user-triggered only
+(`mip-tasks`, `mip-solve-perpetual`, `voice-to-feature`), `allowed-tools`/`disallowed-tools` on
+the two that push/create PRs unattended (`mip-solve-perpetual`, `voice-to-feature`). Nothing
+needed changing; no drift found.
+
 ## 2. superpowers — what fits, what doesn't
 
 The plugin (Jesse Vincent, `obra/superpowers`) ships workflow skills that activate from context.

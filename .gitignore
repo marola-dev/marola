@@ -63,6 +63,10 @@ repomix-output/
 # (PR creation, stack linking) when the session had no gh auth. Never committed.
 /GH_POST_MORTEM.md
 
+# mip-solve-perpetual's per-run task tracker (MIP-0017 §5.1) — one row per task attempt,
+# operator artifact, never committed.
+/docs/mips/*.run-log.csv
+
 # Personal, machine-specific Claude Code overrides (MIP-0011 §5 item 10) — never shared behavior
 # (that belongs in the committed .claude/settings.json).
 /CLAUDE.local.md

@@ -121,9 +121,13 @@ against its own base**, bottom of the stack first, because that is the diff a re
 1. **superpowers `requesting-code-review`** — in a fresh session, per PR: dispatch the reviewer
    subagent with `BASE_SHA = git rev-parse origin/<base branch>`, `HEAD_SHA = git rev-parse
    origin/<task branch>`, `PLAN_OR_REQUIREMENTS` = the task's row in `MIP-NNNN.tasks.md` plus the
-   MIP's §6/§7, `DESCRIPTION` = the PR title. It returns Critical/Important/Minor findings; fix
-   Critical and Important before merging, note Minor in the PR. This is the default for "final
-   review using superpowers".
+   MIP's §6/§7, `DESCRIPTION` = the PR title. Paste `git diff $BASE_SHA..$HEAD_SHA` into the
+   dispatch prompt itself, inline, rather than telling the subagent to re-run that diff on its own
+   — a fresh session has no cache of it, so re-deriving it is a real, avoidable token cost
+   (MIP-0017 §5.2); likewise the build/test/quality checklist is what the author's own PR body
+   already reports, not something the reviewer re-runs from scratch. It returns Critical/Important/
+   Minor findings; fix Critical and Important before merging, note Minor in the PR. This is the
+   default for "final review using superpowers".
 2. **`/code-review <PR#>`** (built-in; `--comment` posts the findings as inline PR comments) or the
    `code-review` plugin's `/code-review` (five parallel agents, ≥ 80-confidence findings only,
    one comment on the PR). Both look for `CLAUDE.md`; in this repo it imports `AGENTS.md` for
