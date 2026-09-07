@@ -6,27 +6,52 @@
 #   scripts/docs-mip-stack.sh list                 # discover candidates, flag duplicates/staleness
 #   scripts/docs-mip-stack.sh plan B1 B2 B3 ...    # print (and log) chained `gh pr create` commands
 #                                                    # for exactly these branches, in this order
-#   --dry-run has no effect on `list` (already read-only); on `plan` it skips the GH_POST_MORTEM.md
-#   append.
+#   scripts/docs-mip-stack.sh auto                 # default when run with no args — see below
+#   --dry-run has no effect on `list` (already read-only); on `plan`/`auto` it skips both pushing
+#   and the GH_POST_MORTEM.md append, so you can preview what would happen.
 #
-# Deliberately two steps, not one "stack everything" command: a real scan of this repo's branches
-# (2026-09-07) found several MIPs with *more than one* candidate branch for the same number — an
-# original `docs/mip-NNNN-*` draft and a later rebuilt `mips/YYYY-MM-DD/K-mip-NNNN-*` branch, not
-# always identical — auto-picking one would silently guess which is canonical. `list` surfaces
-# that ambiguity for a human to resolve; `plan` only ever does the mechanical, judgment-free half
-# (base-chaining + conflict checks) once you've picked the branches yourself.
+# `list`/`plan` are deliberately two steps, not one "stack everything" command: a real scan of
+# this repo's branches (2026-09-07) found several MIPs with *more than one* candidate branch for
+# the same number — an original `docs/mip-NNNN-*` draft and a later rebuilt
+# `mips/YYYY-MM-DD/K-mip-NNNN-*` branch, not always identical — auto-picking one would silently
+# guess which is canonical. `list` surfaces that ambiguity for a human to resolve; `plan` only
+# ever does the mechanical, judgment-free half (base-chaining + conflict checks) once you've
+# picked the branches yourself.
 #
-# `plan` never rewrites history or force-pushes anything — it only *checks* (git merge-tree,
-# read-only) that each branch is conflict-free against its computed base and prints the exact
-# `gh pr create` command for it; nothing is pushed or opened. Append the printed commands to
-# GH_POST_MORTEM.md yourself if you're not ready to run them, or pipe straight into a shell.
+# `auto` (the default, and the only subcommand allowed to push) automates exactly the unambiguous
+# slice of that: any LOCAL docs/mip-NNNN-*/mips/*/K-mip-NNNN-* branch that has never been pushed
+# (`git branch`'s upstream column is empty) AND whose MIP number has no other candidate anywhere
+# — not on origin, not another local unpushed branch — is pushed and planned automatically. Any
+# MIP number with more than one candidate (local or origin) is reported, never guessed, exactly
+# like `list` — auto mode is a strict subset of `plan`'s job, not a bypass of `list`'s judgment
+# call. Locally-chained branches (B is a git ancestor of C) are planned as one stack in that
+# order; unrelated eligible branches are each planned singly against `main`.
+#
+# `plan`/`auto` never rewrite history or force-push anything — they only *check* (git merge-tree,
+# read-only) that each branch is conflict-free against its computed base and print the exact
+# `gh pr create` command for it. `plan` never pushes (it only ever anticipates branches you've
+# already pushed yourself); `auto` pushes only the specific unpushed branches it judged
+# unambiguous, via a plain `git push -u origin <branch>` (never `--force`). Append the printed
+# commands to GH_POST_MORTEM.md yourself if you're not ready to run them, or pipe straight into a
+# shell.
 set -euo pipefail
 
 usage() {
   cat <<'EOF'
-usage: docs-mip-stack.sh list
+usage: docs-mip-stack.sh [auto]
+       docs-mip-stack.sh list
        docs-mip-stack.sh plan <branch> [<branch> ...]
        docs-mip-stack.sh --self-test
+       (any subcommand accepts --dry-run)
+
+  auto    the default (bare `docs-mip-stack.sh` == `docs-mip-stack.sh auto`). Finds every LOCAL
+          docs/mip-NNNN-*/mips/*/K-mip-NNNN-* branch that has never been pushed (no upstream) and
+          whose MIP number has exactly one candidate branch in the whole world (this one — no
+          origin candidate, no other local unpushed one). Pushes each such branch
+          (`git push -u origin`, never --force) and plans it exactly like `plan` below — locally
+          chained branches (one a git ancestor of the next) as one stack, unrelated ones each
+          against `main`. Any MIP number with more than one candidate anywhere is reported and
+          left untouched, same judgment as `list` — auto never guesses which branch is canonical.
 
   list    scan `origin` for un-merged docs/mip-NNNN-*  and mips/*/K-mip-NNNN-* branches, group by
           MIP number, flag any number with more than one candidate branch (pick one yourself —
@@ -183,14 +208,103 @@ plan_cmd() {
   fi
 }
 
+# --- auto -------------------------------------------------------------------------------------
+# Pushes exactly one branch (never --force) and hands it to plan_cmd, unless dry, in which case
+# nothing touches the network — just prints what auto would have done.
+run_chain() {
+  local dry="$1"; shift
+  if [ "$dry" -eq 1 ]; then
+    echo "auto (dry-run): would push and plan as one stack: $*"
+    return 0
+  fi
+  local b
+  for b in "$@"; do
+    echo "auto: pushing $b"
+    git push -u origin "$b"
+  done
+  plan_cmd 0 "$@"
+}
+
+auto_cmd() {
+  local dry="$1"
+  git fetch -q origin
+
+  # Every unmerged origin candidate, counted per MIP number.
+  declare -A origin_count
+  local ob m
+  while IFS= read -r ob; do
+    [ -n "$ob" ] || continue
+    is_candidate_branch "$ob" || continue
+    git merge-base --is-ancestor "origin/$ob" origin/main 2>/dev/null && continue
+    m="$(mip_of "$ob")"
+    [ -n "$m" ] || continue
+    origin_count["$m"]=$(( ${origin_count[$m]:-0} + 1 ))
+  done < <(git branch -r --format='%(refname:short)' | sed 's#^origin/##')
+
+  # Local branches with no upstream at all — genuinely never pushed, not just "ahead of origin".
+  local -a local_unpushed=()
+  local lb up
+  while IFS=$'\t' read -r lb up; do
+    [ -n "$lb" ] || continue
+    is_candidate_branch "$lb" || continue
+    [ -z "$up" ] || continue
+    local_unpushed+=("$lb")
+  done < <(git for-each-ref --format=$'%(refname:short)\t%(upstream:short)' refs/heads/)
+
+  [ "${#local_unpushed[@]}" -ge 1 ] || { echo "auto: no local unpushed docs/mip-* branches"; return 0; }
+
+  declare -A local_count
+  local b
+  for b in "${local_unpushed[@]}"; do
+    m="$(mip_of "$b")"
+    [ -n "$m" ] || continue
+    local_count["$m"]=$(( ${local_count[$m]:-0} + 1 ))
+  done
+
+  local -a eligible=()
+  for b in "${local_unpushed[@]}"; do
+    m="$(mip_of "$b")"
+    [ -n "$m" ] || continue
+    local total=$(( ${origin_count[$m]:-0} + ${local_count[$m]:-0} ))
+    if [ "$total" -gt 1 ]; then
+      echo "auto: skipping $b (${m^^}) — $total candidate(s) for this MIP number across origin+local, resolve by hand: scripts/docs-mip-stack.sh list"
+    else
+      eligible+=("$b")
+    fi
+  done
+  [ "${#eligible[@]}" -ge 1 ] || { echo "auto: nothing unambiguous to stack — every local unpushed candidate's MIP number has another candidate elsewhere"; return 0; }
+
+  # Order by commit time so a real local stack (each branch built on the previous) chains
+  # naturally via the ancestry check below; genuinely independent branches fall out as their own
+  # one-branch chain, planned against main.
+  local -a ordered=()
+  while IFS= read -r b; do [ -n "$b" ] && ordered+=("$b"); done < <(
+    for b in "${eligible[@]}"; do printf '%s\t%s\n' "$(git log -1 --format=%ct "$b")" "$b"; done | sort -n | cut -f2
+  )
+
+  local -a chain=()
+  local prev=""
+  for b in "${ordered[@]}"; do
+    if [ -n "$prev" ] && git merge-base --is-ancestor "$prev" "$b" 2>/dev/null; then
+      chain+=("$b")
+    else
+      [ "${#chain[@]}" -ge 1 ] && run_chain "$dry" "${chain[@]}"
+      chain=("$b")
+    fi
+    prev="$b"
+  done
+  [ "${#chain[@]}" -ge 1 ] && run_chain "$dry" "${chain[@]}"
+}
+
 dry=0; args=()
 for a in "$@"; do [ "$a" = "--dry-run" ] && dry=1 || args+=("$a"); done
 set -- "${args[@]}"
 
-case "${1:-}" in
+case "${1:-auto}" in
+  auto) [ "${1:-}" = "auto" ] && shift; auto_cmd "$dry" ;;
   list) list_cmd ;;
   plan) shift; plan_cmd "$dry" "$@" ;;
   --self-test) self_test ;;
-  --help|-h|"") usage ;;
+  --help|-h) usage ;;
   *) usage >&2; exit 1 ;;
 esac
