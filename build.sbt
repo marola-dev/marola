@@ -143,7 +143,14 @@ lazy val local = (project in file("local"))
     libraryDependencies ++= Seq(
       "io.opentelemetry" % "opentelemetry-sdk" % OpenTelemetryVersion,
       "io.opentelemetry" % "opentelemetry-exporter-otlp" % OpenTelemetryVersion,
-      "io.opentelemetry" % "opentelemetry-sdk-testing" % OpenTelemetryVersion % Test
+      "io.opentelemetry" % "opentelemetry-sdk-testing" % OpenTelemetryVersion % Test,
+      // Text extraction for INEA/INEMA's PDF-only water-quality bulletins (MIP-0031 §4.3):
+      // neither institute exposes a JSON/HTML data feed, so `InemaPdfParser` reads the bulletin's
+      // table straight out of the PDF. Pure JVM, Apache-2.0, no native binary to bundle (unlike
+      // shelling out to `pdftotext`, which MIP-0031's own research used only to verify the
+      // approach, never as a runtime dependency). 3.0.7 confirmed current stable via Maven
+      // Central's search API, 2026-09-07.
+      "org.apache.pdfbox" % "pdfbox" % "3.0.7"
     )
   )
 
