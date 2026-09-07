@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (tasks: `MIP-0013.tasks.md`, task 1 of 6 implemented, pending merge on `mip-0013/1-opencode-config-and-jail`) |
+| **Status** | Accepted (tasks: `MIP-0013.tasks.md`, tasks 1-2 of 6 implemented, pending merge on `mip-0013/1-opencode-config-and-jail`) |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "a new MIP for OpenCode tryout for development, replacing Claude Code") |
 | **Created** | 2026-09-05 |
 | **Phase** | 0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite |
