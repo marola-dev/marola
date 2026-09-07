@@ -349,6 +349,12 @@ def from_tool_calls(knowledge_dir: Path, sea_lore_path: Path) -> list[dict]:
 
 
 def _self_test() -> None:
+    # Two independent checks in one self-test: MIP-0025 task 2's Layer 1 knowledge
+    # augmentation (count floor + every fact verbatim in its cited source) and task 3's
+    # Layer 2 tool calls (real MCP tool names, valid JSON, real argument schemas). They were
+    # written on separate branches and each owned this function; both sets of assertions
+    # matter, so neither is dropped.
+
     rows = from_knowledge(KNOWLEDGE)
     assert len(rows) >= KNOWLEDGE_EXAMPLE_FLOOR, (
         f"knowledge-derived example count {len(rows)} below floor {KNOWLEDGE_EXAMPLE_FLOOR} "
@@ -366,10 +372,6 @@ def _self_test() -> None:
             f"synthetic fact not found verbatim in the file that cites {url} — looks invented: "
             f"{fact[:80]!r}"
         )
-    print(
-        f"self-test OK: {len(rows)} knowledge-derived examples "
-        f"(floor {KNOWLEDGE_EXAMPLE_FLOOR}), every fact verified verbatim against its cited source"
-    )
 
     tool_rows = from_tool_calls(KNOWLEDGE, RESOURCES / "sea_lore.json")
     assert tool_rows, "no tool-call examples generated"
@@ -393,8 +395,10 @@ def _self_test() -> None:
         f"missing tool coverage: {set(TOOL_SCHEMAS) - seen_tools}"
     )
     print(
-        f"self-test OK: {len(tool_rows)} tool-call examples covering all "
-        f"{len(TOOL_SCHEMAS)} real MCP tools with syntactically valid call shapes"
+        f"self-test OK: {len(rows)} knowledge-derived examples "
+        f"(floor {KNOWLEDGE_EXAMPLE_FLOOR}), every fact verified verbatim against its cited "
+        f"source; {len(tool_rows)} tool-call examples covering all {len(TOOL_SCHEMAS)} real "
+        f"MCP tools with syntactically valid call shapes"
     )
 
 
