@@ -15,7 +15,12 @@ import marola.model.Coordinates
 import marola.observability.{AzureMonitorTracing, MlflowTracing, Tracing}
 import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore, SightingStore}
 import marola.vision.{AzureVisionClient, LocalVisionClient, VisionClient}
-import marola.water.{ImaScWaterQualityClient, WaterQualityClient}
+import marola.water.{
+  ImaScWaterQualityClient,
+  IneaRjWaterQualityClient,
+  InemaBaWaterQualityClient,
+  WaterQualityClient
+}
 
 /**
  * Which backend a pluggable integration uses — `Local` is always the zero-Azure default. A real
@@ -36,17 +41,20 @@ object Provider:
 /**
  * Bathing-water data is regional, so its "provider" is an agency, not local-vs-Azure (MIP-0001
  * §5.2: there is no Azure water-quality service, and none is invented). `Auto` (default) picks
- * IMA/SC when the origin is inside Santa Catarina and `None` elsewhere, printing which.
+ * IMA/SC inside Santa Catarina, INEMA/BA inside Bahia, INEA/RJ inside Rio de Janeiro state, and
+ * `None` elsewhere (MIP-0031 §5), printing which.
  */
 enum WaterProvider derives CanEqual:
-  case Auto, ImaSc, None
+  case Auto, ImaSc, InemaBa, IneaRj, None
 
 object WaterProvider:
   def fromEnv(value: Option[String]): WaterProvider =
     value.map(_.trim.toLowerCase) match
-      case Some("ima-sc") | Some("ima_sc") | Some("imasc") => ImaSc
-      case Some("none") | Some("off")                      => None
-      case _                                               => Auto
+      case Some("ima-sc") | Some("ima_sc") | Some("imasc")       => ImaSc
+      case Some("inema-ba") | Some("inema_ba") | Some("inemaba") => InemaBa
+      case Some("inea-rj") | Some("inea_rj") | Some("inearj")    => IneaRj
+      case Some("none") | Some("off")                            => None
+      case _                                                     => Auto
 
 /**
  * MIP-0021 §5: `Overpass` (default) is the only real source — there is no Azure alternative for OSM
@@ -176,13 +184,21 @@ final case class AppConfig(
       s"traces=$tracesBackend${if traceContent then "(content)" else ""}"
     ).mkString(" ")
 
-  /** MIP-0001 §5.2. `None` = no data, which `Swimability.waterVerdict` scores as nothing. */
+  /**
+   * MIP-0001 §5.2, extended MIP-0031 §5. `None` = no data, which `Swimability.waterVerdict` scores
+   * as nothing.
+   */
   def waterQualityClient(origin: Coordinates): Option[WaterQualityClient] =
     waterQualityProvider match
-      case WaterProvider.ImaSc => Some(ImaScWaterQualityClient())
-      case WaterProvider.None  => scala.None
+      case WaterProvider.ImaSc   => Some(ImaScWaterQualityClient())
+      case WaterProvider.InemaBa => Some(InemaBaWaterQualityClient())
+      case WaterProvider.IneaRj  => Some(IneaRjWaterQualityClient())
+      case WaterProvider.None    => scala.None
       case WaterProvider.Auto =>
         if ImaScWaterQualityClient.coversOrigin(origin) then Some(ImaScWaterQualityClient())
+        else if InemaBaWaterQualityClient.coversOrigin(origin) then
+          Some(InemaBaWaterQualityClient())
+        else if IneaRjWaterQualityClient.coversOrigin(origin) then Some(IneaRjWaterQualityClient())
         else scala.None
 
   /**
