@@ -78,6 +78,7 @@ quality-other:
     python3 scripts/benchmark_gate.py --self-test
     python3 scripts/cost-split.py --self-test
     python3 scripts/arxiv_digest.py --self-test
+    python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
     scripts/deps-stack.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
