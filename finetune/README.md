@@ -131,22 +131,37 @@ extra download.
 
 ## Publishing to Hugging Face (MIP-0025 §5.1, MIP-0033 §5.3)
 
-Once a `.gguf` file exists (`ollama create` already needs one via `Modelfile.adapter` for local
-use — the same file publishes), `finetune/publish_hf.py` uploads it to a Hugging Face model repo
-with a generated model card and a `CHECKSUMS` file:
+**Publish the merged model, never the adapter.** `train_lora.py`/`train_dpo.py` produce a LoRA
+*adapter*, and `convert_lora_to_gguf.py` turns that into an adapter-GGUF (`marola-tiny-adapter.gguf`,
+~17 MB). That file works locally only because Ollama already holds the base weights and
+`Modelfile.adapter` names them (`FROM llama3.2:1b` + `ADAPTER ...`). It is not a model, and
+`ollama run hf.co/<you>/<repo>` — which pulls a repo and expects standalone model GGUFs — has no
+base to attach it to. Publishing the adapter produces a repo that looks right and cannot run.
+
+So the chain is merge → convert → quantize → publish (MIP-0025 §5.1), with `merge_export.py`
+covering the first three:
 
 ```bash
-pip install -r finetune/requirements.txt   # adds huggingface_hub
-huggingface-cli login                       # one-time, needs a HF account + write token
+pip install -r finetune/requirements.txt   # torch/transformers/peft, plus huggingface_hub
+huggingface-cli login                       # one-time; a fine-grained token scoped to this repo
+                                            # is enough — publish_hf.py only calls create_repo
+                                            # and upload_file
+
+just finetune-merge preset=tiny                            # dry run: prints the plan, writes nothing
+just finetune-merge preset=tiny llama_cpp=~/src/llama.cpp   # merge + f16 GGUF + Q4_K_M/Q8_0
 
 just finetune-publish \
   repo=<you>/marola-sea-tiny-GGUF \
-  gguf=finetune/out/marola-tiny-adapter.gguf \
+  gguf=finetune/out/marola-sea-tiny-Q4_K_M.gguf \
   base=HuggingFaceTB/SmolLM2-360M-Instruct
 
-# then, from any machine with Ollama:
+# then, from any machine with Ollama — MIP-0025 §7's acceptance test:
 ollama run hf.co/<you>/marola-sea-tiny-GGUF
 ```
+
+With both adapters present, `merge_export.py` merges `out/dpo-adapter` by default: DPO continues
+training *from* the SFT adapter, so the DPO output already contains the SFT weights and is the
+better checkpoint. `--adapter out/adapter` publishes the SFT-only one instead.
 
 Pass `--dry-run` (append after the `just` recipe's own args) to write `CHECKSUMS`/`README.md`
 locally without uploading, to review the model card first. **Check the base model's licence
@@ -155,6 +170,41 @@ Llama-based checkpoint): a model fine-tuned from Llama weights must have "Llama"
 its published name per Meta's Community License (MIP-0025 §5.1(3)) — this script does not enforce
 that, it is a human check before the repo goes up.
 
+## Is it OK to publish a model built on someone else's open model?
+
+Yes — that is what fine-tuning is, and both bases here permit it. But **the base model's licence
+follows the derivative**, and the obligations differ sharply between presets, so the answer is
+not the same for `tiny` as for `small`/`base`. Checked 2026-09-07 against the model cards:
+
+**`tiny` — [SmolLM2-360M-Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct),
+Apache-2.0.** The permissive case. No naming requirement of any kind, and a fine-tune may be
+released under a licence of your choosing. Apache-2.0 still asks that a copy of the licence and
+the copyright notice travel with the distribution, and that modifications be stated — a fine-tune
+is a modification, so say so in the model card. `publish_hf.py --base-license apache-2.0` (its
+default) is correct here.
+
+**`small`/`base` — [Llama-3.2](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct), Llama 3.2
+Community License.** Not Apache, and two obligations bite on any published derivative. §1.b.i:
+
+> "If you use the Llama Materials or any outputs or results of the Llama Materials to create,
+> train, fine tune, or otherwise improve an AI model, which is distributed or made available, you
+> shall also include 'Llama' at the beginning of any such AI model name."
+
+and, in the same section, you must "(A) provide a copy of this Agreement with any such Llama
+Materials; and (B) prominently display 'Built with Llama' on a related website, user interface,
+blogpost, about page, or product documentation."
+
+So a Llama-derived marola-sea must be named `Llama-marola-sea-*`, ship the agreement, and carry a
+"Built with Llama" notice — and must **not** be published as `apache-2.0`. `unsloth/Llama-3.2-1B-Instruct`
+is a mirror of Meta's weights, so the `small` preset inherits exactly the same terms as `base`.
+
+`merge_export.py` enforces the naming half automatically (`llama_prefix()`, self-tested in both
+directions), because a wrong name is the one mistake you cannot fix after publishing without
+breaking every pull. The "Built with Llama" notice, the bundled agreement and the `--base-license`
+value are still human steps before the upload — the Llama licence also carries further terms
+(acceptable-use, and a threshold clause for very large deployments) that are worth reading in full
+rather than summarising here.
+
 ## First-release readiness (marola-sea, MIP-0025/MIP-0033)
 
 What's real today vs. what's still missing before "marola-sea-1.0" is a real, published release:
@@ -162,10 +212,11 @@ What's real today vs. what's still missing before "marola-sea-1.0" is a real, pu
 | Step | Status |
 |---|---|
 | A real training run on real hardware | **done** — `tiny` preset (SmolLM2-360M), CPU, eval loss 3.032→2.866→2.799 over 3 epochs |
-| LoRA → GGUF conversion | **done** — `finetune/out/marola-tiny-adapter.gguf` exists locally (gitignored, not in git) |
+| LoRA → adapter-GGUF conversion | **done** — `finetune/out/marola-tiny-adapter.gguf` exists locally (gitignored, not in git). Enough for local Ollama use via `Modelfile.adapter`; **not** enough to publish |
+| Adapter → merged model → quantized GGUF | **tooling done, run not done** — `finetune/merge_export.py` / `just finetune-merge`. Needs `pip install -r finetune/requirements.txt` and a llama.cpp checkout; this is the step that makes `ollama run hf.co/...` possible at all |
 | Runs end-to-end through marola | **done** — `ollama create` + `Modelfile.adapter`, then `just run -- --summarize` |
 | HF publish tooling | **done this session** — `finetune/publish_hf.py` / `just finetune-publish`, not yet run against a real HF account |
-| Actual HF publish | **not done** — needs the maintainer's own `huggingface-cli login` and a real upload; nothing here can do that unattended |
+| Actual HF publish | **not done** — needs the maintainer's own `huggingface-cli login` and a real upload; nothing here can do that unattended. Publish the merged `marola-sea-tiny-Q4_K_M.gguf`, not the adapter |
 | `just benchmark` numbers for this checkpoint | **not done** — `docs/benchmarks/` has no `tiny`-preset run yet; do this before trusting it over the plain base model (§7 of MIP-0025) |
 | A `small`/`base`-preset run (better quality) | **not started** — `tiny` is a pipeline proof, explicitly not a quality bar (this README's own framing, top of file) |
 | Ollama-registry push (optional 2nd channel) | **not started** — needs `ollama signin`, a human step (MIP-0025 §5.1(2)) |

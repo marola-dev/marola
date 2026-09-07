@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Partially implemented (task 1 of 6, `docs/mips/MIP-0025.tasks.md`) — task 1 (tier2-baseline-evidence) merged as PR #192; tasks 2-6 (dataset scale, tool-call SFT, DPO data/training, HF publish) not started |
+| **Status** | Partially implemented (tasks 1-5 of 6, `docs/mips/MIP-0025.tasks.md`) — task 1 merged as PR #192; tasks 2-5 (dataset scale, tool-call SFT, DPO data, DPO training) merged as GitHub stack #266 (PRs #211, #210, #209, #228); task 6's tooling merged as PR #206 (`publish_hf.py`) plus `finetune/merge_export.py`. What is left is not code: a real `peft` merge + quantize run and an actual Hugging Face upload, both needing the maintainer's own hardware and HF token (ROADMAP.md §2b) |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: turn the maintainer's marola-sea-1.0 notes into a MIP) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (local training/eval only, no product surface change) — the model would first plug into the local `LlmClient` path that already exists (Phase-0-and-later work per `ARCHITECTURE.md` §11), not gated on Phase 1 |
