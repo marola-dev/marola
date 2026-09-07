@@ -86,6 +86,8 @@ quality-other:
     python3 scripts/lib/mip_index_merge.py --self-test
     python3 scripts/mip_graph.py --self-test
     python3 scripts/mip_graph.py --check
+    python3 finetune/build_dataset.py --self-test
+    python3 finetune/build_dpo_dataset.py --self-test
     .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
@@ -199,6 +201,14 @@ benchmark:
 # Tier 2 prep: chat-format JSONL from the DSPy demos, sea lore and knowledge/ (stdlib only).
 finetune-dataset:
     python3 finetune/build_dataset.py
+
+# Layer 3 (MIP-0025 §4.3): DPO preference pairs from Reviewer.scala's own reject/revise decisions.
+finetune-dpo-dataset:
+    python3 finetune/build_dpo_dataset.py
+
+# Layer 3 training: DPO on top of an existing SFT adapter (`just finetune-train` first).
+finetune-train-dpo preset="tiny" *args:
+    python3 finetune/train_dpo.py --preset {{preset}} {{args}}
 
 # Publish a trained .gguf to a Hugging Face model repo (MIP-0025 §5.1). Needs
 # `pip install -r finetune/requirements.txt` and a prior `huggingface-cli login`.

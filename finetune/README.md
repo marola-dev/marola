@@ -30,9 +30,21 @@ just run -- --summarize
    just finetune-dataset        # writes finetune/data/train.jsonl and finetune/data/eval.jsonl
    ```
 
-   Expect a few dozen examples. That is enough to teach *format and tone*, not facts — which is
-   the point: facts stay in the RAG corpus (`knowledge/`) and in live data, the fine-tune only
-   makes the model better at marola's shape of answer. `FUTURE-WORK.md` §9.1 step 4 argues the same.
+   Expect a few thousand examples (2026-09-07: 2,497 train + 277 eval), combining two new layers
+   from MIP-0025 §4.3:
+   - **Layer 1 "Marine Corpus Domain"**: every real chunk and sentence in `knowledge/` asked
+     several paraphrased ways, so the fine-tune sees real domain facts, not just format/tone —
+     each synthetic example is verified (`build_dataset.py --self-test`) to be a verbatim excerpt
+     of the `knowledge/*.md` source it cites, no invented facts.
+   - **Layer 2 "MCP Tool-Call SFT"**: synthetic questions mapped to a single JSON tool call for
+     one of marola's four real MCP tools (`find_nearby_beaches`, `get_swim_recommendation`,
+     `get_water_quality`, `ask_ocean_question` — names and schemas read straight from
+     `SwimConditionsMcpServer.scala`, not guessed). The same self-test checks every generated
+     call is syntactically valid JSON naming a real tool with arguments matching its real schema,
+     and that all four tools are covered.
+
+   Both self-tests are wired into `just quality-other`. The DSPy demos and sea-lore entries
+   remain the *format and tone* teachers `FUTURE-WORK.md` §9.1 step 4 describes.
 
 2. Train the adapter (needs `pip install -r requirements.txt`, a `huggingface-cli login` for the
    gated Llama weights, and ideally a GPU with 8GB+):
@@ -50,6 +62,39 @@ just run -- --summarize
 
 4. Evaluate before trusting it: run `just e2e` and `just run -- --summarize` with the new model,
    and — the real test — compare reviewer scores over a held-out set (`FUTURE-WORK.md` §4.1).
+
+## Layer 3 — DPO preference data + training (MIP-0025 §4.3 — **run, `tiny` preset verified**
+2026-09-07)
+
+`core/llm/Reviewer.scala`'s own reject/revise decisions are the preference signal: wherever the
+compiled `review_prompt.json` demos show a verdict other than `"approve"`, the reviewer's real
+`final_summary` is a correction of a real flawed draft — a (chosen, rejected) pair with no
+invented text on either side. Approved drafts carry no signal and produce no pair.
+
+```bash
+just finetune-dpo-dataset      # writes finetune/data/dpo_pairs.jsonl
+```
+
+`build_dpo_dataset.py --self-test` (wired into `just quality-other`) checks this against both a
+small fixture (asserting exactly one pair per reject/revise event, zero pairs for an all-approve
+fixture) and the real `review_prompt.json` demos (every generated pair's text matches a real
+demo's text verbatim).
+
+```bash
+just finetune-train-dpo preset=tiny -- --no-4bit --epochs 1   # continues from out/adapter (SFT)
+```
+
+`train_dpo.py` (`trl`'s `DPOTrainer`) continues training from the SFT adapter (`train_lora.py`'s
+`out/adapter`) rather than training DPO from scratch — real run, 2026-09-07: `tiny` preset
+(SmolLM2-360M), 2 real preference pairs, 1 epoch, chained after a real SFT run on the scaled-up
+Layer 1+2 dataset (eval loss 3.032 → **0.2594**, mean token accuracy **0.939** — real learning).
+The combined adapter was converted to GGUF and benchmarked
+(`docs/benchmarks/mip-0025/2026-09-07-task5-sft-dpo.md` — a subdirectory `benchmark_gate.py`'s
+promotion-gate `newest()` deliberately doesn't glob into, since this MIP-0025 experiment record is
+not the marola-local Docker image's real promotion-gate reference) — honestly, the tiny tuned model scores
+*below* the untuned `llama3.2` baseline on `just benchmark`'s RAG-grounding task, which that write-up
+explains is expected (nothing in tasks 2-5's training data targets RAG-abstention discipline) and
+not evidence the recipe is broken, not a favorable number picked to declare success.
 
 ## As an image: `ghcr.io/h0ffmann/marola:local` (MIP-0008)
 
