@@ -200,6 +200,12 @@ benchmark:
 finetune-dataset:
     python3 finetune/build_dataset.py
 
+# Publish a trained .gguf to a Hugging Face model repo (MIP-0025 §5.1). Needs
+# `pip install -r finetune/requirements.txt` and a prior `huggingface-cli login`.
+# just finetune-publish repo=you/marola-sea-tiny-GGUF gguf=finetune/out/marola-tiny-adapter.gguf base=HuggingFaceTB/SmolLM2-360M-Instruct
+finetune-publish repo gguf base *args:
+    python3 finetune/publish_hf.py --repo {{repo}} --gguf {{gguf}} --base-model {{base}} {{args}}
+
 # ---------------------------------------------------------------------
 # The map — MIP-0005: precomputed boards on a static site (site/)
 # ---------------------------------------------------------------------

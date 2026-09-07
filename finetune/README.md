@@ -84,6 +84,52 @@ The same ladder applies to the RAG embedder (`knowledge/README.md`): `all-minilm
 the corpus in seconds, `nomic-embed-text` (274MB) is the quality option, `llama3.2` itself needs no
 extra download.
 
+## Publishing to Hugging Face (MIP-0025 §5.1, MIP-0033 §5.3)
+
+Once a `.gguf` file exists (`ollama create` already needs one via `Modelfile.adapter` for local
+use — the same file publishes), `finetune/publish_hf.py` uploads it to a Hugging Face model repo
+with a generated model card and a `CHECKSUMS` file:
+
+```bash
+pip install -r finetune/requirements.txt   # adds huggingface_hub
+huggingface-cli login                       # one-time, needs a HF account + write token
+
+just finetune-publish \
+  repo=<you>/marola-sea-tiny-GGUF \
+  gguf=finetune/out/marola-tiny-adapter.gguf \
+  base=HuggingFaceTB/SmolLM2-360M-Instruct
+
+# then, from any machine with Ollama:
+ollama run hf.co/<you>/marola-sea-tiny-GGUF
+```
+
+Pass `--dry-run` (append after the `just` recipe's own args) to write `CHECKSUMS`/`README.md`
+locally without uploading, to review the model card first. **Check the base model's licence
+before publishing** (`--base-license`, default `apache-2.0` — correct for SmolLM2, wrong for a
+Llama-based checkpoint): a model fine-tuned from Llama weights must have "Llama" at the start of
+its published name per Meta's Community License (MIP-0025 §5.1(3)) — this script does not enforce
+that, it is a human check before the repo goes up.
+
+## First-release readiness (marola-sea, MIP-0025/MIP-0033)
+
+What's real today vs. what's still missing before "marola-sea-1.0" is a real, published release:
+
+| Step | Status |
+|---|---|
+| A real training run on real hardware | **done** — `tiny` preset (SmolLM2-360M), CPU, eval loss 3.032→2.866→2.799 over 3 epochs |
+| LoRA → GGUF conversion | **done** — `finetune/out/marola-tiny-adapter.gguf` exists locally (gitignored, not in git) |
+| Runs end-to-end through marola | **done** — `ollama create` + `Modelfile.adapter`, then `just run -- --summarize` |
+| HF publish tooling | **done this session** — `finetune/publish_hf.py` / `just finetune-publish`, not yet run against a real HF account |
+| Actual HF publish | **not done** — needs the maintainer's own `huggingface-cli login` and a real upload; nothing here can do that unattended |
+| `just benchmark` numbers for this checkpoint | **not done** — `docs/benchmarks/` has no `tiny`-preset run yet; do this before trusting it over the plain base model (§7 of MIP-0025) |
+| A `small`/`base`-preset run (better quality) | **not started** — `tiny` is a pipeline proof, explicitly not a quality bar (this README's own framing, top of file) |
+| Ollama-registry push (optional 2nd channel) | **not started** — needs `ollama signin`, a human step (MIP-0025 §5.1(2)) |
+
+The `tiny` run's job was to validate the pipeline end to end on hardware anyone has, which it did.
+The remaining gap to a real "release" is compute (a `small`/`base` run) and the human steps above
+(HF login, an actual upload, a benchmark run) — no more design work is needed, per MIP-0025 §5.1's
+already-verified plan.
+
 ## What is deliberately not here
 
 - No cloud training. Azure ML / Foundry fine-tuning is the Phase 2 opt-in (`AGENTS.md` cost rule).
