@@ -8,15 +8,11 @@ Full detail excerpted from `AGENTS.md`'s "Code style" section — it lives here 
 while you're actually touching Scala; `AGENTS.md` keeps a one-line pointer for non-Claude tools
 that don't support path-scoped rules.
 
-Several rules below are lifted from **trio** (`trio-repomix-out.xml` at the repo root — a repomix
-dump of a Scala 3.8.3 / Cats Effect 3 / http4s / skunk / tapir order-management backend, read as a
-reference for Scala discipline, not as a dependency). Trio is tagless-final (`F[_]` with context
-bounds, `Resource`, `MonadThrow` as the error channel), **not** direct-style Kyo, so its effect
-*mechanism* does not transfer — what transfers is its layering, construction, failure-typing and
-test discipline, which are effect-system-agnostic. Where a trio convention conflicts with something
-this repo already decided — trio expands imports one symbol per line
-(`rewrite.imports.expand = true`), marola's `.scalafix.conf` merges them (`groupedImports = Merge`)
-— marola's committed config wins; don't "fix" it toward trio.
+A few of the rules below are cross-checked against a reference tagless-final Cats Effect 3
+backend (not a dependency, not tracked in this repo) — its effect *mechanism* doesn't transfer to
+Kyo's direct style, but its layering, construction, failure-typing and test discipline do. Import
+style: `.scalafix.conf`'s `groupedImports = Merge` is this repo's own convention, followed as
+written.
 
 ## Effects and purity
 
@@ -28,22 +24,18 @@ this repo already decided — trio expands imports one symbol per line
   Foundry/Overpass/Open-Meteo, file/database reads, the Telegram polling loop. This keeps the
   decision logic trivially testable without a Kyo runtime.
 - **One trait per pluggable capability; the implementation class is never the type a caller
-  depends on.** Trio's shape is uniform: `trait ProductRepository[F[_]]` holds the methods,
-  `object ProductRepository: def apply(pool) = ProductRepositoryImpl(pool)` is the single entry
-  point, `case class ProductRepositoryImpl` does the work
-  (`trio/persistence/repository/ProductRepository.scala`; identical in `UserRepository.scala`,
-  `service/PaymentService.scala`, `service/NotificationService.scala`, and the capability traits
-  `shared/capability/Log.scala` / `Crypto.scala`). marola already follows this for `LlmClient`,
-  `VisionClient`, `SightingStore`, `Tracing` and `RunLedger` — keep it when adding an integration,
-  and keep the *caller* typed to the trait: `AppConfig.llmClient` returns `Option[LlmClient]`, never
+  depends on.** `trait X[F[_]]` (or, in marola's direct style, no `F[_]`) holds the methods, a
+  companion `object X: def apply(...) = XImpl(...)` is the single entry point, a case class does
+  the work — never a second overload. marola already follows this for `LlmClient`, `VisionClient`,
+  `SightingStore`, `Tracing` and `RunLedger` — keep it when adding an integration, and keep the
+  *caller* typed to the trait: `AppConfig.llmClient` returns `Option[LlmClient]`, never
   `Option[LocalLlmClient]`.
 - **Inject the clock, the exporter and the transport; don't reach for a global.** The repo's own
   precedent: `MlflowRunLedger`'s `now: () => Long = () => System.currentTimeMillis()`
   (`local/src/main/scala/marola/ledger/MlflowRunLedger.scala:52`) and `Recommender`'s
   `today: ZoneId => LocalDate = LocalDate.now(_)` (`core/src/main/scala/marola/Recommender.scala:38`).
-  Trio does the same through `Clock[F]` rather than an inline `Instant.now()`
-  (`trio/shared/syntax.scala`'s `offsetDateTime`, used by every repository). A new component that
-  reads the wall clock, the filesystem or an env var takes it as a parameter with a real default.
+  A new component that reads the wall clock, the filesystem or an env var takes it as a parameter
+  with a real default — never a bare `System.currentTimeMillis()`/`LocalDate.now()` inline.
 
 ## Expected failures
 
@@ -59,12 +51,11 @@ this repo already decided — trio expands imports one symbol per line
   (`azure/src/main/scala/marola/vision/AzureVisionClient.scala:23`),
   `RouteFinder.RouteNotFoundException`
   (`azure/src/main/scala/marola/beaches/RouteFinder.scala:26`), plus a bare `RuntimeException` at
-  `local/src/main/scala/marola/ledger/MlflowApi.scala:51`. Trio's counterpart is one root —
-  `trait TrioException extends Throwable with NoStackTrace: def message: String;
-  override def getMessage() = message` (`trio/shared/TrioException.scala`) — with a per-layer family
-  extending it (`trait UserException extends TrioException`, `PaymentException`, `OrderException`,
-  `sealed trait HttpException`, `sealed trait PersistenceException`), each case a `case object`/
-  `case class` carrying its own `message`. Give a new marola failure that shape: name it for the
+  `local/src/main/scala/marola/ledger/MlflowApi.scala:51`. The fix is one root —
+  `trait MarolaException extends Throwable with NoStackTrace: def message: String;
+  override def getMessage() = message` — with a per-layer family extending it (one sealed trait per
+  layer: HTTP, LLM, vision, routing), each case a `case object`/`case class` carrying its own
+  `message`. Give a new marola failure that shape: name it for the
   layer it comes from, extend a common root (introduce a `MarolaException` when you add the next
   one rather than growing a seventh orphan), and mix in `NoStackTrace` — these are control flow, not
   crashes, and nothing ever reads the stack trace.
@@ -73,17 +64,14 @@ this repo already decided — trio expands imports one symbol per line
   lines 176/215/258/322/338/364/380, `core/src/main/scala/marola/Recommender.scala:60` and `:83`,
   `core/src/main/scala/marola/location/IpGeolocation.scala:105`,
   `cli/src/main/scala/marola/bench/BenchmarkLedger.scala:80`/`:88`/`:100`) and then throws the value
-  away with a single `case _ =>`. Trio narrows explicitly and *totally*, once per boundary: each
-  route declares `given adaptException: Function1[Throwable, HttpException]` listing every domain
-  failure it expects, with `case e => HttpException.InternalServerError()` as the last arm
-  (`trio/http/route/OrderRoute.scala`, `ProductRoute.scala`, `UserRoute.scala`), and one extension —
-  `narrowToHttp` in `trio/http/route/syntax.scala` — logs the original and applies it. When you add
-  an `Abort.catching` site, write the arms for the failures you actually expect *first*; a catch-all
-  is the last case, not the only one.
-- **Recover at the layer that knows what "no data" means, and leave the reason in the code.** Trio's
-  `refineError` (`trio/persistence/repository/syntax.scala`) turns exactly one Postgres
-  `SqlState.UniqueViolation` into `EntityAlreadyExists` and rethrows everything else, rather than
-  swallowing at the call site. marola's good examples already read this way —
+  away with a single `case _ =>`. Narrow explicitly and *totally*, once per boundary: list every
+  domain failure a boundary expects in a `given`/total `match`, `case e => ...` as the last arm, not
+  the only one, and log the original before mapping it. When you add an `Abort.catching` site, write
+  the arms for the failures you actually expect *first*; a catch-all is the last case, not the only
+  one.
+- **Recover at the layer that knows what "no data" means, and leave the reason in the code.** Narrow
+  to exactly the failure you understand and rethrow everything else, rather than swallowing at the
+  call site. marola's good examples already read this way —
   `Recommender.fetchWaterQuality` (`core/src/main/scala/marola/Recommender.scala:53`) maps any
   failure to "no water data for every beach" *and documents that decision in the scaladoc*. Keep the
   comment with the recovery.
@@ -113,11 +101,9 @@ this repo already decided — trio expands imports one symbol per line
   So: when an invariant must hold before the object exists (an exporter is configured, an id was
   resolved), make the primary constructor `private` and expose named factories on the companion,
   each delegating to the one construction site. When there is no invariant, leave the single public
-  constructor alone and don't add a companion `apply` that merely forwards to it. Trio's version of
-  the same rule: every repository and service has exactly one `object X: def apply(...)` entry point
-  and one impl class — never a second overload
-  (`trio/persistence/repository/ProductRepository.scala`, `trio/service/PaymentService.scala`,
-  `trio/service/NotificationService.scala`).
+  constructor alone and don't add a companion `apply` that merely forwards to it — every module here
+  has exactly one `object X: def apply(...)` entry point and one impl class, never a second
+  overload.
 - **The rule applies to entry-point methods too, and marola does break it there.**
   `Recommender.bestHoursTomorrow` (`core/src/main/scala/marola/Recommender.scala:32`),
   `bestPerBeachTomorrow` (`:96`) and `scoreDays` (`:120`) each repeat the same five defaulted
@@ -133,32 +119,27 @@ this repo already decided — trio expands imports one symbol per line
 
 ## Types
 
-- **Wrap domain scalars in a type instead of passing bare `Double`/`Int`/`String`.** Trio does this
-  for *every* domain value: `object Price extends Newtype[Long]` + `type Price = Price.Type` with
-  `validate` rejecting negatives, `Quantity` rejecting `<= 0`, `Name`/`Document` rejecting empty,
-  and `+` defined as an extension on the wrapper so arithmetic stays in the type
-  (`trio/shared/neotypes.scala`) — `Price` and `Quantity` cannot be swapped at a call site, and
-  `Price.Zero` is the only zero. marola's zero-dependency equivalent is Scala 3 `opaque type`,
+- **Wrap domain scalars in a type instead of passing bare `Double`/`Int`/`String`.** A newtype per
+  domain value (a smart constructor rejecting invalid values, arithmetic defined as an extension so
+  it stays in the type) means two values of the same underlying primitive can't be swapped at a call
+  site. marola's zero-dependency equivalent is Scala 3 `opaque type`,
   already specified in `docs/SCALA3-JDK-REVIEW.md` §2.1 (`Km`, `Celsius`, `Score`, landing in
   `core/model/Units.scala`) and still unbuilt: `Coordinates(lat, lon)`
   (`core/src/main/scala/marola/model/Models.scala:5`) takes any two `Double`s, so swapping lat and
   lon compiles. When you touch `Models.scala` or add a numeric field, prefer the opaque alias over a
   bare primitive and put the smart constructor beside it.
-- **A secret's type should refuse to print it.** Trio overrides `toString() = "<REDACTED>"` on the
-  `Password` newtype itself (`trio/shared/neotypes.scala`), so no logging path can leak it. marola
-  redacts at one call site instead — `AppConfig.redacted`
+- **A secret's type should refuse to print it.** A newtype overriding `toString()` to a fixed
+  redacted string means no logging path can leak it. marola redacts at one call site instead —
+  `AppConfig.redacted`
   (`cli/src/main/scala/marola/AppConfig.scala:129`), added after `FABLE_REVIEW` C1 caught the raw
   `toString` echoing every key to stdout. That fix is correct but not structural: a new
   `Option[String]` secret added to `AppConfig`'s 32 fields prints in the clear until someone
   remembers `redacted`. A `Secret` opaque alias with a redacting `toString` is the cheap upgrade
   once the opaque-type work above lands.
-- **An enum that crosses a wire or a disk gets an explicit label, never `toString`/`ordinal`.** Trio
-  pairs each with `val label: String` and a total `fromLabel: String => Option[T]`
-  (`enum UserRole(val label: String)` and `enum OrderStatus(val label: String)` in
-  `trio/domain/User.scala` / `Order.scala`), and the Postgres and JSON codecs are built from that
-  pair (`trio/persistence/repository/row/codecs.scala`'s
-  `` `enum`(_.label, OrderStatus.fromLabel, Type("order_status")) ``) — renaming a case can't
-  silently change the persisted value. Both of marola's sighting stores do the opposite: they write
+- **An enum that crosses a wire or a disk gets an explicit label, never `toString`/`ordinal`.** Pair
+  it with `val label: String` and a total `fromLabel: String => Option[T]`, and build the wire/disk
+  codec from that pair — renaming a case can't silently change the persisted value. Both of marola's
+  sighting stores do the opposite: they write
   `sighting.kind.toString` and read it back with `SightingKind.values.find(_.toString == kindStr)`
   (`azure/src/main/scala/marola/sightings/CosmosDbSightingStore.scala:52`/`:79` and
   `local/src/main/scala/marola/sightings/LocalFileSightingStore.scala:52`/`:66`), so renaming a
@@ -168,10 +149,10 @@ this repo already decided — trio expands imports one symbol per line
 ## Modules
 
 - **`local/` having zero Azure SDK dependency is an invariant that today only a comment enforces**
-  (`build.sbt`, the `lazy val local` block). Trio's build shows the mechanical version is cheap:
-  `sbt-explicit-dependencies` (`project/plugins.sbt`) supplies `undeclaredCompileDependenciesTest`
-  and `unusedCompileDependenciesTest`, which fail the build when a module compiles against something
-  it doesn't declare. Re-read that block before adding any dependency to `core/` or `local/`; wiring
+  (`build.sbt`, the `lazy val local` block). The mechanical version is cheap: the sbt plugin
+  `sbt-explicit-dependencies` supplies `undeclaredCompileDependenciesTest` and
+  `unusedCompileDependenciesTest`, which fail the build when a module compiles against something it
+  doesn't declare. Re-read that block before adding any dependency to `core/` or `local/`; wiring
   that plugin into `just quality` is a legitimate small PR, not scope creep.
 
 ## Testing
@@ -184,37 +165,32 @@ this repo already decided — trio expands imports one symbol per line
   implementation details, and cover edge cases deterministically rather than relying on one happy
   path. (Unlike Kyo's guide, this repo does track deferred work explicitly, in
   `docs/FUTURE-WORK.md` — that's a real, load-bearing doc here, not a banned excuse.)
-- **Hand-write test doubles as instances of the trait; no mocking library.** Both repos already
-  agree, so don't drift: trio has `def notificationService: NotificationService[IO] = _ => IO.unit`,
-  a `paymentService(switch: Ref[IO, Boolean])` that refuses payment on demand
-  (`trio/service/OrderServiceSuite.scala`), and a no-op logger in `trio/testkit/Log.scala`; marola
-  has `Recording extends Tracing` and `Inner extends LlmClient`
+- **Hand-write test doubles as instances of the trait; no mocking library.** A double that's just an
+  instance of the trait (a no-op, a switchable stub, a recorder) beats a mocking framework every
+  time — marola already has `Recording extends Tracing` and `Inner extends LlmClient`
   (`core/src/test/scala/marola/llm/TracedLlmClientSpec.scala:22` and `:39`) and
   `Flaky extends Http.Transport` (`core/src/test/scala/marola/http/HttpSpec.scala:61`). Make the
   double *record* what it saw (`spans`, `seen`, `sent`) so the test can assert on the interaction,
   not only the return value.
-- **Assert the exact failure, never just "it failed."** Trio matches the specific case and fails
-  loudly otherwise — `case Left(UnavailableProduct(_, _)) => success` /
-  `case e => failure(s"Unexpected behavior: $e")` (`trio/service/OrderServiceSuite.scala`) — and
-  splits "wrong credentials" / "wrong role" / "no such user" into three tests with three distinct
-  expected errors (`UserServiceSuite.scala`), which is what proves the "inexistent users don't leak"
-  property. munit's spelling is `intercept[...]`, already used at
+- **Assert the exact failure, never just "it failed."** Match the specific expected case and fail
+  loudly on anything else — `case Left(SpecificError(_, _)) => success` /
+  `case e => failure(s"Unexpected: $e")` — and split near-identical failure modes ("wrong
+  credentials" / "wrong role" / "no such user") into separate tests with distinct expected errors,
+  which is what actually proves a "doesn't leak which part was wrong" property, not just "it
+  failed." munit's spelling is `intercept[...]`, already used at
   `core/src/test/scala/marola/llm/SummarizeFlowSpec.scala:83` and `:92`; prefer it to
   `assert(result.isLeft)`.
-- **One named fixture per suite, not setup copy-pasted per test.** Trio gives each service suite a
-  `type Env` plus a single `localEnv` that builds the whole object graph, and every test is
-  `localEnv.use: (env, srv) => ...` — `OrderServiceSuite`, `ProductServiceSuite` and
-  `UserServiceSuite` are identical in shape — with per-test isolation from a freshly generated
-  Postgres schema (`trio/testkit/UniqueSession.scala`). marola's analog is the
+- **One named fixture per suite, not setup copy-pasted per test.** One `type Env` plus a single
+  builder that assembles the whole object graph, reused identically across every suite in the same
+  shape, with real per-test isolation rather than shared mutable state. marola's analog is the
   `private def run[A](effect: A < Sync) = Sync.Unsafe.evalOrThrow(effect)` helper each spec defines
   (`TracedLlmClientSpec.scala:19`) plus `Http.withTransport` for fixture replay. Keep new suites to
   that one-helper shape, and remember `Test / parallelExecution := false` in `build.sbt` exists
   because `Http.withTransport` is process-wide.
-- **Property tests where a real invariant exists, not everywhere.** Trio keeps them in separate
-  `*Props.scala` files, each with a named generator and one stated invariant:
-  `expect(os.next.next.next == OrderStatus.Delivered)` for a four-state machine that must reach its
-  terminal state (`trio/domain/OrderStatusProps.scala`), and
-  `expect(prod.items.size == prod.variations.size + 1)` (`ProductProps.scala`). marola has none, and
+- **Property tests where a real invariant exists, not everywhere.** Keep them in separate
+  `*Props.scala` files, each with a named generator and one stated invariant — a state machine that
+  must reach its terminal state, an arithmetic relationship that must hold across every generated
+  input. marola has none, and
   `docs/SKILLS.md` already names the obvious target: `Swimability.score` never leaves [0,100], and a
   strictly worse wave height never raises the score. ScalaCheck would be a new dependency — propose
   it, don't slip it in.
