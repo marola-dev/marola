@@ -7,8 +7,8 @@ swim, all on your own machine with a free model (Scala 3 / Kyo / Ollama), source
 labelled, never invented.<br/>
 Not a weather or surf app with a chatbot bolted on: the score and its safety veto are deterministic
 Scala, and the model is on judge duty over that — it interprets and phrases, it never overturns a
-veto. The reasoning behind that split: [`PHILOSOPHY.md`](./PHILOSOPHY.md) §"models reasoning over
-open water, with the deterministic parts kept deterministic."</p>
+veto. The reasoning behind that split: <a href="./PHILOSOPHY.md"><code>PHILOSOPHY.md</code></a>,
+"models reasoning over open water, with the deterministic parts kept deterministic."</p>
 
 <p align="center">
 <a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://github.com/h0ffmann/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
@@ -67,7 +67,7 @@ just ask "what should I do if I get caught in a rip current?"      # grounded an
 just site-build floripa && just site-serve                         # the map, locally, at :8000
 ```
 
-No Telegram token, no Azure account, no API key needed for any of the above. Full walkthrough with
+No Azure account, no API key needed for any of the above. Full walkthrough with
 real output: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md). Docker instead of Nix/sbt/Ollama
 ([MIP-0008](./docs/mips/MIP-0008-docker-images-and-smoke-test.md)):
 
@@ -90,8 +90,8 @@ verified live vs. written-not-run: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.
 | Photo analysis | Multimodal Ollama (`llava`) → Azure AI Vision | `MAROLA_VISION_PROVIDER=azure` |
 | Observability | Off, or OTLP traces into local MLflow → Application Insights | `MAROLA_TRACES=off\|mlflow\|azure` |
 
-**Next:** a Telegram bot, then the rest of the sea (surf, diving, fishing) as new scoring functions
-over the same data — roadmap: [`docs/mips/README.md`](./docs/mips/README.md), [`docs/FUTURE-WORK.md`](./docs/FUTURE-WORK.md) §1.
+**Next:** the rest of the sea (surf, diving, fishing) as new scoring functions over the same data —
+roadmap: [`docs/mips/README.md`](./docs/mips/README.md), [`docs/FUTURE-WORK.md`](./docs/FUTURE-WORK.md) §1.
 
 ## Documentation
 
@@ -99,8 +99,9 @@ over the same data — roadmap: [`docs/mips/README.md`](./docs/mips/README.md), 
 
 | Doc | What it covers |
 |---|---|
+| [`PHILOSOPHY.md`](./PHILOSOPHY.md) | Why marola is built the way it is — the three pillars, why agents, why Scala/Nix/`just` |
 | [`ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | The pipeline, the six pluggable local/Azure integrations, verified-live vs. written-not-run |
-| [`RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md) / [`TELEGRAM-SETUP.md`](./docs/TELEGRAM-SETUP.md) | Run it now with Ollama; registering the bot and Azure-Foundry credentials |
+| [`RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md) | Run it now with Ollama, no Azure account needed |
 | [`FUTURE-WORK.md`](./docs/FUTURE-WORK.md) / [`EFFECTS-MAP.md`](./docs/EFFECTS-MAP.md) | Design sketches, reviewed-not-adopted libraries; a Scala/FP-purity review |
 | [`AI-103-MAPPING.md`](./docs/AI-103-MAPPING.md) / [`AI-500-MAPPING.md`](./docs/AI-500-MAPPING.md) | Exam domain coverage — AI-103 done, AI-500 (multi-agent) a design target |
 | [`SKILLS.md`](./docs/SKILLS.md) / [`AGENT-SKILLS.md`](./docs/AGENT-SKILLS.md) | A skills roadmap for humans; which Claude Code skills to use here |
