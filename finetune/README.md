@@ -30,9 +30,15 @@ just run -- --summarize
    just finetune-dataset        # writes finetune/data/train.jsonl and finetune/data/eval.jsonl
    ```
 
-   Expect a few dozen examples. That is enough to teach *format and tone*, not facts — which is
-   the point: facts stay in the RAG corpus (`knowledge/`) and in live data, the fine-tune only
-   makes the model better at marola's shape of answer. `FUTURE-WORK.md` §9.1 step 4 argues the same.
+   Expect a few hundred examples, most of them Layer 2 "MCP Tool-Call SFT" (MIP-0025 §4.3):
+   synthetic questions mapped to a single JSON tool call for one of marola's four real MCP tools
+   (`find_nearby_beaches`, `get_swim_recommendation`, `get_water_quality`, `ask_ocean_question` —
+   names and schemas read straight from `SwimConditionsMcpServer.scala`, not guessed). Verified
+   by `build_dataset.py --self-test` (wired into `just quality-other`): every generated call is
+   syntactically valid JSON naming a real tool with arguments matching its real schema, and all
+   four tools are covered. The DSPy demos, sea-lore and knowledge-corpus examples remain the
+   *format and tone* teachers `FUTURE-WORK.md` §9.1 step 4 describes — this layer teaches *when
+   and how to call a tool* instead, not new domain facts (the tool itself returns those).
 
 2. Train the adapter (needs `pip install -r requirements.txt`, a `huggingface-cli login` for the
    gated Llama weights, and ideally a GPU with 8GB+):
