@@ -236,6 +236,51 @@ AI-103/AI-500-relevant design choice, not this MIP.)
   independently verified — if marola's PR-based gate turns out to need the same kind of policy
   Windy settled on, that's worth a direct look at Windy's own contributor docs, not assumed here.
 
+### What else Windy does — a survey, not a design (2026-09-07)
+
+The plugin API is one piece of a broader "marola as the Windy of the sea" framing raised
+alongside this MIP. Windy's actual product (`windy.com`, `api.windy.com`, and its sibling marine
+app `windy.app` — all fetched live 2026-09-07, §Checked live below) is wider than a plugin system;
+surveying it honestly, most of it either doesn't fit marola's local-first/no-accounts/deterministic
+shape, or marola already has a direct equivalent under a different name. Each item below is either
+tagged **Follow-up MIP:** (a real, undesigned gap worth its own MIP) or marked as already covered.
+
+- **Point Forecast API** (`api.windy.com`: coordinates in, 20+ weather parameters out). marola
+  already computes almost exactly this per beach/hour internally (`Recommender`/`Swimability`) and
+  already has a local HTTP precedent (MIP-0033 §5.2's `ChatServer`, `com.sun.net.httpserver`, no
+  new dependency). **Follow-up MIP:** a `GET /forecast?lat=&lon=` endpoint returning the same JSON
+  the board already computes, reusing MIP-0033's tunnel path — the most directly "copy this"
+  feature in the whole survey.
+- **Map Forecast API / switchable layers.** marola's map already *has* several layers
+  (MIP-0009 waves, MIP-0016 water quality, MIP-0021 accessibility, MIP-0030 trails, this MIP's own
+  plugin layers) — what it lacks is a visibility toggle UI, not a new data integration. Smaller
+  than a MIP: a `site/static` UI backlog item (a layer-picker control in `app.js`), not proposed
+  here.
+- **Webcams API/network.** marola's own version of this idea is already drafted:
+  `docs/mips/MIP-0006-live-look-user-cameras.md` ("How does it look right now?", Draft, XL,
+  "do when X lands"). No new MIP needed — this survey just confirms the connection explicitly.
+- **Saved locations / favorites.** Windy.app lets a user save and compare spots; marola's site has
+  a "near me" button (client-side, MIP-0005 §9) but nothing persistent across visits.
+  **Follow-up MIP:** a `localStorage`-only favorites list (no server, no accounts — fits the
+  static-site default exactly) — a genuine, currently-undesigned gap, and a small one.
+- **Spot discovery at scale (Windy.app: 130,000+ spots).** marola already discovers beaches per
+  configured area via Overpass (`BeachFinder`); scaling this is adding areas to `site/areas.json`,
+  an operational task, not an integration — no MIP needed.
+- **Community reports / "ask locals" chat.** A real product idea, but a genuine shape change
+  (user accounts, generated content, moderation) that nothing else in marola has taken on —
+  rated here as a real but *much* bigger undertaking than a "copy this feature" item; if ever
+  pursued it needs its own careful MIP weighing the moderation/accounts cost, not a quick add.
+- **Meteorological education content.** marola already has this, just not named after Windy's
+  version: the curated `knowledge/` corpus plus `OceanQa`/`--ask` (MIP-0001, MIP-0022's safety
+  footer on top). Already built.
+- **An embeddable widget** (the inverse of this MIP's plugin API — someone else embeds marola's
+  board on *their* site, e.g. an `<iframe>`). **Follow-up MIP:** closely related to this one
+  (same static-hosting question applies — confirmed no server needed, §4.2's reasoning transfers
+  directly), genuinely worth designing alongside a first real plugin request rather than blocking
+  on it.
+- **PRO subscription / business model.** Out of scope for any engineering MIP — a product/pricing
+  decision, not a design question. Noted, not designed.
+
 ## Appendix
 
 ### Checked live
@@ -249,6 +294,20 @@ AI-103/AI-500-relevant design choice, not this MIP.)
   component — the basis for §4.2's "no, GitHub Pages is fine" conclusion.
 - `site/static/app.js` — read directly, 2026-09-07: confirmed no existing global API (`state` and
   the map instance are local to the file's IIFE) — the gap this MIP's §5 fills.
+- `https://en.wikipedia.org/wiki/Windy.com` — WebFetch, 2026-09-07: global models (GFS, ECMWF,
+  ICON, meteoblue AI Global Model), regional models (NEMS, NAM, HRDPS, AROME), layers (wind, temp,
+  precipitation, pressure, radar, satellite), 50M+ Google Play downloads (2025), 2024 majority
+  stake in meteoblue. No product-feature detail beyond this (flagged as a limitation in the
+  fetched summary itself).
+- `https://api.windy.com/` — WebFetch, 2026-09-07: three real products — Point Forecast API
+  ("wind, temperature, precipitation, air quality and other 20 parameters"), Map Forecast API
+  ("choose from weather models, layers and isolines"), Webcams API ("largest repository of
+  webcams worldwide", ad-free, unrestricted access). Pricing tiers linked but not fetched.
+- `https://windy.app/` — WebFetch, 2026-09-07 (Windy's marine/sports-specific sibling app): live
+  wind map, 10-day forecast, sea temperature, 130,000+ indexed spots, spot comparison, in-app
+  "ask locals" chat, meteorological lessons/activity guides, Apple Watch widget, PRO subscription
+  tier. Tide predictions/route planning/offline maps were not mentioned despite being common for
+  marine apps — noted as an omission, not confirmed absent.
 
 ### Not checked
 - Windy's actual plugin API surface (which of its internal objects a real Windy plugin can call)
