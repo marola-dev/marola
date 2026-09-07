@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft — §5.2 (chat server + widget) **implemented and merged** (#196; the `mip-0033/1-chat-server` branch itself is now stale, safe to delete — its content is fully on `main`); §5.1 (repo visibility), §5.3/§5.4 (model publish, Milestones doc) and the new §5.5/§5.6 (pre-flight checklist, GitHub Releases) not started |
+| **Status** | Partially implemented (§5.2 of 6) — §5.2 (chat server + widget) merged to main as PR #196 (`cli/src/main/scala/marola/agent/ChatServer.scala`, `site/static/chat.js`/`chatbot-config.js`), refined by PR #229; the `mip-0033/1-chat-server` branch it originally shipped on is stale/merged, not pending. §5.1 (repo visibility), §5.3 (model publish), §5.4 (Milestones/`RELEASES.md`) and the new §5.5/§5.6 (pre-flight checklist, GitHub Releases) not started |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "release public will match with release 0, site should be public and safe (static), chatbot must be present working with ollama running on my local computer... with first hugging face distributed model. Idea is to create link between MIPs - milestones - releases") |
 | **Created** | 2026-09-06 |
 | **Phase** | Spans Phase 0-1 work (`ARCHITECTURE.md` §11) — Release 0 is a **new, orthogonal axis**, not another phase: Phase tracks infra/deployment stage (local → bot → Azure → deployed), Release tracks a *bundled, versioned, publicly-announced* milestone. Release 0 draws from Phase 0/1 work already done or in flight; it does not require Phase 2/3 |

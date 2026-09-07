@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — implemented (Phase 0 surfaces: `--ask`, `ask_ocean_question`), pending merge on `mip-0022/1-safety-footer` |
+| **Status** | Implemented (Phase 0 surfaces: `--ask`, `ask_ocean_question`) — merged to main via PR #195 (`749ec54`); the `mip-0022/1-safety-footer` branch is now stale/superseded by that squash-merge |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (candidate K6 of the 2026-09-06 external consolidation, `docs/ROADMAP.md` §7 — the *rule* half; the corpus half is the `corpus-doc` skill, §9) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (`--ask`, `ask_ocean_question`) → 1 (the bot's `/perguntar`, MIP-0002) |

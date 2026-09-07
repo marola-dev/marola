@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — both §11 research gaps blocking design (INEA's real layout, whether INEMA's form offers an HTML shortcut) resolved 2026-09-07; tasks: `docs/mips/MIP-0031.tasks.md` |
+| **Status** | Partially implemented (tasks 1-4 of 6, `docs/mips/MIP-0031.tasks.md`) — both §11 research gaps resolved 2026-09-07; INEMA parser + Salvador coordinate table (tasks 1/3, PR #203) and INEA parser + Rio coordinate table (tasks 2/4, PR #200) merged to main; tasks 5/6 (`InemaBaWaterQualityClient`/`IneaRjWaterQualityClient` wiring into `AppConfig`) not yet built |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "Fix water quality to add new institutes" — Rio and Bahia render correctly but show no water-quality verdict, unlike Florianópolis) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (CLI + board field only) — no earlier-phase prerequisite is missing |

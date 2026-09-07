@@ -45,6 +45,12 @@ test:
 coverage:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt clean coverage test coverageReport coverageAggregate
 
+# The other coverage: statement % of scripts/**/*.py measured while each script's own `--self-test`
+# runs (marola has no pytest suite — those flags are the Python test suite). Exactly what ci.yml
+# publishes as the README's `python coverage` badge; coverage.py comes from flake.nix.
+coverage-python:
+    python3 scripts/repo_stats.py python-coverage
+
 fmt:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll
 
@@ -77,6 +83,8 @@ quality-other:
     python3 scripts/smoke_record.py --self-test
     python3 scripts/benchmark_gate.py --self-test
     python3 scripts/cost-split.py --self-test
+    python3 scripts/repo_stats.py --self-test
+    python3 scripts/pr_label_nlp.py --self-test
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
@@ -88,6 +96,8 @@ quality-other:
     python3 scripts/lib/mip_index_merge.py --self-test
     python3 scripts/mip_graph.py --self-test
     python3 scripts/mip_graph.py --check
+    python3 finetune/build_dataset.py --self-test
+    python3 finetune/build_dpo_dataset.py --self-test
     .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
@@ -201,6 +211,20 @@ benchmark:
 # Tier 2 prep: chat-format JSONL from the DSPy demos, sea lore and knowledge/ (stdlib only).
 finetune-dataset:
     python3 finetune/build_dataset.py
+
+# Layer 3 (MIP-0025 §4.3): DPO preference pairs from Reviewer.scala's own reject/revise decisions.
+finetune-dpo-dataset:
+    python3 finetune/build_dpo_dataset.py
+
+# Layer 3 training: DPO on top of an existing SFT adapter (`just finetune-train` first).
+finetune-train-dpo preset="tiny" *args:
+    python3 finetune/train_dpo.py --preset {{preset}} {{args}}
+
+# Publish a trained .gguf to a Hugging Face model repo (MIP-0025 §5.1). Needs
+# `pip install -r finetune/requirements.txt` and a prior `huggingface-cli login`.
+# just finetune-publish repo=you/marola-sea-tiny-GGUF gguf=finetune/out/marola-tiny-adapter.gguf base=HuggingFaceTB/SmolLM2-360M-Instruct
+finetune-publish repo gguf base *args:
+    python3 finetune/publish_hf.py --repo {{repo}} --gguf {{gguf}} --base-model {{base}} {{args}}
 
 # ---------------------------------------------------------------------
 # The map — MIP-0005: precomputed boards on a static site (site/)
@@ -414,7 +438,13 @@ pr-label *args:
 
 # Backfill labels onto every merged/closed PR that has none yet (never touches an open PR, and
 # never a PR that already has a label — re-running is a no-op scan). `--dry-run` to preview,
-# `--limit N` to cap a first cautious run. See scripts/backfill-pr-labels.sh.
+# `--limit N` to cap a first cautious run. `--nlp` also prints scripts/pr_label_nlp.py's cheap,
+# local, marola-aware NLP guess at the area/* label next to the deterministic one (comparison
+# only — a demonstration that a local TF-IDF classifier can plausibly do this job too, not a
+# replacement for the deterministic taxonomy); `--nlp-apply-unscoped` additionally applies the
+# NLP label, but only when the deterministic side found nothing but area/unscoped and the NLP
+# score clears a real threshold — filling a genuine gap, never overriding a confident call. See
+# scripts/backfill-pr-labels.sh and scripts/pr_label_nlp.py.
 pr-labels-backfill *args:
     scripts/backfill-pr-labels.sh {{args}}
 
@@ -736,3 +766,31 @@ opencode-cost *args="session":
 # either way. `printf 'hello' | just clip`, `just clip --text hello`.
 clip *args:
     scripts/clip.sh {{args}}
+
+# Fast-forward local `main` from origin — always fetches (safe, no working-tree effect); only
+# advances the `main` ref itself when you're actually on `main` with a clean tree (git merge
+# --ff-only, so it can never silently create a merge commit or clobber uncommitted work — it
+# just no-ops with a message when either condition isn't met). Meant to be run unattended on a
+# timer (systemd --user timer or cron calling `just -f <repo>/justfile sync-main`, every 15-30m)
+# so a squash-merged PR shows up as merged locally without a manual `git pull`, and so branch
+# audits against `origin/*` (this repo's own convention — see docs/DEV-FLOW.md) aren't confused
+# by a local main that's actually current on GitHub but stale on disk.
+sync-main:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    git fetch origin --quiet
+    branch="$(git branch --show-current)"
+    if [ "$branch" != "main" ]; then
+        echo "sync-main: on '$branch', not 'main' — fetched origin only, no ref updated"
+        exit 0
+    fi
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "sync-main: local main has uncommitted changes — not touching it (stash first: git stash push -u)"
+        exit 0
+    fi
+    before="$(git rev-parse HEAD)"
+    git merge --ff-only origin/main --quiet
+    after="$(git rev-parse HEAD)"
+    if [ "$before" != "$after" ]; then
+        echo "sync-main: fast-forwarded main $before -> $after"
+    fi

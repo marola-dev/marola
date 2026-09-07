@@ -11,9 +11,11 @@ before building it — see that skill for when a MIP is warranted, what to verif
 one, and the required template sections.
 
 Status vocabulary (`docs/mips/README.md`'s own convention): **Draft → Accepted → Implemented**
-(or **Rejected** / **Superseded**). A MIP built in stages before every task lands stays **Draft**
-with a one-line note on what's still missing in its status row — never a bare "Implemented" until
-the whole task list for that MIP has merged.
+(or **Rejected** / **Superseded**). A MIP built in stages before every task lands carries
+**Partially implemented (tasks a–b of N — #PR #PR)**, naming exactly which tasks are done and what's
+still missing in its own status row — never a bare "Implemented" until the whole task list
+(`MIP-NNNN.tasks.md`, when it exists) is merged, and never a stale "Accepted"/"Draft" once at least
+one task has actually landed.
 
 ## Everything else under `docs/`
 

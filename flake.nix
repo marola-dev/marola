@@ -44,8 +44,26 @@
             # dspy/README.md). `python3 -m venv` + pip installs
             # DSPy itself; not vendored as a nixpkgs package here since it
             # moves fast and pins its own dependency versions.
-            pkgs.python3
-            pkgs.python3Packages.pip
+            #
+            # scikit-learn is bundled into THIS python3 via withPackages, not as a separate
+            # pkgs.python3Packages.scikit-learn alongside a bare pkgs.python3 — a package listed
+            # that way sits in its own nix store path and is never on plain `python3`'s import
+            # path (the exact gotcha documented below for coverage.py, which sidesteps it by only
+            # ever using coverage's own executable, never `import coverage`). scripts/pr_label_nlp.py
+            # does `from sklearn... import ...` directly, so it needs the interpreter itself wired
+            # up. Confirmed present in nixpkgs (`scikit-learn 1.8.0`, checked 2026-09-07 via
+            # `nix eval nixpkgs#python3Packages.scikit-learn.version`).
+            (pkgs.python3.withPackages (ps: with ps; [ pip scikit-learn ]))
+
+            # coverage.py — the README's `python coverage` badge, measured (never estimated) by
+            # running every `scripts/**/*.py --self-test` under it: `scripts/repo_stats.py
+            # python-coverage`. Confirmed present in nixpkgs (`coverage 7.15.4`, built for this
+            # shell's python3 3.14.7, checked 2026-09-07 via
+            # `nix build nixpkgs#python3Packages.coverage`). It puts a `coverage` executable on
+            # PATH but does not put the module on plain python3's import path — which is why
+            # repo_stats.coverage_exe() prefers the executable and falls back to `python3 -m
+            # coverage` for CI's apt `python3-coverage`, where it is the other way around.
+            pkgs.python3Packages.coverage
 
             # uv (astral-sh) — a fast Python package/tool manager. Confirmed present in nixpkgs
             # (`uv 0.12.5`, checked 2026-09-07 via `nix run nixpkgs#uv -- --version`). Its `uvx`
@@ -84,6 +102,11 @@
             # General
             pkgs.jq
             pkgs.git
+
+            # Line counter behind the README's Scala/Python LOC badges (scripts/repo_stats.py;
+            # ci.yml's repo-stats job apt-installs it on the runner). Confirmed present in
+            # nixpkgs (`cloc 2.10`, checked 2026-09-07 via `nix run nixpkgs#cloc -- --version`).
+            pkgs.cloc
 
             # Dockerfile lint (`just quality`, docker.yml) — MIP-0008. Docker itself is not in the
             # flake: it needs a daemon the host runs.
@@ -152,6 +175,11 @@
             java -version
             curl -s -m 1 http://localhost:11434/api/tags >/dev/null 2>&1 \
               || echo "ollama not running — start it with 'ollama serve' (see docs/RUN-LOCALLY.md)"
+            # `just sync-main` fast-forwards local `main` from origin, but only when you're
+            # actually on `main` with a clean tree (git merge --ff-only) — a no-op otherwise, so
+            # this is always safe to run on every shell entry. `timeout` keeps a slow/offline
+            # network from delaying the prompt; failure here must never block entering the shell.
+            (cd "$marola_root" && timeout 10s just sync-main) || true
             echo "Run 'just' to see available commands."
           '';
         };

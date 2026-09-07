@@ -235,3 +235,62 @@ object Http:
       headers.foreach { case (k, v) => builder.header(k, v) }
       check(url, transport.get.send(builder.build()), 500)
     }
+
+  /** What a binary response is — the raw bytes, never decoded as text. */
+  final case class BytesResponse(status: Int, bytes: Array[Byte])
+
+  final case class HttpBytesError(status: Int, url: String)
+      extends Exception(s"HTTP $status for $url")
+
+  /**
+   * Binary-GET's own transport seam, deliberately separate from `Transport`/`Response` above rather
+   * than adding a `bytes` field there: every existing caller of `getString`/`postForm`/etc. depends
+   * on `Response.body` being decoded as UTF-8 text (IMA/SC's own "PRÓPRIA"/"IMPRÓPRIA" accented
+   * strings, Overpass/Open-Meteo JSON) — switching the shared `HttpClient.send` call to
+   * `BodyHandlers.ofByteArray()` and re-deriving `body` from an ISO-8859-1 round-trip would
+   * silently corrupt every one of those already-verified text responses. A PDF bulletin
+   * (INEA/INEMA, MIP-0031) is the first genuinely binary response this module fetches, so it gets
+   * its own thin parallel seam instead of touching a working one.
+   */
+  trait BinaryTransport:
+    def send(request: HttpRequest): BytesResponse
+
+  object BinaryTransport:
+    val Live: BinaryTransport = new BinaryTransport:
+      private val client: HttpClient =
+        HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()
+      def send(request: HttpRequest): BytesResponse =
+        val response = client.send(request, HttpResponse.BodyHandlers.ofByteArray())
+        BytesResponse(response.statusCode(), response.body())
+
+  private val binaryTransport = new java.util.concurrent.atomic.AtomicReference[BinaryTransport](
+    BinaryTransport.Live
+  )
+
+  /** Test seam for `getBytes`, mirroring `withTransport` — replay a fixture PDF/binary by URL. */
+  def withBinaryTransport[A](t: BinaryTransport)(body: => A): A =
+    val previous = binaryTransport.getAndSet(t)
+    try body
+    finally
+      binaryTransport.set(previous)
+      ()
+
+  /**
+   * Plain binary GET — a PDF bulletin today
+   * (`InemaBaWaterQualityClient`/`IneaRjWaterQualityClient`, MIP-0031), never text-decoded. No
+   * retry parameter (unlike `getString`): a malformed/partial PDF from a retry would fail
+   * `InemaPdfParser`/`IneaPdfParser` cleanly rather than silently, and neither institute's endpoint
+   * has shown the transient-503-under-load behaviour Overpass has.
+   */
+  def getBytes(url: String, timeoutSeconds: Long = 30): Array[Byte] < Sync =
+    Sync.defer {
+      val request = HttpRequest
+        .newBuilder(URI.create(url))
+        .timeout(Duration.ofSeconds(timeoutSeconds))
+        .header("User-Agent", userAgent)
+        .GET()
+        .build()
+      val response = binaryTransport.get.send(request)
+      if response.status / 100 == 2 then response.bytes
+      else throw HttpBytesError(response.status, url)
+    }

@@ -10,6 +10,7 @@ import marola.http.Http
 import marola.json.JsonValue
 import marola.lore.SeaLore
 import marola.model.{Beach, BestHour, Coordinates}
+import marola.trails.Trail
 import marola.water.ImaScWaterQualityClient
 import marola.{Fixtures, Recommender, Report}
 
@@ -280,6 +281,52 @@ class BoardSpec extends munit.FunSuite:
     val old = strip(b)
     assert(old.render != b.render, "strip must have removed something")
     assertEquals(SchemaCheck.validate(schema, old), Nil)
+  }
+
+  test("board: trails is empty by default, and schema still accepts an empty array (MIP-0030)") {
+    val b = board(tomorrow)
+    assertEquals(b("trails").arr, Vector.empty)
+    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    assertEquals(SchemaCheck.validate(schema, b), Nil)
+  }
+
+  test(
+    "board: a trail serializes verbatim OSM facts, geometry, and near-anchor distances (MIP-0030)"
+  ) {
+    val trail = Trail(
+      name = "Trilha da Lagoinha do Leste",
+      lengthKm = 2.1149,
+      difficulty = None,
+      surface = Some("paving_stones"),
+      geometry = List(Coordinates(-27.7910, -48.4890), Coordinates(-27.7925, -48.4871)),
+      nearBeach = Some(("Praia do Campeche", 0.42)),
+      nearLake = None
+    )
+    val b = Board.build(
+      "floripa",
+      tomorrow,
+      today,
+      generatedAt,
+      scored,
+      None,
+      sources,
+      trails = List(trail)
+    )
+    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    assertEquals(SchemaCheck.validate(schema, b), Nil)
+    val t = b("trails").arr.head
+    assertEquals(t("name").str, Some("Trilha da Lagoinha do Leste"))
+    assertEquals(t("length_km").num, Some(2.1149))
+    assertEquals(t("difficulty"), JsonValue.JNull)
+    assertEquals(t("surface").str, Some("paving_stones"))
+    assertEquals(t("geometry").arr.size, 2)
+    assertEquals(
+      t("geometry").arr.head.arr.flatMap(_.num).toList,
+      List(-27.7910, -48.4890)
+    )
+    assertEquals(t("near_beach")("name").str, Some("Praia do Campeche"))
+    assertEquals(t("near_beach")("distance_km").num, Some(0.42))
+    assertEquals(t("near_lake"), JsonValue.JNull)
   }
 
 end BoardSpec
