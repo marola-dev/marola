@@ -222,7 +222,17 @@ lazy val cli = (project in file("cli"))
     // Passthrough keeps child stdout on stdout and child stderr on stderr, unwrapped.
     Compile / run / fork := true,
     Compile / run / connectInput := true,
-    Compile / run / outputStrategy := Some(StdoutOutput)
+    Compile / run / outputStrategy := Some(StdoutOutput),
+    // Real regression from the fork above, confirmed live 2026-09-07: a forked child's default
+    // working directory is the *task's own project* baseDirectory — `cli/`, since `cli` is
+    // `(project in file("cli"))` — not the repo root `sbt` itself was launched from. Every
+    // relative path in Main.scala/SiteBuilder.scala (`site/areas.json`, `knowledge/`, `data/`,
+    // ...) assumed cwd = repo root, which held before `fork := true` (an in-process run inherits
+    // sbt's own cwd) and silently broke the moment forking landed: `sbt "cli/run -- --site"`
+    // failed with `NoSuchFileException: site/areas.json` — reproduced live, both locally and in
+    // site.yml's real CI run. Pin it back to the repo root explicitly rather than relying on
+    // fork's default.
+    Compile / run / baseDirectory := (ThisBuild / baseDirectory).value
   )
 
 lazy val root = (project in file("."))
