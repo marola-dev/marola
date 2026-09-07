@@ -206,6 +206,10 @@ finetune-dataset:
 finetune-dpo-dataset:
     python3 finetune/build_dpo_dataset.py
 
+# Layer 3 training: DPO on top of an existing SFT adapter (`just finetune-train` first).
+finetune-train-dpo preset="tiny" *args:
+    python3 finetune/train_dpo.py --preset {{preset}} {{args}}
+
 # ---------------------------------------------------------------------
 # The map — MIP-0005: precomputed boards on a static site (site/)
 # ---------------------------------------------------------------------
