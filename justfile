@@ -84,6 +84,8 @@ quality-other:
     python3 scripts/lib/uses_merge.py --self-test
     scripts/mip-stack.sh --self-test
     python3 scripts/lib/mip_index_merge.py --self-test
+    python3 scripts/mip_graph.py --self-test
+    python3 scripts/mip_graph.py --check
     .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
@@ -456,6 +458,18 @@ deps-stack *args:
 # Needs `gh auth status` OK beyond --dry-run/--from-json/--self-test. Run from the host, not ai-jail.
 mip-stack *args:
     scripts/mip-stack.sh {{args}}
+
+# Regenerate the Mermaid dependency graph in docs/mips/README.md from every MIP's own **Blocked
+# by** metadata row (comma-separated MIP numbers, or `none` — never the prose **Depends on**
+# field, which legitimately mixes four relations in one cell a regex can't tell apart). Nodes are
+# colored by Status; edges are blocker -> blocked, nothing else.
+#   just mip-graph                     # regenerate and write docs/mips/README.md
+#   just mip-graph --check             # exit 1 if the checked-in graph is stale (quality-other)
+#   just mip-graph --parallel 30 31    # can these two MIPs be worked on at once? (dependency
+#                                       # graph reachability AND a §5 source-path overlap check —
+#                                       # the graph alone can't see two MIPs touching the same files)
+mip-graph *args:
+    python3 scripts/mip_graph.py {{args}}
 
 # Delete every local branch whose PR gh confirms MERGED (local branch + remote ref, if still
 # there) — never the current branch or main. Safe for mip-NNNN/k-slug branches too.

@@ -74,10 +74,11 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
 | **Created** | YYYY-MM-DD |
 | **Phase** | 0 / 1 / 2 / 3 / 4 (`ARCHITECTURE.md` §11) |
 | **Related** | `FUTURE-WORK.md` §N, `AI-103-MAPPING.md` row "...", MIP-NNNN |
-| **Effort** | S / M / L / XL — one clause why (what's new: a module? a store? a CI workflow?) |
+| **Effort** | S / M / L / XL — one clause why (what's new: a module? a store? a CI workflow?). If §4's research changed the estimate from what a related MIP guessed, say so: `M, re-rated from S after §4` — copy the same clause into this MIP's `docs/mips/README.md` index cell, don't let the index show a bare letter that hides the correction |
 | **Gain** | one or more of `user value`, `exam coverage (AI-103/AI-500 domain …)`, `infra/dev-loop`, `cost/ops`, each with one clause |
 | **Effort vs Gain** | `do next` / `do when X lands` / `cheap win` / `expensive, defer` / `park` — one sentence why |
-| **Depends on** | other MIPs it needs or that need it; whether Phase 1 or a paid Azure resource gates it (`AGENTS.md`) |
+| **Depends on** | prose, for humans: other MIPs it needs or that need it, whether Phase 1 or a paid Azure resource gates it (`AGENTS.md`), and any non-blocking coordination (shared files, shared design decisions) — say the relationship in words, this field is never parsed |
+| **Blocked by** | machine-readable, for `scripts/mip_graph.py`: a comma-separated list of MIP numbers that must land first, or the literal `none`. Numbers only — no prose, no phase gates, no "not really, but". If a relationship doesn't cleanly reduce to "MIP-NNNN must merge before this one can", it belongs in `Depends on` only, not here — a wrong edge in the generated graph is worse than a missing one |
 | **Risk** | the one thing most likely to make this not worth it |
 | **Cost so far** | the summed `Cost:` trailers of its merged PRs, or "—" if nothing has merged yet |
 
@@ -116,10 +117,23 @@ Including "do nothing". Why they lost.
 Which AI-103 / AI-500 rows this touches, if any. "None" is a fine answer.
 
 ## 11. Open questions
-Things that need a human decision or a check that couldn't be done yet.
+Things that need a human decision or a check that couldn't be done yet. A finding that's real but
+out of this MIP's own scope (found while researching, not asked for) gets its own bullet prefixed
+`**Follow-up MIP:**` naming what it is and that it needs the next MIP number, not folded into this
+MIP's own Design section.
 
 ## Appendix
-Raw research notes, sample payloads, links.
+### Checked live
+One line per external fact you fetched: the URL, the date, and what it actually returned —
+including a failure ("404", "requires an auth token now", "no such endpoint found after checking
+the page's own JS"). This is what `mip-claims-auditor` (`.claude/agents/mip-claims-auditor.md`)
+reads first — a claim in §4/§5/§6/§9 that doesn't trace to a line here is exactly the failure mode
+that subagent exists to catch, cheaply, before anyone re-fetches anything.
+
+### Not checked
+Anything referenced but not independently verified this session — a number repeated from another
+MIP, a claim taken from a search-result summary rather than the source page, a library capability
+assumed from memory. Say so here rather than letting it read as verified by omission.
 ```
 
 ## Filling the six triage fields
@@ -133,6 +147,9 @@ Raw research notes, sample payloads, links.
   the blocking MIP for `do when X lands`, the missing precondition for `park`.
 - **Depends on**: list other MIPs by number, and say explicitly whether `AGENTS.md`'s Phase 1 gate
   (the Telegram bot) or its cost-and-deployment-safety gate (a paid Azure resource) blocks this one.
+- **Blocked by**: the strict subset of `Depends on` that's a pure "must merge first" relationship —
+  comma-separated numbers or `none`. When in doubt whether something belongs here, it doesn't:
+  leave it in `Depends on`'s prose only.
 - **Risk**: one real failure mode, not a hedge — the thing that would make you regret building it.
 - **Cost so far**: pull it from the merged PRs' `Cost:` trailers (`just cost-split MIP-NNNN`); write
   "—" for nothing merged yet, never a guess.
@@ -142,3 +159,11 @@ Raw research notes, sample payloads, links.
 `docs/mips/README.md` holds one table: `| MIP | Title | Status | Created | Effort | Gain | Verdict |
 Cost so far |` (`Verdict` = the MIP's `Effort vs Gain` field). Keep it sorted by number. Create it
 with the first MIP if it doesn't exist.
+
+**Dependency graph.** `just mip-graph` regenerates a Mermaid graph from every MIP's `Blocked by`
+field into `docs/mips/README.md` (between `<!-- mip-graph:start -->`/`-end -->` markers) —
+`just quality`'s `quality-other` fails if it's stale, same as any other generated-and-checked-in
+artifact here. `just mip-graph --parallel NNNN MMMM` answers "can these two be worked on at once":
+no path between them in the `Blocked by` graph **and** no overlap in the backticked source paths
+their §5 Design sections name — the graph alone only catches the first kind of collision, not two
+MIPs quietly touching the same file.

@@ -49,3 +49,42 @@ as an unfilled placeholder).
 | [MIP-0031](./MIP-0031-water-quality-inea-inema.md) | Water quality for Rio (INEA) and Bahia (INEMA) — PDF bulletin parsing plus a curated point-coordinate table, since neither institute publishes a JSON feed or coordinates | Draft | 2026-09-06 | M | user value; exam coverage | do next | — |
 | [MIP-0032](./MIP-0032-model-strategy-benchmark-matrix.md) | The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned on the same questions, with latency and cost columns; local rows free and gated, paid rows opt-in per run | Draft | 2026-09-06 | M | infra/dev-loop; cost/ops; exam coverage | do next (free half) / do when X lands (paid arm: human go-ahead + key) | — |
 | [MIP-0033](./MIP-0033-release-0.md) | Release 0 — the repo goes public, a self-hosted chatbot (Ollama + Cloudflare Tunnel, graceful offline state), the first Hugging Face-published model, and a new Milestones/Releases doc linking MIPs to a named release | Draft | 2026-09-06 | L | user value; community/outreach; infra/dev-loop | do next | — |
+
+<!-- mip-graph:start -->
+```mermaid
+flowchart TD
+  classDef draft fill:#fff,stroke:#999,stroke-dasharray:3 3;
+  classDef accepted fill:#eef,stroke:#36c;
+  classDef implemented fill:#efe,stroke:#2a2;
+  classDef rejected fill:#f8f8f8,stroke:#bbb,color:#999;
+  M0001["MIP-0001<br/>Bathing-water quality in the ranking, and a sea-lore paragraph in every reply"]:::implemented
+  M0002["MIP-0002<br/>The Telegram bot — marola's first real user surface"]:::draft
+  M0003["MIP-0003<br/>Replies in under three seconds — caching, concurrent fetches, precomputed boards"]:::draft
+  M0004["MIP-0004<br/>The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina"]:::draft
+  M0005["MIP-0005<br/>The map — every beach's daily recommendation on a static site the pipeline feeds"]:::implemented
+  M0006["MIP-0006<br/>'How does it look right now?' — a live look at each beach, fed by users' cameras"]:::draft
+  M0007["MIP-0007<br/>Time-series foundation models for marola's own series — local open models first, Azure as the opt-in"]:::draft
+  M0008["MIP-0008<br/>Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows"]:::implemented
+  M0009["MIP-0009<br/>A richer map — a wave marker per beach and, on hover, every aspect at that point"]:::accepted
+  M0010["MIP-0010<br/>MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first, Azure ML as the opt-in"]:::implemented
+  M0011["MIP-0011<br/>Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies"]:::implemented
+  M0012["MIP-0012<br/>llm4s as marola's Scala-native LLM/agent layer — and the deprecation of the Python DSPy step"]:::draft
+  M0013["MIP-0013<br/>OpenCode as marola's development agent — a tryout, and what replacing Claude Code would take"]:::draft
+  M0014["MIP-0014<br/>A marola book — *The Compiler Pushes Back*, written in LaTeX, versioned in a repo, built in CI"]:::draft
+  M0015["MIP-0015<br/>Interação — opt-in 'who else is swimming here' matching between marola users"]:::draft
+  M0016["MIP-0016<br/>Water-quality points on the map — OK / not-OK marks, placed in the sea"]:::draft
+  M0017["MIP-0017<br/>Agentic tooling ideas from `ai-job-search` and September 2026's trending agent repos"]:::draft
+  M0018["MIP-0018<br/>Marola self-documentation — weekly post-planner and multi-platform exporter"]:::draft
+  M0019["MIP-0019<br/>arXiv/trending-repo survey — sea-forecasting and jellyfish-prediction techniques for marola"]:::draft
+  M0020["MIP-0020<br/>An Instagram account for marola — first post by hand, API publishing, and a gated daily pipeline"]:::draft
+  M0021["MIP-0021<br/>Beach accessibility — parking, toilets, showers and lifeguard posts from OSM, shown only where the data exists"]:::draft
+  M0022["MIP-0022<br/>The safety footer — every answer grounded in a safety document ends with lifeguard/193/SAMU 192, appended after the model, never by it"]:::draft
+  M0023["MIP-0023<br/>Product expansion — a wait-list, honest promotion, and the easiest way to keep marola's site and backend maintained"]:::draft
+  M0025["MIP-0025<br/>marola-sea-1.0 — a small domain-tuned model (QLoRA SFT + tool-call SFT + DPO) served through Ollama"]:::draft
+  M0029["MIP-0029<br/>Positioning — marola as the ocean intelligence layer; 'best hour to swim' as its first use case"]:::accepted
+  M0030["MIP-0030<br/>Coastal and lakeside trails on the map — named OSM paths near a beach or a lake"]:::draft
+  M0031["MIP-0031<br/>Water quality for Rio de Janeiro (INEA) and Bahia (INEMA) — closing the 'no data' gap"]:::draft
+  M0032["MIP-0032<br/>The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns"]:::draft
+  M0033["MIP-0033<br/>Release 0 — the repo goes public, a self-hosted chatbot, the first published model"]:::draft
+```
+<!-- mip-graph:end -->
