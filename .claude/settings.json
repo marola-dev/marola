@@ -51,7 +51,10 @@
       "Read(**/*.pem)",
       "Read(**/*.key)",
       "Bash(gh pr merge*)",
-      "Bash(gh pr close*)"
+      "Bash(gh pr close*)",
+      "Bash(gh stack merge*)",
+      "Bash(gh stack unstack*)",
+      "Bash(gh stack delete*)"
     ]
   },
   "hooks": {
