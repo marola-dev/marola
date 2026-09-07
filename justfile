@@ -45,6 +45,12 @@ test:
 coverage:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt clean coverage test coverageReport coverageAggregate
 
+# The other coverage: statement % of scripts/**/*.py measured while each script's own `--self-test`
+# runs (marola has no pytest suite — those flags are the Python test suite). Exactly what ci.yml
+# publishes as the README's `python coverage` badge; coverage.py comes from flake.nix.
+coverage-python:
+    python3 scripts/repo_stats.py python-coverage
+
 fmt:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll
 

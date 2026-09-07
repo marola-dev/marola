@@ -137,8 +137,11 @@ jobs:
           xml = open(sys.argv[1]).read()
           pct = float(re.search(r'statement-rate="([0-9.]+)"', xml).group(1))
           color = "red" if pct < 50 else "yellow" if pct < 80 else "green"
+          # "scala coverage", not "coverage": the README carries a second, Python one now
+          # (repo-stats' stats/python-coverage.json, same thresholds), and two badges that both
+          # read "coverage" are worse than none.
           json.dump(
-              {"schemaVersion": 1, "label": "coverage", "message": f"{pct:.0f}%", "color": color},
+              {"schemaVersion": 1, "label": "scala coverage", "message": f"{pct:.0f}%", "color": color},
               sys.stdout,
           )
           PY
@@ -214,7 +217,18 @@ jobs:
       - name: cloc (only if the runner image does not already have it)
         run: command -v cloc >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends cloc; }
 
-      - name: Badge JSONs — CI health (steps green/ran) and Scala/Python LOC
+      # Same shape as the cloc step: flake.nix ships coverage.py for the local run, the runner
+      # image does not promise it. Ubuntu's python3-coverage puts the module on python3's import
+      # path (repo_stats falls back to `python3 -m coverage` when no `coverage` binary is on
+      # PATH) and needs no pip/PEP-668 dance.
+      - name: coverage.py (only if the runner image does not already have it)
+        run: command -v coverage >/dev/null || python3 -c 'import coverage' 2>/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends python3-coverage; }
+
+      # The Python-coverage part re-runs every `scripts/**/*.py --self-test` under coverage.py —
+      # seconds, no network — and reports statement % over scripts/ only. That is genuinely all
+      # marola has for Python (no pytest suite), so the badge means "covered by the self-tests",
+      # not "covered by a test suite"; see the script's docstring.
+      - name: Badge JSONs — CI health (steps green/ran), Scala/Python LOC, Python coverage
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}

@@ -110,7 +110,8 @@ jobs:
       # panel; app.js treats a missing smoke/latest.json as "no live run". ci.yml's coverage step
       # writes to the same branch, under `coverage/` — the shields.io endpoint JSON the README
       # badge reads, and its repo-stats job writes `stats/` the same way (CI health, Scala/Python
-      # LOC). Each directory is archived only if it exists on the branch yet, so the first
+      # LOC, Python coverage — the whole directory is copied, so a new badge JSON needs no change
+      # here). Each directory is archived only if it exists on the branch yet, so the first
       # coverage run (site-data pushed with only `smoke/` so far, or vice versa) doesn't fail.
       - name: Add the smoke-test results and badge data — coverage, stats (site-data branch, if any)
         run: |

@@ -47,6 +47,16 @@
             pkgs.python3
             pkgs.python3Packages.pip
 
+            # coverage.py — the README's `python coverage` badge, measured (never estimated) by
+            # running every `scripts/**/*.py --self-test` under it: `scripts/repo_stats.py
+            # python-coverage`. Confirmed present in nixpkgs (`coverage 7.15.4`, built for this
+            # shell's python3 3.14.7, checked 2026-09-07 via
+            # `nix build nixpkgs#python3Packages.coverage`). It puts a `coverage` executable on
+            # PATH but does not put the module on plain python3's import path — which is why
+            # repo_stats.coverage_exe() prefers the executable and falls back to `python3 -m
+            # coverage` for CI's apt `python3-coverage`, where it is the other way around.
+            pkgs.python3Packages.coverage
+
             # uv (astral-sh) — a fast Python package/tool manager. Confirmed present in nixpkgs
             # (`uv 0.12.5`, checked 2026-09-07 via `nix run nixpkgs#uv -- --version`). Its `uvx`
             # subcommand runs a Python CLI tool ephemerally (no persistent install, nothing to

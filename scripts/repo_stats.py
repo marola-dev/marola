@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""repo_stats — the README's CI-health and LOC badges, as shields.io endpoint JSON.
+"""repo_stats — the README's CI-health, LOC and Python-coverage badges, as shields.io endpoint JSON.
 
     scripts/repo_stats.py write --out-dir stats \
         --repo h0ffmann/marola --run-id 123 --exclude-job repo-stats
-    scripts/repo_stats.py write --out-dir stats     # LOC only (no --run-id: no CI badge)
+    scripts/repo_stats.py write --out-dir stats     # LOC + Python coverage (no --run-id: no CI badge)
+    scripts/repo_stats.py write --out-dir stats --no-python-coverage   # skip coverage.py
+    scripts/repo_stats.py python-coverage           # just print the measured % (no files written)
     scripts/repo_stats.py --self-test               # shaping + counting rules (just quality-other)
 
-Three files, the same shields.io "endpoint" shape ci.yml already writes for coverage
+Four files, the same shields.io "endpoint" shape ci.yml already writes for the Scala coverage
 (`{"schemaVersion": 1, "label": ..., "message": ..., "color": ...}`), published to the orphan
 `site-data` branch and copied into the site by site.yml, where the README reads them live:
 
-    ci.json          "ci steps"  19/20 green
-    scala-loc.json   "scala"     6,865 LOC
-    python-loc.json  "python"    2,877 LOC
+    ci.json               "ci steps"        19/20 green
+    scala-loc.json        "scala"           6,865 LOC
+    python-loc.json       "python"          2,877 LOC
+    python-coverage.json  "python coverage" 73%
 
 CI health is *step*-level, not job-level: ci.yml has three jobs but ~20 named steps, and
 "build-test passed" hides which of them actually ran. Only steps that ran count — a step whose
@@ -23,8 +26,19 @@ steps are by definition still running while it asks.
 
 LOC is `cloc` (flake.nix ships it; ci.yml apt-installs it on the runner), counted over the four
 Scala modules and the Python trees, code lines only — blanks and comments excluded by cloc, and
-`target/`, `__pycache__/`, virtualenvs and `node_modules/` excluded by path. Standard library
-only; `cloc` is the one external tool and only `write` needs it.
+`target/`, `__pycache__/`, virtualenvs and `node_modules/` excluded by path.
+
+Python coverage is measured, never estimated — but read the label narrowly. marola has no pytest
+suite; every `scripts/**/*.py` is tested by its own `--self-test` flag, the list `just
+quality-other` runs. So this badge is *statement coverage of `scripts/` while those self-tests
+run*, and nothing more: a branch a self-test never bothers to call is uncovered by construction,
+which is why the figure sits in the 70s rather than the 90s. `dspy/` and `finetune/` are out of
+scope — no `--self-test` entry point, and importing them needs torch/DSPy — so they are neither
+numerator nor denominator, while a `scripts/*.py` that grows without a self-test does count
+(at 0%), which is the point. Mechanically: one `coverage run --parallel-mode` per self-test into
+a temp data file, then `coverage combine` + `coverage json`.
+
+Standard library only; `cloc` and `coverage` are the external tools, and only `write` needs them.
 """
 
 import argparse
@@ -43,6 +57,25 @@ EXCLUDE_DIRS = ("target", "__pycache__", ".venv", "venv", "node_modules")
 
 SCALA_COLOR = "DC322F"  # = the README's hand-written Scala badge
 PYTHON_COLOR = "3776AB"  # = python.org's brand blue, as used by shields' own python logo
+
+# Every `python3 <script> --self-test` line of justfile's `quality-other`, in its order. Keeping
+# the two lists equal is what makes the badge honest: the number below is exactly what that gate
+# already runs, not a second, friendlier suite. (The `.sh` self-tests in the same recipe are not
+# Python and cannot contribute statements.)
+SELF_TEST_SCRIPTS = (
+    "scripts/smoke_record.py",
+    "scripts/benchmark_gate.py",
+    "scripts/cost-split.py",
+    "scripts/repo_stats.py",
+    "scripts/arxiv_digest.py",
+    "scripts/awesome_agentic_digest.py",
+    "scripts/lib/req_merge.py",
+    "scripts/lib/uses_merge.py",
+    "scripts/lib/mip_index_merge.py",
+    "scripts/mip_graph.py",
+)
+# Measured tree. `dspy/`/`finetune/` are excluded on purpose — see the module docstring.
+COVERAGE_SOURCE = "scripts"
 
 # A step that reached one of these actually executed; anything else (`skipped`, `neutral`, or a
 # null conclusion for a step still queued/running) is not evidence either way and is not counted.
@@ -90,6 +123,36 @@ def loc_badge(label: str, code: int, color: str) -> dict:
 def parse_cloc(payload: str, language: str) -> int:
     """Code lines for one language out of `cloc --json`; 0 when it found none of that language."""
     return int(json.loads(payload).get(language, {}).get("code", 0))
+
+
+def coverage_badge(percent: float | None) -> dict:
+    """Statement coverage of `scripts/` under its own self-tests. Same thresholds as ci.yml's
+    Scala badge (red < 50 ≤ yellow < 80 ≤ green) so the two read on one scale, and the label
+    says *python* coverage — there are two coverage badges in the README now."""
+    if percent is None:
+        return badge("python coverage", "no data", "lightgrey")
+    color = "red" if percent < 50 else "yellow" if percent < 80 else "green"
+    return badge("python coverage", f"{percent:.0f}%", color)
+
+
+def parse_coverage_json(payload: str) -> float:
+    """The overall statement percentage out of `coverage json` (`totals.percent_covered`)."""
+    return float(json.loads(payload)["totals"]["percent_covered"])
+
+
+def coverage_run_argv(exe: list[str], script: str, data_file: Path) -> list[str]:
+    """One instrumented self-test run. `--parallel-mode` keeps the ten runs from overwriting each
+    other's data file; `--source` fixes the measured tree so a `scripts/*.py` that no self-test
+    imports still lands in the denominator at 0% instead of vanishing from the report."""
+    return [
+        *exe,
+        "run",
+        "--parallel-mode",
+        f"--data-file={data_file}",
+        f"--source={COVERAGE_SOURCE}",
+        script,
+        "--self-test",
+    ]
 
 
 # ---------------------------------------------------------------------------------------------
@@ -142,6 +205,68 @@ def cloc_code(paths: tuple[str, ...], language: str, root: Path) -> int:
     return parse_cloc(out, language) if out.strip() else 0
 
 
+def coverage_exe(which=shutil.which, has_module=None) -> list[str]:
+    """How to invoke coverage.py here, as an argv prefix.
+
+    Two shapes, because the two places this runs install it differently: nix's
+    `python3Packages.coverage` puts a wrapped `coverage` on PATH but *not* on this interpreter's
+    import path, while Ubuntu's `python3-coverage` (what ci.yml apt-installs, mirroring its `cloc`
+    step) does the opposite. Prefer the executable, fall back to `-m`, fail loudly if neither.
+    """
+    if has_module is None:
+
+        def has_module() -> bool:
+            import importlib.util
+
+            return importlib.util.find_spec("coverage") is not None
+
+    if which("coverage"):
+        return ["coverage"]
+    if has_module():
+        return [sys.executable, "-m", "coverage"]
+    raise SystemExit(
+        "repo_stats: coverage.py is not installed (nix develop has it; CI apt-installs "
+        "python3-coverage) — or pass --no-python-coverage"
+    )
+
+
+def python_coverage(root: Path) -> float:
+    """Run every self-test under coverage.py and return the combined statement percentage.
+
+    The data files live in a temp directory, so a run leaves no `.coverage*` behind in the repo.
+    A self-test that *fails* aborts the measurement rather than quietly reporting a smaller
+    number — `just quality-other` is the gate for that, and a green badge over a red self-test
+    would be worse than no badge.
+    """
+    exe = coverage_exe()
+    with tempfile.TemporaryDirectory() as tmp:
+        data_file = Path(tmp) / ".coverage"
+        for script in SELF_TEST_SCRIPTS:
+            subprocess.run(
+                coverage_run_argv(exe, script, data_file),
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        subprocess.run(
+            [*exe, "combine", f"--data-file={data_file}", tmp],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        report = Path(tmp) / "coverage.json"
+        subprocess.run(
+            [*exe, "json", f"--data-file={data_file}", "-o", str(report)],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return parse_coverage_json(report.read_text())
+
+
 def write(out_dir: Path, badges: dict[str, dict]) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
@@ -163,6 +288,8 @@ def collect(args) -> dict[str, dict]:
     if args.run_id:
         green, ran = count_steps(fetch_jobs(args.repo, args.run_id), args.exclude_job)
         badges["ci.json"] = ci_badge(green, ran)
+    if not args.no_python_coverage:
+        badges["python-coverage.json"] = coverage_badge(python_coverage(root))
     return badges
 
 
@@ -240,6 +367,74 @@ def self_test() -> int:
     assert parse_cloc(cloc_json, "Scala") == 6865
     assert parse_cloc(cloc_json, "Python") == 0, "a language cloc did not find is 0, not an error"
 
+    # --- Python coverage: shaping, parsing, the argv builder and how coverage.py is located.
+    assert coverage_badge(73.0) == {
+        "schemaVersion": 1,
+        "label": "python coverage",
+        "message": "73%",
+        "color": "yellow",
+    }
+    assert coverage_badge(80.0)["color"] == "green", "the ci.yml Scala badge's own boundary"
+    assert coverage_badge(49.9)["color"] == "red"
+    assert coverage_badge(100.0)["message"] == "100%", "no decimals on the badge"
+    assert coverage_badge(None) == {
+        "schemaVersion": 1,
+        "label": "python coverage",
+        "message": "no data",
+        "color": "lightgrey",
+    }
+    # Both coverage badges must be distinguishable at a glance — this is the whole reason the
+    # label is not just "coverage" like ci.yml's Scala one used to be.
+    assert coverage_badge(73.0)["label"] != ci_badge(1, 1)["label"]
+
+    cov_json = json.dumps(
+        {
+            "meta": {"version": "7.15.4"},
+            "files": {"scripts/repo_stats.py": {"summary": {"percent_covered": 75.0}}},
+            "totals": {
+                "covered_lines": 1328,
+                "num_statements": 1820,
+                "percent_covered": 72.96703296703296,
+            },
+        }
+    )
+    assert round(parse_coverage_json(cov_json), 2) == 72.97
+    assert coverage_badge(parse_coverage_json(cov_json))["message"] == "73%"
+
+    argv = coverage_run_argv(["coverage"], "scripts/mip_graph.py", Path("/tmp/x/.coverage"))
+    assert argv[:2] == ["coverage", "run"]
+    assert "--parallel-mode" in argv, "ten runs into one data file need parallel mode"
+    assert "--data-file=/tmp/x/.coverage" in argv, "data files stay out of the repo"
+    assert f"--source={COVERAGE_SOURCE}" in argv
+    assert argv[-2:] == ["scripts/mip_graph.py", "--self-test"]
+    assert coverage_run_argv([sys.executable, "-m", "coverage"], "s.py", Path("d"))[1] == "-m"
+
+    assert coverage_exe(which=lambda _: "/usr/bin/coverage") == ["coverage"], "prefer the exe"
+    assert coverage_exe(which=lambda _: None, has_module=lambda: True) == [
+        sys.executable,
+        "-m",
+        "coverage",
+    ], "nix's coverage is on PATH; Ubuntu's python3-coverage is only importable"
+    try:
+        coverage_exe(which=lambda _: None, has_module=lambda: False)
+        raise AssertionError("a missing coverage.py must fail loudly, not report 0%")
+    except SystemExit as exc:
+        assert "--no-python-coverage" in str(exc), str(exc)
+
+    # The badge is only honest while this list is exactly justfile's; drift is the failure mode.
+    root = Path(__file__).resolve().parent.parent
+    for script in SELF_TEST_SCRIPTS:
+        assert (root / script).exists(), f"{script} is in SELF_TEST_SCRIPTS but not on disk"
+    justfile = (root / "justfile").read_text()
+    for script in SELF_TEST_SCRIPTS:
+        assert f"python3 {script} --self-test" in justfile, f"{script} left quality-other"
+    in_recipe = {
+        line.split()[1]
+        for line in justfile.splitlines()
+        if line.strip().startswith("python3 scripts/") and line.strip().endswith("--self-test")
+    }
+    assert in_recipe == set(SELF_TEST_SCRIPTS), sorted(in_recipe ^ set(SELF_TEST_SCRIPTS))
+
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "stats"
         paths = write(out, {"ci.json": ci_badge(20, 20), "scala-loc.json": loc_badge("s", 1, "x")})
@@ -249,7 +444,10 @@ def self_test() -> int:
         write(out, {"ci.json": ci_badge(1, 2)})
         assert json.loads((out / "ci.json").read_text())["message"] == "1/2 green"
 
-    print("repo_stats self-test: ok (step counting, badge shaping, cloc parsing, write)")
+    print(
+        "repo_stats self-test: ok (step counting, badge shaping, cloc/coverage parsing, "
+        "the coverage argv + exe resolution, SELF_TEST_SCRIPTS vs. justfile, write)"
+    )
     return 0
 
 
@@ -265,9 +463,22 @@ def main(argv: list[str]) -> int:
     w.add_argument("--repo", default="h0ffmann/marola", help="owner/name, for the CI-health badge")
     w.add_argument("--run-id", help="workflow run to report on; omitted = LOC badges only")
     w.add_argument("--exclude-job", help="job name to leave out (the reporting job itself)")
+    w.add_argument(
+        "--no-python-coverage",
+        action="store_true",
+        help="skip the coverage.py run (no coverage.py installed, or LOC/CI badges only)",
+    )
+    c = sub.add_parser(
+        "python-coverage", help="print the measured statement %% of scripts/ and exit"
+    )
+    c.add_argument("--root", default=".", help="repo root the self-test paths are relative to")
     args = ap.parse_args(argv)
     if args.self_test:
         return self_test()
+    if args.cmd == "python-coverage":
+        percent = python_coverage(Path(args.root))
+        print(f"{percent:.1f}% ({coverage_badge(percent)['message']} on the badge)")
+        return 0
     if args.cmd != "write":
         ap.print_help()
         return 2
