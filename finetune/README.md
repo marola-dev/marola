@@ -30,9 +30,12 @@ just run -- --summarize
    just finetune-dataset        # writes finetune/data/train.jsonl and finetune/data/eval.jsonl
    ```
 
-   Expect a few dozen examples. That is enough to teach *format and tone*, not facts — which is
-   the point: facts stay in the RAG corpus (`knowledge/`) and in live data, the fine-tune only
-   makes the model better at marola's shape of answer. `FUTURE-WORK.md` §9.1 step 4 argues the same.
+   Expect a few thousand examples (2026-09-07: 2,209 train + 245 eval) — most of them Layer 1
+   "Marine Corpus Domain" examples (MIP-0025 §4.3): every real chunk and sentence in `knowledge/`
+   asked several paraphrased ways, so the fine-tune now sees real domain facts, not just
+   format/tone. Each synthetic example is verified (`build_dataset.py --self-test`) to be a
+   verbatim excerpt of the `knowledge/*.md` source it cites — no invented facts. The DSPy demos
+   and sea-lore entries remain the format/tone teachers `FUTURE-WORK.md` §9.1 step 4 describes.
 
 2. Train the adapter (needs `pip install -r requirements.txt`, a `huggingface-cli login` for the
    gated Llama weights, and ideally a GPU with 8GB+):
