@@ -736,3 +736,31 @@ opencode-cost *args="session":
 # either way. `printf 'hello' | just clip`, `just clip --text hello`.
 clip *args:
     scripts/clip.sh {{args}}
+
+# Fast-forward local `main` from origin — always fetches (safe, no working-tree effect); only
+# advances the `main` ref itself when you're actually on `main` with a clean tree (git merge
+# --ff-only, so it can never silently create a merge commit or clobber uncommitted work — it
+# just no-ops with a message when either condition isn't met). Meant to be run unattended on a
+# timer (systemd --user timer or cron calling `just -f <repo>/justfile sync-main`, every 15-30m)
+# so a squash-merged PR shows up as merged locally without a manual `git pull`, and so branch
+# audits against `origin/*` (this repo's own convention — see docs/DEV-FLOW.md) aren't confused
+# by a local main that's actually current on GitHub but stale on disk.
+sync-main:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    git fetch origin --quiet
+    branch="$(git branch --show-current)"
+    if [ "$branch" != "main" ]; then
+        echo "sync-main: on '$branch', not 'main' — fetched origin only, no ref updated"
+        exit 0
+    fi
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "sync-main: local main has uncommitted changes — not touching it (stash first: git stash push -u)"
+        exit 0
+    fi
+    before="$(git rev-parse HEAD)"
+    git merge --ff-only origin/main --quiet
+    after="$(git rev-parse HEAD)"
+    if [ "$before" != "$after" ]; then
+        echo "sync-main: fast-forwarded main $before -> $after"
+    fi

@@ -152,6 +152,11 @@
             java -version
             curl -s -m 1 http://localhost:11434/api/tags >/dev/null 2>&1 \
               || echo "ollama not running — start it with 'ollama serve' (see docs/RUN-LOCALLY.md)"
+            # `just sync-main` fast-forwards local `main` from origin, but only when you're
+            # actually on `main` with a clean tree (git merge --ff-only) — a no-op otherwise, so
+            # this is always safe to run on every shell entry. `timeout` keeps a slow/offline
+            # network from delaying the prompt; failure here must never block entering the shell.
+            (cd "$marola_root" && timeout 10s just sync-main) || true
             echo "Run 'just' to see available commands."
           '';
         };
