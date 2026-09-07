@@ -69,6 +69,7 @@ SELF_TEST_SCRIPTS = (
     "scripts/repo_stats.py",
     "scripts/arxiv_digest.py",
     "scripts/awesome_agentic_digest.py",
+    "scripts/pr_label_nlp.py",
     "scripts/lib/req_merge.py",
     "scripts/lib/uses_merge.py",
     "scripts/lib/mip_index_merge.py",

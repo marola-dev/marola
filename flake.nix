@@ -44,8 +44,16 @@
             # dspy/README.md). `python3 -m venv` + pip installs
             # DSPy itself; not vendored as a nixpkgs package here since it
             # moves fast and pins its own dependency versions.
-            pkgs.python3
-            pkgs.python3Packages.pip
+            #
+            # scikit-learn is bundled into THIS python3 via withPackages, not as a separate
+            # pkgs.python3Packages.scikit-learn alongside a bare pkgs.python3 — a package listed
+            # that way sits in its own nix store path and is never on plain `python3`'s import
+            # path (the exact gotcha documented below for coverage.py, which sidesteps it by only
+            # ever using coverage's own executable, never `import coverage`). scripts/pr_label_nlp.py
+            # does `from sklearn... import ...` directly, so it needs the interpreter itself wired
+            # up. Confirmed present in nixpkgs (`scikit-learn 1.8.0`, checked 2026-09-07 via
+            # `nix eval nixpkgs#python3Packages.scikit-learn.version`).
+            (pkgs.python3.withPackages (ps: with ps; [ pip scikit-learn ]))
 
             # coverage.py — the README's `python coverage` badge, measured (never estimated) by
             # running every `scripts/**/*.py --self-test` under it: `scripts/repo_stats.py
