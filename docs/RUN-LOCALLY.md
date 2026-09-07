@@ -291,7 +291,7 @@ returned files under `docs/mips/` and let the in-repo agent verify the sources.
 ## 9. The map — build the boards once, serve them as a static site (MIP-0005)
 
 Everything above answers one person at a time. `just site-build` runs the same pipeline once per
-*area* (`site/areas.json`: Florianópolis and Rio by default) and writes what a static map needs:
+*area* (`site/areas.json`: Florianópolis, Rio de Janeiro and Salvador by default) and writes what a static map needs:
 
 ```bash
 just site-build floripa        # ~70 s live: one Overpass query, two Open-Meteo calls per beach, one IMA download

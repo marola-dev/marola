@@ -20,7 +20,8 @@ labelled, never invented.</p>
 </p>
 
 **Live map:** [marola.dev](https://marola.dev/) — every beach around
-Florianópolis and Rio, ranked for today and tomorrow, water quality, tides and the hour slider;
+Florianópolis, Rio de Janeiro and Salvador, ranked for today and tomorrow, water quality, tides
+and the hour slider;
 rebuilt every 3 hours and on every relevant merge to `main` ([`site.yml`](./.github/workflows/site.yml),
 [MIP-0005](./docs/mips/MIP-0005-map-and-static-site.md)). Live data decides the numbers,
 deterministic rules decide anything safety-related, a sourced corpus decides what the model may
