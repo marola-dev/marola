@@ -98,6 +98,7 @@ quality-other:
     python3 scripts/mip_graph.py --check
     python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test
+    python3 finetune/merge_export.py --self-test
     .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
@@ -220,9 +221,19 @@ finetune-dpo-dataset:
 finetune-train-dpo preset="tiny" *args:
     python3 finetune/train_dpo.py --preset {{preset}} {{args}}
 
+# Merge a LoRA adapter into its base and export runnable GGUFs (MIP-0025 §5.1) — the step between
+# training and publishing. `just finetune-merge` alone prints the plan; add llama_cpp=<path> to a
+# llama.cpp checkout to actually convert and quantize. Publishing the ADAPTER instead of the merged
+# model is the mistake this recipe exists to prevent: `ollama run hf.co/...` needs a whole model.
+# just finetune-merge preset=tiny llama_cpp=~/src/llama.cpp
+finetune-merge preset="tiny" llama_cpp="" *args:
+    python3 finetune/merge_export.py --preset {{preset}} {{ if llama_cpp != "" { "--llama-cpp " + llama_cpp } else { "--dry-run" } }} {{args}}
+
 # Publish a trained .gguf to a Hugging Face model repo (MIP-0025 §5.1). Needs
 # `pip install -r finetune/requirements.txt` and a prior `huggingface-cli login`.
-# just finetune-publish repo=you/marola-sea-tiny-GGUF gguf=finetune/out/marola-tiny-adapter.gguf base=HuggingFaceTB/SmolLM2-360M-Instruct
+# Publish the MERGED, quantized model (just finetune-merge), never the adapter — an adapter-GGUF
+# is not runnable on its own and `ollama run hf.co/...` cannot use it.
+# just finetune-publish repo=you/marola-sea-tiny-GGUF gguf=finetune/out/marola-sea-tiny-Q4_K_M.gguf base=HuggingFaceTB/SmolLM2-360M-Instruct
 finetune-publish repo gguf base *args:
     python3 finetune/publish_hf.py --repo {{repo}} --gguf {{gguf}} --base-model {{base}} {{args}}
 
