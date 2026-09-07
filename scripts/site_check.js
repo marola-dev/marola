@@ -110,21 +110,39 @@ function makeLeaflet() {
 // --- an AudioContext just big enough for app.js's wave-sound synth (no real audio, records the
 // node graph so the test can assert it was actually built) ---------------------------------------
 function makeAudioContext() {
+  makeAudioContext.gains = [];
   function node(kind) {
     const n = { kind };
-    n.connect = () => n;
-    if (kind === 'gain') n.gain = { value: 0, cancelScheduledValues() {}, setTargetAtTime(v) { n.gain.value = v; } };
+    // Connecting a node to an AudioParam does NOT replace the param's value — the Web Audio spec
+    // ADDS the connected signal to the intrinsic value. That is the whole reason this fake
+    // records modulators: silencing `gain.value` alone leaves any connected LFO still driving the
+    // param, which is audible. A fake that only tracked `gain.value` could not see that bug.
+    n.connect = (target) => {
+      if (target && typeof target.setTargetAtTime === 'function') target.modulators.push(n);
+      return n;
+    };
+    if (kind === 'gain') {
+      n.gain = {
+        value: 0, modulators: [],
+        cancelScheduledValues() {},
+        setTargetAtTime(v) { n.gain.value = v; }
+      };
+    }
     if (kind === 'bufferSource' || kind === 'oscillator') n.start = () => {};
     if (kind === 'biquadFilter' || kind === 'oscillator') n.frequency = { value: 0 };
     return n;
   }
+  // Peak amplitude a gain node can actually produce: its own value plus the full depth of every
+  // signal connected to its gain param. Silent means this is ~0, not just that `value` is.
+  node.peak = (g) => g.gain.value + g.gain.modulators.reduce((s, m) => s + Math.abs(m.gain ? m.gain.value : 0), 0);
   return {
     state: 'running', currentTime: 0, destination: {}, sampleRate: 44100,
     createBuffer: (ch, len) => ({ getChannelData: () => new Float32Array(len) }),
     createBufferSource: () => node('bufferSource'),
     createBiquadFilter: () => node('biquadFilter'),
-    createGain: () => node('gain'),
+    createGain: () => { const g = node('gain'); makeAudioContext.gains.push(g); return g; },
     createOscillator: () => node('oscillator'),
+    peak: node.peak,
     resume() { this.state = 'running'; }
   };
 }
@@ -223,8 +241,26 @@ async function runPage(board) {
   if (els.sound.listeners.click && els.sound.listeners.click[0]) {
     els.sound.listeners.click[0]({});
     ok(els.sound.attrs['aria-pressed'] === 'true', 'clicking the sound toggle flips aria-pressed to true');
+    // Guard the other direction too: a "fix" that silenced the synth outright would satisfy the
+    // silence assertion below while breaking the feature. On means audible.
+    const onGains = (makeAudioContext.gains || []).filter(g => (g.gain.modulators || []).length > 0);
+    if (onGains[0]) {
+      const onPeak = onGains[0].gain.value + onGains[0].gain.modulators.reduce((s, m) => s + Math.abs(m.gain ? m.gain.value : 0), 0);
+      ok(onPeak > 0.01, 'after the first click the sound is actually audible (peak ' + onPeak.toFixed(4) + ')');
+    }
     els.sound.listeners.click[0]({});
     ok(els.sound.attrs['aria-pressed'] === 'false', 'clicking it again flips aria-pressed back to false — no exception either time');
+    // The bug this guards: aria-pressed flipping is not the same as the sound stopping. The LFO
+    // is connected to the output gain's AudioParam, and a connected signal is ADDED to the
+    // param's intrinsic value, so ramping that value to ~0 still leaves the LFO swinging the
+    // gain by its full depth — audible forever. Assert on peak amplitude, not the attribute.
+    const gains = makeAudioContext.gains || [];
+    const out = gains.filter(g => (g.gain.modulators || []).length > 0)[0];
+    ok(!!out, 'the wave synth has an output gain with an LFO connected to its gain param');
+    if (out) {
+      const peak = out.gain.value + out.gain.modulators.reduce((s, m) => s + Math.abs(m.gain ? m.gain.value : 0), 0);
+      ok(peak < 0.001, 'after the second click the sound is actually silent — LFO depth included (peak ' + peak.toFixed(4) + ')');
+    }
   } else ok(false, 'the sound toggle has a click handler');
   if (joaq && joaq.handlers.click) {
     joaq.handlers.click({});

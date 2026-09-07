@@ -505,7 +505,10 @@
   }
 
   // --- ambient wave sound (Web Audio API, synthesized — no audio file, nothing to fetch) --------
-  var sound = { ctx: null, gain: null, on: false };
+  var sound = { ctx: null, gain: null, lfoDepth: null, on: false };
+  var SWELL_DEPTH = 0.05;   // how far the LFO swings the output gain when the sound is on
+  var SOUND_LEVEL = 0.06;   // the output gain's own level when on
+  var SILENT = 0.0001;
   // Brown noise (integrated white noise, ~ -6dB/octave) through a low-pass filter reads as surf
   // wash; a slow LFO on the gain (~0.15 Hz, one swell every ~6.7s) gives it the rise-and-fall of
   // real waves instead of a flat hiss.
@@ -528,14 +531,18 @@
     var lfo = ctx.createOscillator();
     lfo.frequency.value = 0.15;
     var lfoGain = ctx.createGain();
-    lfoGain.gain.value = 0.05;
+    lfoGain.gain.value = SWELL_DEPTH;
     lfo.connect(lfoGain);
     lfoGain.connect(gainNode.gain);
     noise.connect(filter);
     filter.connect(gainNode);
     gainNode.connect(ctx.destination);
     noise.start(); lfo.start();
-    return gainNode;
+    // The LFO's depth is returned alongside the output gain because BOTH have to be silenced to
+    // stop the sound: a signal connected to an AudioParam is added to that param's intrinsic
+    // value, so ramping gainNode.gain to ~0 on its own leaves the LFO still swinging it by
+    // ±SWELL_DEPTH — audible, and the reason the toggle used to never turn the sound off.
+    return { gain: gainNode, lfoDepth: lfoGain };
   }
 
   // --- events --------------------------------------------------------------------------------
@@ -573,14 +580,19 @@
         var Ctx = window.AudioContext || window.webkitAudioContext;
         if (!Ctx) return;
         sound.ctx = new Ctx();
-        sound.gain = startWaveSound(sound.ctx);
+        var synth = startWaveSound(sound.ctx);
+        sound.gain = synth.gain;
+        sound.lfoDepth = synth.lfoDepth;
       }
       if (sound.ctx.state === 'suspended') sound.ctx.resume();
       sound.on = !sound.on;
       el.sound.setAttribute('aria-pressed', String(sound.on));
       var now = sound.ctx.currentTime;
       sound.gain.gain.cancelScheduledValues(now);
-      sound.gain.gain.setTargetAtTime(sound.on ? 0.06 : 0.0001, now, 0.5);
+      sound.gain.gain.setTargetAtTime(sound.on ? SOUND_LEVEL : SILENT, now, 0.5);
+      // Silence the swell too, or the sound never actually stops — see startWaveSound.
+      sound.lfoDepth.gain.cancelScheduledValues(now);
+      sound.lfoDepth.gain.setTargetAtTime(sound.on ? SWELL_DEPTH : 0, now, 0.5);
     } catch (e) { console.error(e); }
   });
 
