@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — auto-picked by `/mip-solve-perpetual` on 2026-09-06 (S effort, "cheap win", no earlier-phase gap), task list requested via `/mip-tasks` |
+| **Status** | Implemented — all four stacked PRs merged: #144 (wind-level), #145 (site-check-harness), #146 (wave-marker-tooltip), #147 (card-aspect-row); tasks and v1 decisions: [`MIP-0009.tasks.md`](./MIP-0009.tasks.md) |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "for now it just displays dots… hovering the dot should display each aspect: wind level with emoji, whale probability, jellyfish probability, water temperature — a wave icon, not a heat map") |
 | **Created** | 2026-09-05 |
 | **Tasks** | `docs/mips/MIP-0009.tasks.md` — four stacked PRs, one per task; note its decision #1: the §5 test harness (`scripts/site_check.js`) did not exist on 2026-09-06 and is task 2 |
@@ -55,7 +55,9 @@ Hover (desktop) or tap (touch) on a beach:
   there is no hover: a tap opens the card as today, and the **same aspect row is the first block
   of the card**, so both inputs see the same thing.
 - Every emoji is followed by its word ("🪼 jellyfish Low"), so a platform without the glyph still
-  reads correctly; the legend gains "🌊 a beach — hover or tap".
+  reads correctly; the legend gains a wave key — the same path the markers draw, at 18 px in
+  `--ink`, labelled "hover a wave". It is hidden under 640 px: a phone has no hover to offer and
+  the hour bar has no room for the line (it clipped at 390 px).
 - The card, the list, the day picker and the footer panel (MIP-0008) are unchanged.
 
 ## 4. Data sources and dependencies reviewed

@@ -48,6 +48,14 @@ GOAL_COMPLETE: <summary> or GOAL_FAILED: <reason> — grep-able, so a morning ch
 /loop every 15m until: goal met · Work through the first file starting at the first unmerged
 task, then the next file, one task at a time.
 
+**What that loop can and cannot do (verified 2026-09-06):** it keeps *this human-started turn*
+going; it cannot start the skill. A `/mip-solve-perpetual …` delivered by a cron/wakeup arrives
+as plain text — the harness does not expand it and the Skill tool refuses it
+(`disable-model-invocation`). So an overnight run is one typed invocation that lives as long as
+the session and the usage guard allow; once it stops (`GOAL_COMPLETE`/`GOAL_FAILED`/wind-down),
+the next start is a human keystroke again. Do not schedule this command for a later hour and
+expect it to run — stage everything so the typed command works first try instead.
+
 **Rules, no exceptions:**
 - One task = one branch = one PR via `scripts/stack.sh` (never bundle two tasks in one commit).
 - Before every commit: `just build && just test && just quality` must be green.

@@ -6,7 +6,7 @@ uses with nothing more than `MAROLA_LOCAL_LLM_MODEL=marola-llama3.2` — no code
 | Tier | What it is | Cost | Status |
 |---|---|---|---|
 | **1. Modelfile variant** (`Modelfile`) | `llama3.2` with marola's system prompt, tone and decoding parameters baked in. No weights change. | seconds, CPU | **run and verified** (see below) |
-| **2. QLoRA adapter** (`train_lora.py` + `Modelfile.adapter`) | A real LoRA fine-tune of Llama 3.2 on marola's own examples, converted to GGUF and attached to `llama3.2` via Ollama's `ADAPTER`. | hours on CPU, minutes on a GPU; ~6GB download | **written, not run** — no GPU here, and the base weights need a Hugging Face login |
+| **2. QLoRA adapter** (`train_lora.py` + `Modelfile.adapter`) | A real LoRA fine-tune on marola's own examples, converted to GGUF and attached to the base model via Ollama's `ADAPTER`. | `tiny`: minutes on CPU; `base` (gated Llama 3.2 3B): hours on CPU, minutes on a GPU; ~6GB download | **run, `tiny` preset verified** (SmolLM2-360M, 2026-09-06: `finetune-dataset` → `finetune-train preset=tiny --no-4bit --epochs 3` → `convert_lora_to_gguf.py` → `ollama create` → `just run -- --summarize` produced a real reply from the tuned model, end to end. Eval loss fell across all 3 epochs: 3.032 → 2.866 → 2.799 — real learning, not noise. Quality itself is rough at this scale, expected per the ladder below; `small`/`base` are still not run — no GPU here, and `base`'s weights need a Hugging Face login) |
 
 Tier 1 is not fine-tuning in the weights sense and this README does not pretend it is. It exists
 because it is the cheapest way to get a consistently marola-flavoured model *today*, and because

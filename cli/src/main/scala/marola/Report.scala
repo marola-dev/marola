@@ -3,6 +3,7 @@ package marola
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+import marola.beaches.{Facilities, Facility}
 import marola.knowledge.OceanQa
 import marola.lore.{LoreEntry, SeaLore}
 import marola.model.{BestHour, Coordinates, WhaleSightingLikelihood}
@@ -27,6 +28,30 @@ object Report:
   def waterSummary(best: BestHour): String =
     Swimability.waterVerdict(best.waterQuality, todayFor(best)).summary
 
+  /**
+   * MIP-0021 §3: only amenities OSM returned are named, folded into "no data" otherwise — never "no
+   * parking" / "no lifeguard" for a facility OSM simply has no coverage for. `None` when `f.counts`
+   * is empty (`Facilities.NoData`), else the counts in `Facility`'s declared order.
+   */
+  def facilitiesLine(f: Facilities): Option[String] =
+    if f.counts.isEmpty then None
+    else
+      val order = List(Facility.Parking, Facility.Toilets, Facility.Shower, Facility.Lifeguard)
+      val parts = order.flatMap(fac => f.counts.get(fac).map(n => facilityLabel(fac, n)))
+      if parts.isEmpty then None else Some(parts.mkString(" · "))
+
+  private def facilityLabel(f: Facility, n: Int): String = f match
+    case Facility.Parking => s"parking nearby: $n"
+    case Facility.Toilets => s"toilets: $n"
+    case Facility.Shower  => s"showers: $n"
+    // Binary, not a count: OSM's lifeguard posts carry no season (MIP-0021 §8), so "yes" says a
+    // post exists, never "on duty".
+    case Facility.Lifeguard => "lifeguard post: yes"
+
+  /** " · parking nearby: 3 · lifeguard post: yes", or " · facilities: no data" (MIP-0021 §3). */
+  private def facilitiesSuffix(best: BestHour): String =
+    facilitiesLine(best.facilities).map(s => s"  · $s").getOrElse("  · facilities: no data")
+
   /** The pre-MIP one-liner (`--brief`). */
   def briefLine(rank: Int, best: BestHour): String =
     val when = best.hour.time.format(hourFormat)
@@ -37,7 +62,7 @@ object Report:
     val whale =
       if best.whaleSightingLikelihood == WhaleSightingLikelihood.Low then ""
       else s"  |  whale sighting: ${best.whaleSightingLikelihood}"
-    f"${rank}%2d. [${best.score}%3d/100] ${best.beach.name}%-22s ($dist)  best at $when  |  $temp, $wind  |  jellyfish: ${best.jellyfishRisk}$whale  |  $notes"
+    f"${rank}%2d. [${best.score}%3d/100] ${best.beach.name}%-22s ($dist)  best at $when  |  $temp, $wind  |  jellyfish: ${best.jellyfishRisk}$whale  |  $notes${facilitiesSuffix(best)}"
 
   /** Ranked-list line with the water column. */
   def line(rank: Int, best: BestHour): String =
@@ -53,7 +78,7 @@ object Report:
     val verdict = Swimability.waterVerdict(best.waterQuality, todayFor(best))
     val inline = best.notes.filterNot(n => verdict.note.contains(n))
     val notes = if inline.isEmpty then "" else s"  |  ${inline.mkString(", ")}"
-    f"${rank}%2d. [${best.score}%3d/100] ${best.beach.name}%-22s (${best.beach.distanceKm}%.1fkm)  $when  |  water: ${verdict.summary}  |  $temp, $wind, $waves  |  jellyfish: ${best.jellyfishRisk}$whale$notes"
+    f"${rank}%2d. [${best.score}%3d/100] ${best.beach.name}%-22s (${best.beach.distanceKm}%.1fkm)  $when  |  water: ${verdict.summary}  |  $temp, $wind, $waves  |  jellyfish: ${best.jellyfishRisk}$whale$notes${facilitiesSuffix(best)}"
 
   def detail(best: BestHour): String =
     val h = best.hour
@@ -162,7 +187,9 @@ object Report:
       case (p, i) =>
         f"  [${i + 1}] ${p.docTitle} — ${p.source} (score ${p.score}%.2f)"
     }
-    (a.text.trim +: (if sources.isEmpty then Nil else "Sources:" +: sources)).mkString("\n")
+    val body =
+      (a.text.trim +: (if sources.isEmpty then Nil else "Sources:" +: sources)).mkString("\n")
+    marola.knowledge.SafetyFooter.append(body, a.safety)
 
   def compass(deg: Double): String =
     val dirs = Vector("N", "NE", "E", "SE", "S", "SW", "W", "NW")

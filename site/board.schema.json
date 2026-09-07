@@ -71,6 +71,7 @@
               "sea_temp_c": { "type": ["number", "null"] },
               "wave_m": { "type": ["number", "null"] },
               "wind_kmh": { "type": ["number", "null"] },
+              "wind_level": { "type": ["string", "null"], "enum": ["calm", "breezy", "strong", null] },
               "jellyfish": { "$ref": "#/$defs/likelihood" },
               "whales": { "$ref": "#/$defs/likelihood" }
             }
@@ -147,6 +148,17 @@
             "now": { "$ref": "#/$defs/likelihood" },
             "peak": { "type": ["string", "null"] },
             "season": { "type": "boolean" }
+          }
+        },
+        "facilities": {
+          "type": "object",
+          "description": "MIP-0021: OSM amenity counts within 300m of this beach. Optional and additionalProperties:false so an older board built before this MIP still validates unchanged; absent keys = no data for that facility, never a zeroed count.",
+          "additionalProperties": false,
+          "properties": {
+            "parking": { "type": "integer" },
+            "toilets": { "type": "integer" },
+            "shower": { "type": "integer" },
+            "lifeguard": { "type": "integer" }
           }
         }
       }

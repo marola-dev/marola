@@ -10,6 +10,7 @@ import scala.util.Try
 import kyo.*
 
 import marola.Recommender
+import marola.beaches.AccessibilityClient
 import marola.json.JsonValue
 import marola.lore.SeaLore
 import marola.model.Coordinates
@@ -95,10 +96,13 @@ object SiteBuilder:
       static: Path,
       water: Coordinates => Option[WaterQualityClient],
       now: OffsetDateTime,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None
+      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
+      accessibility: Option[AccessibilityClient] = None
   ): List[Path] < Sync =
     for
-      boards <- traverse(areas)(a => buildArea(a, out, water(a.origin), now, distanceRefiner))
+      boards <- traverse(areas)(a =>
+        buildArea(a, out, water(a.origin), now, distanceRefiner, accessibility)
+      )
       index <- Sync.defer(writeAreasIndex(areas, out))
       copied <- Sync.defer(copyStatic(static, out))
     yield boards.flatten ++ (index :: copied)
@@ -108,7 +112,8 @@ object SiteBuilder:
       out: Path,
       water: Option[WaterQualityClient],
       now: OffsetDateTime,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync]
+      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync],
+      accessibility: Option[AccessibilityClient]
   ): List[Path] < Sync =
     val localNow = now.atZoneSameInstant(area.zone).toOffsetDateTime
     val today = localNow.toLocalDate
@@ -121,7 +126,8 @@ object SiteBuilder:
         distanceRefiner,
         water,
         today = _ => today,
-        days = days.size
+        days = days.size,
+        accessibility = accessibility
       )
       .map { scored =>
         val dir = out.resolve("data").resolve(area.id)

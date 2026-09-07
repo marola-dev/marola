@@ -15,7 +15,7 @@ decoration.
 
 | Skill | marola artifact | Status |
 |---|---|---|
-| Select the right Azure AI service for a scenario | `ARCHITECTURE.md` §5's per-integration writeups (Foundry vs. local Ollama, Azure Maps vs. free Overpass routing) each argue the tradeoff explicitly | Built, documented |
+| Select the right Azure AI service for a scenario | `ARCHITECTURE.md` §5's per-integration writeups (Foundry vs. local Ollama, Azure Maps vs. free Overpass routing) each argue the tradeoff explicitly | Built, documented; proposed: MIP-0032 (a measured local-vs-hosted coverage/latency/cost table instead of prose) |
 | Plan for a solution's resource requirements (compute, cost tiers) | `ARCHITECTURE.md` §6, `AGENTS.md`'s cost-safety rules | Built |
 | Use Azure AI Foundry to explore/deploy models | `azure/llm/AzureFoundryLlmClient.scala` | Code complete, not yet run against a live Foundry account (no Azure resources provisioned — see AGENTS.md phase discipline) |
 | Manage costs (budgets, scale-to-zero) | `ARCHITECTURE.md` §6 (Container App scale-to-zero pattern) | Documented, not yet deployed |

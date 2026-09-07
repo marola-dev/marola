@@ -4,7 +4,7 @@ import java.time.{LocalDate, ZoneId}
 
 import kyo.*
 
-import marola.beaches.BeachFinder
+import marola.beaches.{AccessibilityClient, BeachFinder, Facilities}
 import marola.conditions.{OpenMeteoClient, Tides}
 import marola.model.*
 import marola.scoring.Swimability
@@ -35,13 +35,17 @@ object Recommender:
       beachLimit: Int = 6,
       distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
       waterQuality: Option[WaterQualityClient] = None,
-      today: ZoneId => LocalDate = LocalDate.now(_)
+      today: ZoneId => LocalDate = LocalDate.now(_),
+      accessibility: Option[AccessibilityClient] = None
   ): List[BestHour] < Sync =
     for
       beaches <- BeachFinder.nearby(origin, radiusKm, beachLimit)
       refined <- refineDistances(origin, beaches, distanceRefiner)
       water <- fetchWaterQuality(waterQuality, refined)
-      scored <- traverse(refined)(beach => scoreTomorrow(beach, water.get(beach.name), today))
+      facilities <- fetchFacilities(accessibility, refined)
+      scored <- traverse(refined)(beach =>
+        scoreTomorrow(beach, water.get(beach.name), facilities.get(beach.name), today)
+      )
     yield scored.flatten.sortBy(b => (-b.score, Swimability.hourPreference(b.hour)))
 
   /**
@@ -60,6 +64,24 @@ object Recommender:
         Abort.run(Abort.catching[Throwable](c.samplingPoints)).map {
           case Result.Success(points) => WaterQualityMatcher.assign(beaches, points, c.name)
           case _                      => Map.empty[String, WaterQuality]
+        }
+
+  /**
+   * MIP-0021: one extra Overpass call for the whole short list, same dependency-inversion shape as
+   * `fetchWaterQuality` just above. Any failure (Overpass down, malformed response) yields no data
+   * for every beach rather than failing the run — `scoreDay` falls back to `Facilities.NoData` per
+   * beach when a name is missing from the returned map, so an empty map here is enough.
+   */
+  private def fetchFacilities(
+      client: Option[AccessibilityClient],
+      beaches: List[Beach]
+  ): Map[String, Facilities] < Sync =
+    client match
+      case None => Map.empty[String, Facilities]
+      case Some(c) =>
+        Abort.run(Abort.catching[Throwable](c.near(beaches))).map {
+          case Result.Success(byBeach) => byBeach
+          case _                       => Map.empty[String, Facilities]
         }
 
   /**
@@ -99,16 +121,24 @@ object Recommender:
       beachLimit: Int = 6,
       distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
       waterQuality: Option[WaterQualityClient] = None,
-      today: ZoneId => LocalDate = LocalDate.now(_)
+      today: ZoneId => LocalDate = LocalDate.now(_),
+      accessibility: Option[AccessibilityClient] = None
   ): List[BestHour] < Sync =
-    bestHoursTomorrow(origin, radiusKm, beachLimit, distanceRefiner, waterQuality, today).map {
-      all =>
-        all
-          .groupBy(_.beach.name)
-          .values
-          .map(_.minBy(b => (-b.score, Swimability.hourPreference(b.hour))))
-          .toList
-          .sortBy(b => (-b.score, Swimability.hourPreference(b.hour)))
+    bestHoursTomorrow(
+      origin,
+      radiusKm,
+      beachLimit,
+      distanceRefiner,
+      waterQuality,
+      today,
+      accessibility
+    ).map { all =>
+      all
+        .groupBy(_.beach.name)
+        .values
+        .map(_.minBy(b => (-b.score, Swimability.hourPreference(b.hour))))
+        .toList
+        .sortBy(b => (-b.score, Swimability.hourPreference(b.hour)))
     }
 
   /**
@@ -124,17 +154,26 @@ object Recommender:
       distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
       waterQuality: Option[WaterQualityClient] = None,
       today: ZoneId => LocalDate = LocalDate.now(_),
-      days: Int = 2
+      days: Int = 2,
+      accessibility: Option[AccessibilityClient] = None
   ): List[BestHour] < Sync =
     for
       beaches <- BeachFinder.nearby(origin, radiusKm, beachLimit)
       refined <- refineDistances(origin, beaches, distanceRefiner)
       water <- fetchWaterQuality(waterQuality, refined)
+      facilities <- fetchFacilities(accessibility, refined)
       scored <- traverse(refined) { beach =>
         OpenMeteoClient.forecastFor(beach, forecastDays = days).map { forecast =>
           val start = today(ZoneId.of(forecast.timezoneId))
           (0 until days).toList.flatMap(i =>
-            scoreDay(beach, forecast, water.get(beach.name), start, start.plusDays(i))
+            scoreDay(
+              beach,
+              forecast,
+              water.get(beach.name),
+              facilities.getOrElse(beach.name, Facilities.NoData),
+              start,
+              start.plusDays(i)
+            )
           )
         }
       }
@@ -145,11 +184,19 @@ object Recommender:
   private def scoreTomorrow(
       beach: Beach,
       water: Option[WaterQuality],
+      facilities: Option[Facilities],
       todayIn: ZoneId => LocalDate
   ): List[BestHour] < Sync =
     OpenMeteoClient.forecastFor(beach).map { forecast =>
       val today = todayIn(ZoneId.of(forecast.timezoneId))
-      scoreDay(beach, forecast, water, today, today.plusDays(1))
+      scoreDay(
+        beach,
+        forecast,
+        water,
+        facilities.getOrElse(Facilities.NoData),
+        today,
+        today.plusDays(1)
+      )
     }
 
   /** Pure: score every hour of `day` in `forecast`; tides and whale peak are per day. */
@@ -157,6 +204,7 @@ object Recommender:
       beach: Beach,
       forecast: BeachForecast,
       water: Option[WaterQuality],
+      facilities: Facilities,
       today: LocalDate,
       day: LocalDate
   ): List[BestHour] =
@@ -178,7 +226,8 @@ object Recommender:
         notes,
         waterQuality = water,
         dayTides = tides,
-        whalePeak = whalePeak
+        whalePeak = whalePeak,
+        facilities = facilities
       )
     }
 

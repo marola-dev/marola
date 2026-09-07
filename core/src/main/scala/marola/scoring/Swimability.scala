@@ -3,7 +3,7 @@ package marola.scoring
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood}
+import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood, WindLevel}
 import marola.water.{BathingCondition, WaterQuality}
 
 /**
@@ -89,12 +89,23 @@ object Swimability:
       case Some(_)                          => (0, None)
       case None                             => (-5, Some("no wave data"))
 
+  /**
+   * The one place the wind thresholds turn into a band. `windDelta` scores from it and the board
+   * publishes it as `wind_level` (MIP-0009 §5), so the CLI's note and the map's word can't drift.
+   */
+  def windLevel(kmh: Option[Double]): Option[WindLevel] =
+    kmh.map {
+      case w if w >= StrongWindKmh => WindLevel.Strong
+      case w if w >= CalmWindKmh   => WindLevel.Breezy
+      case _                       => WindLevel.Calm
+    }
+
   private def windDelta(hour: HourlyConditions): (Int, Option[String]) =
-    hour.windSpeedKmh match
-      case Some(w) if w >= StrongWindKmh => (-25, Some(f"strong wind (${w}%.0fkm/h)"))
-      case Some(w) if w >= CalmWindKmh   => (-10, Some(f"breezy (${w}%.0fkm/h)"))
-      case Some(_)                       => (0, None)
-      case None                          => (-5, Some("no wind data"))
+    (windLevel(hour.windSpeedKmh), hour.windSpeedKmh) match
+      case (Some(WindLevel.Strong), Some(w)) => (-25, Some(f"strong wind (${w}%.0fkm/h)"))
+      case (Some(WindLevel.Breezy), Some(w)) => (-10, Some(f"breezy (${w}%.0fkm/h)"))
+      case (Some(WindLevel.Calm), _)         => (0, None)
+      case _                                 => (-5, Some("no wind data"))
 
   private def seaTempDelta(hour: HourlyConditions): (Int, Option[String]) =
     hour.seaTempC match

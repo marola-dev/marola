@@ -45,6 +45,12 @@ test:
 coverage:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt clean coverage test coverageReport coverageAggregate
 
+# The other coverage: statement % of scripts/**/*.py measured while each script's own `--self-test`
+# runs (marola has no pytest suite — those flags are the Python test suite). Exactly what ci.yml
+# publishes as the README's `python coverage` badge; coverage.py comes from flake.nix.
+coverage-python:
+    python3 scripts/repo_stats.py python-coverage
+
 fmt:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll
 
@@ -77,15 +83,25 @@ quality-other:
     python3 scripts/smoke_record.py --self-test
     python3 scripts/benchmark_gate.py --self-test
     python3 scripts/cost-split.py --self-test
+    python3 scripts/repo_stats.py --self-test
+    python3 scripts/pr_label_nlp.py --self-test
     python3 scripts/arxiv_digest.py --self-test
+    python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
     scripts/deps-stack.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
+    scripts/mip-stack.sh --self-test
+    scripts/docs-mip-stack.sh --self-test
+    python3 scripts/lib/mip_index_merge.py --self-test
+    python3 scripts/mip_graph.py --self-test
+    python3 scripts/mip_graph.py --check
     .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
     .claude/hooks/session-start.sh --self-test
+    node --check site/static/app.js
+    node scripts/site_check.js
     actionlint
     hadolint Dockerfile Dockerfile.local
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
@@ -397,10 +413,38 @@ cost-fill *args:
 pr *args:
     scripts/pr.sh {{args}}
 
+# Apply the deterministic label taxonomy (scripts/lib/pr_labels.sh) to one PR — the current
+# branch's, or `just pr-label 168`. `--dry-run` prints without calling `gh pr edit`. No LLM, no
+# cost: labels come from the PR's MIP number, changed top-level dirs, and author. See
+# scripts/pr-label.sh.
+pr-label *args:
+    scripts/pr-label.sh {{args}}
+
+# Backfill labels onto every merged/closed PR that has none yet (never touches an open PR, and
+# never a PR that already has a label — re-running is a no-op scan). `--dry-run` to preview,
+# `--limit N` to cap a first cautious run. `--nlp` also prints scripts/pr_label_nlp.py's cheap,
+# local, marola-aware NLP guess at the area/* label next to the deterministic one (comparison
+# only — a demonstration that a local TF-IDF classifier can plausibly do this job too, not a
+# replacement for the deterministic taxonomy); `--nlp-apply-unscoped` additionally applies the
+# NLP label, but only when the deterministic side found nothing but area/unscoped and the NLP
+# score clears a real threshold — filling a genuine gap, never overriding a confident call. See
+# scripts/backfill-pr-labels.sh and scripts/pr_label_nlp.py.
+pr-labels-backfill *args:
+    scripts/backfill-pr-labels.sh {{args}}
+
 # scripts/stack.sh passthrough: `just stack start MIP-0005 2 site-build`, `just stack pr`,
 # `just stack restack`, `just stack status` — the local, script-only view of a MIP stack.
 stack *args:
     scripts/stack.sh {{args}}
+
+# scripts/docs-mip-stack.sh passthrough — chain several independent, un-merged docs/mip-NNNN-*
+# design-doc branches into one base-linked stack for a single review pass. `just docs-mip-stack
+# list` discovers candidates (flags duplicate branches per MIP number and real staleness — never
+# guesses which one is canonical); `just docs-mip-stack plan <branch1> <branch2> ...` verifies
+# each is conflict-free against its computed base and prints/logs the chained `gh pr create`
+# commands. Read-only either way — nothing is pushed, rebased, or opened.
+docs-mip-stack *args:
+    scripts/docs-mip-stack.sh {{args}}
 
 # Stack every open dependency-update PR (dependabot; `--include-steward` adds scala-steward's)
 # into one chain of `deps/<date>/k-slug` branches, the same shape a MIP's task branches get —
@@ -421,6 +465,36 @@ stack *args:
 # local listing. Not available inside ai-jail (AGENTS.md) — run from the host.
 deps-stack *args:
     scripts/deps-stack.sh {{args}}
+
+# Stack every open MIP *draft* PR (a `docs/mip-NNNN-*` branch, or any PR adding a
+# `docs/mips/MIP-NNNN-*.md`; task branches `mip-NNNN/k-*` are excluded) into one chain of
+# `mips/<date>/k-slug` branches ordered by MIP number — different proposals, one stack that merges
+# bottom-up in one CI run. Every draft appends its own row to docs/mips/README.md at the same
+# spot, so after the first one lands the rest conflict on that line: the chain build resolves that
+# by itself (scripts/lib/mip_index_merge.py keeps both rows, in MIP order). Same shape as
+# `just deps-stack`: a dedicated worktree (.tmp/wt-mip-stack), one new PR per chain branch, the
+# original PR closed with a pointer, `gh stack link` at the end. See scripts/mip-stack.sh's header.
+#   just mip-stack                     # discover, build, publish, link
+#   just mip-stack --dry-run           # print every git/gh command; no push, no gh mutation
+#   just mip-stack --resume            # continue after a conflict it could not resolve
+#   just mip-stack --skip 123          # drop PR #123 from the chain
+#   just mip-stack status              # the local chain + each PR's state
+#   just mip-stack clean               # delete mips/* branches whose stacked PR is MERGED
+# Needs `gh auth status` OK beyond --dry-run/--from-json/--self-test. Run from the host, not ai-jail.
+mip-stack *args:
+    scripts/mip-stack.sh {{args}}
+
+# Regenerate the Mermaid dependency graph in docs/mips/README.md from every MIP's own **Blocked
+# by** metadata row (comma-separated MIP numbers, or `none` — never the prose **Depends on**
+# field, which legitimately mixes four relations in one cell a regex can't tell apart). Nodes are
+# colored by Status; edges are blocker -> blocked, nothing else.
+#   just mip-graph                     # regenerate and write docs/mips/README.md
+#   just mip-graph --check             # exit 1 if the checked-in graph is stale (quality-other)
+#   just mip-graph --parallel 30 31    # can these two MIPs be worked on at once? (dependency
+#                                       # graph reachability AND a §5 source-path overlap check —
+#                                       # the graph alone can't see two MIPs touching the same files)
+mip-graph *args:
+    python3 scripts/mip_graph.py {{args}}
 
 # Delete every local branch whose PR gh confirms MERGED (local branch + remote ref, if still
 # there) — never the current branch or main. Safe for mip-NNNN/k-slug branches too.
@@ -537,6 +611,21 @@ jail-dry-run *cmd:
 # sandbox: pr view/create/edit/list and read-only `gh api` work, merge/issues/workflows/secrets
 # fail by permission. Unset in the host shell → nothing is passed, same as before.
 #
+# `--exec`: run `claude` directly under bwrap instead of ai-jail's default mode, which wraps the
+# whole session in its own PTY proxy to draw the persistent status bar (see `-s/--status-bar` in
+# `ai-jail --help`) — it re-parses the terminal stream through a VT parser to reserve a screen row
+# and, on the input side, is one more layer between your keyboard and the sandboxed process. Two
+# maintainer-reported symptoms traced to that layer: Ctrl+C never reaching `claude` (SIGINT is
+# generated by the *outer* terminal's line discipline, but the proxy puts the terminal in raw mode
+# and is responsible for relaying the interrupt byte itself — bare `claude` outside the jail, with
+# no such proxy, does not have this problem) and multi-line/bracketed pastes arriving mangled or
+# as one line (the proxy's parser is on the same input path). `--exec` removes the proxy entirely
+# — `bwrap` execs `claude` with its stdio connected straight to the real terminal, the same as
+# running any other command under `bwrap` directly — at the cost of the status bar (cosmetic only;
+# no sandbox restriction changes: landlock/seccomp/rlimits/network are all set by the bwrap
+# invocation below `--exec` doesn't touch). Confirmed via `ai-jail --help`: "`--exec` Direct
+# execution mode (no PTY proxy, no status bar)".
+#
 # MAROLA_JAIL_CLIPBOARD=1 just jail-claude: opt-in, write-only clipboard bridge — default off, so
 # a plain `just jail-claude` behaves exactly as before this existed. Before ai-jail starts, this
 # creates a FIFO at .tmp/clip.fifo (the repo dir is already rw-mapped into the jail, so the FIFO
@@ -555,6 +644,22 @@ jail-dry-run *cmd:
 # announces itself with one line when on, so it's never silently active. Residual risk: anything
 # the agent copies replaces what you had in the clipboard, and a malicious payload could be a
 # shell command you then paste — read before you paste.
+#
+# MAROLA_JAIL_CLIPBOARD_PASTE=1 just jail-claude: opt-in, real clipboard *read* — separate from
+# the bridge above and off by default. Plain text Ctrl+V is unaffected by any of this (the
+# terminal emulator injects pasted text as ordinary input bytes; `--exec` above is what keeps that
+# path intact) — this flag is only for Claude Code's own image-paste feature, which shells out to
+# xclip/wl-paste itself and needs a real X11/Wayland socket inside the sandbox to do it, which
+# `--no-display` (the jail's default) denies. Setting it adds `--display` (ai-jail's X11/Wayland
+# passthrough) plus forwards `DISPLAY`/`WAYLAND_DISPLAY`, and pins `XDG_RUNTIME_DIR` to the real
+# `/run/user/<uid>` (not this file's own `XDG_RUNTIME_DIR` override two lines up, which points at
+# a repo-local dir for sbt's boot socket and would otherwise make wl-paste look in the wrong
+# place). Security: this is a materially bigger grant than the write-only bridge — a full display
+# socket, not a one-way byte pipe. Wayland compositors isolate clients from each other reasonably
+# well; X11 (this repo's dev host: `XDG_SESSION_TYPE=x11`) has no such isolation — any client on
+# the socket can read other windows' contents and inject synthetic input, not just the clipboard.
+# Off by default; only turn it on if you need image paste and accept that broader exposure for the
+# session.
 jail-claude *args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -579,7 +684,12 @@ jail-claude *args:
             relay_pid=""
         fi
     fi
-    ai-jail --no-save-config --rw-map ~/.claude --rw-map ~/.claude.json --map ~/.ssh --network --terminal-passthrough --env GH_TOKEN claude {{args}}
+    paste_flags=()
+    if [ "${MAROLA_JAIL_CLIPBOARD_PASTE:-0}" = "1" ]; then
+        echo "jail-claude: MAROLA_JAIL_CLIPBOARD_PASTE=1 — real X11/Wayland display passthrough is on, the jail can read your clipboard (and, on X11, more)" >&2
+        paste_flags=(--display --env DISPLAY --env WAYLAND_DISPLAY --env "XDG_RUNTIME_DIR=/run/user/$(id -u)")
+    fi
+    ai-jail --no-save-config --rw-map ~/.claude --rw-map ~/.claude.json --map ~/.ssh --network --terminal-passthrough --exec --env GH_TOKEN "${paste_flags[@]}" claude {{args}}
 
 # The two below pin the model via Claude Code's own alias (always the latest of that line), and
 # still forward any further args to `claude`, e.g. `just jcs --resume`.
@@ -590,6 +700,49 @@ jcf *args: (jail-claude "--model" "fable" args)
 # jail-claude with --model sonnet
 jcs *args: (jail-claude "--model" "sonnet" args)
 
+# jail-claude with --model opus
+jco *args: (jail-claude "--model" "opus" args)
+
+# OpenCode in the jail (MIP-0013) — the same ai-jail policy as jail-claude, OpenCode's own three
+# state directories mapped instead of Claude Code's: `~/.config/opencode` (opencode.json overrides,
+# auth.json — never committed, stays host-side), `~/.local/share/opencode` (session/message
+# storage `cost-split.py`'s OpenCode reader will read), `~/.cache/opencode` (Bun's plugin installs
+# at startup, per MIP-0013 §4.6). `--network` because OpenCode needs it the same way Claude Code
+# does (model calls, plugin installs); `--terminal-passthrough` for its TUI. Extra args go to
+# `opencode` itself, e.g. `just jail-opencode run "..."`.
+jail-opencode *args:
+    ai-jail --no-save-config --rw-map ~/.config/opencode --rw-map ~/.local/share/opencode --rw-map ~/.cache/opencode --network --terminal-passthrough --exec opencode {{args}}
+
+# jail-opencode, short alias
+jo *args: (jail-opencode args)
+
+# GitHub's spec-kit (github.com/github/spec-kit) — a spec-driven-development CLI, `specify`. Not a
+# nixpkgs package (confirmed against its own README, 2026-09-07: it ships via `uv tool install`/
+# PyPI only), so this runs it ephemerally through `uvx` instead of vendoring or persistently
+# installing it — nothing to manage, no state this repo owns. `just specify init <args>`,
+# `just specify check`, etc. — see spec-kit's own `--help` for the full command list.
+#
+# `init` defaults to `--integration claude` (this repo's own agent) when the caller didn't pass
+# `--integration` themselves — spec-kit's own default otherwise falls through to its interactive
+# picker / a different agent, confirmed live 2026-09-07 (`specify init --help`'s own examples
+# name `claude`/`gemini`/`copilot`/`generic` as peers, no agent privileged). Only `init` takes
+# `--integration` at all (`specify check --help` has no such flag), so the default is scoped to
+# that one subcommand, not appended blindly to every `just specify ...` call.
+specify *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    args=({{args}})
+    if [ "${args[0]:-}" = "init" ] && ! printf '%s\n' "${args[@]:-}" | grep -qx -- --integration; then
+        args+=(--integration claude)
+    fi
+    uvx --from specify-cli specify "${args[@]:-}"
+
+# What OpenCode sessions consumed, from its local storage (~/.local/share/opencode), priced at
+# list rates — ccusage's OpenCode support (MIP-0013 §4.5; experimental, unknown models show
+# $0.00). `just opencode-cost session`, `just opencode-cost daily`.
+opencode-cost *args="session":
+    npx --yes ccusage@latest opencode {{args}}
+
 # Push stdin (or --text "…") to the clipboard — write-only, no paste counterpart; see
 # scripts/clip.sh's header and this file's `jail-claude` comment. Inside a session started with
 # `MAROLA_JAIL_CLIPBOARD=1 just jail-claude`, goes through the host relay via .tmp/clip.fifo;
@@ -597,3 +750,31 @@ jcs *args: (jail-claude "--model" "sonnet" args)
 # either way. `printf 'hello' | just clip`, `just clip --text hello`.
 clip *args:
     scripts/clip.sh {{args}}
+
+# Fast-forward local `main` from origin — always fetches (safe, no working-tree effect); only
+# advances the `main` ref itself when you're actually on `main` with a clean tree (git merge
+# --ff-only, so it can never silently create a merge commit or clobber uncommitted work — it
+# just no-ops with a message when either condition isn't met). Meant to be run unattended on a
+# timer (systemd --user timer or cron calling `just -f <repo>/justfile sync-main`, every 15-30m)
+# so a squash-merged PR shows up as merged locally without a manual `git pull`, and so branch
+# audits against `origin/*` (this repo's own convention — see docs/DEV-FLOW.md) aren't confused
+# by a local main that's actually current on GitHub but stale on disk.
+sync-main:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    git fetch origin --quiet
+    branch="$(git branch --show-current)"
+    if [ "$branch" != "main" ]; then
+        echo "sync-main: on '$branch', not 'main' — fetched origin only, no ref updated"
+        exit 0
+    fi
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "sync-main: local main has uncommitted changes — not touching it (stash first: git stash push -u)"
+        exit 0
+    fi
+    before="$(git rev-parse HEAD)"
+    git merge --ff-only origin/main --quiet
+    after="$(git rev-parse HEAD)"
+    if [ "$before" != "$after" ]; then
+        echo "sync-main: fast-forwarded main $before -> $after"
+    fi

@@ -82,7 +82,7 @@ while read -r b; do
     # "MIP-NNNN task k: …" without running past a skimmable length).
     first_subject="$(git log --reverse --format=%s "origin/$base..$(ref_of "$b")" 2>/dev/null | head -1)"
     title=""
-    [ -n "$first_subject" ] && title="$(cap_title "$first_subject")"
+    [ -n "$first_subject" ] && title="$(cap_title "$first_subject" "${mip^^}")"
     gh pr edit "$b" --base "$base" ${title:+--title "$title"} >/dev/null 2>&1 || true
   fi
   rm -f "$extra"
