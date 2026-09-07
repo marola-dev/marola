@@ -18,6 +18,52 @@ somewhere to fail**. A compiler, an exhaustive `match`, a recorded fixture, a de
 scoring function, a sandbox, a written design with dated sources — each is a place where a wrong
 answer stops instead of shipping. The model then does the part only it is good at: language.
 
+## Why it was built, and the three pillars
+
+marola starts from two long-standing interests of its author: open water — swimming in it, being
+near it, knowing when it is worth going — and models, machine-learning models generally, not only
+the language kind that happens to be in fashion. This repository is where those two meet on
+something with real stakes, and the meeting has three standing pillars. They are strategy, not
+delivered features; each is at a different stage, and the stages are named below rather than
+smoothed over.
+
+**Pillar 1 — build marola with agents, and keep that portable.** The code here is written
+day-to-day through an agentic coder (Claude Code, currently), and the constraints that makes
+necessary are the repository's most finished work. `AGENTS.md` is the rulebook, deliberately
+agent-agnostic prose rather than one vendor's config format; MIP-0011 (Implemented,
+ultrareview-verified) turned the rules that must not be optional into things the harness enforces —
+hooks, a shared permission allowlist, path-scoped rules, subagents, skills; `docs/DEV-FLOW.md` is
+the loop from idea to merged PR. "Open to other coders" is not a wish either: MIP-0013 (Draft) is a
+bounded OpenCode tryout that states what replacing Claude Code would actually cost, down to the one
+hard dependency (`scripts/cost-split.py` reads Claude Code's own session logs). This file and the
+MIP discipline around it are the pillar's output, not a description of it.
+
+**Pillar 2 — models reasoning over open water, with the deterministic parts kept deterministic.**
+Built today: the pipeline in `scoring/Swimability.scala` computes the score, the deductions and the
+bathing-water veto in plain Scala, and `llm/Reviewer.scala` is a second, independently prompted
+pass that grades the first model's sentence and may rewrite it. That is already the "LLM as judge
+over non-fuzzy APIs" shape — Open-Meteo, Overpass and the bathing-water agency are read literally,
+the model interprets and phrases them and can never overturn a veto. Not built: anomaly and hazard
+detection over the same series — rough-sea and storm-surge events, heavy rain, the water-related
+emergency nobody subscribes to a beach app for. It is proposed in `docs/FUTURE-WORK.md` §9.2 and
+`docs/AI-500-MAPPING.md` §1/§4 and named in `docs/ROADMAP.md` §5 as the highest-value unbuilt item,
+with no MIP written yet; its own sketch puts a human-confirmation gate on alerting ahead of any
+code, since it would be the first thing marola does unasked. Forecasting proper is parked with an
+honest verdict attached: MIP-0007 (Draft, Phase 4) covers time-series foundation models — TimeGPT
+alongside the open-weight Chronos, TimesFM and Moirai — and concludes they are the wrong tool for
+waves and wind, where Open-Meteo's physics models win, and the right one only for the series marola
+itself accumulates.
+
+**Pillar 3 — models of the ocean domain, if affordable.** The management half exists first on
+purpose: MIP-0010 (Implemented, v1, local) makes MLflow the ledger for benchmark runs, prompt
+compiles and pipeline traces, so a model change is compared on recorded params and metrics rather
+than on impression. The model half is MIP-0025 (Draft) — `marola-sea-1.0`, a 3B base post-trained
+in three layers and served through Ollama — where `finetune/`'s Tier 1 has run and Tier 2 is
+written, not run, for want of a GPU. Its own status line is `do when X lands`, and the X is money:
+compute is the gate, the same human go-ahead `AGENTS.md` requires before any paid resource applies
+to a rented GPU as much as to Azure, and whatever comes out still has to clear `just benchmark`'s
+existing gate rather than bypass it.
+
 ## Why marola
 
 marola — the ocean intelligence layer: the question it answers first, "what is the best hour
