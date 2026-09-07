@@ -49,8 +49,20 @@ as an unfilled placeholder).
 | [MIP-0031](./MIP-0031-water-quality-inea-inema.md) | Water quality for Rio (INEA) and Bahia (INEMA) — PDF bulletin parsing plus a curated point-coordinate table, since neither institute publishes a JSON feed or coordinates | Accepted (tasks: `MIP-0031.tasks.md`) | 2026-09-06 | M | user value; exam coverage | do next | — |
 | [MIP-0032](./MIP-0032-model-strategy-benchmark-matrix.md) | The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned on the same questions, with latency and cost columns; local rows free and gated, paid rows opt-in per run | Draft | 2026-09-06 | M | infra/dev-loop; cost/ops; exam coverage | do next (free half) / do when X lands (paid arm: human go-ahead + key) | — |
 | [MIP-0033](./MIP-0033-release-0.md) | Release 0 — the repo goes public, a self-hosted chatbot (Ollama + Cloudflare Tunnel, graceful offline state), the first Hugging Face-published model, and a new Milestones/Releases doc linking MIPs to a named release | Draft | 2026-09-06 | L | user value; community/outreach; infra/dev-loop | do next | — |
+| [MIP-0036](./MIP-0036-marola-advertising-action.md) | Marola Advertising Action (MAA) — the Release 0 launch, channel by channel (LinkedIn personal + org Page, Reddit, YouTube, Instagram via MIP-0020, Medium, Substack), staggered over eight days, and how to sustain it after (handed to MIP-0018) | Draft | 2026-09-07 | M | community/outreach; infra/dev-loop | do when MIP-0033 lands | — |
 | [MIP-0037](./MIP-0037-map-pwa.md) | A PWA for marola's map — a service worker caches the app shell and the last board so a flaky-signal beach visit stays usable, offline shown honestly, not hidden (ROADMAP.md §7 K8) | Draft | 2026-09-07 | S | user value; infra/dev-loop | cheap win | — |
 
 <!-- mip-graph:start -->
-_No MIP currently declares a **Blocked by** relationship, so there is nothing to graph yet — add that field to a MIP's metadata table and run `just mip-graph` again._
+```mermaid
+flowchart TD
+  classDef draft fill:#fff,stroke:#999,stroke-dasharray:3 3;
+  classDef accepted fill:#eef,stroke:#36c;
+  classDef implemented fill:#efe,stroke:#2a2;
+  classDef rejected fill:#f8f8f8,stroke:#bbb,color:#999;
+  M0033["MIP-0033"]:::draft
+  M0036["MIP-0036"]:::draft
+  M0033 --> M0036
+```
+
+_29 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0025, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0037._
 <!-- mip-graph:end -->
