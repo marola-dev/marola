@@ -10,9 +10,11 @@ import scala.util.Try
 import kyo.*
 
 import marola.Recommender
+import marola.beaches.AccessibilityClient
 import marola.json.JsonValue
 import marola.lore.SeaLore
 import marola.model.Coordinates
+import marola.trails.TrailFinder
 import marola.water.WaterQualityClient
 
 /**
@@ -95,10 +97,13 @@ object SiteBuilder:
       static: Path,
       water: Coordinates => Option[WaterQualityClient],
       now: OffsetDateTime,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None
+      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
+      accessibility: Option[AccessibilityClient] = None
   ): List[Path] < Sync =
     for
-      boards <- traverse(areas)(a => buildArea(a, out, water(a.origin), now, distanceRefiner))
+      boards <- traverse(areas)(a =>
+        buildArea(a, out, water(a.origin), now, distanceRefiner, accessibility)
+      )
       index <- Sync.defer(writeAreasIndex(areas, out))
       copied <- Sync.defer(copyStatic(static, out))
     yield boards.flatten ++ (index :: copied)
@@ -108,43 +113,49 @@ object SiteBuilder:
       out: Path,
       water: Option[WaterQualityClient],
       now: OffsetDateTime,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync]
+      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync],
+      accessibility: Option[AccessibilityClient]
   ): List[Path] < Sync =
     val localNow = now.atZoneSameInstant(area.zone).toOffsetDateTime
     val today = localNow.toLocalDate
     val days = List(today, today.plusDays(1))
-    Recommender
-      .scoreDays(
+    for
+      scored <- Recommender.scoreDays(
         area.origin,
         area.radiusKm,
         area.beachLimit,
         distanceRefiner,
         water,
         today = _ => today,
-        days = days.size
+        days = days.size,
+        accessibility = accessibility
       )
-      .map { scored =>
-        val dir = out.resolve("data").resolve(area.id)
-        Files.createDirectories(dir)
-        val entries = SeaLore.loadDefault()
-        val regions = SeaLore.regionTagsFor(area.origin)
-        val dayFiles = days.map { day =>
-          val lore = SeaLore.pick(entries, day, area.name, regions)
-          val board = Board.build(area.id, day, today, localNow, scored, lore, sources(water))
-          write(dir.resolve(s"$day.json"), board)
-        }
-        val latest = JsonValue.obj(
-          "area" -> JsonValue.str(area.id),
-          "today" -> JsonValue.str(today.toString),
-          "generated_at" -> JsonValue.str(Board.stamp(localNow)),
-          "days" -> JsonValue.arr(
-            days.map(d =>
-              JsonValue.obj("day" -> JsonValue.str(d.toString), "file" -> JsonValue.str(s"$d.json"))
-            )*
-          )
-        )
-        dayFiles :+ write(dir.resolve("latest.json"), latest)
+      // MIP-0030: one extra Overpass query per area per build, reusing the beaches `scoreDays`
+      // already fetched (no second beach query) — the same trails feed both day files below, a
+      // trail doesn't change per day.
+      trails <- TrailFinder.nearby(area.origin, area.radiusKm, scored.map(_.beach).distinct)
+    yield
+      val dir = out.resolve("data").resolve(area.id)
+      Files.createDirectories(dir)
+      val entries = SeaLore.loadDefault()
+      val regions = SeaLore.regionTagsFor(area.origin)
+      val dayFiles = days.map { day =>
+        val lore = SeaLore.pick(entries, day, area.name, regions)
+        val board =
+          Board.build(area.id, day, today, localNow, scored, lore, sources(water), trails)
+        write(dir.resolve(s"$day.json"), board)
       }
+      val latest = JsonValue.obj(
+        "area" -> JsonValue.str(area.id),
+        "today" -> JsonValue.str(today.toString),
+        "generated_at" -> JsonValue.str(Board.stamp(localNow)),
+        "days" -> JsonValue.arr(
+          days.map(d =>
+            JsonValue.obj("day" -> JsonValue.str(d.toString), "file" -> JsonValue.str(s"$d.json"))
+          )*
+        )
+      )
+      dayFiles :+ write(dir.resolve("latest.json"), latest)
 
   private def writeAreasIndex(areas: List[Area], out: Path): Path =
     Files.createDirectories(out.resolve("data"))

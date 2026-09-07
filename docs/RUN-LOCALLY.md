@@ -198,6 +198,42 @@ just benchmark        # 22 ocean questions × {plain prompt, marola strict, maro
 
 Compare with `docs/benchmarks/2026-09-05.md` — the kept reference run and what it taught.
 
+## 5.2 Plug your local model into the public site's chat widget (MIP-0033)
+
+`marola.dev` (or wherever `site/dist/` is served) ships a chat widget that stays hidden until it
+finds a working endpoint — no server dependency by default. To turn it on, run marola's own tiny
+HTTP server and expose it through a **named** Cloudflare Tunnel (a quick/ephemeral tunnel's URL
+changes every restart, which would break the widget's saved config):
+
+```bash
+# 1. Run marola's chat server (wraps --ask's RAG + the MIP-0022 safety footer over HTTP).
+#    Needs the same Ollama setup as §2-3; it blocks in the foreground, Ctrl+C to stop.
+just run -- --serve-chat            # http://localhost:8787 — GET /health, POST /ask
+# just run -- --serve-chat 9000     # a different port
+
+# 2. In another terminal: a one-time cloudflared login, then a NAMED tunnel (free, no account
+#    beyond a Cloudflare login, no port-forwarding on your router).
+cloudflared tunnel login
+cloudflared tunnel create marola-chat
+cloudflared tunnel route dns marola-chat chat.<your-domain>   # or use the trycloudflare.com URL
+                                                                # cloudflared prints for a quick test
+cloudflared tunnel run --url http://localhost:8787 marola-chat
+```
+
+Then point the widget at that URL — edit `site/static/chatbot-config.js`:
+
+```js
+window.MAROLA_CHAT_ENDPOINT = "https://chat.<your-domain>"; // or the trycloudflare.com URL
+```
+
+`just site-build` copies `site/static/*` (including this file) into `site/dist/` as-is. Leave
+`MAROLA_CHAT_ENDPOINT` empty to keep the widget hidden — that's the default, committed state, so a
+fresh clone's site never shows a chat button pointing nowhere. The widget calls `/health` on page
+load and only reveals its toggle button on a 200; a later failure while chatting shows an honest
+"chatbot offline" message rather than hanging. This narrowly overrides MIP-0005 §9's "no server"
+decision for the site — the maintainer's own machine becomes a real, if intermittent, origin;
+uptime is whatever the maintainer's machine and tunnel happen to be, by design (MIP-0033 §6).
+
 ## 6. Troubleshooting
 
 - **`HTTP 404 ... model 'X' not found`** — the model named in `MAROLA_LOCAL_LLM_MODEL` (or
@@ -255,7 +291,7 @@ returned files under `docs/mips/` and let the in-repo agent verify the sources.
 ## 9. The map — build the boards once, serve them as a static site (MIP-0005)
 
 Everything above answers one person at a time. `just site-build` runs the same pipeline once per
-*area* (`site/areas.json`: Florianópolis and Rio by default) and writes what a static map needs:
+*area* (`site/areas.json`: Florianópolis, Rio de Janeiro and Salvador by default) and writes what a static map needs:
 
 ```bash
 just site-build floripa        # ~70 s live: one Overpass query, two Open-Meteo calls per beach, one IMA download

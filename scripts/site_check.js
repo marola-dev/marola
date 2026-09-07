@@ -70,7 +70,7 @@ class El {
   getAttribute(k) { return this.attrs[k]; }
   querySelector() { return new El('anon'); }
 }
-const IDS = ['area', 'days', 'near', 'toggle-list', 'hourbar', 'hour', 'hour-label', 'list', 'card', 'footer', 'status'];
+const IDS = ['area', 'days', 'near', 'sound', 'toggle-list', 'hourbar', 'hour', 'hour-label', 'list', 'card', 'footer', 'status'];
 // 'smoke' is deliberately absent: the page must tolerate a build without the panel (app.js header).
 
 // --- a Leaflet just big enough for app.js --------------------------------------------------------
@@ -100,10 +100,33 @@ function makeLeaflet() {
     tileLayer() { return { addTo(m) { m.layers.push(this); return this; } }; },
     circleMarker: (ll, o) => layer('circleMarker', ll, o),
     marker: (ll, o) => layer('marker', ll, o),
+    polyline: (latlngs, o) => layer('polyline', latlngs, o),
     divIcon: (o) => ({ divIcon: true, options: o }),
     DomEvent: { stopPropagation() {} }
   };
   return L;
+}
+
+// --- an AudioContext just big enough for app.js's wave-sound synth (no real audio, records the
+// node graph so the test can assert it was actually built) ---------------------------------------
+function makeAudioContext() {
+  function node(kind) {
+    const n = { kind };
+    n.connect = () => n;
+    if (kind === 'gain') n.gain = { value: 0, cancelScheduledValues() {}, setTargetAtTime(v) { n.gain.value = v; } };
+    if (kind === 'bufferSource' || kind === 'oscillator') n.start = () => {};
+    if (kind === 'biquadFilter' || kind === 'oscillator') n.frequency = { value: 0 };
+    return n;
+  }
+  return {
+    state: 'running', currentTime: 0, destination: {}, sampleRate: 44100,
+    createBuffer: (ch, len) => ({ getChannelData: () => new Float32Array(len) }),
+    createBufferSource: () => node('bufferSource'),
+    createBiquadFilter: () => node('biquadFilter'),
+    createGain: () => node('gain'),
+    createOscillator: () => node('oscillator'),
+    resume() { this.state = 'running'; }
+  };
 }
 
 // --- run the page once against a board -----------------------------------------------------------
@@ -127,6 +150,7 @@ async function runPage(board) {
     location: { href: 'https://example.test/', search: '' },
     history: { replaceState() {} },
     navigator: {}, alert() {},
+    AudioContext: function () { return makeAudioContext(); },
     URL, URLSearchParams, Promise, Math, String, Array, Object, Number, Error, parseInt, setTimeout, JSON,
     L
   };
@@ -159,20 +183,27 @@ async function runPage(board) {
   const tip = joaq ? String(joaq.tooltip) : '';
   ok(/55\/100 at 10:00/.test(tip), 'Joaquina\'s tooltip head shows score/100 and the hour', tip);
   ok(joaq && joaq.tooltipOpts && joaq.tooltipOpts.sticky === true && joaq.tooltipOpts.className === 'aspects', 'the tooltip is sticky with the aspects class');
-  // MIP-0009 §3: six aspects, the fixture's own numbers, every emoji followed by its word
+  // MIP-0009 §3: six aspects, the fixture's own numbers, every emoji followed by its word — the
+  // water cell now carries a colour dot instead of an emoji (2026-09-07: a dot scans by colour at
+  // a glance the way the score markers already do; a repeated 💧 doesn't distinguish
+  // PRÓPRIA/IMPRÓPRIA/no-data). Joaquina also carries a 7th, facilities cell (MIP-0021 data,
+  // 2026-09-07: previously computed but never rendered on the map at all).
   [['🌬️ breezy, 27 km/h S', 'wind band + km/h + direction'], ['🌡️ water 19.0 °C', 'water temperature'],
    ['〰️ waves 1.3 m every 6 s', 'waves + period'], ['🪼 jellyfish Low', 'jellyfish'],
-   ['🐋 whales Low (best 07:00)', 'whales with the day\'s best hour'], ['💧 1/1 PRÓPRIA (25 Aug)', 'water verdict']]
+   ['🐋 whales Low (best 07:00)', "whales with the day's best hour"],
+   ['<i class="wdot c70"></i> 1/1 PRÓPRIA (25 Aug)', 'water verdict, a colour dot not an emoji'],
+   ['🅿️ parking 3 · 🚻 toilets 1', 'facilities, only the counts the board actually has']]
     .forEach(([needle, label]) => ok(tip.includes(needle), 'tooltip cell: ' + label + ' → "' + needle + '"', tip));
-  ok((tip.match(/<span/g) || []).length === 6, 'the tooltip grid has exactly six cells');
-  ok(joaq && joaq.opts.icon.options.html.includes('#e0a800'), 'Joaquina\'s wave is filled with the 40-69 colour', joaq && joaq.opts.icon.options.html);
+  ok((tip.match(/<span/g) || []).length === 7, 'the tooltip grid has six aspect cells plus facilities (7) when the board has facility data');
+  ok(joaq && joaq.opts.icon.options.html.includes('#e0a800'), "Joaquina's wave is filled with the 40-69 colour", joaq && joaq.opts.icon.options.html);
   const brava = markers.find(m => String(m.tooltip).includes('Praia Brava'));
-  ok(brava && brava.opts.icon.options.html.includes('#c0392b'), 'the unfit beach\'s wave is the red (score-0) colour', brava && brava.opts.icon.options.html);
-  ok(brava && /class="wide unfit">💧 0\/1 IMPRÓPRIA/.test(String(brava.tooltip)), 'the unfit beach\'s water cell carries the unfit class', brava && String(brava.tooltip));
+  ok(brava && brava.opts.icon.options.html.includes('#c0392b'), "the unfit beach's wave is the red (score-0) colour", brava && brava.opts.icon.options.html);
+  ok(brava && /class="wide unfit"><i class="wdot c0"><\/i> 0\/1 IMPRÓPRIA/.test(String(brava.tooltip)), "the unfit beach's water cell carries the unfit class and the red dot", brava && String(brava.tooltip));
+  ok(!String(brava.tooltip).includes('facilities'), 'Brava has no facilities data on the board, so no facilities cell renders (absent, not zeroed)', String(brava.tooltip));
   // the water verdict is a sentence and gets the full width (CSS: .aspects .grid .wide spans both
   // columns and wraps) — nowrap in one column ran it past the 21 rem tooltip and clipped the card
-  ok(/<span class="wide (water|unfit)">💧/.test(tip), 'the water cell is the spanning, wrapping one', tip);
-  ok((tip.match(/class="wide /g) || []).length === 1, 'only the water cell spans both columns', tip);
+  ok(/<span class="wide (water|unfit)"><i class="wdot/.test(tip), 'the water cell is the spanning, wrapping one', tip);
+  ok((tip.match(/class="wide /g) || []).length === 2, 'the water cell and the facilities cell both span both columns', tip);
   // one filled path, not two thin ribbons and a halo: the score colour needs area at area zoom
   ok(joaq && (joaq.opts.icon.options.html.match(/<path /g) || []).length === 1, 'the wave is a single filled path', joaq && joaq.opts.icon.options.html);
   ok(joaq && !/opacity=|drop-shadow|transform=/.test(joaq.opts.icon.options.html), 'no per-path opacity, halo transform or drop-shadow in the marker SVG', joaq && joaq.opts.icon.options.html);
@@ -188,6 +219,13 @@ async function runPage(board) {
     'the list has two entries, best score first');
   ok(els.card.hidden === true || els.card.innerHTML === '', 'the card starts closed');
   ok(els['hour-label'].textContent === 'best hour per beach', 'the slider label starts at "best hour per beach"');
+  ok(els.sound.attrs['aria-pressed'] !== 'true', 'the sound toggle does not start pressed=true');
+  if (els.sound.listeners.click && els.sound.listeners.click[0]) {
+    els.sound.listeners.click[0]({});
+    ok(els.sound.attrs['aria-pressed'] === 'true', 'clicking the sound toggle flips aria-pressed to true');
+    els.sound.listeners.click[0]({});
+    ok(els.sound.attrs['aria-pressed'] === 'false', 'clicking it again flips aria-pressed back to false — no exception either time');
+  } else ok(false, 'the sound toggle has a click handler');
   if (joaq && joaq.handlers.click) {
     joaq.handlers.click({});
     ok(els.card.hidden === false && els.card.innerHTML.includes('Praia da Joaquina') && els.card.innerHTML.includes('55/100'),
@@ -200,6 +238,26 @@ async function runPage(board) {
     const sel = L.created.filter(l => l.added && isWave(l)).find(m => String(m.tooltip).includes('Praia da Joaquina'));
     ok(sel && /\bselected\b/.test(sel.opts.icon.options.className) && sel.opts.icon.options.iconSize[0] === 32 && sel.opts.zIndexOffset === 1000,
       'after selection the wave is re-drawn larger (32 px), marked selected, on top', sel && JSON.stringify(sel.opts.icon.options.iconSize));
+    // "point by point" water quality (2026-09-07): opening a beach's card also plots its real
+    // sampling points as their own circleMarkers — not just the one-line aggregate the card/
+    // tooltip text already shows. Joaquina's fixture has exactly one point, Ponto 33.
+    const waterPts = L.created.filter(l => l.added && l.kind === 'circleMarker' && String(l.tooltip).includes('Ponto 33'));
+    ok(waterPts.length === 1 && waterPts[0].latlng[0] === -27.6301 && waterPts[0].latlng[1] === -48.4479,
+      "opening Joaquina's card plots its one real water-sampling point as a circleMarker at its real coordinates",
+      JSON.stringify(waterPts.map(p => p.latlng)));
+    ok(String(waterPts[0].tooltip).includes('PRÓPRIA'), "the point marker's own tooltip carries its real condition", String(waterPts[0].tooltip));
+    // Selecting a different beach swaps the plotted points, rather than accumulating them —
+    // the stub DOM's querySelector can't re-find renderCard's own close-button listener (it
+    // returns a fresh element each call), so this exercises the same clear-and-replot path
+    // (renderWaterPoints) a real close would, via select() on Brava instead.
+    const bravaMarker = L.created.find(l => l.added && isWave(l) && String(l.tooltip).includes('Praia Brava'));
+    if (bravaMarker && bravaMarker.handlers.click) bravaMarker.handlers.click({});
+    const joaquinaPointsAfter = L.created.filter(l => l.added && l.kind === 'circleMarker' && String(l.tooltip).includes('Ponto 33'));
+    const bravaPointsAfter = L.created.filter(l => l.added && l.kind === 'circleMarker' && String(l.tooltip).includes('Ponto 12'));
+    ok(joaquinaPointsAfter.length === 0, "selecting Brava removes Joaquina's own water-point marker, not left stacked on the map");
+    ok(bravaPointsAfter.length === 1 && bravaPointsAfter[0].opts.fillColor !== waterPts[0].opts.fillColor,
+      "Brava's own (IMPRÓPRIA) point plots instead, in a different colour than Joaquina's PRÓPRIA one",
+      JSON.stringify({ brava: bravaPointsAfter[0] && bravaPointsAfter[0].opts, joaquina: waterPts[0].opts }));
   } else ok(false, 'Joaquina\'s wave has a click handler');
 
   // 3. an older board without wind_level (task 1 made it optional) renders: number, no band word
@@ -209,8 +267,35 @@ async function runPage(board) {
   const markers2 = r2.L.created.filter(l => l.added && isWave(l));
   ok(r2.errors.length === 0 && markers2.length === BOARD.beaches.length, 'a board without wind_level still renders every beach as a wave');
   const tip2 = String((markers2.find(m => String(m.tooltip).includes('Praia da Joaquina')) || {}).tooltip || '');
-  ok(!/breezy|calm|strong/.test(tip2) && tip2.includes('🌬️ wind 27 km/h') && (tip2.match(/<span/g) || []).length === 6,
-    'without wind_level the wind cell keeps the number and drops the band word; six cells remain', tip2);
+  ok(!/breezy|calm|strong/.test(tip2) && tip2.includes('🌬️ wind 27 km/h') && (tip2.match(/<span/g) || []).length === 7,
+    'without wind_level the wind cell keeps the number and drops the band word; seven cells remain (Joaquina has facilities data)', tip2);
+
+  // 4. MIP-0030: trails — a board with no `trails` key renders every other layer unchanged, and one
+  //    with a `trails` array draws one L.polyline per trail, coloured by difficulty, with a tooltip.
+  ok(!('trails' in BOARD), 'the fixture board has no trails key yet — this is the "older board" case');
+  const isPolyline = l => l.kind === 'polyline';
+  ok(L.created.filter(l => l.added && isPolyline(l)).length === 0,
+    'a board with no trails key draws no polyline, and (from section 2 above) still renders every beach');
+
+  const trailed = JSON.parse(JSON.stringify(BOARD));
+  trailed.trails = [
+    { name: 'Trilha da Lagoinha do Leste', length_km: 2.1, difficulty: null, surface: null,
+      geometry: [[-27.79, -48.49], [-27.792, -48.487], [-27.793, -48.485]],
+      near_beach: { name: 'Praia da Joaquina', distance_km: 0.4 }, near_lake: null },
+    { name: 'Trilha Praia do Maço-Guarda', length_km: 1.4, difficulty: 'mountain_hiking', surface: 'ground',
+      geometry: [[-27.40, -48.42], [-27.401, -48.415]],
+      near_beach: null, near_lake: { name: 'Lagoa do Peri', distance_km: 0.2 } }
+  ];
+  const r3 = await runPage(trailed);
+  const trails3 = r3.L.created.filter(l => l.added && isPolyline(l));
+  ok(r3.errors.length === 0, 'app.js logged no errors with a trails array present', r3.errors.join(' | '));
+  ok(trails3.length === trailed.trails.length, 'exactly one polyline per trail (' + trails3.length + ')');
+  const lagoinha = trails3.find(l => String(l.tooltip).includes('Trilha da Lagoinha do Leste'));
+  ok(!!lagoinha && /2\.1\s*km/.test(String(lagoinha.tooltip)), 'a trail polyline\'s tooltip names it and shows its length', lagoinha && String(lagoinha.tooltip));
+  ok(lagoinha && lagoinha.latlng.length === 3, 'the polyline carries the trail\'s full geometry, not just endpoints');
+  ok(lagoinha && lagoinha.opts.color === '#999999', 'a trail with no difficulty tag draws grey (no-data colour)', lagoinha && lagoinha.opts.color);
+  const macoGuarda = trails3.find(l => String(l.tooltip).includes('Maço-Guarda'));
+  ok(macoGuarda && macoGuarda.opts.color === '#e0a800', 'a mountain_hiking trail draws the amber colour', macoGuarda && macoGuarda.opts.color);
 
   if (fails === 0) { console.log('site_check: ok'); process.exit(0); }
   console.error('site_check: ' + fails + ' failure(s)'); process.exit(1);

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Partially implemented (tasks 1-4 of 6, `docs/mips/MIP-0031.tasks.md`) — both §11 research gaps resolved 2026-09-07; INEMA parser + Salvador coordinate table (tasks 1/3, PR #203) and INEA parser + Rio coordinate table (tasks 2/4, PR #200) merged to main; tasks 5/6 (`InemaBaWaterQualityClient`/`IneaRjWaterQualityClient` wiring into `AppConfig`) not yet built |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "Fix water quality to add new institutes" — Rio and Bahia render correctly but show no water-quality verdict, unlike Florianópolis) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (CLI + board field only) — no earlier-phase prerequisite is missing |
@@ -152,8 +152,12 @@ object InemaBaWaterQualityClient:
   def coversOrigin(origin: Coordinates): Boolean = /* Bahia coastal bounding box, same shape as ImaSc's */
 ```
 
-`IneaRjWaterQualityClient` mirrors this shape once INEA's actual current-bulletin URL pattern is
-confirmed (§11 — only Bahia's endpoint was verified live this session).
+`IneaRjWaterQualityClient` mirrors this shape with one addition confirmed in §11: since INEA has
+no `idcampanha`-style stable parameter (it publishes dated, per-zone PDFs as static uploads, not a
+generate-on-demand endpoint), the client first fetches INEA's bulletin-listing page
+(`inea.rj.gov.br/ar-agua-e-solo/balneabilidade-das-praias/`), finds the newest PDF link whose
+filename matches the zone(s) marola's `rio` area needs, then parses it exactly like INEMA's —
+same `PdfBulletinParser`, a different column layout and point-code convention.
 
 `AppConfig.waterQualityClient`'s `Auto` case (`AppConfig.scala:159`) gains two more `if` branches,
 same order-independent bounding-box-check pattern `ImaScWaterQualityClient.coversOrigin` already
@@ -228,19 +232,37 @@ per-amenity).
 
 ## 11. Open questions
 
-- **Confirm INEA's (Rio) actual current-bulletin URL pattern and table layout live**, the way
-  §4.3 verified INEMA's — not done this session; needed before `IneaRjWaterQualityClient` can be
-  built with the same confidence as Bahia's.
-- **Submit INEMA's search form** (§4.2) to check whether it returns structured HTML instead of a
-  PDF for a given campaign/coast selection — if so, HTML scraping might be simpler and more
-  robust than PDF text extraction, and should be preferred.
+- ~~Confirm INEA's (Rio) actual current-bulletin URL pattern and table layout live~~ **Resolved
+  2026-09-07.** Fetched and `pdftotext`-verified a real, current INEA bulletin: `https://www.inea
+  .rj.gov.br/wp-content/uploads/2026/06/Zona-sudoeste-e-Zona-sul-17-06-26.pdf` (Boletim N°24,
+  17/06/2026, found via WebSearch for a recent `inea.rj.gov.br/wp-content/uploads` PDF). Same
+  category of table as INEMA's — clean, text-based, four columns (`PRAIAS`, `LOCALIZAÇÃO (*)`,
+  `Ponto Coleta`, `CONAMA 274/2000` classification), point codes in INEA's own convention (e.g.
+  `BG00`, `GM00`, `PS01`) instead of INEMA's `SSA IN 100` style, and — the important part — **no
+  coordinates here either**, confirming §4.3's blocker (a curated coordinate table, not just a
+  parser) applies identically to both institutes. One real difference from INEMA:
+  **INEA has no `idcampanha`-style stable "get the current bulletin" parameter** — it publishes
+  dated, per-zone PDFs (this one covers "Zonas Sudoeste e Sul" only; Rio's other zones get their
+  own PDFs) directly as static uploads, discovered by checking INEA's own bulletin-listing page
+  (`inea.rj.gov.br/ar-agua-e-solo/balneabilidade-das-praias/`) rather than by parameterizing a URL
+  — `IneaRjWaterQualityClient` needs a "find the latest PDF for the zone(s) marola's `rio` area
+  covers" step INEMA's client doesn't, not just a different table parser.
+- ~~Submit INEMA's search form~~ **Resolved 2026-09-07.** Fetched the search form
+  (`balneabilidade.inema.ba.gov.br/index.php/relatoriodebalneabilidade/boletim`) and read its
+  actual JS handler: `$("#btnGeraBoletim").click(...)` builds a plain `GET` form submit straight
+  to `.../geraBoletim` with only `idcampanha` as a parameter — i.e. the form is a UI wrapper
+  around the exact same PDF endpoint §4.3 already found, not a separate structured-data path.
+  **No HTML alternative exists for INEMA.** PDF parsing is confirmed as the only viable mechanism,
+  not just the pragmatic pick.
 - **Curate the actual coordinate tables** (§5) — a real data-entry task against OSM/Google Maps
   for each point's free-text description, scoped to points near `site/areas.json`'s `rio`/
   `salvador` radii; not started, and the single largest remaining unknown for how much work §5
-  really is.
+  really is. Still open — this is implementation labor, not a research question, and is scoped
+  as its own task in `docs/mips/MIP-0031.tasks.md`.
 - Whether Niterói's municipal ArcGIS "Pontos de Balneabilidade" map
   (`sigeo.niteroi.rj.gov.br`) exposes a real queryable feature service — found via search, not
   fetched or verified this session, and would only cover Niterói, not all of Rio de Janeiro city.
+  Lower priority now that INEA's own bulletin PDF is confirmed workable directly.
 
 ## Appendix
 

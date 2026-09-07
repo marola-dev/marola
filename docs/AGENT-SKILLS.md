@@ -85,6 +85,24 @@ After each merge (bottom of the stack first):
 The whole loop — including how a MIP gets *accepted* and what GitHub shows for a stack — is
 written once in `docs/DEV-FLOW.md`; this section is the skill-by-skill view of it.
 
+## 2.2 Other plugins in use on the maintainer's machine
+
+Beyond superpowers, the maintainer's own `~/.claude/settings.json` (user-scope, not committed —
+these are personal tool choices, not a repo requirement the way superpowers is) has these
+enabled. Listed here so anyone reading a session transcript or a PR this repo produced knows what
+tooling might have shaped it:
+
+| Plugin | Source | What it's for |
+|---|---|---|
+| `code-review@claude-plugins-official` | Anthropic's official marketplace | `/code-review [PR#] [--comment]` / `/code-review ultra` — five-parallel-agent PR review, used on request per `docs/DEV-FLOW.md` §5. Its confidence scorer only credits repo rules it can read (`.claude/rules/*.md`, `AGENTS.md`), so review-relevant conventions stay written there, not only in prose to the agent. |
+| `frontend-design@claude-plugins-official` | Anthropic's official marketplace | Design-review passes for `site/static/` changes — the `site-frontend` in-repo skill (§1 above) is the primary tool for this repo's actual look-and-feel rules; this plugin is a secondary opinion. |
+| `heavy-usage@heavy-usage` (`heavyc-dev/heavy-usage`) | Third-party marketplace | Usage-window tracking (`/heavy-usage:usage`) feeding `/mip-solve-perpetual`'s wind-down math — see `docs/DEV-FLOW.md`'s "verified against its actual source" section for exactly what it can and can't do (soft signal only, no hard `PreToolUse` block). |
+| `portal@portal` (`spotify/portal-ai-plugins`) | Third-party marketplace, added 2026-09-07 | Spotify Portal (Backstage software-catalog) workflows — setup/search/service-briefing/diagnostics against the maintainer's own Portal instance via the Portal CLI. **Not used for marola's own code or workflow** — marola isn't cataloged in Backstage — this is general dev tooling the maintainer runs day to day, unrelated to this repo's own process. |
+
+None of these are required to work on marola — only the in-repo skills (§1) and the committed
+superpowers declaration (§2) are. A contributor without them installed loses nothing but the
+on-request review/design passes and the maintainer's personal usage dashboard.
+
 What you don't need to invoke by name: superpowers' skills trigger on phrases like "let's plan",
 "write the test first", "it's still failing" — say what you're doing and the right one loads.
 `using-git-worktrees` is optional: with one task per session, a plain branch switch is enough;

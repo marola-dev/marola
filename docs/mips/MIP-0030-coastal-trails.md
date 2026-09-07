@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted — implemented, pending merge on `mip-0030/1-coastal-trails` |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "create a MIP for adding all trails info to the rendered map (only trails nearby the ocean or a lake), decide if the fetch mechanism should be the same as IMA/SC") |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (CLI/board field only, no bot text) — no earlier-phase prerequisite is missing |
@@ -105,11 +105,10 @@ out tags geom;
 needed here because a trail is a line, not a point — the map draws its actual path, not a marker
 at its bounding-box centre, which for a multi-kilometre trail can sit nowhere near the water.
 
-**Not verified**: coverage around Rio de Janeiro and Salvador specifically (only Florianópolis was
-queried above) — §11 open question. **Not verified**: whether `out tags geom` at `RADIUS=30000`
-(the widest configured area radius, `site/areas.json`'s Florianópolis entry) stays within
-Overpass's per-query element/time budget the way `BeachFinder`'s 500-element cap does — needs a
-real run before this ships, not assumed from the smaller test above.
+**Verified at implementation time (2026-09-07, see Appendix)**: both open items above. All three
+configured areas return real trail segments at their own `site/areas.json` radius, and the widest
+radius (Florianópolis, 30km) completed in ~22s, inside Overpass's `[timeout:60]` and this repo's
+own HTTP timeout — see the Appendix for exact counts and timings.
 
 ### 4.2 Why not the IMA/SC pattern — the actual design decision this MIP was asked to make
 
@@ -202,6 +201,16 @@ instead of a point.
 Nothing here is LLM-generated: trail name, length, difficulty and surface are all OSM tags or a
 computed geometry length, shown verbatim or "no data" — same rule as every other integration.
 
+**Implementation note (2026-09-07):** §4.1's literal query text never outputs the `.beaches`/
+`.lakes` anchor sets themselves, only the trail ways filtered by them — fine for `nearBeach`
+(the caller already has named, located beaches from `BeachFinder`) but not for `nearLake`, which
+needs the lake's own name/position. The shipped query adds one line, `.lakes out center;`, to the
+same single request (still one Overpass call, not two) so a trail found only via a lake anchor can
+still be labelled. Same-named-segment merging (§8, §11) concatenates each segment's geometry and
+sums each segment's *own* length (not the length of the concatenation, which would add a spurious
+jump between two ways that don't share an endpoint) — confirmed against two real duplicate-name
+groups in the Appendix's fixture capture.
+
 ## 6. Scoring / safety impact
 
 None. Trails do not affect `Swimability.score` or any safety-relevant text — this is a purely
@@ -281,3 +290,39 @@ AI-103 §1, responsible-AI transparency: absence stated as "no data" rather than
 Raw Overpass responses from §4.1's verification queries are not committed (ephemeral live data,
 re-fetchable from the exact query text in §4.1); the query text itself is the reproducible
 artifact and is quoted verbatim above.
+
+### A.1 Live verification across all three configured areas (2026-09-07)
+
+§4.1's third query (as extended in §5's implementation note, `.lakes out center;` included), run
+live against `https://overpass-api.de/api/interpreter` at each area's own `site/areas.json`
+radius (not the 20km used for §4.1's original Florianópolis-only check):
+
+| Area | Origin | Radius | Trail ways | Unique trail names | Same-named-segment groups | Named lakes | Query time |
+|---|---|---|---|---|---|---|---|
+| floripa | -27.60,-48.48 | 30km | 21 | 11 | 2 | 14 | ~22.5s |
+| rio | -22.9878,-43.1913 | 20km | 100 | 63 | 19 | 67 | (not separately timed; well under `[timeout:60]`) |
+| salvador | -12.9777,-38.5016 | 25km | 43 | 36 | 5 | 129 | ~18.6s |
+
+All three areas return real, non-trivial trail coverage — §4.1's Florianópolis-only result was not
+an outlier. The widest configured radius (floripa, 30km) answers in ~22.5s, comfortably inside
+Overpass's own `[timeout:60]` and this repo's `HttpTimeoutSeconds = 60` client-side timeout —
+§11's "does the widest radius stay inside budget" question is answered yes. Rio has by far the
+richest trail data of the three (100 ways, 63 names, 19 real duplicate-name groups — Pão de Açúcar/
+Corcovado's dense hiking-trail network), and is also the only one of the three live captures whose
+`sac_scale` tag is populated on many trails (`hiking`, `mountain_hiking`, `demanding_mountain_hiking`
+all observed) — floripa and salvador's captures carried no `sac_scale` at all in this run,
+consistent with §8's "trail data quality varies with who mapped it," not a bug in the query.
+
+### A.2 `TrailFinderSpec`'s fixture
+
+`core/src/test/resources/fixtures/overpass-trails-floripa.json` is §4.1's exact third query
+(`[out:json][timeout:60]; ... around:20000,-27.6733,-48.4700 ...`, plus `.lakes out center;`),
+captured live against the real endpoint on 2026-09-07 — not fabricated. It returns 20 named trail
+`way`s / 10 unique names, including both of the real same-named-segment merge cases named in §8
+(`Caminho da Costa da Lagoa ao Canto dos Araçás` ×8 segments, `Trilha Parque Estadual do Rio
+Vermelho` ×4 segments) and the exact trail named in §7's "Done" example
+(`Trilha da Lagoinha do Leste`, single segment, 2.11km). This particular capture carries no
+`sac_scale` tag on any trail (difficulty absence is exercised; presence is not, in the live
+fixture) but does carry one real `surface=paving_stones` tag — `TrailFinderSpec` covers the
+difficulty-presence case with a small hand-written synthetic Overpass response instead, kept
+clearly separate from the live-fixture-based tests.

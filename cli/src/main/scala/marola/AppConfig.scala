@@ -2,7 +2,12 @@ package marola
 
 import kyo.*
 
-import marola.beaches.RouteFinder
+import marola.beaches.{
+  AccessibilityClient,
+  NoopAccessibilityClient,
+  OverpassAccessibilityClient,
+  RouteFinder
+}
 import marola.knowledge.{FileKnowledgeStore, OceanQa, OllamaEmbedder}
 import marola.ledger.{MlflowRunLedger, RunLedger}
 import marola.llm.{AzureFoundryLlmClient, LlmClient, LocalLlmClient, TracedLlmClient}
@@ -10,7 +15,12 @@ import marola.model.Coordinates
 import marola.observability.{AzureMonitorTracing, MlflowTracing, Tracing}
 import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore, SightingStore}
 import marola.vision.{AzureVisionClient, LocalVisionClient, VisionClient}
-import marola.water.{ImaScWaterQualityClient, WaterQualityClient}
+import marola.water.{
+  ImaScWaterQualityClient,
+  IneaRjWaterQualityClient,
+  InemaBaWaterQualityClient,
+  WaterQualityClient
+}
 
 /**
  * Which backend a pluggable integration uses — `Local` is always the zero-Azure default. A real
@@ -31,17 +41,34 @@ object Provider:
 /**
  * Bathing-water data is regional, so its "provider" is an agency, not local-vs-Azure (MIP-0001
  * §5.2: there is no Azure water-quality service, and none is invented). `Auto` (default) picks
- * IMA/SC when the origin is inside Santa Catarina and `None` elsewhere, printing which.
+ * IMA/SC inside Santa Catarina, INEMA/BA inside Bahia, INEA/RJ inside Rio de Janeiro state, and
+ * `None` elsewhere (MIP-0031 §5), printing which.
  */
 enum WaterProvider derives CanEqual:
-  case Auto, ImaSc, None
+  case Auto, ImaSc, InemaBa, IneaRj, None
 
 object WaterProvider:
   def fromEnv(value: Option[String]): WaterProvider =
     value.map(_.trim.toLowerCase) match
-      case Some("ima-sc") | Some("ima_sc") | Some("imasc") => ImaSc
-      case Some("none") | Some("off")                      => None
-      case _                                               => Auto
+      case Some("ima-sc") | Some("ima_sc") | Some("imasc")       => ImaSc
+      case Some("inema-ba") | Some("inema_ba") | Some("inemaba") => InemaBa
+      case Some("inea-rj") | Some("inea_rj") | Some("inearj")    => IneaRj
+      case Some("none") | Some("off")                            => None
+      case _                                                     => Auto
+
+/**
+ * MIP-0021 §5: `Overpass` (default) is the only real source — there is no Azure alternative for OSM
+ * amenities — so this is a simple on/off switch, not a `Provider`-shaped local-vs-Azure choice.
+ * `Off` skips the extra Overpass call entirely (useful for `just benchmark`).
+ */
+enum FacilitiesProvider derives CanEqual:
+  case Overpass, Off
+
+object FacilitiesProvider:
+  def fromEnv(value: Option[String]): FacilitiesProvider =
+    value.map(_.trim.toLowerCase) match
+      case Some("off") => Off
+      case _           => Overpass
 
 /**
  * Which `Tracing` backend `Main` wraps the pipeline in — `MAROLA_TRACES=off|mlflow|azure` (MIP-0010
@@ -85,6 +112,7 @@ final case class AppConfig(
     originLat: Option[Double],
     originLon: Option[Double],
     waterQualityProvider: WaterProvider,
+    facilitiesProvider: FacilitiesProvider,
     localEmbedModel: String,
     knowledgeDir: String,
     knowledgeIndexPath: String,
@@ -141,6 +169,7 @@ final case class AppConfig(
       s"origin=${origin.map(o => f"${o.lat}%.4f,${o.lon}%.4f").getOrElse("auto")}",
       f"radius=${beachSearchRadiusKm}%.0fkm",
       s"water=$waterQualityProvider",
+      s"facilities=$facilitiesProvider",
       s"maps=${secret(azureMapsSubscriptionKey)}",
       s"sightings=$sightingStoreProvider(${
           if sightingStoreProvider == Provider.Local then localSightingStorePath
@@ -155,14 +184,33 @@ final case class AppConfig(
       s"traces=$tracesBackend${if traceContent then "(content)" else ""}"
     ).mkString(" ")
 
-  /** MIP-0001 §5.2. `None` = no data, which `Swimability.waterVerdict` scores as nothing. */
+  /**
+   * MIP-0001 §5.2, extended MIP-0031 §5. `None` = no data, which `Swimability.waterVerdict` scores
+   * as nothing.
+   */
   def waterQualityClient(origin: Coordinates): Option[WaterQualityClient] =
     waterQualityProvider match
-      case WaterProvider.ImaSc => Some(ImaScWaterQualityClient())
-      case WaterProvider.None  => scala.None
+      case WaterProvider.ImaSc   => Some(ImaScWaterQualityClient())
+      case WaterProvider.InemaBa => Some(InemaBaWaterQualityClient())
+      case WaterProvider.IneaRj  => Some(IneaRjWaterQualityClient())
+      case WaterProvider.None    => scala.None
       case WaterProvider.Auto =>
         if ImaScWaterQualityClient.coversOrigin(origin) then Some(ImaScWaterQualityClient())
+        else if InemaBaWaterQualityClient.coversOrigin(origin) then
+          Some(InemaBaWaterQualityClient())
+        else if IneaRjWaterQualityClient.coversOrigin(origin) then Some(IneaRjWaterQualityClient())
         else scala.None
+
+  /**
+   * MIP-0021 §5: never `None` — `Off` still needs a client, `NoopAccessibilityClient`, so
+   * `Recommender`'s `Some(...)` call site doesn't have to special-case "off" separately from "the
+   * real client returned no data." `Overpass` (default) reuses the same public endpoint
+   * `BeachFinder` already talks to.
+   */
+  def accessibilityClient: AccessibilityClient =
+    facilitiesProvider match
+      case FacilitiesProvider.Overpass => OverpassAccessibilityClient()
+      case FacilitiesProvider.Off      => NoopAccessibilityClient()
 
   /**
    * Local-only RAG (`FUTURE-WORK.md` §9.1, first cut): the corpus under `knowledgeDir`, embedded by
@@ -281,6 +329,7 @@ object AppConfig:
       originLat = sys.env.get("MAROLA_ORIGIN_LAT").flatMap(_.toDoubleOption),
       originLon = sys.env.get("MAROLA_ORIGIN_LON").flatMap(_.toDoubleOption),
       waterQualityProvider = WaterProvider.fromEnv(sys.env.get("MAROLA_WATER_QUALITY_PROVIDER")),
+      facilitiesProvider = FacilitiesProvider.fromEnv(sys.env.get("MAROLA_FACILITIES")),
       localEmbedModel = sys.env.getOrElse("MAROLA_LOCAL_EMBED_MODEL", OllamaEmbedder.DefaultModel),
       knowledgeDir = sys.env.getOrElse("MAROLA_KNOWLEDGE_DIR", FileKnowledgeStore.DefaultCorpusDir),
       knowledgeIndexPath =

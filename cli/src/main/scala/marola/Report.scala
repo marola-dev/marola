@@ -3,10 +3,12 @@ package marola
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+import marola.beaches.{Facilities, Facility}
 import marola.knowledge.OceanQa
 import marola.lore.{LoreEntry, SeaLore}
 import marola.model.{BestHour, Coordinates, WhaleSightingLikelihood}
 import marola.scoring.Swimability
+import marola.trails.Trail
 import marola.water.BathingCondition
 
 /**
@@ -27,6 +29,30 @@ object Report:
   def waterSummary(best: BestHour): String =
     Swimability.waterVerdict(best.waterQuality, todayFor(best)).summary
 
+  /**
+   * MIP-0021 §3: only amenities OSM returned are named, folded into "no data" otherwise — never "no
+   * parking" / "no lifeguard" for a facility OSM simply has no coverage for. `None` when `f.counts`
+   * is empty (`Facilities.NoData`), else the counts in `Facility`'s declared order.
+   */
+  def facilitiesLine(f: Facilities): Option[String] =
+    if f.counts.isEmpty then None
+    else
+      val order = List(Facility.Parking, Facility.Toilets, Facility.Shower, Facility.Lifeguard)
+      val parts = order.flatMap(fac => f.counts.get(fac).map(n => facilityLabel(fac, n)))
+      if parts.isEmpty then None else Some(parts.mkString(" · "))
+
+  private def facilityLabel(f: Facility, n: Int): String = f match
+    case Facility.Parking => s"parking nearby: $n"
+    case Facility.Toilets => s"toilets: $n"
+    case Facility.Shower  => s"showers: $n"
+    // Binary, not a count: OSM's lifeguard posts carry no season (MIP-0021 §8), so "yes" says a
+    // post exists, never "on duty".
+    case Facility.Lifeguard => "lifeguard post: yes"
+
+  /** " · parking nearby: 3 · lifeguard post: yes", or " · facilities: no data" (MIP-0021 §3). */
+  private def facilitiesSuffix(best: BestHour): String =
+    facilitiesLine(best.facilities).map(s => s"  · $s").getOrElse("  · facilities: no data")
+
   /** The pre-MIP one-liner (`--brief`). */
   def briefLine(rank: Int, best: BestHour): String =
     val when = best.hour.time.format(hourFormat)
@@ -37,7 +63,7 @@ object Report:
     val whale =
       if best.whaleSightingLikelihood == WhaleSightingLikelihood.Low then ""
       else s"  |  whale sighting: ${best.whaleSightingLikelihood}"
-    f"${rank}%2d. [${best.score}%3d/100] ${best.beach.name}%-22s ($dist)  best at $when  |  $temp, $wind  |  jellyfish: ${best.jellyfishRisk}$whale  |  $notes"
+    f"${rank}%2d. [${best.score}%3d/100] ${best.beach.name}%-22s ($dist)  best at $when  |  $temp, $wind  |  jellyfish: ${best.jellyfishRisk}$whale  |  $notes${facilitiesSuffix(best)}"
 
   /** Ranked-list line with the water column. */
   def line(rank: Int, best: BestHour): String =
@@ -53,7 +79,7 @@ object Report:
     val verdict = Swimability.waterVerdict(best.waterQuality, todayFor(best))
     val inline = best.notes.filterNot(n => verdict.note.contains(n))
     val notes = if inline.isEmpty then "" else s"  |  ${inline.mkString(", ")}"
-    f"${rank}%2d. [${best.score}%3d/100] ${best.beach.name}%-22s (${best.beach.distanceKm}%.1fkm)  $when  |  water: ${verdict.summary}  |  $temp, $wind, $waves  |  jellyfish: ${best.jellyfishRisk}$whale$notes"
+    f"${rank}%2d. [${best.score}%3d/100] ${best.beach.name}%-22s (${best.beach.distanceKm}%.1fkm)  $when  |  water: ${verdict.summary}  |  $temp, $wind, $waves  |  jellyfish: ${best.jellyfishRisk}$whale$notes${facilitiesSuffix(best)}"
 
   def detail(best: BestHour): String =
     val h = best.hour
@@ -165,6 +191,22 @@ object Report:
     val body =
       (a.text.trim +: (if sources.isEmpty then Nil else "Sources:" +: sources)).mkString("\n")
     marola.knowledge.SafetyFooter.append(body, a.safety)
+
+  /**
+   * MIP-0030 §3: the nearest trail whose `nearBeach` names this beach, or `None`. `trails` is
+   * whatever `TrailFinder.nearby` returned for the run's origin — every trail in it is already
+   * within `TrailFinder.NearRadiusKm` of *some* beach or lake, so filtering by name here (rather
+   * than re-checking the distance) is enough.
+   */
+  def nearestTrail(beachName: String, trails: List[Trail]): Option[Trail] =
+    trails.filter(_.nearBeach.exists(_._1 == beachName)).minByOption(_.nearBeach.get._2)
+
+  /** MIP-0030 §3: one line per beach — the trail's own length/difficulty, never a guess. */
+  def trailsLine(trail: Option[Trail]): String = trail match
+    case Some(t) =>
+      val difficulty = t.difficulty.getOrElse("no difficulty data")
+      f"  trails nearby: ${t.name} (${t.lengthKm}%.1fkm, $difficulty)"
+    case None => "  trails: no data"
 
   def compass(deg: Double): String =
     val dirs = Vector("N", "NE", "E", "SE", "S", "SW", "W", "NW")

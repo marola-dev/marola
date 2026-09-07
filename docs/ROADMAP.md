@@ -26,7 +26,14 @@ still Draft. `AGENTS.md`'s phase discipline gates every Azure-live step behind i
 Azure-side domains (§2 below) cannot be *built for real* until it ships; they can be designed and
 built local-first now. `docs/AI-500-MAPPING.md` names no MIP that targets its domains directly.
 
-## 2. P0 — bugs found today (fix before anything new)
+## 2. P0 — before anything new
+
+Two P0 blocks, and they are not the same kind of thing: **2a** is the bug backlog (fix it), **2b**
+is the one shipping goal that outranks every new MIP (do it). Section numbers below 2 are left
+alone on purpose — `MIP-0037`'s index row and others cite this file by section ("ROADMAP.md §7
+K8"), so renumbering would break those pointers.
+
+### 2a. Bugs found today
 
 Ten findings; every one verified by execution or inspection before it was filed. Bodies in
 `.tmp/issues/` (gitignored) in the `bug_report.yml` shape; `gh issue create` commands in the
@@ -49,6 +56,33 @@ Two lessons that outlive the fixes: (a) a test that can't distinguish "works" fr
 isn't a test — `< /dev/null → 0 bytes` passed while the server was dead; the reviewer's piped
 handshake is now the reference check for anything stdio; (b) safety gates get adversarial
 self-tests (path prefixes, wrappers, hostile env values), not happy-path ones.
+
+### 2b. Publish marola-sea to Hugging Face — after every pending merge
+
+**P0. The gate is the merge queue, not the calendar**: this starts once every open PR has landed,
+because the model that gets published has to be built from a main that already contains the
+MIP-0025 dataset and training work. Merging first also keeps the model card honest — it cites
+`docs/benchmarks/` numbers, and those move as the finetune PRs land.
+
+What it is: MIP-0025 §5.1's export chain, task 6 (`hf-publish`) of
+[`MIP-0025.tasks.md`](./mips/MIP-0025.tasks.md) — `peft` merge → `convert_hf_to_gguf.py` →
+quantize (Q4_K_M + Q8_0) → `CHECKSUMS` → Hugging Face `upload_folder` with a model card carrying
+the base model, the training-data description, the `docs/benchmarks/` numbers and the IMPRÓPRIA
+safety note from §6 verbatim.
+
+Acceptance is MIP-0025 §7's own, unchanged and deliberately end-to-end: `ollama run
+hf.co/<user>/<repo>` pulls and runs the model on a machine that never had it locally. Anything
+short of that is tooling, not a publish.
+
+Two things to check before starting, both real today:
+
+- The tooling already exists on an open PR — `finetune/publish_hf.py`, on
+  `mip-0025/2-hf-publish-tooling` (**#206**). Its PR title still reads "mip-0025 task 1:
+  tier2-baseline-evidence", which is stale; the branch's actual diff is `publish_hf.py` +
+  `finetune/README.md` + `requirements.txt` + `justfile`. Retitle it when it comes up for merge.
+- The branch numbers in `mip-0025/N-*` do **not** line up with the task numbers in
+  `MIP-0025.tasks.md` — `hf-publish` is task 6 there but branch 2 here. Read the task list as
+  authoritative for order and the branch name as a label only.
 
 ## 3. Now (this week) — existing MIPs, cheapest first
 

@@ -57,7 +57,7 @@ decoration.
 
 | Skill | marola artifact | Status |
 |---|---|---|
-| Text analysis / entity extraction | Not built directly — the closest analog is `Reviewer`'s JSON-extraction-from-prose fallback (`extractJsonObject`), which is a narrow, single-purpose version of the same problem | **Partial gap.** See "Ocean-knowledge grounding" idea below for where a real text-analysis use case (extracting structured info from ocean-safety bulletins/papers) would live |
+| Text analysis / entity extraction | Not built directly — the closest analog is `Reviewer`'s JSON-extraction-from-prose fallback (`extractJsonObject`), which is a narrow, single-purpose version of the same problem | **Partial gap** — proposed: MIP-0045 (§5.1/§5.4 — tokenisation, IDF weighting and cosine ranking in `core`, local, no Azure service). See "Ocean-knowledge grounding" idea below for where a real text-analysis use case (extracting structured info from ocean-safety bulletins/papers) would live |
 | Azure AI Language service | Not integrated | **Gap** — no current product need identified; would be a good fit for the RAG/grounding work below (summarizing/classifying source documents before they go into a retrieval index) |
 | Translation | Not built, not currently a product need | Not planned |
 

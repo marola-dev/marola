@@ -4,10 +4,12 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.{LocalDate, OffsetDateTime}
 
+import marola.beaches.{Facilities, Facility}
 import marola.json.JsonValue
 import marola.lore.{LoreEntry, LoreKind}
 import marola.model.{BestHour, HourlyConditions}
 import marola.scoring.Swimability
+import marola.trails.Trail
 import marola.water.{BathingCondition, WaterQuality}
 
 /**
@@ -45,7 +47,10 @@ object Board:
       generatedAt: OffsetDateTime,
       scored: List[BestHour],
       lore: Option[LoreEntry],
-      sources: Sources
+      sources: Sources,
+      // MIP-0030: named trails near a beach/lake for this area — same for both days of a build
+      // (a trail doesn't change per day), so defaulted empty for every call site that predates it.
+      trails: List[Trail] = Nil
   ): JsonValue =
     val perBeach = scored
       .filter(r => r.hour.time.toLocalDate.isEqual(day) && r.hour.isDaylight.contains(true))
@@ -69,7 +74,8 @@ object Board:
         "water" -> optStr(sources.water)
       ),
       "lore" -> lore.map(loreJson).getOrElse(JsonValue.JNull),
-      "beaches" -> JsonValue.arr(perBeach*)
+      "beaches" -> JsonValue.arr(perBeach*),
+      "trails" -> JsonValue.arr(trails.sortBy(_.name).map(trailJson)*)
     )
 
   /** (best score, name, json) for one beach's daylight hours of one day, chronological. */
@@ -97,6 +103,10 @@ object Board:
         )*
       ),
       "sea" -> seaJson(best.hour),
+      // MIP-0021: absent keys = no data for that facility, never a zeroed count. `{}` (never
+      // omitted) when OSM has nothing near this beach at all — an older board built before this
+      // MIP still validates (§7): `facilities` is optional in the schema, not required.
+      "facilities" -> facilitiesJson(best.facilities),
       "jellyfish" -> JsonValue.str(best.jellyfishRisk.toString),
       "whales" -> JsonValue.obj(
         "now" -> JsonValue.str(best.whaleSightingLikelihood.toString),
@@ -170,6 +180,46 @@ object Board:
       "source" -> optStr(water.map(_.source)),
       "points" -> JsonValue.arr(points*)
     )
+
+  /**
+   * `{"parking": 3, "toilets": 1, "lifeguard": 1}` — facilities OSM has no data for are absent
+   * keys, never a `0` (MIP-0021 §5: OSM cannot say "there is none"). `{}` for `Facilities.NoData`.
+   */
+  private def facilitiesJson(f: Facilities): JsonValue =
+    JsonValue.obj(f.counts.toList.map {
+      case (fac, n) => facilityKey(fac) -> JsonValue.num(n.toDouble)
+    }*)
+
+  private def facilityKey(f: Facility): String = f match
+    case Facility.Parking   => "parking"
+    case Facility.Toilets   => "toilets"
+    case Facility.Shower    => "shower"
+    case Facility.Lifeguard => "lifeguard"
+
+  /**
+   * MIP-0030 §5: verbatim OSM facts or computed geometry length only, `difficulty`/`surface` `null`
+   * (never guessed) when OSM has no `sac_scale`/`surface` tag for this trail.
+   */
+  private def trailJson(t: Trail): JsonValue =
+    JsonValue.obj(
+      "name" -> JsonValue.str(t.name),
+      "length_km" -> JsonValue.num(t.lengthKm),
+      "difficulty" -> optStr(t.difficulty),
+      "surface" -> optStr(t.surface),
+      "geometry" -> JsonValue.arr(
+        t.geometry.map(c => JsonValue.arr(JsonValue.num(c.lat), JsonValue.num(c.lon)))*
+      ),
+      "near_beach" -> nearAnchorJson(t.nearBeach),
+      "near_lake" -> nearAnchorJson(t.nearLake)
+    )
+
+  private def nearAnchorJson(near: Option[(String, Double)]): JsonValue =
+    near
+      .map {
+        case (name, distanceKm) =>
+          JsonValue.obj("name" -> JsonValue.str(name), "distance_km" -> JsonValue.num(distanceKm))
+      }
+      .getOrElse(JsonValue.JNull)
 
   private def loreJson(e: LoreEntry): JsonValue =
     JsonValue.obj(

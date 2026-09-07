@@ -115,5 +115,9 @@ final case class BestHour(
     // the MCP server can print them without re-fetching.
     waterQuality: Option[marola.water.WaterQuality] = None,
     dayTides: List[marola.conditions.TideEvent] = Nil,
-    whalePeak: Option[HourlyConditions] = None
+    whalePeak: Option[HourlyConditions] = None,
+    // MIP-0021: OSM accessibility amenities within 300m of this beach, computed once per beach in
+    // `Recommender.scoreDay`, `Facilities.NoData` (never absent) when no provider is configured or
+    // OSM has nothing nearby.
+    facilities: marola.beaches.Facilities = marola.beaches.Facilities.NoData
 )

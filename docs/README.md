@@ -23,6 +23,7 @@ big enough for a Marola Improvement Proposal (`mips/`, the `mip` skill) and wher
 | [`AGENT-SKILLS.md`](./AGENT-SKILLS.md) | how-to | §3 four skill candidates → MIP-0011 task 8 |
 | [`FABLE_REVIEW.md`](./FABLE_REVIEW.md) | review | D1 managed identity for Cosmos/Vision/Maps — **candidate MIP** (Phase 2 prerequisite; small but security-relevant); §3 jail notes → MIP-0011 task 5 |
 | [`SELF-DOCUMENTING.md`](./SELF-DOCUMENTING.md) | reference | the research behind **MIP-0018** (weekly post-planner + multi-platform exporter) |
+| [`AWESOME-AGENTIC-ENGINEERING.md`](./AWESOME-AGENTIC-ENGINEERING.md) | reference | **MIP-0043** (Draft) — the doc itself and its human-gated `scripts/awesome_agentic_digest.py` update routine; no further MIP material inside |
 | [`benchmarks/`](./benchmarks/) | reference | the runs MIP-0010 would move into a ledger (Markdown stays canonical in v1) |
 | [`mips/`](./mips/README.md) | — | the proposals themselves, with status |
 

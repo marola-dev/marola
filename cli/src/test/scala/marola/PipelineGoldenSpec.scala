@@ -7,8 +7,9 @@ import scala.collection.mutable.ListBuffer
 
 import kyo.*
 
+import marola.beaches.{AccessibilityClient, Facilities}
 import marola.http.Http
-import marola.model.Coordinates
+import marola.model.{Beach, Coordinates}
 import marola.water.{ImaScWaterQualityClient, WaterQualityMatcher}
 
 /**
@@ -188,6 +189,29 @@ class PipelineGoldenSpec extends munit.FunSuite:
       !verdict.veto && verdict.delta == 0 && verdict.summary.startsWith("stale"),
       verdict.toString
     )
+  }
+
+  /** MIP-0021 §5: an `AccessibilityClient` failure, hand-written (no mocking library). */
+  final class Throwing extends AccessibilityClient:
+    def near(beaches: List[Beach], radiusM: Int = 300): Map[String, Facilities] < Sync =
+      Sync.defer(throw new RuntimeException("Overpass is down"))
+
+  test(
+    "golden: an Overpass-facilities outage degrades to 'no data' for every beach, never a failure"
+  ) {
+    val results = Http.withTransport(Fixtures.campeche()) {
+      Sync.Unsafe.evalOrThrow(
+        Recommender.bestPerBeachTomorrow(
+          origin,
+          waterQuality = Some(ImaScWaterQualityClient()),
+          today = fixedToday,
+          accessibility = Some(Throwing())
+        )
+      )
+    }
+    assert(results.nonEmpty)
+    assert(results.forall(_.facilities == Facilities.NoData))
+    results.foreach(r => assertEquals(Report.facilitiesLine(r.facilities), None))
   }
 
 end PipelineGoldenSpec

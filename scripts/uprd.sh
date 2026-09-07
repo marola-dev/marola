@@ -36,6 +36,8 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/uprd_title.sh
 source "$script_dir/lib/uprd_title.sh"
+# shellcheck source=scripts/lib/mip_ref.sh
+source "$script_dir/lib/mip_ref.sh"
 
 dry_run=0; body_file=""; pr_arg=""
 for arg in "$@"; do
@@ -103,8 +105,9 @@ range="origin/$base..$head_ref"
 # "exit code 141" on a branch whose commit range included a merge commit. `|| true` is safe here
 # because an empty `first_subject` already degrades correctly a few lines down.
 first_subject="$(git log --reverse --format=%s "$range" 2>/dev/null | head -1 || true)"
+title_mip_ref="$(detect_mip_ref "$branch" "$range")"
 title=""
-[ -n "$first_subject" ] && title="$(cap_title "$first_subject")"
+[ -n "$first_subject" ] && title="$(cap_title "$first_subject" "$title_mip_ref")"
 
 generate_summary() {
   local first_sha body
@@ -139,22 +142,9 @@ PY
 }
 
 generate_mip() {
-  local mip_ref="" mip_path
-  if [[ "$branch" =~ [Mm][Ii][Pp]-([0-9]{4}) ]]; then
-    mip_ref="MIP-${BASH_REMATCH[1]}"
-  else
-    # Subjects only, not bodies: a body can mention another MIP in passing (a cross-reference,
-    # an example command) without this commit being scoped to it.
-    mip_ref="$(git log --format='%s' "$range" 2>/dev/null \
-      | { grep -ioE '^MIP-[0-9]{4}' || true; } | head -1 | tr '[:lower:]' '[:upper:]')"
-  fi
-  if [ -z "$mip_ref" ]; then
-    # A branch that adds or edits one MIP document is scoped to it (docs/mip-0014-... without
-    # the number in a subject, say).
-    mip_ref="$(git diff --name-only "$range" -- docs/mips 2>/dev/null \
-      | { grep -oE 'MIP-[0-9]{4}' || true; } | sort -u | { [ "$(wc -l)" -eq 1 ] && cat || true; })"
-    [ -n "$mip_ref" ] && mip_ref="$(git diff --name-only "$range" -- docs/mips | grep -oE 'MIP-[0-9]{4}' | head -1)"
-  fi
+  # Same detection already used for the PR title (scripts/lib/mip_ref.sh) — one source of truth,
+  # so the title and this table cell can never disagree on which MIP a branch is scoped to.
+  local mip_ref="$title_mip_ref" mip_path
   if [ -z "$mip_ref" ]; then
     echo "none — not MIP-scoped"
     return

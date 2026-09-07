@@ -5,10 +5,12 @@ import java.time.{LocalDate, OffsetDateTime, ZoneOffset}
 
 import kyo.*
 
+import marola.beaches.{AccessibilityClient, Facilities, Facility}
 import marola.http.Http
 import marola.json.JsonValue
 import marola.lore.SeaLore
-import marola.model.{BestHour, Coordinates}
+import marola.model.{Beach, BestHour, Coordinates}
+import marola.trails.Trail
 import marola.water.ImaScWaterQualityClient
 import marola.{Fixtures, Recommender, Report}
 
@@ -200,6 +202,131 @@ class BoardSpec extends munit.FunSuite:
         "\"wind_level\":\"gale\""
       )
     assert(SchemaCheck.validate(schema, JsonValue.parse(bad)).exists(_.contains("not in enum")))
+  }
+
+  /**
+   * MIP-0021 §5/§7: `Facilities` per beach, and the board's `facilities` object built from it.
+   * `Fixed` is a hand-written double (no mocking library, per `.claude/rules/scala.md`), not the
+   * real `OverpassAccessibilityClient` — network parsing has its own real-fixture coverage in
+   * `marola.beaches.AccessibilitySpec`.
+   */
+  final class Fixed(byBeach: Map[String, Facilities]) extends AccessibilityClient:
+    def near(beaches: List[Beach], radiusM: Int = 300): Map[String, Facilities] < Sync =
+      beaches.map(b => b.name -> byBeach.getOrElse(b.name, Facilities.NoData)).toMap
+
+  private lazy val scoredWithFacilities: List[BestHour] =
+    Http.withTransport(Fixtures.campeche()) {
+      Sync.Unsafe.evalOrThrow(
+        Recommender.scoreDays(
+          origin,
+          radiusKm = 15.0,
+          waterQuality = Some(ImaScWaterQualityClient()),
+          today = _ => today,
+          days = 2,
+          accessibility = Some(
+            Fixed(
+              Map(
+                "Praia do Campeche" -> Facilities(
+                  Map(Facility.Parking -> 3, Facility.Lifeguard -> 1)
+                )
+              )
+            )
+          )
+        )
+      )
+    }
+
+  test(
+    "board: facilities omits absent facilities and OSM-absent beaches read '{}', not a zeroed count"
+  ) {
+    val b = Board.build(
+      "floripa",
+      tomorrow,
+      today,
+      generatedAt,
+      scoredWithFacilities,
+      SeaLore.pick(SeaLore.loadDefault(), tomorrow, "floripa", SeaLore.regionTagsFor(origin)),
+      sources
+    )
+    val campecheFacilities = beach(b, "Praia do Campeche")("facilities")
+    assertEquals(campecheFacilities("parking").num, Some(3.0))
+    assertEquals(campecheFacilities("lifeguard").num, Some(1.0))
+    assertEquals(campecheFacilities("toilets"), JsonValue.JNull) // absent key = no data, never 0
+    assertEquals(campecheFacilities("shower"), JsonValue.JNull)
+    val rioTavares = beach(b, "Praia do Rio Tavares")("facilities")
+    assertEquals(rioTavares, JsonValue.obj())
+    assertEquals(
+      SchemaCheck.validate(JsonValue.parse(Files.readString(BoardSpec.schemaPath)), b),
+      Nil
+    )
+  }
+
+  test("board: schema accepts a board with and without the optional facilities field") {
+    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    val b = Board.build(
+      "floripa",
+      tomorrow,
+      today,
+      generatedAt,
+      scoredWithFacilities,
+      SeaLore.pick(SeaLore.loadDefault(), tomorrow, "floripa", SeaLore.regionTagsFor(origin)),
+      sources
+    )
+    assertEquals(SchemaCheck.validate(schema, b), Nil)
+    def strip(v: JsonValue): JsonValue = v match
+      case JsonValue.JObject(fields) =>
+        JsonValue.JObject((fields - "facilities").map { case (k, x) => k -> strip(x) })
+      case JsonValue.JArray(items) => JsonValue.JArray(items.map(strip))
+      case other                   => other
+    val old = strip(b)
+    assert(old.render != b.render, "strip must have removed something")
+    assertEquals(SchemaCheck.validate(schema, old), Nil)
+  }
+
+  test("board: trails is empty by default, and schema still accepts an empty array (MIP-0030)") {
+    val b = board(tomorrow)
+    assertEquals(b("trails").arr, Vector.empty)
+    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    assertEquals(SchemaCheck.validate(schema, b), Nil)
+  }
+
+  test(
+    "board: a trail serializes verbatim OSM facts, geometry, and near-anchor distances (MIP-0030)"
+  ) {
+    val trail = Trail(
+      name = "Trilha da Lagoinha do Leste",
+      lengthKm = 2.1149,
+      difficulty = None,
+      surface = Some("paving_stones"),
+      geometry = List(Coordinates(-27.7910, -48.4890), Coordinates(-27.7925, -48.4871)),
+      nearBeach = Some(("Praia do Campeche", 0.42)),
+      nearLake = None
+    )
+    val b = Board.build(
+      "floripa",
+      tomorrow,
+      today,
+      generatedAt,
+      scored,
+      None,
+      sources,
+      trails = List(trail)
+    )
+    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    assertEquals(SchemaCheck.validate(schema, b), Nil)
+    val t = b("trails").arr.head
+    assertEquals(t("name").str, Some("Trilha da Lagoinha do Leste"))
+    assertEquals(t("length_km").num, Some(2.1149))
+    assertEquals(t("difficulty"), JsonValue.JNull)
+    assertEquals(t("surface").str, Some("paving_stones"))
+    assertEquals(t("geometry").arr.size, 2)
+    assertEquals(
+      t("geometry").arr.head.arr.flatMap(_.num).toList,
+      List(-27.7910, -48.4890)
+    )
+    assertEquals(t("near_beach")("name").str, Some("Praia do Campeche"))
+    assertEquals(t("near_beach")("distance_km").num, Some(0.42))
+    assertEquals(t("near_lake"), JsonValue.JNull)
   }
 
 end BoardSpec
