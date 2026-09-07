@@ -117,6 +117,23 @@
             # surfaced once CI ran it.
             pkgs.actionlint
 
+            # The self-hosted GitHub Actions runner, for
+            # .github/workflows/marola-sea-publish.yml. That job is pinned to
+            # `runs-on: [self-hosted, marola-sea]` because it downloads gigabytes of weights, burns
+            # CPU on a training run and needs a Hugging Face token — none of which belongs on
+            # shared infrastructure. Having the runner here means registering it is a `nix develop`
+            # away rather than a curl-a-tarball step, and it keeps the runner version visible in
+            # the flake lock like every other tool.
+            #
+            # Setup is in that workflow's header; the short version, from the repo root:
+            #   mkdir -p ~/.marola-runner && cd ~/.marola-runner
+            #   config.sh --url https://github.com/h0ffmann/marola --token <from repo Settings> \
+            #     --labels marola-sea --name $(hostname)
+            #   run.sh                      # or: svc.sh install && svc.sh start
+            # The `marola-sea` label is what keeps this specific: only a workflow asking for that
+            # label lands here, every other workflow stays on GitHub's hosted runners.
+            pkgs.github-runner
+
             # actionlint shells out to shellcheck to lint the `run:` scripts inside workflow
             # steps — without it, actionlint still exits 0 locally and a shellcheck-only finding
             # (e.g. SC2015) only surfaces once CI runs it. Same failure mode as actionlint above.
