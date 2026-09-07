@@ -35,6 +35,7 @@
       "Bash(git diff*)",
       "Bash(git log*)",
       "Bash(git fetch*)",
+      "Bash(git rev-parse*)",
       "Bash(javap*)",
       "Bash(jar tf*)",
       "Bash(unzip -l*)",
@@ -50,7 +51,10 @@
       "Read(**/*.pem)",
       "Read(**/*.key)",
       "Bash(gh pr merge*)",
-      "Bash(gh pr close*)"
+      "Bash(gh pr close*)",
+      "Bash(gh stack merge*)",
+      "Bash(gh stack unstack*)",
+      "Bash(gh stack delete*)"
     ]
   },
   "hooks": {

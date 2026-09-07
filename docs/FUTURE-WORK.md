@@ -402,7 +402,9 @@ checkbox exercises.
 > **Built (first cut):** `docs/mips/MIP-0001-water-quality-and-sea-lore.md` — local RAG over
 > `knowledge/` with citations (`ARCHITECTURE.md` §5h), the sourced sea-lore paragraph, and a
 > fine-tuning scaffold under `finetune/` (Tier 1 built, Tier 2 written-not-run). Steps 1-3 below
-> are now real; step 4 (fine-tuning) has its recipe but no evaluation yet.
+> are now real; step 4 (fine-tuning) has its recipe but no evaluation yet. The *retrieval* half is
+> revisited in `docs/mips/MIP-0045-nlp-and-parsing-over-llm.md` §5.1, which proposes a lexical
+> (TF-IDF) `KnowledgeStore` as the local default in place of the per-question embedding call.
 
 **The pitch:** today, if a user asks "what should I do if I get stung by a jellyfish here," marola
 has nothing — it's not a question `Recommender`'s pipeline answers at all. A grounded knowledge base

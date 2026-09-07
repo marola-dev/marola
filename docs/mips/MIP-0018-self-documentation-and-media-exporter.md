@@ -237,6 +237,10 @@ architecture, and doesn't map to an AI-103 or AI-500 domain row.
 - **What is the blog repo, technically?** (Hugo/Jekyll/Astro/11ty static site, Next.js/MDX app, or
   something else.) Determines §5.3's blog-export frontmatter shape and whether Ghost's Admin API
   is even relevant. Needs a human answer before §5.3/§5.4 can be implemented for real, not guessed.
+  **See also `docs/mips/MIP-0044-site-sections.md` §5.3**, which proposes answering this with
+  "marola.dev itself" — a `/dev/` blog rendered from `site/content/posts/*.md` at build time — and
+  supersedes this MIP's external-blog-repo *destination* (the sibling-clone mechanic in §5.3/§6),
+  leaving the planner and the per-platform formatters here untouched.
 - **Does Substack's email-to-publish path still work for the user's account tier?** Not verified in
   this research pass (`docs/SELF-DOCUMENTING.md` §5 flags it explicitly) — if it does, it's a
   better v1 automation path than manual copy-paste into Substack's editor.

@@ -87,12 +87,20 @@ implement the requested feature but flag which earlier-phase prerequisite is sti
 ## Cost & deployment safety (hard rule)
 
 **Never provision or deploy a paid Azure resource without explicit human confirmation first** —
-propose the change, state the expected cost, wait for a go-ahead. Enforced by a hook, not only
-prose: `.claude/hooks/guard-azure.sh` (`PreToolUse` on `Bash`) blocks `azd up|provision|deploy`/
-`az deployment …` with exit 2 unless `MAROLA_ALLOW_AZURE_DEPLOY=1` is set after a human go-ahead;
-ai-jail is the second layer. Never hardcode a key/connection string/secret. Full detail (managed
-identity, the `.env.example` placeholder rule) is in `.claude/rules/azure.md` — this rule matters
-everywhere though, not only its auto-load paths, so the short version stays here too.
+propose the change, state the expected cost, wait for a go-ahead. Enforced two ways, not only
+prose, and they're deliberately not the same shape (an ultrareview on 2026-09-06 found the two
+layers described as interchangeable when they aren't — this section states the real relationship
+instead): `.claude/settings.json`'s `permissions.deny` refuses the exact literal command prefixes
+(`azd up`, `azd provision`, `az deployment `, `az group create`) before any hook runs at all —
+for those, `MAROLA_ALLOW_AZURE_DEPLOY=1` does nothing, because the tool call never reaches
+`.claude/hooks/guard-azure.sh`; the human runs the command directly, or adds a one-shot rule to
+`.claude/settings.local.json`. `guard-azure.sh` (`PreToolUse` on `Bash`) is the second, broader
+layer, catching every other invocation shape a Claude session might produce (a wrapped shell, an
+absolute path, `cd infra && azd up`) — for those, and only those, `MAROLA_ALLOW_AZURE_DEPLOY=1`
+set after a human go-ahead lets the one command through. ai-jail is a third layer, orthogonal to
+both. Never hardcode a key/connection string/secret. Full detail (managed identity, the
+`.env.example` placeholder rule) is in `.claude/rules/azure.md` — this rule matters everywhere
+though, not only its auto-load paths, so the short version stays here too.
 
 ## Attribution and cost accounting (hard rule)
 

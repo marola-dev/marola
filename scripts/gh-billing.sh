@@ -216,6 +216,11 @@ usage: gh-billing.sh [--year YYYY] [--month M] [--from-file FILE | --json-stdin]
                       format); the API's own error is still classified on failure
   --help              this text
 
+Live mode also prints "Actions minutes: X of Y included this month" for personal Free/Pro plans
+(GitHub's own published allowances — not exposed by the billing-usage API itself, so hardcoded
+and flagged if this repo's account plan isn't in the known table; github.com/settings/billing is
+the live authority if this ever looks wrong).
+
 Live mode needs `gh auth status` with a classic PAT (or gh's own token) carrying the `user`
 scope — fine-grained PATs are not supported by GitHub's billing-usage endpoint. The scope is
 checked locally from `gh auth status` before any live call (skip with --no-scope-check); a 404
@@ -235,9 +240,23 @@ shape() {
   jq "$SHAPE_FILTER" <<<"$1"
 }
 
+# Included Actions minutes per month, personal-account plans only (this script only ever queries
+# GET /users/{username}/... — organization plans like Team/Enterprise are a different endpoint,
+# out of scope here). Not exposed by the billing-usage API itself (checked live, 2026-09-07: the
+# usageItem schema has date/product/sku/quantity/unitType/pricePerUnit/grossAmount/discountAmount/
+# netAmount/repositoryName — no allowance/quota field) — these are GitHub's own published numbers
+# (docs.github.com/billing/managing-billing-for-github-actions/about-billing-for-github-actions,
+# checked live 2026-09-07) and GitHub can change them; github.com/settings/billing is the
+# authoritative live number if this ever looks wrong. Counted in Linux-minute equivalents — a
+# macOS/Windows runner minute costs more against this same pool (2x/10x multipliers), so this
+# quota line only means what it says when every SKU below is "Actions Linux".
+declare -A ACTIONS_INCLUDED_MINUTES=( [free]=2000 [pro]=3000 )
+
 # $1 = shaped JSON from shape() -> the table + total on stdout
+# $2 = plan name (gh api user --jq .plan.name), optional — omit to skip the quota line entirely
+# (the --self-test/--from-file/--json-stdin/--dry-run paths have no live plan to look up)
 print_table() {
-  local shaped="$1"
+  local shaped="$1" plan="${2:-}"
   if jq -e '.empty' <<<"$shaped" >/dev/null 2>&1; then
     echo "no usage recorded for this period yet"
     return 0
@@ -254,6 +273,17 @@ print_table() {
   total="$(jq -r '(.total*100|round/100)' <<<"$shaped")"
   echo
   echo "total: \$${total} net (gross minus any plan-included allowance already applied — a \$0.00 row means the SKU is fully covered by the plan, not free by nature)"
+  if [ -n "$plan" ]; then
+    local included minutes_used pct
+    included="${ACTIONS_INCLUDED_MINUTES[$plan]:-}"
+    minutes_used="$(jq -r '[.rows[] | select(.product=="actions" and (.unit|ascii_downcase)=="minutes") | .quantity] | add // 0' <<<"$shaped")"
+    if [ -n "$included" ]; then
+      pct="$(awk -v u="$minutes_used" -v i="$included" 'BEGIN{printf "%.0f", (i>0 ? u/i*100 : 0)}')"
+      echo "Actions minutes: ${minutes_used} of ${included} included this month (${pct}%, plan: $plan) — Linux-minute equivalents; github.com/settings/billing is the live authority"
+    else
+      echo "Actions minutes used: ${minutes_used} (plan '$plan' isn't in this script's known table — see github.com/settings/billing for your included allowance)"
+    fi
+  fi
   echo "keep GHCR storage down: docs/RUN-LOCALLY.md §10 (container images) — ghcr-retention.yml prunes old -<sha> tags weekly."
 }
 
@@ -467,6 +497,7 @@ from_file=""
 json_stdin=0
 dry_run=0
 no_scope_check=0
+plan=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --year) year="$2"; shift 2 ;;
@@ -512,6 +543,7 @@ else
     exit 1
   fi
   login="$(gh api user --jq .login)"
+  plan="$(gh api user --jq '.plan.name // empty' 2>/dev/null || echo '')"
   echo "GitHub billing usage — $login, $year-$(printf '%02d' "$month")"
   echo
 
@@ -528,4 +560,4 @@ else
 fi
 
 shaped="$(shape "$raw")"
-print_table "$shaped"
+print_table "$shaped" "$plan"

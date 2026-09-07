@@ -243,7 +243,10 @@ file has an open PR (or is logged blocked, per `GH_POST_MORTEM.md`'s convention 
 session auth) or a real usage/blocker limit is hit — see `mip-solve-perpetual`'s own "Stop and
 report" and checkpointing-contract sections for the exact contract. **Merging and closing PRs stay
 denied at the permission layer regardless of mechanic** — `.claude/settings.json`'s
-`permissions.deny` blocks `Bash(gh pr merge*)`/`Bash(gh pr close*)` project-wide, with no override
+`permissions.deny` blocks `Bash(gh pr merge*)`/`Bash(gh pr close*)` project-wide, and (found and
+closed 2026-09-07 — the earlier text here claimed no override flag existed at all, which was
+false: `gh stack merge --yes` merges an entire GitHub Stack non-interactively and was not covered)
+also `Bash(gh stack merge*)`/`Bash(gh stack unstack*)`/`Bash(gh stack delete*)`, with no override
 flag (unlike the Azure cost gate's `MAROLA_ALLOW_AZURE_DEPLOY`) — merging is a human decision, on
 waking up, full stop.
 

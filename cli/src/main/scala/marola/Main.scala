@@ -14,6 +14,7 @@ import marola.model.{BestHour, Coordinates}
 import marola.observability.Tracing
 import marola.sightings.{Sighting, SightingKind}
 import marola.site.SiteBuilder
+import marola.trails.{Trail, TrailFinder}
 
 /**
  * POC entry point for marola, the ocean intelligence layer — its first case, "what's the best hour
@@ -449,10 +450,16 @@ object Main extends KyoApp:
               accessibility = Some(config.accessibilityClient)
             )
           }
+          // MIP-0030: one extra Overpass query, reusing the beaches `bestPerBeachTomorrow` already
+          // fetched (no second beach query) — trails don't depend on the forecast, so this doesn't
+          // need to be inside the span above.
+          trails <- tracing.withSpan("trails") {
+            TrailFinder.nearby(origin.coordinates, origin.radiusKm, results.map(_.beach).distinct)
+          }
           _ <-
             if results.isEmpty then
               Console.printLine("No beaches found nearby, or no forecast data for tomorrow yet.")
-            else printLines(results.zipWithIndex.take(15), brief)
+            else printLines(results.zipWithIndex.take(15), brief, trails)
           _ <- printDetail(results.headOption, brief)
           _ <- if summarize then summarizeTop(config, tracing, results.headOption) else noop
           _ <- printLore(
@@ -553,7 +560,11 @@ object Main extends KyoApp:
 
   // Sequential effect loop, hand-rolled for the same reason as Recommender.traverse: only
   // map/flatMap on `< Async` are confirmed against the pinned Kyo 1.0.0-RC5 build.
-  private def printLines(items: List[(BestHour, Int)], brief: Boolean): Unit < Async =
+  private def printLines(
+      items: List[(BestHour, Int)],
+      brief: Boolean,
+      trails: List[Trail]
+  ): Unit < Async =
     items match
       case Nil => ()
       case (best, i) :: rest =>
@@ -561,7 +572,9 @@ object Main extends KyoApp:
           _ <- Console.printLine(
             if brief then Report.briefLine(i + 1, best) else Report.line(i + 1, best)
           )
-          _ <- printLines(rest, brief)
+          // MIP-0030 §3: one line per beach when a trail is within 500m, "no data" otherwise.
+          _ <- Console.printLine(Report.trailsLine(Report.nearestTrail(best.beach.name, trails)))
+          _ <- printLines(rest, brief, trails)
         yield ()
 
   run(bootstrap(args.toArray))
