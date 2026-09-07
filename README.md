@@ -5,9 +5,10 @@ The ocean near you: conditions, official bathing-water quality per sampling poin
 jellyfish and whale odds, and a grounded "ask the ocean" — first case, the best hour tomorrow to
 swim, all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or clearly
 labelled, never invented.<br/>
-Not what a weather or surf app gives you: the safety veto is code, not a prompt — a sampling point
-rated unfit by the official feed zeroes that beach's score outright — and the whole pipeline, model
-included, runs on your own machine at no cost.</p>
+Not a weather or surf app with a chatbot bolted on: the score and its safety veto are deterministic
+Scala, and the model is on judge duty over that — it interprets and phrases, it never overturns a
+veto. The reasoning behind that split: [`PHILOSOPHY.md`](./PHILOSOPHY.md) §"models reasoning over
+open water, with the deterministic parts kept deterministic."</p>
 
 <p align="center">
 <a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://github.com/h0ffmann/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
