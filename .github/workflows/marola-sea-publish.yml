@@ -11,10 +11,30 @@
 # pushed only after the upload succeeds, so a failed run does not burn a number and re-running is
 # safe.
 #
-# Self-contained by necessity: `finetune/out/` is gitignored, so no adapter exists on a fresh
-# runner and the job trains one. That is the `tiny` preset (SmolLM2-360M, CPU, minutes) — a
+# Runs on YOUR machine, not GitHub's, via a self-hosted runner — this job downloads gigabytes of
+# weights, burns CPU for the training run, and needs a Hugging Face token, none of which belongs
+# on shared infrastructure. The `marola-sea` label is what keeps that specific: only a workflow
+# that asks for the label lands on the runner, so every other workflow in this repo stays on
+# GitHub's hosted runners untouched.
+#
+# One-time setup, on the machine that should build the model:
+#   1. repo Settings -> Actions -> Runners -> New self-hosted runner; follow the download/config
+#      steps it prints, and when it asks for additional labels enter: marola-sea
+#   2. `./run.sh` (foreground) or install it as a service with `./svc.sh install && ./svc.sh start`
+#   3. add the HF_TOKEN repository secret (Settings -> Secrets and variables -> Actions)
+# Self-hosted runners are safe here because this repo is private; GitHub's warning against them is
+# about public repos, where a fork's pull request could run code on your machine. This workflow has
+# no pull_request trigger regardless.
+#
+# Dependencies come from nix, not pip or apt, because that is the combination actually verified
+# end to end on 2026-09-07: python3.withPackages [torch transformers peft ...] for the merge,
+# nixpkgs#llama-cpp.src for convert_hf_to_gguf.py and nixpkgs#llama-cpp for llama-quantize. The
+# runner needs nix with flakes; it needs no Python toolchain of its own.
+#
+# Self-contained by necessity: `finetune/out/` is gitignored, so no adapter exists on a clean
+# checkout and the job trains one. That is the `tiny` preset (SmolLM2-360M, CPU, minutes) — a
 # pipeline proof, not a quality bar, exactly as finetune/README.md frames it. Publishing a
-# `small`/`base` checkpoint needs hardware this runner does not have and stays a local job.
+# `small`/`base` checkpoint needs hardware and time this job does not assume.
 #
 # The chain is MIP-0025 §5.1's, end to end:
 #   dataset -> SFT -> DPO -> peft merge -> convert_hf_to_gguf -> quantize -> upload
@@ -38,8 +58,9 @@ concurrency:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # The label is the whole point: only this workflow goes to your machine.
+    runs-on: [self-hosted, marola-sea]
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v7
         with:
@@ -66,37 +87,26 @@ jobs:
           echo "tag=marola-sea-v$next" >> "$GITHUB_OUTPUT"
           echo "publishing as v$next (previous: ${latest:-none})"
 
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'   # torch/peft wheels; the dev shell's 3.14 has none yet
-
-      - name: install the training and publishing dependencies
-        run: |
-          set -euo pipefail
-          python -m pip install --upgrade pip
-          pip install -r finetune/requirements.txt
-
       - name: build the dataset (stdlib only, deterministic)
         run: |
           set -euo pipefail
-          python finetune/build_dataset.py
-          python finetune/build_dpo_dataset.py
+          python3 finetune/build_dataset.py
+          python3 finetune/build_dpo_dataset.py
 
       - name: train the SFT adapter, then DPO on top of it
         run: |
           set -euo pipefail
-          python finetune/train_lora.py --preset tiny --no-4bit --epochs 3
-          python finetune/train_dpo.py --preset tiny --no-4bit --epochs 1
+          nix shell --impure --expr "$(cat .github/nix-ml-env.nix)" --command sh -c '
+            python3 finetune/train_lora.py --preset tiny --no-4bit --epochs 3
+            python3 finetune/train_dpo.py --preset tiny --no-4bit --epochs 1
+          '
 
       - name: merge the adapter into the base and export GGUFs
         run: |
           set -euo pipefail
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake
-          git clone --depth 1 https://github.com/ggml-org/llama.cpp /tmp/llama.cpp
-          cmake -S /tmp/llama.cpp -B /tmp/llama.cpp/build -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF
-          cmake --build /tmp/llama.cpp/build --target llama-quantize -j"$(nproc)"
-          pip install -r /tmp/llama.cpp/requirements.txt
-          python finetune/merge_export.py --preset tiny --llama-cpp /tmp/llama.cpp
+          src="$(nix build --no-link --print-out-paths nixpkgs#llama-cpp.src)"
+          nix shell --impure --expr "$(cat .github/nix-ml-env.nix)" nixpkgs#llama-cpp --command \
+            python3 finetune/merge_export.py --preset tiny --llama-cpp "$src"
 
       - name: publish to Hugging Face
         env:
@@ -104,7 +114,8 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          python finetune/publish_hf.py \
+          nix shell nixpkgs#python3Packages.huggingface-hub --command \
+            python3 finetune/publish_hf.py \
             --repo "${GITHUB_REPOSITORY_OWNER}/marola-sea-tiny-GGUF" \
             --gguf finetune/out/marola-sea-tiny-Q4_K_M.gguf \
             --gguf finetune/out/marola-sea-tiny-Q8_0.gguf \
