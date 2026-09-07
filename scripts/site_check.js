@@ -100,6 +100,7 @@ function makeLeaflet() {
     tileLayer() { return { addTo(m) { m.layers.push(this); return this; } }; },
     circleMarker: (ll, o) => layer('circleMarker', ll, o),
     marker: (ll, o) => layer('marker', ll, o),
+    polyline: (latlngs, o) => layer('polyline', latlngs, o),
     divIcon: (o) => ({ divIcon: true, options: o }),
     DomEvent: { stopPropagation() {} }
   };
@@ -211,6 +212,33 @@ async function runPage(board) {
   const tip2 = String((markers2.find(m => String(m.tooltip).includes('Praia da Joaquina')) || {}).tooltip || '');
   ok(!/breezy|calm|strong/.test(tip2) && tip2.includes('🌬️ wind 27 km/h') && (tip2.match(/<span/g) || []).length === 6,
     'without wind_level the wind cell keeps the number and drops the band word; six cells remain', tip2);
+
+  // 4. MIP-0030: trails — a board with no `trails` key renders every other layer unchanged, and one
+  //    with a `trails` array draws one L.polyline per trail, coloured by difficulty, with a tooltip.
+  ok(!('trails' in BOARD), 'the fixture board has no trails key yet — this is the "older board" case');
+  const isPolyline = l => l.kind === 'polyline';
+  ok(L.created.filter(l => l.added && isPolyline(l)).length === 0,
+    'a board with no trails key draws no polyline, and (from section 2 above) still renders every beach');
+
+  const trailed = JSON.parse(JSON.stringify(BOARD));
+  trailed.trails = [
+    { name: 'Trilha da Lagoinha do Leste', length_km: 2.1, difficulty: null, surface: null,
+      geometry: [[-27.79, -48.49], [-27.792, -48.487], [-27.793, -48.485]],
+      near_beach: { name: 'Praia da Joaquina', distance_km: 0.4 }, near_lake: null },
+    { name: 'Trilha Praia do Maço-Guarda', length_km: 1.4, difficulty: 'mountain_hiking', surface: 'ground',
+      geometry: [[-27.40, -48.42], [-27.401, -48.415]],
+      near_beach: null, near_lake: { name: 'Lagoa do Peri', distance_km: 0.2 } }
+  ];
+  const r3 = await runPage(trailed);
+  const trails3 = r3.L.created.filter(l => l.added && isPolyline(l));
+  ok(r3.errors.length === 0, 'app.js logged no errors with a trails array present', r3.errors.join(' | '));
+  ok(trails3.length === trailed.trails.length, 'exactly one polyline per trail (' + trails3.length + ')');
+  const lagoinha = trails3.find(l => String(l.tooltip).includes('Trilha da Lagoinha do Leste'));
+  ok(!!lagoinha && /2\.1\s*km/.test(String(lagoinha.tooltip)), 'a trail polyline\'s tooltip names it and shows its length', lagoinha && String(lagoinha.tooltip));
+  ok(lagoinha && lagoinha.latlng.length === 3, 'the polyline carries the trail\'s full geometry, not just endpoints');
+  ok(lagoinha && lagoinha.opts.color === '#999999', 'a trail with no difficulty tag draws grey (no-data colour)', lagoinha && lagoinha.opts.color);
+  const macoGuarda = trails3.find(l => String(l.tooltip).includes('Maço-Guarda'));
+  ok(macoGuarda && macoGuarda.opts.color === '#e0a800', 'a mountain_hiking trail draws the amber colour', macoGuarda && macoGuarda.opts.color);
 
   if (fails === 0) { console.log('site_check: ok'); process.exit(0); }
   console.error('site_check: ' + fails + ' failure(s)'); process.exit(1);

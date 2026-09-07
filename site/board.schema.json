@@ -34,11 +34,44 @@
         "lang": { "type": "string" }
       }
     },
-    "beaches": { "type": "array", "items": { "$ref": "#/$defs/beach" } }
+    "beaches": { "type": "array", "items": { "$ref": "#/$defs/beach" } },
+    "trails": {
+      "description": "MIP-0030: named coastal/lakeside OSM trails within 500m of a beach or a named lake in this area — additive, optional (an older board written before this field existed has none, and still validates)",
+      "type": "array",
+      "items": { "$ref": "#/$defs/trail" }
+    }
   },
   "$defs": {
     "likelihood": { "type": "string", "enum": ["Low", "Moderate", "High"] },
     "hhmm": { "type": "string", "description": "local time, HH:mm" },
+    "near_anchor": {
+      "description": "the nearer beach/lake anchor of this kind, or null when none is within 500m (or none nearby carries a name)",
+      "type": ["object", "null"],
+      "required": ["name", "distance_km"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "distance_km": { "type": "number" }
+      }
+    },
+    "trail": {
+      "type": "object",
+      "required": ["name", "length_km", "difficulty", "surface", "geometry", "near_beach", "near_lake"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "length_km": { "type": "number" },
+        "difficulty": { "type": ["string", "null"], "description": "OSM sac_scale, verbatim, e.g. 'hiking', 'mountain_hiking'; null when the tag is absent" },
+        "surface": { "type": ["string", "null"], "description": "OSM surface, verbatim; null when the tag is absent" },
+        "geometry": {
+          "type": "array",
+          "description": "the trail's node sequence, [lat, lon] pairs, in map-drawing order",
+          "items": { "type": "array", "items": { "type": "number" } }
+        },
+        "near_beach": { "$ref": "#/$defs/near_anchor" },
+        "near_lake": { "$ref": "#/$defs/near_anchor" }
+      }
+    },
     "beach": {
       "type": "object",
       "required": ["name", "lat", "lon", "best", "hours", "water", "tides", "sea", "jellyfish", "whales"],

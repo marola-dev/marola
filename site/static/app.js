@@ -36,7 +36,7 @@
     hourIndex: -1,      // -1 = each beach at its own best hour
     selected: null,     // beach name
     here: null,         // {lat, lon} after "near me"
-    markers: {}, tiles: null, map: null,
+    markers: {}, trailLayers: [], tiles: null, map: null,
     smoke: null, smokeHistory: null, smokeMarker: null   // the last live run (MIP-0008)
   };
 
@@ -206,10 +206,36 @@
       '</div>';
   }
 
+  // --- trails (MIP-0030) ------------------------------------------------------------------------
+  // green = hiking, amber = mountain_hiking, grey = unclassified or no sac_scale tag at all — §3.
+  function trailColour(difficulty) {
+    if (difficulty === 'hiking') return getCss('--c70');
+    if (difficulty === 'mountain_hiking') return getCss('--c40');
+    return getCss('--cna');
+  }
+  function trailTooltipHtml(trail) {
+    return '🥾 ' + esc(trail.name) + ' · ' + fmt(trail.length_km, ' km');
+  }
+
+  function renderTrails() {
+    state.trailLayers.forEach(function (l) { state.map.removeLayer(l); });
+    state.trailLayers = [];
+    (state.board.trails || []).forEach(function (trail) {
+      var latlngs = (trail.geometry || []).map(function (p) { return [p[0], p[1]]; });
+      if (latlngs.length < 2) return;
+      var line = L.polyline(latlngs, {
+        color: trailColour(trail.difficulty), weight: 3, opacity: 0.8, dashArray: '4,4'
+      }).addTo(state.map);
+      line.bindTooltip(trailTooltipHtml(trail), { sticky: true, direction: 'top' });
+      state.trailLayers.push(line);
+    });
+  }
+
   function render() {
     var board = state.board;
     Object.keys(state.markers).forEach(function (k) { state.map.removeLayer(state.markers[k]); });
     state.markers = {};
+    renderTrails();
     var bounds = [];
     board.beaches.forEach(function (beach) {
       var s = shown(beach);
