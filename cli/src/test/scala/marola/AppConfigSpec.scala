@@ -44,3 +44,13 @@ class AppConfigSpec extends munit.FunSuite:
     assertEquals(TraceBackend.fromEnv(Some("bogus"), appInsightsSet), TraceBackend.Azure)
     assertEquals(TraceBackend.fromEnv(Some("bogus"), appInsightsUnset), TraceBackend.Off)
   }
+
+  // MIP-0021 §5: MAROLA_FACILITIES=off|overpass, default overpass — unlike WaterProvider there is
+  // no Azure/region-auto case, just an on/off switch.
+  test("MAROLA_FACILITIES=off is Off; unset or anything else defaults to Overpass") {
+    assertEquals(FacilitiesProvider.fromEnv(Some("off")), FacilitiesProvider.Off)
+    assertEquals(FacilitiesProvider.fromEnv(Some("OFF")), FacilitiesProvider.Off)
+    assertEquals(FacilitiesProvider.fromEnv(Some("overpass")), FacilitiesProvider.Overpass)
+    assertEquals(FacilitiesProvider.fromEnv(Some("bogus")), FacilitiesProvider.Overpass)
+    assertEquals(FacilitiesProvider.fromEnv(None), FacilitiesProvider.Overpass)
+  }

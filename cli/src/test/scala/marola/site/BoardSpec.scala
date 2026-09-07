@@ -5,10 +5,11 @@ import java.time.{LocalDate, OffsetDateTime, ZoneOffset}
 
 import kyo.*
 
+import marola.beaches.{AccessibilityClient, Facilities, Facility}
 import marola.http.Http
 import marola.json.JsonValue
 import marola.lore.SeaLore
-import marola.model.{BestHour, Coordinates}
+import marola.model.{Beach, BestHour, Coordinates}
 import marola.water.ImaScWaterQualityClient
 import marola.{Fixtures, Recommender, Report}
 
@@ -164,6 +165,121 @@ class BoardSpec extends munit.FunSuite:
       case JsonValue.JObject(fields) => JsonValue.JObject(fields - "beaches")
       case other                     => other
     assert(SchemaCheck.validate(schema, broken).exists(_.contains("beaches")))
+  }
+
+  test("board: every hour carries wind_level, consistent with its wind_kmh (MIP-0009 task 1)") {
+    val b = board(tomorrow)
+    val hours = b("beaches").arr.flatMap(_("hours").arr)
+    assert(hours.nonEmpty)
+    hours.foreach { h =>
+      val expected =
+        marola.scoring.Swimability.windLevel(h("wind_kmh").num).map(_.toString.toLowerCase)
+      assertEquals(h("wind_level").str, expected, h.render)
+    }
+    // the fixture must exercise at least one real band, or this test proves nothing
+    assert(hours.exists(_("wind_level").str.isDefined), "no hour had a wind_level")
+  }
+
+  test(
+    "board: schema accepts a board with wind_level and one without it (optional, schema stays 1)"
+  ) {
+    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    val b = board(tomorrow)
+    assertEquals(SchemaCheck.validate(schema, b), Nil)
+    def strip(v: JsonValue): JsonValue = v match
+      case JsonValue.JObject(fields) =>
+        JsonValue.JObject((fields - "wind_level").map { case (k, x) => k -> strip(x) })
+      case JsonValue.JArray(items) => JsonValue.JArray(items.map(strip))
+      case other                   => other
+    val old = strip(b)
+    assert(old.render != b.render, "strip must have removed something")
+    assertEquals(SchemaCheck.validate(schema, old), Nil)
+    // and a wrong band is rejected — the enum bites
+    val bad =
+      b.render.replaceFirst(
+        "\"wind_level\":\\s*\"(calm|breezy|strong)\"",
+        "\"wind_level\":\"gale\""
+      )
+    assert(SchemaCheck.validate(schema, JsonValue.parse(bad)).exists(_.contains("not in enum")))
+  }
+
+  /**
+   * MIP-0021 §5/§7: `Facilities` per beach, and the board's `facilities` object built from it.
+   * `Fixed` is a hand-written double (no mocking library, per `.claude/rules/scala.md`), not the
+   * real `OverpassAccessibilityClient` — network parsing has its own real-fixture coverage in
+   * `marola.beaches.AccessibilitySpec`.
+   */
+  final class Fixed(byBeach: Map[String, Facilities]) extends AccessibilityClient:
+    def near(beaches: List[Beach], radiusM: Int = 300): Map[String, Facilities] < Sync =
+      beaches.map(b => b.name -> byBeach.getOrElse(b.name, Facilities.NoData)).toMap
+
+  private lazy val scoredWithFacilities: List[BestHour] =
+    Http.withTransport(Fixtures.campeche()) {
+      Sync.Unsafe.evalOrThrow(
+        Recommender.scoreDays(
+          origin,
+          radiusKm = 15.0,
+          waterQuality = Some(ImaScWaterQualityClient()),
+          today = _ => today,
+          days = 2,
+          accessibility = Some(
+            Fixed(
+              Map(
+                "Praia do Campeche" -> Facilities(
+                  Map(Facility.Parking -> 3, Facility.Lifeguard -> 1)
+                )
+              )
+            )
+          )
+        )
+      )
+    }
+
+  test(
+    "board: facilities omits absent facilities and OSM-absent beaches read '{}', not a zeroed count"
+  ) {
+    val b = Board.build(
+      "floripa",
+      tomorrow,
+      today,
+      generatedAt,
+      scoredWithFacilities,
+      SeaLore.pick(SeaLore.loadDefault(), tomorrow, "floripa", SeaLore.regionTagsFor(origin)),
+      sources
+    )
+    val campecheFacilities = beach(b, "Praia do Campeche")("facilities")
+    assertEquals(campecheFacilities("parking").num, Some(3.0))
+    assertEquals(campecheFacilities("lifeguard").num, Some(1.0))
+    assertEquals(campecheFacilities("toilets"), JsonValue.JNull) // absent key = no data, never 0
+    assertEquals(campecheFacilities("shower"), JsonValue.JNull)
+    val rioTavares = beach(b, "Praia do Rio Tavares")("facilities")
+    assertEquals(rioTavares, JsonValue.obj())
+    assertEquals(
+      SchemaCheck.validate(JsonValue.parse(Files.readString(BoardSpec.schemaPath)), b),
+      Nil
+    )
+  }
+
+  test("board: schema accepts a board with and without the optional facilities field") {
+    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    val b = Board.build(
+      "floripa",
+      tomorrow,
+      today,
+      generatedAt,
+      scoredWithFacilities,
+      SeaLore.pick(SeaLore.loadDefault(), tomorrow, "floripa", SeaLore.regionTagsFor(origin)),
+      sources
+    )
+    assertEquals(SchemaCheck.validate(schema, b), Nil)
+    def strip(v: JsonValue): JsonValue = v match
+      case JsonValue.JObject(fields) =>
+        JsonValue.JObject((fields - "facilities").map { case (k, x) => k -> strip(x) })
+      case JsonValue.JArray(items) => JsonValue.JArray(items.map(strip))
+      case other                   => other
+    val old = strip(b)
+    assert(old.render != b.render, "strip must have removed something")
+    assertEquals(SchemaCheck.validate(schema, old), Nil)
   }
 
 end BoardSpec

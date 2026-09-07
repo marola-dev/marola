@@ -87,6 +87,16 @@ for sha in "${shas[@]}"; do
       new_cost["$sha"]="$line"
       any=1
     fi
+  elif ! grep -q '^Cost:.*\$' <<<"$body"; then
+    # A Cost: line is present but carries no dollar figure at all — a bare "Cost: est."
+    # placeholder typed by hand instead of run through this script or cost-split.py. Treated
+    # the same as missing, not skipped: the AGENTS.md contract is a real number, not a word.
+    line="$(measured_trailer "$short" "$json_file")"
+    [ -n "$line" ] || line="$(python3 "$script_dir/cost-split.py" --estimate-commit "$sha" 2>/dev/null || true)"
+    if [ -n "$line" ]; then
+      new_cost["$sha"]="$line"
+      any=1
+    fi
   elif grep -q '^Cost:.* est\. ' <<<"$body"; then
     # An estimate written before the session log covered the commit (a subagent's own commit,
     # say) is upgraded to the measured figure once one exists — never the other way round.

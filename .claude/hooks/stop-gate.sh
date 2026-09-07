@@ -36,18 +36,23 @@ except Exception: pass" "$field" 2>/dev/null || true
 }
 
 scala_changed_since_head() {
-  git -C "$REPO_ROOT" diff --name-only HEAD -- '*.scala' 2>/dev/null | grep -q .
+  # Tracked changes (`git diff`) miss a brand-new .scala file the Write tool created but nothing
+  # `git add`ed yet — `git diff` is diff-only by design and never sees untracked paths. Also check
+  # `ls-files --others` so a fresh component/spec file trips the nag too, not just an edit to an
+  # existing one (an ultrareview finding, 2026-09-06).
+  git -C "$REPO_ROOT" diff --name-only HEAD -- '*.scala' 2>/dev/null | grep -q . && return 0
+  git -C "$REPO_ROOT" ls-files --others --exclude-standard -- '*.scala' 2>/dev/null | grep -q .
 }
 
 # check_stop <session_id>: 0 = allow, 2 = block (and writes the marker so the next call allows).
 check_stop() {
   local session_id="$1"
   [ -n "$session_id" ] || return 0   # no session id on stdin — never block by accident
-  mkdir -p "$MARKER_DIR"
+  mkdir -p "$MARKER_DIR" 2>/dev/null || return 0   # can't write a marker -> allow, don't nag
   local marker="$MARKER_DIR/$session_id"
   [ -f "$marker" ] && return 0        # already nagged this session
   scala_changed_since_head || return 0   # nothing scala-shaped changed — nothing to gate
-  touch "$marker"
+  touch "$marker" 2>/dev/null || return 0   # same fail-open rule as the mkdir above
   echo "stop-gate: .scala files changed since HEAD and this session hasn't run \`just test\` yet." >&2
   echo "Run \`just test\` (and \`just quality\`) before stopping, or say why this change doesn't need it. This nag only fires once per session." >&2
   return 2
@@ -113,6 +118,19 @@ self_test() {
     fails=$((fails + 1))
   fi
 
+  # A brand-new, never-`git add`ed .scala file (the Write-tool case) blocks too, not just an edit
+  # to a tracked one — `git diff` alone would miss this.
+  printf 'object Brand\n' > "$repo/Brand.scala"
+  local untracked_session="self-test-session-untracked-$$"
+  local untracked_result=0; check_stop "$untracked_session" || untracked_result=$?
+  if [ "$untracked_result" -eq 2 ]; then
+    echo "  ok   a new untracked .scala file blocks like a tracked edit does"
+  else
+    echo "  FAIL untracked .scala file did not block (exit $untracked_result)"
+    fails=$((fails + 1))
+  fi
+  rm -f "$repo/Brand.scala"
+
   # Empty/missing session id never blocks, even with a .scala change.
   printf 'object A { val x = 2 }\n' > "$repo/A.scala"
   local empty_result=0; check_stop "" || empty_result=$?
@@ -144,6 +162,22 @@ self_test() {
     echo "  ok   end-to-end JSON-derived session id blocks on a fresh session"
   else
     echo "  FAIL end-to-end JSON-derived session id did not block (exit $fifth)"
+    fails=$((fails + 1))
+  fi
+
+  # An unwritable marker dir (read-only fs, XDG_RUNTIME_DIR gone) must allow, not exit 1 — the
+  # hook's own "never block by accident" invariant, applied to the marker writes too (an
+  # ultrareview finding, 2026-09-06: `set -euo pipefail` + an unguarded mkdir/touch used to exit 1,
+  # neither the documented allow-0 nor block-2).
+  printf 'object A { val x = 3 }\n' > "$repo/A.scala"
+  MARKER_DIR="/proc/self/marola-stop-gate-unwritable"
+  local unwritable_session="self-test-session-unwritable-$$"
+  local unwritable_result=0; check_stop "$unwritable_session" || unwritable_result=$?
+  MARKER_DIR="$XDG_RUNTIME_DIR/marola-stop-gate"
+  if [ "$unwritable_result" -eq 0 ]; then
+    echo "  ok   an unwritable marker dir allows (fails open), never exits 1"
+  else
+    echo "  FAIL unwritable marker dir gave exit $unwritable_result, expected 0"
     fails=$((fails + 1))
   fi
 

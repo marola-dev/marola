@@ -36,6 +36,8 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/uprd_title.sh
 source "$script_dir/lib/uprd_title.sh"
+# shellcheck source=scripts/lib/mip_ref.sh
+source "$script_dir/lib/mip_ref.sh"
 
 dry_run=0; body_file=""; pr_arg=""
 for arg in "$@"; do
@@ -96,13 +98,20 @@ git fetch -q origin "$base" 2>/dev/null || true
 range="origin/$base..$head_ref"
 
 # Title: the first (oldest) commit's subject on the branch, capped at 70 chars.
-first_subject="$(git log --reverse --format=%s "$range" 2>/dev/null | head -1)"
+# `|| true` after `head -1`: under `set -o pipefail`, if `git log`'s output is large enough that
+# `head` closes the pipe before git finishes writing, git is killed by SIGPIPE (exit 141) and
+# pipefail reports that as the pipeline's status even though `head` itself succeeded — `set -e`
+# then kills the whole script. Verified live: this exact line failed a real pr-body.yml run with
+# "exit code 141" on a branch whose commit range included a merge commit. `|| true` is safe here
+# because an empty `first_subject` already degrades correctly a few lines down.
+first_subject="$(git log --reverse --format=%s "$range" 2>/dev/null | head -1 || true)"
+title_mip_ref="$(detect_mip_ref "$branch" "$range")"
 title=""
-[ -n "$first_subject" ] && title="$(cap_title "$first_subject")"
+[ -n "$first_subject" ] && title="$(cap_title "$first_subject" "$title_mip_ref")"
 
 generate_summary() {
   local first_sha body
-  first_sha="$(git log --reverse --format=%H "$range" | head -1)"
+  first_sha="$(git log --reverse --format=%H "$range" | head -1 || true)"  # see the SIGPIPE note above
   [ -n "$first_sha" ] || { echo "<!-- fill: one or two sentences — what changed and why -->"; return; }
   body="$(git log -1 --format=%b "$first_sha")"
   # First paragraph (lines up to the first blank line, trailers dropped), trimmed to ~2 sentences.
@@ -133,22 +142,9 @@ PY
 }
 
 generate_mip() {
-  local mip_ref="" mip_path
-  if [[ "$branch" =~ [Mm][Ii][Pp]-([0-9]{4}) ]]; then
-    mip_ref="MIP-${BASH_REMATCH[1]}"
-  else
-    # Subjects only, not bodies: a body can mention another MIP in passing (a cross-reference,
-    # an example command) without this commit being scoped to it.
-    mip_ref="$(git log --format='%s' "$range" 2>/dev/null \
-      | { grep -ioE '^MIP-[0-9]{4}' || true; } | head -1 | tr '[:lower:]' '[:upper:]')"
-  fi
-  if [ -z "$mip_ref" ]; then
-    # A branch that adds or edits one MIP document is scoped to it (docs/mip-0014-... without
-    # the number in a subject, say).
-    mip_ref="$(git diff --name-only "$range" -- docs/mips 2>/dev/null \
-      | { grep -oE 'MIP-[0-9]{4}' || true; } | sort -u | { [ "$(wc -l)" -eq 1 ] && cat || true; })"
-    [ -n "$mip_ref" ] && mip_ref="$(git diff --name-only "$range" -- docs/mips | grep -oE 'MIP-[0-9]{4}' | head -1)"
-  fi
+  # Same detection already used for the PR title (scripts/lib/mip_ref.sh) — one source of truth,
+  # so the title and this table cell can never disagree on which MIP a branch is scoped to.
+  local mip_ref="$title_mip_ref" mip_path
   if [ -z "$mip_ref" ]; then
     echo "none — not MIP-scoped"
     return
@@ -219,7 +215,7 @@ generate_cost() {
     [ -n "$sha" ] || continue
     short="$(git rev-parse --short "$sha")"
     body="$(git log -1 --format=%B "$sha")"
-    line="$(grep '^Cost:' <<<"$body" | head -1)"
+    line="$(grep '^Cost:' <<<"$body" | head -1 || true)"  # see the SIGPIPE note near the top of this file
     if [ -n "$line" ]; then
       text="${line#Cost: }"
     else
@@ -233,7 +229,11 @@ generate_cost() {
   printf '%s\n' "$out"
 }
 
+# The first line is a marker for .github/workflows/pr-body.yml: while it is present the workflow
+# regenerates the body on every push to the PR (new commits change What changed / Cost / Tested);
+# a human who rewrites the body by hand removes the line and the workflow leaves the PR alone.
 generate_body() {
+  echo "<!-- uprd: generated from the branch's commits — delete this line to stop pr-body.yml from regenerating it -->"
   echo "**Summary** — $(generate_summary)"
   echo
   echo "| | |"

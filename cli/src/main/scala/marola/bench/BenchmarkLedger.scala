@@ -3,7 +3,6 @@ package marola.bench
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
 
-import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
 import kyo.*
@@ -103,30 +102,26 @@ object BenchmarkLedger:
     yield handle
 
   /**
-   * First 12 hex chars of SHA-256 over every `*.md` in `dir`, sorted by file name, name and content
-   * both hashed — so a renamed or edited document changes it and anything else in the directory
-   * (README.txt, an editor's swap file) does not. `"none"` when the directory is missing: the
-   * benchmark can still run with an empty corpus and the ledger should say so, not crash.
+   * First 12 hex chars of SHA-256 over every corpus file `marola.knowledge.Corpus.listFiles` sees
+   * (every top-level `.md` file plus every `.md` file directly under `safety/`, MIP-0022), sorted,
+   * name and content both hashed — so a renamed or edited document changes it and anything else in
+   * the directory (README.txt, an editor's swap file) does not. `"none"` when the directory is
+   * missing: the benchmark can still run with an empty corpus and the ledger should say so, not
+   * crash.
    */
   def corpusSha(dir: Path): String =
     if !Files.isDirectory(dir) then "none"
     else
       val digest = MessageDigest.getInstance("SHA-256")
-      val files = Files.list(dir)
-      try
-        files
-          .iterator()
-          .asScala
-          .filter(p => Files.isRegularFile(p) && p.getFileName.toString.endsWith(".md"))
-          .toList
-          .sortBy(_.getFileName.toString)
-          .foreach { p =>
-            digest.update(p.getFileName.toString.getBytes("UTF-8"))
-            digest.update(0.toByte)
-            digest.update(Files.readAllBytes(p))
-            digest.update(0.toByte)
-          }
-      finally files.close()
+      marola.knowledge.Corpus
+        .listFiles(dir)
+        .sortBy(dir.relativize(_).toString)
+        .foreach { p =>
+          digest.update(dir.relativize(p).toString.getBytes("UTF-8"))
+          digest.update(0.toByte)
+          digest.update(Files.readAllBytes(p))
+          digest.update(0.toByte)
+        }
       digest.digest().take(6).map(b => f"$b%02x").mkString
 
   /**

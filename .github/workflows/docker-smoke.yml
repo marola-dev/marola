@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Same recipe as marola-e2e.yml: the binary and the model blobs, cached per model.
       - name: Cache Ollama binary and model
@@ -133,7 +133,7 @@ jobs:
             --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             --model "$MODEL" --image "$IMAGE"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: smoke-${{ github.run_id }}
           path: |

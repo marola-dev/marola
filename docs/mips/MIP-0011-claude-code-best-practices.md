@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Implemented — all eleven tasks merged (`docs/mips/MIP-0011.tasks.md`); verified with `/code-review ultra` (ultrareview) against the full stack diff on 2026-09-06, see §7 |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "MIP for implementing Claude Code best practices, by Anthropic and community") |
 | **Created** | 2026-09-05 |
 | **Tasks** | `docs/mips/MIP-0011.tasks.md` — stacked PRs, one per task |
@@ -13,7 +13,7 @@
 | **Effort vs Gain** | do next — the cost gate (task 2) is "the rule that must be a hook, not prose" per AI-500 §4; cheap and overdue |
 | **Depends on** | none blocking; Phase 0, developer tooling only; MIP-0013's tryout result may show which tasks are Claude-Code-specific |
 | **Risk** | a shell-text `permissions.deny` is a guard rail, not a boundary — `bash -c "azd up"` evades it; ai-jail and the human go-ahead remain the real boundary |
-| **Cost so far** | bundled in a shared ~$9.65 session total (commit 3fdcd05) with MIP-0010 and other PRs, not separately split — nothing implementing it has merged |
+| **Cost so far** | ~$12.86 total across the eleven merged task PRs (`Cost:` trailers, mostly measured via `scripts/cost-split.py`; task 6's `$3.40` is a diff-size estimate, no session log matched) — not counting the design/MIP-writing session bundled into MIP-0010's shared total (commit 3fdcd05), or the follow-on ultrareview verification (see §7 — a free-tier request this time, at $0 to the user; note the real per-review price here once a paid one is spent, so this line stays honest about what future reviews cost) |
 
 ## 1. Summary
 
@@ -204,8 +204,32 @@ None. No product code changes.
 - Measure: permission prompts per session (count from the transcript, before vs after task 1);
   `AGENTS.md` line count (196 → ≤ 150); Cost trailers on the next three task PRs vs the previous
   three (the hooks should not raise them — a Stop hook that loops would).
-- **Done:** all ten tasks merged, `AGENT-SKILLS.md` §1 lists the agents and hooks, `FABLE_REVIEW.md`
-  §3's two notes are printed by the `SessionStart` hook and deleted from auto-memory.
+- **Done:** all eleven tasks merged (PRs #102, #108-110, #115-122), `FABLE_REVIEW.md` §3's jail
+  caveats are printed by the `SessionStart` hook; `gh-not-logged-in-in-sessions.md` (the one
+  matching auto-memory note that actually existed — task 5's PR found only one of the "two" this
+  row originally expected) is deleted.
+- **Ultrareview, 2026-09-06:** `/code-review ultra` run against the full stack diff
+  (`mip-0011/11-overnight-run-guardrail` → `main`, 22 files, +1118/-134) after all eleven tasks
+  merged, at the user's request. A free-tier request this session (`Free ultrareview 1 of 3`) — $0
+  to the user; log the real price here the first time a paid one is spent, so this line doesn't
+  silently imply every future review is free. Findings tracked separately, not folded into this
+  MIP's own scope (a design doc doesn't get rewritten post-hoc for review findings — those become
+  new fix commits/PRs against `main`, referencing this MIP for context).
+- **How to refresh the Cost so far figure above**, since all eleven PRs are already merged (the
+  normal `just uprds MIP-0011` flow only updates *open* PR bodies, not this row):
+  1. `git log --oneline main | grep 'mip-0011 task'` — the eleven merged commit SHAs.
+  2. `for c in <shas>; do git show -s --format=%B "$c" | grep '^Cost:'; done` — pull each
+     commit's own `Cost:` trailer (already measured via `scripts/cost-split.py` at PR time,
+     except task 6, still the one diff-size `est.`) and sum the dollar figures by hand; there is
+     no single command that re-sums an already-merged, cross-session stack's trailers today
+     (`just cost-split MIP-0011` is for an *open*, unmerged stack in one session's own log).
+  3. Edit this row and the matching one in `docs/mips/README.md` together — they must always
+     agree; `docs/DEV-FLOW.md` has no automation for that agreement, so it's a manual pair-edit.
+  4. If task 6's `est.` figure is ever superseded by a real measured one (e.g. a later session
+     finds the original log), update this row's total — the merged commit's own `Cost:` trailer
+     stays as originally written (commit messages are historical, not corrected in place) — and
+     note in the doc edit that the figure changed from estimate to measured, so a reader doesn't
+     assume it was always precise.
 
 ## 8. Risks, limitations, and honest caveats
 
