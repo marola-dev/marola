@@ -19,7 +19,7 @@ labelled, never invented.</p>
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT" /></a>
 </p>
 
-**Live map:** [h0ffmann.github.io/marola](https://h0ffmann.github.io/marola/) — every beach around
+**Live map:** [marola.dev](https://marola.dev/) — every beach around
 Florianópolis and Rio, ranked for today and tomorrow, water quality, tides and the hour slider;
 rebuilt every 3 hours and on every relevant merge to `main` ([`site.yml`](./.github/workflows/site.yml),
 [MIP-0005](./docs/mips/MIP-0005-map-and-static-site.md)). Live data decides the numbers,
