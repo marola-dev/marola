@@ -86,6 +86,7 @@ quality-other:
     python3 scripts/lib/mip_index_merge.py --self-test
     python3 scripts/mip_graph.py --self-test
     python3 scripts/mip_graph.py --check
+    python3 finetune/build_dataset.py --self-test
     .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
