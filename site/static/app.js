@@ -10,7 +10,10 @@
  * el.smoke is then null and every use of it is guarded so the board still loads. Nothing leaves
  * the browser: no analytics, no cookies; "near me" uses the Geolocation API client-side only, when
  * you press the button. The page refuses a board with an unknown schema version rather than
- * guessing.
+ * guessing. The ambient wave sound (#sound) is synthesized locally with the Web Audio API —
+ * filtered brown noise under a slow gain LFO, no audio file fetched, no third-party asset to
+ * source or license — and only starts on the click itself (autoplay policies block anything
+ * earlier anyway, so the toggle button doubles as the required user gesture).
  */
 (function () {
   'use strict';
@@ -25,7 +28,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var el = {
-    area: $('area'), days: $('days'), near: $('near'), toggleList: $('toggle-list'),
+    area: $('area'), days: $('days'), near: $('near'), sound: $('sound'), toggleList: $('toggle-list'),
     hourbar: $('hourbar'), hour: $('hour'), hourLabel: $('hour-label'),
     list: $('list'), card: $('card'), footer: $('footer'), status: $('status'), smoke: $('smoke')
   };
@@ -415,6 +418,40 @@
     }
   }
 
+  // --- ambient wave sound (Web Audio API, synthesized — no audio file, nothing to fetch) --------
+  var sound = { ctx: null, gain: null, on: false };
+  // Brown noise (integrated white noise, ~ -6dB/octave) through a low-pass filter reads as surf
+  // wash; a slow LFO on the gain (~0.15 Hz, one swell every ~6.7s) gives it the rise-and-fall of
+  // real waves instead of a flat hiss.
+  function startWaveSound(ctx) {
+    var seconds = 2, bufferSize = seconds * ctx.sampleRate;
+    var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    var data = buffer.getChannelData(0);
+    var last = 0;
+    for (var i = 0; i < bufferSize; i++) {
+      var white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02;
+      data[i] = last * 3.5;
+    }
+    var noise = ctx.createBufferSource();
+    noise.buffer = buffer; noise.loop = true;
+    var filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 700;
+    var gainNode = ctx.createGain();
+    gainNode.gain.value = 0.0001; // starts silent; the click handler ramps it up
+    var lfo = ctx.createOscillator();
+    lfo.frequency.value = 0.15;
+    var lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.05;
+    lfo.connect(lfoGain);
+    lfoGain.connect(gainNode.gain);
+    noise.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    noise.start(); lfo.start();
+    return gainNode;
+  }
+
   // --- events --------------------------------------------------------------------------------
   el.area.addEventListener('change', function () {
     var area = state.areas.filter(function (a) { return a.id === el.area.value; })[0];
@@ -443,6 +480,22 @@
       L.circleMarker([state.here.lat, state.here.lon], { radius: 6, color: '#0b6e99', fillColor: '#0b6e99', fillOpacity: 1 }).addTo(state.map).bindTooltip('you');
       render();
     }, function () { alert('Location not granted — the list stays ranked by score.'); });
+  });
+  el.sound.addEventListener('click', function () {
+    try {
+      if (!sound.ctx) {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        sound.ctx = new Ctx();
+        sound.gain = startWaveSound(sound.ctx);
+      }
+      if (sound.ctx.state === 'suspended') sound.ctx.resume();
+      sound.on = !sound.on;
+      el.sound.setAttribute('aria-pressed', String(sound.on));
+      var now = sound.ctx.currentTime;
+      sound.gain.gain.cancelScheduledValues(now);
+      sound.gain.gain.setTargetAtTime(sound.on ? 0.06 : 0.0001, now, 0.5);
+    } catch (e) { console.error(e); }
   });
 
   // The hint is only right when the board JSON itself is missing (a fresh checkout, or a build

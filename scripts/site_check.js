@@ -70,7 +70,7 @@ class El {
   getAttribute(k) { return this.attrs[k]; }
   querySelector() { return new El('anon'); }
 }
-const IDS = ['area', 'days', 'near', 'toggle-list', 'hourbar', 'hour', 'hour-label', 'list', 'card', 'footer', 'status'];
+const IDS = ['area', 'days', 'near', 'sound', 'toggle-list', 'hourbar', 'hour', 'hour-label', 'list', 'card', 'footer', 'status'];
 // 'smoke' is deliberately absent: the page must tolerate a build without the panel (app.js header).
 
 // --- a Leaflet just big enough for app.js --------------------------------------------------------
@@ -106,6 +106,28 @@ function makeLeaflet() {
   return L;
 }
 
+// --- an AudioContext just big enough for app.js's wave-sound synth (no real audio, records the
+// node graph so the test can assert it was actually built) ---------------------------------------
+function makeAudioContext() {
+  function node(kind) {
+    const n = { kind };
+    n.connect = () => n;
+    if (kind === 'gain') n.gain = { value: 0, cancelScheduledValues() {}, setTargetAtTime(v) { n.gain.value = v; } };
+    if (kind === 'bufferSource' || kind === 'oscillator') n.start = () => {};
+    if (kind === 'biquadFilter' || kind === 'oscillator') n.frequency = { value: 0 };
+    return n;
+  }
+  return {
+    state: 'running', currentTime: 0, destination: {}, sampleRate: 44100,
+    createBuffer: (ch, len) => ({ getChannelData: () => new Float32Array(len) }),
+    createBufferSource: () => node('bufferSource'),
+    createBiquadFilter: () => node('biquadFilter'),
+    createGain: () => node('gain'),
+    createOscillator: () => node('oscillator'),
+    resume() { this.state = 'running'; }
+  };
+}
+
 // --- run the page once against a board -----------------------------------------------------------
 async function runPage(board) {
   const els = {}; IDS.forEach(id => { els[id] = new El(id); });
@@ -127,6 +149,7 @@ async function runPage(board) {
     location: { href: 'https://example.test/', search: '' },
     history: { replaceState() {} },
     navigator: {}, alert() {},
+    AudioContext: function () { return makeAudioContext(); },
     URL, URLSearchParams, Promise, Math, String, Array, Object, Number, Error, parseInt, setTimeout, JSON,
     L
   };
@@ -188,6 +211,13 @@ async function runPage(board) {
     'the list has two entries, best score first');
   ok(els.card.hidden === true || els.card.innerHTML === '', 'the card starts closed');
   ok(els['hour-label'].textContent === 'best hour per beach', 'the slider label starts at "best hour per beach"');
+  ok(els.sound.attrs['aria-pressed'] !== 'true', 'the sound toggle does not start pressed=true');
+  if (els.sound.listeners.click && els.sound.listeners.click[0]) {
+    els.sound.listeners.click[0]({});
+    ok(els.sound.attrs['aria-pressed'] === 'true', 'clicking the sound toggle flips aria-pressed to true');
+    els.sound.listeners.click[0]({});
+    ok(els.sound.attrs['aria-pressed'] === 'false', 'clicking it again flips aria-pressed back to false — no exception either time');
+  } else ok(false, 'the sound toggle has a click handler');
   if (joaq && joaq.handlers.click) {
     joaq.handlers.click({});
     ok(els.card.hidden === false && els.card.innerHTML.includes('Praia da Joaquina') && els.card.innerHTML.includes('55/100'),
