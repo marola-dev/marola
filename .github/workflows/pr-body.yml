@@ -50,7 +50,31 @@ jobs:
         run: |
           set -euo pipefail
           body="$(gh pr view "$PR" --json body -q .body)"
-          if [ -n "$body" ] && ! grep -q '<!-- fill' <<<"$body" && ! grep -q '^<!-- uprd:' <<<"$body"; then
+          # A body that is byte-identical to the branch's own commit message was not written as a
+          # PR description at all — it is what `gh pr create --fill` (or `--body-file <(git log
+          # -1 --format=%B)`) leaves behind. Those bodies carry neither the template's `<!-- fill`
+          # placeholder nor uprd's `<!-- uprd:` marker, so the hand-written check below used to
+          # treat them as deliberate prose and skip regeneration: the step passed green while the
+          # PR template was never applied. Real case, 2026-09-07: a batch of agent-opened PRs all
+          # sat on their raw commit messages with this job reporting success on every one.
+          # Comparing against the commits themselves is what distinguishes "derived" from
+          # "authored" — a person who hand-writes a description does not reproduce the commit
+          # message to the byte, and one who used `--fill` wanted the generator anyway.
+          trim() { sed -e 's/[[:space:]]*$//' | sed -e :a -e '/^\n*$/{$d;N;};/\n$/ba'; }
+          body_trimmed="$(trim <<<"$body")"
+          derived=0
+          if [ -n "$body_trimmed" ]; then
+            while IFS= read -r sha; do
+              [ -n "$sha" ] || continue
+              if [ "$body_trimmed" = "$(git log -1 --format=%B "$sha" | trim)" ]; then derived=1; break; fi
+            done < <(git rev-list "origin/$BASE_REF..origin/$HEAD_REF")
+            if [ "$derived" -eq 0 ] && [ "$body_trimmed" = "$(git log --reverse --format=%B "origin/$BASE_REF..origin/$HEAD_REF" | trim)" ]; then
+              derived=1
+            fi
+          fi
+          if [ "$derived" -eq 1 ]; then
+            echo "PR #$PR's body is verbatim its commit message — treating as unfilled, regenerating"
+          elif [ -n "$body" ] && ! grep -q '<!-- fill' <<<"$body" && ! grep -q '^<!-- uprd:' <<<"$body"; then
             echo "PR #$PR has a hand-written body — leaving it alone"
             exit 0
           fi
