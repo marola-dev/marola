@@ -1,0 +1,123 @@
+# marola-sea-publish — build and publish the marola-sea model to Hugging Face.
+#
+# NEVER automatic. `workflow_dispatch` only, and deliberately with no inputs: publishing a model
+# to a public registry is an outward-facing, hard-to-unpublish act, so it happens when a human
+# presses the button and never on a push, a schedule, or a merge. There is no `push:`, no
+# `schedule:` and no `pull_request:` trigger here on purpose — adding one would turn a reviewed
+# release into a side effect of ordinary work (AGENTS.md, "Cost & deployment safety").
+#
+# No inputs means the run has to decide the version itself, so it auto-increments: the next
+# `marola-sea-v<N>` git tag after the highest one that already exists, starting at v1. The tag is
+# pushed only after the upload succeeds, so a failed run does not burn a number and re-running is
+# safe.
+#
+# Self-contained by necessity: `finetune/out/` is gitignored, so no adapter exists on a fresh
+# runner and the job trains one. That is the `tiny` preset (SmolLM2-360M, CPU, minutes) — a
+# pipeline proof, not a quality bar, exactly as finetune/README.md frames it. Publishing a
+# `small`/`base` checkpoint needs hardware this runner does not have and stays a local job.
+#
+# The chain is MIP-0025 §5.1's, end to end:
+#   dataset -> SFT -> DPO -> peft merge -> convert_hf_to_gguf -> quantize -> upload
+# The merge matters: train_lora.py emits a LoRA *adapter*, and `ollama run hf.co/...` cannot use
+# one — it needs a standalone model GGUF. See finetune/merge_export.py.
+#
+# Requires an `HF_TOKEN` repository secret: a fine-grained Hugging Face token scoped to the target
+# model repo with write access (publish_hf.py only calls create_repo and upload_file). A classic
+# "write" token would grant far more than this needs.
+name: marola-sea publish
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # only to push the marola-sea-v<N> tag after a successful publish
+
+concurrency:
+  group: marola-sea-publish
+  cancel-in-progress: false   # never interrupt an upload half-done
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # the version counter reads existing tags
+
+      - name: refuse to run without a token, before doing 40 minutes of work
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "::error::HF_TOKEN secret is not set — add a fine-grained Hugging Face token with write access to the target model repo." >&2
+            exit 1
+          fi
+          echo "HF_TOKEN present"
+
+      - name: work out the next version (auto-increment, no input)
+        id: version
+        run: |
+          set -euo pipefail
+          latest="$(git tag -l 'marola-sea-v*' | sed -E 's/^marola-sea-v//' | grep -E '^[0-9]+$' | sort -n | tail -1 || true)"
+          next=$(( ${latest:-0} + 1 ))
+          echo "version=v$next" >> "$GITHUB_OUTPUT"
+          echo "tag=marola-sea-v$next" >> "$GITHUB_OUTPUT"
+          echo "publishing as v$next (previous: ${latest:-none})"
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'   # torch/peft wheels; the dev shell's 3.14 has none yet
+
+      - name: install the training and publishing dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install -r finetune/requirements.txt
+
+      - name: build the dataset (stdlib only, deterministic)
+        run: |
+          set -euo pipefail
+          python finetune/build_dataset.py
+          python finetune/build_dpo_dataset.py
+
+      - name: train the SFT adapter, then DPO on top of it
+        run: |
+          set -euo pipefail
+          python finetune/train_lora.py --preset tiny --no-4bit --epochs 3
+          python finetune/train_dpo.py --preset tiny --no-4bit --epochs 1
+
+      - name: merge the adapter into the base and export GGUFs
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends cmake
+          git clone --depth 1 https://github.com/ggml-org/llama.cpp /tmp/llama.cpp
+          cmake -S /tmp/llama.cpp -B /tmp/llama.cpp/build -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF
+          cmake --build /tmp/llama.cpp/build --target llama-quantize -j"$(nproc)"
+          pip install -r /tmp/llama.cpp/requirements.txt
+          python finetune/merge_export.py --preset tiny --llama-cpp /tmp/llama.cpp
+
+      - name: publish to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          python finetune/publish_hf.py \
+            --repo "${GITHUB_REPOSITORY_OWNER}/marola-sea-tiny-GGUF" \
+            --gguf finetune/out/marola-sea-tiny-Q4_K_M.gguf \
+            --gguf finetune/out/marola-sea-tiny-Q8_0.gguf \
+            --base-model HuggingFaceTB/SmolLM2-360M-Instruct \
+            --base-license apache-2.0
+
+      - name: tag the release, only after a successful upload
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "marola-sea published to Hugging Face by ${GITHUB_WORKFLOW} run ${GITHUB_RUN_ID}"
+          git push origin "$TAG"
+          echo "tagged $TAG"
