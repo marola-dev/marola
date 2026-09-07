@@ -119,6 +119,49 @@ carries the `Co-Authored-By: Claude <noreply@anthropic.com>` trailer and every P
 Full guide: [`CONTRIBUTING.md`](./CONTRIBUTING.md). Please also read the
 [Code of Conduct](./CODE_OF_CONDUCT.md) and, for a vulnerability, [`SECURITY.md`](./SECURITY.md).
 
+## Thanks
+
+marola is a small project standing on a lot of other people's work. Named in rough order of how
+much of it marola actually leans on:
+
+**[Kyo](https://getkyo.io/)** — the effect system the whole Scala side is written in
+(`kyo-core`, `kyo-direct`, `kyo-combinators`, `kyo-http`). Direct-style `.now`/`defer` is what
+lets marola's pipeline read like ordinary code while keeping effects honest at the type level, and
+`docs/EFFECTS-MAP.md` exists because Kyo made that boundary worth auditing at all. A pre-1.0
+library whose authors have been shipping fast — this repo pins a version and verifies API shapes
+against the jar rather than the docs, which is a compliment to the pace, not a complaint.
+
+**[Scala 3](https://www.scala-lang.org/)** and the JVM, **[MUnit](https://scalameta.org/munit/)**
+for every test in the repo, **[sbt](https://www.scala-sbt.org/)** and
+**[scoverage](https://github.com/scoverage/sbt-scoverage)** for the build and the coverage badge.
+
+**[Ollama](https://ollama.com/)** — the reason marola runs entirely locally with no account and no
+key, and the default the whole "local-first, Azure opt-in" design is built around.
+**[llama.cpp](https://github.com/ggml-org/llama.cpp)** and ggml for GGUF conversion and
+quantization; **[Hugging Face](https://huggingface.co/)** for `transformers`, `peft`, `trl` and
+the Hub, and **[SmolLM2](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct)** for the
+Apache-2.0 base marola-sea is fine-tuned from. **[DSPy](https://dspy.ai/)** compiles the prompts
+that the Scala side replays.
+
+**[OpenStreetMap](https://www.openstreetmap.org/copyright)** contributors and the
+**[Overpass API](https://overpass-api.de/)** — every beach, trail and facility on the map is
+theirs, under ODbL. **[Open-Meteo](https://open-meteo.com/)** for sea temperature, wind and wave
+forecasts, free and without a key. **[Leaflet](https://leafletjs.com/)** draws the map.
+
+**[Nix](https://nixos.org/)** and **[just](https://github.com/casey/just)** make the dev shell
+reproducible and the commands memorable; **[ruff](https://docs.astral.sh/ruff/)**,
+**[actionlint](https://github.com/rhysd/actionlint)** and
+**[hadolint](https://github.com/hadolint/hadolint)** keep the non-Scala half honest.
+**[OpenTelemetry](https://opentelemetry.io/)** and **[MLflow](https://mlflow.org/)** carry the
+traces and the run ledger, **[PDFBox](https://pdfbox.apache.org/)** parses the water-quality
+bulletins, and the **[Model Context Protocol](https://modelcontextprotocol.io/)** SDK exposes
+marola's tools to other agents. **[ai-jail](https://github.com/akitaonrails/ai-jail)** sandboxes
+the agents that write most of this code.
+
+And the public bodies whose data marola only reads and re-presents: **INEA** (Rio de Janeiro),
+**INEMA** (Bahia) and **IMA/SC** (Santa Catarina) publish the bathing-water bulletins the map's
+water quality comes from.
+
 ## License
 
 [MIT](./LICENSE) — © 2026 Matheus Hoffmann.
