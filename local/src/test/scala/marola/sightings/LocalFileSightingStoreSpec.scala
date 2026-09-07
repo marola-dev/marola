@@ -25,7 +25,8 @@ class LocalFileSightingStoreSpec extends munit.FunSuite:
 
   tmp.test("a recorded sighting round-trips back out, note and all") { p =>
     val store = LocalFileSightingStore(p.toString)
-    val s = sighting("Joaquina", SightingKind.Jellyfish, "2026-09-07T10:00:00Z", Some("many, small"))
+    val s =
+      sighting("Joaquina", SightingKind.Jellyfish, "2026-09-07T10:00:00Z", Some("many, small"))
     run(store.record(s))
     assertEquals(run(store.recentFor("Joaquina", 10)), List(s))
   }
@@ -64,14 +65,21 @@ class LocalFileSightingStoreSpec extends munit.FunSuite:
   tmp.test("one malformed line does not hide every other report") { p =>
     val store = LocalFileSightingStore(p.toString)
     run(store.record(sighting("Joaquina", SightingKind.Jellyfish, "2026-09-05T10:00:00Z")))
-    Files.writeString(p, Files.readString(p) + "{not json at all\n\n", java.nio.file.StandardOpenOption.TRUNCATE_EXISTING)
+    Files.writeString(
+      p,
+      Files.readString(p) + "{not json at all\n\n",
+      java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
+    )
     run(store.record(sighting("Joaquina", SightingKind.Whale, "2026-09-06T10:00:00Z")))
     assertEquals(run(store.recentFor("Joaquina", 10)).size, 2, "the good lines survive a bad one")
   }
 
   tmp.test("an unknown sighting kind is skipped, not guessed at") { p =>
     val store = LocalFileSightingStore(p.toString)
-    Files.writeString(p, """{"beach_name":"Joaquina","kind":"Kraken","reported_at":"2026-09-06T10:00:00Z","note":null}""" + "\n")
+    Files.writeString(
+      p,
+      """{"beach_name":"Joaquina","kind":"Kraken","reported_at":"2026-09-06T10:00:00Z","note":null}""" + "\n"
+    )
     assertEquals(run(store.recentFor("Joaquina", 10)), Nil)
   }
 
