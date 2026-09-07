@@ -47,6 +47,14 @@
             pkgs.python3
             pkgs.python3Packages.pip
 
+            # uv (astral-sh) — a fast Python package/tool manager. Confirmed present in nixpkgs
+            # (`uv 0.12.5`, checked 2026-09-07 via `nix run nixpkgs#uv -- --version`). Its `uvx`
+            # subcommand runs a Python CLI tool ephemerally (no persistent install, nothing to
+            # manage) — that's what `just specify` below uses to run GitHub's spec-kit without
+            # vendoring it (spec-kit isn't a nixpkgs package: it ships only via `uv tool install`/
+            # PyPI, confirmed against its own README, 2026-09-07).
+            pkgs.uv
+
             # marola's default local LLM/vision backend (LocalLlmClient,
             # LocalVisionClient, and the DSPy compile step's default
             # MAROLA_DSPY_MODEL) — this is what lets marola run with zero

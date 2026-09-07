@@ -692,6 +692,27 @@ jail-opencode *args:
 # jail-opencode, short alias
 jo *args: (jail-opencode args)
 
+# GitHub's spec-kit (github.com/github/spec-kit) — a spec-driven-development CLI, `specify`. Not a
+# nixpkgs package (confirmed against its own README, 2026-09-07: it ships via `uv tool install`/
+# PyPI only), so this runs it ephemerally through `uvx` instead of vendoring or persistently
+# installing it — nothing to manage, no state this repo owns. `just specify init <args>`,
+# `just specify check`, etc. — see spec-kit's own `--help` for the full command list.
+#
+# `init` defaults to `--integration claude` (this repo's own agent) when the caller didn't pass
+# `--integration` themselves — spec-kit's own default otherwise falls through to its interactive
+# picker / a different agent, confirmed live 2026-09-07 (`specify init --help`'s own examples
+# name `claude`/`gemini`/`copilot`/`generic` as peers, no agent privileged). Only `init` takes
+# `--integration` at all (`specify check --help` has no such flag), so the default is scoped to
+# that one subcommand, not appended blindly to every `just specify ...` call.
+specify *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    args=({{args}})
+    if [ "${args[0]:-}" = "init" ] && ! printf '%s\n' "${args[@]:-}" | grep -qx -- --integration; then
+        args+=(--integration claude)
+    fi
+    uvx --from specify-cli specify "${args[@]:-}"
+
 # What OpenCode sessions consumed, from its local storage (~/.local/share/opencode), priced at
 # list rates — ccusage's OpenCode support (MIP-0013 §4.5; experimental, unknown models show
 # $0.00). `just opencode-cost session`, `just opencode-cost daily`.
