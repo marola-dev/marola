@@ -63,12 +63,18 @@ jobs:
           source scripts/lib/uprd_title.sh
           current="$(gh pr view "$PR" --json title -q .title)"
           norm() { tr '[:upper:]' '[:lower:]' <<<"$1" | sed -E 's/[^a-z0-9]+/ /g; s/^ //; s/ $//'; }
-          if [ "$(norm "$current")" != "$(norm "$HEAD_REF")" ]; then
+          first="$(git log --reverse --format=%s "origin/$BASE_REF..origin/$HEAD_REF" | head -1)"
+          [ -n "$first" ] || { echo "no commits past the base — nothing to title"; exit 0; }
+          # GitHub's own "still default" title takes one of two shapes depending on how many
+          # commits the branch has when the PR is first opened: the branch name (multi-commit),
+          # or the sole commit's full, uncapped subject line verbatim (single-commit — every
+          # branch this repo's agents push, one task = one commit). Checking only against the
+          # branch name treated every single-commit PR's default title as "a human retitled it"
+          # and never capped it — confirmed live, 2026-09-06.
+          if [ "$(norm "$current")" != "$(norm "$HEAD_REF")" ] && [ "$current" != "$first" ]; then
             echo "PR #$PR title was set by a human — leaving it: $current"
             exit 0
           fi
-          first="$(git log --reverse --format=%s "origin/$BASE_REF..origin/$HEAD_REF" | head -1)"
-          [ -n "$first" ] || { echo "no commits past the base — nothing to title"; exit 0; }
           title="$(cap_title "$first")"
           gh pr edit "$PR" --title "$title"
           echo "PR #$PR title: $title"
