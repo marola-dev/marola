@@ -179,6 +179,8 @@ product features:
 
 > Partly built: `just benchmark` (`ARCHITECTURE.md` §5h) is a deterministic held-out check for the
 > *answering* path (RAG vs. plain prompt). The summarizer/reviewer path still has only its trainset.
+> The model axis of that benchmark (closed API vs. open local vs. RAG vs. tuned, with latency and
+> cost columns) is proposed as `docs/mips/MIP-0032-model-strategy-benchmark-matrix.md`.
 
 `dspy/compile_recommendation_prompt.py`'s `TRAINSET` currently does double duty as both the
 few-shot demo source *and* the only quality check (`jellyfish_and_whale_mentioned_when_relevant`,
