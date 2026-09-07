@@ -130,20 +130,29 @@ lazy val core = (project in file("core"))
 // CLI never carries two OpenTelemetry SDKs.
 val OpenTelemetryVersion = "1.65.0"
 
+// Pure-JVM PDF text extraction for the INEA/INEMA bulletin parsers (MIP-0031 §4.3): both agencies
+// publish bathing-water bulletins only as PDFs, never structured data, and PDFBox (Apache-2.0)
+// avoids shelling out to `pdftotext`, which would need a native binary bundled into the Docker
+// image. Maven Central's latest stable release at the time of writing (`maven-metadata.xml`,
+// 2026-09-07) is 3.0.8 — pinned explicitly rather than left to a range.
+val PdfboxVersion = "3.0.8"
+
 lazy val local = (project in file("local"))
   .dependsOn(core)
   .settings(baseSettings)
   .settings(
     name := "marola-local",
-    // Still zero Azure SDK dependency (the module's invariant). The one non-JDK dependency is the
+    // Still zero Azure SDK dependency (the module's invariant). The non-JDK dependencies are the
     // OpenTelemetry SDK + OTLP/HTTP exporter for `observability/MlflowTracing` (MIP-0010 task 6):
     // MLflow ingests traces over OTLP/HTTP only, and hand-rolling the protobuf payload over
-    // `java.net.http` would be a worse dependency than the reference exporter. Everything else in
-    // this module stays `Http`/`JsonValue` over `java.net.http`.
+    // `java.net.http` would be a worse dependency than the reference exporter; and Apache PDFBox
+    // for the water-quality bulletin PDF parsers (MIP-0031). Everything else in this module stays
+    // `Http`/`JsonValue` over `java.net.http`.
     libraryDependencies ++= Seq(
       "io.opentelemetry" % "opentelemetry-sdk" % OpenTelemetryVersion,
       "io.opentelemetry" % "opentelemetry-exporter-otlp" % OpenTelemetryVersion,
-      "io.opentelemetry" % "opentelemetry-sdk-testing" % OpenTelemetryVersion % Test
+      "io.opentelemetry" % "opentelemetry-sdk-testing" % OpenTelemetryVersion % Test,
+      "org.apache.pdfbox" % "pdfbox" % PdfboxVersion
     )
   )
 
