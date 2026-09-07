@@ -26,6 +26,8 @@ rebuilt every 3 hours and on every relevant merge to `main` ([`site.yml`](./.git
 deterministic rules decide anything safety-related, a sourced corpus decides what the model may
 say, and a second model reviews the first — the reasoning behind each choice: [`PHILOSOPHY.md`](./PHILOSOPHY.md).
 
+<p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view.png" alt="marola.dev — best hour per beach, ranked, with the water-quality popup for a sampling point" width="720" /></a></p>
+
 ## What you get
 
 - **Best hour tomorrow, per beach** — OpenStreetMap beaches, Open-Meteo sea/weather/tide forecasts, a 0-100 swimability score with the reasons, never at night.
