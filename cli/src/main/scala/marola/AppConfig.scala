@@ -2,7 +2,12 @@ package marola
 
 import kyo.*
 
-import marola.beaches.RouteFinder
+import marola.beaches.{
+  AccessibilityClient,
+  NoopAccessibilityClient,
+  OverpassAccessibilityClient,
+  RouteFinder
+}
 import marola.knowledge.{FileKnowledgeStore, OceanQa, OllamaEmbedder}
 import marola.ledger.{MlflowRunLedger, RunLedger}
 import marola.llm.{AzureFoundryLlmClient, LlmClient, LocalLlmClient, TracedLlmClient}
@@ -42,6 +47,20 @@ object WaterProvider:
       case Some("ima-sc") | Some("ima_sc") | Some("imasc") => ImaSc
       case Some("none") | Some("off")                      => None
       case _                                               => Auto
+
+/**
+ * MIP-0021 §5: `Overpass` (default) is the only real source — there is no Azure alternative for OSM
+ * amenities — so this is a simple on/off switch, not a `Provider`-shaped local-vs-Azure choice.
+ * `Off` skips the extra Overpass call entirely (useful for `just benchmark`).
+ */
+enum FacilitiesProvider derives CanEqual:
+  case Overpass, Off
+
+object FacilitiesProvider:
+  def fromEnv(value: Option[String]): FacilitiesProvider =
+    value.map(_.trim.toLowerCase) match
+      case Some("off") => Off
+      case _           => Overpass
 
 /**
  * Which `Tracing` backend `Main` wraps the pipeline in — `MAROLA_TRACES=off|mlflow|azure` (MIP-0010
@@ -85,6 +104,7 @@ final case class AppConfig(
     originLat: Option[Double],
     originLon: Option[Double],
     waterQualityProvider: WaterProvider,
+    facilitiesProvider: FacilitiesProvider,
     localEmbedModel: String,
     knowledgeDir: String,
     knowledgeIndexPath: String,
@@ -141,6 +161,7 @@ final case class AppConfig(
       s"origin=${origin.map(o => f"${o.lat}%.4f,${o.lon}%.4f").getOrElse("auto")}",
       f"radius=${beachSearchRadiusKm}%.0fkm",
       s"water=$waterQualityProvider",
+      s"facilities=$facilitiesProvider",
       s"maps=${secret(azureMapsSubscriptionKey)}",
       s"sightings=$sightingStoreProvider(${
           if sightingStoreProvider == Provider.Local then localSightingStorePath
@@ -163,6 +184,17 @@ final case class AppConfig(
       case WaterProvider.Auto =>
         if ImaScWaterQualityClient.coversOrigin(origin) then Some(ImaScWaterQualityClient())
         else scala.None
+
+  /**
+   * MIP-0021 §5: never `None` — `Off` still needs a client, `NoopAccessibilityClient`, so
+   * `Recommender`'s `Some(...)` call site doesn't have to special-case "off" separately from "the
+   * real client returned no data." `Overpass` (default) reuses the same public endpoint
+   * `BeachFinder` already talks to.
+   */
+  def accessibilityClient: AccessibilityClient =
+    facilitiesProvider match
+      case FacilitiesProvider.Overpass => OverpassAccessibilityClient()
+      case FacilitiesProvider.Off      => NoopAccessibilityClient()
 
   /**
    * Local-only RAG (`FUTURE-WORK.md` §9.1, first cut): the corpus under `knowledgeDir`, embedded by
@@ -281,6 +313,7 @@ object AppConfig:
       originLat = sys.env.get("MAROLA_ORIGIN_LAT").flatMap(_.toDoubleOption),
       originLon = sys.env.get("MAROLA_ORIGIN_LON").flatMap(_.toDoubleOption),
       waterQualityProvider = WaterProvider.fromEnv(sys.env.get("MAROLA_WATER_QUALITY_PROVIDER")),
+      facilitiesProvider = FacilitiesProvider.fromEnv(sys.env.get("MAROLA_FACILITIES")),
       localEmbedModel = sys.env.getOrElse("MAROLA_LOCAL_EMBED_MODEL", OllamaEmbedder.DefaultModel),
       knowledgeDir = sys.env.getOrElse("MAROLA_KNOWLEDGE_DIR", FileKnowledgeStore.DefaultCorpusDir),
       knowledgeIndexPath =

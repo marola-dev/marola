@@ -220,7 +220,8 @@ object Main extends KyoApp:
               SiteBuilder.DefaultStatic,
               water = config.waterQualityClient,
               now = java.time.OffsetDateTime.now(),
-              distanceRefiner = config.distanceRefiner
+              distanceRefiner = config.distanceRefiner,
+              accessibility = Some(config.accessibilityClient)
             )
           )
         )
@@ -416,7 +417,8 @@ object Main extends KyoApp:
               origin.coordinates,
               origin.radiusKm,
               distanceRefiner = config.distanceRefiner,
-              waterQuality = water
+              waterQuality = water,
+              accessibility = Some(config.accessibilityClient)
             )
           }
           _ <-

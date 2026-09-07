@@ -149,6 +149,17 @@
             "peak": { "type": ["string", "null"] },
             "season": { "type": "boolean" }
           }
+        },
+        "facilities": {
+          "type": "object",
+          "description": "MIP-0021: OSM amenity counts within 300m of this beach. Optional and additionalProperties:false so an older board built before this MIP still validates unchanged; absent keys = no data for that facility, never a zeroed count.",
+          "additionalProperties": false,
+          "properties": {
+            "parking": { "type": "integer" },
+            "toilets": { "type": "integer" },
+            "shower": { "type": "integer" },
+            "lifeguard": { "type": "integer" }
+          }
         }
       }
     }
