@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Draft — §5.2 (chat server + widget) implemented on `mip-0033/1-chat-server`, pending merge; §5.1 (repo visibility) and §5.3/§5.4 (model publish, Milestones doc) not started |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "release public will match with release 0, site should be public and safe (static), chatbot must be present working with ollama running on my local computer... with first hugging face distributed model. Idea is to create link between MIPs - milestones - releases") |
 | **Created** | 2026-09-06 |
 | **Phase** | Spans Phase 0-1 work (`ARCHITECTURE.md` §11) — Release 0 is a **new, orthogonal axis**, not another phase: Phase tracks infra/deployment stage (local → bot → Azure → deployed), Release tracks a *bundled, versioned, publicly-announced* milestone. Release 0 draws from Phase 0/1 work already done or in flight; it does not require Phase 2/3 |
