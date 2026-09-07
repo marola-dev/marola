@@ -137,11 +137,11 @@ jobs:
           xml = open(sys.argv[1]).read()
           pct = float(re.search(r'statement-rate="([0-9.]+)"', xml).group(1))
           color = "red" if pct < 50 else "yellow" if pct < 80 else "green"
-          # "scala coverage", not "coverage": the README carries a second, Python one now
-          # (repo-stats' stats/python-coverage.json, same thresholds), and two badges that both
-          # read "coverage" are worse than none.
+          # "sc-cov", not "coverage": the README carries a second, Python one now (repo-stats'
+          # stats/python-coverage.json, same thresholds, labelled "py-cov"), and two badges that
+          # both read "coverage" are worse than none. Rename one and the other has to follow.
           json.dump(
-              {"schemaVersion": 1, "label": "scala coverage", "message": f"{pct:.0f}%", "color": color},
+              {"schemaVersion": 1, "label": "sc-cov", "message": f"{pct:.0f}%", "color": color},
               sys.stdout,
           )
           PY

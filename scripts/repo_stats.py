@@ -15,7 +15,7 @@ Four files, the same shields.io "endpoint" shape ci.yml already writes for the S
     ci.json               "ci steps"        19/20 green
     scala-loc.json        "scala"           6,865 LOC
     python-loc.json       "python"          2,877 LOC
-    python-coverage.json  "python coverage" 73%
+    python-coverage.json  "py-cov" 73%
 
 CI health is *step*-level, not job-level: ci.yml has three jobs but ~20 named steps, and
 "build-test passed" hides which of them actually ran. Only steps that ran count — a step whose
@@ -128,12 +128,14 @@ def parse_cloc(payload: str, language: str) -> int:
 
 def coverage_badge(percent: float | None) -> dict:
     """Statement coverage of `scripts/` under its own self-tests. Same thresholds as ci.yml's
-    Scala badge (red < 50 ≤ yellow < 80 ≤ green) so the two read on one scale, and the label
-    says *python* coverage — there are two coverage badges in the README now."""
+    Scala badge (red < 50 ≤ yellow < 80 ≤ green) so the two read on one scale. The label is
+    `py-cov`, paired with ci.yml's `sc-cov` — short enough that the two badges sit side by side
+    without wrapping, and still distinguishable at a glance, which is the only thing the label
+    has to do."""
     if percent is None:
-        return badge("python coverage", "no data", "lightgrey")
+        return badge("py-cov", "no data", "lightgrey")
     color = "red" if percent < 50 else "yellow" if percent < 80 else "green"
-    return badge("python coverage", f"{percent:.0f}%", color)
+    return badge("py-cov", f"{percent:.0f}%", color)
 
 
 def parse_coverage_json(payload: str) -> float:
@@ -371,7 +373,7 @@ def self_test() -> int:
     # --- Python coverage: shaping, parsing, the argv builder and how coverage.py is located.
     assert coverage_badge(73.0) == {
         "schemaVersion": 1,
-        "label": "python coverage",
+        "label": "py-cov",
         "message": "73%",
         "color": "yellow",
     }
@@ -380,12 +382,13 @@ def self_test() -> int:
     assert coverage_badge(100.0)["message"] == "100%", "no decimals on the badge"
     assert coverage_badge(None) == {
         "schemaVersion": 1,
-        "label": "python coverage",
+        "label": "py-cov",
         "message": "no data",
         "color": "lightgrey",
     }
     # Both coverage badges must be distinguishable at a glance — this is the whole reason the
-    # label is not just "coverage" like ci.yml's Scala one used to be.
+    # label is not just "coverage" like ci.yml's Scala one used to be. `py-cov` here pairs with
+    # `sc-cov` in ci.yml; if one is renamed the other has to follow.
     assert coverage_badge(73.0)["label"] != ci_badge(1, 1)["label"]
 
     cov_json = json.dumps(
