@@ -168,11 +168,12 @@ it used on the `origin ->` line:
 No Azure setup, no Telegram token are needed for any of the above — every integration defaults to
 free/local, see §5's table.
 
-## 3b. Two different uses of AI, deliberately not one
+## 3b. Two different uses of AI today, a third planned — deliberately not one
 
 marola runs AI in two places that answer to different rules, and conflating them is the easiest way
 to misread the codebase. The distinction is not stylistic — it decides what may be wrong, and how
-you would find out.
+you would find out. A third use is designed but not built, and is kept separate from both for the
+same reason.
 
 **The map is deterministic. No model writes any number a visitor sees.** The board is built by
 `cli/src/main/scala/marola/site/SiteBuilder.scala`, which contains no LLM reference at all — grep
@@ -205,6 +206,27 @@ fenced by a judge, a corpus and tools.** When something looks wrong, that split 
 look — a bad map value is a parser or a scoring bug, a bad chat answer is a model, a retrieval or a
 prompt problem. It is also why the map needs no GPU, no token and no network beyond the free APIs,
 while the chat is the only part that depends on a model at all.
+
+### Use 3, planned: forecasting with time-series foundation models
+
+Neither of the two above predicts anything. The map reports what the agencies and Open-Meteo
+measured; the chat explains it. A third use — **forecasting marola's own accumulated series with a
+pretrained time-series transformer** — is designed in
+[MIP-0007](./mips/MIP-0007-time-series-foundation-models.md), prompted by Nixtla's TimeGPT, with
+the open-weight models (Chronos, TimesFM, Moirai) as the local-first candidates and TimeGEN-1 via
+Azure AI Foundry as the opt-in cloud path, consistent with the six-integration pattern in §5.
+
+It is a genuinely different shape from both: not a language model at all, but a numeric forecaster
+run zero-shot over a history — the kind of thing that could calibrate the jellyfish and whale
+heuristics (§8) against real accumulated reports instead of the hand-tuned thresholds they use
+today.
+
+**Deliberately not started.** MIP-0007 is Draft, Phase 4, and parked on purpose: it needs weeks of
+marola's own series before any backtest is meaningful, and the MIP states its own risk plainly —
+zero-shot foundation models may simply lose to "last result persists" on series this small and
+noisy. Only the accumulation is worth doing now. That honesty is the point of listing it here as a
+third *use*: when it arrives it will be a third thing that can be wrong in a third way, and it
+should not be quietly folded into either of the two that exist.
 
 ## 4. Target architecture (Telegram bot, once built)
 
