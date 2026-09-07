@@ -1,6 +1,10 @@
 package marola.knowledge
 
+import java.nio.file.Files
+
 class CorpusSpec extends munit.FunSuite:
+
+  private given unsafe: kyo.AllowUnsafe = kyo.AllowUnsafe.embrace.danger
 
   private val doc =
     """# Rip currents
@@ -43,6 +47,49 @@ class CorpusSpec extends munit.FunSuite:
     assert(msgs.head.content.contains("ONLY the numbered passages"))
     assert(msgs(1).content.contains("[1] (Rip currents — https://x)"))
     assert(msgs(1).content.endsWith("Question: what do I do in a rip?"))
+  }
+
+  test("chunkDocument stamps safety onto every chunk it produces") {
+    val plain = Corpus.chunkDocument(doc)
+    assert(plain.forall(!_.safety))
+    val safe = Corpus.chunkDocument(doc, safety = true)
+    assert(safe.forall(_.safety))
+  }
+
+  test("listFiles: top-level .md files plus one level into safety/, not deeper, sorted") {
+    val tmp = Files.createTempDirectory("marola-corpus-listfiles")
+    Files.writeString(tmp.resolve("b.md"), "# B")
+    Files.writeString(tmp.resolve("a.md"), "# A")
+    Files.writeString(tmp.resolve("not-markdown.txt"), "ignore me")
+    val safetyDir = tmp.resolve("safety")
+    Files.createDirectory(safetyDir)
+    Files.writeString(safetyDir.resolve("rip.md"), "# Rip")
+    val nested = safetyDir.resolve("nested")
+    Files.createDirectory(nested)
+    Files.writeString(nested.resolve("deep.md"), "# Deep")
+
+    val files = Corpus.listFiles(tmp).map(_.getFileName.toString)
+    assertEquals(files, List("a.md", "b.md", "rip.md"))
+  }
+
+  test("listFiles on a missing directory is empty, not an error") {
+    assertEquals(Corpus.listFiles(java.nio.file.Paths.get("/no/such/dir/at/all")), Nil)
+  }
+
+  test("load stamps safety = true only for chunks from files under safety/") {
+    val tmp = Files.createTempDirectory("marola-corpus-load")
+    Files.writeString(tmp.resolve("plain.md"), "# Plain\nSource: https://example.com\n\nbody text")
+    val safetyDir = tmp.resolve("safety")
+    Files.createDirectory(safetyDir)
+    Files.writeString(
+      safetyDir.resolve("rip.md"),
+      "# Rip\nSource: https://example.com\n\ndanger text"
+    )
+
+    val chunks = kyo.Sync.Unsafe.evalOrThrow(Corpus.load(tmp))
+    val bySafety = chunks.groupBy(_.safety).view.mapValues(_.map(_.docTitle)).toMap
+    assertEquals(bySafety.getOrElse(false, Nil), List("Plain"))
+    assertEquals(bySafety.getOrElse(true, Nil), List("Rip"))
   }
 
 end CorpusSpec

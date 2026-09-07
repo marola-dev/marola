@@ -162,7 +162,9 @@ object Report:
       case (p, i) =>
         f"  [${i + 1}] ${p.docTitle} — ${p.source} (score ${p.score}%.2f)"
     }
-    (a.text.trim +: (if sources.isEmpty then Nil else "Sources:" +: sources)).mkString("\n")
+    val body =
+      (a.text.trim +: (if sources.isEmpty then Nil else "Sources:" +: sources)).mkString("\n")
+    marola.knowledge.SafetyFooter.append(body, a.safety)
 
   def compass(deg: Double): String =
     val dirs = Vector("N", "NE", "E", "SE", "S", "SW", "W", "NW")

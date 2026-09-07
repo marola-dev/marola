@@ -2,8 +2,6 @@ package marola.knowledge
 
 import java.nio.file.{Files, Paths}
 
-import scala.jdk.CollectionConverters.*
-
 import kyo.*
 
 import marola.json.JsonValue
@@ -37,7 +35,13 @@ final class FileKnowledgeStore(corpusDir: String, indexPath: String, embedder: E
         val q = vectors.headOption.getOrElse(Vector.empty)
         index
           .map(i =>
-            Passage(i.chunk.docTitle, i.chunk.source, i.chunk.text, Corpus.cosine(q, i.vector))
+            Passage(
+              i.chunk.docTitle,
+              i.chunk.source,
+              i.chunk.text,
+              Corpus.cosine(q, i.vector),
+              i.chunk.safety
+            )
           )
           .sortBy(-_.score)
           .take(k)
@@ -85,20 +89,8 @@ final class FileKnowledgeStore(corpusDir: String, indexPath: String, embedder: E
 
   private def fingerprint: String < Sync =
     Sync.defer {
-      val dir = Paths.get(corpusDir)
-      val files =
-        if !Files.isDirectory(dir) then Nil
-        else
-          Files
-            .list(dir)
-            .iterator()
-            .asScala
-            .filter(_.toString.endsWith(".md"))
-            .toList
-            .sortBy(_.toString)
-      val parts = files.map(p =>
-        s"${p.getFileName}:${Files.size(p)}:${Files.getLastModifiedTime(p).toMillis}"
-      )
+      val files = Corpus.listFiles(Paths.get(corpusDir))
+      val parts = files.map(p => s"$p:${Files.size(p)}:${Files.getLastModifiedTime(p).toMillis}")
       s"${embedder.model}|${parts.mkString(",")}"
     }
 
@@ -113,7 +105,9 @@ final class FileKnowledgeStore(corpusDir: String, indexPath: String, embedder: E
             title <- c("title").str
             source <- c("source").str
             text <- c("text").str
-          yield Indexed(CorpusChunk(title, source, text), c("vector").arr.flatMap(_.num))
+          yield
+            val safety = c("safety").bool.getOrElse(false)
+            Indexed(CorpusChunk(title, source, text, safety), c("vector").arr.flatMap(_.num))
         })
       else None
 
@@ -128,6 +122,7 @@ final class FileKnowledgeStore(corpusDir: String, indexPath: String, embedder: E
           "title" -> JsonValue.str(i.chunk.docTitle),
           "source" -> JsonValue.str(i.chunk.source),
           "text" -> JsonValue.str(i.chunk.text),
+          "safety" -> JsonValue.bool(i.chunk.safety),
           "vector" -> JsonValue.arr(i.vector.map(JsonValue.num)*)
         )
       }*)

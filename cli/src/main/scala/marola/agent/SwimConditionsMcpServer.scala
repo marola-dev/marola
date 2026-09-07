@@ -257,7 +257,10 @@ object SwimConditionsMcpServer:
       case Some(llm) =>
         val answer = runSync(OceanQa.answer(question, config.knowledgeStore, llm))
         JsonValue.obj(
-          "answer" -> JsonValue.str(answer.text),
+          "answer" -> JsonValue.str(
+            marola.knowledge.SafetyFooter.append(answer.text, answer.safety)
+          ),
+          "safety" -> JsonValue.bool(answer.safety),
           "sources" -> JsonValue.arr(
             answer.passages.map(p =>
               JsonValue.obj(

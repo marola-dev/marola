@@ -14,7 +14,12 @@ import marola.llm.{ChatMessage, LlmClient}
  */
 object OceanQa:
 
-  final case class Answer(text: String, passages: List[Passage])
+  /**
+   * `safety` is true iff any retained passage came from `knowledge/safety/` (MIP-0022) — computed
+   * once from retrieval, independent of which passage's text the model actually cited, so a
+   * strict-mode abstention on a safety question still carries the footer.
+   */
+  final case class Answer(text: String, passages: List[Passage], safety: Boolean)
 
   val NoPassagesReply =
     "I don't have anything in my ocean notes about that yet — try asking about rip currents, " +
@@ -67,7 +72,7 @@ object OceanQa:
       passages <- store.search(question, k)
       relevant = passages.filter(_.score >= minScore)
       reply <- complete(llm, question, relevant, fallback)
-    yield Answer(reply, relevant)
+    yield Answer(reply, relevant, relevant.exists(_.safety))
 
   private def complete(
       llm: LlmClient,
