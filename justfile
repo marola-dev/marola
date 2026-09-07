@@ -84,6 +84,7 @@ quality-other:
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
     scripts/mip-stack.sh --self-test
+    scripts/docs-mip-stack.sh --self-test
     python3 scripts/lib/mip_index_merge.py --self-test
     python3 scripts/mip_graph.py --self-test
     python3 scripts/mip_graph.py --check
@@ -421,6 +422,15 @@ pr-labels-backfill *args:
 # `just stack restack`, `just stack status` — the local, script-only view of a MIP stack.
 stack *args:
     scripts/stack.sh {{args}}
+
+# scripts/docs-mip-stack.sh passthrough — chain several independent, un-merged docs/mip-NNNN-*
+# design-doc branches into one base-linked stack for a single review pass. `just docs-mip-stack
+# list` discovers candidates (flags duplicate branches per MIP number and real staleness — never
+# guesses which one is canonical); `just docs-mip-stack plan <branch1> <branch2> ...` verifies
+# each is conflict-free against its computed base and prints/logs the chained `gh pr create`
+# commands. Read-only either way — nothing is pushed, rebased, or opened.
+docs-mip-stack *args:
+    scripts/docs-mip-stack.sh {{args}}
 
 # Stack every open dependency-update PR (dependabot; `--include-steward` adds scala-steward's)
 # into one chain of `deps/<date>/k-slug` branches, the same shape a MIP's task branches get —
