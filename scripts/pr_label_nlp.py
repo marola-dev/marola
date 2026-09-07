@@ -110,6 +110,7 @@ def fetch_pr_text(pr_number: str) -> str:
 
 def self_test() -> int:
     fails = 0
+    skipped = False
 
     def ok(got, want, label):
         nonlocal fails
@@ -134,6 +135,11 @@ def self_test() -> int:
     # This is a real, small test corpus check against the actual scikit-learn/vectorizer pipeline —
     # requires scikit-learn importable, but no network and no `gh` call, matching every other
     # script's --self-test convention in this repo (offline, deterministic given fixed input).
+    # scikit-learn is an optional dependency here: it is not in flake.nix's devShell and not on
+    # the CI runner, so a missing import is an environment fact, not a failure. Skip only the
+    # classifier cases and still run the parsing checks below — returning 1 for a skip used to
+    # abort `repo_stats.py`'s Python-coverage measurement (it runs every --self-test under
+    # `check=True`) and take the whole repo-stats job with it.
     try:
         for text, expected in cases:
             ranked = classify(text, top=1)
@@ -141,10 +147,11 @@ def self_test() -> int:
             ok(got, expected, f"classify('{text[:40]}...') picks {expected}")
     except ImportError as exc:
         print(
-            f"  SKIP  scikit-learn not importable in this environment ({exc}) — self-test cannot run",
+            f"  SKIP  scikit-learn not importable ({exc}) — classifier cases skipped, "
+            "parsing checks still run",
             file=sys.stderr,
         )
-        return 1
+        skipped = True
 
     # Pure parsing check, no scikit-learn needed.
     descriptions = load_taxonomy_descriptions()
@@ -153,18 +160,13 @@ def self_test() -> int:
         True,
         "load_taxonomy_descriptions finds area/water-quality from scripts/lib/pr_labels.sh",
     )
-    ok(
-        set(AREA_CONTEXT_KEYWORDS.keys()) <= set(descriptions.keys()) or True,
-        True,
-        "every AREA_CONTEXT_KEYWORDS label name is a real taxonomy label (no typo'd label)",
-    )
     for label in AREA_CONTEXT_KEYWORDS:
         if label not in descriptions:
             fails += 1
             print(f"  FAIL  AREA_CONTEXT_KEYWORDS has '{label}' which is not in the real taxonomy")
 
     if fails == 0:
-        print("pr_label_nlp self-test: ok")
+        print("pr_label_nlp self-test: ok" + (" (classifier cases skipped)" if skipped else ""))
         return 0
     print(f"pr_label_nlp self-test: {fails} failure(s)", file=sys.stderr)
     return 1
