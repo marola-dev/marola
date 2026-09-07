@@ -18,12 +18,61 @@ somewhere to fail**. A compiler, an exhaustive `match`, a recorded fixture, a de
 scoring function, a sandbox, a written design with dated sources — each is a place where a wrong
 answer stops instead of shipping. The model then does the part only it is good at: language.
 
+## Why it was built, and the three pillars
+
+marola starts from two long-standing interests of its author: open water — swimming in it, being
+near it, knowing when it is worth going — and models, machine-learning models generally, not only
+the language kind that happens to be in fashion. This repository is where those two meet on
+something with real stakes, and the meeting has three standing pillars. They are strategy, not
+delivered features; each is at a different stage, and the stages are named below rather than
+smoothed over.
+
+**Pillar 1 — build marola with agents, and keep that portable.** The code here is written
+day-to-day through an agentic coder (Claude Code, currently), and the constraints that makes
+necessary are the repository's most finished work. `AGENTS.md` is the rulebook, deliberately
+agent-agnostic prose rather than one vendor's config format; MIP-0011 (Implemented,
+ultrareview-verified) turned the rules that must not be optional into things the harness enforces —
+hooks, a shared permission allowlist, path-scoped rules, subagents, skills; `docs/DEV-FLOW.md` is
+the loop from idea to merged PR. "Open to other coders" is not a wish either: MIP-0013 (Draft) is a
+bounded OpenCode tryout that states what replacing Claude Code would actually cost, down to the one
+hard dependency (`scripts/cost-split.py` reads Claude Code's own session logs). This file and the
+MIP discipline around it are the pillar's output, not a description of it.
+
+**Pillar 2 — models reasoning over open water, with the deterministic parts kept deterministic.**
+Built today: the pipeline in `scoring/Swimability.scala` computes the score, the deductions and the
+bathing-water veto in plain Scala, and `llm/Reviewer.scala` is a second, independently prompted
+pass that grades the first model's sentence and may rewrite it. That is already the "LLM as judge
+over non-fuzzy APIs" shape — Open-Meteo, Overpass and the bathing-water agency are read literally,
+the model interprets and phrases them and can never overturn a veto. Not built: anomaly and hazard
+detection over the same series — rough-sea and storm-surge events, heavy rain, the water-related
+emergency nobody subscribes to a beach app for. It is proposed in `docs/FUTURE-WORK.md` §9.2 and
+`docs/AI-500-MAPPING.md` §1/§4 and named in `docs/ROADMAP.md` §5 as the highest-value unbuilt item,
+with no MIP written yet; its own sketch puts a human-confirmation gate on alerting ahead of any
+code, since it would be the first thing marola does unasked. Forecasting proper is parked with an
+honest verdict attached: MIP-0007 (Draft, Phase 4) covers time-series foundation models — TimeGPT
+alongside the open-weight Chronos, TimesFM and Moirai — and concludes they are the wrong tool for
+waves and wind, where Open-Meteo's physics models win, and the right one only for the series marola
+itself accumulates.
+
+**Pillar 3 — models of the ocean domain, if affordable.** The management half exists first on
+purpose: MIP-0010 (Implemented, v1, local) makes MLflow the ledger for benchmark runs, prompt
+compiles and pipeline traces, so a model change is compared on recorded params and metrics rather
+than on impression. The model half is MIP-0025 (Draft) — `marola-sea-1.0`, a 3B base post-trained
+in three layers and served through Ollama — where `finetune/`'s Tier 1 has run and Tier 2 is
+written, not run, for want of a GPU. Its own status line is `do when X lands`, and the X is money:
+compute is the gate, the same human go-ahead `AGENTS.md` requires before any paid resource applies
+to a rented GPU as much as to Azure, and whatever comes out still has to clear `just benchmark`'s
+existing gate rather than bypass it.
+
 ## Why marola
 
-The question "what is the best hour tomorrow to swim nearby?" is small enough to finish and hard
-enough to be honest about. It needs live data (Overpass, Open-Meteo, a bathing-water agency), a
-decision that can get someone hurt if it is wrong (rough sea, contaminated water, darkness), and a
-sentence a person will actually read. That mix is exactly where an LLM alone fails and where an
+marola — the ocean intelligence layer: the question it answers first, "what is the best hour
+tomorrow to swim nearby?", is small enough to finish and hard enough to be honest about — and the
+same layer (live data, a decision that can hurt someone if wrong, a sentence a person will read) is
+what any other question about the sea near you needs too. It needs live data (Overpass, Open-Meteo,
+a bathing-water agency), a decision that can get someone hurt if it is wrong (rough sea,
+contaminated water, darkness), and a sentence a person will actually read. That mix is exactly
+where an LLM alone fails and where an
 LLM inside a constrained pipeline is genuinely better than either alone. It also happens to
 exercise every AI-103 domain and most of AI-500 (`docs/AI-103-MAPPING.md`, `docs/AI-500-MAPPING.md`)
 without inventing a use case for the sake of an exam.
@@ -56,21 +105,21 @@ reviewer be strict without being verbose:
   jar" rule exists because Kyo is pre-1.0 and its docs drift), GraalVM native images, a container
   that is a fat jar and nothing else.
 
-**The Python question, answered honestly.** The premise "Python barely has type checking" is
-too strong, and this file should not repeat it. Python has had gradual typing since 3.5 and an
-active tool ecosystem (mypy, pyright, and newer checkers); typed Python is common in modern
-libraries. What is true, and is the actual point, is narrower and matters more for agent-written
-code: the annotations are **optional and unenforced by the language** — the `typing` module's own
+**The Python question.** Python is not short of types: gradual typing since 3.5, mypy and
+pyright, and typed code is the norm in modern libraries. The point is where the gate lives. In
+Python the annotations are optional and unenforced by the language — the `typing` module's own
 documentation opens with "The Python runtime does not enforce function and variable type
 annotations. They can be used by third party tools such as type checkers, IDEs, linters, etc."
-(docs.python.org, fetched 2026-09-05). So the gate exists only if every contributor, including
-the agent, installs it, configures it, and never types `Any` to make it pass; large parts of the
-ecosystem are untyped or loosely typed; there is no exhaustiveness check on a `match`; and a wrong
-type is discovered when that line runs. On the JVM the gate is the build. That difference — a
-check that is *there by construction* versus one that is *there by discipline* — is the whole
-argument for putting an LLM's output through Scala rather than through Python. It is not an
-argument against Python: marola's offline steps (`dspy/`, `finetune/`) are Python, chosen because
-the libraries only exist there, and kept out of the runtime path on purpose.
+(docs.python.org, fetched 2026-09-05) — so the check is there by discipline: every contributor,
+including the agent, installs the checker, configures it, and never reaches for `Any` to make it
+pass; a `match` has no exhaustiveness check; a wrong type surfaces when that line runs. On the JVM
+the gate is the build — there by construction — and Scala 3 makes it strict without ceremony
+(strict equality, warnings as errors, `enum` with exhaustive `match`, effects at the boundary).
+For a backend system that will live for years and be written largely by agents, that is the bet
+this repo makes: compile-time safety, one build tool with pinned resolution, and ergonomics that
+hold up as the codebase grows beat Python's faster start over the long term. Python keeps the
+places where its libraries are the only ones — the offline steps (`dspy/`, `finetune/`) — and
+stays out of the runtime path on purpose.
 
 ## Why Nix
 

@@ -43,6 +43,7 @@ import datetime as dt
 import json
 import os
 import re
+import sqlite3
 import statistics
 import subprocess
 import sys
@@ -174,6 +175,77 @@ def messages(pdir, session_prefix):
                 # transcript carries its worktree's branch. It is what lets usage follow the
                 # branch instead of the clock (see the attribution loop in main()).
                 seen[key] = (ts, sid, m.get("model", "?"), m["usage"], d.get("gitBranch") or "")
+    return sorted(seen.values(), key=lambda x: x[0])
+
+
+def opencode_db_path():
+    """The real store, confirmed live 2026-09-07 against opencode 1.18.25 (MIP-0013 task 2, §11
+    OQ2): `$XDG_DATA_HOME/opencode/opencode-stable.db` — not the `storage/message/*/msg_*.json`
+    files an earlier draft of that MIP assumed; those don't exist in this version. Falls back to
+    `~/.local/share/opencode` per the XDG default when the env var is unset, and tries the
+    non-`-stable` filename too in case a future/edge/nightly channel uses it."""
+    base = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local" / "share")))
+    d = base / "opencode"
+    for name in ("opencode-stable.db", "opencode.db"):
+        p = d / name
+        if p.is_file():
+            return p
+    return None
+
+
+def messages_opencode(root, session_prefix):
+    """(timestamp, session, model, usage, gitBranch) per assistant message — the OpenCode-harness
+    twin of `messages()` above, same tuple shape so `main()`'s attribution loop needs no branching
+    beyond which reader it calls. `gitBranch` is always `""`: OpenCode's `message`/`session` rows
+    carry no branch field (confirmed live, same session), so a message here always falls back to
+    `main()`'s time-only rule — documented, not a bug to fix, since OpenCode sessions in this repo
+    are (so far) one-project, foreground, interactive runs, not marola's multi-worktree pattern.
+
+    `usage` is shaped like Claude Code's dict (`input_tokens`/`output_tokens`/
+    `cache_creation_input_tokens`/`cache_read_input_tokens`) so `price()` needs no change; `model`
+    is `providerID/modelID` (e.g. `ollama/llama3.2`) — `price()` looks it up in the same LiteLLM
+    table and returns `None` for a local Ollama model, same graceful "not priced" path Claude
+    Code's `<synthetic>` skip already exercises, not a special case here.
+    """
+    db = opencode_db_path()
+    if db is None:
+        return []
+    seen = {}
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    try:
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        cur.execute(
+            "select m.id, m.session_id, m.data from message m "
+            "join session s on s.id = m.session_id "
+            "where s.directory = ?",
+            (str(root),),
+        )
+        for row in cur.fetchall():
+            if session_prefix and not row["session_id"].startswith(session_prefix):
+                continue
+            try:
+                d = json.loads(row["data"])
+            except json.JSONDecodeError:
+                continue
+            if d.get("role") != "assistant" or not isinstance(d.get("tokens"), dict):
+                continue
+            t = d["tokens"]
+            cache = t.get("cache") or {}
+            created_ms = (d.get("time") or {}).get("created")
+            if created_ms is None:
+                continue
+            ts = dt.datetime.fromtimestamp(created_ms / 1000, tz=dt.UTC)
+            usage = {
+                "input_tokens": t.get("input", 0),
+                "output_tokens": t.get("output", 0),
+                "cache_creation_input_tokens": cache.get("write", 0),
+                "cache_read_input_tokens": cache.get("read", 0),
+            }
+            model = f"{d.get('providerID', '?')}/{d.get('modelID', '?')}"
+            seen[row["id"]] = (ts, row["session_id"], model, usage, "")
+    finally:
+        con.close()
     return sorted(seen.values(), key=lambda x: x[0])
 
 
@@ -579,6 +651,76 @@ def self_test():
         )
         assert not (outer / "x.txt").exists(), "inner repo's file leaked into the outer repo"
 
+    # --- messages_opencode(): a synthetic DB built against the real schema (MIP-0013 task 2,
+    # confirmed live 2026-09-07 against opencode 1.18.25) — table/column names, tokens.{...} JSON
+    # shape, session.directory filtering. No real ~/.local/share/opencode touched. ---
+    with tempfile.TemporaryDirectory() as oc_tmp:
+        oc_root = Path(oc_tmp)
+        data_dir = oc_root / "data" / "opencode"
+        data_dir.mkdir(parents=True)
+        saved_xdg = os.environ.get("XDG_DATA_HOME")
+        os.environ["XDG_DATA_HOME"] = str(oc_root / "data")
+        try:
+            db_path = data_dir / "opencode-stable.db"
+            con = sqlite3.connect(db_path)
+            con.execute("create table session (id text, directory text)")
+            con.execute("create table message (id text, session_id text, data text)")
+            here = str(oc_root / "repo")
+            elsewhere = str(oc_root / "other-repo")
+            con.execute("insert into session values (?, ?)", ("ses_here", here))
+            con.execute("insert into session values (?, ?)", ("ses_elsewhere", elsewhere))
+            user_msg = json.dumps({"role": "user"})
+            asst_msg = json.dumps(
+                {
+                    "role": "assistant",
+                    "modelID": "llama3.2",
+                    "providerID": "ollama",
+                    "tokens": {"input": 4096, "output": 8, "cache": {"read": 100, "write": 0}},
+                    "time": {"created": 1788756841410},
+                }
+            )
+            elsewhere_msg = json.dumps(
+                {
+                    "role": "assistant",
+                    "modelID": "llama3.2",
+                    "providerID": "ollama",
+                    "tokens": {"input": 1, "output": 1, "cache": {"read": 0, "write": 0}},
+                    "time": {"created": 1788756841410},
+                }
+            )
+            con.execute("insert into message values (?, ?, ?)", ("msg_user", "ses_here", user_msg))
+            con.execute("insert into message values (?, ?, ?)", ("msg_asst", "ses_here", asst_msg))
+            con.execute(
+                "insert into message values (?, ?, ?)",
+                ("msg_other_repo", "ses_elsewhere", elsewhere_msg),
+            )
+            con.commit()
+            con.close()
+
+            found = messages_opencode(Path(here), None)
+            assert len(found) == 1, (
+                found
+            )  # the user-role row and the other repo's row are both dropped
+            ts, sid, model, usage, branch = found[0]
+            assert sid == "ses_here", sid
+            assert model == "ollama/llama3.2", model
+            assert usage == {
+                "input_tokens": 4096,
+                "output_tokens": 8,
+                "cache_creation_input_tokens": 0,
+                "cache_read_input_tokens": 100,
+            }, usage
+            assert branch == "", branch  # OpenCode carries no gitBranch — main()'s time-only rule
+
+            assert messages_opencode(Path(str(oc_root / "no-such-repo")), None) == []
+        finally:
+            if saved_xdg is None:
+                os.environ.pop("XDG_DATA_HOME", None)
+            else:
+                os.environ["XDG_DATA_HOME"] = saved_xdg
+
+    assert opencode_db_path() is None or opencode_db_path().is_file()
+
     print(
         f"cost-split self-test: ok (parser {len(cases)} cases, synthetic calibration "
         f"median {coeff:.0f} tokens/line from {stats['n']} commits)"
@@ -666,6 +808,12 @@ def main():
     ap.add_argument(
         "--verbose", action="store_true", help="with --estimate, print the calibration fit"
     )
+    ap.add_argument(
+        "--harness",
+        choices=["claude", "opencode", "all"],
+        default="all",
+        help="which agent harness's session logs to read (MIP-0013 task 2; default: both)",
+    )
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
 
@@ -692,10 +840,16 @@ def main():
         print(format_estimate_trailer(tokens, usd, changed, dt.date.today().isoformat()))
         return
 
-    pdir = project_dir(root)
-    if not pdir.is_dir():
-        sys.exit(f"no session logs at {pdir}")
-    msgs = messages(pdir, a.session)
+    msgs = []
+    if a.harness in ("claude", "all"):
+        pdir = project_dir(root)
+        if pdir.is_dir():
+            msgs += messages(pdir, a.session)
+        elif a.harness == "claude":
+            sys.exit(f"no session logs at {pdir}")
+    if a.harness in ("opencode", "all"):
+        msgs += messages_opencode(root, a.session)
+    msgs.sort(key=lambda x: x[0])
     cs = commits(root, a.stack.lower() if a.stack else None)
     if not cs:
         sys.exit("no commits ahead of origin/main on the selected branch(es)")

@@ -13,8 +13,19 @@ trait Embedder:
   def model: String
   def embed(texts: List[String]): List[Vector[Double]] < Sync
 
-/** A retrieved chunk with its provenance — `source` is the URL the corpus document cites. */
-final case class Passage(docTitle: String, source: String, text: String, score: Double)
+/**
+ * A retrieved chunk with its provenance — `source` is the URL the corpus document cites. `safety`
+ * carries `CorpusChunk.safety` through retrieval (MIP-0022): `OceanQa.answer` uses it to decide
+ * whether the reply must carry the emergency footer, independent of which document's text the model
+ * actually quoted.
+ */
+final case class Passage(
+    docTitle: String,
+    source: String,
+    text: String,
+    score: Double,
+    safety: Boolean = false
+)
 
 /**
  * Retrieval over marola's curated marine-knowledge corpus (the Markdown files under `knowledge/`) —

@@ -4,6 +4,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.{LocalDate, OffsetDateTime}
 
+import marola.beaches.{Facilities, Facility}
 import marola.json.JsonValue
 import marola.lore.{LoreEntry, LoreKind}
 import marola.model.{BestHour, HourlyConditions}
@@ -97,6 +98,10 @@ object Board:
         )*
       ),
       "sea" -> seaJson(best.hour),
+      // MIP-0021: absent keys = no data for that facility, never a zeroed count. `{}` (never
+      // omitted) when OSM has nothing near this beach at all — an older board built before this
+      // MIP still validates (§7): `facilities` is optional in the schema, not required.
+      "facilities" -> facilitiesJson(best.facilities),
       "jellyfish" -> JsonValue.str(best.jellyfishRisk.toString),
       "whales" -> JsonValue.obj(
         "now" -> JsonValue.str(best.whaleSightingLikelihood.toString),
@@ -115,6 +120,11 @@ object Board:
       "sea_temp_c" -> optNum(r.hour.seaTempC),
       "wave_m" -> optNum(r.hour.waveHeightM),
       "wind_kmh" -> optNum(r.hour.windSpeedKmh),
+      // The band the CLI's note uses, lower-cased for the page; optional in the schema so an
+      // already-published board without it still validates (MIP-0009 §5).
+      "wind_level" -> optStr(
+        Swimability.windLevel(r.hour.windSpeedKmh).map(_.toString.toLowerCase)
+      ),
       "jellyfish" -> JsonValue.str(r.jellyfishRisk.toString),
       "whales" -> JsonValue.str(r.whaleSightingLikelihood.toString)
     )
@@ -165,6 +175,21 @@ object Board:
       "source" -> optStr(water.map(_.source)),
       "points" -> JsonValue.arr(points*)
     )
+
+  /**
+   * `{"parking": 3, "toilets": 1, "lifeguard": 1}` — facilities OSM has no data for are absent
+   * keys, never a `0` (MIP-0021 §5: OSM cannot say "there is none"). `{}` for `Facilities.NoData`.
+   */
+  private def facilitiesJson(f: Facilities): JsonValue =
+    JsonValue.obj(f.counts.toList.map {
+      case (fac, n) => facilityKey(fac) -> JsonValue.num(n.toDouble)
+    }*)
+
+  private def facilityKey(f: Facility): String = f match
+    case Facility.Parking   => "parking"
+    case Facility.Toilets   => "toilets"
+    case Facility.Shower    => "shower"
+    case Facility.Lifeguard => "lifeguard"
 
   private def loreJson(e: LoreEntry): JsonValue =
     JsonValue.obj(

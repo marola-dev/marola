@@ -16,7 +16,8 @@ import marola.sightings.{Sighting, SightingKind}
 import marola.site.SiteBuilder
 
 /**
- * POC entry point for "what's the best hour tomorrow to swim nearby?".
+ * POC entry point for marola, the ocean intelligence layer — its first case, "what's the best hour
+ * tomorrow to swim nearby?".
  *
  * Phase 0 of marola (see docs/ARCHITECTURE.md): this runs the real pipeline (nearby beaches via
  * Overpass, forecasts via Open-Meteo, heuristic scoring) end to end from the command line, with no
@@ -147,10 +148,11 @@ object Main extends KyoApp:
       case (Some((kind, beachName, note)), _, _) => reportSighting(config, kind, beachName, note)
       case (None, Some(photoPath), _)            => analyzePhoto(config, photoPath)
       case (None, None, Some(question))          => askOcean(config, question)
-      case (None, None, None) if args.contains("--reindex")   => reindexKnowledge(config)
-      case (None, None, None) if args.contains("--benchmark") => runBenchmark(config)
-      case (None, None, None) if args.contains("--site")      => buildSite(args, config)
-      case (None, None, None)                                 => runRecommendation(args, config)
+      case (None, None, None) if args.contains("--reindex")    => reindexKnowledge(config)
+      case (None, None, None) if args.contains("--benchmark")  => runBenchmark(config)
+      case (None, None, None) if args.contains("--site")       => buildSite(args, config)
+      case (None, None, None) if args.contains("--serve-chat") => serveChat(args, config)
+      case (None, None, None)                                  => runRecommendation(args, config)
 
   /**
    * `--ask "<question>"` — local RAG over the Markdown corpus in `knowledge/` (MIP-0001 /
@@ -189,6 +191,33 @@ object Main extends KyoApp:
         yield ()
 
   /**
+   * `--serve-chat [port]` (MIP-0033 §5.2): runs `marola.agent.ChatServer` in the foreground —
+   * `/health` and `/ask` over plain HTTP on `localhost:port` (default `ChatServer.DefaultPort`),
+   * meant to sit behind a named Cloudflare Tunnel so the static site's chat widget can reach it.
+   * Blocks until interrupted (Ctrl+C); prints an honest "no LLM configured" warning up front rather
+   * than starting a server that can only 503.
+   */
+  private def serveChat(args: Array[String], config: AppConfig): Unit < Async =
+    val port =
+      argValue(args, "--serve-chat")
+        .filterNot(_.startsWith("--"))
+        .flatMap(_.toIntOption)
+        .getOrElse(marola.agent.ChatServer.DefaultPort)
+    for
+      _ <-
+        if config.llmClient.isEmpty then
+          Console.printLine(
+            s"warning: llmProvider=${config.llmProvider} is not configured — /ask will 503 until it is"
+          )
+        else noop
+      _ <- Sync.defer(marola.agent.ChatServer.start(config, port))
+      _ <- Console.printLine(
+        s"marola chat server listening on http://localhost:$port (GET /health, POST /ask) — Ctrl+C to stop"
+      )
+      _ <- Sync.defer(new java.util.concurrent.CountDownLatch(1).await())
+    yield ()
+
+  /**
    * `--site [area-id]` (MIP-0005): build the static map's data for one area of `site/areas.json`,
    * or every area when no id is given, into `site/dist/` (`--site-out <dir>` to change it, `--areas
    * <file>` for another areas file). One Overpass query per area; no LLM call.
@@ -219,7 +248,8 @@ object Main extends KyoApp:
               SiteBuilder.DefaultStatic,
               water = config.waterQualityClient,
               now = java.time.OffsetDateTime.now(),
-              distanceRefiner = config.distanceRefiner
+              distanceRefiner = config.distanceRefiner,
+              accessibility = Some(config.accessibilityClient)
             )
           )
         )
@@ -391,7 +421,9 @@ object Main extends KyoApp:
     val summarize = args.contains("--summarize")
     val brief = args.contains("--brief")
     for
-      _ <- Console.printLine("marola :: best hour tomorrow to swim nearby (POC)")
+      _ <- Console.printLine(
+        "marola :: the ocean intelligence layer (POC) — first case: best hour tomorrow to swim nearby"
+      )
       _ <- Console.printLine(s"config -> ${config.redacted}")
       _ <- warnHalfPair(args, config)
       origin <- resolveOrigin(args, config)
@@ -413,7 +445,8 @@ object Main extends KyoApp:
               origin.coordinates,
               origin.radiusKm,
               distanceRefiner = config.distanceRefiner,
-              waterQuality = water
+              waterQuality = water,
+              accessibility = Some(config.accessibilityClient)
             )
           }
           _ <-

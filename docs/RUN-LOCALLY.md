@@ -198,6 +198,42 @@ just benchmark        # 22 ocean questions × {plain prompt, marola strict, maro
 
 Compare with `docs/benchmarks/2026-09-05.md` — the kept reference run and what it taught.
 
+## 5.2 Plug your local model into the public site's chat widget (MIP-0033)
+
+`marola.dev` (or wherever `site/dist/` is served) ships a chat widget that stays hidden until it
+finds a working endpoint — no server dependency by default. To turn it on, run marola's own tiny
+HTTP server and expose it through a **named** Cloudflare Tunnel (a quick/ephemeral tunnel's URL
+changes every restart, which would break the widget's saved config):
+
+```bash
+# 1. Run marola's chat server (wraps --ask's RAG + the MIP-0022 safety footer over HTTP).
+#    Needs the same Ollama setup as §2-3; it blocks in the foreground, Ctrl+C to stop.
+just run -- --serve-chat            # http://localhost:8787 — GET /health, POST /ask
+# just run -- --serve-chat 9000     # a different port
+
+# 2. In another terminal: a one-time cloudflared login, then a NAMED tunnel (free, no account
+#    beyond a Cloudflare login, no port-forwarding on your router).
+cloudflared tunnel login
+cloudflared tunnel create marola-chat
+cloudflared tunnel route dns marola-chat chat.<your-domain>   # or use the trycloudflare.com URL
+                                                                # cloudflared prints for a quick test
+cloudflared tunnel run --url http://localhost:8787 marola-chat
+```
+
+Then point the widget at that URL — edit `site/static/chatbot-config.js`:
+
+```js
+window.MAROLA_CHAT_ENDPOINT = "https://chat.<your-domain>"; // or the trycloudflare.com URL
+```
+
+`just site-build` copies `site/static/*` (including this file) into `site/dist/` as-is. Leave
+`MAROLA_CHAT_ENDPOINT` empty to keep the widget hidden — that's the default, committed state, so a
+fresh clone's site never shows a chat button pointing nowhere. The widget calls `/health` on page
+load and only reveals its toggle button on a 200; a later failure while chatting shows an honest
+"chatbot offline" message rather than hanging. This narrowly overrides MIP-0005 §9's "no server"
+decision for the site — the maintainer's own machine becomes a real, if intermittent, origin;
+uptime is whatever the maintainer's machine and tunnel happen to be, by design (MIP-0033 §6).
+
 ## 6. Troubleshooting
 
 - **`HTTP 404 ... model 'X' not found`** — the model named in `MAROLA_LOCAL_LLM_MODEL` (or
@@ -255,7 +291,7 @@ returned files under `docs/mips/` and let the in-repo agent verify the sources.
 ## 9. The map — build the boards once, serve them as a static site (MIP-0005)
 
 Everything above answers one person at a time. `just site-build` runs the same pipeline once per
-*area* (`site/areas.json`: Florianópolis and Rio by default) and writes what a static map needs:
+*area* (`site/areas.json`: Florianópolis, Rio de Janeiro and Salvador by default) and writes what a static map needs:
 
 ```bash
 just site-build floripa        # ~70 s live: one Overpass query, two Open-Meteo calls per beach, one IMA download
@@ -265,7 +301,7 @@ just site-serve                # http://localhost:8000 — tap Praia do Campeche
 `site/dist/` (git-ignored) then holds `index.html` + `app.js` + vendored Leaflet from
 `site/static/`, and under `data/`: `areas.json`, and per area `<today>.json`, `<tomorrow>.json`
 (the board — `site/board.schema.json` is the contract, checked by `BoardSpec`) and `latest.json`
-pointing at both. The page shows every beach as a marker coloured by score, a card with the same
+pointing at both. The page shows every beach as a wave marker coloured by score — hover it (tap, on a phone: the same row opens first in the card) for the six aspects at that hour: wind band with its emoji and km/h, water temperature, waves, jellyfish, whales, water verdict (MIP-0009) — a card with the same
 numbers the CLI prints, a day picker, an hour slider, the generated-at time and every source. No
 cookies, no analytics; "near me" is the browser's own geolocation, on request, never sent anywhere.
 If `site/dist/smoke/latest.json` exists (the docker smoke test's last run, §10 — `site.yml` copies
@@ -288,7 +324,8 @@ than becoming pages (Pages source must be "GitHub Actions", never "Deploy from a
 would run Jekyll over the whole branch). Publishing: `just site-deploy` triggers
 `.github/workflows/site.yml` (build on the runner, deploy to GitHub Pages — the same workflow runs
 every 3 h on its own and on every merge to `main` that touches `site/` or the pipeline; the result
-is https://h0ffmann.github.io/marola/), `just site-deploy cloudflare` pushes a local `site/dist` with wrangler.
+is https://marola.dev/, GitHub Pages' custom domain — see `.github/workflows/site.yml`'s header
+comment for the CNAME/DNS setup), `just site-deploy cloudflare` pushes a local `site/dist` with wrangler.
 Tiles come from OpenStreetMap's public servers, which is fine for a link shared among friends and
 not for a public launch — switch `tiles` in `site/areas.json` to a Protomaps/MapTiler source
 before that (MIP-0005 §8).

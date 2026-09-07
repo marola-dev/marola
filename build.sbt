@@ -130,20 +130,34 @@ lazy val core = (project in file("core"))
 // CLI never carries two OpenTelemetry SDKs.
 val OpenTelemetryVersion = "1.65.0"
 
+// Pure-JVM PDF text extraction for the INEA/INEMA bulletin parsers (MIP-0031 §4.3): both agencies
+// publish bathing-water bulletins only as PDFs, never structured data, and PDFBox (Apache-2.0)
+// avoids shelling out to `pdftotext`, which would need a native binary bundled into the Docker
+// image. Maven Central's latest stable release at the time of writing (`maven-metadata.xml`,
+// 2026-09-07) is 3.0.8 — pinned explicitly rather than left to a range.
+val PdfboxVersion = "3.0.8"
+
 lazy val local = (project in file("local"))
   .dependsOn(core)
   .settings(baseSettings)
   .settings(
     name := "marola-local",
-    // Still zero Azure SDK dependency (the module's invariant). The one non-JDK dependency is the
+    // Still zero Azure SDK dependency (the module's invariant). The non-JDK dependencies are the
     // OpenTelemetry SDK + OTLP/HTTP exporter for `observability/MlflowTracing` (MIP-0010 task 6):
     // MLflow ingests traces over OTLP/HTTP only, and hand-rolling the protobuf payload over
-    // `java.net.http` would be a worse dependency than the reference exporter. Everything else in
-    // this module stays `Http`/`JsonValue` over `java.net.http`.
+    // `java.net.http` would be a worse dependency than the reference exporter; and Apache PDFBox
+    // for the water-quality bulletin PDF parsers (MIP-0031). Everything else in this module stays
+    // `Http`/`JsonValue` over `java.net.http`.
     libraryDependencies ++= Seq(
       "io.opentelemetry" % "opentelemetry-sdk" % OpenTelemetryVersion,
       "io.opentelemetry" % "opentelemetry-exporter-otlp" % OpenTelemetryVersion,
-      "io.opentelemetry" % "opentelemetry-sdk-testing" % OpenTelemetryVersion % Test
+      "io.opentelemetry" % "opentelemetry-sdk-testing" % OpenTelemetryVersion % Test,
+      // Text extraction for INEA/INEMA's PDF-only water-quality bulletins (MIP-0031 §4.3):
+      // neither institute exposes a JSON/HTML data feed, so `InemaPdfParser`/`IneaPdfParser` read
+      // the bulletin's table straight out of the PDF. Pure JVM, Apache-2.0, no native binary to
+      // bundle (unlike shelling out to `pdftotext`, which MIP-0031's own research used only to
+      // verify the approach, never as a runtime dependency).
+      "org.apache.pdfbox" % "pdfbox" % PdfboxVersion
     )
   )
 
@@ -192,7 +206,33 @@ lazy val cli = (project in file("cli"))
     // this, `sbt run` prompts interactively to pick one, which hangs in batch mode (confirmed:
     // `No main class detected` under a non-interactive run). Use
     // `sbt cli/runMain marola.agent.SwimConditionsMcpServer` to run the MCP server instead.
-    Compile / run / mainClass := Some("marola.Main")
+    Compile / run / mainClass := Some("marola.Main"),
+    // Fork `run`/`runMain` into their own JVM and hand them sbt's stdin. The MCP server's `main`
+    // returns as soon as the stdio transport is registered and relies on the SDK's non-daemon
+    // reader thread to keep the process alive — fine under plain `java`, but sbt's in-process run
+    // treats `main` returning as task completion and exits, killing that thread: `.mcp.json`'s
+    // `just mcp-server` answered 0 bytes and exited ~2 s after start (MIP-0011 task 9 review,
+    // 2026-09-06, reproduced with a real initialize → tools/list handshake). A forked JVM lives
+    // until its non-daemon threads end and, with `connectInput`, actually receives the client's
+    // frames. `just run` forks too now — a stricter, more production-like isolation, not a loss.
+    // `StdoutOutput` is the other half: by default sbt captures a forked child's stdout and stderr
+    // and re-logs them through its own logger — child stdout as `[info]` (which `sbt -error`
+    // then drops: the initialize result vanished) and child stderr as `[error]` lines written to
+    // sbt's *stdout* (the server's INFO log line surfaced there, corrupting the transport again).
+    // Passthrough keeps child stdout on stdout and child stderr on stderr, unwrapped.
+    Compile / run / fork := true,
+    Compile / run / connectInput := true,
+    Compile / run / outputStrategy := Some(StdoutOutput),
+    // Real regression from the fork above, confirmed live 2026-09-07: a forked child's default
+    // working directory is the *task's own project* baseDirectory — `cli/`, since `cli` is
+    // `(project in file("cli"))` — not the repo root `sbt` itself was launched from. Every
+    // relative path in Main.scala/SiteBuilder.scala (`site/areas.json`, `knowledge/`, `data/`,
+    // ...) assumed cwd = repo root, which held before `fork := true` (an in-process run inherits
+    // sbt's own cwd) and silently broke the moment forking landed: `sbt "cli/run -- --site"`
+    // failed with `NoSuchFileException: site/areas.json` — reproduced live, both locally and in
+    // site.yml's real CI run. Pin it back to the repo root explicitly rather than relying on
+    // fork's default.
+    Compile / run / baseDirectory := (ThisBuild / baseDirectory).value
   )
 
 lazy val root = (project in file("."))

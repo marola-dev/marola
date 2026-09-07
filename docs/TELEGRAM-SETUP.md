@@ -20,7 +20,11 @@ the path once you're deploying with Foundry/Azure backing the LLM step.
    (`.env.example` already reserves `MAROLA_TELEGRAM_BOT_TOKEN` for this — see `AppConfig.scala`).
 4. Optional but worth doing now: `/setdescription` and `/setcommands` in BotFather to give the bot
    a description and a command list (e.g. `swim - best hour to swim nearby`) — purely cosmetic,
-   doesn't require any code to exist yet.
+   doesn't require any code to exist yet. Suggested `/setdescription` text, once the bot is live
+   (Phase 1 — `AGENTS.md`'s phase discipline; not set yet): "marola — the ocean intelligence
+   layer: conditions, water quality, tides, sea life. First case, `/swim`, the best hour
+   tomorrow." The `/swim` command's own one-line description stays `swim - best hour to swim
+   nearby` — the command really is only about swimming, so it doesn't need to change.
 
 **Verify the token works right now**, without any marola code running — Telegram's `getMe` method
 just confirms the token is valid and shows your bot's own info:

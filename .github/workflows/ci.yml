@@ -27,8 +27,9 @@ jobs:
       python: ${{ steps.filter.outputs.python }}
       workflows: ${{ steps.filter.outputs.workflows }}
       docker: ${{ steps.filter.outputs.docker }}
+      site: ${{ steps.filter.outputs.site }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -51,6 +52,9 @@ jobs:
               - 'scripts/*.sh'      # gh-billing.sh's self-test lives in the same quality-other job
               - 'scripts/fixtures/**'
               - 'ruff.toml'
+            site:
+              - 'site/**'            # app.js/CSS/schema/fixtures → scripts/site_check.js (MIP-0009 task 2)
+              - 'scripts/site_check.js'
             workflows:
               - '.github/workflows/**'
             docker:
@@ -72,7 +76,7 @@ jobs:
       contents: write
       actions: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -133,8 +137,11 @@ jobs:
           xml = open(sys.argv[1]).read()
           pct = float(re.search(r'statement-rate="([0-9.]+)"', xml).group(1))
           color = "red" if pct < 50 else "yellow" if pct < 80 else "green"
+          # "scala coverage", not "coverage": the README carries a second, Python one now
+          # (repo-stats' stats/python-coverage.json, same thresholds), and two badges that both
+          # read "coverage" are worse than none.
           json.dump(
-              {"schemaVersion": 1, "label": "coverage", "message": f"{pct:.0f}%", "color": color},
+              {"schemaVersion": 1, "label": "scala coverage", "message": f"{pct:.0f}%", "color": color},
               sys.stdout,
           )
           PY
@@ -183,16 +190,89 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (≤ 3 h) will pick the coverage number up"
 
+  # README badges that describe this repo rather than one job's pass/fail: how many of *this*
+  # run's steps went green (step-level — ci.yml has three jobs but ~20 named steps, and
+  # "build-test passed" hides which of them ran at all), plus the Scala and Python line counts.
+  # Same publish path as the coverage badge: a shields.io endpoint JSON on the orphan `site-data`
+  # branch, copied into the site by site.yml, read live by the README.
+  #
+  # A separate job rather than one more step inside build-test, because a step can only see the
+  # conclusions of steps that have already finished — from here, every other job of the run is
+  # done and its steps carry a real `conclusion`. `always()` so a run where build-test is skipped
+  # (a docs-only push) or failing still reports; `scripts/repo_stats.py` counts only steps that
+  # actually ran, so a docs-only push reads "8/8 green" instead of a misleading "8/20".
+  repo-stats:
+    needs: [changes, build-test, quality-other]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # push the badge JSONs to the site-data branch
+      actions: read # read this run's own jobs/steps (the default token is contents-only)
+    steps:
+      - uses: actions/checkout@v7
+
+      # flake.nix ships cloc for the local run of the same script; the runner image does not
+      # promise it, so install it when it is missing (seconds, from Ubuntu's own archive).
+      - name: cloc (only if the runner image does not already have it)
+        run: command -v cloc >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends cloc; }
+
+      # Same shape as the cloc step: flake.nix ships coverage.py for the local run, the runner
+      # image does not promise it. Ubuntu's python3-coverage puts the module on python3's import
+      # path (repo_stats falls back to `python3 -m coverage` when no `coverage` binary is on
+      # PATH) and needs no pip/PEP-668 dance.
+      - name: coverage.py (only if the runner image does not already have it)
+        run: command -v coverage >/dev/null || python3 -c 'import coverage' 2>/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends python3-coverage; }
+
+      # The Python-coverage part re-runs every `scripts/**/*.py --self-test` under coverage.py —
+      # seconds, no network — and reports statement % over scripts/ only. That is genuinely all
+      # marola has for Python (no pytest suite), so the badge means "covered by the self-tests",
+      # not "covered by a test suite"; see the script's docstring.
+      - name: Badge JSONs — CI health (steps green/ran), Scala/Python LOC, Python coverage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: python3 scripts/repo_stats.py write --out-dir stats --repo "$REPO" --run-id "$RUN_ID" --exclude-job repo-stats
+
+      # Same orphan-branch mechanism as the coverage JSON above (and docker-smoke.yml's smoke
+      # panel). This job `needs:` build-test, so the two never push to site-data concurrently.
+      - name: Publish the stats JSONs to the site-data branch
+        run: |
+          if git ls-remote --exit-code --heads origin site-data >/dev/null; then
+            git fetch --depth=1 origin site-data
+            git worktree add site-data FETCH_HEAD
+            git -C site-data checkout -q -B site-data
+          else
+            git worktree add --detach site-data
+            git -C site-data checkout -q --orphan site-data
+            git -C site-data rm -rfq .
+          fi
+          mkdir -p site-data/stats
+          cp stats/*.json site-data/stats/
+          git -C site-data config user.name "github-actions[bot]"
+          git -C site-data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C site-data add stats
+          if git -C site-data diff --cached --quiet; then
+            echo "stats unchanged — nothing to push"
+          else
+            git -C site-data commit -q -m "stats: ${{ github.sha }}"
+            git -C site-data push -q origin site-data
+          fi
+          # No site.yml trigger here on purpose: the ≤ 3 h scheduled build picks these up, and a
+          # docs-only push must not spend an Overpass query just to refresh a line count
+          # (site.yml's own push filters and build-test's trigger already cover code changes).
+
   # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/,
   # a linter for these workflow files themselves, and hadolint for the Dockerfiles — the same
   # gates as `just quality`.
   quality-other:
     needs: changes
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # ruff-action appends its `src` (default: the checkout root) to `args`, so this lints every
       # .py in the repo — the same `ruff check .` as `just quality-other`. A file list here once
       # drifted from the local one and an unused import reached main. `version` matches the ruff
@@ -217,6 +297,9 @@ jobs:
       - name: "self-test — cost-split (Cost: trailer parser + diff-size estimator)"
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/cost-split.py --self-test
+      - name: self-test — repo_stats (CI-health step counting + LOC badge shaping)
+        if: needs.changes.outputs.python == 'true'
+        run: python3 scripts/repo_stats.py --self-test
       - name: self-test — gh-billing (GitHub billing-usage response shaping)
         if: needs.changes.outputs.python == 'true'
         run: scripts/gh-billing.sh --self-test
@@ -229,12 +312,24 @@ jobs:
       - name: self-test — uses_merge (workflow `uses:` bump conflict auto-resolve)
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/uses_merge.py --self-test
+      - name: self-test — mip-stack (MIP-draft PR discovery ordering)
+        if: needs.changes.outputs.python == 'true'
+        run: scripts/mip-stack.sh --self-test
+      - name: self-test — mip_index_merge (docs/mips/README.md row conflict auto-resolve)
+        if: needs.changes.outputs.python == 'true'
+        run: python3 scripts/lib/mip_index_merge.py --self-test
+      - name: site harness — app.js against site/fixtures in a stub DOM (MIP-0009)
+        if: needs.changes.outputs.site == 'true'
+        run: |
+          node --version
+          node --check site/static/app.js
+          node scripts/site_check.js
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2
       - name: hadolint (Dockerfiles)
         if: needs.changes.outputs.docker == 'true'
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@v3.5.0
         with:
           dockerfile: Dockerfile
 

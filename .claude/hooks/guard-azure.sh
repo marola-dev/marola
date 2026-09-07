@@ -8,26 +8,45 @@
 # exits 0 (allowed). `MAROLA_ALLOW_AZURE_DEPLOY=1` in the environment lets the command through:
 # set it only after a human has said "go" to a costed proposal, never in .env or a justfile.
 #
+# This is the SECOND of two layers, not the only one — `.claude/settings.json`'s `permissions.deny`
+# refuses the exact literal command prefixes (`azd up`, `azd provision`, `az deployment `,
+# `az group create`) before this hook (or any hook) ever runs; for those specific shapes
+# MAROLA_ALLOW_AZURE_DEPLOY does nothing, since the tool call is refused upstream — a human runs
+# the command directly, or adds a one-shot rule to .claude/settings.local.json. This hook exists
+# for every OTHER invocation shape a session might produce (`./azd up`, `bash -c 'azd up'`, a
+# wrapped `cd infra && azd up`) — those are the ones MAROLA_ALLOW_AZURE_DEPLOY actually bypasses.
+# An ultrareview on 2026-09-06 found the docs describing these as one interchangeable bypass,
+# which they aren't; AGENTS.md and .claude/rules/azure.md now state the same split explicitly.
+#
 #   .claude/hooks/guard-azure.sh --self-test   # run by `just quality`; exits non-zero on any miss
 #
-# Wired in .claude/settings.json → hooks.PreToolUse[matcher "Bash"]. ai-jail is the second layer.
+# Wired in .claude/settings.json → hooks.PreToolUse[matcher "Bash"]. ai-jail is a third layer,
+# orthogonal to both permissions.deny and this hook.
 set -euo pipefail
 
 MESSAGE='Blocked by .claude/hooks/guard-azure.sh (AGENTS.md "Cost & deployment safety"): never provision or deploy a paid Azure resource — azd up/provision/deploy, az deployment … — without explicit human confirmation first. Propose the change, state the expected cost, and wait for a go-ahead; the human then runs it, or sets MAROLA_ALLOW_AZURE_DEPLOY=1 for that one command.'
 
 # 0 = the command is an Azure provision/deploy, 1 = anything else. Word-anchored so `azd up` inside
-# a longer shell line still matches while e.g. `echo hazd up` or `gazdup` do not.
+# a longer shell line still matches while e.g. `echo hazd up` or `gazdup` do not. The boundary on
+# both sides is "not a word character" (word = alnum, `_`, `-`), deliberately NOT excluding `/`,
+# `.`, quotes or parens: `./azd up`, `/usr/bin/azd up`, `bash -c 'azd up'` and `(azd up)` are all
+# real invocation shapes and all provision — an ultrareview on 2026-09-06 found the previous
+# `[^[:alnum:]_./-]` prefix class let every one of them through (exit 0), which is the cost gate
+# failing open. Boundaries stay permissive; only the verb is strict.
 is_azure_deploy() {
   local cmd="$1"
-  [[ "$cmd" =~ (^|[^[:alnum:]_./-])azd[[:space:]]+(up|provision|deploy)([[:space:]]|$|[;&|]) ]] && return 0
-  [[ "$cmd" =~ (^|[^[:alnum:]_./-])az[[:space:]]+deployment([[:space:]]|$|[;&|]) ]] && return 0
+  local b='(^|[^[:alnum:]_-])' e='([^[:alnum:]_-]|$)'
+  [[ "$cmd" =~ ${b}azd[[:space:]]+(up|provision|deploy)${e} ]] && return 0
+  [[ "$cmd" =~ ${b}az[[:space:]]+deployment${e} ]] && return 0
   return 1
 }
 
 # The decision for one command under one environment: prints nothing, exits 0 (allow) or 2 (block).
+# The override must be exactly "1" — `MAROLA_ALLOW_AZURE_DEPLOY=0`/`=false`/`=no` used to pass the
+# old `-z` check and unblock deploys (same ultrareview), the opposite of what those spellings mean.
 decide() {
   local cmd="$1" override="${2-}"
-  if is_azure_deploy "$cmd" && [ -z "$override" ]; then
+  if is_azure_deploy "$cmd" && [ "$override" != "1" ]; then
     printf '%s\n' "$MESSAGE" >&2
     return 2
   fi
@@ -71,6 +90,22 @@ self_test() {
   expect 0 "" just build
   expect 0 "1" azd up
   expect 0 "1" az deployment group create --resource-group rg
+  # Shapes the 2026-09-06 ultrareview found failing open (all exited 0 before the boundary fix):
+  expect 2 "" ./azd up
+  expect 2 "" /usr/bin/azd up
+  expect 2 "" "bash -c 'azd up'"
+  expect 2 "" 'sh -c "azd provision"'
+  expect 2 "" '(azd deploy)'
+  expect 2 "" 'nix develop -c azd up'
+  # Word boundaries still hold: these are not the verb
+  expect 0 "" echo hazd up
+  expect 0 "" gazdup
+  expect 0 "" cat azd-up-notes.md
+  expect 0 "" azd upgrade
+  # The override must be exactly "1": "0"/"false" used to unblock (same review)
+  expect 2 "0" azd up
+  expect 2 "false" azd up
+  expect 2 "yes" az deployment group create --resource-group rg
   # The message must carry the rule, not just "blocked"
   local msg; msg="$(decide 'azd up' 2>&1 >/dev/null || true)"
   if grep -q 'explicit human confirmation' <<<"$msg"; then echo "  ok   message quotes the AGENTS.md rule"; else echo "  FAIL message missing the rule"; fails=$((fails + 1)); fi

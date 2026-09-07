@@ -75,24 +75,56 @@ object Http:
   private[http] def backoffFor(baseMs: Long, attempt: Int): Long = baseMs << attempt
 
   /**
-   * One send, plus up to `retries` more after a retryable status, sleeping `backoffFor` between
-   * them. Blocking, like the send itself (see the class comment on why that is fine here). The last
-   * response is returned whatever its status; `check` turns a non-2xx into `HttpError`.
+   * Failures worth another attempt before any response arrived: a connect timeout
+   * (`HttpConnectTimeoutException`, 10 s in `Transport.Live`), a read timeout on the request's own
+   * budget (`HttpTimeoutException`, its parent), or a refused/reset connection
+   * (`ConnectException`). All transient by nature — the 2026-09-06 scheduled site build died on one
+   * `HTTP connect timed out` from a GitHub runner with no retry at all (`site.yml`,
+   * `Main.buildSite`). A malformed URL, a TLS failure or an `HttpError` from `check` are not in
+   * this set: they repeat identically.
+   */
+  private[http] def isRetryableFailure(t: Throwable): Boolean = t match
+    case _: java.net.http.HttpTimeoutException => true
+    case _: java.net.ConnectException          => true
+    case _                                     => false
+
+  /**
+   * One send, plus up to `retries` more after a retryable status or a retryable failure
+   * (`isRetryableFailure`), sleeping `backoffFor` between them. Blocking, like the send itself (see
+   * the class comment on why that is fine here). The last response is returned whatever its status
+   * — `check` turns a non-2xx into `HttpError` — and the last failure is rethrown as is.
    */
   private def sendRetrying(request: HttpRequest, retries: Int, backoffMs: Long): Response =
     @annotation.tailrec
     def loop(attempt: Int): Response =
-      val response = transport.get.send(request)
-      if attempt < retries && RetryableStatuses.contains(response.status) then
-        Thread.sleep(backoffFor(backoffMs, attempt))
-        loop(attempt + 1)
-      else response
+      val outcome: Either[Throwable, Response] =
+        try Right(transport.get.send(request))
+        catch case t: Throwable if isRetryableFailure(t) => Left(t)
+      outcome match
+        case Right(response) if attempt < retries && RetryableStatuses.contains(response.status) =>
+          Thread.sleep(backoffFor(backoffMs, attempt))
+          loop(attempt + 1)
+        case Right(response) => response
+        case Left(_) if attempt < retries =>
+          Thread.sleep(backoffFor(backoffMs, attempt))
+          loop(attempt + 1)
+        case Left(failure) => throw failure
     loop(0)
 
   private def userAgent = "marola/0.1 (+https://github.com/h0ffmann/marola)"
 
-  /** `headers`: e.g. an API key that must not go in the URL (`RouteFinder`). */
-  def getString(url: String, headers: Map[String, String] = Map.empty): String < Sync =
+  /**
+   * `headers`: e.g. an API key that must not go in the URL (`RouteFinder`). `retries` extra
+   * attempts after a `RetryableStatuses` answer or a retryable failure (none by default),
+   * `backoffMs` doubling each time — `OpenMeteoClient` asks for two, so a connect timeout on one of
+   * a board's ~160 forecast calls no longer ends the whole scheduled site build.
+   */
+  def getString(
+      url: String,
+      headers: Map[String, String] = Map.empty,
+      retries: Int = 0,
+      backoffMs: Long = 1000
+  ): String < Sync =
     Sync.defer {
       val builder = HttpRequest
         .newBuilder(URI.create(url))
@@ -100,7 +132,7 @@ object Http:
         .header("User-Agent", userAgent)
         .GET()
       headers.foreach { case (k, v) => builder.header(k, v) }
-      check(url, transport.get.send(builder.build()), 300)
+      check(url, sendRetrying(builder.build(), retries, backoffMs), 300)
     }
 
   /**

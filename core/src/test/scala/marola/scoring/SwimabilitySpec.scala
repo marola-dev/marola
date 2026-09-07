@@ -2,7 +2,7 @@ package marola.scoring
 
 import java.time.LocalDateTime
 
-import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood}
+import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood, WindLevel}
 
 class SwimabilitySpec extends munit.FunSuite:
 
@@ -62,6 +62,33 @@ class SwimabilitySpec extends munit.FunSuite:
     val (breezyScore, _) = Swimability.score(hour(windSpeedKmh = Some(20.0)))
     val (strongScore, _) = Swimability.score(hour(windSpeedKmh = Some(40.0)))
     assert(strongScore < breezyScore, s"strong=$strongScore breezy=$breezyScore")
+  }
+
+  test(
+    "windLevel: below calm is Calm, between is Breezy, at/above strong is Strong, no data is None"
+  ) {
+    assertEquals(Swimability.windLevel(Some(8.0)), Some(WindLevel.Calm))
+    assertEquals(Swimability.windLevel(Some(14.9)), Some(WindLevel.Calm))
+    assertEquals(
+      Swimability.windLevel(Some(15.0)),
+      Some(WindLevel.Breezy)
+    ) // the calm threshold is inclusive
+    assertEquals(Swimability.windLevel(Some(29.9)), Some(WindLevel.Breezy))
+    assertEquals(Swimability.windLevel(Some(30.0)), Some(WindLevel.Strong)) // so is the strong one
+    assertEquals(Swimability.windLevel(Some(40.0)), Some(WindLevel.Strong))
+    assertEquals(Swimability.windLevel(None), None)
+  }
+
+  test("windLevel and windDelta's note agree — one threshold, two consumers (MIP-0009 §6)") {
+    def noteFor(kmh: Option[Double]): Option[String] =
+      Swimability
+        .score(hour(windSpeedKmh = kmh))
+        ._2
+        .find(n => n.contains("wind") || n.contains("breezy"))
+    assertEquals(noteFor(Some(8.0)), None) // Calm: no wind note at all
+    assert(noteFor(Some(20.0)).exists(_.startsWith("breezy")), noteFor(Some(20.0)).toString)
+    assert(noteFor(Some(40.0)).exists(_.startsWith("strong wind")), noteFor(Some(40.0)).toString)
+    assertEquals(noteFor(None), Some("no wind data")) // None is "no data", never a band
   }
 
   test("cold water is penalized more than warm water") {
