@@ -63,7 +63,12 @@ jobs:
           source scripts/lib/uprd_title.sh
           current="$(gh pr view "$PR" --json title -q .title)"
           norm() { tr '[:upper:]' '[:lower:]' <<<"$1" | sed -E 's/[^a-z0-9]+/ /g; s/^ //; s/ $//'; }
-          first="$(git log --reverse --format=%s "origin/$BASE_REF..origin/$HEAD_REF" | head -1)"
+          # `|| true`: under pipefail, a `git log` output large enough for `head` to close the
+          # pipe early kills git with SIGPIPE (141), which pipefail reports as the pipeline's
+          # status even though `head` succeeded — set -e then kills the step. Same bug, same fix,
+          # as scripts/uprd.sh's identical pattern (that one failed a real run with this exact
+          # symptom on a branch whose range included a merge commit).
+          first="$(git log --reverse --format=%s "origin/$BASE_REF..origin/$HEAD_REF" | head -1 || true)"
           [ -n "$first" ] || { echo "no commits past the base — nothing to title"; exit 0; }
           # GitHub's own "still default" title takes one of two shapes depending on how many
           # commits the branch has when the PR is first opened: the branch name (multi-commit),

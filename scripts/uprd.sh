@@ -96,13 +96,19 @@ git fetch -q origin "$base" 2>/dev/null || true
 range="origin/$base..$head_ref"
 
 # Title: the first (oldest) commit's subject on the branch, capped at 70 chars.
-first_subject="$(git log --reverse --format=%s "$range" 2>/dev/null | head -1)"
+# `|| true` after `head -1`: under `set -o pipefail`, if `git log`'s output is large enough that
+# `head` closes the pipe before git finishes writing, git is killed by SIGPIPE (exit 141) and
+# pipefail reports that as the pipeline's status even though `head` itself succeeded — `set -e`
+# then kills the whole script. Verified live: this exact line failed a real pr-body.yml run with
+# "exit code 141" on a branch whose commit range included a merge commit. `|| true` is safe here
+# because an empty `first_subject` already degrades correctly a few lines down.
+first_subject="$(git log --reverse --format=%s "$range" 2>/dev/null | head -1 || true)"
 title=""
 [ -n "$first_subject" ] && title="$(cap_title "$first_subject")"
 
 generate_summary() {
   local first_sha body
-  first_sha="$(git log --reverse --format=%H "$range" | head -1)"
+  first_sha="$(git log --reverse --format=%H "$range" | head -1 || true)"  # see the SIGPIPE note above
   [ -n "$first_sha" ] || { echo "<!-- fill: one or two sentences — what changed and why -->"; return; }
   body="$(git log -1 --format=%b "$first_sha")"
   # First paragraph (lines up to the first blank line, trailers dropped), trimmed to ~2 sentences.
@@ -219,7 +225,7 @@ generate_cost() {
     [ -n "$sha" ] || continue
     short="$(git rev-parse --short "$sha")"
     body="$(git log -1 --format=%B "$sha")"
-    line="$(grep '^Cost:' <<<"$body" | head -1)"
+    line="$(grep '^Cost:' <<<"$body" | head -1 || true)"  # see the SIGPIPE note near the top of this file
     if [ -n "$line" ]; then
       text="${line#Cost: }"
     else
