@@ -141,6 +141,10 @@ button[aria-pressed="true"], .segmented button.on { background: var(--accent); c
 /* the water verdict is a sentence, not a reading: full width, wrapping */
 .aspects .grid .wide { grid-column: 1 / -1; white-space: normal; }
 .aspects .unfit { color: var(--c0); font-weight: 600; }
+/* the water verdict's colour dot — same tokens as the score legend (.legend i), so green/red/grey
+ * means the same thing everywhere on the page, not a second colour language to learn */
+.wdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: .25em; vertical-align: 1px; }
+.aspects .facilities { color: var(--muted); }
 .legend .wave-key { color: var(--ink); }
 .legend .wave-key svg { width: 18px; height: 18px; vertical-align: -4px; margin-right: .3em; }
 /* the same row as the first block of the card (touch has no hover); the head repeats the h2.

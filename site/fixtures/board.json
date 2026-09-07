@@ -17,6 +17,7 @@
         { "h": "10:00", "score": 55, "notes": ["breezy (27km/h)", "cold water (19.0°C)"], "sea_temp_c": 19.0, "wave_m": 1.3, "wind_kmh": 27.0, "wind_level": "breezy", "jellyfish": "Low", "whales": "Low" },
         { "h": "13:00", "score": 30, "notes": ["strong wind (33km/h)", "cold water (19.4°C)"], "sea_temp_c": 19.4, "wave_m": 1.4, "wind_kmh": 33.0, "wind_level": "strong", "jellyfish": "Low", "whales": "Low" }
       ],
+      "facilities": { "parking": 3, "toilets": 1 },
       "water": {
         "summary": "1/1 PRÓPRIA (25 Aug)",
         "unfit": false,
