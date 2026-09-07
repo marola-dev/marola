@@ -27,6 +27,16 @@
 # call. Locally-chained branches (B is a git ancestor of C) are planned as one stack in that
 # order; unrelated eligible branches are each planned singly against `main`.
 #
+# `auto` also *reports* (never touches) the other half of the problem: branches that are already
+# pushed to origin, still un-merged, unambiguous (exactly one candidate for their MIP number) and
+# sharing a fork point with at least one other such branch — i.e. several drafts written in
+# parallel off the same `main` commit, which is precisely the shape that conflicts in
+# `docs/mips/README.md`'s index table. Until 2026-09-07 auto said nothing at all about those (it
+# only ever looked at LOCAL branches with no upstream), so with four freshly-pushed MIP drafts
+# sitting on origin it printed only its "skipping <ambiguous>" noise — silence where there was
+# obviously something to stack. It now names them and prints the `plan` command to run; it does
+# not chain them itself, for the reason in the comment above `report_pushed_groups`.
+#
 # `plan`/`auto` never rewrite history or force-push anything — they only *check* (git merge-tree,
 # read-only) that each branch is conflict-free against its computed base and print the exact
 # `gh pr create` command for it. `plan` never pushes (it only ever anticipates branches you've
@@ -52,6 +62,10 @@ usage: docs-mip-stack.sh [auto]
           chained branches (one a git ancestor of the next) as one stack, unrelated ones each
           against `main`. Any MIP number with more than one candidate anywhere is reported and
           left untouched, same judgment as `list` — auto never guesses which branch is canonical.
+          Then REPORTS (read-only, never pushes or rebases) every already-pushed, un-merged,
+          unambiguous candidate that shares a fork point with another one — parallel drafts off
+          the same main commit, the shape that conflicts in docs/mips/README.md — with the exact
+          `plan` command to chain them in MIP-number order.
 
   list    scan `origin` for un-merged docs/mip-NNNN-*  and mips/*/K-mip-NNNN-* branches, group by
           MIP number, flag any number with more than one candidate branch (pick one yourself —
@@ -77,6 +91,29 @@ is_candidate_branch() {
   [[ "$1" =~ ^docs/mip-[0-9]{4}-.+$ ]] || [[ "$1" =~ ^mips/[0-9-]+/[0-9]+-mip-[0-9]{4}-.+$ ]]
 }
 
+# Order branch names by their MIP number (not lexicographically by branch name, which would sort
+# `mips/2026-09-07/2-mip-0035-…` next to `docs/mip-0005-…` by its leading path segment). Reads
+# branch names on stdin, writes them ordered on stdout; anything that isn't a candidate branch
+# name is dropped.
+sort_by_mip() {
+  local b m
+  while IFS= read -r b; do
+    [ -n "$b" ] || continue
+    m="$(mip_of "$b")"
+    [ -n "$m" ] || continue
+    printf '%s\t%s\n' "$m" "$b"
+  done | sort -t$'\t' -k1,1 | cut -f2
+}
+
+# Reads "<count>\t<branch>" lines, writes the branches whose MIP number has exactly one candidate
+# in the whole world, in MIP-number order. The count is computed by the caller (origin + local),
+# so this stays pure and self-testable: it is the same "act only when unambiguous" rule auto
+# already applies to local unpushed branches, factored out so the pushed-branch report can reuse
+# it verbatim rather than re-deriving it.
+single_candidates() {
+  awk -F'\t' '$1 == 1 { print $2 }' | sort_by_mip
+}
+
 self_test() {
   local fails=0
   ok() { if [ "$1" = "$2" ]; then echo "  ok   $3"; else echo "  FAIL $3 — got '$1', want '$2'"; fails=$((fails+1)); fi }
@@ -86,6 +123,19 @@ self_test() {
   ok "$(is_candidate_branch mips/2026-09-06/1-mip-0020-instagram-bot && echo yes || echo no)" "yes" "a stacked mips/YYYY-MM-DD/K-mip-NNNN-* branch is a candidate"
   ok "$(is_candidate_branch mip-0025/3-dataset-scale-layer1 && echo yes || echo no)" "no" "an implementation task branch (mip-NNNN/k-*) is NOT a docs candidate"
   ok "$(is_candidate_branch main && echo yes || echo no)" "no" "main is never a candidate"
+  ok "$(printf '%s\n' docs/mip-0046-remove-ai-slop-ui docs/mip-0044-site-sections docs/mip-0045-nlp-parsing-over-llm | sort_by_mip | tr '\n' ' ')" \
+     "docs/mip-0044-site-sections docs/mip-0045-nlp-parsing-over-llm docs/mip-0046-remove-ai-slop-ui " \
+     "sort_by_mip orders parallel drafts by MIP number, not by branch name"
+  ok "$(printf '%s\n' mips/2026-09-07/2-mip-0035-map-plugin-api docs/mip-0005-map-site | sort_by_mip | tr '\n' ' ')" \
+     "docs/mip-0005-map-site mips/2026-09-07/2-mip-0035-map-plugin-api " \
+     "sort_by_mip sorts a stacked mips/… branch by its MIP number, not its path prefix"
+  ok "$(printf '%s\n' main docs/mip-0044-site-sections | sort_by_mip | tr '\n' ' ')" \
+     "docs/mip-0044-site-sections " "sort_by_mip drops a non-candidate branch name"
+  ok "$(printf '1\tdocs/mip-0046-remove-ai-slop-ui\n2\tdocs/mip-0021-beach-accessibility\n1\tdocs/mip-0044-site-sections\n' | single_candidates | tr '\n' ' ')" \
+     "docs/mip-0044-site-sections docs/mip-0046-remove-ai-slop-ui " \
+     "single_candidates keeps only MIP numbers with exactly one candidate, in number order"
+  ok "$(printf '3\tdocs/mip-0021-beach-accessibility\n' | single_candidates | tr '\n' ' ')" "" \
+     "single_candidates keeps nothing when every candidate's MIP number is ambiguous"
   if [ "$fails" -eq 0 ]; then echo "docs-mip-stack self-test: ok"; else echo "docs-mip-stack self-test: $fails failure(s)" >&2; exit 1; fi
 }
 
@@ -225,6 +275,76 @@ run_chain() {
   plan_cmd 0 "$@"
 }
 
+# The second half of auto's job, and the read-only one: branches that are ALREADY pushed. Part 1
+# below only ever sees local branches with no upstream, so four MIP design-doc branches written in
+# parallel by four agents and pushed straight to origin (MIP-0044/45/46/47, 2026-09-07) were
+# invisible to it — `just docs-mip-stack` printed only "skipping <ambiguous>" lines about four
+# unrelated old local branches and nothing whatsoever about the four that were plainly ready to
+# stack. That silence was the bug.
+#
+# Why this REPORTS instead of chaining automatically. `plan`'s and `auto`'s stated contract is
+# that neither ever rewrites history or force-pushes; the only write auto is trusted with is a
+# plain `git push -u` of a branch that was never pushed at all. Independently-forked drafts that
+# each add a row to docs/mips/README.md's index CONFLICT with each other until one is *rebased*
+# onto the other, so "auto-chain them" would mean either handing plan_cmd a pair it will correctly
+# refuse with CONFLICT, or letting auto rebase and force-push branches already published on origin
+# — a far larger grant than the one the file's philosophy actually justifies. The unambiguity test
+# this file already applies (exactly one candidate per MIP number) settles *which branch is
+# canonical*; it says nothing about *what order several MIPs should merge in*. MIP-number order is
+# the sane default with no other signal, but it is still a guess, so it is printed as a command to
+# run, not executed. Reporting is what fixes the silence; guessing is not needed to fix it.
+#
+# The grouping key is the branch's fork point (merge-base with origin/main), not "every pending
+# branch": a lone draft forked weeks ago needs no chaining and `list` already surfaces it, while
+# two or more sharing one fork point are exactly the parallel-drafts shape that conflicts. On this
+# repo that turns 12 unambiguous pending branches into 2 real groups instead of 12 lines of noise.
+report_pushed_groups() {
+  local -n counts_ref="$1"   # MIP number -> total candidate count (origin + local)
+  local -a singles=()
+  local b m fork
+  while IFS= read -r b; do [ -n "$b" ] && singles+=("$b"); done < <(
+    while IFS= read -r b; do
+      [ -n "$b" ] || continue
+      is_candidate_branch "$b" || continue
+      git merge-base --is-ancestor "origin/$b" origin/main 2>/dev/null && continue
+      m="$(mip_of "$b")"
+      [ -n "$m" ] || continue
+      printf '%s\t%s\n' "${counts_ref[$m]:-0}" "$b"
+    done < <(git branch -r --format='%(refname:short)' | sed 's#^origin/##') | single_candidates
+  )
+  [ "${#singles[@]}" -ge 1 ] || return 0
+
+  # Group by fork point, keeping each group in MIP-number order (singles is already sorted).
+  declare -A by_fork
+  for b in "${singles[@]}"; do
+    fork="$(git merge-base origin/main "origin/$b" 2>/dev/null || true)"
+    [ -n "$fork" ] || continue
+    by_fork["$fork"]="${by_fork[$fork]:-}${b}"$'\n'
+  done
+
+  for fork in "${!by_fork[@]}"; do
+    local -a group=()
+    while IFS= read -r b; do [ -n "$b" ] && group+=("$b"); done <<<"${by_fork[$fork]}"
+    [ "${#group[@]}" -ge 2 ] || continue
+    # Already chained? Every branch after the first must have its predecessor as an ancestor —
+    # that is what a stack looks like once someone has rebased it, and re-reporting it as
+    # "needs chaining" would be wrong.
+    local chained=1 i
+    for (( i=1; i<${#group[@]}; i++ )); do
+      git merge-base --is-ancestor "origin/${group[i-1]}" "origin/${group[i]}" 2>/dev/null || { chained=0; break; }
+    done
+    echo   # one blank line before every group, including the first (it follows the local half)
+    if [ "$chained" -eq 1 ]; then
+      echo "auto: ${#group[@]} already-chained pushed branches (fork point ${fork:0:8}) — ready to plan:"
+    else
+      echo "auto: ${#group[@]} ready-to-chain pushed branches (fork point ${fork:0:8}), MIP-number order recommended:"
+    fi
+    for b in "${group[@]}"; do echo "    - $b  ($(mip_of "$b" | tr '[:lower:]' '[:upper:]'))"; done
+    echo "  run: scripts/docs-mip-stack.sh plan ${group[*]}"
+    [ "$chained" -eq 1 ] || echo "  (plan is read-only and will report CONFLICT until each branch is rebased onto its predecessor — auto never rebases or force-pushes a published branch)"
+  done
+}
+
 auto_cmd() {
   local dry="$1"
   git fetch -q origin
@@ -251,28 +371,43 @@ auto_cmd() {
     local_unpushed+=("$lb")
   done < <(git for-each-ref --format=$'%(refname:short)\t%(upstream:short)' refs/heads/)
 
-  [ "${#local_unpushed[@]}" -ge 1 ] || { echo "auto: no local unpushed docs/mip-* branches"; return 0; }
-
   declare -A local_count
   local b
-  for b in "${local_unpushed[@]}"; do
+  for b in "${local_unpushed[@]:-}"; do
+    [ -n "$b" ] || continue
     m="$(mip_of "$b")"
     [ -n "$m" ] || continue
     local_count["$m"]=$(( ${local_count[$m]:-0} + 1 ))
   done
 
+  # The one "is this MIP number unambiguous?" count, shared by the local-unpushed half below and
+  # the already-pushed report — same rule, computed once.
+  declare -A total_count
+  for m in "${!origin_count[@]}"; do total_count["$m"]=$(( ${origin_count[$m]:-0} + ${local_count[$m]:-0} )); done
+  for m in "${!local_count[@]}"; do total_count["$m"]=$(( ${origin_count[$m]:-0} + ${local_count[$m]:-0} )); done
+
+  [ "${#local_unpushed[@]}" -ge 1 ] || {
+    echo "auto: no local unpushed docs/mip-* branches"
+    report_pushed_groups total_count
+    return 0
+  }
+
   local -a eligible=()
   for b in "${local_unpushed[@]}"; do
     m="$(mip_of "$b")"
     [ -n "$m" ] || continue
-    local total=$(( ${origin_count[$m]:-0} + ${local_count[$m]:-0} ))
+    local total=${total_count[$m]:-0}
     if [ "$total" -gt 1 ]; then
       echo "auto: skipping $b (${m^^}) — $total candidate(s) for this MIP number across origin+local, resolve by hand: scripts/docs-mip-stack.sh list"
     else
       eligible+=("$b")
     fi
   done
-  [ "${#eligible[@]}" -ge 1 ] || { echo "auto: nothing unambiguous to stack — every local unpushed candidate's MIP number has another candidate elsewhere"; return 0; }
+  [ "${#eligible[@]}" -ge 1 ] || {
+    echo "auto: nothing unambiguous to stack locally — every local unpushed candidate's MIP number has another candidate elsewhere"
+    report_pushed_groups total_count
+    return 0
+  }
 
   # Order by commit time so a real local stack (each branch built on the previous) chains
   # naturally via the ancestry check below; genuinely independent branches fall out as their own
@@ -294,6 +429,7 @@ auto_cmd() {
     prev="$b"
   done
   [ "${#chain[@]}" -ge 1 ] && run_chain "$dry" "${chain[@]}"
+  report_pushed_groups total_count
 }
 
 dry=0; args=()

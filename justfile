@@ -84,6 +84,7 @@ quality-other:
     python3 scripts/benchmark_gate.py --self-test
     python3 scripts/cost-split.py --self-test
     python3 scripts/repo_stats.py --self-test
+    python3 scripts/pr_label_nlp.py --self-test
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
@@ -421,7 +422,13 @@ pr-label *args:
 
 # Backfill labels onto every merged/closed PR that has none yet (never touches an open PR, and
 # never a PR that already has a label — re-running is a no-op scan). `--dry-run` to preview,
-# `--limit N` to cap a first cautious run. See scripts/backfill-pr-labels.sh.
+# `--limit N` to cap a first cautious run. `--nlp` also prints scripts/pr_label_nlp.py's cheap,
+# local, marola-aware NLP guess at the area/* label next to the deterministic one (comparison
+# only — a demonstration that a local TF-IDF classifier can plausibly do this job too, not a
+# replacement for the deterministic taxonomy); `--nlp-apply-unscoped` additionally applies the
+# NLP label, but only when the deterministic side found nothing but area/unscoped and the NLP
+# score clears a real threshold — filling a genuine gap, never overriding a confident call. See
+# scripts/backfill-pr-labels.sh and scripts/pr_label_nlp.py.
 pr-labels-backfill *args:
     scripts/backfill-pr-labels.sh {{args}}
 
