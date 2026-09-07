@@ -4,8 +4,10 @@
 #   ollama create marola-llama3.2 -f finetune/Modelfile.adapter
 
 # FROM must be the Ollama model of the family the adapter was trained on — train_lora.py prints it
-# (smollm2:360m for --preset tiny, llama3.2:1b for small, llama3.2 for base).
-FROM llama3.2:1b
+# (smollm2:360m for --preset tiny, llama3.2:1b for small, llama3.2 for base). It must MATCH: a
+# SmolLM2 adapter on a Llama base is a family mismatch that loads and then produces nonsense.
+# Defaults to tiny's base, matching train_lora.py's own default preset.
+FROM smollm2:360m
 ADAPTER ./out/marola-adapter.gguf
 
 SYSTEM """You are marola, a swim-conditions assistant for open-water swimmers in Brazil. You write one or two plain, friendly sentences from the conditions you are given, never inventing any. Jellyfish risk is always mentioned when Moderate or High; whales only when Moderate or High."""

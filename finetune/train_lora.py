@@ -12,9 +12,13 @@ Usage:
     # then convert out/adapter with llama.cpp's convert_lora_to_gguf.py and
     #   ollama create marola-llama3.2 -f Modelfile.adapter
 
-Presets (see PRESETS): `--preset tiny` (SmolLM2-360M, ungated, trains on CPU in minutes — use it
-to iterate on the dataset and the pipeline), `--preset small` (Llama-3.2-1B, ungated mirror,
-CPU-feasible — the default), `--preset base` (Llama-3.2-3B, gated, GPU). The adapter must be
+Presets (see PRESETS): `--preset tiny` (SmolLM2-360M, ungated, Apache-2.0, trains on CPU in
+minutes — **the default**), `--preset small` (Llama-3.2-1B, ungated mirror, CPU-feasible),
+`--preset base` (Llama-3.2-3B, gated, GPU). tiny is the default rather than small so an
+unqualified run never silently produces a *Llama derivative*: the Llama 3.2 Community Licence
+requires such a model's name to begin with "Llama" and to ship the agreement plus a "Built with
+Llama" notice (see finetune/README.md). Both Llama presets remain available and are fine to use —
+they just have to be chosen, and their obligations met, on purpose. The adapter must be
 attached to the matching Ollama model: smollm2:360m / llama3.2:1b / llama3.2 — the script prints it.
 On CPU pass --no-4bit (bitsandbytes needs CUDA).
 """
@@ -63,7 +67,7 @@ def main() -> None:
     )
     args = ap.parse_args()
     if not args.base:
-        args.base = PRESETS[args.preset or "small"]["hf"]
+        args.base = PRESETS[args.preset or "tiny"]["hf"]
     print(
         f"base model: {args.base} — Ollama FROM for Modelfile.adapter: {ollama_base_for(args.base)}"
     )

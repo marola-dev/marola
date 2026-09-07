@@ -48,7 +48,7 @@ def main() -> None:
     )
     args = ap.parse_args()
     if not args.base:
-        args.base = PRESETS[args.preset or "small"]["hf"]
+        args.base = PRESETS[args.preset or "tiny"]["hf"]
     if not Path(args.sft_adapter).exists():
         raise SystemExit(
             f"no SFT adapter at {args.sft_adapter} — run train_lora.py first: MIP-0025 task 5 is "

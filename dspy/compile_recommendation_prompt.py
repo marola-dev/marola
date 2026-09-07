@@ -11,8 +11,12 @@ docs/ARCHITECTURE.md §5a.
 Run for real against a local Ollama model (see README.md's Status section) — zero cost by default.
 It calls the model repeatedly to bootstrap few-shot demos, so against a paid endpoint it costs real
 (if small) money. Point `MAROLA_DSPY_MODEL` at whichever model marola will actually run at request
-time so the optimized prompt matches the model that'll replay it; the default is the same local
-`llama3.2` the Scala side defaults to.
+time so the optimized prompt matches the model that'll replay it. The default is deliberately a
+non-Llama model (SmolLM2): DSPy *bootstraps* its few-shot demos by calling the model, those demos
+are committed into the artifact, and `finetune/build_dataset.py` feeds them into marola-sea's
+training set — so whatever compiles this becomes an input to a fine-tune. Llama 3.2's Community
+Licence §1.b.i reaches "any outputs or results of the Llama Materials" used to train a model, so a
+Llama default here would quietly put a naming obligation on a model whose base carries none.
 
 Usage:
     cd dspy
@@ -232,6 +236,12 @@ REVIEW_TRAINSET = [
         ),
     ).with_inputs(*REVIEW_INPUT_FIELDS),
 ]
+
+
+# Non-Llama on purpose — see the module docstring. SmolLM2 is Apache-2.0, so demos bootstrapped
+# with it carry no downstream naming obligation when build_dataset.py feeds them to a fine-tune.
+# Override with MAROLA_DSPY_MODEL to compile against whatever marola will actually run.
+DEFAULT_DSPY_MODEL = "ollama_chat/smollm2:360m"
 
 
 def review_json_is_well_formed_and_sound(example, prediction, trace=None) -> float:
@@ -507,7 +517,7 @@ def main() -> int:
     # of marola's local-first design (see ARCHITECTURE.md §5/§6). "llama3.2" is a small, commonly
     # pulled model (`ollama pull llama3.2`) — override MAROLA_DSPY_MODEL to whatever you actually
     # have, or to Foundry/OpenAI instead (see this file's module docstring for both).
-    model = os.environ.get("MAROLA_DSPY_MODEL", "ollama_chat/llama3.2")
+    model = os.environ.get("MAROLA_DSPY_MODEL", DEFAULT_DSPY_MODEL)
     api_base = os.environ.get("MAROLA_DSPY_API_BASE")  # e.g. http://localhost:11434, Ollama-only
     lm_kwargs = {"api_base": api_base} if api_base else {}
     dspy.configure(lm=dspy.LM(model, **lm_kwargs))

@@ -116,8 +116,8 @@ Modelfile steps work at three sizes — change only `--preset`:
 
 | preset | base model | gated? | CPU training time (41 examples, 3 epochs, rough) | Ollama `FROM` for the adapter |
 |---|---|---|---|---|
-| `tiny` | SmolLM2-360M-Instruct | no | minutes | `smollm2:360m` |
-| `small` (default) | Llama-3.2-1B-Instruct (unsloth mirror) | no | tens of minutes | `llama3.2:1b` |
+| `tiny` (default) | SmolLM2-360M-Instruct | no | minutes | `smollm2:360m` |
+| `small` | Llama-3.2-1B-Instruct (unsloth mirror) | no | tens of minutes | `llama3.2:1b` |
 | `base` | Llama-3.2-3B-Instruct | yes (HF login) | hours; use a GPU | `llama3.2` |
 
 Loop: `just finetune-dataset` → `just finetune-train preset=tiny` → convert → `ollama create` →
