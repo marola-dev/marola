@@ -99,24 +99,51 @@ def load_mips():
     return mips
 
 
+NO_EDGES_PLACEHOLDER = (
+    "_No MIP currently declares a **Blocked by** relationship, so there is nothing to graph yet "
+    "— add that field to a MIP's metadata table and run `just mip-graph` again._"
+)
+
+
 def render_mermaid(mips):
-    lines = ["```mermaid", "flowchart TD"]
-    lines.append("  classDef draft fill:#fff,stroke:#999,stroke-dasharray:3 3;")
-    lines.append("  classDef accepted fill:#eef,stroke:#36c;")
-    lines.append("  classDef implemented fill:#efe,stroke:#2a2;")
-    lines.append("  classDef rejected fill:#f8f8f8,stroke:#bbb,color:#999;")
-    for num in sorted(mips):
-        mip = mips[num]
-        safe_title = mip.title.replace('"', "'")
-        lines.append(f'  {mip.node_id()}["MIP-{num:04d}<br/>{safe_title}"]:::{mip.status_class()}')
     edges = []
     for num in sorted(mips):
         mip = mips[num]
         for blocker in mip.blocked_by:
             if blocker in mips:
-                edges.append(f"  {mips[blocker].node_id()} --> {mip.node_id()}")
-    lines.extend(sorted(set(edges)))
+                edges.append((blocker, num))
+    edges = sorted(set(edges))
+    if not edges:
+        return NO_EDGES_PLACEHOLDER
+
+    # Only the MIPs that actually participate in an edge get drawn — an orphan MIP (no declared
+    # Blocked-by relationship in either direction) adds a disconnected box that tells the reader
+    # nothing the index table above doesn't already say, and 20+ of them turned the graph into an
+    # unreadable wall (verified against a real run: 29 MIPs, 0 edges, every node carrying its full
+    # title — the exact complaint that got this rewritten).
+    connected = {a for a, _ in edges} | {b for _, b in edges}
+
+    lines = ["```mermaid", "flowchart TD"]
+    lines.append("  classDef draft fill:#fff,stroke:#999,stroke-dasharray:3 3;")
+    lines.append("  classDef accepted fill:#eef,stroke:#36c;")
+    lines.append("  classDef implemented fill:#efe,stroke:#2a2;")
+    lines.append("  classDef rejected fill:#f8f8f8,stroke:#bbb,color:#999;")
+    for num in sorted(connected):
+        mip = mips[num]
+        # Bare "MIP-NNNN" only — the full title is already one line up in the index table, and a
+        # long label per node is exactly what made the graph unreadable before this rewrite.
+        lines.append(f'  {mip.node_id()}["MIP-{num:04d}"]:::{mip.status_class()}')
+    for a, b in edges:
+        lines.append(f"  {mips[a].node_id()} --> {mips[b].node_id()}")
     lines.append("```")
+    orphans = sorted(set(mips) - connected)
+    if orphans:
+        orphan_list = ", ".join(f"MIP-{n:04d}" for n in orphans)
+        lines.append("")
+        lines.append(
+            f"_{len(orphans)} MIP(s) with no declared Blocked-by relationship, not graphed: "
+            f"{orphan_list}._"
+        )
     return "\n".join(lines)
 
 
@@ -263,9 +290,28 @@ def self_test():
     ok(block.startswith(START_MARK) and block.endswith(END_MARK), "block is wrapped in markers")
     ok("M0010 --> M0032" in block, "an edge renders blocker --> blocked")
     ok(":::implemented" in block and ":::draft" in block, "status classes render per node")
+    ok('"MIP-0010"' in block, "a connected node's label is bare MIP-NNNN, not its title")
+    ok(
+        "Ledger" not in block and "Benchmark" not in block,
+        "a MIP's title never appears in the graph",
+    )
 
     r = reachable(mips, 32)
     ok(r == {10}, "reachable() walks the Blocked-by chain")
+
+    zero_edge_mips = {1: Mip(1, "A", "Draft", []), 2: Mip(2, "B", "Draft", [])}
+    zero_block = graph_block(zero_edge_mips)
+    ok("```mermaid" not in zero_block, "zero Blocked-by edges renders no mermaid block at all")
+    ok("nothing to graph yet" in zero_block, "zero edges renders the placeholder text instead")
+
+    orphan_mips = {
+        1: Mip(1, "Orphan", "Draft", []),
+        10: Mip(10, "Ledger", "Implemented", []),
+        32: Mip(32, "Benchmark", "Draft", [10]),
+    }
+    orphan_block = graph_block(orphan_mips)
+    ok("M0001" not in orphan_block, "a MIP with no edge in either direction is not drawn as a node")
+    ok("MIP-0001" in orphan_block, "an excluded orphan is still named in the not-graphed list")
 
     stale_before = "before\n<!-- mip-graph:start -->\nold\n<!-- mip-graph:end -->\nafter\n"
     tmp_readme = Path("/tmp/mip_graph_selftest_readme.md")
