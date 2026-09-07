@@ -51,8 +51,20 @@ as an unfilled placeholder).
 | [MIP-0033](./MIP-0033-release-0.md) | Release 0 — the repo goes public, a self-hosted chatbot (Ollama + Cloudflare Tunnel, graceful offline state), the first Hugging Face-published model, and a new Milestones/Releases doc linking MIPs to a named release | Draft | 2026-09-06 | L | user value; community/outreach; infra/dev-loop | do next | — |
 | [MIP-0034](./MIP-0034-rss-feeds-and-content-syndication.md) | RSS in and RSS out — INMET's live warning feed as an expiring alert banner, a reading queue that feeds `corpus-doc` instead of the index, and marola's own Atom feed on the site | Draft | 2026-09-07 | S/M/L (per §5 item) | user value; infra/dev-loop; exam coverage | cheap win (§5.6 outbound, §5.3 reading queue); do next (§5.2 INMET alerts); park (§5.5 transcripts, §5.7b); reject (auto-ingest into `knowledge/`) | — |
 | [MIP-0035](./MIP-0035-map-plugin-api.md) | A plugin API for marola's map — a `windy-plugin-template`-style third-party JS layer, loaded client-side via a committed `plugins.json` manifest; confirmed it needs no move off GitHub Pages. Scoped as a Release 1 item, after MIP-0033's Release 0 | Accepted — implemented, pending merge on `mip-0035/1-plugin-api` | 2026-09-07 | M | user value; community/outreach; infra/dev-loop | do next (after Release 0) | — |
+| [MIP-0036](./MIP-0036-marola-advertising-action.md) | Marola Advertising Action (MAA) — the Release 0 launch, channel by channel (LinkedIn personal + org Page, Reddit, YouTube, Instagram via MIP-0020, Medium, Substack), staggered over eight days, and how to sustain it after (handed to MIP-0018) | Draft | 2026-09-07 | M | community/outreach; infra/dev-loop | do when MIP-0033 lands | — |
 | [MIP-0037](./MIP-0037-map-pwa.md) | A PWA for marola's map — a service worker caches the app shell and the last board so a flaky-signal beach visit stays usable, offline shown honestly, not hidden (ROADMAP.md §7 K8) | Draft | 2026-09-07 | S | user value; infra/dev-loop | cheap win | — |
 
 <!-- mip-graph:start -->
-_No MIP currently declares a **Blocked by** relationship, so there is nothing to graph yet — add that field to a MIP's metadata table and run `just mip-graph` again._
+```mermaid
+flowchart TD
+  classDef draft fill:#fff,stroke:#999,stroke-dasharray:3 3;
+  classDef accepted fill:#eef,stroke:#36c;
+  classDef implemented fill:#efe,stroke:#2a2;
+  classDef rejected fill:#f8f8f8,stroke:#bbb,color:#999;
+  M0033["MIP-0033"]:::draft
+  M0036["MIP-0036"]:::draft
+  M0033 --> M0036
+```
+
+_31 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0025, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0034, MIP-0035, MIP-0037._
 <!-- mip-graph:end -->
