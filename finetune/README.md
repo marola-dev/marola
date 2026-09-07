@@ -170,6 +170,41 @@ Llama-based checkpoint): a model fine-tuned from Llama weights must have "Llama"
 its published name per Meta's Community License (MIP-0025 §5.1(3)) — this script does not enforce
 that, it is a human check before the repo goes up.
 
+## Is it OK to publish a model built on someone else's open model?
+
+Yes — that is what fine-tuning is, and both bases here permit it. But **the base model's licence
+follows the derivative**, and the obligations differ sharply between presets, so the answer is
+not the same for `tiny` as for `small`/`base`. Checked 2026-09-07 against the model cards:
+
+**`tiny` — [SmolLM2-360M-Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct),
+Apache-2.0.** The permissive case. No naming requirement of any kind, and a fine-tune may be
+released under a licence of your choosing. Apache-2.0 still asks that a copy of the licence and
+the copyright notice travel with the distribution, and that modifications be stated — a fine-tune
+is a modification, so say so in the model card. `publish_hf.py --base-license apache-2.0` (its
+default) is correct here.
+
+**`small`/`base` — [Llama-3.2](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct), Llama 3.2
+Community License.** Not Apache, and two obligations bite on any published derivative. §1.b.i:
+
+> "If you use the Llama Materials or any outputs or results of the Llama Materials to create,
+> train, fine tune, or otherwise improve an AI model, which is distributed or made available, you
+> shall also include 'Llama' at the beginning of any such AI model name."
+
+and, in the same section, you must "(A) provide a copy of this Agreement with any such Llama
+Materials; and (B) prominently display 'Built with Llama' on a related website, user interface,
+blogpost, about page, or product documentation."
+
+So a Llama-derived marola-sea must be named `Llama-marola-sea-*`, ship the agreement, and carry a
+"Built with Llama" notice — and must **not** be published as `apache-2.0`. `unsloth/Llama-3.2-1B-Instruct`
+is a mirror of Meta's weights, so the `small` preset inherits exactly the same terms as `base`.
+
+`merge_export.py` enforces the naming half automatically (`llama_prefix()`, self-tested in both
+directions), because a wrong name is the one mistake you cannot fix after publishing without
+breaking every pull. The "Built with Llama" notice, the bundled agreement and the `--base-license`
+value are still human steps before the upload — the Llama licence also carries further terms
+(acceptable-use, and a threshold clause for very large deployments) that are worth reading in full
+rather than summarising here.
+
 ## First-release readiness (marola-sea, MIP-0025/MIP-0033)
 
 What's real today vs. what's still missing before "marola-sea-1.0" is a real, published release:
