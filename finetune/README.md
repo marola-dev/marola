@@ -30,12 +30,21 @@ just run -- --summarize
    just finetune-dataset        # writes finetune/data/train.jsonl and finetune/data/eval.jsonl
    ```
 
-   Expect a few thousand examples (2026-09-07: 2,209 train + 245 eval) — most of them Layer 1
-   "Marine Corpus Domain" examples (MIP-0025 §4.3): every real chunk and sentence in `knowledge/`
-   asked several paraphrased ways, so the fine-tune now sees real domain facts, not just
-   format/tone. Each synthetic example is verified (`build_dataset.py --self-test`) to be a
-   verbatim excerpt of the `knowledge/*.md` source it cites — no invented facts. The DSPy demos
-   and sea-lore entries remain the format/tone teachers `FUTURE-WORK.md` §9.1 step 4 describes.
+   Expect a few thousand examples (2026-09-07: 2,497 train + 277 eval), combining two new layers
+   from MIP-0025 §4.3:
+   - **Layer 1 "Marine Corpus Domain"**: every real chunk and sentence in `knowledge/` asked
+     several paraphrased ways, so the fine-tune sees real domain facts, not just format/tone —
+     each synthetic example is verified (`build_dataset.py --self-test`) to be a verbatim excerpt
+     of the `knowledge/*.md` source it cites, no invented facts.
+   - **Layer 2 "MCP Tool-Call SFT"**: synthetic questions mapped to a single JSON tool call for
+     one of marola's four real MCP tools (`find_nearby_beaches`, `get_swim_recommendation`,
+     `get_water_quality`, `ask_ocean_question` — names and schemas read straight from
+     `SwimConditionsMcpServer.scala`, not guessed). The same self-test checks every generated
+     call is syntactically valid JSON naming a real tool with arguments matching its real schema,
+     and that all four tools are covered.
+
+   Both self-tests are wired into `just quality-other`. The DSPy demos and sea-lore entries
+   remain the *format and tone* teachers `FUTURE-WORK.md` §9.1 step 4 describes.
 
 2. Train the adapter (needs `pip install -r requirements.txt`, a `huggingface-cli login` for the
    gated Llama weights, and ideally a GPU with 8GB+):

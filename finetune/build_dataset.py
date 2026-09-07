@@ -16,6 +16,11 @@ Sources (all local files, no network, no model calls):
      to generate anything. Deliberately deterministic and reproducible: MIP-0025 §4.3 notes that
      LLM-based synthetic generation (e.g. Reviewer-filtered) was "not run or estimated for real
      cost" — that stays future work, not something this script does silently.
+  5. Tool-call SFT (MIP-0025 §4.3 Layer 2): synthetic questions → a single JSON tool call, for the
+     four real MCP tools cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala exposes
+     (`find_nearby_beaches`, `get_swim_recommendation`, `get_water_quality`,
+     `ask_ocean_question` — names and argument schemas read directly from that file, not guessed).
+     Teaches *when and how* to call each tool, not new facts — the tool itself returns the facts.
 
 Output: finetune/data/train.jsonl and eval.jsonl in the chat format most trainers accept:
   {"messages": [{"role": "system", ...}, {"role": "user", ...}, {"role": "assistant", ...}]}
@@ -214,6 +219,135 @@ def _load_knowledge_sources(dir_: Path) -> dict[str, str]:
 KNOWLEDGE_EXAMPLE_FLOOR = 2000
 
 
+# --- Layer 2: tool-call SFT (MIP-0025 §4.3) --------------------------------------------------
+#
+# Tool names and argument schemas below are transcribed from the *actual* MCP tool definitions in
+# cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala (latLonRadiusSchema:
+# lat/lon required, radius_km optional; questionSchema: question required) — read from that file,
+# not guessed or invented. If that file's tool set changes, this dict must change with it.
+TOOL_CALL_SYSTEM = (
+    "You are marola, a swim-conditions assistant for open-water swimmers in Brazil. When a "
+    "question needs live data you don't have, reply with exactly one JSON object of the shape "
+    '{"tool": "<name>", "arguments": {...}} and nothing else — never invent the result yourself.'
+)
+
+TOOL_SCHEMAS: dict[str, dict[str, tuple[str, ...]]] = {
+    "find_nearby_beaches": {"required": ("lat", "lon"), "optional": ("radius_km",)},
+    "get_swim_recommendation": {"required": ("lat", "lon"), "optional": ("radius_km",)},
+    "get_water_quality": {"required": ("lat", "lon"), "optional": ("radius_km",)},
+    "ask_ocean_question": {"required": ("question",), "optional": ()},
+}
+
+# Same coordinates as site/fixtures/board.json's fixture beaches — real marola locations, not
+# invented ones.
+LOCATIONS: tuple[tuple[float, float], ...] = ((-27.6296, -48.4487), (-27.4021, -48.4157))
+RADII: tuple[float | None, ...] = (None, 10.0, 20.0)
+
+FIND_BEACHES_TEMPLATES = (
+    "Find swim beaches near {lat}, {lon}.",
+    "What open-water beaches are close to {lat}, {lon}?",
+    "Search for beaches around latitude {lat}, longitude {lon}.",
+    "Are there any beaches near {lat}, {lon}?",
+    "List the beaches close to {lat}, {lon}.",
+    "I'm at {lat}, {lon} — any beaches nearby?",
+    "Beaches near {lat}, {lon}, please.",
+    "Which beaches are around {lat}, {lon}?",
+    "Show me swim spots close to {lat}, {lon}.",
+    "Look up beaches near coordinate {lat}, {lon}.",
+)
+
+RECOMMENDATION_TEMPLATES = (
+    "What's the best hour to swim tomorrow near {lat}, {lon}?",
+    "Give me tomorrow's swim conditions near {lat}, {lon}.",
+    "When should I swim tomorrow around {lat}, {lon}?",
+    "Best swim window tomorrow near {lat}, {lon}?",
+    "What are tomorrow's conditions like near {lat}, {lon}?",
+    "Recommend a swim time near {lat}, {lon} for tomorrow.",
+    "I want to swim tomorrow near {lat}, {lon} — when's best?",
+    "Tell me tomorrow's swimability near {lat}, {lon}.",
+    "Forecast tomorrow's swim conditions for {lat}, {lon}.",
+    "What hour has the best score near {lat}, {lon} tomorrow?",
+)
+
+WATER_QUALITY_TEMPLATES = (
+    "Is the water clean near {lat}, {lon}?",
+    "What's the bathing-water quality near {lat}, {lon}?",
+    "Check water quality around {lat}, {lon}.",
+    "Any water quality warnings near {lat}, {lon}?",
+    "Is it safe to swim near {lat}, {lon} — water quality-wise?",
+    "Give me the enterococci readings near {lat}, {lon}.",
+    "PRÓPRIA or IMPRÓPRIA near {lat}, {lon}?",
+    "What do the sampling points say near {lat}, {lon}?",
+    "Water quality check for {lat}, {lon}.",
+    "Has water near {lat}, {lon} been tested recently?",
+)
+
+ASK_QUESTION_TEMPLATES = (
+    "{question}",
+    "Hey marola, {question}",
+    "Quick question: {question}",
+    "{question} Please look it up.",
+    "I want to know: {question}",
+    "Can you answer this: {question}",
+    "{question} (from a swimmer prepping a trip)",
+    "Ocean question: {question}",
+    "{question} What does your knowledge base say?",
+    "Before I go for a swim, {question}",
+)
+
+
+def _tool_call_example(user: str, tool: str, arguments: dict) -> dict:
+    assistant = json.dumps({"tool": tool, "arguments": arguments})
+    return {
+        "messages": [
+            {"role": "system", "content": TOOL_CALL_SYSTEM},
+            {"role": "user", "content": user},
+            {"role": "assistant", "content": assistant},
+        ]
+    }
+
+
+def _latlon_tool_examples(tool: str, templates: tuple[str, ...]) -> list[dict]:
+    rows = []
+    for lat, lon in LOCATIONS:
+        for radius in RADII:
+            arguments: dict[str, float] = {"lat": lat, "lon": lon}
+            if radius is not None:
+                arguments["radius_km"] = radius
+            for t in templates:
+                user = t.format(lat=lat, lon=lon)
+                if radius is not None:
+                    user += f" Search within {radius:g} km."
+                rows.append(_tool_call_example(user, tool, arguments))
+    return rows
+
+
+def _ask_tool_examples(knowledge_dir: Path, sea_lore_path: Path) -> list[dict]:
+    questions = []
+    for path in sorted(knowledge_dir.rglob("*.md")):
+        title, source, _ = chunk_markdown(path.read_text(encoding="utf-8"))
+        if source:
+            questions.append(f"What do you know about {title.lower()}?")
+    if sea_lore_path.exists():
+        for e in json.loads(sea_lore_path.read_text(encoding="utf-8")):
+            questions.append(f"Tell me about {e['id'].replace('-', ' ')}.")
+    rows = []
+    for question in questions:
+        for t in ASK_QUESTION_TEMPLATES:
+            user = t.format(question=question)
+            rows.append(_tool_call_example(user, "ask_ocean_question", {"question": question}))
+    return rows
+
+
+def from_tool_calls(knowledge_dir: Path, sea_lore_path: Path) -> list[dict]:
+    rows = []
+    rows += _latlon_tool_examples("find_nearby_beaches", FIND_BEACHES_TEMPLATES)
+    rows += _latlon_tool_examples("get_swim_recommendation", RECOMMENDATION_TEMPLATES)
+    rows += _latlon_tool_examples("get_water_quality", WATER_QUALITY_TEMPLATES)
+    rows += _ask_tool_examples(knowledge_dir, sea_lore_path)
+    return rows
+
+
 def _self_test() -> None:
     rows = from_knowledge(KNOWLEDGE)
     assert len(rows) >= KNOWLEDGE_EXAMPLE_FLOOR, (
@@ -237,6 +371,32 @@ def _self_test() -> None:
         f"(floor {KNOWLEDGE_EXAMPLE_FLOOR}), every fact verified verbatim against its cited source"
     )
 
+    tool_rows = from_tool_calls(KNOWLEDGE, RESOURCES / "sea_lore.json")
+    assert tool_rows, "no tool-call examples generated"
+    seen_tools: set[str] = set()
+    for row in tool_rows:
+        assistant = row["messages"][2]["content"]
+        parsed = json.loads(assistant)  # raises if not syntactically valid JSON
+        assert set(parsed.keys()) == {"tool", "arguments"}, f"unexpected shape: {parsed!r}"
+        tool = parsed["tool"]
+        assert tool in TOOL_SCHEMAS, f"not a real MCP tool name: {tool!r}"
+        seen_tools.add(tool)
+        schema = TOOL_SCHEMAS[tool]
+        args = parsed["arguments"]
+        assert isinstance(args, dict), f"{tool} arguments must be an object: {args!r}"
+        for req in schema["required"]:
+            assert req in args, f"{tool} call is missing required argument {req!r}: {args!r}"
+        allowed = set(schema["required"]) | set(schema["optional"])
+        for key in args:
+            assert key in allowed, f"{tool} call has an argument not in its real schema: {key!r}"
+    assert seen_tools == set(TOOL_SCHEMAS), (
+        f"missing tool coverage: {set(TOOL_SCHEMAS) - seen_tools}"
+    )
+    print(
+        f"self-test OK: {len(tool_rows)} tool-call examples covering all "
+        f"{len(TOOL_SCHEMAS)} real MCP tools with syntactically valid call shapes"
+    )
+
 
 def main() -> None:
     rows: list[dict] = []
@@ -246,6 +406,7 @@ def main() -> None:
     )
     rows += from_sea_lore(RESOURCES / "sea_lore.json")
     rows += from_knowledge(KNOWLEDGE)
+    rows += from_tool_calls(KNOWLEDGE, RESOURCES / "sea_lore.json")
 
     random.Random(42).shuffle(rows)
     n_eval = max(2, len(rows) // 10)
