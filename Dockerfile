@@ -33,7 +33,9 @@ RUN sbt --batch cli/assembly \
 
 # --- jvm -------------------------------------------------------------------------------------
 FROM eclipse-temurin:25-jre-alpine AS jvm
-RUN addgroup -S marola && adduser -S marola -G marola \
+# Fixed numeric ids: `USER marola` by name is hadolint DL3066 (a host that bind-mounts /app/data
+# cannot resolve the name); 10001 avoids every default host uid and the busybox nobody/65534.
+RUN addgroup -S -g 10001 marola && adduser -S -u 10001 -G marola marola \
  && mkdir -p /app/data && chown -R marola:marola /app
 WORKDIR /app
 COPY --from=builder /marola.jar /app/marola.jar
@@ -42,7 +44,7 @@ COPY --from=builder /marola.jar /app/marola.jar
 COPY --chown=marola:marola knowledge /app/knowledge
 COPY --chown=marola:marola site/areas.json site/board.schema.json /app/site/
 COPY --chown=marola:marola site/static /app/site/static
-USER marola
+USER 10001:10001
 VOLUME ["/app/data"]
 # One CLI run at a time, short-lived: the serial GC and a small heap beat the defaults here.
 ENV JAVA_TOOL_OPTIONS="-XX:+UseSerialGC -XX:MaxRAMPercentage=75 -XX:TieredStopAtLevel=1"

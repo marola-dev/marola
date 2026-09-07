@@ -5,9 +5,10 @@ this before writing, modifying, or deploying anything. Humans should read it too
 
 ## What this repo is
 
-**marola** — a Telegram assistant answering "what's the best hour tomorrow to swim nearby?" — real
-nearby beach discovery (OpenStreetMap), live sea/weather conditions (Open-Meteo), a jellyfish/whale
-heuristic, an LLM-generated summary reviewed by a second LLM pass, all runnable **entirely locally
+**marola** — the ocean intelligence layer for a stretch of coast, reachable as a Telegram
+assistant: real nearby beach discovery (OpenStreetMap), live sea/weather conditions (Open-Meteo), a
+jellyfish/whale heuristic, an LLM-generated summary reviewed by a second LLM pass — its first case
+is "what's the best hour tomorrow to swim nearby?" — all runnable **entirely locally
 with a free Ollama model, zero Azure account needed**, with Azure Maps/Foundry/Cosmos DB/Vision/
 Application Insights as opt-in upgrades per integration, never a package deal. Also hands-on
 coverage of every [AI-103](https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-apps-and-agents-developer-associate/)
@@ -86,12 +87,20 @@ implement the requested feature but flag which earlier-phase prerequisite is sti
 ## Cost & deployment safety (hard rule)
 
 **Never provision or deploy a paid Azure resource without explicit human confirmation first** —
-propose the change, state the expected cost, wait for a go-ahead. Enforced by a hook, not only
-prose: `.claude/hooks/guard-azure.sh` (`PreToolUse` on `Bash`) blocks `azd up|provision|deploy`/
-`az deployment …` with exit 2 unless `MAROLA_ALLOW_AZURE_DEPLOY=1` is set after a human go-ahead;
-ai-jail is the second layer. Never hardcode a key/connection string/secret. Full detail (managed
-identity, the `.env.example` placeholder rule) is in `.claude/rules/azure.md` — this rule matters
-everywhere though, not only its auto-load paths, so the short version stays here too.
+propose the change, state the expected cost, wait for a go-ahead. Enforced two ways, not only
+prose, and they're deliberately not the same shape (an ultrareview on 2026-09-06 found the two
+layers described as interchangeable when they aren't — this section states the real relationship
+instead): `.claude/settings.json`'s `permissions.deny` refuses the exact literal command prefixes
+(`azd up`, `azd provision`, `az deployment `, `az group create`) before any hook runs at all —
+for those, `MAROLA_ALLOW_AZURE_DEPLOY=1` does nothing, because the tool call never reaches
+`.claude/hooks/guard-azure.sh`; the human runs the command directly, or adds a one-shot rule to
+`.claude/settings.local.json`. `guard-azure.sh` (`PreToolUse` on `Bash`) is the second, broader
+layer, catching every other invocation shape a Claude session might produce (a wrapped shell, an
+absolute path, `cd infra && azd up`) — for those, and only those, `MAROLA_ALLOW_AZURE_DEPLOY=1`
+set after a human go-ahead lets the one command through. ai-jail is a third layer, orthogonal to
+both. Never hardcode a key/connection string/secret. Full detail (managed identity, the
+`.env.example` placeholder rule) is in `.claude/rules/azure.md` — this rule matters everywhere
+though, not only its auto-load paths, so the short version stays here too.
 
 ## Attribution and cost accounting (hard rule)
 
@@ -129,10 +138,18 @@ Prefer running agent tools through [ai-jail](https://github.com/akitaonrails/ai-
 out-of-sandbox access. `.env`/`*.pem`/`*.key` are masked regardless of disk content;
 `just jail-dry-run <cmd>` previews a jailed command. No `gh` login of its own — `just jail-claude`
 passes `GH_TOKEN` from the host shell (fine-grained, gitignored `.env`) so PRs work via
-`just uprd`. `MAROLA_JAIL_CLIPBOARD=1` opts into a write-only clipboard bridge (`just clip`), off
-by default. **Ubuntu 24.04:** `bwrap: setting up uid map: Permission denied` means unprivileged
-user namespaces are blocked by default — fix via a scoped AppArmor profile, or disable the sysctl
-(weakens the protection globally).
+`just uprd`. `jail-claude` runs `ai-jail --exec` — direct execution, no PTY proxy/status bar —
+because the proxy is what broke Ctrl+C (it owns the raw terminal and must relay the interrupt
+byte itself) and mangled multi-line/bracketed pastes; see the justfile comment above `jail-claude`
+for the full diagnosis. `MAROLA_JAIL_CLIPBOARD=1` opts into a write-only clipboard bridge
+(`just clip`), off by default. Plain text Ctrl+V paste needs nothing extra (the terminal emulator
+injects it as ordinary input); Claude Code's own image-paste needs a real X11/Wayland socket,
+which `MAROLA_JAIL_CLIPBOARD_PASTE=1` opts into — off by default, and a bigger grant than the
+write-only bridge (a full display socket, not a one-way pipe; on X11 specifically, any client on
+that socket can read other windows and inject input, not just read the clipboard). **Ubuntu
+24.04:** `bwrap: setting up uid map: Permission denied` means unprivileged user namespaces are
+blocked by default — fix via a scoped AppArmor profile, or disable the sysctl (weakens the
+protection globally).
 
 ## Before implementing a feature
 

@@ -20,6 +20,15 @@ import marola.model.{Beach, BeachForecast, HourlyConditions}
  */
 object OpenMeteoClient:
 
+  /**
+   * Extra attempts per Open-Meteo call after a 429/5xx or a connect/read timeout
+   * (`Http.isRetryableFailure`): a board is ~2 calls × 80 beaches, and one `HTTP connect timed out`
+   * from a GitHub runner ended the whole scheduled site build on 2026-09-06. Two retries with 1 s
+   * then 2 s back-off — a blip costs seconds, an outage still fails the build (site.yml then keeps
+   * the previous deploy).
+   */
+  private val ForecastRetries = 2
+
   private val ForecastBase = "https://api.open-meteo.com/v1/forecast"
   private val MarineBase = "https://marine-api.open-meteo.com/v1/marine"
 
@@ -38,8 +47,8 @@ object OpenMeteoClient:
         s"&forecast_days=$forecastDays&timezone=auto"
 
     for
-      weatherBody <- Http.getString(weatherUrl)
-      marineBody <- Http.getString(marineUrl)
+      weatherBody <- Http.getString(weatherUrl, retries = ForecastRetries)
+      marineBody <- Http.getString(marineUrl, retries = ForecastRetries)
     yield merge(beach, JsonValue.parse(weatherBody), JsonValue.parse(marineBody))
 
   private def merge(beach: Beach, weather: JsonValue, marine: JsonValue): BeachForecast =

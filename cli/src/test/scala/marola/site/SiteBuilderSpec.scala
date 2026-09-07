@@ -30,6 +30,21 @@ class SiteBuilderSpec extends munit.FunSuite:
     tiles = "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     tilesAttribution = "© OpenStreetMap contributors"
   )
+  // A second area outside Santa Catarina's water-quality coverage (`ImaScWaterQualityClient
+  // .coversOrigin`), in a different IANA zone that shares today's UTC offset with `floripa` — the
+  // same shape as `site/areas.json`'s real "salvador" entry (MIP-0005's "rio" proved one extra area;
+  // this proves a second one alongside it, each keeping its own water-provider selection and zone).
+  private val salvador = SiteBuilder.Area(
+    id = "salvador",
+    name = "Salvador, BA",
+    lat = -12.9777,
+    lon = -38.5016,
+    radiusKm = 25.0,
+    beachLimit = 6,
+    zone = ZoneId.of("America/Bahia"),
+    tiles = "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    tilesAttribution = "© OpenStreetMap contributors"
+  )
   private val now = OffsetDateTime.of(2026, 9, 5, 18, 0, 0, 0, ZoneOffset.ofHours(-3))
 
   private def tmpDir(prefix: String): Path = Files.createTempDirectory(prefix)
@@ -100,6 +115,33 @@ class SiteBuilderSpec extends munit.FunSuite:
     assert(board("beaches").arr.forall(_("water")("summary").str.contains("no data")))
   }
 
+  test("build with two areas keeps each its own directory, zone and water-provider selection") {
+    val out = tmpDir("marola-site-multi")
+    val static = tmpDir("marola-site-static-multi")
+    // The same per-origin selection `AppConfig.waterQualityClient`'s Auto mode makes in production:
+    // Santa Catarina (floripa) gets IMA/SC, everywhere else (salvador) gets none.
+    val water = (origin: marola.model.Coordinates) =>
+      if ImaScWaterQualityClient.coversOrigin(origin) then Some(ImaScWaterQualityClient()) else None
+    val written = Http.withTransport(Fixtures.campeche()) {
+      Sync.Unsafe.evalOrThrow(
+        SiteBuilder.build(List(floripa, salvador), out, static, water = water, now = now)
+      )
+    }
+    assert(written.nonEmpty)
+
+    val floripaBoard =
+      JsonValue.parse(Files.readString(out.resolve("data/floripa/2026-09-06.json")))
+    assertEquals(floripaBoard("sources")("water").str, Some(ImaScWaterQualityClient().name))
+
+    val salvadorBoard =
+      JsonValue.parse(Files.readString(out.resolve("data/salvador/2026-09-06.json")))
+    assertEquals(salvadorBoard("sources")("water"), JsonValue.JNull)
+    assert(salvadorBoard("beaches").arr.forall(_("water")("summary").str.contains("no data")))
+
+    val areas = JsonValue.parse(Files.readString(out.resolve("data").resolve("areas.json")))
+    assertEquals(areas("areas").arr.flatMap(_("id").str), Vector("floripa", "salvador"))
+  }
+
   test("the real site/static (index.html, app.js, style.css, vendored Leaflet) lands in dist") {
     val out = tmpDir("marola-site-real-static")
     val written = build(out, SiteBuilderSpec.repoFile("site/static"))
@@ -123,6 +165,13 @@ class SiteBuilderSpec extends munit.FunSuite:
     }
     assertEquals(areas.head.id, "floripa")
     assertEquals(areas.head.zone, ZoneId.of("America/Sao_Paulo"))
+    // Bahia/Rio (the user-visible ask this covers): one area per state's main beach-rich metro, same
+    // one-point-plus-radius shape as floripa/rio — not a whole-state coastal scan, matching the
+    // existing design (MIP-0005.tasks.md decision 2 already scoped "rio" to the city, not the state).
+    assertEquals(areas.map(_.id), List("floripa", "rio", "salvador"))
+    val salvador = areas.find(_.id == "salvador").get
+    assertEquals(salvador.name, "Salvador, BA")
+    assertEquals(salvador.zone, ZoneId.of("America/Bahia"))
     assertEquals(SiteBuilder.Areas.parse("[]"), Nil)
     // an entry missing a required field is dropped, not a crash
     assertEquals(SiteBuilder.Areas.parse("""[{"id": "x", "name": "X"}]"""), Nil)

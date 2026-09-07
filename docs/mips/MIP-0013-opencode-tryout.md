@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted (tasks: `MIP-0013.tasks.md`, tasks 1-2 of 6 implemented and merged to main, PR #197; the `mip-0013/1-opencode-config-and-jail` branch is now stale/superseded by that merge; tasks 3-6 remain) |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "a new MIP for OpenCode tryout for development, replacing Claude Code") |
 | **Created** | 2026-09-05 |
 | **Phase** | 0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite |
@@ -217,9 +217,10 @@ The tryout adds files next to `.claude/`, deletes nothing, and is one PR per bul
    OpenCode — one trailer, whichever harness made the commit; `scripts/uprd.sh` keeps working (it
    reads `Cost:` trailers, not the co-author). If OpenCode's trailer cannot be pinned to that exact
    text (§11 OQ1), the `opencode-git-trailers` plugin sets it.
-5. **Docs.** `DEV-FLOW.md` §7 gains an OpenCode column for the three harness-specific rows (`/usage`
-   → `opencode stats`, `just claude-cost` → `just opencode-cost`, `/code-review` → the
-   `mip-reviewer` agent); `AGENT-SKILLS.md` notes which skills load under OpenCode (all three) and
+5. **Docs.** `DEV-FLOW.md` §8 (Command reference) gains an OpenCode column for the three
+   harness-specific rows (`/usage` → `opencode stats`, `just claude-cost` → `just opencode-cost`,
+   `/code-review` → the `mip-reviewer` agent); `AGENT-SKILLS.md` notes which skills load under
+   OpenCode (all three) and
    that superpowers (a Claude Code plugin) does not.
 6. **The experiment itself** (no code): two tasks from an accepted MIP's task list — one Scala
    task with a named test, one docs/config task — each in a fresh OpenCode session, `just jo`,
@@ -298,9 +299,15 @@ None. Developer tooling.
 1. **Attribution:** how was #919 resolved — is there a config key for the co-author trailer, does
    an `AGENTS.md` instruction now shape it, or is the `opencode-git-trailers` plugin needed to get
    exactly one trailer with the required text?
-2. **Message JSON schema** in `~/.local/share/opencode/storage/message/` (token field names, model
-   id form, timestamps) — confirm on a real file before writing task 2's reader; whether the
-   SQLite `opencode.db` is the better source since v1.2.
+2. ~~**Message JSON schema**~~ — **Resolved 2026-09-07**, live: a real `opencode run --model
+   ollama/llama3.2 "..."` (opencode 1.18.25, task 1's `pkgs.opencode`) writes no
+   `storage/message/*/msg_*.json` at all — everything lives in a SQLite database at
+   `$XDG_DATA_HOME/opencode/opencode-stable.db`, table `message(id, session_id, time_created,
+   time_updated, data)`, `data` a JSON blob. An assistant message's `data` carries
+   `tokens.{total,input,output,reasoning,cache.{read,write}}`, `modelID`, `providerID`, `cost`
+   (always `0`, priced downstream — matches §4.5's own note), `time.{created,completed}`. Task 2
+   (`MIP-0013.tasks.md`) is updated with the exact mapping needed against `cost-split.py`'s
+   existing `price()` shape.
 3. **Can `llama3.2` (or `marola-llama3.2`) drive OpenCode's tool loop at all** on a marola task?
    If not, what is the smallest local model that can (`qwen`/`devstral`-class), and does it fit
    the machine?

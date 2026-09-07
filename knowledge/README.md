@@ -13,6 +13,11 @@ which are well-known references (NOAA, IMA/SC, Wikipedia) — but the sentence-b
 against each source is a human job that has **not** been done yet. Do that before this corpus
 backs a public bot (Phase 1). Anything you can't verify, delete.
 
+**Safety topics** go under `knowledge/safety/` (MIP-0022) — a document there is otherwise a normal
+corpus file, but any answer grounded in it gets an emergency footer (lifeguards, 193, 192)
+appended automatically after the model's reply. The footer is added by `SafetyFooter`, never by
+the document or the model — don't write one into the Markdown yourself.
+
 ## Embedding model options (`MAROLA_LOCAL_EMBED_MODEL`)
 
 | model | size | dims | when |

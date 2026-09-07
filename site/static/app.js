@@ -10,7 +10,10 @@
  * el.smoke is then null and every use of it is guarded so the board still loads. Nothing leaves
  * the browser: no analytics, no cookies; "near me" uses the Geolocation API client-side only, when
  * you press the button. The page refuses a board with an unknown schema version rather than
- * guessing.
+ * guessing. The ambient wave sound (#sound) is synthesized locally with the Web Audio API —
+ * filtered brown noise under a slow gain LFO, no audio file fetched, no third-party asset to
+ * source or license — and only starts on the click itself (autoplay policies block anything
+ * earlier anyway, so the toggle button doubles as the required user gesture).
  */
 (function () {
   'use strict';
@@ -25,7 +28,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var el = {
-    area: $('area'), days: $('days'), near: $('near'), toggleList: $('toggle-list'),
+    area: $('area'), days: $('days'), near: $('near'), sound: $('sound'), toggleList: $('toggle-list'),
     hourbar: $('hourbar'), hour: $('hour'), hourLabel: $('hour-label'),
     list: $('list'), card: $('card'), footer: $('footer'), status: $('status'), smoke: $('smoke')
   };
@@ -37,7 +40,8 @@
     selected: null,     // beach name
     here: null,         // {lat, lon} after "near me"
     markers: {}, tiles: null, map: null,
-    smoke: null, smokeHistory: null, smokeMarker: null   // the last live run (MIP-0008)
+    smoke: null, smokeHistory: null, smokeMarker: null,   // the last live run (MIP-0008)
+    waterPointMarkers: []   // the selected beach's own sampling points, real markers, not text
   };
 
   // --- helpers -------------------------------------------------------------------------------
@@ -134,6 +138,10 @@
       // a shared link can open straight on one beach: ?beach=Praia%20do%20Campeche
       var beach = param('beach');
       if (beach && !state.selected && beachByName(beach)) state.selected = beach;
+      // Re-plot the selected beach's water points against *this* board (a shared-link initial
+      // load, or a day/area switch while a beach card was already open) — same board this render
+      // is about to use, never a stale one from before the fetch.
+      renderWaterPoints(beachByName(state.selected));
       render();
     });
   }
@@ -149,6 +157,94 @@
     state.map.setView([area.lat, area.lon], 11);
   }
 
+  // --- wave markers + hover aspects (MIP-0009) -------------------------------------------------
+  var WIND_EMOJI = { calm: '🍃', breezy: '🌬️', strong: '💨' };
+  var COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  function compass(deg) { return deg === null || deg === undefined ? '' : COMPASS[Math.round(deg / 45) % 8]; }
+
+  /**
+   * One wave, filled with the score colour. A single path with a body — a crest over a flat base —
+   * so the colour has area the way the old 10 px dot did: two thin ribbons plus a white halo read
+   * as white smudges once eighty beaches sit close together. Keep this `d` and index.html's legend
+   * key in step. The selected beach's is larger and drawn on top; a past hour fades the fill and
+   * dashes the outline in CSS, so the shape stays legible over the tiles.
+   */
+  var WAVE_PATH = 'M3 10c2.6-7 6.4-7 9 0s6.4 5 9 0v10H3z';
+  function waveIcon(fill, selected, past) {
+    var size = selected ? 32 : 24;
+    return L.divIcon({
+      className: 'wave' + (selected ? ' selected' : '') + (past ? ' past' : ''),
+      iconSize: [size, size], iconAnchor: [size / 2, size / 2], tooltipAnchor: [0, -size / 2],
+      html: '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" aria-hidden="true">' +
+        '<path d="' + WAVE_PATH + '" fill="' + esc(fill) + '" stroke="#fff" stroke-width="1" stroke-linejoin="round"/></svg>'
+    });
+  }
+
+  /** The full hours[] entry behind what `shown()` returns (the best-hour shape carries no numbers). */
+  function hourEntry(beach, s) {
+    if (!s) return null;
+    for (var i = 0; i < beach.hours.length; i++) if (beach.hours[i].h === s.h) return beach.hours[i];
+    return null;
+  }
+
+  /**
+   * A small colour-only dot for a beach's water verdict — green/red/grey, the same tokens the
+   * score legend already uses (--c70/--c0/--cna) — instead of the 💧 emoji, which reads the same
+   * regardless of PRÓPRIA/IMPRÓPRIA/no-data and doesn't scan at a glance the way the score
+   * markers' colour already does. `unfit` is the authoritative bad-water signal (Swimability's own
+   * veto); "no data" is read straight off the summary text since the board carries no separate
+   * boolean for it.
+   */
+  function waterDotClass(beach) {
+    if (beach.water.unfit) return 'wdot c0';
+    if (beach.water.summary === 'no data') return 'wdot cna';
+    return 'wdot c70';
+  }
+
+  /**
+   * The six aspects at the shown hour — every value a number or an enum from the board, every
+   * emoji followed by its word (older fonts lack 🪼). Used by the marker tooltip and, in task 4,
+   * as the first block of the card, so hover and tap see the same thing.
+   */
+  function aspectsHtml(beach, s) {
+    var head = '<div class="head">🌊 ' + esc(beach.name) + (s ? ' · ' + s.score + '/100 at ' + esc(s.h) : ' · dark at this hour') + '</div>';
+    var e = hourEntry(beach, s);
+    if (!e) return head;
+    var level = e.wind_level || null; // an older board has no band: number only, no word
+    var wind = (level ? WIND_EMOJI[level] + ' ' + level + ', ' : '🌬️ wind ') + fmt(e.wind_kmh, ' km/h', 0) +
+      (s.best && beach.sea.wind_dir_deg !== null ? ' ' + compass(beach.sea.wind_dir_deg) : '');
+    var waves = '〰️ waves ' + fmt(e.wave_m, ' m') + (s.best && beach.sea.period_s !== null ? ' every ' + fmt(beach.sea.period_s, ' s', 0) : '');
+    var whales = '🐋 whales ' + esc(e.whales) + (beach.whales.peak && beach.whales.peak !== e.h ? ' (best ' + esc(beach.whales.peak) + ')' : '');
+    // The verdict is a sentence ("8/9 PRÓPRIA — avoid Ponto 98 (25 Aug)"), not a reading: it gets
+    // the full width and wraps (.wide), while the short cells stay on one line each. A colour dot
+    // (waterDotClass) replaces the 💧 emoji — see that function's doc comment for why.
+    var water = '<span class="wide ' + (beach.water.unfit ? 'unfit' : 'water') + '"><i class="' + waterDotClass(beach) + '"></i> ' + esc(beach.water.summary) + '</span>';
+    // Accessibility (MIP-0021): OSM amenity counts within 300m, already in every board — only
+    // rendered when the board actually has at least one count for this beach (an older board, or
+    // a beach with no matched amenities at all, has no `facilities` key: absent, not zeroed).
+    var facilities = facilitiesHtml(beach.facilities);
+    return head + '<div class="grid">' +
+      '<span>' + wind + '</span>' +
+      '<span>🌡️ water ' + fmt(e.sea_temp_c, ' °C') + '</span>' +
+      '<span>' + waves + '</span>' +
+      '<span>🪼 jellyfish ' + esc(e.jellyfish) + '</span>' +
+      '<span>' + whales + '</span>' +
+      water +
+      (facilities ? '<span class="wide facilities">' + facilities + '</span>' : '') +
+      '</div>';
+  }
+
+  var FACILITY_LABEL = { parking: '🅿️ parking', toilets: '🚻 toilets', shower: '🚿 shower', lifeguard: '🛟 lifeguard' };
+
+  /** One short line, only the facilities the board actually has a count for, in a fixed order. */
+  function facilitiesHtml(f) {
+    if (!f) return '';
+    var parts = ['parking', 'toilets', 'shower', 'lifeguard']
+      .filter(function (k) { return f[k] !== undefined && f[k] !== null; })
+      .map(function (k) { return FACILITY_LABEL[k] + ' ' + f[k]; });
+    return parts.length ? parts.join(' · ') : '';
+  }
+
   function render() {
     var board = state.board;
     Object.keys(state.markers).forEach(function (k) { state.map.removeLayer(state.markers[k]); });
@@ -157,10 +253,15 @@
     board.beaches.forEach(function (beach) {
       var s = shown(beach);
       var c = colour(s ? s.score : null, beach.water.unfit);
-      var m = L.circleMarker([beach.lat, beach.lon], {
-        radius: state.selected === beach.name ? 13 : 10, color: '#fff', weight: 2, fillColor: c, fillOpacity: s && isPast(s.h) ? 0.45 : 0.9
+      var selected = state.selected === beach.name;
+      var m = L.marker([beach.lat, beach.lon], {
+        icon: waveIcon(c, selected, !!(s && isPast(s.h))), zIndexOffset: selected ? 1000 : 0, keyboard: true
       }).addTo(state.map);
-      m.bindTooltip(beach.name + (s ? ' · ' + s.score + ' at ' + s.h : ' · dark'), { direction: 'top', offset: [0, -8] });
+      // No `title`: the browser would draw its own tooltip on top of Leaflet's after ~1 s. keyboard:
+      // true already makes the icon focusable (tabindex + role=button); name it for a screen reader
+      // directly instead. Guarded — the stub Leaflet in scripts/site_check.js has no element.
+      if (m.getElement) { var mel = m.getElement(); if (mel) mel.setAttribute('aria-label', beach.name); }
+      m.bindTooltip(aspectsHtml(beach, s), { sticky: true, direction: 'top', className: 'aspects', opacity: 0.97 });
       m.on('click', function (e) { L.DomEvent.stopPropagation(e); select(beach.name, false); });
       state.markers[beach.name] = m;
       bounds.push([beach.lat, beach.lon]);
@@ -208,15 +309,39 @@
     state.selected = name; setParam('beach', name);
     var b = beachByName(name);
     if (b && pan !== false) state.map.panTo([b.lat, b.lon]);
+    renderWaterPoints(b);
     render();
   }
   function closeCard() {
     state.selected = null; el.card.hidden = true;
     var u = new URL(location.href); u.searchParams.delete('beach'); history.replaceState(null, '', u);
+    renderWaterPoints(null);
     render();
   }
   function beachByName(name) {
     return state.board.beaches.filter(function (b) { return b.name === name; })[0] || null;
+  }
+
+  /**
+   * The selected beach's own water-sampling points as real markers — "point by point", not just
+   * the one-line aggregate summary the tooltip/card text already shows. Only for the open beach
+   * (every board can carry several sampling points per beach, several beaches per area — plotting
+   * all of them all the time would bury the wave markers); cleared on close or when a different
+   * beach is selected. Colour-only (no emoji), the same green/red/grey tokens as `waterDotClass`
+   * and the score legend, so a point's dot means the same thing everywhere on the page.
+   */
+  function renderWaterPoints(beach) {
+    state.waterPointMarkers.forEach(function (m) { state.map.removeLayer(m); });
+    state.waterPointMarkers = [];
+    if (!beach || !beach.water || !beach.water.points) return;
+    beach.water.points.forEach(function (p) {
+      var color = p.condition === 'improper' ? getCss('--c0') : p.condition === 'proper' ? getCss('--c70') : getCss('--cna');
+      var cond = p.condition === 'proper' ? 'PRÓPRIA' : p.condition === 'improper' ? 'IMPRÓPRIA' : 'unclassified';
+      var m = L.circleMarker([p.lat, p.lon], { radius: 6, color: '#fff', weight: 2, fillColor: color, fillOpacity: 1 })
+        .addTo(state.map)
+        .bindTooltip(esc(p.point) + ' (' + esc(p.location) + '): ' + cond + ', ' + esc(p.sampled_on), { direction: 'top', offset: [0, -6] });
+      state.waterPointMarkers.push(m);
+    });
   }
 
   function renderCard() {
@@ -249,7 +374,10 @@
     var whales = b.whales.now + (b.whales.peak ? ', best daylight odds at ' + esc(b.whales.peak) : '') + (b.whales.season ? ' — humpback season' : ' — outside July-November');
     el.card.innerHTML =
       '<button class="close" type="button" aria-label="Close">×</button>' +
-      '<h2>' + esc(b.name) + '</h2>' + head +
+      '<h2>' + esc(b.name) + '</h2>' +
+      // Touch has no hover: the same aspect row the tooltip shows, first, so a tap sees what a
+      // mouse sees (MIP-0009 §3). Its .head repeats the h2 and is hidden by CSS inside the card.
+      '<div class="aspects">' + aspectsHtml(b, s) + '</div>' + head +
       '<dl>' +
       '<dt>Why</dt><dd>' + notes + '</dd>' +
       '<dt>Water quality</dt><dd>' + water + '</dd>' +
@@ -350,6 +478,40 @@
     }
   }
 
+  // --- ambient wave sound (Web Audio API, synthesized — no audio file, nothing to fetch) --------
+  var sound = { ctx: null, gain: null, on: false };
+  // Brown noise (integrated white noise, ~ -6dB/octave) through a low-pass filter reads as surf
+  // wash; a slow LFO on the gain (~0.15 Hz, one swell every ~6.7s) gives it the rise-and-fall of
+  // real waves instead of a flat hiss.
+  function startWaveSound(ctx) {
+    var seconds = 2, bufferSize = seconds * ctx.sampleRate;
+    var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    var data = buffer.getChannelData(0);
+    var last = 0;
+    for (var i = 0; i < bufferSize; i++) {
+      var white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02;
+      data[i] = last * 3.5;
+    }
+    var noise = ctx.createBufferSource();
+    noise.buffer = buffer; noise.loop = true;
+    var filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 700;
+    var gainNode = ctx.createGain();
+    gainNode.gain.value = 0.0001; // starts silent; the click handler ramps it up
+    var lfo = ctx.createOscillator();
+    lfo.frequency.value = 0.15;
+    var lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.05;
+    lfo.connect(lfoGain);
+    lfoGain.connect(gainNode.gain);
+    noise.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    noise.start(); lfo.start();
+    return gainNode;
+  }
+
   // --- events --------------------------------------------------------------------------------
   el.area.addEventListener('change', function () {
     var area = state.areas.filter(function (a) { return a.id === el.area.value; })[0];
@@ -378,6 +540,22 @@
       L.circleMarker([state.here.lat, state.here.lon], { radius: 6, color: '#0b6e99', fillColor: '#0b6e99', fillOpacity: 1 }).addTo(state.map).bindTooltip('you');
       render();
     }, function () { alert('Location not granted — the list stays ranked by score.'); });
+  });
+  el.sound.addEventListener('click', function () {
+    try {
+      if (!sound.ctx) {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        sound.ctx = new Ctx();
+        sound.gain = startWaveSound(sound.ctx);
+      }
+      if (sound.ctx.state === 'suspended') sound.ctx.resume();
+      sound.on = !sound.on;
+      el.sound.setAttribute('aria-pressed', String(sound.on));
+      var now = sound.ctx.currentTime;
+      sound.gain.gain.cancelScheduledValues(now);
+      sound.gain.gain.setTargetAtTime(sound.on ? 0.06 : 0.0001, now, 0.5);
+    } catch (e) { console.error(e); }
   });
 
   // The hint is only right when the board JSON itself is missing (a fresh checkout, or a build

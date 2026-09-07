@@ -3,9 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>marola — best hour to swim, every beach</title>
-  <meta name="description" content="Every beach around the area ranked by swim conditions for today and tomorrow: sea, wind, waves, water quality, tides, jellyfish. Computed once, no tracking.">
+  <title>marola — the ocean intelligence layer</title>
+  <meta name="description" content="Every beach around the area ranked by conditions for today and tomorrow: sea, wind, waves, water quality, tides, jellyfish. Computed once, no tracking. First case: the best hour tomorrow to swim.">
   <meta name="theme-color" content="#ffffff">
+  <!-- MIP-0033 §5.2: img-src allows https: for OSM's tile.openstreetmap.org (site/areas.json's
+       "tiles" URL, loaded by every area) — default-src alone would silently break the map.
+       connect-src likewise allows https: for the chat widget's fetch() to whatever tunnel URL
+       chatbot-config.js names (the maintainer's own, set by them — not a fixed host).
+       script-src/object-src stay locked to same-origin: this page loads no third-party script. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https:; connect-src 'self' https:; object-src 'none'">
   <link rel="stylesheet" href="vendor/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -13,12 +19,13 @@
   <header class="bar">
     <div class="brand">
       <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 9c2.5 0 2.5-2.5 5-2.5S9.5 9 12 9s2.5-2.5 5-2.5S19.5 9 22 9"/><path d="M2 16c2.5 0 2.5-2.5 5-2.5s2.5 2.5 5 2.5 2.5-2.5 5-2.5 2.5 2.5 5 2.5"/></svg>marola</h1>
-      <p class="tagline">Best hour to swim at every beach: sea, wind, tide, water quality.</p>
+      <p class="tagline">The ocean near you: conditions, water quality, sea life, tides, hazards.</p>
     </div>
     <div class="controls">
       <select id="area" aria-label="Area"></select>
       <div id="days" class="segmented" role="group" aria-label="Day"></div>
       <button id="near" type="button" title="Sort the list by distance from you (stays in your browser)">near me</button>
+      <button id="sound" type="button" aria-pressed="false" title="Toggle ambient wave sound — synthesized in your browser, nothing downloaded or played automatically">🌊 sound</button>
       <button id="toggle-list" type="button" aria-controls="list" aria-expanded="false">list</button>
     </div>
   </header>
@@ -28,6 +35,7 @@
     <input id="hour" type="range" min="-1" max="-1" value="-1" step="1" aria-label="Hour of the day">
     <span class="legend" aria-hidden="true">
       <b>score</b> <span><i class="c70"></i>≥70</span> <span><i class="c40"></i>40–69</span> <span><i class="c1"></i>1–39</span> <span><i class="c0"></i>unfit</span> <span><i class="cna"></i>no data</span>
+      <span class="wave-key"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10c2.6-7 6.4-7 9 0s6.4 5 9 0v10H3z" fill="currentColor"/></svg>hover a wave</span>
     </span>
   </div>
 
@@ -41,8 +49,24 @@
     <p id="status">loading…</p>
   </footer>
 
+  <button id="chat-toggle" type="button" class="chat-toggle" hidden aria-controls="chat-panel" aria-expanded="false">ask the ocean</button>
+  <section id="chat-panel" class="chat-panel" hidden aria-live="polite">
+    <header>
+      <h2>ask the ocean</h2>
+      <button id="chat-close" type="button" aria-label="close">×</button>
+    </header>
+    <div id="chat-log" class="chat-log"></div>
+    <p id="chat-offline" class="chat-offline" hidden>chatbot offline — try again later, or ask via the CLI/MCP tool.</p>
+    <form id="chat-form">
+      <input id="chat-input" type="text" placeholder="e.g. what do I do in a rip current?" autocomplete="off">
+      <button type="submit">ask</button>
+    </form>
+  </section>
+
   <noscript><p class="nojs">This page needs JavaScript to read the board JSON. The data itself is at <a href="data/">data/</a>.</p></noscript>
   <script src="vendor/leaflet.js"></script>
   <script src="app.js"></script>
+  <script src="chatbot-config.js"></script>
+  <script src="chat.js"></script>
 </body>
 </html>

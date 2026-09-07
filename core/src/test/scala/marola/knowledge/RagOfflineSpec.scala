@@ -115,4 +115,34 @@ class RagOfflineSpec extends munit.FunSuite:
     assert(!seen.head.content.contains("numbered passages"))
   }
 
+  test("Answer.safety is true iff a retained passage came from knowledge/safety/") {
+    val tmp = Files.createTempDirectory("marola-rag")
+    val s = store(BagOfWordsEmbedder(), tmp)
+    val llm = new LlmClient:
+      def complete(messages: List[ChatMessage]): String < Sync =
+        Sync.defer("Swim parallel to the shore [1].")
+
+    val ripQuestion = Sync.Unsafe.evalOrThrow(
+      OceanQa.answer("caught in a rip current, swim parallel to the shore", s, llm, k = 2)
+    )
+    assert(ripQuestion.safety, ripQuestion.passages.map(_.docTitle).toString)
+
+    val whaleQuestion =
+      Sync.Unsafe.evalOrThrow(OceanQa.answer("humpback whale migration season", s, llm, k = 2))
+    assert(!whaleQuestion.safety, whaleQuestion.passages.map(_.docTitle).toString)
+  }
+
+  test("Answer.safety is true on a strict abstention when a safety passage was retained") {
+    val safePassage =
+      Passage("Rip currents", "https://x", "swim parallel to the shore", 0.9, safety = true)
+    val store = new KnowledgeStore:
+      def search(q: String, k: Int): List[Passage] < Sync = List(safePassage)
+    val llm = new LlmClient:
+      def complete(messages: List[ChatMessage]): String < Sync =
+        Sync.defer(OceanQa.NoAnswerSentinel)
+    val a = Sync.Unsafe.evalOrThrow(OceanQa.answer("anything", store, llm))
+    assertEquals(a.text, OceanQa.NoPassagesReply)
+    assert(a.safety)
+  }
+
 end RagOfflineSpec

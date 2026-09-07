@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Implemented — merged to main via PR #202 (`c775ebb`); the `mip-0021/1-beach-accessibility` branch is now stale/superseded by that squash-merge |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (candidate K4 of the 2026-09-06 external consolidation, `docs/ROADMAP.md` §7) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (CLI notes) → 1 (bot reply, map card); no Azure, no earlier-phase prerequisite for the CLI half |
@@ -116,16 +116,27 @@ absence rule ("no data", never "none") is the safety property; the spec pins it.
 
 ## 7. Verification plan
 
-- Fixture: the real Overpass response for the Campeche 20 km query, recorded once
-  (`core/src/test/resources/fixtures/overpass-facilities-campeche.json`, same convention as the
-  golden fixtures), with the per-beach attribution the implementing PR measured.
-- `AccessibilitySpec` (golden style, like `PipelineGoldenSpec`): Joaquina's counts equal the
-  fixture's; a beach with no nearby elements yields `NoData` and `facilitiesLine` is `None`;
-  duplicated node/way for one parking counts once; an Overpass failure yields `NoData` for all
-  and the run still completes; the board's `facilities` object omits absent facilities.
+- Fixture: the real Overpass response for the Campeche short-list query, recorded live on
+  2026-09-07 (`core/src/test/resources/fixtures/overpass-facilities-campeche.json`, same
+  convention as the golden fixtures), with the per-beach attribution the implementing PR measured.
+  **Measured, not assumed** — the design's `around`-per-beach query (§5) is a 300m radius around
+  the *pipeline's actual 6 nearest beaches*, not the §4 survey's 40-beach/20km sweep, and the real
+  result is sparser than §4's numbers might suggest: only 2 elements total — one `amenity=parking`
+  ~100m from Praia do Campeche, one `emergency=lifeguard` ~150m from Praia do Rio Tavares. Joaquina,
+  Morro das Pedras, Gravatá and Armação all get `Facilities.NoData`. This is itself the absence
+  rule (§5) working as designed, not a bug: OSM's facility coverage this close to these particular
+  six beaches is genuinely thin.
+- `AccessibilitySpec` (golden style, like `PipelineGoldenSpec`): Campeche's parking and Rio
+  Tavares's lifeguard post counts equal the fixture's; the other four beaches yield `NoData` and
+  `facilitiesLine` is `None`; a node/way pair for one real place (different OSM ids, near-identical
+  coordinates — dedup by rounded coordinate, not by OSM id, since Overpass's own union already
+  drops literal duplicate elements) counts once; an Overpass failure yields `NoData` for all and
+  the run still completes; the board's `facilities` object omits absent facilities.
 - `BoardSpec`: schema accepts a board with and without `facilities`.
-- Live: `just run -- --brief --lat -27.6733 --lon -48.4700` prints facilities lines for Joaquina
-  and Campeche and "no data" for at least one beach; noted in the PR body.
+- Live: `just run -- --brief --lat -27.6733 --lon -48.4700` (via `sbt cli/run`) printed
+  `· parking nearby: 1` for Praia do Campeche, `· lifeguard post: yes` for Praia do Rio Tavares,
+  and `· facilities: no data` for the other four beaches — confirmed 2026-09-07, matching the
+  fixture exactly.
 
 ## 8. Risks, limitations, and honest caveats
 
@@ -159,9 +170,14 @@ absence rule ("no data", never "none") is the safety property; the spec pins it.
 
 ## 11. Open questions
 
-1. Radius: 300 m (this survey) or the beach's own extent (way/relation geometry, which Overpass
-   can return with `out geom`)? Geometry is more honest for a 3 km beach; decide from the fixture.
-2. Dedup key for one real place mapped twice: OSM id types or rounded coordinates?
+1. ~~Radius: 300 m (this survey) or the beach's own extent (way/relation geometry, which Overpass
+   can return with `out geom`)?~~ **Resolved for v1:** fixed 300m, `radiusM` on the trait. Beach
+   geometry (`out geom`) is a real future refinement for large beaches but adds a second query
+   shape; not worth it until the fixed radius is shown to misattribute in practice.
+2. ~~Dedup key for one real place mapped twice: OSM id types or rounded coordinates?~~
+   **Resolved:** rounded coordinates (~11m, `OverpassAccessibilityClient.DedupCoordDecimals`) — an
+   id-based dedup can't catch this case at all, since a node and its enclosing way live in
+   different OSM id spaces (§7).
 3. Should `wheelchair` return once *any* SC beach carries the tag, or only when a threshold of
    beaches do? Proposal: show it per beach as soon as it exists, since it is per-beach data.
 4. Should the bot reply (MIP-0002) include the line by default or on request (`/estrutura`)?

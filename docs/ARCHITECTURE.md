@@ -20,6 +20,8 @@ optional, not a bootstrap-only stand-in.
 
 ## 1. Problem & product vision
 
+marola is the ocean intelligence layer for a stretch of coast; its first use case (this MVP) is:
+
 **MVP hypothesis:** a Telegram message — "what's the best hour tomorrow to swim nearby?" — gets
 back a ranked list of nearby open-water swim spots, each with its best hour tomorrow, sea
 temperature, wind, wave height, a jellyfish-likelihood heuristic, and (informational, not

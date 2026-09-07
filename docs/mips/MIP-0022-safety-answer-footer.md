@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Implemented (Phase 0 surfaces: `--ask`, `ask_ocean_question`) — merged to main via PR #195 (`749ec54`); the `mip-0022/1-safety-footer` branch is now stale/superseded by that squash-merge |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (candidate K6 of the 2026-09-06 external consolidation, `docs/ROADMAP.md` §7 — the *rule* half; the corpus half is the `corpus-doc` skill, §9) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (`--ask`, `ask_ocean_question`) → 1 (the bot's `/perguntar`, MIP-0002) |
@@ -12,7 +12,7 @@
 | **Effort vs Gain** | do next — the corpus is about to gain safety documents via `corpus-doc`; the footer must exist before the first one lands, or the highest-stakes answers ship without it |
 | **Depends on** | nothing for the CLI/MCP surfaces; MIP-0002 for the bot surface. Blocks: the first `knowledge/safety/*.md` PR should not merge before this does |
 | **Risk** | a footer on every safety answer becomes wallpaper users skip; mitigated by keeping it to two short lines and only on answers actually grounded in a safety document, not on every answer |
-| **Cost so far** | — |
+| **Cost so far** | ~$73.38 (measured, `scripts/cost-split.py --estimate --json`) |
 
 ## 1. Summary
 
