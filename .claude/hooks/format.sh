@@ -63,32 +63,42 @@ self_test() {
   local tmp; tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
 
-  # An already-formatted .scala file comes out byte-equal.
-  local scala_file="$tmp/Formatted.scala"
-  cat >"$scala_file" <<'EOF'
+  # An already-formatted .scala file comes out byte-equal (skipped if `cs` is absent — same guard
+  # as the .py check below; a cold coursier cache/no network/air-gapped CI must not fail
+  # `just quality-other` on a check that needs a coursier launch, an ultrareview finding,
+  # 2026-09-06 — this one was the only .scala/.py asymmetry: the .py check already skipped).
+  # $messy is used later too (the end-to-end JSON-path test below), regardless of whether cs is
+  # on PATH, so the file itself is written unconditionally — only the scalafmt-dependent
+  # assertions are skipped when cs is absent.
+  local messy="$tmp/Messy.scala"
+  printf 'package example\nfinal case class Messy(name:String,value:Int)\n' >"$messy"
+  if command -v cs >/dev/null 2>&1; then
+    local scala_file="$tmp/Formatted.scala"
+    cat >"$scala_file" <<'EOF'
 package example
 
 final case class Formatted(name: String, value: Int)
 EOF
-  cp "$scala_file" "$tmp/Formatted.scala.orig"
-  if format_file "$scala_file" && cmp -s "$scala_file" "$tmp/Formatted.scala.orig"; then
-    echo "  ok   already-formatted .scala file is byte-equal after format_file"
-  else
-    echo "  FAIL already-formatted .scala file changed"
-    diff -u "$tmp/Formatted.scala.orig" "$scala_file" || true
-    fails=$((fails + 1))
-  fi
+    cp "$scala_file" "$tmp/Formatted.scala.orig"
+    if format_file "$scala_file" && cmp -s "$scala_file" "$tmp/Formatted.scala.orig"; then
+      echo "  ok   already-formatted .scala file is byte-equal after format_file"
+    else
+      echo "  FAIL already-formatted .scala file changed"
+      diff -u "$tmp/Formatted.scala.orig" "$scala_file" || true
+      fails=$((fails + 1))
+    fi
 
-  # A badly-formatted .scala file is actually reformatted.
-  local messy="$tmp/Messy.scala"
-  printf 'package example\nfinal case class Messy(name:String,value:Int)\n' >"$messy"
-  cp "$messy" "$tmp/Messy.scala.orig"
-  format_file "$messy"
-  if cmp -s "$messy" "$tmp/Messy.scala.orig"; then
-    echo "  FAIL messy .scala file was not reformatted"
-    fails=$((fails + 1))
+    # A badly-formatted .scala file is actually reformatted.
+    cp "$messy" "$tmp/Messy.scala.orig"
+    format_file "$messy"
+    if cmp -s "$messy" "$tmp/Messy.scala.orig"; then
+      echo "  FAIL messy .scala file was not reformatted"
+      fails=$((fails + 1))
+    else
+      echo "  ok   messy .scala file was reformatted"
+    fi
   else
-    echo "  ok   messy .scala file was reformatted"
+    echo "  skip .scala checks — cs (coursier) not on PATH"
   fi
 
   # An already-formatted .py file comes out byte-equal (skipped if ruff is absent).

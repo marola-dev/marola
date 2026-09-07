@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (tasks: `MIP-0013.tasks.md`, tasks 1-2 of 6 implemented, pending merge on `mip-0013/1-opencode-config-and-jail`) |
+| **Status** | Accepted (tasks: `MIP-0013.tasks.md`, tasks 1-2 of 6 implemented and merged to main, PR #197; the `mip-0013/1-opencode-config-and-jail` branch is now stale/superseded by that merge; tasks 3-6 remain) |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "a new MIP for OpenCode tryout for development, replacing Claude Code") |
 | **Created** | 2026-09-05 |
 | **Phase** | 0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite |
@@ -217,9 +217,10 @@ The tryout adds files next to `.claude/`, deletes nothing, and is one PR per bul
    OpenCode — one trailer, whichever harness made the commit; `scripts/uprd.sh` keeps working (it
    reads `Cost:` trailers, not the co-author). If OpenCode's trailer cannot be pinned to that exact
    text (§11 OQ1), the `opencode-git-trailers` plugin sets it.
-5. **Docs.** `DEV-FLOW.md` §7 gains an OpenCode column for the three harness-specific rows (`/usage`
-   → `opencode stats`, `just claude-cost` → `just opencode-cost`, `/code-review` → the
-   `mip-reviewer` agent); `AGENT-SKILLS.md` notes which skills load under OpenCode (all three) and
+5. **Docs.** `DEV-FLOW.md` §8 (Command reference) gains an OpenCode column for the three
+   harness-specific rows (`/usage` → `opencode stats`, `just claude-cost` → `just opencode-cost`,
+   `/code-review` → the `mip-reviewer` agent); `AGENT-SKILLS.md` notes which skills load under
+   OpenCode (all three) and
    that superpowers (a Claude Code plugin) does not.
 6. **The experiment itself** (no code): two tasks from an accepted MIP's task list — one Scala
    task with a named test, one docs/config task — each in a fresh OpenCode session, `just jo`,

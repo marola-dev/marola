@@ -44,6 +44,16 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
   # for, or an explicit "none — <reason>" for a bug fix/typo/refactor with no behaviour change
   # (the mip skill's own "Not for" list). Silence is the thing this check exists to remove — same
   # shape as the PR template's own MIP row, promoted to a per-commit, per-push gate.
+  # Commits already reachable from origin/main are already pushed and reviewed, so this gate has
+  # no business re-judging them. Without the exclusion, merging main into a branch drags main's
+  # own history back into `$base..$local_sha` and blocks the push over commits that predate this
+  # rule — a real block hit on 2026-09-07 merging main into docs/mip-0020-instagram-pipeline,
+  # which re-flagged #146/#147/#179. Pushing main itself is unaffected: commits not yet on
+  # origin/main are not reachable from it, so they still get checked.
+  exclude=()
+  if git rev-parse -q --verify origin/main >/dev/null 2>&1; then
+    exclude=(--not origin/main)
+  fi
   while read -r sha; do
     [[ -n "$sha" ]] || continue
     if git diff --name-only "$sha^" "$sha" 2>/dev/null | grep -qE "$frontend_pattern"; then
@@ -52,7 +62,7 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
         frontend_bad_commits+=("$sha")
       fi
     fi
-  done < <(git rev-list "$base..$local_sha" 2>/dev/null)
+  done < <(git rev-list "$base..$local_sha" ${exclude[@]+"${exclude[@]}"} 2>/dev/null)
 done
 [[ "$pushing" == 1 ]] || exit 0
 

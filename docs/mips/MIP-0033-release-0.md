@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Partially implemented (§5.2 of 6) — §5.2 (chat server + widget) merged to main as PR #196 (`cli/src/main/scala/marola/agent/ChatServer.scala`, `site/static/chat.js`/`chatbot-config.js`), refined by PR #229; the `mip-0033/1-chat-server` branch it originally shipped on is stale/merged, not pending. §5.1 (repo visibility), §5.3 (model publish), §5.4 (Milestones/`RELEASES.md`) and the new §5.5/§5.6 (pre-flight checklist, GitHub Releases) not started |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "release public will match with release 0, site should be public and safe (static), chatbot must be present working with ollama running on my local computer... with first hugging face distributed model. Idea is to create link between MIPs - milestones - releases") |
 | **Created** | 2026-09-06 |
 | **Phase** | Spans Phase 0-1 work (`ARCHITECTURE.md` §11) — Release 0 is a **new, orthogonal axis**, not another phase: Phase tracks infra/deployment stage (local → bot → Azure → deployed), Release tracks a *bundled, versioned, publicly-announced* milestone. Release 0 draws from Phase 0/1 work already done or in flight; it does not require Phase 2/3 |
@@ -69,6 +69,41 @@ MIPs: MIP-0005 (map), MIP-0025 (fine-tune), MIP-0033 (this one)
 
 No new metadata field on the MIP template itself — a Release is a *view over* existing MIPs, named and dated, not a property any single MIP carries (a MIP can belong to zero or one release; most won't belong to any). This deliberately does not duplicate the MIP-hardening research's `Blocked by`/dependency-graph proposal (still pending your review, separate report) — if that lands, `RELEASES.md` can later link to specific graph nodes, not before.
 
+### 5.5 Before the first real run — pre-flight checklist
+
+Added 2026-09-07, after a real branch audit (117 unmerged branches, 44 from that day alone) found
+that roughly 75% of same-day branches were already fully absorbed into `main` under a *different*
+branch name — a real, ongoing hygiene cost this MIP should close out before Release 0 "goes live"
+for the first time, not leave implicit. Everything below must be true **once, right before** the
+repo-public flip in §5.1 — not a recurring gate on every future PR:
+
+- **§5.1's own checklist** (secret scan, `SECURITY.md`, `.env.example` re-check) — already specified above, restated here as item 1 of this consolidated list, not duplicated in substance.
+- **A fresh ultrareview pass on `main`, findings fixed.** The last one (2026-09-06) found 9 issues, all fixed (`fix-agg-ultrareview1`, merged as #224) — confirmed clean as of 2026-09-07's branch audit, nothing outstanding from that specific run. Re-run `/code-review ultra` once more, right before the public flip, since a lot lands on `main` between now and then; fix whatever it finds the same way.
+- **Branch cleaning.** Delete every branch whose full content already exists on `main` (the 75% pattern above) — `git diff --name-only main...branch` covering every touched file is the mechanical check; a branch that fails it (some files still absent from `main`) is real, unmerged work and must be triaged (merge it, or explicitly decide to drop it and say why), not silently deleted. Not a one-time pass either — recurring branch buildup is exactly what produced 117 stale refs by the time this section was written, so this should become a standing step (e.g. before each Release, not just Release 0).
+- **A real GitHub Release, not just `RELEASES.md`** — see §5.6.
+
+### 5.6 GitHub Releases (native), starting from v1
+
+`docs/mips/RELEASES.md` (§5.4) stays as the authoritative, MIP-linked narrative of what shipped —
+it says *why* a release exists and which MIPs it draws from, which a bare git tag can't. But
+nothing today creates an actual GitHub Release object (a tag, a Releases-page entry, auto-generated
+commit notes, an attachable asset) — the two are complementary, not a replacement for one another.
+Starting with the **v1** tag (Release 0 itself is a milestone marker, not necessarily a tagged
+version — the first real semantic tag is what "v1" means here, per the maintainer's own request):
+
+```bash
+git tag -a v1.0.0 -m "v1.0.0 — <one-line summary, matches RELEASES.md's entry>"
+git push origin v1.0.0
+gh release create v1.0.0 --title "v1.0.0" --notes-file <(echo "See docs/mips/RELEASES.md#release-0 for the full MIP-linked writeup.") --generate-notes
+```
+
+`--generate-notes` gives GitHub's own commit-log summary since the previous tag, appended after the
+short pointer to `RELEASES.md` — the redundant-sounding combination is deliberate: GitHub's
+auto-notes are complete but MIP-blind, `RELEASES.md` is curated but has to be found; the release
+notes carry a link to the richer doc rather than trying to duplicate it inline. Needs `gh auth
+login` with a token that has release-creation rights — not available in this sandbox session
+(`gh` unauthenticated throughout), so this step is real, un-executed future work, not verified live.
+
 ## 6. Scoring / safety impact
 
 None to `Swimability`/scoring. Safety-adjacent note: the chatbot widget must carry the same "not a safety authority" framing MIP-0025 §6 already requires of any marola-sea output, and MIP-0022's safety footer applies to chatbot answers exactly as it does to CLI ones — no new exemption.
@@ -78,7 +113,9 @@ None to `Swimability`/scoring. Safety-adjacent note: the chatbot widget must car
 - Repo-public: the secret-scan tool's own clean-run output, kept as the PR's evidence (not committed, referenced).
 - Chatbot: manually verified both states — Ollama+tunnel up (a real answer arrives) and down (kill `cloudflared`, confirm the graceful message, not a hang).
 - HF publish: `ollama run hf.co/<user>/<repo>` pulls and runs from a machine that never had the model locally.
-- "Done" = all three, plus `docs/mips/RELEASES.md` committed with Release 0's real date.
+- §5.5's pre-flight checklist: a fresh ultrareview run with zero unfixed findings, and a branch audit showing no branch both (a) unmerged and (b) already fully absorbed into `main` under a different name.
+- §5.6: `gh release list` shows `v1.0.0`, and its notes link to `docs/mips/RELEASES.md#release-0`.
+- "Done" = all of the above, plus `docs/mips/RELEASES.md` committed with Release 0's real date.
 
 ## 8. Risks, limitations, and honest caveats
 
@@ -101,3 +138,5 @@ AI-500: a chatbot with a stated, honest availability state (never a silent failu
 - Tiny (`marola-sea-tiny`, already trained) vs. spending more CPU time on `small` before the first HF publish — a real timeline-vs-quality call for the maintainer.
 - Whether `docs/mips/RELEASES.md` should also gain the dependency-graph tooling from the (separate, pending) MIP-hardening report, once that's decided — not blocking Release 0.
 - Exact Cloudflare Tunnel setup steps (named tunnel creation, `cloudflared` as a systemd/launchd service so it survives a reboot) — not written up here, implementation-PR detail.
+- Whether branch cleaning (§5.5) should also get a `just` command (a read-only "which branches are fully absorbed into main" report, mirroring `scripts/docs-mip-stack.sh list`'s own discovery-not-auto-delete pattern) — not built this session; the 2026-09-07 audit was done by hand. **Follow-up MIP:** a general-purpose `scripts/branch-audit.sh` doing this file-presence check across *all* unmerged branches (not just `docs/mip-*`) would generalize `docs-mip-stack.sh list`'s staleness detection — worth its own MIP once there's a second real need for it, not assumed here.
+- §5.6's exact tag-naming scheme past `v1.0.0` (semver strictly, or date-based) — not decided, first tag only.
