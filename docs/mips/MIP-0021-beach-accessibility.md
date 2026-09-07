@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — implemented, pending merge on `mip-0021/1-beach-accessibility` |
+| **Status** | Implemented — merged to main via PR #202 (`c775ebb`); the `mip-0021/1-beach-accessibility` branch is now stale/superseded by that squash-merge |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (candidate K4 of the 2026-09-06 external consolidation, `docs/ROADMAP.md` §7) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (CLI notes) → 1 (bot reply, map card); no Azure, no earlier-phase prerequisite for the CLI half |

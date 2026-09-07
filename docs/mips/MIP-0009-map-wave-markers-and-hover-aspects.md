@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — auto-picked by `/mip-solve-perpetual` on 2026-09-06 (S effort, "cheap win", no earlier-phase gap), task list requested via `/mip-tasks` |
+| **Status** | Implemented — all four stacked PRs merged: #144 (wind-level), #145 (site-check-harness), #146 (wave-marker-tooltip), #147 (card-aspect-row); tasks and v1 decisions: [`MIP-0009.tasks.md`](./MIP-0009.tasks.md) |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "for now it just displays dots… hovering the dot should display each aspect: wind level with emoji, whale probability, jellyfish probability, water temperature — a wave icon, not a heat map") |
 | **Created** | 2026-09-05 |
 | **Tasks** | `docs/mips/MIP-0009.tasks.md` — four stacked PRs, one per task; note its decision #1: the §5 test harness (`scripts/site_check.js`) did not exist on 2026-09-06 and is task 2 |

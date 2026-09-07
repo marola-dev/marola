@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Implemented — merged as PR #222 (`docs/AWESOME-AGENTIC-ENGINEERING.md`, `scripts/awesome_agentic_digest.py`, wired into `quality-other`) |
 | **Author** | Claude (agent), for M. Hoffmann (request: a public curated "awesome list" of agentic-engineering projects, kept current by a semi-automated routine, plus a real "top 10 repos similar to marola" section) |
 | **Created** | 2026-09-07 |
 | **Phase** | 0 (`ARCHITECTURE.md` §11) — a repo/community doc plus a maintainer dev-tool script, not a Telegram/product feature. No earlier-phase prerequisite |
