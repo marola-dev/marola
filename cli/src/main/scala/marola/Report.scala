@@ -8,6 +8,7 @@ import marola.knowledge.OceanQa
 import marola.lore.{LoreEntry, SeaLore}
 import marola.model.{BestHour, Coordinates, WhaleSightingLikelihood}
 import marola.scoring.Swimability
+import marola.trails.Trail
 import marola.water.BathingCondition
 
 /**
@@ -190,6 +191,22 @@ object Report:
     val body =
       (a.text.trim +: (if sources.isEmpty then Nil else "Sources:" +: sources)).mkString("\n")
     marola.knowledge.SafetyFooter.append(body, a.safety)
+
+  /**
+   * MIP-0030 §3: the nearest trail whose `nearBeach` names this beach, or `None`. `trails` is
+   * whatever `TrailFinder.nearby` returned for the run's origin — every trail in it is already
+   * within `TrailFinder.NearRadiusKm` of *some* beach or lake, so filtering by name here (rather
+   * than re-checking the distance) is enough.
+   */
+  def nearestTrail(beachName: String, trails: List[Trail]): Option[Trail] =
+    trails.filter(_.nearBeach.exists(_._1 == beachName)).minByOption(_.nearBeach.get._2)
+
+  /** MIP-0030 §3: one line per beach — the trail's own length/difficulty, never a guess. */
+  def trailsLine(trail: Option[Trail]): String = trail match
+    case Some(t) =>
+      val difficulty = t.difficulty.getOrElse("no difficulty data")
+      f"  trails nearby: ${t.name} (${t.lengthKm}%.1fkm, $difficulty)"
+    case None => "  trails: no data"
 
   def compass(deg: Double): String =
     val dirs = Vector("N", "NE", "E", "SE", "S", "SW", "W", "NW")

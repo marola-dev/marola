@@ -39,8 +39,9 @@
     hourIndex: -1,      // -1 = each beach at its own best hour
     selected: null,     // beach name
     here: null,         // {lat, lon} after "near me"
-    markers: {}, tiles: null, map: null,
-    smoke: null, smokeHistory: null, smokeMarker: null   // the last live run (MIP-0008)
+    markers: {}, trailLayers: [], tiles: null, map: null,
+    smoke: null, smokeHistory: null, smokeMarker: null,   // the last live run (MIP-0008)
+    waterPointMarkers: []   // the selected beach's own sampling points, real markers, not text
   };
 
   // --- helpers -------------------------------------------------------------------------------
@@ -137,6 +138,10 @@
       // a shared link can open straight on one beach: ?beach=Praia%20do%20Campeche
       var beach = param('beach');
       if (beach && !state.selected && beachByName(beach)) state.selected = beach;
+      // Re-plot the selected beach's water points against *this* board (a shared-link initial
+      // load, or a day/area switch while a beach card was already open) — same board this render
+      // is about to use, never a stale one from before the fetch.
+      renderWaterPoints(beachByName(state.selected));
       render();
     });
   }
@@ -183,6 +188,20 @@
   }
 
   /**
+   * A small colour-only dot for a beach's water verdict — green/red/grey, the same tokens the
+   * score legend already uses (--c70/--c0/--cna) — instead of the 💧 emoji, which reads the same
+   * regardless of PRÓPRIA/IMPRÓPRIA/no-data and doesn't scan at a glance the way the score
+   * markers' colour already does. `unfit` is the authoritative bad-water signal (Swimability's own
+   * veto); "no data" is read straight off the summary text since the board carries no separate
+   * boolean for it.
+   */
+  function waterDotClass(beach) {
+    if (beach.water.unfit) return 'wdot c0';
+    if (beach.water.summary === 'no data') return 'wdot cna';
+    return 'wdot c70';
+  }
+
+  /**
    * The six aspects at the shown hour — every value a number or an enum from the board, every
    * emoji followed by its word (older fonts lack 🪼). Used by the marker tooltip and, in task 4,
    * as the first block of the card, so hover and tap see the same thing.
@@ -197,8 +216,13 @@
     var waves = '〰️ waves ' + fmt(e.wave_m, ' m') + (s.best && beach.sea.period_s !== null ? ' every ' + fmt(beach.sea.period_s, ' s', 0) : '');
     var whales = '🐋 whales ' + esc(e.whales) + (beach.whales.peak && beach.whales.peak !== e.h ? ' (best ' + esc(beach.whales.peak) + ')' : '');
     // The verdict is a sentence ("8/9 PRÓPRIA — avoid Ponto 98 (25 Aug)"), not a reading: it gets
-    // the full width and wraps (.wide), while the five short cells stay on one line each.
-    var water = '<span class="wide ' + (beach.water.unfit ? 'unfit' : 'water') + '">💧 ' + esc(beach.water.summary) + '</span>';
+    // the full width and wraps (.wide), while the short cells stay on one line each. A colour dot
+    // (waterDotClass) replaces the 💧 emoji — see that function's doc comment for why.
+    var water = '<span class="wide ' + (beach.water.unfit ? 'unfit' : 'water') + '"><i class="' + waterDotClass(beach) + '"></i> ' + esc(beach.water.summary) + '</span>';
+    // Accessibility (MIP-0021): OSM amenity counts within 300m, already in every board — only
+    // rendered when the board actually has at least one count for this beach (an older board, or
+    // a beach with no matched amenities at all, has no `facilities` key: absent, not zeroed).
+    var facilities = facilitiesHtml(beach.facilities);
     return head + '<div class="grid">' +
       '<span>' + wind + '</span>' +
       '<span>🌡️ water ' + fmt(e.sea_temp_c, ' °C') + '</span>' +
@@ -206,13 +230,51 @@
       '<span>🪼 jellyfish ' + esc(e.jellyfish) + '</span>' +
       '<span>' + whales + '</span>' +
       water +
+      (facilities ? '<span class="wide facilities">' + facilities + '</span>' : '') +
       '</div>';
+  }
+
+  // --- trails (MIP-0030) ------------------------------------------------------------------------
+  // green = hiking, amber = mountain_hiking, grey = unclassified or no sac_scale tag at all — §3.
+  function trailColour(difficulty) {
+    if (difficulty === 'hiking') return getCss('--c70');
+    if (difficulty === 'mountain_hiking') return getCss('--c40');
+    return getCss('--cna');
+  }
+  function trailTooltipHtml(trail) {
+    return '🥾 ' + esc(trail.name) + ' · ' + fmt(trail.length_km, ' km');
+  }
+
+  function renderTrails() {
+    state.trailLayers.forEach(function (l) { state.map.removeLayer(l); });
+    state.trailLayers = [];
+    (state.board.trails || []).forEach(function (trail) {
+      var latlngs = (trail.geometry || []).map(function (p) { return [p[0], p[1]]; });
+      if (latlngs.length < 2) return;
+      var line = L.polyline(latlngs, {
+        color: trailColour(trail.difficulty), weight: 3, opacity: 0.8, dashArray: '4,4'
+      }).addTo(state.map);
+      line.bindTooltip(trailTooltipHtml(trail), { sticky: true, direction: 'top' });
+      state.trailLayers.push(line);
+    });
+  }
+
+  var FACILITY_LABEL = { parking: '🅿️ parking', toilets: '🚻 toilets', shower: '🚿 shower', lifeguard: '🛟 lifeguard' };
+
+  /** One short line, only the facilities the board actually has a count for, in a fixed order. */
+  function facilitiesHtml(f) {
+    if (!f) return '';
+    var parts = ['parking', 'toilets', 'shower', 'lifeguard']
+      .filter(function (k) { return f[k] !== undefined && f[k] !== null; })
+      .map(function (k) { return FACILITY_LABEL[k] + ' ' + f[k]; });
+    return parts.length ? parts.join(' · ') : '';
   }
 
   function render() {
     var board = state.board;
     Object.keys(state.markers).forEach(function (k) { state.map.removeLayer(state.markers[k]); });
     state.markers = {};
+    renderTrails();
     var bounds = [];
     board.beaches.forEach(function (beach) {
       var s = shown(beach);
@@ -273,15 +335,39 @@
     state.selected = name; setParam('beach', name);
     var b = beachByName(name);
     if (b && pan !== false) state.map.panTo([b.lat, b.lon]);
+    renderWaterPoints(b);
     render();
   }
   function closeCard() {
     state.selected = null; el.card.hidden = true;
     var u = new URL(location.href); u.searchParams.delete('beach'); history.replaceState(null, '', u);
+    renderWaterPoints(null);
     render();
   }
   function beachByName(name) {
     return state.board.beaches.filter(function (b) { return b.name === name; })[0] || null;
+  }
+
+  /**
+   * The selected beach's own water-sampling points as real markers — "point by point", not just
+   * the one-line aggregate summary the tooltip/card text already shows. Only for the open beach
+   * (every board can carry several sampling points per beach, several beaches per area — plotting
+   * all of them all the time would bury the wave markers); cleared on close or when a different
+   * beach is selected. Colour-only (no emoji), the same green/red/grey tokens as `waterDotClass`
+   * and the score legend, so a point's dot means the same thing everywhere on the page.
+   */
+  function renderWaterPoints(beach) {
+    state.waterPointMarkers.forEach(function (m) { state.map.removeLayer(m); });
+    state.waterPointMarkers = [];
+    if (!beach || !beach.water || !beach.water.points) return;
+    beach.water.points.forEach(function (p) {
+      var color = p.condition === 'improper' ? getCss('--c0') : p.condition === 'proper' ? getCss('--c70') : getCss('--cna');
+      var cond = p.condition === 'proper' ? 'PRÓPRIA' : p.condition === 'improper' ? 'IMPRÓPRIA' : 'unclassified';
+      var m = L.circleMarker([p.lat, p.lon], { radius: 6, color: '#fff', weight: 2, fillColor: color, fillOpacity: 1 })
+        .addTo(state.map)
+        .bindTooltip(esc(p.point) + ' (' + esc(p.location) + '): ' + cond + ', ' + esc(p.sampled_on), { direction: 'top', offset: [0, -6] });
+      state.waterPointMarkers.push(m);
+    });
   }
 
   function renderCard() {

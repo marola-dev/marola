@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — implemented in this same PR (single-PR-sized per this MIP's own Effort row and the `mip-tasks` skill's "skip stacking for a single-PR change" rule); flips to Implemented on merge |
+| **Status** | Implemented — merged as PR #179 ("docs: implement MIP-0029 — marola as the ocean intelligence layer"), single-PR-sized per this MIP's own Effort row and the `mip-tasks` skill's "skip stacking for a single-PR change" rule |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "rebrand marola to be the ocean layer intelligence, the best place to swim is just one of its own cases, consider this decision taking into consideration all planned mips"; refined the same day — "designed to be ocean intelligence layer, but acting like wave intelligence layer, but without being cocky … consider ALL MIP scopes") |
 | **Created** | 2026-09-06 |
 | **Number note** | 0029, not 0023 — 0020/0023/0024/0025 are already claimed by open drafts on remote branches (Instagram pipeline, waitlist-promotion, sea-model), and `docs/ROADMAP.md` §5 separately *proposes* 0023–0028 for unbuilt AI-500 work. Those two claims on 0023/0025 disagree and neither is this MIP's business to resolve — flagged here, revisited in §11 |
