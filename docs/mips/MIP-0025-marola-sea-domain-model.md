@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — tasks: `docs/mips/MIP-0025.tasks.md` |
+| **Status** | Partially implemented (task 1 of 6, `docs/mips/MIP-0025.tasks.md`) — task 1 (tier2-baseline-evidence) merged as PR #192; tasks 2-6 (dataset scale, tool-call SFT, DPO data/training, HF publish) not started |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: turn the maintainer's marola-sea-1.0 notes into a MIP) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (local training/eval only, no product surface change) — the model would first plug into the local `LlmClient` path that already exists (Phase-0-and-later work per `ARCHITECTURE.md` §11), not gated on Phase 1 |

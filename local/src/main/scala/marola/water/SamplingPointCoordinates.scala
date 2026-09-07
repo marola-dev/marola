@@ -4,40 +4,45 @@ import marola.json.JsonValue
 import marola.model.Coordinates
 
 /**
- * Hand-curated point-code → coordinate lookup for INEMA's (Bahia) sampling points near
- * `site/areas.json`'s `salvador` area (MIP-0031 §5) — neither INEMA nor INEA's bulletin PDF carries
- * a coordinate for any point (MIP-0031 §4.3), so this bundled resource, `sampling_points_ba.json`,
- * supplies them for the points marola's configured Salvador area actually needs, scoped to what a
- * real, cited geocoding method (OSM/Nominatim, matched against the bulletin's own point/beach names
- * — see the resource's per-entry `source` field) could confidently resolve, not the whole 134-point
- * Bahia coast.
- *
- * A code missing from the table — a bulletin row this pass couldn't confidently geocode, or a
- * genuinely new point INEMA adds later — is dropped by `lookup`, never defaulted to a guessed
- * coordinate: the same tolerant-parsing discipline `ImaScWaterQualityClient.parse` already follows
- * for a malformed point or sample.
+ * Loads a hand-curated point-code → coordinate lookup table from a bundled JSON resource — the
+ * mechanism MIP-0031 §5 introduces because neither INEA's nor INEMA's bulletin PDF carries
+ * coordinates (verified live, MIP-0031 §4.3/§11). One resource per state —
+ * `sampling_points_ba.json` (INEMA/Bahia) and `sampling_points_rj.json` (INEA/Rio) — each populated
+ * only for point codes whose beach falls inside the matching `site/areas.json` area's radius,
+ * geocoded from the bulletin's own beach name against OpenStreetMap/Nominatim; every entry's
+ * `source` field says which OSM feature and query resolved it and when. A point code absent from a
+ * table is **dropped by the caller, never defaulted to a guessed coordinate** — the same
+ * tolerant-parsing discipline `ImaScWaterQualityClient`'s own doc comment states.
  */
 object SamplingPointCoordinates:
 
-  private val Resource = "sampling_points_ba.json"
+  final case class Entry(code: String, beachHint: String, coordinates: Coordinates, source: String)
 
-  private lazy val byCode: Map[String, Coordinates] = load(Resource)
+  /** Loads and indexes a resource by point code; later duplicate codes overwrite earlier ones. */
+  def load(resourceName: String): Map[String, Coordinates] =
+    parse(readResource(resourceName)).map(e => e.code -> e.coordinates).toMap
 
-  /** A code absent from the curated table returns `None` — never a guessed coordinate. */
-  def lookup(code: String): Option[Coordinates] = byCode.get(code)
+  private def readResource(name: String): String =
+    val stream = getClass.getClassLoader.getResourceAsStream(name)
+    require(stream != null, s"missing sampling-point resource: $name")
+    try scala.io.Source.fromInputStream(stream, "UTF-8").mkString
+    finally stream.close()
 
-  private def load(resource: String): Map[String, Coordinates] =
-    val stream = getClass.getClassLoader.getResourceAsStream(resource)
-    if stream == null then Map.empty
-    else
-      val text =
-        try scala.io.Source.fromInputStream(stream, "UTF-8").mkString
-        finally stream.close()
-      JsonValue.parse(text).arr.flatMap(parseEntry).toMap
+  /** Pure; unit-tested directly on JSON text (`SamplingPointCoordinatesSpec`). */
+  private[water] def parse(json: String): List[Entry] =
+    JsonValue.parse(json).arr.toList.flatMap(parseEntry)
 
-  private def parseEntry(entry: JsonValue): Option[(String, Coordinates)] =
+  private def parseEntry(v: JsonValue): Option[Entry] =
     for
-      code <- entry("code").str
-      lat <- entry("lat").num
-      lon <- entry("lon").num
-    yield code -> Coordinates(lat, lon)
+      code <- v("code").str
+      beach <- v("beach_hint").str
+      lat <- v("lat").num
+      lon <- v("lon").num
+      source <- v("source").str
+    yield Entry(code, beach, Coordinates(lat, lon), source)
+
+  /** INEMA/Bahia's curated table (`local/src/main/resources/sampling_points_ba.json`). */
+  val Bahia: Map[String, Coordinates] = load("sampling_points_ba.json")
+
+  /** INEA/Rio's curated table (`local/src/main/resources/sampling_points_rj.json`). */
+  val Rio: Map[String, Coordinates] = load("sampling_points_rj.json")

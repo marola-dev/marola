@@ -37,7 +37,7 @@ or what a user sees goes through one first.
   self-tests — the same gates `ci.yml` runs). Dependency freshness: Scala/sbt deps are watched by
   `scala-steward.yml` (weekly PRs); GitHub Actions and the two Python requirements files by
   `.github/dependabot.yml`. `just deps-stack` chains the open dependabot PRs into one stack
-  (`docs/DEV-FLOW.md` §6/§7) instead of merging each one through its own CI run.
+  (`docs/DEV-FLOW.md` §6/§8) instead of merging each one through its own CI run.
 
 ## Code style
 
