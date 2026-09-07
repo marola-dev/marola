@@ -108,24 +108,33 @@ function makeLeaflet() {
 }
 
 // --- run the page once against a board -----------------------------------------------------------
-async function runPage(board) {
+// `opts.extraFiles` merges into the stub fetch() map (MIP-0035: e.g. 'plugins.json'); `opts.search`
+// sets location.search (MIP-0035's `?plugin=` dev-mode loader).
+async function runPage(board, opts) {
+  opts = opts || {};
   const els = {}; IDS.forEach(id => { els[id] = new El(id); });
-  const files = {
+  const files = Object.assign({
     'data/areas.json': { areas: [{ id: 'fixture', name: 'Fixture Bay', lat: -27.6, lon: -48.5, tiles: 'https://tiles.example/{z}/{x}/{y}.png', tiles_attribution: 'test' }] },
     'data/fixture/latest.json': { days: [{ day: board.day, file: board.day + '.json' }] }
-  };
+  }, opts.extraFiles || {});
   files['data/fixture/' + board.day + '.json'] = board;
   const L = makeLeaflet();
   const colours = { '--c70': '#2a9d4b', '--c40': '#e0a800', '--c1': '#e07a00', '--c0': '#c0392b', '--cna': '#999999' };
   const errors = [];
+  const scripts = []; // MIP-0035: every <script> app.js injected, in order, so a test can assert on it
+  const domBody = { appendChild: (n) => { if (n && n.tagName === 'script') scripts.push(n); } };
   const sandbox = {
     console: { error: (...a) => errors.push(a.map(String).join(' ')), log() {} },
-    document: { getElementById: id => els[id] || null, documentElement: {} },
+    document: {
+      getElementById: id => els[id] || null, documentElement: {},
+      createElement: (tag) => ({ tagName: tag, src: '', async: false, onerror: null }),
+      body: domBody
+    },
     getComputedStyle: () => ({ getPropertyValue: n => colours[n] || '' }),
     fetch: p => Promise.resolve(p in files
       ? { ok: true, status: 200, json: () => Promise.resolve(JSON.parse(JSON.stringify(files[p]))) }
       : { ok: false, status: 404, json: () => Promise.reject(new Error('404')) }),
-    location: { href: 'https://example.test/', search: '' },
+    location: { href: 'https://example.test/', search: opts.search || '' },
     history: { replaceState() {} },
     navigator: {}, alert() {},
     URL, URLSearchParams, Promise, Math, String, Array, Object, Number, Error, parseInt, setTimeout, JSON,
@@ -135,7 +144,10 @@ async function runPage(board) {
   vm.createContext(sandbox);
   vm.runInContext(APP, sandbox, { filename: 'site/static/app.js' });
   for (let i = 0; i < 200 && !els.list.innerHTML; i++) await new Promise(r => setImmediate(r));
-  return { els, L, errors };
+  // plugins.json is fetched right after the first render (markPluginsReady) — give its own
+  // microtask/callback chain a few ticks to settle before a test inspects `scripts`.
+  for (let i = 0; i < 20; i++) await new Promise(r => setImmediate(r));
+  return { els, L, errors, window: sandbox, scripts };
 }
 
 (async () => {
@@ -239,6 +251,21 @@ async function runPage(board) {
   ok(lagoinha && lagoinha.opts.color === '#999999', 'a trail with no difficulty tag draws grey (no-data colour)', lagoinha && lagoinha.opts.color);
   const macoGuarda = trails3.find(l => String(l.tooltip).includes('Maço-Guarda'));
   ok(macoGuarda && macoGuarda.opts.color === '#e0a800', 'a mountain_hiking trail draws the amber colour', macoGuarda && macoGuarda.opts.color);
+
+  // 5. plugin API (MIP-0035)
+  const r4 = await runPage(BOARD, { extraFiles: { 'plugins.json': [] } });
+  let ctxSeen = null;
+  r4.window.marola.registerPlugin({ name: 'late', init: (ctx) => { ctxSeen = ctx; } });
+  ok(!!ctxSeen, 'a plugin registered after the board loads is init()\'d immediately');
+  ok(!!(ctxSeen && ctxSeen.map), 'the plugin context carries the live map instance');
+  ok(!!(ctxSeen && ctxSeen.board && ctxSeen.board.day === BOARD.day), 'the plugin context carries the current board');
+  ok(r4.scripts.length === 0, 'an empty plugins.json injects no <script>');
+
+  const r5 = await runPage(BOARD, { extraFiles: { 'plugins.json': [{ name: 'x', url: 'https://cdn.example/x.js' }] } });
+  ok(r5.scripts.length === 1 && r5.scripts[0].src === 'https://cdn.example/x.js', 'a plugins.json with one entry injects exactly one <script>');
+
+  const r6 = await runPage(BOARD, { search: '?plugin=https%3A%2F%2Fdev.example%2Fplugin.js', extraFiles: { 'plugins.json': [] } });
+  ok(r6.scripts.some(s => s.src === 'https://dev.example/plugin.js'), 'a ?plugin= URL is injected too (dev-mode loader)');
 
   if (fails === 0) { console.log('site_check: ok'); process.exit(0); }
   console.error('site_check: ' + fails + ' failure(s)'); process.exit(1);

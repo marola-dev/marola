@@ -6,6 +6,9 @@
   <title>marola — the ocean intelligence layer</title>
   <meta name="description" content="Every beach around the area ranked by conditions for today and tomorrow: sea, wind, waves, water quality, tides, jellyfish. Computed once, no tracking. First case: the best hour tomorrow to swim.">
   <meta name="theme-color" content="#ffffff">
+  <!-- MIP-0035: script-src 'self' https: lets a plugins.json-listed (PR-reviewed) or ?plugin=
+       dev-mode URL load; that review, not this policy, is the real trust gate — see the MIP. -->
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' https:; object-src 'none'">
   <link rel="stylesheet" href="vendor/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>

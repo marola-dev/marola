@@ -40,6 +40,55 @@
     smoke: null, smokeHistory: null, smokeMarker: null   // the last live run (MIP-0008)
   };
 
+  // --- plugin API (MIP-0035) -------------------------------------------------------------------
+  // window.marola.registerPlugin({name, init(ctx)}) — ctx.map/ctx.L are ready only after the
+  // first board has rendered (pluginsReady), so a plugin registered earlier is queued and
+  // init()'d once that happens; one registered later (a slow <script>, or the ?plugin= dev-mode
+  // loader below) is init()'d immediately. ctx.onBoardUpdate(fn) fires fn(board) on every later
+  // area/day/hour change — a plugin never sees a stale board without re-registering.
+  var pluginsReady = false;
+  var boardUpdateListeners = [];
+  window.marola = window.marola || {};
+  window.marola.plugins = window.marola.plugins || [];
+  window.marola.registerPlugin = function (plugin) {
+    window.marola.plugins.push(plugin);
+    if (pluginsReady) initPlugin(plugin);
+  };
+  function initPlugin(plugin) {
+    try {
+      plugin.init({
+        map: state.map,
+        L: window.L,
+        board: state.board,
+        onBoardUpdate: function (fn) { boardUpdateListeners.push(fn); }
+      });
+    } catch (e) {
+      console.error('marola plugin "' + (plugin && plugin.name || '?') + '" failed to init', e);
+    }
+  }
+  function markPluginsReady() {
+    if (pluginsReady) return;
+    pluginsReady = true;
+    window.marola.plugins.forEach(initPlugin);
+    loadPluginManifest();
+  }
+  // plugins.json is same-origin (no CORS issue) — one <script src> per entry, injected after the
+  // board so a slow/broken plugin never delays the core map. `?plugin=<url>` (repeatable) is the
+  // dev-mode loader, mirroring windy-plugin-template's local URL loading.
+  function loadPluginManifest() {
+    new URLSearchParams(location.search).getAll('plugin').forEach(injectPluginScript);
+    fetchJson('plugins.json').then(function (list) {
+      (list || []).forEach(function (p) { if (p && p.url) injectPluginScript(p.url); });
+    }).catch(function () { /* plugins.json missing/invalid: no third-party plugins, not an error */ });
+  }
+  function injectPluginScript(url) {
+    var s = document.createElement('script');
+    s.src = url;
+    s.async = true;
+    s.onerror = function () { console.error('marola: failed to load plugin script', url); };
+    document.body.appendChild(s);
+  }
+
   // --- helpers -------------------------------------------------------------------------------
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -135,6 +184,8 @@
       var beach = param('beach');
       if (beach && !state.selected && beachByName(beach)) state.selected = beach;
       render();
+      markPluginsReady();
+      boardUpdateListeners.forEach(function (fn) { try { fn(state.board); } catch (e) { console.error(e); } });
     });
   }
 
