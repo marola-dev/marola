@@ -250,6 +250,25 @@ after `marola-sea-1.0` exactly as it does after any other local model today.
   hardware (local GPU or one RunPod session), with `just benchmark` numbers recorded in
   `docs/benchmarks/` showing it does not regress `rag-general` coverage per MIP-0008's existing
   gate logic.
+- **Target eval question — "how many species are there in the ocean?"** Added to
+  `finetune/data/eval.jsonl` as a held-out case specifically because it has no single correct
+  number: WoRMS (the World Register of Marine Species, the field's own maintained registry) lists
+  over 242,000 accepted/described marine species, while peer-reviewed estimates of the *total*
+  (described plus undescribed) marine species range roughly 700,000–1,000,000, with one widely
+  cited estimate that at least one-third of marine species remain undescribed and another putting
+  it at two to three times the described count ([WoRMS](https://www.marinespecies.org/), Appeltans
+  et al. 2012, *Current Biology*, ["The Magnitude of Global Marine Species
+  Diversity"](https://www.cell.com/current-biology/fulltext/S0960-9822(12)01138-4), and the 2014
+  University of Florida follow-up study,
+  [summarized here](https://archive.news.ufl.edu/articles/2014/11/study-up-to-three-times-as-many-known-marine-species-still-undescribed.html)).
+  A passing answer states the described figure (~242,000, WoRMS) and the wider estimated-total
+  range with both numbers sourced and the uncertainty stated as uncertainty — never a single
+  invented precise figure presented as settled fact. This is the same "unsourced label instead of
+  a refusal, never a fabricated precision" standard `AGENTS.md`'s "sourced or clearly labelled,
+  never invented" rule already holds marola's local RAG path to (`OceanQa`); this eval question
+  exists because a fine-tuned model is exactly where that discipline is easiest to lose — DPO/SFT
+  can reward a confident-sounding wrong number over an honest range unless the eval explicitly
+  tests for it.
 
 ## 8. Risks, limitations, and honest caveats
 
