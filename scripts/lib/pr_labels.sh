@@ -145,7 +145,11 @@ pr_label_classify() {
   else
     areas="area/unscoped"
   fi
-  printf '%s\n' "$areas"
+  # shellcheck disable=SC2086 # deliberately unquoted: PR_LABEL_MIP_AREA's space-separated
+  # values (e.g. "area/map-site area/sea-life" for MIP-0009) must word-split into one printf
+  # arg/line per label — quoting collapsed a multi-area MIP into a single, space-containing
+  # "label" that gh then rejected as not found (PR #147, area/map-site area/sea-life).
+  printf '%s\n' $areas
   layers="$(pr_label_layers "$paths")"
   [ -n "$layers" ] && printf '%s\n' "$layers"
   kind="$(pr_label_kind "$author" "$paths")"
