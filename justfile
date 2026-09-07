@@ -86,6 +86,7 @@ quality-other:
     python3 scripts/lib/mip_index_merge.py --self-test
     python3 scripts/mip_graph.py --self-test
     python3 scripts/mip_graph.py --check
+    python3 finetune/build_dpo_dataset.py --self-test
     .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
@@ -199,6 +200,10 @@ benchmark:
 # Tier 2 prep: chat-format JSONL from the DSPy demos, sea lore and knowledge/ (stdlib only).
 finetune-dataset:
     python3 finetune/build_dataset.py
+
+# Layer 3 (MIP-0025 §4.3): DPO preference pairs from Reviewer.scala's own reject/revise decisions.
+finetune-dpo-dataset:
+    python3 finetune/build_dpo_dataset.py
 
 # ---------------------------------------------------------------------
 # The map — MIP-0005: precomputed boards on a static site (site/)
