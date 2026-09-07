@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted — implemented, pending merge on `mip-0035/1-plugin-api` (itself stacked on `mip-0030/1-coastal-trails`, since both touch `site/static/index.html`/`app.js`); this doc lands on its own so the design is reviewable before that code is |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-07: "create mip to add plugin possibility like as in windycom/windy-plugin-template, does it require marola.dev move out from GitHub pages? it should be first requirement of release 1 (not 0)") |
 | **Created** | 2026-09-07 |
 | **Phase** | 0 (site/static only — no bot, no Azure, no earlier-phase prerequisite missing) |
