@@ -144,3 +144,31 @@ class HttpSpec extends munit.FunSuite:
     assertEquals(Http.backoffFor(baseMs = 1000, attempt = 1), 2000L)
     assertEquals(Http.backoffFor(baseMs = 1000, attempt = 2), 4000L)
   }
+
+  // --- getBytes / BinaryTransport (MIP-0031: PDF bulletins are the first binary GET this module
+  // makes) — a separate seam from Transport/Response above, so these are separate tests, not an
+  // extension of Scripted/Flaky which only ever produce Http.Response (text).
+  final class ScriptedBytes(status: Int, bytes: Array[Byte]) extends Http.BinaryTransport:
+    var sent: Int = 0
+    def send(request: HttpRequest): Http.BytesResponse =
+      sent += 1
+      Http.BytesResponse(status, bytes)
+
+  test("getBytes returns the exact bytes on 2xx, never text-decoded") {
+    val raw = Array[Byte](0x25, 0x50, 0x44, 0x46, 0xff.toByte, 0x00) // "%PDF" + non-UTF8 bytes
+    val t = ScriptedBytes(200, raw)
+    val got = Http.withBinaryTransport(t) {
+      Sync.Unsafe.evalOrThrow(Http.getBytes("https://example.test/b.pdf"))
+    }
+    assertEquals(got.toList, raw.toList)
+    assertEquals(t.sent, 1)
+  }
+
+  test("getBytes throws HttpBytesError on a non-2xx status") {
+    val t = ScriptedBytes(404, Array.emptyByteArray)
+    val result = Http.withBinaryTransport(t) {
+      try Right(Sync.Unsafe.evalOrThrow(Http.getBytes("https://example.test/missing.pdf")))
+      catch case e: Http.HttpBytesError => Left(e.status)
+    }
+    assertEquals(result, Left(404))
+  }

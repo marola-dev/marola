@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — implemented, pending merge on `mip-0021/1-beach-accessibility` |
+| **Status** | Implemented — merged to main via PR #202 (`c775ebb`); the `mip-0021/1-beach-accessibility` branch is now stale/superseded by that squash-merge |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (candidate K4 of the 2026-09-06 external consolidation, `docs/ROADMAP.md` §7) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (CLI notes) → 1 (bot reply, map card); no Azure, no earlier-phase prerequisite for the CLI half |
-| **Related** | `BeachFinder` (the Overpass path this reuses), MIP-0005 (map card), MIP-0002 (bot reply), `docs/ARCHITECTURE.md` §5 (pluggable-integration pattern), `docs/ROADMAP.md` §7 provider-query checklist (first box, answered in §4) |
+| **Related** | `BeachFinder` (the Overpass path this reuses), MIP-0005 (map card), MIP-0002 (bot reply), `docs/ARCHITECTURE.md` §5 (pluggable-integration pattern), `docs/ROADMAP.md` §7 provider-query checklist (first box, answered in §4). **See also [MIP-0046](./MIP-0046-remove-ai-slop-ui.md)** (Draft) — the map's facilities line (`FACILITY_LABEL` in `site/static/app.js`, where this MIP's counts reached the map in PR #233) loses its 🅿️🚻🚿🛟 for SVG pictograms; the "no data, never none" rule this MIP set is untouched |
 | **Effort** | S — one new trait + Overpass client in `core/beaches`, one extra query per run, a fixture and a spec; no new dependency, no LLM |
 | **Gain** | user value (where can I park / is there a lifeguard post — safety-relevant facts today's reply lacks); exam coverage (AI-103 §1 responsible-AI transparency: deterministic labels, "no data" stated as such) |
 | **Effort vs Gain** | cheap win — buildable today with no new provider; the only risk is the sparse data, which the design treats as a fact to show, not a gap to paper over |

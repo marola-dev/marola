@@ -9,7 +9,12 @@
 # written by uprd (its first-line `<!-- uprd:` marker is present). A body someone rewrote by hand
 # has none of those and is left alone — delete the marker line to opt out of regeneration.
 # The title is set from the first commit's subject (capped, scripts/lib/uprd_title.sh) only when
-# GitHub's default was kept — the branch name, or its "Fix/dockerfile numeric uid" spelling.
+# GitHub's default was kept — the branch name, or its "Fix/dockerfile numeric uid" spelling. When
+# the branch/commits are MIP-scoped (scripts/lib/mip_ref.sh's same 3-tier detection scripts/uprd.sh
+# uses for the body's own MIP table row) and the subject doesn't already start with that MIP
+# number, cap_title prepends "MIP-NNNN: " — fixed 2026-09-07 after a real PR's title didn't start
+# with its MIP number even though the body's MIP row correctly linked it: the two used to be
+# entirely disconnected code paths (title = raw subject only; MIP number = a separate table cell).
 #
 # Skipped for PRs from forks (the token is read-only there) and for bot PRs (dependabot and
 # scala-steward write their own bodies).
@@ -61,6 +66,9 @@ jobs:
           set -euo pipefail
           # shellcheck source=scripts/lib/uprd_title.sh
           source scripts/lib/uprd_title.sh
+          # shellcheck source=scripts/lib/mip_ref.sh
+          source scripts/lib/mip_ref.sh
+          mip_ref="$(detect_mip_ref "$HEAD_REF" "origin/$BASE_REF..origin/$HEAD_REF")"
           current="$(gh pr view "$PR" --json title -q .title)"
           norm() { tr '[:upper:]' '[:lower:]' <<<"$1" | sed -E 's/[^a-z0-9]+/ /g; s/^ //; s/ $//'; }
           # `|| true`: under pipefail, a `git log` output large enough for `head` to close the
@@ -80,6 +88,6 @@ jobs:
             echo "PR #$PR title was set by a human — leaving it: $current"
             exit 0
           fi
-          title="$(cap_title "$first")"
+          title="$(cap_title "$first" "$mip_ref")"
           gh pr edit "$PR" --title "$title"
           echo "PR #$PR title: $title"

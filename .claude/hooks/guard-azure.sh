@@ -8,9 +8,20 @@
 # exits 0 (allowed). `MAROLA_ALLOW_AZURE_DEPLOY=1` in the environment lets the command through:
 # set it only after a human has said "go" to a costed proposal, never in .env or a justfile.
 #
+# This is the SECOND of two layers, not the only one — `.claude/settings.json`'s `permissions.deny`
+# refuses the exact literal command prefixes (`azd up`, `azd provision`, `az deployment `,
+# `az group create`) before this hook (or any hook) ever runs; for those specific shapes
+# MAROLA_ALLOW_AZURE_DEPLOY does nothing, since the tool call is refused upstream — a human runs
+# the command directly, or adds a one-shot rule to .claude/settings.local.json. This hook exists
+# for every OTHER invocation shape a session might produce (`./azd up`, `bash -c 'azd up'`, a
+# wrapped `cd infra && azd up`) — those are the ones MAROLA_ALLOW_AZURE_DEPLOY actually bypasses.
+# An ultrareview on 2026-09-06 found the docs describing these as one interchangeable bypass,
+# which they aren't; AGENTS.md and .claude/rules/azure.md now state the same split explicitly.
+#
 #   .claude/hooks/guard-azure.sh --self-test   # run by `just quality`; exits non-zero on any miss
 #
-# Wired in .claude/settings.json → hooks.PreToolUse[matcher "Bash"]. ai-jail is the second layer.
+# Wired in .claude/settings.json → hooks.PreToolUse[matcher "Bash"]. ai-jail is a third layer,
+# orthogonal to both permissions.deny and this hook.
 set -euo pipefail
 
 MESSAGE='Blocked by .claude/hooks/guard-azure.sh (AGENTS.md "Cost & deployment safety"): never provision or deploy a paid Azure resource — azd up/provision/deploy, az deployment … — without explicit human confirmation first. Propose the change, state the expected cost, and wait for a go-ahead; the human then runs it, or sets MAROLA_ALLOW_AZURE_DEPLOY=1 for that one command.'
