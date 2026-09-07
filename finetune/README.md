@@ -51,6 +51,23 @@ just run -- --summarize
 4. Evaluate before trusting it: run `just e2e` and `just run -- --summarize` with the new model,
    and — the real test — compare reviewer scores over a held-out set (`FUTURE-WORK.md` §4.1).
 
+## Layer 3 — DPO preference data (MIP-0025 §4.3, dataset only — training is `train_dpo.py`, not
+built yet)
+
+`core/llm/Reviewer.scala`'s own reject/revise decisions are the preference signal: wherever the
+compiled `review_prompt.json` demos show a verdict other than `"approve"`, the reviewer's real
+`final_summary` is a correction of a real flawed draft — a (chosen, rejected) pair with no
+invented text on either side. Approved drafts carry no signal and produce no pair.
+
+```bash
+just finetune-dpo-dataset      # writes finetune/data/dpo_pairs.jsonl
+```
+
+`build_dpo_dataset.py --self-test` (wired into `just quality-other`) checks this against both a
+small fixture (asserting exactly one pair per reject/revise event, zero pairs for an all-approve
+fixture) and the real `review_prompt.json` demos (every generated pair's text matches a real
+demo's text verbatim).
+
 ## As an image: `ghcr.io/h0ffmann/marola:local` (MIP-0008)
 
 The Tier 1 model, versioned like the code. `Dockerfile.local` is Ollama with `marola-llama3.2`
