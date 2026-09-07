@@ -104,6 +104,13 @@
             # and `.ai-jail` (project-level policy, committed) below.
             ai-jail.packages.${system}.default
             pkgs.bubblewrap
+
+            # OpenCode (MIP-0013): a second coding-agent harness this repo is tried against,
+            # additive only — nothing under .claude/ is removed. Confirmed present in nixpkgs
+            # (`opencode` 1.18.21 on nixos-unstable, checked 2026-09-07 via `nix search`).
+            # `opencode.json` (repo root) is its config; `just jail-opencode`/`just jo` runs it
+            # under ai-jail the same way `just jail-claude` does for Claude Code.
+            pkgs.opencode
           ];
 
           # Backup for anything else (coursier, plain `java`, scala-cli) that

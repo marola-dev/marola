@@ -678,6 +678,25 @@ jcs *args: (jail-claude "--model" "sonnet" args)
 # jail-claude with --model opus
 jco *args: (jail-claude "--model" "opus" args)
 
+# OpenCode in the jail (MIP-0013) — the same ai-jail policy as jail-claude, OpenCode's own three
+# state directories mapped instead of Claude Code's: `~/.config/opencode` (opencode.json overrides,
+# auth.json — never committed, stays host-side), `~/.local/share/opencode` (session/message
+# storage `cost-split.py`'s OpenCode reader will read), `~/.cache/opencode` (Bun's plugin installs
+# at startup, per MIP-0013 §4.6). `--network` because OpenCode needs it the same way Claude Code
+# does (model calls, plugin installs); `--terminal-passthrough` for its TUI. Extra args go to
+# `opencode` itself, e.g. `just jail-opencode run "..."`.
+jail-opencode *args:
+    ai-jail --no-save-config --rw-map ~/.config/opencode --rw-map ~/.local/share/opencode --rw-map ~/.cache/opencode --network --terminal-passthrough --exec opencode {{args}}
+
+# jail-opencode, short alias
+jo *args: (jail-opencode args)
+
+# What OpenCode sessions consumed, from its local storage (~/.local/share/opencode), priced at
+# list rates — ccusage's OpenCode support (MIP-0013 §4.5; experimental, unknown models show
+# $0.00). `just opencode-cost session`, `just opencode-cost daily`.
+opencode-cost *args="session":
+    npx --yes ccusage@latest opencode {{args}}
+
 # Push stdin (or --text "…") to the clipboard — write-only, no paste counterpart; see
 # scripts/clip.sh's header and this file's `jail-claude` comment. Inside a session started with
 # `MAROLA_JAIL_CLIPBOARD=1 just jail-claude`, goes through the host relay via .tmp/clip.fifo;
