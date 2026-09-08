@@ -45,6 +45,43 @@ def ollama_base_for(hf_id: str) -> str:
     return "<the Ollama model matching " + hf_id + ">"
 
 
+def _resume_target(args) -> str | None:
+    """The newest `checkpoint-N` under --out, or None to train from scratch.
+
+    This is the "resume or start over?" decision, and it is deliberately made from what is on disk
+    rather than from a flag alone: `--resume` on a clean machine must start from scratch, not fail,
+    or the first run of any CI job breaks.
+
+    Refuses to resume a checkpoint trained from a different base model. Optimizer and scheduler
+    state are shaped by the model; loading a Qwen-7B checkpoint into a SmolLM2 run either explodes
+    with a shape error or, worse, silently produces nonsense. The marker file is written next to
+    the checkpoints on every run.
+    """
+    out = Path(args.out)
+    marker = out / ".marola-base"
+    ckpts = sorted(
+        (d for d in out.glob("checkpoint-*") if d.is_dir()),
+        key=lambda d: int(d.name.rsplit("-", 1)[1]),
+    )
+    if not ckpts:
+        return None
+    if marker.exists():
+        previous = marker.read_text().strip()
+        if previous != args.base:
+            raise SystemExit(
+                f"train_lora: {out} holds checkpoints trained from {previous!r}, but this run uses "
+                f"{args.base!r}. Refusing to resume across base models — delete {out} or pass a "
+                "different --out."
+            )
+    return str(ckpts[-1])
+
+
+def _mark_base(args) -> None:
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / ".marola-base").write_text(args.base + "\n")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -56,6 +93,19 @@ def main() -> None:
         "base = Llama-3.2-3B (gated, GPU recommended, matches `llama3.2`)",
     )
     ap.add_argument("--base", default=None, help="explicit HF model id; overrides --preset")
+    ap.add_argument(
+        "--resume",
+        action="store_true",
+        help="continue from the newest checkpoint in --out if one exists. Trainer checkpoints "
+        "carry optimizer, scheduler, RNG and step state, so this resumes mid-epoch rather than "
+        "restarting the epoch — what makes a multi-day or interrupted run survivable",
+    )
+    ap.add_argument(
+        "--save-steps",
+        type=int,
+        default=200,
+        help="checkpoint every N steps; with --resume this bounds what a crash costs",
+    )
     ap.add_argument("--data", default=str(Path(__file__).parent / "data"))
     ap.add_argument("--out", default=str(Path(__file__).parent / "out" / "adapter"))
     ap.add_argument("--epochs", type=int, default=3)
@@ -126,6 +176,9 @@ def main() -> None:
         bf16=torch.cuda.is_available(),
         report_to=[],
     )
+    _mark_base(args)
+    resume = _resume_target(args) if args.resume else None
+    print(f"resuming from {resume}" if resume else "training from scratch (no checkpoint found)")
     trainer = SFTTrainer(
         model=model,
         processing_class=tok,
@@ -134,7 +187,7 @@ def main() -> None:
         train_dataset=data["train"],
         eval_dataset=data["eval"],
     )
-    trainer.train()
+    trainer.train(resume_from_checkpoint=resume)
     trainer.save_model(args.out)
     print(
         f"adapter saved to {args.out} — convert with llama.cpp convert_lora_to_gguf.py, then see Modelfile.adapter"

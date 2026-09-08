@@ -9,7 +9,12 @@ let
   pkgs = (builtins.getFlake "nixpkgs").legacyPackages.${builtins.currentSystem};
 in
 pkgs.python3.withPackages (ps: with ps; [
-  torch
+  # CUDA build, not the plain `torch` this used to name. That default is CPU-only, so the publish
+  # workflow trained a 360M model on 32 CPU threads while an idle RTX 4090 sat next to it — 46
+  # minutes to reach 25% of a run that takes minutes on the GPU. The CPU build is still what an
+  # agent session gets (no /dev/nvidia* inside the sandbox); this is for the self-hosted runner,
+  # which has the real card.
+  torchWithCuda
   transformers
   peft
   trl

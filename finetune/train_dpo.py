@@ -33,6 +33,19 @@ def main() -> None:
     )
     ap.add_argument("--base", default=None, help="explicit HF model id; overrides --preset")
     ap.add_argument(
+        "--resume",
+        action="store_true",
+        help="continue from the newest checkpoint in --out if one exists. Trainer checkpoints "
+        "carry optimizer, scheduler, RNG and step state, so this resumes mid-epoch rather than "
+        "restarting the epoch — what makes a multi-day or interrupted run survivable",
+    )
+    ap.add_argument(
+        "--save-steps",
+        type=int,
+        default=200,
+        help="checkpoint every N steps; with --resume this bounds what a crash costs",
+    )
+    ap.add_argument(
         "--sft-adapter",
         default=str(Path(__file__).parent / "out" / "adapter"),
         help="the SFT LoRA adapter to continue training from (train_lora.py's --out)",
