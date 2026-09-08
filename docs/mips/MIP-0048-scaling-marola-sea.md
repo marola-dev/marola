@@ -10,7 +10,7 @@
 | **Effort** | M — no new module: preset tables, training flags and a preflight estimator already exist on `experiment/qwen-presets-and-training-perf` (PR #277). The work left is corpus growth and one real GPU run, not new machinery |
 | **Gain** | user value (a domain model that answers ocean questions usefully rather than proving a pipeline); exam coverage (AI-103 "Fine-tuning a model" — today "Recipe written, not run (no GPU)"); infra/dev-loop (a preflight that says whether a run fits before four hours are spent finding out) |
 | **Effort vs Gain** | do next for the 4B/7B step; **park 27B** — §4.4 shows it needs instruction data marola does not have and should not write |
-| **Depends on** | MIP-0025 (the pipeline this scales — merged tasks 1-5, publish tooling in place). Needs a working NVIDIA driver on the reference machine, which is a host fix and not a MIP. Coordinates with MIP-0032, which would benchmark whatever this produces; neither blocks the other. No Phase 1 gate, no paid Azure resource, so `AGENTS.md`'s cost rule does not apply |
+| **Depends on** | MIP-0025 (the pipeline this scales — merged tasks 1-5, publish tooling in place). No hardware prerequisite — the host's RTX 4090 is healthy (driver 595.84, CUDA 13.2). Coordinates with MIP-0032, which would benchmark whatever this produces; neither blocks the other. No Phase 1 gate, no paid Azure resource, so `AGENTS.md`'s cost rule does not apply |
 | **Blocked by** | 0025 |
 | **Risk** | Spending a GPU day on a bigger model that answers no better, because the ceiling is the corpus (168 unique facts) and not the parameter count — §4.5 |
 | **Cost so far** | — |
@@ -86,16 +86,25 @@ Measured on 2026-09-07, not assumed:
 
 | resource | measured | binding? |
 |---|---|---|
-| GPU | RTX 4090, 24 GB — **driver down** (`nvidia-smi` fails; `lspci` sees the card) | yes, until fixed |
+| GPU | RTX 4090, 24 GB — **healthy**: driver 595.84, CUDA 13.2, 34 °C idle, 933 MiB used (host `nvidia-smi`, 2026-09-07) | no |
 | RAM | 188 GB total, ~158 GB available | no |
 | CPU | 32 threads, 50 °C at load 14 (high = 80, crit = 100) | no |
 | disk | **7,030 GB** free on the repo's filesystem | no |
 
-One methodological note worth keeping: `df /home` inside a sandboxed shell reported **95 GB** while
-`os.statvfs` on the repo directory reported **7,030 GB**. Acting on the first number produced a
-wrong conclusion ("27B cannot finish here") that survived two messages before being caught. The
-preflight tool in PR #277 measures the directory artifacts are actually written to, for this
-reason.
+**A methodological note that earned its place by being learned twice.** Both of the machine facts
+above were first measured from inside a sandboxed agent session, and both were wrong about the
+machine:
+
+- `df /home` in the sandbox reported **95 GB**; `os.statvfs` on the repo reported **7,030 GB**. The
+  first number produced a confident "27B cannot finish here" that survived two messages.
+- `nvidia-smi` in the sandbox reports "couldn't communicate with the NVIDIA driver" because the jail
+  maps no `/dev/nvidia*` nodes. On the host the same command reports **driver 595.84, CUDA 13.2, a
+  healthy RTX 4090**. An earlier draft of this MIP recorded the GPU as broken and built
+  recommendations on it.
+
+The rule this MIP adopts: **a measurement taken inside the sandbox describes the sandbox, not the
+machine.** Anything about hardware gets confirmed on the host before it is written down, and
+`finetune/preflight.py` is designed to be run there rather than by an agent.
 
 ### 4.3 What 24 GB of VRAM actually allows
 
@@ -165,8 +174,8 @@ Qwen3-Reranker-4B (both apache-2.0) are candidates. Not proposed here; noted in 
 
 ### Pick
 
-**`qwen-7b` (Qwen2.5-7B-Instruct) for the next real run**, `qwen-14b` if the 4090 is healthy and
-time allows; **`qwen-27b` parked** pending general instruction data that is out of scope. And the
+**`qwen-7b` (Qwen2.5-7B-Instruct) for the next real run**, `qwen-14b` next — the 4090 is healthy,
+so both are a matter of hours, not hardware; **`qwen-27b` parked** pending general instruction data that is out of scope. And the
 corpus work in §4.5 outranks all of them.
 
 
@@ -244,11 +253,58 @@ one-flag `peft` change usually worth a small quality gain at the same rank; unte
 
 **What to change, in order:**
 
-1. Fix the NVIDIA driver (host, not this repo).
-2. `just finetune-preflight preset=qwen-7b` — confirm the numbers on the real machine.
-3. Grow `knowledge/` per §4.5. This is the highest-value item and needs no GPU.
-4. Train `qwen-7b` with `--rank 32`, benchmark against the base model per MIP-0025 §7.
-5. Only then consider 14B.
+1. `just finetune-preflight preset=qwen-7b` on the host — confirm the numbers where the GPU is
+   actually visible.
+2. Grow `knowledge/` per §4.5 and §4.7. This is the highest-value item and needs no GPU.
+3. Train `qwen-7b` with `--rank 32` (and `use_dora=True`, Appendix A), benchmark against the
+   untuned base per MIP-0025 §7.
+4. Only then consider 14B.
+
+
+### Multi-stage and resumable training
+
+A long run should not be an all-or-nothing bet on the machine staying up. Three separable
+mechanisms, in increasing order of how much they change the design:
+
+**1. Checkpoint and resume — the direct answer.** HuggingFace `Trainer` (which `SFTTrainer`
+extends) writes a full checkpoint: model/adapter weights, optimizer state, LR-scheduler state, RNG
+state and the step counter. `trainer.train(resume_from_checkpoint=True)` picks up mid-epoch, not
+just at an epoch boundary, so a run can be stopped and restarted across days, reboots or a moved
+GPU. What marola needs to change to use it:
+
+```python
+# today, in train_lora.py's SFTConfig
+save_strategy="epoch",          # a checkpoint only every epoch
+save_total_limit=1,             # keeps the newest only
+
+# for a multi-day run
+save_strategy="steps",
+save_steps=200,                 # tune so a crash costs minutes, not hours
+save_total_limit=2,             # one to resume from, one as a fallback
+```
+
+plus a `--resume` flag passing `resume_from_checkpoint` through. Note the interaction with
+`save_total_limit=1`, added in PR #277 to stop a 27B run writing ~100 GB of unread checkpoints:
+that is still resumable, but it leaves no fallback if the newest checkpoint is truncated by the
+crash that stopped the run. For long runs, 2 is the safer number.
+
+**2. Staged training — marola already does this.** SFT and DPO are separate scripts producing
+separate adapters (`out/adapter`, `out/dpo-adapter`), where DPO continues from the SFT adapter. That
+is already a two-stage pipeline with a durable artifact between stages, and each stage can be run on
+a different day. The natural third stage, if §4.7's corpus grows enough, is **continued
+pre-training** on raw ocean text *before* the SFT stage — domain knowledge first, instruction
+format second, preferences last.
+
+**3. Batched corpus work.** The expensive part of this MIP is not GPU time, it is §4.7's corpus
+growth, which is inherently incremental: every `knowledge/*.md` file added raises the ceiling a
+little, `build_dataset.py` is deterministic and re-runnable, and its self-test asserts provenance on
+every regeneration. There is no reason to wait for a "complete" corpus before training on the
+current one — train, benchmark, add documents, retrain, and keep the benchmark rows to see whether
+the corpus is actually helping.
+
+The practical shape for a multi-day 14B run: `save_steps=200`, `save_total_limit=2`, run under
+`tmux` or a systemd unit so an SSH drop does not kill it, and resume after any interruption. The
+GPU only needs to be free while a stage is running, not for the whole calendar span.
 
 ## 6. Scoring / safety impact
 
@@ -263,8 +319,8 @@ someone to swim — that boundary is the point of `ARCHITECTURE.md` §3b.
 - **Add** `docs/benchmarks/` entries for `tiny` and for whichever Qwen preset is run — MIP-0025 §7
   asks for the comparison against the untuned base and it has never been done. Without it, "the
   tuned model is better" is an assumption.
-- **Live check**: `just finetune-preflight preset=qwen-7b` on the reference machine with a working
-  driver, then the full chain to `ollama run hf.co/<user>/<repo>`.
+- **Live check**: `just finetune-preflight preset=qwen-7b` **on the host**, where the GPU is
+  visible, then the full chain to `ollama run hf.co/<user>/<repo>`.
 - **Done looks like**: a Qwen-based marola-sea published, and a benchmark row showing it beats both
   the untuned base *and* the 360M tuned model on marola's own questions. If it does not beat them,
   that is a finding to record, not to hide.
@@ -274,8 +330,9 @@ someone to swim — that boundary is the point of `ARCHITECTURE.md` §3b.
 - **The corpus ceiling makes a bigger model look pointless.** 168 unique facts is the real limit;
   a 14B model may benchmark barely above the 360M one and the effort will look wasted. It will not
   be — but expectations should be set now, not after the run.
-- **Nothing in PR #277 has been run.** The Qwen presets are wired and preflighted, never trained —
-  there is no working CUDA device on the reference machine at the time of writing.
+- **Nothing in PR #277 has been run.** The Qwen presets are wired and preflighted, never trained.
+  Not for want of hardware — the host's RTX 4090 is healthy — but because the agent session that
+  wrote them has no GPU access. The first real run is the maintainer's, on the host.
 - **The ETA estimator is calibrated on one data point** (SmolLM2-360M on CPU) and scaled by
   parameter count. Treat its numbers as order-of-magnitude.
 - **CPU training above ~3B is days.** The estimator warns; the warning is real.
@@ -398,6 +455,30 @@ actually done.** `publish_hf.py` already generates the base model, the training-
 the eval numbers. If a future marola-sea is ever a merge rather than a fine-tune, the card says
 merge. That is the whole difference between the two columns above.
 
+
+### Appendix C — Curated lists worth watching
+
+The fine-tuning landscape moves faster than a MIP can be revised, so these are the maintained
+indexes to re-read before acting on anything in Appendix A rather than trusting this document's
+snapshot of 2026-09-07. Listed as pointers, not endorsements — none was audited here beyond
+confirming it exists and is on topic.
+
+| List | Why it is relevant to marola |
+|---|---|
+| [Hannibal046/Awesome-LLM](https://github.com/Hannibal046/Awesome-LLM) | The general index — models, papers, tooling. The first place a new base model shows up. |
+| [Curated-Awesome-Lists/awesome-llms-fine-tuning](https://github.com/Curated-Awesome-Lists/awesome-llms-fine-tuning) | Tutorials, papers and tools specifically for fine-tuning; the closest match to §5's decisions. |
+| [pdaicode/awesome-LLMs-finetuning](https://github.com/pdaicode/awesome-LLMs-finetuning) | Second fine-tuning collection; useful as a cross-check when two lists disagree. |
+| [horseee/Awesome-Efficient-LLM](https://github.com/horseee/Awesome-Efficient-LLM) | Efficiency-focused, with a dedicated [tuning.md](https://github.com/horseee/Awesome-Efficient-LLM/blob/main/tuning.md) — the right index for DoRA/rsLoRA-class techniques on one GPU. |
+| [rafska/Awesome-local-LLM](https://github.com/rafska/Awesome-local-LLM) | Running models locally: the axis marola actually cares about, since Ollama is the deployment target. |
+| [ethicals7s/awesome-local-ai](https://github.com/ethicals7s/awesome-local-ai) | Local-only tooling, no cloud or API keys — the same constraint as `ARCHITECTURE.md` §5's local default. |
+| [mlabonne/llm-datasets](https://github.com/mlabonne/llm-datasets) | Post-training datasets. Directly relevant to §4.4's "general instruction data marola does not have" and §4.7's corpus work. |
+| [onejune2018/Awesome-LLM-Eval](https://github.com/onejune2018/Awesome-LLM-Eval) | Evaluation tooling and benchmarks — the gap MIP-0025 §7 and MIP-0032 both point at. |
+
+Two frameworks surfaced repeatedly across these lists and are worth naming next to Unsloth in
+Appendix A: **Axolotl** (LoRA/QLoRA/DeepSpeed/PEFT, multi-GPU) and **xtuner** (explicitly supports
+Qwen among others). Neither was evaluated here; both are alternatives to hand-rolling
+`train_lora.py` further if its flag surface keeps growing.
+
 ### Checked live
 
 - `https://huggingface.co/api/models?author=Qwen&sort=downloads&limit=60` — 2026-09-07. Returned 60
@@ -408,8 +489,9 @@ merge. That is the whole difference between the two columns above.
   no naming requirement on derivatives.
 - `https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct` — 2026-09-07. Llama 3.2 Community
   Licence §1.b.i quoted verbatim in §4.1.
-- Reference machine, 2026-09-07: `nvidia-smi` fails with "couldn't communicate with the NVIDIA
-  driver" while `lspci` reports `NVIDIA Corporation AD102 [GeForce RTX 4090]`; `free -g` 188 GB;
+- Reference machine, 2026-09-07, **on the host**: `nvidia-smi` reports driver 595.84, CUDA 13.2,
+  `NVIDIA GeForce RTX 4090`, 933 MiB / 24564 MiB used, 34 °C, P8. Inside the sandboxed agent
+  session the same command fails and `/dev/nvidia*` does not exist — see §4.2. `free -g` 188 GB;
   `nproc` 32; `sensors` Package id 0 +50.0 °C (high +80, crit +100); `os.statvfs` on
   `finetune/` 7,030 GB free against `df /home` 95 GB.
 - Built dataset, 2026-09-07: 2,774 rows across `train.jsonl`/`eval.jsonl`, 168 unique assistant
@@ -425,6 +507,13 @@ merge. That is the whole difference between the two columns above.
 - Web search on 2026 fine-tuning practice — 2026-09-07: DoRA as a default-on upgrade, rsLoRA for
   r ≥ 32, all-linear target modules beating attention-only, Unsloth's ~2×/50% claims and Feb 2026
   MoE support.
+- Web search for curated GitHub lists (Appendix C) — 2026-09-07, restricted to github.com. Returned
+  the eight repositories linked there plus mentions of Axolotl and xtuner. Existence and topic
+  confirmed from the search result titles/descriptions; none of the repositories was opened,
+  audited, or its recommendations verified.
+- Host `nvidia-smi`, 2026-09-07, pasted by the maintainer: driver 595.84, CUDA 13.2, RTX 4090,
+  933 MiB / 24564 MiB, 34 °C. This corrected an earlier draft of this MIP that recorded the GPU as
+  unusable based on a sandbox-side failure — see §4.2.
 - Web search on domain dataset practice — 2026-09-07: 500-1,000 examples for formatting tasks,
   3,000-10,000 for domain adaptation; Self-Instruct with a judge filtering 5-10%; prefer real domain
   data and generate synthetic from real seeds. Papers surfaced: CRAFT (2409.02098), Dial-insight
