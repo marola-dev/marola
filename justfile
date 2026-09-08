@@ -89,6 +89,7 @@ quality-other:
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
     scripts/setup-cuda-cache.sh --self-test
+    scripts/setup-ml-venv.sh --self-test
     scripts/deps-stack.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
@@ -221,6 +222,10 @@ finetune-dpo-dataset:
 # Layer 3 training: DPO on top of an existing SFT adapter (`just finetune-train` first).
 finetune-train-dpo preset="tiny" *args:
     python3 finetune/train_dpo.py --preset {{preset}} {{args}}
+
+# Create/update the venv marola-sea trains in (CUDA torch from PyTorch's wheel index).
+ml-venv *args:
+    scripts/setup-ml-venv.sh {{args}}
 
 # One-time host setup: add the CUDA binary cache so torchWithCuda is fetched, not compiled.
 gpu-cache-setup *args:
