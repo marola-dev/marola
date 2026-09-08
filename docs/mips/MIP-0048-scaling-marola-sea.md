@@ -169,6 +169,58 @@ Qwen3-Reranker-4B (both apache-2.0) are candidates. Not proposed here; noted in 
 time allows; **`qwen-27b` parked** pending general instruction data that is out of scope. And the
 corpus work in §4.5 outranks all of them.
 
+
+## 4.7 Growing the corpus with quality, not volume
+
+§4.5 says the ceiling is 168 unique facts. Raising it badly is easy and would make the model
+worse, so this records how the field says to do it well, and what marola already has lying around.
+
+**How much.** Published 2026 guidance: 500-1,000 examples move the needle on formatting or
+classification; **3,000-10,000 high-quality examples** are the range for adapting a model to a new
+domain. marola has 168 unique facts behind 2,774 rows — an order of magnitude short on the axis
+that matters, and already past the point where more paraphrases help.
+
+**Real data first.** The consistent advice is to prioritise real domain text and, when generating,
+generate *from real seeds* rather than from generic prompts. marola already ingests real sources it
+does not use for training:
+
+- **The agency bulletins it already parses.** `IneaPdfParser`/`InemaPdfParser` read real INEA/RJ and
+  INEMA/BA bathing-water PDFs. Every historical bulletin is real, sourced, dated domain text.
+- **`scripts/arxiv_digest.py`** already fetches and caches ocean-forecasting papers. Abstracts are
+  citable domain prose.
+- **Open-Meteo and OSM documentation** — the vocabulary of the tool-call layer.
+- **Tide tables and the existing `sea_lore.json`** — small, but curated and sourced.
+- **Lifeguard and civil-defence safety material** (SALVAMAR/Bombeiros for SC, and the equivalents in
+  RJ/BA) — exactly the register the safety footer answers in.
+
+**Synthetic, done properly.** The 2026 Self-Instruct shape is: 150-200 human-written seed tasks, a
+stronger teacher model to expand them with a diversity-promoting prompt, then **a judge model that
+re-scores generated rows and discards those below a threshold** — commonly sampling 5-10% for
+audit. CRAFT (arXiv 2409.02098) is the retrieval-flavoured variant: pull real corpus passages, then
+augment around them, which fits marola better than free generation because every row stays anchored
+to a citable source.
+
+Two constraints marola must add to that recipe, from its own rules:
+
+1. **`AGENTS.md`'s "sourced or clearly labelled, never invented"** already forbids unsourced facts
+   reaching a user. Training data deserves the same bar — `build_dataset.py --self-test` already
+   asserts every generated fact appears verbatim in the `knowledge/*.md` it cites, and any synthetic
+   expansion must keep that property or the assertion becomes theatre.
+2. **The teacher's licence follows the output.** This is the same clause that made a Llama teacher a
+   problem for a SmolLM2 student (see MIP-0025's licence note): Llama 3.2 §1.b.i reaches "any
+   outputs or results of the Llama Materials" used to train a model. An Apache-2.0 teacher (a larger
+   Qwen) has no such term; a commercial API's terms of service need reading before its output enters
+   a published model's training set.
+
+**Capability collapse** is the failure mode to watch: narrow domain fine-tuning on a small set can
+destroy general ability (Dial-insight, arXiv 2403.09167). The defence is mixing in general
+instruction data — which is also §4.4's argument, arriving from the other direction.
+
+**Precedents from other domains** worth copying rather than inventing: REx86 (arXiv 2510.20975)
+builds a local domain model for x86 reverse engineering from a modest curated corpus; both it and
+CRAFT are the same shape marola needs — narrow domain, small real corpus, careful augmentation, a
+local model at the end.
+
 ## 5. Design
 
 Nothing new is required — the machinery landed in PR #277 on
@@ -268,6 +320,84 @@ this is a single-model change, not a multi-agent one.
 
 ## Appendix
 
+### Appendix A — State-of-the-art training techniques worth adopting
+
+Researched 2026-09-07. The user's constraint was explicit: a longer run is acceptable if the result
+is better. These are ordered by confidence, and none has been run here.
+
+**Adopt now, near-free:**
+
+- **DoRA** (`use_dora=True` in `peft`). Decomposes the weight update into magnitude and direction
+  and LoRA-fits only the direction; reported to converge faster and match full fine-tuning at the
+  same rank. 2026 guides describe it as a default-on free upgrade. One flag in `train_lora.py`.
+- **All-linear target modules.** Current 2026 benchmarks say including q, k, v, o, gate, up and down
+  consistently beats attention-only for minimal VRAM cost. **marola already does this** — worth
+  recording as validated rather than changed.
+- **rsLoRA** (rank-stabilised LoRA) — a scaling factor that makes the output scale invariant to
+  rank. Recommended once r ≥ 32, which is exactly the rank §5 proposes.
+
+**Adopt if the tooling proves out:**
+
+- **Unsloth.** Reported ~2× faster training at ~50% less VRAM through fused kernels and PEFT
+  optimisations, plus MoE support since Feb 2026 with a claimed 7-12× speedup there. Packaging is
+  **not** the obstacle it looked like: `nix eval nixpkgs#python3Packages.unsloth` resolves to
+  `python3.14-unsloth-2026.4.5` (checked 2026-09-07), so it is one line in
+  `.github/nix-ml-env.nix` and needs no pip path or overlay. That makes it cheap to try; the speed
+  and VRAM claims are still vendor figures and unmeasured here.
+
+**Deliberately not proposed:**
+
+- **Longer runs / more epochs.** The user offered more hours, but with 168 unique facts more epochs
+  buys memorisation, not knowledge. Spend the hours on §4.7's corpus instead — this is the one place
+  where "it can take longer" does not convert into quality.
+- **Model merging.** See Appendix B: it is a legitimate technique, and it is precisely what the Rio
+  project was criticised for presenting as training.
+
+### Appendix B — Comparison with Rio de Janeiro's municipal LLM
+
+In April 2026 Rio de Janeiro's city government, through IplanRio, launched a family of six models
+("Rio 3"), including **Rio 3.0 Open at 235 billion parameters** and **Rio 3.0 Open Mini at 44
+billion**, described as open source, with a total project cost of **R$ 500 mil** — claimed as "30
+vezes menor" than an off-the-shelf system. A larger **Rio 3.5 Open at 397 billion parameters** was
+published with strong benchmark numbers.
+
+Within hours the benchmark claims were contested. The developer of N2 Pro analysed the release and
+found that the published artifact combined the weights of **Qwen and Nex** — a *raw merge*, a
+mathematical mixture of two existing models **with no additional training**, rather than the
+distillation the project described, and without disclosing the use of N2 Pro. The prefecture
+acknowledged that existing models had been reused, and said the release had been premature and
+represented an unfinished intermediate version. Its director had earlier said of the Qwen base: *"o
+modelo não tem nada a ver com o Qwen original, mas usamos a estrutura e o treinamento."*
+
+Three things are worth stating fairly before the comparison. Merging is a **legitimate** technique
+when disclosed — the criticism was about description, not method. A municipal government building
+public AI capability is a good thing. And R$ 500 mil is genuinely small for the ambition.
+
+|  | **marola-sea today** | **marola-sea proposed** (§4 pick) | **Rio 3.5 Open** |
+|---|---|---|---|
+| Parameters | **360 M** | 7.6 B (Qwen2.5-7B-Instruct) | **397 B** (claimed) |
+| Base | SmolLM2-360M-Instruct | Qwen2.5-7B-Instruct | Qwen + Nex (merged) |
+| Method | QLoRA SFT + tool-call SFT + **DPO** | same, larger base, r=32 | **raw weight merge, no training** |
+| Evidence of training | eval loss 3.032 → 2.866 → 2.799 over 3 epochs; DPO to 0.2594 | to be measured | none — no training performed |
+| Weights published | tooling ready, not yet uploaded | same | "open source"; location not confirmed in reporting |
+| Licence | Apache-2.0 end to end, deliberately | Apache-2.0 | Qwen is Apache-2.0; Nex component unclear |
+| Attribution | base model named in the model card by `publish_hf.py` | same | N2 Pro use undisclosed |
+| Independent verification | GGUF loaded in Ollama and answered in trained format | benchmark planned (MIP-0025 §7) | claims contested within hours |
+| Cost | ~$0 (local CPU) | one GPU-day | R$ 500.000 |
+
+**The useful lesson is not the parameter count.** marola-sea is roughly a thousandth the size of
+Rio's headline number and does strictly more actual training than a merge does. What separates the
+two is not scale but **provenance**: which base, which licence, what was run, and what the numbers
+were. This repo already has that discipline written down — `AGENTS.md`'s "sourced or clearly
+labelled, never invented", the `Cost:` trailer on every PR, `finetune/README.md`'s "run, `tiny`
+preset verified" versus "written, not run" vocabulary — and MIP-0025 §7 requires a benchmark against
+the untuned base *before* claiming the tuned model is better.
+
+The concrete practice to keep, stated as a rule this MIP adopts: **the model card must say what was
+actually done.** `publish_hf.py` already generates the base model, the training-data description and
+the eval numbers. If a future marola-sea is ever a merge rather than a fine-tune, the card says
+merge. That is the whole difference between the two columns above.
+
 ### Checked live
 
 - `https://huggingface.co/api/models?author=Qwen&sort=downloads&limit=60` — 2026-09-07. Returned 60
@@ -284,9 +414,25 @@ this is a single-model change, not a multi-agent one.
   `finetune/` 7,030 GB free against `df /home` 95 GB.
 - Built dataset, 2026-09-07: 2,774 rows across `train.jsonl`/`eval.jsonl`, 168 unique assistant
   answers; `knowledge/` 7 files, 2,535 words.
+- `https://www.mobiletime.com.br/noticias/02/04/2026/prefeitura-do-rio-3-llms/` — 2026-09-07.
+  Rio 3.0 Open 235B, Mini 44B, six models, R$ 500 mil, "30 vezes menor", Qwen-derived, described as
+  open source; the article does not say where the weights are published. Director quote in
+  Appendix B is from this page.
+- Web search on the Rio controversy — 2026-09-07, results from Canaltech, Tecnoblog, Baguete, TMC:
+  Rio 3.5 Open at 397B, contested benchmarks, the N2 Pro developer's finding that the artifact was a
+  raw Qwen+Nex merge rather than the claimed distillation, and the prefecture's response that the
+  release was premature and intermediate.
+- Web search on 2026 fine-tuning practice — 2026-09-07: DoRA as a default-on upgrade, rsLoRA for
+  r ≥ 32, all-linear target modules beating attention-only, Unsloth's ~2×/50% claims and Feb 2026
+  MoE support.
+- Web search on domain dataset practice — 2026-09-07: 500-1,000 examples for formatting tasks,
+  3,000-10,000 for domain adaptation; Self-Instruct with a judge filtering 5-10%; prefer real domain
+  data and generate synthetic from real seeds. Papers surfaced: CRAFT (2409.02098), Dial-insight
+  (2403.09167), REx86 (2510.20975).
 - Merged model artifacts produced this session: `merged/model.safetensors` 723 MB,
   `marola-sea-tiny-f16.gguf` 725 MB, `Q4_K_M` 270 MB, `Q8_0` 386 MB; the Q4_K_M loaded into Ollama
   and answered in the trained "Source: <url>" format (§3).
+
 
 ### Not checked
 
@@ -299,3 +445,11 @@ this is a single-model change, not a multi-agent one.
   not in doubt; the specific counts should be re-checked before anyone plans against them.
 - **DoRA's reported quality advantage** — from memory, not verified.
 - **Qwen3-Embedding / Qwen3-Reranker quality** — listed in the HF response, never evaluated here.
+- **Rio's published weights.** Not located or inspected. The merge finding in Appendix B is reported
+  by the N2 Pro developer via the press coverage above, not independently reproduced here — the
+  comparison table's "Rio 3.5 Open" column is therefore *as reported*, not *as verified*. The Nex
+  component's licence in particular was not established.
+- **Every SOTA claim in Appendix A** — DoRA/rsLoRA/Unsloth figures are from 2026 guides and vendor
+  claims found in search, not benchmarked here and not read from the primary papers.
+- **Unsloth's runtime behaviour** — the package is present in nixpkgs (verified), but it has not
+  been imported, run, or benchmarked here; the ~2×/50% figures remain vendor claims.
