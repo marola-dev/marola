@@ -88,6 +88,7 @@ quality-other:
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
+    scripts/setup-cuda-cache.sh --self-test
     scripts/deps-stack.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
@@ -220,6 +221,10 @@ finetune-dpo-dataset:
 # Layer 3 training: DPO on top of an existing SFT adapter (`just finetune-train` first).
 finetune-train-dpo preset="tiny" *args:
     python3 finetune/train_dpo.py --preset {{preset}} {{args}}
+
+# One-time host setup: add the CUDA binary cache so torchWithCuda is fetched, not compiled.
+gpu-cache-setup *args:
+    scripts/setup-cuda-cache.sh {{args}}
 
 # Merge a LoRA adapter into its base and export runnable GGUFs (MIP-0025 §5.1) — the step between
 # training and publishing. `just finetune-merge` alone prints the plan; add llama_cpp=<path> to a
