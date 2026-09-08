@@ -2,17 +2,7 @@ name: docker smoke test (a live --summarize, shown on the map)
 
 # MIP-0008 §5.4/§5.5: run the published image end to end — Overpass, Open-Meteo, IMA, a small
 # Ollama model for the draft and the reviewer — at a real location, and put the result where the
-# map shows it as "Last live run". The cheapest continuous check that pipeline, prompt, reviewer
-# and model still produce a sane sentence together.
-#
-# Cost (MIP §8): ~5 min of runner per run — image pull, the Ollama binary + `llama3.2:1b` from
-# the cache (the 1.3 GB pull happens once per model, as in marola-e2e.yml), ~1 min of pipeline
-# and 1-2 min of CPU inference. Daily plus on demand; never per PR. One Overpass query per run.
-#
-# Where the result goes: NOT to Pages directly — site.yml owns the deploy and two deploys would
-# race. This workflow commits `smoke/` to the orphan `site-data` branch (tiny JSON files, one bot
-# commit per run) and triggers site.yml, which copies the branch into site/dist/smoke/. If the
-# trigger fails, the next scheduled site build (≤ 3 h) picks it up anyway.
+# map shows it as "Last live run".
 
 on:
   workflow_dispatch:
@@ -84,9 +74,7 @@ jobs:
           ollama list | awk 'NR>1{print $1}' | grep -qx "$MODEL" || ollama pull "$MODEL"
 
       # `--network host` so the container reaches the runner's Ollama at localhost:11434, the
-      # image's default. The location: a Maps pin (short link expanded here, parsed by the CLI's
-      # --location-url), else lat/lon, else Campeche. Exit code kept, never fatal: a failed run is
-      # recorded as failed and shown as such.
+      # image's default.
       - name: Run --summarize in the image
         id: run
         env:

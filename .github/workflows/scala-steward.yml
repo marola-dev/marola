@@ -1,31 +1,7 @@
 name: scala-steward (dependency update PRs)
 
 # Scans build.sbt/project/** for newer releases of every dependency (core/local/azure/cli — dspy/
-# is Python-only, out of scope) and opens one PR per update it finds. Free: GitHub Actions minutes
-# only, no paid resource, no Azure involved (AGENTS.md's cost rule is about Azure provisioning,
-# not this).
-#
-# Uses the default GITHUB_TOKEN (verified via scala-steward-org/scala-steward-action's own docs,
-# 2026-09-05: no PAT/GitHub App needed for a single repo) — as long as the repo's own "Allow GitHub
-# Actions to create and approve pull requests" setting (Settings -> Actions -> General -> Workflow
-# permissions) is ON. Workflow-level `permissions: pull-requests: write` below is necessary but not
-# sufficient: that repo-level toggle is a separate gate, and with it off the API call fails with a
-# 403 and the exact body "GitHub Actions is not permitted to create or approve pull requests" —
-# seen for real on this repo, 2026-09-07. Fix either by flipping that toggle, or — the tighter-
-# scoped alternative, since that toggle affects every workflow in the repo, not just this one — by
-# adding a fine-grained PAT (contents: write, pull requests: write, scoped to this repo only) as
-# the `STEWARD_GH_TOKEN` repo secret; the step below prefers it automatically when present and
-# falls back to GITHUB_TOKEN otherwise, so nothing else changes either way.
-#
-# Caveat, also GitHub's own documented behaviour, not this action's: a PR opened by GITHUB_TOKEN
-# does not trigger other workflows (recursive-workflow prevention) — so ci.yml's checks won't
-# appear automatically on a Steward PR opened that way. Push an empty commit (or close/reopen) to
-# get CI to run before merging — using a PAT (the STEWARD_GH_TOKEN path above) also sidesteps this,
-# since PAT-opened PRs aren't subject to that restriction.
-#
-# Kyo (io.getkyo) is pinned pre-1.0 and verified against the jar, not getkyo.io's docs (AGENTS.md,
-# build.sbt) — a Steward PR bumping it is useful signal, but still needs that same jar-verification
-# step before merging, same as any manual Kyo bump.
+# is Python-only, out of scope) and opens one PR per update it finds.
 
 on:
   schedule:

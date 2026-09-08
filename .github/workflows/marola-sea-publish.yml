@@ -1,55 +1,4 @@
-# marola-sea-publish — build and publish the marola-sea model to Hugging Face.
-#
-# NEVER automatic. `workflow_dispatch` only, and deliberately with no inputs: publishing a model
-# to a public registry is an outward-facing, hard-to-unpublish act, so it happens when a human
-# presses the button and never on a push, a schedule, or a merge. There is no `push:`, no
-# `schedule:` and no `pull_request:` trigger here on purpose — adding one would turn a reviewed
-# release into a side effect of ordinary work (AGENTS.md, "Cost & deployment safety").
-#
-# No inputs means the run has to decide the version itself, so it auto-increments: the next
-# `marola-sea-v<N>` git tag after the highest one that already exists, starting at v1. The tag is
-# pushed only after the upload succeeds, so a failed run does not burn a number and re-running is
-# safe.
-#
-# Runs on YOUR machine, not GitHub's, via a self-hosted runner — this job downloads gigabytes of
-# weights, burns CPU for the training run, and needs a Hugging Face token, none of which belongs
-# on shared infrastructure. The `marola-sea` label is what keeps that specific: only a workflow
-# that asks for the label lands on the runner, so every other workflow in this repo stays on
-# GitHub's hosted runners untouched.
-#
-# One-time setup, on the machine that should build the model:
-#   1. repo Settings -> Actions -> Runners -> New self-hosted runner; follow the download/config
-#      steps it prints, and when it asks for additional labels enter: marola-sea
-#   2. `./run.sh` (foreground) or install it as a service with `./svc.sh install && ./svc.sh start`
-#   3. add the HF_TOKEN repository secret (Settings -> Secrets and variables -> Actions)
-# Self-hosted runners are safe here because this repo is private; GitHub's warning against them is
-# about public repos, where a fork's pull request could run code on your machine. This workflow has
-# no pull_request trigger regardless.
-#
-# Dependencies come from nix, not pip or apt, because that is the combination actually verified
-# end to end on 2026-09-07: python3.withPackages [torch transformers peft ...] for the merge,
-# nixpkgs#llama-cpp.src for convert_hf_to_gguf.py and nixpkgs#llama-cpp for llama-quantize. The
-# runner needs nix with flakes; it needs no Python toolchain of its own.
-#
-# Self-contained by necessity: `finetune/out/` is gitignored, so no adapter exists on a clean
-# checkout and the job trains one. The preset is a dispatch input defaulting to `qwen-7b` — the
-# Apache-2.0 model MIP-0048 §4 picks — rather than the `tiny` 360M pipeline proof it used to
-# hardcode.
-#
-# It trains on the GPU. An earlier version named `pkgs.python3Packages.torch` (the CPU build) and
-# passed `--no-4bit`, so a real run spent 46 minutes reaching 25% of a 360M training job while an
-# idle RTX 4090 sat beside it. The env now uses torchWithCuda, `--no-4bit` is gone, and a step
-# asserts `torch.cuda.is_available()` before any training starts — a silent CPU fallback is the
-# expensive failure here, so it fails loudly instead.
-#
-# The chain is MIP-0025 §5.1's, end to end:
-#   dataset -> SFT -> DPO -> peft merge -> convert_hf_to_gguf -> quantize -> upload
-# The merge matters: train_lora.py emits a LoRA *adapter*, and `ollama run hf.co/...` cannot use
-# one — it needs a standalone model GGUF. See finetune/merge_export.py.
-#
-# Requires an `HF_TOKEN` repository secret: a fine-grained Hugging Face token scoped to the target
-# model repo with write access (publish_hf.py only calls create_repo and upload_file). A classic
-# "write" token would grant far more than this needs.
+# marola-sea-publish — build and publish the marola-sea model to Hugging Face. MIP-0025.
 name: marola-sea publish
 
 on:
@@ -73,8 +22,7 @@ concurrency:
   cancel-in-progress: false   # never interrupt an upload half-done
 
 env:
-  # Outside the workspace on purpose — see the checkout step. Survives `git clean -ffdx`, survives
-  # the runner re-cloning, and is what makes a timed-out run resumable on the next dispatch.
+  # Outside the workspace on purpose — see the checkout step.
   CKPT_ROOT: ${{ github.workspace }}/../marola-checkpoints
 
 jobs:
@@ -87,11 +35,7 @@ jobs:
         with:
           fetch-depth: 0   # the version counter reads existing tags
           # `clean: true` (the default) runs `git clean -ffdx`, and -x removes IGNORED files —
-          # which is where finetune/out/ lives. On a self-hosted runner the workspace persists
-          # between runs, so that default would wipe every checkpoint before training starts and
-          # --resume would silently never trigger. Checkpoints therefore live outside the
-          # workspace entirely (CKPT_ROOT below); the workspace itself is still cleaned, which is
-          # what keeps a stale working tree from leaking between runs.
+          # which is where finetune/out/ lives.
           clean: true
 
       - name: refuse to run without a token, before doing 40 minutes of work
