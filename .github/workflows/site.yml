@@ -83,7 +83,7 @@ jobs:
       - name: Add the smoke-test results and badge data — coverage, stats (site-data branch, if any)
         run: |
           if git fetch --depth=1 origin site-data 2>/dev/null; then
-            for dir in smoke coverage stats; do
+            for dir in smoke coverage stats docs; do
               if git cat-file -e "FETCH_HEAD:$dir" 2>/dev/null; then
                 git archive FETCH_HEAD "$dir" | tar -x -C site/dist
               else

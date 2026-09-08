@@ -1,0 +1,88 @@
+# api-docs — generate Scala/Python API docs and push them to the `site-data` branch. MIP-0044 §5.6.
+# Not on the site's 3-hourly schedule: ~20 MB is uploaded when code changes, not eight times a day.
+name: API docs
+
+on:
+  push:
+    branches: [main]
+    paths: ['**/*.scala', 'build.sbt', 'project/**', 'scripts/**.py', 'finetune/build_dataset.py']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: api-docs
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: sbt
+      - uses: sbt/setup-sbt@v1
+
+      - name: scaladoc, one tree per module
+        run: |
+          set -euo pipefail
+          sbt core/doc local/doc azure/doc cli/doc
+          for m in core local azure cli; do
+            mkdir -p out/docs/api/scala/"$m"
+            cp -r "$m"/target/scala-*/api/. out/docs/api/scala/"$m"/
+          done
+
+      - name: pdoc for the scripts
+        run: |
+          set -euo pipefail
+          pip install --quiet pdoc
+          # Stdlib-only CLI scripts, not a library — the index page says so, per MIP-0044 §5.6.
+          pdoc -o out/docs/api/python scripts/*.py scripts/lib/*.py finetune/build_dataset.py || \
+            echo "pdoc produced nothing for some inputs — continuing with what it did produce"
+
+      - name: strip third-party scripts so the docs keep script-src 'self'
+        run: |
+          set -euo pipefail
+          python3 scripts/strip_external_scripts.py out/docs/api/scala out/docs/api/python
+          if grep -rl 'src="http' out/docs --include='*.html' | head -1 | grep -q .; then
+            echo "::error::an external <script src> survived the strip — the docs would violate the site CSP" >&2
+            grep -rl 'src="http' out/docs --include='*.html' | head -5 >&2
+            exit 1
+          fi
+          echo "no external script src in the generated tree"
+
+      - name: build the docs index (guides, MIPs, API — one page, MIP-0044 §5.6)
+        run: |
+          set -euo pipefail
+          python3 scripts/build_docs_index.py --out out/docs/index.html
+          find out/docs -maxdepth 3 -name index.html | sort
+
+      - name: push to the site-data branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          tmp="$(mktemp -d)"
+          if git fetch --depth=1 origin site-data 2>/dev/null; then
+            git worktree add -f "$tmp" FETCH_HEAD --detach
+          else
+            git worktree add -f --detach "$tmp"
+            git -C "$tmp" checkout --orphan site-data
+            git -C "$tmp" rm -rq --cached . 2>/dev/null || true
+          fi
+          rm -rf "${tmp:?}/api"
+          cp -r out/docs "$tmp/docs"
+          git -C "$tmp" add -A api
+          if git -C "$tmp" diff --cached --quiet; then
+            echo "api docs unchanged — nothing to push"
+            exit 0
+          fi
+          git -C "$tmp" commit -qm "api docs from ${GITHUB_SHA::12}"
+          git -C "$tmp" push -q origin HEAD:site-data
+          echo "pushed docs/ to site-data"

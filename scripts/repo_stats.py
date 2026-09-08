@@ -74,6 +74,8 @@ SELF_TEST_SCRIPTS = (
     "scripts/lib/uses_merge.py",
     "scripts/lib/mip_index_merge.py",
     "scripts/mip_graph.py",
+    "scripts/strip_external_scripts.py",
+    "scripts/build_docs_index.py",
 )
 # Measured tree. `dspy/`/`finetune/` are excluded on purpose — see the module docstring.
 COVERAGE_SOURCE = "scripts"

@@ -77,6 +77,8 @@ quality-other:
     scripts/docs-mip-stack.sh --self-test
     python3 scripts/lib/mip_index_merge.py --self-test
     python3 scripts/mip_graph.py --self-test
+    python3 scripts/strip_external_scripts.py --self-test
+    python3 scripts/build_docs_index.py --self-test
     python3 scripts/mip_graph.py --check
     python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test
