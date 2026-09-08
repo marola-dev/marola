@@ -50,12 +50,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/strip_external_scripts.py out/docs/api/scala out/docs/api/python
-          if grep -rl 'src="http' out/docs --include='*.html' | head -1 | grep -q .; then
-            echo "::error::an external <script src> survived the strip — the docs would violate the site CSP" >&2
-            grep -rl 'src="http' out/docs --include='*.html' | head -5 >&2
-            exit 1
-          fi
-          echo "no external script src in the generated tree"
+          # --check reuses the stripper's own regex. The previous guard grepped for `src="http`,
+          # which matched pdoc's rendering of strip_external_scripts.py's own docstring.
+          python3 scripts/strip_external_scripts.py --check out/docs
 
       - name: build the docs index (guides, MIPs, API — one page, MIP-0044 §5.6)
         run: |

@@ -54,6 +54,28 @@ var pathToRoot = document.body.getAttribute("data-path-to-root") || "";
 """
 
 
+def check(dirs: list[Path]) -> int:
+    """Report any real external <script src> left in the tree, using EXTERNAL_SCRIPT itself.
+
+    The workflow used to grep for the looser `src="http`, which matched this file's own
+    documentation once pdoc rendered it — escaped text about script tags, not a script tag.
+    """
+    offenders = [
+        f
+        for d in dirs
+        if d.is_dir()
+        for f in d.rglob("*.html")
+        if EXTERNAL_SCRIPT.search(f.read_text(encoding="utf-8", errors="ignore"))
+    ]
+    for f in offenders[:5]:
+        print(f"external script src survives in {f}", file=sys.stderr)
+    if offenders:
+        print(f"{len(offenders)} file(s) would violate the site CSP", file=sys.stderr)
+        return 1
+    print("no external script src in the generated tree")
+    return 0
+
+
 def process(dirs: list[Path]) -> int:
     total_files = total_removed = 0
     for d in dirs:
@@ -105,6 +127,25 @@ def self_test() -> int:
         1,
         "plain http src is removed as well",
     )
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "clean.html").write_text("<html><body>no scripts</body></html>", encoding="utf-8")
+        ok(check([d]), 0, "--check passes a tree with no external script")
+        # What pdoc emits for this very file: text *about* script tags, with < escaped.
+        (d / "pdoc.html").write_text(
+            '<html><body><code>EXTERNAL_SCRIPT = &lt;script src="https://x/a.js"&gt;</code>'
+            "<p>strips &lt;script src=&quot;https://...&quot;&gt; tags</p></body></html>",
+            encoding="utf-8",
+        )
+        ok(check([d]), 0, "documentation about script tags is not mistaken for one")
+        (d / "real.html").write_text(
+            '<html><head><script src="https://d3js.org/d3.v6.min.js"></script></head></html>',
+            encoding="utf-8",
+        )
+        ok(check([d]), 1, "a real external script tag is still caught")
+
     if fails:
         print(f"strip_external_scripts self-test: {fails} failure(s)", file=sys.stderr)
         return 1
@@ -118,13 +159,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     ap.add_argument("dirs", nargs="*", type=Path)
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--check", action="store_true", help="report survivors, change nothing")
     args = ap.parse_args(argv)
     if args.self_test:
         return self_test()
     if not args.dirs:
         ap.print_help()
         return 2
-    return process(args.dirs)
+    return check(args.dirs) if args.check else process(args.dirs)
 
 
 if __name__ == "__main__":
