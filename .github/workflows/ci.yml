@@ -82,7 +82,7 @@ jobs:
 
       # Dependencies: keyed on the build definition only, so source edits keep the hit.
       - name: Cache sbt / coursier
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/coursier
@@ -94,7 +94,7 @@ jobs:
 
       # Compiled classes + zinc's incremental-compile analysis.
       - name: Cache compiled classes (zinc incremental)
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             core/target
