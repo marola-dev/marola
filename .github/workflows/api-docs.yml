@@ -73,9 +73,11 @@ jobs:
             git -C "$tmp" checkout --orphan site-data
             git -C "$tmp" rm -rq --cached . 2>/dev/null || true
           fi
-          rm -rf "${tmp:?}/api"
+          # The tree is docs/, not api/ — site.yml copies `docs` out of site-data. Removing and
+          # staging `api` here left the copy unstaged and `add` with nothing to match.
+          rm -rf "${tmp:?}/docs"
           cp -r out/docs "$tmp/docs"
-          git -C "$tmp" add -A api
+          git -C "$tmp" add -A docs
           if git -C "$tmp" diff --cached --quiet; then
             echo "api docs unchanged — nothing to push"
             exit 0
