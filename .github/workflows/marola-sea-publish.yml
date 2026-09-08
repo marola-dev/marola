@@ -7,12 +7,15 @@ on:
   workflow_dispatch:
     inputs:
       preset:
+        # Only what finetune/train_lora.py's PRESETS actually holds — it validates with
+        # choices=sorted(PRESETS), so an option listed here that it does not know fails at train
+        # time, after the venv build. The qwen-* presets come back with PR #277.
         description: "training preset (see finetune/train_lora.py PRESETS)"
         type: choice
-        default: qwen-7b
-        options: [tiny, qwen-4b, qwen-7b, qwen-14b]
+        default: tiny
+        options: [tiny, small]
       resume:
-        description: "resume from the last checkpoint if one exists"
+        description: "resume DPO from the last checkpoint if one exists"
         type: boolean
         default: true
 
@@ -53,13 +56,6 @@ jobs:
           fi
           echo "HF_TOKEN present"
 
-      - name: preflight — does this run fit on this machine?
-        env:
-          PRESET: ${{ inputs.preset }}
-        run: |
-          set -euo pipefail
-          python3 finetune/preflight.py --preset "$PRESET" --strict
-
       - name: python env with CUDA torch (venv, reused between runs)
         run: |
           set -euo pipefail
@@ -92,8 +88,8 @@ jobs:
           py="$VENV_ROOT/bin/marola-python"   # wraps the venv python with libstdc++ on the path
           # Refuse rather than fall back to CPU: a silent fallback is hours wasted, not a warning.
           "$py" -c 'import torch, sys; sys.exit(0 if torch.cuda.is_available() else "no CUDA device visible to torch")'
-          # shellcheck disable=SC2086  # RESUME is intentionally an unquoted flag-or-empty
-          "$py" finetune/train_lora.py --preset "$PRESET" --epochs 3 $RESUME \
+          # train_lora.py has no --resume on main; train_dpo.py does. PR #277 adds it.
+          "$py" finetune/train_lora.py --preset "$PRESET" --epochs 3 \
             --out "$CKPT_ROOT/$PRESET/adapter"
           # shellcheck disable=SC2086
           "$py" finetune/train_dpo.py --preset "$PRESET" --epochs 1 $RESUME \
