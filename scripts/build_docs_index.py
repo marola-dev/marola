@@ -60,7 +60,9 @@ def render(guides, module_list, mip_list) -> str:
         return f'    <li><a href="{html.escape(href)}">{html.escape(name)}</a>{note_html}</li>'
 
     guide_items = "\n".join(li(f"{REPO}/{p}", Path(p).name, note) for p, note in guides)
-    api_items = "\n".join(li(f"api/scala/{m}/index.html", m, note) for m, note in module_list)
+    # marola.html, not index.html: scaladoc's landing page lists only "Packages: package marola",
+    # so linking it lands the reader on an empty body. The package page is the actual content.
+    api_items = "\n".join(li(f"api/scala/{m}/marola.html", m, note) for m, note in module_list)
     mip_items = "\n".join(
         li(f"{REPO}/docs/mips/{fn}", f"MIP-{num} — {title}", "") for num, title, fn in mip_list
     )
@@ -125,9 +127,14 @@ def self_test() -> int:
         [("0044", "site sections", "MIP-0044-site-sections.md")],
     )
     ok(
-        'href="api/scala/core/index.html"' in page,
+        'href="api/scala/core/marola.html"' in page,
         True,
-        "Scala modules link into the generated tree",
+        "Scala modules link to the package page, which has the members",
+    )
+    ok(
+        'href="api/scala/core/index.html"' in page,
+        False,
+        "and not to scaladoc's landing page, whose body is one 'package marola' line",
     )
     ok(
         'href="api/python/index.html"' in page,
