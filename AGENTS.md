@@ -132,6 +132,24 @@ Scala style, the Kyo effect boundary, and testing discipline are in `.claude/rul
 auto-loaded while editing `.scala`/`build.sbt`. Short version for every language: prefer `enum` +
 exhaustive matching over exceptions for expected failure modes, and reproduce a bug with a failing
 test before fixing it.
+
+**Comments: write few, and only what the code cannot say.** Agents overshoot here badly — #280,
+#284, #286 and #287 were four separate passes cutting comment lines roughly in half (Scala 1882 →
+793, shell 1071 → 565, the justfile 392 → 135, JavaScript 166 → 115), and the same verbosity grows
+straight back unless it is refused in review. Before writing a comment, check it is one of these:
+
+- **why, not what** — a non-obvious decision, a rejected alternative, a constraint from outside the
+  file (an API's behaviour, a licence, a version pin). `// increment i` is noise; "429 is Overpass's
+  documented back-pressure, not an exception" is not.
+- **a trap** — something that will look like a bug, or bite the next reader, and is invisible here.
+- **a pointer** — the MIP or issue that explains the shape, in one reference, not a summary of it.
+
+Everything else belongs in the commit message, the MIP, or nowhere. Specifically: do not restate
+the code in prose, do not narrate the history of a fix in the file it fixed, do not re-explain in a
+comment what a good name already says, and do not paste a paragraph where a clause works. A
+docstring that is longer than the function it documents is a defect, not thoroughness. The commit
+message is the right home for reasoning and evidence — it is versioned, it is read once, and it
+does not have to be maintained forever alongside the code.
 Prefer running agent tools through [ai-jail](https://github.com/akitaonrails/ai-jail) —
 `just jail-claude` (or `jcf`/`jcs`, pinned to fable/sonnet) — over bare. It sandboxes the process
 (bubblewrap/Landlock/seccomp); it doesn't replace the rules above or stop bad code/overspend, only

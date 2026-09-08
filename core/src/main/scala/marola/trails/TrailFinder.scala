@@ -53,6 +53,26 @@ object TrailFinder:
    * in the same request, merges same-named segments into one `Trail` each (MIP-0030 §8: OSM splits
    * one named trail into many small ways), and returns them sorted by name.
    */
+  /**
+   * `nearby`, degraded to no trails when Overpass fails — 429 is its documented back-pressure, not
+   * an exception. Trails are enrichment on an already-complete result, so a failure here must not
+   * discard the run; `Recommender.fetchFacilities` treats its Overpass call the same way. The beach
+   * query itself still fails loudly: with no beaches there is nothing to report.
+   */
+  def nearbyOrEmpty(
+      origin: Coordinates,
+      radiusKm: Double,
+      beaches: List[Beach]
+  ): List[Trail] < Sync =
+    soften(nearby(origin, radiusKm, beaches))
+
+  /** Split out so the recovery is testable without reaching Overpass. */
+  private[trails] def soften(effect: List[Trail] < Sync): List[Trail] < Sync =
+    Abort.run(Abort.catching[Throwable](effect)).map {
+      case Result.Success(trails) => trails
+      case _                      => Nil
+    }
+
   def nearby(origin: Coordinates, radiusKm: Double, beaches: List[Beach]): List[Trail] < Sync =
     val radiusM = (radiusKm * 1000).toInt
     val nearM = (NearRadiusKm * 1000).toInt

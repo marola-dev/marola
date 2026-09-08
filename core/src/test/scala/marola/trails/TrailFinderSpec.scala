@@ -1,5 +1,7 @@
 package marola.trails
 
+import kyo.*
+
 import marola.json.JsonValue
 import marola.model.{Beach, Coordinates}
 
@@ -12,6 +14,8 @@ import marola.model.{Beach, Coordinates}
  * `core/src/test/resources/fixtures/overpass-trails-floripa.json`.
  */
 class TrailFinderSpec extends munit.FunSuite:
+
+  private given unsafe: AllowUnsafe = AllowUnsafe.embrace.danger
 
   private def resource(name: String): String =
     val s = getClass.getClassLoader.getResourceAsStream(name)
@@ -126,4 +130,18 @@ class TrailFinderSpec extends munit.FunSuite:
     assertEquals(t.nearBeach, None)
   }
 
+  test("an Overpass failure yields no trails instead of taking the run down") {
+    val boom: List[Trail] < Sync =
+      Sync.defer(
+        throw marola.http.Http
+          .HttpError(429, "https://overpass-api.de/api/interpreter", "rate limited")
+      )
+    assertEquals(Sync.Unsafe.evalOrThrow(TrailFinder.soften(boom)), Nil)
+  }
+
+  test("soften is transparent when the effect succeeds — it only swallows failures") {
+    val ts = trailsOf()
+    assert(ts.nonEmpty, "fixture should parse some trails")
+    assertEquals(Sync.Unsafe.evalOrThrow(TrailFinder.soften(Sync.defer(ts))), ts)
+  }
 end TrailFinderSpec

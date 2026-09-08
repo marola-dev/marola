@@ -122,7 +122,7 @@ object SiteBuilder:
       // MIP-0030: one extra Overpass query per area per build, reusing the beaches `scoreDays`
       // already fetched (no second beach query) — the same trails feed both day files below, a
       // trail doesn't change per day.
-      trails <- TrailFinder.nearby(area.origin, area.radiusKm, scored.map(_.beach).distinct)
+      trails <- TrailFinder.nearbyOrEmpty(area.origin, area.radiusKm, scored.map(_.beach).distinct)
     yield
       val dir = out.resolve("data").resolve(area.id)
       Files.createDirectories(dir)

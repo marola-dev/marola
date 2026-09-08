@@ -434,7 +434,11 @@ object Main extends KyoApp:
           // already fetched (no second beach query) — trails don't depend on the forecast, so
           // this doesn't need to be inside the span above.
           trails <- tracing.withSpan("trails") {
-            TrailFinder.nearby(origin.coordinates, origin.radiusKm, results.map(_.beach).distinct)
+            TrailFinder.nearbyOrEmpty(
+              origin.coordinates,
+              origin.radiusKm,
+              results.map(_.beach).distinct
+            )
           }
           _ <-
             if results.isEmpty then
