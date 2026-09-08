@@ -1,11 +1,4 @@
-# actionlint config. Without this, `runs-on: [self-hosted, marola-sea]` fails linting with
-# 'label "marola-sea" is unknown' — actionlint only knows GitHub's hosted labels unless the
-# repo's custom self-hosted labels are declared here.
-#
-# marola-sea is the label on the maintainer's own machine, used by
-# .github/workflows/marola-sea-publish.yml so that the model build/publish runs locally while
-# every other workflow stays on GitHub's hosted runners. See that workflow's header for the
-# runner registration steps.
+# actionlint config.
 self-hosted-runner:
   labels:
     - marola-sea

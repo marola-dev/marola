@@ -16,9 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Decide what actually changed so the expensive job only runs when it can matter. A docs-only
-  # push costs one ~10s job. (`dorny/paths-filter` is free; on `push` it diffs against the previous
-  # commit, on `pull_request` against the base.)
+  # Decide what actually changed so the expensive job only runs when it can matter.
   changes:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -69,9 +67,7 @@ jobs:
     timeout-minutes: 30
     # Elevated past the workflow-level `contents: read` only for this job's main-only coverage
     # steps below: pushing coverage/latest.json to the orphan site-data branch, and re-triggering
-    # site.yml so the badge refreshes right away. Same mechanism docker-smoke.yml uses for the
-    # smoke panel. Both are inert on pull_request — GitHub already read-only-caps a fork PR's
-    # token regardless of what's declared here.
+    # site.yml so the badge refreshes right away.
     permissions:
       contents: write
       actions: write
@@ -96,9 +92,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sbt-
 
-      # Compiled classes + zinc's incremental-compile analysis. Exact key = nothing to compile;
-      # a restore-keys hit gives zinc the previous analysis so it recompiles only what changed —
-      # which is the case that matters on every PR. Cache is per Scala/JDK version via the key.
+      # Compiled classes + zinc's incremental-compile analysis.
       - name: Cache compiled classes (zinc incremental)
         uses: actions/cache@v4
         with:
@@ -123,10 +117,7 @@ jobs:
 
       # Main only, and only after the checks above pass: `sbt-scoverage` (project/plugins.sbt)
       # re-instruments core/local/azure/cli, reruns the suite, and coverageAggregate sums one
-      # statement-coverage number across all four for the README badge. `just coverage` runs the
-      # same recipe locally. The aggregate report lands at
-      # target/scala-*/scoverage-report/scoverage.xml with a `statement-rate="NN.NN"` attribute
-      # on the root <scoverage> element — parsed below into a shields.io "endpoint" JSON.
+      # statement-coverage number across all four for the README badge.
       - name: Coverage (main only) — instrumented build, statement %, shields.io endpoint JSON
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -139,7 +130,7 @@ jobs:
           color = "red" if pct < 50 else "yellow" if pct < 80 else "green"
           # "sc-cov", not "coverage": the README carries a second, Python one now (repo-stats'
           # stats/python-coverage.json, same thresholds, labelled "py-cov"), and two badges that
-          # both read "coverage" are worse than none. Rename one and the other has to follow.
+          # both read "coverage" are worse than none.
           json.dump(
               {"schemaVersion": 1, "label": "sc-cov", "message": f"{pct:.0f}%", "color": color},
               sys.stdout,
@@ -147,15 +138,12 @@ jobs:
           PY
           echo && cat coverage.json
           # `sbt clean` above wiped the target/ dirs the "Cache compiled classes" step keys on.
-          # A plain, non-instrumented recompile puts them back the way a normal build leaves them,
-          # so the cache-save at the end of this job doesn't warm the cache with scoverage's
-          # instrumented classfiles for the next (non-coverage) run to restore.
           sbt coverageOff compile test
 
       # site.yml's build job copies this branch's `smoke/` and `coverage/` directories into
       # site/dist (see site.yml) — same orphan-branch mechanism docker-smoke.yml uses for the
-      # smoke panel, reused here so both features share one publish path and one permissions
-      # story (GITHUB_TOKEN only, no secret, safe once the repo is public).
+      # smoke panel, reused here so both features share one publish path and one permissions story
+      # (GITHUB_TOKEN only, no secret, safe once the repo is public).
       - name: Publish the coverage JSON to the site-data branch
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -181,9 +169,6 @@ jobs:
           fi
 
       # workflow_dispatch is one of the two events GITHUB_TOKEN may trigger from a workflow.
-      # Belt-and-suspenders: most scala-touching main pushes already retrigger site.yml on their
-      # own (its push filters include core/local/cli/build.sbt/project), this just covers the
-      # gap (e.g. an azure/-only change) and shaves the wait off the rest.
       - name: Rebuild the site so the coverage badge refreshes
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
@@ -193,14 +178,6 @@ jobs:
   # README badges that describe this repo rather than one job's pass/fail: how many of *this*
   # run's steps went green (step-level — ci.yml has three jobs but ~20 named steps, and
   # "build-test passed" hides which of them ran at all), plus the Scala and Python line counts.
-  # Same publish path as the coverage badge: a shields.io endpoint JSON on the orphan `site-data`
-  # branch, copied into the site by site.yml, read live by the README.
-  #
-  # A separate job rather than one more step inside build-test, because a step can only see the
-  # conclusions of steps that have already finished — from here, every other job of the run is
-  # done and its steps carry a real `conclusion`. `always()` so a run where build-test is skipped
-  # (a docs-only push) or failing still reports; `scripts/repo_stats.py` counts only steps that
-  # actually ran, so a docs-only push reads "8/8 green" instead of a misleading "8/20".
   repo-stats:
     needs: [changes, build-test, quality-other]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -218,16 +195,12 @@ jobs:
         run: command -v cloc >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends cloc; }
 
       # Same shape as the cloc step: flake.nix ships coverage.py for the local run, the runner
-      # image does not promise it. Ubuntu's python3-coverage puts the module on python3's import
-      # path (repo_stats falls back to `python3 -m coverage` when no `coverage` binary is on
-      # PATH) and needs no pip/PEP-668 dance.
+      # image does not promise it.
       - name: coverage.py (only if the runner image does not already have it)
         run: command -v coverage >/dev/null || python3 -c 'import coverage' 2>/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends python3-coverage; }
 
       # The Python-coverage part re-runs every `scripts/**/*.py --self-test` under coverage.py —
-      # seconds, no network — and reports statement % over scripts/ only. That is genuinely all
-      # marola has for Python (no pytest suite), so the badge means "covered by the self-tests",
-      # not "covered by a test suite"; see the script's docstring.
+      # seconds, no network — and reports statement % over scripts/ only.
       - name: Badge JSONs — CI health (steps green/ran), Scala/Python LOC, Python coverage
         env:
           GH_TOKEN: ${{ github.token }}
@@ -236,7 +209,7 @@ jobs:
         run: python3 scripts/repo_stats.py write --out-dir stats --repo "$REPO" --run-id "$RUN_ID" --exclude-job repo-stats
 
       # Same orphan-branch mechanism as the coverage JSON above (and docker-smoke.yml's smoke
-      # panel). This job `needs:` build-test, so the two never push to site-data concurrently.
+      # panel).
       - name: Publish the stats JSONs to the site-data branch
         run: |
           if git ls-remote --exit-code --heads origin site-data >/dev/null; then
@@ -263,9 +236,9 @@ jobs:
           # docs-only push must not spend an Overpass query just to refresh a line count
           # (site.yml's own push filters and build-test's trigger already cover code changes).
 
-  # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/,
-  # a linter for these workflow files themselves, and hadolint for the Dockerfiles — the same
-  # gates as `just quality`.
+  # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/, a
+  # linter for these workflow files themselves, and hadolint for the Dockerfiles — the same gates
+  # as `just quality`.
   quality-other:
     needs: changes
     if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
@@ -274,9 +247,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # ruff-action appends its `src` (default: the checkout root) to `args`, so this lints every
-      # .py in the repo — the same `ruff check .` as `just quality-other`. A file list here once
-      # drifted from the local one and an unused import reached main. `version` matches the ruff
-      # flake.nix ships, so format findings don't differ between the two either.
+      # .py in the repo — the same `ruff check .` as `just quality-other`.
       - name: ruff check (every .py in the repo)
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
@@ -333,8 +304,7 @@ jobs:
         with:
           dockerfile: Dockerfile
 
-      # MIP-0010: every compose profile must still render — the mlflow profile included. Needs no
-      # daemon; `docker compose config` is client-side. Same check as `just quality`.
+      # MIP-0010: every compose profile must still render — the mlflow profile included.
       - name: docker compose config (all profiles)
         if: needs.changes.outputs.docker == 'true'
         run: docker compose --profile mlflow --profile ollama --profile local config --quiet
