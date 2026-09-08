@@ -10,22 +10,14 @@ import marola.model.{Beach, BeachForecast, HourlyConditions}
 
 /**
  * Open-Meteo (open-meteo.com) — free, no API key for non-commercial use
- * (https://open-meteo.com/en/pricing: "Open-Meteo is free for non-commercial use"). Two endpoints
- * are combined and joined by matching hourly timestamp: the general Forecast API (air temp, wind,
- * UV, precipitation) and the Marine API (wave height, sea surface temperature, current). Both
- * return `time` as a *local, zone-less* string (e.g. "2026-09-05T14:00") when `timezone=auto` is
- * passed, alongside a separate `timezone` field naming the IANA zone — that zone is what
- * `Recommender` uses to figure out which hours count as "tomorrow" at that beach, not the caller's
- * own JVM default zone.
+ * (https://open-meteo.com/en/pricing: "Open-Meteo is free for non-commercial use").
  */
 object OpenMeteoClient:
 
   /**
    * Extra attempts per Open-Meteo call after a 429/5xx or a connect/read timeout
    * (`Http.isRetryableFailure`): a board is ~2 calls × 80 beaches, and one `HTTP connect timed out`
-   * from a GitHub runner ended the whole scheduled site build on 2026-09-06. Two retries with 1 s
-   * then 2 s back-off — a blip costs seconds, an outage still fails the build (site.yml then keeps
-   * the previous deploy).
+   * from a GitHub runner ended the whole scheduled site build on 2026-09-06.
    */
   private val ForecastRetries = 2
 
@@ -42,7 +34,6 @@ object OpenMeteoClient:
       s"$MarineBase?latitude=${coords.lat}&longitude=${coords.lon}" +
         "&hourly=wave_height,sea_surface_temperature,ocean_current_velocity" +
         // MIP-0001: period/swell for the detailed block, sea level (tides) for `Tides.extrema`.
-        // Variable names confirmed live against the Marine API on 2026-09-05.
         ",wave_period,wave_direction,swell_wave_height,swell_wave_period,sea_level_height_msl" +
         s"&forecast_days=$forecastDays&timezone=auto"
 

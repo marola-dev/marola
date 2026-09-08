@@ -1,22 +1,11 @@
 #!/usr/bin/env bash
-# Blocks a commit if any staged Scala changes don't compile (the lint gates run in .githooks/pre-push).
-#
-# Installed automatically via `core.hooksPath` (set by flake.nix's
-# shellHook every time you enter `nix develop`); run `just install-hooks`
-# once if you're not using the dev shell. See AGENTS.md.
-#
-# NOTE: this compiles the working tree, not a stashed reconstruction of
-# just the staged diff — same tradeoff as `just build`/`just test`
-# already documented in AGENTS.md. If you've got unstaged Scala changes
-# mixed in, they get compiled too.
+# Blocks a commit if any staged Scala changes don't compile (the lint gates run in
+# .githooks/pre-push).
 set -euo pipefail
 
-# See justfile's XDG_RUNTIME_DIR override: sbt's launcher needs a writable
-# one to create its boot server socket, and ai-jail doesn't map /run/user
-# into its sandbox, so a bare `sbt` here would die with
-# `AccessDeniedException: /run/user` inside a jailed `just jail-claude`
-# session. This hook calls `sbt` directly (not `just`), so it needs its
-# own copy of the override rather than inheriting the justfile's.
+# See justfile's XDG_RUNTIME_DIR override: sbt's launcher needs a writable one to create its boot
+# server socket, and ai-jail doesn't map /run/user into its sandbox, so a bare `sbt` here would
+# die with `AccessDeniedException: /run/user` inside a jailed `just jail-claude` session.
 repo_root="$(git rev-parse --show-toplevel)"
 export XDG_RUNTIME_DIR="$repo_root/.tmp/sbt-runtime"
 mkdir -p "$XDG_RUNTIME_DIR"
@@ -41,8 +30,7 @@ else
 fi
 
 # Same gate ci.yml's `quality` job runs, but at commit time — a broken workflow file used to
-# surface only once GitHub Actions ran it. `pkgs.actionlint` is in flake.nix's devShell; if it's
-# missing here (not using `nix develop`), skip rather than block.
+# surface only once GitHub Actions ran it.
 if git diff --cached --name-only --diff-filter=ACM | grep -qE '^\.github/workflows/.*\.ya?ml$'; then
   if command -v actionlint >/dev/null 2>&1; then
     echo "pre-commit: staged workflow changes detected, running actionlint..."

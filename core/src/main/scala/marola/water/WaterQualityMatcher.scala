@@ -4,18 +4,7 @@ import java.text.Normalizer
 
 import marola.model.Beach
 
-/**
- * Assigns each provider sampling point to (at most) one OSM beach. Pure, so it's unit-tested on a
- * fixture trimmed from the real IMA feed (`WaterQualityMatcherSpec`).
- *
- * Name match wins: the provider's beach name and OSM's, both normalised (accents stripped, "Praia
- * do/da/de..." prefix dropped, lower-cased), are equal or one is a word-prefix of the other — that
- * second rule is what pairs OSM's "Praia da Armação" with IMA's "PRAIA DA ARMAÇÃO DO PÂNTANO DO
- * SUL". Distance is the fallback only for points whose name matches no beach at all: the nearest
- * beach within `MaxDistanceKm` — *unless* the point is inland water (a name starting LAGOA, CANAL,
- * RIO, ...), which never lands on a sea beach however close it is. Confirmed necessary by test:
- * Lagoa da Conceição's Ponto 72 is ~1.3km from Praia da Joaquina's centroid.
- */
+/** Assigns each provider sampling point to (at most) one OSM beach. */
 object WaterQualityMatcher:
 
   val MaxDistanceKm = 2.5
@@ -49,7 +38,7 @@ object WaterQualityMatcher:
     val (na, nb) = (normalise(a), normalise(b))
     na.nonEmpty && nb.nonEmpty && (na == nb || na.startsWith(nb + " ") || nb.startsWith(na + " "))
 
-  /** Beach name → its matched points. Beaches with no point are absent from the map. */
+  /** Beach name → its matched points. */
   def assign(
       beaches: List[Beach],
       points: List[SamplingPoint],

@@ -35,10 +35,10 @@ class SwimabilitySpec extends munit.FunSuite:
     )
 
   test("good conditions score high when they don't also read as jellyfish-favorable") {
-    // Calm wind + calm current alone are already 2 of the 4 jellyfish signals (see
-    // Swimability's doc comment: the heuristic's "calm" correlates overlap with what also makes
-    // for pleasant swimming), so a *merely* choppy sea here — not hot, not dead calm — is what
-    // isolates "good swimming score" from "elevated jellyfish risk" for this assertion.
+    // Calm wind + calm current alone are already 2 of the 4 jellyfish signals (see Swimability's
+    // doc comment: the heuristic's "calm" correlates overlap with what also makes for pleasant
+    // swimming), so a *merely* choppy sea here — not hot, not dead calm — is what isolates "good
+    // swimming score" from "elevated jellyfish risk" for this assertion.
     val (score, notes) =
       Swimability.score(
         hour(waveHeightM = Some(0.7), windSpeedKmh = Some(10.0), currentVelocityKmh = Some(3.0))
@@ -100,8 +100,7 @@ class SwimabilitySpec extends munit.FunSuite:
   test("score is clamped at 0, never negative, for a worst-plausible-case combination") {
     // Note: rough seas and strong wind (the two biggest penalties) each also rule out their own
     // jellyfish-heuristic "calm" signal, so this doesn't actually stack every penalty at once —
-    // the floor this scoring scheme can reach is low double digits, not exactly 0. This test
-    // exists for the `.max(0)` clamp itself, in case future re-weighting pushes the sum past -100.
+    // the floor this scoring scheme can reach is low double digits, not exactly 0.
     val (score, _) = Swimability.score(
       hour(
         seaTempC = Some(30.0),
@@ -198,7 +197,7 @@ class SwimabilitySpec extends munit.FunSuite:
     val (night, nightNotes) = Swimability.score(hour(isDaylight = Some(false)))
     assert(night <= day - 50, s"day=$day night=$night")
     assert(nightNotes.contains("dark") && !dayNotes.contains("dark"))
-    // unknown daylight is not penalised (Open-Meteo omitted is_day)
+    // unknown daylight is not penalised (Open-Meteo omitted is_day).
     assertEquals(Swimability.score(hour(isDaylight = None))._1, day)
   }
 

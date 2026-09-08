@@ -12,40 +12,7 @@ import marola.ledger.RunLedger.RunHandle
 /**
  * REST client for a local `mlflow server` (MIP-0010 §4.2 — REST over `org.mlflow:mlflow-client`:
  * four tracking endpoints plus one artifact-proxy call, no new dependency, no version lag against
- * whatever server tag is running). `trackingUri` is the bare server root, e.g.
- * `http://127.0.0.1:5000` (a trailing slash is tolerated — stripped before use); every tracking
- * call below appends `/api/2.0/mlflow/...` to it, confirmed against
- * `https://mlflow.org/docs/latest/api_reference/rest-api.html` (fetched 2026-09-05):
- *
- *   - `GET 2.0/mlflow/experiments/get-by-name` (fields as a query string, not a JSON body — this is
- *     the one GET endpoint used here)
- *   - `POST 2.0/mlflow/experiments/create`
- *   - `POST 2.0/mlflow/runs/create`
- *   - `POST 2.0/mlflow/runs/log-batch` — capped at 1000 metrics OR 100 params per call, 250-char
- *     keys; `logParams`/`logMetrics` chunk to those caps, `truncateKey` shortens an oversized key
- *     and warns rather than sending a request the server would reject.
- *   - `POST 2.0/mlflow/runs/update` — `RunStatus` `FINISHED`/`FAILED`.
- *
- * `now` is injected (defaults to the wall clock) purely for deterministic tests — the same shape as
- * `Recommender`'s injected `today`.
- *
- * Artifact upload (`artifact`) does not use `POST 2.0/mlflow/artifacts/presigned-upload-url` — that
- * RPC hands back a cloud-storage URL, meaningless for the filesystem-backed local server this MIP
- * targets. It instead goes through the server's own artifact-store proxy, started with
- * `--serve-artifacts` (MIP §4.1). That proxy's REST surface is not on the
- * `api_reference/rest-api.html` page — confirmed instead from
- * `mlflow/protos/mlflow_artifacts.proto` (fetched 2026-09-05 via GitHub) plus a matching MLflow
- * example (`examples/mlflow_artifacts/README.md`): `PUT
- * /api/2.0/mlflow-artifacts/artifacts/<path>`, raw bytes as the body. `<path>` here is built as
- * `<experimentId>/<runId>/artifacts/<fileName>`, which is the default `mlflow-artifacts:/` scheme's
- * HTTP mapping when the server is started with `--serve-artifacts` and no `--default-artifact-root`
- * override — exactly MIP §4.1's own command line, so this is what task 3's compose profile will
- * run. A server given a different `--default-artifact-root` would need the run's own `artifact_uri`
- * (from `runs/create`'s response) parsed instead of this constructed path; that's the concrete
- * trigger for MIP §11 OQ5 (fall back to `org.mlflow:mlflow-client`'s `logArtifact` for this one
- * call) if it turns out to matter in practice. `Http` gained one addition for this: `putBytes`,
- * mirroring `postBytes` but issuing `PUT` — the artifact proxy is the only marola caller that needs
- * that verb.
+ * whatever server tag is running).
  */
 final class MlflowRunLedger(
     trackingUri: String,

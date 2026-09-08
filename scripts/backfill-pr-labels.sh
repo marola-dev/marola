@@ -1,37 +1,9 @@
 #!/usr/bin/env bash
 # backfill-pr-labels — apply scripts/pr-label.sh's taxonomy to every finalized (merged or closed,
-# never open) PR that currently has zero labels. Safe to re-run: a PR gets exactly one pass once
-# it has any label (including area/unscoped), so a second run is a no-op scan, not a re-classify.
-#
-#   scripts/backfill-pr-labels.sh              # label every unlabeled merged/closed PR
-#   scripts/backfill-pr-labels.sh --dry-run    # print what would be applied, change nothing
-#   scripts/backfill-pr-labels.sh --limit 20   # cap how many PRs this run touches
-#
-#   scripts/backfill-pr-labels.sh --nlp                     # also print scripts/pr_label_nlp.py's
-#                                                            #   area/* suggestion next to the
-#                                                            #   deterministic result, for every PR
-#                                                            #   this run touches — comparison only,
-#                                                            #   never applied
-#   scripts/backfill-pr-labels.sh --nlp --nlp-apply-unscoped
-#                                                            # additionally: when the deterministic
-#                                                            #   classifier found NOTHING but
-#                                                            #   area/unscoped (no MIP number
-#                                                            #   detected) AND the NLP classifier's
-#                                                            #   top score clears $NLP_MIN_SIMILARITY
-#                                                            #   (default 0.15), also apply that one
-#                                                            #   NLP-suggested area label — filling a
-#                                                            #   genuine gap the deterministic method
-#                                                            #   cannot resolve, never overriding a
-#                                                            #   confident deterministic call. Same
-#                                                            #   "judge, never veto" shape as
-#                                                            #   llm/Reviewer.scala over
-#                                                            #   Swimability.scala's score.
-#
-# Needs `gh auth status` OK. One `gh pr edit` per PR that needs it — no batching, so this is
-# gh-API-rate-bound, not slow for its own sake; `--limit` exists for a first cautious run.
+# never open) PR that currently has zero labels.
 set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=scripts/lib/pr_labels.sh
+# shellcheck source=scripts/lib/pr_labels.sh.
 source "$script_dir/lib/pr_labels.sh"
 
 NLP_MIN_SIMILARITY="${NLP_MIN_SIMILARITY:-0.15}"
@@ -66,7 +38,7 @@ args=()
 
 # nlp_compare <pr-number> — prints the deterministic vs. NLP area/* comparison, and (only with
 # --nlp-apply-unscoped) applies the NLP suggestion when the deterministic side is bare
-# area/unscoped and the NLP score clears the threshold. Read-only otherwise.
+# area/unscoped and the NLP score clears the threshold.
 nlp_compare() {
   local n="$1" json ref subjects paths mip areas nlp_out nlp_label nlp_score
   json="$(gh pr view "$n" --json title,body,headRefName,commits)"

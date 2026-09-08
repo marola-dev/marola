@@ -62,8 +62,8 @@ class SamplingPointCoordinatesSpec extends munit.FunSuite:
   ) {
     val table = SamplingPointCoordinates.Rio
     assertEquals(table.get("NO-SUCH-CODE"), None)
-    // Barra de Guaratiba's own points are outside the `rio` area radius (MIP-0031.tasks.md task 4)
-    // and were deliberately left out rather than geocoded speculatively.
+    // Barra de Guaratiba's own points are outside the `rio` area radius (MIP-0031.tasks.md task
+    // 4) and were deliberately left out rather than geocoded speculatively.
     assertEquals(table.get("BG00"), None)
   }
 

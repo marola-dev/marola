@@ -4,8 +4,8 @@ import marola.model.Coordinates
 
 class IpGeolocationSpec extends munit.FunSuite:
 
-  // Real answers three providers gave for one Florianópolis IP while building IpGeolocation,
-  // plus São Paulo as the classic "ISP head office" outlier Brazilian IP databases produce.
+  // Real answers three providers gave for one Florianópolis IP while building IpGeolocation, plus
+  // São Paulo as the classic "ISP head office" outlier Brazilian IP databases produce.
   private val floripaCentro = Coordinates(-27.5967, -48.5492)
   private val floripaCentroB = Coordinates(-27.5969, -48.5468)
   private val floripaLagoa = Coordinates(-27.6168, -48.4997)

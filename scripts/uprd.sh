@@ -1,42 +1,20 @@
 #!/usr/bin/env bash
-# uprd — update the current branch's pull-request description on GitHub from its commits.
-#
-#   just uprd                 # rewrite the PR body and print its URL — creates the PR if none exists
-#   just uprd --dry-run       # print the body that would be written, change nothing
-#   just uprd 84               # that PR by number (also `#84`): its head branch and base are
-#                             # taken from GitHub, so it works from any checkout — needs gh
-#   just uprd path/to/body.md # use that file as the body instead of generating one
-#   BASE=main just uprd       # base branch (default: the PR's base, else main)
-#   BRANCH=x EXTRA_FILE=f     # (scripts/uprds.sh) another branch than the checked-out one, and a
-#                             # file appended to the generated body — the stack section
-#
-# Generated body follows .github/PULL_REQUEST_TEMPLATE.md's shape (bold labels + a table, no `#`
-# headings — see AGENTS.md "Attribution and cost accounting"):
-#   Summary — the first (oldest) commit's body paragraph, trimmed to ~2 sentences, or a
-#             `<!-- fill -->` placeholder when that commit has no body.
-#   MIP     — auto-detected, in order: a `mip-NNNN` token anywhere in the branch name
-#             (`mip-0010/3-…`, `docs/mip-0014-book`), a commit subject starting with `MIP-NNNN`,
-#             a `docs/mips/MIP-NNNN-*.md` file touched on the branch; linked to that file on
-#             the branch's tip. "none — not MIP-scoped" otherwise.
-#   Tested  — one line: the four gates (AGENTS.md tokens `gates` = just build && just test &&
-#             just quality, `e2e`, `live` = a `just run -- --brief`, `ci-only`) each as ✅/⬜,
-#             then ` — ` and the note(s) from the commits' `Tested:` trailers (joined `; ` when
-#             more than one). No trailer at all → "not recorded — add a `Tested:` trailer
-#             (AGENTS.md)". Nothing is guessed from prose: an agent writes the trailer once at
-#             commit time.
-#   Cost    — every `Cost:` trailer found in those commits, one per commit, joined with `<br>`
-#             when there's more than one (AGENTS.md "Attribution and cost accounting" — the
-#             trailer is the source of truth, this section never drifts from it). No trailer →
-#             "not recorded — add a `Cost:` trailer".
-#   What changed — one bullet per commit subject.
-# The PR title is the first commit's subject, capped at 70 chars (scripts/lib/uprd_title.sh) —
-# a warning is printed to stderr when a title had to be cut.
-# Needs `gh` logged in (gh auth status) except for --dry-run.
+# uprd — update the current branch's pull-request description on GitHub from its commits. just
+# uprd # rewrite the PR body and print its URL — creates the PR if none exists just uprd --dry-run
+# # print the body that would be written, change nothing just uprd 84 # that PR by number (also
+# `#84`): its head branch and base are # taken from GitHub, so it works from any checkout — needs
+# gh just uprd path/to/body.md # use that file as the body instead of generating one BASE=main
+# just uprd # base branch (default: the PR's base, else main) BRANCH=x EXTRA_FILE=f #
+# (scripts/uprds.sh) another branch than the checked-out one, and a # file appended to the
+# generated body — the stack section Generated body follows .github/PULL_REQUEST_TEMPLATE.md's
+# shape (bold labels + a table, no `#` headings — see AGENTS.md "Attribution and cost
+# accounting"): Summary — the first (oldest) commit's body paragraph, trimmed to ~2 sentences, or
+# a `<!-- fill -->` placeholder when that commit has no body.
 set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=scripts/lib/uprd_title.sh
+# shellcheck source=scripts/lib/uprd_title.sh.
 source "$script_dir/lib/uprd_title.sh"
-# shellcheck source=scripts/lib/mip_ref.sh
+# shellcheck source=scripts/lib/mip_ref.sh.
 source "$script_dir/lib/mip_ref.sh"
 
 dry_run=0; body_file=""; pr_arg=""
@@ -52,9 +30,9 @@ done
 # A PR number resolves the branch and base from GitHub — the checkout can be on anything.
 pr_number=""; pr_url=""; base="${BASE:-}"
 if [ -n "$pr_arg" ]; then
-  # gh's own --jq, not sed over the JSON: gh pretty-prints when stdout is a terminal and a
-  # `"key": "value"` with a space silently matched nothing, which made a valid number fall
-  # through to the "you are on main" guard.
+  # gh's own --jq, not sed over the JSON: gh pretty-prints when stdout is a terminal and a `"key":
+  # "value"` with a space silently matched nothing, which made a valid number fall through to the
+  # "you are on main" guard.
   if ! pr_tsv="$(gh pr view "$pr_arg" --json number,url,baseRefName,headRefName,state \
         --jq '[.number, .url, .baseRefName, .headRefName, .state] | @tsv' 2>/dev/null)"; then
     echo "uprd: cannot resolve PR #$pr_arg — gh not logged in (gh auth status), or no such PR" >&2
@@ -71,8 +49,8 @@ fi
 branch="${BRANCH:-$(git branch --show-current)}"
 [ -n "$branch" ] || { echo "uprd: detached HEAD — check out the PR branch first" >&2; exit 1; }
 # Refuse on the base branch itself, before any gh call — `gh pr create --head main --base main`
-# fails confusingly ("head branch is the same as base branch"). ${BASE:-main} is only a guess
-# here (the PR's real base is resolved below via `gh pr view`), but it catches the common case.
+# fails confusingly ("head branch is the same as base branch"). ${BASE:-main} is only a guess here
+# (the PR's real base is resolved below via `gh pr view`), but it catches the common case.
 guard_base="${BASE:-main}"
 [ "$branch" != "$guard_base" ] || { echo "uprd: you are on '$branch' — check out the PR branch first (git switch <branch>), or BRANCH=<branch> just uprd" >&2; exit 1; }
 # The branch's tip: local if it exists here, else the remote-tracking one (uprds on a stack that
@@ -98,12 +76,6 @@ git fetch -q origin "$base" 2>/dev/null || true
 range="origin/$base..$head_ref"
 
 # Title: the first (oldest) commit's subject on the branch, capped at 70 chars.
-# `|| true` after `head -1`: under `set -o pipefail`, if `git log`'s output is large enough that
-# `head` closes the pipe before git finishes writing, git is killed by SIGPIPE (exit 141) and
-# pipefail reports that as the pipeline's status even though `head` itself succeeded — `set -e`
-# then kills the whole script. Verified live: this exact line failed a real pr-body.yml run with
-# "exit code 141" on a branch whose commit range included a merge commit. `|| true` is safe here
-# because an empty `first_subject` already degrades correctly a few lines down.
 first_subject="$(git log --reverse --format=%s "$range" 2>/dev/null | head -1 || true)"
 title_mip_ref="$(detect_mip_ref "$branch" "$range")"
 title=""
@@ -149,8 +121,8 @@ generate_mip() {
     echo "none — not MIP-scoped"
     return
   fi
-  # The document as it exists on the branch's tip (a PR that adds the MIP has it there, not on
-  # the checked-out main), linked by its blob URL — a relative path does not resolve in a PR body.
+  # The document as it exists on the branch's tip (a PR that adds the MIP has it there, not on the
+  # checked-out main), linked by its blob URL — a relative path does not resolve in a PR body.
   mip_path="$(git ls-tree -r --name-only "$head_ref" -- docs/mips 2>/dev/null \
     | { grep -E "^docs/mips/${mip_ref}-[^/]*\.md$" || true; } | head -1)"
   if [ -n "$mip_path" ]; then
@@ -167,12 +139,7 @@ repo_web_url() {   # git@github.com:o/r.git | https://github.com/o/r(.git) → h
 
 generate_tested() {
   # One line for the Tested table cell: the four gates as glyph + short name, then ` — ` and the
-  # note(s) from every `Tested:` trailer on the branch (AGENTS.md). Format per trailer:
-  # `Tested: <tokens> — <note>` — tokens (comma-separated: gates, e2e, live, ci-only) flip a gate
-  # to ✅ and are read only before the ` — ` (or ` -- `) separator, so a note like "no e2e, data
-  # path untouched" cannot flip one by accident. Unknown words before the separator and the note
-  # itself join every trailer's note with `; `, so the cell stays one line no matter how many
-  # commits carry one.
+  # note(s) from every `Tested:` trailer on the branch (AGENTS.md).
   local trailers gate=⬜ e2e=⬜ live=⬜ ci=⬜ notes="" n_notes=0 line head note tok extra
   trailers="$(git log --format='%(trailers:key=Tested,valueonly,unfold)' "$range" 2>/dev/null | sed '/^[[:space:]]*$/d')"
   if [ -z "$trailers" ]; then
@@ -194,8 +161,8 @@ generate_tested() {
       esac
     done
     note="$(printf '%s' "${extra:+$extra — }$note" | sed -E 's/^[[:space:]—-]+//; s/[[:space:]]+$//')"
-    # Newest commit's note only (git log order): a six-commit branch otherwise turns the cell
-    # into a wall of text; the earlier notes are one click away in the commits.
+    # Newest commit's note only (git log order): a six-commit branch otherwise turns the cell into
+    # a wall of text; the earlier notes are one click away in the commits.
     if [ -n "$note" ]; then n_notes=$((n_notes + 1)); [ -n "$notes" ] || notes="$note"; fi
   done <<<"$trailers"
   local cell="$gate gates · $e2e e2e · $live live · $ci ci-only"
@@ -206,10 +173,10 @@ generate_tested() {
 
 generate_cost() {
   # One line per commit, oldest first, joined with `<br>` (a markdown table cell can't hold a raw
-  # newline): the commit's own `Cost:` trailer when it has one; otherwise
-  # `scripts/cost-split.py --estimate-commit` for that commit, labelled `est.` and never mistaken
-  # for a measurement; "not recorded" only for a commit where even the estimator has nothing (an
-  # empty diff, or no calibratable history) — never a blanket fallback for the whole branch.
+  # newline): the commit's own `Cost:` trailer when it has one; otherwise `scripts/cost-split.py
+  # --estimate-commit` for that commit, labelled `est.` and never mistaken for a measurement; "not
+  # recorded" only for a commit where even the estimator has nothing (an empty diff, or no
+  # calibratable history) — never a blanket fallback for the whole branch.
   local sha short body line text out="" sep=""
   while IFS= read -r sha; do
     [ -n "$sha" ] || continue
@@ -243,7 +210,7 @@ generate_body() {
   echo "| **Cost** | $(generate_cost) |"
   echo
   echo "**What changed**"
-  # shellcheck disable=SC2016  # the backticks are literal markdown, not command substitution
+  # shellcheck disable=SC2016 # the backticks are literal markdown, not command substitution.
   git log --reverse --format='- %s (`%h`)' "$range" 2>/dev/null
   if [ -n "${EXTRA_FILE:-}" ] && [ -s "$EXTRA_FILE" ]; then echo; cat "$EXTRA_FILE"; fi
 }
@@ -258,8 +225,7 @@ if [ "$dry_run" -eq 1 ]; then
 fi
 
 if [ "$create_pr" -eq 1 ]; then
-  # Pass --title in the body-file mode to override by editing the PR afterwards. The branch must
-  # already be pushed.
+  # Pass --title in the body-file mode to override by editing the PR afterwards.
   git rev-parse --verify -q "origin/$branch" >/dev/null || git push -q -u origin "$branch"
   pr_url="$(gh pr create --base "$base" --head "$branch" --title "$title" --body-file "$tmp")"
   echo "created PR: $pr_url"

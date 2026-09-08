@@ -22,13 +22,7 @@ import marola.water.{
   WaterQualityClient
 }
 
-/**
- * Which backend a pluggable integration uses — `Local` is always the zero-Azure default. A real
- * `enum` instead of a raw `String` (an earlier version of this file compared `llmProvider ==
- * "azure"` directly): typos like `"azur"` silently fell back to local before: now they don't
- * compile. Parsed once in `AppConfig.fromEnv`, case-insensitively, defaulting to `Local` for
- * anything unrecognized (including no env var set at all) rather than failing to start.
- */
+/** Which backend a pluggable integration uses — `Local` is always the zero-Azure default. */
 enum Provider derives CanEqual:
   case Local, Azure
 
@@ -40,9 +34,7 @@ object Provider:
 
 /**
  * Bathing-water data is regional, so its "provider" is an agency, not local-vs-Azure (MIP-0001
- * §5.2: there is no Azure water-quality service, and none is invented). `Auto` (default) picks
- * IMA/SC inside Santa Catarina, INEMA/BA inside Bahia, INEA/RJ inside Rio de Janeiro state, and
- * `None` elsewhere (MIP-0031 §5), printing which.
+ * §5.2: there is no Azure water-quality service, and none is invented).
  */
 enum WaterProvider derives CanEqual:
   case Auto, ImaSc, InemaBa, IneaRj, None
@@ -59,7 +51,6 @@ object WaterProvider:
 /**
  * MIP-0021 §5: `Overpass` (default) is the only real source — there is no Azure alternative for OSM
  * amenities — so this is a simple on/off switch, not a `Provider`-shaped local-vs-Azure choice.
- * `Off` skips the extra Overpass call entirely (useful for `just benchmark`).
  */
 enum FacilitiesProvider derives CanEqual:
   case Overpass, Off
@@ -72,14 +63,7 @@ object FacilitiesProvider:
 
 /**
  * Which `Tracing` backend `Main` wraps the pipeline in — `MAROLA_TRACES=off|mlflow|azure` (MIP-0010
- * §5). `Off` and `Mlflow` both currently resolve to `Tracing.Noop` in `AppConfig.tracing`
- * (`Mlflow`'s real backend is a later task in the tracing lane; parsing it now keeps the env var's
- * contract stable once it lands, rather than rejecting the value today). Unset — or any value this
- * doesn't recognize — falls back to *today's implicit behavior*, same "don't fail to start on a
- * typo" spirit as `Provider`/`WaterProvider` above: `Azure` if
- * `APPLICATIONINSIGHTS_CONNECTION_STRING` is set (this repo's tracing existed before this switch
- * did), `Off` otherwise. `fromEnv` takes that connection string explicitly rather than reading
- * `sys.env` itself, so it stays a pure, directly testable function (see `AppConfigSpec`).
+ * §5).
  */
 enum TraceBackend derives CanEqual:
   case Off, Mlflow, Azure
@@ -94,15 +78,7 @@ object TraceBackend:
 
 /**
  * Minimal env-driven config: plain Scala, no Kyo `Env` effect yet (nothing to inject it into at POC
- * stage). `telegramBotToken` and `foundryProjectEndpoint` are both `None` until you actually set
- * them up — see docs/ARCHITECTURE.md and `.env.example`. `Main` runs the CLI/local-coordinates path
- * regardless of whether either is set; only the Telegram bot loop needs the former.
- *
- * `llmProvider` picks which `LlmClient` backend `Main`'s query-synthesis step uses — see
- * `ARCHITECTURE.md` §5/§6 for the local-vs-Azure tradeoff this exists to make a real, permanent
- * choice rather than a bootstrap-only default. `Provider.Local` (the default) needs nothing beyond
- * a running Ollama-compatible server; `Provider.Azure` needs a provisioned Foundry/Azure OpenAI
- * deployment and `az login` or a managed identity.
+ * stage).
  */
 final case class AppConfig(
     telegramBotToken: Option[String],
@@ -141,8 +117,7 @@ final case class AppConfig(
 ):
   /**
    * A fixed "current location" for the CLI, from `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON` — both or
-   * neither: one without the other is ignored (and `Main` says so) rather than half-applied. Sits
-   * between `--lat/--lon` (wins) and IP geolocation (fallback) in `Main.resolveOrigin`.
+   * neither: one without the other is ignored (and `Main` says so) rather than half-applied.
    */
   def origin: Option[Coordinates] =
     for
@@ -152,7 +127,7 @@ final case class AppConfig(
 
   /**
    * What `Main` prints instead of the raw case class (FABLE_REVIEW C1: the raw `toString` echoed
-   * every key/token to stdout). Secrets show as set/unset; everything else verbatim.
+   * every key/token to stdout).
    */
   def redacted: String =
     def secret(v: Option[String]) = if v.isDefined then "<set>" else "unset"
@@ -184,10 +159,7 @@ final case class AppConfig(
       s"traces=$tracesBackend${if traceContent then "(content)" else ""}"
     ).mkString(" ")
 
-  /**
-   * MIP-0001 §5.2, extended MIP-0031 §5. `None` = no data, which `Swimability.waterVerdict` scores
-   * as nothing.
-   */
+  /** MIP-0001 §5.2, extended MIP-0031 §5. */
   def waterQualityClient(origin: Coordinates): Option[WaterQualityClient] =
     waterQualityProvider match
       case WaterProvider.ImaSc   => Some(ImaScWaterQualityClient())
@@ -214,8 +186,7 @@ final case class AppConfig(
 
   /**
    * Local-only RAG (`FUTURE-WORK.md` §9.1, first cut): the corpus under `knowledgeDir`, embedded by
-   * the same Ollama server as the LLM, indexed on disk. No Azure alternative yet — Azure AI Search
-   * is the obvious sibling when Phase 2 comes.
+   * the same Ollama server as the LLM, indexed on disk.
    */
   def knowledgeStore: FileKnowledgeStore =
     FileKnowledgeStore(
@@ -235,10 +206,7 @@ final case class AppConfig(
 
   /**
    * `llmClient` behind `TracedLlmClient` (MIP-0010 task 6): one `llm.<model>` span per call on the
-   * given `Tracing` — transparent with `Tracing.Noop`. The model name on the span is the local
-   * model or, for Foundry, the deployment name (the endpoint's last path segment — see
-   * `AzureFoundryLlmClient`'s URL shape). Prompt/completion text only with
-   * `MAROLA_TRACE_CONTENT=1`.
+   * given `Tracing` — transparent with `Tracing.Noop`.
    */
   def tracedLlmClient(tracing: Tracing): Option[LlmClient] =
     llmClient.map(TracedLlmClient(_, llmModelName, tracing, traceContent))
@@ -275,12 +243,7 @@ final case class AppConfig(
   /**
    * `RunLedger.Noop` (MIP-0010) unless `MAROLA_MLFLOW_TRACKING_URI` is set — no network call, no
    * mlflow server needed, matches every other pluggable integration's local-by-nothing default
-   * except this one has no Azure sibling yet (MIP §4.5 is still Draft). Unlike `llmClient`/
-   * `sightingStore`/`visionClient`, there's no `Provider` enum here: the ledger is either off or on
-   * a tracking URI, there's no local-vs-Azure choice to make yet. `mlflowExperiment` is the
-   * experiment *prefix* (`marola` ⇒ `marola/benchmark`, `marola/prompt-compile`, `marola/traces` —
-   * MIP §11 OQ6); each caller appends its own kind. Unused until task 4 wires `OceanBenchmark.run`
-   * to call it.
+   * except this one has no Azure sibling yet (MIP §4.5 is still Draft).
    */
   def runLedger: RunLedger =
     mlflowTrackingUri match
@@ -289,11 +252,7 @@ final case class AppConfig(
 
   /**
    * `Recommender` (in `marola-core`) can't reference `RouteFinder` (in `marola-azure`) directly —
-   * `marola-core` has zero Azure SDK dependency by design (`FUTURE-WORK.md` §7.3). This is the
-   * dependency-inversion seam: `Recommender.bestPerBeachTomorrow`'s `distanceRefiner` parameter
-   * takes a plain function, and only `marola-cli` (which depends on both `core` and `azure`) is in
-   * a position to build one backed by `RouteFinder`. `None` when no Azure Maps key is configured —
-   * `Recommender` already treats that as "keep the haversine distance."
+   * `marola-core` has zero Azure SDK dependency by design (`FUTURE-WORK.md` §7.3).
    */
   def distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] =
     azureMapsSubscriptionKey.map(key =>
@@ -303,9 +262,7 @@ final case class AppConfig(
   /**
    * The `Tracing` instance `Main` wraps the pipeline in — resolved once per run, in `Main`, and
    * passed down (it is an effect: `MlflowTracing` looks the traces experiment up over REST before
-   * the first span). `Mlflow` without a tracking URI, and `Azure` without a connection string (a
-   * `tracesBackend` set by hand while the env var is unset), fall back to `Noop` rather than
-   * throwing — there's nothing to connect to.
+   * the first span).
    */
   def tracing: Tracing < Sync =
     tracesBackend match
@@ -337,7 +294,7 @@ object AppConfig:
       seaLoreEnabled =
         !sys.env.get("MAROLA_SEA_LORE").exists(v => v.equalsIgnoreCase("off") || v == "0"),
       // `general` (default): off-corpus questions get a labelled unsourced answer instead of a
-      // refusal; `strict` keeps the pure-RAG behaviour. See OceanQa.Fallback and `just benchmark`.
+      // refusal; `strict` keeps the pure-RAG behaviour.
       askFallback =
         if sys.env.get("MAROLA_ASK_FALLBACK").exists(_.equalsIgnoreCase("strict")) then
           OceanQa.Fallback.Strict
@@ -364,8 +321,8 @@ object AppConfig:
       azureVisionEndpoint = sys.env.get("AZURE_VISION_ENDPOINT"),
       azureVisionKey = sys.env.get("AZURE_VISION_KEY"),
       // Azure's own standard env var name (every Azure Monitor SDK/agent auto-detects it) — used
-      // directly rather than bridged through a MAROLA_-prefixed name, unlike Langfuse's Python env
-      // vars (which don't share this repo's naming convention to begin with).
+      // directly rather than bridged through a MAROLA_-prefixed name, unlike Langfuse's Python
+      // env vars (which don't share this repo's naming convention to begin with).
       appInsightsConnectionString = appInsightsConnectionString,
       // MIP-0010 §5: unset ⇒ RunLedger.Noop (`just mlflow-up` prints the tracking URI to export).
       mlflowTrackingUri = sys.env.get("MAROLA_MLFLOW_TRACKING_URI"),

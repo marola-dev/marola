@@ -1,25 +1,6 @@
 #!/usr/bin/env bash
-# format — PostToolUse(Edit|Write) hook: format the one file just written, in place
-# (MIP-0011 §5 item 3).
-#
-# `flake.nix` does not provide a native `scalafmt` binary (checked for MIP-0011 OQ1: no
-# `pkgs.scalafmt`, nothing named scalafmt on PATH in the dev shell). `coursier` is in the flake
-# though, and `cs launch org.scalameta:scalafmt-cli_2.13:<version>` runs scalafmt without paying
-# for an sbt JVM boot — ~1s once coursier's cache is warm, well inside the timeout below. The
-# scalafmt version is read from .scalafmt.conf so the hook and `just fmt`/`sbt scalafmtAll` never
-# drift apart.
-#
-# *.py: `ruff format` on that file, only when `ruff` is on PATH ("when present" — a missing ruff
-# should never block an edit).
-#
-# Single file, 30s timeout: a slow hook is worse than none (MIP-0011 §5 item 3). Reads the file
-# path from the hook's JSON on stdin (`.tool_input.file_path`, present for both Edit and Write).
-# Formatting failures are swallowed (exit 0 either way) — this hook improves style on a
-# best-effort basis, it must never block an edit or fail a turn.
-#
-#   .claude/hooks/format.sh --self-test   # run by `just quality`; exits non-zero on any miss
-#
-# Wired in .claude/settings.json → hooks.PostToolUse[matcher "Edit|Write"].
+# format — PostToolUse(Edit|Write) hook: format the one file just written, in place (MIP-0011 §5
+# item 3).
 set -euo pipefail
 
 TIMEOUT_SECS=30
@@ -39,7 +20,7 @@ except Exception: pass' 2>/dev/null || true
   fi
 }
 
-# format_file <path>: best-effort, in place. Always returns 0 — never blocks the edit.
+# format_file <path>: best-effort, in place.
 format_file() {
   local path="$1"
   [ -f "$path" ] || return 0
@@ -64,12 +45,12 @@ self_test() {
   trap 'rm -rf "$tmp"' RETURN
 
   # An already-formatted .scala file comes out byte-equal (skipped if `cs` is absent — same guard
-  # as the .py check below; a cold coursier cache/no network/air-gapped CI must not fail
-  # `just quality-other` on a check that needs a coursier launch, an ultrareview finding,
-  # 2026-09-06 — this one was the only .scala/.py asymmetry: the .py check already skipped).
-  # $messy is used later too (the end-to-end JSON-path test below), regardless of whether cs is
-  # on PATH, so the file itself is written unconditionally — only the scalafmt-dependent
-  # assertions are skipped when cs is absent.
+  # as the .py check below; a cold coursier cache/no network/air-gapped CI must not fail `just
+  # quality-other` on a check that needs a coursier launch, an ultrareview finding, 2026-09-06 —
+  # this one was the only .scala/.py asymmetry: the .py check already skipped). $messy is used
+  # later too (the end-to-end JSON-path test below), regardless of whether cs is on PATH, so the
+  # file itself is written unconditionally — only the scalafmt-dependent assertions are skipped
+  # when cs is absent.
   local messy="$tmp/Messy.scala"
   printf 'package example\nfinal case class Messy(name:String,value:Int)\n' >"$messy"
   if command -v cs >/dev/null 2>&1; then

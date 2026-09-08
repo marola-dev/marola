@@ -1,7 +1,5 @@
 // site_check — run site/static/app.js in a stub DOM against a built site/dist and print what it
 // rendered: markers, list rows, footer, the "Last live run" panel (MIP-0008) when smoke/ exists.
-// Exits 1 if app.js throws or draws no beach. Usage: node .claude/skills/site-frontend/site_check.js site/dist
-// (run from the repo root; `just site-build floripa` first, or copy site/dist from another checkout).
 const fs = require('fs'), path = require('path');
 const dist = process.argv[2] || 'site/dist';
 if (!fs.existsSync(path.join(dist, 'data', 'areas.json'))) { console.error('no ' + dist + '/data/areas.json — build the site first'); process.exit(1); }

@@ -8,9 +8,6 @@ import kyo.*
 
 /**
  * One indexable unit: a paragraph-ish slice of a corpus document, with the document's provenance.
- * `safety = true` iff the document lives under `knowledge/safety/` (MIP-0022) — the directory is
- * the marker, not a front-matter flag, so a new safety topic is reviewable in a PR's file list and
- * needs no parser change.
  */
 final case class CorpusChunk(
     docTitle: String,
@@ -22,11 +19,7 @@ final case class CorpusChunk(
 /**
  * The corpus is a directory of Markdown files (`knowledge/` at the repo root by default), plus a
  * `safety/` subdirectory (MIP-0022) for documents whose answers must always carry the emergency
- * footer. Each file starts with a `# Title` line and a `Source: <url>` line; the rest is prose.
- * Chunking is by blank line, merging consecutive paragraphs up to `MaxChunkChars` so a short
- * heading doesn't become a chunk on its own — good enough for a corpus of a few dozen paragraphs,
- * which is what this is. The chunker is pure and unit-tested (`CorpusSpec`); only
- * `load`/`listFiles` touch the filesystem.
+ * footer.
  */
 object Corpus:
 

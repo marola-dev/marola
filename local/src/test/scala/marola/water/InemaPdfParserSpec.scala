@@ -5,7 +5,7 @@ package marola.water
  * endpoint MIP-0031 §4.3 verified — `curl
  * http://balneabilidade.inema.ba.gov.br/index.php/relatoriodebalneabilidade/geraBoletim?idcampanha=83453`,
  * saved unmodified as `inema-boletim-salvador-13-2025.pdf` (Boletim N°13/2025, "Costa: Litoral de
- * Salvador", 04/04/2025). Real bulletin bytes, not a synthesized fixture.
+ * Salvador", 04/04/2025).
  */
 class InemaPdfParserSpec extends munit.FunSuite:
 

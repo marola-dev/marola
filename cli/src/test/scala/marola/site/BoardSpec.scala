@@ -16,9 +16,7 @@ import marola.{Fixtures, Recommender, Report}
 
 /**
  * MIP-0005 §7: the board is built from the same recorded transport as `PipelineGoldenSpec`, so
- * every number on the map is the number the CLI would print. The schema (`site/board.schema.json`)
- * is checked here with a small structural validator (type/required/properties/items/enum/$ref) — no
- * JSON-schema library, same dependency stance as `marola.json`.
+ * every number on the map is the number the CLI would print.
  */
 class BoardSpec extends munit.FunSuite:
 
@@ -74,7 +72,7 @@ class BoardSpec extends munit.FunSuite:
     assertEquals(byHost("api.open-meteo.com"), beachCount)
     assertEquals(byHost("marine-api.open-meteo.com"), beachCount)
     assertEquals(all.map(_.hour.time.toLocalDate).toSet, Set(today, tomorrow))
-    // same ranking rule as the CLI: best first
+    // same ranking rule as the CLI: best first.
     assertEquals(all.map(_.score), all.map(_.score).sortBy(-_))
   }
 
@@ -105,7 +103,7 @@ class BoardSpec extends munit.FunSuite:
       val name = beach("name").str.get
       val source =
         scored.filter(r => r.beach.name == name && r.hour.time.toLocalDate.isEqual(tomorrow))
-      // daylight only — the fixture has is_day, and no dark hour appears on the board
+      // daylight only — the fixture has is_day, and no dark hour appears on the board.
       assertEquals(hs.size, source.count(_.hour.isDaylight.contains(true)))
       val max = hours.flatMap(_("score").num).max
       assertEquals(beach("best")("score").num, Some(max))
@@ -137,7 +135,7 @@ class BoardSpec extends munit.FunSuite:
     assertEquals(campeche("best")("notes").arr.flatMap(_.str).toList, best.notes)
     assertEquals(campeche("jellyfish").str, Some(best.jellyfishRisk.toString))
     assertEquals(campeche("whales")("now").str, Some(best.whaleSightingLikelihood.toString))
-    // Rio Tavares has no IMA point: the water object still exists and says so
+    // Rio Tavares has no IMA point: the water object still exists and says so.
     val rt = beach(b, "Praia do Rio Tavares")
     assertEquals(rt("water")("summary").str, Some("no data"))
     assertEquals(rt("water")("points").arr, Vector.empty)
@@ -161,7 +159,7 @@ class BoardSpec extends munit.FunSuite:
     assertEquals(JsonValue.parse(b.render), b)
     val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
     assertEquals(SchemaCheck.validate(schema, b), Nil)
-    // the validator must actually bite: drop a required field and it reports it
+    // the validator must actually bite: drop a required field and it reports it.
     val broken = b match
       case JsonValue.JObject(fields) => JsonValue.JObject(fields - "beaches")
       case other                     => other
@@ -177,7 +175,7 @@ class BoardSpec extends munit.FunSuite:
         marola.scoring.Swimability.windLevel(h("wind_kmh").num).map(_.toString.toLowerCase)
       assertEquals(h("wind_level").str, expected, h.render)
     }
-    // the fixture must exercise at least one real band, or this test proves nothing
+    // the fixture must exercise at least one real band, or this test proves nothing.
     assert(hours.exists(_("wind_level").str.isDefined), "no hour had a wind_level")
   }
 
@@ -195,7 +193,7 @@ class BoardSpec extends munit.FunSuite:
     val old = strip(b)
     assert(old.render != b.render, "strip must have removed something")
     assertEquals(SchemaCheck.validate(schema, old), Nil)
-    // and a wrong band is rejected — the enum bites
+    // and a wrong band is rejected — the enum bites.
     val bad =
       b.render.replaceFirst(
         "\"wind_level\":\\s*\"(calm|breezy|strong)\"",
@@ -204,12 +202,7 @@ class BoardSpec extends munit.FunSuite:
     assert(SchemaCheck.validate(schema, JsonValue.parse(bad)).exists(_.contains("not in enum")))
   }
 
-  /**
-   * MIP-0021 §5/§7: `Facilities` per beach, and the board's `facilities` object built from it.
-   * `Fixed` is a hand-written double (no mocking library, per `.claude/rules/scala.md`), not the
-   * real `OverpassAccessibilityClient` — network parsing has its own real-fixture coverage in
-   * `marola.beaches.AccessibilitySpec`.
-   */
+  /** MIP-0021 §5/§7: `Facilities` per beach, and the board's `facilities` object built from it. */
   final class Fixed(byBeach: Map[String, Facilities]) extends AccessibilityClient:
     def near(beaches: List[Beach], radiusM: Int = 300): Map[String, Facilities] < Sync =
       beaches.map(b => b.name -> byBeach.getOrElse(b.name, Facilities.NoData)).toMap
@@ -343,8 +336,7 @@ object BoardSpec:
 
 /**
  * The subset of JSON Schema the board contract uses: `type` (single or list), `required`,
- * `properties`, `additionalProperties: false`, `items`, `enum`, `$ref` to `#/$defs/...`. Returns
- * every violation with its JSON path.
+ * `properties`, `additionalProperties: false`, `items`, `enum`, `$ref` to `#/$defs/...`.
  */
 object SchemaCheck:
 

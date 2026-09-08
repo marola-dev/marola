@@ -18,16 +18,7 @@ import com.sun.net.httpserver.{HttpExchange, HttpHandler, HttpServer}
  * `SafetyFooter` behind two endpoints, so the static site — reached through a Cloudflare Tunnel to
  * this machine, MIP-0033's chosen path — gets a grounded, footer-carrying answer rather than
  * talking to Ollama's own API directly (which would bypass the corpus and the safety footer
- * entirely). No new dependency: `com.sun.net.httpserver` ships with the JDK.
- *
- * `GET /health` -> 200 when an LLM is configured, 503 otherwise — what the widget polls before
- * showing the chat panel, so a visitor sees "chatbot offline" (site/static's own copy) instead of a
- * hung request. `POST /ask` `{"question": "..."}` -> `{"answer", "safety", "sources"}`, the same
- * shape `SwimConditionsMcpServer.askHandler` returns.
- *
- * CORS is wide open (`Access-Control-Allow-Origin: *`): this is a personal machine behind a tunnel
- * URL the maintainer controls, not a credentialed API — there is no session or secret here worth
- * restricting by origin.
+ * entirely).
  */
 object ChatServer:
 

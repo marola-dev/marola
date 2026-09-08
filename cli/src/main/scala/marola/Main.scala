@@ -19,18 +19,6 @@ import marola.trails.{Trail, TrailFinder}
 /**
  * POC entry point for marola, the ocean intelligence layer — its first case, "what's the best hour
  * tomorrow to swim nearby?".
- *
- * Phase 0 of marola (see docs/ARCHITECTURE.md): this runs the real pipeline (nearby beaches via
- * Overpass, forecasts via Open-Meteo, heuristic scoring) end to end from the command line, with no
- * Azure/Telegram setup required — the origin comes from `--lat`/`--lon`, else
- * `MAROLA_ORIGIN_LAT/LON`, else the machine's IP geolocation (see `resolveOrigin`), standing in for
- * "the user's shared location", which the real Telegram bot will supply once it exists.
- *
- * `--summarize` additionally calls `AppConfig.llmClient` (local Ollama-compatible by default, no
- * Azure needed — see ARCHITECTURE.md §5/§6) to turn the #1 result into a natural-language summary,
- * replaying the DSPy-compiled prompt (`CompiledPrompt`). Off by default: a local CPU-served model
- * genuinely takes tens of seconds (confirmed against a real Ollama install), so this is opt-in
- * rather than adding that latency to every run.
  */
 object Main extends KyoApp:
 
@@ -41,8 +29,7 @@ object Main extends KyoApp:
   /**
    * IP geolocation is city-level at best (`IpGeolocation`'s doc comment on why, and why Brazil in
    * particular): when the origin comes from it, search at least this far so the residual error
-   * doesn't push real nearby beaches outside the radius. Never *narrows* a larger configured
-   * `MAROLA_BEACH_SEARCH_RADIUS_KM`.
+   * doesn't push real nearby beaches outside the radius.
    */
   private val IpGeolocationMinRadiusKm = 20.0
 
@@ -53,9 +40,7 @@ object Main extends KyoApp:
    * Precedence: explicit `--lat`/`--lon` flags, then a Google Maps pin given as `--location-url`
    * (MIP-0008 §5.6, `Coordinates.fromMapsUrl`), then `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON`, then
    * the machine's public-IP geolocation (widened radius, see above), then the built-in Rio default
-   * only if the IP lookup found nothing at all (offline). Half a pair — one flag or one env var
-   * without its partner — is ignored, not half-applied; `warnHalfPair` reports it, as it does an
-   * unreadable `--location-url`.
+   * only if the IP lookup found nothing at all (offline).
    */
   private def resolveOrigin(args: Array[String], config: AppConfig): Origin < Sync =
     (flagOrigin(args).orElse(urlOrigin(args)), config.origin) match
@@ -128,9 +113,7 @@ object Main extends KyoApp:
   /**
    * `--report-sighting <jellyfish|whale> <beach name> [note...]` — the stand-in for submitting a
    * sighting via the (not-yet-built) Telegram bot; see `SightingStore`'s own doc comment on the
-   * phase-discipline gap this papers over. Returns `None` for any other invocation, including a
-   * malformed one, so `bootstrap` falls through to the normal recommendation flow rather than
-   * silently swallowing a typo.
+   * phase-discipline gap this papers over.
    */
   private def parseSightingReport(
       args: Array[String]
@@ -158,8 +141,7 @@ object Main extends KyoApp:
   /**
    * `--ask "<question>"` — local RAG over the Markdown corpus in `knowledge/` (MIP-0001 /
    * `FUTURE-WORK.md` §9.1): retrieve with the Ollama embedder, answer with the local LLM from those
-   * passages only, print the passages' sources. First run embeds the corpus (minutes on CPU); later
-   * runs hit the index.
+   * passages only, print the passages' sources.
    */
   private def askOcean(config: AppConfig, question: String): Unit < Async =
     config.llmClient match
@@ -195,8 +177,6 @@ object Main extends KyoApp:
    * `--serve-chat [port]` (MIP-0033 §5.2): runs `marola.agent.ChatServer` in the foreground —
    * `/health` and `/ask` over plain HTTP on `localhost:port` (default `ChatServer.DefaultPort`),
    * meant to sit behind a named Cloudflare Tunnel so the static site's chat widget can reach it.
-   * Blocks until interrupted (Ctrl+C); prints an honest "no LLM configured" warning up front rather
-   * than starting a server that can only 503.
    */
   private def serveChat(args: Array[String], config: AppConfig): Unit < Async =
     val port =
@@ -221,7 +201,7 @@ object Main extends KyoApp:
   /**
    * `--site [area-id]` (MIP-0005): build the static map's data for one area of `site/areas.json`,
    * or every area when no id is given, into `site/dist/` (`--site-out <dir>` to change it, `--areas
-   * <file>` for another areas file). One Overpass query per area; no LLM call.
+   * <file>` for another areas file).
    */
   private def buildSite(args: Array[String], config: AppConfig): Unit < Async =
     val areasPath = argValue(args, "--areas")
@@ -261,11 +241,10 @@ object Main extends KyoApp:
                 files.filter(_.toString.endsWith(".json")).map(_.toString).mkString(", ")
             )
           case failure =>
-            // Fail the *process*, not just the line: site.yml deploys whatever this step leaves in
-            // site/dist, and on 5 Sep 2026 that was the first area's boards and no index.html — a
-            // 404 at the site root — because the second area's Overpass query failed after the
-            // first area had been written and the JVM still exited 0. `exit` is KyoApp's own
-            // (`KyoApp.Base.exit(code)(using AllowUnsafe)`, confirmed in the pinned RC5 jar).
+            // Fail the *process*, not just the line: site.yml deploys whatever this step leaves
+            // in site/dist, and on 5 Sep 2026 that was the first area's boards and no index.html
+            // — a 404 at the site root — because the second area's Overpass query failed after
+            // the first area had been written and the JVM still exited 0.
             for
               _ <- Console.printLine(s"(site build failed: $failure)")
               _ <- Sync.defer {
@@ -304,7 +283,7 @@ object Main extends KyoApp:
   /**
    * MIP-0010 task 4: the same run into the configured `RunLedger` — `RunLedger.Noop` prints nothing
    * (no tracking URI configured, the default); `MlflowRunLedger` prints the run's URL, or a warning
-   * when the server could not be reached. Never fails the benchmark: the report is already saved.
+   * when the server could not be reached.
    */
   private def logBenchmarkRun(
       config: AppConfig,
@@ -437,7 +416,8 @@ object Main extends KyoApp:
         s"water quality -> ${water.map(_.name).getOrElse("no provider for this region (MIP-0001 §11)")}"
       )
       // MIP-0010 task 6: one trace per run — `marola.recommend` is the root span, the
-      // `bestPerBeachTomorrow` fetch/score step and the two LLM calls (`llm.<model>`) nest under it.
+      // `bestPerBeachTomorrow` fetch/score step and the two LLM calls (`llm.<model>`) nest under
+      // it.
       tracing <- resolveTracing(config)
       _ <- tracing.withSpan("marola.recommend", Map("origin.source" -> origin.source.toString)) {
         for
@@ -450,9 +430,9 @@ object Main extends KyoApp:
               accessibility = Some(config.accessibilityClient)
             )
           }
-          // MIP-0030: one extra Overpass query, reusing the beaches `bestPerBeachTomorrow` already
-          // fetched (no second beach query) — trails don't depend on the forecast, so this doesn't
-          // need to be inside the span above.
+          // MIP-0030: one extra Overpass query, reusing the beaches `bestPerBeachTomorrow`
+          // already fetched (no second beach query) — trails don't depend on the forecast, so
+          // this doesn't need to be inside the span above.
           trails <- tracing.withSpan("trails") {
             TrailFinder.nearby(origin.coordinates, origin.radiusKm, results.map(_.beach).distinct)
           }
@@ -500,9 +480,6 @@ object Main extends KyoApp:
   /**
    * Generates the draft summary, then hands it to `Reviewer` (`ARCHITECTURE.md` §5a,
    * `FUTURE-WORK.md` §4.2) for a second, independent pass before printing anything to the user.
-   * Both `loadCompiledPrompt` calls live inside their respective `Abort.catching` blocks, not just
-   * the network call — a missing/malformed resource file threw uncaught past an earlier version of
-   * this function, since it happened outside the block that was actually being caught.
    */
   private def summarizeTop(
       config: AppConfig,

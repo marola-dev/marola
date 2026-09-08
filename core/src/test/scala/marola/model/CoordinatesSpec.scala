@@ -3,8 +3,7 @@ package marola.model
 /**
  * MIP-0008 §4/§5.6: `Coordinates.fromMapsUrl` reads a Google Maps pin out of the URL shapes Maps
  * hands out — the viewport `/@lat,lon,zoom`, the `q=`/`query=`/`ll=` query forms, and the
- * `!3dlat!4dlon` pin inside a place URL. Short links (`maps.app.goo.gl`) are expanded by the caller
- * (the smoke workflow follows the redirect); this parser only ever sees the long form.
+ * `!3dlat!4dlon` pin inside a place URL.
  */
 class CoordinatesSpec extends munit.FunSuite:
 

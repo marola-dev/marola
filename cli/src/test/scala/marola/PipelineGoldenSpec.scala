@@ -15,8 +15,7 @@ import marola.water.{ImaScWaterQualityClient, WaterQualityMatcher}
 /**
  * Serves recorded real responses by URL — the cheap regression mechanism: the whole pipeline runs
  * exactly as in production (same query strings, same parsers, same scoring) against fixtures
- * captured on 2026-09-05, with no network. Re-record a fixture (`docs/RUN-LOCALLY.md` §7) when an
- * upstream format changes; the diff in the fixture *is* the regression report.
+ * captured on 2026-09-05, with no network.
  */
 final class ReplayTransport(val routes: List[(String => Boolean, String)]) extends Http.Transport:
   val requests: ListBuffer[String] = ListBuffer.empty
@@ -97,7 +96,8 @@ class PipelineGoldenSpec extends munit.FunSuite:
       )
     )
     assertEquals(results, results.sortBy(-_.score))
-    // never recommend the dark: every beach's best hour is a daylight hour (the fixture has is_day)
+    // never recommend the dark: every beach's best hour is a daylight hour (the fixture has
+    // is_day).
     results.foreach(r =>
       assertEquals(r.hour.isDaylight, Some(true), s"${r.beach.name} at ${r.hour.time}")
     )
@@ -132,7 +132,8 @@ class PipelineGoldenSpec extends munit.FunSuite:
       campeche.notes.toString
     )
     assert(Report.waterSummary(campeche).startsWith("4/5 PRÓPRIA"), Report.waterSummary(campeche))
-    // Rio Tavares is served the same forecast fixture and has no IMA point → its score is the base.
+    // Rio Tavares is served the same forecast fixture and has no IMA point → its score is the
+    // base.
     val rioTavares =
       results.find(_.beach.name == "Praia do Rio Tavares").getOrElse(fail("no Rio Tavares"))
     assertEquals(rioTavares.waterQuality, None)
@@ -181,7 +182,7 @@ class PipelineGoldenSpec extends munit.FunSuite:
         )
       )
     }
-    // … so staleness is checked directly on the verdict with a later "today":
+    // … so staleness is checked directly on the verdict with a later "today":.
     val campeche = results.find(_.beach.name == "Praia do Campeche").get
     val verdict =
       marola.scoring.Swimability.waterVerdict(campeche.waterQuality, LocalDate.of(2026, 11, 1))

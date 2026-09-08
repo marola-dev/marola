@@ -1,11 +1,4 @@
-/* marola chat widget — MIP-0033 §5.2. Plain JS, no build step, no dependency.
- *
- * Talks to `marola.agent.ChatServer` (GET /health, POST /ask), reached through the maintainer's
- * own machine via a named Cloudflare Tunnel — endpoint set in chatbot-config.js, loaded before
- * this file. An empty endpoint means "not set up" and the widget stays hidden; a set endpoint
- * that fails its health check shows the honest offline message instead of a hung request or a
- * raw fetch error, per MIP-0033 §3's rule: never a spinner that hangs, never a silent failure.
- */
+/** marola chat widget — MIP-0033 §5.2. */
 (function () {
   'use strict';
 

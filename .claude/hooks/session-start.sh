@@ -1,21 +1,6 @@
 #!/usr/bin/env bash
-# session-start — SessionStart hook: print branch, gh auth, uncommitted count, and the two
-# ai-jail caveats from FABLE_REVIEW.md §3, once, as session context. (MIP-0011 §5 item 5.)
-#
-# Replaces re-discovering these facts every session via auto-memory: this hook states them
-# as a harness fact instead. `gh-not-logged-in-in-sessions.md` (the auto-memory note covering
-# the gh-auth caveat) is deleted in this same change — see the commit body for what the other
-# FABLE_REVIEW.md §3 caveat (.env.example/.ai-jail reading empty inside the jail) never had a
-# matching memory note to delete.
-#
-# Output format matches MIP-0011 §3's example exactly:
-#   ▸ SessionStart: branch mip-0010/1-run-ledger · gh: not logged in (push works, PRs by hand) · 0 uncommitted
-#   ▸ jail caveat: .env.example and .ai-jail read empty inside `just jail-claude` — never `git add -A`, stage by name
-#   ▸ jail caveat: gh has no ~/.config/gh inside the jail — push works over SSH, PRs need GH_TOKEN or by hand
-#
-#   .claude/hooks/session-start.sh --self-test   # run by `just quality`; exits non-zero on any miss
-#
-# Wired in .claude/settings.json -> hooks.SessionStart.
+# session-start — SessionStart hook: print branch, gh auth, uncommitted count, and the two ai-jail
+# caveats from FABLE_REVIEW.md §3, once, as session context. MIP-0011.
 set -euo pipefail
 
 REPO_ROOT="${SESSION_START_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"

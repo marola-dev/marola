@@ -1,19 +1,7 @@
 name: marola E2E (manual)
 
-# Manual trigger ONLY — no `push`/`pull_request`, deliberately: this hits live Overpass/Open-Meteo/
-# IMA and (optionally) a real local Ollama model. The cheap, always-on regression check is the
-# offline fixture-replay suite in ci.yml (cli/src/test/scala/marola/PipelineGoldenSpec.scala) —
-# run this only when you want to know the *live* APIs still behave.
-#
-# Cost controls, in order of impact:
-#   1. Two jobs. `network` needs no Ollama at all (the E2E tests that only need Overpass/Open-Meteo/
-#      IMA). `llm` is opt-in via the `with_llm` input, default off — most regressions are in the
-#      data path, not the model path.
-#   2. `~/.ollama/models` and the ollama binary are cached by actions/cache, keyed on the model
-#      name, so the 1.3GB pull happens once per model, not per run.
-#   3. `timeout-minutes` on both jobs so a hung Overpass slot can't burn an hour.
-#   4. `concurrency` cancels a superseded run.
-#   5. The smallest model that produces well-formed reviewer JSON (`llama3.2:1b`, RUN-LOCALLY.md).
+# Manual trigger ONLY — no `push`/`pull_request`, deliberately: this hits live
+# Overpass/Open-Meteo/ IMA and (optionally) a real local Ollama model.
 on:
   workflow_dispatch:
     inputs:
@@ -39,11 +27,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cache/coursier
@@ -66,11 +54,11 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cache/coursier
@@ -84,7 +72,7 @@ jobs:
       # The expensive part, cached: the model blobs (~1.3GB for llama3.2:1b) and the binary.
       - name: Cache Ollama binary and model
         id: ollama-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.ollama/models

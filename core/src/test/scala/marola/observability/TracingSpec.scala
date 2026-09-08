@@ -4,8 +4,7 @@ import kyo.*
 
 /**
  * `Tracing.Noop` is the zero-dependency default (`MAROLA_TRACES=off`, or unset with nothing
- * configured) — both methods must just run the wrapped effect, unchanged, no span. Same
- * `Sync.Unsafe.evalOrThrow` idiom as `core/src/test/scala/marola/http/HttpSpec.scala`.
+ * configured) — both methods must just run the wrapped effect, unchanged, no span.
  */
 class TracingSpec extends munit.FunSuite:
 

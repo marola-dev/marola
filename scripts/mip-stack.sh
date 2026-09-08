@@ -63,9 +63,9 @@
 set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
-# shellcheck source=scripts/lib/stack_link.sh
+# shellcheck source=scripts/lib/stack_link.sh.
 source "$script_dir/lib/stack_link.sh"
-# shellcheck source=scripts/lib/uprd_title.sh
+# shellcheck source=scripts/lib/uprd_title.sh.
 source "$script_dir/lib/uprd_title.sh"
 
 plan_dir="$repo_root/.tmp/mip-stack"
@@ -105,8 +105,7 @@ print_conflict_instructions() {   # $1 = branch left mid-cherry-pick
 }
 
 # The one conflict class this script resolves: docs/mips/README.md and nothing else conflicted,
-# and mip_index_merge.py reduces every hunk to "both rows, in order". Returns 0 with the file
-# staged (ready for `cherry-pick --continue`), else 1 and touches nothing.
+# and mip_index_merge.py reduces every hunk to "both rows, in order".
 auto_resolve_index() {
   local conflicted
   conflicted="$(git -C "$wt_dir" diff --name-only --diff-filter=U)"
@@ -121,11 +120,7 @@ auto_resolve_index() {
 }
 
 # Two conflict shapes resolve by themselves; anything else stops for a human. $1 = the commit
-# being cherry-picked. (1) "Same change already landed": a conflicted file whose content in that
-# commit is byte-identical to origin/main's — the draft's change was squash-merged under another
-# PR, or the same edit was made on main — takes origin/main's version. (2) docs/mips/README.md,
-# the row conflict, through auto_resolve_index. A conflicted file that is neither leaves the
-# cherry-pick as it is (files already resolved stay resolved — less for the human to do).
+# being cherry-picked.
 auto_resolve_conflicts() {
   local c="$1" f other=0 readme=0
   while read -r f; do
@@ -167,7 +162,7 @@ while [ $# -gt 0 ]; do
 done
 run() { if [ "$dry" -eq 1 ]; then echo "+ $*"; else "$@"; fi; }
 
-# --- ordering (shared by discovery, --from-json, --self-test): pure jq ------------------------
+# --- ordering (shared by discovery, --from-json, --self-test): pure jq ------------------------.
 order_prs() {   # stdin: gh-pr-list-shaped JSON array -> stdout: MIP draft PRs, by MIP number
   local skip_json="[]"
   if [ "${#skip_nums[@]}" -gt 0 ]; then
@@ -177,8 +172,7 @@ order_prs() {   # stdin: gh-pr-list-shaped JSON array -> stdout: MIP draft PRs, 
     # The number in the head branch name wins (docs/mip-0023-... is MIP-0023 whatever files it
     # carries); a PR whose head has no number is placed by the HIGHEST MIP file it touches — a
     # draft that merged the branch of an earlier draft to stay mergeable carries that file too,
-    # and "first file in the list" put three drafts under MIP-0020 on 2026-09-06. (No apostrophes
-    # here: this comment sits inside the single-quoted jq program.)
+    # and "first file in the list" put three drafts under MIP-0020 on 2026-09-06.
     def mip_from_files: [(.files // [])[] | .path | capture("^docs/mips/MIP-(?<n>[0-9]{4})-[^/]*\\.md$") | .n] | max // null;
     def mip_from_head: (.headRefName | capture("^(?:docs/)?mip-(?<n>[0-9]{4})") | .n) // null;
     def is_task_branch: .headRefName | test("^mip-[0-9]{4}/[0-9]+-");
@@ -212,16 +206,17 @@ discover() {
   order_prs <<<"$raw"
 }
 
-# --- self-test ----------------------------------------------------------------------------------
+# --- self-test
+# ----------------------------------------------------------------------------------.
 self_test() {
   local fixture="$script_dir/fixtures/mip-stack-prs.json"
   [ -f "$fixture" ] || { echo "mip-stack self-test: fixture not found: $fixture" >&2; exit 1; }
   local skip_nums=() ordered got expected
   ordered="$(order_prs <"$fixture")"
   got="$(jq -c '[.[].number]' <<<"$ordered")"
-  # 201 (MIP-0020, head docs/mip-…), 208 (MIP-0023 by file, head not docs/), 210 (MIP-0025),
-  # 211 (head docs/mip-0025-… although its files list MIP-0020's file first — the head wins);
-  # 205 is a task branch (excluded), 212 touches no MIP file (excluded).
+  # 201 (MIP-0020, head docs/mip-…), 208 (MIP-0023 by file, head not docs/), 210 (MIP-0025), 211
+  # (head docs/mip-0025-… although its files list MIP-0020's file first — the head wins); 205 is a
+  # task branch (excluded), 212 touches no MIP file (excluded).
   expected="[201,208,210,211]"
   echo "order: $got"
   jq -r '.[] | "  #\(.number) MIP-\(.mip) \(.headRefName)"' <<<"$ordered"
@@ -237,7 +232,7 @@ resolve_ref() {
   if git -C "$repo_root" rev-parse --verify -q "refs/remotes/origin/$1" >/dev/null; then echo "origin/$1"; else echo "$1"; fi
 }
 
-# --- plan + chain ------------------------------------------------------------------------------
+# --- plan + chain ------------------------------------------------------------------------------.
 compute_plan() {   # $1 = ordered JSON -> {date, prs:[... + slug, k, branch]}
   local ordered="$1" date n i=0 slugged="[]"
   date="$(date +%Y-%m-%d)"
@@ -319,10 +314,7 @@ build_chain() {
     head_ref="$(resolve_ref "$(jq -r '.headRefName' <<<"$entry")")"
     # The PR's *own* commits: reachable from its head, not from main and not from any earlier
     # draft's head — a draft that merged another draft's branch (to stay mergeable) carries that
-    # draft's commits by SHA, and they are already on the chain from that earlier link. Patch-id
-    # matching (`rev-list --cherry-pick`) is not enough here: the chain's copy of a commit has a
-    # different diff once its README row conflict was resolved. Merge commits are skipped; a
-    # cherry-pick that ends up empty (the same patch, rebased rather than merged) is dropped.
+    # draft's commits by SHA, and they are already on the chain from that earlier link.
     local -a not_refs=("origin/main")
     while read -r earlier; do
       [ -n "$earlier" ] || continue
@@ -337,7 +329,6 @@ build_chain() {
     # Already on main by content: every docs/mips/MIP-*.md the PR's own commits touch exists on
     # origin/main with the same blob as on the PR head — the draft was squash-merged under another
     # PR number (today: docs/mip-0021-beach-accessibility, merged as #134, still open as #135).
-    # Its commits are not ancestors of main, so ancestry cannot see it; the content can.
     local mip_paths landed=1
     mip_paths="$(while read -r cc; do [ -n "$cc" ] && git -C "$wt_dir" diff-tree --no-commit-id --name-only -r "$cc"; done <<<"$commits" 2>/dev/null | grep -E '^docs/mips/MIP-[0-9]{4}-[^/]*\.md$' | sort -u || true)"
     if [ -n "$mip_paths" ]; then
@@ -356,7 +347,7 @@ build_chain() {
     # draft (rather than merging it) carries copies of that draft's commits under new SHAs, with
     # the author date and subject intact — and once the copy's README row was resolved differently
     # its patch-id differs too, so only "same author date + same subject as a commit the chain
-    # already has" identifies it. Those are skipped, not cherry-picked.
+    # already has" identifies it.
     local have_keys
     have_keys="$(git -C "$wt_dir" log --format='%at %s' "$base_ref" --not origin/main 2>/dev/null || true)"
     while read -r c; do
@@ -478,7 +469,7 @@ cmd_clean() {
   fi
 }
 
-# --- entry point ------------------------------------------------------------------------------
+# --- entry point ------------------------------------------------------------------------------.
 if [ "$self_test" -eq 1 ]; then self_test; exit 0; fi
 case "$subcommand" in
   status) cmd_status; exit 0 ;;

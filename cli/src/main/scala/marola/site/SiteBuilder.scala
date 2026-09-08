@@ -21,17 +21,11 @@ import marola.water.WaterQualityClient
  * MIP-0005 §5.3: `just site-build` — run the pipeline once per *area* (not per user) and write the
  * boards the static map reads: `data/<area>/<day>.json` for today and tomorrow, `latest.json`
  * pointing at both, `data/areas.json` listing every area for the page's area switch, and a copy of
- * `site/static/` (the page itself). Everything in `out/` is derived; the directory is ignored by
- * git and served as-is by `just site-serve` or GitHub Pages.
- *
- * The one Overpass query per area per build is the cost to watch (`ARCHITECTURE.md` §7): keep areas
- * few and scheduled runs ≤ 8/day until MIP-0003's cache lands.
+ * `site/static/` (the page itself).
  */
 object SiteBuilder:
 
-  /**
-   * One entry of `site/areas.json`. `tiles` is a Leaflet URL template; see the MIP's tiles note.
-   */
+  /** One entry of `site/areas.json`. */
   final case class Area(
       id: String,
       name: String,
@@ -85,12 +79,7 @@ object SiteBuilder:
       water = water.map(_.name)
     )
 
-  /**
-   * Builds every area into `out` and returns the files written. `water` picks the provider per
-   * origin (`AppConfig.waterQualityClient` in production, a fixed client in tests); `now` is the
-   * one clock read, in whatever offset the caller has — each area converts it to its own zone for
-   * "today" and the `generated_at` stamp.
-   */
+  /** Builds every area into `out` and returns the files written. */
   def build(
       areas: List[Area],
       out: Path,

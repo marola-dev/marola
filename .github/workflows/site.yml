@@ -1,35 +1,13 @@
 name: site (build the boards, deploy the map)
 
 # MIP-0005 §5.4: compute every area's board once on a schedule and publish site/dist as a static
-# site — no server, no LLM, no per-visitor cost. The scheduled deploy is Phase 3's first deploy
-# artefact (ARCHITECTURE.md §11) and it is entirely free: GitHub Pages + Actions minutes.
-#
-# Cost model (verified by the run times, not just estimated): one `just site-build` is ~1-2 min of
-# pipeline (one Overpass query per area in site/areas.json, two Open-Meteo calls per beach, one
-# IMA download) plus JVM/sbt start-up — 3-4 min per run. Every 3 hours = 8 runs/day ≈ 30 min/day,
-# well inside the free tier. Overpass fair use (ARCHITECTURE.md §7): keep areas few and the cron at
-# ≥ 3 h until MIP-0003's cache lands.
-#
-# One-time human setup, not a paid resource: repo Settings → Pages → Source = "GitHub Actions".
-# Until that is done the deploy job fails with "Pages not enabled" and nothing else happens.
-# That setting is also what keeps this private repository private: with "Deploy from a branch"
-# Pages runs Jekyll over the whole branch and publishes README, docs/*.md and the source as HTML.
-# Here the only thing that ever reaches Pages is the artifact below — site/dist, allowlisted.
-# Scheduled workflows only run from the default branch, so this file has to be on main. The live
-# site is https://marola.dev/ (linked from the README; h0ffmann.github.io/marola/ still resolves
-# and redirects once the custom domain is verified in Settings → Pages).
-#
-# Custom domain (marola.dev): because this deploys via actions/deploy-pages, not "Deploy from a
-# branch", GitHub never reads a CNAME file from the repo itself — it has to be inside the uploaded
-# artifact, so the "write the CNAME file" step below puts one in site/dist on every deploy. The
-# domain's own DNS (four A records to GitHub Pages' IPs, or a CNAME to h0ffmann.github.io for a
-# subdomain) and ticking "Enforce HTTPS" in Settings → Pages are one-time, done outside this repo.
+# site — no server, no LLM, no per-visitor cost. MIP-0003.
 
 on:
   schedule:
     - cron: "15 */3 * * *" # every 3 h (UTC); :15 avoids the top-of-hour crowd on shared runners
   # CD: a merge to main that changes the page or the pipeline redeploys right away instead of
-  # waiting up to 3 h. Docs-only merges don't trigger it (one Overpass query per run, §7 fair use).
+  # waiting up to 3 h.
   push:
     branches: [main]
     paths:
@@ -64,11 +42,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cache/coursier
@@ -80,12 +58,7 @@ jobs:
       - uses: sbt/setup-sbt@v1
 
       # `--site` with no id builds every area; the water-quality provider is picked per area
-      # origin (IMA/SC inside Santa Catarina, "no data" elsewhere). No Ollama, no --summarize.
-      # Transient network faults are retried twice inside the pipeline (Http.sendRetrying: a 429/5xx
-      # or a connect/read timeout, 1 s then 2 s back-off — the 2026-09-06 run died on one `HTTP
-      # connect timed out` with no retry). A runner whose egress is down for longer than that gets
-      # one more whole attempt after 60 s; sbt is already compiled by then, so it costs ~2 min, not
-      # a second cold start. Two failures in a row fail the job and the previous deploy stays.
+      # origin (IMA/SC inside Santa Catarina, "no data" elsewhere).
       - name: Build the boards (one Overpass query per area, no LLM)
         env:
           AREA: ${{ inputs.area }}
@@ -106,13 +79,7 @@ jobs:
         run: scripts/stamp_site_version.sh site/dist
 
       # MIP-0008 §5.5: the smoke test's results (docker-smoke.yml) live on the orphan `site-data`
-      # branch — copied into the site here, never deployed by that workflow. No branch yet = no
-      # panel; app.js treats a missing smoke/latest.json as "no live run". ci.yml's coverage step
-      # writes to the same branch, under `coverage/` — the shields.io endpoint JSON the README
-      # badge reads, and its repo-stats job writes `stats/` the same way (CI health, Scala/Python
-      # LOC, Python coverage — the whole directory is copied, so a new badge JSON needs no change
-      # here). Each directory is archived only if it exists on the branch yet, so the first
-      # coverage run (site-data pushed with only `smoke/` so far, or vice versa) doesn't fail.
+      # branch — copied into the site here, never deployed by that workflow.
       - name: Add the smoke-test results and badge data — coverage, stats (site-data branch, if any)
         run: |
           if git fetch --depth=1 origin site-data 2>/dev/null; then
@@ -136,11 +103,7 @@ jobs:
             head -c 600 site/dist/smoke/latest.json
           fi
 
-      # A half-built site must never reach Pages. The CLI now exits non-zero when any area fails
-      # (so the build step above already fails); this is the belt to that suspender: the page, the
-      # areas index and one latest.json per area in site/areas.json must all be there. Without it,
-      # one failed Overpass query on the second area deployed a dist holding the first area's boards
-      # and no index.html — a 404 at the site root (5 Sep 2026, the 18:15 UTC scheduled run).
+      # A half-built site must never reach Pages.
       - name: Required files — the page, the areas index, one latest.json per area
         run: |
           cd site/dist
@@ -153,14 +116,11 @@ jobs:
 
       # GitHub Pages custom domain (marola.dev): with actions/deploy-pages (not "Deploy from a
       # branch"), the CNAME file has to travel inside the artifact — there's no branch for GitHub
-      # to read it from. Plain text, one line, no scheme/path (github.io/CNAME.html docs).
+      # to read it from.
       - name: Write the custom-domain CNAME file
         run: echo "marola.dev" > site/dist/CNAME
 
-      # Only the map is public. The artifact is site/dist and nothing more; this step deletes the
-      # one file that is not the page (data/.gitkeep's sibling in site/dist) and fails the build if
-      # anything outside the allowlist is there — a stray copy is caught here, not shipped.
-      # docs/*.md are not on the site by design: they render on GitHub, for people with access.
+      # Only the map is public.
       - name: Publish allowlist — index.html, app.js, style.css, chat.js, chatbot-config.js, CNAME, vendor/, data/, smoke/, coverage/, stats/ and nothing else
         run: |
           cd site/dist
@@ -171,7 +131,7 @@ jobs:
           fi
           echo "publishing:"; find . -type f | sort
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site/dist
 

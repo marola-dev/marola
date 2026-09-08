@@ -1,28 +1,16 @@
 #!/usr/bin/env bash
-# cost-fill — add a missing `Cost:` and/or `Tested:` trailer to every commit of the current
-# branch that lacks one (AGENTS.md "Attribution and cost accounting"), without git filter-branch:
-# each commit is replayed with `git cherry-pick` onto a scratch branch, only commits missing a
-# trailer are amended, and author/committer dates are preserved (`GIT_COMMITTER_DATE` set from the
+# cost-fill — add a missing `Cost:` and/or `Tested:` trailer to every commit of the current branch
+# that lacks one (AGENTS.md "Attribution and cost accounting"), without git filter-branch: each
+# commit is replayed with `git cherry-pick` onto a scratch branch, only commits missing a trailer
+# are amended, and author/committer dates are preserved (`GIT_COMMITTER_DATE` set from the
 # original commit before every cherry-pick and every amend — cherry-pick already keeps the author
-# date on its own).
-#
-#   just cost-fill               # fill missing trailers on the current branch, in place
-#   just cost-fill --dry-run     # print what would be added per commit, change nothing
-#
-# `Cost:` prefers a measured figure from `scripts/cost-split.py`'s session logs (the same numbers
-# `just cost-split` would print); when nothing was logged for that commit at all — a subagent
-# whose worktree session was never re-attached, a commit made on another machine — it falls back
-# to `scripts/cost-split.py --estimate-commit`, always labelled `est.` so it can't be mistaken for
-# a measurement. `Tested:` is never invented: a missing one gets exactly
-# `Tested: ci-only — trailer added by just cost-fill, gates not re-run` — it never claims a gate
-# that was not actually run.
-#
-# Trailer order is fixed (AGENTS.md): Tested, then Cost, then Co-Authored-By (and anything else),
-# nothing after — an existing trailer of one kind and a newly-added one of another are reordered
-# into that shape, not just appended.
-#
-# Used by `scripts/pr.sh` before every push. Idempotent: a commit that already carries both
-# trailers is left untouched, and the branch isn't rewritten at all when nothing is missing.
+# date on its own). just cost-fill # fill missing trailers on the current branch, in place just
+# cost-fill --dry-run # print what would be added per commit, change nothing `Cost:` prefers a
+# measured figure from `scripts/cost-split.py`'s session logs (the same numbers `just cost-split`
+# would print); when nothing was logged for that commit at all — a subagent whose worktree session
+# was never re-attached, a commit made on another machine — it falls back to
+# `scripts/cost-split.py --estimate-commit`, always labelled `est.` so it can't be mistaken for a
+# measurement.
 set -euo pipefail
 
 dry_run=0
@@ -44,9 +32,7 @@ TESTED_FALLBACK="Tested: ci-only — trailer added by just cost-fill, gates not 
 
 # Precompute what each commit needs before touching history at all — a diff's size (and hence its
 # estimate) doesn't change when its message gains a trailer, so it's safe to ask cost-split.py
-# about the *original* shas up front, once, rather than mid-rewrite. Written to a temp file, not
-# piped: `python3 - <<'PY'` below already claims stdin to carry the script's own source, so a
-# second use of stdin for data would just read EOF.
+# about the *original* shas up front, once, rather than mid-rewrite.
 json_file="$(mktemp)"
 python3 "$script_dir/cost-split.py" --estimate --json >"$json_file" 2>/dev/null || echo '[]' >"$json_file"
 
@@ -89,8 +75,7 @@ for sha in "${shas[@]}"; do
     fi
   elif ! grep -q '^Cost:.*\$' <<<"$body"; then
     # A Cost: line is present but carries no dollar figure at all — a bare "Cost: est."
-    # placeholder typed by hand instead of run through this script or cost-split.py. Treated
-    # the same as missing, not skipped: the AGENTS.md contract is a real number, not a word.
+    # placeholder typed by hand instead of run through this script or cost-split.py.
     line="$(measured_trailer "$short" "$json_file")"
     [ -n "$line" ] || line="$(python3 "$script_dir/cost-split.py" --estimate-commit "$sha" 2>/dev/null || true)"
     if [ -n "$line" ]; then
@@ -98,8 +83,8 @@ for sha in "${shas[@]}"; do
       any=1
     fi
   elif grep -q '^Cost:.* est\. ' <<<"$body"; then
-    # An estimate written before the session log covered the commit (a subagent's own commit,
-    # say) is upgraded to the measured figure once one exists — never the other way round.
+    # An estimate written before the session log covered the commit (a subagent's own commit, say)
+    # is upgraded to the measured figure once one exists — never the other way round.
     line="$(measured_trailer "$short" "$json_file")"
     if [ -n "$line" ]; then
       new_cost["$sha"]="$line"
@@ -158,9 +143,7 @@ sys.stdout.write("\n".join(body) + "\n\n" + "\n".join(ordered) + "\n")
 PY
 }
 
-# The rewrite replays the branch onto origin/main. If main moved past this branch's base since
-# it was pushed (a PR it stacked on got merged), every replayed commit turns into an add/add
-# conflict against the squash — refuse up front instead of discovering it mid-replay.
+# The rewrite replays the branch onto origin/main.
 git fetch -q origin main 2>/dev/null || true
 if ! git merge-base --is-ancestor origin/main "$branch"; then
   echo "cost-fill: $branch is behind origin/main — rebase it first (git rebase origin/main), then re-run" >&2
@@ -179,8 +162,7 @@ for sha in "${shas[@]}"; do
   # --allow-empty preserves a commit that was already empty at authoring time; --empty=drop
   # instead skips one that becomes empty here because its content is already on this branch's new
   # base (e.g. the PR this branch was stacked on has since been squash-merged into main under a
-  # different sha) — a stale-base symptom cost-fill should not crash on. No `-q`: some git builds
-  # (confirmed: 2.55.0) reject `cherry-pick -q` outright with a bare usage dump — redirect instead.
+  # different sha) — a stale-base symptom cost-fill should not crash on.
   GIT_COMMITTER_DATE="$cdate" git cherry-pick --allow-empty --empty=drop "$sha" >/dev/null
   if [ "$(git rev-parse HEAD)" = "$prev_head" ]; then
     echo "cost-fill: $sha's diff is already on $branch's base — skipped (rebase this branch onto origin/main)" >&2

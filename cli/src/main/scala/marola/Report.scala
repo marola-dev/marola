@@ -13,9 +13,7 @@ import marola.water.BathingCondition
 
 /**
  * Pure text rendering for `Main` (MIP-0001 §3): the ranked list (with its water column), the
- * detailed block for the top pick, and the sea-lore paragraph. Kept out of `Main` so it's plain
- * functions over `BestHour` — no effects, no config — and so the MCP server can reuse the same
- * water-quality summary text.
+ * detailed block for the top pick, and the sea-lore paragraph.
  */
 object Report:
 
@@ -31,8 +29,7 @@ object Report:
 
   /**
    * MIP-0021 §3: only amenities OSM returned are named, folded into "no data" otherwise — never "no
-   * parking" / "no lifeguard" for a facility OSM simply has no coverage for. `None` when `f.counts`
-   * is empty (`Facilities.NoData`), else the counts in `Facility`'s declared order.
+   * parking" / "no lifeguard" for a facility OSM simply has no coverage for.
    */
   def facilitiesLine(f: Facilities): Option[String] =
     if f.counts.isEmpty then None
@@ -97,8 +94,8 @@ object Report:
               case BathingCondition.Proper   => "PRÓPRIA"
               case BathingCondition.Improper => "IMPRÓPRIA"
               case BathingCondition.Unknown  => "unclassified"
-            // CONAMA 274 classifies on the last five samples, so a point can be IMPRÓPRIA while its
-            // latest count is low (Ponto 04 at Praia da Saudade: IMPRÓPRIA, 10/100mL). Say so.
+            // CONAMA 274 classifies on the last five samples, so a point can be IMPRÓPRIA while
+            // its latest count is low (Ponto 04 at Praia da Saudade: IMPRÓPRIA, 10/100mL).
             val count = s.enterococciPer100ml
               .map { n =>
                 val why =
@@ -192,12 +189,7 @@ object Report:
       (a.text.trim +: (if sources.isEmpty then Nil else "Sources:" +: sources)).mkString("\n")
     marola.knowledge.SafetyFooter.append(body, a.safety)
 
-  /**
-   * MIP-0030 §3: the nearest trail whose `nearBeach` names this beach, or `None`. `trails` is
-   * whatever `TrailFinder.nearby` returned for the run's origin — every trail in it is already
-   * within `TrailFinder.NearRadiusKm` of *some* beach or lake, so filtering by name here (rather
-   * than re-checking the distance) is enough.
-   */
+  /** MIP-0030 §3: the nearest trail whose `nearBeach` names this beach, or `None`. */
   def nearestTrail(beachName: String, trails: List[Trail]): Option[Trail] =
     trails.filter(_.nearBeach.exists(_._1 == beachName)).minByOption(_.nearBeach.get._2)
 

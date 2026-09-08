@@ -1,18 +1,12 @@
 #!/usr/bin/env bash
 # stack — stacked-PR mechanics for MIP task branches (see .claude/skills/mip-tasks/SKILL.md).
-#
-#   scripts/stack.sh start  MIP-0005 1 board-json     # branch mip-0005/1-board-json off main
-#   scripts/stack.sh start  MIP-0005 2 map-page       # off the previous task branch (mip-0005/1-*)
-#   scripts/stack.sh pr                               # push + open/update the PR with the right base
-#   scripts/stack.sh restack                          # after a base PR was squash-merged: rebase onto main
-#   scripts/stack.sh status                           # every branch of this MIP with its base and PR
-#   scripts/stack.sh branches [MIP-0005]              # the MIP's task branches, local or remote, bottom to top
-#   scripts/stack.sh link [MIP-0005]                  # GitHub Stack (gh stack link) from the *open* PRs, bottom to top
-#   --dry-run on any subcommand prints what would run.
-#
-# Convention: branch = mip-NNNN/<k>-<slug>; task k's base is task k-1's branch (task 1's is main).
-# GitHub retargets a child PR to main when its base PR merges and the base branch is deleted;
-# with squash merges the child then needs `restack` (rebase --onto) before it is conflict-free.
+# scripts/stack.sh start MIP-0005 1 board-json # branch mip-0005/1-board-json off main
+# scripts/stack.sh start MIP-0005 2 map-page # off the previous task branch (mip-0005/1-*)
+# scripts/stack.sh pr # push + open/update the PR with the right base scripts/stack.sh restack #
+# after a base PR was squash-merged: rebase onto main scripts/stack.sh status # every branch of
+# this MIP with its base and PR scripts/stack.sh branches [MIP-0005] # the MIP's task branches,
+# local or remote, bottom to top scripts/stack.sh link [MIP-0005] # GitHub Stack (gh stack link)
+# from the *open* PRs, bottom to top --dry-run on any subcommand prints what would run.
 set -euo pipefail
 dry=0; args=()
 for a in "$@"; do [ "$a" = "--dry-run" ] && dry=1 || args+=("$a"); done
@@ -85,10 +79,10 @@ case "${1:-}" in
     ;;
   link)
     # GitHub's native Stack (the "Preview stack" box on a PR) through the official extension.
-    # stack_link (scripts/lib/stack_link.sh, shared with scripts/deps-stack.sh) does the
-    # open-PR filtering and the actual `gh stack link` call.
+    # stack_link (scripts/lib/stack_link.sh, shared with scripts/deps-stack.sh) does the open-PR
+    # filtering and the actual `gh stack link` call.
     mip="$(mip_arg "${2:-}")"
-    # shellcheck source=scripts/lib/stack_link.sh
+    # shellcheck source=scripts/lib/stack_link.sh.
     source "$(dirname "${BASH_SOURCE[0]}")/lib/stack_link.sh"
     mapfile -t brs < <(branches_of "$mip")
     stack_link "$dry" "${brs[@]}"

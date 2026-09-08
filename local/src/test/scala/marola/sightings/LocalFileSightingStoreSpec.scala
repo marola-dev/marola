@@ -5,11 +5,7 @@ import java.time.Instant
 
 import kyo.*
 
-/**
- * The default `SightingStore` — append-only JSONL on disk, no account and no network. Every test
- * writes to its own temp file, so these are real round-trips through the real file format rather
- * than a mock of it.
- */
+/** The default `SightingStore` — append-only JSONL on disk, no account and no network. */
 class LocalFileSightingStoreSpec extends munit.FunSuite:
 
   private given AllowUnsafe = AllowUnsafe.embrace.danger

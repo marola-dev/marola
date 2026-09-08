@@ -1,23 +1,10 @@
 #!/usr/bin/env bash
 # pr_labels — shared taxonomy + classifier for scripts/pr-label.sh and
-# scripts/backfill-pr-labels.sh. Deterministic on purpose (AGENTS.md's "sourced or clearly
-# labelled, never invented" ethos applied to PR metadata, not just product answers): every label
-# below is derived from a fact already on the PR (its MIP number, the paths it touched, its
-# author) — never guessed from prose, and never an LLM call. A PR that matches nothing gets
-# `area/unscoped` rather than being left unlabelled, so a backfill run doesn't reconsider it next
-# time (scripts/backfill-pr-labels.sh only looks at PRs with zero labels).
-#
-# Area taxonomy follows docs/mips/MIP-0029-ocean-layer-positioning.md §4's MIP-by-MIP survey —
-# grouped by product/use-case area, not by MIP number, so "show me every water-quality PR" works
-# across MIP-0001 and MIP-0016 alike. MIP-0029 is a Draft on a remote branch (not yet merged to
-# docs/mips/), not on disk in every checkout — this file's own comments are the source of truth
-# for the mapping, re-derive from that MIP if it changes materially.
+# scripts/backfill-pr-labels.sh. MIP-0001.
 
 set -euo pipefail
 
-# name:color:description — color is a GitHub label hex (no '#'). `ensure_pr_labels` creates or
-# updates (--force) every one of these so a fresh clone/fork has the full taxonomy before the
-# first PR is labelled.
+# name:color:description — color is a GitHub label hex (no '#').
 PR_LABEL_TAXONOMY=(
   "area/conditions:1d76db:Live sea/weather/tide data, forecasting, caching/latency of an answer"
   "area/water-quality:0e8a16:Bathing-water quality per sampling point"
@@ -78,8 +65,7 @@ declare -A PR_LABEL_MIP_AREA=(
   [29]="area/positioning"
 )
 
-# ensure_pr_labels — create/update every taxonomy label on the current `gh` repo. Idempotent
-# (--force overwrites color/description, never touches which PRs already carry the label).
+# ensure_pr_labels — create/update every taxonomy label on the current `gh` repo.
 ensure_pr_labels() {
   local entry name color desc
   for entry in "${PR_LABEL_TAXONOMY[@]}"; do
@@ -90,9 +76,10 @@ ensure_pr_labels() {
   done
 }
 
-# pr_label_mip_number <headRefName> <commit-subjects-newline-separated> <changed-paths-newline-separated>
-# Same detection order as scripts/uprd.sh's MIP auto-detect: branch name token, then a commit
-# subject starting with MIP-NNNN, then a docs/mips/MIP-NNNN-*.md file touched.
+# pr_label_mip_number <headRefName> <commit-subjects-newline-separated>
+# <changed-paths-newline-separated> Same detection order as scripts/uprd.sh's MIP auto-detect:
+# branch name token, then a commit subject starting with MIP-NNNN, then a docs/mips/MIP-NNNN-*.md
+# file touched.
 pr_label_mip_number() {
   local ref="$1" subjects="$2" paths="$3" n
   if [[ "$ref" =~ mip-([0-9]{4}) ]]; then
@@ -145,10 +132,10 @@ pr_label_classify() {
   else
     areas="area/unscoped"
   fi
-  # shellcheck disable=SC2086 # deliberately unquoted: PR_LABEL_MIP_AREA's space-separated
-  # values (e.g. "area/map-site area/sea-life" for MIP-0009) must word-split into one printf
-  # arg/line per label — quoting collapsed a multi-area MIP into a single, space-containing
-  # "label" that gh then rejected as not found (PR #147, area/map-site area/sea-life).
+  # shellcheck disable=SC2086 # deliberately unquoted: PR_LABEL_MIP_AREA's space-separated values
+  # (e.g. "area/map-site area/sea-life" for MIP-0009) must word-split into one printf arg/line per
+  # label — quoting collapsed a multi-area MIP into a single, space-containing "label" that gh
+  # then rejected as not found (PR #147, area/map-site area/sea-life).
   printf '%s\n' $areas
   layers="$(pr_label_layers "$paths")"
   [ -n "$layers" ] && printf '%s\n' "$layers"

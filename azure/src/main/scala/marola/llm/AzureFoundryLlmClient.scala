@@ -13,22 +13,13 @@ import com.azure.identity.DefaultAzureCredentialBuilder
  * `azure-ai-agents` SDK (sessions, toolboxes, agent definitions): that SDK is for actual agent
  * orchestration, reserved for the separate MCP-tool-calling agent (`agent/` package,
  * `ARCHITECTURE.md` §5b) — a one-shot "turn this BestHour into a sentence" call doesn't need it.
- *
- * Auth is `DefaultAzureCredential` (managed identity in production, `az login` locally), per
- * `AGENTS.md`'s "no API keys" rule — confirmed against the real `azure-identity:1.18.1` API
- * (`DefaultAzureCredentialBuilder().build().getTokenSync(...)`), not run against a live endpoint
- * (no Foundry project provisioned — see ARCHITECTURE.md §6).
- *
- * `endpoint` is the deployment's own base URL, e.g.
- * `https://<resource>.openai.azure.com/openai/deployments/<deployment>` — `apiVersion` is appended
- * as a query param, matching Azure OpenAI's REST chat-completions shape.
  */
 final class AzureFoundryLlmClient(endpoint: String, apiVersion: String) extends LlmClient:
 
   private val credential = DefaultAzureCredentialBuilder().build()
 
-  // Cognitive Services' own resource-manager scope — the standard audience for Azure OpenAI/Foundry
-  // data-plane bearer tokens, independent of any one deployment.
+  // Cognitive Services' own resource-manager scope — the standard audience for Azure
+  // OpenAI/Foundry data-plane bearer tokens, independent of any one deployment.
   private val tokenScope = "https://cognitiveservices.azure.com/.default"
 
   private def bearerToken(): String < Sync =

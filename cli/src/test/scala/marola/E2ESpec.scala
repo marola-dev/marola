@@ -8,27 +8,7 @@ import marola.model.Coordinates
 /**
  * A real end-to-end check — "what's the best hour tomorrow to swim nearby?" run against live
  * Overpass/Open-Meteo (and, for the second test, a live local Ollama server), asserting the
- * pipeline's actual output is sane. This is the answer to "how do you E2E-test this without a
- * clunky .sh file": a normal munit test, tagged `E2E` and excluded from the default `sbt test` run
- * (see `build.sbt`'s `Test / testOptions` — hitting live network on every `just test` would make
- * the fast unit-test suite flaky and slow), run explicitly with:
- * {{{
- * just e2e
- * }}}
- * On CI (`.github/workflows/marola-e2e.yml`) the network-only job sets `MAROLA_E2E_SKIP_LLM=1` so
- * the Ollama-backed test skips without probing localhost; the offline regression suite that runs on
- * every push is `PipelineGoldenSpec` (fixture replay, no network at all). (overrides
- * `Test/testOptions` for that one invocation to `--include-tags=E2E` — see `justfile`'s own comment
- * on why a plain `testOnly -- --include-tags=E2E` doesn't work: munit applies an exclude over a
- * same-tag include when both are passed together, confirmed directly, so the default
- * `--exclude-tags=E2E` has to be replaced, not appended to). No bash scripting, no separate runner:
- * the same `sbt`/munit tooling every other test in this repo uses, one command away.
- *
- * Kyo effects are run synchronously via `Sync.Unsafe.evalOrThrow` under
- * `AllowUnsafe.embrace.danger` — the same documented escape hatch `agent/SwimConditionsMcpServer`
- * uses to bridge Kyo into a foreign synchronous API (there, the MCP SDK's callback interface; here,
- * munit's plain `Unit`- returning test bodies). Confirmed real by inspecting the actual pinned
- * `kyo-core:1.0.0-RC5` jar's `Sync.Unsafe` API, not guessed.
+ * pipeline's actual output is sane.
  */
 class E2ESpec extends munit.FunSuite:
   import E2ESpec.E2E

@@ -11,12 +11,7 @@ import marola.llm.LlmClient
 /**
  * Talks to a multimodal Ollama model (`llava`, `moondream`, ...) over the same OpenAI-compatible
  * `/v1/chat/completions` endpoint `LocalLlmClient` uses — vision requests just add an `image_url`
- * content part alongside the text prompt, per the standard OpenAI vision message format. Not run
- * against a real multimodal model in this environment: only a text-only model
- * (`dolphin-mixtral:8x7b`) was available locally while building this (confirmed via `ollama list`)
- * — pulling a vision-capable model (`ollama pull llava`, several GB) wasn't done unprompted. The
- * HTTP/JSON mechanics reuse `LocalLlmClient`'s already-confirmed request/response shape, so the
- * only unverified part is Ollama's handling of the `image_url` content part specifically.
+ * content part alongside the text prompt, per the standard OpenAI vision message format.
  */
 final class LocalVisionClient(baseUrl: String, model: String) extends VisionClient:
 

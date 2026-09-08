@@ -1,17 +1,9 @@
 #!/usr/bin/env bash
 # branches — local branch hygiene against GitHub PR state, for plain (non-stacked) branches.
-#
-#   scripts/branches.sh clean   # delete every local branch whose PR is MERGED (local + remote ref)
-#   scripts/branches.sh open    # open a base=main PR for every local branch that's ahead of main,
-#                                # has no PR yet, and isn't a mip-NNNN/k-slug stack branch
-#   --dry-run on either prints what would run.
-#
-# Stacked MIP task branches (mip-NNNN/k-slug) are `open`'s business only via
-# `scripts/stack.sh pr` / `just uprds MIP-NNNN` — those need the previous task's branch as base,
-# not main. `clean` is safe for them too: it only ever acts on a branch gh confirms MERGED.
-#
-# Requires `gh auth status` (not available inside the ai-jail sandbox — run from the host, see
-# AGENTS.md). Never touches the current branch or main.
+# scripts/branches.sh clean # delete every local branch whose PR is MERGED (local + remote ref)
+# scripts/branches.sh open # open a base=main PR for every local branch that's ahead of main, #
+# has no PR yet, and isn't a mip-NNNN/k-slug stack branch --dry-run on either prints what would
+# run.
 set -euo pipefail
 dry=0; args=()
 for a in "$@"; do [ "$a" = "--dry-run" ] && dry=1 || args+=("$a"); done

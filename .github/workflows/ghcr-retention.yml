@@ -1,26 +1,7 @@
 name: ghcr-retention (prune old image tags)
 
 # This repo is private, so GHCR storage is real cost (see docker.yml's cost-model comment), and
-# nothing prunes the images docker.yml/docker-local.yml push. Every merge to main that touches the
-# relevant paths adds a new `jvm-<sha>` and `native-<sha>`; `dev-<sha>` only on request; every
-# docker-local.yml run adds a `local-<sha>` candidate whether or not the benchmark gate promotes
-# it — a rejected candidate (bundling the ~2 GB Ollama model) never gets deleted on its own.
-#
-# This prunes only the `<target>-<sha>` immutable tags, one target at a time so each keeps its own
-# count — the moving tags (jvm, native, dev, local) are never touched: docs/RUN-LOCALLY.md §10,
-# docker-compose.yml and docker-smoke.yml's default all pull those, never a bare sha tag.
-#
-# Uses snok/container-retention-policy (not actions/delete-package-versions: that one has no way
-# to scope "keep the last N" to a tag-prefix filter, so a single global count would mix jvm/native/
-# dev/local candidates together instead of retaining N of each). `token: GITHUB_TOKEN` should work
-# here — this repo's own workflows publish the package, which grants it admin on the package by
-# default — but snok's docs note the built-in token has reduced filtering support versus a PAT; if
-# a run fails on a permissions/filtering error, add a classic PAT with the `packages:delete` scope
-# as a repo secret (e.g. `GHCR_CLEANUP_TOKEN`, per AGENTS.md — never commit the value) and swap it
-# in below.
-#
-# `workflow_dispatch`'s `dry-run` defaults to true: run it by hand first and read the job log
-# before trusting the schedule to delete anything for real.
+# nothing prunes the images docker.yml/docker-local.yml push.
 
 on:
   schedule:

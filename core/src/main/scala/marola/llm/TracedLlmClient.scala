@@ -8,16 +8,6 @@ import marola.observability.Tracing
  * MIP-0010 task 6: the decorator that gives every `LlmClient.complete` one span — `llm.<model>`
  * with the GenAI semantic-convention attributes MLflow ingests (`gen_ai.operation.name`,
  * `gen_ai.request.model`) plus marola's own sizes (message count, prompt/completion characters).
- * Latency is the span's own duration. Token counts are *not* recorded: `LlmClient.complete` returns
- * the text only, the `usage` block of the chat-completions response is discarded in
- * `LlmClient.extractContent` — surfacing it means widening the trait, deliberately not done here
- * (MIP §8: "token counts only when the response carries `usage`", which today it never does at this
- * layer).
- *
- * Prompt and completion text are attached only when `traceContent` is true
- * (`MAROLA_TRACE_CONTENT=1`): the prompt carries the swimmer's coordinates, which is personal data
- * that should not land in a trace store by default. Vendor-free — `core` sees only the `Tracing`
- * trait; wraps `LocalLlmClient` and `AzureFoundryLlmClient` alike in `AppConfig.llmClient`.
  */
 final class TracedLlmClient(
     inner: LlmClient,

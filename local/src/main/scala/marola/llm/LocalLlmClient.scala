@@ -7,11 +7,7 @@ import marola.json.JsonValue
 
 /**
  * Talks to any OpenAI-compatible local server — Ollama (`ollama serve`, default port 11434), LM
- * Studio, or a llama.cpp server. This is what makes marola runnable with zero Azure account:
- * confirmed end-to-end against a real local Ollama install (`dolphin-mixtral:8x7b`) while building
- * this — a trivial completion took ~46s on CPU, hence the generous default timeout below. No new
- * dependency: it's plain JSON over HTTP via the same `Http`/`JsonValue` marola already uses for
- * Open-Meteo/Overpass.
+ * Studio, or a llama.cpp server.
  */
 final class LocalLlmClient(baseUrl: String, model: String) extends LlmClient:
 

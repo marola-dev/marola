@@ -15,14 +15,7 @@ import marola.water.{BathingCondition, WaterQuality}
 /**
  * MIP-0005 §5.2: the machine-readable board the static map renders — one document per area per day,
  * every beach with every *daylight* hour scored, plus the same water/tide/sea facts the CLI's
- * detailed block prints. Pure: a serializer over `BestHour`s (from `Recommender.scoreDays`), no
- * I/O, no clock — `generatedAt` and `today` are inputs so a build is reproducible from fixtures.
- * The contract for any consumer (the page's `app.js`, the bot, an MCP tool) is
- * `site/board.schema.json`, checked against this output in `BoardSpec`.
- *
- * Presentation rules carried over from MIP-0001/0005 §6: dark hours never appear (so a "best hour"
- * can't be one), unfit water is an explicit `unfit: true` with the agency's own note, the lore
- * paragraph is verbatim with its source, and no per-visitor data exists anywhere.
+ * detailed block prints.
  */
 object Board:
 
@@ -48,8 +41,8 @@ object Board:
       scored: List[BestHour],
       lore: Option[LoreEntry],
       sources: Sources,
-      // MIP-0030: named trails near a beach/lake for this area — same for both days of a build
-      // (a trail doesn't change per day), so defaulted empty for every call site that predates it.
+      // MIP-0030: named trails near a beach/lake for this area — same for both days of a build (a
+      // trail doesn't change per day), so defaulted empty for every call site that predates it.
       trails: List[Trail] = Nil
   ): JsonValue =
     val perBeach = scored
@@ -58,7 +51,7 @@ object Board:
       .values
       .map(hours => beachJson(hours.sortBy(_.hour.time), today))
       .toList
-      // `bestScore` is the sort key: best first, then name for a stable order between runs
+      // `bestScore` is the sort key: best first, then name for a stable order between runs.
       .sortBy { case (score, name, _) => (-score, name) }
       .map(_._3)
 
@@ -103,9 +96,7 @@ object Board:
         )*
       ),
       "sea" -> seaJson(best.hour),
-      // MIP-0021: absent keys = no data for that facility, never a zeroed count. `{}` (never
-      // omitted) when OSM has nothing near this beach at all — an older board built before this
-      // MIP still validates (§7): `facilities` is optional in the schema, not required.
+      // MIP-0021: absent keys = no data for that facility, never a zeroed count.
       "facilities" -> facilitiesJson(best.facilities),
       "jellyfish" -> JsonValue.str(best.jellyfishRisk.toString),
       "whales" -> JsonValue.obj(
@@ -152,7 +143,7 @@ object Board:
 
   /**
    * Always an object, even with no provider: the card's water line is never absent, it says "no
-   * data" (absence of data is not evidence of cleanliness — MIP-0001 §6). `unfit` is the veto.
+   * data" (absence of data is not evidence of cleanliness — MIP-0001 §6).
    */
   private def waterJson(water: Option[WaterQuality], today: LocalDate): JsonValue =
     val verdict = Swimability.waterVerdict(water, today)
@@ -183,7 +174,7 @@ object Board:
 
   /**
    * `{"parking": 3, "toilets": 1, "lifeguard": 1}` — facilities OSM has no data for are absent
-   * keys, never a `0` (MIP-0021 §5: OSM cannot say "there is none"). `{}` for `Facilities.NoData`.
+   * keys, never a `0` (MIP-0021 §5: OSM cannot say "there is none").
    */
   private def facilitiesJson(f: Facilities): JsonValue =
     JsonValue.obj(f.counts.toList.map {

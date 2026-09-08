@@ -15,12 +15,7 @@ import marola.model.Coordinates
 /**
  * Santa Catarina's bathing-water programme (IMA — Instituto do Meio Ambiente), via the JSON feed
  * the portal's own map uses: `POST /relatorio/mapa`, empty body, no auth, ~207KB for all 260 points
- * with their last five samples. Verified live on 2026-09-05 (MIP-0001 §4.1); it is
- * **undocumented**, so every field read below is tolerant — a malformed point or sample is dropped,
- * never fatal — and the whole call is `Abort.catching`-wrapped by `Recommender`.
- *
- * Off-season (April-September) the full coast is sampled monthly, so
- * `WaterQuality.MaxSampleAgeDays` (45) is what keeps a two-month-old PRÓPRIA from looking current.
+ * with their last five samples.
  */
 final class ImaScWaterQualityClient(endpoint: String = ImaScWaterQualityClient.DefaultEndpoint)
     extends WaterQualityClient:

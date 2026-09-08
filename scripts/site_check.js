@@ -1,13 +1,7 @@
 #!/usr/bin/env node
-/* site_check — runs site/static/app.js against site/fixtures/board.json in a stub DOM and a stub
+/** site_check — runs site/static/app.js against site/fixtures/board.json in a stub DOM and a stub
  * Leaflet (`L`), no browser, no network, no dependencies (MIP-0009 task 2; §5 said this harness
- * existed since MIP-0008 — it did not, so here it is). It validates the fixture against
- * site/board.schema.json with the same JSON-Schema subset BoardSpec's SchemaCheck uses, then asserts
- * what the page does with it. Tasks 3-4 extend the assertions (wave markers, the aspects tooltip,
- * the card row); this file's job today is the baseline those tasks turn red then green.
- *
- *   node scripts/site_check.js        # run by `just quality-other` and ci.yml's quality-other job
- */
+ * existed since MIP-0008 — it did not, so here it is). */
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -25,7 +19,8 @@ function ok(cond, label, detail) {
   else { console.log('  FAIL ' + label + (detail ? ' — ' + detail : '')); fails++; }
 }
 
-// --- the JSON-Schema subset the board contract uses (mirror of BoardSpec.SchemaCheck) ----------
+// --- the JSON-Schema subset the board contract uses (mirror of BoardSpec.SchemaCheck)
+// ----------.
 function typeName(v) {
   if (v === null) return 'null';
   if (Array.isArray(v)) return 'array';
@@ -58,7 +53,8 @@ function validate(schema, value, p, root) {
   return errs;
 }
 
-// --- a DOM just big enough for app.js -----------------------------------------------------------
+// --- a DOM just big enough for app.js
+// -----------------------------------------------------------.
 class El {
   constructor(id) {
     this.id = id; this.innerHTML = ''; this.textContent = ''; this.hidden = false; this.value = '';
@@ -71,16 +67,19 @@ class El {
   querySelector() { return new El('anon'); }
 }
 const IDS = ['area', 'days', 'near', 'sound', 'toggle-list', 'hourbar', 'hour', 'hour-label', 'list', 'card', 'footer', 'status'];
-// 'smoke' is deliberately absent: the page must tolerate a build without the panel (app.js header).
+// 'smoke' is deliberately absent: the page must tolerate a build without the panel (app.js
+// header).
 
-// --- a Leaflet just big enough for app.js --------------------------------------------------------
+// --- a Leaflet just big enough for app.js
+// --------------------------------------------------------.
 function makeLeaflet() {
   const created = []; // every marker/circleMarker, in creation order
   const layer = (kind, latlng, opts) => {
     const l = { kind, latlng, opts, tooltip: null, tooltipOpts: null, handlers: {}, added: false };
     l.addTo = function (m) { this.added = true; m.layers.push(this); return this; };
-    // Leaflet hands back the marker's DOM node once it is on the map; app.js names it for a screen
-    // reader through this (it dropped `title`, which drew a second, native tooltip over Leaflet's).
+    // Leaflet hands back the marker's DOM node once it is on the map; app.js names it for a
+    // screen reader through this (it dropped `title`, which drew a second, native tooltip over
+    // Leaflet's).
     l.element = { attrs: {}, setAttribute(k, v) { this.attrs[k] = String(v); } };
     l.getElement = function () { return this.added ? this.element : null; };
     l.bindTooltip = function (c, o) { this.tooltip = c; this.tooltipOpts = o; return this; };
@@ -108,15 +107,14 @@ function makeLeaflet() {
 }
 
 // --- an AudioContext just big enough for app.js's wave-sound synth (no real audio, records the
-// node graph so the test can assert it was actually built) ---------------------------------------
+// node graph so the test can assert it was actually built)
+// ---------------------------------------.
 function makeAudioContext() {
   makeAudioContext.gains = [];
   function node(kind) {
     const n = { kind };
     // Connecting a node to an AudioParam does NOT replace the param's value — the Web Audio spec
-    // ADDS the connected signal to the intrinsic value. That is the whole reason this fake
-    // records modulators: silencing `gain.value` alone leaves any connected LFO still driving the
-    // param, which is audible. A fake that only tracked `gain.value` could not see that bug.
+    // ADDS the connected signal to the intrinsic value.
     n.connect = (target) => {
       if (target && typeof target.setTargetAtTime === 'function') target.modulators.push(n);
       return n;
@@ -133,7 +131,7 @@ function makeAudioContext() {
     return n;
   }
   // Peak amplitude a gain node can actually produce: its own value plus the full depth of every
-  // signal connected to its gain param. Silent means this is ~0, not just that `value` is.
+  // signal connected to its gain param.
   node.peak = (g) => g.gain.value + g.gain.modulators.reduce((s, m) => s + Math.abs(m.gain ? m.gain.value : 0), 0);
   return {
     state: 'running', currentTime: 0, destination: {}, sampleRate: 44100,
@@ -147,7 +145,8 @@ function makeAudioContext() {
   };
 }
 
-// --- run the page once against a board -----------------------------------------------------------
+// --- run the page once against a board
+// -----------------------------------------------------------.
 async function runPage(board) {
   const els = {}; IDS.forEach(id => { els[id] = new El(id); });
   const files = {
@@ -181,7 +180,7 @@ async function runPage(board) {
 
 (async () => {
   console.log('site_check:');
-  // 1. the fixture is a valid board, and the checker bites
+  // 1. the fixture is a valid board, and the checker bites.
   const errs = validate(SCHEMA, BOARD);
   ok(errs.length === 0, 'site/fixtures/board.json conforms to site/board.schema.json', errs.slice(0, 3).join('; '));
   const broken = JSON.parse(JSON.stringify(BOARD)); delete broken.beaches;
@@ -189,7 +188,7 @@ async function runPage(board) {
   const badEnum = JSON.parse(JSON.stringify(BOARD)); badEnum.beaches[0].hours[0].wind_level = 'gale';
   ok(validate(SCHEMA, badEnum).some(e => e.includes('not in enum')), 'the checker rejects an unknown wind_level');
 
-  // 2. the page renders the fixture: one marker per beach, tooltips, list, card
+  // 2. the page renders the fixture: one marker per beach, tooltips, list, card.
   const { els, L, errors } = await runPage(BOARD);
   ok(errors.length === 0, 'app.js logged no errors while loading', errors.join(' | '));
   const isWave = l => l.kind === 'marker' && l.opts && l.opts.icon && l.opts.icon.divIcon && /\bwave\b/.test(l.opts.icon.options.className);
@@ -204,8 +203,7 @@ async function runPage(board) {
   // MIP-0009 §3: six aspects, the fixture's own numbers, every emoji followed by its word — the
   // water cell now carries a colour dot instead of an emoji (2026-09-07: a dot scans by colour at
   // a glance the way the score markers already do; a repeated 💧 doesn't distinguish
-  // PRÓPRIA/IMPRÓPRIA/no-data). Joaquina also carries a 7th, facilities cell (MIP-0021 data,
-  // 2026-09-07: previously computed but never rendered on the map at all).
+  // PRÓPRIA/IMPRÓPRIA/no-data).
   [['🌬️ breezy, 27 km/h S', 'wind band + km/h + direction'], ['🌡️ water 19.0 °C', 'water temperature'],
    ['〰️ waves 1.3 m every 6 s', 'waves + period'], ['🪼 jellyfish Low', 'jellyfish'],
    ['🐋 whales Low (best 07:00)', "whales with the day's best hour"],
@@ -219,17 +217,19 @@ async function runPage(board) {
   ok(brava && /class="wide unfit"><i class="wdot c0"><\/i> 0\/1 IMPRÓPRIA/.test(String(brava.tooltip)), "the unfit beach's water cell carries the unfit class and the red dot", brava && String(brava.tooltip));
   ok(!String(brava.tooltip).includes('facilities'), 'Brava has no facilities data on the board, so no facilities cell renders (absent, not zeroed)', String(brava.tooltip));
   // the water verdict is a sentence and gets the full width (CSS: .aspects .grid .wide spans both
-  // columns and wraps) — nowrap in one column ran it past the 21 rem tooltip and clipped the card
+  // columns and wraps) — nowrap in one column ran it past the 21 rem tooltip and clipped the
+  // card.
   ok(/<span class="wide (water|unfit)"><i class="wdot/.test(tip), 'the water cell is the spanning, wrapping one', tip);
   ok((tip.match(/class="wide /g) || []).length === 2, 'the water cell and the facilities cell both span both columns', tip);
-  // one filled path, not two thin ribbons and a halo: the score colour needs area at area zoom
+  // one filled path, not two thin ribbons and a halo: the score colour needs area at area zoom.
   ok(joaq && (joaq.opts.icon.options.html.match(/<path /g) || []).length === 1, 'the wave is a single filled path', joaq && joaq.opts.icon.options.html);
   ok(joaq && !/opacity=|drop-shadow|transform=/.test(joaq.opts.icon.options.html), 'no per-path opacity, halo transform or drop-shadow in the marker SVG', joaq && joaq.opts.icon.options.html);
   ok(joaq && joaq.opts.title === undefined && joaq.opts.keyboard === true,
     'the marker has no `title` (no native tooltip over Leaflet\'s) but stays keyboard-reachable');
   ok(joaq && joaq.element.attrs['aria-label'] === 'Praia da Joaquina',
     'the marker element is named for a screen reader with aria-label', joaq && JSON.stringify(joaq.element.attrs));
-  // the legend key is the same glyph, or the key stops meaning "this shape on the map is a beach"
+  // the legend key is the same glyph, or the key stops meaning "this shape on the map is a
+  // beach".
   const keyPath = (/<span class="wave-key">.*?<path d="([^"]+)"/.exec(INDEX) || [])[1];
   const iconPath = (/<path d="([^"]+)"/.exec((joaq && joaq.opts.icon.options.html) || '') || [])[1];
   ok(!!keyPath && keyPath === iconPath, 'index.html\'s legend key draws the same path as the marker', keyPath + ' vs ' + iconPath);
@@ -242,7 +242,7 @@ async function runPage(board) {
     els.sound.listeners.click[0]({});
     ok(els.sound.attrs['aria-pressed'] === 'true', 'clicking the sound toggle flips aria-pressed to true');
     // Guard the other direction too: a "fix" that silenced the synth outright would satisfy the
-    // silence assertion below while breaking the feature. On means audible.
+    // silence assertion below while breaking the feature.
     const onGains = (makeAudioContext.gains || []).filter(g => (g.gain.modulators || []).length > 0);
     if (onGains[0]) {
       const onPeak = onGains[0].gain.value + onGains[0].gain.modulators.reduce((s, m) => s + Math.abs(m.gain ? m.gain.value : 0), 0);
@@ -250,10 +250,7 @@ async function runPage(board) {
     }
     els.sound.listeners.click[0]({});
     ok(els.sound.attrs['aria-pressed'] === 'false', 'clicking it again flips aria-pressed back to false — no exception either time');
-    // The bug this guards: aria-pressed flipping is not the same as the sound stopping. The LFO
-    // is connected to the output gain's AudioParam, and a connected signal is ADDED to the
-    // param's intrinsic value, so ramping that value to ~0 still leaves the LFO swinging the
-    // gain by its full depth — audible forever. Assert on peak amplitude, not the attribute.
+    // The bug this guards: aria-pressed flipping is not the same as the sound stopping.
     const gains = makeAudioContext.gains || [];
     const out = gains.filter(g => (g.gain.modulators || []).length > 0)[0];
     ok(!!out, 'the wave synth has an output gain with an LFO connected to its gain param');
@@ -266,7 +263,8 @@ async function runPage(board) {
     joaq.handlers.click({});
     ok(els.card.hidden === false && els.card.innerHTML.includes('Praia da Joaquina') && els.card.innerHTML.includes('55/100'),
       'clicking Joaquina\'s wave opens its card with the score');
-    // task 4: the card's first block is the very same aspect row the tooltip shows (touch parity)
+    // task 4: the card's first block is the very same aspect row the tooltip shows (touch
+    // parity).
     const card = els.card.innerHTML;
     const rowAt = card.indexOf('<div class="aspects">' + tip + '</div>');
     ok(rowAt >= 0 && rowAt < card.indexOf('<dl>') && rowAt > card.indexOf('</h2>'),
@@ -276,15 +274,15 @@ async function runPage(board) {
       'after selection the wave is re-drawn larger (32 px), marked selected, on top', sel && JSON.stringify(sel.opts.icon.options.iconSize));
     // "point by point" water quality (2026-09-07): opening a beach's card also plots its real
     // sampling points as their own circleMarkers — not just the one-line aggregate the card/
-    // tooltip text already shows. Joaquina's fixture has exactly one point, Ponto 33.
+    // tooltip text already shows.
     const waterPts = L.created.filter(l => l.added && l.kind === 'circleMarker' && String(l.tooltip).includes('Ponto 33'));
     ok(waterPts.length === 1 && waterPts[0].latlng[0] === -27.6301 && waterPts[0].latlng[1] === -48.4479,
       "opening Joaquina's card plots its one real water-sampling point as a circleMarker at its real coordinates",
       JSON.stringify(waterPts.map(p => p.latlng)));
     ok(String(waterPts[0].tooltip).includes('PRÓPRIA'), "the point marker's own tooltip carries its real condition", String(waterPts[0].tooltip));
-    // Selecting a different beach swaps the plotted points, rather than accumulating them —
-    // the stub DOM's querySelector can't re-find renderCard's own close-button listener (it
-    // returns a fresh element each call), so this exercises the same clear-and-replot path
+    // Selecting a different beach swaps the plotted points, rather than accumulating them — the
+    // stub DOM's querySelector can't re-find renderCard's own close-button listener (it returns a
+    // fresh element each call), so this exercises the same clear-and-replot path
     // (renderWaterPoints) a real close would, via select() on Brava instead.
     const bravaMarker = L.created.find(l => l.added && isWave(l) && String(l.tooltip).includes('Praia Brava'));
     if (bravaMarker && bravaMarker.handlers.click) bravaMarker.handlers.click({});
@@ -296,7 +294,7 @@ async function runPage(board) {
       JSON.stringify({ brava: bravaPointsAfter[0] && bravaPointsAfter[0].opts, joaquina: waterPts[0].opts }));
   } else ok(false, 'Joaquina\'s wave has a click handler');
 
-  // 3. an older board without wind_level (task 1 made it optional) renders: number, no band word
+  // 3. an older board without wind_level (task 1 made it optional) renders: number, no band word.
   const stripped = JSON.parse(JSON.stringify(BOARD));
   stripped.beaches.forEach(b => b.hours.forEach(h => { delete h.wind_level; }));
   const r2 = await runPage(stripped);
@@ -306,8 +304,7 @@ async function runPage(board) {
   ok(!/breezy|calm|strong/.test(tip2) && tip2.includes('🌬️ wind 27 km/h') && (tip2.match(/<span/g) || []).length === 7,
     'without wind_level the wind cell keeps the number and drops the band word; seven cells remain (Joaquina has facilities data)', tip2);
 
-  // 4. MIP-0030: trails — a board with no `trails` key renders every other layer unchanged, and one
-  //    with a `trails` array draws one L.polyline per trail, coloured by difficulty, with a tooltip.
+  // 4.
   ok(!('trails' in BOARD), 'the fixture board has no trails key yet — this is the "older board" case');
   const isPolyline = l => l.kind === 'polyline';
   ok(L.created.filter(l => l.added && isPolyline(l)).length === 0,

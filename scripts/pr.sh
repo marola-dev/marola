@@ -1,20 +1,11 @@
 #!/usr/bin/env bash
 # pr — the one-command agent path from a finished commit to a filled, pushed PR (AGENTS.md
-# "Attribution and cost accounting" — "write the commit, run `just pr`, nothing else"):
-#
-#   1. refuse on main or with a dirty working tree (tracked changes; untracked files are ignored) — commit first
-#   2. fill any missing Cost:/Tested: trailer (scripts/cost-fill.sh, itself idempotent)
-#   3. push — a mip-NNNN/k-* task branch goes through `scripts/stack.sh pr` (it already knows the
-#      right base: the previous task's branch); anything else is a plain `git push`, with
-#      `--force-with-lease` when cost-fill just rewrote history. The pre-push hook
-#      (.githooks/pre-push) runs the lint gates on the way out.
-#   4. create or update the PR from the template (scripts/uprd.sh; stack.sh pr does this itself
-#      for a mip task branch)
-#   5. print the PR URL
-#
-#   just pr             # fill -> push -> PR, in one step
-#   just pr --dry-run   # print every command (and the generated PR body) — no gh, no push, no
-#                        # history rewrite, safe with gh logged out
+# "Attribution and cost accounting" — "write the commit, run `just pr`, nothing else"): 1. refuse
+# on main or with a dirty working tree (tracked changes; untracked files are ignored) — commit
+# first 2. fill any missing Cost:/Tested: trailer (scripts/cost-fill.sh, itself idempotent) 3.
+# push — a mip-NNNN/k-* task branch goes through `scripts/stack.sh pr` (it already knows the right
+# base: the previous task's branch); anything else is a plain `git push`, with
+# `--force-with-lease` when cost-fill just rewrote history.
 set -euo pipefail
 
 dry_run=0
