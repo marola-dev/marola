@@ -89,7 +89,7 @@ jobs:
           VENV_ROOT: ${{ env.VENV_ROOT }}
         run: |
           set -euo pipefail
-          py="$VENV_ROOT/bin/python"
+          py="$VENV_ROOT/bin/marola-python"   # wraps the venv python with libstdc++ on the path
           # Refuse rather than fall back to CPU: a silent fallback is hours wasted, not a warning.
           "$py" -c 'import torch, sys; sys.exit(0 if torch.cuda.is_available() else "no CUDA device visible to torch")'
           # shellcheck disable=SC2086  # RESUME is intentionally an unquoted flag-or-empty
@@ -106,7 +106,7 @@ jobs:
           src="$(nix build --no-link --print-out-paths nixpkgs#llama-cpp.src)"
           "$VENV_ROOT/bin/python" -m pip install --quiet gguf
           nix shell nixpkgs#llama-cpp --command \
-            "$VENV_ROOT/bin/python" finetune/merge_export.py --preset "${{ inputs.preset }}" --llama-cpp "$src" \
+            "$VENV_ROOT/bin/marola-python" finetune/merge_export.py --preset "${{ inputs.preset }}" --llama-cpp "$src" \
               --adapter "${CKPT_ROOT}/${{ inputs.preset }}/dpo-adapter"
 
       - name: publish to Hugging Face
@@ -117,7 +117,7 @@ jobs:
         run: |
           set -euo pipefail
           BASE_MODEL="$(python3 -c "import sys; sys.path.insert(0,'finetune'); from train_lora import PRESETS; print(PRESETS['$PRESET']['hf'])")"
-          "$VENV_ROOT/bin/python" finetune/publish_hf.py \
+          "$VENV_ROOT/bin/marola-python" finetune/publish_hf.py \
             --repo "${GITHUB_REPOSITORY_OWNER}/marola-sea-${PRESET#qwen-}-GGUF" \
             --gguf "finetune/out/marola-sea-${PRESET}-Q4_K_M.gguf" \
             --gguf "finetune/out/marola-sea-${PRESET}-Q8_0.gguf" \
