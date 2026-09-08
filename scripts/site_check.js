@@ -330,6 +330,29 @@ async function runPage(board) {
   const macoGuarda = trails3.find(l => String(l.tooltip).includes('Maço-Guarda'));
   ok(macoGuarda && macoGuarda.opts.color === '#e0a800', 'a mountain_hiking trail draws the amber colour', macoGuarda && macoGuarda.opts.color);
 
+  // --- section nav ---------------------------------------------------------------------------
+  const nav = (/<nav class="sitenav"[\s\S]*?<\/nav>/.exec(INDEX) || [''])[0];
+  ok(nav.length > 0, 'the page has a section nav — /docs/ is reachable without typing the URL');
+  ok(/<a href="\/docs\/">Docs<\/a>/.test(nav), 'Docs is a real link to the published docs');
+  ok((nav.match(/<span aria-disabled="true">/g) || []).length === 5,
+    'the five sections with no page yet are spans, not links');
+  ok(!/<a[^>]+href="#"/.test(nav), 'no href="#" — a link that goes nowhere is worse than "soon"');
+  ok(INDEX.indexOf('<nav class="sitenav"') > INDEX.indexOf('</footer>'),
+    'the nav sits outside #footer, which renderFooter() overwrites on every board load');
+  ok(/el\.footer\.innerHTML\s*=/.test(APP),
+    'renderFooter still replaces #footer wholesale — the reason for the assertion above');
+
+  // --- lowercase house style, and what it must not touch ---------------------------------------
+  const CSS = fs.readFileSync(path.join(ROOT, 'site/static/style.css'), 'utf8');
+  ok(/body\s*\{\s*text-transform:\s*lowercase/.test(CSS), 'the site is lowercase as a house style');
+  const exempt = (/\.src,[\s\S]*?\{\s*text-transform:\s*none;?\s*\}/.exec(CSS) || [''])[0];
+  for (const sel of ['.src', '.water', '.list li', '.card h2', '.leaflet-tooltip .head']) {
+    ok(exempt.includes(sel), 'keeps its own case: ' + sel);
+  }
+  ok(/\.bar h1\s*\{\s*text-transform:\s*lowercase/.test(CSS),
+    "marola's own name stays lowercase, even inside an exempted container");
+  ok(/class="src"/.test(APP), 'app.js tags provider names so Open-Meteo and IMA/SC survive the style');
+
   if (fails === 0) { console.log('site_check: ok'); process.exit(0); }
   console.error('site_check: ' + fails + ' failure(s)'); process.exit(1);
 })().catch(e => { console.error('site_check: crashed —', e); process.exit(1); });

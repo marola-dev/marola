@@ -390,7 +390,9 @@
     var b = state.board;
     var srcs = [b.sources.beaches, b.sources.forecast, b.sources.water].filter(Boolean).map(function (s) {
       var href = SOURCE_LINKS[s.split(' ')[0]] || SOURCE_LINKS[s];
-      return href ? '<a href="' + href + '" target="_blank" rel="noopener">' + esc(s) + '</a>' : esc(s);
+      var label = href ? '<a href="' + href + '" target="_blank" rel="noopener">' + esc(s) + '</a>' : esc(s);
+      // .src keeps third-party names out of the lowercase house style — Open-Meteo, IMA/SC.
+      return '<span class="src">' + label + '</span>';
     }).join(' · ');
     var lore = b.lore ? '<p class="lore">' + (b.lore.kind === 'creature' ? '🐋 Sea life: ' : '🌊 Did you know? ') + esc(b.lore.text) +
       ' <a href="' + esc(b.lore.source) + '" target="_blank" rel="noopener">[source]</a></p>' : '';

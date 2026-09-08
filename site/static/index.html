@@ -49,6 +49,18 @@
     <p id="status">loading…</p>
   </footer>
 
+  <!-- Outside #footer on purpose: renderFooter() replaces that element's innerHTML on every
+       board load, so anything static in there is destroyed. Sections with no page yet are
+       <span>, never <a href="#">: a link that goes nowhere is worse than one that says "soon". -->
+  <nav class="sitenav" aria-label="Sections">
+    <a href="/docs/">Docs</a>
+    <span aria-disabled="true">Alerts <i>soon</i></span>
+    <span aria-disabled="true">News <i>soon</i></span>
+    <span aria-disabled="true">About <i>soon</i></span>
+    <span aria-disabled="true">Contact <i>soon</i></span>
+    <span aria-disabled="true">Donate <i>soon</i></span>
+  </nav>
+
   <button id="chat-toggle" type="button" class="chat-toggle" hidden aria-controls="chat-panel" aria-expanded="false">ask the ocean</button>
   <section id="chat-panel" class="chat-panel" hidden aria-live="polite">
     <header>

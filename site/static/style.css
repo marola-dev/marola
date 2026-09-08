@@ -118,6 +118,29 @@ button[aria-pressed="true"], .segmented button.on { background: var(--accent); c
 .footer { padding: .75rem 1rem 1.1rem; font-size: 13px; color: var(--muted); background: var(--panel); border-top: 1px solid var(--line); }
 .footer p { margin: .3rem 0; max-width: 65ch; }
 .footer .lore { font-size: 15px; color: var(--ink); }
+/* Lowercase house style. The exemptions are names marola does not own: the providers
+ * (Open-Meteo, IMA/SC, OpenStreetMap) and the agency's own bathing-water verdict, which
+ * MIP-0001 shows verbatim — lowercasing PRÓPRIA/IMPRÓPRIA would restate a classification
+ * marola did not make. Style stops where someone else's words start. */
+body { text-transform: lowercase; }
+/* Names marola did not choose keep their own case: providers, the agency's verdict, and the
+ * beaches themselves. The containers are exempted rather than the strings wrapped — app.js emits
+ * beach names as bare text nodes, and adding a span there would churn markup the list layout and
+ * the harness both depend on. */
+.src, .water, .unfit, .leaflet-control-attribution,
+.list li, .card h2, .leaflet-tooltip .head, .marker-label { text-transform: none; }
+/* marola's own name is lowercase everywhere, including where a container above opted out. */
+.bar h1 { text-transform: lowercase; }
+
+/* Section row under the footer. Wraps rather than scrolls, so all six stay reachable at 390px. */
+.sitenav { display: flex; flex-wrap: wrap; gap: .35rem 1.1rem; align-items: baseline;
+  padding: .6rem 1rem 1.1rem; font-size: 13px; background: var(--panel); border-top: 1px solid var(--line); }
+.sitenav a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.sitenav a:hover { text-decoration: underline; }
+.sitenav span { color: var(--muted); cursor: default; }
+.sitenav i { font-style: normal; font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 .35rem; margin-left: .25rem; }
+
 .nojs { padding: 1rem; max-width: 65ch; }
 
 .leaflet-container { font: inherit; }
