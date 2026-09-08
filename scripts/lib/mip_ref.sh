@@ -1,15 +1,6 @@
 #!/usr/bin/env bash
 # mip_ref — shared MIP-number detection for scripts/uprd.sh and .github/workflows/pr-body.yml's
-# title step. Sourced, not run directly (no execute bit) — the shebang is only so shellcheck
-# knows the dialect. Source it, then: mip_ref="$(detect_mip_ref "$branch" "$range")"
-#
-# Three tiers, same order everywhere a MIP gets auto-detected in this repo (scripts/uprd.sh's own
-# `generate_mip` table cell used to duplicate this inline — now delegates here):
-#   1. a `mip-NNNN` token anywhere in the branch name (`mip-0010/3-…`, `docs/mip-0014-…`)
-#   2. a commit subject starting with `MIP-NNNN` (subjects only, not bodies — a body can mention
-#      another MIP in passing without this commit being scoped to it)
-#   3. the single `docs/mips/MIP-NNNN-*.md` file touched on the branch
-# Echoes "MIP-NNNN" (always uppercase) or nothing if none of the three matched.
+# title step.
 detect_mip_ref() {
   local branch="$1" range="$2" mip_ref=""
   if [[ "$branch" =~ [Mm][Ii][Pp]-([0-9]{4}) ]]; then

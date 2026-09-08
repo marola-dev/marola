@@ -1,20 +1,8 @@
 #!/usr/bin/env bash
 # pr-label — apply the deterministic label taxonomy (scripts/lib/pr_labels.sh) to one PR.
-# Labels are derived, never guessed: the PR's MIP number (branch name / commit subject /
-# docs/mips/MIP-NNNN-*.md touched — same detection scripts/uprd.sh uses), the top-level dirs it
-# touched, and its author. No LLM call, no cost.
-#
-#   scripts/pr-label.sh              # the current branch's open PR
-#   scripts/pr-label.sh 168          # that PR by number (also `#168`)
-#   scripts/pr-label.sh --dry-run 168
-#
-# Only adds labels (gh --add-label is additive) — never removes one, so a manually-added label
-# survives a re-run. Re-running after the taxonomy changes will not clear a label this script
-# applied under an old mapping; edit it by hand if that happens.
-# Needs `gh auth status` OK.
 set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=scripts/lib/pr_labels.sh
+# shellcheck source=scripts/lib/pr_labels.sh.
 source "$script_dir/lib/pr_labels.sh"
 
 dry_run=0; pr_arg=""

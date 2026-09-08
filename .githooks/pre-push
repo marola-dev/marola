@@ -1,16 +1,5 @@
 #!/usr/bin/env bash
-# Blocks a push if the lint gates ci.yml runs would fail on it. The last push before a merge is
-# the one that lands on main, so code is linted before it leaves the machine — not discovered
-# in a red `quality-other` job after the merge (an unused import in scripts/cost-split.py got
-# there that way: `just quality` had skipped ruff and its file list missed the script).
-#
-# Always: `just quality-other` (ruff on every .py, the scripts/*.py self-tests, actionlint,
-# hadolint — seconds, no JVM). When a pushed commit touches Scala/sbt/scalafmt/scalafix config:
-# `just quality-scala` (scalafmt + scalafix, needs sbt) as well.
-#
-# Installed via `core.hooksPath` like .githooks/pre-commit (flake.nix's shellHook, or `just
-# install-hooks` once outside `nix develop`). Bypass: `git push --no-verify` — CI runs the same
-# gates anyway, so a bypass only moves the failure back to GitHub.
+# Blocks a push if the lint gates ci.yml runs would fail on it.
 set -euo pipefail
 
 remote="$1"
@@ -27,7 +16,8 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
   [[ "$local_sha" == "$zero" ]] && continue      # deleting a remote branch: nothing to lint
   pushing=1
   if [[ "$remote_sha" == "$zero" ]]; then
-    # New branch on the remote: what's new relative to origin/main (no origin/main: lint everything).
+    # New branch on the remote: what's new relative to origin/main (no origin/main: lint
+    # everything).
     base="$(git merge-base "$local_sha" origin/main 2>/dev/null || true)"
   else
     base="$remote_sha"
@@ -42,14 +32,7 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
   # A commit that touches site/static/** (the user-visible frontend surface, "what a user sees"
   # per .claude/skills/mip/SKILL.md's "When a MIP is warranted") must say why: either the MIP it's
   # for, or an explicit "none — <reason>" for a bug fix/typo/refactor with no behaviour change
-  # (the mip skill's own "Not for" list). Silence is the thing this check exists to remove — same
-  # shape as the PR template's own MIP row, promoted to a per-commit, per-push gate.
-  # Commits already reachable from origin/main are already pushed and reviewed, so this gate has
-  # no business re-judging them. Without the exclusion, merging main into a branch drags main's
-  # own history back into `$base..$local_sha` and blocks the push over commits that predate this
-  # rule — a real block hit on 2026-09-07 merging main into docs/mip-0020-instagram-pipeline,
-  # which re-flagged #146/#147/#179. Pushing main itself is unaffected: commits not yet on
-  # origin/main are not reachable from it, so they still get checked.
+  # (the mip skill's own "Not for" list).
   exclude=()
   if git rev-parse -q --verify origin/main >/dev/null 2>&1; then
     exclude=(--not origin/main)
