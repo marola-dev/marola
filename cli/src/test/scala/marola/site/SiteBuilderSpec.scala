@@ -51,6 +51,25 @@ class SiteBuilderSpec extends munit.FunSuite:
 
   private def tmpDir(prefix: String): Path = Files.createTempDirectory(prefix)
 
+  /**
+   * An agency that is reachable and has nothing to say — IMA/SC's shape while its production host
+   * served a self-signed certificate, and INEA/RJ's once its hardcoded bulletin aged out.
+   */
+  private object SilentProvider extends marola.water.WaterQualityClient:
+    def name: String = "IMA/SC"
+    def samplingPoints: List[marola.water.SamplingPoint] < Sync = Nil
+
+  private def buildWith(
+      out: Path,
+      static: Path,
+      client: marola.water.WaterQualityClient
+  ): List[Path] =
+    Http.withTransport(Fixtures.campeche()) {
+      Sync.Unsafe.evalOrThrow(
+        SiteBuilder.build(List(floripa), out, static, water = _ => Some(client), now = now)
+      )
+    }
+
   private def build(out: Path, static: Path): List[Path] =
     Http.withTransport(Fixtures.campeche()) {
       Sync.Unsafe.evalOrThrow(
@@ -63,6 +82,27 @@ class SiteBuilderSpec extends munit.FunSuite:
         )
       )
     }
+
+  test("a provider that returns nothing is named as such, never claimed as a working source") {
+    val out = tmpDir("marola-site-out")
+    val static = tmpDir("marola-site-static")
+    Files.writeString(static.resolve("index.html"), "<html>marola</html>")
+    Files.createDirectories(static.resolve("vendor"))
+    Files.writeString(static.resolve("vendor").resolve("leaflet.js"), "// leaflet")
+
+    val _ = buildWith(out, static, SilentProvider)
+    val board = JsonValue.parse(
+      Files.readString(out.resolve("data").resolve("floripa").resolve("2026-09-06.json"))
+    )
+    assertEquals(board("sources")("water").str, Some("IMA/SC (no data returned)"))
+    // The provider name still comes first, so app.js's SOURCE_LINKS lookup (split on the first
+    // space) resolves the same link it always did.
+    assert(board("sources")("water").str.exists(_.startsWith("IMA/SC")))
+    assert(
+      board("beaches").arr.forall(_("water")("summary").str.contains("no data")),
+      "every beach should read 'no data' when the provider returned nothing"
+    )
+  }
 
   test("build writes both days, latest.json and the areas index, and copies site/static") {
     val out = tmpDir("marola-site-out")

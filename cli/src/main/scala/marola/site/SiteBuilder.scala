@@ -72,11 +72,18 @@ object SiteBuilder:
   val DefaultOut: Path = Path.of("site", "dist")
   val DefaultStatic: Path = Path.of("site", "static")
 
-  private val sources = (water: Option[WaterQualityClient]) =>
+  /**
+   * `gotData` comes from the scored beaches, not from which client was configured. Naming a
+   * provider that returned nothing is what let marola.dev claim "IMA/SC" beside 80 beaches reading
+   * "no data" — a visitor cannot tell that from an agency publishing nothing that week. The suffix
+   * keeps the provider's name first, so app.js's SOURCE_LINKS lookup (which splits on the first
+   * space) still resolves the link.
+   */
+  private val sources = (water: Option[WaterQualityClient], gotData: Boolean) =>
     Board.Sources(
       beaches = "OpenStreetMap/Overpass",
       forecast = "Open-Meteo",
-      water = water.map(_.name)
+      water = water.map(c => if gotData then c.name else s"${c.name} (no data returned)")
     )
 
   /** Builds every area into `out` and returns the files written. */
@@ -126,12 +133,13 @@ object SiteBuilder:
     yield
       val dir = out.resolve("data").resolve(area.id)
       Files.createDirectories(dir)
+      val gotWater = scored.exists(_.waterQuality.exists(_.points.nonEmpty))
       val entries = SeaLore.loadDefault()
       val regions = SeaLore.regionTagsFor(area.origin)
       val dayFiles = days.map { day =>
         val lore = SeaLore.pick(entries, day, area.name, regions)
         val board =
-          Board.build(area.id, day, today, localNow, scored, lore, sources(water), trails)
+          Board.build(area.id, day, today, localNow, scored, lore, sources(water, gotWater), trails)
         write(dir.resolve(s"$day.json"), board)
       }
       val latest = JsonValue.obj(

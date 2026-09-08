@@ -45,9 +45,32 @@ object Recommender:
       case None => Map.empty[String, WaterQuality]
       case Some(c) =>
         Abort.run(Abort.catching[Throwable](c.samplingPoints)).map {
-          case Result.Success(points) => WaterQualityMatcher.assign(beaches, points, c.name)
-          case _                      => Map.empty[String, WaterQuality]
+          case Result.Success(points) =>
+            if points.isEmpty then
+              java.lang.System.err.println(
+                s"water: ${c.name} returned no sampling points — every beach will read 'no data'"
+              )
+            WaterQualityMatcher.assign(beaches, points, c.name)
+          // Was `case _ => Map.empty`, which made an unreachable agency indistinguishable from an
+          // agency that published nothing. Both IMA/SC (a self-signed cert on their production
+          // host) and INEA/RJ went dark for days without a single line of output.
+          case Result.Failure(e) =>
+            java.lang.System.err.println(s"water: ${c.name} failed — ${describe(e)}")
+            Map.empty[String, WaterQuality]
+          case other =>
+            java.lang.System.err.println(s"water: ${c.name} failed — $other")
+            Map.empty[String, WaterQuality]
         }
+
+  /**
+   * The cause, not the wrapper: a TLS failure buried three `caused by` levels down is the whole
+   * message, and `toString` on the outer exception hides it.
+   */
+  private def describe(t: Throwable): String =
+    val chain = Iterator.iterate(t)(_.getCause).takeWhile(_ != null).take(4).toList
+    chain
+      .map(e => s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}")
+      .mkString(" <- ")
 
   /**
    * MIP-0021: one extra Overpass call for the whole short list, same dependency-inversion shape as
