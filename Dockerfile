@@ -47,7 +47,10 @@ COPY --chown=marola:marola site/static /app/site/static
 USER 10001:10001
 VOLUME ["/app/data"]
 # One CLI run at a time, short-lived: the serial GC and a small heap beat the defaults here.
-ENV JAVA_TOOL_OPTIONS="-XX:+UseSerialGC -XX:MaxRAMPercentage=75 -XX:TieredStopAtLevel=1"
+# --sun-misc-unsafe-memory-access=allow: same JEP 498 warning as build.sbt's forked run — Scala
+# 3.9.0's LazyVals calls Unsafe.objectFieldOffset. See build.sbt for why it is a suppression with
+# an expiry date rather than a fix.
+ENV JAVA_TOOL_OPTIONS="-XX:+UseSerialGC -XX:MaxRAMPercentage=75 -XX:TieredStopAtLevel=1 --sun-misc-unsafe-memory-access=allow"
 ENTRYPOINT ["java", "-jar", "/app/marola.jar"]
 CMD ["--brief"]
 # The MCP server is the other main class in the same jar (build.sbt):

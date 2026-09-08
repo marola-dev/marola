@@ -221,6 +221,17 @@ lazy val cli = (project in file("cli"))
     // sbt's *stdout* (the server's INFO log line surfaced there, corrupting the transport again).
     // Passthrough keeps child stdout on stdout and child stderr on stderr, unwrapped.
     Compile / run / fork := true,
+    // Silences four lines on every forked run, from JDK 24's JEP 498 warning about
+    // sun.misc.Unsafe memory access: scala.runtime.LazyVals$ calls objectFieldOffset to
+    // initialise instance lazy vals. Nothing in marola calls Unsafe — it is scala-library
+    // 3.9.0, and 3.9.0 is the newest stable Scala (3.10.0 is at RC1), so there is no version
+    // to upgrade to today.
+    //
+    // A suppression, not a fix, and it has an expiry: JEP 471's roadmap goes warn -> deny by
+    // default -> removal, and when Unsafe is removed this flag stops being accepted and the JVM
+    // will refuse to start. Re-check on every Scala bump; the real fix is upstream moving
+    // LazyVals to VarHandles. Tests are unaffected — they do not fork.
+    Compile / run / javaOptions += "--sun-misc-unsafe-memory-access=allow",
     Compile / run / connectInput := true,
     Compile / run / outputStrategy := Some(StdoutOutput),
     // Real regression from the fork above, confirmed live 2026-09-07: a forked child's default
