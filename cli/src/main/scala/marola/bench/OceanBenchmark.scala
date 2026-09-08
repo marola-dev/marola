@@ -10,26 +10,7 @@ import marola.json.JsonValue
 import marola.knowledge.{KnowledgeStore, OceanQa}
 import marola.llm.LlmClient
 
-/**
- * Is marola's answer better than just asking the model? Three arms, same local model, same
- * questions (`benchmark_questions.json`: ocean science, history, animals, nature, safety — some
- * inside the `knowledge/` corpus, most outside it on purpose):
- *
- *   - `baseline` — the plain prompt (`OceanQa.generalMessages`), no retrieval.
- *   - `rag-strict` — marola's grounded answer; abstains when nothing relevant is retrieved.
- *   - `rag-general` — grounded when the corpus covers it, labelled general knowledge otherwise.
- *
- * Scoring is deterministic and cheap — no LLM-as-judge (that's `FUTURE-WORK.md` §4.1):
- *   - **coverage**: share of the question's expected keywords present in the answer (each keyword
- *     may list alternatives with `|`). A proxy for "said the right thing".
- *   - **cited**: the answer carries a `[n]` citation — only RAG can do this; it's the user-facing
- *     difference between "trust me" and "here's where it's from".
- *   - **abstained**: the answer is the no-notes reply — honest on off-corpus questions, useless for
- *     the user who asked.
- *   - **latency**.
- * The report ends with a verdict computed from the numbers, including what would beat the baseline
- * where it loses. Run with `just benchmark`; the report is saved under `data/`.
- */
+/** Is marola's answer better than just asking the model?. */
 object OceanBenchmark:
 
   final case class Question(

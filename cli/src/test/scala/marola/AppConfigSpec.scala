@@ -15,8 +15,7 @@ import marola.water.{ImaScWaterQualityClient, IneaRjWaterQualityClient, InemaBaW
 /**
  * `TraceBackend.fromEnv` (MIP-0010 tracing-lane task 5): pure, no network, no `sys.env` read —
  * every `MAROLA_TRACES` value plus the backward-compat default derived from whether
- * `APPLICATIONINSIGHTS_CONNECTION_STRING` is set. The first `AppConfig`-adjacent test file in this
- * module (`cli/src/test`), so it also gives future config-parsing tests a home.
+ * `APPLICATIONINSIGHTS_CONNECTION_STRING` is set.
  */
 class AppConfigSpec extends munit.FunSuite:
 
@@ -67,7 +66,8 @@ class AppConfigSpec extends munit.FunSuite:
     assertEquals(FacilitiesProvider.fromEnv(None), FacilitiesProvider.Overpass)
   }
 
-  // --- the enum parsers: every branch, including the "don't fail to start on a typo" default -----
+  // --- the enum parsers: every branch, including the "don't fail to start on a typo" default
+  // -----.
 
   test(
     "Provider.fromEnv: only 'azure' (any case) is Azure; anything else, including unset, is Local"
@@ -112,7 +112,8 @@ class AppConfigSpec extends munit.FunSuite:
     assertEquals(FacilitiesProvider.fromEnv(Some("overpass")), FacilitiesProvider.Overpass)
   }
 
-  // --- origin: both or neither, never half-applied ----------------------------------------------
+  // --- origin: both or neither, never half-applied
+  // ----------------------------------------------.
 
   test("origin needs both lat and lon — one without the other is ignored, not half-applied") {
     assertEquals(
@@ -124,7 +125,8 @@ class AppConfigSpec extends munit.FunSuite:
     assertEquals(base.copy(originLat = scala.None, originLon = scala.None).origin, scala.None)
   }
 
-  // --- redacted: the whole point is that secrets never reach stdout (FABLE_REVIEW C1) ------------
+  // --- redacted: the whole point is that secrets never reach stdout (FABLE_REVIEW C1)
+  // ------------.
 
   test("redacted never prints a secret's value, only whether it is set") {
     val withSecrets = base
@@ -183,7 +185,8 @@ class AppConfigSpec extends munit.FunSuite:
     assert(r.contains("no endpoint"), r)
   }
 
-  // --- waterQualityClient: every explicit provider, and Auto's geography ------------------------
+  // --- waterQualityClient: every explicit provider, and Auto's geography
+  // ------------------------.
 
   private val floripa = Coordinates(-27.6, -48.5) // Santa Catarina -> IMA/SC
   private val salvador = Coordinates(-12.97, -38.5) // Bahia -> INEMA/BA
@@ -220,7 +223,8 @@ class AppConfigSpec extends munit.FunSuite:
     )
   }
 
-  // --- the client selectors: Local always resolves, Azure only with its settings present ---------
+  // --- the client selectors: Local always resolves, Azure only with its settings present
+  // ---------.
 
   test("accessibilityClient is never None — Off resolves to the Noop client, not absence") {
     assert(isA[OverpassAccessibilityClient](base.accessibilityClient))
@@ -346,7 +350,7 @@ class AppConfigSpec extends munit.FunSuite:
     assert(base.copy(localEmbedModel = "all-minilm").knowledgeStore ne null)
   }
 
-  // --- tracing: an effect, so run it. Every backend without its settings degrades to Noop --------
+  // --- tracing: an effect, so run it.
 
   test("tracing is Noop when off, and when a backend is chosen without the settings it needs") {
     assertEquals(run(base.copy(tracesBackend = TraceBackend.Off).tracing), Tracing.Noop)
@@ -383,9 +387,7 @@ class AppConfigSpec extends munit.FunSuite:
 
   /**
    * Every field at its `fromEnv` default, so each test can `.copy` exactly the one thing it is
-   * about. Built by hand rather than read from `sys.env`: these tests must not depend on the
-   * machine they run on, and `AppConfig.fromEnv` is itself covered by asserting the defaults it
-   * produces below.
+   * about.
    */
   private val base = AppConfig(
     telegramBotToken = scala.None,

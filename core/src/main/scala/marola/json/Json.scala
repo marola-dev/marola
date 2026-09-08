@@ -7,8 +7,7 @@ package marola.json
  * `Http.scala`'s doc comment and `docs/FUTURE-WORK.md`) — every shape this module needs to
  * read/write (Open-Meteo, Overpass, Ollama, Azure Maps/Vision, Telegram's Bot API) is plain nested
  * object/array/string/number, so a small recursive-descent parser plus a matching renderer covers
- * it without pulling in a derivation-macro-based library for a handful of ad hoc shapes. Migrating
- * to `kyo.Schema` typed derivation is tracked future work, not ruled out.
+ * it without pulling in a derivation-macro-based library for a handful of ad hoc shapes.
  */
 enum JsonValue derives CanEqual:
   case JObject(fields: Map[String, JsonValue])
@@ -88,11 +87,7 @@ object JsonValue:
 
   final case class JsonParseException(message: String) extends Exception(message)
 
-  /**
-   * Parses `input` into a `JsonValue`, throwing `JsonParseException` on malformed input. Thrown
-   * rather than returned as `Either` because every call site here treats a malformed response from
-   * a third-party API as an unrecoverable-for-this-request fault, not a case to branch on.
-   */
+  /** Parses `input` into a `JsonValue`, throwing `JsonParseException` on malformed input. */
   def parse(input: String): JsonValue =
     val parser = new Parser(input)
     val result = parser.parseValue()

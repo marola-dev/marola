@@ -8,9 +8,7 @@ import marola.model.{Beach, Coordinates}
 
 /**
  * Finds named beaches near a point via OpenStreetMap's Overpass API (overpass-api.de) — free, no
- * API key, no signup. Good enough for a POC; a production deployment calling this more than
- * occasionally should either self-host an Overpass instance or cache results, per Overpass's own
- * fair-use policy (https://wiki.openstreetmap.org/wiki/Overpass_API#Introduction).
+ * API key, no signup.
  */
 object BeachFinder:
 
@@ -20,15 +18,13 @@ object BeachFinder:
    * Upper bound on elements Overpass returns *before* marola sorts them by distance — Overpass's
    * `out N` truncation is in database order, not by distance, so this has to be comfortably larger
    * than the number of named beaches any plausible radius contains, or the nearest ones can be cut
-   * arbitrarily. An earlier version used `limit * 4` (24) and, around Florianópolis at 20km with
-   * relations included (~40 named beaches), that silently dropped beaches 200m away.
+   * arbitrarily.
    */
   private val MaxOverpassElements = 500
 
   /**
    * Overpass's server-side query budget, and the client-side HTTP timeout kept above it so a slow
-   * query surfaces as Overpass's own error rather than a client abort. Relation-aware `around`
-   * queries are slow on the public instance (~29s observed) — see `Http.postForm`.
+   * query surfaces as Overpass's own error rather than a client abort.
    */
   private val OverpassTimeoutSeconds = 45
   private val HttpTimeoutSeconds = 60L
@@ -36,8 +32,7 @@ object BeachFinder:
   /**
    * Extra attempts after a 429/5xx from the public instance (`Http.RetryableStatuses`): a 504 under
    * load is routine there and transient — one cost a scheduled site build its second area on 5 Sep
-   * 2026. Two retries with 1 s then 2 s back-off; worst case ~3 min, inside site.yml's 20 min job
-   * budget and still well under Overpass's fair-use expectations (one query per area).
+   * 2026.
    */
   private val OverpassRetries = 2
 
@@ -46,8 +41,7 @@ object BeachFinder:
     // All three OSM element types: large beaches are very often mapped as multipolygon
     // *relations*, not ways — confirmed on real data: Praia do Campeche, Joaquina, Armação,
     // Matadeiro and ~40 others around Florianópolis are relations, and a node+way-only query
-    // returned just two beaches within 20km of Campeche. `["name"]` drops unnamed fragments up
-    // front (parseElement would discard them anyway) so the element cap isn't spent on them.
+    // returned just two beaches within 20km of Campeche.
     val around = s"""["natural"="beach"]["name"](around:$radiusM,${origin.lat},${origin.lon})"""
     val query =
       s"""[out:json][timeout:$OverpassTimeoutSeconds];

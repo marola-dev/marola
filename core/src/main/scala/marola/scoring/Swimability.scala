@@ -18,15 +18,7 @@ object WaterVerdict:
 
 /**
  * Pure decision logic over one already-fetched hourly forecast slice — no I/O, no Kyo effect type,
- * trivially unit-testable (see `SwimabilitySpec`). Same split as `AGENTS.md`'s code-style rule:
- * fetch the data at the effect boundary, score it here.
- *
- * The jellyfish part is a heuristic, not a forecast: there is no free (or, as far as could be
- * found, any) public jellyfish-bloom API. The signals used below — warm sea surface temperature,
- * weak wind, calm seas, weak current — are the commonly cited ecological correlates for jellyfish
- * accumulating near shore, not a validated model. Treat `JellyfishRisk` as "worth a visual check
- * before wading in", not a guarantee either way. See docs/ARCHITECTURE.md's "Future work" section
- * for the plan to calibrate this against real user-reported sightings.
+ * trivially unit-testable (see `SwimabilitySpec`).
  */
 object Swimability:
 
@@ -42,8 +34,7 @@ object Swimability:
 
   // Humpback whales migrate along the Brazilian coast to breed/calve in warmer water roughly
   // July-November (austral winter/spring), peaking around August-September — e.g. Instituto
-  // Baleia Jubarte's Abrolhos-bank season runs July-November. This is a calendar fact, not
-  // per-hour data, so it's the one signal below that doesn't come from Open-Meteo.
+  // Baleia Jubarte's Abrolhos-bank season runs July-November.
   private val WhaleSeasonMonths: Set[Int] = Set(7, 8, 9, 10, 11)
   private val WhaleCalmWaveHeightM = 1.0 // rougher than the swim-comfort threshold: you just
   private val WhaleCalmWindKmh = 20.0 // need to *spot* a blow/breach, not swim in it
@@ -65,9 +56,7 @@ object Swimability:
 
   /**
    * Informational only — unlike `jellyfishRisk`, this never feeds into `score`: whether you might
-   * spot a whale doesn't make an hour more or less safe/pleasant to swim in. Daylight is a hard
-   * requirement (you can't spot a blow/breach in the dark), then in-season + calm-enough seas
-   * upgrade it from Low.
+   * spot a whale doesn't make an hour more or less safe/pleasant to swim in.
    */
   def whaleSightingLikelihood(hour: HourlyConditions): WhaleSightingLikelihood =
     val inSeason = WhaleSeasonMonths.contains(hour.time.getMonthValue)
@@ -89,10 +78,7 @@ object Swimability:
       case Some(_)                          => (0, None)
       case None                             => (-5, Some("no wave data"))
 
-  /**
-   * The one place the wind thresholds turn into a band. `windDelta` scores from it and the board
-   * publishes it as `wind_level` (MIP-0009 §5), so the CLI's note and the map's word can't drift.
-   */
+  /** The one place the wind thresholds turn into a band. */
   def windLevel(kmh: Option[Double]): Option[WindLevel] =
     kmh.map {
       case w if w >= StrongWindKmh => WindLevel.Strong
@@ -121,9 +107,7 @@ object Swimability:
 
   /**
    * Night is not a swim slot: no lifeguards, no visibility, no way to check the shoreline for
-   * jellyfish. A heavy penalty rather than a veto so a beach with data only for dark hours still
-   * ranks somewhere; in practice any daylight hour beats any dark one. Before this every hour tied
-   * on a flat day and `00:00` "won" by being first (RUN-LOCALLY.md's own sample output).
+   * jellyfish.
    */
   private val DarkPenalty = -60
 
@@ -132,11 +116,7 @@ object Swimability:
       case Some(false) => (DarkPenalty, Some("dark"))
       case _           => (0, None)
 
-  /**
-   * Tie-breaker among equally scored hours: distance from 10:00. Mid-morning is when lifeguard
-   * posts are staffed, the light is best and the sea is usually calmest before the afternoon wind —
-   * so a flat forecast recommends 10:00, not 06:00 or 17:00. Lower is better.
-   */
+  /** Tie-breaker among equally scored hours: distance from 10:00. */
   def hourPreference(hour: HourlyConditions): Int =
     math.abs(hour.time.getHour - 10)
 
@@ -153,7 +133,7 @@ object Swimability:
    * MIP-0001 §6, verbatim: every fresh matched point IMPRÓPRIA → veto (score 0); some IMPRÓPRIA →
    * −20 and name the spots to avoid; all PRÓPRIA → nothing; no match / provider `none` → nothing
    * (absence of data is not evidence of pollution); every sample older than 45 days → treated as no
-   * data, but say so. Uses the agency's own classification (`condition`), never the raw count.
+   * data, but say so.
    */
   def waterVerdict(water: Option[WaterQuality], today: LocalDate): WaterVerdict =
     water match
@@ -200,8 +180,7 @@ object Swimability:
 
   /**
    * 0-100, higher = better conditions for open-water swimming, plus the reasons behind any
-   * deduction (empty when conditions are simply good). `water` is per-beach, not per-hour
-   * (MIP-0001): a veto zeroes the hour whatever the sea is doing.
+   * deduction (empty when conditions are simply good).
    */
   def score(
       hour: HourlyConditions,

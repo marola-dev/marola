@@ -22,7 +22,7 @@ class TidesSpec extends munit.FunSuite:
     )
 
   test("extrema finds the low and the high of a simple tidal curve") {
-    // levels: falls to -0.3 at 02:00, rises to +0.9 at 08:00, falls again
+    // levels: falls to -0.3 at 02:00, rises to +0.9 at 08:00, falls again.
     val levels = List(0.1, -0.1, -0.3, -0.2, 0.2, 0.5, 0.8, 0.9, 0.7, 0.4)
     val hours = levels.zipWithIndex.map { case (l, i) => hour(i, Some(l)) }
     val events = Tides.extrema(hours)
@@ -36,7 +36,8 @@ class TidesSpec extends munit.FunSuite:
   }
 
   test("a 2cm wobble at the end of the day is not a tide turn") {
-    // real shape from a run: ... high 21:00 +0.42, 22:00 +0.40, 23:00 +0.41 → one high, no 22:00 low
+    // real shape from a run: ... high 21:00 +0.42, 22:00 +0.40, 23:00 +0.41 → one high, no 22:00
+    // low.
     val levels = List(-0.1, 0.2, 0.5, 0.7, 0.6, 0.4, 0.3, 0.35, 0.42, 0.40, 0.41)
     val hours = levels.zipWithIndex.map { case (l, i) => hour(i, Some(l)) }
     val events = Tides.extrema(hours)
@@ -50,7 +51,7 @@ class TidesSpec extends munit.FunSuite:
     val levels = List(0.0, 0.5, 0.45, 0.9, 0.2, -0.5, 0.1)
     val hours = levels.zipWithIndex.map { case (l, i) => hour(i, Some(l)) }
     val events = Tides.extrema(hours)
-    // 01:00 +0.5 and 03:00 +0.9 are both highs with only a 0.05 wobble between → keep 03:00 only
+    // 01:00 +0.5 and 03:00 +0.9 are both highs with only a 0.05 wobble between → keep 03:00 only.
     assertEquals(
       events.map(e => (e.time.getHour, e.heightM, e.isHigh)),
       List((3, 0.9, true), (5, -0.5, false))

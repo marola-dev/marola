@@ -8,27 +8,13 @@ import org.apache.pdfbox.text.PDFTextStripper
  * the only mechanism confirmed live for this institute (MIP-0031 §4.3/§11: no JSON/HTML alternative
  * exists, INEMA's own search form just wraps a `GET` to this same PDF endpoint) — into rows of
  * (point code, point name, description, category).
- *
- * Apache PDFBox's default `PDFTextStripper` (unlike `pdftotext -layout`, used only to verify the
- * approach live, never as a runtime dependency) does not preserve table columns — it renders the
- * whole bulletin as plain reading-order lines, and one table row usually fits on a single line:
- * `"<Ponto> - <Código> <Local da Coleta> <Categoria>"`, e.g. `"São Tomé de Paripe - SSA IN 100 Em
- * frente à casa Vila Maria, ao lado da rampa de acesso à praia. Própria"` — verified against the
- * real captured fixture (`local/src/test/resources/inema-boletim-salvador-13-2025.pdf`, fetched
- * live 2026-09-07 from the same `idcampanha=83453` bulletin MIP-0031 §4.3 verified). A long "Local
- * da Coleta" description wraps onto a following line with no marker of its own (confirmed real —
- * e.g. the fixture's "Boa Viagem - SSA BV 100" row splits across two lines) so a new row is
- * recognised only by its `"<name> - <code> "` prefix at the start of a line; any line without that
- * prefix is a continuation of the previous row's description.
  */
 object InemaPdfParser:
 
   final case class Row(code: String, pointName: String, description: String, category: String)
 
   // INEMA's own point-code convention (e.g. "SSA IN 100"): one or more uppercase acronym tokens
-  // followed by a numeric suffix. Structural, not hardcoded to "SSA" — Bahia's other coastal
-  // bulletins (this fixture covers only "Costa: Litoral de Salvador") may use a different acronym
-  // for the same shape.
+  // followed by a numeric suffix.
   private val rowStart = "^(.+?) - ([A-Z]{2,4}(?:\\s+[A-Z]{2,4})*\\s+\\d{2,4})\\s+(.*)$".r
 
   private val tableEndMarker = "Observações"
@@ -43,8 +29,7 @@ object InemaPdfParser:
     try new PDFTextStripper().getText(document)
     finally document.close()
 
-  // Table rows start right after the "Ponto - Código ... Categoria" header line and end at the
-  // "Observações:" section that follows every real bulletin.
+  // Table rows start right after the "Ponto - Código .
   private def tableLines(text: String): List[String] =
     text.linesIterator.toList
       .dropWhile(line => !rowStart.matches(line.trim))

@@ -12,18 +12,15 @@ import marola.model.{Beach, Coordinates}
  * MIP-0021 §7: replays the real Overpass response recorded live on 2026-09-07
  * (`core/src/test/resources/fixtures/overpass-facilities-campeche.json`) for the six beaches
  * `bestPerBeachTomorrow`'s defaults find near Campeche — same regression shape as
- * `cli.PipelineGoldenSpec`. That live query returned only two elements: one `amenity=parking` near
- * Praia do Campeche, one `emergency=lifeguard` near Praia do Rio Tavares — sparser than MIP-0021
- * §4's 40-beach/20km survey, and itself the proof of the absence rule this MIP exists to enforce:
- * four of the six nearest beaches get `Facilities.NoData`, truthfully.
+ * `cli.PipelineGoldenSpec`.
  */
 class AccessibilitySpec extends munit.FunSuite:
 
   private given unsafe: AllowUnsafe = AllowUnsafe.embrace.danger
 
   // The six nearest beaches to Campeche (-27.6733,-48.4700), as `BeachFinder.nearby` returns them
-  // with the pipeline's real defaults (radiusKm=15, limit=6) — measured live alongside the fixture
-  // above, not re-derived from it.
+  // with the pipeline's real defaults (radiusKm=15, limit=6) — measured live alongside the
+  // fixture above, not re-derived from it.
   private val campeche = Beach("Praia do Campeche", Coordinates(-27.6859814, -48.4858158), 2.101)
   private val rioTavares =
     Beach("Praia do Rio Tavares", Coordinates(-27.6544005, -48.4677042), 2.114)
@@ -89,8 +86,9 @@ class AccessibilitySpec extends munit.FunSuite:
 
   test("attribute: a real place mapped as both a node and a way counts once, not twice") {
     // Synthetic — not from the live fixture — built only to exercise the dedup rule MIP-0021 §5
-    // calls out: a node and a way for the same real parking lot have *different* OSM ids (separate
-    // id spaces), so only coordinate-rounding dedup (not an id-based one) catches this case.
+    // calls out: a node and a way for the same real parking lot have *different* OSM ids
+    // (separate id spaces), so only coordinate-rounding dedup (not an id-based one) catches this
+    // case.
     val duplicated = JsonValue
       .parse("""
       {"elements": [

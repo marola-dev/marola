@@ -25,7 +25,7 @@ class MlflowRunLedgerSpec extends munit.FunSuite:
 
   /**
    * One recorded call: HTTP method, full URL, and the request body as text (empty for a body-less
-   * GET). Answers the scripted responses in order, repeating the last one if over-called.
+   * GET).
    */
   final class Scripted(responses: Http.Response*) extends Http.Transport:
     val requests: ListBuffer[(String, String, String)] = ListBuffer.empty

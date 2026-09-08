@@ -9,10 +9,7 @@ final case class TideEvent(time: LocalDateTime, heightM: Double, isHigh: Boolean
 
 /**
  * Tide turns as local extrema of the hourly sea-level series — no tide-table API, no harmonic
- * model, just "this hour is higher than both neighbours". Hourly resolution means a turn is
- * reported to the nearest hour (real high water may be ±30 min off), which is what the detailed
- * block promises (MIP-0001 §3/§7). Pure; expects `hours` in chronological order, as
- * `OpenMeteoClient` returns them.
+ * model, just "this hour is higher than both neighbours".
  */
 object Tides:
 

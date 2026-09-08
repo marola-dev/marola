@@ -7,8 +7,7 @@ import kyo.*
 /**
  * The retry at the transport seam (`Http.postForm(..., retries)`): Overpass's public instance
  * answers 504 under load — observed live on 5 Sep 2026, and the reason a scheduled site build
- * stopped after its first area (see `site.yml`). Deterministic: a scripted transport, no network,
- * millisecond backoff.
+ * stopped after its first area (see `site.yml`).
  */
 class HttpSpec extends munit.FunSuite:
 

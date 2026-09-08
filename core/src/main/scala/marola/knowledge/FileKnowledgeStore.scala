@@ -9,12 +9,7 @@ import marola.json.JsonValue
 /**
  * Local-first RAG index: embeds every corpus chunk once, stores the vectors as JSON under
  * `./data/`, and re-embeds only when the corpus or the embedding model changes (a fingerprint of
- * file names, sizes, mtimes and the model name). Search embeds the query with the same `Embedder`
- * and ranks by cosine. Everything is `< Sync`; a missing corpus dir just yields no passages.
- *
- * Index format: `{"model": ..., "fingerprint": ..., "chunks": [{title, source, text, vector}]}` —
- * hand-rolled JSON like the rest of the repo (`json/Json.scala`). Vectors are 3072 doubles per
- * chunk with `llama3.2` as the embedder; for a corpus of ~50 chunks that's a ~3MB file, fine.
+ * file names, sizes, mtimes and the model name).
  */
 final class FileKnowledgeStore(corpusDir: String, indexPath: String, embedder: Embedder)
     extends KnowledgeStore:

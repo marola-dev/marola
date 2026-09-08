@@ -2,8 +2,7 @@ package marola.knowledge
 
 /**
  * `nativeBaseUrl` bridges the two URL shapes Ollama serves: `LocalLlmClient` talks to the
- * OpenAI-compatible `/v1` base, while the embeddings endpoint is on the native root. Getting this
- * wrong yields a 404 at index time, so it is worth pinning.
+ * OpenAI-compatible `/v1` base, while the embeddings endpoint is on the native root.
  */
 class OllamaEmbedderSpec extends munit.FunSuite:
 

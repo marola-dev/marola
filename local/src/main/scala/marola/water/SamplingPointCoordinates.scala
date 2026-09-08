@@ -6,13 +6,7 @@ import marola.model.Coordinates
 /**
  * Loads a hand-curated point-code → coordinate lookup table from a bundled JSON resource — the
  * mechanism MIP-0031 §5 introduces because neither INEA's nor INEMA's bulletin PDF carries
- * coordinates (verified live, MIP-0031 §4.3/§11). One resource per state —
- * `sampling_points_ba.json` (INEMA/Bahia) and `sampling_points_rj.json` (INEA/Rio) — each populated
- * only for point codes whose beach falls inside the matching `site/areas.json` area's radius,
- * geocoded from the bulletin's own beach name against OpenStreetMap/Nominatim; every entry's
- * `source` field says which OSM feature and query resolved it and when. A point code absent from a
- * table is **dropped by the caller, never defaulted to a guessed coordinate** — the same
- * tolerant-parsing discipline `ImaScWaterQualityClient`'s own doc comment states.
+ * coordinates (verified live, MIP-0031 §4.3/§11).
  */
 object SamplingPointCoordinates:
 

@@ -18,7 +18,8 @@ class SiteBuilderSpec extends munit.FunSuite:
 
   private given unsafe: AllowUnsafe = AllowUnsafe.embrace.danger
 
-  // The fixture transport serves Campeche's Overpass answer for any origin; keep the golden origin.
+  // The fixture transport serves Campeche's Overpass answer for any origin; keep the golden
+  // origin.
   private val floripa = SiteBuilder.Area(
     id = "floripa",
     name = "Florianópolis",
@@ -32,8 +33,9 @@ class SiteBuilderSpec extends munit.FunSuite:
   )
   // A second area outside Santa Catarina's water-quality coverage (`ImaScWaterQualityClient
   // .coversOrigin`), in a different IANA zone that shares today's UTC offset with `floripa` — the
-  // same shape as `site/areas.json`'s real "salvador" entry (MIP-0005's "rio" proved one extra area;
-  // this proves a second one alongside it, each keeping its own water-provider selection and zone).
+  // same shape as `site/areas.json`'s real "salvador" entry (MIP-0005's "rio" proved one extra
+  // area; this proves a second one alongside it, each keeping its own water-provider selection
+  // and zone).
   private val salvador = SiteBuilder.Area(
     id = "salvador",
     name = "Salvador, BA",
@@ -118,8 +120,8 @@ class SiteBuilderSpec extends munit.FunSuite:
   test("build with two areas keeps each its own directory, zone and water-provider selection") {
     val out = tmpDir("marola-site-multi")
     val static = tmpDir("marola-site-static-multi")
-    // The same per-origin selection `AppConfig.waterQualityClient`'s Auto mode makes in production:
-    // Santa Catarina (floripa) gets IMA/SC, everywhere else (salvador) gets none.
+    // The same per-origin selection `AppConfig.waterQualityClient`'s Auto mode makes in
+    // production: Santa Catarina (floripa) gets IMA/SC, everywhere else (salvador) gets none.
     val water = (origin: marola.model.Coordinates) =>
       if ImaScWaterQualityClient.coversOrigin(origin) then Some(ImaScWaterQualityClient()) else None
     val written = Http.withTransport(Fixtures.campeche()) {
@@ -150,7 +152,7 @@ class SiteBuilderSpec extends munit.FunSuite:
     )
     val html = Files.readString(out.resolve("index.html"))
     assert(html.contains("vendor/leaflet.js") && html.contains("app.js"), html)
-    // the page reads what the builder writes: the same relative paths
+    // the page reads what the builder writes: the same relative paths.
     val js = Files.readString(out.resolve("app.js"))
     assert(js.contains("data/areas.json") && js.contains("latest.json"), "app.js data paths")
   }
@@ -165,15 +167,16 @@ class SiteBuilderSpec extends munit.FunSuite:
     }
     assertEquals(areas.head.id, "floripa")
     assertEquals(areas.head.zone, ZoneId.of("America/Sao_Paulo"))
-    // Bahia/Rio (the user-visible ask this covers): one area per state's main beach-rich metro, same
-    // one-point-plus-radius shape as floripa/rio — not a whole-state coastal scan, matching the
-    // existing design (MIP-0005.tasks.md decision 2 already scoped "rio" to the city, not the state).
+    // Bahia/Rio (the user-visible ask this covers): one area per state's main beach-rich metro,
+    // same one-point-plus-radius shape as floripa/rio — not a whole-state coastal scan, matching
+    // the existing design (MIP-0005.tasks.md decision 2 already scoped "rio" to the city, not the
+    // state).
     assertEquals(areas.map(_.id), List("floripa", "rio", "salvador"))
     val salvador = areas.find(_.id == "salvador").get
     assertEquals(salvador.name, "Salvador, BA")
     assertEquals(salvador.zone, ZoneId.of("America/Bahia"))
     assertEquals(SiteBuilder.Areas.parse("[]"), Nil)
-    // an entry missing a required field is dropped, not a crash
+    // an entry missing a required field is dropped, not a crash.
     assertEquals(SiteBuilder.Areas.parse("""[{"id": "x", "name": "X"}]"""), Nil)
   }
 

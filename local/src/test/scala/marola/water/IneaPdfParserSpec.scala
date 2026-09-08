@@ -57,8 +57,8 @@ class IneaPdfParserSpec extends munit.FunSuite:
   }
 
   test("a beach with three points under one merged label is fully and correctly resolved") {
-    // Ipanema: IP03, IP10 (label attached here), IP06 — all three must resolve to Ipanema, not
-    // to the neighbouring single-row "Arpoador" group that immediately follows.
+    // Ipanema: IP03, IP10 (label attached here), IP06 — all three must resolve to Ipanema, not to
+    // the neighbouring single-row "Arpoador" group that immediately follows.
     assertEquals(rows.find(_.pointCode == "IP03").map(_.beachName), Some("Ipanema"))
     assertEquals(rows.find(_.pointCode == "IP06").map(_.beachName), Some("Ipanema"))
     assertEquals(rows.find(_.pointCode == "AR00").map(_.beachName), Some("Arpoador"))

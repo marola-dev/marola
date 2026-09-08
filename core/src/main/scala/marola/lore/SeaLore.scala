@@ -10,11 +10,7 @@ import marola.model.Coordinates
 enum LoreKind derives CanEqual:
   case Secret, Creature
 
-/**
- * One curated, sourced paragraph. `regions` are tags like `global` or `BR-S` (south Brazil coast);
- * `months` restricts seasonal facts (a right-whale entry in February would be wrong). Every entry
- * carries a `source` URL — an entry without one must not be added (MIP-0001 §5.4).
- */
+/** One curated, sourced paragraph. */
 final case class LoreEntry(
     id: String,
     kind: LoreKind,
@@ -25,12 +21,7 @@ final case class LoreEntry(
     lang: String
 ) derives CanEqual
 
-/**
- * The "did you know?" paragraph at the end of a reply. Selection is pure and deterministic: the
- * same beach shows the same entry all day and a different one tomorrow, and neighbouring beaches
- * differ (seeded by date × beach name). The text is shown **verbatim** — it never goes through the
- * LLM, so it can't be paraphrased into something its source doesn't say.
- */
+/** The "did you know?" paragraph at the end of a reply. */
 object SeaLore:
 
   val DefaultResource = "sea_lore.json"

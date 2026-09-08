@@ -13,7 +13,7 @@ import marola.ledger.RunLedger.RunHandle
 /**
  * MIP-0010 task 4 (`BenchmarkLedgerSpec` in the task list): the params/metrics an
  * `OceanBenchmark.Report` turns into, asserted against a recording `RunLedger` double — no MLflow,
- * no network. The Markdown report stays the canonical gate input; this is additive.
+ * no network.
  */
 class BenchmarkLedgerSpec extends munit.FunSuite:
 

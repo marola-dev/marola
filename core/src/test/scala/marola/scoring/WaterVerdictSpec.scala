@@ -95,7 +95,7 @@ class WaterVerdictSpec extends munit.FunSuite:
     assertEquals((v.delta, v.veto), (0, false))
     assert(v.note.exists(_.contains("stale")), v.note.toString)
     assert(v.summary.startsWith("stale"))
-    // exactly 45 days is still fresh
+    // exactly 45 days is still fresh.
     val edge = WaterQuality(
       List(point("Ponto 1", BathingCondition.Improper, today.minusDays(45), 900)),
       "IMA/SC"

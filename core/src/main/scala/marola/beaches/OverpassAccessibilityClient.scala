@@ -8,14 +8,7 @@ import marola.model.{Beach, Coordinates}
 
 /**
  * Overpass amenities near beaches `BeachFinder` already found (MIP-0021) — same public endpoint,
- * same HTTP timeout/retry discipline as `BeachFinder`, one extra query per run. Unlike
- * `BeachFinder`, this doesn't search Overpass for beaches itself: it builds an `around` union from
- * the beach coordinates it's handed, so it costs exactly one HTTP call regardless of how many
- * facility tags are being looked up.
- *
- * Never fails a run on its own: an Overpass error propagates as `Http.HttpError`/a network
- * exception, which `Recommender` catches and maps to `Facilities.NoData` for every beach — the same
- * stance MIP-0001 §5.2 takes for water quality (`Recommender.fetchWaterQuality`).
+ * same HTTP timeout/retry discipline as `BeachFinder`, one extra query per run.
  */
 final class OverpassAccessibilityClient(
     endpoint: String = OverpassAccessibilityClient.OverpassEndpoint
@@ -52,8 +45,7 @@ object OverpassAccessibilityClient:
    * One `around` union per beach coordinate, two tag filters each — a regex alternation over the
    * six tags MIP-0021 §4 measured (`amenity` for parking/shower/toilets/lifeguard, `emergency` for
    * the two lifeguard-post spellings) rather than one clause per tag, to keep the query's line
-   * count linear in the beach count, not the beach count times six. Pure string building, tested
-   * directly (`AccessibilitySpec`).
+   * count linear in the beach count, not the beach count times six.
    */
   private[beaches] def query(beaches: List[Beach], radiusM: Int): String =
     val clauses = beaches.flatMap { b =>
@@ -77,16 +69,7 @@ object OverpassAccessibilityClient:
 
   final private case class Located(facility: Facility, lat: Double, lon: Double)
 
-  /**
-   * Pure; unit-tested against the real fixture (`AccessibilitySpec`). Overpass's own union already
-   * removes a literal repeated element (same type and id returned by two overlapping `around`
-   * clauses), so the only duplication left is one real place mapped as *both* a node and a way —
-   * different OSM ids, near-identical coordinates, which id-based dedup can't catch. Deduped by
-   * rounded coordinate instead (MIP-0021 §5's open dedup question — no duplicate showed up in the
-   * live fixture to force the choice either way, so this is the one that actually handles the
-   * realistic case). Each surviving element is then attributed to the nearest beach within
-   * `radiusM`; every beach nothing attributed to gets `Facilities.NoData`.
-   */
+  /** Pure; unit-tested against the real fixture (`AccessibilitySpec`). */
   private[beaches] def attribute(
       elements: Vector[JsonValue],
       beaches: List[Beach],

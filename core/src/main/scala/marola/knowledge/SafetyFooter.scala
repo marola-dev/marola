@@ -2,12 +2,7 @@ package marola.knowledge
 
 /**
  * The emergency footer marola appends to any answer grounded in a `knowledge/safety/` document
- * (MIP-0022). Appended after the model's text, never inside the prompt — the footer's wording is
- * fixed and reviewed, not something a small local model is trusted to phrase itself.
- *
- * 193 (Corpo de Bombeiros, Brazil's fire/rescue service — the number used for drowning and aquatic
- * rescue) and 192 (SAMU, the national ambulance service) are both free, national numbers, verified
- * live 2026-09-07.
+ * (MIP-0022).
  */
 object SafetyFooter:
 

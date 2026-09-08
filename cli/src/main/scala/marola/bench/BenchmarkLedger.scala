@@ -13,11 +13,7 @@ import marola.ledger.RunLedger.RunHandle
 /**
  * MIP-0010 §5, task 4: what an `OceanBenchmark.Report` looks like as a ledger run — experiment
  * `<prefix>/benchmark`, params (which model, embedder, threshold, corpus and commit produced it),
- * one metric per `ArmSummary` column, the Markdown report as the artifact. The Markdown file under
- * `data/` stays the canonical result (`scripts/benchmark_gate.py` reads it, not MLflow); this is
- * additive, and with `RunLedger.Noop` it costs nothing. `params`/`metrics` are pure so the exact
- * shape is unit-tested; `log` is the one effectful step and never fails the benchmark — a ledger
- * error is reported as `None` so the report is still printed and saved.
+ * one metric per `ArmSummary` column, the Markdown report as the artifact.
  */
 object BenchmarkLedger:
 
@@ -59,14 +55,7 @@ object BenchmarkLedger:
   def runName(reportPath: Path): String =
     reportPath.getFileName.toString.stripSuffix(".md")
 
-  /**
-   * One run, in order: `start` → `metrics` → `artifact` → `end(ok = true)`. Returns the handle so
-   * the caller can print the run's URL, or `None` when the ledger failed at any step — after
-   * `start` succeeded the run is closed with `end(ok = false)` first (best effort) so the UI shows
-   * it as FAILED rather than forever RUNNING. Nothing here throws: the benchmark report was already
-   * computed and saved by the time this runs, and a ledger outage must not turn that into a
-   * failure.
-   */
+  /** One run, in order: `start` → `metrics` → `artifact` → `end(ok = true)`. */
   def log(
       ledger: RunLedger,
       experimentPrefix: String,
@@ -105,9 +94,7 @@ object BenchmarkLedger:
    * First 12 hex chars of SHA-256 over every corpus file `marola.knowledge.Corpus.listFiles` sees
    * (every top-level `.md` file plus every `.md` file directly under `safety/`, MIP-0022), sorted,
    * name and content both hashed — so a renamed or edited document changes it and anything else in
-   * the directory (README.txt, an editor's swap file) does not. `"none"` when the directory is
-   * missing: the benchmark can still run with an empty corpus and the ledger should say so, not
-   * crash.
+   * the directory (README.txt, an editor's swap file) does not.
    */
   def corpusSha(dir: Path): String =
     if !Files.isDirectory(dir) then "none"
@@ -126,7 +113,7 @@ object BenchmarkLedger:
 
   /**
    * `git rev-parse --short HEAD` in `dir`, `"unknown"` when git or the repo is not there (the
-   * Docker image, for one). `GITHUB_SHA` wins when set — Actions checkouts can be detached.
+   * Docker image, for one).
    */
   def gitSha(dir: Path = Path.of(".")): String =
     sys.env.get("GITHUB_SHA").map(_.take(7)).getOrElse {

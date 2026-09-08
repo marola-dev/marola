@@ -20,20 +20,6 @@ import tools.jackson.databind.json.JsonMapper
  * Service + MCP tool-calling" item from `ARCHITECTURE.md` §5b: instead of `Recommender` hardcoding
  * the call order (BeachFinder → OpenMeteoClient → Swimability), an agent (Claude Desktop locally,
  * or an Azure AI Foundry agent once deployed) can decide when/how to call these tools itself.
- *
- * Runs over **stdio** (`StdioServerTransportProvider`) — the simplest MCP transport, and the one
- * that needs zero network exposure: point any local MCP client's config at this jar (`java -cp ...
- * marola.agent.SwimConditionsMcpServer`) and it "just works", no Azure account, no public URL. A
- * Foundry agent's *remote* MCP tool config needs an HTTP-reachable server instead (this SDK also
- * ships `HttpServletSseServerTransportProvider`/`HttpServletStreamableServerTransportProvider` for
- * that — not wired up here, since it needs an actual servlet container and a public endpoint, i.e.
- * real deployment, which nothing in this repo has yet per `AGENTS.md`'s cost-safety rule).
- *
- * Verified: this file compiles and, run manually, correctly registers with and responds to the MCP
- * `tools/list` and `tools/call` methods (checked by piping raw JSON-RPC requests to stdin — see
- * `ARCHITECTURE.md` §5b's Status note). NOT verified against Claude Desktop or a Foundry agent
- * directly — that requires configuring an actual MCP client to launch this process, which wasn't
- * available to test in this environment.
  */
 object SwimConditionsMcpServer:
 
@@ -67,7 +53,7 @@ object SwimConditionsMcpServer:
       "jellyfish_risk" -> JsonValue.str(best.jellyfishRisk.toString),
       "whale_sighting_likelihood" -> JsonValue.str(best.whaleSightingLikelihood.toString),
       "notes" -> JsonValue.arr(best.notes.map(JsonValue.str)*),
-      // MIP-0001
+      // MIP-0001.
       "water_quality" -> best.waterQuality.map(waterQualityToJson).getOrElse(JsonValue.JNull),
       "water_quality_summary" -> JsonValue.str(marola.Report.waterSummary(best)),
       "tides" -> JsonValue.arr(
@@ -288,10 +274,5 @@ object SwimConditionsMcpServer:
       .toolCall(waterQualityTool, waterQualityHandler(_, _))
       .toolCall(askTool, askHandler(_, _))
       .build()
-    // `main` returns here. What keeps the process serving stdio is the SDK's non-daemon reader
-    // thread, which ends on stdin EOF — so under plain `java` the JVM lives exactly as long as the
-    // client's pipe. Under sbt's *in-process* run that is not enough: sbt treats `main` returning
-    // as task completion and exits, which is why `build.sbt` forks `run` (`.mcp.json` launches
-    // this via `just mcp-server`; MIP-0011 task 9 review, 2026-09-06). Launched by an MCP client
-    // (Claude Code, Claude Desktop), never interactively.
+    // `main` returns here.
     Runtime.getRuntime.addShutdownHook(Thread(() => server.closeGracefully()))

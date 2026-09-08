@@ -9,9 +9,7 @@ import marola.model.{Beach, Coordinates}
  * (around:20000,-27.6733,-48.4700)->.beaches; ...` (plus `.lakes out center;`, this
  * implementation's own addition — see `TrailFinder.nearby`'s doc comment) — against the real
  * `https://overpass-api.de/api/interpreter`, saved verbatim as
- * `core/src/test/resources/fixtures/overpass-trails-floripa.json`. Not fabricated: 20 named trail
- * `way`s, 10 unique names, two real same-named-segment groups (`Caminho da Costa da Lagoa ao Canto
- * dos Araçás` ×8, `Trilha Parque Estadual do Rio Vermelho` ×4).
+ * `core/src/test/resources/fixtures/overpass-trails-floripa.json`.
  */
 class TrailFinderSpec extends munit.FunSuite:
 
@@ -38,8 +36,8 @@ class TrailFinderSpec extends munit.FunSuite:
   }
 
   test("a real trail carries its OSM surface tag verbatim when present") {
-    // This exact live capture never returned a sac_scale tag (§4.1's own combined-query run
-    // found none either — real trail data quality varies, §8); surface is present here.
+    // This exact live capture never returned a sac_scale tag (§4.1's own combined-query run found
+    // none either — real trail data quality varies, §8); surface is present here.
     val t = find(trailsOf(), "Caminho da Costa da Lagoa ao Canto dos Araçás")
     assertEquals(t.surface, Some("paving_stones"))
     assertEquals(t.difficulty, None)
@@ -54,7 +52,7 @@ class TrailFinderSpec extends munit.FunSuite:
     val a = find(ts, "Caminho da Costa da Lagoa ao Canto dos Araçás")
     assertEquals(a.geometry.size, 353) // 8 segments' geometries concatenated
     assertEqualsDouble(a.lengthKm, 7.2564, 0.01) // sum of each segment's own length, not the
-    // concatenation's (avoids a spurious jump between two segments that don't share an endpoint)
+    // concatenation's (avoids a spurious jump between two segments that don't share an endpoint).
     val b = find(ts, "Trilha Parque Estadual do Rio Vermelho")
     assertEquals(b.geometry.size, 76)
     assertEqualsDouble(b.lengthKm, 3.8369, 0.01)
@@ -81,11 +79,12 @@ class TrailFinderSpec extends munit.FunSuite:
   ) {
     // Not a fabricated fixture edit — the real response names 10 lakes; the closest to any real
     // trail here is Lagoa da Conceição, ~0.56km from "Caminho da Costa da Lagoa ao Canto dos
-    // Araçás" — still over TrailFinder.NearRadiusKm. TrailFinder must not invent a match.
+    // Araçás" — still over TrailFinder.NearRadiusKm.
     trailsOf().foreach(t => assertEquals(t.nearLake, None, t.name))
   }
 
-  // --- synthetic: the merge algorithm in isolation, separate from the live fixture above ---------
+  // --- synthetic: the merge algorithm in isolation, separate from the live fixture above
+  // ---------.
 
   test(
     "synthetic: merge concatenates geometry, sums length, keeps the first non-None tag, and finds a named lake anchor"

@@ -6,11 +6,7 @@ import marola.llm.{ChatMessage, LlmClient}
 
 /**
  * "Ask the ocean": retrieve the top passages for a question, then have the local model answer
- * *only* from them, citing `[n]`. The prompt is hand-written rather than DSPy-compiled for now — a
- * compiled `AnswerFromPassages` signature is the obvious follow-up once there's an eval set
- * (`FUTURE-WORK.md` §4.1) — but the grounding rule is the same one the sea-lore feature applies:
- * nothing reaches the user that isn't in a sourced document. With no passages retrieved the model
- * isn't called at all.
+ * *only* from them, citing `[n]`.
  */
 object OceanQa:
 
@@ -25,26 +21,14 @@ object OceanQa:
     "I don't have anything in my ocean notes about that yet — try asking about rip currents, " +
       "jellyfish stings, bathing-water quality, whales, tides or wave conditions."
 
-  /**
-   * `Strict`: below `minScore` (or nothing retrieved) → abstain with `NoPassagesReply`. `General`:
-   * below `minScore` → answer from the model's own knowledge, prefixed with `GeneralKnowledgeLabel`
-   * so the user sees it is unsourced. The corpus covers a handful of swim-safety topics; ocean
-   * history/science questions land here. `just benchmark` measures what each mode costs and buys.
-   */
+  /** `Strict`: below `minScore` (or nothing retrieved) → abstain with `NoPassagesReply`. */
   enum Fallback derives CanEqual:
     case Strict, General
 
   val GeneralKnowledgeLabel =
     "(From the model's general knowledge — unsourced; verify before relying on it.) "
 
-  /**
-   * Cosine score under which the best passage is treated as "not about this". Default 0 (off):
-   * `just benchmark` on 2026-09-05 showed `llama3.2`'s own embeddings put *irrelevant* passages at
-   * 0.49-0.50 and relevant ones at 0.36-0.40 — the score carries almost no signal with that
-   * embedder, so a threshold either never fires or always does. Relevance is decided by the model
-   * via `NoAnswerSentinel` instead; set `MAROLA_ASK_MIN_SCORE` (≈0.5) only with a real embedding
-   * model such as `nomic-embed-text`, where cosine means something.
-   */
+  /** Cosine score under which the best passage is treated as "not about this". */
   val DefaultMinScore = 0.0
 
   /**
@@ -83,7 +67,6 @@ object OceanQa:
     if passages.isEmpty then unanswered(llm, question, fallback)
     else
       // Two-stage: try grounded; if the model itself says the passages don't cover it, fall back.
-      // This is what makes `General` work even when the embedder can't tell relevant from not.
       llm.complete(buildMessages(question, passages)).flatMap { grounded =>
         if saysNoAnswer(grounded) then unanswered(llm, question, fallback)
         else grounded: String < Sync

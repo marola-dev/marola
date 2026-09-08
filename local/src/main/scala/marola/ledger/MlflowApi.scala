@@ -11,8 +11,7 @@ import marola.json.JsonValue
 /**
  * The two MLflow REST calls shared by the run ledger (`MlflowRunLedger`) and the trace exporter
  * (`observability.MlflowTracing`, MIP-0010 task 6 — MLflow's OTLP endpoint wants an experiment *id*
- * in a header, so tracing needs the same name → id resolution the ledger does). Plain
- * `Http`/`JsonValue` over `java.net.http`, no MLflow client library (MIP §4.2).
+ * in a header, so tracing needs the same name → id resolution the ledger does).
  */
 object MlflowApi:
 

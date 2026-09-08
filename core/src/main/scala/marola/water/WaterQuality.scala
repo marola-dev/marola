@@ -10,8 +10,7 @@ import marola.model.Coordinates
 /**
  * Bathing-water fitness as the monitoring agency classifies it — `Proper`/`Improper` are CONAMA
  * 274/2000's PRÓPRIA/IMPRÓPRIA (enterococci ≤ 100/100mL in 80% of the last five samples), applied
- * by the agency, not re-derived here (MIP-0001 §6/§9). `Unknown` is what a provider returns for a
- * point it lists but hasn't classified.
+ * by the agency, not re-derived here (MIP-0001 §6/§9).
  */
 enum BathingCondition derives CanEqual:
   case Proper, Improper, Unknown
@@ -27,7 +26,6 @@ final case class WaterSample(
 /**
  * One monitored spot on a beach — a beach can have several (Praia do Campeche has five), and they
  * genuinely differ: a stream mouth 300m from clean water is routinely IMPRÓPRIA (MIP-0001 §2).
- * `beachName` is the provider's own name for the beach, matched to OSM's by `WaterQualityMatcher`.
  */
 final case class SamplingPoint(
     id: String,
@@ -68,12 +66,7 @@ final case class WaterQuality(points: List[SamplingPoint], source: String):
 object WaterQuality:
   val MaxSampleAgeDays = 45L
 
-/**
- * A regional bathing-water data source. One implementation per agency/portal —
- * `ImaScWaterQualityClient` (Santa Catarina) in `marola-local` today; INEA/RJ, CETESB/SP would be
- * siblings. Returns the whole region in one call; `WaterQualityMatcher` does the per-beach
- * assignment.
- */
+/** A regional bathing-water data source. */
 trait WaterQualityClient:
   def name: String
   def samplingPoints: List[SamplingPoint] < Sync

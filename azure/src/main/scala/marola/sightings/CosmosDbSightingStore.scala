@@ -19,19 +19,7 @@ import com.azure.cosmos.{CosmosClientBuilder, CosmosContainer}
 /**
  * Optional `SightingStore` backend for an actually-provisioned, shared Cosmos DB container — needed
  * once the Telegram bot exists and can run as a shared, always-on service (a
- * `LocalFileSightingStore` file only makes sense for one process on one host). Partitioned by
- * `beach_name`, matching every query this module runs (`recentFor` always filters by beach).
- *
- * Items are passed as plain `java.util.Map[String, Object]`, not a typed POJO — Cosmos's Java SDK
- * serializes via Jackson reflection on annotated fields by default, and a plain `Map` sidesteps
- * that without pulling Jackson bindings into `Sighting` itself, consistent with this module's "no
- * JSON library dependency" stance elsewhere (`json/Json.scala`'s own doc comment).
- *
- * API surface (`CosmosClientBuilder().endpoint(..).key(..).buildClient()`,
- * `client.getDatabase(..).getContainer(..)`, `container.createItem(item, PartitionKey, options)`,
- * `container.queryItems(SqlQuerySpec, CosmosQueryRequestOptions, Class)`) confirmed by inspecting a
- * real `com.azure:azure-cosmos:4.71.0` jar's class files — not exercised against a live Cosmos DB
- * account (none provisioned; see `AGENTS.md`'s cost-safety rule).
+ * `LocalFileSightingStore` file only makes sense for one process on one host).
  */
 final class CosmosDbSightingStore(
     endpoint: String,

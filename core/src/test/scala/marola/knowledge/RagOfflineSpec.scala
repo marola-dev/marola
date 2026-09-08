@@ -9,16 +9,13 @@ import marola.llm.{ChatMessage, LlmClient}
 /**
  * The RAG mechanics — chunking the real `knowledge/` corpus, indexing, fingerprint caching,
  * retrieval, and grounded prompt building — with a deterministic bag-of-words "embedder" instead of
- * Ollama. Retrieval quality with a real model is the benchmark's job (`just benchmark`); this
- * guards the plumbing.
+ * Ollama.
  */
 class RagOfflineSpec extends munit.FunSuite:
 
   private given unsafe: AllowUnsafe = AllowUnsafe.embrace.danger
 
-  /**
-   * Hashed bag of words → cosine similarity is lexical overlap. Counts calls for the cache test.
-   */
+  /** Hashed bag of words → cosine similarity is lexical overlap. */
   final class BagOfWordsEmbedder extends Embedder:
     val model = "bag-of-words-test"
     var calls = 0
@@ -86,7 +83,7 @@ class RagOfflineSpec extends munit.FunSuite:
     val llm = new LlmClient:
       def complete(messages: List[ChatMessage]): String < Sync =
         Sync.defer { seen = messages; "Swim parallel to the shore [1]." }
-    // minScore = 0: the bag-of-words cosine is far below the real-embedder threshold
+    // minScore = 0: the bag-of-words cosine is far below the real-embedder threshold.
     val a = Sync.Unsafe.evalOrThrow(
       OceanQa.answer(
         "caught in a rip current, swim parallel to the shore",
@@ -106,7 +103,7 @@ class RagOfflineSpec extends munit.FunSuite:
     val none = Sync.Unsafe.evalOrThrow(OceanQa.answer("anything", empty, llm))
     assertEquals(none.text, OceanQa.NoPassagesReply)
     assertEquals(none.passages, Nil)
-    // general fallback: the model is asked without passages and the answer is labelled unsourced
+    // general fallback: the model is asked without passages and the answer is labelled unsourced.
     val general = Sync.Unsafe.evalOrThrow(
       OceanQa.answer("anything", empty, llm, fallback = OceanQa.Fallback.General)
     )

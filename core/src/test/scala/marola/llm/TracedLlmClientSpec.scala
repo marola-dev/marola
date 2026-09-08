@@ -9,8 +9,7 @@ import marola.observability.Tracing
 /**
  * MIP-0010 task 6: `TracedLlmClient` wraps every `complete` in one `Tracing.llmSpan` with the GenAI
  * semantic-convention attributes MLflow ingests — and, by default, *no* prompt or completion text
- * (a swimmer's location is personal data; `MAROLA_TRACE_CONTENT=1` opts in). Asserted against a
- * recording `Tracing` double: vendor-free, no OpenTelemetry in `core`.
+ * (a swimmer's location is personal data; `MAROLA_TRACE_CONTENT=1` opts in).
  */
 class TracedLlmClientSpec extends munit.FunSuite:
 

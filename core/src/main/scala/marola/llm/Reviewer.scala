@@ -8,18 +8,7 @@ import marola.json.JsonValue
  * The reviewer/critic pass (`FUTURE-WORK.md` §4.2, now built rather than just proposed): replays a
  * second DSPy-compiled artifact (`review_prompt.json`, compiled from
  * `dspy/compile_recommendation_prompt.py`'s `ReviewSwimSummary` signature) against the summarizer's
- * own draft output, before either reaches a user. A model grading its own answer in the same call
- * can't catch its own mistakes as reliably as a fresh pass focused only on checking, not generating
- * — the same reasoning DSPy's own `Evaluate`/LLM-as-judge pattern uses.
- *
- * The review signature's sole output field is a single JSON string (`review_json` — see
- * `CompiledPrompt`'s doc comment on why: one JSON-string output field reuses the exact same
- * demo/replay mechanics as the summarizer's single-text-field output, no `CompiledPrompt` change
- * needed beyond parameterizing which field is the output). Confirmed against a real local Ollama
- * model while building this: it reliably returns well-formed JSON matching this schema, and in one
- * bootstrap run correctly caught a deliberately-planted flaw (a draft summary missing a required
- * jellyfish mention) and produced a corrected `final_summary` — see `dspy/review_prompt.json`, a
- * real compiled artifact, not a hand-written fixture.
+ * own draft output, before either reaches a user.
  */
 object Reviewer:
 

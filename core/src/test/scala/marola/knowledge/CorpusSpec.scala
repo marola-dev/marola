@@ -25,7 +25,7 @@ class CorpusSpec extends munit.FunSuite:
       assert(c.text.length <= Corpus.MaxChunkChars, s"chunk too long: ${c.text.length}")
       assert(!c.text.contains("# Rip currents") && !c.text.toLowerCase.contains("source:"))
     }
-    // the two short paragraphs merge; the 690-char one stands alone; the last one follows
+    // the two short paragraphs merge; the 690-char one stands alone; the last one follows.
     assertEquals(
       chunks.head.text,
       "First paragraph about rip currents.\n\nSecond paragraph, still short."

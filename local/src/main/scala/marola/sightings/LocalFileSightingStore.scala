@@ -8,13 +8,7 @@ import kyo.*
 
 import marola.json.JsonValue
 
-/**
- * Default `SightingStore` — one JSON object per line, appended to a local file. No Azure account,
- * no setup: this is what makes the sighting-feedback loop (`ARCHITECTURE.md` §8) testable today,
- * with `CosmosDbSightingStore` as the opt-in upgrade for actually running the Telegram bot as a
- * shared, always-on service (a local file isn't a sensible store once more than one process/host
- * can receive reports).
- */
+/** Default `SightingStore` — one JSON object per line, appended to a local file. */
 final class LocalFileSightingStore(path: String) extends SightingStore:
 
   def record(sighting: Sighting): Unit < Sync =

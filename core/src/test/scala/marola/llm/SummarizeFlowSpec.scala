@@ -5,7 +5,7 @@ import kyo.*
 /**
  * The summarize → review flow with a scripted `LlmClient` — regression for the compiled prompt
  * artifacts, message building, the OpenAI-shape response extraction and the reviewer's JSON
- * recovery, none of which need a model. This is what CI runs instead of the Ollama E2E test.
+ * recovery, none of which need a model.
  */
 class SummarizeFlowSpec extends munit.FunSuite:
 
@@ -52,7 +52,7 @@ class SummarizeFlowSpec extends munit.FunSuite:
     )
     assert(msgs.last.content.contains("Beach Name: Praia do Campeche"))
     assert(msgs.last.content.contains("Whale Sighting Likelihood: Moderate"))
-    // demos never leak the `augmented` marker as a field
+    // demos never leak the `augmented` marker as a field.
     assert(!msgs.exists(_.content.contains("Augmented")))
   }
 
@@ -70,7 +70,7 @@ class SummarizeFlowSpec extends munit.FunSuite:
     assertEquals(result.score, 82)
     assertEquals(result.verdict, "approve")
     assertEquals(result.finalSummary, draft)
-    // the reviewer saw the draft as the `summary` input
+    // the reviewer saw the draft as the `summary` input.
     assert(llm.calls(1).last.content.contains(s"Summary: $draft"))
   }
 

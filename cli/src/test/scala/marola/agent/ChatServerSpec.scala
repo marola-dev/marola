@@ -5,10 +5,7 @@ import kyo.*
 import marola.knowledge.{KnowledgeStore, Passage}
 import marola.llm.{ChatMessage, LlmClient}
 
-/**
- * `ChatServer.responseFor` — the JSON shape MIP-0033's chat widget consumes. HTTP plumbing
- * (`start`/handlers) needs a live socket and isn't unit-tested here; this is the pure part.
- */
+/** `ChatServer.responseFor` — the JSON shape MIP-0033's chat widget consumes. */
 class ChatServerSpec extends munit.FunSuite:
 
   private given unsafe: AllowUnsafe = AllowUnsafe.embrace.danger

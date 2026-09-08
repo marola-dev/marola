@@ -10,10 +10,6 @@ import marola.model.{Beach, Coordinates}
  * MIP-0030: a named coastal/lakeside trail (OSM `highway=path`/`track`) near a beach or a named
  * lake — length, whatever `sac_scale`/`surface` OSM carries (verbatim, `None` when the tag is
  * absent, never guessed), and the geometry the map draws.
- *
- * `nearBeach`/`nearLake` are the nearest anchor of each kind within `TrailFinder.NearRadiusKm`,
- * measured from the trail's full (merged) geometry — `None` when no anchor of that kind is that
- * close, even if the trail was found via the other kind.
  */
 final case class Trail(
     name: String,
@@ -61,9 +57,9 @@ object TrailFinder:
     val radiusM = (radiusKm * 1000).toInt
     val nearM = (NearRadiusKm * 1000).toInt
     // MIP-0030 §4.1's verified query shape, plus `.lakes out center;` — the literal §4.1 text
-    // never outputs the lake anchors themselves, but `nearLake` needs their name/position to label
-    // a trail found only via a lake anchor, so this adds one more `out` statement to the same
-    // single request rather than issuing a second one.
+    // never outputs the lake anchors themselves, but `nearLake` needs their name/position to
+    // label a trail found only via a lake anchor, so this adds one more `out` statement to the
+    // same single request rather than issuing a second one.
     val query =
       s"""[out:json][timeout:$OverpassTimeoutSeconds];
          |way["natural"="beach"]["name"](around:$radiusM,${origin.lat},${origin.lon})->.beaches;
@@ -95,14 +91,7 @@ object TrailFinder:
       surface: Option[String]
   )
 
-  /**
-   * Package-visible for `TrailFinderSpec`: parses a raw Overpass response into merged trails. Every
-   * returned way is already within `NearRadiusKm` of *some* beach or lake anchor — Overpass's own
-   * `around.beaches:`/`around.lakes:` filtered the query server-side — but `nearBeach`/`nearLake`
-   * can still both be `None`: the caller's `beaches` list may not include the exact anchor Overpass
-   * matched (e.g. it was trimmed by `BeachFinder`'s own limit), or the matching lake had no `name`
-   * tag. That's an honest "found nearby, can't say by which name", not a reason to drop the trail.
-   */
+  /** Package-visible for `TrailFinderSpec`: parses a raw Overpass response into merged trails. */
   private[trails] def parse(root: JsonValue, beaches: List[Beach]): List[Trail] =
     val elements = root("elements").arr.toList
     val lakes = elements.flatMap(parseLake)
