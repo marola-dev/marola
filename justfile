@@ -549,6 +549,57 @@ training-logs run_id="":
     echo "training-logs: downloaded to .tmp/training-logs — analyse with:"
     echo "  just analyze-training .tmp/training-logs/*/"
 
+# A second checkout of this repo that tracks origin/main, so you can build and test what has
+# just merged while an agent works on a branch in the main checkout — no marola2 clone, no
+# second remote, one .git. Lives at .tmp/wt-main, which is already gitignored and already
+# excluded from ruff/scoverage/cloc as a `.tmp/wt-*` path.
+#
+# DETACHED at origin/main on purpose, not `checkout main`: git refuses to check out one branch in
+# two worktrees, so a worktree holding `main` breaks the moment the main checkout goes back to it.
+# Detached sidesteps that entirely and is what "always synced on main" actually wants — you read
+# and run here, you commit in the other checkout.
+#
+#   just worktree            # create it, or fast-forward it to the latest origin/main
+#   cd .tmp/wt-main && nix develop
+worktree dir=".tmp/wt-main":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    root="{{justfile_directory()}}"
+    wt="$root/{{dir}}"
+    git -C "$root" fetch origin --quiet
+    target="$(git -C "$root" rev-parse origin/main)"
+    if git -C "$root" worktree list --porcelain | grep -qx "worktree $wt"; then
+        # Never clobber work in progress — say so and stop, the same contract as sync-main.
+        if [ -n "$(git -C "$wt" status --porcelain)" ]; then
+            echo "worktree: $wt has uncommitted changes — not touching it" >&2
+            echo "          commit/stash them there, or pass a different dir" >&2
+            exit 1
+        fi
+        before="$(git -C "$wt" rev-parse HEAD)"
+        git -C "$wt" checkout --quiet --detach "$target"
+        if [ "$before" = "$target" ]; then
+            echo "worktree: $wt already at origin/main ($(echo "$target" | cut -c1-7))"
+        else
+            echo "worktree: $wt $(echo "$before" | cut -c1-7) -> $(echo "$target" | cut -c1-7) (origin/main)"
+        fi
+    else
+        mkdir -p "$(dirname "$wt")"
+        git -C "$root" worktree add --detach "$wt" "$target"
+        echo "worktree: created $wt at origin/main"
+    fi
+    echo "  cd {{dir}} && nix develop"
+
+# Drop worktree registrations whose directories are gone (this repo accumulates them from agent
+# runs and /tmp experiments). Only removes bookkeeping for already-deleted directories — it never
+# deletes a worktree that still exists, so it is safe to run any time.
+worktree-prune:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    before=$(git worktree list | wc -l)
+    git worktree prune -v
+    after=$(git worktree list | wc -l)
+    echo "worktree-prune: $before -> $after registered ($((before - after)) stale entries removed)"
+
 # Claude Code in the jail;.
 jail-claude *args:
     #!/usr/bin/env bash
@@ -647,6 +698,12 @@ sync-main:
     set -euo pipefail
     git fetch origin --quiet
     branch="$(git branch --show-current)"
+    if [ -z "$branch" ]; then
+        # A detached checkout — `just worktree`'s main mirror is the common case, and printing
+        # "on ''" made it look broken. That mirror is fast-forwarded by `just worktree`, not here.
+        echo "sync-main: detached HEAD (a worktree mirror?) — fetched origin only, no ref updated"
+        exit 0
+    fi
     if [ "$branch" != "main" ]; then
         echo "sync-main: on '$branch', not 'main' — fetched origin only, no ref updated"
         exit 0

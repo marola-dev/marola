@@ -217,6 +217,13 @@
             # this is always safe to run on every shell entry. `timeout` keeps a slow/offline
             # network from delaying the prompt; failure here must never block entering the shell.
             (cd "$marola_root" && timeout 10s just sync-main) || true
+            # Two checkouts of this repo are a normal setup here: the main one, where an agent
+            # works on a branch, and `just worktree`'s detached mirror of origin/main, where you
+            # build and test what has merged. They look identical at a prompt, and running the
+            # wrong one is a confusing five minutes, so the shell says which it is.
+            if [ -n "$marola_root" ] && [ -z "$(git -C "$marola_root" branch --show-current 2>/dev/null)" ]; then
+              echo "marola: DETACHED mirror at $(git -C "$marola_root" rev-parse --short HEAD 2>/dev/null) — refresh it with 'just worktree' from the main checkout; commit there, not here"
+            fi
             echo "Run 'just' to see available commands."
           '';
         };
