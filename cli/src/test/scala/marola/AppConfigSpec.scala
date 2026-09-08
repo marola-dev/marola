@@ -10,7 +10,6 @@ import marola.model.Coordinates
 import marola.observability.Tracing
 import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore}
 import marola.vision.{AzureVisionClient, LocalVisionClient}
-import marola.water.{ImaScWaterQualityClient, IneaRjWaterQualityClient, InemaBaWaterQualityClient}
 
 /**
  * `TraceBackend.fromEnv` (MIP-0010 tracing-lane task 5): pure, no network, no `sys.env` read —
@@ -375,12 +374,17 @@ class AppConfigSpec extends munit.FunSuite:
     ct.runtimeClass.isInstance(value)
 
   /** Which agency a water-quality client speaks for — a name asserts better than a type. */
-  private def agency(client: Option[Any]): String = client match
-    case Some(_: ImaScWaterQualityClient)   => "ima-sc"
-    case Some(_: InemaBaWaterQualityClient) => "inema-ba"
-    case Some(_: IneaRjWaterQualityClient)  => "inea-rj"
-    case Some(other)                        => other.getClass.getSimpleName
-    case None                               => "none"
+  // By the provider's own name, not its class: every client is now wrapped in
+  // CachedWaterQualityClient, and the name is both what survives that wrapping and what the board
+  // reports as `sources.water` — the behaviour, rather than which class implements it.
+  private def agency(client: Option[marola.water.WaterQualityClient]): String = client match
+    case Some(c) =>
+      c.name match
+        case "IMA/SC"   => "ima-sc"
+        case "INEMA/BA" => "inema-ba"
+        case "INEA/RJ"  => "inea-rj"
+        case other      => other
+    case None => "none"
 
   private given AllowUnsafe = AllowUnsafe.embrace.danger
   private def run[A](effect: A < Sync): A = Sync.Unsafe.evalOrThrow(effect)

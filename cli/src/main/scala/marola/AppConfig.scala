@@ -16,6 +16,7 @@ import marola.observability.{AzureMonitorTracing, MlflowTracing, Tracing}
 import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore, SightingStore}
 import marola.vision.{AzureVisionClient, LocalVisionClient, VisionClient}
 import marola.water.{
+  CachedWaterQualityClient,
   ImaScWaterQualityClient,
   IneaRjWaterQualityClient,
   InemaBaWaterQualityClient,
@@ -113,7 +114,10 @@ final case class AppConfig(
     mlflowTrackingUri: Option[String],
     mlflowExperiment: String,
     tracesBackend: TraceBackend,
-    traceContent: Boolean
+    traceContent: Boolean,
+    // Defaulted so every existing construction still compiles, and injected rather than read
+    // inline from the environment (`.claude/rules/scala.md`) so a test can point it at a tmpdir.
+    waterCacheDir: java.nio.file.Path = java.nio.file.Path.of("data", "water-cache")
 ):
   /**
    * A fixed "current location" for the CLI, from `MAROLA_ORIGIN_LAT`/`MAROLA_ORIGIN_LON` — both or
@@ -159,8 +163,16 @@ final case class AppConfig(
       s"traces=$tracesBackend${if traceContent then "(content)" else ""}"
     ).mkString(" ")
 
-  /** MIP-0001 §5.2, extended MIP-0031 §5. */
+  /**
+   * MIP-0001 §5.2, extended MIP-0031 §5. Every provider is wrapped so an agency outage serves the
+   * last good fetch instead of blanking every beach — see `CachedWaterQualityClient`.
+   */
   def waterQualityClient(origin: Coordinates): Option[WaterQualityClient] =
+    selectWaterClient(origin).map(c =>
+      CachedWaterQualityClient(c, CachedWaterQualityClient.fileFor(waterCacheDir, c.name))
+    )
+
+  private def selectWaterClient(origin: Coordinates): Option[WaterQualityClient] =
     waterQualityProvider match
       case WaterProvider.ImaSc   => Some(ImaScWaterQualityClient())
       case WaterProvider.InemaBa => Some(InemaBaWaterQualityClient())

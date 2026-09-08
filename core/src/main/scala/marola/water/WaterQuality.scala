@@ -15,6 +15,23 @@ import marola.model.Coordinates
 enum BathingCondition derives CanEqual:
   case Proper, Improper, Unknown
 
+object BathingCondition:
+  /**
+   * Explicit disk label, never `toString`/`ordinal` (`.claude/rules/scala.md`): the cache on disk
+   * must survive a case being renamed.
+   */
+  extension (c: BathingCondition)
+    def label: String = c match
+      case Proper   => "propria"
+      case Improper => "impropria"
+      case Unknown  => "unknown"
+
+  def fromLabel(s: String): Option[BathingCondition] = s match
+    case "propria"   => Some(Proper)
+    case "impropria" => Some(Improper)
+    case "unknown"   => Some(Unknown)
+    case _           => None
+
 final case class WaterSample(
     sampledOn: LocalDate,
     condition: BathingCondition,
