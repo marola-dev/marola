@@ -143,6 +143,9 @@
             # .githooks/pre-push). Was missing here too, so `just quality` skipped ruff with a
             # one-line notice and an unused import in scripts/cost-split.py reached main — CI
             # lints every .py in the repo, and the local run had been linting a hand-kept list.
+            # pdoc generates the Python half of marola.dev/docs/ (MIP-0044 §5.6).
+            pkgs.python3Packages.pdoc
+
             pkgs.ruff
 
             # ai-jail — sandboxes AI coding agents (Claude Code, ...)
