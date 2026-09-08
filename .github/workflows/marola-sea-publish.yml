@@ -7,10 +7,14 @@ on:
   workflow_dispatch:
     inputs:
       preset:
+        # train_lora.py validates with choices=sorted(PRESETS), so an option it does not know
+        # fails at train time, after the venv build. main's PRESETS also hold `small` and `base`,
+        # both Llama-derived — kept out of the publish path deliberately (#273). qwen-* returns
+        # with PR #277.
         description: "training preset (see finetune/train_lora.py PRESETS)"
         type: choice
-        default: qwen-7b
-        options: [tiny, qwen-4b, qwen-7b, qwen-14b]
+        default: tiny
+        options: [tiny]
       resume:
         description: "resume from the last checkpoint if one exists"
         type: boolean
@@ -52,13 +56,6 @@ jobs:
             exit 1
           fi
           echo "HF_TOKEN present"
-
-      - name: preflight — does this run fit on this machine?
-        env:
-          PRESET: ${{ inputs.preset }}
-        run: |
-          set -euo pipefail
-          python3 finetune/preflight.py --preset "$PRESET" --strict
 
       - name: python env with CUDA torch (venv, reused between runs)
         run: |
