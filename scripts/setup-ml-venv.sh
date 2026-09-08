@@ -18,6 +18,17 @@ pkgs_from_requirements() {
   grep -vE '^\s*(#|$)|^torch\b' finetune/requirements.txt | sed 's/;.*//'
 }
 
+# Where the NVIDIA *driver* library lives. libcuda.so.1 is installed by the driver, never shipped
+# by pip, and a nix linker does not search /usr/lib — so torch imports fine and reports
+# cuda_available=False, which looks like a driver problem and is not one.
+libcuda_dir() {
+  local d
+  for d in /run/opengl-driver/lib /usr/lib/x86_64-linux-gnu /usr/lib64; do
+    if [ -e "$d/libcuda.so.1" ]; then echo "$d"; return 0; fi
+  done
+  return 1
+}
+
 # PyTorch ships manylinux wheels that dlopen the system libstdc++. Under `nix develop` the nix
 # Python's linker cannot see one, so `import torch` dies with
 # "libstdc++.so.6: cannot open shared object file". Prefer nix's gcc lib, fall back to the distro's.
@@ -37,9 +48,10 @@ libstdcxx_dir() {
 wrapper_body() {
   printf '%s\n' \
     '#!/usr/bin/env bash' \
-    '# Written by scripts/setup-ml-venv.sh. Runs the venv Python with a libstdc++ on the library' \
-    "# path, which PyTorch's manylinux wheels need and a nix Python does not provide." \
-    "export LD_LIBRARY_PATH=\"$2\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}\"" \
+    '# Written by scripts/setup-ml-venv.sh. Runs the venv Python with libstdc++ and the NVIDIA' \
+    '# driver library on the search path: the manylinux wheels need the first, and without the' \
+    '# second torch imports but reports cuda_available=False. A nix Python finds neither.' \
+    "export LD_LIBRARY_PATH=\"$2:$3\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}\"" \
     "exec \"$1/bin/python\" \"\$@\""
 }
 
@@ -52,9 +64,12 @@ self_test() {
   ok "$(pkgs_from_requirements | grep -c ';')" "0" "environment markers are stripped, pip gets plain names"
   d="$(libstdcxx_dir || true)"
   ok "$([ -n "$d" ] && [ -e "$d/libstdc++.so.6" ] && echo found)" "found" "a libstdc++ is located for the manylinux wheels"
-  ok "$(wrapper_body /venv /libs | grep -c 'LD_LIBRARY_PATH')" "1" "the wrapper puts libstdc++ on the library path"
-  ok "$(wrapper_body /venv /libs | grep -c '^exec ')" "1" "the wrapper execs rather than adding a shell per call"
-  ok "$(wrapper_body /venv /libs | grep -c '/venv/bin/python')" "1" "the wrapper runs the venv's own interpreter"
+  ok "$(wrapper_body /venv /libs /drv | grep -c 'LD_LIBRARY_PATH')" "1" "the wrapper puts libstdc++ on the library path"
+  ok "$(wrapper_body /venv /libs /drv | grep -c '^exec ')" "1" "the wrapper execs rather than adding a shell per call"
+  ok "$(wrapper_body /venv /libs /drv | grep -c '/venv/bin/python')" "1" "the wrapper runs the venv's own interpreter"
+  ok "$(wrapper_body /venv /libs /drv | grep -c '/libs:/drv')" "1" "both libstdc++ and the driver dir are on the path"
+  d="$(libcuda_dir || true)"
+  ok "$([ -n "$d" ] && [ -e "$d/libcuda.so.1" ] && echo found)" "found" "the NVIDIA driver library is located — without it cuda_available is False"
   if [ "$fails" -eq 0 ]; then echo "setup-ml-venv self-test: ok"; return 0; fi
   echo "setup-ml-venv self-test: $fails failure(s)" >&2; return 1
 }
@@ -81,9 +96,13 @@ libs="$(libstdcxx_dir)" || {
   echo "setup-ml-venv: no libstdc++.so.6 found — torch's wheels cannot load without one" >&2
   exit 1
 }
-wrapper_body "$VENV_ROOT" "$libs" > "$VENV_ROOT/bin/marola-python"
+drv="$(libcuda_dir)" || {
+  echo "setup-ml-venv: no libcuda.so.1 found — is the NVIDIA driver installed? (nvidia-smi)" >&2
+  exit 1
+}
+wrapper_body "$VENV_ROOT" "$libs" "$drv" > "$VENV_ROOT/bin/marola-python"
 chmod +x "$VENV_ROOT/bin/marola-python"
-echo "wrapper: $VENV_ROOT/bin/marola-python (libstdc++ from $libs)"
+echo "wrapper: $VENV_ROOT/bin/marola-python (libstdc++ $libs, driver $drv)"
 
 echo
 "$VENV_ROOT/bin/marola-python" -c 'import torch; print(f"torch {torch.__version__}  cuda_available={torch.cuda.is_available()}"); print("device:", torch.cuda.get_device_name(0)) if torch.cuda.is_available() else exit("torch cannot see a CUDA device — check nvidia-smi on this host")'
