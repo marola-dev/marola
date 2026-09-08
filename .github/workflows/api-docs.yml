@@ -62,7 +62,6 @@ jobs:
           find out/docs -maxdepth 3 -name index.html | sort
 
       - name: push to the site-data branch
-        id: push
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -87,7 +86,6 @@ jobs:
           git -C "$tmp" commit -qm "api docs from ${GITHUB_SHA::12}"
           git -C "$tmp" push -q origin HEAD:site-data
           echo "pushed docs/ to site-data"
-          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       # site-data is not the published site: site.yml copies docs/ out of it into site/dist and
       # deploys that. Nothing here triggers site.yml — its push filter only watches site/, the
@@ -96,8 +94,14 @@ jobs:
       # each fix landed and pushed correctly, and the site simply had not been rebuilt since.
       # Same mechanism ci.yml uses for the coverage badge; workflow_dispatch is one of the two
       # events GITHUB_TOKEN is allowed to trigger from inside a workflow.
+      # Unconditional, NOT gated on "did the tree change": the invariant is that what marola.dev
+      # serves matches what was generated, and an unchanged tree can still be undeployed — which
+      # is exactly the state that produced this bug. Docs were pushed to site-data at 16:57 and
+      # the live deploy was stamped 16:43, so a change-gated trigger would have fired never and
+      # the 404 would have waited on the 3-hourly schedule anyway. api-docs only runs on a code
+      # push to main, and ci.yml already triggers site.yml on those, so the marginal cost is one
+      # extra build on pushes that change scripts/ but no Scala.
       - name: Redeploy the site so the new docs are actually served
-        if: steps.push.outputs.pushed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (<= 3 h) will publish the docs"
