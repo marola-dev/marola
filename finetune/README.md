@@ -129,6 +129,59 @@ The same ladder applies to the RAG embedder (`knowledge/README.md`): `all-minilm
 the corpus in seconds, `nomic-embed-text` (274MB) is the quality option, `llama3.2` itself needs no
 extra download.
 
+## Presets, and what each costs on your machine
+
+`just finetune-preflight preset=<name>` answers the only question that matters before starting a
+run — does it fit, and how long — by measuring VRAM, RAM and the real filesystem rather than
+guessing:
+
+```
+$ just finetune-preflight preset=qwen-27b
+preset      : qwen-27b  (Qwen/Qwen3.8-27B, 27B, apache-2.0)
+              NOTE: base model, not Instruct — needs far more data/epochs to act as an assistant
+  RAM  (merge)  need    58.0 GB   have   202.4 GB   OK
+  disk (peak)   need   153.9 GB   have  7030.6 GB   OK
+estimated wall clock: ~28.9 h for 3 SFT + 1 DPO epoch (rough)
+```
+
+Measure the filesystem the artifacts actually land on. On 2026-09-07 `df /home` in a sandboxed
+shell reported 95 GB while `os.statvfs` on the repo reported 7 TB — the difference between "27B is
+impossible here" and "27B is fine".
+
+| preset | base | licence | notes |
+|---|---|---|---|
+| `tiny` (default) | SmolLM2-360M-Instruct | apache-2.0 | CPU-viable, the pipeline proof |
+| `small` | Llama-3.2-1B-Instruct | **llama-3.2** | name must start with `Llama-` |
+| `base` | Llama-3.2-3B-Instruct (gated) | **llama-3.2** | same, plus an HF login |
+| `qwen-4b` | Qwen3-4B-Instruct-2507 | apache-2.0 | best quality-per-hour step up |
+| `qwen-7b` | Qwen2.5-7B-Instruct | apache-2.0 | ~20x `tiny`, under an hour on a 4090 |
+| `qwen-14b` | Qwen2.5-14B-Instruct | apache-2.0 | comfortable QLoRA on 24 GB |
+| `qwen-27b` | Qwen3.8-27B | apache-2.0 | **base model, not Instruct**; GPU only in practice |
+
+Qwen2.5-3B-Instruct is deliberately absent: its card says `other`, not apache-2.0, unlike every
+other size in that family.
+
+### Device modes
+
+`--device auto` (default) uses CUDA when it is there. `--device cpu` forces CPU — fine at `tiny`,
+measured in days above ~3B. `--device hybrid` fills the GPU to a ceiling and spills the remainder
+into CPU RAM via accelerate's `max_memory`; slower per step because offloaded layers cross PCIe
+twice, but it is the difference between running and an OOM when a model does not fit in VRAM
+alone.
+
+A present card with a broken driver looks exactly like no card at all to torch, so `--device cuda`
+fails loudly with a pointer at `nvidia-smi` rather than silently training on CPU for a day.
+
+### Throughput
+
+Defaults now include: example **packing** (marola's ~2.8k rows are mostly far shorter than the
+2048-token window, so without it most of every batch is padding — the single biggest win here),
+**gradient checkpointing** (~20% slower per step, large drop in activation memory, which is what
+makes the bigger presets fit), **SDPA attention**, **TF32** matmuls, a **fused AdamW** on CUDA,
+**double quantization** in the 4-bit config, and `save_total_limit=1` so a 27B run does not write
+~100 GB of unread checkpoints per epoch. Per-device batch and gradient accumulation are chosen by
+model size to keep the effective batch at ~8; override with `--batch`/`--grad-accum`.
+
 ## Publishing to Hugging Face (MIP-0025 §5.1, MIP-0033 §5.3)
 
 **Publish the merged model, never the adapter.** `train_lora.py`/`train_dpo.py` produce a LoRA

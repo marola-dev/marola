@@ -88,6 +88,7 @@ quality-other:
     python3 scripts/mip_graph.py --check
     python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test
+    python3 finetune/preflight.py --self-test
     python3 finetune/merge_export.py --self-test
     .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
@@ -194,6 +195,10 @@ benchmark:
 # Tier 2 prep: chat-format JSONL from the DSPy demos, sea lore and knowledge/.
 finetune-dataset:
     python3 finetune/build_dataset.py
+
+# VRAM, RAM, disk and a rough ETA for a fine-tune on this machine, before starting it. MIP-0048.
+finetune-preflight preset="tiny" *args:
+    python3 finetune/preflight.py --preset {{preset}} {{args}}
 
 # Layer 3 — DPO preference pairs from Reviewer.scala's reject/revise decisions. MIP-0025 §4.3.
 finetune-dpo-dataset:
