@@ -70,6 +70,7 @@ quality-other:
     scripts/gh-billing.sh --self-test
     scripts/setup-cuda-cache.sh --self-test
     scripts/setup-ml-venv.sh --self-test
+    scripts/gh-token.sh --self-test
     scripts/deps-stack.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
@@ -469,6 +470,28 @@ jail-dry-run *cmd:
 
 # --no-save-config keeps a jailed run from writing the host's config.
 
+# Make sure the HOST has a GitHub credential the jail can borrow, then say which one. Run this
+# on the host before `just jco` — never inside a jail, where a login goes to an ephemeral HOME.
+# Already logged in is the normal case and costs nothing: gh's OAuth token does not expire, so
+# this just confirms it and exits. `just gh-auth --refresh` re-runs gh's flow to ADD scopes (that
+# one does need a browser approval); `just gh-auth --login` forces a fresh login.
+gh-auth *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{args}}" in
+        *--refresh*) exec gh auth refresh ;;
+        *--login*)   exec gh auth login ;;
+    esac
+    if src="$(scripts/gh-token.sh --source)"; then
+        echo "gh-auth: already authenticated — $src"
+        if [ "$src" = "gh:host-login" ]; then gh auth status 2>&1 | sed 's/^/  /'; fi
+        echo 'gh-auth: "just jco" will forward this token into the jail; no login needed in there.'
+    else
+        echo "gh-auth: no credential on this host yet — running gh auth login (one time)."
+        gh auth login
+        scripts/gh-token.sh --source >/dev/null && echo "gh-auth: done — now run: just jco"
+    fi
+
 # Claude Code in the jail;.
 jail-claude *args:
     #!/usr/bin/env bash
@@ -499,6 +522,18 @@ jail-claude *args:
         echo "jail-claude: MAROLA_JAIL_CLIPBOARD_PASTE=1 — real X11/Wayland display passthrough is on, the jail can read your clipboard (and, on X11, more)" >&2
         paste_flags=(--display --env DISPLAY --env WAYLAND_DISPLAY --env "XDG_RUNTIME_DIR=/run/user/$(id -u)")
     fi
+    # Resolve the token out here, on the host, where the real gh login lives: ~/.config/gh is
+    # deliberately NOT mapped into the jail, so authenticating inside it writes to an ephemeral
+    # HOME and is gone by the next session. See scripts/gh-token.sh.
+    if src="$(scripts/gh-token.sh --source)"; then
+        GH_TOKEN="$(scripts/gh-token.sh)"
+        export GH_TOKEN
+        echo "jail-claude: GH_TOKEN from $src — gh works inside the jail, no login needed" >&2
+    else
+        echo "jail-claude: no GitHub token (no GH_TOKEN in .env, and gh is logged out on the host)." >&2
+        echo "             gh will not work inside the jail and 'just uprd' cannot open a PR." >&2
+        echo "             Fix once, on the host: gh auth login   (or add GH_TOKEN= to .env)" >&2
+    fi
     ai-jail --no-save-config --rw-map ~/.claude --rw-map ~/.claude.json --map ~/.ssh --network --terminal-passthrough --exec --env GH_TOKEN "${paste_flags[@]}" claude {{args}}
 
 # The two below pin the model via Claude Code's own alias (always the latest of that line), and
@@ -516,7 +551,16 @@ jco *args: (jail-claude "--model" "opus" args)
 # OpenCode in the jail (MIP-0013) — the same ai-jail policy as jail-claude, OpenCode's own three
 # OpenCode in the same jail, with its own state directories instead of Claude Code's. MIP-0013.
 jail-opencode *args:
-    ai-jail --no-save-config --rw-map ~/.config/opencode --rw-map ~/.local/share/opencode --rw-map ~/.cache/opencode --network --terminal-passthrough --exec opencode {{args}}
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Same host-side token resolution as jail-claude, and for the same reason — this recipe used
+    # to forward no token at all, so gh was unusable in an OpenCode jail.
+    if src="$(scripts/gh-token.sh --source)"; then
+        GH_TOKEN="$(scripts/gh-token.sh)"
+        export GH_TOKEN
+        echo "jail-opencode: GH_TOKEN from $src" >&2
+    fi
+    ai-jail --no-save-config --rw-map ~/.config/opencode --rw-map ~/.local/share/opencode --rw-map ~/.cache/opencode --network --terminal-passthrough --exec --env GH_TOKEN opencode {{args}}
 
 # jail-opencode, short alias.
 jo *args: (jail-opencode args)

@@ -136,9 +136,15 @@ Prefer running agent tools through [ai-jail](https://github.com/akitaonrails/ai-
 `just jail-claude` (or `jcf`/`jcs`, pinned to fable/sonnet) — over bare. It sandboxes the process
 (bubblewrap/Landlock/seccomp); it doesn't replace the rules above or stop bad code/overspend, only
 out-of-sandbox access. `.env`/`*.pem`/`*.key` are masked regardless of disk content;
-`just jail-dry-run <cmd>` previews a jailed command. No `gh` login of its own — `just jail-claude`
-passes `GH_TOKEN` from the host shell (fine-grained, gitignored `.env`) so PRs work via
-`just uprd`. `jail-claude` runs `ai-jail --exec` — direct execution, no PTY proxy/status bar —
+`just jail-dry-run <cmd>` previews a jailed command. **A jail never has a `gh` login of its own,
+and cannot acquire one:** `~/.config/gh` is not mapped in, so `gh auth login` *inside* the jail
+writes to an ephemeral HOME and is gone by the next session — that is the "reauth every time" loop,
+not a bug in `gh`. `just jail-claude`/`just jail-opencode` therefore resolve a token on the host,
+via `scripts/gh-token.sh`, and forward the value with `--env GH_TOKEN`: a fine-grained key in the
+gitignored `.env` first (the shellHook loads it — narrowest credential, so it wins), otherwise the
+host's own `gh auth token`. Authenticate **once on the host**, never inside the jail. If neither
+exists, `jail-claude` says so at startup rather than letting you discover it when `just uprd`
+fails. `jail-claude` runs `ai-jail --exec` — direct execution, no PTY proxy/status bar —
 because the proxy is what broke Ctrl+C (it owns the raw terminal and must relay the interrupt
 byte itself) and mangled multi-line/bracketed pastes; see the justfile comment above `jail-claude`
 for the full diagnosis. `MAROLA_JAIL_CLIPBOARD=1` opts into a write-only clipboard bridge
