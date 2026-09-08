@@ -337,8 +337,10 @@ async function runPage(board) {
   ok((nav.match(/<span aria-disabled="true">/g) || []).length === 5,
     'the five sections with no page yet are spans, not links');
   ok(!/<a[^>]+href="#"/.test(nav), 'no href="#" — a link that goes nowhere is worse than "soon"');
-  ok(INDEX.indexOf('<nav class="sitenav"') > INDEX.indexOf('</footer>'),
-    'the nav sits outside #footer, which renderFooter() overwrites on every board load');
+  ok(INDEX.indexOf('<nav class="sitenav"') < INDEX.indexOf('<header class="bar"'),
+    'the nav is the first thing on the page, above the header');
+  ok(INDEX.indexOf('<nav class="sitenav"') < INDEX.indexOf('<footer id="footer"'),
+    'and outside #footer, which renderFooter() overwrites on every board load');
   ok(/el\.footer\.innerHTML\s*=/.test(APP),
     'renderFooter still replaces #footer wholesale — the reason for the assertion above');
 
