@@ -221,6 +221,7 @@ pages = [{"l":"index.html#","e":false,"i":"","n":"marola-core","t":"marola-core"
 {"l":"marola/trails/TrailFinder$.html#","e":false,"i":"","n":"TrailFinder","t":"TrailFinder","d":"marola.trails","k":"object","x":""},
 {"l":"marola/trails/TrailFinder$.html#NearRadiusKm-0","e":false,"i":"","n":"NearRadiusKm","t":"NearRadiusKm: Double","d":"marola.trails.TrailFinder","k":"val","x":""},
 {"l":"marola/trails/TrailFinder$.html#nearby-fffff9c6","e":false,"i":"","n":"nearby","t":"nearby(origin: Coordinates, radiusKm: Double, beaches: List[Beach]): List[Trail] < Sync","d":"marola.trails.TrailFinder","k":"def","x":""},
+{"l":"marola/trails/TrailFinder$.html#nearbyOrEmpty-fffff9c6","e":false,"i":"","n":"nearbyOrEmpty","t":"nearbyOrEmpty(origin: Coordinates, radiusKm: Double, beaches: List[Beach]): List[Trail] < Sync","d":"marola.trails.TrailFinder","k":"def","x":""},
 {"l":"marola/vision.html#","e":false,"i":"","n":"marola.vision","t":"marola.vision","d":"","k":"package","x":""},
 {"l":"marola/vision/VisionClient.html#","e":false,"i":"","n":"VisionClient","t":"VisionClient","d":"marola.vision","k":"trait","x":""},
 {"l":"marola/vision/VisionClient.html#describe-fffff84d","e":false,"i":"","n":"describe","t":"describe(imageBytes: Array[Byte]): String < Sync","d":"marola.vision.VisionClient","k":"def","x":""},
