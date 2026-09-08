@@ -10,4 +10,4 @@ accelerate>=1.14.0
 bitsandbytes>=0.50.2; sys_platform == "linux"
 
 # publish_hf.py only — uploading a trained GGUF to a Hugging Face model repo (MIP-0025 §5.1)
-huggingface_hub>=0.26.0
+huggingface_hub>=1.30.0
