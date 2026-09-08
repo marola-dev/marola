@@ -273,14 +273,18 @@ just at an epoch boundary, so a run can be stopped and restarted across days, re
 GPU. What marola needs to change to use it:
 
 ```python
-# today, in train_lora.py's SFTConfig
-save_strategy="epoch",          # a checkpoint only every epoch
-save_total_limit=1,             # keeps the newest only
+# today, in train_lora.py
+SFTConfig(
+    save_strategy="epoch",  # a checkpoint only every epoch
+    save_total_limit=1,  # keeps the newest only
+)
 
 # for a multi-day run
-save_strategy="steps",
-save_steps=200,                 # tune so a crash costs minutes, not hours
-save_total_limit=2,             # one to resume from, one as a fallback
+SFTConfig(
+    save_strategy="steps",
+    save_steps=200,  # tune so a crash costs minutes, not hours
+    save_total_limit=2,  # one to resume from, one as a fallback
+)
 ```
 
 plus a `--resume` flag passing `resume_from_checkpoint` through. Note the interaction with
