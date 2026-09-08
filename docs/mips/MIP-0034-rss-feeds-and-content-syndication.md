@@ -109,6 +109,43 @@ Janeiro` 17, `Metropolitana de Salvador` 1. **No key, no quota published, free.*
 a beach needs a hand-written mesoregion→`areas.json` table (§5.2, §11.2). Not verified: any rate
 limit or terms-of-use page beyond the embedded copyright line.
 
+**Revision, 2026-09-08 — the mesoregion table is not needed.** A second probing pass (originally
+drafted as MIP-0049, folded in here) found three things that change §5.2's design:
+
+- **Each item's `<guid>`/`<link>` resolves to a full OASIS CAP 1.2 document.**
+  `GET https://apiprevmet3.inmet.gov.br/avisos/rss/55649` → 200, `text/xml`, 8 973 bytes,
+  `urn:oasis:names:tc:emergency:cap:1.2`. It carries `event`, `severity`, `urgency`, `certainty`,
+  `onset`, `expires`, `description`, `instruction`, `web`, `<area><areaDesc>` — and a
+  **`<polygon>` of 291 `lat,lon` pairs**. Real geometry. So a beach is matched by point-in-polygon
+  against the alert's own boundary, and `AlertAreas.byArea` (§5.2) is deleted rather than written:
+  no hand-maintained table, no per-area entry when `areas.json` grows, and the match is exact
+  instead of "this mesoregion name sounds like that area".
+- **Severity has two vocabularies.** RSS says `Perigo Potencial` / `Perigo` / `Grande Perigo`
+  (80 / 8 / 1 of 89 live items); CAP says `Moderate` / `Severe` / `Extreme`. Alert 55649 is
+  `Perigo Potencial` in RSS and `Moderate` in CAP — the same alert. Show INMET's Portuguese
+  verbatim, order by the CAP enum.
+- **INMET returns no HTTP response at all to curl's default User-Agent.** TCP connects, the TLS
+  handshake completes (`Client hello` … both `Finished`), then nothing until timeout. With a
+  browser UA the same URL is an immediate 200. This is the first thing to check when the client
+  appears to hang, and it will otherwise read as an INMET outage.
+
+### 4.1a INMET `avisos/ativos` JSON — enrichment only, deliberately not primary
+`GET https://apiprevmet3.inmet.gov.br/avisos/ativos` → 200, `application/json`, 419 178 bytes,
+`{"hoje": [...], "futuro": [...]}`. Strictly richer than RSS or CAP: `poligono` is already
+**GeoJSON**, `municipios` carries **IBGE municipality codes** ("Aracruz - ES (3200607)"), plus
+`estados`, `mesorregioes`, `microrregioes`, `geocodes`, `riscos`, `instrucoes`, and `aviso_cor`
+(`#FFFE00`) — INMET's own severity colour. It is **not** the primary source: no INMET page
+documenting it was found, so its shape can change without notice, whereas RSS 2.0 and CAP 1.2 are
+published standards. Use it best-effort for municipality names and the official colour; losing it
+must not take the alert path down.
+
+### 4.1b Backfill — viable by bounded id walk, no archive endpoint
+`/avisos` and `/avisos/todos` both 404. But ids are dense and monotonic in time and old ones stay
+served: `/avisos/rss/55000` → `sent` 2026-07-15, `50000` → 2025-02-28, `40000` → 2022-08-29, all
+200 with full CAP; `/avisos/rss/1000` → 500. So history back to at least **2022** is reachable by
+walking ids downward from the newest, a few KB each. Only five ids were sampled — density and the
+exact floor are **not** established (Appendix, "Not checked").
+
 ### 4.2 YouTube channel Atom — fetchable, but thin (§5.5)
 `https://www.youtube.com/feeds/videos.xml?channel_id=<id>` returns 200 Atom, no key. Verified
 against a real id resolved from a channel page (`UC-87aDLv5WFJ83fxt21gsEQ`, NOAAVisualizations):
@@ -215,13 +252,24 @@ trait AlertClient:                       // mirrors WaterQualityClient's shape
   def alertsFor(area: SiteBuilder.Area, now: OffsetDateTime): List[MarineAlert] < Sync
 
 object InmetAlertClient extends AlertClient   // core/alerts/InmetAlertClient.scala
-object AlertAreas:
-  /** IBGE mesoregion names → areas.json ids. Hand-written, sourced, unit-tested. */
-  val byArea: Map[String, Set[String]]   // "floripa" -> Set("Grande Florianópolis", …)
+
+// §4.1's revision: geometry comes from the alert's own CAP document, so there is no
+// mesoregion→area table to hand-maintain. `areaDesc` is kept for display only.
+final case class AlertArea(description: String, polygon: List[Coordinates])
+object Geo:
+  /** Ray-casting point-in-polygon. Pure, ~20 lines, no dependency. Safety-relevant: plain
+    * Scala, exhaustively unit-tested, never model output. */
+  def contains(polygon: List[Coordinates], c: Coordinates): Boolean
 ```
 
-- `<description>`'s HTML table is parsed by **field label** (`Início`, `Fim`, `Evento`,
-  `Severidade`, `Área`) into typed fields — deterministic, no LLM anywhere on this path.
+- **Geometry, not names.** The RSS gives the item list; each item's link gives CAP 1.2 with a
+  `<polygon>`, and a beach is in the alert iff `Geo.contains` says so. This replaces the
+  hand-written `AlertAreas.byArea` the first draft needed, removes §11.2's maintenance question,
+  and is what makes the path work for **all of Brazil** — a new entry in `areas.json` needs no new
+  mapping row. A CAP document with no `<polygon>` degrades to an alert with an empty area that
+  matches nothing, and its `areaDesc` is still shown.
+- The RSS `<description>` HTML table is then only a **fallback** for fields CAP does not carry,
+  not the parse path — deterministic either way, no LLM anywhere on this path.
 - **Expiry is load-bearing.** An alert is shown iff `now` is within `[startsAt, endsAt]`. Nothing
   from this path is ever persisted into the knowledge index, precisely because the index has no
   concept of expiry: a cached "storm warning" answered three weeks later is the worst failure this
@@ -361,9 +409,19 @@ byte-identical after any `feed_digest.py` run.
   already exists must pass with and without it.
 - `feed_digest.py --self-test` (offline) added to `quality-other`, plus the `knowledge/`
   `Ingested-from:` guard from §5.4.
-- Live checks, run by hand before merging the implementation: `curl -sS
-  https://apiprevmet3.inmet.gov.br/avisos/rss | head`, `just site-build floripa && xmllint --noout
-  site/dist/feed.xml`, and the feed pasted into one real reader.
+- `CapParserSpec` (pure, added 2026-09-08 with §4.1's revision): the checked-in alert 55649
+  document parses into `event`, both severity vocabularies, `onset`/`expires`, its 291-point
+  polygon and its `web` source URL; a CAP document with no `<polygon>` yields an empty area rather
+  than throwing, and never matches.
+- `GeoSpec` (pure): point-in-polygon inside, outside, on a vertex, on an edge, and a point whose
+  latitude exactly equals a vertex's (the classic ray-casting off-by-one). Plus the test that
+  earns its keep: a Joaquina coordinate is **not** covered by 55649's real Amazonas polygon, and a
+  coordinate inside it is — this is what catches an inverted lat/lon, the likeliest silent bug on
+  this path.
+- Live checks, run by hand before merging the implementation: `curl -sS -A "$(scripts/…ua)"
+  https://apiprevmet3.inmet.gov.br/avisos/rss | head` (**a User-Agent is required — see §4.1**),
+  `just site-build floripa && xmllint --noout site/dist/feed.xml`, and the feed pasted into one
+  real reader.
 - **Done** = the alert banner appears for a real active warning and disappears after its `Fim`;
   `feed.xml` validates and shows one item per area per day across two consecutive rebuilds;
   `git status` shows no change under `knowledge/` after a digest run.
@@ -504,8 +562,37 @@ reads `*.md` directly under `knowledge/` **plus** directly under `knowledge/safe
 (Atom parsing + per-item JSON + `index.jsonl` + `--self-test`), `justfile` `quality-other`,
 `knowledge/README.md` (the safety-directory paragraph added by #195).
 
+### Checked live (2026-09-08, second pass — the MIP-0049 findings folded into §4.1)
+
+- `https://apiprevmet3.inmet.gov.br/avisos/rss` — **200**, `application/rss+xml`, 160 320 bytes,
+  **89** `<item>`s. Severity split: `Perigo Potencial` 80, `Perigo` 8, `Grande Perigo` 1. Events:
+  Baixa Umidade 34, Tempestade 32, Chuvas Intensas 12, Vendaval 3, Acumulado de Chuva 1, Geada 1,
+  Declínio de Temperatura 1.
+- The same URL with **curl's default User-Agent** — no HTTP response at all; TLS handshake
+  completes, then timeout. `http://portal.inmet.gov.br/` → 302; `https://portal.inmet.gov.br/` →
+  500 with a browser UA. DNS resolves and `example.com` → 200 from the same shell, so this is
+  INMET-side, not the sandbox.
+- `https://apiprevmet3.inmet.gov.br/avisos/rss/55649` — **200**, `text/xml`, 8 973 bytes, CAP 1.2.
+  `event` Chuvas Intensas, `severity` Moderate, `urgency` Future, `certainty` Likely, `onset`
+  2026-09-11T09:34:00-03:00, `expires` 2026-09-11T23:59:00-03:00, `areaDesc` naming five Amazonas
+  mesoregions, `<polygon>` with **291** `lat,lon` pairs.
+- `https://apiprevmet3.inmet.gov.br/avisos/ativos` — **200**, `application/json`, 419 178 bytes,
+  keys `hoje` (3 records) / `futuro`. Fields include `poligono` (GeoJSON Polygon), `municipios`
+  with IBGE codes, `estados`, `mesorregioes`, `microrregioes`, `geocodes`, `severidade`,
+  `aviso_cor` (`#FFFE00`), `riscos`, `instrucoes`, `data_inicio`/`data_fim`.
+- Backfill probe — `/avisos/rss/{55649,55000,50000,40000}` all **200**, `sent` 2026-09-08,
+  2026-07-15, 2025-02-28, 2022-08-29. `/avisos/rss/1000` → **500**. `/avisos` → 404,
+  `/avisos/todos` → 404.
+
 ### Not checked
 
+- (2026-09-08) Whether alert ids are globally dense or have large gaps — only five were sampled,
+  and the 500 floor was found by bisection, not documentation. The backfill walker must tolerate
+  both and never assume density.
+- (2026-09-08) Whether the CAP `identifier` (`urn:oid:2.49.0.0.76.0.2026.28220.1`) is a stabler
+  dedupe key than the numeric id. The numeric id is proposed because both the RSS and the URL use it.
+- (2026-09-08) Whether `avisos.inmet.gov.br/<id>` — the human page shown as `Source:` — serves old
+  ids the way the API path does. Only the API was probed for history.
 - INMET's terms of use beyond the `<copyright>` element and the inline licence comment in the feed
   itself; no separate ToS page was fetched, and no rate limit is documented anywhere I looked.
 - Whether INMET's `avisos` feed ever carries a `Ressaca` (heavy-surf) event type — none appeared in
