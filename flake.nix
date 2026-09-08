@@ -135,8 +135,17 @@
             pkgs.github-runner
 
             # actionlint shells out to shellcheck to lint the `run:` scripts inside workflow
-            # steps — without it, actionlint still exits 0 locally and a shellcheck-only finding
-            # (e.g. SC2015) only surfaces once CI runs it. Same failure mode as actionlint above.
+            # steps — without it, actionlint exits 0 locally and a shellcheck-only finding only
+            # surfaces once CI runs it. Same failure mode as actionlint above.
+            #
+            # SC2015 used to be the example here, and it is no longer a good one: nixpkgs now
+            # ships shellcheck 0.11.0, which DROPPED SC2015 entirely (even the canonical
+            # `true && echo a || echo b` is clean), while ubuntu-latest's actionlint action still
+            # runs an older shellcheck that flags it. So local is now LOOSER than CI on that rule
+            # specifically, and `A && B || C` in a workflow `run:` will pass `just quality` and
+            # then fail ci.yml's actionlint step — which is exactly what happened on the
+            # marola-sea log-export step. Write `if ...; then ...; fi` in workflow run blocks;
+            # it is clearer anyway, and it does not swallow the failure the `|| true` hid.
             pkgs.shellcheck
 
             # Python lint/format (`just quality-other`, ci.yml's quality-other job,

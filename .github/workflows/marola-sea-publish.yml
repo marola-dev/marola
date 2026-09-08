@@ -138,9 +138,14 @@ jobs:
           mkdir -p training-logs
           # The checkpoints live outside the workspace, so copy the state files in — they are a
           # few KB of JSON and they are the whole structured record of the run.
+          # A missing state file is expected (that stage may not have run); a copy that fails
+          # for any other reason is not, so this is an if rather than `&& cp || true` — which
+          # swallowed the second case, and is the SC2015 older shellchecks flag.
           for d in adapter dpo-adapter; do
             src="$CKPT_ROOT/$PRESET/$d/trainer_state.json"
-            [ -f "$src" ] && cp "$src" "training-logs/${d}-trainer_state.json" || true
+            if [ -f "$src" ]; then
+              cp "$src" "training-logs/${d}-trainer_state.json"
+            fi
           done
           python3 scripts/analyze_training.py \
             "$CKPT_ROOT/$PRESET/adapter" "$CKPT_ROOT/$PRESET/dpo-adapter" \
