@@ -71,6 +71,7 @@ quality-other:
     scripts/setup-cuda-cache.sh --self-test
     scripts/setup-ml-venv.sh --self-test
     scripts/gh-token.sh --self-test
+    scripts/temps.sh --self-test
     scripts/deps-stack.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
@@ -491,6 +492,12 @@ gh-auth *args:
         gh auth login
         scripts/gh-token.sh --source >/dev/null && echo "gh-auth: done — now run: just jco"
     fi
+# CPU/GPU temperature with a verdict — for watching a long marola-sea training run.
+# `just temps` for one snapshot, `just temps --watch` to follow it, `just temps --json` for a log.
+# Thresholds are the hardware's own (coretemp max/crit, nvidia-smi slowdown/shutdown), not
+# invented numbers. GPU readings need the host: /dev/nvidia* is not mapped into the jail.
+temps *args:
+    scripts/temps.sh {{args}}
 
 # Claude Code in the jail;.
 jail-claude *args:
