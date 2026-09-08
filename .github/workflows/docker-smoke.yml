@@ -52,7 +52,7 @@ jobs:
       # Same recipe as marola-e2e.yml: the binary and the model blobs, cached per model.
       - name: Cache Ollama binary and model
         id: ollama-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.ollama/models
