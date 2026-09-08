@@ -1,24 +1,5 @@
 #!/usr/bin/env bash
-# stop-gate — Stop hook: nudge once per session to run `just test` after a .scala edit.
-# (MIP-0011 §5 item 4.)
-#
-# If any tracked .scala file differs from HEAD and this session hasn't been blocked by this hook
-# yet, block the stop once with a message asking Claude to run `just test` (or say why not), and
-# record a marker so the *same session* is never blocked a second time — a Stop hook that blocks
-# repeatedly burns tokens and trust (MIP-0011 §8), and the harness already caps continuations at
-# 8; this caps at 1 regardless. The marker does not check that `just test` actually ran — the
-# block itself is the enforcement; a second nag in the same session would just be noise.
-#
-# Session scope comes from the hook's own JSON (`.session_id`), not `stop_hook_active` — that
-# field only distinguishes "this Stop followed a block", not "this session already got one nag",
-# and a later ordinary Stop later in the same session must not re-block.
-#
-# Marker location: $XDG_RUNTIME_DIR (falls back to /tmp), one file per session id — ephemeral,
-# never committed, cleared whenever the runtime dir is (login session end / reboot).
-#
-#   .claude/hooks/stop-gate.sh --self-test   # run by `just quality`; exits non-zero on any miss
-#
-# Wired in .claude/settings.json -> hooks.Stop.
+# stop-gate — Stop hook: nudge once per session to run `just test` after a .scala edit. MIP-0011.
 set -euo pipefail
 
 REPO_ROOT="${STOP_GATE_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
@@ -37,9 +18,7 @@ except Exception: pass" "$field" 2>/dev/null || true
 
 scala_changed_since_head() {
   # Tracked changes (`git diff`) miss a brand-new .scala file the Write tool created but nothing
-  # `git add`ed yet — `git diff` is diff-only by design and never sees untracked paths. Also check
-  # `ls-files --others` so a fresh component/spec file trips the nag too, not just an edit to an
-  # existing one (an ultrareview finding, 2026-09-06).
+  # `git add`ed yet — `git diff` is diff-only by design and never sees untracked paths.
   git -C "$REPO_ROOT" diff --name-only HEAD -- '*.scala' 2>/dev/null | grep -q . && return 0
   git -C "$REPO_ROOT" ls-files --others --exclude-standard -- '*.scala' 2>/dev/null | grep -q .
 }
@@ -167,8 +146,8 @@ self_test() {
 
   # An unwritable marker dir (read-only fs, XDG_RUNTIME_DIR gone) must allow, not exit 1 — the
   # hook's own "never block by accident" invariant, applied to the marker writes too (an
-  # ultrareview finding, 2026-09-06: `set -euo pipefail` + an unguarded mkdir/touch used to exit 1,
-  # neither the documented allow-0 nor block-2).
+  # ultrareview finding, 2026-09-06: `set -euo pipefail` + an unguarded mkdir/touch used to exit
+  # 1, neither the documented allow-0 nor block-2).
   printf 'object A { val x = 3 }\n' > "$repo/A.scala"
   MARKER_DIR="/proc/self/marola-stop-gate-unwritable"
   local unwritable_session="self-test-session-unwritable-$$"

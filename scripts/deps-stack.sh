@@ -98,15 +98,15 @@
 set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
-# shellcheck source=scripts/lib/stack_link.sh
+# shellcheck source=scripts/lib/stack_link.sh.
 source "$script_dir/lib/stack_link.sh"
-# shellcheck source=scripts/lib/uprd_title.sh
+# shellcheck source=scripts/lib/uprd_title.sh.
 source "$script_dir/lib/uprd_title.sh"
 
 plan_dir="$repo_root/.tmp/deps-stack"
 plan_file="$plan_dir/plan.json"
 
-# --- the dedicated build worktree — never the caller's own checkout (see header, "Isolation") --
+# --- the dedicated build worktree — never the caller's own checkout (see header, "Isolation") --.
 wt_rel=".tmp/wt-deps-stack"
 wt_dir="$repo_root/$wt_rel"
 
@@ -122,11 +122,7 @@ remove_worktree() {   # best-effort: also cleans up a worktree whose directory w
   git -C "$repo_root" worktree prune 2>/dev/null || true
 }
 
-# $1 = fresh|resume. A fresh (non-`--resume`) invocation always starts the chain over (discovery
-# is re-run, plan.json is overwritten below), so the worktree is rebuilt from origin/main too —
-# this is also what clears out a stale worktree left over from an earlier date's abandoned run.
-# `--resume` reuses whatever the previous run left in place; it errors out rather than silently
-# building a fresh (and therefore wrong) worktree if that one is gone.
+# $1 = fresh|resume.
 ensure_worktree() {
   mkdir -p "$repo_root/.tmp"
   if [ "$1" = fresh ]; then
@@ -143,8 +139,8 @@ ensure_worktree() {
   fi
 }
 
-# Printed on a cherry-pick conflict this script can't auto-resolve — names the worktree, never
-# the caller's own checkout, so following these steps can't touch the caller's branch or index.
+# Printed on a cherry-pick conflict this script can't auto-resolve — names the worktree, never the
+# caller's own checkout, so following these steps can't touch the caller's branch or index.
 print_conflict_instructions() {   # $1 = branch left mid-cherry-pick
   echo
   echo "deps-stack: CONFLICT cherry-picking onto $1 in $wt_rel — resolve it:"
@@ -160,13 +156,7 @@ print_conflict_instructions() {   # $1 = branch left mid-cherry-pick
 # --diff-filter=U` reports in the worktree is either a `*requirements*.txt` (scripts/lib/
 # req_merge.py: keep the higher lower bound per package) or a `.github/workflows/*.yml|yaml`
 # (scripts/lib/uses_merge.py: keep the higher `uses: owner/action@vN` per step — the
-# actions/checkout-bump-next-to-a-hadolint-bump shape). Each module's docstring/self-test covers
-# the exact hunks it accepts and refuses. Returns 0 and leaves the resolved files `git add`ed
-# (ready for `cherry-pick --continue`) only when *every* conflicted file qualified and resolved;
-# otherwise returns 1 and stages nothing, so the ordinary conflict-stop path still applies. (Each
-# module is itself all-or-nothing over the files it gets; when the requirements files resolve and
-# a workflow file then refuses, the requirements files stay resolved on disk but unstaged — the
-# human-resolve step that follows only has the workflow file left to fix.)
+# actions/checkout-bump-next-to-a-hadolint-bump shape).
 auto_resolve_bumps() {
   local conflicted f
   conflicted="$(git -C "$wt_dir" diff --name-only --diff-filter=U)"
@@ -237,7 +227,7 @@ run() { if [ "$dry" -eq 1 ]; then echo "+ $*"; else "$@"; fi; }
 
 # --- ordering (shared by discovery, --from-json, and --self-test) ---------------------------
 # github-actions first, then pip, then scala-steward (only when asked for), each group by PR
-# number ascending. Pure jq — no git/gh — so --self-test needs neither.
+# number ascending.
 order_prs() {   # stdin: gh-pr-list-shaped JSON array -> stdout: same, filtered + sorted
   local skip_json="[]"
   if [ "${#skip_nums[@]}" -gt 0 ]; then
@@ -293,7 +283,7 @@ discover() {   # -> ordered JSON array on stdout
   order_prs <<<"$raw"
 }
 
-# --- self-test --------------------------------------------------------------------------------
+# --- self-test --------------------------------------------------------------------------------.
 self_test() {
   local fixture="$script_dir/fixtures/deps-stack-prs.json"
   [ -f "$fixture" ] || { echo "deps-stack self-test: fixture not found: $fixture" >&2; exit 1; }
@@ -323,7 +313,7 @@ resolve_ref() {
   if git -C "$repo_root" rev-parse --verify -q "refs/remotes/origin/$1" >/dev/null; then echo "origin/$1"; else echo "$1"; fi
 }
 
-# --- build the local branch chain -----------------------------------------------------------
+# --- build the local branch chain -----------------------------------------------------------.
 today() { date +%Y-%m-%d; }
 
 compute_plan() {   # $1 = ordered PR JSON array -> {date, prs:[...+slug+k+branch]} on stdout
@@ -435,7 +425,7 @@ build_chain() {   # $1 = plan JSON -> builds/continues the local branch chain
   done
 }
 
-# --- publish: option (b) — new stacked PRs, original dependabot PRs closed -----------------
+# --- publish: option (b) — new stacked PRs, original dependabot PRs closed -----------------.
 publish_chain() {
   local plan="$1" n k
   n="$(jq '.prs | length' <<<"$plan")"
@@ -530,7 +520,7 @@ cmd_clean() {
   local plan; plan="$(cat "$plan_file")"
   # A chain branch is very likely checked out in the worktree right now (build_chain leaves it on
   # the tip) — `git branch -D` refuses to delete a branch checked out anywhere, so detach the
-  # worktree first. This only ever touches $wt_dir, never the caller's own checkout.
+  # worktree first.
   if [ "$dry" -eq 0 ] && worktree_registered; then
     git -C "$wt_dir" checkout -q --detach origin/main 2>/dev/null || true
   fi
@@ -559,7 +549,7 @@ cmd_clean() {
   fi
 }
 
-# --- entry point ------------------------------------------------------------------------------
+# --- entry point ------------------------------------------------------------------------------.
 if [ "$self_test" -eq 1 ]; then self_test; exit 0; fi
 
 case "$subcommand" in

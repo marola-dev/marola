@@ -1,49 +1,12 @@
 #!/usr/bin/env bash
 # docs-mip-stack — find pending, un-merged docs/mip-NNNN-* design-doc branches and chain the ones
 # you pick into a base-linked stack of gh pr create commands, so several independent MIP drafts
-# can be reviewed and merged together in one pass.
-#
-#   scripts/docs-mip-stack.sh list                 # discover candidates, flag duplicates/staleness
-#   scripts/docs-mip-stack.sh plan B1 B2 B3 ...    # print (and log) chained `gh pr create` commands
-#                                                    # for exactly these branches, in this order
-#   scripts/docs-mip-stack.sh auto                 # default when run with no args — see below
-#   --dry-run has no effect on `list` (already read-only); on `plan`/`auto` it skips both pushing
-#   and the GH_POST_MORTEM.md append, so you can preview what would happen.
-#
-# `list`/`plan` are deliberately two steps, not one "stack everything" command: a real scan of
-# this repo's branches (2026-09-07) found several MIPs with *more than one* candidate branch for
-# the same number — an original `docs/mip-NNNN-*` draft and a later rebuilt
-# `mips/YYYY-MM-DD/K-mip-NNNN-*` branch, not always identical — auto-picking one would silently
-# guess which is canonical. `list` surfaces that ambiguity for a human to resolve; `plan` only
-# ever does the mechanical, judgment-free half (base-chaining + conflict checks) once you've
-# picked the branches yourself.
-#
-# `auto` (the default, and the only subcommand allowed to push) automates exactly the unambiguous
-# slice of that: any LOCAL docs/mip-NNNN-*/mips/*/K-mip-NNNN-* branch that has never been pushed
-# (`git branch`'s upstream column is empty) AND whose MIP number has no other candidate anywhere
-# — not on origin, not another local unpushed branch — is pushed and planned automatically. Any
-# MIP number with more than one candidate (local or origin) is reported, never guessed, exactly
-# like `list` — auto mode is a strict subset of `plan`'s job, not a bypass of `list`'s judgment
-# call. Locally-chained branches (B is a git ancestor of C) are planned as one stack in that
-# order; unrelated eligible branches are each planned singly against `main`.
-#
-# `auto` also *reports* (never touches) the other half of the problem: branches that are already
-# pushed to origin, still un-merged, unambiguous (exactly one candidate for their MIP number) and
-# sharing a fork point with at least one other such branch — i.e. several drafts written in
-# parallel off the same `main` commit, which is precisely the shape that conflicts in
-# `docs/mips/README.md`'s index table. Until 2026-09-07 auto said nothing at all about those (it
-# only ever looked at LOCAL branches with no upstream), so with four freshly-pushed MIP drafts
-# sitting on origin it printed only its "skipping <ambiguous>" noise — silence where there was
-# obviously something to stack. It now names them and prints the `plan` command to run; it does
-# not chain them itself, for the reason in the comment above `report_pushed_groups`.
-#
-# `plan`/`auto` never rewrite history or force-push anything — they only *check* (git merge-tree,
-# read-only) that each branch is conflict-free against its computed base and print the exact
-# `gh pr create` command for it. `plan` never pushes (it only ever anticipates branches you've
-# already pushed yourself); `auto` pushes only the specific unpushed branches it judged
-# unambiguous, via a plain `git push -u origin <branch>` (never `--force`). Append the printed
-# commands to GH_POST_MORTEM.md yourself if you're not ready to run them, or pipe straight into a
-# shell.
+# can be reviewed and merged together in one pass. scripts/docs-mip-stack.sh list # discover
+# candidates, flag duplicates/staleness scripts/docs-mip-stack.sh plan B1 B2 B3 ... # print (and
+# log) chained `gh pr create` commands # for exactly these branches, in this order
+# scripts/docs-mip-stack.sh auto # default when run with no args — see below --dry-run has no
+# effect on `list` (already read-only); on `plan`/`auto` it skips both pushing and the
+# GH_POST_MORTEM.md append, so you can preview what would happen.
 set -euo pipefail
 
 usage() {
@@ -85,16 +48,14 @@ usage: docs-mip-stack.sh [auto]
 EOF
 }
 
-# --- pure parsing, self-tested without git/network ------------------------------------------
+# --- pure parsing, self-tested without git/network ------------------------------------------.
 mip_of() { sed -n 's#^docs/\(mip-[0-9]\{4\}\)-.*#\1#p; s#.*/[0-9]\{1,\}-\(mip-[0-9]\{4\}\)-.*#\1#p' <<<"$1" | head -1; }
 is_candidate_branch() {
   [[ "$1" =~ ^docs/mip-[0-9]{4}-.+$ ]] || [[ "$1" =~ ^mips/[0-9-]+/[0-9]+-mip-[0-9]{4}-.+$ ]]
 }
 
 # Order branch names by their MIP number (not lexicographically by branch name, which would sort
-# `mips/2026-09-07/2-mip-0035-…` next to `docs/mip-0005-…` by its leading path segment). Reads
-# branch names on stdin, writes them ordered on stdout; anything that isn't a candidate branch
-# name is dropped.
+# `mips/2026-09-07/2-mip-0035-…` next to `docs/mip-0005-…` by its leading path segment).
 sort_by_mip() {
   local b m
   while IFS= read -r b; do
@@ -106,10 +67,7 @@ sort_by_mip() {
 }
 
 # Reads "<count>\t<branch>" lines, writes the branches whose MIP number has exactly one candidate
-# in the whole world, in MIP-number order. The count is computed by the caller (origin + local),
-# so this stays pure and self-testable: it is the same "act only when unambiguous" rule auto
-# already applies to local unpushed branches, factored out so the pushed-branch report can reuse
-# it verbatim rather than re-deriving it.
+# in the whole world, in MIP-number order.
 single_candidates() {
   awk -F'\t' '$1 == 1 { print $2 }' | sort_by_mip
 }
@@ -139,17 +97,16 @@ self_test() {
   if [ "$fails" -eq 0 ]; then echo "docs-mip-stack self-test: ok"; else echo "docs-mip-stack self-test: $fails failure(s)" >&2; exit 1; fi
 }
 
-# --- list -------------------------------------------------------------------------------------
-# A branch's real content diff against origin/main is only its docs/mips files if `git diff
-# --name-only origin/main..<branch>` touches nothing outside that allow-list — anything else
-# means the branch forked from an older main and carries unrelated stale content (the exact
-# failure mode found and fixed by hand for MIP-0034/35/36 earlier this session).
+# --- list ------------------------------------------------------------------------------------- A
+# branch's real content diff against origin/main is only its docs/mips files if `git diff
+# --name-only origin/main..<branch>` touches nothing outside that allow-list — anything else means
+# the branch forked from an older main and carries unrelated stale content (the exact failure mode
+# found and fixed by hand for MIP-0034/35/36 earlier this session).
 is_stale() {
   local branch="$1" f fork
   # The branch's OWN merge-base with current main, not main's current tip — main moves fast in
-  # this repo (many unrelated PRs land daily), so diffing against its current tip would flag
-  # every branch as "stale" purely because main grew new files after the branch forked. Diffing
-  # from the fork point isolates exactly what the branch's own commits changed.
+  # this repo (many unrelated PRs land daily), so diffing against its current tip would flag every
+  # branch as "stale" purely because main grew new files after the branch forked.
   fork="$(git merge-base origin/main "origin/$branch" 2>/dev/null || true)"
   [ -n "$fork" ] || return 0
   while IFS= read -r f; do
@@ -204,7 +161,7 @@ list_cmd() {
   echo "next: scripts/docs-mip-stack.sh plan <branch1> <branch2> ... (your own chosen order, one per MIP)"
 }
 
-# --- plan -------------------------------------------------------------------------------------
+# --- plan -------------------------------------------------------------------------------------.
 plan_cmd() {
   local dry="$1"; shift
   [ "$#" -ge 1 ] || { echo "plan needs at least one branch — see --help" >&2; exit 1; }
@@ -275,29 +232,7 @@ run_chain() {
   plan_cmd 0 "$@"
 }
 
-# The second half of auto's job, and the read-only one: branches that are ALREADY pushed. Part 1
-# below only ever sees local branches with no upstream, so four MIP design-doc branches written in
-# parallel by four agents and pushed straight to origin (MIP-0044/45/46/47, 2026-09-07) were
-# invisible to it — `just docs-mip-stack` printed only "skipping <ambiguous>" lines about four
-# unrelated old local branches and nothing whatsoever about the four that were plainly ready to
-# stack. That silence was the bug.
-#
-# Why this REPORTS instead of chaining automatically. `plan`'s and `auto`'s stated contract is
-# that neither ever rewrites history or force-pushes; the only write auto is trusted with is a
-# plain `git push -u` of a branch that was never pushed at all. Independently-forked drafts that
-# each add a row to docs/mips/README.md's index CONFLICT with each other until one is *rebased*
-# onto the other, so "auto-chain them" would mean either handing plan_cmd a pair it will correctly
-# refuse with CONFLICT, or letting auto rebase and force-push branches already published on origin
-# — a far larger grant than the one the file's philosophy actually justifies. The unambiguity test
-# this file already applies (exactly one candidate per MIP number) settles *which branch is
-# canonical*; it says nothing about *what order several MIPs should merge in*. MIP-number order is
-# the sane default with no other signal, but it is still a guess, so it is printed as a command to
-# run, not executed. Reporting is what fixes the silence; guessing is not needed to fix it.
-#
-# The grouping key is the branch's fork point (merge-base with origin/main), not "every pending
-# branch": a lone draft forked weeks ago needs no chaining and `list` already surfaces it, while
-# two or more sharing one fork point are exactly the parallel-drafts shape that conflicts. On this
-# repo that turns 12 unambiguous pending branches into 2 real groups instead of 12 lines of noise.
+# The second half of auto's job, and the read-only one: branches that are ALREADY pushed. MIP-0044.
 report_pushed_groups() {
   local -n counts_ref="$1"   # MIP number -> total candidate count (origin + local)
   local -a singles=()
@@ -326,9 +261,7 @@ report_pushed_groups() {
     local -a group=()
     while IFS= read -r b; do [ -n "$b" ] && group+=("$b"); done <<<"${by_fork[$fork]}"
     [ "${#group[@]}" -ge 2 ] || continue
-    # Already chained? Every branch after the first must have its predecessor as an ancestor —
-    # that is what a stack looks like once someone has rebased it, and re-reporting it as
-    # "needs chaining" would be wrong.
+    # Already chained?.
     local chained=1 i
     for (( i=1; i<${#group[@]}; i++ )); do
       git merge-base --is-ancestor "origin/${group[i-1]}" "origin/${group[i]}" 2>/dev/null || { chained=0; break; }

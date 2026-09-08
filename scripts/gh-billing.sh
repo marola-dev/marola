@@ -1,62 +1,18 @@
 #!/usr/bin/env bash
 # gh-billing — one-shot view of this GitHub account's metered usage: Actions minutes, GHCR/
-# Packages storage and transfer, Copilot, all of it. This repo is private (no free public-repo
-# Actions minutes or GHCR storage), so this is real money, not just hygiene — see docker.yml's
-# cost-model comment. Named gh-billing, not billing: this repo already has a Claude Code cost
-# tool of the same shape (`just claude-cost` / `just cost-split`, AGENTS.md "Attribution and cost
-# accounting") and a bare "billing" doesn't say which bill it's showing.
-#
-#   scripts/gh-billing.sh                        # current month to date
-#   scripts/gh-billing.sh --month 8              # a past month this year
-#   scripts/gh-billing.sh --year 2026 --month 8
-#   scripts/gh-billing.sh --from-file resp.json  # shape a saved API response, no `gh` call
-#   scripts/gh-billing.sh --json-stdin <resp.json
-#   scripts/gh-billing.sh --self-test            # shapes scripts/fixtures/gh-billing-usage.json
-#                                                 # and asserts its total (in `just quality-other`)
-#   scripts/gh-billing.sh --dry-run              # print the `gh api` call, no network
-#
-# Calls GET /users/{login}/settings/billing/usage — the "enhanced billing platform"'s consolidated
-# usage report, one call covering Actions, Packages (GHCR storage/transfer) and a personal Copilot
-# subscription, grouped by product+SKU below:
-# https://docs.github.com/en/rest/billing/usage?apiVersion=2022-11-28#get-billing-usage-report-for-a-user
-# Each usageItem carries date, product, sku, quantity, unitType, pricePerUnit, grossAmount,
-# discountAmount, netAmount and (for repo-attributable usage) repositoryName — see that page for
-# the exact field list this script's jq relies on.
-#
-# It replaces three product-specific endpoints (.../billing/actions, .../billing/packages,
-# .../billing/shared-storage) that GitHub announced closing down on 2025-09-26:
-# https://github.blog/changelog/2025-09-26-product-specific-billing-apis-are-closing-down/
-# ("we're closing down the remaining product-specific billing APIs for Actions, Packages, and
-# shared storage"). That's a year in the past as of this script, so there is no live fallback here
-# — a 404 from the endpoint above prints a pointer to https://github.com/settings/billing instead
-# of pretending the old endpoints are still a real path.
-#
-# Auth: needs a classic personal access token (or `gh`'s own OAuth token) with the `user` scope.
-# Fine-grained PATs are explicitly NOT supported for this endpoint (not "need a wider grant" —
-# the platform rejects them outright), per
-# https://docs.github.com/en/billing/tutorials/automate-usage-reporting ("The billing usage
-# endpoints do not support fine-grained personal access tokens"). If `gh` is already logged in
-# with a narrower classic scope, `gh auth refresh -s user` adds it without a full re-login.
-#
-# Requires `gh auth status` (not available inside the ai-jail sandbox — run from the host), unless
-# you're shaping a saved response with --from-file/--json-stdin, which needs neither `gh` nor
-# network.
-#
-# Repo cost tools, so you reach for the right one (AGENTS.md "Attribution and cost accounting"):
-#   gh-billing.sh (this script)   — GitHub's bill: Actions minutes, GHCR storage/transfer, Copilot.
-#   just claude-cost / cost-split — Claude Code quota (tokens), not a GitHub cost at all.
+# Packages storage and transfer, Copilot, all of it.
 set -euo pipefail
 
-# Both API facts below (path + the `user` scope requirement) are asserted directly by GitHub:
-# the path from https://docs.github.com/en/rest/billing/usage?apiVersion=2022-11-28
-# ("Get billing usage report for a user" — GET /users/{username}/settings/billing/usage,
-# classic PATs only — https://docs.github.com/en/billing/tutorials/automate-usage-reporting:
-# "The billing usage endpoints do not support fine-grained personal access tokens"), and the
-# `user` scope from gh's own error text on a token that lacks it: `gh: This API operation needs
-# the "user" scope.` GitHub returns HTTP 404 (not 403) for that case on this endpoint — a missing
-# scope on a personal-account-scoped resource looks like "not found", not "forbidden" — so the
-# scope-check below runs before any live call, and the error classifier still recognizes the
-# phrase in case a call is made anyway (e.g. `gh auth status` parsing failed).
+# Both API facts below (path + the `user` scope requirement) are asserted directly by GitHub: the
+# path from https://docs.github.com/en/rest/billing/usage?apiVersion=2022-11-28 ("Get billing
+# usage report for a user" — GET /users/{username}/settings/billing/usage, classic PATs only —
+# https://docs.github.com/en/billing/tutorials/automate-usage-reporting: "The billing usage
+# endpoints do not support fine-grained personal access tokens"), and the `user` scope from gh's
+# own error text on a token that lacks it: `gh: This API operation needs the "user" scope.` GitHub
+# returns HTTP 404 (not 403) for that case on this endpoint — a missing scope on a
+# personal-account-scoped resource looks like "not found", not "forbidden" — so the scope-check
+# below runs before any live call, and the error classifier still recognizes the phrase in case a
+# call is made anyway (e.g. `gh auth status` parsing failed).
 
 # Extracts (and confines parsing to) the block of `gh auth status` output belonging to $2 (a
 # hostname, e.g. "github.com") when the text has host headers at all: gh prints one unindented
@@ -64,9 +20,7 @@ set -euo pipefail
 # first — confirmed against cli/cli's own status_test.go "multiple accounts on a host" case), so a
 # multi-host or multi-account status block can carry more than one "Token scopes:" line and the
 # wrong one must not be picked when the account we care about (github.com, always, since the
-# billing endpoint only lives there) isn't first. Falls back to the whole text unchanged when no
-# such header is found — keeps this working on the old single-line/no-header fixtures below and
-# on any text a caller hands in directly.
+# billing endpoint only lives there) isn't first.
 host_block() {   # $1 = gh-auth-status text, $2 = hostname
   local text="$1" host="$2" block
   block="$(awk -v host="$host" '
@@ -82,20 +36,7 @@ host_block() {   # $1 = gh-auth-status text, $2 = hostname
 }
 
 # Extracts the scope list from a `gh auth status` "Token scopes: ..." line and tests for exact
-# membership of $2. Handles gh 2.99's quoted, comma-separated format:
-#   - Token scopes: 'gist', 'read:org', 'repo'
-# and the scopeless case `Token scopes: none`. Matches the full scope name only (`user`), not a
-# prefixed sub-scope like `read:user` — the API's own error asks for the parent scope, and
-# `read:user` does not grant it.
-#
-# gh 2.99's `pkg/cmd/auth/status/status.go` (verified against
-# https://github.com/cli/cli/blob/v2.99.0/pkg/cmd/auth/status/status.go and its status_test.go —
-# both identical to the trunk branch as of this check) only prints the "Token scopes:" line at all
-# when `expectScopes(token)` is true, i.e. the token has a `ghp_` or `gho_` prefix. For every other
-# prefix — `github_pat_` (fine-grained PAT), `ghs_` (server-to-server/installation), `ghu_`, `ghr_`
-# — the line is omitted entirely, not printed as "none". So "no Token scopes: line found" and
-# "Token scopes: none" are two different, both-real states, and only the caller (has_user_scope)
-# knows which failure message fits which.
+# membership of $2.
 scope_line() {   # $1 = gh-auth-status text for one host -> the raw scope list, "none", or "" if absent
   local text="$1" line
   line="$(grep -m1 'Token scopes:' <<<"$text" || true)"
@@ -137,16 +78,10 @@ missing_user_scope_message() {
   fi
 }
 
-# GH_TOKEN/GITHUB_TOKEN in the environment override whatever `gh auth login` stored in the
-# keyring — gh always prefers the env var (see status.go's authTokenWriteable: a tokenSource
-# ending "_TOKEN" is the env-var case) — so `gh auth refresh` never touches it: refresh rewrites
-# the keyring credential, which gh won't even look at while the env var is set. This repo's own
-# `just jail-claude` (see the justfile's jail-claude recipe comment) exports GH_TOKEN as a
-# fine-grained PAT scoped to this one repo, which api.github.com's billing-usage endpoint rejects
-# outright (not a scope gap — fine-grained PATs are "explicitly NOT supported", per
-# https://docs.github.com/en/billing/tutorials/automate-usage-reporting), and the same variable
-# may also be exported from the maintainer's own .env on the host. Either way the fix is the same:
-# run without it, on the keyring token, which does need the `user` scope.
+# GH_TOKEN/GITHUB_TOKEN in the environment override whatever `gh auth login` stored in the keyring
+# — gh always prefers the env var (see status.go's authTokenWriteable: a tokenSource ending
+# "_TOKEN" is the env-var case) — so `gh auth refresh` never touches it: refresh rewrites the
+# keyring credential, which gh won't even look at while the env var is set.
 env_token_message() {   # -> the message text, or "" if neither var is set
   local var=""
   if [ -n "${GH_TOKEN:-}" ]; then
@@ -160,9 +95,7 @@ env_token_message() {   # -> the message text, or "" if neither var is set
 }
 
 # $1 = raw stderr text from a failed `gh api` call -> the one diagnostic paragraph to print, or
-# nothing when the error doesn't match a known shape. Scope message wins over the generic 404
-# paragraph (checked first) since GitHub returns 404 for both "endpoint closed" and "missing
-# scope" and only the error text tells them apart.
+# nothing when the error doesn't match a known shape.
 classify_error() {
   local err="$1"
   if grep -qi 'needs the "user" scope' <<<"$err"; then
@@ -176,8 +109,7 @@ classify_error() {
 
 # Groups usageItems by product+SKU (a month can have several rows per SKU — e.g. one per
 # repository, since repositoryName is per-item, not per-SKU) and sums quantity/gross/discount/net
-# per group, sorted by net descending. `empty: true` is a sentinel the printer below checks for
-# instead of shaping an empty .rows array, so a period with zero usage prints one clear line.
+# per group, sorted by net descending.
 readonly SHAPE_FILTER='
   if (.usageItems | length) == 0 then
     {empty: true}
@@ -235,26 +167,20 @@ to a placeholder if that fails).
 EOF
 }
 
-# $1 = raw usage JSON (the API response, or a fixture/file/stdin with the same shape) -> shaped JSON
+# $1 = raw usage JSON (the API response, or a fixture/file/stdin with the same shape) -> shaped
+# JSON.
 shape() {
   jq "$SHAPE_FILTER" <<<"$1"
 }
 
 # Included Actions minutes per month, personal-account plans only (this script only ever queries
 # GET /users/{username}/... — organization plans like Team/Enterprise are a different endpoint,
-# out of scope here). Not exposed by the billing-usage API itself (checked live, 2026-09-07: the
-# usageItem schema has date/product/sku/quantity/unitType/pricePerUnit/grossAmount/discountAmount/
-# netAmount/repositoryName — no allowance/quota field) — these are GitHub's own published numbers
-# (docs.github.com/billing/managing-billing-for-github-actions/about-billing-for-github-actions,
-# checked live 2026-09-07) and GitHub can change them; github.com/settings/billing is the
-# authoritative live number if this ever looks wrong. Counted in Linux-minute equivalents — a
-# macOS/Windows runner minute costs more against this same pool (2x/10x multipliers), so this
-# quota line only means what it says when every SKU below is "Actions Linux".
+# out of scope here).
 declare -A ACTIONS_INCLUDED_MINUTES=( [free]=2000 [pro]=3000 )
 
-# $1 = shaped JSON from shape() -> the table + total on stdout
-# $2 = plan name (gh api user --jq .plan.name), optional — omit to skip the quota line entirely
-# (the --self-test/--from-file/--json-stdin/--dry-run paths have no live plan to look up)
+# $1 = shaped JSON from shape() -> the table + total on stdout $2 = plan name (gh api user --jq
+# .plan.name), optional — omit to skip the quota line entirely (the
+# --self-test/--from-file/--json-stdin/--dry-run paths have no live plan to look up).
 print_table() {
   local shaped="$1" plan="${2:-}"
   if jq -e '.empty' <<<"$shaped" >/dev/null 2>&1; then
@@ -342,8 +268,8 @@ ghe.io
   - Token scopes: none
 EOF
 )"
-  # Verbatim: cli/cli status_test.go "token from env" case — GH_TOKEN holding a classic gho_
-  # token still gets a real "Token scopes:" line (expectScopes matches on token prefix, not on
+  # Verbatim: cli/cli status_test.go "token from env" case — GH_TOKEN holding a classic gho_ token
+  # still gets a real "Token scopes:" line (expectScopes matches on token prefix, not on
   # tokenSource), just with an empty scope set from the mocked response.
   sample_env_token="$(cat <<'EOF'
 github.com
@@ -354,10 +280,9 @@ github.com
   - Token scopes: none
 EOF
 )"
-  # Verbatim: cli/cli status_test.go "PAT V2 token" case — a fine-grained PAT (github_pat_
-  # prefix) gets NO "Token scopes:" line at all: expectScopes() only matches ghp_/gho_, so gh
-  # skips the line entirely rather than printing "none". This is the shape that used to be
-  # silently misread as "missing user scope" instead of "wrong token type, no scope will fix it".
+  # Verbatim: cli/cli status_test.go "PAT V2 token" case — a fine-grained PAT (github_pat_ prefix)
+  # gets NO "Token scopes:" line at all: expectScopes() only matches ghp_/gho_, so gh skips the
+  # line entirely rather than printing "none".
   sample_fine_grained="$(cat <<'EOF'
 github.com
   ✓ Logged in to github.com account monalisa (GH_CONFIG_DIR/hosts.yml)
@@ -513,8 +438,8 @@ while [ $# -gt 0 ]; do
 done
 
 if [ "$dry_run" -eq 1 ]; then
-  # No login required: falls back to a placeholder login if `gh api user` fails (not logged in,
-  # no network) so the call shape can still be eyeballed.
+  # No login required: falls back to a placeholder login if `gh api user` fails (not logged in, no
+  # network) so the call shape can still be eyeballed.
   dry_login="$(gh api user --jq .login 2>/dev/null || echo '{username}')"
   echo "gh-billing --dry-run: would call:"
   echo "  gh api \"/users/$dry_login/settings/billing/usage?year=$year&month=$month\""

@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 # Project-scoped status line for marola (shared via .claude/settings.json).
-# JSON fields: https://code.claude.com/docs/en/statusline . statusLine.command
-# does not support ${CLAUDE_PROJECT_DIR}, so the repo root is resolved at
-# runtime via `git rev-parse --show-toplevel` instead.
 set -u
 input=$(cat)
 MODEL=$(printf '%s' "$input" | jq -r '.model.display_name // empty')
@@ -33,7 +30,7 @@ format_reset() {
     h=$((diff / 3600)); m=$(((diff % 3600) / 60))
     [ "$h" -gt 0 ] && printf '%dh%02dm' "$h" "$m" || printf '%dm' "$m"
 }
-# ---- git branch/dirty/ahead-behind, cached a few seconds under the repo's .tmp/ ----
+# ---- git branch/dirty/ahead-behind, cached a few seconds under the repo's .tmp/ ----.
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
 BRANCH=""; DIRTY=""; AHEAD="0"; BEHIND="0"
 if [ -n "$ROOT" ]; then
@@ -59,7 +56,7 @@ if [ -n "$ROOT" ]; then
     fi
     IFS='|' read -r BRANCH DIRTY AHEAD BEHIND < "$CACHE_FILE"
 fi
-# ---- line 1: model/effort, dir, branch, dirty count, ahead/behind ----
+# ---- line 1: model/effort, dir, branch, dirty count, ahead/behind ----.
 MODEL_PART="$MODEL"
 [ -n "$EFFORT" ] && MODEL_PART="${MODEL_PART:+$MODEL_PART/}$EFFORT"
 HEAD=""
@@ -72,7 +69,7 @@ if [ -n "$BRANCH" ]; then
         GIT_PART="$GIT_PART ${DIM}(+${AHEAD:-0}/-${BEHIND:-0})${RESET}"
 fi
 LINE1="${HEAD}${DIRNAME}${GIT_PART}"
-# ---- line 2: 10-char context window bar, color-coded ----
+# ---- line 2: 10-char context window bar, color-coded ----.
 PCT=$(printf '%s' "$PCT_RAW" | cut -d. -f1)
 case "$PCT" in ''|*[!0-9]*) PCT=0 ;; esac
 FILLED=$((PCT * 10 / 100)); [ "$FILLED" -gt 10 ] && FILLED=10; [ "$FILLED" -lt 0 ] && FILLED=0
@@ -84,7 +81,7 @@ BAR_COLOR="$GREEN"
 [ "$PCT" -ge 70 ] && BAR_COLOR="$YELLOW"
 [ "$PCT" -ge 90 ] && BAR_COLOR="$RED"
 LINE2="${BAR_COLOR}${BAR}${RESET} ${PCT}%"
-# ---- line 3: cost, lines changed, cache hit ratio, rate limits ----
+# ---- line 3: cost, lines changed, cache hit ratio, rate limits ----.
 COST_FMT=""
 [ -n "$COST" ] && COST_FMT=$(printf '$%.2f' "$COST")
 LINES_PART=""
