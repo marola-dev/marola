@@ -111,6 +111,28 @@ roadmap: [`docs/mips/README.md`](./docs/mips/README.md), [`docs/FUTURE-WORK.md`]
 
 If you're an AI coding agent picking this repo up: read [`AGENTS.md`](./AGENTS.md) first.
 
+## marola-sea — the fine-tuned model
+
+marola's own small model, trained on the repo's ocean corpus and published as GGUF:
+**[h0ffmann/marola-sea-tiny-GGUF](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF)**.
+
+```bash
+just marola-sea-pull tiny Q8_0     # pull it into Ollama as `marola-sea`
+MAROLA_LOCAL_LLM_MODEL=marola-sea just run -- --summarize
+```
+
+The `tiny` preset is SmolLM2-360M — a **pipeline proof, not a quality bar**, exactly as
+[`finetune/README.md`](./finetune/README.md) frames it. On a real swim summary it ignores the
+facts it is given and invents its own; `marola-llama3.2` (Llama 3.2 with marola's persona, built
+locally by `just finetune-model`) produces a usable answer from the same input. Scaling it is
+[`MIP-0048`](./docs/mips/MIP-0048-scaling-marola-sea.md).
+
+| Doc | What it covers |
+|---|---|
+| [`finetune/README.md`](./finetune/README.md) | The two tiers, what each costs, what is actually run |
+| [`MIP-0025`](./docs/mips/README.md) | The chain: dataset → SFT → DPO → merge → GGUF → publish |
+| [`MIP-0048`](./docs/mips/MIP-0048-scaling-marola-sea.md) | Which model, which checkpoint, which hardware, the data ceiling |
+
 ## Contributing
 
 Small PRs, one topic each; non-trivial changes start as a MIP under `docs/mips/`; every commit
