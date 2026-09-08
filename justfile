@@ -72,6 +72,7 @@ quality-other:
     scripts/setup-ml-venv.sh --self-test
     scripts/gh-token.sh --self-test
     scripts/temps.sh --self-test
+    python3 scripts/analyze_training.py --self-test
     scripts/deps-stack.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
@@ -498,6 +499,39 @@ gh-auth *args:
 # invented numbers. GPU readings need the host: /dev/nvidia* is not mapped into the jail.
 temps *args:
     scripts/temps.sh {{args}}
+
+# Analyse a finished training run and say what the next one should change. Reads HF Trainer's
+# trainer_state.json (both trainers set report_to=[], so there is no MLflow/W&B run to open).
+#   just analyze-training                       # the local checkpoints, both stages
+#   just analyze-training ../some/adapter       # a specific run
+# For a run that happened in CI: `just training-logs <run-id>` first, then point this at it.
+analyze-training *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "{{args}}" ]; then
+        python3 scripts/analyze_training.py {{args}}
+    else
+        root="${CKPT_ROOT:-../marola-checkpoints}/${PRESET:-tiny}"
+        python3 scripts/analyze_training.py "$root/adapter" "$root/dpo-adapter"
+    fi
+
+# Pull a marola-sea CI run's full logs and report down from GitHub, into .tmp/training-logs/.
+# Works for the self-hosted runner too — the artifact is uploaded to GitHub either way.
+#   just training-logs              # the most recent marola-sea publish run
+#   just training-logs 12345678     # a specific run id
+training-logs run_id="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    id="{{run_id}}"
+    if [ -z "$id" ]; then
+        id="$(gh run list --workflow "marola-sea publish" --limit 1 --json databaseId \
+              --jq '.[0].databaseId')"
+        echo "training-logs: most recent run is $id"
+    fi
+    mkdir -p .tmp/training-logs
+    gh run download "$id" --dir .tmp/training-logs
+    echo "training-logs: downloaded to .tmp/training-logs — analyse with:"
+    echo "  just analyze-training .tmp/training-logs/*/"
 
 # Claude Code in the jail;.
 jail-claude *args:

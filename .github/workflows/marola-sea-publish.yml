@@ -18,6 +18,16 @@ on:
         description: "resume DPO from the last checkpoint if one exists"
         type: boolean
         default: true
+      major_version:
+        # Leave both blank to keep the auto-increment: next marola-sea-v<N> after the highest
+        # tag that exists. Set major to pin a version by hand, e.g. 2 + 1 -> marola-sea-v2.1.
+        description: "major version (blank = auto-increment)"
+        type: string
+        default: ""
+      minor_version:
+        description: "minor version (used only when major is set; blank = 0)"
+        type: string
+        default: ""
 
 permissions:
   contents: write   # only to push the marola-sea-v<N> tag after a successful publish
@@ -61,15 +71,32 @@ jobs:
           set -euo pipefail
           scripts/setup-ml-venv.sh
 
-      - name: work out the next version (auto-increment, no input)
+      - name: work out the version (manual major/minor, else auto-increment)
         id: version
+        env:
+          MAJOR: ${{ inputs.major_version }}
+          MINOR: ${{ inputs.minor_version }}
         run: |
           set -euo pipefail
-          latest="$(git tag -l 'marola-sea-v*' | sed -E 's/^marola-sea-v//' | grep -E '^[0-9]+$' | sort -n | tail -1 || true)"
-          next=$(( ${latest:-0} + 1 ))
-          echo "version=v$next" >> "$GITHUB_OUTPUT"
-          echo "tag=marola-sea-v$next" >> "$GITHUB_OUTPUT"
-          echo "publishing as v$next (previous: ${latest:-none})"
+          if [ -n "${MAJOR// /}" ]; then
+            case "$MAJOR" in ''|*[!0-9]*) echo "::error::major_version must be a number, got '$MAJOR'" >&2; exit 1 ;; esac
+            case "${MINOR:-0}" in *[!0-9]*) echo "::error::minor_version must be a number, got '$MINOR'" >&2; exit 1 ;; esac
+            version="v${MAJOR}.${MINOR:-0}"
+            # Fail now, not after hours of training and an irreversible upload.
+            if git rev-parse -q --verify "refs/tags/marola-sea-$version" >/dev/null; then
+              echo "::error::marola-sea-$version already exists — pick another major/minor" >&2
+              exit 1
+            fi
+            echo "publishing as $version (pinned by hand)"
+          else
+            # Reads the major of both tag shapes (v3 and v3.1), so a manual pin does not reset
+            # the counter the next time this runs on auto.
+            latest="$(git tag -l 'marola-sea-v*' | sed -E 's/^marola-sea-v([0-9]+).*$/\1/' | grep -E '^[0-9]+$' | sort -n | tail -1 || true)"
+            version="v$(( ${latest:-0} + 1 ))"
+            echo "publishing as $version (auto-increment, previous major: ${latest:-none})"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=marola-sea-$version" >> "$GITHUB_OUTPUT"
 
       - name: build the dataset (stdlib only, deterministic)
         run: |
@@ -88,13 +115,47 @@ jobs:
           py="$VENV_ROOT/bin/marola-python"   # wraps the venv python with libstdc++ on the path
           # Refuse rather than fall back to CPU: a silent fallback is hours wasted, not a warning.
           "$py" -c 'import torch, sys; sys.exit(0 if torch.cuda.is_available() else "no CUDA device visible to torch")'
+          # tee, not >: the live log still streams to the Actions console so a stuck run is
+          # visible while it happens, AND a full copy survives for the analysis step. Actions
+          # truncates very long step logs in the web view; the artifact does not.
+          mkdir -p training-logs
           # train_lora.py has no --resume on main; train_dpo.py does. PR #277 adds it.
           "$py" finetune/train_lora.py --preset "$PRESET" --epochs 3 \
-            --out "$CKPT_ROOT/$PRESET/adapter"
+            --out "$CKPT_ROOT/$PRESET/adapter" 2>&1 | tee training-logs/train_lora.log
           # shellcheck disable=SC2086
           "$py" finetune/train_dpo.py --preset "$PRESET" --epochs 1 $RESUME \
             --sft-adapter "$CKPT_ROOT/$PRESET/adapter" \
-            --out "$CKPT_ROOT/$PRESET/dpo-adapter"
+            --out "$CKPT_ROOT/$PRESET/dpo-adapter" 2>&1 | tee training-logs/train_dpo.log
+
+      - name: analyse the run and put the report in the job summary
+        # `always()`: a crashed or throttled run is exactly when the log is worth reading.
+        if: always()
+        env:
+          PRESET: ${{ inputs.preset }}
+          CKPT_ROOT: ${{ env.CKPT_ROOT }}
+        run: |
+          set -euo pipefail
+          mkdir -p training-logs
+          # The checkpoints live outside the workspace, so copy the state files in — they are a
+          # few KB of JSON and they are the whole structured record of the run.
+          for d in adapter dpo-adapter; do
+            src="$CKPT_ROOT/$PRESET/$d/trainer_state.json"
+            [ -f "$src" ] && cp "$src" "training-logs/${d}-trainer_state.json" || true
+          done
+          python3 scripts/analyze_training.py \
+            "$CKPT_ROOT/$PRESET/adapter" "$CKPT_ROOT/$PRESET/dpo-adapter" \
+            --markdown training-logs/report.md --json training-logs/report.json || true
+          # Renders inline on the run page — no download needed to see what happened.
+          if [ -f training-logs/report.md ]; then cat training-logs/report.md >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - name: upload the logs and the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: training-logs-${{ inputs.preset }}-${{ github.run_id }}
+          path: training-logs/
+          retention-days: 90
+          if-no-files-found: warn
 
       - name: merge the adapter into the base and export GGUFs
         run: |
