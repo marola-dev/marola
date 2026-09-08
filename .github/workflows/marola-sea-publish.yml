@@ -66,6 +66,13 @@ jobs:
           fi
           echo "HF_TOKEN present"
 
+      - name: preflight — does this run fit on this machine?
+        env:
+          PRESET: ${{ inputs.preset }}
+        run: |
+          set -euo pipefail
+          python3 finetune/preflight.py --preset "$PRESET" --strict
+
       - name: python env with CUDA torch (venv, reused between runs)
         run: |
           set -euo pipefail
