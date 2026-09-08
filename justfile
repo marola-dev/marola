@@ -70,6 +70,7 @@ quality-other:
     scripts/gh-billing.sh --self-test
     scripts/setup-cuda-cache.sh --self-test
     scripts/setup-ml-venv.sh --self-test
+    scripts/marola-sea-pull.sh --self-test
     scripts/gh-token.sh --self-test
     scripts/temps.sh --self-test
     python3 scripts/analyze_training.py --self-test
@@ -117,8 +118,9 @@ watch:
 # Ollama — marola's default local LLM backend (LocalLlmClient, docs/RUN-LOCALLY.md)
 # ---------------------------------------------------------------------
 
-# Make sure an Ollama server is reachable and has `model` pulled.
-ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2") embed=env_var_or_default("MAROLA_LOCAL_EMBED_MODEL", "llama3.2"):
+# Make sure an Ollama server is reachable, starting one if not. Split out of ollama-up so
+# marola-sea-pull can require a server without also pulling ollama-up's default models.
+ollama-serve:
     #!/usr/bin/env bash
     set -euo pipefail
     api=http://localhost:11434/api/tags
@@ -132,6 +134,20 @@ ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2") embed=e
         done
         curl -sf -m 2 "$api" >/dev/null || { echo "ollama: server did not come up — see .tmp/ollama.log" >&2; exit 1; }
     fi
+
+# Pull the *published* marola-sea model (the trained weights from Hugging Face) into Ollama and
+# name it `marola-sea`. Unlike finetune-model (Tier 1: persona on a stock base) and
+# Modelfile.adapter (Tier 2: an adapter needing the base locally), this is the real model the
+# publish workflow produced — standalone GGUFs, no Modelfile involved.
+#   just marola-sea-pull                 # tiny, Q4_K_M, owner from the git remote
+#   just marola-sea-pull small Q8_0      # another preset/quant
+marola-sea-pull preset="tiny" quant="Q4_K_M" owner="": ollama-serve
+    scripts/marola-sea-pull.sh {{preset}} {{quant}} {{owner}}
+
+# Make sure an Ollama server is reachable and has `model` pulled.
+ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2") embed=env_var_or_default("MAROLA_LOCAL_EMBED_MODEL", "llama3.2"): ollama-serve
+    #!/usr/bin/env bash
+    set -euo pipefail
     for m in "{{model}}" "{{embed}}"; do
         if ollama list | awk 'NR>1 {print $1}' | grep -qx "$m"; then
             echo "ollama: serving, model '$m' already pulled"
