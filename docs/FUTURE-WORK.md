@@ -399,6 +399,10 @@ checkbox exercises.
 
 ### 9.1 "marola knows the ocean": RAG and/or fine-tuning over marine literature
 
+> Which base model, which checkpoint and which hardware that fine-tune should use — and why the
+> corpus, not the parameter count, is the binding constraint — is designed in
+> [`MIP-0048`](./mips/MIP-0048-scaling-marola-sea.md).
+
 > **Built (first cut):** `docs/mips/MIP-0001-water-quality-and-sea-lore.md` — local RAG over
 > `knowledge/` with citations (`ARCHITECTURE.md` §5h), the sourced sea-lore paragraph, and a
 > fine-tuning scaffold under `finetune/` (Tier 1 built, Tier 2 written-not-run). Steps 1-3 below

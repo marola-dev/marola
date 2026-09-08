@@ -64,6 +64,7 @@ as an unfilled placeholder).
 | [MIP-0045](./MIP-0045-nlp-and-parsing-over-llm.md) | Classic NLP and parsing where an LLM call is currently paying for it — a survey of marola's product pipeline and its own dev loop | Draft | 2026-09-07 | M — one new `KnowledgeStore` in `core` (no new dependency), one benchmark arm, one script change; re-rated from S after §4's probe | cost/ops; infra/dev-loop; exam coverage (AI-103 §5 "Text analysis / entity extraction") | cheap win (§5.1, §5.2); do next (§5.4); park (§5.3) | — |
 | [MIP-0046](./MIP-0046-remove-ai-slop-ui.md) | The map without the generated look — a chart-derived icon set replacing every emoji on the page | Draft | 2026-09-07 | M — three site files plus `scripts/site_check.js`, whose emoji assertions are a `just quality-other` gate and have to move in lockstep; "done" needs a browser at 390/1280 px, not only the stub harness | user value; infra/dev-loop | do next — self-contained, and it wants to land before MIP-0042 freezes today's client at `/v1/` | — |
 | [MIP-0047](./MIP-0047-desmos-equation-art.md) | Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped (five sea motifs; no third-party script, no Desmos-exported file, no build step) | Draft | 2026-09-07 | S — one stdlib Python generator with a `--self-test`, one equations file, a generated `<symbol>` block in MIP-0046's sprite; the authoring is hours of human eye-work but not build effort | user value; infra/dev-loop | do when MIP-0046 lands | — |
+| [MIP-0048](./MIP-0048-scaling-marola-sea.md) | Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling | Draft | 2026-09-07 | M | user value; exam coverage (AI-103 fine-tuning row); infra/dev-loop | do next (4B/7B); park 27B | — |
 <!-- mip-graph:start -->
 ```mermaid
 flowchart TD
@@ -71,13 +72,16 @@ flowchart TD
   classDef accepted fill:#eef,stroke:#36c;
   classDef implemented fill:#efe,stroke:#2a2;
   classDef rejected fill:#f8f8f8,stroke:#bbb,color:#999;
+  M0025["MIP-0025"]:::draft
   M0033["MIP-0033"]:::draft
   M0034["MIP-0034"]:::draft
   M0036["MIP-0036"]:::draft
   M0044["MIP-0044"]:::draft
+  M0048["MIP-0048"]:::draft
+  M0025 --> M0048
   M0033 --> M0036
   M0034 --> M0044
 ```
 
-_39 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0025, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047._
+_38 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047._
 <!-- mip-graph:end -->
