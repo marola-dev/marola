@@ -110,7 +110,8 @@ a beach needs a hand-written mesoregion→`areas.json` table (§5.2, §11.2). No
 limit or terms-of-use page beyond the embedded copyright line.
 
 **Revision, 2026-09-08 — the mesoregion table is not needed.** A second probing pass (originally
-drafted as MIP-0049, folded in here) found three things that change §5.2's design:
+drafted as a separate MIP before finding this one already owned the source, and folded in here
+rather than given a number of its own) found three things that change §5.2's design:
 
 - **Each item's `<guid>`/`<link>` resolves to a full OASIS CAP 1.2 document.**
   `GET https://apiprevmet3.inmet.gov.br/avisos/rss/55649` → 200, `text/xml`, 8 973 bytes,
@@ -562,7 +563,7 @@ reads `*.md` directly under `knowledge/` **plus** directly under `knowledge/safe
 (Atom parsing + per-item JSON + `index.jsonl` + `--self-test`), `justfile` `quality-other`,
 `knowledge/README.md` (the safety-directory paragraph added by #195).
 
-### Checked live (2026-09-08, second pass — the MIP-0049 findings folded into §4.1)
+### Checked live (2026-09-08, second pass — folded into §4.1)
 
 - `https://apiprevmet3.inmet.gov.br/avisos/rss` — **200**, `application/rss+xml`, 160 320 bytes,
   **89** `<item>`s. Severity split: `Perigo Potencial` 80, `Perigo` 8, `Grande Perigo` 1. Events:
