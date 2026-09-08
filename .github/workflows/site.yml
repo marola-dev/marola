@@ -18,6 +18,12 @@ on:
       - "build.sbt"
       - "project/**"
       - ".github/workflows/site.yml"
+  # api-docs.yml regenerates docs/ on the site-data branch, which this workflow copies into
+  # site/dist. Nothing above matches that: a docs-only change touches none of these paths, so the
+  # docs sat on the branch until the 3-hourly schedule and marola.dev/docs 404'd in between.
+  workflow_run:
+    workflows: ["API docs"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       area:
@@ -38,6 +44,8 @@ concurrency:
 
 jobs:
   build:
+    # A failed api-docs run has nothing new to publish.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
