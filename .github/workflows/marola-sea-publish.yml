@@ -100,7 +100,6 @@ jobs:
         run: |
           set -euo pipefail
           src="$(nix build --no-link --print-out-paths nixpkgs#llama-cpp.src)"
-          "$VENV_ROOT/bin/python" -m pip install --quiet gguf
           nix shell nixpkgs#llama-cpp --command \
             "$VENV_ROOT/bin/marola-python" finetune/merge_export.py --preset "${{ inputs.preset }}" --llama-cpp "$src" \
               --adapter "${CKPT_ROOT}/${{ inputs.preset }}/dpo-adapter"

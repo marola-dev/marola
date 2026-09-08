@@ -77,6 +77,12 @@ self_test() {
   ok "$(pkgs_from_requirements | grep -c '^torch$')" "0" "torch is excluded from the second install pass"
   ok "$(pkgs_from_requirements | grep -c 'transformers')" "1" "transformers is installed from PyPI"
   ok "$(pkgs_from_requirements | grep -c ';')" "0" "environment markers are stripped, pip gets plain names"
+  # merge_export.py shells out to llama.cpp's convert_hf_to_gguf.py, whose vocab probe catches only
+  # FileNotFoundError — a missing sentencepiece surfaces as ModuleNotFoundError and kills the run
+  # rather than falling back. These three were lost when the venv replaced .github/nix-ml-env.nix.
+  for dep in gguf sentencepiece protobuf; do
+    ok "$(pkgs_from_requirements | grep -c "^$dep")" "1" "$dep is installed — convert_hf_to_gguf.py needs it"
+  done
   d="$(libstdcxx_dir || true)"
   ok "$([ -n "$d" ] && [ -e "$d/libstdc++.so.6" ] && echo found)" "found" "a libstdc++ is located for the manylinux wheels"
   ok "$(wrapper_body /venv /libs /drv | grep -c 'LD_LIBRARY_PATH')" "1" "the wrapper puts libstdc++ on the library path"

@@ -162,6 +162,14 @@
             # `opencode.json` (repo root) is its config; `just jail-opencode`/`just jo` runs it
             # under ai-jail the same way `just jail-claude` does for Claude Code.
             pkgs.opencode
+
+            # waydroid — run Android APKs from this shell. Confirmed present in nixpkgs
+            # (`waydroid 1.6.3`, x86_64-linux, checked 2026-09-08). This puts the CLI on PATH
+            # only: waydroid drives a host-side LXC container, so `waydroid init`/`session start`
+            # additionally need binder kernel modules, lxc and a running waydroid-container
+            # service on the host — none of which a devShell can provide. Same shape as
+            # pkgs.ollama and hadolint above: the binary is here, the daemon is the host's.
+            pkgs.waydroid
           ];
 
           # Backup for anything else (coursier, plain `java`, scala-cli) that
