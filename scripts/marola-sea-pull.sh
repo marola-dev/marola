@@ -37,6 +37,23 @@ hf_ref() {   # owner preset quant -> the reference `ollama pull` takes
   printf 'hf.co/%s/marola-sea-%s-GGUF:%s' "$1" "$2" "$3"
 }
 
+hf_repo() { printf '%s/marola-sea-%s-GGUF' "$1" "$2"; }
+
+# The quant tags a repo really has, from its file list. Ollama reports a missing tag as a bare
+# "The specified tag is not available in the repository", which reads exactly like a missing repo
+# and is not — publish_hf.py uploads whichever GGUFs the run produced, so a repo can hold Q8_0 and
+# not Q4_K_M. Saying which tags exist turns a dead end into a one-word retry.
+# Split from the fetch so the parsing is testable with no network: JSON on stdin -> one tag
+# per line. Deliberately not jq — nothing else in this repo requires it at runtime.
+quants_from_json() {
+  tr ',' '\n' | grep -oE 'marola-sea-[a-z0-9]+-[A-Za-z0-9_]+\.gguf' \
+    | sed -E 's/.*-([A-Za-z0-9_]+)\.gguf/\1/' | sort -u
+}
+
+quants_in_repo() {   # repo -> one tag per line, empty when the repo/API is unreachable
+  curl -sf -m 20 "https://huggingface.co/api/models/$1" 2>/dev/null | quants_from_json
+}
+
 self_test() {
   local fails=0
   ok() { if [ "$1" = "$2" ]; then echo "  ok   $3"; else echo "  FAIL $3 — got '$1' want '$2'"; fails=$((fails+1)); fi; }
@@ -58,6 +75,21 @@ self_test() {
      "the pull reference matches what publish_hf.py uploads"
   ok "$(hf_ref h0ffmann small Q8_0)" "hf.co/h0ffmann/marola-sea-small-GGUF:Q8_0" \
      "preset and quant both flow into it"
+
+  # The real failure this hit: publish_hf.py uploads whichever GGUFs a run produced, so a repo can
+  # hold Q8_0 and not Q4_K_M, and ollama reports that as a bare "tag is not available" — which
+  # reads like a missing repo. The pull error names the tags that do exist instead.
+  fixture='{"siblings":[{"rfilename":".gitattributes"},{"rfilename":"CHECKSUMS"},{"rfilename":"README.md"},{"rfilename":"marola-sea-tiny-Q8_0.gguf"}]}'
+  ok "$(printf '%s' "$fixture" | quants_from_json | tr '\n' ' ')" "Q8_0 " \
+     "the published repo's real file list yields exactly the tags it has"
+  ok "$(printf '%s' "$fixture" | quants_from_json | grep -c Q4_K_M)" "0" \
+     "and does not claim a quant that was never uploaded"
+  ok "$(printf '{"siblings":[{"rfilename":"marola-sea-tiny-Q4_K_M.gguf"},{"rfilename":"marola-sea-tiny-Q8_0.gguf"}]}' | quants_from_json | tr '\n' ' ')" \
+     "Q4_K_M Q8_0 " "a repo with both quants lists both, sorted"
+  ok "$(printf '{"siblings":[{"rfilename":"README.md"}]}' | quants_from_json | wc -l)" "0" \
+     "a repo with no GGUF yields nothing, so the caller reports an empty repo instead"
+  ok "$(hf_repo h0ffmann tiny)" "h0ffmann/marola-sea-tiny-GGUF" \
+     "the repo id matches what publish_hf.py creates"
 
   if [ "$fails" -eq 0 ]; then echo "marola-sea-pull self-test: ok"; return 0; fi
   echo "marola-sea-pull self-test: $fails failure(s)" >&2; return 1
@@ -82,10 +114,18 @@ fi
 ref=$(hf_ref "$owner" "$preset" "$quant")
 echo "pulling $ref"
 if ! ollama pull "$ref"; then
+  repo=$(hf_repo "$owner" "$preset")
   echo >&2
-  echo "marola-sea-pull: pull failed. The usual cause is that nothing has been published for" >&2
-  echo "                 this preset yet — check https://huggingface.co/$owner/marola-sea-$preset-GGUF" >&2
-  echo "                 and run the 'marola-sea publish' workflow if it is missing." >&2
+  available=$(quants_in_repo "$repo" | tr '\n' ' ')
+  if [ -n "${available// /}" ]; then
+    echo "marola-sea-pull: '$quant' is not in $repo." >&2
+    echo "                 Available: ${available% }" >&2
+    echo "                 Retry with one of those: just marola-sea-pull $preset <quant>" >&2
+  else
+    echo "marola-sea-pull: pull failed, and $repo lists no GGUF (or is unreachable)." >&2
+    echo "                 Check https://huggingface.co/$repo — if it is empty, run the" >&2
+    echo "                 'marola-sea publish' workflow to publish this preset." >&2
+  fi
   exit 1
 fi
 
