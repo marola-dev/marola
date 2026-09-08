@@ -9,7 +9,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write   # push the generated tree to the site-data branch
+  actions: write    # and ask site.yml to redeploy it (see the last step)
 
 concurrency:
   group: api-docs
@@ -61,6 +62,7 @@ jobs:
           find out/docs -maxdepth 3 -name index.html | sort
 
       - name: push to the site-data branch
+        id: push
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -85,3 +87,17 @@ jobs:
           git -C "$tmp" commit -qm "api docs from ${GITHUB_SHA::12}"
           git -C "$tmp" push -q origin HEAD:site-data
           echo "pushed docs/ to site-data"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      # site-data is not the published site: site.yml copies docs/ out of it into site/dist and
+      # deploys that. Nothing here triggers site.yml — its push filter only watches site/, the
+      # Scala modules and its own file — so without this the docs sit on the branch, invisible,
+      # until the next 3-hourly build. That is why marola.dev/docs 404'd after both #305 and #306:
+      # each fix landed and pushed correctly, and the site simply had not been rebuilt since.
+      # Same mechanism ci.yml uses for the coverage badge; workflow_dispatch is one of the two
+      # events GITHUB_TOKEN is allowed to trigger from inside a workflow.
+      - name: Redeploy the site so the new docs are actually served
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (<= 3 h) will publish the docs"
