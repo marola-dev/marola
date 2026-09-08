@@ -27,6 +27,7 @@ CI whenever the code changes.</p>
     <li><a href="https://github.com/h0ffmann/marola/blob/main/docs/FUTURE-WORK.md">FUTURE-WORK.md</a> <small>— Design sketches and reviewed-but-not-adopted ideas</small></li>
     <li><a href="https://github.com/h0ffmann/marola/blob/main/docs/ROADMAP.md">ROADMAP.md</a> <small>— What to do next, and why</small></li>
     <li><a href="https://github.com/h0ffmann/marola/blob/main/AGENTS.md">AGENTS.md</a> <small>— The rules any AI agent working here follows</small></li>
+    <li><a href="https://github.com/h0ffmann/marola/blob/main/finetune/README.md">README.md</a> <small>— Fine-tuning marola-sea: the two tiers, what each costs, what is real</small></li>
 </ul>
 
 <h2>API — Scala</h2>
@@ -40,11 +41,14 @@ CI whenever the code changes.</p>
 <h2>API — Python</h2>
 <ul>
     <li><a href="api/python/index.html">scripts</a> <small>— the repo's own tooling</small></li>
+    <li><a href="api/python/train_lora.html">finetune</a> <small>— the marola-sea training,
+        merge and publish chain</small></li>
 </ul>
-<p><small>Nine stdlib-only CLI scripts rather than a library: roughly a third of their functions
-carry docstrings. Read it as a tour of the tooling, not a reference.</small></p>
+<p><small>CLI scripts rather than a library, all stdlib-only at import time — the finetune ones
+keep torch and peft behind lazy imports so they document (and self-test) without the ML stack.
+Read it as a tour of the tooling, not a reference.</small></p>
 
-<h2>Improvement proposals (44)</h2>
+<h2>Improvement proposals (45)</h2>
 <p><small>Every non-trivial change is designed here before it is built.</small></p>
 <ul>
     <li><a href="https://github.com/h0ffmann/marola/blob/main/docs/mips/MIP-0001-water-quality-and-sea-lore.md">MIP-0001 — water quality and sea lore</a></li>
@@ -91,4 +95,5 @@ carry docstrings. Read it as a tour of the tooling, not a reference.</small></p>
     <li><a href="https://github.com/h0ffmann/marola/blob/main/docs/mips/MIP-0046-remove-ai-slop-ui.md">MIP-0046 — remove ai slop ui</a></li>
     <li><a href="https://github.com/h0ffmann/marola/blob/main/docs/mips/MIP-0047-desmos-equation-art.md">MIP-0047 — desmos equation art</a></li>
     <li><a href="https://github.com/h0ffmann/marola/blob/main/docs/mips/MIP-0048-scaling-marola-sea.md">MIP-0048 — scaling marola sea</a></li>
+    <li><a href="https://github.com/h0ffmann/marola/blob/main/docs/mips/MIP-0049-scala-for-the-web-layer.md">MIP-0049 — scala for the web layer</a></li>
 </ul>
