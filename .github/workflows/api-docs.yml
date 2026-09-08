@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
@@ -43,7 +43,11 @@ jobs:
           set -euo pipefail
           pip install --quiet pdoc
           # Stdlib-only CLI scripts, not a library — the index page says so, per MIP-0044 §5.6.
-          pdoc -o out/docs/api/python scripts/*.py scripts/lib/*.py finetune/build_dataset.py || \
+          # All of finetune/, not just build_dataset.py: every script there keeps torch/peft/trl
+          # behind lazy imports, so pdoc can import them without the ML stack installed (verified
+          # — all six render). That discipline exists for --dry-run/--self-test; documenting them
+          # is a second thing it buys.
+          pdoc -o out/docs/api/python scripts/*.py scripts/lib/*.py finetune/*.py || \
             echo "pdoc produced nothing for some inputs — continuing with what it did produce"
 
       - name: strip third-party scripts so the docs keep script-src 'self'

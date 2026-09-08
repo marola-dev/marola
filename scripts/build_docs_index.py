@@ -31,6 +31,7 @@ GUIDES = [
     ("docs/FUTURE-WORK.md", "Design sketches and reviewed-but-not-adopted ideas"),
     ("docs/ROADMAP.md", "What to do next, and why"),
     ("AGENTS.md", "The rules any AI agent working here follows"),
+    ("finetune/README.md", "Fine-tuning marola-sea: the two tiers, what each costs, what is real"),
 ]
 
 MODULES = [
@@ -98,9 +99,12 @@ CI whenever the code changes.</p>
 <h2>API — Python</h2>
 <ul>
     <li><a href="api/python/index.html">scripts</a> <small>— the repo's own tooling</small></li>
+    <li><a href="api/python/train_lora.html">finetune</a> <small>— the marola-sea training,
+        merge and publish chain</small></li>
 </ul>
-<p><small>Nine stdlib-only CLI scripts rather than a library: roughly a third of their functions
-carry docstrings. Read it as a tour of the tooling, not a reference.</small></p>
+<p><small>CLI scripts rather than a library, all stdlib-only at import time — the finetune ones
+keep torch and peft behind lazy imports so they document (and self-test) without the ML stack.
+Read it as a tour of the tooling, not a reference.</small></p>
 
 <h2>Improvement proposals ({len(mip_list)})</h2>
 <p><small>Every non-trivial change is designed here before it is built.</small></p>
@@ -140,6 +144,17 @@ def self_test() -> int:
         'href="api/python/index.html"' in page,
         True,
         "the Python docs are one section, not a separate site",
+    )
+    ok(
+        'href="api/python/train_lora.html"' in page,
+        True,
+        "the finetune chain is reachable, not buried in the scripts index",
+    )
+    # Against the real GUIDES, not the fixture page render() is called with above.
+    ok(
+        any(path == "finetune/README.md" for path, _ in GUIDES),
+        True,
+        "the fine-tuning guide is listed with the other guides",
     )
     ok("/dev/" in page, False, "no /dev/ path — the docs live at /docs/")
     ok(f"{REPO}/PHILOSOPHY.md" in page, True, "guides link to the repository, not a mirrored copy")
