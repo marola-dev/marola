@@ -1,0 +1,784 @@
+<!DOCTYPE html><html data-pathToRoot="../../" data-rawLocation="marola/http/Http$" data-dynamicSideMenu="false"><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"></meta><title>Http</title><link rel="shortcut icon" type="image/x-icon" href="../../favicon.ico"></link><script type="text/javascript" src="../../scripts/theme.js"></script><script type="text/javascript" src="../../scripts/searchData.js" defer="true"></script><script type="text/javascript" src="../../scripts/scastieConfiguration.js" defer="true"></script><link rel="stylesheet" href="../../styles/theme/bundle.css"></link><link rel="stylesheet" href="../../styles/theme/components/bundle.css"></link><link rel="stylesheet" href="../../styles/theme/components/button/bundle.css"></link><link rel="stylesheet" href="../../styles/theme/layout/bundle.css"></link><link rel="stylesheet" href="../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../styles/searchbar.css"></link><link rel="stylesheet" href="../../styles/social-links.css"></link><link rel="stylesheet" href="../../styles/versions-dropdown.css"></link><link rel="stylesheet" href="../../styles/content-contributors.css"></link><script type="text/javascript" src="../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../scripts/scaladoc-scalajs.js" defer="true"></script><script type="text/javascript" src="../../scripts/contributors.js" defer="true"></script><script type="text/javascript" src="../../scripts/data.js" defer="true"></script><script src="../../scripts/path-to-root.js"></script></head><body data-path-to-root="../../"><div id=""><div id="header" class="body-small"><div class="header-container-left"><a href="../../" class="logo-container"><span class="project-name h300">marola-core</span></a><span onclick="dropdownHandler(event)" class="text-button with-arrow" id="dropdown-trigger"><a></a></span><div id="version-dropdown" class="dropdown-menu"></div></div><div class="header-container-right"><button id="search-toggle" class="icon-button"></button><span id="theme-toggle" class="icon-button"></span><span id="mobile-menu-toggle" class="icon-button hamburger"></span></div></div><div id="mobile-menu"><div class="mobile-menu-header body-small"><span class="mobile-menu-logo"><span class="project-name h300">marola-core</span></span><button id="mobile-menu-close" class="icon-button close"></button></div><div class="mobile-menu-container body-medium"><input id="mobile-scaladoc-searchbar-input" class="scaladoc-searchbar-input" type="search" placeholder="Find anything"></input><span id="mobile-theme-toggle" class="mobile-menu-item mode"></span></div></div><span id="mobile-sidebar-toggle" class="floating-button"></span><div id="leftColumn" class="body-small"><div class="switcher-container"><a id="api-nav-button" class="switcher h100 selected" href="../../index.html">API</a></div><nav id="api-nav" class="side-menu"><div class="ni n0 expanded"><span class="nh h100 expanded cs"><button class="ar icon-button expanded"></button><a href="../../marola.html"><span class="micon pa"></span><span>marola</span></a></span><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../beaches.html"><span class="micon pa"></span><span>beaches</span></a></span><div class="ni n2 "><span class="nh "><a href="../beaches/AccessibilityClient.html"><span class="micon tr"></span><span>AccessibilityClient</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../beaches/BeachFinder$.html"><span class="micon ob"></span><span>BeachFinder</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../beaches/Facilities$.html"><span class="micon ob"></span><span>Facilities</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../beaches/Facilities.html"><span class="micon cl"></span><span>Facilities</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../beaches/Facility.html"><span class="micon en"></span><span>Facility</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../beaches/NoopAccessibilityClient.html"><span class="micon cl"></span><span>NoopAccessibilityClient</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../beaches/OverpassAccessibilityClient.html"><span class="micon cl"></span><span>OverpassAccessibilityClient</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../beaches/OverpassAccessibilityClient$.html"><span class="micon ob"></span><span>OverpassAccessibilityClient</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../conditions.html"><span class="micon pa"></span><span>conditions</span></a></span><div class="ni n2 "><span class="nh "><a href="../conditions/OpenMeteoClient$.html"><span class="micon ob"></span><span>OpenMeteoClient</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../conditions/TideEvent.html"><span class="micon cl"></span><span>TideEvent</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../conditions/Tides$.html"><span class="micon ob"></span><span>Tides</span></a></span></div></div><div class="ni n1 expanded"><span class="nh h100 expanded cs"><button class="ar icon-button expanded"></button><a href="../http.html"><span class="micon pa"></span><span>http</span></a></span><div class="ni n2 expanded"><span class="nh h100 selected"><button class="ar icon-button expanded"></button><a href="#"><span class="micon ob"></span><span>Http</span></a></span><div class="ni n3 "><span class="nh "><a href="Http$$BinaryTransport$.html"><span class="micon ob"></span><span>BinaryTransport</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Http$$BinaryTransport.html"><span class="micon tr"></span><span>BinaryTransport</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Http$$BytesResponse.html"><span class="micon cl"></span><span>BytesResponse</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Http$$HttpBytesError.html"><span class="micon cl"></span><span>HttpBytesError</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Http$$HttpError.html"><span class="micon cl"></span><span>HttpError</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Http$$Response.html"><span class="micon cl"></span><span>Response</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Http$$Transport$.html"><span class="micon ob"></span><span>Transport</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Http$$Transport.html"><span class="micon tr"></span><span>Transport</span></a></span></div></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../json.html"><span class="micon pa"></span><span>json</span></a></span><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../json/JsonValue.html"><span class="micon en"></span><span>JsonValue</span></a></span><div class="ni n3 "><span class="nh "><a href="../json/JsonValue$$JObject.html"><span class="micon cl"></span><span>JObject</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../json/JsonValue$$JArray.html"><span class="micon cl"></span><span>JArray</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../json/JsonValue$$JString.html"><span class="micon cl"></span><span>JString</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../json/JsonValue$$JNumber.html"><span class="micon cl"></span><span>JNumber</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../json/JsonValue$$JBool.html"><span class="micon cl"></span><span>JBool</span></a></span></div></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../json/JsonValue$.html"><span class="micon ob"></span><span>JsonValue</span></a></span><div class="ni n3 "><span class="nh "><a href="../json/JsonValue$$JsonParseException.html"><span class="micon cl"></span><span>JsonParseException</span></a></span></div></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../knowledge.html"><span class="micon pa"></span><span>knowledge</span></a></span><div class="ni n2 "><span class="nh "><a href="../knowledge/Corpus$.html"><span class="micon ob"></span><span>Corpus</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../knowledge/CorpusChunk.html"><span class="micon cl"></span><span>CorpusChunk</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../knowledge/Embedder.html"><span class="micon tr"></span><span>Embedder</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../knowledge/FileKnowledgeStore$.html"><span class="micon ob"></span><span>FileKnowledgeStore</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../knowledge/FileKnowledgeStore.html"><span class="micon cl"></span><span>FileKnowledgeStore</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../knowledge/KnowledgeStore.html"><span class="micon tr"></span><span>KnowledgeStore</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../knowledge/OceanQa$.html"><span class="micon ob"></span><span>OceanQa</span></a></span><div class="ni n3 "><span class="nh "><a href="../knowledge/OceanQa$$Answer.html"><span class="micon cl"></span><span>Answer</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../knowledge/OceanQa$$Fallback.html"><span class="micon en"></span><span>Fallback</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../knowledge/Passage.html"><span class="micon cl"></span><span>Passage</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../knowledge/SafetyFooter$.html"><span class="micon ob"></span><span>SafetyFooter</span></a></span><div class="ni n3 "><span class="nh "><a href="../knowledge/SafetyFooter$$Lang.html"><span class="micon en"></span><span>Lang</span></a></span></div></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../ledger.html"><span class="micon pa"></span><span>ledger</span></a></span><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../ledger/RunLedger$.html"><span class="micon ob"></span><span>RunLedger</span></a></span><div class="ni n3 "><span class="nh "><a href="../ledger/RunLedger$$RunHandle.html"><span class="micon cl"></span><span>RunHandle</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../ledger/RunLedger.html"><span class="micon tr"></span><span>RunLedger</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../llm.html"><span class="micon pa"></span><span>llm</span></a></span><div class="ni n2 "><span class="nh "><a href="../llm/ChatMessage.html"><span class="micon cl"></span><span>ChatMessage</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../llm/CompiledPrompt.html"><span class="micon cl"></span><span>CompiledPrompt</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../llm/CompiledPrompt$.html"><span class="micon ob"></span><span>CompiledPrompt</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../llm/LlmClient.html"><span class="micon tr"></span><span>LlmClient</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../llm/LlmClient$.html"><span class="micon ob"></span><span>LlmClient</span></a></span><div class="ni n3 "><span class="nh "><a href="../llm/LlmClient$$NoCompletionException.html"><span class="micon cl"></span><span>NoCompletionException</span></a></span></div></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../llm/Reviewer$.html"><span class="micon ob"></span><span>Reviewer</span></a></span><div class="ni n3 "><span class="nh "><a href="../llm/Reviewer$$MalformedReviewException.html"><span class="micon cl"></span><span>MalformedReviewException</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../llm/Reviewer$$ReviewResult.html"><span class="micon cl"></span><span>ReviewResult</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../llm/TracedLlmClient$.html"><span class="micon ob"></span><span>TracedLlmClient</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../llm/TracedLlmClient.html"><span class="micon cl"></span><span>TracedLlmClient</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../location.html"><span class="micon pa"></span><span>location</span></a></span><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../location/IpGeolocation$.html"><span class="micon ob"></span><span>IpGeolocation</span></a></span><div class="ni n3 "><span class="nh "><a href="../location/IpGeolocation$$Provider.html"><span class="micon cl"></span><span>Provider</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../location/IpLocation.html"><span class="micon cl"></span><span>IpLocation</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../lore.html"><span class="micon pa"></span><span>lore</span></a></span><div class="ni n2 "><span class="nh "><a href="../lore/LoreEntry.html"><span class="micon cl"></span><span>LoreEntry</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../lore/LoreKind.html"><span class="micon en"></span><span>LoreKind</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../lore/SeaLore$.html"><span class="micon ob"></span><span>SeaLore</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../model.html"><span class="micon pa"></span><span>model</span></a></span><div class="ni n2 "><span class="nh "><a href="../model/Beach.html"><span class="micon cl"></span><span>Beach</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../model/BeachForecast.html"><span class="micon cl"></span><span>BeachForecast</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../model/BestHour.html"><span class="micon cl"></span><span>BestHour</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../model/Coordinates$.html"><span class="micon ob"></span><span>Coordinates</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../model/Coordinates.html"><span class="micon cl"></span><span>Coordinates</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../model/HourlyConditions.html"><span class="micon cl"></span><span>HourlyConditions</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../model/JellyfishRisk.html"><span class="micon en"></span><span>JellyfishRisk</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../model/WhaleSightingLikelihood.html"><span class="micon en"></span><span>WhaleSightingLikelihood</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../model/WindLevel.html"><span class="micon en"></span><span>WindLevel</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../observability.html"><span class="micon pa"></span><span>observability</span></a></span><div class="ni n2 "><span class="nh "><a href="../observability/Tracing.html"><span class="micon tr"></span><span>Tracing</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../observability/Tracing$.html"><span class="micon ob"></span><span>Tracing</span></a></span><div class="ni n3 "><span class="nh "><a href="../observability/Tracing$$Noop$.html"><span class="micon ob"></span><span>Noop</span></a></span></div></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../scoring.html"><span class="micon pa"></span><span>scoring</span></a></span><div class="ni n2 "><span class="nh "><a href="../scoring/Swimability$.html"><span class="micon ob"></span><span>Swimability</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../scoring/WaterVerdict$.html"><span class="micon ob"></span><span>WaterVerdict</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../scoring/WaterVerdict.html"><span class="micon cl"></span><span>WaterVerdict</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../sightings.html"><span class="micon pa"></span><span>sightings</span></a></span><div class="ni n2 "><span class="nh "><a href="../sightings/Sighting.html"><span class="micon cl"></span><span>Sighting</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../sightings/SightingKind.html"><span class="micon en"></span><span>SightingKind</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../sightings/SightingStore.html"><span class="micon tr"></span><span>SightingStore</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../site.html"><span class="micon pa"></span><span>site</span></a></span><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../site/Board$.html"><span class="micon ob"></span><span>Board</span></a></span><div class="ni n3 "><span class="nh "><a href="../site/Board$$Sources.html"><span class="micon cl"></span><span>Sources</span></a></span></div></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../trails.html"><span class="micon pa"></span><span>trails</span></a></span><div class="ni n2 "><span class="nh "><a href="../trails/Trail.html"><span class="micon cl"></span><span>Trail</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../trails/TrailFinder$.html"><span class="micon ob"></span><span>TrailFinder</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../vision.html"><span class="micon pa"></span><span>vision</span></a></span><div class="ni n2 "><span class="nh "><a href="../vision/VisionClient.html"><span class="micon tr"></span><span>VisionClient</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../water.html"><span class="micon pa"></span><span>water</span></a></span><div class="ni n2 "><span class="nh "><a href="../water/BathingCondition.html"><span class="micon en"></span><span>BathingCondition</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../water/SamplingPoint.html"><span class="micon cl"></span><span>SamplingPoint</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../water/WaterQuality.html"><span class="micon cl"></span><span>WaterQuality</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../water/WaterQuality$.html"><span class="micon ob"></span><span>WaterQuality</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../water/WaterQualityClient.html"><span class="micon tr"></span><span>WaterQualityClient</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../water/WaterQualityMatcher$.html"><span class="micon ob"></span><span>WaterQualityMatcher</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../water/WaterSample.html"><span class="micon cl"></span><span>WaterSample</span></a></span></div></div><div class="ni n1 "><span class="nh "><a href="../Recommender$.html"><span class="micon ob"></span><span>Recommender</span></a></span></div></div></nav></div><div id="footer" class="body-small"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div><div id="scaladoc-searchBar"></div><div id="main"><div class="breadcrumbs container"><a href="../../index.html">marola-core</a>/<a href="../../marola.html">marola</a>/<a href="../http.html">marola.http</a>/<a href="Http$.html">Http</a></div><div id="content" class="body-medium"><div><div class="cover-header">
+ <span class="icon"><span class="micon ob"></span></span>
+ <h1 class="h600 single">Http</h1>
+</div>
+<div class="fqname body-large">
+ <span>marola.http.Http</span>
+</div>
+<div class="main-signature mono-small-block">
+ <div class="signature">
+  <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="Http$.html" t="n" class="documentableName ">Http</a>
+ </div>
+</div>
+<div class="cover">
+ <div class="doc">
+  <p>Thin <code>java.net.http.HttpClient</code> wrapper at the Kyo effect boundary, kept deliberately instead of migrating to kyo-http's own client.</p>
+ </div>
+ <section id="attributes">
+  <h2 class="h500">Attributes</h2>
+  <dl class="attributes">
+   <dt class="body-small">Graph</dt>
+   <dd class="body-medium">
+    <div id="inheritance-diagram" class="diagram-class showGraph">
+     <button type="button" class="label-only-button" onclick="zoomOut()">Reset zoom</button><button type="button" class="label-only-button" onclick="hideGraph()">Hide graph</button><button type="button" class="label-only-button" onclick="showGraph()">Show graph</button>
+     <svg id="graph"></svg>
+     <script type="text/dot" id="dot"> digraph g {
+ node0 [id=node0, label="<span style=\"color: #FFFFFF;\">object <a href=\"Http$.html\" t=\"n\">Http</a></span>", class="object vertex"];
+node1 [id=node1, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Object</span></span>", class="class vertex"];
+node2 [id=node2, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Any</span></span>", class="class vertex"];
+node3 [id=node3, label="<span style=\"color: #FFFFFF;\">trait <span data-unresolved-link=\"\" t=\"n\">Matchable</span></span>", class="trait vertex"];
+
+
+ node0 -> node1;
+node1 -> node2;
+node1 -> node3;
+node3 -> node2;
+
+}
+</script>
+    </div>
+   </dd>
+   <dt class="body-small">Supertypes</dt>
+   <dd class="body-medium">
+    <div class="mono-small-block supertypes">
+     <div>
+      class <span data-unresolved-link="" t="n">Object</span>
+     </div>
+     <div>
+      trait <span data-unresolved-link="" t="n">Matchable</span>
+     </div>
+     <div>
+      class <span data-unresolved-link="" t="n">Any</span>
+     </div>
+     <span></span>
+    </div>
+   </dd>
+   <dt class="body-small">Self type</dt>
+   <dd class="body-medium">
+    <div class="mono-small-block supertypes">
+     <span></span>
+     <div>
+      <a href="Http$.html" t="n">Http</a>.<span t="k">type</span>
+     </div>
+    </div>
+   </dd>
+  </dl>
+ </section>
+</div>
+<section id="members-list">
+ <h2 class="h500">Members list</h2>
+ <div class="documentableFilter">
+  <div class="filtersContainer"></div>
+  <input class="filterableInput" placeholder="Filter by any phrase" data-test-id="filterBarInput" type="search"><button class="clearButton label-only-button" data-test-id="filterBarClearButton">Clear all</button>
+ </div>
+ <div class="membersList expand">
+  <div class="tabs">
+   <div class="contents">
+    <section id="Type-members">
+     <div data-togglable="Type members" class="tab expand">
+      <div class="member-group-header">
+       <h3 data-togglable="Type members" class="h400">Type members</h3>
+      </div>
+      <section id="Classlikes">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Classlikes</h4>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="Http$$BinaryTransport$.html" t="n" class="documentableName ">BinaryTransport</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="cover">
+             <div class="doc"></div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="Http$$BinaryTransport.html">trait</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="Http$$BinaryTransport$.html" t="n">BinaryTransport</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">trait </span></span><a href="Http$$BinaryTransport.html" t="n" class="documentableName ">BinaryTransport</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Binary-GET's own transport seam, deliberately separate from <code>Transport</code>/<code>Response</code> above rather than adding a <code>bytes</code> field there: every existing caller of <code>getString</code>/<code>postForm</code>/etc. depends on <code>Response.body</code> being decoded as UTF-8 text (IMA/SC's own "PRÓPRIA"/"IMPRÓPRIA" accented strings, Overpass/Open-Meteo JSON) — switching the shared <code>HttpClient.send</code> call to <code>BodyHandlers.ofByteArray()</code> and re-deriving <code>body</code> from an ISO-8859-1 round-trip would silently corrupt every one of those already-verified text responses.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Binary-GET's own transport seam, deliberately separate from <code>Transport</code>/<code>Response</code> above rather than adding a <code>bytes</code> field there: every existing caller of <code>getString</code>/<code>postForm</code>/etc. depends on <code>Response.body</code> being decoded as UTF-8 text (IMA/SC's own "PRÓPRIA"/"IMPRÓPRIA" accented strings, Overpass/Open-Meteo JSON) — switching the shared <code>HttpClient.send</code> call to <code>BodyHandlers.ofByteArray()</code> and re-deriving <code>body</code> from an ISO-8859-1 round-trip would silently corrupt every one of those already-verified text responses.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="Http$$BinaryTransport$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="final,case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">final case </span></span><span class="kind"><span t="k">class </span></span><a href="Http$$BytesResponse.html" t="n" class="documentableName ">BytesResponse</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">status</span>: <span data-unresolved-link="" t="t">Int</span>, <span t="k"></span><span data-unresolved-link="" t="n">bytes</span>: <span data-unresolved-link="" t="t">Array</span>[<span data-unresolved-link="" t="t">Byte</span>])
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>What a binary response is — the raw bytes, never decoded as text.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>What a binary response is — the raw bytes, never decoded as text.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="final,case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">final case </span></span><span class="kind"><span t="k">class </span></span><a href="Http$$HttpBytesError.html" t="n" class="documentableName ">HttpBytesError</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">status</span>: <span data-unresolved-link="" t="t">Int</span>, <span t="k"></span><span data-unresolved-link="" t="n">url</span>: <span data-unresolved-link="" t="t">String</span>)<span t="k"> extends </span><span data-unresolved-link="" t="t">Exception</span></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="cover">
+             <div class="doc"></div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Exception</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Throwable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="final,case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">final case </span></span><span class="kind"><span t="k">class </span></span><a href="Http$$HttpError.html" t="n" class="documentableName ">HttpError</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">status</span>: <span data-unresolved-link="" t="t">Int</span>, <span t="k"></span><span data-unresolved-link="" t="n">url</span>: <span data-unresolved-link="" t="t">String</span>, <span t="k"></span><span data-unresolved-link="" t="n">bodySnippet</span>: <span data-unresolved-link="" t="t">String</span>)<span t="k"> extends </span><span data-unresolved-link="" t="t">Exception</span></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="cover">
+             <div class="doc"></div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Exception</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Throwable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="final,case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">final case </span></span><span class="kind"><span t="k">class </span></span><a href="Http$$Response.html" t="n" class="documentableName ">Response</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">status</span>: <span data-unresolved-link="" t="t">Int</span>, <span t="k"></span><span data-unresolved-link="" t="n">body</span>: <span data-unresolved-link="" t="t">String</span>)
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>What a transport returns — just the two things every caller here reads.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>What a transport returns — just the two things every caller here reads.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="Http$$Transport$.html" t="n" class="documentableName ">Transport</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="cover">
+             <div class="doc"></div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="Http$$Transport.html">trait</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="Http$$Transport$.html" t="n">Transport</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">trait </span></span><a href="Http$$Transport.html" t="n" class="documentableName ">Transport</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>The one seam between marola and the network.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>The one seam between marola and the network.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="Http$$Transport$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </section>
+    <section id="Value-members">
+     <div data-togglable="Value members" class="tab expand">
+      <div class="member-group-header">
+       <h3 data-togglable="Value members" class="h400">Value members</h3>
+      </div>
+      <section id="Concrete-methods">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Concrete methods</h4>
+        </div>
+        <div class="documentableElement" id="getBytes-9fc">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Http$.html#getBytes-9fc" t="n" class="documentableName ">getBytes</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">url</span>: <span data-unresolved-link="" t="t">String</span>, <span t="k"></span><span data-unresolved-link="" t="n">timeoutSeconds</span>: <span data-unresolved-link="" t="t">Long</span> = ...): <span data-unresolved-link="" t="t">Array</span>[<span data-unresolved-link="" t="t">Byte</span>] <span data-unresolved-link="" t="t">&lt;</span> <span data-unresolved-link="" t="t">Sync</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Plain binary GET — a PDF bulletin today (<code>InemaBaWaterQualityClient</code>/<code>IneaRjWaterQualityClient</code>, MIP-0031), never text-decoded.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Plain binary GET — a PDF bulletin today (<code>InemaBaWaterQualityClient</code>/<code>IneaRjWaterQualityClient</code>, MIP-0031), never text-decoded.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="getString-fffff2d9">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Http$.html#getString-fffff2d9" t="n" class="documentableName ">getString</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">url</span>: <span data-unresolved-link="" t="t">String</span>, <span t="k"></span><span data-unresolved-link="" t="n">headers</span>: <span data-unresolved-link="" t="t">Map</span>[<span data-unresolved-link="" t="t">String</span>, <span data-unresolved-link="" t="t">String</span>] = ..., <span t="k"></span><span data-unresolved-link="" t="n">retries</span>: <span data-unresolved-link="" t="t">Int</span> = ..., <span t="k"></span><span data-unresolved-link="" t="n">backoffMs</span>: <span data-unresolved-link="" t="t">Long</span> = ...): <span data-unresolved-link="" t="t">String</span> <span data-unresolved-link="" t="t">&lt;</span> <span data-unresolved-link="" t="t">Sync</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p><code>headers</code>: e.g. an API key that must not go in the URL (<code>RouteFinder</code>).</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p><code>headers</code>: e.g. an API key that must not go in the URL (<code>RouteFinder</code>).</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="postBytes-c03">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Http$.html#postBytes-c03" t="n" class="documentableName ">postBytes</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">url</span>: <span data-unresolved-link="" t="t">String</span>, <span t="k"></span><span data-unresolved-link="" t="n">body</span>: <span data-unresolved-link="" t="t">Array</span>[<span data-unresolved-link="" t="t">Byte</span>], <span t="k"></span><span data-unresolved-link="" t="n">contentType</span>: <span data-unresolved-link="" t="t">String</span> = ..., <span t="k"></span><span data-unresolved-link="" t="n">headers</span>: <span data-unresolved-link="" t="t">Map</span>[<span data-unresolved-link="" t="t">String</span>, <span data-unresolved-link="" t="t">String</span>] = ..., <span t="k"></span><span data-unresolved-link="" t="n">timeoutSeconds</span>: <span data-unresolved-link="" t="t">Long</span> = ...): <span data-unresolved-link="" t="t">String</span> <span data-unresolved-link="" t="t">&lt;</span> <span data-unresolved-link="" t="t">Sync</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Raw-binary POST (<code>application/octet-stream</code> by default) — Azure AI Vision's Image Analysis API takes the image bytes directly in the request body rather than as JSON (see <code>AzureVisionClient</code>'s doc comment).</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Raw-binary POST (<code>application/octet-stream</code> by default) — Azure AI Vision's Image Analysis API takes the image bytes directly in the request body rather than as JSON (see <code>AzureVisionClient</code>'s doc comment).</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="postForm-fffffc55">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Http$.html#postForm-fffffc55" t="n" class="documentableName ">postForm</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">url</span>: <span data-unresolved-link="" t="t">String</span>, <span t="k"></span><span data-unresolved-link="" t="n">form</span>: <span data-unresolved-link="" t="t">Map</span>[<span data-unresolved-link="" t="t">String</span>, <span data-unresolved-link="" t="t">String</span>], <span t="k"></span><span data-unresolved-link="" t="n">timeoutSeconds</span>: <span data-unresolved-link="" t="t">Long</span> = ..., <span t="k"></span><span data-unresolved-link="" t="n">retries</span>: <span data-unresolved-link="" t="t">Int</span> = ..., <span t="k"></span><span data-unresolved-link="" t="n">backoffMs</span>: <span data-unresolved-link="" t="t">Long</span> = ...): <span data-unresolved-link="" t="t">String</span> <span data-unresolved-link="" t="t">&lt;</span> <span data-unresolved-link="" t="t">Sync</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p><code>application/x-www-form-urlencoded</code> POST — Overpass's query API and Telegram's Bot API both accept this for their respective single-field payloads.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p><code>application/x-www-form-urlencoded</code> POST — Overpass's query API and Telegram's Bot API both accept this for their respective single-field payloads.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="postJson-e51">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Http$.html#postJson-e51" t="n" class="documentableName ">postJson</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">url</span>: <span data-unresolved-link="" t="t">String</span>, <span t="k"></span><span data-unresolved-link="" t="n">jsonBody</span>: <span data-unresolved-link="" t="t">String</span>, <span t="k"></span><span data-unresolved-link="" t="n">headers</span>: <span data-unresolved-link="" t="t">Map</span>[<span data-unresolved-link="" t="t">String</span>, <span data-unresolved-link="" t="t">String</span>] = ..., <span t="k"></span><span data-unresolved-link="" t="n">timeoutSeconds</span>: <span data-unresolved-link="" t="t">Long</span> = ...): <span data-unresolved-link="" t="t">String</span> <span data-unresolved-link="" t="t">&lt;</span> <span data-unresolved-link="" t="t">Sync</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p><code>application/json</code> POST with arbitrary extra headers (e.g. <code>Authorization: Bearer ...</code>) — used by both <code>llm</code> clients.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p><code>application/json</code> POST with arbitrary extra headers (e.g. <code>Authorization: Bearer ...</code>) — used by both <code>llm</code> clients.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="putBytes-c03">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Http$.html#putBytes-c03" t="n" class="documentableName ">putBytes</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">url</span>: <span data-unresolved-link="" t="t">String</span>, <span t="k"></span><span data-unresolved-link="" t="n">body</span>: <span data-unresolved-link="" t="t">Array</span>[<span data-unresolved-link="" t="t">Byte</span>], <span t="k"></span><span data-unresolved-link="" t="n">contentType</span>: <span data-unresolved-link="" t="t">String</span> = ..., <span t="k"></span><span data-unresolved-link="" t="n">headers</span>: <span data-unresolved-link="" t="t">Map</span>[<span data-unresolved-link="" t="t">String</span>, <span data-unresolved-link="" t="t">String</span>] = ..., <span t="k"></span><span data-unresolved-link="" t="n">timeoutSeconds</span>: <span data-unresolved-link="" t="t">Long</span> = ...): <span data-unresolved-link="" t="t">String</span> <span data-unresolved-link="" t="t">&lt;</span> <span data-unresolved-link="" t="t">Sync</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Raw-binary PUT — <code>MlflowRunLedger.artifact</code>'s one caller: MLflow's artifact-store proxy (<code>mlflow/protos/mlflow_artifacts.proto</code>, <code>PUT .../mlflow-artifacts/artifacts/</code>) takes the file bytes directly and, unlike every other write in this module, uses <code>PUT</code> rather than <code>POST</code>.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Raw-binary PUT — <code>MlflowRunLedger.artifact</code>'s one caller: MLflow's artifact-store proxy (<code>mlflow/protos/mlflow_artifacts.proto</code>, <code>PUT .../mlflow-artifacts/artifacts/</code>) takes the file bytes directly and, unlike every other write in this module, uses <code>PUT</code> rather than <code>POST</code>.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="withBinaryTransport-fffffabc">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Http$.html#withBinaryTransport-fffffabc" t="n" class="documentableName ">withBinaryTransport</a>[<span t="k"></span><span data-unresolved-link="" t="t">A</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">t</span>: <a href="Http$$BinaryTransport.html" t="t">BinaryTransport</a>)(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">body</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">A</span>): <span data-unresolved-link="" t="t">A</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Test seam for <code>getBytes</code>, mirroring <code>withTransport</code> — replay a fixture PDF/binary by URL.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Test seam for <code>getBytes</code>, mirroring <code>withTransport</code> — replay a fixture PDF/binary by URL.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="withTransport-fffff45b">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Http$.html#withTransport-fffff45b" t="n" class="documentableName ">withTransport</a>[<span t="k"></span><span data-unresolved-link="" t="t">A</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">t</span>: <a href="Http$$Transport.html" t="t">Transport</a>)(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">body</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">A</span>): <span data-unresolved-link="" t="t">A</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Test seam: runs <code>body</code> with <code>t</code> installed, restoring the previous transport afterwards.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Test seam: runs <code>body</code> with <code>t</code> installed, restoring the previous transport afterwards.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+      <section id="Concrete-fields">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Concrete fields</h4>
+        </div>
+        <div class="documentableElement" id="RetryableStatuses-0">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">val </span></span><a href="Http$.html#RetryableStatuses-0" t="n" class="documentableName ">RetryableStatuses</a>: <span data-unresolved-link="" t="t">Set</span>[<span data-unresolved-link="" t="t">Int</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Statuses worth another attempt — a rate limit or an overloaded/absent upstream, never a client error: 429, 502, 503, 504.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Statuses worth another attempt — a rate limit or an overloaded/absent upstream, never a client error: 429, 502, 503, 504.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </section>
+   </div>
+  </div>
+ </div>
+</section></div><div id="toc" class="body-small"><div id="toc-container"><span class="toc-title h200">In this article</span><nav class="toc-nav"><ul class="toc-list"><li><a href="#attributes">Attributes</a></li><li><a href="#members-list">Members list</a><ul><li><a href="#Type-members">Type members</a><ul><li><a href="#Classlikes">Classlikes</a></li></ul></li><li><a href="#Value-members">Value members</a><ul><li><a href="#Concrete-methods">Concrete methods</a></li><li><a href="#Concrete-fields">Concrete fields</a></li></ul></li></ul></li></ul></nav></div></div></div><div id="footer" class="body-small mobile-footer"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div></div></div></body></html>
