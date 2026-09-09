@@ -17,6 +17,8 @@ import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore, Sighting
 import marola.vision.{AzureVisionClient, LocalVisionClient, VisionClient}
 import marola.water.{
   CachedWaterQualityClient,
+  FallbackWaterQualityClient,
+  ImaScPdfWaterQualityClient,
   ImaScWaterQualityClient,
   IneaRjWaterQualityClient,
   InemaBaWaterQualityClient,
@@ -168,9 +170,22 @@ final case class AppConfig(
    * last good fetch instead of blanking every beach — see `CachedWaterQualityClient`.
    */
   def waterQualityClient(origin: Coordinates): Option[WaterQualityClient] =
-    selectWaterClient(origin).map(c =>
-      CachedWaterQualityClient(c, CachedWaterQualityClient.fileFor(waterCacheDir, c.name))
-    )
+    selectWaterClient(origin).map { c =>
+      // Live feed -> the agency's other publication channel -> last good fetch. IMA's JSON went
+      // down while its weekly bulletin PDF stayed up, so an outage in one channel should not be a
+      // blackout for the user.
+      val withBackup = backupFor(c).fold(c)(FallbackWaterQualityClient(c, _))
+      CachedWaterQualityClient(
+        withBackup,
+        CachedWaterQualityClient.fileFor(waterCacheDir, c.name)
+      )
+    }
+
+  /** Only IMA/SC has a second channel today; INEA and INEMA publish one bulletin each. */
+  private def backupFor(primary: WaterQualityClient): Option[WaterQualityClient] =
+    primary match
+      case _: ImaScWaterQualityClient => Some(ImaScPdfWaterQualityClient())
+      case _                          => scala.None
 
   private def selectWaterClient(origin: Coordinates): Option[WaterQualityClient] =
     waterQualityProvider match
