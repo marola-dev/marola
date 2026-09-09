@@ -1,0 +1,38 @@
+# site-health — check what marola.dev actually serves.
+#
+# Every other gate checks inputs: fixtures, schemas, a stub DOM. Two failures got past all of them
+# and were found by a human looking at the page — /docs 404'd for hours while the tree sat on the
+# site-data branch, and every Florianópolis beach read "no data" while the board still named IMA/SC
+# as its source. Both builds were green.
+#
+# Separate from site.yml on purpose: a red run here means upstream data is missing, not that the
+# build is broken, so it must not block a deploy.
+name: site health
+
+on:
+  schedule:
+    - cron: "45 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Site to check"
+        type: string
+        default: "https://marola.dev"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-health
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: What marola.dev is serving
+        env:
+          BASE: ${{ inputs.base || 'https://marola.dev' }}
+        run: python3 scripts/site_live_check.py --base "$BASE"

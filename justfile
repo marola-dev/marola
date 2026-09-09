@@ -70,10 +70,12 @@ quality-other:
     scripts/gh-billing.sh --self-test
     scripts/setup-cuda-cache.sh --self-test
     scripts/setup-ml-venv.sh --self-test
+    scripts/setup-runners.sh --self-test
     scripts/marola-sea-pull.sh --self-test
     scripts/gh-token.sh --self-test
     scripts/temps.sh --self-test
     python3 scripts/analyze_training.py --self-test
+    python3 scripts/site_live_check.py --self-test
     scripts/deps-stack.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
@@ -599,6 +601,22 @@ worktree-prune:
     git worktree prune -v
     after=$(git worktree list | wc -l)
     echo "worktree-prune: $before -> $after registered ($((before - after)) stale entries removed)"
+
+# Register N self-hosted Actions runners so CI runs in parallel, not FIFO. One runner takes one
+# job at a time, and ci.yml alone has four that used to run concurrently.
+#   just runners            # 3, installed as services
+#   just runners 4          # 4
+#   just runners --status   # what is registered and running
+runners *args:
+    scripts/setup-runners.sh {{args}}
+
+# Check what marola.dev actually serves — that the boards carry water sampling points, that the
+# canary beach is present, that the schema is one the page understands. Every other gate checks
+# inputs (fixtures, schemas, a stub DOM); this is the only one that looks at the published result.
+#   just site-live-check                          # https://marola.dev
+#   just site-live-check --base http://localhost:8000
+site-live-check *args:
+    python3 scripts/site_live_check.py {{args}}
 
 # Claude Code in the jail;.
 jail-claude *args:
