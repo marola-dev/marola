@@ -9,6 +9,7 @@ import scala.util.Try
 import kyo.*
 
 import marola.json.JsonValue
+import marola.log.Log
 import marola.model.Coordinates
 
 /**
@@ -44,9 +45,9 @@ final class CachedWaterQualityClient(inner: WaterQualityClient, cacheFile: Path)
     Sync.defer {
       val cached = CachedWaterQualityClient.read(cacheFile)
       if cached.isEmpty then
-        java.lang.System.err.println(s"water: $name $why and no cache at $cacheFile")
+        CachedWaterQualityClient.log.warn(s"water: $name $why and no cache at $cacheFile")
       else
-        java.lang.System.err.println(
+        CachedWaterQualityClient.log.warn(
           s"water: $name $why — serving ${cached.size} cached points from $cacheFile " +
             "(sample dates unchanged; the 45-day freshness rule still applies)"
         )
@@ -54,6 +55,8 @@ final class CachedWaterQualityClient(inner: WaterQualityClient, cacheFile: Path)
     }
 
 object CachedWaterQualityClient:
+
+  private val log = Log.forName(getClass.getName)
 
   /** One file per provider, named for it, so two providers never overwrite each other. */
   def fileFor(dir: Path, providerName: String): Path =

@@ -6,6 +6,7 @@ import kyo.*
 
 import marola.beaches.{AccessibilityClient, BeachFinder, Facilities}
 import marola.conditions.{OpenMeteoClient, Tides}
+import marola.log.Log
 import marola.model.*
 import marola.scoring.Swimability
 import marola.water.{WaterQuality, WaterQualityClient, WaterQualityMatcher}
@@ -16,6 +17,8 @@ import marola.water.{WaterQuality, WaterQualityClient, WaterQualityMatcher}
  * return every (beach, hour) ranked best-first.
  */
 object Recommender:
+
+  private val log = Log.forName(getClass.getName)
 
   def bestHoursTomorrow(
       origin: Coordinates,
@@ -47,7 +50,7 @@ object Recommender:
         Abort.run(Abort.catching[Throwable](c.samplingPoints)).map {
           case Result.Success(points) =>
             if points.isEmpty then
-              java.lang.System.err.println(
+              log.warn(
                 s"water: ${c.name} returned no sampling points — every beach will read 'no data'"
               )
             WaterQualityMatcher.assign(beaches, points, c.name)
@@ -55,10 +58,10 @@ object Recommender:
           // agency that published nothing. Both IMA/SC (a self-signed cert on their production
           // host) and INEA/RJ went dark for days without a single line of output.
           case Result.Failure(e) =>
-            java.lang.System.err.println(s"water: ${c.name} failed — ${describe(e)}")
+            log.warn(s"water: ${c.name} failed — ${describe(e)}")
             Map.empty[String, WaterQuality]
           case other =>
-            java.lang.System.err.println(s"water: ${c.name} failed — $other")
+            log.warn(s"water: ${c.name} failed — $other")
             Map.empty[String, WaterQuality]
         }
 

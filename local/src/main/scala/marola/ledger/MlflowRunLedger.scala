@@ -8,6 +8,7 @@ import marola.http.Http
 import marola.json.JsonValue
 import marola.ledger.MlflowApi.field
 import marola.ledger.RunLedger.RunHandle
+import marola.log.Log
 
 /**
  * REST client for a local `mlflow server` (MIP-0010 §4.2 — REST over `org.mlflow:mlflow-client`:
@@ -133,6 +134,8 @@ final class MlflowRunLedger(
 
 object MlflowRunLedger:
 
+  private val log = Log.forName(getClass.getName)
+
   /**
    * `runs/log-batch`'s own caps (MIP §4.2, MLflow's REST reference, fetched 2026-09-05): "up to
    * 1000 metrics", "up to 100 params" per call.
@@ -145,15 +148,13 @@ object MlflowRunLedger:
 
   /**
    * Truncates an oversized param/metric key to `MaxKeyLength` and warns on stderr — there is no
-   * existing logger in `local/` to route through (`Console.printLine` in `cli/Main` is a
-   * user-facing CLI message, not a warning sink other modules use), so this follows `Http.scala`'s
-   * own precedent of a plain, undecorated stderr line for something the operator should notice but
-   * that must not fail the run.
+   * operator should notice but that must not fail the run. It used a bare stderr line because
+   * `local/` had no logger; `marola.log.Log` is that logger now.
    */
   private def truncateKey(key: String): String =
     if key.length <= MaxKeyLength then key
     else
-      java.lang.System.err.println(
-        s"warning: mlflow key '$key' (${key.length} chars) truncated to $MaxKeyLength"
+      MlflowRunLedger.log.warn(
+        s"mlflow key '$key' (${key.length} chars) truncated to $MaxKeyLength"
       )
       key.take(MaxKeyLength)

@@ -178,21 +178,31 @@ class MlflowRunLedgerSpec extends munit.FunSuite:
     assertEquals(sizes.sorted, List(50, 100))
   }
 
-  test("a 251-character key is truncated to 250 in the outgoing request, with a stderr warning") {
+  test("a 251-character key is truncated to 250 in the outgoing request, and warns") {
     val longKey = "k" * 251
     val t = Scripted(logBatchOk)
-    val previousErr = java.lang.System.err
-    val captured = new java.io.ByteArrayOutputStream()
-    java.lang.System.setErr(new java.io.PrintStream(captured))
+
+    // Through the logging system, not a captured stream: where a warning is written is appender
+    // configuration, that one was written is the behaviour worth pinning.
+    // Pattern match, not asInstanceOf — .scalafix.conf disables the cast.
+    val logger = org.slf4j.LoggerFactory.getLogger("marola.ledger.MlflowRunLedger") match
+      case l: ch.qos.logback.classic.Logger => l
+      case other => fail(s"expected a logback logger, got ${other.getClass.getName}")
+    val appender =
+      new ch.qos.logback.core.read.ListAppender[ch.qos.logback.classic.spi.ILoggingEvent]
+    appender.start()
+    logger.addAppender(appender)
     try Http.withTransport(t)(run(ledger.metrics(handle, Map(longKey -> 1.0))))
-    finally java.lang.System.setErr(previousErr)
+    finally
+      val _ = logger.detachAppender(appender)
 
     val sentKey = obj(t.requests.head._3)("metrics").arr.head("key").str.getOrElse(fail("no key"))
     assertEquals(sentKey.length, 250)
     assertEquals(sentKey, longKey.take(250))
+    val warnings = appender.list.toArray.toList.map(_.toString)
     assert(
-      captured.toString(UTF_8).contains("warning"),
-      s"expected a warning on stderr, got: ${captured.toString(UTF_8)}"
+      warnings.exists(_.contains("truncated")),
+      s"expected a truncation warning, got: $warnings"
     )
   }
 
