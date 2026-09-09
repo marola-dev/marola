@@ -66,6 +66,7 @@ as an unfilled placeholder).
 | [MIP-0047](./MIP-0047-desmos-equation-art.md) | Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped (five sea motifs; no third-party script, no Desmos-exported file, no build step) | Draft | 2026-09-07 | S — one stdlib Python generator with a `--self-test`, one equations file, a generated `<symbol>` block in MIP-0046's sprite; the authoring is hours of human eye-work but not build effort | user value; infra/dev-loop | do when MIP-0046 lands | — |
 | [MIP-0048](./MIP-0048-scaling-marola-sea.md) | Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling | Draft | 2026-09-07 | M | user value; exam coverage (AI-103 fine-tuning row); infra/dev-loop | do next (4B/7B); park 27B | — |
 | [MIP-0049](./MIP-0049-scala-for-the-web-layer.md) | Scala for the web layer — Tyrian, Laminar, ScalaTags, or better plain-JS discipline | Draft | 2026-09-08 | Per option: S for server-side HTML, L for a Scala.js view layer (a JS build target, a bundle, and a replacement for `site_check.js`), XL for both | infra/dev-loop; user value only indirectly | cheap win (server-side HTML); do when MIP-0042's cross-build proves out (the client layer); reject a game engine | — |
+| [MIP-0050](./MIP-0050-brazilian-llms.md) | Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in | Draft | 2026-09-09 | M for the evaluation arm (a preset row, a GGUF pull, a benchmark arm); L for fine-tuning on a Manacá base (a unigram-tokenizer conversion path, and a corpus that is currently English) | user value (the audience is Brazilian, the output is English); infra/dev-loop (a PT-native 1.7B base beats SmolLM2-360M) | do next (the evaluation arm — MIP-0048 needs the number anyway); do when the corpus is Portuguese (the fine-tune); reject Sabiá-7B on licensing | — |
 <!-- mip-graph:start -->
 ```mermaid
 flowchart TD
@@ -84,5 +85,5 @@ flowchart TD
   M0034 --> M0044
 ```
 
-_39 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049._
+_40 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050._
 <!-- mip-graph:end -->
