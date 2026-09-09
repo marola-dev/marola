@@ -1,12 +1,8 @@
 package marola.water
 
 import java.text.Normalizer
-import java.util as ju
 
 import scala.collection.mutable.ArrayBuffer
-
-import org.apache.pdfbox.Loader
-import org.apache.pdfbox.text.{PDFTextStripper, TextPosition}
 
 /**
  * INEA (Rio de Janeiro)'s bathing-water bulletin PDF layout — verified live 2026-09-07 against a
@@ -41,35 +37,11 @@ object IneaPdfParser:
   private val BeachColumnMaxX = 200.0f
 
   /** One extracted text run and its real PDF position — the geometry the attribution rule needs. */
-  final private[water] case class Chunk(x: Float, y: Float, text: String) derives CanEqual
-
-  final private[water] case class Line(y: Float, chunks: List[Chunk])
-
-  final private class LineCapturingStripper extends PDFTextStripper:
-    private val current = ArrayBuffer.empty[Chunk]
-    private val lines = ArrayBuffer.empty[Line]
-
-    override def writeString(text: String, textPositions: ju.List[TextPosition]): Unit =
-      if !textPositions.isEmpty then
-        val first = textPositions.get(0)
-        current += Chunk(first.getXDirAdj, first.getYDirAdj, text)
-
-    override def writeLineSeparator(): Unit =
-      if current.nonEmpty then
-        lines += Line(current.head.y, current.toList)
-        current.clear()
-      ()
-
-    def captured(): List[Line] = lines.toList
+  // Geometry-aware extraction now lives in PdfLines, shared with ImaScPdfParser.
+  import PdfLines.Line
 
   def parseTable(pdfBytes: Array[Byte]): List[Row] =
-    val doc = Loader.loadPDF(pdfBytes)
-    try
-      val stripper = new LineCapturingStripper
-      stripper.setSortByPosition(true)
-      val _ = stripper.getText(doc)
-      parseLines(stripper.captured())
-    finally doc.close()
+    parseLines(PdfLines.of(pdfBytes))
 
   final private case class RowEvent(
       code: String,
