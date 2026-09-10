@@ -12,7 +12,7 @@
 | **Effort vs Gain** | **park**, with a named trigger. marola's wave problem is ~87 core-hours per 48-h cycle at 1.1 km (§4.1) — real, but tractable on a workstation without any port. The port becomes worth reconsidering only at 550 m, and only after MIP-0051 §5.4's ledger shows nearshore resolution is the binding error |
 | **Depends on** | Nothing technically. Every rung of MIP-0051 stands without this. Do not read this MIP as a prerequisite for anything marola ships |
 | **Blocked by** | none |
-| **Risk** | That this MIP reads as a plan rather than a rejection, and someone starts a 12-month port for a beach forecast in Florianópolis. §4.1's arithmetic exists to prevent that. The close second is legal, not technical: WW3's licence forbids third-party disclosure and requires derivatives be offered to NOAA (§4.2), so a *published* port may not be permissible at all |
+| **Risk** | That this MIP reads as a plan rather than a rejection, and someone starts a 12-month port for a beach forecast in Florianópolis. §4.1's arithmetic exists to prevent that. A narrower second risk is legal and applies **only to publishing a port**, not to running the model (§4.2) |
 | **Cost so far** | — |
 
 ## 1. Summary
@@ -29,8 +29,9 @@ Only a 550 m nest, 8× more expensive again, would make the question live.
 
 Three findings from the review matter more than the language comparison itself. **The DOE Kokkos
 kernels the attached plan is built around do not exist** — the repository was enumerated. **WW3's
-licence is not open source** and forbids disclosing the software to third parties, which may bar
-publishing any port at all. And **an equivalent spectral wave model already reached 37× on GPUs
+licence is not open source**, and while it plainly permits running the model and publishing its
+output, it restricts *redistributing the code* — which constrains publishing a port but nothing
+marola would actually ship. And **an equivalent spectral wave model already reached 37× on GPUs
 without leaving Fortran**, while a partial offload of WW3's own hotspot reached 1.4× per node —
 so residency, not language, is what decides the outcome.
 
@@ -107,19 +108,76 @@ submodule** (`components/ww3/src/WW3` → `E3SM-Project/WW3`, branch `e3sm`). A 
 for `wavewatch kokkos` returns **zero results**. The E3SM wave group's actual trajectory went
 OpenACC (2023) → **ML emulation** (2026, §4.2.6), never Kokkos. Route B' should be struck.
 
-**WAVEWATCH III's licence is not open source, and this is the largest risk in the proposal.** The
-repository clones anonymously with no registration — but `LICENSE.md` ("WAVEWATCH III® Software
-License", © 2009 National Weather Service) states that **"no disclosure of any portion of the
-software, whether by means of a media or verbally, may be made to any third party"**; that a licensee
-who modifies it **"is required to offer same to NOAA"**, explicitly including "changes to the wave
-model proper including numerical and physical approaches"; that every employee with access must
-first state **in writing** that they have read the licence; that use is permitted **"for any purpose
-relating to sea state prediction"**; and that WAVEWATCH III® is a **trademark**. It is not
-OSI-approved and not compatible, on a literal reading, with publishing a derived port to a public
-repository. NOAA publishing the code itself sits in obvious tension with that clause, but the tension
-is NOAA's to resolve, not a licensee's. **Whether a public GPU port of WW3 may be published at all is
-an open question for NOAA/EMC (§11), not an assumption.** For contrast: Kokkos is Apache-2.0, and
-Oceananigans.jl — a from-scratch GPU ocean model — is MIT.
+**WAVEWATCH III's licence is not open source — but it restricts less than it first appears, and the
+distinction decides which parts of this MIP are affected.** The repository clones anonymously with no
+registration, and downloading makes you a Licensee; there is no approval step to request. The full
+text of `LICENSE.md` ("WAVEWATCH III® Software License", © 2009 National Weather Service) was read,
+not summarised. At a glance:
+
+| | Allowed? |
+|---|---|
+| Download, build and run WW3 for wave forecasting | **Yes** — the licence's central grant |
+| Ask NOAA for permission first | **Not required** — downloading makes you a Licensee |
+| Keep a **private** fork with your own modifications | **Yes**, with notices kept and changes declared |
+| Publish the model's **output** (wave heights, a forecast, the marola map) | **Yes** — the licence governs software, not forecasts |
+| Use it commercially | **Yes** — there is no non-commercial clause |
+| Publish the **source**, or a derived port, in a **public** repository | **No**, on a literal reading — this is the one real restriction |
+| Change the model's numerics or physics and keep the changes to yourself | **No** — you must *offer* them to NOAA (offer, not have accepted) |
+| Call your own product "WAVEWATCH III" | **No** — it is a trademark |
+
+In detail, what it **permits outright**:
+
+- **Use** — "The Licensee may use the software **for any purpose relating to sea state prediction**."
+  Running a nest for marola is the central case, not a loophole. There is **no non-commercial
+  clause**, unlike MIP-0050's CC-BY-NC problem.
+- **Private copies and private forks** — "A Licensee may reproduce sufficient software to satisfy its
+  needs", provided copies keep the name, version and notices, and modifications are declared as such.
+- **Publishing the model's output.** The licence governs software, not forecasts. Nothing restricts
+  publishing wave heights on marola.dev.
+
+What it **restricts**:
+
+- **Redistribution** — "no disclosure of any portion of the software, whether by means of a media or
+  verbally, may be made to any third party". On a literal reading this bars publishing WW3 source, or
+  a derived port, to a public repository.
+- **Modifications to the model proper** — a licensee who changes "numerical and physical approaches
+  to wave modeling" **"is required to offer same to NOAA"** (to offer; NOAA need not accept).
+- **Per-person acknowledgement** — everyone with access must state **in writing** that they have read
+  and accepted the licence. Trivial for one developer; a real obligation if contributors ever touch
+  WW3 code.
+- **The trademark** — WAVEWATCH III® may not be used as a product name without permission.
+
+The licence dates from 2009, before the code was on GitHub, when distribution meant requesting a
+tarball from NOAA; the no-disclosure clause reads as "do not redistribute — send people to us", not
+as secrecy. NOAA has since published the code itself, which sits in obvious tension with that clause,
+but the tension is NOAA's to resolve rather than a licensee's.
+
+Three questions follow naturally from reading the table, and are worth answering here because they
+are the ones anyone re-reading this MIP will ask.
+
+**"Can't I just keep a private fork?"** Yes, and this is the licence's own language, not a
+workaround: "A Licensee may reproduce sufficient software to satisfy its needs." The restriction is
+on making a fork *public*, not on having one.
+
+**"Do I have to ask permission for any use at all?"** No. There is no registration, no application
+and no approval step — the licence is already the grant, and cloning the repository makes you a
+Licensee bound by it. This matters because "the licence is restrictive" is easily misread as "the
+project needs NOAA's sign-off before it can start". It does not.
+
+**"Then why is the code public?"** Because the licence is from **2009** and the distribution model
+changed underneath it. It was written when obtaining WW3 meant asking NOAA for a tarball, and the
+no-disclosure clause served to keep NOAA the single source rather than to keep the code secret. NOAA
+itself later published everything on GitHub — which means NOAA disclosed it to the world — so the
+clause no longer protects what it was written to protect. It is a licence that aged without being
+rewritten, not a trap. That reading is inference from the dates and the clause's wording, however,
+and it is not NOAA speaking; §11 keeps the question open rather than treating this paragraph as an
+answer.
+
+**The practical consequence is narrow.** Everything MIP-0051 §5.3 would do — run the model, publish
+the forecast — is squarely permitted. Only publishing a *port* is constrained, and that is precisely
+the thing §5 already recommends against on cost grounds. **Whether NOAA/EMC would permit a public
+port is an open question (§11), not a blocker for anything marola would ship.** For contrast: Kokkos
+is Apache-2.0, and Oceananigans.jl — a from-scratch GPU ocean model — is MIT.
 
 ### 4.2.1 The candidates, compared
 
@@ -191,8 +249,7 @@ revisit it.
    for 1.4× is a bad trade even for the people who need it; for marola it is not a trade at all.
 2. **If MIP-0051 §5.4's ledger says nearshore resolution is the binding error**, run stock WW3 in
    Fortran, on CPUs, at 1.1 km, on the existing machine. No new language, no port, no GPU.
-   Note that WW3's licence (§4.2) permits use "for any purpose relating to sea state prediction" —
-   *running* it is squarely inside that; publishing a modified derivative is the part that is not.
+   The licence permits this without asking anyone (§4.2); a private fork is permitted too.
 3. **Revisit this MIP only if 1.1 km proves insufficient** — that is, if the buoy scores and the
    physics say 550 m is needed. At 550 m the cost is ~693 core-hours per cycle (§4.1), which one
    workstation cannot do twice a day, and a GPU becomes a genuine question rather than an
@@ -296,10 +353,10 @@ model deployment and no user-facing AI surface in this proposal.
   say the public models are already close at our beaches, this entire MIP is moot and should be
   marked Rejected rather than parked.
 - **May a public GPU port of WW3 be published at all?** §4.2's licence reading says no on a literal
-  construction, and NOAA publishes the code itself, so the answer is genuinely unclear. It is the
-  highest-risk unknown in this MIP and only NOAA/EMC can settle it. It does not affect *running*
-  stock WW3, which the licence permits for sea-state prediction — it affects every option that ends
-  in a published derivative, which is all of §4.2.1.
+  construction, and NOAA publishes the code itself, so the answer is genuinely unclear and only
+  NOAA/EMC can settle it. Scope, stated precisely so this is not over-read: it does **not** affect
+  running stock WW3, keeping a private fork, or publishing forecasts — all of which the licence
+  permits. It affects only options ending in a **publicly redistributed derivative**.
 - **Follow-up MIP:** if a nearshore nest is ever adopted, the "home machine computes, pushes an
   artefact, static site consumes" deployment pattern needs designing once for the repo — it would
   also serve MIP-0048's training runs. MIP-0051 §11 raises the same point; it needs one number, not
