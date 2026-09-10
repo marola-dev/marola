@@ -69,6 +69,7 @@ as an unfilled placeholder).
 | [MIP-0050](./MIP-0050-brazilian-llms.md) | Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in | Draft | 2026-09-09 | M for the evaluation arm (a preset row, a GGUF pull, a benchmark arm); L for fine-tuning on a Manacá base (a unigram-tokenizer conversion path, and a corpus that is currently English) | user value (the audience is Brazilian, the output is English); infra/dev-loop (a PT-native 1.7B base beats SmolLM2-360M) | do next (the evaluation arm — MIP-0048 needs the number anyway); do when the corpus is Portuguese (the fine-tune); reject Sabiá-7B on licensing | — |
 | [MIP-0051](./MIP-0051-wave-model-ensemble.md) | Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid | Draft | 2026-09-10 | M for the ensemble (one query parameter, one `enum`, a median — no new call, no new dependency) and M for the buoy ledger; L for running our own nearshore grid (designed, not built) | user value (marola quotes one model as fact; at Jurerê that number ranges 0.20–1.34 m depending which you ask); infra/dev-loop (a buoy-scored ledger makes forecast quality a weekly number instead of an opinion) | do next (the ensemble and the ledger — the disagreement is measured and crosses live scoring thresholds); do when the ledger has a season (our own grid) | — |
 | [MIP-0052](./MIP-0052-wave-model-compute.md) | Should marola ever run its own wave model, and in what language? — a costed survey | Draft | 2026-09-10 | S for this MIP (it is a survey whose deliverable is a decision); the thing it surveys is XL and out of marola's tree — the attached plan estimates 7–12 months solo with ~40% stall risk | infra/dev-loop (a costed answer, with a named trigger, to a question that will otherwise keep resurfacing) | park — marola's target 1.1 km nest is ~87 core-hours per cycle and needs no port; revisit only if 550 m proves necessary, and only after MIP-0051's buoy ledger says nearshore resolution is the binding error | — |
+| [MIP-0053](./MIP-0053-learned-local-correction.md) | A learned local correction, not another model — statistical downscaling of the public wave forecasts | Draft | 2026-09-10 | M — an offline Python trainer, a JSON artefact of coefficients, and a deterministic Scala applier; the `dspy/` pattern, no runtime Python, no GPU, no new dependency | user value (a 6.7× model disagreement at Jurerê fixed in days rather than months); infra/dev-loop (MIP-0051's buoy ledger becomes a training set, so the same data earns twice) | do next for the offshore correction; park the sheltered-bay correction that motivated it — there is no local observation to train on, and no model form fixes a missing dataset | — |
 <!-- mip-graph:start -->
 ```mermaid
 flowchart TD
@@ -82,10 +83,13 @@ flowchart TD
   M0036["MIP-0036"]:::draft
   M0044["MIP-0044"]:::draft
   M0048["MIP-0048"]:::draft
+  M0051["MIP-0051"]:::draft
+  M0053["MIP-0053"]:::draft
   M0025 --> M0048
   M0033 --> M0036
   M0034 --> M0044
+  M0051 --> M0053
 ```
 
-_42 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0051, MIP-0052._
+_41 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052._
 <!-- mip-graph:end -->
