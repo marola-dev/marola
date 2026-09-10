@@ -24,8 +24,8 @@ import marola.model.Coordinates
  * downloaded yesterday is exactly as valid today as one downloaded a minute ago. When the cached
  * samples genuinely age out, the existing rule turns them into "no data" without help from here.
  *
- * Writes only on a non-empty fetch: an agency that answers with nothing must not erase a good
- * cache.
+ * Writes only on a fetch that carries actual samples: an agency that answers with nothing — or with
+ * points that have no readings attached — must not erase a good cache.
  */
 final class CachedWaterQualityClient(inner: WaterQualityClient, cacheFile: Path)
     extends WaterQualityClient:
@@ -34,10 +34,10 @@ final class CachedWaterQualityClient(inner: WaterQualityClient, cacheFile: Path)
 
   def samplingPoints: List[SamplingPoint] < Sync =
     Abort.run(Abort.catching[Throwable](inner.samplingPoints)).map {
-      case Result.Success(points) if points.nonEmpty =>
+      case Result.Success(points) if SamplingPoint.anyUsable(points) =>
         CachedWaterQualityClient.write(cacheFile, points)
         points
-      case Result.Success(_) => fallback("returned no points")
+      case Result.Success(_) => fallback("returned no usable samples")
       case other             => fallback(s"failed ($other)")
     }
 

@@ -54,6 +54,14 @@ final case class SamplingPoint(
 ):
   def latest: Option[WaterSample] = samples.sortBy(_.sampledOn.toEpochDay).lastOption
 
+object SamplingPoint:
+  /**
+   * A point with no samples is not data: it renders as nothing and scores as nothing. Asking
+   * `points.nonEmpty` instead is what let IMA's 2026-09-10 feed change blank every Florianópolis
+   * beach while the cache and the PDF backup both stood down.
+   */
+  def anyUsable(points: List[SamplingPoint]): Boolean = points.exists(_.latest.isDefined)
+
 /** Every sampling point matched to one beach, plus where the data came from. */
 final case class WaterQuality(points: List[SamplingPoint], source: String):
 

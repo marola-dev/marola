@@ -133,7 +133,7 @@ object SiteBuilder:
     yield
       val dir = out.resolve("data").resolve(area.id)
       Files.createDirectories(dir)
-      val gotWater = scored.exists(_.waterQuality.exists(_.points.nonEmpty))
+      val gotWater = scored.exists(_.waterQuality.exists(_.latestSamples.nonEmpty))
       val entries = SeaLore.loadDefault()
       val regions = SeaLore.regionTagsFor(area.origin)
       val dayFiles = days.map { day =>

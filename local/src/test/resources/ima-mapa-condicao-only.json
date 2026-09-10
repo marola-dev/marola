@@ -1,0 +1,68 @@
+[
+ {
+  "CODIGO": "5cbb3f3d-4fb6-4963-abf2-6a184fcba133",
+  "MUNICIPIO_COD_IBGE": "4205407",
+  "MUNICIPIO": "Florianópolis",
+  "PONTO_NOME": "Ponto 73",
+  "BALNEARIO": "Praia do Campeche",
+  "LOCALIZACAO": "Avenida Campeche, n°300, no Riozinho do Campeche",
+  "LATITUDE": "-27.68594870",
+  "LONGITUDE": "-48.48143810",
+  "CONDICAO": "IMPRÓPRIO"
+ },
+ {
+  "CODIGO": "58fbe2a9-d9ce-466f-94c3-5dbd46416ead",
+  "MUNICIPIO_COD_IBGE": "4205407",
+  "MUNICIPIO": "Florianópolis",
+  "PONTO_NOME": "Ponto 35",
+  "BALNEARIO": "Praia do Campeche",
+  "LOCALIZACAO": "Em frente à Avenida Pequeno Príncipe, n°3348",
+  "LATITUDE": "-27.68986350",
+  "LONGITUDE": "-48.48182920",
+  "CONDICAO": "PRÓPRIO"
+ },
+ {
+  "CODIGO": "63d551b7-1f3c-4a1f-b5f3-a5c7bc9bcca7",
+  "MUNICIPIO_COD_IBGE": "4205407",
+  "MUNICIPIO": "Florianópolis",
+  "PONTO_NOME": "Ponto 90",
+  "BALNEARIO": "Praia do Campeche",
+  "LOCALIZACAO": "Em frente à Rua Campos Limpos, (Rua Lomba do Sabão),  n°281",
+  "LATITUDE": "-27.69760850",
+  "LONGITUDE": "-48.48988740",
+  "CONDICAO": "PRÓPRIO"
+ },
+ {
+  "CODIGO": "643c2751-c528-438f-b8f6-1411ae8da1af",
+  "MUNICIPIO_COD_IBGE": "4205407",
+  "MUNICIPIO": "Florianópolis",
+  "PONTO_NOME": "Ponto 89",
+  "BALNEARIO": "Praia do Campeche",
+  "LOCALIZACAO": "Avenida Jerônimo Venâncio Chagas, n°113, em frente à passarela de acesso",
+  "LATITUDE": "-27.66619150",
+  "LONGITUDE": "-48.47564810",
+  "CONDICAO": "PRÓPRIO"
+ },
+ {
+  "CODIGO": "f40d3748-4815-424f-90b8-a4f752d13f14",
+  "MUNICIPIO_COD_IBGE": "4205407",
+  "MUNICIPIO": "Florianópolis",
+  "PONTO_NOME": "Ponto 75",
+  "BALNEARIO": "Praia do Campeche",
+  "LOCALIZACAO": "Avenida Campeche, n°300, no mar",
+  "LATITUDE": "-27.68624700",
+  "LONGITUDE": "-48.48093300",
+  "CONDICAO": "PRÓPRIO"
+ },
+ {
+  "CODIGO": "b92ecc90-45d3-4988-9076-d253c2406ffa",
+  "MUNICIPIO_COD_IBGE": "4205407",
+  "MUNICIPIO": "Florianópolis",
+  "PONTO_NOME": "Ponto 33",
+  "BALNEARIO": "Praia da Joaquina",
+  "LOCALIZACAO": "Em frente à Avenida Prefeito Acácio Garibaldi São Thiago, n°1416, ao lado do Posto de Guarda-Vidas",
+  "LATITUDE": "-27.62863050",
+  "LONGITUDE": "-48.44829980",
+  "CONDICAO": "PRÓPRIO"
+ }
+]

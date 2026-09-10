@@ -59,6 +59,25 @@ class SiteBuilderSpec extends munit.FunSuite:
     def name: String = "IMA/SC"
     def samplingPoints: List[marola.water.SamplingPoint] < Sync = Nil
 
+  /**
+   * The shape IMA's feed took on 2026-09-10: points parse, but `ANALISES` is gone so none carries a
+   * sample. The board rendered nothing on every beach while still naming IMA/SC as a working
+   * source, because the outage check asked `points.nonEmpty`.
+   */
+  private object SampleLessProvider extends marola.water.WaterQualityClient:
+    def name: String = "IMA/SC"
+    def samplingPoints: List[marola.water.SamplingPoint] < Sync =
+      List(
+        marola.water.SamplingPoint(
+          "P73",
+          "Praia do Campeche",
+          "Ponto 73",
+          "Riozinho do Campeche",
+          marola.model.Coordinates(-27.685, -48.481),
+          Nil
+        )
+      )
+
   private def buildWith(
       out: Path,
       static: Path,
@@ -101,6 +120,25 @@ class SiteBuilderSpec extends munit.FunSuite:
     assert(
       board("beaches").arr.forall(_("water")("summary").str.contains("no data")),
       "every beach should read 'no data' when the provider returned nothing"
+    )
+  }
+
+  test("a provider whose points carry no samples is an outage too, not a working source") {
+    val out = tmpDir("marola-site-sampleless")
+    val static = tmpDir("marola-site-sampleless-static")
+    Files.writeString(static.resolve("index.html"), "<html>marola</html>")
+    Files.createDirectories(static.resolve("vendor"))
+    Files.writeString(static.resolve("vendor").resolve("leaflet.js"), "// leaflet")
+
+    val _ = buildWith(out, static, SampleLessProvider)
+    val board = JsonValue.parse(
+      Files.readString(out.resolve("data").resolve("floripa").resolve("2026-09-06.json"))
+    )
+    // Before the fix this read a clean "IMA/SC" beside 80 beaches showing nothing at all.
+    assertEquals(board("sources")("water").str, Some("IMA/SC (no data returned)"))
+    assert(
+      board("beaches").arr.forall(_("water")("points").arr.isEmpty),
+      "a point with no samples must not render as a sampling point"
     )
   }
 

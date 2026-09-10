@@ -11,9 +11,9 @@ import marola.log.Log
  * verdict, while the same agency's weekly bulletin PDF stayed up the whole time. One agency, two
  * publication channels, and no reason for an outage in one to be a blackout for the user.
  *
- * "Gives nothing" covers both a thrown failure and an empty answer, because from the map's side
- * they are the same thing. Stacked under `CachedWaterQualityClient`, the order is: live feed,
- * backup channel, last good fetch.
+ * "Gives nothing" covers a thrown failure, an empty answer, and points that carry no samples,
+ * because from the map's side all three are the same thing. Stacked under
+ * `CachedWaterQualityClient`, the order is: live feed, backup channel, last good fetch.
  */
 final class FallbackWaterQualityClient(primary: WaterQualityClient, backup: WaterQualityClient)
     extends WaterQualityClient:
@@ -22,7 +22,7 @@ final class FallbackWaterQualityClient(primary: WaterQualityClient, backup: Wate
 
   def samplingPoints: List[SamplingPoint] < Sync =
     Abort.run(Abort.catching[Throwable](primary.samplingPoints)).map {
-      case Result.Success(points) if points.nonEmpty => points
+      case Result.Success(points) if SamplingPoint.anyUsable(points) => points
       case Result.Success(_) =>
         FallbackWaterQualityClient.log.warn(
           s"${primary.name}: primary source returned nothing — trying ${backup.getClass.getSimpleName}"
@@ -46,7 +46,7 @@ object FallbackWaterQualityClient:
   private def attempt(backup: WaterQualityClient): List[SamplingPoint] < Sync =
     Abort.run(Abort.catching[Throwable](backup.samplingPoints)).map {
       case Result.Success(points) =>
-        if points.isEmpty then log.warn("backup source returned nothing either")
+        if !SamplingPoint.anyUsable(points) then log.warn("backup source returned nothing either")
         else log.info(s"backup source supplied ${points.size} points")
         points
       case other =>

@@ -65,6 +65,19 @@ jobs:
             ${{ runner.os }}-sbt-
       - uses: sbt/setup-sbt@v1
 
+      # CachedWaterQualityClient serves the last good bulletin when an agency is unreachable
+      # (MIP-0031/#330). Without this the cache directory is empty on every run, so the feature
+      # was inert in the only place it runs, and one bad INEA fetch blanked all of rio. A rolling
+      # key is required: a fixed key restores but never re-saves, so the cache would never
+      # advance past its first write.
+      - name: Restore the last good water bulletins
+        uses: actions/cache/restore@v6
+        with:
+          path: data/water-cache
+          key: water-cache-${{ github.run_id }}
+          restore-keys: |
+            water-cache-
+
       # `--site` with no id builds every area; the water-quality provider is picked per area
       # origin (IMA/SC inside Santa Catarina, "no data" elsewhere).
       - name: Build the boards (one Overpass query per area, no LLM)
@@ -77,6 +90,15 @@ jobs:
             [ "$attempt" -eq 2 ] || sleep 60
           done
           exit 1
+
+      # `always()`: a build that failed after a good fetch still has bulletins worth keeping, and
+      # GitHub evicts a cache unused for 7 days — this workflow runs far more often than that.
+      - name: Save the water bulletins for the next run
+        if: always()
+        uses: actions/cache/save@v6
+        with:
+          path: data/water-cache
+          key: water-cache-${{ github.run_id }}
 
       # fix/site-smoke-panel-null: stamp index.html's app.js/style.css tags with `?v=<sha>` so
       # Pages' CDN (each file cached independently, `cache-control: max-age=600` per file,

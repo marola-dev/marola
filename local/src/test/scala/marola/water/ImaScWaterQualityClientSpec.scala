@@ -61,3 +61,45 @@ class ImaScWaterQualityClientSpec extends munit.FunSuite:
   }
 
 end ImaScWaterQualityClientSpec
+
+/**
+ * The feed marola actually received on 2026-09-10: `ANALISES` is gone and every point carries a
+ * single `CONDICAO` instead. The old shape produced 260 points with no samples at all, which read
+ * downstream as "no data" on every Florianópolis beach while the board still named IMA/SC.
+ */
+class ImaScCondicaoOnlySpec extends munit.FunSuite:
+
+  private val points =
+    val stream = getClass.getClassLoader.getResourceAsStream("ima-mapa-condicao-only.json")
+    val text =
+      try scala.io.Source.fromInputStream(stream, "UTF-8").mkString
+      finally stream.close()
+    ImaScWaterQualityClient.parse(JsonValue.parse(text), () => LocalDate.of(2026, 9, 10))
+
+  test("a point with no ANALISES still yields a usable sample from CONDICAO") {
+    assertEquals(points.size, 6)
+    points.foreach(p => assert(p.latest.isDefined, s"${p.pointName} has no usable sample"))
+  }
+
+  test("CONDICAO's masculine labels map to the agency's classification") {
+    val p73 = points.find(_.pointName == "Ponto 73").getOrElse(fail("no Ponto 73"))
+    assertEquals(p73.latest.map(_.condition), Some(BathingCondition.Improper))
+    val p35 = points.find(_.pointName == "Ponto 35").getOrElse(fail("no Ponto 35"))
+    assertEquals(p35.latest.map(_.condition), Some(BathingCondition.Proper))
+  }
+
+  test("Campeche still has its five points, and they carry coordinates") {
+    val campeche = points.filter(_.beachName.toLowerCase.contains("campeche"))
+    assertEquals(campeche.size, 5)
+    campeche.foreach(p => assert(p.coordinates.lat < -27.0 && p.coordinates.lon < -48.0))
+  }
+
+  test("a CONDICAO-only sample carries no count and no rain — the feed no longer sends them") {
+    val p35 = points.find(_.pointName == "Ponto 35").getOrElse(fail("no Ponto 35"))
+    assertEquals(p35.latest.flatMap(_.enterococciPer100ml), None)
+    assertEquals(p35.latest.flatMap(_.rain), None)
+  }
+  test("the synthesised sample is dated by the injected clock, not the wall clock") {
+    val p35 = points.find(_.pointName == "Ponto 35").getOrElse(fail("no Ponto 35"))
+    assertEquals(p35.latest.map(_.sampledOn), Some(LocalDate.of(2026, 9, 10)))
+  }

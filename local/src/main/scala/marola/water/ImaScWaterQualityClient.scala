@@ -14,8 +14,11 @@ import marola.model.Coordinates
 
 /**
  * Santa Catarina's bathing-water programme (IMA — Instituto do Meio Ambiente), via the JSON feed
- * the portal's own map uses: `POST /relatorio/mapa`, empty body, no auth, ~207KB for all 260 points
- * with their last five samples.
+ * the portal's own map uses: `POST /relatorio/mapa`, empty body, no auth.
+ *
+ * The payload has two shapes and both are parsed. It used to carry each point's last five samples
+ * in `ANALISES` (~207KB for 260 points); as of 2026-09-10 it sends one `CONDICAO` per point and no
+ * history at all (~85KB), which is why `currentCondition` exists.
  */
 final class ImaScWaterQualityClient(endpoint: String = ImaScWaterQualityClient.DefaultEndpoint)
     extends WaterQualityClient:
@@ -40,15 +43,18 @@ object ImaScWaterQualityClient:
 
   private val dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
-  /** Pure; unit-tested on a trimmed real payload (`ImaScWaterQualityClientSpec`). */
-  def parse(json: JsonValue): List[SamplingPoint] =
-    json.arr.toList.flatMap(parsePoint)
+  /**
+   * Pure given `today`, which only the `CONDICAO` fallback reads (`.claude/rules/scala.md`: inject
+   * the clock, don't reach for a global). Unit-tested on trimmed real payloads of both feed shapes.
+   */
+  def parse(json: JsonValue, today: () => LocalDate = () => LocalDate.now()): List[SamplingPoint] =
+    json.arr.toList.flatMap(parsePoint(_, today))
 
   // The feed sends numbers as strings ("-27.4261029", "197"); tolerate real numbers too.
   private def text(v: JsonValue): Option[String] =
     v.str.orElse(v.num.map(n => if n == n.toLong then n.toLong.toString else n.toString))
 
-  private def parsePoint(p: JsonValue): Option[SamplingPoint] =
+  private def parsePoint(p: JsonValue, today: () => LocalDate): Option[SamplingPoint] =
     for
       id <- text(p("CODIGO"))
       beach <- p("BALNEARIO").str
@@ -60,8 +66,23 @@ object ImaScWaterQualityClient:
       p("PONTO_NOME").str.getOrElse(""),
       p("LOCALIZACAO").str.getOrElse(""),
       Coordinates(lat, lon),
-      p("ANALISES").arr.toList.flatMap(parseSample)
+      p("ANALISES").arr.toList.flatMap(parseSample) match
+        case Nil     => currentCondition(p, today).toList
+        case samples => samples
     )
+
+  /**
+   * The feed stopped sending `ANALISES` between 2026-09-05 and 2026-09-10, leaving one `CONDICAO`
+   * per point and no sample history. Without this, all 260 points parse with no samples at all and
+   * every Florianópolis beach reads "no data" while the board still names IMA/SC.
+   *
+   * Same honest reading as `IneaRjWaterQualityClient.sampleOf`: the agency's current
+   * classification, dated today because the feed no longer says when it sampled. The verdict is
+   * still the agency's, shown verbatim (MIP-0001 §6/§9); only its date is ours.
+   */
+  private def currentCondition(p: JsonValue, today: () => LocalDate): Option[WaterSample] =
+    p("CONDICAO").str
+      .map(raw => WaterSample(today(), condition(Some(raw)), None, None, None))
 
   private def parseSample(a: JsonValue): Option[WaterSample] =
     for

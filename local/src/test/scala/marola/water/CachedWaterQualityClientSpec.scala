@@ -114,3 +114,50 @@ class CachedWaterQualityClientSpec extends munit.FunSuite:
     assertEquals(ima.getFileName.toString, "ima-sc.json")
   }
 end CachedWaterQualityClientSpec
+
+/**
+ * A point carrying no samples is not data. IMA's feed dropped `ANALISES` on 2026-09-10 and returned
+ * 260 such points; because every emptiness check asked `points.nonEmpty`, the cache treated them as
+ * a good fetch and the PDF backup never ran, while the board rendered nothing on every beach.
+ */
+class SampleLessPointsAreNotDataSpec extends munit.FunSuite:
+
+  private given unsafe: AllowUnsafe = AllowUnsafe.embrace.danger
+
+  private def pointWith(samples: List[WaterSample]) =
+    SamplingPoint(
+      "P73",
+      "Praia do Campeche",
+      "Ponto 73",
+      "Riozinho do Campeche",
+      Coordinates(-27.685, -48.481),
+      samples
+    )
+
+  private val good = pointWith(
+    List(WaterSample(LocalDate.of(2026, 8, 25), BathingCondition.Proper, None, None, None))
+  )
+  private val sampleLess = pointWith(Nil)
+
+  private class Fixed(points: List[SamplingPoint]) extends WaterQualityClient:
+    def name: String = "IMA/SC"
+    def samplingPoints: List[SamplingPoint] < Sync = points
+
+  test("the backup runs when the primary returns points that carry no samples") {
+    val client = FallbackWaterQualityClient(Fixed(List(sampleLess)), Fixed(List(good)))
+    val out = Sync.Unsafe.evalOrThrow(client.samplingPoints)
+    assertEquals(out.flatMap(_.latest).size, 1, "backup should have supplied the usable sample")
+  }
+
+  test("a sample-less fetch does not overwrite a good cache") {
+    val file = Files.createTempDirectory("marola-water-cache").resolve("ima-sc.json")
+    CachedWaterQualityClient.write(file, List(good))
+    val client = CachedWaterQualityClient(Fixed(List(sampleLess)), file)
+    val out = Sync.Unsafe.evalOrThrow(client.samplingPoints)
+    assertEquals(out.flatMap(_.latest).size, 1, "should have fallen back to the cached good point")
+    assertEquals(
+      CachedWaterQualityClient.read(file).flatMap(_.latest).size,
+      1,
+      "cache was clobbered"
+    )
+  }
