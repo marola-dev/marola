@@ -297,6 +297,17 @@ jobs:
           node --version
           node --check site/static/app.js
           node scripts/site_check.js
+      # raven-actions/actionlint installs its own shellcheck and pyflakes when neither is on PATH
+      # (action.yml, the tool-dependencies step) — `sudo apt-get update` with no tty, which on the
+      # self-hosted runner hung until the job timeout killed it (run 34709971906), plus a stray
+      # `pipx install` into the developer's own home. nix already has both, at the versions
+      # flake.nix pins, so put them on PATH first and the action's install path never runs.
+      - name: shellcheck + pyflakes from nix (self-hosted only — the action would apt-get them)
+        if: needs.changes.outputs.workflows == 'true' && runner.environment == 'self-hosted'
+        run: |
+          for out in $(nix build --no-link --print-out-paths nixpkgs#shellcheck nixpkgs#python3Packages.pyflakes); do
+            if [ -d "$out/bin" ]; then echo "$out/bin" >> "$GITHUB_PATH"; fi
+          done
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2

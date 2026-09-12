@@ -138,14 +138,14 @@
             # steps — without it, actionlint exits 0 locally and a shellcheck-only finding only
             # surfaces once CI runs it. Same failure mode as actionlint above.
             #
-            # SC2015 used to be the example here, and it is no longer a good one: nixpkgs now
-            # ships shellcheck 0.11.0, which DROPPED SC2015 entirely (even the canonical
-            # `true && echo a || echo b` is clean), while ubuntu-latest's actionlint action still
-            # runs an older shellcheck that flags it. So local is now LOOSER than CI on that rule
-            # specifically, and `A && B || C` in a workflow `run:` will pass `just quality` and
-            # then fail ci.yml's actionlint step — which is exactly what happened on the
-            # marola-sea log-export step. Write `if ...; then ...; fi` in workflow run blocks;
-            # it is clearer anyway, and it does not swallow the failure the `|| true` hid.
+            # SC2015 used to be the example here: nixpkgs ships shellcheck 0.11.0, which DROPPED
+            # SC2015 entirely (even the canonical `true && echo a || echo b` is clean), while
+            # ubuntu-latest's older shellcheck still flags it — local was LOOSER than CI, and
+            # `A && B || C` in a workflow `run:` passed `just quality` then failed ci.yml's
+            # actionlint step (the marola-sea log-export step). ci.yml now hands the actionlint
+            # action this same 0.11.0 on the self-hosted runner, so the skew is back only under
+            # the CI_RUNNER=ubuntu-latest escape hatch. Write `if ...; then ...; fi` in workflow
+            # run blocks anyway; it is clearer, and does not swallow the failure `|| true` hid.
             pkgs.shellcheck
 
             # Python lint/format (`just quality-other`, ci.yml's quality-other job,
