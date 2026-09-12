@@ -46,7 +46,7 @@ QUANTIZATIONS = ("Q4_K_M", "Q8_0")
 
 def default_adapter(out_dir: Path) -> Path:
     """The best adapter present: DPO continues training *from* the SFT adapter, so when both
-    exist `out/dpo-adapter` already contains the SFT weights and is the one to publish."""
+    exist `out/<preset>/dpo-adapter` already contains the SFT weights and is the one to publish."""
     dpo, sft = out_dir / "dpo-adapter", out_dir / "adapter"
     return dpo if dpo.exists() else sft
 
@@ -240,7 +240,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--adapter",
         default=None,
-        help="LoRA adapter dir (default: out/dpo-adapter, else out/adapter)",
+        help="LoRA adapter dir (default: out/<preset>/dpo-adapter, else out/<preset>/adapter)",
     )
     ap.add_argument(
         "--out",

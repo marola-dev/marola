@@ -17,6 +17,7 @@
 set -euo pipefail
 
 LOCAL_NAME="${MAROLA_SEA_LOCAL_NAME:-marola-sea}"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # github.com owner out of either remote form, so the default repo is the one you actually forked
 # or created rather than a name hardcoded here.
@@ -33,11 +34,20 @@ owner_from_remote() {
   return 1
 }
 
-hf_ref() {   # owner preset quant -> the reference `ollama pull` takes
-  printf 'hf.co/%s/marola-sea-%s-GGUF:%s' "$1" "$2" "$3"
+# Meta's Community Licence makes a Llama derivative's name start with `Llama-`, so `small` and
+# `base` publish as Llama-marola-sea-<preset>-GGUF and everything else as marola-sea-<preset>-GGUF.
+# The prefix is read from train_lora.PRESETS rather than hardcoded here: merge_export.py names the
+# files from that same field, and two places guessing it separately is how the publisher and the
+# puller end up pointed at different repos.
+name_prefix() {   # preset -> "" | "Llama-"
+  python3 -c "import sys; sys.path.insert(0, '$repo_root/finetune'); from train_lora import PRESETS; print(PRESETS.get('$1', {}).get('name_prefix', ''))" 2>/dev/null || printf ''
 }
 
-hf_repo() { printf '%s/marola-sea-%s-GGUF' "$1" "$2"; }
+hf_ref() {   # owner preset quant -> the reference `ollama pull` takes
+  printf 'hf.co/%s:%s' "$(hf_repo "$1" "$2")" "$3"
+}
+
+hf_repo() { printf '%s/%smarola-sea-%s-GGUF' "$1" "$(name_prefix "$2")" "$2"; }
 
 # The quant tags a repo really has, from its file list. Ollama reports a missing tag as a bare
 # "The specified tag is not available in the repository", which reads exactly like a missing repo
@@ -73,8 +83,10 @@ self_test() {
 
   ok "$(hf_ref h0ffmann tiny Q4_K_M)" "hf.co/h0ffmann/marola-sea-tiny-GGUF:Q4_K_M" \
      "the pull reference matches what publish_hf.py uploads"
-  ok "$(hf_ref h0ffmann small Q8_0)" "hf.co/h0ffmann/marola-sea-small-GGUF:Q8_0" \
+  ok "$(hf_ref h0ffmann qwen-7b Q8_0)" "hf.co/h0ffmann/marola-sea-qwen-7b-GGUF:Q8_0" \
      "preset and quant both flow into it"
+  ok "$(hf_ref h0ffmann small Q8_0)" "hf.co/h0ffmann/Llama-marola-sea-small-GGUF:Q8_0" \
+     "a Llama preset is published under the Llama- prefix its licence requires, so pull it there"
 
   # The real failure this hit: publish_hf.py uploads whichever GGUFs a run produced, so a repo can
   # hold Q8_0 and not Q4_K_M, and ollama reports that as a bare "tag is not available" — which

@@ -8,7 +8,7 @@ MIP-0008's image gate applies to `marola-local`). Needs `pip install huggingface
 human's own one-time setup per `AGENTS.md`'s "never hardcode a key" rule.
 
 This is the export chain's *last* step only. Get the `.gguf` file(s) first:
-  1. `just finetune-train preset=<tiny|small|base>` (LoRA adapter, finetune/out/adapter/)
+  1. `just finetune-train preset=<preset>` (LoRA adapter, finetune/out/<preset>/adapter/)
   2. merge + convert with llama.cpp's `convert_hf_to_gguf.py` (base) or use `ollama create` +
      `Modelfile.adapter` for local-only use without merging (see finetune/README.md)
   3. this script, pointed at the resulting .gguf file(s)
