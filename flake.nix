@@ -129,7 +129,9 @@
             #   mkdir -p ~/.marola-runner && cd ~/.marola-runner
             #   config.sh --url https://github.com/h0ffmann/marola --token <from repo Settings> \
             #     --labels marola-sea,dependabot --name $(hostname)
-            #   run.sh                      # or: svc.sh install && svc.sh start
+            #   run.sh                      # or: just ghar (background, preflight first)
+            # `just gha` says how many runners and jobs are live and where; `just ghas` stops them
+            # all, discovered from the process table rather than a pidfile.
             # `marola-sea` keeps the publish job specific. `dependabot` is the label GitHub's own
             # Dependabot looks for once "Dependabot on self-hosted runners" is enabled (Settings →
             # Advanced Security → Dependabot): update jobs then run ONLY on runners carrying it,

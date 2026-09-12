@@ -291,6 +291,11 @@ jobs:
       - name: self-test — deps-merge (which dependency PRs are green enough to merge)
         if: needs.changes.outputs.python == 'true'
         run: scripts/deps-merge.sh --self-test
+      - name: self-test — runner-preflight / gha-runner (the self-hosted runner's own checks)
+        if: needs.changes.outputs.python == 'true'
+        run: |
+          scripts/runner-preflight.sh --self-test
+          scripts/gha-runner.sh --self-test
       - name: self-test — req_merge (requirements-file conflict auto-resolve)
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/req_merge.py --self-test

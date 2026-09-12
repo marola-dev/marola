@@ -78,6 +78,8 @@ quality-other:
     python3 scripts/site_live_check.py --self-test
     scripts/deps-stack.sh --self-test
     scripts/deps-merge.sh --self-test
+    scripts/runner-preflight.sh --self-test
+    scripts/gha-runner.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
     scripts/mip-stack.sh --self-test
@@ -430,6 +432,34 @@ deps-stack *args:
 # Merge every open dependency-update PR whose checks are green (--dry-run to see what it would do).
 deps-merge *args:
     scripts/deps-merge.sh {{args}}
+
+# Can this machine run the workflows? (tooling, scala-steward's PR permission, runner labels, disk)
+runner-preflight:
+    scripts/runner-preflight.sh
+
+# Start the self-hosted Actions runner in the background, preflight first. MAROLA_GHA_RUNNER_DIR
+# picks the registration directory (default /home/hoffmann/code/actions-runner).
+runner-up *args:
+    scripts/gha-runner.sh up {{args}}
+
+# Stop every runner listening on that directory — discovered from the process table, not from a
+# pidfile, so one started by hand or by a shell that has since closed is stopped too. Refuses
+# while a job is executing; --force stops it anyway and cleans up the worker.
+runner-down *args:
+    scripts/gha-runner.sh down {{args}}
+
+# Local process + what GitHub thinks of the runner + the tail of its log.
+runner-status:
+    scripts/gha-runner.sh status
+
+# Follow the background runner's log.
+runner-logs:
+    scripts/gha-runner.sh logs
+
+# The short forms, for the three you type: run, ask, stop.
+alias ghar := runner-up
+alias gha := runner-status
+alias ghas := runner-down
 
 # Stack every open MIP *draft* PR (a `docs/mip-NNNN-*` branch, or any PR adding a
 # `docs/mips/MIP-NNNN-*.md`;.
