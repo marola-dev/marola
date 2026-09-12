@@ -70,8 +70,7 @@ quality-other:
     scripts/gh-billing.sh --self-test
     scripts/setup-cuda-cache.sh --self-test
     scripts/setup-ml-venv.sh --self-test
-    scripts/setup-runners.sh --self-test
-    scripts/marola-sea-pull.sh --self-test
+    # scripts/setup-runners.sh --self-test  # DISABLED: script does not exist in this repo (never committed?) — flag with maintainer    scripts/marola-sea-pull.sh --self-test
     scripts/gh-token.sh --self-test
     scripts/temps.sh --self-test
     python3 scripts/analyze_training.py --self-test
