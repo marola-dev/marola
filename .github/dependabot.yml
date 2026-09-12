@@ -1,38 +1,35 @@
 # Scala/sbt dependencies (core/local/azure/cli) are watched by scala-steward.yml instead — see
 # CONTRIBUTING.md.
 #
-# Mondays and Fridays, grouped one PR per ecosystem: `just deps-stack` then chains three branches
-# instead of the dozen separate PRs a per-dependency run produces. `cronjob` is required whenever
-# `interval` is `cron`, `day`/`time` are not allowed beside it, and the zone goes in `timezone`,
-# never inside the expression (schemastore.org/dependabot-2.0.json, verified 2026-09-12).
+# One pull request for every dependency update, across all three ecosystems. Per-entry `groups`
+# was already collapsing a dozen PRs into one per entry, but the floor was still three — a group
+# cannot span update entries, so github-actions, dspy and finetune each opened their own. A
+# multi-ecosystem group is the key that does span them: its schedule (Mondays and Fridays, 09:00
+# America/Sao_Paulo) replaces the per-entry ones, and `patterns` is required on every entry that
+# joins it. `cronjob` is required whenever `interval` is `cron`, `day`/`time` are not allowed
+# beside it, and the zone goes in `timezone`, never inside the expression
+# (schemastore.org/dependabot-2.0.json, verified 2026-09-12).
 version: 2
+
+multi-ecosystem-groups:
+  marola-deps:
+    schedule:
+      interval: "cron"
+      cronjob: "0 9 * * 1,5"
+      timezone: "America/Sao_Paulo"
+
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
-    schedule:
-      interval: "cron"
-      cronjob: "0 9 * * 1,5"
-      timezone: "America/Sao_Paulo"
-    groups:
-      github-actions:
-        patterns: ["*"]
+    patterns: ["*"]
+    multi-ecosystem-group: "marola-deps"
 
   - package-ecosystem: "pip"
     directory: "/dspy"
-    schedule:
-      interval: "cron"
-      cronjob: "0 9 * * 1,5"
-      timezone: "America/Sao_Paulo"
-    groups:
-      dspy:
-        patterns: ["*"]
+    patterns: ["*"]
+    multi-ecosystem-group: "marola-deps"
 
   - package-ecosystem: "pip"
     directory: "/finetune"
-    schedule:
-      interval: "cron"
-      cronjob: "0 9 * * 1,5"
-      timezone: "America/Sao_Paulo"
-    groups:
-      finetune:
-        patterns: ["*"]
+    patterns: ["*"]
+    multi-ecosystem-group: "marola-deps"
