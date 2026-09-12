@@ -76,6 +76,7 @@ quality-other:
     python3 scripts/analyze_training.py --self-test
     python3 scripts/site_live_check.py --self-test
     scripts/deps-stack.sh --self-test
+    scripts/deps-merge.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
     scripts/mip-stack.sh --self-test
@@ -402,6 +403,10 @@ docs-mip-stack *args:
 # Stack every open dependency-update PR (dependabot;.
 deps-stack *args:
     scripts/deps-stack.sh {{args}}
+
+# Merge every open dependency-update PR whose checks are green (--dry-run to see what it would do).
+deps-merge *args:
+    scripts/deps-merge.sh {{args}}
 
 # Stack every open MIP *draft* PR (a `docs/mip-NNNN-*` branch, or any PR adding a
 # `docs/mips/MIP-NNNN-*.md`;.

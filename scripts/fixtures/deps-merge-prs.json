@@ -1,0 +1,50 @@
+[
+  {
+    "number": 302,
+    "title": "build(deps): bump the finetune group in /finetune with 4 updates",
+    "headRefName": "dependabot/pip/finetune/finetune-10dec0c926",
+    "mergeable": "MERGEABLE",
+    "statusCheckRollup": [
+      { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SKIPPED" },
+      { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SUCCESS" },
+      { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SKIPPED" }
+    ]
+  },
+  {
+    "number": 301,
+    "title": "build(deps): bump actions/setup-java from 5 to 6 in the github-actions group",
+    "headRefName": "dependabot/github_actions/github-actions-31df092e2e",
+    "mergeable": "MERGEABLE",
+    "statusCheckRollup": [
+      { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SUCCESS" }
+    ]
+  },
+  {
+    "number": 303,
+    "title": "build(deps): bump a broken action",
+    "headRefName": "dependabot/github_actions/broken-1",
+    "mergeable": "MERGEABLE",
+    "statusCheckRollup": [
+      { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SUCCESS" },
+      { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "FAILURE" }
+    ]
+  },
+  {
+    "number": 304,
+    "title": "build(deps): bump something still building",
+    "headRefName": "dependabot/pip/dspy/pending-1",
+    "mergeable": "MERGEABLE",
+    "statusCheckRollup": [
+      { "__typename": "CheckRun", "status": "IN_PROGRESS", "conclusion": null }
+    ]
+  },
+  {
+    "number": 305,
+    "title": "build(deps): bump something that conflicts",
+    "headRefName": "dependabot/pip/dspy/conflicting-1",
+    "mergeable": "CONFLICTING",
+    "statusCheckRollup": [
+      { "__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SUCCESS" }
+    ]
+  }
+]
