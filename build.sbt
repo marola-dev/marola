@@ -23,7 +23,7 @@
 // since it's the one place that has to pick a backend per integration.
 
 ThisBuild / scalaVersion := "3.9.0" // Scala 3.9 LTS itself needs JDK 17+, but Kyo 1.0.0-RC5 requires JDK 25 (see build note above) — the JVM running sbt/scalac must be 25+
-ThisBuild / version      := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "com.marola"
 
 // scalafix's semantic rules (RemoveUnused, OrganizeImports) need SemanticDB.
@@ -56,11 +56,10 @@ lazy val baseSettings = Seq(
     // purpose — the MCP SDK's BiFunction handlers take an `exchange` they don't use.
     "-Wunused:imports,locals,privates,implicits"
   ),
-
   libraryDependencies ++= Seq(
     // --- Effects ---
-    "io.getkyo" %% "kyo-core"        % kyoVersion,
-    "io.getkyo" %% "kyo-direct"      % kyoVersion, // direct-style (.now / defer) syntax
+    "io.getkyo" %% "kyo-core" % kyoVersion,
+    "io.getkyo" %% "kyo-direct" % kyoVersion, // direct-style (.now / defer) syntax
     "io.getkyo" %% "kyo-combinators" % kyoVersion,
     // NOTE: kyo-sttp existed pre-1.0 but was never published in the 1.0.x
     // line (last release May 2025) — Kyo replaced the sttp integration
@@ -77,15 +76,14 @@ lazy val baseSettings = Seq(
     // (`core`'s `Http.scala`), which is simpler and already
     // live-verified against real APIs. Migrating is real, tracked future
     // work — see `docs/FUTURE-WORK.md` §2.
-    "io.getkyo" %% "kyo-http"        % kyoVersion,
+    "io.getkyo" %% "kyo-http" % kyoVersion,
 
     // --- Logging ---
-    "ch.qos.logback" % "logback-classic" % "1.5.13",
+    "ch.qos.logback" % "logback-classic" % "1.5.38",
 
     // --- Test ---
     "org.scalameta" %% "munit" % "1.0.2" % Test
   ),
-
   testFrameworks += munitFramework,
 
   // Excludes tests tagged "E2E" (cli/src/test/scala/marola/E2ESpec.scala) from the default
@@ -101,7 +99,6 @@ lazy val baseSettings = Seq(
   // by default — confirmed the hard way: BoardSpec's call-count assertion failed only when it ran
   // next to PipelineGoldenSpec. Sequential suites cost nothing here (the whole run is seconds).
   Test / parallelExecution := false,
-
   assembly / assemblyMergeStrategy := {
     // ServiceLoader registrations (e.g. the MCP Java SDK's JsonSchemaValidatorSupplier — see
     // cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala) live under
@@ -115,7 +112,7 @@ lazy val baseSettings = Seq(
     // there. Paths are per artifact, so nothing collides; `first` is only for a duplicate jar.
     case PathList("META-INF", "native-image", xs @ _*) => MergeStrategy.first
     case PathList("META-INF", xs @ _*)                 => MergeStrategy.discard
-    case _                                         => MergeStrategy.first
+    case _                                             => MergeStrategy.first
   }
 )
 
