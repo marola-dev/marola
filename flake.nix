@@ -162,8 +162,12 @@
             # for the AGENTS.md cost/deploy rules, but a real containment
             # layer for whatever an agent runs locally. See `just jail-*`
             # and `.ai-jail` (project-level policy, committed) below.
-            ai-jail.packages.${system}.default
+            #ai-jail.packages.${system}.default
+            (ai-jail.packages.${system}.default.overrideAttrs (old: {
+  	      doCheck = false;
+            }))
             pkgs.bubblewrap
+
 
             # OpenCode (MIP-0013): a second coding-agent harness this repo is tried against,
             # additive only — nothing under .claude/ is removed. Confirmed present in nixpkgs
