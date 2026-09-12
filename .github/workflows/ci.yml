@@ -19,7 +19,7 @@ jobs:
   # Decide what actually changed so the expensive job only runs when it can matter.
   changes:
     runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
-    timeout-minutes: 5
+    timeout-minutes: 10
     outputs:
       scala: ${{ steps.filter.outputs.scala }}
       python: ${{ steps.filter.outputs.python }}
