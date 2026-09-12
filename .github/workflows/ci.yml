@@ -18,7 +18,7 @@ concurrency:
 jobs:
   # Decide what actually changed so the expensive job only runs when it can matter.
   changes:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
     timeout-minutes: 5
     outputs:
       scala: ${{ steps.filter.outputs.scala }}
@@ -63,7 +63,7 @@ jobs:
   build-test:
     needs: changes
     if: needs.changes.outputs.scala == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
     timeout-minutes: 30
     # Elevated past the workflow-level `contents: read` only for this job's main-only coverage
     # steps below: pushing coverage/latest.json to the orphan site-data branch, and re-triggering
@@ -181,6 +181,8 @@ jobs:
   repo-stats:
     needs: [changes, build-test, quality-other]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # The one job left on GitHub's image: its cloc/coverage.py steps `sudo apt-get install`, which
+    # is not something to run against a developer's own machine.
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -242,7 +244,7 @@ jobs:
   quality-other:
     needs: changes
     if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7

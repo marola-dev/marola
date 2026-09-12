@@ -18,7 +18,7 @@ jobs:
       && !contains(fromJSON('["dependabot[bot]", "github-actions[bot]"]'), github.actor)
       && !startsWith(github.event.pull_request.head.ref, 'dependabot/')
       && !startsWith(github.event.pull_request.head.ref, 'update/')
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
