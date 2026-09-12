@@ -1,18 +1,38 @@
 # Scala/sbt dependencies (core/local/azure/cli) are watched by scala-steward.yml instead — see
 # CONTRIBUTING.md.
+#
+# Mondays and Fridays, grouped one PR per ecosystem: `just deps-stack` then chains three branches
+# instead of the dozen separate PRs a per-dependency run produces. `cronjob` is required whenever
+# `interval` is `cron`, `day`/`time` are not allowed beside it, and the zone goes in `timezone`,
+# never inside the expression (schemastore.org/dependabot-2.0.json, verified 2026-09-12).
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 9 * * 1,5"
+      timezone: "America/Sao_Paulo"
+    groups:
+      github-actions:
+        patterns: ["*"]
 
   - package-ecosystem: "pip"
     directory: "/dspy"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 9 * * 1,5"
+      timezone: "America/Sao_Paulo"
+    groups:
+      dspy:
+        patterns: ["*"]
 
   - package-ecosystem: "pip"
     directory: "/finetune"
     schedule:
-      interval: "weekly"
+      interval: "cron"
+      cronjob: "0 9 * * 1,5"
+      timezone: "America/Sao_Paulo"
+    groups:
+      finetune:
+        patterns: ["*"]

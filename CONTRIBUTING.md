@@ -36,8 +36,11 @@ or what a user sees goes through one first.
   scalafmt + scalafixAll + ruff + actionlint + hadolint on the Dockerfiles + the Python scripts'
   self-tests — the same gates `ci.yml` runs). Dependency freshness: Scala/sbt deps are watched by
   `scala-steward.yml` (weekly PRs); GitHub Actions and the two Python requirements files by
-  `.github/dependabot.yml`. `just deps-stack` chains the open dependabot PRs into one stack
-  (`docs/DEV-FLOW.md` §6/§8) instead of merging each one through its own CI run.
+  `.github/dependabot.yml` — Mondays and Fridays at 09:00 America/Sao_Paulo, one grouped PR per
+  ecosystem. `just deps-stack` chains those PRs into one stack (`docs/DEV-FLOW.md` §6/§8) instead
+  of merging each one through its own CI run. There is no API to trigger a Dependabot run: the
+  button is Insights → Dependency graph → Dependabot → Check for updates, and pushing any change
+  to `.github/dependabot.yml` forces one.
 
 ## Code style
 

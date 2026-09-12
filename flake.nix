@@ -128,10 +128,15 @@
             # Setup is in that workflow's header; the short version, from the repo root:
             #   mkdir -p ~/.marola-runner && cd ~/.marola-runner
             #   config.sh --url https://github.com/h0ffmann/marola --token <from repo Settings> \
-            #     --labels marola-sea --name $(hostname)
+            #     --labels marola-sea,dependabot --name $(hostname)
             #   run.sh                      # or: svc.sh install && svc.sh start
-            # The `marola-sea` label is what keeps this specific: only a workflow asking for that
-            # label lands here, every other workflow stays on GitHub's hosted runners.
+            # `marola-sea` keeps the publish job specific. `dependabot` is the label GitHub's own
+            # Dependabot looks for once "Dependabot on self-hosted runners" is enabled (Settings →
+            # Advanced Security → Dependabot): update jobs then run ONLY on runners carrying it,
+            # and queue forever if none does. Its updater runs in containers, so the runner user
+            # needs a reachable Docker. An already-registered runner takes the label in place:
+            #   gh api --method POST repos/h0ffmann/marola/actions/runners/<id>/labels \
+            #     -f 'labels[]=dependabot'
             pkgs.github-runner
 
             # actionlint shells out to shellcheck to lint the `run:` scripts inside workflow
