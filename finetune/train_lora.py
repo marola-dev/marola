@@ -1,40 +1,66 @@
-"""QLoRA fine-tune of Llama 3.2 on marola's dataset — Tier 2 in README.md.
+"""QLoRA fine-tune of one preset base model on marola's dataset — Tier 2 in README.md.
 
-STATUS: written against the documented peft/transformers/trl APIs, NOT RUN in this repo (no GPU
-on the machine that wrote it, and the base weights are gated behind a Hugging Face login). Treat
-the first run as a debugging session, not a build step.
+STATUS: the `tiny` preset has been run end to end (see finetune/README.md); every larger preset is
+written against the documented peft/transformers/trl APIs and NOT RUN here. Treat a first run on a
+new preset as a debugging session, not a build step.
 
 Usage:
     pip install -r requirements.txt
-    huggingface-cli login                      # Llama 3.2 weights are gated
+    huggingface-cli login                      # only the gated `base` preset needs this
     python build_dataset.py                    # or: just finetune-dataset
-    python train_lora.py --base meta-llama/Llama-3.2-3B-Instruct --epochs 3
-    # then convert out/adapter with llama.cpp's convert_lora_to_gguf.py and
-    #   ollama create marola-llama3.2 -f Modelfile.adapter
+    python train_lora.py --preset qwen-7b --epochs 3
+    # then convert out/<preset>/adapter with llama.cpp's convert_lora_to_gguf.py and
+    #   just finetune-adapter-model preset=qwen-7b
 
-Presets (see PRESETS): `--preset tiny` (SmolLM2-360M, ungated, Apache-2.0, trains on CPU in
-minutes — **the default**), `--preset small` (Llama-3.2-1B, ungated mirror, CPU-feasible),
-`--preset base` (Llama-3.2-3B, gated, GPU). tiny is the default rather than small so an
-unqualified run never silently produces a *Llama derivative*: the Llama 3.2 Community Licence
-requires such a model's name to begin with "Llama" and to ship the agreement plus a "Built with
-Llama" notice (see finetune/README.md). Both Llama presets remain available and are fine to use —
-they just have to be chosen, and their obligations met, on purpose. The adapter must be
-attached to the matching Ollama model: smollm2:360m / llama3.2:1b / llama3.2 — the script prints it.
-On CPU pass --no-4bit (bitsandbytes needs CUDA).
+Presets (see PRESETS): `tiny` (SmolLM2-360M, ungated, Apache-2.0, trains on CPU in minutes — **the
+default**), `small`/`base` (Llama 3.2 1B/3B; the 3B is gated), `qwen-4b`/`qwen-7b`/`qwen-14b`/
+`qwen-27b` (Apache-2.0 throughout). tiny is the default rather than small so an unqualified run
+never silently produces a *Llama derivative*: the Llama 3.2 Community Licence requires such a
+model's name to begin with "Llama" and to ship the agreement plus a "Built with Llama" notice (see
+finetune/README.md). Both Llama presets remain available and are fine to use — they just have to
+be chosen, and their obligations met, on purpose.
+
+Switching base is safe by construction: each preset trains into its own `out/<preset>/` directory,
+and a run refuses to start if the directory it is about to write already holds another base
+model's work. On CPU pass --no-4bit (bitsandbytes needs CUDA).
 """
 
 from __future__ import annotations
 
 import argparse
+import json
+import re
 from pathlib import Path
 
 # Iterate fast on a tiny model, then re-run the same script on the real one: the dataset, the LoRA
 # config and the GGUF/Ollama steps are identical, only `--preset` changes.
-# `params_b` drives the preflight estimator: VRAM for QLoRA training, RAM for the fp16 merge, and
-# disk for the export, are all functions of parameter count. Measure the real filesystem rather
-# than trusting `df` on a parent path — inside a sandboxed shell `df /home` reported 95 GB while
-# `os.statvfs` on the repo itself reported 7 TB, which is the difference between "27B is
-# impossible here" and "27B is fine".
+#
+# Every field has exactly one consumer, so a new preset cannot half-exist:
+#   hf/ollama      the HF id to train from, and the Ollama model an adapter trained on it attaches
+#                  to — `ollama create` fails loudly on a tag that does not exist, but attaching to
+#                  the WRONG one of a family loads fine and then answers nonsense, so both the tag
+#                  and its variant (instruct vs thinking) are part of the identity.
+#   params_b       preflight's VRAM/RAM/disk estimator, and the batch/accum split below.
+#   gated          whether a Hugging Face login is needed before the weights download.
+#   licence        an HF licence *id*, passed through to publish_hf.py --base-license.
+#   name_prefix    Meta's Community Licence requires a Llama derivative's name to start with
+#                  "Llama-" (MIP-0025 §5.1(3)); merge_export.py reads this instead of guessing
+#                  from the id.
+#   thinking       the base's chat template emits reasoning blocks, which changes what an SFT run
+#                  teaches and what the Ollama model answers with.
+#   target_modules which projections LoRA attaches to. peft matches by suffix and silently skips
+#                  what it does not find, so a model whose attention is not q/k/v/o_proj needs its
+#                  own list rather than the standard one.
+ATTENTION_AND_MLP = (
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj",
+    "gate_proj",
+    "up_proj",
+    "down_proj",
+)
+
 PRESETS = {
     "tiny": {
         "hf": "HuggingFaceTB/SmolLM2-360M-Instruct",
@@ -42,105 +68,296 @@ PRESETS = {
         "gated": False,
         "params_b": 0.36,
         "licence": "apache-2.0",
+        "name_prefix": "",
+        "thinking": False,
+        "target_modules": ATTENTION_AND_MLP,
     },
     "small": {
         "hf": "unsloth/Llama-3.2-1B-Instruct",
         "ollama": "llama3.2:1b",
         "gated": False,
         "params_b": 1.24,
-        "licence": "llama-3.2 (name must start with 'Llama-', ship the agreement + notice)",
+        "licence": "llama3.2",
+        "name_prefix": "Llama-",
+        "thinking": False,
+        "target_modules": ATTENTION_AND_MLP,
     },
     "base": {
         "hf": "meta-llama/Llama-3.2-3B-Instruct",
         "ollama": "llama3.2",
         "gated": True,
         "params_b": 3.2,
-        "licence": "llama-3.2 (name must start with 'Llama-', ship the agreement + notice)",
+        "licence": "llama3.2",
+        "name_prefix": "Llama-",
+        "thinking": False,
+        "target_modules": ATTENTION_AND_MLP,
     },
     # Qwen: Apache-2.0 throughout, so no naming obligation of any kind — the reason these are the
-    # recommended step up from `tiny` rather than the Llama presets above. Sizes verified against
-    # huggingface.co/api/models?author=Qwen on 2026-09-07. Qwen2.5-3B-Instruct is deliberately
-    # absent: its card says `other`, not apache-2.0, unlike every other size in the family.
+    # recommended step up from `tiny` rather than the Llama presets above. Sizes and licences
+    # verified against huggingface.co/api/models/<id>, Ollama tags against ollama.com/library,
+    # both on 2026-09-12. Qwen2.5-3B-Instruct is deliberately absent: its card says `other`, not
+    # apache-2.0, unlike every other size in the family.
     "qwen-4b": {
         "hf": "Qwen/Qwen3-4B-Instruct-2507",
-        "ollama": "qwen3:4b",
+        # NOT `qwen3:4b` — that tag is 4b-thinking-2507 (digest 359d7dd4bcda), a different
+        # checkpoint from the Instruct-2507 weights trained here (0edcdef34593).
+        "ollama": "qwen3:4b-instruct",
         "gated": False,
-        "params_b": 4.0,
+        "params_b": 4.02,
         "licence": "apache-2.0",
+        "name_prefix": "",
+        "thinking": False,
+        "target_modules": ATTENTION_AND_MLP,
     },
     "qwen-7b": {
         "hf": "Qwen/Qwen2.5-7B-Instruct",
         "ollama": "qwen2.5:7b",
         "gated": False,
-        "params_b": 7.6,
+        "params_b": 7.62,
         "licence": "apache-2.0",
+        "name_prefix": "",
+        "thinking": False,
+        "target_modules": ATTENTION_AND_MLP,
     },
     "qwen-14b": {
         "hf": "Qwen/Qwen2.5-14B-Instruct",
         "ollama": "qwen2.5:14b",
         "gated": False,
-        "params_b": 14.8,
+        "params_b": 14.77,
         "licence": "apache-2.0",
+        "name_prefix": "",
+        "thinking": False,
+        "target_modules": ATTENTION_AND_MLP,
     },
-    # 27B fits on the reference machine: ~154 GB of export against ~7 TB free, ~54 GB of RAM for
-    # the fp16 merge against 188 GB, and ~16 GB of VRAM for QLoRA 4-bit against 24 GB. The real
-    # caveats are elsewhere — this checkpoint is a BASE model, not Instruct, so expect to need far
-    # more data and epochs before it behaves like an assistant; and CPU-only training at this size
-    # is measured in weeks, so it is a GPU-only preset in practice.
+    # The odd one out, and the reason `target_modules`/`thinking` are preset fields at all.
+    # Qwen3.8-27B is post-trained (not a base checkpoint), multimodal
+    # (`Qwen3_5ForConditionalGeneration`, pipeline image-text-to-text — the merge drops the vision
+    # tower) and hybrid-attention: only 16 of its 64 layers use q/k/v/o_proj, the other 48 are
+    # linear-attention layers with different names, so the standard target list would quietly
+    # train a quarter of the attention stack. Its template also wraps every assistant turn in an
+    # empty <think></think> block. NOT RUN here — treat a first run as an experiment, not a build.
     "qwen-27b": {
         "hf": "Qwen/Qwen3.8-27B",
-        "ollama": "qwen3:27b",
+        "ollama": "qwen3.8:27b",
         "gated": False,
-        "params_b": 27.0,
+        "params_b": 27.78,
         "licence": "apache-2.0",
-        "instruct": False,
+        "name_prefix": "",
+        "thinking": True,
+        "target_modules": "all-linear",
     },
 }
+
+PRESET_FIELDS = (
+    "hf",
+    "ollama",
+    "gated",
+    "params_b",
+    "licence",
+    "name_prefix",
+    "thinking",
+    "target_modules",
+)
+
+BASE_MARKER = ".marola-base"
+
+
+def preset_for(hf_id: str) -> str | None:
+    """The preset name that owns this HF id, or None for a `--base` outside the table."""
+    for name, p in PRESETS.items():
+        if p["hf"] == hf_id:
+            return name
+    return None
 
 
 def ollama_base_for(hf_id: str) -> str:
     """The `FROM` line Modelfile.adapter needs — the adapter only fits the family it was trained on."""
-    for p in PRESETS.values():
-        if p["hf"] == hf_id:
-            return p["ollama"]
-    return "<the Ollama model matching " + hf_id + ">"
+    name = preset_for(hf_id)
+    return PRESETS[name]["ollama"] if name else "<the Ollama model matching " + hf_id + ">"
 
 
-def _resume_target(args) -> str | None:
+def run_slug(hf_id: str) -> str:
+    """The per-run directory name: the preset when there is one, else a slug of the model id.
+
+    Artifacts are namespaced by this rather than shared, because everything downstream of training
+    is model-shaped: an adapter, a merged checkpoint and a GGUF built from SmolLM2 mean nothing to
+    a Qwen run, and `save_total_limit` deletes by step number without looking at whose checkpoint
+    it is — the two bases' step counts differ, so a shared directory loses whichever run wrote
+    fewer steps.
+    """
+    name = preset_for(hf_id)
+    if name:
+        return name
+    return re.sub(r"[^a-z0-9]+", "-", hf_id.rsplit("/", 1)[-1].lower()).strip("-") or "custom"
+
+
+def run_dir(hf_id: str) -> Path:
+    """`finetune/out/<preset>` — every artifact of one base's run lives under here."""
+    return Path(__file__).parent / "out" / run_slug(hf_id)
+
+
+def default_out(hf_id: str, kind: str = "adapter") -> Path:
+    """`finetune/out/<preset>/adapter` — see run_slug for why this is not `finetune/out/adapter`."""
+    return run_dir(hf_id) / kind
+
+
+def has_artifacts(out: Path) -> bool:
+    """Does this directory already hold a training run's output?"""
+    return bool(list(out.glob("checkpoint-*"))) or (out / "adapter_config.json").exists()
+
+
+def base_conflict(marker_text: str | None, base: str) -> bool:
+    """True when a directory's recorded base model is not the one about to be trained."""
+    return bool(marker_text) and marker_text.strip() != base
+
+
+def read_marker(out: Path) -> str | None:
+    marker = out / BASE_MARKER
+    return marker.read_text() if marker.exists() else None
+
+
+def check_base(out: Path, base: str) -> None:
+    """Refuse to write a second base model's run into another's directory.
+
+    Optimizer, scheduler and adapter shapes are all model-specific: resuming a SmolLM2 checkpoint
+    into a Qwen run either explodes with a shape error or, worse, trains something meaningless.
+    This runs whether or not `--resume` was passed, because an unguarded run does not resume the
+    other base's work — it overwrites it, and `save_total_limit` can delete it mid-run.
+    """
+    if not out.exists():
+        return
+    previous = read_marker(out)
+    if base_conflict(previous, base) and has_artifacts(out):
+        raise SystemExit(
+            f"train_lora: {out} holds a run trained from {previous.strip()!r}, but this run uses "
+            f"{base!r}. Refusing to mix base models in one directory — delete {out}, or pass "
+            "--out for this base (the default is already per-preset)."
+        )
+
+
+def adapter_base(adapter: Path) -> str | None:
+    """Which base model an existing LoRA adapter was trained on, per its own adapter_config.json."""
+    cfg = Path(adapter) / "adapter_config.json"
+    if not cfg.exists():
+        return None
+    try:
+        return json.loads(cfg.read_text()).get("base_model_name_or_path")
+    except json.JSONDecodeError:
+        return None
+
+
+def check_adapter_base(adapter: Path, base: str) -> None:
+    """Refuse a mismatched adapter *before* the base model loads.
+
+    peft raises on its own eventually, but only after transformers has pulled a full checkpoint
+    into RAM — up to tens of GB for the larger presets. This is one JSON read.
+    """
+    found = adapter_base(adapter)
+    if found and found != base:
+        raise SystemExit(
+            f"the adapter at {adapter} was trained on {found!r}, not {base!r}. A LoRA adapter only "
+            "fits the family it was trained on — point --sft-adapter/--adapter at this base's run "
+            "(finetune/out/<preset>/), or retrain."
+        )
+
+
+def latest_checkpoint(out: Path) -> str | None:
     """The newest `checkpoint-N` under --out, or None to train from scratch.
 
-    This is the "resume or start over?" decision, and it is deliberately made from what is on disk
-    rather than from a flag alone: `--resume` on a clean machine must start from scratch, not fail,
-    or the first run of any CI job breaks.
-
-    Refuses to resume a checkpoint trained from a different base model. Optimizer and scheduler
-    state are shaped by the model; loading a Qwen-7B checkpoint into a SmolLM2 run either explodes
-    with a shape error or, worse, silently produces nonsense. The marker file is written next to
-    the checkpoints on every run.
+    Decided from what is on disk rather than from the flag alone: `--resume` on a clean machine
+    must start from scratch, not fail, or the first run of any CI job breaks.
     """
-    out = Path(args.out)
-    marker = out / ".marola-base"
     ckpts = sorted(
         (d for d in out.glob("checkpoint-*") if d.is_dir()),
         key=lambda d: int(d.name.rsplit("-", 1)[1]),
     )
-    if not ckpts:
-        return None
-    if marker.exists():
-        previous = marker.read_text().strip()
-        if previous != args.base:
-            raise SystemExit(
-                f"train_lora: {out} holds checkpoints trained from {previous!r}, but this run uses "
-                f"{args.base!r}. Refusing to resume across base models — delete {out} or pass a "
-                "different --out."
-            )
-    return str(ckpts[-1])
+    return str(ckpts[-1]) if ckpts else None
 
 
-def _mark_base(args) -> None:
-    out = Path(args.out)
+def mark_base(out: Path, base: str) -> None:
     out.mkdir(parents=True, exist_ok=True)
-    (out / ".marola-base").write_text(args.base + "\n")
+    (out / BASE_MARKER).write_text(base + "\n")
+
+
+def self_test() -> int:
+    """Everything above is pure or filesystem-only — no torch, no network, seconds to run."""
+    import tempfile
+
+    fails = 0
+
+    def ok(got, want, label):
+        nonlocal fails
+        if got == want:
+            print(f"  ok   {label}")
+        else:
+            fails += 1
+            print(f"  FAIL {label} — got {got!r}, want {want!r}")
+
+    for name, p in PRESETS.items():
+        ok(sorted(p), sorted(PRESET_FIELDS), f"{name} declares every preset field")
+        ok(
+            p["licence"] in ("apache-2.0", "llama3.2"),
+            True,
+            f"{name}'s licence is an HF id, not prose (publish_hf --base-license takes it)",
+        )
+        ok(
+            p["name_prefix"] == ("Llama-" if "llama" in p["hf"].lower() else ""),
+            True,
+            f"{name}'s name_prefix matches Meta's obligation for its base",
+        )
+
+    ok(preset_for("Qwen/Qwen2.5-7B-Instruct"), "qwen-7b", "a base id resolves back to its preset")
+    ok(preset_for("mistralai/Whatever"), None, "an unknown base id resolves to no preset")
+    ok(ollama_base_for(PRESETS["qwen-27b"]["hf"]), "qwen3.8:27b", "27B's Ollama tag is qwen3.8")
+    ok(run_slug("Qwen/Qwen2.5-7B-Instruct"), "qwen-7b", "the run directory is the preset name")
+    ok(run_slug("acme/Some_Model-v2"), "some-model-v2", "an off-table base still gets a slug")
+    ok(
+        default_out("Qwen/Qwen2.5-7B-Instruct").parts[-2:],
+        ("qwen-7b", "adapter"),
+        "the default --out is namespaced by preset",
+    )
+    ok(
+        default_out(PRESETS["tiny"]["hf"]) != default_out(PRESETS["qwen-7b"]["hf"]),
+        True,
+        "tiny and qwen-7b cannot land in the same directory",
+    )
+
+    ok(base_conflict("a\n", "b"), True, "a different recorded base is a conflict")
+    ok(base_conflict("a\n", "a"), False, "the same base is not a conflict")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        ad = Path(tmp) / "adapter"
+        ad.mkdir()
+        smol, qwen = PRESETS["tiny"]["hf"], PRESETS["qwen-7b"]["hf"]
+        check_adapter_base(ad, qwen)  # no adapter_config.json yet — nothing to contradict
+        (ad / "adapter_config.json").write_text(json.dumps({"base_model_name_or_path": smol}))
+        ok(adapter_base(ad), smol, "an adapter reports the base it was trained on")
+        check_adapter_base(ad, smol)
+        try:
+            check_adapter_base(ad, qwen)
+            ok("no refusal", "SystemExit", "a foreign adapter must be refused before loading")
+        except SystemExit as exc:
+            ok(smol in str(exc), True, "the refusal names the adapter's real base")
+    ok(base_conflict(None, "a"), False, "an unmarked directory is not a conflict")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "adapter"
+        smol, qwen = PRESETS["tiny"]["hf"], PRESETS["qwen-7b"]["hf"]
+        check_base(out, smol)  # nothing on disk yet
+        mark_base(out, smol)
+        (out / "checkpoint-40").mkdir()
+        ok(latest_checkpoint(out), str(out / "checkpoint-40"), "the newest checkpoint is found")
+        try:
+            check_base(out, qwen)
+            ok("no refusal", "SystemExit", "switching base in a used directory must be refused")
+        except SystemExit as exc:
+            ok(smol in str(exc) and qwen in str(exc), True, "the refusal names both base models")
+        check_base(out, smol)  # the same base is still fine
+        (out / "checkpoint-40").rmdir()
+        ok(latest_checkpoint(out), None, "an empty directory resumes from scratch")
+
+    print("train_lora self-test:", "ok" if not fails else f"{fails} FAILED")
+    return 1 if fails else 0
 
 
 def main() -> None:
@@ -150,10 +367,21 @@ def main() -> None:
         choices=sorted(PRESETS),
         default=None,
         help="tiny = SmolLM2-360M (CPU, minutes, ungated — for iterating on the dataset); "
-        "small = Llama-3.2-1B (ungated mirror, CPU-feasible, matches `llama3.2:1b`); "
-        "base = Llama-3.2-3B (gated, GPU recommended, matches `llama3.2`)",
+        "small/base = Llama 3.2 1B/3B (the 3B is gated, and both carry Meta's naming obligation); "
+        "qwen-4b/7b/14b/27b = Apache-2.0 all the way down, the recommended step up from tiny. "
+        "Each preset trains into its own out/<preset>/ directory",
     )
-    ap.add_argument("--base", default=None, help="explicit HF model id; overrides --preset")
+    ap.add_argument(
+        "--base",
+        default=None,
+        help="explicit HF model id; overrides --preset. An id in the preset table still gets that "
+        "preset's directory, Ollama tag, licence and LoRA targets",
+    )
+    ap.add_argument(
+        "--self-test",
+        action="store_true",
+        help="check the preset table and the base-switching guards; no torch, no network",
+    )
     ap.add_argument(
         "--resume",
         action="store_true",
@@ -168,7 +396,11 @@ def main() -> None:
         help="checkpoint every N steps; with --resume this bounds what a crash costs",
     )
     ap.add_argument("--data", default=str(Path(__file__).parent / "data"))
-    ap.add_argument("--out", default=str(Path(__file__).parent / "out" / "adapter"))
+    ap.add_argument(
+        "--out",
+        default=None,
+        help="where the adapter and checkpoints go (default: finetune/out/<preset>/adapter)",
+    )
     ap.add_argument("--epochs", type=int, default=3)
     ap.add_argument("--lr", type=float, default=2e-4)
     ap.add_argument("--rank", type=int, default=16)
@@ -212,11 +444,28 @@ def main() -> None:
         "memory, which is what makes the bigger presets fit at all",
     )
     args = ap.parse_args()
+    if args.self_test:
+        raise SystemExit(self_test())
+
     if not args.base:
         args.base = PRESETS[args.preset or "tiny"]["hf"]
+    # An explicit --base that happens to be a preset's model still gets that preset's settings:
+    # the table is keyed by what the model IS, not by how it was named on the command line.
+    preset_name = args.preset or preset_for(args.base)
+    preset = PRESETS.get(preset_name or "", {})
+    if not args.out:
+        args.out = str(default_out(args.base))
+    out = Path(args.out)
+    check_base(out, args.base)
     print(
-        f"base model: {args.base} — Ollama FROM for Modelfile.adapter: {ollama_base_for(args.base)}"
+        f"base model: {args.base} ({preset_name or 'off-table'}) — Ollama FROM for "
+        f"Modelfile.adapter: {ollama_base_for(args.base)}; adapter -> {out}"
     )
+    if preset.get("thinking"):
+        print(
+            "NOTE: this base's chat template wraps every assistant turn in a reasoning block, so "
+            "the fine-tune teaches that shape too — check one sample before publishing."
+        )
 
     import torch
     from datasets import load_dataset
@@ -283,26 +532,21 @@ def main() -> None:
         "json", data_files={"train": f"{args.data}/train.jsonl", "eval": f"{args.data}/eval.jsonl"}
     )
 
+    # peft matches target modules by suffix and skips what it cannot find, so a hybrid attention
+    # stack needs "all-linear" rather than the q/k/v/o list every other preset uses.
+    targets = preset.get("target_modules", ATTENTION_AND_MLP)
     lora = LoraConfig(
         r=args.rank,
         lora_alpha=2 * args.rank,
         lora_dropout=0.05,
         bias="none",
         task_type="CAUSAL_LM",
-        target_modules=[
-            "q_proj",
-            "k_proj",
-            "v_proj",
-            "o_proj",
-            "gate_proj",
-            "up_proj",
-            "down_proj",
-        ],
+        target_modules="all-linear" if targets == "all-linear" else list(targets),
     )
     # Effective batch stays ~8 regardless of size; only how it is split changes. Bigger models get
     # a smaller per-device batch and more accumulation, because activation memory scales with both
     # batch and model width.
-    params_b = PRESETS.get(args.preset or "", {}).get("params_b", 1.0)
+    params_b = preset.get("params_b", 1.0)
     if args.batch is not None:
         batch = args.batch
     elif device == "cpu":
@@ -342,9 +586,9 @@ def main() -> None:
         f"packing={not args.no_packing} grad_checkpointing={not args.no_grad_checkpointing} "
         f"4bit={use_4bit}"
     )
-    _mark_base(args)
-    resume = _resume_target(args) if args.resume else None
+    resume = latest_checkpoint(out) if args.resume else None
     print(f"resuming from {resume}" if resume else "training from scratch (no checkpoint found)")
+    mark_base(out, args.base)
     trainer = SFTTrainer(
         model=model,
         processing_class=tok,

@@ -26,12 +26,19 @@ half is pure and testable on any machine, and only the merge itself needs the he
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from train_lora import PRESETS  # noqa: E402  — same directory, shares the preset table
+from train_lora import (  # noqa: E402  — same directory, shares the preset table
+    PRESETS,
+    check_adapter_base,
+    preset_for,
+    run_dir,
+    run_slug,
+)
 
 HERE = Path(__file__).parent
 QUANTIZATIONS = ("Q4_K_M", "Q8_0")
@@ -49,10 +56,12 @@ def model_name(preset: str) -> str:
     return f"marola-sea-{preset}"
 
 
-def llama_prefix(base_hf_id: str, name: str) -> str:
+def prefixed_name(base_hf_id: str, name: str) -> str:
     """Meta's Community Licence requires a Llama-derived model's name to START with `Llama-`
-    (MIP-0025 §5.1(3)). `tiny` is SmolLM2 and needs no prefix; `small`/`base` are Llama."""
-    return f"Llama-{name}" if "llama" in base_hf_id.lower() else name
+    (MIP-0025 §5.1(3)). The obligation is a property of the base, so it is declared once in
+    train_lora.PRESETS (`name_prefix`) rather than re-guessed from the id here."""
+    preset = PRESETS.get(preset_for(base_hf_id) or "", {})
+    return preset.get("name_prefix", "") + name
 
 
 def gguf_paths(out_dir: Path, name: str) -> dict[str, Path]:
@@ -89,14 +98,35 @@ def quantize_argv(llama_cpp: Path, out_f16: Path, out_q: Path, quant: str) -> li
 
 def plan(args) -> dict:
     base = args.base or PRESETS[args.preset]["hf"]
-    out_dir = Path(args.out)
-    name = llama_prefix(base, model_name(args.preset))
+    # One directory per base — the same `out/<preset>/` layout train_lora.py writes into, so a
+    # Qwen merge can never pick up a SmolLM2 adapter or overwrite its GGUFs.
+    out_dir = Path(args.out) if args.out else run_dir(base)
+    name = prefixed_name(base, model_name(run_slug(base)))
     return {
         "base": base,
         "adapter": Path(args.adapter) if args.adapter else default_adapter(out_dir),
         "merged": out_dir / "merged",
         "name": name,
+        "licence": PRESETS.get(preset_for(base) or "", {}).get("licence", "apache-2.0"),
         "gguf": gguf_paths(out_dir, name),
+    }
+
+
+def plan_json(p: dict) -> dict:
+    """The plan as JSON — what to publish, under which name and licence.
+
+    The publish step used to rebuild these strings in bash (`marola-sea-${PRESET#qwen-}-GGUF`,
+    a hardcoded apache-2.0), which silently disagreed with what this script had actually written:
+    a different repo name, the wrong file path for a preset whose name carries the Llama- prefix,
+    and the wrong licence for the two Llama presets. One producer, one consumer, no second guess.
+    """
+    return {
+        "base": p["base"],
+        "name": p["name"],
+        "licence": p["licence"],
+        "adapter": str(p["adapter"]),
+        "merged": str(p["merged"]),
+        "gguf": {k: str(v) for k, v in p["gguf"].items()},
     }
 
 
@@ -138,20 +168,39 @@ def self_test() -> int:
 
     ok(model_name("tiny"), "marola-sea-tiny", "model_name follows MIP-0025 §5.1(3)'s stem")
     ok(
-        llama_prefix("HuggingFaceTB/SmolLM2-360M-Instruct", "marola-sea-tiny"),
+        prefixed_name("HuggingFaceTB/SmolLM2-360M-Instruct", "marola-sea-tiny"),
         "marola-sea-tiny",
         "a SmolLM2-derived model needs no Llama- prefix",
     )
     ok(
-        llama_prefix("unsloth/Llama-3.2-1B-Instruct", "marola-sea-small"),
+        prefixed_name("unsloth/Llama-3.2-1B-Instruct", "marola-sea-small"),
         "Llama-marola-sea-small",
         "a Llama-derived model MUST start with Llama- (Meta Community Licence)",
     )
     ok(
-        llama_prefix("meta-llama/Llama-3.2-3B-Instruct", "marola-sea-base"),
+        prefixed_name("meta-llama/Llama-3.2-3B-Instruct", "marola-sea-base"),
         "Llama-marola-sea-base",
         "the gated base preset is Llama-derived too",
     )
+    ok(
+        prefixed_name("Qwen/Qwen2.5-7B-Instruct", "marola-sea-qwen-7b"),
+        "marola-sea-qwen-7b",
+        "an Apache-2.0 Qwen base carries no naming obligation",
+    )
+
+    class _Args:
+        preset, base, adapter, out = "qwen-7b", None, None, None
+
+    j = plan_json(plan(_Args()))
+    ok(j["name"], "marola-sea-qwen-7b", "the plan JSON carries the published name")
+    ok(j["licence"], "apache-2.0", "the plan JSON carries the base's licence id")
+    ok(
+        j["gguf"]["Q4_K_M"].endswith("out/qwen-7b/marola-sea-qwen-7b-Q4_K_M.gguf"),
+        True,
+        "the plan JSON's GGUF path is the one merge_export actually writes",
+    )
+    ok(all(isinstance(v, str) for v in j["gguf"].values()), True, "the plan JSON is serialisable")
+
     names = sorted(p.name for p in gguf_paths(Path("/o"), "marola-sea-tiny").values())
     ok(
         names,
@@ -193,7 +242,12 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="LoRA adapter dir (default: out/dpo-adapter, else out/adapter)",
     )
-    ap.add_argument("--out", default=str(HERE / "out"))
+    ap.add_argument(
+        "--out",
+        default=None,
+        help="the run directory holding the adapter and the GGUFs "
+        "(default: finetune/out/<preset>, matching train_lora.py)",
+    )
     ap.add_argument(
         "--llama-cpp", default=None, help="path to a llama.cpp checkout (for convert + quantize)"
     )
@@ -203,6 +257,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--dry-run", action="store_true", help="print the plan and the exact commands, run nothing"
     )
+    ap.add_argument(
+        "--plan-json",
+        default=None,
+        help="also write the plan (name, licence, base, GGUF paths) here, for the publish step to "
+        "consume instead of rebuilding those strings itself",
+    )
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args(argv)
 
@@ -210,8 +270,13 @@ def main(argv: list[str] | None = None) -> int:
         return self_test()
 
     p = plan(args)
+    if args.plan_json:
+        dest = Path(args.plan_json)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(json.dumps(plan_json(p), indent=2) + "\n")
+        print(f"plan    : {dest}")
     llama_cpp = Path(args.llama_cpp) if args.llama_cpp else None
-    print(f"base    : {p['base']}")
+    print(f"base    : {p['base']} ({p['licence']})")
     print(f"adapter : {p['adapter']}")
     print(f"merged  : {p['merged']}")
     for k, v in p["gguf"].items():
@@ -228,7 +293,7 @@ def main(argv: list[str] | None = None) -> int:
         print("\n# then publish the QUANTIZED files (never the adapter):")
         print(
             f"just finetune-publish repo=<you>/{p['name']}-GGUF "
-            f"gguf={p['gguf']['Q4_K_M']} base={p['base']}"
+            f"gguf={p['gguf']['Q4_K_M']} base={p['base']} --base-license {p['licence']}"
         )
         print("dry run: nothing was written")
         return 0
@@ -238,6 +303,7 @@ def main(argv: list[str] | None = None) -> int:
             f"merge_export: no adapter at {p['adapter']} — run `just finetune-train` (and "
             "optionally `just finetune-train-dpo`) first"
         )
+    check_adapter_base(p["adapter"], p["base"])
     merge(p["base"], p["adapter"], p["merged"])
 
     if args.skip_convert:
@@ -257,7 +323,8 @@ def main(argv: list[str] | None = None) -> int:
         subprocess.run(quantize_argv(llama_cpp, p["gguf"]["f16"], p["gguf"][q], q), check=True)
         print(f"quantized {p['gguf'][q].name}")
     print(
-        f"\nnext: just finetune-publish repo=<you>/{p['name']}-GGUF gguf={p['gguf']['Q4_K_M']} base={p['base']}"
+        f"\nnext: just finetune-publish repo=<you>/{p['name']}-GGUF gguf={p['gguf']['Q4_K_M']} "
+        f"base={p['base']} --base-license {p['licence']}"
     )
     return 0
 

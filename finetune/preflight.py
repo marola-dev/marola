@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from train_lora import PRESETS  # noqa: E402
+from train_lora import PRESETS, preset_for, run_dir  # noqa: E402
 
 HERE = Path(__file__).parent
 
@@ -104,9 +104,19 @@ def main(argv: list[str] | None = None) -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     ap.add_argument("--preset", choices=sorted(PRESETS), default="tiny")
+    ap.add_argument(
+        "--base",
+        default=None,
+        help="explicit HF model id; overrides --preset, exactly as in train_lora.py — so the "
+        "estimate is for the run you are actually about to start",
+    )
     ap.add_argument("--device", choices=("auto", "cuda", "cpu"), default="auto")
     ap.add_argument("--low-disk", action="store_true")
-    ap.add_argument("--out", default=str(HERE / "out"))
+    ap.add_argument(
+        "--out",
+        default=None,
+        help="the run directory to measure free disk against (default: finetune/out/<preset>)",
+    )
     ap.add_argument("--strict", action="store_true", help="exit 1 when the run does not fit")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args(argv)
@@ -114,7 +124,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.self_test:
         return self_test()
 
-    preset = PRESETS[args.preset]
+    base = args.base or PRESETS[args.preset]["hf"]
+    preset_name = preset_for(base) or args.preset
+    preset = PRESETS.get(preset_name, {})
+    if args.base and not preset:
+        raise SystemExit(
+            f"preflight: {base!r} is not in the preset table, so its size is unknown — add it to "
+            "train_lora.PRESETS, or use --preset for an estimate of a comparable model"
+        )
     params_b = preset["params_b"]
     have_vram = vram_gb()
     device = args.device
@@ -122,14 +139,16 @@ def main(argv: list[str] | None = None) -> int:
         device = "cuda" if have_vram > 0 else "cpu"
 
     need = estimate(params_b, device, args.low_disk)
-    out = Path(args.out)
+    out = Path(args.out) if args.out else run_dir(base)
     out.mkdir(parents=True, exist_ok=True)
     have = {"vram": have_vram, "ram": total_ram_gb(), "disk": free_disk_gb(out)}
 
-    print(f"preset      : {args.preset}  ({preset['hf']}, {params_b:g}B, {preset['licence']})")
-    if preset.get("instruct") is False:
+    print(f"preset      : {preset_name}  ({preset['hf']}, {params_b:g}B, {preset['licence']})")
+    print(f"run dir     : {out}")
+    if preset.get("thinking"):
         print(
-            "              NOTE: base model, not Instruct — needs far more data/epochs to act as an assistant"
+            "              NOTE: this base's template emits reasoning blocks, so the fine-tune "
+            "teaches that shape too"
         )
     print(
         f"device      : {device}{'  (no usable CUDA device found)' if device == 'cpu' and args.device == 'auto' else ''}"

@@ -2,17 +2,18 @@
 
 Continues training from an SFT LoRA adapter (train_lora.py's output) using the preference pairs
 build_dpo_dataset.py wrote (finetune/data/dpo_pairs.jsonl: {"prompt", "chosen", "rejected"}, one
-pair per real Reviewer.scala reject/revise decision). Same preset ladder as train_lora.py — the
-adapter must be trained on the same base model it continues from.
+pair per real Reviewer.scala reject/revise decision). Same preset ladder and the same per-preset
+`out/<preset>/` layout as train_lora.py; an adapter trained on a different base is refused before
+anything loads, rather than after the base weights are in RAM.
 
 STATUS: written against the documented peft/trl DPOTrainer API. See finetune/README.md's Layer 3
 section for whether a real run's evidence has landed yet.
 
 Usage:
     python build_dataset.py                                  # SFT dataset (Layers 1+2)
-    python train_lora.py --preset tiny --no-4bit --epochs 3   # SFT adapter -> out/adapter
+    python train_lora.py --preset tiny --no-4bit --epochs 3   # SFT -> out/tiny/adapter
     python build_dpo_dataset.py                               # DPO pairs (Layer 3)
-    python train_dpo.py --preset tiny --no-4bit --epochs 1    # DPO adapter -> out/dpo-adapter
+    python train_dpo.py --preset tiny --no-4bit --epochs 1    # DPO -> out/tiny/dpo-adapter
 """
 
 from __future__ import annotations
@@ -20,7 +21,16 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from train_lora import PRESETS, ollama_base_for
+from train_lora import (
+    PRESETS,
+    check_adapter_base,
+    check_base,
+    default_out,
+    latest_checkpoint,
+    mark_base,
+    ollama_base_for,
+    preset_for,
+)
 
 
 def main() -> None:
@@ -47,11 +57,16 @@ def main() -> None:
     )
     ap.add_argument(
         "--sft-adapter",
-        default=str(Path(__file__).parent / "out" / "adapter"),
-        help="the SFT LoRA adapter to continue training from (train_lora.py's --out)",
+        default=None,
+        help="the SFT LoRA adapter to continue training from, i.e. train_lora.py's --out "
+        "(default: finetune/out/<preset>/adapter, the same per-preset layout)",
     )
     ap.add_argument("--data", default=str(Path(__file__).parent / "data" / "dpo_pairs.jsonl"))
-    ap.add_argument("--out", default=str(Path(__file__).parent / "out" / "dpo-adapter"))
+    ap.add_argument(
+        "--out",
+        default=None,
+        help="where the DPO adapter goes (default: finetune/out/<preset>/dpo-adapter)",
+    )
     ap.add_argument("--epochs", type=int, default=1)
     ap.add_argument("--lr", type=float, default=5e-6)
     ap.add_argument("--beta", type=float, default=0.1, help="DPO KL-penalty strength")
@@ -62,14 +77,25 @@ def main() -> None:
     args = ap.parse_args()
     if not args.base:
         args.base = PRESETS[args.preset or "tiny"]["hf"]
+    preset_name = args.preset or preset_for(args.base)
+    if not args.sft_adapter:
+        args.sft_adapter = str(default_out(args.base, "adapter"))
+    if not args.out:
+        args.out = str(default_out(args.base, "dpo-adapter"))
+    out = Path(args.out)
     if not Path(args.sft_adapter).exists():
         raise SystemExit(
             f"no SFT adapter at {args.sft_adapter} — run train_lora.py first: MIP-0025 task 5 is "
             "SFT (Layers 1+2) then DPO (Layer 3) continuing from it, not DPO trained from scratch"
         )
+    # Both guards before torch: the adapter must belong to this base, and this directory must not
+    # already hold another base's DPO run.
+    check_adapter_base(Path(args.sft_adapter), args.base)
+    check_base(out, args.base)
     print(
-        f"base model: {args.base} — Ollama FROM for Modelfile.adapter: {ollama_base_for(args.base)}"
-        f" — continuing DPO from SFT adapter {args.sft_adapter}"
+        f"base model: {args.base} ({preset_name or 'off-table'}) — Ollama FROM for "
+        f"Modelfile.adapter: {ollama_base_for(args.base)} — continuing DPO from SFT adapter "
+        f"{args.sft_adapter}, writing {out}"
     )
 
     import torch
@@ -105,12 +131,16 @@ def main() -> None:
         gradient_accumulation_steps=2,
         logging_steps=1,
         max_length=args.max_length,
-        save_strategy="epoch",
+        save_strategy="steps",
+        save_steps=args.save_steps,
         bf16=torch.cuda.is_available(),
         report_to=[],
     )
     trainer = DPOTrainer(model=model, args=cfg, train_dataset=data, processing_class=tok)
-    trainer.train()
+    resume = latest_checkpoint(out) if args.resume else None
+    print(f"resuming from {resume}" if resume else "training from scratch (no checkpoint found)")
+    mark_base(out, args.base)
+    trainer.train(resume_from_checkpoint=resume)
     trainer.save_model(args.out)
     print(
         f"DPO adapter saved to {args.out} — convert with llama.cpp's convert_lora_to_gguf.py, "

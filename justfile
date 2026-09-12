@@ -86,6 +86,7 @@ quality-other:
     python3 scripts/strip_external_scripts.py --self-test
     python3 scripts/build_docs_index.py --self-test
     python3 scripts/mip_graph.py --check
+    python3 finetune/train_lora.py --self-test
     python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test
     python3 finetune/preflight.py --self-test
@@ -179,6 +180,22 @@ ask question:
 # Force a re-embed of knowledge/ (normally automatic when a file or the embed model changes).
 knowledge-index:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --reindex"
+
+# Tier 2: a trained adapter attached to its own base, as `marola-sea-<preset>`. FROM and ADAPTER
+# come from the preset table, so switching base produces a second Ollama model rather than
+# overwriting the first.
+finetune-adapter-model preset="tiny":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    from="$(python3 -c "import sys; sys.path.insert(0, 'finetune'); from train_lora import PRESETS; print(PRESETS['{{preset}}']['ollama'])")"
+    gguf="$PWD/finetune/out/{{preset}}/adapter.gguf"
+    if [ ! -f "$gguf" ]; then
+      echo "no adapter GGUF at $gguf — train it, then convert with llama.cpp's convert_lora_to_gguf.py" >&2
+      exit 1
+    fi
+    mkdir -p .tmp
+    sed -e "s|^FROM .*|FROM $from|" -e "s|^ADAPTER .*|ADAPTER $gguf|" finetune/Modelfile.adapter > .tmp/Modelfile.adapter
+    ollama create marola-sea-{{preset}} -f .tmp/Modelfile.adapter
 
 # Tier 1: llama3.2 plus marola's persona/decoding as an Ollama model (finetune/Modelfile).
 finetune-model base="llama3.2":

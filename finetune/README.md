@@ -56,7 +56,7 @@ just run -- --summarize
 3. Convert the adapter to GGUF with llama.cpp's `convert_lora_to_gguf.py` and register it:
 
    ```bash
-   python /path/to/llama.cpp/convert_lora_to_gguf.py out/adapter --outfile out/marola-adapter.gguf
+   python /path/to/llama.cpp/convert_lora_to_gguf.py out/tiny/adapter --outfile out/tiny/adapter.gguf
    ollama create marola-llama3.2 -f Modelfile.adapter
    ```
 
@@ -81,11 +81,11 @@ fixture) and the real `review_prompt.json` demos (every generated pair's text ma
 demo's text verbatim).
 
 ```bash
-just finetune-train-dpo preset=tiny -- --no-4bit --epochs 1   # continues from out/adapter (SFT)
+just finetune-train-dpo preset=tiny -- --no-4bit --epochs 1   # continues from out/tiny/adapter
 ```
 
 `train_dpo.py` (`trl`'s `DPOTrainer`) continues training from the SFT adapter (`train_lora.py`'s
-`out/adapter`) rather than training DPO from scratch — real run, 2026-09-07: `tiny` preset
+`out/tiny/adapter`) rather than training DPO from scratch — real run, 2026-09-07: `tiny` preset
 (SmolLM2-360M), 2 real preference pairs, 1 epoch, chained after a real SFT run on the scaled-up
 Layer 1+2 dataset (eval loss 3.032 → **0.2594**, mean token accuracy **0.939** — real learning).
 The combined adapter was converted to GGUF and benchmarked
@@ -112,13 +112,29 @@ adapter; the README above is still the honest status.
 ## Iterating on a local machine: the small-model ladder
 
 Retraining "from the ground" should cost minutes, not an afternoon. The same script, dataset and
-Modelfile steps work at three sizes — change only `--preset`:
+Modelfile steps work at every size — change only `--preset`:
 
 | preset | base model | gated? | CPU training time (41 examples, 3 epochs, rough) | Ollama `FROM` for the adapter |
 |---|---|---|---|---|
 | `tiny` (default) | SmolLM2-360M-Instruct | no | minutes | `smollm2:360m` |
 | `small` | Llama-3.2-1B-Instruct (unsloth mirror) | no | tens of minutes | `llama3.2:1b` |
 | `base` | Llama-3.2-3B-Instruct | yes (HF login) | hours; use a GPU | `llama3.2` |
+| `qwen-4b` | Qwen3-4B-Instruct-2507 | no | hours; use a GPU | `qwen3:4b-instruct` |
+| `qwen-7b` | Qwen2.5-7B-Instruct | no | GPU only in practice | `qwen2.5:7b` |
+| `qwen-14b` | Qwen2.5-14B-Instruct | no | GPU only in practice | `qwen2.5:14b` |
+| `qwen-27b` | Qwen3.8-27B | no | GPU only, never run here | `qwen3.8:27b` |
+
+The `FROM` column is part of the identity, not a convenience: `qwen3:4b` is the *thinking*-2507
+checkpoint and `qwen3:4b-instruct` is the Instruct-2507 one that `qwen-4b` trains on, and attaching
+an adapter to the wrong sibling loads cleanly and then answers nonsense. `just
+finetune-adapter-model preset=<preset>` fills both lines in from the preset table and creates
+`marola-sea-<preset>`, so each base gets its own Ollama model.
+
+**Switching base is safe by construction.** Every preset trains into its own
+`finetune/out/<preset>/` (adapter, DPO adapter, merged model, GGUFs), and each script refuses to
+start when the directory it is about to write, or the adapter it is about to load, belongs to a
+different base model — checked from a marker file and `adapter_config.json` before torch is even
+imported. Nothing is shared between a SmolLM2 run and a Qwen one.
 
 Loop: `just finetune-dataset` → `just finetune-train preset=tiny` → convert → `ollama create` →
 `just benchmark` / `just run -- --summarize` → edit the dataset → repeat. Only when the tiny model
@@ -137,11 +153,16 @@ guessing:
 
 ```
 $ just finetune-preflight preset=qwen-27b
-preset      : qwen-27b  (Qwen/Qwen3.8-27B, 27B, apache-2.0)
-              NOTE: base model, not Instruct — needs far more data/epochs to act as an assistant
-  RAM  (merge)  need    58.0 GB   have   202.4 GB   OK
-  disk (peak)   need   153.9 GB   have  7030.6 GB   OK
-estimated wall clock: ~28.9 h for 3 SFT + 1 DPO epoch (rough)
+preset      : qwen-27b  (Qwen/Qwen3.8-27B, 27.78B, apache-2.0)
+run dir     : finetune/out/qwen-27b
+              NOTE: this base's template emits reasoning blocks, so the fine-tune teaches that shape too
+device      : cpu  (no usable CUDA device found)
+
+  VRAM (train)  n/a on cpu
+  RAM  (merge)  need    59.6 GB   have   202.4 GB   OK
+  disk (peak)   need   158.3 GB   have  7009.0 GB   OK
+estimated wall clock: ~29.8 h for 3 SFT + 1 DPO epoch (rough)
+  WARNING: CPU training above ~3B is measured in days. Use a GPU or a smaller preset.
 ```
 
 Measure the filesystem the artifacts actually land on. On 2026-09-07 `df /home` in a sandboxed
@@ -156,10 +177,18 @@ impossible here" and "27B is fine".
 | `qwen-4b` | Qwen3-4B-Instruct-2507 | apache-2.0 | best quality-per-hour step up |
 | `qwen-7b` | Qwen2.5-7B-Instruct | apache-2.0 | ~20x `tiny`, under an hour on a 4090 |
 | `qwen-14b` | Qwen2.5-14B-Instruct | apache-2.0 | comfortable QLoRA on 24 GB |
-| `qwen-27b` | Qwen3.8-27B | apache-2.0 | **base model, not Instruct**; GPU only in practice |
+| `qwen-27b` | Qwen3.8-27B | apache-2.0 | post-trained and **multimodal** (`Qwen3_5ForConditionalGeneration`); thinking template, hybrid attention — see below |
 
 Qwen2.5-3B-Instruct is deliberately absent: its card says `other`, not apache-2.0, unlike every
 other size in that family.
+
+`qwen-27b` is the odd one out and has never been run. Three things make it unlike the rest, all of
+them verified against its model card and config on 2026-09-12: it is post-trained rather than a
+base checkpoint; it is multimodal (`pipeline_tag: image-text-to-text`, so the merge drops the
+vision tower); and only 16 of its 64 layers use `q/k/v/o_proj` — the other 48 are linear-attention
+layers under different names, which is why its preset carries `target_modules: "all-linear"`
+instead of the standard list. Its chat template also wraps every assistant turn in an empty
+`<think></think>` block, so an SFT run teaches that shape too. Treat it as an experiment.
 
 ### Device modes
 
@@ -185,7 +214,7 @@ model size to keep the effective batch at ~8; override with `--batch`/`--grad-ac
 ## Publishing to Hugging Face (MIP-0025 §5.1, MIP-0033 §5.3)
 
 **Publish the merged model, never the adapter.** `train_lora.py`/`train_dpo.py` produce a LoRA
-*adapter*, and `convert_lora_to_gguf.py` turns that into an adapter-GGUF (`marola-tiny-adapter.gguf`,
+*adapter*, and `convert_lora_to_gguf.py` turns that into an adapter-GGUF (`out/tiny/adapter.gguf`,
 ~17 MB). That file works locally only because Ollama already holds the base weights and
 `Modelfile.adapter` names them (`FROM llama3.2:1b` + `ADAPTER ...`). It is not a model, and
 `ollama run hf.co/<you>/<repo>` — which pulls a repo and expects standalone model GGUFs — has no
@@ -212,9 +241,9 @@ just finetune-publish \
 ollama run hf.co/<you>/marola-sea-tiny-GGUF
 ```
 
-With both adapters present, `merge_export.py` merges `out/dpo-adapter` by default: DPO continues
+With both adapters present, `merge_export.py` merges `out/<preset>/dpo-adapter` by default: DPO continues
 training *from* the SFT adapter, so the DPO output already contains the SFT weights and is the
-better checkpoint. `--adapter out/adapter` publishes the SFT-only one instead.
+better checkpoint. `--adapter out/<preset>/adapter` publishes the SFT-only one instead.
 
 Pass `--dry-run` (append after the `just` recipe's own args) to write `CHECKSUMS`/`README.md`
 locally without uploading, to review the model card first. **Check the base model's licence
@@ -265,7 +294,7 @@ What's real today vs. what's still missing before "marola-sea-1.0" is a real, pu
 | Step | Status |
 |---|---|
 | A real training run on real hardware | **done** — `tiny` preset (SmolLM2-360M), CPU, eval loss 3.032→2.866→2.799 over 3 epochs |
-| LoRA → adapter-GGUF conversion | **done** — `finetune/out/marola-tiny-adapter.gguf` exists locally (gitignored, not in git). Enough for local Ollama use via `Modelfile.adapter`; **not** enough to publish |
+| LoRA → adapter-GGUF conversion | **done** — `finetune/out/tiny/adapter.gguf` exists locally (gitignored, not in git). Enough for local Ollama use via `Modelfile.adapter`; **not** enough to publish |
 | Adapter → merged model → quantized GGUF | **tooling done, run not done** — `finetune/merge_export.py` / `just finetune-merge`. Needs `pip install -r finetune/requirements.txt` and a llama.cpp checkout; this is the step that makes `ollama run hf.co/...` possible at all |
 | Runs end-to-end through marola | **done** — `ollama create` + `Modelfile.adapter`, then `just run -- --summarize` |
 | HF publish tooling | **done this session** — `finetune/publish_hf.py` / `just finetune-publish`, not yet run against a real HF account |
