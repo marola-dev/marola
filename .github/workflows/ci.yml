@@ -181,9 +181,7 @@ jobs:
   repo-stats:
     needs: [changes, build-test, quality-other]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # The one job left on GitHub's image: its cloc/coverage.py steps `sudo apt-get install`, which
-    # is not something to run against a developer's own machine.
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
     timeout-minutes: 10
     permissions:
       contents: write # push the badge JSONs to the site-data branch
@@ -191,14 +189,25 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # flake.nix ships cloc for the local run of the same script; the runner image does not
-      # promise it, so install it when it is missing (seconds, from Ubuntu's own archive).
+      # Both tools come from flake.nix for the local run of the same script. On the self-hosted
+      # runner take them from nix as well: `sudo apt-get` there has no tty to prompt on and hangs
+      # until the job times out (run 34709971906). repo_stats.coverage_exe already prefers a
+      # wrapped `coverage` on PATH over `python3 -m coverage`, which is exactly what nix gives.
+      - name: cloc + coverage.py from nix
+        if: runner.environment == 'self-hosted'
+        run: |
+          for out in $(nix build --no-link --print-out-paths nixpkgs#cloc nixpkgs#python3Packages.coverage); do
+            if [ -d "$out/bin" ]; then echo "$out/bin" >> "$GITHUB_PATH"; fi
+          done
+
+      # The CI_RUNNER=ubuntu-latest fallback: GitHub's image promises neither tool, but does have
+      # a passwordless sudo and apt, so install them there the way this job always did.
       - name: cloc (only if the runner image does not already have it)
+        if: runner.environment == 'github-hosted'
         run: command -v cloc >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends cloc; }
 
-      # Same shape as the cloc step: flake.nix ships coverage.py for the local run, the runner
-      # image does not promise it.
       - name: coverage.py (only if the runner image does not already have it)
+        if: runner.environment == 'github-hosted'
         run: command -v coverage >/dev/null || python3 -c 'import coverage' 2>/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends python3-coverage; }
 
       # The Python-coverage part re-runs every `scripts/**/*.py --self-test` under coverage.py —
