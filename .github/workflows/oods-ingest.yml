@@ -139,7 +139,8 @@ jobs:
                      -m "Tested: oods-check — ${check:-not run}" \
                      -m "Cost: \$0"
           git push origin "HEAD:${{ github.ref_name }}"
-          git --no-pager show --stat --oneline HEAD | head -20
+          # No `| head`: with pipefail a closed pipe is exit 141, and a data commit is long.
+          git --no-pager show --stat --oneline HEAD
 
       - name: Re-assert the ingest failure
         if: steps.ingest.outcome == 'failure'
