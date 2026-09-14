@@ -1,0 +1,32 @@
+# A merged (or closed) PR's runs keep going: the merge starts a run in ci-<main>'s concurrency
+# group, the PR's run sits in ci-<pull/N/merge>'s, so cancel-in-progress never sees them
+# together. Cancel by head SHA — pull_request runs record the PR head commit, so one query
+# catches CI, docker and pr-body for this PR and nothing else.
+name: ci short-circuit on PR close
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  cancel:
+    # Not self-hosted: it would queue behind the very run it is meant to cancel.
+    runs-on: ubuntu-latest
+    steps:
+      - name: cancel this PR's in-flight runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          for status in in_progress queued waiting; do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&status=$status&per_page=100" \
+              --jq '.workflow_runs[] | select(.event == "pull_request") | "\(.id) \(.name)"' \
+            | while read -r id name; do
+                echo "cancel $id ($name, $status)"
+                gh run cancel "$id"
+              done
+          done
