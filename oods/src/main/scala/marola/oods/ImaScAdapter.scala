@@ -197,4 +197,10 @@ object ImaScAdapter:
     )
 
   private val livePost: (String, Map[String, String]) => String < Sync =
-    (url, form) => Http.postForm(url, form, timeoutSeconds = 30)
+    (url, form) =>
+      Http.postForm(
+        url,
+        form,
+        timeoutSeconds = 30,
+        headers = Map("User-Agent" -> Ingest.UserAgent)
+      )

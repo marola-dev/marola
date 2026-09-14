@@ -109,24 +109,26 @@ object Http:
    * `application/x-www-form-urlencoded` POST — Overpass's query API and Telegram's Bot API both
    * accept this for their respective single-field payloads.
    */
+  /** `headers` overrides the defaults below — OODS ingests identify themselves, not as the app. */
   def postForm(
       url: String,
       form: Map[String, String],
       timeoutSeconds: Long = 15,
       retries: Int = 0,
-      backoffMs: Long = 1000
+      backoffMs: Long = 1000,
+      headers: Map[String, String] = Map.empty
   ): String < Sync =
     Sync.defer {
       val encoded = form
         .map { case (k, v) => s"${URLEncoder.encode(k, UTF_8)}=${URLEncoder.encode(v, UTF_8)}" }
         .mkString("&")
-      val request = HttpRequest
+      val builder = HttpRequest
         .newBuilder(URI.create(url))
         .timeout(Duration.ofSeconds(timeoutSeconds))
         .header("User-Agent", userAgent)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .POST(HttpRequest.BodyPublishers.ofString(encoded))
-        .build()
+      val request = headers.foldLeft(builder)((b, h) => b.setHeader(h._1, h._2)).build()
       check(url, sendRetrying(request, retries, backoffMs), 300)
     }
 
