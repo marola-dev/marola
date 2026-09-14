@@ -181,6 +181,13 @@ lazy val azure = (project in file("azure"))
     )
   )
 
+// The data pipeline behind `data/oods/` (MIP-0056): an offline ingest/build step, never part of
+// the runtime image — no Dockerfile copies it and `cli` does not depend on it.
+lazy val oods = (project in file("oods"))
+  .dependsOn(local)
+  .settings(baseSettings)
+  .settings(name := "marola-oods")
+
 lazy val cli = (project in file("cli"))
   .dependsOn(core, local, azure)
   .enablePlugins(NativeImagePlugin)
@@ -247,7 +254,7 @@ lazy val cli = (project in file("cli"))
   )
 
 lazy val root = (project in file("."))
-  .aggregate(core, local, azure, cli)
+  .aggregate(core, local, azure, cli, oods)
   .settings(
     name := "marola",
     publish / skip := true,
