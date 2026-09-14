@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+
+
+
+<head>
+    <title>BALNEABILIDADE</title>
+ <link href="https://balneabilidade.ima.sc.gov.br/assets/js/addtohomescreen.css" rel="stylesheet">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="application-name" content="BalneabilidadeSC">
+<meta name="apple-mobile-web-app-title" content="BalneabilidadeSC">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="apple-touch-icon" href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/ios-appicon-120-120.png">
+<link rel="apple-touch-icon" sizes="152x152" href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/ios-appicon-152-152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/ios-appicon-180-180.png">
+<link rel="apple-touch-icon" sizes="120x120" href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/ios-appicon-120-120.png">
+<link href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/apple-touch-startup-image-320x460.png" media="(device-width: 320px)"
+    rel="apple-touch-startup-image">
+<!-- iPhone (Retina) SPLASHSCREEN-->
+<link href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/apple-touch-startup-image-640x920.png"
+    media="(device-width: 320px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image">
+<!-- iPad (portrait) SPLASHSCREEN-->
+<link href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/apple-touch-startup-image-768x1004.png" media="(device-width: 768px) and (orientation: portrait)"
+    rel="apple-touch-startup-image">
+<!-- iPad (landscape) SPLASHSCREEN-->
+<link href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/apple-touch-startup-image-748x1024.png" media="(device-width: 768px) and (orientation: landscape)"
+    rel="apple-touch-startup-image">
+<!-- iPad (Retina, portrait) SPLASHSCREEN-->
+<link href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/apple-touch-startup-image-1536x2008.png"
+    media="(device-width: 1536px) and (orientation: portrait) and (-webkit-device-pixel-ratio: 2)"
+    rel="apple-touch-startup-image">
+<!-- iPad (Retina, landscape) SPLASHSCREEN-->
+<link href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/apple-touch-startup-image-2048x1496.png"
+    media="(device-width: 1536px)  and (orientation: landscape) and (-webkit-device-pixel-ratio: 2)"
+    rel="apple-touch-startup-image">
+<!-- iPhone 6/7/8 -->
+<link href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/apple-touch-startup-image-750x1334.png"
+    media="(device-width: 375px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+<!-- iPhone 6 Plus/7 Plus/8 Plus -->
+<link href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/ios/apple-touch-startup-image-1242x2208.png"
+    media="(device-width: 414px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image" />
+
+<meta name="msapplication-starturl" content="/?utm_source=homescreen">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<link rel="icon" type="image/png" href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="https://balneabilidade.ima.sc.gov.br/assets/img/meta/favicon-96x96.png" sizes="96x96">
+
+<meta name="theme-color" content="#536878">
+
+
+
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="https://balneabilidade.ima.sc.gov.br/assets/img/favicon.ico">
+
+    <link href="https://balneabilidade.ima.sc.gov.br/assets/css/base.css" rel="stylesheet">
+    <link href="https://balneabilidade.ima.sc.gov.br/assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://balneabilidade.ima.sc.gov.br/assets/css/bootstrap.css" rel="stylesheet">
+
+    <script src="https://balneabilidade.ima.sc.gov.br/assets/js/jquery-3.3.1.min.js"></script>
+    <script src="https://balneabilidade.ima.sc.gov.br/assets/js/bootstrap.min.js"></script>
+    <script src="https://balneabilidade.ima.sc.gov.br/assets/js/OpenLayers.js"></script>
+    <script src="https://balneabilidade.ima.sc.gov.br/assets/js/jquery.redirect.js"></script>
+    <script src="https://balneabilidade.ima.sc.gov.br/assets/js/jquery.mask.min.js"></script>
+
+
+    <!------ Include the above in your HEAD tag ---------->
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!--<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">-->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+    <style>
+
+    </style>
+</head
+<body>
+
+    
+
+<script>
+    function openModalAlert(titulo, mensagem, tipo) {
+        $('#modalAlertLabel').html(titulo);
+        $('#modal-header').addClass("modal-" + tipo);
+        $('#modalAlertMessage').html(mensagem);
+        $('#modalAlert').modal('show');
+    }
+
+</script>
+
+
+
+<div class="modal fade" id="modalAlert" tabindex="-1" role="dialog" aria-labelledby="modalAlert" aria-hidden="true" style="z-index: 999999">
+    <div class="modal-dialog ">
+        <div class="modal-content">
+            <div class="modal-header" id="modal-header">
+                <h5 class="modal-title" id="modalAlertLabel"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                
+                <div id="modalAlertMessage" style="font-size: 12px;">
+
+                </div>
+
+                <!--<label style="font-size:10px; font-weight: bold">* - AQUI VAI UM TEXTO</label>-->
+            </div>
+            <div class="modal-footer">
+
+
+                <button type="button" class="btn btn-dark" data-dismiss="modal">FECHAR</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    
+
+<script>
+    function openModalPraia() {
+         $("#tb_pontos").html("");
+        $("#divListaCondicaoPontos").hide();
+        $('#modal-header').addClass("modal-info");
+        $('#modalPraia').modal('show');
+        getMunicipios();
+    }
+
+    function getMunicipios() {
+        $("#campoMunicipios").html("");
+        $.post('https://balneabilidade.ima.sc.gov.br/municipio/getMunicipios',
+                function (data, status) {
+                    if (status == "success") {
+                        var municipios = jQuery.parseJSON(data);
+
+                        for (var i in municipios) {
+                            var option = document.createElement("option");
+                            option.setAttribute("value", municipios[i].CODIGO);
+                            option.appendChild(document.createTextNode(municipios[i].DESCRICAO));
+                            $("#campoMunicipios").append(option);
+
+                        }
+                        // Carrega os balneários do primeiro município já
+                        // selecionado (o valor agora é o nome, não id numérico).
+                        if (municipios.length > 0) {
+                            getLocais(municipios[0].CODIGO);
+                        }
+                    }
+                });
+    }
+
+    function getLocais(municipioID) {
+        $("#campoLocais").html("");
+        $.post('https://balneabilidade.ima.sc.gov.br/local/getLocaisByMunicipio', {municipioID: municipioID},
+                function (data, status) {
+                    if (status == "success") {
+                        var locais = jQuery.parseJSON(data);
+                        for (var i in locais) {
+
+                            var option = document.createElement("option");
+                            var valor = locais[i].CODIGO;
+                            valor += "#" + locais[i].LATITUDE;
+                            valor += "#" + locais[i].LONGITUDE;
+                            option.setAttribute("value", valor);
+                            option.appendChild(document.createTextNode(locais[i].BALNEARIO));
+
+                            $("#campoLocais").append(option);
+
+                        }
+
+                    }
+                });
+    }
+
+    function setLatAndLon(dados) {
+        var coordenadas = dados.split("#");
+        centralizaPraia(coordenadas[1], coordenadas[2]);
+    }
+
+    function listarCondicaoPontos(dados) {
+        var dados = dados.split("#");
+        $("#tb_pontos").html("");
+        $.post('https://balneabilidade.ima.sc.gov.br/pontoColeta/getPontosByLocal', {localID: dados[0]},
+                function (data, status) {
+                    if (status == "success") {
+                        var pontos = jQuery.parseJSON(data);
+                        for (var i in pontos) {
+
+                            var tr = document.createElement("tr");
+
+                            var local = document.createElement("td")
+                            var textoLocal = pontos[i].NOME;
+                            if (pontos[i].LOCALIZACAO) { textoLocal += " — " + pontos[i].LOCALIZACAO; }
+                            local.appendChild(document.createTextNode(textoLocal));
+
+                            var condicao = document.createElement("td")
+                            condicao.appendChild(document.createTextNode(pontos[i].CONDICAO));
+
+                            if (pontos[i].CONDICAO === "PRÓPRIO") {
+                                condicao.setAttribute("style", "color:blue")
+                            } else {
+                                if (pontos[i].CONDICAO === "IMPRÓPRIO") {
+                                    condicao.setAttribute("style", "color:red")
+                                } else {
+                                    condicao.setAttribute("style", "color:orange")
+                                }
+                            }
+
+                            tr.appendChild(local);
+                            tr.appendChild(condicao);
+
+                            $("#tb_pontos").append(tr);
+
+                        }
+                        $("#divListaCondicaoPontos").show();
+                    }
+                });
+
+    }
+
+</script>
+
+<div class="modal fade" id="modalPraia" tabindex="-1" role="dialog" aria-labelledby="modalPraia" aria-hidden="true" style="z-index: 999999">
+    <div class="modal-dialog ">
+        <div class="modal-content">
+            <div class="modal-header modal-info" id="modal-header">
+                <h5 class="modal-title" id="modalPraiaLabel">Balneabilidade por Praia</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label style="font-size: 12px">Selecione o município, o balneário e clique no botão "Balneabilidade" para verificar a condição de balneabilidade do balneário.  </label>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="campoMunicipios">Município</label>
+                    </div>
+                    <select class="custom-select" id="campoMunicipios">
+
+                    </select>
+                </div>
+
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="campoLocais">Balneário</label>
+                    </div>
+                    <select class="custom-select" id="campoLocais">
+
+                    </select>
+                </div>
+                <div class="table-responsive" id="divListaCondicaoPontos" style="display: none">
+                    <table class="table table-striped table" style="text-align: center">
+                        <thead class="thead-dark">
+                        <th>LOCAL</th>
+                        <th>CONDIÇÃO</th>
+
+                        </thead>
+                        <tbody id="tb_pontos">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" onclick="setLatAndLon($('#campoLocais').val())"><i class="fas fa-map-marked-alt"></i> VER NO MAPA</button>
+                <button type="button" class="btn btn-dark" onClick="listarCondicaoPontos($('#campoLocais').val())"><i class="fas fa-search"></i> LISTAR</button>
+                <input type="hidden" name="campoLongitude" id="campoLongitude"/>
+                <input type="hidden" name="campoLatitude" id="campoLatitude"/>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $("#campoMunicipios").change(function (event) {
+        $("#tb_pontos").html("");
+        $("#divListaCondicaoPontos").hide();
+        getLocais($("#campoMunicipios").val());
+    });
+    $("#campoLocais").change(function (event) {
+        $("#tb_pontos").html("");
+        $("#divListaCondicaoPontos").hide();
+    });
+
+</script>
+
+    
+
+<script>
+    function openModalHistorico() {
+        $("#tb_pontos").html("");
+        $("#divListaCondicaoPontos").hide();
+        $('#modal-header').addClass("modal-info");
+        $('#modalHistorico').modal('show');
+        getMunicipiosHistorico();
+        getAnos();
+    }
+
+
+    function gerarCSV() {
+        var localID = $("#campoLocaisHistorico").val();
+        var dados = localID.split("#");
+        localID = dados[0];
+
+        $.redirect('https://balneabilidade.ima.sc.gov.br/relatorio/exportarCSV', {
+                municipioID: $("#campoMunicipiosHistorico").val(),
+                localID: localID,
+                ano: $("#campoAnoHistorico").val()
+            },
+            "POST");
+    }
+
+
+    function exibirHistorico() {
+
+        var localID = $("#campoLocaisHistorico").val();
+        var dados = localID.split("#");
+        localID = dados[0];
+
+
+
+
+
+        $.redirect('https://balneabilidade.ima.sc.gov.br/relatorio/historico', {
+                municipioID: $("#campoMunicipiosHistorico").val(),
+                localID: localID,
+                ano: $("#campoAnoHistorico").val(),
+                redirect: true
+            },
+            "POST",
+            "_blank");
+    }
+
+
+    function getMunicipiosHistorico() {
+        $("#campoMunicipiosHistorico").html("");
+        $.post('https://balneabilidade.ima.sc.gov.br/municipio/getMunicipios',
+            function(data, status) {
+                if (status == "success") {
+                    var municipios = jQuery.parseJSON(data);
+
+                    var optionTodos = document.createElement("option");
+                    optionTodos.setAttribute("value", 0);
+                    optionTodos.appendChild(document.createTextNode("Todos"));
+                    $("#campoMunicipiosHistorico").append(optionTodos);
+
+                    for (var i in municipios) {
+                        var option = document.createElement("option");
+                        option.setAttribute("value", municipios[i].CODIGO);
+                        option.appendChild(document.createTextNode(municipios[i].DESCRICAO));
+                        $("#campoMunicipiosHistorico").append(option);
+                    }
+                }
+            });
+        getLocaisHistorico(0);
+    }
+
+
+    function getAnos() {
+        $("#campoAnoHistorico").html("");
+        $.post('https://balneabilidade.ima.sc.gov.br/registro/anosAnalisados',
+            function(data, status) {
+                if (status == "success") {
+                    var anos = jQuery.parseJSON(data);
+                    for (var i in anos) {
+                        var option = document.createElement("option");
+                        option.setAttribute("value", anos[i].ANO);
+                        option.appendChild(document.createTextNode(anos[i].ANO));
+                        $("#campoAnoHistorico").append(option);
+                    }
+                }
+            });
+    }
+
+
+    function getLocaisHistorico(municipioID) {
+        $("#campoLocaisHistorico").html("");
+        $.post('https://balneabilidade.ima.sc.gov.br/local/getLocaisByMunicipio', {
+                municipioID: municipioID
+            },
+            function(data, status) {
+                if (status == "success") {
+                    var locais = jQuery.parseJSON(data);
+
+                    var optionTodos = document.createElement("option");
+                    optionTodos.setAttribute("value", 0);
+                    optionTodos.appendChild(document.createTextNode("Todos"));
+                    $("#campoLocaisHistorico").append(optionTodos);
+
+
+                    for (var i in locais) {
+
+                        var option = document.createElement("option");
+                        var valor = locais[i].CODIGO;
+                        valor += "#" + locais[i].LATITUDE;
+                        valor += "#" + locais[i].LONGITUDE;
+                        option.setAttribute("value", valor);
+                        option.appendChild(document.createTextNode(locais[i].BALNEARIO));
+
+                        $("#campoLocaisHistorico").append(option);
+
+                    }
+
+                }
+            });
+    }
+</script>
+
+<div class="modal fade" id="modalHistorico" tabindex="-1" role="dialog" aria-labelledby="modalHistorico" aria-hidden="true" style="z-index: 999999">
+    <div class="modal-dialog ">
+        <div class="modal-content">
+            <div class="modal-header modal-info" id="modal-header">
+                <h5 class="modal-title" id="modalHistoricoLabel">Histórico de Balneabilidade</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label style="font-size: 12px">Selecione o município, o balneário e clique no botão "Balneabilidade" para verificar a condição de balneabilidade do balneário. </label>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="campoMunicipiosHistorico">Município</label>
+                    </div>
+                    <select class="custom-select" id="campoMunicipiosHistorico">
+
+                    </select>
+                </div>
+
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="campoLocaisHistorico">Balneário</label>
+                    </div>
+                    <select class="custom-select" id="campoLocaisHistorico">
+
+                    </select>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="campoAnoHistorico">Ano</label>
+                    </div>
+                    <select class="custom-select" id="campoAnoHistorico">
+
+                    </select>
+                </div>
+                <div class="table-responsive" id="divListaCondicaoPontos" style="display: none">
+                    <table class="table table-striped table" style="text-align: center">
+                        <thead class="thead-dark">
+                            <th>LOCAL</th>
+                            <th>CONDIÇÃO</th>
+
+                        </thead>
+                        <tbody id="tb_pontos">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" onClick="gerarCSV()"><i class="fas fa-file-csv"></i> GERAR CSV</button>
+                <button type="button" class="btn btn-dark" onClick="exibirHistorico()"><i class="fas fa-search"></i> LISTAR</button>
+                <input type="hidden" name="campoLongitude" id="campoLongitude" />
+                <input type="hidden" name="campoLatitude" id="campoLatitude" />
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $("#campoMunicipiosHistorico").change(function(event) {
+        $("#tb_pontos").html("");
+        $("#divListaCondicaoPontos").hide();
+        getLocaisHistorico($("#campoMunicipiosHistorico").val());
+    });
+    $("#campoLocaisHistorico").change(function(event) {
+        $("#tb_pontos").html("");
+        $("#divListaCondicaoPontos").hide();
+    });
+</script>    
+
+<script>
+    function openModalDownload() {
+        $("#tb_pontos").html("");
+        $("#divListaCondicaoPontos").hide();
+        $('#modal-header').addClass("modal-info");
+        $('#modalDownload').modal('show');
+
+    }
+
+
+
+
+
+
+
+    function getAnos() {
+        $("#campoAnoHistorico").html("");
+        $.post('https://balneabilidade.ima.sc.gov.br/registro/anosAnalisados',
+            function(data, status) {
+                if (status == "success") {
+                    var anos = jQuery.parseJSON(data);
+                    for (var i in anos) {
+                        var option = document.createElement("option");
+                        option.setAttribute("value", anos[i].ANO);
+                        option.appendChild(document.createTextNode(anos[i].ANO));
+                        $("#campoAnoHistorico").append(option);
+                    }
+                }
+            });
+    }
+</script>
+
+<div class="modal fade" id="modalDownload" tabindex="-1" role="dialog" aria-labelledby="modalDownload" aria-hidden="true" style="z-index: 999999">
+    <div class="modal-dialog ">
+        <div class="modal-content">
+            <div class="modal-header modal-info" id="modal-header">
+                <h5 class="modal-title" id="modalHistoricoLabel">Relatório de Balneabilidade</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label style="font-size: 12px">Selecione o relatório para download. </label>
+
+                <div class="table-responsive" id="divTabelaRelatorio">
+                    <table class="table table-striped table" style="text-align: center">
+                        <thead class="thead-dark">
+                            <th>RELATÓRIO </th>
+                            <th>DATA</th>
+                        </thead>
+                        <tbody id="tabelaRelatorios">
+                                                            <tr>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-09-10">44/2026</a></td>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-09-10">10/09/2026</a></td>
+                                </tr>
+                                                            <tr>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-09-02">43/2026</a></td>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-09-02">02/09/2026</a></td>
+                                </tr>
+                                                            <tr>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-08-28">42/2026</a></td>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-08-28">28/08/2026</a></td>
+                                </tr>
+                                                            <tr>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-08-18">41/2026</a></td>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-08-18">18/08/2026</a></td>
+                                </tr>
+                                                            <tr>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-08-11">40/2026</a></td>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-08-11">11/08/2026</a></td>
+                                </tr>
+                                                            <tr>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-08-04">39/2026</a></td>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-08-04">04/08/2026</a></td>
+                                </tr>
+                                                            <tr>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-07-31">38/2026</a></td>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-07-31">31/07/2026</a></td>
+                                </tr>
+                                                            <tr>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-07-23">37/2026</a></td>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-07-23">23/07/2026</a></td>
+                                </tr>
+                                                            <tr>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-07-14">36/2026</a></td>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-07-14">14/07/2026</a></td>
+                                </tr>
+                                                            <tr>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-07-07">35/2026</a></td>
+                                    <td><a target="_blank" href="https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/2026-07-07">07/07/2026</a></td>
+                                </tr>
+                                                    </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+    
+
+
+    
+    <div class="container-fluid" style="padding: 0px">
+        <div class="row" style="margin: 0px;padding: 0px;" >
+            <div class="col-sm-2" style="padding: 0px;">
+                <!--                HEADER-->
+                <!--MENU INICIO-->
+                <link href="https://balneabilidade.ima.sc.gov.br/assets/css/bootstrap.css" rel="stylesheet">
+<div class="nav-side-menu">
+    <div class="brand d-none d-sm-block"><img class="company-logo" src="https://balneabilidade.ima.sc.gov.br/assets/img/IMA_LOGO.jpg"/></div>
+    <div class="brand d-md-none" style="height: 50px; background-color: #01a0e4; color: #fff; font-weight: bold"><b>BALNEABILIDADE</b></div>
+    <i class="fa fa-bars fa-2x toggle-btn" data-toggle="collapse" data-target="#menu-content"></i>
+
+    <div class="menu-list">
+
+
+        <ul id="menu-content" class="menu-content collapse out ">
+            <li style="text-align: center; font-weight: bold" class="nome-sistema d-none d-sm-block">
+                <a href="https://balneabilidade.ima.sc.gov.br/" target="_blank">BALNEABILIDADE</a>
+            </li>
+
+            <li>
+                <a href="#" onclick="minhaLocalizacao()">
+                     <i class="fas fa-compass"></i> Minha Localização
+                </a>
+            </li>
+            <li>
+                <a href="https://balneabilidade.ima.sc.gov.br/">
+                    <i class="fas fa-map-marked-alt"></i> MAPA
+                </a>
+            </li>
+
+            <li>
+                <a href="#" onclick="openModalDownload()"">
+                    <i class="fas fa-clipboard-list"></i> Relatório de Balneabilidade
+                </a>
+            </li>
+
+            <li>
+                <a href="#" onclick="openModalPraia()">
+                    <i class="fas fa-umbrella-beach"></i> Praias
+                </a>
+            </li>
+            <li>
+                <a href="#" onclick="openModalHistorico()">
+                    <i class="fas fa-history"></i> Histórico
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>                <!--MENU FIM-->
+            </div>
+            <div class="col-sm-10" style="padding: 0px;">
+<!--                <div style="width: 100%;">
+                    <div class="row top d-none d-sm-block" style="margin-right: 0px;">
+    
+    <div class="col-md-2 d-none d-sm-block">
+       
+    </div>
+    <div class="col-md-3 d-none d-sm-block">
+       
+    </div>
+    <div class="col-md-3 d-none d-sm-block">
+       
+    </div>
+    
+</div>
+
+    
+                </div>-->
+<style type="text/css">
+    html,
+    body,
+    #map {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+    }
+
+    .table-middle {
+        vertical-align: middle;
+    }
+
+    td {
+        vertical-align: middle;
+    }
+</style>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H5X3HB7V96"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-H5X3HB7V96');
+</script>
+
+<script src="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/build/ol.js"></script>
+<link rel="stylesheet" href="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/css/ol.css">
+<script>
+    function tryLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(init, function() {
+                initSemGPS();
+                openModalAlert("ERRO DE COORDENADA", "NÃO FOI POSSÍVEL RECUPERAR SUAS COORDENADAS.<br>Verifique se seu dispositivo é compatível ou se a localização está ativa.", "alert");
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            initSemGPS();
+            openModalAlert("ERRO DE COORDENADA", "NÃO FOI POSSÍVEL RECUPERAR SUAS COORDENADAS.<br>Verifique se seu dispositivo é compatível ou se a localização está ativa.", "alert");
+        }
+    }
+
+    function minhaLocalizacao() {
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(centralizaMinhaLocalizacao, function() {
+                openModalAlert("ERRO DE COORDENADA", "NÃO FOI POSSÍVEL RECUPERAR SUAS COORDENADAS.<br>Verifique se seu dispositivo é compatível ou se a localização está ativa.", "alert");
+
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            openModalAlert("ERRO DE COORDENADA", "NÃO FOI POSSÍVEL RECUPERAR SUAS COORDENADAS.<br>Verifique se seu dispositivo é compatível ou se a localização está ativa.", "alert");
+        }
+    }
+
+
+
+    function centralizaPraia(latitude, longitude) {
+        var lat = parseFloat(latitude);
+        var lon = parseFloat(longitude);
+        map.getView().setCenter(ol.proj.fromLonLat([lon, lat]));
+        map.getView().setZoom(15);
+    }
+
+    // Monta a tabela das últimas 5 análises (carregadas sob demanda no clique).
+    function montaTabelaAnalises(analises) {
+        if (!analises || !analises.length) {
+            return "<div style='padding:15px'>Sem análises recentes para este ponto.</div>";
+        }
+        var html = "<div class='table-responsive'><table class='table table-striped align-middle' style='text-align:center;'><tr><th class='align-middle'>Data</th><th class='align-middle'>Condição*</th><th class='align-middle'>Chuva nas últimas 24 horas**</th><th class='align-middle'>Temp. Água (ºC)</th><th class='align-middle'>Concentração de <em>E. coli</em> (NMP/100mL)</th></tr>";
+        for (var j in analises) {
+            var color = (analises[j].CONDICAO === 'PRÓPRIO') ? 'blue' : (analises[j].CONDICAO === 'INDETERMINADO' ? 'grey' : 'red');
+            html += "<tr><td>" + analises[j].DATA + "</td><td><b><font color='" + color + "'>" + analises[j].CONDICAO + "</font></b></td><td>" + analises[j].CHUVA + "</td><td>" + analises[j].TEMP_AGUA + "</td><td>" + analises[j].RESULTADO + "</td></tr>";
+        }
+        html += "</table></div><br><br>";
+        html += "<p style='text-align:justify; font-size:10px'>* Um ponto é considerado próprio quando em 4 das últimas 5 coletas o resultado de concentração de <em>E. coli</em> for inferior a 800 NMP/100mL, ressalvada também a condição que o resultado mais recente seja inferior a 2.000 NMP/100mL.</p>";
+        html += "<p style='text-align:justify; font-size:10px'>** Precipitações pluviométricas intensas podem afetar o resultado da balneabilidade em função da lavagem de vias públicas, extravasamentos de estações elevatórias de esgoto, saturação de solos contaminados, ligações clandestinas em drenagem pluvial, entre outros.</p>";
+        return html;
+    }
+
+    // Busca as análises do ponto no clique e abre o modal (com botão de rota).
+    function abrirAnalisesPonto(f) {
+        var balneario = f.get('balneario');
+        var cabecalho = f.get('municipio') + "<br>" + f.get('localizacao') + "<br>" + f.get('ponto') + "<br><br>";
+        var botaoRota = '';
+        try {
+            var coord = ol.proj.toLonLat(f.getGeometry().getCoordinates());
+            botaoRota = '<br><a href="https://www.google.com/maps/dir/?api=1&destination=' + coord[1] + ',' + coord[0] + '" target="_blank" class="btn btn-block btn-secondary" style="margin-top:10px;"><i class="fas fa-directions"></i> COMO CHEGAR?</a>';
+        } catch (e) {}
+        $.post("https://balneabilidade.ima.sc.gov.br/relatorio/analisesPonto", { codigo: f.get('codigo') }, function(data) {
+            var analises = (typeof data === 'string') ? jQuery.parseJSON(data) : data;
+            openModalAlert(balneario, cabecalho + montaTabelaAnalises(analises) + botaoRota, "info");
+        });
+    }
+
+    function init(coordenadas) {
+
+        // Try HTML5 geolocation.
+        var vectorSource = new ol.source.Vector();
+        var vectorLayer = new ol.layer.Vector({
+            source: vectorSource
+        });
+
+        var basemap = new ol.layer.Tile({
+            source: new ol.source.OSM(),
+        })
+
+        var googleSatelite = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: 'http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}',
+                maxZoom: 19,
+            })
+        });
+
+        basemap.setOpacity(0.35);
+
+        map = new ol.Map({
+            target: 'map',
+            layers: [
+                googleSatelite, basemap, vectorLayer
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([-50.2766086, -28.6179381]),
+                zoom: 7
+
+            })
+        });
+
+
+
+
+        var bandeiraVermelha = new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.2, 1],
+                src: 'https://balneabilidade.ima.sc.gov.br/assets/img/bandeira_vermelha.png'
+            })
+        });
+
+        var bandeiraAzul = new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.2, 1],
+                src: 'https://balneabilidade.ima.sc.gov.br/assets/img/bandeira_azul.png'
+            })
+        });
+
+        var bandeiraCinzal = new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.2, 1],
+                src: 'https://balneabilidade.ima.sc.gov.br/assets/img/bandeira_cinza.png'
+            })
+        });
+
+
+
+
+        $.post("https://balneabilidade.ima.sc.gov.br/relatorio/mapa",
+            function(data, status) {
+
+                if (status == "success") {
+                    var pontos = jQuery.parseJSON(data);
+                    var cont = 0;
+                    for (var i in pontos) {
+                        cont++;
+
+                        if ((pontos[i].LONGITUDE !== '') && (pontos[i].LATITUDE !== '')) {
+                            var lon = parseFloat(pontos[i].LONGITUDE);
+                            var lat = parseFloat(pontos[i].LATITUDE);
+                            var cond = pontos[i].CONDICAO;
+
+                            var feature = new ol.Feature({
+                                type: 'click',
+                                codigo: pontos[i].CODIGO,
+                                municipio: pontos[i].MUNICIPIO,
+                                balneario: pontos[i].BALNEARIO,
+                                ponto: pontos[i].PONTO_NOME,
+                                localizacao: pontos[i].LOCALIZACAO,
+                                geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat]))
+                            });
+
+                            if (cond === 'PRÓPRIO') {
+                                feature.setStyle(bandeiraAzul);
+                            } else if (cond === 'IMPRÓPRIO') {
+                                feature.setStyle(bandeiraVermelha);
+                            } else {
+                                feature.setStyle(bandeiraCinza);
+                            }
+
+                            vectorSource.addFeature(feature);
+
+                        }
+                    }
+                }
+            });
+
+
+
+        map.on('click', function(evt) {
+
+            var f = map.forEachFeatureAtPixel(
+                evt.pixel,
+                function(ft, layer) {
+                    return ft;
+                }, {
+                    hitTolerance: 2
+                }
+            );
+
+            if (f && f.get('type') == 'click') {
+                //                var geometry = f.getGeometry();
+
+
+
+
+                abrirAnalisesPonto(f);
+
+            }
+
+        });
+    }
+
+    function initSemGPS() {
+
+        // Try HTML5 geolocation.
+        vectorSource = new ol.source.Vector();
+        var vectorLayer = new ol.layer.Vector({
+            source: vectorSource
+        });
+
+
+        /*    var layers = [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM(),
+                }),
+                new ol.layer.Tile({
+                    source: new ol.source.TileWMS({
+                        url: 'http://sigsc.sc.gov.br/sigserver/SIGSC/wms',
+                        params: {
+                            'LAYERS': 'OrtoRGB-Landsat-2012',
+                            'TILED': true
+                        },
+                        serverType: 'geoserver',
+                        // Countries have transparency, so do not fade tiles:
+                        transition: 0,
+                    }),
+                }),
+                vectorLayer
+            ];
+
+            map = new ol.Map({
+                target: 'map',
+                layers,
+                view: new ol.View({
+                    center: ol.proj.fromLonLat([-48.5524258,-27.598288]),
+                    zoom: 7.7
+                })
+            });
+            
+            https://basemapstyles-api.arcgis.com/arcgis/rest/services/styles/v2/webmaps/osm/hybrid
+            */
+
+
+        var basemap = new ol.layer.Tile({
+            source: new ol.source.OSM(),
+        })
+
+        //http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}
+        googleSatelite = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: 'http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}',
+                maxZoom: 19,
+            })
+        });
+
+        var myStyle = new ol.style.Style({
+            fill: new ol.style.Fill({
+                color: [255, 255, 255, 0.0],
+            }),
+            stroke: new ol.style.Stroke({
+                color: "white",
+                width: 1,
+            })
+        });
+
+
+        var limiteSC = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                url: 'https://balneabilidade.ima.sc.gov.br//assets/Limite_Estadual.json',
+                format: new ol.format.GeoJSON(),
+            }),
+            style: myStyle
+        });
+
+
+        // OpenStreetMap apenas com nomes de ruas
+        var osmLabels = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: 'https://{a-c}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
+                attributions: '© OpenStreetMap contributors & CARTO'
+            })
+        });
+
+        map = new ol.Map({
+            target: 'map',
+            layers: [
+                basemap, googleSatelite, osmLabels, limiteSC, vectorLayer
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([-50.2766086, -28.6179381]),
+                zoom: 7.7
+            })
+        });
+
+        /*
+
+                map = new ol.Map({
+                    target: 'map',
+                    layers: [
+                        new ol.layer.Tile({
+                            source: new ol.source.OSM()
+                        }), vectorLayer
+                    ],
+                    view: new ol.View({
+                        center: ol.proj.fromLonLat([-48.5524258,-27.598288]),
+                        zoom: 7.7
+                    })
+                });
+        */
+        var bandeiraVermelha = new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.2, 1],
+                src: 'https://balneabilidade.ima.sc.gov.br/assets/img/bandeira_vermelha.png'
+            })
+        });
+
+        var bandeiraAzul = new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.2, 1],
+                src: 'https://balneabilidade.ima.sc.gov.br/assets/img/bandeira_azul.png'
+            })
+        });
+
+        var bandeiraCinza = new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.2, 1],
+                src: 'https://balneabilidade.ima.sc.gov.br/assets/img/bandeira_cinza.png'
+            })
+        });
+
+
+
+        $.post("https://balneabilidade.ima.sc.gov.br/relatorio/mapa",
+            function(data, status) {
+                //console.log(data);
+                if (status == "success") {
+                    var pontos = jQuery.parseJSON(data);
+                    var cont = 0;
+                    for (var i in pontos) {
+                        cont++;
+                        //console.log(pontos[i]);
+                        if ((pontos[i].LONGITUDE !== '') && (pontos[i].LATITUDE !== '')) {
+                            var lon = parseFloat(pontos[i].LONGITUDE);
+                            var lat = parseFloat(pontos[i].LATITUDE);
+                            var cond = pontos[i].CONDICAO;
+
+                            var feature = new ol.Feature({
+                                type: 'click',
+                                codigo: pontos[i].CODIGO,
+                                municipio: pontos[i].MUNICIPIO,
+                                balneario: pontos[i].BALNEARIO,
+                                ponto: pontos[i].PONTO_NOME,
+                                localizacao: pontos[i].LOCALIZACAO,
+                                geometry: new ol.geom.Point(ol.proj.fromLonLat([lon, lat]))
+                            });
+
+                            if (cond === 'PRÓPRIO') {
+                                feature.setStyle(bandeiraAzul);
+                            } else if (cond === 'IMPRÓPRIO') {
+                                feature.setStyle(bandeiraVermelha);
+                            } else {
+                                feature.setStyle(bandeiraCinza);
+                            }
+
+
+
+
+
+
+                            vectorSource.addFeature(feature);
+
+                        }
+                    }
+                }
+            });
+
+
+        //        var feature = new ol.Feature({
+        //            type: 'click',
+        //            geometry: new ol.geom.Point(ol.proj.fromLonLat([coordenadas.coords.longitude, coordenadas.coords.latitude]))
+        //        });
+        //        feature.setStyle(bandeiraAzul);
+        //        vectorSource.addFeature(feature);
+
+        map.on('click', function(evt) {
+
+            var f = map.forEachFeatureAtPixel(
+                evt.pixel,
+                function(ft, layer) {
+                    return ft;
+                }, {
+                    hitTolerance: 2
+                }
+            );
+
+            if (f && f.get('type') == 'click') {
+                //                var geometry = f.getGeometry();
+
+                // Obter as coordenadas do ponto
+                var coord = f.getGeometry().getCoordinates();
+                var lonLat = ol.proj.toLonLat(coord);
+                var lon = lonLat[0];
+                var lat = lonLat[1];
+
+                // Criar o link do Google Maps para a rota
+                var googleMapsLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+
+                // Adicionar um botão no modal para abrir o Google Maps
+                var botaoRota = `<br><a href="${googleMapsLink}" target="_blank" class="btn btn-block btn-secondary" style="margin-top:10px;"><i class="fas fa-directions"></i> COMO CHEGAR?</a>`;
+
+                
+
+                abrirAnalisesPonto(f);
+
+            }
+
+        });
+    }
+
+
+
+    function centralizaMinhaLocalizacao(coordenadas) {
+        var longitude = coordenadas.coords.longitude;
+        var latitude = coordenadas.coords.latitude;
+
+        console.log("Coordenadas recebidas:", longitude, latitude); // 🔍 Depuração
+
+        // Criando a feature para a bandeira
+        var minhaLocalizacao = new ol.Feature({
+            geometry: new ol.geom.Point(ol.proj.fromLonLat([longitude, latitude]))
+        });
+
+        // Definindo o estilo da bandeira
+        var minhaLocalizacaoImg = new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.5, 1], // Ajuste conforme necessário
+                src: 'https://balneabilidade.ima.sc.gov.br/assets/img/myMarker.png',
+                scale: 1 // Ajuste o tamanho se necessário
+            })
+        });
+
+        minhaLocalizacao.setStyle(minhaLocalizacaoImg);
+
+        // Verificando se vectorSource existe
+        if (!vectorSource) {
+            console.error("vectorSource não está definido!");
+            return;
+        }
+
+
+
+        // Limpando o vectorSource e adicionando a nova feature
+        // vectorSource.clear(); // Remove ícones anteriores
+        vectorSource.addFeature(minhaLocalizacao);
+
+
+
+        // Centraliza e ajusta o zoom
+        map.getView().setCenter(ol.proj.fromLonLat([longitude, latitude]));
+        map.getView().setZoom(16);
+    }
+
+    function ajustarOpacidade(valor) {
+        googleSatelite.setOpacity(parseFloat(valor));
+    }
+</script>
+
+
+
+<div style="width: 100%;">
+
+
+
+    <div class="row" style="margin:0px;padding: 0px;min-height: 100vh; background-color: #e9ecef">
+        <div id="sliderContainer" class="d-none d-sm-block" style="position: absolute; bottom: 300px; right: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.8); padding: 2px;padding-right:3px; border-radius: 5px;width:132px">
+            <input type="range" id="opacitySlider" min="0" max="1" step="0.1" value="1" onchange="ajustarOpacidade(this.value)">
+        </div>
+        <div id="sliderContainer" class="d-sm-none" style="position: absolute; bottom: 150px; left: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.8); padding: 2px;padding-right:3px; border-radius: 5px;width:132px">
+            <input type="range" id="opacitySlider" min="0" max="1" step="0.1" value="1" onchange="ajustarOpacidade(this.value)">
+        </div>
+        <!--corpo-->
+        <!--        <div class="breadcrumb-top" >
+                    PASSO A PASSO PARA HOMOLOGAÇÃO
+                </div>
+                <div class="conteudo">
+                    
+                </div>-->
+        <div class="jumbotron" style="width: 100%;padding: 0rem 0rem;">
+            <div id="map"></div>
+
+            <div id="myLocation" class="d-md-none" style="position: absolute;z-index: 9999;color:#01a0e4; top:85px; left: 15px;font-size: 25px;cursor: pointer">
+                <img src="https://balneabilidade.ima.sc.gov.br/assets/img/myLocation.png" onclick="minhaLocalizacao()" />
+            </div>
+
+            <div id="myLocation" style="position: absolute;z-index: 9999;bottom:150px; right: 10px;border:1px solid #000; background-color: #fff;height: 140px; width: 130px ">
+                <label style="font-size: 12px;padding-left: 25px"><b>Legenda</b></label><br>
+                <img style="padding-left: 2px" src="https://balneabilidade.ima.sc.gov.br/assets/img/bandeira_azul.png" /> <label style="color: blue;font-size: 12px">Próprio</label><br>
+                <img style="padding-left: 2px" src="https://balneabilidade.ima.sc.gov.br/assets/img/bandeira_vermelha.png" /> <label style="color: red;font-size: 12px">Impróprio</label><br>
+                <img style="padding-left: 2px" src="https://balneabilidade.ima.sc.gov.br/assets/img/bandeira_cinza.png" /> <label style="color: grey;font-size: 12px">Indeterminado</label>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        initSemGPS();
+    });
+</script>
+
+
+
+</div>
+</div>
+
+</div>
+
+
+</body>
+</html>
+
