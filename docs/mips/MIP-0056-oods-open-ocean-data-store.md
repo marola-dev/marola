@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft — `Tasks: docs/mips/MIP-0056.tasks.md` |
+| **Status** | Accepted — `Tasks: docs/mips/MIP-0056.tasks.md` |
 | **Author** | Claude Fable 5.1, from M. Hoffmann's brief of 2026-09-14 ("production-grade data management for water quality … OODS … first step a GHA ingesting IMA/SC … incremental and backfill … STATE or CITY as a parameter, adapters per use case … a common view for all BR data") |
 | **Created** | 2026-09-14 |
 | **Phase** | 0 — an offline data pipeline and a versioned dataset; nothing waits on the Telegram bot, no Azure resource |

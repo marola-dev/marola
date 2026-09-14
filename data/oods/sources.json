@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "ima-sc",
+      "institute": "IMA — Instituto do Meio Ambiente de Santa Catarina",
+      "state": "SC",
+      "country": "BR",
+      "urls": {
+        "export_csv": "https://balneabilidade.ima.sc.gov.br/relatorio/exportarCSV",
+        "years": "https://balneabilidade.ima.sc.gov.br/registro/anosAnalisados",
+        "municipalities": "https://balneabilidade.ima.sc.gov.br/municipio/getMunicipios",
+        "beaches": "https://balneabilidade.ima.sc.gov.br/local/getLocaisByMunicipio",
+        "points": "https://balneabilidade.ima.sc.gov.br/relatorio/mapa"
+      },
+      "cadence": "weekly in season, monthly off season",
+      "licence": "none granted; public administrative information (LAI, Lei 12.527/2011)"
+    }
+  ]
+}
