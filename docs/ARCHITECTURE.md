@@ -272,7 +272,7 @@ configured (so `Main` can fail gracefully with a clear message rather than a sta
 | 5d | Sighting reports | JSON-lines file | Cosmos DB container | `MAROLA_SIGHTING_STORE_PROVIDER=azure` |
 | 5e | Photo analysis | Multimodal Ollama model (`llava`) | Azure AI Vision Image Analysis | `MAROLA_VISION_PROVIDER=azure` |
 | 5f | Observability | Off (no-op); `MAROLA_TRACES=mlflow` → OTLP traces into the local MLflow server (MIP-0010) | Application Insights via OpenTelemetry | `MAROLA_TRACES=off\|mlflow\|azure` (unset + `APPLICATIONINSIGHTS_CONNECTION_STRING` ⇒ `azure`) |
-| 5g | Bathing-water quality (MIP-0001) | IMA/SC feed, auto-selected when the origin is in Santa Catarina; `none` elsewhere | *(none — regional agencies, not a cloud service; see MIP-0001 §5.2)* | `MAROLA_WATER_QUALITY_PROVIDER=auto\|ima-sc\|none` |
+| 5g | Bathing-water quality (MIP-0001) | IMA/SC feed, auto-selected when the origin is in Santa Catarina; `none` elsewhere. Behind it: the weekly bulletin PDF, then the last good fetch — and, once it is wired, the OODS store (MIP-0056) | *(none — regional agencies, not a cloud service; see MIP-0001 §5.2)* | `MAROLA_WATER_QUALITY_PROVIDER=auto\|ima-sc\|none` |
 | 5h | Ocean knowledge Q&A — local RAG (MIP-0001, `FUTURE-WORK.md` §9.1) | `knowledge/*.md` embedded by Ollama (`llama3.2` itself by default), JSON index under `data/` | *(not built — Azure AI Search is the obvious sibling in Phase 2)* | `MAROLA_LOCAL_EMBED_MODEL`, `MAROLA_KNOWLEDGE_DIR` |
 
 ### 5a. Query synthesis — `llm/`
@@ -496,6 +496,13 @@ refuses inland-water points (LAGOA/CANAL/RIO...), because Lagoa da Conceição's
   LLM. The reviewer does **not** receive the lore (deviation from MIP-0001 §5.4, deliberately:
   the lore never enters a model, so there is nothing for the reviewer to check).
 - `SightingKind.Pollution`; MCP gains `get_water_quality` and `water_quality`/`tides` fields.
+- **The store behind both channels** (MIP-0056): `oods/` ingests IMA/SC's per-beach CSV history
+  into `data/oods/` — raw bytes, a manifest, Parquet partitions queried with DuckDB — daily, in
+  `.github/workflows/oods-ingest.yml`. It is 23 years of samples instead of the feed's last five,
+  and it is meant to become the third fallback under the feed and the bulletin PDF. Not yet read
+  by the app: the `latest/` export that `CachedWaterQualityClient` would consume is MIP-0056's own
+  follow-up task. See `docs/RUN-LOCALLY.md` for the commands and `data/oods/README.md` for
+  provenance.
 
 **Status — verified live from Campeche on 2026-09-05:** Ponto 73 (Riozinho) shows IMPRÓPRIA with
 749 enterococci/100mL, the other four PRÓPRIA, Campeche scores −20 with the location named; tide

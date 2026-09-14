@@ -439,7 +439,41 @@ of the `marola` services passes the two variables through from your shell/`.env`
 and omits them otherwise (the `mlflow` profile is independent: `--profile mlflow --profile ollama`
 starts both, neither depends on the other).
 
-## 12. What this guide deliberately doesn't cover
+## 12. The OODS store — bathing-water history in git (MIP-0056)
+
+Optional and offline once it is fetched: `oods/` ingests IMA/SC's per-beach CSV export (2003
+onwards, one file per beach-year) into `data/oods/`, rebuilds Parquet partitions from it with
+DuckDB, and checks them. No Ollama, no Azure, no database server.
+
+```bash
+just oods-ingest --source ima-sc --mode incremental --dry-run   # plan only: what would be fetched
+just oods-ingest --source ima-sc --mode incremental             # today's partitions (~143 CSVs)
+just oods-ingest --source ima-sc --mode backfill --from 2003 --to 2026   # ~20 min of polite fetching
+just oods-build                                                  # raw + points.json -> parquet/
+just oods-check                                                  # schema, keys, orphans; free with no store
+just oods-sql "SELECT count(*) FROM br_bathing_water"            # duckdb with views.sql loaded
+```
+
+What lands on disk:
+
+```
+data/oods/
+  sources.json                     the registry: institute, urls, cadence, licence status
+  manifest/ima-sc.json             per raw file: url, sha256, bytes, fetched_at, rows
+  raw/ima-sc/points.json           the sampling-point registry, sorted
+  raw/ima-sc/csv/<city>/<beach>/<year>.csv    the export's bytes, verbatim
+  parquet/ima-sc/points.parquet
+  parquet/ima-sc/samples/year=YYYY/samples.parquet
+```
+
+`.github/workflows/oods-ingest.yml` runs the same three commands daily and commits what changed to
+the ref it ran on. **Two human decisions stand before its first scheduled run on `main`** (MIP-0056
+§11): the `main-rule` ruleset requires a pull request, so the push needs GitHub Actions added as a
+bypass actor (preferred, keyless) or a fine-grained `OODS_PUSH_TOKEN`; and the data's licence is
+undecided — IMA has granted none, so `data/oods/README.md` states the source and the LAI basis and
+carries no licence badge until that is settled.
+
+## 13. What this guide deliberately doesn't cover
 
 Telegram bot setup (there is no bot loop yet — see `TELEGRAM-SETUP.md` for credential setup ahead
 of that Phase 1 work) and any Azure integration (`ARCHITECTURE.md` §5/§6, all optional, none needed

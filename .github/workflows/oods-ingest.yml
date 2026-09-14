@@ -1,0 +1,143 @@
+name: oods ingest (fetch, build, commit the store)
+
+# MIP-0056 §5.4: fetch IMA/SC's CSV history, rebuild the Parquet partitions that moved, check them,
+# and commit the result to the ref this ran on — the store is data in git, not a database.
+#
+# On `main` this pushes only once a human adds the GitHub Actions integration as a bypass actor on
+# the `main-rule` ruleset (or stores a fine-grained PAT); until then the push step fails there.
+
+on:
+  schedule:
+    # Daily: IMA publishes on irregular weekdays, so polling beats guessing (MIP-0056 §4.1).
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "source id from data/oods/sources.json"
+        type: choice
+        default: ima-sc
+        options: [ima-sc]
+      mode:
+        # incremental refetches only the mutable partitions (the current year); backfill walks
+        # from_year..to_year and is ~20 minutes of polite fetching.
+        description: "incremental (today's partitions) or backfill (a year range)"
+        type: choice
+        default: incremental
+        options: [incremental, backfill]
+      from_year:
+        description: "first year of a backfill (ignored by incremental)"
+        type: string
+        default: "2003"
+      to_year:
+        description: "last year of a backfill (blank = the current year)"
+        type: string
+        default: ""
+      dry_run:
+        description: "plan only — fetch nothing, write nothing, commit nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# Two ingests would race on the same files; a queued run waits rather than cancelling fetches
+# already paid for.
+concurrency:
+  group: oods-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The commit step pushes back to this ref, so check it out by name rather than the
+          # detached SHA a schedule hands us.
+          ref: ${{ github.ref_name }}
+          fetch-depth: 1
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/.sbt
+            ~/.ivy2/cache
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt', 'project/**') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+
+      - uses: sbt/setup-sbt@v1
+
+      # A failed partition makes the CLI exit non-zero *after* writing what succeeded, so the run
+      # continues to build, check and commit that; the last step re-asserts the failure.
+      - name: Ingest
+        id: ingest
+        continue-on-error: true
+        env:
+          SOURCE: ${{ inputs.source || 'ima-sc' }}
+          MODE: ${{ inputs.mode || 'incremental' }}
+          FROM_YEAR: ${{ inputs.from_year }}
+          TO_YEAR: ${{ inputs.to_year }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          args="--source $SOURCE --mode $MODE"
+          if [ -n "${FROM_YEAR:-}" ]; then args="$args --from $FROM_YEAR"; fi
+          if [ -n "${TO_YEAR:-}" ]; then args="$args --to $TO_YEAR"; fi
+          if [ "${DRY_RUN:-false}" = "true" ]; then args="$args --dry-run"; fi
+          echo "oods/run $args"
+          sbt -batch "oods/run $args"
+
+      # DuckDB's globs raise on a store with no raw files at all — a dry run, or a first run on a
+      # branch that has no data yet.
+      - name: Build the Parquet partitions
+        run: |
+          set -euo pipefail
+          if [ ! -d data/oods/raw ]; then
+            echo "oods-build: no data/oods/raw — nothing to build"
+            exit 0
+          fi
+          sbt -batch -error "oods/runMain marola.oods.BuildMain"
+
+      - name: Check the store
+        run: |
+          set -euo pipefail
+          sbt -batch -error "oods/runMain marola.oods.CheckMain" | tee "$RUNNER_TEMP/oods-check.txt"
+
+      - name: Commit the store
+        if: ${{ inputs.dry_run != true }}
+        env:
+          SOURCE: ${{ inputs.source || 'ima-sc' }}
+          MODE: ${{ inputs.mode || 'incremental' }}
+        run: |
+          set -euo pipefail
+          # New CSVs are untracked, so the worktree diff cannot see them: stage first, then let the
+          # index decide whether there is anything to commit.
+          git add -- data/oods
+          if git diff --cached --quiet -- data/oods; then
+            echo "data/oods unchanged — nothing to commit"
+            exit 0
+          fi
+          files="$(git diff --cached --name-only -- data/oods | wc -l)"
+          check="$(grep '^oods-check:' "$RUNNER_TEMP/oods-check.txt" | head -1)"
+          # The ingest report counts partitions, not rows; oods-check's sample count is the store's
+          # only row figure, so the message carries the post-run total.
+          rows="$(printf '%s' "$check" | sed -n 's/^oods-check: [0-9]* files, \([0-9]*\) samples.*/\1/p')"
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "data(oods): $SOURCE $MODE $(date -u +%Y-%m-%d) — $files files, ${rows:-0} rows" \
+                     -m "Tested: oods-check — ${check:-not run}" \
+                     -m "Cost: \$0"
+          git push origin "HEAD:${{ github.ref_name }}"
+          git --no-pager show --stat --oneline HEAD | head -20
+
+      - name: Re-assert the ingest failure
+        if: steps.ingest.outcome == 'failure'
+        run: |
+          echo "::error::a partition failed to ingest — what succeeded was built and committed; see the Ingest step's log"
+          exit 1
