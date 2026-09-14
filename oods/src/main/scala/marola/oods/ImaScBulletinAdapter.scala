@@ -28,7 +28,8 @@ final class ImaScBulletinAdapter(
     now: () => Instant = () => Instant.now()
 ) extends SourceAdapter:
 
-  private val cachedIndex = AtomicReference[Option[Map[(String, String), PointRow]]](None)
+  private val cachedIndex =
+    AtomicReference[Option[Either[String, Map[(String, String), PointRow]]]](None)
   private val cachedArchive = AtomicReference[Map[String, String]](Map.empty)
 
   def partitions(plan: Plan): List[Partition] < Sync =
@@ -58,7 +59,8 @@ final class ImaScBulletinAdapter(
     val path = rawPath(raw.partition)
     cachedIndex.get match
       case None => Left(ParseError(path, "points registry not loaded — fetch `points` first"))
-      case Some(index) =>
+      case Some(Left(collision)) => Left(ParseError(path, collision))
+      case Some(Right(index)) =>
         for
           on <- Try(LocalDate.parse(raw.partition.key)).toEither.left.map(_ =>
             ParseError(path, s"'${raw.partition.key}' is not a bulletin date")
@@ -125,12 +127,21 @@ object ImaScBulletinAdapter:
    * The bulletin names a beach and a point and no municipality, and (beach, point) is unique across
    * all 260 feed points — the CSV's (municipio, beach, point) triple would only lose matches here,
    * because the bulletin's spelling ("PRAIA DO BALN. CAMBORIÚ") is not the portal database's.
+   *
+   * That uniqueness is a property of the feed, not a guarantee, and silently keeping one of two
+   * colliding points would hang a verdict on another beach's coordinates — so it is checked on
+   * every run and refused, never resolved.
    */
-  private def index(points: List[PointRow]): Map[(String, String), PointRow] =
-    points
-      .sortBy(_.pointKey)
-      .map(p => (norm(p.beachName), norm(p.pointName)) -> p)
-      .toMap
+  private def index(points: List[PointRow]): Either[String, Map[(String, String), PointRow]] =
+    val byPair = points.groupBy(p => (normBeach(p.beachName), norm(p.pointName)))
+    byPair.toList.sortBy(_._1).find(_._2.sizeIs > 1) match
+      case None => Right(byPair.map((pair, ps) => pair -> ps.minBy(_.pointKey)))
+      case Some(((beach, point), clash)) =>
+        Left(
+          s"the feed lists ${clash.size} points as ($beach, $point) — " +
+            s"${clash.map(_.pointKey).sorted.mkString(", ")} — and a bulletin carries no " +
+            "municipality to tell them apart"
+        )
 
   /** Two segments, where the CSV's slug key has three: the two shapes can never collide. */
   private def pointKey(source: Source, beach: String, point: String): String =
@@ -145,9 +156,9 @@ object ImaScBulletinAdapter:
     SampleRow(
       sourceId = source.id,
       pointKey = index
-        .get((norm(row.beachName), norm(row.pointName)))
+        .get((normBeach(row.beachName), norm(row.pointName)))
         .map(_.pointKey)
-        .getOrElse(pointKey(source, row.beachName, row.pointName)),
+        .getOrElse(pointKey(source, withoutPageFooter(row.beachName), row.pointName)),
       sampledOn = row.collectedOn,
       sampledAt = None,
       condition = row.condition,
@@ -164,6 +175,19 @@ object ImaScBulletinAdapter:
     )
 
   private def norm(s: String): String = WaterQualityMatcher.normalise(s)
+
+  private val PageFooter = "(?i)^\\s*p[aá]gina\\s*:?\\s*\\d+\\s+de\\s+\\d+\\s+".r
+
+  /**
+   * Trap: every page's footer shares a line with the heading under it, so `ImaScPdfParser` reads
+   * "Página: 3 de 18 PRAIA DE PIÇARRAS" as one beach name and the real point loses that week's
+   * verdict to a phantom. Stripped here rather than in the parser, whose live client
+   * (`ImaScPdfWaterQualityClient`) has a regression suite of its own over that logic.
+   */
+  private[oods] def withoutPageFooter(beach: String): String =
+    PageFooter.replaceFirstIn(beach, "").trim
+
+  private[oods] def normBeach(beach: String): String = norm(withoutPageFooter(beach))
 
   private val liveGet: String => Array[Byte] < Sync =
     url => Http.getBytes(url, timeoutSeconds = 60, headers = Map("User-Agent" -> Ingest.UserAgent))

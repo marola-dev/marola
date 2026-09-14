@@ -7,6 +7,7 @@ import java.time.{Instant, LocalDate}
 import kyo.*
 
 import marola.oods.Channel
+import marola.water.WaterQualityMatcher
 
 /**
  * The bulletin channel against the captured portal (MIP-0056 §7): which dates each mode plans,
@@ -34,12 +35,19 @@ class ImaScBulletinAdapterSpec extends munit.FunSuite:
     else if url.contains("2023-03-10") then fixture("ima-boletim-sc-2023-03-10.pdf")
     else bulletin2026
 
-  private def adapter(get: String => Array[Byte] = served): ImaScBulletinAdapter =
+  private def adapter(
+      get: String => Array[Byte] = served,
+      feed: => String = String(fixture("points.json"), UTF_8)
+  ): ImaScBulletinAdapter =
     ImaScBulletinAdapter(
       get = url => Sync.defer(get(url)),
-      registry = ImaScAdapter(post = (_, _) => Sync.defer(String(fixture("points.json"), UTF_8))),
+      registry = ImaScAdapter(post = (_, _) => Sync.defer(feed)),
       now = () => Instant.parse("2026-09-14T12:00:00Z")
     )
+
+  private def feedRow(code: String, municipality: String, beach: String, point: String): String =
+    s"""{"CODIGO":"$code","MUNICIPIO":"$municipality","BALNEARIO":"$beach",
+        |"PONTO_NOME":"$point","LATITUDE":"-27.0","LONGITUDE":"-48.0"}""".stripMargin
 
   private def planFor(mode: Mode): Plan =
     Plan(
@@ -118,6 +126,10 @@ class ImaScBulletinAdapterSpec extends munit.FunSuite:
   test("the oldest archived bulletin has the same layout and parses too") {
     val rows = rowsOf(adapter(), "2023-03-10")
     assertEquals(rows.size, 225)
+    // 37 of its beaches are named or numbered differently in today's feed — 2023's "PRAIA DO
+    // BALN. CAMBORIÚ" is the feed's "Praia Central" — and keep a slug key with no coordinates.
+    assertEquals(rows.count(r => uuid.matches(r.pointKey)), 188)
+    assert(rows.forall(!_.pointKey.contains("pagina")), "no page footer may reach a point key")
     assert(
       rows.forall(_.bulletinDate.contains(LocalDate.parse("2023-03-10"))),
       "every row carries the bulletin it came from"
@@ -127,20 +139,76 @@ class ImaScBulletinAdapterSpec extends munit.FunSuite:
   test("a bulletin row the feed lists keeps the portal's UUID; the rest fall back to a slug") {
     val rows = rowsOf(adapter(), "2026-08-28")
     val (keyed, fallback) = rows.partition(r => uuid.matches(r.pointKey))
-    assertEquals(keyed.size, 254)
-    // Four beaches the bulletin spells differently from the feed — and one artefact: a page footer
-    // shares a line with the heading, so `ImaScPdfParser` reads "Página: 3 de 18 PRAIA DE
-    // PIÇARRAS". Asserted rather than worked around here, so fixing the parser flips this test.
+    assertEquals(keyed.size, 255)
+    // Four beaches the bulletin spells differently from the feed, and nothing else.
     assertEquals(
       fallback.map(_.pointKey).sorted,
       List(
         "ima-sc:arroio-da-praia-das-gaivotas/ponto-02",
         "ima-sc:itapoa/ponto-05",
         "ima-sc:lagoa-boca-da-barra-foz-do-canal-do-linguado/ponto-02",
-        "ima-sc:pagina-3-de-18-praia-de-picarras/ponto-01",
         "ima-sc:saudade/ponto-06"
       )
     )
+  }
+
+  test("a heading the parser glued a page footer onto still reaches the feed's own point") {
+    val rows = rowsOf(adapter(), "2026-08-28")
+    val picarras = ImaScAdapter
+      .parsePoints(source, String(fixture("points.json"), UTF_8))
+      .find(p =>
+        WaterQualityMatcher.normalise(p.beachName) == "picarras" && p.pointName == "Ponto 01"
+      )
+      .getOrElse(fail("no Praia de Piçarras Ponto 01 in the feed"))
+    assertEquals(rows.count(_.pointKey == picarras.pointKey), 1)
+    assert(rows.forall(!_.pointKey.contains("pagina")), "no page footer may reach a point key")
+  }
+
+  test("a page footer glued onto a heading keys to the same point as the clean heading") {
+    assertEquals(
+      ImaScBulletinAdapter.normBeach("Página: 3 de 18 PRAIA DE PIÇARRAS"),
+      ImaScBulletinAdapter.normBeach("PRAIA DE PIÇARRAS")
+    )
+    assertEquals(
+      ImaScBulletinAdapter.withoutPageFooter("Pagina: 12 de 18  LAGOA DA CONCEIÇÃO"),
+      "LAGOA DA CONCEIÇÃO"
+    )
+    assertEquals(
+      ImaScBulletinAdapter.withoutPageFooter("PRAIA DE PIÇARRAS"),
+      "PRAIA DE PIÇARRAS",
+      "a clean heading must survive untouched"
+    )
+  }
+
+  /** What makes (beach, point) a safe key at all — checked against the feed, not assumed. */
+  test("the committed points feed has one point per (beach, point) pair") {
+    val feed = ImaScAdapter.parsePoints(source, String(fixture("points.json"), UTF_8))
+    assertEquals(feed.size, 260)
+    val pairs = feed.map(p =>
+      (
+        WaterQualityMatcher.normalise(p.beachName),
+        WaterQualityMatcher.normalise(p.pointName)
+      )
+    )
+    assertEquals(pairs.distinct.size, 260)
+  }
+
+  test("two feed points sharing a (beach, point) pair are refused, not silently resolved") {
+    val clashing =
+      List(
+        feedRow("aaaaaaaa-0000-0000-0000-000000000001", "Itajaí", "Praia Brava", "Ponto 01"),
+        feedRow("bbbbbbbb-0000-0000-0000-000000000002", "Florianópolis", "Brava", "Ponto 01")
+      ).mkString("[", ",", "]")
+    val a = adapter(feed = clashing)
+    val _ = eval(a.points)
+    val partition = Partition(source.id, Channel.Pdf, "2026-08-28", 2026, immutable = true)
+    val raw = eval(a.fetch(partition))
+    a.rows(raw) match
+      case Left(ParseError(_, detail)) =>
+        assert(detail.contains("(brava, ponto 01)"), detail)
+        assert(detail.contains("aaaaaaaa-0000-0000-0000-000000000001"), detail)
+        assert(detail.contains("bbbbbbbb-0000-0000-0000-000000000002"), detail)
+      case other => fail(s"expected a ParseError, got $other")
   }
 
   test("a bulletin parsed before the registry loaded is a ParseError, not a slug-keyed store") {

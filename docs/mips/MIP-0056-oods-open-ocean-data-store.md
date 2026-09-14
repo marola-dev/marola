@@ -362,10 +362,12 @@ run green for a week, and `just oods-sql "SELECT count(*) FROM br_bathing_water"
 - **The PDF channel's Wayback backfill** (189 bulletins) is a one-off download of roughly 57 MB (189 × the ~300 KB observed per bulletin — an estimate); the PDFs
   are not stored, only their parsed rows plus sha256 and URL in the manifest.
 - **The bulletin's join key is (beach, point), not the CSV's (municipio, beach, point)**: the PDF
-  prints no municipality per record, and the 260-point feed has no (beach, point) collision. Four
-  of the 2026-08-28 bulletin's 259 rows spell a beach differently from the feed and keep a
-  two-segment slug key with `geo_source = 'none'`; a fifth is an `ImaScPdfParser` artefact, a page
-  footer read as part of the heading (`ImaScBulletinAdapterSpec` asserts all five).
+  prints no municipality per record, and the 260-point feed has no (beach, point) collision — a
+  property the adapter re-checks on every run and refuses rather than resolves, because keeping
+  one of two colliding points would hang a verdict on another beach's coordinates. Four of the
+  2026-08-28 bulletin's 259 rows, and 37 of the 2023-03-10 bulletin's 225, spell a beach
+  differently from today's feed and keep a two-segment slug key with `geo_source = 'none'`; that
+  is the price of a name join across three years, not a defect.
 
 ## 9. Alternatives considered
 
