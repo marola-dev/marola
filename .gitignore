@@ -43,6 +43,8 @@ result-*
 !/data/.gitkeep
 # The OODS store is versioned data, not runtime output (MIP-0056 §5.1).
 !/data/oods/
+# the raw layer lives in a Hugging Face dataset (MIP-0056 §4.4 revised); the manifest indexes it
+/data/oods/raw/
 /finetune/data/*
 !/finetune/data/.gitkeep
 /finetune/out/*
