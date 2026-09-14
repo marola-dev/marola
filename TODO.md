@@ -29,6 +29,62 @@ itself is 15+ days out.
 - [ ] **UFSC SEPEX / Semana Acadêmica da Computação** — October; invited talks by contacting PET
       Computação / CALICO, no deadline published.
 
+**November–December 2026**
+
+- [ ] **Codecon Meetup Floripa** — monthly-ish, evening, two talks + networking; #20 is 29 Sep at
+      HostGator. Meetup speakers apply by form on [eventos.codecon.dev](https://eventos.codecon.dev/)
+      (contato@codecon.dev otherwise) — ask for #21/#22 (Oct/Nov). Their audience is exactly
+      "cases, DX, reliability".
+- [ ] **Codecon Select Experience 26** — 14 Nov 2026 at STATE Innovation Center; curated, one
+      day, senior crowd. Invite-only line-up — ask via the meetup organisers once a meetup talk
+      has landed.
+- [ ] **AWS User Group Floripa re:Invent re:Cap** — the UG runs a recap after re:Invent (early
+      Dec), usually Dec/Jan, slots by asking on
+      [Meetup](https://www.meetup.com/aws-user-group-floripa/). Angle: marola's opt-in cloud
+      integrations vs. the zero-account local path.
+- [ ] **GDG Floripa DevFest** — DevFest season is Nov/Dec nationally (Recife 5 Dec, Campinas
+      28 Nov); [GDG Floripa](https://gdg.community.dev/gdg-floripa/) lists nothing yet — ask the
+      organisers whether a 2026 edition exists; if not, a regular GDG meetup slot.
+- [ ] **X Semana Acadêmica de Oceanografia (SEA), UFSC** — the IX edition ran 6–10 Oct 2025 at
+      the EFI amphitheatre, Trindade; the X edition should be Oct 2026 (too soon) — write to
+      sea.oceanografia.ufsc@gmail.com now for a 2027 slot. The one room where the sea-conditions
+      heuristic gets peer review from oceanographers.
+- [ ] **Anthropic Community Brazil / Cursor Meetup Florianópolis** — small, informal, agent
+      tooling; no CFP, message the organiser on Meetup / Tech Floripa. Topic: the ai-jail +
+      MIP + cost-trailer workflow, marola as the worked example.
+
+**January–June 2027**
+
+- [ ] **DWX — Data World Xperience 27** — 17–18 Jun 2027 at CentroSul
+      ([Sympla](https://www.sympla.com.br/dwx-data-world-xperience-27__3286455)); data + AI,
+      corporate; speakers via the organisers (no public CFP) — pitch early in 2027.
+- [ ] **Python Sul 2027** — May, city rotates in the South (2026 was Londrina, 1–3 May, CFP
+      closed 31 Mar); watch [sul.python.org.br](https://sul.python.org.br/) — CFP on
+      talks.python.org.br opens ~Feb.
+- [ ] **TDC Floripa 2027** — July; 2026's Call4Papers ran 12 Feb → 12 Apr, so expect the same
+      window. Submit to the IA or Data track.
+- [ ] **Summit de Inteligência Artificial Brasil 2027** — 23–26 Jun 2027 at Ágora Tech Park,
+      Joinville ([site](https://www.summitdeinteligenciaartificial.com/)); 4th in-person
+      edition, has a startup/university exhibition space — a stand or a lightning slot for a
+      local-LLM ocean assistant is on-theme.
+- [ ] **Codecon Summit 27** — 23–24 Jul 2027, Expotrade (Pinhais/Curitiba); CFP listed with
+      the tickets on eventos.codecon.dev, usually ~Mar. Regional, not Floripa.
+- [ ] **DevOpsDays Floripa 2027** — Oct 2027; CFP ~Jun–Aug (2026's closed 30 Aug).
+- [ ] **Front in Floripa 2027** — Nov 2027; CFP ~Sep. Fallback if the 2026 proposal misses.
+- [ ] **Startup Summit 2027** — Aug 2027, not announced; business track, ACATE picks.
+- [ ] **SECCOM 2027 (UFSC Semana Acadêmica de Computação e Sistemas)** — 2025 ran 29 Sep–3 Oct
+      ([seccom-ufsc.github.io](https://seccom-ufsc.github.io/2025/)); organised by CALICO +
+      CASIN + PET Informática, speakers invited — write in Aug 2027.
+
+**Recurring, a slot by asking (any month)**
+
+- [ ] **Data Science Floripa** — 1,550 members on Meetup, dormant since Feb 2020, openly
+      [looking for an organiser](https://www.meetup.com/dsfloripa/) (Telegram in the
+      description). Reviving it with an ocean-data first meetup is a talk and a community in
+      one move.
+- [ ] **PyLadies Floripa**, **RubyFloripa** (5-minute talks), **FloripaJS**, **WordPress
+      Floripa** — see Communities below; all take volunteers, none has a CFP.
+
 ### Listings to watch
 
 - [ ] [floripa.com — congressos e palestras](https://floripa.com/categorias-eventos/congressos-e-palestras/)
@@ -88,9 +144,22 @@ itself is 15+ days out.
 - [ ] UFSC — [SEPEX](https://sepex.ufsc.br/) (Oct, with the Semana Nacional de C&T) and the
       Semana Acadêmica da Computação (PET Computação + CALICO); invited talks by contacting the
       organisers, no CFP.
+- [ ] [DWX — Data World Xperience](https://www.sympla.com.br/dwx-data-world-xperience-27__3286455)
+      — yearly in Florianópolis (2026: 26–27 Mar; 2027: 17–18 Jun, CentroSul); data/AI, no
+      public CFP.
+- [ ] [Summit de IA Brasil](https://www.summitdeinteligenciaartificial.com/) — Joinville, June
+      yearly (2027: 23–26 Jun).
+- [ ] [Codecon](https://codecon.dev/) — Floripa meetups monthly-ish, Select Experience (Nov,
+      Floripa), Summit (Jul, Curitiba region); meetup talks by form, summit by CFP.
+- [ ] AWS Community Day Brasil — the 2026 Sul edition was 19 Sep in Curitiba, co-organised by
+      the Floripa UG (2024 had a Florianópolis edition); watch
+      [awscommunityday.com.br](https://awscommunityday.com.br/) for 2027.
 
 ### Not researched yet
 
 - [ ] Surf, sailing and ocean-science groups (UFSC oceanography, Projeto Baleia Franca, surf
       schools) — the audience that cares about the sea conditions, not the stack.
 - [ ] IFSC and UNISENAI SC-401 (hosted a Python Floripa meetup) as venues.
+- [ ] FLISOL Floripa (April, free-software install fest) — no 2026 listing found; check
+      UFSC/IFSC in March.
+- [ ] Hacktoberfest / Google I/O Extended Floripa — no local 2026 listing found.
