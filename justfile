@@ -17,7 +17,7 @@ install-hooks:
 
 # Last 10 commits on the current branch, one line each (short hash, relative age, author,
 # subject, refs).
-log n="10" *args:
+log n="10" *args="":
     @git --no-pager log -n {{n}} --abbrev-commit --decorate --date=relative --format='%C(yellow)%h%C(reset) %C(dim)%ad%C(reset) %C(blue)%an%C(reset) %s%C(auto)%d%C(reset)' {{args}}
 
 # ---------------------------------------------------------------------
@@ -205,7 +205,7 @@ finetune-model base="llama3.2":
     mkdir -p .tmp && sed 's/^FROM .*/FROM {{base}}/' finetune/Modelfile > .tmp/Modelfile && ollama create marola-llama3.2 -f .tmp/Modelfile
 
 # Tier 2: QLoRA adapter. preset=tiny trains on CPU in minutes; small|base need more.
-finetune-train preset="tiny" *args:
+finetune-train preset="tiny" *args="":
     python3 finetune/train_lora.py --preset {{preset}} {{args}}
 
 # marola vs a plain prompt on 22 ocean questions, 3 arms — writes data/benchmark-*.md.
@@ -217,7 +217,7 @@ finetune-dataset:
     python3 finetune/build_dataset.py
 
 # VRAM, RAM, disk and a rough ETA for a fine-tune on this machine, before starting it. MIP-0048.
-finetune-preflight preset="tiny" *args:
+finetune-preflight preset="tiny" *args="":
     python3 finetune/preflight.py --preset {{preset}} {{args}}
 
 # Layer 3 — DPO preference pairs from Reviewer.scala's reject/revise decisions. MIP-0025 §4.3.
@@ -225,7 +225,7 @@ finetune-dpo-dataset:
     python3 finetune/build_dpo_dataset.py
 
 # Layer 3 training: DPO on top of an existing SFT adapter (`just finetune-train` first).
-finetune-train-dpo preset="tiny" *args:
+finetune-train-dpo preset="tiny" *args="":
     python3 finetune/train_dpo.py --preset {{preset}} {{args}}
 
 # Create/update the venv marola-sea trains in (CUDA torch from PyTorch's wheel index).
@@ -238,7 +238,7 @@ gpu-cache-setup *args:
 
 # Merge a LoRA adapter into its base and export runnable GGUFs (MIP-0025 §5.1) — the step
 # between training and publishing.
-finetune-merge preset="tiny" llama_cpp="" *args:
+finetune-merge preset="tiny" llama_cpp="" *args="":
     python3 finetune/merge_export.py --preset {{preset}} {{ if llama_cpp != "" { "--llama-cpp " + llama_cpp } else { "--dry-run" } }} {{args}}
 
 # Publish a trained .gguf to a Hugging Face model repo (MIP-0025 §5.1).
