@@ -48,7 +48,8 @@ class IngestPlanSpec extends munit.FunSuite:
       planFor(Mode.Incremental),
       LocalDate.parse("2026-09-14"),
       Manifest.empty,
-      candidates(2024, 2025, 2026)
+      candidates(2024, 2025, 2026),
+      ImaScAdapter.rawPath
     )
     assertEquals(years(selected), List(2026))
     assertEquals(selected.map(_.immutable), List(false))
@@ -59,7 +60,8 @@ class IngestPlanSpec extends munit.FunSuite:
       planFor(Mode.Incremental),
       LocalDate.parse("2027-01-10"),
       Manifest.empty,
-      candidates(2025, 2026, 2027)
+      candidates(2025, 2026, 2027),
+      ImaScAdapter.rawPath
     )
     assertEquals(years(selected), List(2026, 2027))
   }
@@ -69,7 +71,8 @@ class IngestPlanSpec extends munit.FunSuite:
       planFor(Mode.Incremental),
       LocalDate.parse("2027-02-20"),
       Manifest.empty,
-      candidates(2025, 2026, 2027)
+      candidates(2025, 2026, 2027),
+      ImaScAdapter.rawPath
     )
     assertEquals(years(selected), List(2027))
   }
@@ -79,7 +82,8 @@ class IngestPlanSpec extends munit.FunSuite:
       planFor(Mode.Backfill, from = 2004, to = 2005),
       LocalDate.parse("2026-09-14"),
       Manifest.empty,
-      candidates(2003, 2004, 2005, 2006)
+      candidates(2003, 2004, 2005, 2006),
+      ImaScAdapter.rawPath
     )
     assertEquals(years(selected), List(2004, 2005))
     assertEquals(selected.map(_.immutable), List(true, true))
@@ -90,7 +94,8 @@ class IngestPlanSpec extends munit.FunSuite:
       planFor(Mode.Backfill),
       LocalDate.parse("2026-09-14"),
       manifestWith(2005, 2026),
-      candidates(2004, 2005, 2026)
+      candidates(2004, 2005, 2026),
+      ImaScAdapter.rawPath
     )
     assertEquals(years(selected), List(2004, 2026))
   }
@@ -100,9 +105,44 @@ class IngestPlanSpec extends munit.FunSuite:
       planFor(Mode.Incremental),
       LocalDate.parse("2026-09-14"),
       manifestWith(2026),
-      candidates(2026)
+      candidates(2026),
+      ImaScAdapter.rawPath
     )
     assertEquals(years(selected), List(2026))
+  }
+
+  /** The pdf channel's partitions (MIP-0056 §4.2): a dated bulletin is fetched once, ever. */
+  test("an adapter's own immutable partition is planned incrementally until the manifest has it") {
+    val bulletin =
+      Partition("ima-sc", Channel.Pdf, "2026-09-10", 2026, immutable = true)
+    val path = ImaScBulletinAdapter().rawPath(bulletin)
+    val selected = Ingest.plan(
+      planFor(Mode.Incremental),
+      LocalDate.parse("2026-09-14"),
+      Manifest.empty,
+      List(bulletin),
+      ImaScBulletinAdapter().rawPath
+    )
+    assertEquals(selected, List(bulletin))
+    val again = Ingest.plan(
+      planFor(Mode.Incremental),
+      LocalDate.parse("2026-09-14"),
+      Manifest(
+        raw = Map(
+          path -> RawEntry(
+            "https://example.invalid",
+            "abc",
+            10,
+            Instant.parse("2026-09-14T12:00:00Z"),
+            3
+          )
+        ),
+        partitions = Map.empty
+      ),
+      List(bulletin),
+      ImaScBulletinAdapter().rawPath
+    )
+    assertEquals(again, Nil)
   }
 
   test("a city no adapter covers is an error, not an empty success") {

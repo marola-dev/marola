@@ -180,3 +180,13 @@ trait SourceAdapter:
   def fetch(p: Partition): RawFile < Sync
   def rows(raw: RawFile): Either[ParseError, List[SampleRow]]
   def points: List[PointRow] < Sync
+
+  /** §5.1's layout for this adapter's channel: the manifest key and a `ParseError`'s path. */
+  def rawPath(p: Partition): String
+
+  /**
+   * What lands on disk, which is not always what came back: the pdf channel keeps the rows it
+   * parsed, never the 300 KB bulletin. The manifest still describes the fetch — `RawFile.url` and
+   * the sha256 of `RawFile.bytes` — so the provenance survives the transform (MIP-0056 §4.2).
+   */
+  def storedBytes(raw: RawFile, rows: List[SampleRow]): Array[Byte] = raw.bytes

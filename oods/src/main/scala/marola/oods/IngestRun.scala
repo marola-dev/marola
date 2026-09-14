@@ -90,16 +90,21 @@ private object IngestRun:
     else Left(failure): Either[Throwable, RawFile]
 
   /** 429/403 is the portal asking us to stop — retrying it is what gets a scraper banned. */
-  private def abortOf(t: Throwable): Option[IngestError] = t match
-    case Http.HttpError(status, url, _) if status == 429 || status == 403 =>
-      Some(IngestError.AbortedByStatus(status, url))
+  private def abortOf(t: Throwable): Option[IngestError] = status(t) match
+    case Some((code, url)) if code == 429 || code == 403 =>
+      Some(IngestError.AbortedByStatus(code, url))
     case _ => None
 
   private def retryable(t: Throwable): Boolean = t match
-    case Http.HttpError(status, _, _)          => status >= 500
     case _: java.net.http.HttpTimeoutException => true
     case _: java.net.ConnectException          => true
-    case _                                     => false
+    case other                                 => status(other).exists(_._1 >= 500)
+
+  /** `getBytes` has a failure type of its own — the pdf channel reaches the portal through it. */
+  private def status(t: Throwable): Option[(Int, String)] = t match
+    case Http.HttpError(code, url, _)   => Some((code, url))
+    case Http.HttpBytesError(code, url) => Some((code, url))
+    case _                              => None
 
   private def record(
       adapter: SourceAdapter,
@@ -118,22 +123,24 @@ private object IngestRun:
         val fetched = progress.copy(fetched = progress.fetched + 1)
         adapter.rows(raw) match
           case Left(e)     => fetched.copy(failed = PartitionFailure(p, e.detail) :: fetched.failed)
-          case Right(rows) => store(p, raw, rows.size, dataDir, fetched, at)
+          case Right(rows) => store(adapter, p, raw, rows, dataDir, fetched, at)
 
   private def store(
+      adapter: SourceAdapter,
       p: Partition,
       raw: RawFile,
-      rows: Int,
+      rows: List[SampleRow],
       dataDir: Path,
       progress: Progress,
       at: Instant
   ): Progress =
-    // `rawPath` is §5.1's layout, not IMA's own — it moves onto `SourceAdapter` with adapter two.
-    val path = ImaScAdapter.rawPath(p)
-    if !RawStore.write(dataDir.resolve(path), raw.bytes) then
+    val path = adapter.rawPath(p)
+    if !RawStore.write(dataDir.resolve(path), adapter.storedBytes(raw, rows)) then
       progress.copy(unchanged = progress.unchanged + 1)
     else
-      val entry = RawEntry(raw.url, RawStore.sha256(raw.bytes), raw.bytes.length.toLong, at, rows)
+      // The fetch, not the file: a bulletin's manifest entry keeps the PDF's url and sha256.
+      val entry =
+        RawEntry(raw.url, RawStore.sha256(raw.bytes), raw.bytes.length.toLong, at, rows.size)
       progress.copy(
         written = progress.written + 1,
         manifest = progress.manifest.copy(raw = progress.manifest.raw.updated(path, entry))
@@ -160,8 +167,10 @@ private object IngestRun:
         )
       Progress(manifest.copy(raw = manifest.raw.updated(path, entry)))
 
-  private def reason(t: Throwable): String = t match
-    case Http.HttpError(status, url, _)        => s"HTTP $status from $url"
-    case _: java.net.http.HttpTimeoutException => "timed out"
-    case _: java.net.ConnectException          => "connection refused"
-    case other => s"${other.getClass.getSimpleName}: ${Option(other.getMessage).getOrElse("")}"
+  private def reason(t: Throwable): String = status(t) match
+    case Some((code, url)) => s"HTTP $code from $url"
+    case None =>
+      t match
+        case _: java.net.http.HttpTimeoutException => "timed out"
+        case _: java.net.ConnectException          => "connection refused"
+        case other => s"${other.getClass.getSimpleName}: ${Option(other.getMessage).getOrElse("")}"

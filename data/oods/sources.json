@@ -11,7 +11,9 @@
         "years": "https://balneabilidade.ima.sc.gov.br/registro/anosAnalisados",
         "municipalities": "https://balneabilidade.ima.sc.gov.br/municipio/getMunicipios",
         "beaches": "https://balneabilidade.ima.sc.gov.br/local/getLocaisByMunicipio",
-        "points": "https://balneabilidade.ima.sc.gov.br/relatorio/mapa"
+        "points": "https://balneabilidade.ima.sc.gov.br/relatorio/mapa",
+        "index": "https://balneabilidade.ima.sc.gov.br/",
+        "bulletin": "https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF"
       },
       "cadence": "weekly in season, monthly off season",
       "licence": "none granted; public administrative information (LAI, Lei 12.527/2011)"

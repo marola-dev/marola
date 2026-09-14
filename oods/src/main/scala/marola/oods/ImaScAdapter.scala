@@ -81,6 +81,8 @@ final class ImaScAdapter(
       case None => Left(ParseError(path, "points registry not loaded — fetch `points` first"))
       case Some(registry) => ImaScCsv.parse(source, path, String(raw.bytes, UTF_8), registry)
 
+  def rawPath(p: Partition): String = ImaScAdapter.rawPath(p)
+
   def points: List[PointRow] < Sync =
     memo(cachedPoints) {
       post(url("points"), Map.empty)
@@ -155,7 +157,9 @@ object ImaScAdapter:
       "years" -> "https://balneabilidade.ima.sc.gov.br/registro/anosAnalisados",
       "municipalities" -> "https://balneabilidade.ima.sc.gov.br/municipio/getMunicipios",
       "beaches" -> "https://balneabilidade.ima.sc.gov.br/local/getLocaisByMunicipio",
-      "points" -> "https://balneabilidade.ima.sc.gov.br/relatorio/mapa"
+      "points" -> "https://balneabilidade.ima.sc.gov.br/relatorio/mapa",
+      "index" -> "https://balneabilidade.ima.sc.gov.br/",
+      "bulletin" -> "https://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF"
     ),
     cadence = "weekly in season, monthly off season",
     licence = "none granted; public administrative information (LAI, Lei 12.527/2011)"

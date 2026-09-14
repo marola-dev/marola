@@ -100,8 +100,11 @@ Municipio,Balneario,"Ponto Coleta",Localização,Data,Hora,Vento,Maré,Chuva,"Á
 
 `GET /relatorio/downloadPDF/YYYY-MM-DD`. Verified 2026-09-14: the home page links the last 10
 dated bulletins; `2026-08-28` returns a 322 KB PDF, `2026-09-11` (no bulletin that day) 404s. The
-Wayback Machine's CDX index lists 192 unique dated bulletins (2023: 19, 2024: 86, 2025: 66, 2026:
-21) and the oldest, `2023-03-10`, has the same record layout `ImaScPdfParser` handles today. The
+Wayback Machine's CDX index lists 189 unique dated bulletins (2023: 19, 2024: 83, 2025: 66, 2026:
+21) and the oldest, `2023-03-10`, has the same record layout `ImaScPdfParser` handles today. (The
+count read 192 when this was drafted; counted from the committed
+`wayback-cdx-downloadPDF.json` fixture in task 7 it is 189 — its 193 rows also hold an undated
+`/downloadPDF`, a malformed `…/2024-02-09No`, and 2024-10-18 three times.) The
 PDF carries the official report number, a verdict per point and the location text *as of that
 week* (the CSV renders today's location text for every year). It carries no indicator value. It is
 a later task (§5.2, task 7): the CSV alone delivers the history.
@@ -356,8 +359,13 @@ run green for a week, and `just oods-sql "SELECT count(*) FROM br_bathing_water"
   Above ~200 MB in the tree, move raw to LFS and keep Parquet + manifest in git.
 - **A portal outage is not an error in the data**: incremental runs simply commit nothing; the
   workflow's failure notifications are the signal, not "no data" on the map (§5.5).
-- **The PDF channel's Wayback backfill** (192 bulletins) is a one-off download of roughly 60 MB (192 × the ~300 KB observed per bulletin — an estimate); the PDFs
+- **The PDF channel's Wayback backfill** (189 bulletins) is a one-off download of roughly 57 MB (189 × the ~300 KB observed per bulletin — an estimate); the PDFs
   are not stored, only their parsed rows plus sha256 and URL in the manifest.
+- **The bulletin's join key is (beach, point), not the CSV's (municipio, beach, point)**: the PDF
+  prints no municipality per record, and the 260-point feed has no (beach, point) collision. Four
+  of the 2026-08-28 bulletin's 259 rows spell a beach differently from the feed and keep a
+  two-segment slug key with `geo_source = 'none'`; a fifth is an `ImaScPdfParser` artefact, a page
+  footer read as part of the heading (`ImaScBulletinAdapterSpec` asserts all five).
 
 ## 9. Alternatives considered
 

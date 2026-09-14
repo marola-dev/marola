@@ -3,7 +3,7 @@ package marola.oods
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.sql.{Connection, ResultSet}
-import java.time.Instant
+import java.time.{Instant, LocalDate}
 
 import scala.jdk.CollectionConverters.*
 
@@ -181,6 +181,99 @@ class OodsBuildSpec extends munit.FunSuite:
             TO '$file' (FORMAT PARQUET)"""
       )
     finally connection.close()
+
+  /** A bulletin as task 7's runner leaves it: the rows it parsed, never the PDF. */
+  private def bulletin(dir: Path, date: String, rows: List[SampleRow]): Unit =
+    val file = dir.resolve(s"raw/ima-sc/bulletins/$date.jsonl")
+    val _ = Files.createDirectories(file.getParent)
+    val _ = Files.write(file, RawStore.renderSamples(rows))
+
+  private def pdfRow(key: String, on: String, from: String): SampleRow =
+    SampleRow(
+      sourceId = "ima-sc",
+      pointKey = key,
+      sampledOn = LocalDate.parse(on),
+      sampledAt = None,
+      condition = BathingCondition.Improper,
+      indicator = Indicator.Unknown,
+      indicatorValue = None,
+      qualifier = Qualifier.Exact,
+      rain = None,
+      wind = None,
+      tide = None,
+      waterTempC = None,
+      airTempC = None,
+      channel = Channel.Pdf,
+      bulletinDate = Some(LocalDate.parse(from))
+    )
+
+  private def csvSample: SampleRow =
+    parsed(2025)
+      .find(_.sampledOn.isEqual(LocalDate.parse("2025-12-29")))
+      .getOrElse(fail("the 2025 fixture has no 2025-12-29 sample"))
+
+  test("the csv row wins where a bulletin repeats a day the export already carries") {
+    val dir = store()
+    val covered = csvSample
+    bulletin(dir, "2026-01-07", List(pdfRow(covered.pointKey, "2025-12-29", "2026-01-07")))
+    val _ = built(dir)
+    val (rows, channel, condition) = one(
+      dir,
+      s"""SELECT count(*), any_value(channel), any_value(condition) FROM br_bathing_water
+          WHERE point_key = '${covered.pointKey}' AND sampled_on = DATE '2025-12-29'"""
+    )(rs => (rs.getLong(1), rs.getString(2), rs.getString(3)))
+    assertEquals(rows, 1L)
+    assertEquals(channel, "csv")
+    assertEquals(condition, covered.condition.label)
+  }
+
+  test("a day only the bulletin saw survives, with its indicator unknown and its bulletin date") {
+    val dir = store()
+    val covered = csvSample
+    bulletin(dir, "2026-01-07", List(pdfRow(covered.pointKey, "2026-01-05", "2026-01-07")))
+    val _ = built(dir)
+    val (channel, indicator, from) = one(
+      dir,
+      s"""SELECT channel, indicator, bulletin_date FROM br_bathing_water
+          WHERE point_key = '${covered.pointKey}' AND sampled_on = DATE '2026-01-05'"""
+    )(rs => (rs.getString(1), rs.getString(2), rs.getDate(3).toLocalDate))
+    assertEquals(channel, "pdf")
+    assertEquals(indicator, "unknown")
+    assertEquals(from, LocalDate.parse("2026-01-07"))
+  }
+
+  test("a point only a bulletin names still gets a point row, so no sample is dropped") {
+    val dir = store()
+    val key = "ima-sc:praia-inventada/ponto-77"
+    bulletin(dir, "2026-01-07", List(pdfRow(key, "2026-01-05", "2026-01-07")))
+    val _ = built(dir)
+    val (beach, point, geo) = one(
+      dir,
+      s"SELECT beach_name, point_name, geo_source FROM br_bathing_water WHERE point_key = '$key'"
+    )(rs => (rs.getString(1), rs.getString(2), rs.getString(3)))
+    assertEquals(beach, "PRAIA INVENTADA")
+    assertEquals(point, "PONTO 77")
+    assertEquals(geo, "none")
+  }
+
+  /**
+   * A bulletin repeats a point it could not resample, so the same (point, day) arrives from several
+   * weeks — once in the store, or the sample primary key has duplicates.
+   */
+  test("a sample two bulletins both report is stored once, under the first that published it") {
+    val dir = store()
+    val key = csvSample.pointKey
+    bulletin(dir, "2026-01-07", List(pdfRow(key, "2026-01-05", "2026-01-07")))
+    bulletin(dir, "2026-01-14", List(pdfRow(key, "2026-01-05", "2026-01-14")))
+    val _ = built(dir)
+    val (rows, from) = one(
+      dir,
+      s"""SELECT count(*), any_value(bulletin_date) FROM br_bathing_water
+          WHERE point_key = '$key' AND sampled_on = DATE '2026-01-05'"""
+    )(rs => (rs.getLong(1), rs.getDate(2).toLocalDate))
+    assertEquals(rows, 1L)
+    assertEquals(from, LocalDate.parse("2026-01-07"))
+  }
 
   test("point_stats counts the improper-after-rain samples of a point") {
     val dir = store()

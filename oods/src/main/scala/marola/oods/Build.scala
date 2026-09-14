@@ -73,6 +73,8 @@ object Build:
             s"SET VARIABLE data_dir = ${Duck.lit(dataDir.toAbsolutePath.toString)}"
           )
           Duck.exec(connection, Duck.script("build.sql"))
+          if rawFiles(dataDir, ".jsonl").nonEmpty then
+            Duck.exec(connection, Duck.script("bulletins.sql"))
           val sources =
             Duck.query(connection, "SELECT DISTINCT source_id FROM point ORDER BY 1")(
               _.getString(1)
@@ -86,8 +88,11 @@ object Build:
         finally connection.close()
       case reasons => BuildOutcome.Failed(reasons)
 
-  /** `raw/<source>/csv/<key>/<year>.csv` — `ImaScAdapter.rawPath`'s layout, read back. */
-  private def rawCsvFiles(dataDir: Path): List[Path] =
+  /**
+   * What each adapter's `rawPath` left under `raw/` — `.csv` for the export, `.jsonl` for a
+   * bulletin.
+   */
+  private def rawFiles(dataDir: Path, suffix: String): List[Path] =
     val raw = dataDir.resolve("raw")
     if !Files.isDirectory(raw) then Nil
     else
@@ -96,7 +101,7 @@ object Build:
         walk
           .iterator()
           .asScala
-          .filter(f => Files.isRegularFile(f) && f.getFileName.toString.endsWith(".csv"))
+          .filter(f => Files.isRegularFile(f) && f.getFileName.toString.endsWith(suffix))
           .toList
           .sorted
       finally walk.close()
@@ -106,7 +111,7 @@ object Build:
    * parse as zero samples rather than as an error. The parser's own check, applied before any COPY.
    */
   private def foreignHeaders(dataDir: Path): List[String] =
-    rawCsvFiles(dataDir).flatMap { file =>
+    rawFiles(dataDir, ".csv").flatMap { file =>
       val first = Files.lines(file, UTF_8)
       val header =
         try first.findFirst().orElse("")
@@ -118,7 +123,7 @@ object Build:
 
   private def empty(connection: Connection, dataDir: Path, sources: List[String]): List[String] =
     val withRaw =
-      rawCsvFiles(dataDir).flatMap(f => dataDir.relativize(f).toString.split("/").lift(1))
+      rawFiles(dataDir, ".csv").flatMap(f => dataDir.relativize(f).toString.split("/").lift(1))
     (sources ++ withRaw).distinct.sorted.flatMap { sourceId =>
       val rows = Duck
         .query(connection, s"SELECT count(*) FROM sample WHERE source_id = ${Duck.lit(sourceId)}")(

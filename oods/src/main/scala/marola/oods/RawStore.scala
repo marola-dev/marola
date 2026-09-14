@@ -33,6 +33,37 @@ object RawStore:
   def renderPoints(points: List[PointRow]): Array[Byte] =
     points.sortBy(_.pointKey).map(point).mkString("[\n", ",\n", "\n]\n").getBytes(UTF_8)
 
+  /**
+   * `bulletins/YYYY-MM-DD.jsonl`: the pdf channel's raw file is the rows it parsed, because the PDF
+   * itself is 300 KB of layout this store has no use for (MIP-0056 §5.1). Sorted, so a re-parse of
+   * the same bulletin is byte-identical and commits nothing.
+   */
+  def renderSamples(rows: List[SampleRow]): Array[Byte] =
+    rows
+      .sortBy(r => (r.pointKey, r.sampledOn.toString))
+      .map(sample)
+      .mkString("", "\n", "\n")
+      .getBytes(UTF_8)
+
+  private def sample(s: SampleRow): String =
+    Vector(
+      "source_id" -> quote(s.sourceId),
+      "point_key" -> quote(s.pointKey),
+      "sampled_on" -> quote(s.sampledOn.toString),
+      "sampled_at" -> optional(s.sampledAt.map(_.toString)),
+      "condition" -> quote(s.condition.label),
+      "indicator" -> quote(s.indicator.label),
+      "indicator_value" -> s.indicatorValue.fold("null")(_.toString),
+      "indicator_qualifier" -> quote(s.qualifier.label),
+      "rain" -> optional(s.rain),
+      "wind" -> optional(s.wind),
+      "tide" -> optional(s.tide),
+      "water_temp_c" -> s.waterTempC.fold("null")(_.toString),
+      "air_temp_c" -> s.airTempC.fold("null")(_.toString),
+      "channel" -> quote(s.channel.label),
+      "bulletin_date" -> optional(s.bulletinDate.map(_.toString))
+    ).map((k, v) => s"${quote(k)}:$v").mkString("{", ",", "}")
+
   private def point(p: PointRow): String =
     Vector(
       "source_id" -> quote(p.sourceId),

@@ -5,11 +5,17 @@ import java.time.LocalDate
 
 import kyo.*
 
+import marola.oods.Channel
+
 /**
- * `just oods-ingest --source ima-sc [--state SC] [--city "Florianópolis,Itajaí"] [--mode
- * incremental|backfill] [--from 2003] [--to 2026] [--concurrency 1] [--dry-run] [--data-dir PATH]`.
- * `--city` and `--state` repeat or take a comma-separated list; `--from`/`--to` only bound a
- * backfill (MIP-0056 §5.2).
+ * `just oods-ingest --source ima-sc [--channel csv|pdf] [--state SC] [--city
+ * "Florianópolis,Itajaí"] [--mode incremental|backfill] [--from 2003] [--to 2026] [--concurrency 1]
+ * [--dry-run] [--data-dir PATH]`. `--city` and `--state` repeat or take a comma-separated list;
+ * `--from`/`--to` only bound a backfill (MIP-0056 §5.2).
+ *
+ * `--channel`, not a second `--source` label: the source id is the store's own partition key, so an
+ * `ima-sc-pdf` would fork the manifest, the points registry and `br_bathing_water`'s csv-over-pdf
+ * precedence into two unrelated sources.
  */
 object Main extends KyoApp:
 
@@ -17,13 +23,14 @@ object Main extends KyoApp:
   private val FirstYear = 2003
   private val DefaultDataDir = Paths.get("data", "oods")
 
-  final private case class Options(source: String, plan: Plan, dataDir: Path)
+  final private case class Options(channel: Channel, plan: Plan, dataDir: Path)
 
   final private case class Draft(
       source: Option[String] = None,
       states: Set[String] = Set.empty,
       cities: Set[String] = Set.empty,
       mode: Mode = Mode.Incremental,
+      channel: Channel = Channel.Csv,
       fromYear: Option[Int] = None,
       toYear: Option[Int] = None,
       concurrency: Int = 1,
@@ -38,6 +45,10 @@ object Main extends KyoApp:
     case "--state" :: v :: t    => flags(t, draft.copy(states = draft.states ++ split(v)))
     case "--city" :: v :: t     => flags(t, draft.copy(cities = draft.cities ++ split(v)))
     case "--data-dir" :: v :: t => flags(t, draft.copy(dataDir = Paths.get(v)))
+    case "--channel" :: v :: t =>
+      Channel.fromLabel(v).filter(c => c == Channel.Csv || c == Channel.Pdf) match
+        case Some(channel) => flags(t, draft.copy(channel = channel))
+        case None          => Left(IngestError.BadFlag(s"--channel expects csv or pdf, got '$v'"))
     case "--mode" :: v :: t =>
       Mode.fromLabel(v) match
         case Some(mode) => flags(t, draft.copy(mode = mode))
@@ -72,7 +83,7 @@ object Main extends KyoApp:
         case Some(id) =>
           Right(
             Options(
-              id,
+              draft.channel,
               Plan(
                 sources = Set(id),
                 states = draft.states,
@@ -102,8 +113,12 @@ object Main extends KyoApp:
     (lines :+ s"${lines.size} partitions planned (dry run: nothing fetched, nothing written)")
       .mkString("\n")
 
+  private def adapterFor(channel: Channel): SourceAdapter = channel match
+    case Channel.Pdf                => ImaScBulletinAdapter()
+    case Channel.Csv | Channel.Json => ImaScAdapter()
+
   private def ingest(options: Options, today: LocalDate): Unit < Async =
-    val adapter = ImaScAdapter()
+    val adapter = adapterFor(options.channel)
     for
       result <- Ingest.run(adapter, options.plan, options.dataDir, today)
       _ <- result match

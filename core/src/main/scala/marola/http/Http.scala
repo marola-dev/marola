@@ -241,14 +241,18 @@ object Http:
    * Plain binary GET — a PDF bulletin today
    * (`InemaBaWaterQualityClient`/`IneaRjWaterQualityClient`, MIP-0031), never text-decoded.
    */
-  def getBytes(url: String, timeoutSeconds: Long = 30): Array[Byte] < Sync =
+  def getBytes(
+      url: String,
+      timeoutSeconds: Long = 30,
+      headers: Map[String, String] = Map.empty
+  ): Array[Byte] < Sync =
     Sync.defer {
-      val request = HttpRequest
+      val builder = HttpRequest
         .newBuilder(URI.create(url))
         .timeout(Duration.ofSeconds(timeoutSeconds))
         .header("User-Agent", userAgent)
         .GET()
-        .build()
+      val request = headers.foldLeft(builder)((b, h) => b.setHeader(h._1, h._2)).build()
       val response = binaryTransport.get.send(request)
       if response.status / 100 == 2 then response.bytes
       else throw HttpBytesError(response.status, url)

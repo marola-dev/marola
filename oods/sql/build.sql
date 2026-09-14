@@ -65,6 +65,15 @@ FROM read_csv(
 -- A year with no samples exports as `…,YYYY,"Sem registros"`: five columns, no date, no sample.
 WHERE try_strptime(trim(data), '%d/%m/%Y') IS NOT NULL;
 
+-- Read once, joined by every channel (bulletins.sql reads it too).
+CREATE OR REPLACE TEMP TABLE raw_ingest AS
+SELECT e.key AS raw_path,
+       CAST(json_extract_string(e.value, '$.fetched_at') AS TIMESTAMP) AS ingested_at
+FROM (
+  SELECT unnest(map_entries(raw)) AS e
+  FROM read_json(getvariable('data_dir') || '/manifest/*.json',
+                 columns = {'raw': 'MAP(VARCHAR, JSON)'}));
+
 CREATE OR REPLACE TEMP TABLE feed_point AS
 SELECT * FROM read_json(
   getvariable('data_dir') || '/raw/*/points.json',
@@ -106,14 +115,7 @@ SELECT
   coalesce(m.ingested_at, TIMESTAMP '1970-01-01 00:00:00') AS ingested_at,
   year(k.sampled_on) AS year
 FROM keyed k
-LEFT JOIN (
-  SELECT e.key AS raw_path,
-         CAST(json_extract_string(e.value, '$.fetched_at') AS TIMESTAMP) AS ingested_at
-  FROM (
-    SELECT unnest(map_entries(raw)) AS e
-    FROM read_json(getvariable('data_dir') || '/manifest/*.json',
-                   columns = {'raw': 'MAP(VARCHAR, JSON)'}))) m
-  USING (raw_path);
+LEFT JOIN raw_ingest m USING (raw_path);
 
 CREATE OR REPLACE TEMP TABLE point AS
 SELECT source_id, point_key, country, state, municipality, ibge_code, beach_name, point_name,

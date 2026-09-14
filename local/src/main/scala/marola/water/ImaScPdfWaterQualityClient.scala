@@ -1,6 +1,9 @@
 package marola.water
 
 import java.text.Normalizer
+import java.time.LocalDate
+
+import scala.util.Try
 
 import kyo.*
 
@@ -52,15 +55,19 @@ object ImaScPdfWaterQualityClient:
 
   private val BulletinLink = """/relatorio/downloadPDF/(\d{4}-\d{2}-\d{2})""".r
 
-  /** The newest dated bulletin the index links to. Dates sort lexicographically in ISO form. */
-  def latestBulletinUrl(indexHtml: String): Option[String] =
+  /** Every dated bulletin the index links to, oldest first — OODS plans one partition each. */
+  def bulletinDates(indexHtml: String): List[LocalDate] =
     BulletinLink
       .findAllMatchIn(indexHtml)
       .map(_.group(1))
       .toList
       .distinct
+      .flatMap(d => Try(LocalDate.parse(d)).toOption)
       .sorted
-      .lastOption
+
+  /** The newest dated bulletin the index links to. */
+  def latestBulletinUrl(indexHtml: String): Option[String] =
+    bulletinDates(indexHtml).lastOption
       .map(d => s"http://balneabilidade.ima.sc.gov.br/relatorio/downloadPDF/$d")
 
   /**

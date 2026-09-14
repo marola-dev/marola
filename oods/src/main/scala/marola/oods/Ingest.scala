@@ -54,17 +54,22 @@ object Ingest:
       plan: Plan,
       today: LocalDate,
       manifest: Manifest,
-      candidates: List[Partition]
+      candidates: List[Partition],
+      rawPath: Partition => String
   ): List[Partition] =
     val mutable = mutableYears(today)
-    candidates
-      .map(p => p.copy(immutable = !mutable.contains(p.year)))
-      .filter { p =>
-        val inMode = plan.mode match
-          case Mode.Incremental => !p.immutable
-          case Mode.Backfill    => p.year >= plan.fromYear && p.year <= plan.toYear
-        inMode && (!p.immutable || !manifest.raw.contains(ImaScAdapter.rawPath(p)))
-      }
+    candidates.flatMap { candidate =>
+      // The year window can only add immutability: an adapter that declared a partition immutable
+      // knows the document itself cannot change, which the calendar does not.
+      val p = candidate.copy(immutable = candidate.immutable || !mutable.contains(candidate.year))
+      val unseen = !manifest.raw.contains(rawPath(p))
+      val inMode = plan.mode match
+        // A fetch-once partition belongs in an incremental run too — it is this week's bulletin,
+        // not a closed year of a beach's export.
+        case Mode.Incremental => !p.immutable || candidate.immutable
+        case Mode.Backfill    => p.year >= plan.fromYear && p.year <= plan.toYear
+      Option.when(inMode && (!p.immutable || unseen))(p)
+    }
 
   /** An empty enumeration under a `--city` filter means the name matched nothing, not "done". */
   def unknownCity(plan: Plan, candidates: List[Partition]): Option[IngestError] =
@@ -87,7 +92,7 @@ object Ingest:
     for
       candidates <- adapter.partitions(plan)
       manifest <- Sync.defer(Manifest.read(manifestFile))
-      selected = Ingest.plan(plan, today, manifest, candidates)
+      selected = Ingest.plan(plan, today, manifest, candidates, adapter.rawPath)
       skipped = candidates.size - selected.size
       result <- decide(plan, selected, skipped, candidates)(
         IngestRun.all(adapter, selected, skipped, dataDir, manifestFile, manifest, now, sleep)

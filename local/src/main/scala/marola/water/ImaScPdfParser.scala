@@ -24,7 +24,8 @@ import scala.util.Try
  * Em frente à Rua Apolônio Ireno Cardoso
  * }}}
  */
-private[water] object ImaScPdfParser:
+/** `private[marola]`: `oods`'s bulletin channel (MIP-0056 §4.2) parses the same PDF. */
+private[marola] object ImaScPdfParser:
 
   final case class Row(
       beachName: String,
