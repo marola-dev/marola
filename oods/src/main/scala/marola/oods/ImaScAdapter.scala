@@ -141,7 +141,10 @@ object ImaScAdapter:
       extends Exception(s"ima-sc: no portal beach for partition key '$key'")
       with NoStackTrace
 
-  /** Mirrors the `ima-sc` entry of `data/oods/sources.json`; task 3 loads that file instead. */
+  /**
+   * The code's copy of `data/oods/sources.json`'s `ima-sc` entry; `SourcesRegistrySpec` keeps the
+   * two from drifting.
+   */
   val DefaultSource: Source = Source(
     id = "ima-sc",
     institute = "IMA — Instituto do Meio Ambiente de Santa Catarina",

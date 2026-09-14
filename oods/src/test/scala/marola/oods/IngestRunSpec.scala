@@ -27,15 +27,15 @@ class IngestRunSpec extends munit.FunSuite:
     try String(stream.readAllBytes(), UTF_8)
     finally stream.close()
 
-  /** Two of Florianópolis's real beaches, so a run is two partitions instead of forty-three. */
-  private val beachCodes: List[String] =
-    ImaScAdapter.parseCodes(fixture("locais-florianopolis.json")).take(2)
+  /** Florianópolis's real beaches, `take`n so a run is two or three partitions, not forty-three. */
+  private def beachCodes(count: Int): List[String] =
+    ImaScAdapter.parseCodes(fixture("locais-florianopolis.json")).take(count)
 
-  private val beachesBody: String =
-    beachCodes.map(c => s"""{"CODIGO":${JsonValue.str(c).render}}""").mkString("[", ",", "]")
+  private def beachesBody(count: Int): String =
+    beachCodes(count).map(c => s"""{"CODIGO":${JsonValue.str(c).render}}""").mkString("[", ",", "]")
 
   /** `script`: statuses the next fetches of one `localID` get before the CSV is served. */
-  final private class Portal(script: Map[String, List[Int]] = Map.empty):
+  final private class Portal(script: Map[String, List[Int]] = Map.empty, beaches: Int = 2):
     val exports: ListBuffer[Map[String, String]] = ListBuffer.empty
     private val urls = ImaScAdapter.DefaultSource.urls
     private val remaining = mutable.Map.from(script)
@@ -43,7 +43,7 @@ class IngestRunSpec extends munit.FunSuite:
     def post(url: String, form: Map[String, String]): String < Sync = Sync.defer {
       if url == urls("years") then fixture("anos.json")
       else if url == urls("municipalities") then fixture("municipios.json")
-      else if url == urls("beaches") then beachesBody
+      else if url == urls("beaches") then beachesBody(beaches)
       else if url == urls("points") then fixture("points.json")
       else
         val _ = exports.append(form)
@@ -153,7 +153,7 @@ class IngestRunSpec extends munit.FunSuite:
 
   test("a 500 then a 200 succeeds, the second attempt recorded") {
     val dir = tempDir()
-    val portal = Portal(Map(beachCodes.head -> List(500)))
+    val portal = Portal(Map(beachCodes(2).head -> List(500)))
     val pauses = Pauses()
     val outcome = outcomeOf(ingest(dir, portal, pauses))
     assertEquals(portal.exports.size, 3)
@@ -167,7 +167,7 @@ class IngestRunSpec extends munit.FunSuite:
 
   test("three 500s record the partition as failed, write the others, and exit non-zero") {
     val dir = tempDir()
-    val portal = Portal(Map(beachCodes.head -> List(500, 500, 500)))
+    val portal = Portal(Map(beachCodes(2).head -> List(500, 500, 500)))
     val result = ingest(dir, portal, Pauses())
     val outcome = outcomeOf(result)
     assertEquals(portal.exports.size, 4)
@@ -178,9 +178,28 @@ class IngestRunSpec extends munit.FunSuite:
     assert(Manifest.read(dir.resolve("manifest/ima-sc.json")).raw.size == 2)
   }
 
+  test("a mid-run 429 keeps what was already written and stops before the next request") {
+    val dir = tempDir()
+    val portal = Portal(Map(beachCodes(3)(1) -> List(429)), beaches = 3)
+    val result = ingest(dir, portal, Pauses())
+    val outcome = outcomeOf(result)
+    assertEquals(outcome.planned.size, 3)
+    assertEquals(portal.exports.size, 2, "the third partition was never requested")
+    assertEquals(outcome.written, 1)
+    assert(outcome.aborted.isDefined, "the run reports the abort")
+    assertEquals(Ingest.exitCode(result), 1)
+
+    val first = rawFile(dir, outcome.planned.head)
+    assertEquals(Files.readString(first, UTF_8), fixture("campeche-2026.csv"))
+    assert(!Files.exists(rawFile(dir, outcome.planned(2))), "the untouched partition has no file")
+    val manifest = Manifest.read(dir.resolve("manifest/ima-sc.json"))
+    assert(manifest.raw.contains(ImaScAdapter.rawPath(outcome.planned.head)))
+    assertEquals(manifest.raw.size, 2)
+  }
+
   test("a 429 aborts the run before the next request") {
     val dir = tempDir()
-    val portal = Portal(Map(beachCodes.head -> List(429)))
+    val portal = Portal(Map(beachCodes(2).head -> List(429)))
     val result = ingest(dir, portal, Pauses())
     val outcome = outcomeOf(result)
     assertEquals(portal.exports.size, 1)
