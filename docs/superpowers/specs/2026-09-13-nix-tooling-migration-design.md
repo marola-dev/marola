@@ -76,9 +76,9 @@ sandbox the Nix build sandbox does not give), bubblewrap (Linux only), opencode,
 script packages:
 
 - `gh-token` — `scripts/gh-token.sh` as is (`--source`, `--self-test`).
-- `clip`, `clip-relay` — the write-only clipboard bridge, as is; the fifo path moves from
-  `<repo>/.tmp/clip.fifo` to `$XDG_RUNTIME_DIR/ai-jail-clip.fifo` so it does not depend on a
-  repo layout.
+- `clip`, `clip-relay` — the write-only clipboard bridge, as is. The fifo stays at
+  `<project>/.tmp/clip.fifo`: the project directory is what ai-jail maps into the sandbox, so a
+  path under `$XDG_RUNTIME_DIR` would be invisible from inside.
 - `jail-run` — the `jail-claude` / `jail-opencode` / `jail-dry-run` recipe bodies as one script:
   `jail-run claude [args]`, `jail-run opencode [args]`, `jail-run --dry-run -- <cmd>`. Runs in
   the current directory, which must hold the project's `.ai-jail`. Opt-ins `JAIL_CLIPBOARD=1`
@@ -159,7 +159,7 @@ other two and can merge in any order once its lab exists.
   agreed price of one closure.
 - **The Docker `dev` stage** copies `flake.nix` and `flake.lock` and runs `nix develop`; it now
   fetches three more GitHub inputs at build time. Same network need it already has for nixpkgs.
-- **`jail-run` changes the fifo path** and the env-var names. Anyone with
+- **`jail-run` changes the env-var names.** Anyone with
   `MAROLA_JAIL_CLIPBOARD=1` in a shell profile gets the compatibility mapping for one release,
   then the old name stops working.
 - **ai-jail inside a jail.** These PRs are authored inside `just jail-claude`, where `.ai-jail`
