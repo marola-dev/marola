@@ -280,5 +280,5 @@ waking up, full stop.
 | Cost per PR | `just cost-split MIP-NNNN [--session <id>] [--estimate]`, `just claude-cost` |
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |
 | Status line | `.claude/statusline.sh`, shared via `.claude/settings.json` |
-| Push text to the clipboard (write-only) | `just clip` — needs `MAROLA_JAIL_CLIPBOARD=1 just jail-claude` inside the jail, works directly outside it |
-| Claude Code's own image paste (Ctrl+V) inside the jail | `MAROLA_JAIL_CLIPBOARD_PASTE=1 just jail-claude` — opt-in X11/Wayland display passthrough, off by default (bigger grant than the write-only bridge, see justfile's `jail-claude` comment) |
+| Push text to the clipboard (write-only) | `just clip` — needs `JAIL_CLIPBOARD=1 just jail-claude` inside the jail, works directly outside it |
+| Claude Code's own image paste (Ctrl+V) inside the jail | `JAIL_CLIPBOARD_PASTE=1 just jail-claude` — opt-in X11/Wayland display passthrough, off by default (bigger grant than the write-only bridge, see justfile's `jail-claude` comment) |

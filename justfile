@@ -72,7 +72,6 @@ quality-other:
     scripts/setup-ml-venv.sh --self-test
     # scripts/setup-runners.sh --self-test  # not in this repo — never committed
     scripts/marola-sea-pull.sh --self-test
-    scripts/gh-token.sh --self-test
     scripts/temps.sh --self-test
     python3 scripts/analyze_training.py --self-test
     python3 scripts/site_live_check.py --self-test
@@ -543,7 +542,7 @@ gh-billing *args:
 # Print the sandbox invocation ai-jail would run, without running it — use this to audit a
 # command's jail before trusting it for real.
 jail-dry-run *cmd:
-    ai-jail --no-save-config --dry-run -- {{cmd}}
+    jail-run --dry-run -- {{cmd}}
 
 # --no-save-config keeps a jailed run from writing the host's config.
 
@@ -559,14 +558,14 @@ gh-auth *args:
         *--refresh*) exec gh auth refresh ;;
         *--login*)   exec gh auth login ;;
     esac
-    if src="$(scripts/gh-token.sh --source)"; then
+    if src="$(gh-token --source)"; then
         echo "gh-auth: already authenticated — $src"
         if [ "$src" = "gh:host-login" ]; then gh auth status 2>&1 | sed 's/^/  /'; fi
         echo 'gh-auth: "just jco" will forward this token into the jail; no login needed in there.'
     else
         echo "gh-auth: no credential on this host yet — running gh auth login (one time)."
         gh auth login
-        scripts/gh-token.sh --source >/dev/null && echo "gh-auth: done — now run: just jco"
+        gh-token --source >/dev/null && echo "gh-auth: done — now run: just jco"
     fi
 # CPU/GPU temperature with a verdict — for watching a long marola-sea training run.
 # `just temps` for one snapshot, `just temps --watch` to follow it, `just temps --json` for a log.
@@ -675,49 +674,10 @@ runners *args:
 site-live-check *args:
     python3 scripts/site_live_check.py {{args}}
 
-# Claude Code in the jail;.
+# Claude Code in the jail — labs/agentic's jail-run (h0ffmann/nix-config). MAROLA_JAIL_CLIPBOARD*
+# still work for one release; the lab's names are JAIL_CLIPBOARD / JAIL_CLIPBOARD_PASTE.
 jail-claude *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    relay_pid=""
-    cleanup() {
-        if [ -n "$relay_pid" ]; then
-            kill -TERM "$relay_pid" 2>/dev/null || true
-            wait "$relay_pid" 2>/dev/null || true
-        fi
-    }
-    trap cleanup EXIT INT TERM
-    if [ "${MAROLA_JAIL_CLIPBOARD:-0}" = "1" ]; then
-        mkdir -p .tmp
-        fifo=".tmp/clip.fifo"
-        rm -f "$fifo"
-        mkfifo "$fifo"
-        scripts/clip-relay.sh "$fifo" &
-        relay_pid=$!
-        sleep 0.2
-        if ! kill -0 "$relay_pid" 2>/dev/null; then
-            wait "$relay_pid" 2>/dev/null || true
-            relay_pid=""
-        fi
-    fi
-    paste_flags=()
-    if [ "${MAROLA_JAIL_CLIPBOARD_PASTE:-0}" = "1" ]; then
-        echo "jail-claude: MAROLA_JAIL_CLIPBOARD_PASTE=1 — real X11/Wayland display passthrough is on, the jail can read your clipboard (and, on X11, more)" >&2
-        paste_flags=(--display --env DISPLAY --env WAYLAND_DISPLAY --env "XDG_RUNTIME_DIR=/run/user/$(id -u)")
-    fi
-    # Resolve the token out here, on the host, where the real gh login lives: ~/.config/gh is
-    # deliberately NOT mapped into the jail, so authenticating inside it writes to an ephemeral
-    # HOME and is gone by the next session. See scripts/gh-token.sh.
-    if src="$(scripts/gh-token.sh --source)"; then
-        GH_TOKEN="$(scripts/gh-token.sh)"
-        export GH_TOKEN
-        echo "jail-claude: GH_TOKEN from $src — gh works inside the jail, no login needed" >&2
-    else
-        echo "jail-claude: no GitHub token (no GH_TOKEN in .env, and gh is logged out on the host)." >&2
-        echo "             gh will not work inside the jail and 'just uprd' cannot open a PR." >&2
-        echo "             Fix once, on the host: gh auth login   (or add GH_TOKEN= to .env)" >&2
-    fi
-    ai-jail --no-save-config --rw-map ~/.claude --rw-map ~/.claude.json --map ~/.ssh --network --terminal-passthrough --exec --env GH_TOKEN "${paste_flags[@]}" claude {{args}}
+    JAIL_CLIPBOARD="${JAIL_CLIPBOARD:-${MAROLA_JAIL_CLIPBOARD:-0}}" JAIL_CLIPBOARD_PASTE="${JAIL_CLIPBOARD_PASTE:-${MAROLA_JAIL_CLIPBOARD_PASTE:-0}}" jail-run claude {{args}}
 
 # The two below pin the model via Claude Code's own alias (always the latest of that line), and
 # still forward any further args to `claude`, e.g.
@@ -731,19 +691,9 @@ jcs *args: (jail-claude "--model" "sonnet" args)
 # jail-claude with --model opus.
 jco *args: (jail-claude "--model" "opus" args)
 
-# OpenCode in the jail (MIP-0013) — the same ai-jail policy as jail-claude, OpenCode's own three
 # OpenCode in the same jail, with its own state directories instead of Claude Code's. MIP-0013.
 jail-opencode *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    # Same host-side token resolution as jail-claude, and for the same reason — this recipe used
-    # to forward no token at all, so gh was unusable in an OpenCode jail.
-    if src="$(scripts/gh-token.sh --source)"; then
-        GH_TOKEN="$(scripts/gh-token.sh)"
-        export GH_TOKEN
-        echo "jail-opencode: GH_TOKEN from $src" >&2
-    fi
-    ai-jail --no-save-config --rw-map ~/.config/opencode --rw-map ~/.local/share/opencode --rw-map ~/.cache/opencode --network --terminal-passthrough --exec --env GH_TOKEN opencode {{args}}
+    jail-run opencode {{args}}
 
 # jail-opencode, short alias.
 jo *args: (jail-opencode args)
@@ -765,7 +715,7 @@ opencode-cost *args="session":
 
 # Push stdin (or --text "…") to the clipboard — write-only, no paste counterpart;.
 clip *args:
-    scripts/clip.sh {{args}}
+    clip {{args}}
 
 # Fast-forward local `main` from origin — always fetches (safe, no working-tree effect);.
 sync-main:

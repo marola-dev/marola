@@ -4,18 +4,18 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    ai-jail = {
-      url = "github:akitaonrails/ai-jail";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # h0ffmann/nix-config labs, one nixpkgs closure via `follows`; bump with `nix flake update lint`.
     lint = {
       url = "github:h0ffmann/nix-config/labs/lint?dir=labs/lint";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    agentic = {
+      url = "github:h0ffmann/nix-config/labs/agentic?dir=labs/agentic";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, ai-jail, lint }:
+  outputs = { self, nixpkgs, flake-utils, lint, agentic }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -26,7 +26,8 @@
         # what the wrapper actually hardcodes.
         sbtOnJdk25 = pkgs.sbt.override { jre = jdk; };
 
-        # marola's own tools. Lint comes from labs/lint, appended below.
+        # marola's own tools. Lint and the agent sandbox come from labs/lint and labs/agentic,
+        # appended below.
         projectTools = [
           jdk
           sbtOnJdk25
@@ -45,7 +46,6 @@
           # `ollama serve` is started separately (docs/RUN-LOCALLY.md); this only puts it on PATH.
           pkgs.ollama
           pkgs.azure-cli
-          pkgs.gh
 
           # `just context-mips`: repomix packs docs for a browser session, wl-copy/xclip copy them.
           pkgs.repomix
@@ -66,14 +66,6 @@
           # needs a reachable Docker.
           pkgs.github-runner
 
-          # ai-jail — sandboxes coding agents behind bubblewrap/Landlock/seccomp. Its test suite
-          # needs a sandbox the Nix build sandbox does not provide, hence doCheck = false.
-          (ai-jail.packages.${system}.default.overrideAttrs (_: { doCheck = false; }))
-          pkgs.bubblewrap
-
-          # OpenCode (MIP-0013), a second agent harness; `opencode.json` is its config.
-          pkgs.opencode
-
           # waydroid CLI only: the LXC container, binder modules and the waydroid-container
           # service are the host's, same shape as ollama above.
           pkgs.waydroid
@@ -82,11 +74,10 @@
       {
         devShells.default = pkgs.mkShell {
           name = "marola";
-          packages = projectTools ++ lint.lib.${system}.tools;
+          packages = projectTools ++ lint.lib.${system}.tools ++ agentic.lib.${system}.tools;
 
           JAVA_HOME = "${jdk}";
-          # ai-jail's own devShell sets this; it does not propagate when consumed as a package.
-          BWRAP_BIN = "${pkgs.bubblewrap}/bin/bwrap";
+          inherit (agentic.lib.${system}.env) BWRAP_BIN;
 
           # `azd` is deliberately absent — its nixpkgs packaging status changes. If a deploy needs
           # it: curl -fsSL https://aka.ms/install-azd.sh | bash

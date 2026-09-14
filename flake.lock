@@ -1,9 +1,34 @@
 {
   "nodes": {
+    "agentic": {
+      "inputs": {
+        "ai-jail": "ai-jail",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "dir": "labs/agentic",
+        "lastModified": 1789347868,
+        "narHash": "sha256-YsYmh9TrMVNtCDUgT5QX/X4JlEOMFN3ZW8GEWEJ+oS4=",
+        "owner": "h0ffmann",
+        "repo": "nix-config",
+        "rev": "d42ff99dde4d7617de1ba8887a3d879a791f46d7",
+        "type": "github"
+      },
+      "original": {
+        "dir": "labs/agentic",
+        "owner": "h0ffmann",
+        "ref": "labs/agentic",
+        "repo": "nix-config",
+        "type": "github"
+      }
+    },
     "ai-jail": {
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": [
+          "agentic",
           "nixpkgs"
         ],
         "pre-commit-hooks": "pre-commit-hooks",
@@ -11,11 +36,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1788373133,
-        "narHash": "sha256-xsyWZ2+MXMfGye87mLcOgiKce4ysmwlH8rtV7k+k2Mk=",
+        "lastModified": 1789258709,
+        "narHash": "sha256-NT+UHiP5rpXastHpKhhhUJXW8rvPk7AXkiN+DoBPOmw=",
         "owner": "akitaonrails",
         "repo": "ai-jail",
-        "rev": "e0b6b9623299910aed154e4100509c312354d6c4",
+        "rev": "126a67e2788652f7c554072b401824719b6a2987",
         "type": "github"
       },
       "original": {
@@ -79,6 +104,7 @@
     "gitignore": {
       "inputs": {
         "nixpkgs": [
+          "agentic",
           "ai-jail",
           "pre-commit-hooks",
           "nixpkgs"
@@ -142,6 +168,7 @@
         "flake-compat": "flake-compat",
         "gitignore": "gitignore",
         "nixpkgs": [
+          "agentic",
           "ai-jail",
           "nixpkgs"
         ]
@@ -162,7 +189,7 @@
     },
     "root": {
       "inputs": {
-        "ai-jail": "ai-jail",
+        "agentic": "agentic",
         "flake-utils": "flake-utils_2",
         "lint": "lint",
         "nixpkgs": "nixpkgs"
@@ -171,6 +198,7 @@
     "rust-overlay": {
       "inputs": {
         "nixpkgs": [
+          "agentic",
           "ai-jail",
           "nixpkgs"
         ]
@@ -222,6 +250,7 @@
     "treefmt-nix": {
       "inputs": {
         "nixpkgs": [
+          "agentic",
           "ai-jail",
           "nixpkgs"
         ]

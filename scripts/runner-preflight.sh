@@ -64,7 +64,7 @@ check_tools() {
 
 token() {   # the host's token, by the same rule jail-claude uses
   if [ -n "${GH_TOKEN:-}" ]; then printf '%s' "$GH_TOKEN"; return 0; fi
-  "$script_dir/gh-token.sh" 2>/dev/null || true
+  gh-token 2>/dev/null || true   # labs/agentic (h0ffmann/nix-config), on PATH via flake.nix
 }
 
 check_pr_creation() {
