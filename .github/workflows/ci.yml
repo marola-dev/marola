@@ -189,16 +189,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Both tools come from flake.nix for the local run of the same script. On the self-hosted
-      # runner take them from nix as well: `sudo apt-get` there has no tty to prompt on and hangs
-      # until the job times out (run 34709971906). repo_stats.coverage_exe already prefers a
-      # wrapped `coverage` on PATH over `python3 -m coverage`, which is exactly what nix gives.
-      - name: cloc + coverage.py from nix
+      # Both tools come from labs/lint (h0ffmann/nix-config) via flake.nix's `lint` input — the
+      # same lock `just quality` uses locally. On the self-hosted runner `sudo apt-get` has no
+      # tty and hangs until the job times out (run 34709971906); nix does not.
+      # repo_stats.coverage_exe already prefers a wrapped `coverage` on PATH over
+      # `python3 -m coverage`, which is exactly what nix gives.
+      - name: cloc + coverage.py from the lint shell
         if: runner.environment == 'self-hosted'
         run: |
-          for out in $(nix build --no-link --print-out-paths nixpkgs#cloc nixpkgs#python3Packages.coverage); do
-            if [ -d "$out/bin" ]; then echo "$out/bin" >> "$GITHUB_PATH"; fi
-          done
+          nix develop .#lint --command which cloc coverage | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
 
       # The CI_RUNNER=ubuntu-latest fallback: GitHub's image promises neither tool, but does have
       # a passwordless sudo and apt, so install them there the way this job always did.
@@ -263,13 +262,13 @@ jobs:
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
-          version: "0.16.5"   # = flake.nix's ruff (nix develop --command ruff --version)
+          version: "0.16.5"   # = labs/lint's ruff as marola locks it (nix develop .#lint --command ruff --version)
           args: check
       - name: ruff format --check
         if: needs.changes.outputs.python == 'true'
         uses: astral-sh/ruff-action@v3
         with:
-          version: "0.16.5"   # = flake.nix's ruff (nix develop --command ruff --version)
+          version: "0.16.5"   # = labs/lint's ruff as marola locks it (nix develop .#lint --command ruff --version)
           args: format --check
       - name: self-tests — smoke_record (the smoke workflow's parser) and benchmark_gate (marola-local's gate)
         if: needs.changes.outputs.python == 'true'
@@ -319,12 +318,10 @@ jobs:
       # self-hosted runner hung until the job timeout killed it (run 34709971906), plus a stray
       # `pipx install` into the developer's own home. nix already has both, at the versions
       # flake.nix pins, so put them on PATH first and the action's install path never runs.
-      - name: shellcheck + pyflakes from nix (self-hosted only — the action would apt-get them)
+      - name: shellcheck + pyflakes from the lint shell (self-hosted only — the action would apt-get them)
         if: needs.changes.outputs.workflows == 'true' && runner.environment == 'self-hosted'
         run: |
-          for out in $(nix build --no-link --print-out-paths nixpkgs#shellcheck nixpkgs#python3Packages.pyflakes); do
-            if [ -d "$out/bin" ]; then echo "$out/bin" >> "$GITHUB_PATH"; fi
-          done
+          nix develop .#lint --command which shellcheck pyflakes | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
         uses: raven-actions/actionlint@v2

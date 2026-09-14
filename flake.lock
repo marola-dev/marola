@@ -98,6 +98,29 @@
         "type": "github"
       }
     },
+    "lint": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "dir": "labs/lint",
+        "lastModified": 1789347500,
+        "narHash": "sha256-xSnMHVzmm/JttlqbzA11JEkbteqsIkDRVLKP5uASGjk=",
+        "owner": "h0ffmann",
+        "repo": "nix-config",
+        "rev": "f64b6356aef2b7ec864fb5b270afdb45b923efc3",
+        "type": "github"
+      },
+      "original": {
+        "dir": "labs/lint",
+        "owner": "h0ffmann",
+        "ref": "labs/lint",
+        "repo": "nix-config",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1788404924,
@@ -141,6 +164,7 @@
       "inputs": {
         "ai-jail": "ai-jail",
         "flake-utils": "flake-utils_2",
+        "lint": "lint",
         "nixpkgs": "nixpkgs"
       }
     },

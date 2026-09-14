@@ -126,7 +126,8 @@ stays out of the runtime path on purpose.
 A dev shell that is the same on every machine is the first constraint an agent meets. `flake.nix`
 pins JDK 25 (Kyo's artifacts will not load on 24 — a real `UnsupportedClassVersionError`, not a
 hypothetical), sbt on that JDK, scala-cli, coursier, `just`, Python for the offline steps, `az`,
-`gh`, hadolint. `nix develop` is the whole setup; there is no "works on my machine" left for the
+`gh`; the lint toolchain (hadolint, actionlint, shellcheck, ruff, …) comes from `labs/lint` in
+h0ffmann/nix-config as one flake input. `nix develop` is the whole setup; there is no "works on my machine" left for the
 model to reason about, and no page of install instructions for it to skip. CI, the Docker `dev`
 image and the laptop run the same shell.
 

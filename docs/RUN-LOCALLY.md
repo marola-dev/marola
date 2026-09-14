@@ -374,7 +374,7 @@ docker run --rm --network host ghcr.io/h0ffmann/marola:jvm --summarize --lat -27
 `Dockerfile` is one multi-stage file: `builder` (sbt, Temurin 25) → `jvm` (Temurin 25 JRE on
 Alpine, ~70 MB + the 55 MB jar), `native-build` → `native` (below), and `dev` — the literal
 `nix develop` in an image, for reading or hacking on the code without installing Nix
-(`docker run -it marola:dev bash`). Lint: `just quality` runs hadolint on it (in the flake).
+(`docker run -it marola:dev bash`). Lint: `just quality` runs hadolint on it (from the lint lab).
 
 **Native binary (GraalVM).** The same CLI compiled ahead of time — one 69 MB executable, no JVM,
 ~75 MB of RSS, on a distroless image (`ghcr.io/h0ffmann/marola:native`, amd64). Everything
