@@ -9,7 +9,7 @@ import marola.water.{BathingCondition, WaterQualityMatcher}
 
 /**
  * The pure half of the `ima-sc` adapter: `exportarCSV`'s 13-column export → `SampleRow`s, joined to
- * the points feed on (municipio, balneario, ponto) (MIP-0056 §4.1, §8).
+ * the points feed on (balneario, ponto) (MIP-0056 §4.1, §8).
  */
 object ImaScCsv:
 
@@ -56,16 +56,24 @@ object ImaScCsv:
       .toMap
 
   /**
-   * The join key of MIP-0056 §4.1: unique across all 260 live points, unlike `PONTO_NOME` alone.
-   * Sorted first because two feed points can normalise to the same triple and `toMap` keeps the
-   * last: without the sort the winner would be the feed's order, and `build.sql` — which takes
-   * `max(point_key)` — would key the same samples differently.
+   * (beach, point), not (municipio, beach, point): `exportarCSV` keys on `localID` alone, so a body
+   * holds every municipality's points for that beach name with column 1 echoing the request — the
+   * municipality in a CSV row is what was asked for, not where the point is (MIP-0056 §4.1).
+   *
+   * The pair is unique across all 260 live points, but that is a property of the feed, not a
+   * guarantee: keeping one of two colliding points would hang a sample on another beach's
+   * coordinates, so it is checked on every run and refused, never resolved.
    */
-  def index(points: List[PointRow]): Map[(String, String, String), PointRow] =
-    points
-      .sortBy(_.pointKey)
-      .map(p => (norm(p.municipality), norm(p.beachName), norm(p.pointName)) -> p)
-      .toMap
+  def index(points: List[PointRow]): Either[String, Map[(String, String), PointRow]] =
+    val byPair = points.groupBy(p => (norm(p.beachName), norm(p.pointName)))
+    byPair.toList.sortBy(_._1).find(_._2.sizeIs > 1) match
+      case None => Right(byPair.map((pair, ps) => pair -> ps.minBy(_.pointKey)))
+      case Some(((beach, point), clash)) =>
+        Left(
+          s"the feed lists ${clash.size} points as ($beach, $point) — " +
+            s"${clash.map(_.pointKey).sorted.mkString(", ")} — and the export's municipality " +
+            "column is the request's, so nothing tells them apart"
+        )
 
   /** The portal's 13 columns, in order — `Build` refuses a raw file that does not start with it. */
   def hasKnownHeader(line: String): Boolean =
@@ -77,13 +85,13 @@ object ImaScCsv:
    */
   def pointFor(
       source: Source,
-      index: Map[(String, String, String), PointRow],
+      index: Map[(String, String), PointRow],
       municipio: String,
       beach: String,
       point: String
   ): PointRow =
     index.getOrElse(
-      (norm(municipio), norm(beach), norm(point)),
+      (norm(beach), norm(point)),
       PointRow(
         sourceId = source.id,
         pointKey = s"${source.id}:${slug(municipio)}/${slug(beach)}/${slug(point)}",
@@ -115,8 +123,10 @@ object ImaScCsv:
       case header :: _ if !hasKnownHeader(header) =>
         Left(ParseError(rawPath, s"unexpected header: ${header.take(150)}"))
       case _ :: body =>
-        val registry = index(points)
-        collect(source, rawPath, registry, body.map(fields), Nil, line = 2)
+        index(points) match
+          case Left(clash) => Left(ParseError(rawPath, clash))
+          case Right(registry) =>
+            collect(source, rawPath, registry, body.map(fields), Nil, line = 2)
 
   private enum Parsed derives CanEqual:
     case Sample(row: SampleRow)
@@ -127,7 +137,7 @@ object ImaScCsv:
   private def collect(
       source: Source,
       rawPath: String,
-      registry: Map[(String, String, String), PointRow],
+      registry: Map[(String, String), PointRow],
       rest: List[List[String]],
       acc: List[SampleRow],
       line: Int
@@ -142,7 +152,7 @@ object ImaScCsv:
 
   private def row(
       source: Source,
-      registry: Map[(String, String, String), PointRow],
+      registry: Map[(String, String), PointRow],
       cells: List[String]
   ): Parsed =
     // A year with no samples for a point is `…,YYYY,"Sem registros"` — 200, five columns, no row.

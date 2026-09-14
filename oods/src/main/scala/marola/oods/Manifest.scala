@@ -59,6 +59,14 @@ object Manifest:
       partitions = fields(json("partitions")).flatMap((k, v) => v.str.map(k -> _))
     )
 
+  /**
+   * Raw entries whose file is gone — a partition deleted by hand, or one a corrected planner no
+   * longer fetches. Left in, the entry keeps claiming a file `oods-check` cannot find and a
+   * re-ingest would skip; `partitions` is rewritten wholesale by `Build`, so only `raw` needs this.
+   */
+  def prune(m: Manifest, exists: String => Boolean): Manifest =
+    m.copy(raw = m.raw.filter((path, _) => exists(path)))
+
   /** A source that has never run has no manifest; that is an empty one, not a failure. */
   def read(file: Path): Manifest =
     if !Files.isRegularFile(file) then empty

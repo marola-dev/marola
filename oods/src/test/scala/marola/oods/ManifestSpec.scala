@@ -103,3 +103,11 @@ class ManifestSpec extends munit.FunSuite:
       "the partial write should be the temp file"
     )
   }
+
+  test("pruning drops the entries whose raw file is gone and keeps the rest byte-identical") {
+    val gone = "data/oods/raw/ima-sc/csv/florianopolis/praia-do-campeche/2025.csv"
+    val pruned = Manifest.prune(manifest, path => path != gone)
+    assertEquals(pruned.raw.keySet, Set("data/oods/raw/ima-sc/points.json"))
+    assertEquals(pruned.partitions, manifest.partitions)
+    assertEquals(Manifest.prune(manifest, _ => true), manifest)
+  }

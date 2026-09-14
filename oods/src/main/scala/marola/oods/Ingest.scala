@@ -32,8 +32,20 @@ final case class Outcome(
     written: Int,
     unchanged: Int,
     skipped: Int,
+    skippedUpstream: List[Partition],
     failed: List[PartitionFailure],
     aborted: Option[IngestError]
+) derives CanEqual
+
+/**
+ * What a run will fetch and what it will not: `skipped` is the planner's own rules (mode,
+ * manifest), `upstreamBroken` the source's `known_broken` list — never a failure, so it leaves the
+ * exit code alone (MIP-0056 §5.2).
+ */
+final case class Selection(
+    fetch: List[Partition],
+    upstreamBroken: List[Partition],
+    skipped: Int
 ) derives CanEqual
 
 object Ingest:
@@ -50,14 +62,18 @@ object Ingest:
    */
   def mutableYears(today: LocalDate): Set[Int] = Set(today.getYear, today.minusDays(45).getYear)
 
+  /** `known_broken`'s id for a partition: `sources.json` names `<key>/<year>`. */
+  def partitionId(p: Partition): String = s"${p.key}/${p.year}"
+
   def plan(
       plan: Plan,
       today: LocalDate,
       manifest: Manifest,
-      candidates: List[Partition]
-  ): List[Partition] =
+      candidates: List[Partition],
+      broken: Set[String]
+  ): Selection =
     val mutable = mutableYears(today)
-    candidates
+    val wanted = candidates
       .map(p => p.copy(immutable = !mutable.contains(p.year)))
       .filter { p =>
         val inMode = plan.mode match
@@ -65,6 +81,8 @@ object Ingest:
           case Mode.Backfill    => p.year >= plan.fromYear && p.year <= plan.toYear
         inMode && (!p.immutable || !manifest.raw.contains(ImaScAdapter.rawPath(p)))
       }
+    val (upstreamBroken, fetch) = wanted.partition(p => broken.contains(partitionId(p)))
+    Selection(fetch, upstreamBroken, candidates.size - wanted.size)
 
   /** An empty enumeration under a `--city` filter means the name matched nothing, not "done". */
   def unknownCity(plan: Plan, candidates: List[Partition]): Option[IngestError] =
@@ -87,20 +105,36 @@ object Ingest:
     for
       candidates <- adapter.partitions(plan)
       manifest <- Sync.defer(Manifest.read(manifestFile))
-      selected = Ingest.plan(plan, today, manifest, candidates)
-      skipped = candidates.size - selected.size
-      result <- decide(plan, selected, skipped, candidates)(
-        IngestRun.all(adapter, selected, skipped, dataDir, manifestFile, manifest, now, sleep)
+      selected = Ingest.plan(
+        plan,
+        today,
+        manifest,
+        candidates,
+        adapter.source.knownBroken.map(_.partition).toSet
+      )
+      result <- decide(plan, selected, candidates)(
+        IngestRun.all(adapter, selected, dataDir, manifestFile, manifest, now, sleep)
       )
     yield result
 
   private def decide(
       plan: Plan,
-      selected: List[Partition],
-      skipped: Int,
+      selected: Selection,
       candidates: List[Partition]
   )(ingest: => Outcome < Sync): Either[IngestError, Outcome] < Sync =
     unknownCity(plan, candidates) match
-      case Some(error)         => Left(error)
-      case None if plan.dryRun => Right(Outcome(selected, 0, 0, 0, skipped, Nil, None))
-      case None                => ingest.map(Right(_))
+      case Some(error) => Left(error)
+      case None if plan.dryRun =>
+        Right(
+          Outcome(
+            selected.fetch,
+            0,
+            0,
+            0,
+            selected.skipped,
+            selected.upstreamBroken,
+            Nil,
+            None
+          )
+        )
+      case None => ingest.map(Right(_))

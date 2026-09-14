@@ -2,6 +2,7 @@ package marola.oods
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Paths}
+import java.time.LocalDate
 
 import marola.json.JsonValue
 
@@ -21,6 +22,15 @@ class SourcesRegistrySpec extends munit.FunSuite:
   private def str(v: JsonValue, field: String): String =
     v(field).str.getOrElse(fail(s"missing string field '$field'"))
 
+  private def brokenPartitions(v: JsonValue): List[BrokenPartition] =
+    v("known_broken").arr.toList.map(b =>
+      BrokenPartition(
+        partition = str(b, "partition"),
+        observed = LocalDate.parse(str(b, "observed")),
+        reason = str(b, "reason")
+      )
+    )
+
   test("the registry's ima-sc entry is ImaScAdapter.DefaultSource, field for field") {
     val ima = entry("ima-sc")
     val urls = ima("urls") match
@@ -33,7 +43,19 @@ class SourcesRegistrySpec extends munit.FunSuite:
       country = str(ima, "country"),
       urls = urls,
       cadence = str(ima, "cadence"),
-      licence = str(ima, "licence")
+      licence = str(ima, "licence"),
+      knownBroken = brokenPartitions(ima)
     )
     assertEquals(fromDisk, ImaScAdapter.DefaultSource)
+  }
+
+  test("the registry names the five beach-years the portal cannot export") {
+    val listed = brokenPartitions(entry("ima-sc"))
+    assertEquals(listed.size, 5)
+    assertEquals(listed.map(_.observed).distinct, List(LocalDate.parse("2026-09-14")))
+    assert(
+      listed.map(_.partition).contains("florianopolis/balneario/2017"),
+      listed.map(_.partition).toString
+    )
+    assert(listed.forall(_.reason.nonEmpty))
   }

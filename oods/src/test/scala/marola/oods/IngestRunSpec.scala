@@ -43,7 +43,10 @@ class IngestRunSpec extends munit.FunSuite:
     def post(url: String, form: Map[String, String]): String < Sync = Sync.defer {
       if url == urls("years") then fixture("anos.json")
       else if url == urls("municipalities") then fixture("municipios.json")
-      else if url == urls("beaches") then beachesBody(beaches)
+      // Only Florianópolis lists beaches: one list for all 28 municipalities would read as 28
+      // municipalities sharing every beach name, and the plan would key them by the first.
+      else if url == urls("beaches") then
+        if form("municipioID") == "Florianópolis" then beachesBody(beaches) else "[]"
       else if url == urls("points") then fixture("points.json")
       else
         val _ = exports.append(form)

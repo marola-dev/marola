@@ -85,13 +85,13 @@ SELECT
       || oods_slug(c.point_name)) AS point_key
 FROM csv_row c
 LEFT JOIN (
-  -- One row per normalised triple: `ImaScCsv.index` builds a Map from a point-key-sorted list, so
-  -- the greatest key wins there too when two feed points normalise the same.
-  SELECT source_id, oods_norm(municipality) AS m, oods_norm(beach_name) AS b,
-         oods_norm(point_name) AS p, max(point_key) AS point_key
+  -- (beach, point), not (municipality, beach, point): `exportarCSV` ignores `municipioID`, so a
+  -- row's municipality is the one that was requested, not the one the point is in — the same join
+  -- `ImaScCsv.index` makes, which refuses the feed outright if two points share the pair.
+  SELECT source_id, oods_norm(beach_name) AS b, oods_norm(point_name) AS p,
+         max(point_key) AS point_key
   FROM feed_point GROUP BY ALL) f
   ON f.source_id = c.source_id
-  AND f.m = oods_norm(c.municipality)
   AND f.b = oods_norm(c.beach_name)
   AND f.p = oods_norm(c.point_name);
 

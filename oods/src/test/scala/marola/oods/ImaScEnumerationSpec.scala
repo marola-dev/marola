@@ -7,6 +7,7 @@ import scala.collection.mutable.ListBuffer
 
 import kyo.*
 
+import marola.json.JsonValue
 import marola.oods.Channel
 
 /**
@@ -24,7 +25,7 @@ class ImaScEnumerationSpec extends munit.FunSuite:
   private given AllowUnsafe = AllowUnsafe.embrace.danger
   private def run[A](effect: A < Sync): A = Sync.Unsafe.evalOrThrow(effect)
 
-  final private class Portal:
+  final private class Portal(beaches: String => List[String] = Portal.florianopolisOnly):
     val calls: ListBuffer[(String, Map[String, String])] = ListBuffer.empty
     private val urls = ImaScAdapter.DefaultSource.urls
 
@@ -32,10 +33,22 @@ class ImaScEnumerationSpec extends munit.FunSuite:
       val _ = calls.append((url, form))
       if url == urls("years") then fixture("anos.json")
       else if url == urls("municipalities") then fixture("municipios.json")
-      else if url == urls("beaches") then fixture("locais-florianopolis.json")
+      else if url == urls("beaches") then codes(beaches(form("municipioID")))
       else if url == urls("points") then fixture("points.json")
       else fixture("campeche-2025.csv")
     }
+
+  private object Portal:
+    /**
+     * Trap: the portal lists a different set per municipality, so a stub answering all 28 with one
+     * list would make every beach look shared and collapse the plan onto the first municipality.
+     */
+    val florianopolisOnly: String => List[String] = m =>
+      if m == "Florianópolis" then ImaScAdapter.parseCodes(fixture("locais-florianopolis.json"))
+      else Nil
+
+  private def codes(names: List[String]): String =
+    names.map(n => s"""{"CODIGO":${JsonValue.str(n).render}}""").mkString("[", ",", "]")
 
   private def adapterWith(portal: Portal): ImaScAdapter =
     ImaScAdapter(post = portal.post, now = () => Instant.parse("2026-09-14T12:00:00Z"))
@@ -72,7 +85,9 @@ class ImaScEnumerationSpec extends munit.FunSuite:
     assert(partitions.forall(_.channel == Channel.Csv))
     assert(partitions.forall(_.sourceId == "ima-sc"))
     assertEquals(partitions.map(_.year).distinct.sorted, (2003 to 2026).toList)
-    assertEquals(portal.calls.count((url, _) => url.endsWith("getLocaisByMunicipio")), 1)
+    // Every municipality, even under `--city`: which municipality owns a shared beach's partition
+    // is a property of the whole state's lists, and a filtered run must pick the same one.
+    assertEquals(portal.calls.count((url, _) => url.endsWith("getLocaisByMunicipio")), 28)
   }
 
   test("beaches whose names differ only by an article or a doubled space keep distinct keys") {
@@ -135,4 +150,50 @@ class ImaScEnumerationSpec extends munit.FunSuite:
       case other => fail(s"expected the registry to be missing, got $other")
     val _ = run(adapter.points)
     assertEquals(adapter.rows(raw).map(_.size), Right(145))
+  }
+
+  private val twoMunicipalities: String => List[String] =
+    case "Florianópolis" => List("Praia Brava", "Praia do Campeche")
+    case "Itajaí"        => List("Praia Brava", "Praia de Cabeçudas")
+    case _               => Nil
+
+  test("a beach name two municipalities list is one partition, under the first of them") {
+    val keys =
+      run(adapterWith(Portal(twoMunicipalities)).partitions(plan(Set.empty))).map(_.key).distinct
+    assertEquals(keys, List("florianopolis/brava", "florianopolis/campeche", "itajai/cabecudas"))
+  }
+
+  test("the shared beach keeps one partition per year, and only the first municipality's path") {
+    val partitions = run(adapterWith(Portal(twoMunicipalities)).partitions(plan(Set.empty)))
+    val brava = partitions.filter(_.key.endsWith("/brava"))
+    assertEquals(brava.size, 24)
+    assertEquals(brava.map(_.year).sorted, (2003 to 2026).toList)
+    assertEquals(
+      ImaScAdapter.rawPath(brava.head),
+      s"raw/ima-sc/csv/florianopolis/brava/${brava.head.year}.csv"
+    )
+  }
+
+  test("--city keeps a shared beach the other municipality owns, under that owner's key") {
+    val itajai = run(adapterWith(Portal(twoMunicipalities)).partitions(plan(Set("Itajaí"))))
+    assertEquals(itajai.map(_.key).distinct, List("florianopolis/brava", "itajai/cabecudas"))
+  }
+
+  test("a shared beach is fetched under the municipality its key names") {
+    val portal = Portal(twoMunicipalities)
+    val partition = Partition("ima-sc", Channel.Csv, "florianopolis/brava", 2025, immutable = false)
+    val _ = run(adapterWith(portal).fetch(partition))
+    assertEquals(
+      portal.calls.last._2,
+      Map("municipioID" -> "Florianópolis", "localID" -> "Praia Brava", "ano" -> "2025")
+    )
+  }
+
+  test("two beaches whose names differ but normalise alike stay two partitions") {
+    val nearly: String => List[String] =
+      case "Florianópolis"        => List("Praia do Itaguaçu")
+      case "São Francisco do Sul" => List("Praia de Itaguaçú")
+      case _                      => Nil
+    val keys = run(adapterWith(Portal(nearly)).partitions(plan(Set.empty))).map(_.key).distinct
+    assertEquals(keys, List("florianopolis/itaguacu", "sao-francisco-do-sul/itaguacu"))
   }

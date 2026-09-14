@@ -14,7 +14,34 @@
         "points": "https://balneabilidade.ima.sc.gov.br/relatorio/mapa"
       },
       "cadence": "weekly in season, monthly off season",
-      "licence": "none granted; public administrative information (LAI, Lei 12.527/2011)"
+      "licence": "none granted; public administrative information (LAI, Lei 12.527/2011)",
+      "known_broken": [
+        {
+          "partition": "balneario-camboriu/central/2016",
+          "observed": "2026-09-14",
+          "reason": "HTTP 200 truncated mid-year, CodeIgniter 'headers already sent'"
+        },
+        {
+          "partition": "balneario-camboriu/central/2024",
+          "observed": "2026-09-14",
+          "reason": "HTTP 200 truncated mid-year, CodeIgniter 'headers already sent'"
+        },
+        {
+          "partition": "florianopolis/balneario/2017",
+          "observed": "2026-09-14",
+          "reason": "HTTP 500 date_format(): bool given"
+        },
+        {
+          "partition": "governador-celso-ramos/palmas/2024",
+          "observed": "2026-09-14",
+          "reason": "HTTP 200 truncated mid-year, CodeIgniter 'headers already sent'"
+        },
+        {
+          "partition": "jaguaruna/lagoa-do-arroio-corrente/2018",
+          "observed": "2026-09-14",
+          "reason": "HTTP 500 date_format(): bool given"
+        }
+      ]
     }
   ]
 }

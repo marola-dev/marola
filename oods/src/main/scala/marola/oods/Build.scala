@@ -171,8 +171,10 @@ object Build:
         acc.copy(written = acc.written :+ target.path)
     }
     // Replaced, not merged: a partition that no longer exists must leave the manifest with it.
-    if manifest.partitions != built then
-      Manifest.write(manifestFile, manifest.copy(partitions = built))
+    val next = Manifest
+      .prune(manifest, path => Files.isRegularFile(dataDir.resolve(path)))
+      .copy(partitions = built)
+    if next != manifest then Manifest.write(manifestFile, next)
     done
 
   private def hash(connection: Connection, target: Target): String =

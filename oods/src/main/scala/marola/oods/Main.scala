@@ -90,17 +90,26 @@ object Main extends KyoApp:
 
   private def report(outcome: Outcome): String =
     val counts =
-      s"planned ${outcome.planned.size}, skipped ${outcome.skipped}, fetched ${outcome.fetched}, " +
+      s"planned ${outcome.planned.size}, skipped ${outcome.skipped}, " +
+        s"skipped_upstream ${outcome.skippedUpstream.size}, fetched ${outcome.fetched}, " +
         s"written ${outcome.written}, unchanged ${outcome.unchanged}, failed ${outcome.failed.size}"
     val failures =
       outcome.failed.map(f => s"  failed ${f.partition.key} ${f.partition.year}: ${f.reason}")
     val aborted = outcome.aborted.map(e => s"  aborted: ${e.message}").toList
-    (counts :: failures ++ aborted).mkString("\n")
+    (counts :: upstreamBroken(outcome) ++ failures ++ aborted).mkString("\n")
+
+  /** Not a failure: the source's own `known_broken` list, named so a run says what it left out. */
+  private def upstreamBroken(outcome: Outcome): List[String] =
+    Option
+      .when(outcome.skippedUpstream.nonEmpty)(
+        s"  skipped_upstream: ${outcome.skippedUpstream.map(Ingest.partitionId).mkString(", ")}"
+      )
+      .toList
 
   private def plannedLines(outcome: Outcome): String =
     val lines = outcome.planned.map(p => s"${p.sourceId} ${p.channel.label} ${p.key} ${p.year}")
-    (lines :+ s"${lines.size} partitions planned (dry run: nothing fetched, nothing written)")
-      .mkString("\n")
+    ((lines :+ s"${lines.size} partitions planned (dry run: nothing fetched, nothing written)") ++
+      upstreamBroken(outcome)).mkString("\n")
 
   private def ingest(options: Options, today: LocalDate): Unit < Async =
     val adapter = ImaScAdapter()

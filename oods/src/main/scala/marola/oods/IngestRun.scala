@@ -23,8 +23,7 @@ private object IngestRun:
 
   def all(
       adapter: SourceAdapter,
-      selected: List[Partition],
-      skipped: Int,
+      selected: Selection,
       dataDir: Path,
       manifestFile: Path,
       manifest: Manifest,
@@ -35,14 +34,15 @@ private object IngestRun:
       // The registry first: `rows` cannot join a sample to a point without it (`ImaScAdapter.rows`).
       registry <- adapter.points
       start <- Sync.defer(writePoints(adapter.source, dataDir, registry, manifest, now()))
-      end <- each(adapter, selected, dataDir, start, now, sleep)
+      end <- each(adapter, selected.fetch, dataDir, start, now, sleep)
       _ <- Sync.defer(Manifest.write(manifestFile, end.manifest))
     yield Outcome(
-      selected,
+      selected.fetch,
       end.fetched,
       end.written,
       end.unchanged,
-      skipped,
+      selected.skipped,
+      selected.upstreamBroken,
       end.failed.reverse,
       end.aborted
     )

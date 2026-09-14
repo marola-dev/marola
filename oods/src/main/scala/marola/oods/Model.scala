@@ -150,6 +150,13 @@ final case class Partition(
  */
 final case class RawFile(partition: Partition, url: String, bytes: Array[Byte], fetchedAt: Instant)
 
+/**
+ * A partition the portal itself cannot export, reproduced by hand on `observed` — not a transient
+ * failure, so the planner drops it instead of failing every run on it (MIP-0056 §5.2).
+ */
+final case class BrokenPartition(partition: String, observed: LocalDate, reason: String)
+    derives CanEqual
+
 /** One entry of `data/oods/sources.json`. */
 final case class Source(
     id: String,
@@ -158,7 +165,8 @@ final case class Source(
     country: String,
     urls: Map[String, String],
     cadence: String,
-    licence: String
+    licence: String,
+    knownBroken: List[BrokenPartition]
 ) derives CanEqual
 
 final case class Plan(

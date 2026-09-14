@@ -1,7 +1,7 @@
 package marola.oods
 
 import java.nio.charset.StandardCharsets.UTF_8
-import java.time.Instant
+import java.time.{Instant, LocalDate}
 import java.util.concurrent.atomic.AtomicReference
 
 import scala.util.control.NoStackTrace
@@ -45,20 +45,31 @@ final class ImaScAdapter(
             found
           }
 
+  /**
+   * Trap: every municipality is enumerated even under `--city`, because which one owns a shared
+   * beach's partition depends on the whole state's lists — a filtered run must choose the same
+   * owner as a full one, or the two write different paths for the same export.
+   */
   def partitions(plan: Plan): List[Partition] < Sync =
     if !serves(plan) then Nil
     else
       for
         available <- years
         names <- municipalities
-        wanted = names.filter(m => plan.cities.isEmpty || plan.cities.exists(sameName(_, m)))
-        keys <- traverse(wanted)(partitionKeys)
+        listed <- traverse(names)(m => beaches(m).map(m -> _))
       yield
         val window = available.filter(y => y >= plan.fromYear && y <= plan.toYear).sorted
-        keys.flatten.flatMap { key =>
-          // `immutable` is the planner's call (MIP-0056 §5.2): the adapter has no refetch window.
-          window.map(year => Partition(source.id, Channel.Csv, key, year, immutable = false))
-        }
+        ImaScAdapter
+          .canonicalBeaches(listed)
+          .filter(b =>
+            plan.cities.isEmpty || b.listedIn.exists(m => plan.cities.exists(sameName(_, m)))
+          )
+          .flatMap { beach =>
+            // `immutable` is the planner's call (MIP-0056 §5.2): the adapter has no refetch window.
+            window.map(year =>
+              Partition(source.id, Channel.Csv, beach.key, year, immutable = false)
+            )
+          }
 
   def fetch(p: Partition): RawFile < Sync =
     for
@@ -93,9 +104,6 @@ final class ImaScAdapter(
 
   private def sameName(a: String, b: String): Boolean = ImaScCsv.slug(a) == ImaScCsv.slug(b)
 
-  private def partitionKeys(municipio: String): List[String] < Sync =
-    beachKeys(municipio).map(_.keys.toList.sorted)
-
   private def beachKeys(municipio: String): Map[String, String] < Sync =
     beaches(municipio).map { found =>
       val prefix = ImaScCsv.slug(municipio)
@@ -125,7 +133,7 @@ final class ImaScAdapter(
   /**
    * Same rationale as `Recommender.traverse`: built from `map`/`flatMap`, the confirmed Kyo API.
    */
-  private def traverse[A, B](items: List[A])(f: A => List[B] < Sync): List[List[B]] < Sync =
+  private def traverse[A, B](items: List[A])(f: A => B < Sync): List[B] < Sync =
     items match
       case Nil => Nil
       case head :: tail =>
@@ -140,6 +148,18 @@ object ImaScAdapter:
   final case class UnknownPartitionException(key: String)
       extends Exception(s"ima-sc: no portal beach for partition key '$key'")
       with NoStackTrace
+
+  /**
+   * Reproduced by hand on 2026-09-14: the first two answer HTTP 500 from IMA's own date formatting,
+   * the last three answer 200 with the CSV cut off mid-year and a PHP warning appended. Listing
+   * them keeps a backfill's exit code honest and a January incremental from failing forever on the
+   * two 2024 ones.
+   */
+  private val Http500 = "HTTP 500 date_format(): bool given"
+  private val Truncated = "HTTP 200 truncated mid-year, CodeIgniter 'headers already sent'"
+
+  private def broken(partition: String, reason: String): BrokenPartition =
+    BrokenPartition(partition, LocalDate.parse("2026-09-14"), reason)
 
   /**
    * The code's copy of `data/oods/sources.json`'s `ima-sc` entry; `SourcesRegistrySpec` keeps the
@@ -158,8 +178,43 @@ object ImaScAdapter:
       "points" -> "https://balneabilidade.ima.sc.gov.br/relatorio/mapa"
     ),
     cadence = "weekly in season, monthly off season",
-    licence = "none granted; public administrative information (LAI, Lei 12.527/2011)"
+    licence = "none granted; public administrative information (LAI, Lei 12.527/2011)",
+    knownBroken = List(
+      broken("balneario-camboriu/central/2016", Truncated),
+      broken("balneario-camboriu/central/2024", Truncated),
+      broken("florianopolis/balneario/2017", Http500),
+      broken("governador-celso-ramos/palmas/2024", Truncated),
+      broken("jaguaruna/lagoa-do-arroio-corrente/2018", Http500)
+    )
   )
+
+  /** A partition key and every municipality that lists the beach, the key's own first. */
+  final case class BeachKey(key: String, listedIn: List[String]) derives CanEqual
+
+  final private case class Listing(localId: String, municipality: String, key: String)
+
+  /**
+   * One partition per beach *name*: `exportarCSV` keys on `localID` and ignores `municipioID`, so
+   * the two municipalities that both list "Praia Brava" get byte-identical bodies holding both
+   * their points, with column 1 echoing the request — fetching each would store one export twice
+   * (MIP-0056 §4.1). The alphabetically first municipality keeps the partition, an arbitrary but
+   * stable choice, and `listedIn` is what lets `--city` still select it for the other.
+   *
+   * Names are compared exactly, not by slug: "Praia do Itaguaçu" (Florianópolis) and "Praia de
+   * Itaguaçú" (São Francisco do Sul) fold to one slug but are two `localID`s and two real exports.
+   */
+  def canonicalBeaches(listed: List[(String, List[String])]): List[BeachKey] =
+    val listings =
+      listed.sortBy((municipio, _) => ImaScCsv.slug(municipio)).flatMap { (municipio, beaches) =>
+        ImaScCsv.beachSlugs(beaches).toList.sorted.map { (beachSlug, localId) =>
+          Listing(localId, municipio, s"${ImaScCsv.slug(municipio)}/$beachSlug")
+        }
+      }
+    val byLocalId = listings.groupBy(_.localId)
+    listings.map(_.localId).distinct.map { localId =>
+      val shared = byLocalId(localId)
+      BeachKey(shared.head.key, shared.map(_.municipality).distinct)
+    }
 
   /** `data/oods/raw/…` of MIP-0056 §5.1 — the path a `ParseError` and the manifest name. */
   def rawPath(p: Partition): String =
