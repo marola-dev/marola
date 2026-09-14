@@ -6,7 +6,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     # h0ffmann/nix-config labs, one nixpkgs closure via `follows`; bump with `nix flake update lint`.
     lint = {
-      url = "github:h0ffmann/nix-config/labs/lint?dir=labs/lint";
+      url = "github:h0ffmann/nix-config?dir=labs/lint";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     agentic = {

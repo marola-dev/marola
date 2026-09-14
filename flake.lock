@@ -132,17 +132,16 @@
       },
       "locked": {
         "dir": "labs/lint",
-        "lastModified": 1789347500,
-        "narHash": "sha256-xSnMHVzmm/JttlqbzA11JEkbteqsIkDRVLKP5uASGjk=",
+        "lastModified": 1789349635,
+        "narHash": "sha256-cGZRGYaBzNMblT9S5nCkefuwy49wmoEvsOSsUAIKRdg=",
         "owner": "h0ffmann",
         "repo": "nix-config",
-        "rev": "f64b6356aef2b7ec864fb5b270afdb45b923efc3",
+        "rev": "642195111d6b9ac4c5aea24dbd5f242160b397b0",
         "type": "github"
       },
       "original": {
         "dir": "labs/lint",
         "owner": "h0ffmann",
-        "ref": "labs/lint",
         "repo": "nix-config",
         "type": "github"
       }
