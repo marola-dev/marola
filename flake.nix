@@ -13,9 +13,13 @@
       url = "github:h0ffmann/nix-config/labs/agentic?dir=labs/agentic";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    cuda = {
+      url = "github:h0ffmann/nix-config/labs/cuda?dir=labs/cuda";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, lint, agentic }:
+  outputs = { self, nixpkgs, flake-utils, lint, agentic, cuda }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -26,8 +30,8 @@
         # what the wrapper actually hardcodes.
         sbtOnJdk25 = pkgs.sbt.override { jre = jdk; };
 
-        # marola's own tools. Lint and the agent sandbox come from labs/lint and labs/agentic,
-        # appended below.
+        # marola's own tools. Lint, the agent sandbox and the CUDA host scripts come from
+        # labs/lint, labs/agentic and labs/cuda (x86_64-linux only), appended below.
         projectTools = [
           jdk
           sbtOnJdk25
@@ -74,7 +78,8 @@
       {
         devShells.default = pkgs.mkShell {
           name = "marola";
-          packages = projectTools ++ lint.lib.${system}.tools ++ agentic.lib.${system}.tools;
+          packages = projectTools ++ lint.lib.${system}.tools ++ agentic.lib.${system}.tools
+            ++ pkgs.lib.optionals (system == "x86_64-linux") cuda.lib.${system}.tools;
 
           JAVA_HOME = "${jdk}";
           inherit (agentic.lib.${system}.env) BWRAP_BIN;

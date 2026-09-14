@@ -49,6 +49,29 @@
         "type": "github"
       }
     },
+    "cuda": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "dir": "labs/cuda",
+        "lastModified": 1789347872,
+        "narHash": "sha256-RSi+/23vqxeFkvoYsX/E/vxbE53YeaGwHLQNDM+ybOM=",
+        "owner": "h0ffmann",
+        "repo": "nix-config",
+        "rev": "0cd8343dddf1eb73e6d46e70ae2bc8fe7f1297ff",
+        "type": "github"
+      },
+      "original": {
+        "dir": "labs/cuda",
+        "owner": "h0ffmann",
+        "ref": "labs/cuda",
+        "repo": "nix-config",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -189,6 +212,7 @@
     "root": {
       "inputs": {
         "agentic": "agentic",
+        "cuda": "cuda",
         "flake-utils": "flake-utils_2",
         "lint": "lint",
         "nixpkgs": "nixpkgs"

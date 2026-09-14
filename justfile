@@ -68,8 +68,6 @@ quality-other:
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
-    scripts/setup-cuda-cache.sh --self-test
-    scripts/setup-ml-venv.sh --self-test
     # scripts/setup-runners.sh --self-test  # not in this repo — never committed
     scripts/marola-sea-pull.sh --self-test
     scripts/temps.sh --self-test
@@ -227,13 +225,14 @@ finetune-dpo-dataset:
 finetune-train-dpo preset="tiny" *args="":
     python3 finetune/train_dpo.py --preset {{preset}} {{args}}
 
-# Create/update the venv marola-sea trains in (CUDA torch from PyTorch's wheel index).
+# Create/update the venv marola-sea trains in — labs/cuda's setup-ml-venv (h0ffmann/nix-config);
+# call its bin/python-cuda afterwards, never bin/python.
 ml-venv *args:
-    scripts/setup-ml-venv.sh {{args}}
+    REQUIREMENTS=finetune/requirements.txt VENV_ROOT="${VENV_ROOT:-$HOME/.marola-ml-venv}" setup-ml-venv {{args}}
 
-# One-time host setup: add the CUDA binary cache so torchWithCuda is fetched, not compiled.
+# One-time host setup: the CUDA binary cache, so torchWithCuda is fetched, not compiled.
 gpu-cache-setup *args:
-    scripts/setup-cuda-cache.sh {{args}}
+    setup-cuda-cache {{args}}
 
 # Merge a LoRA adapter into its base and export runnable GGUFs (MIP-0025 §5.1) — the step
 # between training and publishing.

@@ -1,6 +1,6 @@
 # marola-sea-publish — build and publish the marola-sea model to Hugging Face. MIP-0025.
 # Manual dispatch only, on the self-hosted `marola-sea` runner; setup in docs/RUN-LOCALLY.md.
-# CUDA torch comes from a venv (scripts/setup-ml-venv.sh), not nixpkgs — no cache for this pin.
+# CUDA torch comes from a venv (labs/cuda's setup-ml-venv, via flake.nix), not nixpkgs.
 name: marola-sea publish
 
 on:
@@ -77,7 +77,7 @@ jobs:
       - name: python env with CUDA torch (venv, reused between runs)
         run: |
           set -euo pipefail
-          scripts/setup-ml-venv.sh
+          REQUIREMENTS=finetune/requirements.txt nix develop --command setup-ml-venv
 
       - name: work out the version (manual major/minor, else auto-increment)
         id: version
@@ -120,7 +120,7 @@ jobs:
           VENV_ROOT: ${{ env.VENV_ROOT }}
         run: |
           set -euo pipefail
-          py="$VENV_ROOT/bin/marola-python"   # wraps the venv python with libstdc++ on the path
+          py="$VENV_ROOT/bin/python-cuda"   # wraps the venv python with libstdc++ on the path
           # Refuse rather than fall back to CPU: a silent fallback is hours wasted, not a warning.
           "$py" -c 'import torch, sys; sys.exit(0 if torch.cuda.is_available() else "no CUDA device visible to torch")'
           # tee, not >: the live log still streams to the Actions console so a stuck run is
@@ -177,7 +177,7 @@ jobs:
           set -euo pipefail
           src="$(nix build --no-link --print-out-paths nixpkgs#llama-cpp.src)"
           nix shell nixpkgs#llama-cpp --command \
-            "$VENV_ROOT/bin/marola-python" finetune/merge_export.py --preset "${{ inputs.preset }}" --llama-cpp "$src" \
+            "$VENV_ROOT/bin/python-cuda" finetune/merge_export.py --preset "${{ inputs.preset }}" --llama-cpp "$src" \
               --adapter "${CKPT_ROOT}/${{ inputs.preset }}/dpo-adapter" \
               --plan-json finetune/out/plan.json
 
@@ -197,7 +197,7 @@ jobs:
                        ('Q4', p['gguf']['Q4_K_M']), ('Q8', p['gguf']['Q8_0'])):
               print(f'{k}={shlex.quote(v)}')
           ")"
-          "$VENV_ROOT/bin/marola-python" finetune/publish_hf.py \
+          "$VENV_ROOT/bin/python-cuda" finetune/publish_hf.py \
             --repo "${GITHUB_REPOSITORY_OWNER}/${NAME}-GGUF" \
             --gguf "$Q4" \
             --gguf "$Q8" \

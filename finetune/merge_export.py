@@ -224,6 +224,17 @@ def self_test() -> int:
         "adapter",
         "with no DPO adapter present, the SFT adapter is the one merged",
     )
+    # merge_export shells out to llama.cpp's convert_hf_to_gguf.py, whose vocab probe catches only
+    # FileNotFoundError: a missing sentencepiece surfaces as ModuleNotFoundError and kills the run.
+    # setup-ml-venv (labs/cuda) installs the requirements file as given and knows nothing of this.
+    req = (Path(__file__).parent / "requirements.txt").read_text()
+    for dep in ("gguf", "sentencepiece", "protobuf"):
+        ok(
+            dep in req,
+            True,
+            f"{dep} is in finetune/requirements.txt — convert_hf_to_gguf.py needs it",
+        )
+
     if fails:
         print(f"merge_export self-test: {fails} failure(s)", file=sys.stderr)
         return 1
