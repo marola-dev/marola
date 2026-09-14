@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.sql.{Connection, ResultSet}
 import java.time.Instant
+import java.util.Comparator
 
 import scala.jdk.CollectionConverters.*
 
@@ -272,4 +273,39 @@ class OodsBuildSpec extends munit.FunSuite:
       case BuildOutcome.Failed(reasons) =>
         assert(reasons.exists(_.contains("no samples")), reasons)
       case other => fail(s"expected a failure, got $other")
+  }
+
+  private def rawEntries(dir: Path): Int =
+    Manifest.read(dir.resolve("manifest/ima-sc.json")).raw.size
+
+  test("a store whose raw layer was never pulled is refused, not pruned") {
+    val dir = store()
+    val raw = Files.walk(dir.resolve("raw"))
+    try raw.sorted(Comparator.reverseOrder()).forEach(Files.delete)
+    finally raw.close()
+    Build.run(dir) match
+      case BuildOutcome.Failed(reasons) =>
+        assert(reasons.exists(_.contains("oods-raw-pull")), reasons)
+        assertEquals(rawEntries(dir), 5)
+      case other => fail(s"expected a failure, got $other")
+  }
+
+  test("one raw file the manifest names and the disk has not is enough to refuse") {
+    val dir = store()
+    val _ = built(dir)
+    Files.delete(dir.resolve(rawPath(2003)))
+    Build.run(dir) match
+      case BuildOutcome.Failed(reasons) =>
+        assert(reasons.exists(_.contains("2003.csv")), reasons)
+        assertEquals(rawEntries(dir), 5)
+      case other => fail(s"expected a failure, got $other")
+  }
+
+  test("--prune is the deliberate deletion: the vanished entry goes and the build runs") {
+    val dir = store()
+    val _ = built(dir)
+    Files.delete(dir.resolve(rawPath(2003)))
+    Build.run(dir, prune = true) match
+      case BuildOutcome.Built(_) => assertEquals(rawEntries(dir), 4)
+      case other                 => fail(s"expected a build, got $other")
   }

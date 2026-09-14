@@ -1,6 +1,6 @@
 package marola.oods
 
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 import java.time.{Instant, LocalDate}
 
 import kyo.*
@@ -65,12 +65,18 @@ object Ingest:
   /** `known_broken`'s id for a partition: `sources.json` names `<key>/<year>`. */
   def partitionId(p: Partition): String = s"${p.key}/${p.year}"
 
+  /**
+   * `exists` is the raw file on disk. A manifest entry whose file is gone is not a skip: the raw
+   * layer lives in a Hugging Face dataset (MIP-0056 §4.4), so a runner that could not pull it must
+   * refetch rather than build a store whose manifest names files nobody has.
+   */
   def plan(
       plan: Plan,
       today: LocalDate,
       manifest: Manifest,
       candidates: List[Partition],
-      broken: Set[String]
+      broken: Set[String],
+      exists: String => Boolean = _ => true
   ): Selection =
     val mutable = mutableYears(today)
     val wanted = candidates
@@ -79,7 +85,8 @@ object Ingest:
         val inMode = plan.mode match
           case Mode.Incremental => !p.immutable
           case Mode.Backfill    => p.year >= plan.fromYear && p.year <= plan.toYear
-        inMode && (!p.immutable || !manifest.raw.contains(ImaScAdapter.rawPath(p)))
+        val path = ImaScAdapter.rawPath(p)
+        inMode && (!p.immutable || !(manifest.raw.contains(path) && exists(path)))
       }
     val (upstreamBroken, fetch) = wanted.partition(p => broken.contains(partitionId(p)))
     Selection(fetch, upstreamBroken, candidates.size - wanted.size)
@@ -110,7 +117,8 @@ object Ingest:
         today,
         manifest,
         candidates,
-        adapter.source.knownBroken.map(_.partition).toSet
+        adapter.source.knownBroken.map(_.partition).toSet,
+        path => Files.isRegularFile(dataDir.resolve(path))
       )
       result <- decide(plan, selected, candidates)(
         IngestRun.all(adapter, selected, dataDir, manifestFile, manifest, now, sleep)

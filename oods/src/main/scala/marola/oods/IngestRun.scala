@@ -136,8 +136,20 @@ private object IngestRun:
       val entry = RawEntry(raw.url, RawStore.sha256(raw.bytes), raw.bytes.length.toLong, at, rows)
       progress.copy(
         written = progress.written + 1,
-        manifest = progress.manifest.copy(raw = progress.manifest.raw.updated(path, entry))
+        manifest = progress.manifest.copy(raw =
+          progress.manifest.raw.updated(path, kept(progress.manifest, path, entry))
+        )
       )
+
+  /**
+   * Bytes we already had keep their `fetched_at` — a refetch of an unchanged *present* file never
+   * touched the entry (`RawStore.write` returns false), and one restored from the dataset must not
+   * either, or a machine that pulls the raw layer rewrites all 3,331 entries for nothing.
+   */
+  private def kept(manifest: Manifest, path: String, entry: RawEntry): RawEntry =
+    manifest.raw.get(path) match
+      case Some(old) if old.sha256 == entry.sha256 => entry.copy(fetchedAt = old.fetchedAt)
+      case _                                       => entry
 
   private def writePoints(
       source: Source,
@@ -158,7 +170,7 @@ private object IngestRun:
           at,
           points.size
         )
-      Progress(manifest.copy(raw = manifest.raw.updated(path, entry)))
+      Progress(manifest.copy(raw = manifest.raw.updated(path, kept(manifest, path, entry))))
 
   private def reason(t: Throwable): String = t match
     case Http.HttpError(status, url, _)        => s"HTTP $status from $url"

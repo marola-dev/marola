@@ -184,3 +184,24 @@ class IngestPlanSpec extends munit.FunSuite:
       )
     )
   }
+
+  test("an immutable partition the manifest names but the disk has lost is planned again") {
+    val onDisk = Ingest.plan(
+      planFor(Mode.Backfill, from = 2024, to = 2024),
+      LocalDate.parse("2026-09-14"),
+      manifestWith(2024),
+      candidates(2024),
+      Set.empty,
+      exists = _ => true
+    )
+    assertEquals(years(onDisk), Nil)
+    val pulledAway = Ingest.plan(
+      planFor(Mode.Backfill, from = 2024, to = 2024),
+      LocalDate.parse("2026-09-14"),
+      manifestWith(2024),
+      candidates(2024),
+      Set.empty,
+      exists = _ => false
+    )
+    assertEquals(years(pulledAway), List(2024))
+  }

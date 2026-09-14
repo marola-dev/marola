@@ -63,8 +63,8 @@ enum BuildOutcome derives CanEqual:
  */
 object Build:
 
-  def run(dataDir: Path): BuildOutcome =
-    foreignHeaders(dataDir) match
+  def run(dataDir: Path, prune: Boolean = false): BuildOutcome =
+    (if prune then Nil else missingRaw(dataDir)) ++ foreignHeaders(dataDir) match
       case Nil =>
         val connection = Duck.connect()
         try
@@ -80,7 +80,7 @@ object Build:
           empty(connection, dataDir, sources) match
             case Nil =>
               BuildOutcome.Built(
-                sources.foldLeft(BuildReport(Nil, Nil))(oneSource(connection, dataDir, _, _))
+                sources.foldLeft(BuildReport(Nil, Nil))(oneSource(connection, dataDir, prune, _, _))
               )
             case reasons => BuildOutcome.Failed(reasons)
         finally connection.close()
@@ -100,6 +100,37 @@ object Build:
           .toList
           .sorted
       finally walk.close()
+
+  private def manifestFiles(dataDir: Path): List[Path] =
+    val dir = dataDir.resolve("manifest")
+    if !Files.isDirectory(dir) then Nil
+    else
+      val list = Files.list(dir)
+      try list.iterator().asScala.filter(_.getFileName.toString.endsWith(".json")).toList.sorted
+      finally list.close()
+
+  /**
+   * The raw layer is not in git — it lives in a Hugging Face dataset (MIP-0056 §4.4), so a clone
+   * has the manifest and no `raw/`, and an ingest that ran before the pull has only the year it
+   * fetched. Building either would drop every absent file from the manifest (`Manifest.prune`
+   * below) and the next run would refetch the lot, so the manifest and the disk must agree first.
+   * `--prune` is the deliberate deletion: partitions removed by hand, as MIP-0056 task 10 did.
+   */
+  private def missingRaw(dataDir: Path): List[String] =
+    manifestFiles(dataDir).flatMap { file =>
+      val gone = Manifest
+        .read(file)
+        .raw
+        .keys
+        .toList
+        .sorted
+        .filterNot(path => Files.isRegularFile(dataDir.resolve(path)))
+      Option.when(gone.nonEmpty)(
+        s"${file.getFileName}: ${gone.size} raw files the manifest names are not on disk " +
+          s"(${gone.take(3).mkString(", ")}${if gone.sizeIs > 3 then ", …" else ""}) — run " +
+          "`just oods-raw-pull` first, or `just oods-build -- --prune` if you deleted them on purpose"
+      )
+    }
 
   /**
    * `build.sql` skips line 1 whatever it says, so a reordered or renamed upstream column would
@@ -155,6 +186,7 @@ object Build:
   private def oneSource(
       connection: Connection,
       dataDir: Path,
+      prune: Boolean,
       report: BuildReport,
       sourceId: String
   ): BuildReport =
@@ -171,9 +203,11 @@ object Build:
         acc.copy(written = acc.written :+ target.path)
     }
     // Replaced, not merged: a partition that no longer exists must leave the manifest with it.
-    val next = Manifest
-      .prune(manifest, path => Files.isRegularFile(dataDir.resolve(path)))
-      .copy(partitions = built)
+    // `raw` is only ever pruned under `--prune`; without it `missingRaw` has already refused.
+    val pruned =
+      if prune then Manifest.prune(manifest, path => Files.isRegularFile(dataDir.resolve(path)))
+      else manifest
+    val next = pruned.copy(partitions = built)
     if next != manifest then Manifest.write(manifestFile, next)
     done
 
@@ -207,7 +241,7 @@ trait OodsApp extends KyoApp:
         exit(code)
       }
 
-/** `just oods-build [--data-dir PATH]` — the transform half of MIP-0056 §5.2. */
+/** `just oods-build [--data-dir PATH] [--prune]` — the transform half of MIP-0056 §5.2. */
 object BuildMain extends OodsApp:
 
   private def report(outcome: BuildOutcome): String = outcome match
@@ -219,7 +253,7 @@ object BuildMain extends OodsApp:
 
   run {
     for
-      outcome <- Sync.defer(Build.run(Cli.dataDir(args.toList)))
+      outcome <- Sync.defer(Build.run(Cli.dataDir(args.toList), args.contains("--prune")))
       _ <- Console.printLine(report(outcome))
       _ <- stop(outcome match
         case BuildOutcome.Built(_)  => 0

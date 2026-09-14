@@ -83,18 +83,10 @@ class IngestRunSpec extends munit.FunSuite:
       dataDir: Path,
       portal: Portal,
       pauses: Pauses,
-      plan: Plan = planFor()
+      plan: Plan = planFor(),
+      now: Instant = Instant.parse("2026-09-14T12:00:00Z")
   ): Either[IngestError, Outcome] =
-    eval(
-      Ingest.run(
-        adapterOf(portal),
-        plan,
-        dataDir,
-        today,
-        () => Instant.parse("2026-09-14T12:00:00Z"),
-        pauses.sleep
-      )
-    )
+    eval(Ingest.run(adapterOf(portal), plan, dataDir, today, () => now, pauses.sleep))
 
   private def tempDir(): Path = Files.createTempDirectory("oods-ingest")
 
@@ -241,4 +233,19 @@ class IngestRunSpec extends munit.FunSuite:
         Http.Response(200, fixture("anos.json"))
     val _ = Http.withTransport(recorder)(eval(ImaScAdapter().years))
     assertEquals(seen.toList, List(Ingest.UserAgent))
+  }
+
+  test("a raw file restored from the dataset keeps its manifest entry, fetched_at and all") {
+    val dir = tempDir()
+    val _ = outcomeOf(ingest(dir, Portal(), Pauses()))
+    val before = manifestBytes(dir)
+    val partition =
+      Manifest.read(dir.resolve("manifest/ima-sc.json")).raw.keys.find(_.endsWith(".csv")).get
+    Files.delete(dir.resolve(partition))
+    // A day later, the same bytes: only the raw file was missing (a pull that never ran), so
+    // rewriting 3,331 fetched_at values would be a diff for nothing.
+    val outcome =
+      outcomeOf(ingest(dir, Portal(), Pauses(), now = Instant.parse("2026-09-15T12:00:00Z")))
+    assertEquals(outcome.written, 1)
+    assertEquals(manifestBytes(dir), before)
   }
