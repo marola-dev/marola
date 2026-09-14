@@ -3,14 +3,14 @@
 torch>=2.14.0
 transformers>=5.17.0
 peft>=0.20.0
-trl>=1.12.0
+trl>=1.13.0
 datasets>=5.0.1
 accelerate>=1.15.0
 # CUDA only — omit on CPU and pass --no-4bit to train_lora.py
 bitsandbytes>=0.50.2; sys_platform == "linux"
 
 # publish_hf.py only — uploading a trained GGUF to a Hugging Face model repo (MIP-0025 §5.1)
-huggingface_hub>=1.30.0
+huggingface_hub>=1.31.0
 
 # merge_export.py only — llama.cpp's convert_hf_to_gguf.py, which it shells out to. These were in
 # .github/nix-ml-env.nix before the venv replaced it (#290). sentencepiece is needed even for a
