@@ -7,6 +7,10 @@ name: oods ingest (fetch, build, commit the store)
 # the `main-rule` ruleset (or stores a fine-grained PAT); until then the push step fails there.
 
 on:
+  # TEMPORARY (task 11 bootstrap): a dispatch is only registered for a workflow that exists on the
+  # default branch, so the live check runs on a push. Removed before review.
+  push:
+    branches: [mip-0056/11-raw-offload]
   schedule:
     # Daily: IMA publishes on irregular weekdays, so polling beats guessing (MIP-0056 §4.1).
     - cron: "0 12 * * *"
@@ -111,8 +115,8 @@ jobs:
         continue-on-error: true
         env:
           SOURCE: ${{ inputs.source || 'ima-sc' }}
-          MODE: ${{ inputs.mode || 'incremental' }}
-          FROM_YEAR: ${{ inputs.from_year }}
+          MODE: ${{ inputs.mode || 'backfill' }}
+          FROM_YEAR: ${{ inputs.from_year || '2003' }}
           TO_YEAR: ${{ inputs.to_year }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
@@ -147,7 +151,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           SOURCE: ${{ inputs.source || 'ima-sc' }}
-          MODE: ${{ inputs.mode || 'incremental' }}
+          MODE: ${{ inputs.mode || 'backfill' }}
         run: |
           set -euo pipefail
           python3 scripts/oods_raw_sync.py push --source "$SOURCE" --mode "$MODE"
