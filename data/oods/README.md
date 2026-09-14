@@ -19,83 +19,56 @@ Ingested 2026-09-14: the IMA/SC backfill 2003–2025 plus the 2026 incremental.
 
 | | |
 |---|---|
-| Samples (`br_bathing_water`) | 148,642 rows over 137,365 distinct moments — see "Known gaps" |
-| Sampling points | 281 keys for 260 real points (21 counted twice — see "Known gaps") |
+| Samples (`br_bathing_water`) | 137,365 — one row per (point, moment) |
+| Sampling points | 260, every one with a coordinate from IMA's own feed |
 | Municipalities / beaches | 28 / 139 |
 | Date range | 2003-01-07 → 2026-09-08 |
-| Files under `data/oods/` | 3,456 — 3,427 raw CSVs, `points.json`, 25 Parquet, the manifest, this file, `sources.json` |
-| Tree size | 36 MB — `raw/` 33 MB, `parquet/` 1.5 MB, `manifest/` 904 KB |
+| Files under `data/oods/` | 3,360 — 3,331 raw CSVs, `points.json`, 25 Parquet, the manifest, this file, `sources.json` |
+| Tree size | 34 MB — `raw/` 31 MB, `parquet/` 1.4 MB, `manifest/` 880 KB |
 
-Rows per year (row counts, so the four ambiguous beaches count twice):
+Rows per year:
 
 | Year | Rows | Year | Rows | Year | Rows |
 |---:|---:|---:|---:|---:|---:|
-| 2003 | 5,410 | 2011 | 5,113 | 2019 | 7,295 |
-| 2004 | 5,461 | 2012 | 5,025 | 2020 | 6,667 |
-| 2005 | 5,246 | 2013 | 5,191 | 2021 | 6,222 |
-| 2006 | 5,241 | 2014 | 5,100 | 2022 | 7,366 |
-| 2007 | 5,507 | 2015 | 5,655 | 2023 | 7,766 |
-| 2008 | 5,410 | 2016 | 6,156 | 2024 | 9,842 |
-| 2009 | 5,721 | 2017 | 6,616 | 2025 | 9,575 |
-| 2010 | 5,055 | 2018 | 6,794 | 2026 | 5,208 |
+| 2003 | 5,043 | 2011 | 4,730 | 2019 | 6,764 |
+| 2004 | 5,082 | 2012 | 4,660 | 2020 | 6,154 |
+| 2005 | 4,884 | 2013 | 4,820 | 2021 | 5,747 |
+| 2006 | 4,879 | 2014 | 4,739 | 2022 | 6,821 |
+| 2007 | 5,125 | 2015 | 5,267 | 2023 | 7,154 |
+| 2008 | 5,040 | 2016 | 5,628 | 2024 | 8,873 |
+| 2009 | 5,319 | 2017 | 6,094 | 2025 | 8,773 |
+| 2010 | 4,677 | 2018 | 6,262 | 2026 | 4,830 |
 
 ## Known gaps
 
-- **Five beach-years the portal itself cannot export** (2026-09-14, reproducible): Florianópolis /
-  Praia do Balneário 2017 and Jaguaruna / Lagoa do Arroio Corrente 2018 answer HTTP 500
-  (`date_format(): Argument #1 ($object) must be of type DateTimeInterface, bool given`); Balneário
-  Camboriú / Praia Central 2016 and 2024 and Governador Celso Ramos / Praia de Palmas 2024 return
-  HTTP 200 but stop mid-row and append a PHP warning, so the export is incomplete. The ingest
-  refuses a truncated file rather than storing a partial year; these five have no raw file.
-- **Four beach names exist in two municipalities each, and the export ignores which one you
-  asked for.** `exportarCSV` keys on `localID` (the beach name) alone: requesting *Praia Brava* for
+- **Five beach-years the portal itself cannot export** (2026-09-14, reproduced twice by hand):
+  Florianópolis / Praia do Balneário 2017 and Jaguaruna / Lagoa do Arroio Corrente 2018 answer
+  HTTP 500 (`date_format(): Argument #1 ($object) must be of type DateTimeInterface, bool given`);
+  Balneário Camboriú / Praia Central 2016 and 2024 and Governador Celso Ramos / Praia de Palmas
+  2024 answer HTTP 200 but stop mid-row and append a PHP "headers already sent" block, so the
+  export is incomplete. These five have no raw file, and no year of theirs is partial: the ingest
+  refuses a truncated body rather than storing a half year. They are listed as `known_broken` in
+  `sources.json`, so a run skips them and reports `skipped_upstream` instead of failing —
+  re-checking them is a matter of deleting the entry and running a backfill for that year.
+- **Four beach names exist in two municipalities each, and the export ignores which one you ask
+  for.** `exportarCSV` keys on `localID` (the beach name) alone: requesting *Praia Brava* for
   Florianópolis and for Itajaí returns byte-identical bodies — the union of both beaches' points —
   differing only in the `Municipio` column, which echoes the request. The same holds for *Praia dos
   Ingleses* (Florianópolis / São Francisco do Sul), *Praia Grande* (Penha / Governador Celso Ramos)
-  and *Praia de São Miguel* (Biguaçu / Penha). Two consequences, both live in this store:
-
-  - **22,554 rows cover 11,277 distinct moments** — every sample at these four beach names is
-    stored twice, once under each municipality label. Distinct samples are **137,365**, not
-    148,642. Any count, rate or map marker over these beaches double-counts until this is fixed.
-  - **21 points carry no coordinate** (`geo_source = 'none'`, 11,277 samples). These are *not*
-    retired points and *not* points IMA omits from its registry: all 21 are being sampled today
-    (last sample 2026-08-24 or 2026-08-25, three weeks before this backfill) and all 21 are in
-    `/relatorio/mapa` — under the *other* municipality, so the build's
-    (municipality, beach, point) join misses them and falls back to a slug key. marola's map
-    cannot place their rows.
-
-  | Municipality in the CSV | Beach | Point | Last sampled | Samples | Same point in the map feed, under |
-  |---|---|---|---|---:|---|
-  | Biguaçu | Praia de São Miguel | Ponto 10 | 2026-08-25 | 675 | Penha |
-  | Florianópolis | Praia Brava | Ponto 03 | 2026-08-25 | 677 | Itajaí |
-  | Florianópolis | Praia Brava | Ponto 04 | 2026-08-25 | 675 | Itajaí |
-  | Florianópolis | Praia Brava | Ponto 05 | 2026-08-25 | 339 | Itajaí |
-  | Florianópolis | Praia dos Ingleses | Ponto 07 | 2026-08-25 | 611 | São Francisco do Sul |
-  | Governador Celso Ramos | Praia Grande | Ponto 08 | 2026-08-25 | 651 | Penha |
-  | Itajaí | Praia Brava | Ponto 24 | 2026-08-24 | 636 | Florianópolis |
-  | Itajaí | Praia Brava | Ponto 25 | 2026-08-24 | 616 | Florianópolis |
-  | Itajaí | Praia Brava | Ponto 69 | 2026-08-24 | 625 | Florianópolis |
-  | Itajaí | Praia Brava | Ponto 79 | 2026-08-24 | 305 | Florianópolis |
-  | Penha | Praia Grande | Ponto 10 | 2026-08-25 | 487 | Governador Celso Ramos |
-  | Penha | Praia Grande | Ponto 24 | 2026-08-25 | 28 | Governador Celso Ramos |
-  | Penha | Praia de São Miguel | Ponto 01 | 2026-08-25 | 632 | Biguaçu |
-  | São Francisco do Sul | Praia dos Ingleses | Ponto 27 | 2026-08-24 | 702 | Florianópolis |
-  | São Francisco do Sul | Praia dos Ingleses | Ponto 28 | 2026-08-24 | 710 | Florianópolis |
-  | São Francisco do Sul | Praia dos Ingleses | Ponto 29 | 2026-08-24 | 696 | Florianópolis |
-  | São Francisco do Sul | Praia dos Ingleses | Ponto 57 | 2026-08-24 | 713 | Florianópolis |
-  | São Francisco do Sul | Praia dos Ingleses | Ponto 58 | 2026-08-24 | 705 | Florianópolis |
-  | São Francisco do Sul | Praia dos Ingleses | Ponto 77 | 2026-08-24 | 366 | Florianópolis |
-  | São Francisco do Sul | Praia dos Ingleses | Ponto 78 | 2026-08-24 | 367 | Florianópolis |
-  | São Francisco do Sul | Praia dos Ingleses | Ponto 98 | 2026-08-24 | 61 | Florianópolis |
-
-  The 21 rows mirror 21 feed points exactly, which is why the coordinates are recoverable: joining
-  on (beach, point) alone, or fetching an ambiguous beach once instead of once per municipality,
-  resolves both problems. Neither is a data fix — both are code, and both are follow-ups outside
-  this dataset (a `points.json` snapshot history or a curated coordinate table, as MIP-0031 did,
-  would also cover a point the feed genuinely lacks).
+  and *Praia de São Miguel* (Biguaçu / Penha). Each is therefore fetched **once**, stored under the
+  alphabetically first of the two municipalities (`florianopolis/brava`, `florianopolis/ingleses`,
+  `governador-celso-ramos/grande`, `biguacu/sao-miguel`), and its rows are keyed on (beach, point)
+  against IMA's map feed — so a sample lands on the point that really took it, whatever the CSV's
+  municipality column says. Nothing is lost: the other municipality's points are in the same file.
+  Until 2026-09-14 the store held both copies, which is why an earlier version of this file
+  reported 148,642 rows and 21 points without coordinates; both are gone.
+- **Two beach names that differ only in spelling are two real beaches**, and both are kept:
+  "Praia do Itaguaçu" (Florianópolis) and "Praia de Itaguaçú" (São Francisco do Sul), "Guarda do
+  Embaú" (Palhoça) and "Praia da Guarda do Embaú" (Paulo Lopes). They fold to one slug but are two
+  `localID`s with two different exports and no point in common.
 - **Three moments were recorded twice** by the export and collapsed to one row each by the build's
   primary key; one of the three pairs disagrees on the E. coli count (6,131 vs 161) and the build
-  keeps the worse reading.
+  keeps the worse reading. 137,368 raw rows, 137,365 samples.
 
 ## Licence
 
