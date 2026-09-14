@@ -409,6 +409,9 @@ checkbox exercises.
 > are now real; step 4 (fine-tuning) has its recipe but no evaluation yet. The *retrieval* half is
 > revisited in `docs/mips/MIP-0045-nlp-and-parsing-over-llm.md` §5.1, which proposes a lexical
 > (TF-IDF) `KnowledgeStore` as the local default in place of the per-question embedding call.
+> The store and the chunker themselves — Lucene HNSW + BM25 locally, Azure AI Search opt-in, typed
+> chunks with provenance, a golden-set recall@k — are designed in
+> [`MIP-0055`](./mips/MIP-0055-vector-store-and-ocean-knowledge-chunking.md).
 
 **The pitch:** today, if a user asks "what should I do if I get stung by a jellyfish here," marola
 has nothing — it's not a question `Recommender`'s pipeline answers at all. A grounded knowledge base
