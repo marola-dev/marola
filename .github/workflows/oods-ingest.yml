@@ -124,7 +124,8 @@ jobs:
             exit 0
           fi
           files="$(git diff --cached --name-only -- data/oods | wc -l)"
-          check="$(grep '^oods-check:' "$RUNNER_TEMP/oods-check.txt" | head -1)"
+          # `|| true` so an unreadable check line degrades the trailer instead of killing the commit.
+          check="$(grep -m1 '^oods-check:' "$RUNNER_TEMP/oods-check.txt" || true)"
           # The ingest report counts partitions, not rows; oods-check's sample count is the store's
           # only row figure, so the message carries the post-run total.
           rows="$(printf '%s' "$check" | sed -n 's/^oods-check: [0-9]* files, \([0-9]*\) samples.*/\1/p')"
