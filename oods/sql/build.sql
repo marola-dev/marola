@@ -113,7 +113,17 @@ LEFT JOIN (
     SELECT unnest(map_entries(raw)) AS e
     FROM read_json(getvariable('data_dir') || '/manifest/*.json',
                    columns = {'raw': 'MAP(VARCHAR, JSON)'}))) m
-  USING (raw_path);
+  USING (raw_path)
+-- IMA's export records the same moment twice: byte-identically, or with two different readings
+-- (three pairs statewide on 2026-09-14 — 161 vs 6131 E. coli at one point, 14 vs 15 °C air at
+-- another). The schema's primary key says one row per moment, so keep the worse count — the
+-- conservative reading for bathing water — and break a tie on the rest of the row, never on file
+-- order, so the build stays reproducible.
+QUALIFY row_number() OVER (
+  PARTITION BY k.source_id, k.point_key, k.sampled_on, k.sampled_at
+  ORDER BY k.indicator_value DESC NULLS LAST,
+           concat_ws('|', k.condition, k.indicator_qualifier, k.rain, k.wind, k.tide,
+                     k.water_temp_c, k.air_temp_c)) = 1;
 
 CREATE OR REPLACE TEMP TABLE point AS
 SELECT source_id, point_key, country, state, municipality, ibge_code, beach_name, point_name,

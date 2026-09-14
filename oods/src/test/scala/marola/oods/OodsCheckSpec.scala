@@ -68,6 +68,25 @@ class OodsCheckSpec extends munit.FunSuite:
     assertEquals(Check.exitCode(outcome), 0)
   }
 
+  /**
+   * IMA's export repeats a moment: three pairs statewide on 2026-09-14, one byte-identical, two
+   * with a different E. coli count or air temperature for the same point, date and time. Neither
+   * shape may fail the store's own primary key.
+   */
+  test("a moment the export records twice does not break the sample key") {
+    val dir = built()
+    val lines = fixture("campeche-2025.csv").linesIterator.toList
+    val conflicting = lines.last.replaceAll(",(\\d+),([^,]*)$", ",6131,$2")
+    val _ = Files.write(
+      dir.resolve("raw/ima-sc/csv/florianopolis/campeche/2025.csv"),
+      ((lines :+ lines.last :+ conflicting).mkString("\n") + "\n").getBytes(UTF_8)
+    )
+    val _ = Build.run(dir)
+    Check.run(dir) match
+      case CheckOutcome.Passed(_, _, _) => ()
+      case other                        => fail(s"expected a pass, got ${Check.lines(other)}")
+  }
+
   test("a duplicated primary key fails the check") {
     val dir = built()
     seed(dir, "duplicate.parquet", "SELECT *")

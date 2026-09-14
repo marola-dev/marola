@@ -132,6 +132,22 @@ class OodsBuildSpec extends munit.FunSuite:
     assertEquals(duplicates, 0L)
   }
 
+  /** The rule build.sql picks when the export gives one moment two readings (§8): the worse one. */
+  test("two readings of one moment keep the higher count") {
+    val dir = store()
+    val lines = csvFor(2025).linesIterator.toList
+    val milder = lines.last.replaceAll(",(\\d+),([^,]*)$", ",9,$2")
+    write(dir, rawPath(2025), (lines :+ milder).mkString("\n") + "\n")
+    val _ = built(dir)
+    val (rows, value) = one(
+      dir,
+      """SELECT count(*), any_value(indicator_value) FROM br_bathing_water
+         WHERE sampled_on = DATE '2025-01-02' AND point_name = 'Ponto 90'"""
+    )(rs => (rs.getLong(1), rs.getInt(2)))
+    assertEquals(rows, 1L)
+    assertEquals(value, 404)
+  }
+
   test("a censored count keeps its number and its qualifier") {
     val dir = store()
     val _ = built(dir)
