@@ -95,3 +95,12 @@ class OodsCheckSpec extends munit.FunSuite:
         assert(violations.exists(_.contains("schema")), violations)
       case other => fail(s"expected a failure, got $other")
   }
+
+  test("a partition file the manifest does not know fails the check") {
+    val dir = built()
+    seed(dir, "stray.parquet", "SELECT *")
+    Check.run(dir) match
+      case CheckOutcome.Failed(violations) =>
+        assert(violations.exists(_.contains("manifest")), violations)
+      case other => fail(s"expected a failure, got $other")
+  }

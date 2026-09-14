@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import java.sql.{Connection, DriverManager, ResultSet}
 
+import scala.jdk.CollectionConverters.*
 import scala.util.control.NoStackTrace
 
 import kyo.*
@@ -46,21 +47,86 @@ object Duck:
 final case class BuildReport(written: List[String], unchanged: List[String]) derives CanEqual
 
 /**
+ * A build that read a raw file it does not understand writes nothing: a renamed upstream column
+ * parses as zero samples, and a silent success would replace the manifest's partition map with an
+ * empty store (MIP-0056 §8 — "a portal outage is not an error in the data", but a changed export
+ * is).
+ */
+enum BuildOutcome derives CanEqual:
+  case Built(report: BuildReport)
+  case Failed(reasons: List[String])
+
+/**
  * `build.sql` → one Parquet file per partition (MIP-0056 §5.3). A partition is rewritten only when
  * the content hash of its sorted rows differs from the manifest's, so a rebuild over unchanged raw
  * files touches nothing and `git status` stays empty.
  */
 object Build:
 
-  def run(dataDir: Path): BuildReport =
-    val connection = Duck.connect()
-    try
-      Duck.exec(connection, s"SET VARIABLE data_dir = ${Duck.lit(dataDir.toAbsolutePath.toString)}")
-      Duck.exec(connection, Duck.script("build.sql"))
-      Duck
-        .query(connection, "SELECT DISTINCT source_id FROM point ORDER BY 1")(_.getString(1))
-        .foldLeft(BuildReport(Nil, Nil))(oneSource(connection, dataDir, _, _))
-    finally connection.close()
+  def run(dataDir: Path): BuildOutcome =
+    foreignHeaders(dataDir) match
+      case Nil =>
+        val connection = Duck.connect()
+        try
+          Duck.exec(
+            connection,
+            s"SET VARIABLE data_dir = ${Duck.lit(dataDir.toAbsolutePath.toString)}"
+          )
+          Duck.exec(connection, Duck.script("build.sql"))
+          val sources =
+            Duck.query(connection, "SELECT DISTINCT source_id FROM point ORDER BY 1")(
+              _.getString(1)
+            )
+          empty(connection, dataDir, sources) match
+            case Nil =>
+              BuildOutcome.Built(
+                sources.foldLeft(BuildReport(Nil, Nil))(oneSource(connection, dataDir, _, _))
+              )
+            case reasons => BuildOutcome.Failed(reasons)
+        finally connection.close()
+      case reasons => BuildOutcome.Failed(reasons)
+
+  /** `raw/<source>/csv/<key>/<year>.csv` — `ImaScAdapter.rawPath`'s layout, read back. */
+  private def rawCsvFiles(dataDir: Path): List[Path] =
+    val raw = dataDir.resolve("raw")
+    if !Files.isDirectory(raw) then Nil
+    else
+      val walk = Files.walk(raw)
+      try
+        walk
+          .iterator()
+          .asScala
+          .filter(f => Files.isRegularFile(f) && f.getFileName.toString.endsWith(".csv"))
+          .toList
+          .sorted
+      finally walk.close()
+
+  /**
+   * `build.sql` skips line 1 whatever it says, so a reordered or renamed upstream column would
+   * parse as zero samples rather than as an error. The parser's own check, applied before any COPY.
+   */
+  private def foreignHeaders(dataDir: Path): List[String] =
+    rawCsvFiles(dataDir).flatMap { file =>
+      val first = Files.lines(file, UTF_8)
+      val header =
+        try first.findFirst().orElse("")
+        finally first.close()
+      Option.when(!ImaScCsv.hasKnownHeader(header))(
+        s"${dataDir.relativize(file)}: not the portal's 13-column header"
+      )
+    }
+
+  private def empty(connection: Connection, dataDir: Path, sources: List[String]): List[String] =
+    val withRaw =
+      rawCsvFiles(dataDir).flatMap(f => dataDir.relativize(f).toString.split("/").lift(1))
+    (sources ++ withRaw).distinct.sorted.flatMap { sourceId =>
+      val rows = Duck
+        .query(connection, s"SELECT count(*) FROM sample WHERE source_id = ${Duck.lit(sourceId)}")(
+          _.getLong(1)
+        )
+        .head
+      Option.when(withRaw.contains(sourceId) && rows == 0)(s"$sourceId: raw CSVs but no samples")
+    }
 
   /** The relative path of a partition is its manifest key — `raw/…`'s convention, one level up. */
   final private case class Target(path: String, select: String, order: String)
@@ -129,17 +195,34 @@ object Build:
     val _ =
       Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
 
-/** `just oods-build [--data-dir PATH]` — the transform half of MIP-0056 §5.2. */
-object BuildMain extends KyoApp:
+/** `exit` is `KyoApp`'s own member, so a shared non-zero exit has to be a trait, not a helper. */
+trait OodsApp extends KyoApp:
+  protected def stop(code: Int): Unit < Async =
+    if code == 0 then ()
+    else
+      Sync.defer {
+        import AllowUnsafe.embrace.danger
+        exit(code)
+      }
 
-  private def report(built: BuildReport): String =
-    val lines = built.written.map(path => s"  wrote $path")
-    (lines :+ s"${built.written.size} written, ${built.unchanged.size} unchanged").mkString("\n")
+/** `just oods-build [--data-dir PATH]` — the transform half of MIP-0056 §5.2. */
+object BuildMain extends OodsApp:
+
+  private def report(outcome: BuildOutcome): String = outcome match
+    case BuildOutcome.Built(built) =>
+      val lines = built.written.map(path => s"  wrote $path")
+      (lines :+ s"${built.written.size} written, ${built.unchanged.size} unchanged").mkString("\n")
+    case BuildOutcome.Failed(reasons) =>
+      (s"oods-build: ${reasons.size} refused" :: reasons.map("  " + _)).mkString("\n")
 
   run {
     for
-      built <- Sync.defer(Build.run(Cli.dataDir(args.toList)))
-      _ <- Console.printLine(report(built))
+      outcome <- Sync.defer(Build.run(Cli.dataDir(args.toList)))
+      _ <- Console.printLine(report(outcome))
+      _ <- stop(outcome match
+        case BuildOutcome.Built(_)  => 0
+        case BuildOutcome.Failed(_) => 1
+      )
     yield ()
   }
 

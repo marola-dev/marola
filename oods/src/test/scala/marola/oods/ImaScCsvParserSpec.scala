@@ -135,3 +135,27 @@ class ImaScCsvParserSpec extends munit.FunSuite:
     assertEquals(placeholder.lat, None)
     assertEquals(placeholder.pointKey, "ima-sc:florianopolis/campeche/ponto-99")
   }
+
+  test("two feed points that normalise alike resolve to the greatest key, whatever the order") {
+    def twin(key: String) = PointRow(
+      sourceId = source.id,
+      pointKey = key,
+      country = "BR",
+      state = "SC",
+      municipality = "Florianópolis",
+      beachName = "Praia do Campeche",
+      pointName = "Ponto 35",
+      ibgeCode = None,
+      locationDesc = None,
+      lat = None,
+      lon = None,
+      geoSource = GeoSource.Feed,
+      firstSeen = None,
+      lastSeen = None
+    )
+    // `build.sql` picks max(point_key) over the same triple; the two must agree or a point's
+    // history splits between the SQL build and the ingest's own join.
+    val triple = ("florianopolis", "campeche", "ponto 35")
+    assertEquals(ImaScCsv.index(List(twin("bbb"), twin("aaa")))(triple).pointKey, "bbb")
+    assertEquals(ImaScCsv.index(List(twin("aaa"), twin("bbb")))(triple).pointKey, "bbb")
+  }

@@ -336,8 +336,11 @@ jobs:
           dockerfile: Dockerfile
 
       # MIP-0056 §5.4: the store's own gate — schema conformance, primary keys, orphan samples.
-      # It needs a JVM, which this job otherwise has no use for, so both steps are gated on the
-      # oods filter rather than run unconditionally.
+      # It needs a JVM, which this job otherwise has no use for, so all three steps are gated on
+      # the oods filter rather than run unconditionally. sbt directly, not `just oods-check`: this
+      # job has no `just` (it installs tools per step, the way docker-local.yml runs the benchmark
+      # by its sbt command), and `CheckOutcome.NothingToCheck` already covers an empty store, so
+      # the recipe's JVM-skipping guard buys nothing here.
       - name: Set up JDK 25 (oods store check)
         if: needs.changes.outputs.oods == 'true'
         uses: actions/setup-java@v6
@@ -349,7 +352,7 @@ jobs:
         uses: sbt/setup-sbt@v1
       - name: oods-check (data/oods/parquet against oods/sql/schema.sql)
         if: needs.changes.outputs.oods == 'true'
-        run: just oods-check
+        run: sbt -batch -error "oods/runMain marola.oods.CheckMain"
 
       # MIP-0010: every compose profile must still render — the mlflow profile included.
       - name: docker compose config (all profiles)

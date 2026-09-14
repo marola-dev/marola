@@ -71,6 +71,10 @@ class OodsBuildSpec extends munit.FunSuite:
     )
     dir
 
+  private def built(dir: Path): BuildReport = Build.run(dir) match
+    case BuildOutcome.Built(report)   => report
+    case BuildOutcome.Failed(reasons) => fail(s"the build failed: ${reasons.mkString("; ")}")
+
   private def parsed(year: Int): List[SampleRow] =
     ImaScCsv.parse(source, rawPath(year), csvFor(year), registry) match
       case Right(rows) => rows
@@ -111,14 +115,14 @@ class OodsBuildSpec extends munit.FunSuite:
 
   test("every parsed fixture row reaches the sample partitions") {
     val dir = store()
-    val _ = Build.run(dir)
+    val _ = built(dir)
     val rows = one(dir, "SELECT count(*) FROM br_bathing_water")(_.getLong(1))
     assertEquals(rows, allParsed.size.toLong)
   }
 
   test("the sample primary key is unique across the store") {
     val dir = store()
-    val _ = Build.run(dir)
+    val _ = built(dir)
     val duplicates = one(
       dir,
       """SELECT count(*) FROM (
@@ -130,7 +134,7 @@ class OodsBuildSpec extends munit.FunSuite:
 
   test("a censored count keeps its number and its qualifier") {
     val dir = store()
-    val _ = Build.run(dir)
+    val _ = built(dir)
     val (value, qualifier) = one(
       dir,
       """SELECT indicator_value, indicator_qualifier FROM br_bathing_water
@@ -142,7 +146,7 @@ class OodsBuildSpec extends munit.FunSuite:
 
   test("a point the feed never listed is kept with geo_source none") {
     val dir = store()
-    val _ = Build.run(dir)
+    val _ = built(dir)
     val (key, geo) = one(
       dir,
       "SELECT point_key, geo_source FROM br_bathing_water WHERE point_name = 'Ponto 999'"
@@ -153,7 +157,7 @@ class OodsBuildSpec extends munit.FunSuite:
 
   test("br_bathing_water keeps the csv row when a pdf row shares its key") {
     val dir = store()
-    val _ = Build.run(dir)
+    val _ = built(dir)
     seedPdfRow(dir)
     val (rows, channel) = one(
       dir,
@@ -180,7 +184,7 @@ class OodsBuildSpec extends munit.FunSuite:
 
   test("point_stats counts the improper-after-rain samples of a point") {
     val dir = store()
-    val _ = Build.run(dir)
+    val _ = built(dir)
     val key = allParsed.head.pointKey
     val mine = allParsed.filter(_.pointKey == key)
     val rained = mine.filter(_.rain.exists(_ != "Ausente"))
@@ -198,7 +202,7 @@ class OodsBuildSpec extends munit.FunSuite:
 
   test("latest_per_point holds exactly the newest sample of each point") {
     val dir = store()
-    val _ = Build.run(dir)
+    val _ = built(dir)
     val expected = allParsed.groupBy(_.pointKey).size
     val (points, newest) = one(
       dir,
@@ -210,9 +214,9 @@ class OodsBuildSpec extends munit.FunSuite:
 
   test("a second build over unchanged input rewrites nothing") {
     val dir = store()
-    val first = Build.run(dir)
+    val first = built(dir)
     val before = hashes(dir)
-    val second = Build.run(dir)
+    val second = built(dir)
     assertEquals(second.written, Nil)
     assert(first.written.nonEmpty, "the first build wrote nothing")
     assertEquals(hashes(dir), before)
@@ -220,12 +224,12 @@ class OodsBuildSpec extends munit.FunSuite:
 
   test("an edited year rewrites exactly that year's partition") {
     val dir = store()
-    val _ = Build.run(dir)
+    val _ = built(dir)
     val before = hashes(dir)
     val edited = csvFor(2025).linesIterator.toList
     val extra = edited(1).replace("29/12/2025", "02/01/2025")
     write(dir, rawPath(2025), (edited :+ extra).mkString("", "\n", "\n"))
-    val report = Build.run(dir)
+    val report = built(dir)
     assertEquals(report.written, List("parquet/ima-sc/samples/year=2025/samples.parquet"))
     val after = hashes(dir)
     assertEquals(after.keySet, before.keySet)
@@ -233,4 +237,23 @@ class OodsBuildSpec extends munit.FunSuite:
       after.filter((path, hash) => before(path) != hash).keySet,
       Set("ima-sc/samples/year=2025/samples.parquet")
     )
+  }
+
+  test("a raw CSV whose header is not the portal's fails the build, writing nothing") {
+    val dir = store()
+    write(dir, rawPath(2022), "a,b,c\n1,2,3\n")
+    Build.run(dir) match
+      case BuildOutcome.Failed(reasons) =>
+        assert(reasons.exists(_.contains("2022.csv")), reasons)
+        assert(!Files.exists(dir.resolve("parquet")), "a failed build must write no partition")
+      case other => fail(s"expected a failure, got $other")
+  }
+
+  test("raw CSVs that yield no sample at all fail the build") {
+    val dir = store()
+    (years :+ 2024).foreach(year => write(dir, rawPath(year), fixture("header-only.csv")))
+    Build.run(dir) match
+      case BuildOutcome.Failed(reasons) =>
+        assert(reasons.exists(_.contains("no samples")), reasons)
+      case other => fail(s"expected a failure, got $other")
   }

@@ -57,9 +57,19 @@ object ImaScCsv:
 
   /**
    * The join key of MIP-0056 §4.1: unique across all 260 live points, unlike `PONTO_NOME` alone.
+   * Sorted first because two feed points can normalise to the same triple and `toMap` keeps the
+   * last: without the sort the winner would be the feed's order, and `build.sql` — which takes
+   * `max(point_key)` — would key the same samples differently.
    */
   def index(points: List[PointRow]): Map[(String, String, String), PointRow] =
-    points.map(p => (norm(p.municipality), norm(p.beachName), norm(p.pointName)) -> p).toMap
+    points
+      .sortBy(_.pointKey)
+      .map(p => (norm(p.municipality), norm(p.beachName), norm(p.pointName)) -> p)
+      .toMap
+
+  /** The portal's 13 columns, in order — `Build` refuses a raw file that does not start with it. */
+  def hasKnownHeader(line: String): Boolean =
+    fields(line.stripPrefix("\uFEFF")).map(_.trim) == Header
 
   /**
    * The registry entry for a CSV row, or a placeholder keyed by slug with `GeoSource.Missing`: a
@@ -102,7 +112,7 @@ object ImaScCsv:
       text.stripPrefix("\uFEFF").split("\n", -1).view.map(_.stripSuffix("\r")).filter(_.nonEmpty)
     lines.toList match
       case Nil => Left(ParseError(rawPath, "empty export"))
-      case header :: _ if fields(header).map(_.trim) != Header =>
+      case header :: _ if !hasKnownHeader(header) =>
         Left(ParseError(rawPath, s"unexpected header: ${header.take(150)}"))
       case _ :: body =>
         val registry = index(points)

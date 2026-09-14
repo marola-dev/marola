@@ -79,7 +79,8 @@ object Check:
           "source_id, point_key, sampled_on, sampled_at, channel",
           "sample"
         ) ++
-        orphans(connection, points, samples)
+        orphans(connection, points, samples) ++
+        strays(dataDir, files)
     (schemaViolations ++ keyViolations) match
       case Nil =>
         CheckOutcome.Passed(
@@ -88,6 +89,22 @@ object Check:
           unmatched(connection, points)
         )
       case violations => CheckOutcome.Failed(violations)
+
+  /**
+   * A partition the manifest forgot is still matched by `views.sql`'s glob and still counted in
+   * `br_bathing_water` — the one way a stale file keeps answering queries after its year was
+   * rebuilt or dropped. `Build` never deletes, so the check has to name it.
+   */
+  private def strays(dataDir: Path, files: List[Path]): List[String] =
+    val known = files
+      .flatMap(f => dataDir.relativize(f).toString.split("/").lift(1))
+      .distinct
+      .flatMap(id => Manifest.read(dataDir.resolve(s"manifest/$id.json")).partitions.keys)
+      .toSet
+    files
+      .map(f => dataDir.relativize(f).toString)
+      .filterNot(known.contains)
+      .map(path => s"$path: no manifest entry — an orphan partition")
 
   /** `DESCRIBE` on schema.sql's own tables: the DDL stays the single statement of the truth. */
   private def columns(connection: Connection, target: String): List[(String, String)] =
@@ -151,15 +168,12 @@ object Check:
 /**
  * `just oods-check [--data-dir PATH]` — non-zero on any violation, quiet and free with no store.
  */
-object CheckMain extends KyoApp:
+object CheckMain extends OodsApp:
 
   run {
     for
       outcome <- Sync.defer(Check.run(Cli.dataDir(args.toList)))
       _ <- Console.printLine(Check.lines(outcome).mkString("\n"))
-      _ <- Sync.defer {
-        import AllowUnsafe.embrace.danger
-        if Check.exitCode(outcome) != 0 then exit(Check.exitCode(outcome))
-      }
+      _ <- stop(Check.exitCode(outcome))
     yield ()
   }
