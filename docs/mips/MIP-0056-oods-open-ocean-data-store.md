@@ -87,12 +87,17 @@ Municipio,Balneario,"Ponto Coleta",Localização,Data,Hora,Vento,Maré,Chuva,"Á
   sampled 2026-09-08, none of them Campeche — so no channel is systematically ahead).
 - Edge cases verified: a year with no data returns HTTP 200 and one row `…,1999,"Sem registros"`;
   an unknown `localID` returns HTTP 200 with the header only (137 B). Both are "empty", not errors.
-- Volume: 143 beaches × 24 years = 3,432 requests; observed sizes 4–24 KB and 0.07–0.23 s each.
+- Volume: 143 beach entries over 139 distinct names × 24 years = 3,336 requests (four names are
+  listed by two municipalities each and export identically, below); observed sizes 4–24 KB and
+  0.07–0.23 s each.
   Sequential with a polite 250 ms pause: ~20 minutes once. Rows: ~180 k statewide (estimate from
   Campeche's ~29 samples per point-year × 260 points × 24 years; early years are sparser).
 - The CSV has no point id and no coordinates; the join key to the points feed is
-  (`Municipio`, `Balneario`, `Ponto Coleta`), verified unique across all 260 live points.
-  `PONTO_NOME` alone is not unique (88 distinct names for 260 points, Appendix).
+  (`Balneario`, `Ponto Coleta`), verified unique across all 260 live points, and a feed that ever
+  broke that uniqueness is refused rather than half-joined. `Municipio` is *not* part of the key:
+  `exportarCSV` ignores `municipioID` and echoes the requested municipality back, so it says what
+  was asked for, not where the point is (task 10). `PONTO_NOME` alone is not unique either (88
+  distinct names for 260 points, Appendix).
 - Not verified: whether the portal rate-limits (no `robots.txt` — it 404s; no documented limit).
   The planner is polite by construction (§5.2) and the workflow is daily, not hourly.
 
@@ -213,7 +218,10 @@ Rules the planner (`Ingest.plan`, pure, tested) enforces, the same for every ada
   250 ms pause between requests to one host, `concurrency` ≤ 4, retry on 5xx/timeouts with
   exponential backoff (3 attempts), and a 429/403 aborts the run rather than retrying.
 - **`--state SC`, `--city Florianópolis`, `--source ima-sc`** filter `partitions` before fetching;
-  a city that no adapter covers is an error, not an empty success.
+  a city that no adapter covers is an error, not an empty success. `--city` filters the enumerated
+  beaches, not the enumeration: a beach two municipalities list belongs to the first of them, which
+  is a property of the whole state's lists, so every municipality is enumerated and the filter is
+  applied to the municipalities that list each beach (task 10).
 - **Failure is visible:** the run exits non-zero if any partition failed, after writing the ones
   that succeeded and their manifest entries — never a half-written file (write to a temp path,
   rename).
@@ -322,8 +330,9 @@ Unit tests (all offline, on captured fixtures checked into `oods/src/test/resour
 
 - `ImaScCsvParserSpec` — Campeche 2003/2010/2025/2026 fixtures: BOM stripped, quoted commas in
   `Localização`, `<20` → (20, Below), `Sem registros` → empty, header-only → empty, `PRÓPRIA` and
-  `IMPRÓPRIA` → labels, `dd/MM/yyyy` + `HH:mm`; the join to `points.json` by (municipio, beach,
-  point) resolves every Campeche row to a UUID and a coordinate.
+  `IMPRÓPRIA` → labels, `dd/MM/yyyy` + `HH:mm`; the join to `points.json` by (beach, point)
+  resolves every Campeche row to a UUID and a coordinate, including a body whose echoed municipality
+  is the wrong one.
 - `IngestPlanSpec` — which partitions each mode selects on a given date; the January rule; a
   manifest hit skips an immutable partition and never a mutable one; `--city` with no adapter fails.
 - `ManifestSpec` — round trip, sorted keys, byte-stable rewrite, atomic replace.
@@ -333,7 +342,7 @@ Unit tests (all offline, on captured fixtures checked into `oods/src/test/resour
   precedence in `br_bathing_water`, and **two builds produce identical file hashes**.
 - `LatestExportSpec` — `latest/ima-sc.json` round-trips through `CachedWaterQualityClient.read`.
 
-Live checks, in order: `just oods-ingest --source ima-sc --mode incremental --dry-run` lists ≈143
+Live checks, in order: `just oods-ingest --source ima-sc --mode incremental --dry-run` lists 139
 partitions and fetches nothing; without `--dry-run` it writes them and a second run commits
 nothing; `just oods-ingest --mode backfill --from 2003 --to 2025` finishes with zero failures and
 `just oods-check` passes; the workflow's `dry_run` dispatch is green; the first scheduled run
@@ -344,8 +353,12 @@ run green for a week, and `just oods-sql "SELECT count(*) FROM br_bathing_water"
 
 - **Licence** (§4.5): the store republishes IMA's data; until §11's decision lands, `data/oods/
   README.md` states the source, the LAI basis and that IMA has granted no licence — no CC badge.
+- **The export ignores `municipioID`.** `exportarCSV` keys on `localID` alone, so the four beach
+  names two municipalities each list return one byte-identical body holding both their points: the
+  planner fetches each such name once, under the alphabetically first municipality, and the rows are
+  keyed without the municipality column (§4.1, task 10).
 - **Names are the join key** for the CSV channel. A beach renamed on the portal splits its history
-  into two `localID`s; a point renumbered breaks the (municipio, beach, point) join and the row is
+  into two `localID`s; a point renumbered breaks the (beach, point) join and the row is
   kept with `point_key = NULL`-free fallback `ima-sc:<slug>` and `geo_source = 'none'` rather than
   dropped — visible in `just oods-check`'s "unmatched" count.
 - **`Localização` in the CSV is today's text for every year**; the PDF channel (task 7) is the

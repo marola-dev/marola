@@ -181,3 +181,27 @@ class ImaScCsvParserSpec extends munit.FunSuite:
         assert(detail.contains("x") && detail.contains("y"), detail)
       case other => fail(s"expected a ParseError, got $other")
   }
+
+  test("the echoed Municipio is the request's, so a row keys on (beach, point) against the feed") {
+    // `exportarCSV` keys on `localID` alone and answers either municipality with the same body,
+    // column 1 set to whatever was asked for — so keying on it would split a beach's history in
+    // two and lose the coordinates of half of it (MIP-0056 §4.1).
+    val asItajai = fixture("campeche-2026.csv").replace("\nFlorianópolis,", "\nItajaí,")
+    assert(asItajai.contains("\nItajaí,"), "the fixture's first column is unquoted")
+    assert(!asItajai.contains("\nFlorianópolis,"), "every data row was rewritten")
+
+    val rows = ImaScCsv.parse(source, "raw/as-itajai.csv", asItajai, points) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"expected a parse, got $error")
+    val campecheKeys = points.filter(_.beachName == "Praia do Campeche").map(_.pointKey).toSet
+    assertEquals(campecheKeys.size, 5)
+    assertEquals(rows.size, 90)
+    assertEquals(rows.map(_.pointKey).toSet, campecheKeys)
+    assertEquals(rows.map(_.pointKey).toSet, parse("campeche-2026.csv").map(_.pointKey).toSet)
+
+    // And the stored municipality is the feed's, not the one the export echoed back.
+    val point = ImaScCsv.pointFor(source, registry, "Itajaí", "Praia do Campeche", "Ponto 35")
+    assertEquals(point.municipality, "Florianópolis")
+    assertEquals(point.pointKey, "58fbe2a9-d9ce-466f-94c3-5dbd46416ead")
+    assertEquals(point.geoSource, GeoSource.Feed)
+  }
