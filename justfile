@@ -109,6 +109,10 @@ quality-fix:
 run *args:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run {{args}}"
 
+# Runs the OODS ingest (MIP-0056): `just oods-ingest --source ima-sc --mode incremental --dry-run`
+oods-ingest *args:
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt -batch "oods/run {{args}}"
+
 # Runs marola's MCP tool server (cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala)
 # — a separate main class from `run`'s (see build.sbt's Compile/run/mainClass note on why plain
 # `sbt run` can't pick this one).
