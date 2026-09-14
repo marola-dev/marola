@@ -10,6 +10,11 @@ on:
   schedule:
     # Daily: IMA publishes on irregular weekdays, so polling beats guessing (MIP-0056 §4.1).
     - cron: "0 12 * * *"
+  # TEMPORARY (removed at the end of this task): a workflow_dispatch is only offered for a file
+  # that exists on the default branch, so the branch runs that verify this workflow have to be
+  # push-triggered. MIP-0056 task 5.
+  push:
+    branches: [mip-0056/5-ingest-workflow]
   workflow_dispatch:
     inputs:
       source:
@@ -83,7 +88,7 @@ jobs:
           MODE: ${{ inputs.mode || 'incremental' }}
           FROM_YEAR: ${{ inputs.from_year }}
           TO_YEAR: ${{ inputs.to_year }}
-          DRY_RUN: ${{ inputs.dry_run }}
+          DRY_RUN: 'true'   # TEMPORARY: a push event carries no inputs — restored next commit
         run: |
           set -euo pipefail
           args="--source $SOURCE --mode $MODE"
