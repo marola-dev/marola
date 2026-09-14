@@ -73,6 +73,7 @@ quality-other:
     scripts/temps.sh --self-test
     python3 scripts/analyze_training.py --self-test
     python3 scripts/site_live_check.py --self-test
+    python3 scripts/oods_raw_sync.py --self-test
     scripts/deps-stack.sh --self-test
     scripts/deps-merge.sh --self-test
     scripts/runner-preflight.sh --self-test
@@ -113,6 +114,16 @@ run *args:
 # Runs the OODS ingest (MIP-0056): `just oods-ingest --source ima-sc --mode incremental --dry-run`
 oods-ingest *args:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt -batch "oods/run {{args}}"
+
+# The raw layer is not in git — it lives in a Hugging Face dataset (MIP-0056 §4.4). Pull it before
+# a build on a fresh clone; the ingest workflow pulls and pushes around every run.
+# `just oods-raw-pull --dry-run` lists what would change and downloads nothing.
+oods-raw-pull *args:
+    python3 scripts/oods_raw_sync.py pull {{args}}
+
+# Needs HF_TOKEN with write access to the dataset; `--source`/`--mode` name the commit.
+oods-raw-push *args:
+    python3 scripts/oods_raw_sync.py push {{args}}
 
 # raw/ + points.json -> parquet/ (MIP-0056 §5.3). Rewrites only the partitions whose contents moved.
 oods-build *args:

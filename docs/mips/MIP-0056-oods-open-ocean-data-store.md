@@ -120,12 +120,12 @@ readable without marola, and must diff in a PR.
 
 | Option | Verdict | Why |
 |---|---|---|
-| Raw text (CSV/JSON/NDJSON as fetched) | **canonical** | Diffable, reviewable, `git blame`-able; immutable per (beach, year) for past years, so one fetch, no churn; git's packfiles compress it ~4–5× |
+| Raw text (CSV/JSON/NDJSON as fetched) | **canonical, on Hugging Face, not in git** (revised by task 11) | Immutable per (beach, year) for past years, so one fetch, no churn — but the *tree count*, not the bytes, is what git could not carry: 3,331 CSVs is a pull request no human reviews. It lives in the public dataset `h0ffmann/oods-br-bathing-water` (free, git-versioned, viewer, and DuckDB reads `hf://` directly), synced by the ingest workflow, indexed by the manifest that stays in git |
 | Apache Parquet, Hive-partitioned by `source_id`/`year` | **derived, committed** | Columnar, ~1–3 MB for 180 k rows, readable by DuckDB/pandas/polars/Arrow in every language; a past year's partition is rewritten only when its content hash changes (§5.3), so it does not churn either |
 | DuckDB SQL (`schema.sql`, `views.sql`) | **the DDL and the common view** | Text, versioned, engine-portable enough; the union view over every source is a query, not a file |
 | SQLite | rejected | One binary blob rewritten on every run; unreadable diffs, unmergeable conflicts; the runtime would gain a dependency to read it |
 | Delta Lake (delta-rs) / Iceberg | rejected | Their value — ACID, concurrent writers, time travel — is what git already gives a single-writer dataset; a second versioning system, a Rust/Python-only writer, and a heavy JVM reader |
-| Git LFS / release assets for raw | rejected for now | LFS makes the raw layer invisible to `git diff` and to forks; revisit if the tree passes ~200 MB (§8) |
+| Git LFS / release assets for raw | rejected | LFS makes the raw layer invisible to `git diff` and to forks, and ties it to one remote's quota; the Hugging Face dataset above is the same trade with a viewer, a public URL per file and no repo quota |
 
 DuckDB is available twice: `python3Packages.duckdb`/`duckdb` 1.5.5 in the flake's locked nixpkgs
 (CLI for humans, `just oods-sql`), and `org.duckdb:duckdb_jdbc` on Maven Central (1.3.1.0 latest
@@ -149,10 +149,11 @@ data/oods/
   README.md                         what this is, how to query, provenance, licence
   sources.json                      registry: id, institute, state, country, urls, cadence, licence status
   manifest/ima-sc.json              per raw file: url, sha256, bytes, fetched_at, rows; per partition: content hash
-  raw/ima-sc/
-    points.json                     the /relatorio/mapa registry, sorted by CODIGO, one point per line
-    csv/<municipio>/<beach>/<year>.csv   exportarCSV bytes verbatim (BOM included) — slugs are ASCII
-    bulletins/YYYY-MM-DD.jsonl      task 7: rows parsed from each weekly PDF; the PDF itself is not stored
+  DATASET-CARD.md                   uploaded as the dataset's README.md by `just oods-raw-push`
+  raw/                              GITIGNORED — the dataset's `raw/`, fetched by `just oods-raw-pull`
+    ima-sc/points.json              the /relatorio/mapa registry, sorted by CODIGO, one point per line
+    ima-sc/csv/<municipio>/<beach>/<year>.csv   exportarCSV bytes verbatim (BOM included) — slugs are ASCII
+    ima-sc/bulletins/YYYY-MM-DD.jsonl   task 7: rows parsed from each weekly PDF; the PDF itself is not stored
   parquet/ima-sc/
     points.parquet
     samples/year=YYYY/samples.parquet
@@ -160,7 +161,12 @@ data/oods/
 oods/sql/schema.sql  build.sql  views.sql   the DDL and the common view — code, not data
 ```
 
-`.gitignore` gains `!/data/oods/` under the existing `/data/*` rule; runtime output
+`sources.json` also carries the raw layer's address, once, at the top level:
+`"raw_store": {"kind": "hf-dataset", "repo": "h0ffmann/oods-br-bathing-water", "prefix": "raw/"}` —
+the manifest's keys stay `raw/...`, so a reader turns one into
+`https://huggingface.co/datasets/<repo>/resolve/main/<key>`.
+
+`.gitignore` gains `!/data/oods/` under the existing `/data/*` rule and then `/data/oods/raw/`; runtime output
 (`sightings.jsonl`, `knowledge-index.json`, `water-cache/`) stays ignored. The Docker volume at
 `/app/data` is unaffected.
 

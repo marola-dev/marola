@@ -78,6 +78,7 @@ SELF_TEST_SCRIPTS = (
     "scripts/build_docs_index.py",
     "scripts/analyze_training.py",
     "scripts/site_live_check.py",
+    "scripts/oods_raw_sync.py",
 )
 # Measured tree. `dspy/`/`finetune/` are excluded on purpose — see the module docstring.
 COVERAGE_SOURCE = "scripts"

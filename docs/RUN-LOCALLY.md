@@ -446,6 +446,7 @@ onwards, one file per beach-year) into `data/oods/`, rebuilds Parquet partitions
 DuckDB, and checks them. No Ollama, no Azure, no database server.
 
 ```bash
+just oods-raw-pull                                              # the raw layer, from Hugging Face
 just oods-ingest --source ima-sc --mode incremental --dry-run   # plan only: what would be fetched
 just oods-ingest --source ima-sc --mode incremental             # today's partitions (~143 CSVs)
 just oods-ingest --source ima-sc --mode backfill --from 2003 --to 2026   # ~20 min of polite fetching
@@ -454,19 +455,34 @@ just oods-check                                                  # schema, keys,
 just oods-sql "SELECT count(*) FROM br_bathing_water"            # duckdb with views.sql loaded
 ```
 
+**To rebuild the store from scratch: clone → `just oods-raw-pull` → `just oods-build`.** The raw
+layer is not in git — 3,331 small CSVs are a tree git could carry but no reviewer could read — so it
+lives in the public dataset
+[h0ffmann/oods-br-bathing-water](https://huggingface.co/datasets/h0ffmann/oods-br-bathing-water)
+(MIP-0056 §4.4), named once in `data/oods/sources.json`'s `raw_store` block. Pulling needs no
+Hugging Face token; `just oods-raw-push` does, and only the ingest workflow runs it. Add
+`--dry-run` to either to list the delta without transferring anything.
+
+**A clone that has not pulled cannot build.** `just oods-build` refuses while any raw file the
+manifest names is absent, rather than pruning those entries and leaving the next ingest to refetch
+3,331 files; the ingest itself does the opposite, refetching a partition whose raw file is gone
+however complete the manifest looks. When the deletion was deliberate — a partition dropped by
+hand — `just oods-build -- --prune` is the way to say so.
+
 What lands on disk:
 
 ```
 data/oods/
   sources.json                     the registry: institute, urls, cadence, licence status
   manifest/ima-sc.json             per raw file: url, sha256, bytes, fetched_at, rows
-  raw/ima-sc/points.json           the sampling-point registry, sorted
-  raw/ima-sc/csv/<city>/<beach>/<year>.csv    the export's bytes, verbatim
+  raw/ima-sc/points.json           gitignored — `just oods-raw-pull` fetches it
+  raw/ima-sc/csv/<city>/<beach>/<year>.csv    likewise: the export's bytes, verbatim
   parquet/ima-sc/points.parquet
   parquet/ima-sc/samples/year=YYYY/samples.parquet
 ```
 
-`.github/workflows/oods-ingest.yml` runs the same three commands daily and commits what changed to
+`.github/workflows/oods-ingest.yml` pulls the raw layer, runs the same three commands daily,
+pushes the raw layer back and commits what changed to
 the ref it ran on. **Two human decisions stand before its first scheduled run on `main`** (MIP-0056
 §11): the `main-rule` ruleset requires a pull request, so the push needs GitHub Actions added as a
 bypass actor (preferred, keyless) or a fine-grained `OODS_PUSH_TOKEN`; and the data's licence is

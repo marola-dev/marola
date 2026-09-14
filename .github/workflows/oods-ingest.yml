@@ -73,6 +73,37 @@ jobs:
 
       - uses: sbt/setup-sbt@v1
 
+      # The raw layer lives in a Hugging Face dataset, not in git (MIP-0056 §4.4): pull it before
+      # the ingest, so the manifest-skip rule stays honest and the build sees the whole tree.
+      - name: refuse to run without a token, before 20 minutes of fetching
+        if: ${{ inputs.dry_run != true }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "::error::HF_TOKEN secret is not set — add a fine-grained Hugging Face token with write access to the raw dataset." >&2
+            exit 1
+          fi
+          echo "HF_TOKEN present"
+
+      - name: Python with huggingface_hub
+        run: |
+          set -euo pipefail
+          if python3 -c 'import huggingface_hub' 2>/dev/null; then
+            echo "huggingface_hub already importable"
+            exit 0
+          fi
+          python3 -m pip install --user --quiet --disable-pip-version-check 'huggingface_hub==1.*' \
+            || python3 -m pip install --user --quiet --break-system-packages 'huggingface_hub==1.*'
+
+      - name: Pull the raw layer
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 scripts/oods_raw_sync.py pull
+
       # A failed partition makes the CLI exit non-zero *after* writing what succeeded, so the run
       # continues to build, check and commit that; the last step re-asserts the failure.
       - name: Ingest
@@ -108,6 +139,18 @@ jobs:
         run: |
           set -euo pipefail
           sbt -batch -error "oods/runMain marola.oods.CheckMain" | tee "$RUNNER_TEMP/oods-check.txt"
+
+      # After the check, before the commit: the repo's manifest must never name a file the
+      # dataset does not have. A dry run pulls but never pushes.
+      - name: Push the raw layer
+        if: ${{ inputs.dry_run != true }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SOURCE: ${{ inputs.source || 'ima-sc' }}
+          MODE: ${{ inputs.mode || 'incremental' }}
+        run: |
+          set -euo pipefail
+          python3 scripts/oods_raw_sync.py push --source "$SOURCE" --mode "$MODE"
 
       - name: Commit the store
         if: ${{ inputs.dry_run != true }}

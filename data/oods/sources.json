@@ -1,5 +1,10 @@
 {
   "version": 1,
+  "raw_store": {
+    "kind": "hf-dataset",
+    "repo": "h0ffmann/oods-br-bathing-water",
+    "prefix": "raw/"
+  },
   "sources": [
     {
       "id": "ima-sc",
