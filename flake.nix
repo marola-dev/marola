@@ -60,6 +60,10 @@
 
           pkgs.jq
           pkgs.git
+          # `just oods-sql`: the human's half of MIP-0056's store. The build step uses
+          # org.duckdb:duckdb_jdbc instead (build.sbt) and the two versions need not match —
+          # only Parquet files cross the boundary, never a .duckdb file.
+          pkgs.duckdb
 
           # The self-hosted Actions runner for marola-sea-publish.yml (`runs-on: [self-hosted,
           # marola-sea]`): gigabytes of weights, a training run and a Hugging Face token do not

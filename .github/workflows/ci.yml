@@ -26,6 +26,7 @@ jobs:
       workflows: ${{ steps.filter.outputs.workflows }}
       docker: ${{ steps.filter.outputs.docker }}
       site: ${{ steps.filter.outputs.site }}
+      oods: ${{ steps.filter.outputs.oods }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -53,6 +54,9 @@ jobs:
             site:
               - 'site/**'            # app.js/CSS/schema/fixtures → scripts/site_check.js (MIP-0009 task 2)
               - 'scripts/site_check.js'
+            oods:
+              - 'oods/**'            # the module, its SQL, and the store it builds
+              - 'data/oods/**'
             workflows:
               - '.github/workflows/**'
             docker:
@@ -251,7 +255,7 @@ jobs:
   # as `just quality`.
   quality-other:
     needs: changes
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true' || needs.changes.outputs.oods == 'true'
     runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
     timeout-minutes: 5
     steps:
@@ -330,6 +334,22 @@ jobs:
         uses: hadolint/hadolint-action@v3.5.0
         with:
           dockerfile: Dockerfile
+
+      # MIP-0056 §5.4: the store's own gate — schema conformance, primary keys, orphan samples.
+      # It needs a JVM, which this job otherwise has no use for, so both steps are gated on the
+      # oods filter rather than run unconditionally.
+      - name: Set up JDK 25 (oods store check)
+        if: needs.changes.outputs.oods == 'true'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+      - name: Set up sbt (oods store check)
+        if: needs.changes.outputs.oods == 'true'
+        uses: sbt/setup-sbt@v1
+      - name: oods-check (data/oods/parquet against oods/sql/schema.sql)
+        if: needs.changes.outputs.oods == 'true'
+        run: just oods-check
 
       # MIP-0010: every compose profile must still render — the mlflow profile included.
       - name: docker compose config (all profiles)

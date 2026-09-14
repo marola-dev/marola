@@ -89,6 +89,7 @@ quality-other:
     python3 finetune/train_lora.py --self-test
     python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test
+    just oods-check
     python3 finetune/preflight.py --self-test
     python3 finetune/merge_export.py --self-test
     .claude/hooks/guard-azure.sh --self-test
@@ -112,6 +113,36 @@ run *args:
 # Runs the OODS ingest (MIP-0056): `just oods-ingest --source ima-sc --mode incremental --dry-run`
 oods-ingest *args:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt -batch "oods/run {{args}}"
+
+# raw/ + points.json -> parquet/ (MIP-0056 §5.3). Rewrites only the partitions whose contents moved.
+oods-build *args:
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt -batch "oods/runMain marola.oods.BuildMain {{args}}"
+
+# Queries the store with the nix duckdb CLI, views.sql loaded first:
+# `just oods-sql "SELECT count(*) FROM br_bathing_water"`
+oods-sql query:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # DuckDB binds a view when it is created, so views.sql needs the Parquet to exist; before the
+    # first build the query still runs, without br_bathing_water.
+    if [ -d data/oods/parquet ]; then
+      duckdb -init oods/sql/views.sql -c {{quote(query)}}
+    else
+      echo "oods-sql: no data/oods/parquet yet — views.sql not loaded" >&2
+      duckdb -c {{quote(query)}}
+    fi
+
+# Schema, primary keys and orphan samples across data/oods/parquet (MIP-0056 §5.4). Part of
+# `quality-other`, so it must cost nothing on a checkout that has no store yet.
+oods-check *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -z "{{args}}" ] && [ ! -d data/oods/parquet ]; then
+      echo "oods-check: no data/oods/parquet — nothing to check"
+      exit 0
+    fi
+    mkdir -p "$XDG_RUNTIME_DIR"
+    sbt -batch -error "oods/runMain marola.oods.CheckMain {{args}}"
 
 # Runs marola's MCP tool server (cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala)
 # — a separate main class from `run`'s (see build.sbt's Compile/run/mainClass note on why plain
