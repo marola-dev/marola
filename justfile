@@ -68,7 +68,7 @@ quality-other:
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
-    # scripts/setup-runners.sh --self-test  # not in this repo — never committed
+    scripts/setup-runners.sh --self-test
     scripts/marola-sea-pull.sh --self-test
     scripts/temps.sh --self-test
     python3 scripts/analyze_training.py --self-test
