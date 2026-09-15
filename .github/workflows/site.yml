@@ -132,11 +132,11 @@ jobs:
         run: echo "marola.dev" > site/dist/CNAME
 
       # Only the map is public.
-      - name: Publish allowlist — index.html, app.js, style.css, chat.js, chatbot-config.js, CNAME, vendor/, data/, smoke/, coverage/, stats/, docs/ and nothing else
+      - name: Publish allowlist — index.html, about.html, app.js, style.css, chat.js, chatbot-config.js, CNAME, vendor/, data/, smoke/, coverage/, stats/, docs/ and nothing else
         run: |
           cd site/dist
           rm -f .gitkeep
-          unexpected="$(find . -mindepth 1 \( -path ./data -o -path ./smoke -o -path ./coverage -o -path ./stats -o -path ./docs -o -path ./vendor \) -prune -o -type f ! -name index.html ! -name app.js ! -name style.css ! -name chat.js ! -name chatbot-config.js ! -name CNAME -print)"
+          unexpected="$(find . -mindepth 1 \( -path ./data -o -path ./smoke -o -path ./coverage -o -path ./stats -o -path ./docs -o -path ./vendor \) -prune -o -type f ! -name index.html ! -name about.html ! -name app.js ! -name style.css ! -name chat.js ! -name chatbot-config.js ! -name CNAME -print)"
           if [ -n "$unexpected" ]; then
             echo "files in site/dist that are not on the publish allowlist:"; echo "$unexpected"; exit 1
           fi
