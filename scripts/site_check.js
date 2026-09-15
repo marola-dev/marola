@@ -334,8 +334,9 @@ async function runPage(board) {
   const nav = (/<nav class="sitenav"[\s\S]*?<\/nav>/.exec(INDEX) || [''])[0];
   ok(nav.length > 0, 'the page has a section nav — /docs/ is reachable without typing the URL');
   ok(/<a href="\/docs\/">Docs<\/a>/.test(nav), 'Docs is a real link to the published docs');
-  ok((nav.match(/<span aria-disabled="true">/g) || []).length === 5,
-    'the five sections with no page yet are spans, not links');
+  ok(/<a href="about\.html">About<\/a>/.test(nav), 'About is a real link to the about page');
+  ok((nav.match(/<span aria-disabled="true">/g) || []).length === 4,
+    'the four sections with no page yet are spans, not links');
   ok(!/<a[^>]+href="#"/.test(nav), 'no href="#" — a link that goes nowhere is worse than "soon"');
   ok(INDEX.indexOf('<nav class="sitenav"') < INDEX.indexOf('<header class="bar"'),
     'the nav is the first thing on the page, above the header');

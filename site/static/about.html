@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>marola — about</title>
+  <meta name="description" content="What marola is, how the score is computed, and where the data comes from.">
+  <meta name="theme-color" content="#ffffff">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https:; object-src 'none'">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="sitenav" aria-label="Sections">
+    <a href="/docs/">Docs</a>
+    <span aria-disabled="true">Alerts <i>soon</i></span>
+    <span aria-disabled="true">News <i>soon</i></span>
+    <a href="about.html" aria-current="page">About</a>
+    <span aria-disabled="true">Contact <i>soon</i></span>
+    <span aria-disabled="true">Donate <i>soon</i></span>
+  </nav>
+
+  <header class="bar">
+    <div class="brand">
+      <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 9c2.5 0 2.5-2.5 5-2.5S9.5 9 12 9s2.5-2.5 5-2.5S19.5 9 22 9"/><path d="M2 16c2.5 0 2.5-2.5 5-2.5s2.5 2.5 5 2.5 2.5-2.5 5-2.5 2.5 2.5 5 2.5"/></svg>marola</h1>
+      <p class="tagline">The ocean near you: conditions, water quality, sea life, tides, hazards.</p>
+    </div>
+    <div class="controls">
+      <a href="index.html">back to the map</a>
+    </div>
+  </header>
+
+  <main class="main about">
+    <article class="about-body">
+      <h2>What this is</h2>
+      <p>marola ranks every beach nearby by whether it's good to swim right now, and tells you the
+      best hour tomorrow. It pulls live sea, wind, wave and water-quality conditions, checks them
+      against a jellyfish/whale heuristic, and turns the result into one score per beach per hour
+      — computed once, cached, no tracking, no account.</p>
+
+      <h2>How the score works</h2>
+      <p>Each beach gets a number from the same five bands shown on the map legend: <b>≥70</b>
+      good, <b>40–69</b> fair, <b>1–39</b> poor, <b>0</b> unfit, or <b>no data</b> when a source
+      didn't answer. The score folds together sea state, wind, waves, tide, and water quality;
+      an LLM writes a short plain-language summary of the conditions, and a second LLM pass checks
+      that summary against the numbers before it's shown.</p>
+
+      <h2>Where the data comes from</h2>
+      <p>Beach locations and shapes come from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>.
+      Sea and weather conditions come from <a href="https://open-meteo.com/">Open-Meteo</a>. Both are
+      free, public sources — marola adds no private or paid data feed by default.</p>
+
+      <h2>Privacy</h2>
+      <p>The map runs with no cookies and no tracking. The "near me" sort uses your location only
+      inside your own browser — it is never sent anywhere. The board itself is computed once on a
+      schedule and served as static data; visiting the page doesn't trigger a live lookup on your
+      behalf.</p>
+
+      <h2>Who builds this</h2>
+      <p>marola is an open, in-progress project — the code, design proposals and architecture notes
+      are public in the repository. See <a href="/docs/">the docs</a> for the full picture,
+      including what's running today versus what's still a design sketch.</p>
+    </article>
+  </main>
+
+  <footer id="footer" class="footer">
+    <p>marola — no cookies, no tracking.</p>
+  </footer>
+</body>
+</html>

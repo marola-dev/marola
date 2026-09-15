@@ -143,6 +143,12 @@ body { text-transform: lowercase; }
 
 .nojs { padding: 1rem; max-width: 65ch; }
 
+.about { display: block; padding: 1.5rem 1rem 2.5rem; overflow-y: auto; }
+.about-body { max-width: 65ch; margin: 0 auto; }
+.about-body h2 { font-size: 20px; font-weight: 600; margin: 1.6rem 0 .4rem; }
+.about-body h2:first-child { margin-top: 0; }
+.about-body p { margin: 0 0 .8rem; color: var(--ink); }
+
 .leaflet-container { font: inherit; }
 .leaflet-container .leaflet-control-zoom a { color: var(--ink); }
 .leaflet-tooltip { font-size: 13px; font-variant-numeric: tabular-nums; border-color: var(--line); border-radius: 6px; }
