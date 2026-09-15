@@ -56,10 +56,13 @@ quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
     for tool in ruff actionlint hadolint; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
-    # `just --fmt` is still --unstable (just 1.58.0); the check is cheap and syntax-validates the
-    # justfile as a side effect, so a typo'd recipe fails here instead of at whichever `just`
-    # subcommand a human or agent happens to run next.
-    just --unstable --fmt --check
+    # `just --fmt --check` looked like the obvious gate, but it disagreed with itself between this
+    # machine and the self-hosted CI runner on the exact same file and `just --version` (both
+    # 1.58.0) — its canonical style is still --unstable and evidently not yet deterministic across
+    # builds/environments. `just --list` has no opinion on formatting, only on whether the file
+    # parses, so it can't disagree that way; a syntax error (bad recipe header, unmatched quote,
+    # duplicate name) still fails it.
+    just --list >/dev/null
     # One command per line: under `set -e` a failing left side of `a && b` does not stop the
     # script (errexit exempts it), and the first pre-push run sailed past a ruff finding that way.
     ruff check .

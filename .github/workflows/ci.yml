@@ -265,9 +265,9 @@ jobs:
         if: needs.changes.outputs.justfile == 'true' && runner.environment == 'self-hosted'
         run: |
           nix develop .#lint --command which just | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
-      - name: just --fmt --check (justfile is in canonical style)
+      - name: just --list (justfile parses — no opinion on style, see quality-other's comment)
         if: needs.changes.outputs.justfile == 'true'
-        run: just --unstable --fmt --check
+        run: just --list >/dev/null
       # ruff-action appends its `src` (default: the checkout root) to `args`, so this lints every
       # .py in the repo — the same `ruff check .` as `just quality-other`.
       - name: ruff check (every .py in the repo)
