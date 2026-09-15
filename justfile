@@ -362,14 +362,29 @@ context-full:
     @just _clip .tmp/marola-context-full.md
 
 # The Node repomix (nixpkgs, flake.nix) — not the unrelated PyPI "repomix" Python port, which a
-# pip/pipx install can put earlier on PATH (it prints an argparse usage and ignores our config).
+# pip/pipx/uv install can shadow it with on PATH: same command name, but it parses our
+# repomix.config.json's "$schema" key as a constructor kwarg and dies
+# (`RepomixConfig.__init__() got an unexpected keyword argument '$schema'`) instead of the clear
+# usage error the old comment here assumed. A bare `--version` number doesn't tell the two apart
+# — the Python port prints one too — so require the resolved binary's own path to name the
+# nixpkgs derivation (".../-repomix-<ver>/bin/repomix"), not just live under /nix/store: some
+# other nix-packaged tool could otherwise squat there. If that's not on PATH at all, this may just
+# mean the caller isn't inside `nix develop` yet (a fresh shell/tmux pane that skipped it) — retry
+# once through the flake's own devShell before giving up.
 _repomix:
     #!/usr/bin/env bash
     set -euo pipefail
-    bin="$(type -aP repomix 2>/dev/null | grep -m1 '^/nix/store/' || command -v repomix || true)"
-    [ -n "$bin" ] || { echo "repomix not found — enter 'nix develop' (flake.nix provides it)" >&2; exit 1; }
-    if ! "$bin" --version 2>/dev/null | grep -qE '^[0-9]+\.[0-9]+'; then
-        echo "warning: $bin does not look like the Node repomix; output may be wrong" >&2
+    find_nix_repomix() {
+        type -aP repomix 2>/dev/null | grep -m1 -E '^/nix/store/[^/]*-repomix-[^/]*/bin/repomix$' || true
+    }
+    bin="$(find_nix_repomix)"
+    if [ -z "$bin" ]; then
+        bin="$(nix develop --quiet --command bash -c 'type -aP repomix 2>/dev/null' 2>/dev/null \
+            | grep -m1 -E '^/nix/store/[^/]*-repomix-[^/]*/bin/repomix$' || true)"
+    fi
+    if [ -z "$bin" ]; then
+        echo "repomix not found — enter 'nix develop' (flake.nix provides it)" >&2
+        exit 1
     fi
     echo "$bin"
 
