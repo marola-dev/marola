@@ -26,6 +26,7 @@ jobs:
       workflows: ${{ steps.filter.outputs.workflows }}
       docker: ${{ steps.filter.outputs.docker }}
       site: ${{ steps.filter.outputs.site }}
+      justfile: ${{ steps.filter.outputs.justfile }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -59,6 +60,8 @@ jobs:
               - 'Dockerfile*'
               - 'docker-compose.yml'
               - '.dockerignore'
+            justfile:
+              - 'justfile'
 
   build-test:
     needs: changes
@@ -251,11 +254,20 @@ jobs:
   # as `just quality`.
   quality-other:
     needs: changes
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true' || needs.changes.outputs.justfile == 'true'
     runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
+      # just is already in labs/lint's tools (nix develop .#lint --command which just) — same
+      # PATH-prepend pattern as the shellcheck/pyflakes step below, so no separate setup action.
+      - name: just from the lint shell (self-hosted only — github-hosted has no nix)
+        if: needs.changes.outputs.justfile == 'true' && runner.environment == 'self-hosted'
+        run: |
+          nix develop .#lint --command which just | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
+      - name: just --fmt --check (justfile is in canonical style)
+        if: needs.changes.outputs.justfile == 'true'
+        run: just --unstable --fmt --check
       # ruff-action appends its `src` (default: the checkout root) to `args`, so this lints every
       # .py in the repo — the same `ruff check .` as `just quality-other`.
       - name: ruff check (every .py in the repo)

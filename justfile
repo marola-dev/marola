@@ -18,7 +18,7 @@ install-hooks:
 # Last 10 commits on the current branch, one line each (short hash, relative age, author,
 # subject, refs).
 log n="10" *args="":
-    @git --no-pager log -n {{n}} --abbrev-commit --decorate --date=relative --format='%C(yellow)%h%C(reset) %C(dim)%ad%C(reset) %C(blue)%an%C(reset) %s%C(auto)%d%C(reset)' {{args}}
+    @git --no-pager log -n {{ n }} --abbrev-commit --decorate --date=relative --format='%C(yellow)%h%C(reset) %C(dim)%ad%C(reset) %C(blue)%an%C(reset) %s%C(auto)%d%C(reset)' {{ args }}
 
 # ---------------------------------------------------------------------
 # Build / test / lint
@@ -56,6 +56,10 @@ quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
     for tool in ruff actionlint hadolint; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
+    # `just --fmt` is still --unstable (just 1.58.0); the check is cheap and syntax-validates the
+    # justfile as a side effect, so a typo'd recipe fails here instead of at whichever `just`
+    # subcommand a human or agent happens to run next.
+    just --unstable --fmt --check
     # One command per line: under `set -e` a failing left side of `a && b` does not stop the
     # script (errexit exempts it), and the first pre-push run sailed past a ruff finding that way.
     ruff check .
@@ -107,7 +111,7 @@ quality-fix:
 
 # Runs marola's CLI (build.sbt's `cli` project;.
 run *args:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run {{args}}"
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run {{ args }}"
 
 # Runs marola's MCP tool server (cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala)
 # — a separate main class from `run`'s (see build.sbt's Compile/run/mainClass note on why plain
@@ -129,9 +133,9 @@ ollama-serve:
     set -euo pipefail
     api=http://localhost:11434/api/tags
     if ! curl -sf -m 2 "$api" >/dev/null; then
-        mkdir -p "{{justfile_directory()}}/.tmp"
+        mkdir -p "{{ justfile_directory() }}/.tmp"
         echo "ollama: not reachable on localhost:11434 — starting 'ollama serve' in the background"
-        nohup ollama serve >"{{justfile_directory()}}/.tmp/ollama.log" 2>&1 &
+        nohup ollama serve >"{{ justfile_directory() }}/.tmp/ollama.log" 2>&1 &
         for _ in $(seq 1 30); do
             curl -sf -m 1 "$api" >/dev/null && break
             sleep 1
@@ -144,15 +148,15 @@ ollama-serve:
 # Modelfile.adapter (Tier 2: an adapter needing the base locally), this is the real model the
 # publish workflow produced — standalone GGUFs, no Modelfile involved.
 #   just marola-sea-pull                 # tiny, Q4_K_M, owner from the git remote
-#   just marola-sea-pull small Q8_0      # another preset/quant
+# just marola-sea-pull small Q8_0      # another preset/quant
 marola-sea-pull preset="tiny" quant="Q4_K_M" owner="": ollama-serve
-    scripts/marola-sea-pull.sh {{preset}} {{quant}} {{owner}}
+    scripts/marola-sea-pull.sh {{ preset }} {{ quant }} {{ owner }}
 
 # Make sure an Ollama server is reachable and has `model` pulled.
 ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2") embed=env_var_or_default("MAROLA_LOCAL_EMBED_MODEL", "llama3.2"): ollama-serve
     #!/usr/bin/env bash
     set -euo pipefail
-    for m in "{{model}}" "{{embed}}"; do
+    for m in "{{ model }}" "{{ embed }}"; do
         if ollama list | awk 'NR>1 {print $1}' | grep -qx "$m"; then
             echo "ollama: serving, model '$m' already pulled"
         else
@@ -175,7 +179,7 @@ e2e:
 
 # Ask knowledge/*.md a question — local RAG, Ollama embeds and answers. MIP-0001.
 ask question:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --ask \"{{question}}\""
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --ask \"{{ question }}\""
 
 # Force a re-embed of knowledge/ (normally automatic when a file or the embed model changes).
 knowledge-index:
@@ -187,23 +191,23 @@ knowledge-index:
 finetune-adapter-model preset="tiny":
     #!/usr/bin/env bash
     set -euo pipefail
-    from="$(python3 -c "import sys; sys.path.insert(0, 'finetune'); from train_lora import PRESETS; print(PRESETS['{{preset}}']['ollama'])")"
-    gguf="$PWD/finetune/out/{{preset}}/adapter.gguf"
+    from="$(python3 -c "import sys; sys.path.insert(0, 'finetune'); from train_lora import PRESETS; print(PRESETS['{{ preset }}']['ollama'])")"
+    gguf="$PWD/finetune/out/{{ preset }}/adapter.gguf"
     if [ ! -f "$gguf" ]; then
       echo "no adapter GGUF at $gguf — train it, then convert with llama.cpp's convert_lora_to_gguf.py" >&2
       exit 1
     fi
     mkdir -p .tmp
     sed -e "s|^FROM .*|FROM $from|" -e "s|^ADAPTER .*|ADAPTER $gguf|" finetune/Modelfile.adapter > .tmp/Modelfile.adapter
-    ollama create marola-sea-{{preset}} -f .tmp/Modelfile.adapter
+    ollama create marola-sea-{{ preset }} -f .tmp/Modelfile.adapter
 
 # Tier 1: llama3.2 plus marola's persona/decoding as an Ollama model (finetune/Modelfile).
 finetune-model base="llama3.2":
-    mkdir -p .tmp && sed 's/^FROM .*/FROM {{base}}/' finetune/Modelfile > .tmp/Modelfile && ollama create marola-llama3.2 -f .tmp/Modelfile
+    mkdir -p .tmp && sed 's/^FROM .*/FROM {{ base }}/' finetune/Modelfile > .tmp/Modelfile && ollama create marola-llama3.2 -f .tmp/Modelfile
 
 # Tier 2: QLoRA adapter. preset=tiny trains on CPU in minutes; small|base need more.
 finetune-train preset="tiny" *args="":
-    python3 finetune/train_lora.py --preset {{preset}} {{args}}
+    python3 finetune/train_lora.py --preset {{ preset }} {{ args }}
 
 # marola vs a plain prompt on 22 ocean questions, 3 arms — writes data/benchmark-*.md.
 benchmark:
@@ -215,7 +219,7 @@ finetune-dataset:
 
 # VRAM, RAM, disk and a rough ETA for a fine-tune on this machine, before starting it. MIP-0048.
 finetune-preflight preset="tiny" *args="":
-    python3 finetune/preflight.py --preset {{preset}} {{args}}
+    python3 finetune/preflight.py --preset {{ preset }} {{ args }}
 
 # Layer 3 — DPO preference pairs from Reviewer.scala's reject/revise decisions. MIP-0025 §4.3.
 finetune-dpo-dataset:
@@ -223,25 +227,25 @@ finetune-dpo-dataset:
 
 # Layer 3 training: DPO on top of an existing SFT adapter (`just finetune-train` first).
 finetune-train-dpo preset="tiny" *args="":
-    python3 finetune/train_dpo.py --preset {{preset}} {{args}}
+    python3 finetune/train_dpo.py --preset {{ preset }} {{ args }}
 
 # Create/update the venv marola-sea trains in — labs/cuda's setup-ml-venv (h0ffmann/nix-config);
 # call its bin/python-cuda afterwards, never bin/python.
 ml-venv *args:
-    REQUIREMENTS=finetune/requirements.txt VENV_ROOT="${VENV_ROOT:-$HOME/.marola-ml-venv}" setup-ml-venv {{args}}
+    REQUIREMENTS=finetune/requirements.txt VENV_ROOT="${VENV_ROOT:-$HOME/.marola-ml-venv}" setup-ml-venv {{ args }}
 
 # One-time host setup: the CUDA binary cache, so torchWithCuda is fetched, not compiled.
 gpu-cache-setup *args:
-    setup-cuda-cache {{args}}
+    setup-cuda-cache {{ args }}
 
 # Merge a LoRA adapter into its base and export runnable GGUFs (MIP-0025 §5.1) — the step
 # between training and publishing.
 finetune-merge preset="tiny" llama_cpp="" *args="":
-    python3 finetune/merge_export.py --preset {{preset}} {{ if llama_cpp != "" { "--llama-cpp " + llama_cpp } else { "--dry-run" } }} {{args}}
+    python3 finetune/merge_export.py --preset {{ preset }} {{ if llama_cpp != "" { "--llama-cpp " + llama_cpp } else { "--dry-run" } }} {{ args }}
 
 # Publish a trained .gguf to a Hugging Face model repo (MIP-0025 §5.1).
 finetune-publish repo gguf base *args:
-    python3 finetune/publish_hf.py --repo {{repo}} --gguf {{gguf}} --base-model {{base}} {{args}}
+    python3 finetune/publish_hf.py --repo {{ repo }} --gguf {{ gguf }} --base-model {{ base }} {{ args }}
 
 # ---------------------------------------------------------------------
 # The map — MIP-0005: precomputed boards on a static site (site/)
@@ -249,24 +253,24 @@ finetune-publish repo gguf base *args:
 
 # Build the static map's data into site/dist. MIP-0005.
 site-build area="":
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --site {{area}}"
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --site {{ area }}"
     scripts/stamp_site_version.sh site/dist
 
 # Serve site/dist at http://localhost:8000 (python3 is in the flake).
 site-serve port="8000":
-    python3 -m http.server -d site/dist {{port}}
+    python3 -m http.server -d site/dist {{ port }}
 
 # Deploy the map to GitHub Pages.
 site-deploy target="github":
     #!/usr/bin/env bash
     set -euo pipefail
-    case "{{target}}" in
+    case "{{ target }}" in
         github)
             gh workflow run site.yml && echo "queued site.yml — watch it: gh run list --workflow site.yml" ;;
         cloudflare)
             [ -f site/dist/index.html ] || { echo "site/dist is empty — run: just site-build" >&2; exit 1; }
             npx --yes wrangler pages deploy site/dist --project-name "${MAROLA_SITE_PROJECT:-marola}" ;;
-        *) echo "unknown target '{{target}}' — github | cloudflare" >&2; exit 1 ;;
+        *) echo "unknown target '{{ target }}' — github | cloudflare" >&2; exit 1 ;;
     esac
 
 # ---------------------------------------------------------------------
@@ -278,12 +282,12 @@ site-deploy target="github":
 docker-build target="jvm":
     #!/usr/bin/env bash
     set -euo pipefail
-    if [ "{{target}}" = local ]; then docker build -f Dockerfile.local -t marola:local .; else docker build --target {{target}} -t marola:{{target}} .; fi
+    if [ "{{ target }}" = local ]; then docker build -f Dockerfile.local -t marola:local .; else docker build --target {{ target }} -t marola:{{ target }} .; fi
 
 # Run the locally built jvm image against the Ollama on this machine (`--network host`, so
 # Run the CLI image with host networking, so a local Ollama on :11434 is reachable.
 docker-run *args:
-    docker run --rm --network host --env-file <(env | grep '^MAROLA_' || true) marola:jvm {{args}}
+    docker run --rm --network host --env-file <(env | grep '^MAROLA_' || true) marola:jvm {{ args }}
 
 # GraalVM native-image of the CLI → cli/target/marola (MIP-0008 task 3).
 native-image:
@@ -298,7 +302,7 @@ native-image:
 
 # Run the GraalVM native binary.
 native-run *args:
-    ./cli/target/marola {{args}}
+    ./cli/target/marola {{ args }}
 
 # Start a local MLflow server for the run ledger. MIP-0010.
 mlflow-up:
@@ -336,7 +340,7 @@ context-mips:
 context-mip mip:
     #!/usr/bin/env bash
     set -euo pipefail
-    num="$(grep -oE '[0-9]{4}' <<<"{{mip}}" | head -1)"
+    num="$(grep -oE '[0-9]{4}' <<<"{{ mip }}" | head -1)"
     if [ -z "$num" ]; then echo "usage: just context-mip MIP-NNNN" >&2; exit 1; fi
     mip_file="$(ls docs/mips/MIP-"$num"-*.md 2>/dev/null | head -1)"
     if [ -z "$mip_file" ]; then echo "no docs/mips/MIP-$num-*.md found" >&2; exit 1; fi
@@ -391,60 +395,60 @@ _repomix:
 _clip file:
     #!/usr/bin/env bash
     set -euo pipefail
-    size="$(wc -c < "{{file}}")"
+    size="$(wc -c < "{{ file }}")"
     if command -v wl-copy >/dev/null 2>&1 && [ -n "${WAYLAND_DISPLAY:-}" ]; then
-        wl-copy < "{{file}}"; echo "copied to clipboard via wl-copy: {{file}} ($size bytes)"
+        wl-copy < "{{ file }}"; echo "copied to clipboard via wl-copy: {{ file }} ($size bytes)"
     elif command -v xclip >/dev/null 2>&1 && [ -n "${DISPLAY:-}" ]; then
-        xclip -selection clipboard < "{{file}}"; echo "copied to clipboard via xclip: {{file}} ($size bytes)"
+        xclip -selection clipboard < "{{ file }}"; echo "copied to clipboard via xclip: {{ file }} ($size bytes)"
     elif command -v pbcopy >/dev/null 2>&1; then
-        pbcopy < "{{file}}"; echo "copied to clipboard via pbcopy: {{file}} ($size bytes)"
+        pbcopy < "{{ file }}"; echo "copied to clipboard via pbcopy: {{ file }} ($size bytes)"
     else
-        echo "no clipboard tool/display found — open the file instead: {{file}} ($size bytes)"
+        echo "no clipboard tool/display found — open the file instead: {{ file }} ($size bytes)"
     fi
 
 # Update the current branch's PR description on GitHub from its commits — "What changed" (one
 # Write or refresh a PR body from the branch's commits — pr-body.yml runs the same generator.
 uprd *args:
-    scripts/uprd.sh {{args}}
+    scripts/uprd.sh {{ args }}
 
 # Same for a whole MIP stack (scripts/uprds.sh): — MIP-0005.
 uprds *args:
-    scripts/uprds.sh {{args}}
+    scripts/uprds.sh {{ args }}
 
 # Add a missing Cost:/Tested: trailer to a commit, measured from the session logs.
 cost-fill *args:
-    scripts/cost-fill.sh {{args}}
+    scripts/cost-fill.sh {{ args }}
 
 # The whole agent PR workflow in one command: trailers, push, PR body. AGENTS.md.
 pr *args:
-    scripts/pr.sh {{args}}
+    scripts/pr.sh {{ args }}
 
 # Apply the deterministic label taxonomy (scripts/lib/pr_labels.sh) to one PR — the current
 # branch's, or `just pr-label 168`.
 pr-label *args:
-    scripts/pr-label.sh {{args}}
+    scripts/pr-label.sh {{ args }}
 
 # Backfill labels onto every merged/closed PR that has none yet (never touches an open PR, and
 # never a PR that already has a label — re-running is a no-op scan).
 pr-labels-backfill *args:
-    scripts/backfill-pr-labels.sh {{args}}
+    scripts/backfill-pr-labels.sh {{ args }}
 
 # scripts/stack.sh passthrough: — MIP-0005.
 stack *args:
-    scripts/stack.sh {{args}}
+    scripts/stack.sh {{ args }}
 
 # scripts/docs-mip-stack.sh passthrough — chain several independent, un-merged docs/mip-NNNN-*
 # design-doc branches into one base-linked stack for a single review pass.
 docs-mip-stack *args:
-    scripts/docs-mip-stack.sh {{args}}
+    scripts/docs-mip-stack.sh {{ args }}
 
 # Stack every open dependency-update PR (dependabot;.
 deps-stack *args:
-    scripts/deps-stack.sh {{args}}
+    scripts/deps-stack.sh {{ args }}
 
 # Merge every open dependency-update PR whose checks are green (--dry-run to see what it would do).
 deps-merge *args:
-    scripts/deps-merge.sh {{args}}
+    scripts/deps-merge.sh {{ args }}
 
 # Can this machine run the workflows? (tooling, scala-steward's PR permission, runner labels, disk)
 runner-preflight:
@@ -453,13 +457,13 @@ runner-preflight:
 # Start the self-hosted Actions runner in the background, preflight first. MAROLA_GHA_RUNNER_DIR
 # picks the registration directory (default /home/hoffmann/code/actions-runner).
 runner-up *args:
-    scripts/gha-runner.sh up {{args}}
+    scripts/gha-runner.sh up {{ args }}
 
 # Stop every runner listening on that directory — discovered from the process table, not from a
 # pidfile, so one started by hand or by a shell that has since closed is stopped too. Refuses
 # while a job is executing; --force stops it anyway and cleans up the worker.
 runner-down *args:
-    scripts/gha-runner.sh down {{args}}
+    scripts/gha-runner.sh down {{ args }}
 
 # Local process + what GitHub thinks of the runner + the tail of its log.
 runner-status:
@@ -477,23 +481,23 @@ alias ghas := runner-down
 # Stack every open MIP *draft* PR (a `docs/mip-NNNN-*` branch, or any PR adding a
 # `docs/mips/MIP-NNNN-*.md`;.
 mip-stack *args:
-    scripts/mip-stack.sh {{args}}
+    scripts/mip-stack.sh {{ args }}
 
 # Regenerate the Mermaid dependency graph in docs/mips/README.md from every MIP's own **Blocked
 # by** metadata row (comma-separated MIP numbers, or `none` — never the prose **Depends on**
 # field, which legitimately mixes four relations in one cell a regex can't tell apart).
 mip-graph *args:
-    python3 scripts/mip_graph.py {{args}}
+    python3 scripts/mip_graph.py {{ args }}
 
 # Delete every local branch whose PR gh confirms MERGED (local branch + remote ref, if still
 # there) — never the current branch or main.
 branches-clean *args:
-    scripts/branches.sh clean {{args}}
+    scripts/branches.sh clean {{ args }}
 
 # Open a base=main PR for every local *plain* branch (not a mip-NNNN/k-slug stack branch) that's
 # ahead of origin/main and has no PR yet.
 branches-open *args:
-    scripts/branches.sh open {{args}}
+    scripts/branches.sh open {{ args }}
 
 # GitHub's native Stacks (the "Preview stack" box on a PR) via the official `gh stack` extension.
 stack-setup:
@@ -504,24 +508,24 @@ stack-setup:
 # Link a MIP's *open* PRs into one GitHub Stack, bottom to top (`scripts/stack.sh link`): —
 # MIP-0005.
 stack-link mip="":
-    scripts/stack.sh link {{mip}}
+    scripts/stack.sh link {{ mip }}
 
 # The stack as GitHub sees it (PR numbers, states, bases) — MIP-0005.
 stack-view *args:
-    gh stack view {{args}}
+    gh stack view {{ args }}
 
 # After a bottom PR was squash-merged: — MIP-0005.
 stack-sync mip="":
     #!/usr/bin/env bash
     set -euo pipefail
-    bottom="$(scripts/stack.sh branches {{mip}} | head -1)"
+    bottom="$(scripts/stack.sh branches {{ mip }} | head -1)"
     gh stack checkout "$bottom"
     gh stack sync
 
 # Merge a whole stack (or everything up to one PR) in a single all-or-nothing operation — no
 # restack between merges.
 stack-merge *args:
-    gh stack merge {{args}}
+    gh stack merge {{ args }}
 
 # ---------------------------------------------------------------------
 # Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"
@@ -530,17 +534,17 @@ stack-merge *args:
 # Split a session's real token usage across the commits it produced (scripts/cost-split.py): —
 # MIP-0005.
 cost-split *args:
-    python3 scripts/cost-split.py {{args}}
+    python3 scripts/cost-split.py {{ args }}
 
 # What Claude Code sessions consumed, from the local session logs (~/.claude/projects), priced
 # at list rates — the quota proxy to paste into a PR's "Cost" line.
 claude-cost *args="session":
-    npx --yes ccusage@latest {{args}}
+    npx --yes ccusage@latest {{ args }}
 
 # GitHub's own bill this month — Actions minutes, GHCR/Packages storage and transfer, Copilot —
 # in one call to the consolidated billing-usage API (scripts/gh-billing.sh).
 gh-billing *args:
-    scripts/gh-billing.sh {{args}}
+    scripts/gh-billing.sh {{ args }}
 
 # ---------------------------------------------------------------------
 # ai-jail — sandbox AI coding agents (bubblewrap/Landlock/seccomp on
@@ -556,7 +560,7 @@ gh-billing *args:
 # Print the sandbox invocation ai-jail would run, without running it — use this to audit a
 # command's jail before trusting it for real.
 jail-dry-run *cmd:
-    jail-run --dry-run -- {{cmd}}
+    jail-run --dry-run -- {{ cmd }}
 
 # --no-save-config keeps a jailed run from writing the host's config.
 
@@ -568,7 +572,7 @@ jail-dry-run *cmd:
 gh-auth *args:
     #!/usr/bin/env bash
     set -euo pipefail
-    case "{{args}}" in
+    case "{{ args }}" in
         *--refresh*) exec gh auth refresh ;;
         *--login*)   exec gh auth login ;;
     esac
@@ -586,7 +590,7 @@ gh-auth *args:
 # Thresholds are the hardware's own (coretemp max/crit, nvidia-smi slowdown/shutdown), not
 # invented numbers. GPU readings need the host: /dev/nvidia* is not mapped into the jail.
 temps *args:
-    scripts/temps.sh {{args}}
+    scripts/temps.sh {{ args }}
 
 # Analyse a finished training run and say what the next one should change. Reads HF Trainer's
 # trainer_state.json (both trainers set report_to=[], so there is no MLflow/W&B run to open).
@@ -596,8 +600,8 @@ temps *args:
 analyze-training *args:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [ -n "{{args}}" ]; then
-        python3 scripts/analyze_training.py {{args}}
+    if [ -n "{{ args }}" ]; then
+        python3 scripts/analyze_training.py {{ args }}
     else
         root="${CKPT_ROOT:-../marola-checkpoints}/${PRESET:-tiny}"
         python3 scripts/analyze_training.py "$root/adapter" "$root/dpo-adapter"
@@ -606,11 +610,11 @@ analyze-training *args:
 # Pull a marola-sea CI run's full logs and report down from GitHub, into .tmp/training-logs/.
 # Works for the self-hosted runner too — the artifact is uploaded to GitHub either way.
 #   just training-logs              # the most recent marola-sea publish run
-#   just training-logs 12345678     # a specific run id
+# just training-logs 12345678     # a specific run id
 training-logs run_id="":
     #!/usr/bin/env bash
     set -euo pipefail
-    id="{{run_id}}"
+    id="{{ run_id }}"
     if [ -z "$id" ]; then
         id="$(gh run list --workflow "marola-sea publish" --limit 1 --json databaseId \
               --jq '.[0].databaseId')"
@@ -632,12 +636,12 @@ training-logs run_id="":
 # and run here, you commit in the other checkout.
 #
 #   just worktree            # create it, or fast-forward it to the latest origin/main
-#   cd .tmp/wt-main && nix develop
+# cd .tmp/wt-main && nix develop
 worktree dir=".tmp/wt-main":
     #!/usr/bin/env bash
     set -euo pipefail
-    root="{{justfile_directory()}}"
-    wt="$root/{{dir}}"
+    root="{{ justfile_directory() }}"
+    wt="$root/{{ dir }}"
     git -C "$root" fetch origin --quiet
     target="$(git -C "$root" rev-parse origin/main)"
     if git -C "$root" worktree list --porcelain | grep -qx "worktree $wt"; then
@@ -659,7 +663,7 @@ worktree dir=".tmp/wt-main":
         git -C "$root" worktree add --detach "$wt" "$target"
         echo "worktree: created $wt at origin/main"
     fi
-    echo "  cd {{dir}} && nix develop"
+    echo "  cd {{ dir }} && nix develop"
 
 # Drop worktree registrations whose directories are gone (this repo accumulates them from agent
 # runs and /tmp experiments). Only removes bookkeeping for already-deleted directories — it never
@@ -676,22 +680,22 @@ worktree-prune:
 # job at a time, and ci.yml alone has four that used to run concurrently.
 #   just runners            # 3, installed as services
 #   just runners 4          # 4
-#   just runners --status   # what is registered and running
+# just runners --status   # what is registered and running
 runners *args:
-    scripts/setup-runners.sh {{args}}
+    scripts/setup-runners.sh {{ args }}
 
 # Check what marola.dev actually serves — that the boards carry water sampling points, that the
 # canary beach is present, that the schema is one the page understands. Every other gate checks
 # inputs (fixtures, schemas, a stub DOM); this is the only one that looks at the published result.
 #   just site-live-check                          # https://marola.dev
-#   just site-live-check --base http://localhost:8000
+# just site-live-check --base http://localhost:8000
 site-live-check *args:
-    python3 scripts/site_live_check.py {{args}}
+    python3 scripts/site_live_check.py {{ args }}
 
 # Claude Code in the jail — labs/agentic's jail-run (h0ffmann/nix-config). MAROLA_JAIL_CLIPBOARD*
 # still work for one release; the lab's names are JAIL_CLIPBOARD / JAIL_CLIPBOARD_PASTE.
 jail-claude *args:
-    JAIL_CLIPBOARD="${JAIL_CLIPBOARD:-${MAROLA_JAIL_CLIPBOARD:-0}}" JAIL_CLIPBOARD_PASTE="${JAIL_CLIPBOARD_PASTE:-${MAROLA_JAIL_CLIPBOARD_PASTE:-0}}" jail-run claude {{args}}
+    JAIL_CLIPBOARD="${JAIL_CLIPBOARD:-${MAROLA_JAIL_CLIPBOARD:-0}}" JAIL_CLIPBOARD_PASTE="${JAIL_CLIPBOARD_PASTE:-${MAROLA_JAIL_CLIPBOARD_PASTE:-0}}" jail-run claude {{ args }}
 
 # The two below pin the model via Claude Code's own alias (always the latest of that line), and
 # still forward any further args to `claude`, e.g.
@@ -707,7 +711,7 @@ jco *args: (jail-claude "--model" "opus" args)
 
 # OpenCode in the same jail, with its own state directories instead of Claude Code's. MIP-0013.
 jail-opencode *args:
-    jail-run opencode {{args}}
+    jail-run opencode {{ args }}
 
 # jail-opencode, short alias.
 jo *args: (jail-opencode args)
@@ -716,7 +720,7 @@ jo *args: (jail-opencode args)
 specify *args:
     #!/usr/bin/env bash
     set -euo pipefail
-    args=({{args}})
+    args=({{ args }})
     if [ "${args[0]:-}" = "init" ] && ! printf '%s\n' "${args[@]:-}" | grep -qx -- --integration; then
         args+=(--integration claude)
     fi
@@ -725,11 +729,11 @@ specify *args:
 # What OpenCode sessions consumed, from its local storage (~/.local/share/opencode), priced at
 # list rates — ccusage's OpenCode support (MIP-0013 §4.5;.
 opencode-cost *args="session":
-    npx --yes ccusage@latest opencode {{args}}
+    npx --yes ccusage@latest opencode {{ args }}
 
 # Push stdin (or --text "…") to the clipboard — write-only, no paste counterpart;.
 clip *args:
-    clip {{args}}
+    clip {{ args }}
 
 # Fast-forward local `main` from origin — always fetches (safe, no working-tree effect);.
 sync-main:
