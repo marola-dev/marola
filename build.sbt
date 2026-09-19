@@ -246,8 +246,33 @@ lazy val cli = (project in file("cli"))
     Compile / run / baseDirectory := (ThisBuild / baseDirectory).value
   )
 
+// --- ADK agents (MIP-0061) ------------------------------------------------------------------
+// Google's Agent Development Kit for Java, driven from Scala. A leaf module: nothing depends on
+// it, so the ADK's dependency tree (google-genai, RxJava 3, LangChain4j) never reaches the CLI
+// jar or the GraalVM native image. Versions confirmed against adk-java's own pom at v1.10.1
+// (2026-09-19): it pins the MCP SDK at 2.0.0 — the same one `cli` uses — and LangChain4j 1.12.2.
+val AdkVersion = "1.10.1"
+val LangChain4jVersion = "1.12.2"
+
+lazy val agents = (project in file("agents"))
+  .dependsOn(core, local, cli)
+  .settings(baseSettings)
+  .settings(
+    name := "marola-agents",
+    libraryDependencies ++= Seq(
+      "com.google.adk" % "google-adk" % AdkVersion,
+      // The LangChain4j bridge is how an ADK agent talks to Ollama — the local, keyless default.
+      "com.google.adk" % "google-adk-langchain4j" % AdkVersion,
+      "dev.langchain4j" % "langchain4j-ollama" % LangChain4jVersion
+    ),
+    Compile / run / mainClass := Some("marola.agents.SwimBriefMain"),
+    Compile / run / baseDirectory := (ThisBuild / baseDirectory).value,
+    run / fork := true,
+    run / connectInput := true
+  )
+
 lazy val root = (project in file("."))
-  .aggregate(core, local, azure, cli)
+  .aggregate(core, local, azure, cli, agents)
   .settings(
     name := "marola",
     publish / skip := true,

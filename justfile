@@ -696,6 +696,13 @@ runners *args:
 site-live-check *args:
     python3 scripts/site_live_check.py {{ args }}
 
+# The swim-brief agent (MIP-0061): Google's ADK for Java driven from Scala, over marola's own
+# deterministic tools. Local by default (Ollama, `llama3.2`); `MAROLA_AGENT_PROVIDER=gemini` with
+# GOOGLE_API_KEY uses the Gemini API instead. `--trace` prints the tool calls and their results.
+# just swim-brief --lat -27.5954 --lon -48.5480 --radius-km 20
+swim-brief *args:
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt -batch --error "agents/run {{ args }}"
+
 # Claude Code in the jail — labs/agentic's jail-run (h0ffmann/nix-config). MAROLA_JAIL_CLIPBOARD*
 # still work for one release; the lab's names are JAIL_CLIPBOARD / JAIL_CLIPBOARD_PASTE.
 jail-claude *args:

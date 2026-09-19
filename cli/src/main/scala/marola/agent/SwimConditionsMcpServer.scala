@@ -33,7 +33,7 @@ object SwimConditionsMcpServer:
       case other => other.toString.trim.toDoubleOption // bad input → default, not a crash
     }
 
-  private def beachToJson(beach: Beach): JsonValue =
+  private[marola] def beachToJson(beach: Beach): JsonValue =
     JsonValue.obj(
       "name" -> JsonValue.str(beach.name),
       "lat" -> JsonValue.num(beach.coordinates.lat),
@@ -41,7 +41,7 @@ object SwimConditionsMcpServer:
       "distance_km" -> JsonValue.num(beach.distanceKm)
     )
 
-  private def bestHourToJson(best: BestHour): JsonValue =
+  private[marola] def bestHourToJson(best: BestHour): JsonValue =
     JsonValue.obj(
       "beach_name" -> JsonValue.str(best.beach.name),
       "distance_km" -> JsonValue.num(best.beach.distanceKm),
