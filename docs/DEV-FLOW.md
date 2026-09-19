@@ -114,7 +114,8 @@ reads differently from a measured number at a glance.
 
 ## 5. Final review — only when asked
 
-Nothing reviews a PR automatically. Reviews start when the human says so ("review the stack",
+Nothing reviews a PR automatically. (Proposed change: `docs/mips/MIP-0060-open-code-review-on-ready.md` —
+an advisory local-model pass when a PR is marked ready.) Reviews start when the human says so ("review the stack",
 "claude review #21", `/code-review`). Three ways, cheapest first; all of them review **one PR
 against its own base**, bottom of the stack first, because that is the diff a reviewer sees.
 
