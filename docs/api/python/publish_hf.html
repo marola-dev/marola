@@ -71,7 +71,7 @@ human's own one-time setup per <code>AGENTS.md</code>'s "never hardcode a key" r
 <p>This is the export chain's <em>last</em> step only. Get the <code>.gguf</code> file(s) first:</p>
 
 <ol>
-<li><code>just finetune-train preset=&lt;tiny|small|base&gt;</code> (LoRA adapter, finetune/out/adapter/)</li>
+<li><code>just finetune-train preset=&lt;preset&gt;</code> (LoRA adapter, finetune/out/<preset>/adapter/)</li>
 <li>merge + convert with llama.cpp's <code>convert_hf_to_gguf.py</code> (base) or use <code>ollama create</code> +
 <code>Modelfile.adapter</code> for local-only use without merging (see finetune/README.md)</li>
 <li>this script, pointed at the resulting .gguf file(s)</li>
@@ -95,7 +95,7 @@ that needs a separate <code>ollama signin</code> and a private key this script h
 </span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a><span class="sd">human&#39;s own one-time setup per `AGENTS.md`&#39;s &quot;never hardcode a key&quot; rule.</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a>
 </span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="sd">This is the export chain&#39;s *last* step only. Get the `.gguf` file(s) first:</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="sd">  1. `just finetune-train preset=&lt;tiny|small|base&gt;` (LoRA adapter, finetune/out/adapter/)</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="sd">  1. `just finetune-train preset=&lt;preset&gt;` (LoRA adapter, finetune/out/&lt;preset&gt;/adapter/)</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="sd">  2. merge + convert with llama.cpp&#39;s `convert_hf_to_gguf.py` (base) or use `ollama create` +</span>
 </span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="sd">     `Modelfile.adapter` for local-only use without merging (see finetune/README.md)</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a><span class="sd">  3. this script, pointed at the resulting .gguf file(s)</span>
