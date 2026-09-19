@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Draft — `Tasks: docs/mips/MIP-0060.tasks.md` |
 | **Author** | Claude (Fable 5.1), for M. Hoffmann |
 | **Created** | 2026-09-19 |
 | **Phase** | 0 (dev-loop; no user-facing surface, no Azure) |
@@ -73,7 +73,9 @@ Scala Steward PR, or a fork.
   `actions/github-script`, supports incremental re-review. Inner actions are SHA-pinned. Upstream's
   own docs say pinning the Action alone does not freeze behaviour — `ocr_version` must be pinned too.
   The demo workflow uses `pull_request_target` and `@main`.
-- **Not checked:** the JSON output schema; the agent's exact tool list (assumed read-only file/search
+- **JSON output schema: confirmed against the source at `v1.12.7`** (§11.2) — `internal/model/review.go`
+  and `cmd/opencodereview/output.go`.
+- **Not checked:** the agent's exact tool list (assumed read-only file/search
   tools — no evidence it executes repo code, but not confirmed in source); whether an MCP server can
   be configured from inside the reviewed repo (`.opencodereview/`); the benchmark numbers; whether
   the release tag `v1.12.7` (ref object `03b362a…`) is annotated — dereference before pinning.
@@ -212,7 +214,19 @@ None claimed. (AI-103 "Responsible AI" is about the product's output, not the de
 ## 11. Open questions
 
 1. Is `qwen2.5-coder:7b` good enough (§7.1)? If not, which local model fits the runner's GPU?
-2. OCR's JSON schema and the agent's tool list — read the source before writing `ocr-post.py`.
+2. ~~OCR's JSON schema~~ — **resolved**, confirmed against the source at `v1.12.7` (2026-09-19):
+   `internal/model/review.go` defines `LlmComment` (`path`, `content`, `suggestion_code`,
+   `existing_code`, `start_line`, `end_line`, `category` ∈ bug/security/performance/maintainability/
+   test/style/documentation/other, `severity` ∈ critical/high/medium/low) and
+   `cmd/opencodereview/output.go` the envelope `jsonOutput` (`status`, `llm{provider,model}`,
+   `message`, `summary{files_reviewed,comments,*_tokens,elapsed,budget_exceeded}`, `tool_calls`,
+   `comments`, `warnings`, `project_summary`, `session_id`, `manifest`). The posting rules come
+   from upstream's own consumer, `scripts/github-actions/post-review-comments.js`: inline-able when
+   `start_line` or `end_line` ≥ 1, multi-line as `start_line` + `line` on `side: RIGHT`, a
+   `suggestion` block only when `suggestion_code` **and** `existing_code` are both set, and
+   `event: COMMENT` on every review it creates. `scripts/ocr-post.py` reads that shape and degrades
+   to a summary-only comment on anything else, so a schema move is a quiet run, not a red check.
+   The **agent's tool list is still not checked**.
 3. `buildGoModule` vs release binary: does the locked nixpkgs carry Go ≥ 1.25.5?
 4. Should a stack (`mip-NNNN/k-*`) be reviewed bottom-first only, to save runner time?
 5. Review language: English, or Portuguese to match MIP-0054's direction?

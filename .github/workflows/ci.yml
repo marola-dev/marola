@@ -319,6 +319,9 @@ jobs:
       - name: self-test — mip_index_merge (docs/mips/README.md row conflict auto-resolve)
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/mip_index_merge.py --self-test
+      - name: self-test — ocr-post (Open Code Review JSON → one advisory PR review, MIP-0060)
+        if: needs.changes.outputs.python == 'true'
+        run: python3 scripts/ocr-post.py --self-test
       - name: site harness — app.js against site/fixtures in a stub DOM (MIP-0009)
         if: needs.changes.outputs.site == 'true'
         run: |

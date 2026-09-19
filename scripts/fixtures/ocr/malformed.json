@@ -1,0 +1,8 @@
+{
+  "status": "success",
+  "llm": { "provider": "local", "model": "qwen2.5-coder:7b" },
+  "summary": { "files_reviewed": 2, "comments": 1, "elapsed": "0m58s" },
+  "comments": [
+    {
+      "path": "scripts/oods_ingest.py",
+      "content": "the run was killed here",

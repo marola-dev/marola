@@ -1,0 +1,44 @@
+{
+  "status": "completed_with_warnings",
+  "llm": { "provider": "local", "model": "qwen2.5-coder:7b" },
+  "summary": {
+    "files_reviewed": 3,
+    "comments": 2,
+    "total_tokens": 22100,
+    "input_tokens": 20500,
+    "output_tokens": 1600,
+    "elapsed": "1m12s"
+  },
+  "tool_calls": {
+    "total": 4,
+    "by_tool": { "read_file": 3, "code_comment": 1 },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [
+    {
+      "path": "oods/src/main/scala/Planner.scala",
+      "content": "`rows.head` throws on an empty list; the caller has no empty-list guard.",
+      "start_line": 41,
+      "end_line": 41,
+      "category": "bug",
+      "severity": "high"
+    },
+    {
+      "path": "core/src/main/scala/Untouched.scala",
+      "content": "This file is not in the PR at all — the model followed a reference out of the diff. A real finding, maybe, but not one this PR can be asked to fix inline.",
+      "start_line": 12,
+      "end_line": 12,
+      "category": "maintainability",
+      "severity": "medium"
+    }
+  ],
+  "warnings": [
+    {
+      "file": "core/src/main/scala/Untouched.scala",
+      "type": "out_of_scope_read",
+      "message": "file read outside the reviewed set"
+    }
+  ]
+}

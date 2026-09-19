@@ -73,6 +73,7 @@ SELF_TEST_SCRIPTS = (
     "scripts/lib/req_merge.py",
     "scripts/lib/uses_merge.py",
     "scripts/lib/mip_index_merge.py",
+    "scripts/ocr-post.py",
     "scripts/mip_graph.py",
     "scripts/strip_external_scripts.py",
     "scripts/build_docs_index.py",
