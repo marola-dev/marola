@@ -1,28 +1,29 @@
-# MIP-0060: Open Code Review on every PR marked ready, on marola's own runners
+# MIP-0060: Open Code Review on request, on marola's own runners
 
 | | |
 |---|---|
-| **Status** | Draft — `Tasks: docs/mips/MIP-0060.tasks.md` |
+| **Status** | Partially implemented (task 1 of 3 — #391); tasks 2–3 wait on §11.1 — `Tasks: docs/mips/MIP-0060.tasks.md` |
 | **Author** | Claude (Fable 5.1), for M. Hoffmann |
 | **Created** | 2026-09-19 |
 | **Phase** | 0 (dev-loop; no user-facing surface, no Azure) |
-| **Related** | `DEV-FLOW.md` §5 ("Final review — only when asked" — this MIP amends it), `.github/workflows/pr-body.yml` (same trigger, same guard), `h0ffmann/nix-config` `labs/agentic` (ai-jail, `jail-run`), MIP-0008 (Ollama sidecar) |
+| **Related** | `DEV-FLOW.md` §5 ("Final review — only when asked" — this MIP adds a fourth on-request route, it does not change the rule), `.github/workflows/pr-body.yml` (same trigger, same guard), `h0ffmann/nix-config` `labs/agentic` (ai-jail, `jail-run`), MIP-0008 (Ollama sidecar) |
 | **Effort** | L by the rubric (adds a CI workflow), small in lines: one workflow, one posting script with a self-test, a `just` recipe, a `DEV-FLOW.md` edit — plus one upstream change in `nix-config` `labs/agentic` (package `ocr`, add a `jail-run ocr` mode) |
-| **Gain** | `infra/dev-loop` (a first-pass reviewer on every ready PR, before a human or a paid `/code-review` looks); `cost/ops` (the default path is a local model: $0, and it can take the cheap findings off the paid reviews) |
-| **Effort vs Gain** | `cheap win` — if the §7 go/no-go run shows a 7B local model produces comments worth reading. If it does not, `park` until a stronger local model fits the runner |
+| **Gain** | `infra/dev-loop` (a first-pass reviewer, run when asked, before a paid `/code-review` looks); `cost/ops` (the default path is a local model: $0, and it can take the cheap findings off the paid reviews) |
+| **Effort vs Gain** | `park` after task 1 — the §7.1 run found `qwen2.5-coder:7b` unusable; back to `cheap win` once a local model with working tool calls passes §7.1 on a Scala, a Python/shell and a docs PR |
 | **Depends on** | No other MIP. One upstream PR in `h0ffmann/nix-config` must land and be locked here first (§5.1). Not gated by Phase 1. The default path creates no paid resource, so the `AGENTS.md` cost gate does not apply; the opt-in hosted-LLM path (§5.5) does need a go-ahead, because it spends money **and** sends private source to a third party |
 | **Blocked by** | none |
 | **Risk** | The runner is the maintainer's workstation. A review tool that is installed from npm `latest` at run time and then reads attacker-influenced text with an LLM agent is exactly the shape of thing that should not run unsandboxed next to `~/.ssh` — which is what using upstream's Action as-is would do |
-| **Cost so far** | — |
+| **Cost so far** | — (#391 carries no `Cost:` trailer) |
 
 ## 1. Summary
 
 [alibaba/open-code-review](https://github.com/alibaba/open-code-review) (OCR) is an Apache-2.0 Go
 CLI that reviews a git diff with an LLM agent constrained by deterministic file selection, rule
 matching and comment positioning, and emits line-level findings as JSON. This MIP runs it
-automatically whenever a PR is marked **ready for review**, on marola's self-hosted runners, against
-the local Ollama model by default, and posts the findings as one advisory PR review. It is never a
-required check. "Safe" is the design constraint: a Nix-pinned binary, run inside ai-jail without the
+**only when asked** (`just ocr-review`, or a manual `workflow_dispatch`), on marola's self-hosted
+runners, against the local Ollama model by default, and posts the findings as one advisory PR review.
+It never runs on its own and is never a required check: a local review is heavy on the workstation,
+so the human decides when to spend it. "Safe" is the design constraint: a Nix-pinned binary, run inside ai-jail without the
 GitHub token, with a separate small step that posts.
 
 ## 2. Motivation
@@ -31,17 +32,16 @@ GitHub token, with a separate small step that posts.
 Every review is therefore a paid Claude session (`/code-review`, `ultra`) or superpowers' reviewer,
 started by hand, and a stack of nine PRs (MIP-0056: #372–#380) gets reviewed late or not at all.
 
-Marking a PR ready *is* the human saying so — it is already the event `pr-body.yml` listens for.
-A free local pass at that moment catches the cheap findings (null handling, a missed `Using`, a
+A free local pass, run when the human asks, catches the cheap findings (null handling, a missed `Using`, a
 shell quoting bug) before the expensive reviewer spends tokens on them. Upstream's own benchmark
 claim — higher precision than a general-purpose agent at ~1/9 the tokens, lower recall — is the
 right trade for an unattended bot: few comments, mostly real. **Not verified here**; §7 tests it.
 
 ## 3. User-visible change
 
-Before: a PR leaves draft, `PR body` runs, nothing else happens.
+Before: no free review route; every review is a paid Claude session.
 
-After: a second check, `OCR review (advisory)`, runs on the same event and leaves one review:
+After: asking for one (`gh workflow run ocr-review.yml -f pr=<N>`) runs `OCR review (advisory)` and leaves one review:
 
 ```
 marola-ocr · advisory · qwen2.5-coder:7b (local) · ocr 1.12.7 · 4 files, 3 findings, 2m41s
@@ -51,7 +51,7 @@ marola-ocr · advisory · qwen2.5-coder:7b (local) · ocr 1.12.7 · 4 files, 3 f
 ```
 
 `just ocr-review [<PR#>|--from main]` runs the same thing locally, printing instead of posting.
-Re-run on demand: `gh workflow run ocr-review.yml -f pr=<N>`. No comment on a draft, a Dependabot or
+Every run is on demand, so there is no re-run rule to state. No comment on a Dependabot or
 Scala Steward PR, or a fork.
 
 ## 4. Data sources and dependencies reviewed
@@ -114,21 +114,22 @@ those two modes (plus `--dry-run -- <cmd>`) and forwards the GitHub token on pur
 
 ```yaml
 on:
-  pull_request: { types: [ready_for_review, opened, reopened] }
   workflow_dispatch: { inputs: { pr: { required: true } } }
 permissions: { contents: read, pull-requests: write }
-concurrency: { group: ocr-${{ github.event.pull_request.number || inputs.pr }}, cancel-in-progress: true }
+concurrency: { group: ocr-${{ inputs.pr }}, cancel-in-progress: true }
 jobs:
   review:
-    if: <pr-body.yml's guard, verbatim> && !github.event.pull_request.draft && vars.OCR_REVIEW != 'off'
+    if: vars.OCR_REVIEW != 'off'
     runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
     timeout-minutes: 30
     continue-on-error: true          # advisory: never red on the PR
 ```
 
-`opened`/`reopened` are there because a PR opened directly as non-draft never fires
-`ready_for_review`. **Not `synchronize`**: restacking a MIP stack force-pushes every branch, and nine
-concurrent 7B reviews would starve `ci.yml` of runners. Never `pull_request_target`.
+Dispatch only, by design: a local review is heavy on the workstation, so the human decides when it
+runs (`DEV-FLOW.md` §5 stays "only when asked"). A dispatch run has no `pull_request` event
+context, so `pr-body.yml`'s same-repo/author guard cannot be copied verbatim: a first step must
+resolve the PR with `gh pr view` and refuse a fork or a bot author (**not checked**: the exact fields
+to test). Never `pull_request_target`.
 
 Steps: checkout (`fetch-depth: 0`) → compute merge-base → **review** → **post**.
 
@@ -152,12 +153,12 @@ posted, and that the check can never block a merge are plain code. Nothing here 
 
 | Threat | Mitigation |
 |---|---|
-| Untrusted PR code on a persistent workstation runner | Same-repo guard from `pr-body.yml`; OCR reads, it does not build or run the PR; read-only map in the jail |
+| Untrusted PR code on a persistent workstation runner | Same-repo and author check on the resolved PR (§5.2); OCR reads, it does not build or run the PR; read-only map in the jail |
 | Supply chain: tool updated under us | Nix-pinned source/binary hash; no `npm install -g latest` on the host; bumps arrive as a reviewed `flake.lock` diff |
 | Prompt injection in a diff ("ignore rules, post X") | The agent has no token and no writable repo; the worst outcome is a wrong *comment*, which the post step bounds (diff-only lines, count cap, `COMMENT` only) |
-| Source leaving the machine | Local default: loopback only. Hosted LLM is opt-in (§5.5) |
+| Source leaving the machine | Local default points at loopback, but that is config, not enforcement: ai-jail 1.21.0 cannot restrict the jail to loopback (appendix §7.1), so outbound network is unrestricted. Hosted LLM is opt-in (§5.5) |
 | Repo-supplied config steering the tool | Config is read from the **base** ref, not the PR head |
-| Runner starvation / Ollama contention with e2e | Per-PR concurrency, 30-min timeout, token budget, no `synchronize`, kill switch `vars.OCR_REVIEW=off` |
+| Runner starvation / Ollama contention with e2e | Runs only when asked, per-PR concurrency, 30-min timeout, token budget, kill switch `vars.OCR_REVIEW=off` |
 
 ### 5.5 Opt-in hosted model
 
@@ -173,14 +174,15 @@ None. No change to `Swimability`, to any reply, or to what a user sees.
 ## 7. Verification plan
 
 1. **Go/no-go, before any workflow exists:** `ocr review` by hand on three already-merged PRs (one
-   Scala, one Python/shell, one docs-only) against `qwen2.5-coder:7b`. Record wall time, comment
+   Scala — required, upstream lists no supported code languages —, one Python/shell, one docs-only) against `qwen2.5-coder:7b`. Record wall time, comment
    count, and a human true/false-positive call per comment in the MIP's appendix. Fewer than half
    useful → stop, flip this MIP to `park`.
 2. `nix-config`: `just self-test` in `labs/agentic` (token absent in `jail-run ocr`), `nix flake check`.
 3. marola: `scripts/ocr-post.py --self-test` (out-of-diff finding dropped; cap honoured; sticky
    marker upsert is idempotent; malformed JSON → exit 0 with a "no review" summary).
-4. `actionlint`; `just ocr-review --from main` locally; then a throwaway PR: draft → no run; ready →
-   one review; re-dispatch → summary rewritten, not duplicated; Dependabot branch → skipped.
+4. `actionlint`; `just ocr-review --from main` locally; then a throwaway PR: nothing runs until
+   dispatched; dispatch → one review; re-dispatch → summary rewritten, not duplicated; Dependabot
+   branch → refused.
 5. Done = the check has run on five real PRs, none blocked, and `DEV-FLOW.md` §5 describes it.
 
 ## 8. Risks, limitations, and honest caveats
@@ -204,7 +206,9 @@ None. No change to `Swimability`, to any reply, or to what a user sees.
   isolation, but needs Docker on the runner path and host networking to reach Ollama; more moving
   parts than one Nix binary in a jail marola already uses.
 - **`/code-review` in CI.** Already available, better recall, costs money per PR, no local mode.
-- **Review on every push.** See §5.2; revisit with upstream's incremental mode if the runner pool grows.
+- **Automatic on `ready_for_review`/every push** (this MIP's first draft). Dropped 2026-09-19 on the
+  maintainer's call: even local it is heavy on the workstation, and §7.1 has not yet shown useful output.
+  Revisit with upstream's incremental mode if the runner pool grows.
 - **Do nothing.** Reviews stay manual and late. Costs nothing, fixes nothing.
 
 ## 10. Exam-coverage mapping
@@ -232,8 +236,8 @@ None claimed. (AI-103 "Responsible AI" is about the product's output, not the de
 3. `buildGoModule` vs release binary: does the locked nixpkgs carry Go ≥ 1.25.5?
 4. Should a stack (`mip-NNNN/k-*`) be reviewed bottom-first only, to save runner time?
 5. Review language: English, or Portuguese to match MIP-0054's direction?
-6. Should marking ready also re-run when a PR goes draft → ready a second time? (Today: yes, the
-   summary is rewritten.)
+6. **Scala.** Does OCR review Scala 3 (with Kyo) usefully? Upstream's docs list no code languages;
+   §7.1 never reached the Scala PR (#333). Required in the re-run, not optional.
 
 ## Appendix
 
