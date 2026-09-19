@@ -26,3 +26,4 @@ sanitised real output when one exists, and say so here.
 | `many.json` | 18 findings over mixed severities — more than the default cap of 15 |
 | `malformed.json` | Truncated mid-object, as if `ocr` was killed while writing |
 | `empty.json` | Zero bytes — `ocr` produced no output at all |
+| `failed-run.json` | **A real run**, untouched: `ocr` v1.12.7 on PR #332 against `qwen2.5-coder:7b` (MIP-0060 §7.1, 2026-09-19). `status: failed`, `comments: null` (not `[]`), every file in `manifest.coverage.failed`. The only fixture captured from a run; no run has produced a populated comment yet |

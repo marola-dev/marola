@@ -100,6 +100,14 @@ def load_findings(path: str) -> tuple[dict, list[dict], str]:
         return {}, [], f"{Path(path).name} is not valid JSON ({e.msg}, line {e.lineno})"
     if not isinstance(doc, dict):
         return {}, [], "top-level JSON is not an object — unknown output shape"
+    if doc.get("comments") is None and doc.get("status") == "failed":
+        # A failed run carries `comments: null`, not `[]` (seen in a real v1.12.7 run, fixture
+        # failed-run.json); the per-file reasons are in manifest.coverage.failed.
+        failed = ((doc.get("manifest") or {}).get("coverage") or {}).get("failed") or []
+        why = next(
+            (str(f.get("reason")) for f in failed if isinstance(f, dict) and f.get("reason")), ""
+        )
+        return doc, [], f"ocr failed on {len(failed)} file(s)" + (f" — {why}" if why else "")
     if not isinstance(doc.get("comments"), list):
         return doc, [], "no `comments` array in the output — unknown output shape"
     findings = [normalise(c) for c in doc["comments"] if isinstance(c, dict)]
@@ -455,7 +463,11 @@ def self_test() -> int:  # noqa: C901 - a flat list of assertions reads better t
     run(build_parser().parse_args(argv), api)
     ok(len(api.comments) == 1 and api.patches == 1, "a second run PATCHes, never posts a twin")
 
-    for fixture, why in (("malformed.json", "not valid JSON"), ("empty.json", "is empty")):
+    for fixture, why in (
+        ("malformed.json", "not valid JSON"),
+        ("empty.json", "is empty"),
+        ("failed-run.json", "ocr failed on 4 file(s)"),
+    ):
         rc, api = go(fixture)
         ok(rc == 0, f"{fixture} still exits 0 — the check is advisory")
         ok(not api.reviews, f"{fixture} posts no review")
