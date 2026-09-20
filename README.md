@@ -163,4 +163,4 @@ published by INEA (Rio de Janeiro), INEMA (Bahia) and IMA/SC (Santa Catarina).
 
 ## License
 
-[MIT](./LICENSE) — © 2026 Matheus Hoffmann.
+[MIT](./LICENSE) — © 2026 Matheus Hoffmann and marola contributors.
