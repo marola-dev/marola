@@ -2,7 +2,7 @@
 # Loosely pinned, same caveat as dspy/requirements.txt: these move fast; re-check before trusting.
 torch>=2.14.0
 transformers>=5.17.0
-peft>=0.20.0
+peft>=0.21.0
 trl>=1.13.0
 datasets>=5.0.1
 accelerate>=1.15.0
@@ -10,7 +10,7 @@ accelerate>=1.15.0
 bitsandbytes>=0.50.2; sys_platform == "linux"
 
 # publish_hf.py only — uploading a trained GGUF to a Hugging Face model repo (MIP-0025 §5.1)
-huggingface_hub>=1.31.0
+huggingface_hub>=1.32.0
 
 # merge_export.py only — llama.cpp's convert_hf_to_gguf.py, which it shells out to. These were in
 # .github/nix-ml-env.nix before the venv replaced it (#290). sentencepiece is needed even for a
@@ -19,4 +19,4 @@ huggingface_hub>=1.31.0
 # instead of falling back to the GPT-2 vocab path SmolLM2 actually needs.
 gguf>=0.19.0
 sentencepiece>=0.2.2
-protobuf>=7.36.1
+protobuf>=7.36.2
