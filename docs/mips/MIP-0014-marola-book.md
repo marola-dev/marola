@@ -6,9 +6,9 @@
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-05: "a MIP for a marola-related book, technical, in LaTeX, versioned in a repository, built in CI, in the tradition of self-published FP books") |
 | **Created** | 2026-09-05 |
 | **Phase** | 0 — a documentation/tooling project, nothing a swimmer sees; independent of the app's own phase gate, but see Effort vs Gain below for why it should still wait |
-| **Related** | `PHILOSOPHY.md` (the book's own thesis — "the one decision" — is the book's spine); `docs/SKILLS.md` (the roadmap this book turns into a narrative); `docs/AI-103-MAPPING.md`, `docs/AI-500-MAPPING.md` (the exam framing, one audience option); `docs/DEV-FLOW.md` (the MIP/agent loop chapter); `docs/FUTURE-WORK.md` §10 ("the Scala/JVM gap in the prompt-engineering ecosystem" — a marola book is a small dent in the literature gap, not just the code gap); `docs/mips/MIP-0005` (map site), `MIP-0008` (Docker images), `MIP-0010` (MLflow), `MIP-0012` (llm4s/DSPy deprecation) — each is a chapter's grounding; [h0ffmann/forecast-energy-demand](https://github.com/h0ffmann/forecast-energy-demand) (the author's own LaTeX-thesis-with-CI-translation pipeline — reviewed in §4.6 as prior art and a token-efficiency case study) |
+| **Related** | `PHILOSOPHY.md` (the book's own thesis — "the one decision" — is the book's spine); `docs/SKILLS.md` (the roadmap this book turns into a narrative); `docs/DEV-FLOW.md` (the MIP/agent loop chapter); `docs/FUTURE-WORK.md` §10 ("the Scala/JVM gap in the prompt-engineering ecosystem" — a marola book is a small dent in the literature gap, not just the code gap); `docs/mips/MIP-0005` (map site), `MIP-0008` (Docker images), `MIP-0010` (MLflow), `MIP-0012` (llm4s/DSPy deprecation) — each is a chapter's grounding; [h0ffmann/forecast-energy-demand](https://github.com/h0ffmann/forecast-energy-demand) (the author's own LaTeX-thesis-with-CI-translation pipeline — reviewed in §4.6 as prior art and a token-efficiency case study) |
 | **Effort** | XL — an 11-chapter first edition in English plus a pt-BR translation build, a LaTeX/Nix/CI toolchain built from scratch, a listing-extraction pipeline kept honest against a fast-moving codebase (see §7 estimate), and a segment-level translation pipeline with its own translation-memory store and CI gate (§5.8) |
-| **Gain** | community/outreach (a citable, dated, verified account of a real local-first LLM product, in a genre — self-published FP books — that currently has zero Scala-native-LLM entries per `FUTURE-WORK.md` §10); exam-prep artifact (turns `docs/SKILLS.md`'s roadmap into a narrative); reach (a pt-BR edition, §5.8, for the author's own first-language reviewers and a Brazilian Scala/AI audience); no direct product value for the swimmer |
+| **Gain** | community/outreach (a citable, dated, verified account of a real local-first LLM product, in a genre — self-published FP books — that currently has zero Scala-native-LLM entries per `FUTURE-WORK.md` §10); learning artifact (turns `docs/SKILLS.md`'s roadmap into a narrative); reach (a pt-BR edition, §5.8, for the author's own first-language reviewers and a Brazilian Scala/AI audience); no direct product value for the swimmer |
 | **Effort vs Gain** | expensive, defer — real value, but XL effort competing for the same author-hours as Phase 1 (the Telegram bot, MIP-0002, still Draft); write one chapter, the build pipeline, and a translated sample chapter first as a spike, not the whole outline or both full editions, and don't let it displace Phase 1 |
 | **Depends on** | Nothing technically (the book's toolchain is independent of the app); a stronger chapter 2 ("does it work for a real user") needs MIP-0002 (Telegram bot) shipped first — not a hard blocker, an honesty one; the translation pipeline (§5.8) defaults to Ollama (this repo's own `local/` module) specifically so it depends on no paid or third-party-hosted service — see §8's GitHub-Models-retirement finding for why that default matters |
 | **Risk** | marola's own code changes fast (dozens of commits, several whole MIPs' worth of tasks, landed on `main` inside 2026-09-05 alone — confirmed via `git log`) — listings extracted today are stale by the next PR unless the extraction is pinned and CI-checked, not hand-copied once and forgotten; translation adds a second copy of the same risk on the pt-BR side (see §8) |
@@ -17,7 +17,7 @@
 ## 1. Summary
 
 marola has more written-down design and honesty than most personal projects (`PHILOSOPHY.md`,
-eleven MIPs, an effects map, two exam mappings, a benchmarks ledger), but all of it is reference
+eleven MIPs, an effects map, a benchmarks ledger), but all of it is reference
 material, answering "what did we build" one file at a time, never "how would you build this, and
 why these specific choices, read start to finish." This MIP proposes turning that material into a
 real technical book, **written in LaTeX, versioned in a git repository, built to PDF in CI on every
@@ -259,10 +259,8 @@ cover title).
 build a real LLM-backed product, not a chatbot demo** — people who already know Scala and want the
 missing piece Volpe's and Maguire's books don't cover: an LLM sitting inside a product with live
 data, a safety-relevant deterministic core, and a review pass, built with Kyo instead of
-cats-effect. AI-103/AI-500 candidates and open-water swimmers are real secondary audiences (the
-back cover can say so) but the chapter order below is written for the primary one — an AI-103
-candidate reading straight through gets the exam mapping as a sidebar per chapter (§5.2), not the
-spine.
+cats-effect. Open-water swimmers are a real secondary audience (the back cover can say so) but
+the chapter order below is written for the primary one.
 
 ### 5.2 Chapter outline, mapped to real files
 
@@ -271,7 +269,7 @@ spine.
 | 1 | The one decision — why constrain the model instead of trusting it | `PHILOSOPHY.md` |
 | 2 | The pipeline: beaches, weather, and a ranked list before any LLM runs | `ARCHITECTURE.md` §3-4, `Recommender.scala`, `BeachFinder.scala`, `OpenMeteoClient.scala` |
 | 3 | Pure scoring, effectful boundary — Kyo at the edge, not the core | `scoring/Swimability.scala`, `docs/EFFECTS-MAP.md`, `AGENTS.md`'s code-style section |
-| 4 | Six pluggable integrations, one shape — trait, local default, Azure opt-in | `ARCHITECTURE.md` §5's table, `AppConfig.scala` |
+| 4 | Six pluggable integrations, one shape — trait, local default, opt-in backend | `ARCHITECTURE.md` §5's table, `AppConfig.scala` |
 | 5 | Turning a row of numbers into a sentence, twice — synthesis and review | `llm/LlmClient.scala`, `llm/CompiledPrompt.scala`, `llm/Reviewer.scala` (§5a) |
 | 6 | Compiling the prompt instead of hand-tuning it — DSPy in, Scala out | `dspy/compile_recommendation_prompt.py`, MIP-0012 (the Scala-native successor) |
 | 7 | Answering from a sourced corpus — RAG over the sea-lore knowledge base | `knowledge/`, `OllamaEmbedder`, `OceanQa`, `docs/benchmarks/2026-09-05.md` |
@@ -279,7 +277,7 @@ spine.
 | 9 | An experiment ledger for free — MLflow, traces, and the run history | MIP-0010, `RunLedger`, `Tracing` |
 | 10 | Shipping it — Docker images, the static map, GitHub Pages | MIP-0008, MIP-0005, `Dockerfile`, `site/` |
 | 11 | The loop that wrote this book's own code — MIPs, agents, and the cost of asking | `AGENTS.md`, `docs/DEV-FLOW.md`, the `mip` skill, the `Cost:` trailer |
-| — | Conclusion — what's still open, honestly | `docs/FUTURE-WORK.md`, the AI-103/AI-500 gap tables |
+| — | Conclusion — what's still open, honestly | `docs/FUTURE-WORK.md` |
 
 Each chapter ends with a boxed "verify this yourself" sidebar naming the exact `just` recipe or
 live check from the source doc, in the same honest-status vocabulary the repo already uses; a
@@ -322,7 +320,7 @@ every push (fails the PR if `latexmk`/`check_listings.py` fails); a `release` wo
 `push: tags: v*`, matrix-builds a screen and a print variant, and attaches both to a draft GitHub
 Release named after the tag. No self-hosted runner, no paid service: GitHub Actions' free minutes
 cover a LaTeX build the same way they already cover `ci.yml` for the app (`AGENTS.md` cost rule is
-about Azure resources, not CI minutes, but the same "free by default" instinct applies).
+about paid cloud resources, not CI minutes, but the same "free by default" instinct applies).
 
 ### 5.6 Licensing
 
@@ -347,7 +345,7 @@ than the source already is.
   tooling (versions, reader web app) the way Leanpub has.
 - **Free PDF from the GitHub Release + an optional paid print-on-demand** (Lulu/similar, not
   researched here): matches this repo's existing "free by default, paid tier opt-in" pattern
-  (`ARCHITECTURE.md` §5's local/Azure split) applied to distribution instead of infrastructure.
+  (`ARCHITECTURE.md` §5's local-first split) applied to distribution instead of infrastructure.
 
 ### 5.8 Multi-language build
 
@@ -422,8 +420,7 @@ None. No product code, no scoring logic, no user-facing output changes.
   (§5.4) specifically so this risk never touches the app's CI.
 - **Selling a book about an unfinished POC is a credibility risk if the honesty vocabulary slips.**
   The whole pitch is that this book is as verified as the MIPs it's based on; a chapter that
-  overclaims Azure paths that are "written, not run" (most of them, per `ARCHITECTURE.md` §5) would
-  undercut the book's own thesis.
+  overclaims paths that are "written, not run" would undercut the book's own thesis.
 - **A stale or partial pt-BR PDF shipped silently is worse than no translation at all**: §5.8's CI
   gate (fail on any un-translated/unreviewed segment hash) exists to make that impossible, the same
   role `check_listings.py` (§5.3) plays for code drift. Not hypothetical: `forecast-energy-demand`'s
@@ -449,14 +446,6 @@ None. No product code, no scoring logic, no user-facing output changes.
 - **Blog-post series instead of a book**: lower effort, no PDF/CI story, doesn't test the
   "extraction not paste" listings discipline this MIP considers the actual point; also loses the
   Leanpub-style "publish early, publish often" cadence a real book format buys.
-
-## 10. Exam-coverage mapping
-
-None directly — this is a meta-project about marola, not a new integration or a new AI-103/AI-500
-domain. Indirectly, each chapter's "verify this yourself" sidebar (§5.2) doubles as exam-prep
-narrative for the `AI-103-MAPPING.md`/`AI-500-MAPPING.md` rows the chapter's code already closes,
-and the book operationalizes `docs/SKILLS.md`'s stated goal of practicing skills "in order, using
-this repo as the vehicle" for a reader who isn't the repo's own author.
 
 ## 11. Open questions
 

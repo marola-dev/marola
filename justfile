@@ -29,7 +29,7 @@ build:
 test:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt test
 
-# Statement coverage across core/local/azure/cli (sbt-scoverage, project/plugins.sbt).
+# Statement coverage across core/local/cli (sbt-scoverage, project/plugins.sbt).
 coverage:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt clean coverage test coverageReport coverageAggregate
 
@@ -93,7 +93,6 @@ quality-other:
     python3 finetune/build_dpo_dataset.py --self-test
     python3 finetune/preflight.py --self-test
     python3 finetune/merge_export.py --self-test
-    .claude/hooks/guard-azure.sh --self-test
     .claude/hooks/format.sh --self-test
     .claude/hooks/stop-gate.sh --self-test
     .claude/hooks/session-start.sh --self-test

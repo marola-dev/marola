@@ -31,8 +31,8 @@ not an adopted dependency, until a MIP says otherwise.
 |---|---|---|---|
 | **Kyo AI modules** (already marola's effect system) | Kyo | Typed tool inputs/outputs, resources and prompt templates, OAuth 2.1, MCP 2025-11-25 and 2026-07-28 protocol revisions with negotiation | Part of Kyo 1.x; marola pins RC5 — check what's in the pinned jar before relying on it (`AGENTS.md` rule) |
 | **agent4s** | cats-effect, fs2, http4s | Unified providers (Claude, OpenAI, Gemini, DeepSeek, Perplexity), type-safe tool calling with derived JSON schema, a **LangGraph-style graph module** (state-machine workflows, conditional routing) | v0.1.0, 0 stars, no Ollama listed — read the graph module, don't depend on it |
-| **llm4s** | Scala (plain `Either`, `Future` for orchestration) | "Agentic and LLM programming in Scala"; roadmap aims at stable API contracts, provider parity, Java/Kotlin interop, security hardening. Checked against the 0.4.1 jar in MIP-0012: agent loop + handoffs + guardrails, MCP client (stdio/SSE/Streamable HTTP) and HTTP MCP server, `ResponseFormat.JsonSchema`; Ollama client drops tool messages; Azure is key-only; 154 transitive jars incl. the Azure OpenAI SDK | Active, pre-production per its own roadmap (v0.4.1, 2026-08-29) — **proposed as an opt-in module: `docs/mips/MIP-0012-llm4s-adoption-and-dspy-deprecation.md`** |
-| **sttp-ai** | fs2 / ZIO / Pekko Streams / Ox | OpenAI, Anthropic, Gemini, Azure, **Ollama** and OpenAI-compatible endpoints; structured outputs, tool calling, streaming | Mature client layer; the only one listing Ollama and Pekko Streams explicitly |
+| **llm4s** | Scala (plain `Either`, `Future` for orchestration) | "Agentic and LLM programming in Scala"; roadmap aims at stable API contracts, provider parity, Java/Kotlin interop, security hardening. Checked against the 0.4.1 jar in MIP-0012: agent loop + handoffs + guardrails, MCP client (stdio/SSE/Streamable HTTP) and HTTP MCP server, `ResponseFormat.JsonSchema`; Ollama client drops tool messages; provider auth is key-only; 154 transitive jars | Active, pre-production per its own roadmap (v0.4.1, 2026-08-29) — **proposed as an opt-in module: `docs/mips/MIP-0012-llm4s-adoption-and-dspy-deprecation.md`** |
+| **sttp-ai** | fs2 / ZIO / Pekko Streams / Ox | OpenAI, Anthropic, Gemini, **Ollama** and OpenAI-compatible endpoints; structured outputs, tool calling, streaming | Mature client layer; the only one listing Ollama and Pekko Streams explicitly |
 | **LangChain4j** (Java) | plain Java, Quarkus/Spring | Unified providers and vector stores, tool calling incl. MCP, agents, RAG | The mature JVM option; builder-and-annotation idioms, usable from Scala |
 
 Nothing in this list is a Scala-native *multi-agent* framework with termination, budgets and
@@ -66,7 +66,7 @@ bot/
   ChatActor(chatId)        last location, bounded message window, language; TTL 24h
   RoleActor(summarizer)    pure step fn over a DSPy-compiled prompt
   RoleActor(reviewer)      pure step fn; can rewrite
-  RoleActor(escalation)    trend/anomaly over the forecast series; gated (AI-500 §4)
+  RoleActor(escalation)    trend/anomaly over the forecast series; gated by a human
   TaskBoard                event-sourced task list; sequences handoffs; enforces budgets
   DigestScheduler          timers → boards (MIP-0003) → ChatActor.send
   MCP server               unchanged — Claude Desktop and the bot share the same tools

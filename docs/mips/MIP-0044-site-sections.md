@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude Opus 5, for M. Hoffmann (request of 2026-09-07, verbatim: "create a MIP for 44 site sections (besides map, map is just a section in the website, explode section for now news rss about dev (markdown blog) contact donate)", read together with the same session's earlier "news, docs, donate, about, rss, contact sections should be added to the site (map in one of the sections) … it could be possible to have a blog style, and read directly posts from MD files, with direct code snippets" / "be careful for not doing too much promotion" and "there is a way to integrate my docs <> wiki <> docs website, would be good to have python docs and scala docs also added in this website, this area may be called dev") |
 | **Created** | 2026-09-07 |
-| **Phase** | 3 — `ARCHITECTURE.md` §11 item 4 puts `.github/workflows/site.yml` in Phase 3 as "the first deploy artefact … already here and free". Everything here rides that same workflow: no server, no Azure, no per-visitor cost. No Phase 1 or Phase 2 prerequisite; §9 rejects the one idea (a contact form) that would have needed a backend and thus jumped the gate |
+| **Phase** | 3 — `ARCHITECTURE.md` §11 item 4 puts `.github/workflows/site.yml` in Phase 3 as "the first deploy artefact … already here and free". Everything here rides that same workflow: no server, no cloud account, no per-visitor cost. No Phase 1 or Phase 2 prerequisite; §9 rejects the one idea (a contact form) that would have needed a backend and thus jumped the gate |
 | **Related** | MIP-0005 (the static site and its "no templating engine, no build step" constraint — Implemented; this MIP is the first change to that constraint and argues it explicitly), MIP-0034 (RSS plumbing: §5.6 writes `feed.xml` into `site/dist` and adds one `<link rel="alternate">`, with **no page and no nav** — this MIP's `/feeds/` section is where that plumbing becomes something a human can read), MIP-0018 (self-documentation: its §5.3 exports posts to an *external* blog repo whose technology is its own §11 open question — this MIP supersedes that destination, see §5.3), MIP-0033 §5.1 (repo-public checklist — gates §5.5's `docs/` mirror only), MIP-0008 §5.5 + `ci.yml` (the `site-data` orphan-branch mechanic this MIP reuses for generated API docs), MIP-0022 (the safety footer, which §6 makes the generator append), MIP-0009 (`scripts/site_check.js`, the no-browser page harness this MIP extends), `docs/ROADMAP.md` §7 (no K-row covers this; checked), `docs/FUTURE-WORK.md` (no section covers this; checked) |
 | **Effort** | XL — a page generator plus a nav plus a markdown pipeline plus **two** documentation toolchains (JVM `sbt doc`, a new Python `pdoc` in `flake.nix`) plus a new CI workflow, and it edits five load-bearing pieces of existing machinery at once: `site.yml`'s publish allowlist, `scripts/stamp_site_version.sh` (hard-coded to `index.html`), `scripts/site_check.js`, `SiteBuilder.copyStatic`, and `index.html`'s CSP. Also the first third-party JVM dependency the site build has ever had (`org.commonmark`, §4.1) |
 | **Gain** | user value (a visitor can find out what marola is, who runs it, and how to reach them — today the site answers none of those); community/outreach (MIP-0018's weekly post needs a place to land, and MIP-0034's feed needs a page to be discoverable from); infra/dev-loop (generated Scala/Python API docs that stay honest because CI regenerates them, instead of a wiki that rots) |
 | **Effort vs Gain** | Per §5 item, not one call. `do next` for §5.1–§5.2 (the generator, nav, `/about/` with contact, `/support/`) — small, self-contained, no new dependency except the layout code itself. `do next` for §5.3 (news + dev blog) once §5.1 lands. `do when MIP-0034 lands` for §5.4 (`/feeds/`) — it has literally nothing to link until then. `do when MIP-0033 §5.1 lands` for §5.5's `docs/` mirror. `cheap win` for §5.6's Scala API docs (`sbt doc` already works, verified §4.3); `expensive, defer` for §5.6's Python API docs — verified in §4.4 that the honest output is thin |
-| **Depends on** | **MIP-0034 must merge before the `/feeds/` section is buildable** — its §5.6 is what writes `feed.xml`; a feeds page with no feed is not a smaller version of this, it is nothing, so the edge is declared below rather than hand-waved. **MIP-0033 §5.1** (the repo-public checklist: full-history secret scan, `SECURITY.md`, `.env.example` re-read) gates §5.5's mirror of `docs/*.md` onto the public site — publishing those files *is* the same disclosure decision that checklist exists for, even though the repo's visibility flag is technically separate; this is prose-only, because §5.1 is a checklist item inside a partially-implemented MIP, not a merge a graph edge can point at. **MIP-0018** is not a blocker in either direction, but this MIP answers its §11 open question ("what is the blog repo, technically?") with "marola.dev itself" and supersedes its §5.3 blog-repo destination — coordinate before either ships. No Phase 1 gate (this is not the Telegram bot), no paid Azure resource, no API key, no server |
+| **Depends on** | **MIP-0034 must merge before the `/feeds/` section is buildable** — its §5.6 is what writes `feed.xml`; a feeds page with no feed is not a smaller version of this, it is nothing, so the edge is declared below rather than hand-waved. **MIP-0033 §5.1** (the repo-public checklist: full-history secret scan, `SECURITY.md`, `.env.example` re-read) gates §5.5's mirror of `docs/*.md` onto the public site — publishing those files *is* the same disclosure decision that checklist exists for, even though the repo's visibility flag is technically separate; this is prose-only, because §5.1 is a checklist item inside a partially-implemented MIP, not a merge a graph edge can point at. **MIP-0018** is not a blocker in either direction, but this MIP answers its §11 open question ("what is the blog repo, technically?") with "marola.dev itself" and supersedes its §5.3 blog-repo destination — coordinate before either ships. No Phase 1 gate (this is not the Telegram bot), no paid cloud resource, no API key, no server |
 | **Blocked by** | 0034 |
 | **Risk** | The site stops being a thing that can't break. Today `site/dist` is four files plus JSON and the failure mode is "the board is stale"; after this it is a generated multi-page site whose build can fail in ways that publish a *half* site — and `site.yml`'s required-files check only knows about `index.html`. The second, quieter risk: a "donate" page is the one part of this that can make marola look like it wants something, and the request itself warned against that — §5.2 keeps it to one page with no banner, no popup, no third-party widget, and the ledger the repo already publishes as its content |
 | **Cost so far** | — |
@@ -55,7 +55,7 @@ After:
 marola.dev/                 the map (unchanged: same app.js, same leaflet, same board JSON)
 marola.dev/news/            dated operational notes; newest first, one page each
 marola.dev/dev/             the blog — long-form posts, markdown, real code snippets
-marola.dev/dev/scala/       generated Scaladoc, one entry per module (core/local/azure/cli)
+marola.dev/dev/scala/       generated Scaladoc, one entry per module (core/local/cli)
 marola.dev/dev/python/      generated pdoc for scripts/ (see §4.4 for what this honestly contains)
 marola.dev/dev/docs/        docs/*.md rendered — gated on MIP-0033 §5.1
 marola.dev/about/           what marola is, what it is not, sources, privacy, #contact
@@ -101,9 +101,8 @@ made honest: a snippet in a post is the repo's code at that commit, never a copy
 - **`com.vladsch.flexmark:flexmark`**: richer, but verified 2026-09-07 that its Maven metadata's
   newest version is **0.64.8** with `lastUpdated 20230523183154`: three years stale. Rejected.
 - **Pick: commonmark 0.30.0**, in `cli/` (where `SiteBuilder` already lives), not in `core/` or
-  `local/`: `local/`'s zero-Azure invariant is untouched either way, but keeping a rendering
-  dependency out of `core/` keeps the pipeline module dependency-light, matching `build.sbt`'s
-  existing shape.
+  `local/`: keeping a rendering dependency out of `core/` keeps the pipeline module
+  dependency-light, matching `build.sbt`'s existing shape.
 
 ### 4.2 Client-side markdown (the alternative, rejected — see §9)
 `marked` **18.0.11** (MIT) and `markdown-it` **14.1.0** (MIT), both verified 2026-09-07 via
@@ -113,12 +112,12 @@ page's CSP is `script-src` = `default-src 'self'`, so a CDN `<script>` is not an
 
 ### 4.3 Scaladoc — run live, not assumed
 `sbt core/doc` **was actually run** on 2026-09-07 in this repo's `nix develop` shell: exit 0,
-3 s, one warning (`Option -classpath was updated`). `local/doc`, `azure/doc`, `cli/doc` also exit 0.
+3 s, one warning (`Option -classpath was updated`). `local/doc`, `cli/doc` also exit 0.
 No plugin needed: `build.sbt` and `project/plugins.sbt` have **no** `doc`/unidoc wiring today
 (verified by reading both), so this is Scala 3's built-in scaladoc.
 
-Real output, measured: **core 7.2 MB, local 4.4 MB, azure 4.0 MB, cli 4.4 MB, 20 MB total**;
-core alone is 411 files / 103 HTML pages. Four *independent* sites, no cross-module links.
+Real output, measured: **core 7.2 MB, local 4.4 MB, cli 4.4 MB, 16 MB total**;
+core alone is 411 files / 103 HTML pages. Three *independent* sites, no cross-module links.
 
 **The finding that changes the design:** every one of those 103 pages loads four third-party
 scripts:
@@ -186,13 +185,13 @@ imports a third party (`dspy`).
   zero site code, and produces a Sponsor button without this MIP building anything. buy-me-a-coffee
   and a wallet address are *links on one page*, never an embedded widget (§5.2).
 
-### 4.6 GitHub Pages limits, against a 20 MB docs tree
+### 4.6 GitHub Pages limits, against a 16 MB docs tree
 Verified 2026-09-07 on docs.github.com's Pages-limits page: published sites "may be no larger than
 1 GB"; a **soft** bandwidth limit of 100 GB/month; a soft 10-builds-per-hour limit that "does not
 apply if you build and publish your site with a custom GitHub Actions workflow": which is exactly
-what `site.yml` is. So 20 MB of API docs is 2% of the size budget and no build-rate problem. What it
-*is* is 20 MB re-uploaded on all eight scheduled deploys a day for content that only changes when
-Scala changes, which is why §5.6 puts it on the `site-data` branch instead.
+what `site.yml` is. So 16 MB of API docs is under 2% of the size budget and no build-rate
+problem. What it *is* is 16 MB re-uploaded on all eight scheduled deploys a day for content that
+only changes when Scala changes, which is why §5.6 puts it on the `site-data` branch instead.
 
 ## 5. Design
 
@@ -366,13 +365,13 @@ there into `site/dist` (`git archive FETCH_HEAD "$dir" | tar -x -C site/dist`, g
 `scripts/**.py`, **not** on the 3-hourly schedule, runs:
 
 ```bash
-sbt core/doc local/doc azure/doc cli/doc     # verified working, §4.3
+sbt core/doc local/doc cli/doc               # verified working, §4.3
 scripts/strip_external_scripts.py <dir>...    # new; see below
 pdoc -o out/python scripts/*.py scripts/lib/*.py finetune/build_dataset.py
 ```
 
 and pushes the result to `site-data` under `api/`. `site.yml`'s copy loop gains `api` beside
-`smoke` and `coverage`; its publish allowlist gains the directory. Net effect: 20 MB is uploaded
+`smoke` and `coverage`; its publish allowlist gains the directory. Net effect: 16 MB is uploaded
 when Scala changes, not eight times a day.
 
 `scripts/strip_external_scripts.py` (new, with a `--self-test` like every other script here) removes
@@ -424,7 +423,7 @@ Live checks (commands, to run and record):
 
 ```bash
 just site-build && just site-serve      # then curl each URL in §3 for HTTP 200 and a <title>
-sbt core/doc local/doc azure/doc cli/doc && grep -rl 'src="http' */target/scala-*/api | wc -l  # 0
+sbt core/doc local/doc cli/doc && grep -rl 'src="http' */target/scala-*/api | wc -l  # 0
 pdoc -o /tmp/pyapi scripts/*.py scripts/lib/*.py finetune/build_dataset.py
 ```
 
@@ -439,8 +438,9 @@ missing; the generated API tree contains zero third-party script tags; `just qua
 - **The cache-buster is index.html-shaped.** `stamp_site_version.sh` `sed`s one file; the CDN skew
   it was written for (`fix/site-smoke-panel-null`, each Pages file cached independently at
   `max-age=600`) applies to every new page too.
-- **20 MB of generated docs is real weight** even at 2% of the 1 GB limit, and the bandwidth limit
-  is a soft 100 GB/month (§4.6), which a crawler walking 400+ doc files repeatedly can move toward.
+- **16 MB of generated docs is real weight** even at under 2% of the 1 GB limit, and the bandwidth
+  limit is a soft 100 GB/month (§4.6), which a crawler walking 400+ doc files repeatedly can move
+  toward.
 - **Scaladoc's four CDN scripts are a privacy regression if the strip step ever silently fails**:
   hence the grep gate, not just the script.
 - **The Python docs page will look thin,** because it is (§4.4). The mitigation is saying so on the
@@ -476,12 +476,6 @@ missing; the generated API tree contains zero third-party script tags; `just qua
   defensible and the least promotional option available; rejected only because the request asked for
   the section. §11 offers it back as a decision.
 
-## 10. Exam-coverage mapping
-
-None directly. The closest adjacency is `AI-500-MAPPING.md` §4's human-gate discipline, which this
-MIP touches only in the negative sense that nothing here is autonomous: every page is generated from
-files a human wrote and reviewed. No AI-103 row is closed.
-
 ## 11. Open questions
 
 - **Nav size: the one call worth a human's veto.** The request named seven sections; this MIP ships
@@ -501,8 +495,8 @@ files a human wrote and reviewed. No AI-103 row is closed.
 - **What goes in `/news/` on day one?** The pipeline is worth nothing without a first post. A
   reasonable seed is the last few merged PRs' own stories (the 2026-09-06 connect-timeout retry, the
   jail `--exec` fix), which is also exactly what MIP-0018's planner produces.
-- **Should `/dev/docs/` render every `docs/*.md` or a curated subset?** `FABLE_REVIEW.md` and the
-  exam-mapping docs are internal-facing; publishing all 17 unfiltered is a decision, not a default.
+- **Should `/dev/docs/` render every `docs/*.md` or a curated subset?** `FABLE_REVIEW.md` is
+  internal-facing; publishing all 17 unfiltered is a decision, not a default.
 - **Follow-up MIP:** the site currently has no way to say "this page is stale". Every generated page
   will carry a `generatedAt` stamp, but a *content* freshness policy (when does a news item stop
   being news, what does `/news/` show after six quiet months) is a small design of its own and
@@ -536,8 +530,8 @@ files a human wrote and reviewed. No AI-103 row is closed.
   bandwidth, soft 10 builds/hour that "does not apply if you build and publish your site with a
   custom GitHub Actions workflow".
 - **This repo, run locally 2026-09-07** (`nix develop`, JDK 25, sbt 1.10.7): `sbt core/doc` exit 0
-  in 3 s with one warning; `local/doc`, `azure/doc`, `cli/doc` exit 0. Sizes `du -sh`: 7.2 M / 4.4 M
-  / 4.0 M / 4.4 M = 20 M. `core` API tree: 411 files, 103 HTML pages. `grep -rl` over those pages:
+  in 3 s with one warning; `local/doc`, `cli/doc` exit 0. Sizes `du -sh`: 7.2 M / 4.4 M
+  / 4.4 M = 16 M. `core` API tree: 411 files, 103 HTML pages. `grep -rl` over those pages:
   **103 of 103** reference `cdnjs.cloudflare.com/…/dagre-d3`, `cdn.jsdelivr.net/…/graphlib-dot`,
   `d3js.org/d3.v6.min.js` and `scastie.scala-lang.org/embedded.js`; the single inline script body is
   `var pathToRoot = "";`.

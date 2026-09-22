@@ -82,12 +82,12 @@ new kind of input this repo doesn't have a source for yet.
 ### 1.4 What dive scoring specifically needs
 
 - **Underwater visibility**: no free API was found for this (checked while researching; same
-  "doesn't exist" conclusion `ARCHITECTURE.md` §8 reached for jellyfish forecasts). The closest
-  real signal: [Copernicus Marine Service](https://marine.copernicus.eu/) publishes turbidity and
+  "doesn't exist" conclusion `ARCHITECTURE.md` §8 reached for jellyfish forecasts). The closest real
+  signal: [Copernicus Marine Service](https://marine.copernicus.eu/) publishes turbidity and
   chlorophyll concentration layers that correlate with visibility, but it's a much heavier
   integration (NetCDF/gridded data, not a simple REST JSON call like everything else this repo
-  uses), a real candidate for "the next tier of integration effort," not a quick add.
-  Copernicus is free registration, not requiring Azure or payment, consistent with the local-first
+  uses), a real candidate for "the next tier of integration effort," not a quick add. Copernicus is
+  free registration, not requiring a cloud account or payment, consistent with the local-first
   ethos.
 - **Current strength**: already fetched (`ocean_current_velocity`, used today for the whale/
   jellyfish heuristics); divers want it *low*, same direction of preference as jellyfish-avoidance,
@@ -101,7 +101,7 @@ new kind of input this repo doesn't have a source for yet.
 "Users can subscribe to more than one activity" is a per-user preference, which needs persisted
 per-user state, something marola doesn't have yet in any form (the closest existing piece is
 `SightingStore`, which is per-*beach*, not per-*user*). The natural extension, following the same
-local-vs-Azure pattern as everything in `ARCHITECTURE.md` §5:
+local-default pattern as everything in `ARCHITECTURE.md` §5:
 
 ```scala
 trait UserPreferencesStore:
@@ -111,12 +111,9 @@ trait UserPreferencesStore:
 ```
 
 with `LocalFileUserPreferencesStore` (JSON-lines, same shape as `LocalFileSightingStore`) as the
-default and a `CosmosDbUserPreferencesStore` option, genuinely the same container even, since
-Cosmos DB doesn't need a schema up front; `sightings` and `user_preferences` could be two
-containers in one database. The Telegram bot (once built; see `TELEGRAM-SETUP.md` and
-`ARCHITECTURE.md` §11 Phase 1) would expose this via commands like `/subscribe surf`,
-`/unsubscribe dive`, and a daily digest that only includes conditions for a user's subscribed
-activities.
+default. The Telegram bot (once built; see `TELEGRAM-SETUP.md` and `ARCHITECTURE.md` §11 Phase 1)
+would expose this via commands like `/subscribe surf`, `/unsubscribe dive`, and a daily digest that
+only includes conditions for a user's subscribed activities.
 
 ## 2. Reviewed: kyo-http + kyo-schema instead of the hand-rolled `Http`/`Json` modules
 
@@ -132,21 +129,19 @@ was dropped from `build.sbt` as unused, so migrating means adding it back.
 `getString`, `postForm`, `postJson`, `postBytes`) and `json/Json.scala` (~200 lines: a
 recursive-descent parser plus a renderer) in favor of `kyo.HttpClient.getJson[A]`/`postJson[A, B]`
 calls with `derives Schema` case classes for every shape this repo currently parses by hand
-(Overpass responses, Open-Meteo responses, Ollama/Foundry chat completions, Azure Maps/Vision
-responses, Telegram's Bot API shapes once the bot exists). That's a real, positive trade: less
-hand-rolled parsing code, typed models instead of stringly-typed `JsonValue` navigation, and a
-client that (per kyo-http's design) also targets JS/Native if marola's Scala code were ever reused
-outside the JVM.
+(Overpass responses, Open-Meteo responses, Ollama chat completions, Telegram's Bot API shapes once
+the bot exists). That's a real, positive trade: less hand-rolled parsing code, typed models instead
+of stringly-typed `JsonValue` navigation, and a client that (per kyo-http's design) also targets
+JS/Native if marola's Scala code were ever reused outside the JVM.
 
 **Why not done in this pass:** every HTTP/JSON call site in this repo was *live-verified* against
-real APIs while building it this session (Overpass, Open-Meteo, Ollama, and the graceful-failure
-paths for Azure Maps/Vision/Foundry). Migrating now means re-doing that verification against a
-library with no version-specific published docs (RC5's actual behavior was confirmed by reading
-bytecode, not by reading a doc page): real risk of a subtle behavioral difference (timeout
-defaults, redirect handling, connection pooling) going unnoticed until it breaks something that
-currently works. This is exactly the kind of change worth doing *deliberately*, in its own pass,
-with its own round of live re-verification per integration, not bundled into unrelated feature
-work.
+real APIs while building it this session (Overpass, Open-Meteo, Ollama). Migrating now means
+re-doing that verification against a library with no version-specific published docs (RC5's actual
+behavior was confirmed by reading bytecode, not by reading a doc page): real risk of a subtle
+behavioral difference (timeout defaults, redirect handling, connection pooling) going unnoticed
+until it breaks something that currently works. This is exactly the kind of change worth doing
+*deliberately*, in its own pass, with its own round of live re-verification per integration, not
+bundled into unrelated feature work.
 
 **Recommendation:** migrate, but as a dedicated task: one integration at a time (start with
 `OpenMeteoClient`, the simplest/most-called shape), re-verify each against live data before moving
@@ -166,9 +161,9 @@ significantly across that gap, per Kyo's own release notes referenced elsewhere 
 different, pre-redesign version of its own core dependency is a real risk (likely won't even
 resolve/compile cleanly alongside `kyo-core:1.0.0-RC5`, and if it did, its API idioms would predate
 the ones the rest of this codebase uses). The custom `llm/LlmClient` abstraction built this session
-(local Ollama + Azure Foundry, both plain HTTP) is the right call for now: it's small, verified
-live, and has zero dependency-compatibility risk. Revisit only if `kyo-llm` (or a genuine
-`kyo-ai` successor) sees a real release against the Kyo 1.x line.
+(local Ollama, plain HTTP) is the right call for now: it's small, verified live, and has zero
+dependency-compatibility risk. Revisit only if `kyo-llm` (or a genuine `kyo-ai` successor) sees a
+real release against the Kyo 1.x line.
 
 ## 4. Harness ideas: evaluation and a reviewer/critic pass
 
@@ -257,9 +252,7 @@ into something closer to a real rules table.
 actively-maintained (last updated September 2025), type-safe, effect-agnostic Scala driver for
 **Neo4j**. Not a fit: marola has no graph data model anywhere; no relationships-between-entities
 problem that a graph database is the right tool for. If §1's multi-activity subscriptions or a
-future "beaches near beaches" / social feature ever genuinely needs graph queries, Cosmos DB
-(already an adopted dependency, §5d) has its own Gremlin/graph API. Evaluate that first before
-adding a whole second database technology.
+future "beaches near beaches" / social feature ever genuinely needs graph queries, evaluate it then.
 
 **`Iron`** ([github.com/Iltotore/iron](https://github.com/Iltotore/iron)): actively maintained
 (current major version `3.x`), Scala 3 refined types: attach compile-time-or-runtime-checked
@@ -274,12 +267,12 @@ instead of relying on every caller remembering to clamp/validate. Not adopted he
 architecture change) that it's a reasonable first Scala-3-ergonomics task for whoever picks this
 file up next, well before the larger `kyo-http`/`kyo-schema` migration (§2).
 
-## 7. Splitting marola out of the ai-103 monorepo — superseded, see below
+## 7. Splitting marola out of the earlier monorepo — superseded, see below
 
 ### 7.1 Status: superseded by a simpler outcome
 
 This section originally described preparing marola to be `git subtree split` out of a shared
-`ai-103` monorepo that also contained an unrelated project (nf-organizer, a nota-fiscal/expense
+monorepo that also contained an unrelated project (nf-organizer, a nota-fiscal/expense
 organizer). That plan involved marola/ carrying self-contained copies of every infra file a
 standalone repo would need (`.ai-jail`, `.gitignore`, `.githooks/pre-commit`, `.scalafmt.conf`,
 `flake.nix`, `justfile`, `project/`, and a `build.sbt.standalone`: a complete, working
@@ -289,13 +282,12 @@ way when a file literally named `marola/build.sbt` got loaded twice by a root `s
 
 **What actually happened instead, once the decision was made to make this repo marola's own repo
 rather than extract marola from it:** nf-organizer's content was moved to an external backup
-(outside this repo, not deleted) and removed here entirely; marola's four module directories
-(`core/local/azure/cli`) and `dspy/` were hoisted from `marola/core|local|azure|cli|dspy` up to the
-repo root; all the duplicate infra files listed above were deleted (root's copies already cover the
-whole repo now; nothing else needs them); and `build.sbt` was simplified to one root aggregate
-with no `nfOrganizer` project and no `marola` umbrella project: `core`, `local`, `azure`, `cli` are
-now aggregated directly under root. No `git subtree split`, no history rewrite, no
-`RootProject`/`.standalone`-file workaround needed. The entire reason for those was the
+(outside this repo, not deleted) and removed here entirely; marola's module directories and `dspy/`
+were hoisted from `marola/` up to the repo root; all the duplicate infra files listed above were
+deleted (root's copies already cover the whole repo now; nothing else needs them); and `build.sbt`
+was simplified to one root aggregate with no `nfOrganizer` project and no `marola` umbrella project:
+`core`, `local`, `cli` are now aggregated directly under root. No `git subtree split`, no history
+rewrite, no `RootProject`/`.standalone`-file workaround needed. The entire reason for those was the
 monorepo-with-two-projects shape, which no longer exists.
 
 The `RootProject` investigation below is kept for its own sake: it's a real, independently useful
@@ -315,8 +307,8 @@ similar monorepo-split situation comes up again elsewhere.
 ### 7.2 CI
 
 `.github/workflows/ci.yml` now runs one job (`build-test`) doing unscoped `sbt scalafmtCheckAll` /
-`sbt compile` / `sbt test` at the repo root: `.aggregate()` cascades these to all four modules
-(`core`/`local`/`azure`/`cli`) by default, confirmed directly. (An earlier version of this repo,
+`sbt compile` / `sbt test` at the repo root: `.aggregate()` cascades these to all three modules
+(`core`/`local`/`cli`) by default, confirmed directly. (An earlier version of this repo,
 back when it also contained nf-organizer, split this into two per-module jobs for clearer CI
 reporting; with only one project in the repo now, that split no longer serves a purpose.)
 
@@ -330,40 +322,25 @@ execution**: that requires pushing it and triggering it for real, which wasn't d
 
 ### 7.3 Splitting marola *itself* into multiple sbt modules — DONE
 
-Executed. Root `build.sbt` defines four subprojects, sbt project IDs `core`, `local`, `azure`,
-`cli` (artifact names `marola-core`/`marola-local`/`marola-azure`/`marola-cli`), aggregated
-directly under the root project.
+Executed. Root `build.sbt` defines three subprojects, sbt project IDs `core`, `local`, `cli`
+(artifact names `marola-core`/`marola-local`/`marola-cli`), aggregated directly under the root
+project.
 
-(Originally these lived nested one level down, under `marola/core|local|azure|cli/`, from when this
-repo was a shared monorepo with a second, unrelated project. Once this repo became marola's own
-repo, that nesting no longer served a purpose, so the four module directories (plus `dspy/` and
-all the `.md` docs, now centralized under `docs/`) were hoisted up to the repo root. Any older text
-below referencing `marola/core`-style paths or `core`-style sbt project IDs predates that
-hoist; the directories are `core/`, `local/`, `azure/`, `cli/` and the sbt IDs are `core`, `local`,
-`azure`, `cli` now.)
+(Originally these lived nested one level down, under `marola/core|local|cli/`, from when this repo
+was a shared monorepo with a second, unrelated project. Once this repo became marola's own repo,
+that nesting no longer served a purpose, so the module directories (plus `dspy/` and all the `.md`
+docs, now centralized under `docs/`) were hoisted up to the repo root. Any older text below
+referencing `marola/core`-style paths or `core`-style sbt project IDs predates that hoist; the
+directories are `core/`, `local/`, `cli/` and the sbt IDs are `core`, `local`, `cli` now.)
 
 | Module | Contains | Depends on |
 |---|---|---|
 | `marola-core` | `model/`, `scoring/`, `beaches/BeachFinder`, `conditions/OpenMeteoClient`, `Recommender`, `http/`, `json/`, `llm/LlmClient` (trait + `CompiledPrompt` + `Reviewer`), `sightings/{SightingStore,Sighting}`, `vision/VisionClient` (trait) | nothing else in marola |
-| `marola-local` | `llm/LocalLlmClient`, `vision/LocalVisionClient`, `sightings/LocalFileSightingStore` | `marola-core` — **zero Azure SDK dependency, confirmed**: `local`'s `libraryDependencies` in `build.sbt` adds nothing beyond `baseSettings` |
-| `marola-azure` | `llm/AzureFoundryLlmClient`, `vision/AzureVisionClient`, `beaches/RouteFinder`, `sightings/CosmosDbSightingStore`, `observability/Telemetry` | `marola-core` |
-| `marola-cli` | `Main`, `AppConfig`, `agent/SwimConditionsMcpServer` | `marola-core`, `marola-local`, `marola-azure` |
+| `marola-local` | `llm/LocalLlmClient`, `vision/LocalVisionClient`, `sightings/LocalFileSightingStore` | `marola-core` |
+| `marola-cli` | `Main`, `AppConfig`, `agent/SwimConditionsMcpServer` | `marola-core`, `marola-local` |
 
 (`marola-bot`, the originally-proposed fifth module for the Telegram polling loop, wasn't created
 since that code still doesn't exist: Phase 1 is still not built. Add it when that lands.)
-
-**A real design problem surfaced immediately and needed a fix, not just a file move:**
-`Recommender` (core) originally called `RouteFinder.travelDistanceKm` (azure) directly: a genuine
-circular dependency once physically separated, not just an import-organization nuisance (`sbt
-compile` failed with `Not Found Error: value RouteFinder is not a member of marola.beaches`).
-Fixed via dependency inversion: `Recommender.bestPerBeachTomorrow`/`bestHoursTomorrow` now take a
-`distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync]` parameter instead of an
-`azureMapsKey: Option[String]`. `marola-core` never references Azure Maps at all anymore.
-`AppConfig.distanceRefiner` (in `marola-cli`, which depends on both `core` and `azure`) is the one
-place that closes over `RouteFinder` to build the actual function. This is a better design than
-the original hardcoded-call version, not just a workaround forced by the module split. The
-local-vs-Azure choice for distance refinement is now visible in `Recommender`'s own signature
-instead of hidden behind a string key's presence/absence.
 
 **Verified, not just compiled:** full `sbt compile`/`sbt test` (every unit test passed across the new
 module boundaries), `sbt cli/run` and `sbt cli/run -- --summarize` against live
@@ -371,20 +348,13 @@ Overpass/Open-Meteo/Ollama (including the Reviewer pass), both `E2ESpec` tests, 
 `sbt cli/assembly` producing a working fat jar (`java -jar
 marola-cli-assembly-*.jar` runs correctly), all after the split, not just before it.
 
-**Not done as part of this:** `AppConfig` still eagerly references all three backends'
-client-construction code in one file (`llmClient`/`sightingStore`/`visionClient`/`distanceRefiner`
-factory methods): the module *boundary* is real (local truly can't see azure-identity/etc.
-at compile time), but `AppConfig` itself, living in `cli`, still has to know about all three
-to wire up. That's inherent to having one config type pick a backend per integration; splitting
-`AppConfig` itself further wasn't attempted and isn't obviously worth doing.
-
 ## 8. Smaller items already flagged elsewhere
 
 Not repeated in full here; see the cross-referenced section:
 
 - Calibrating the jellyfish/whale heuristics against real `SightingStore` data: `ARCHITECTURE.md`
   §8.
-- Real per-beach travel time/distance beyond Azure Maps' driving-distance API (walking/transit
+- Real per-beach travel time/distance instead of straight-line distance (driving/walking/transit
   modes); `ARCHITECTURE.md` §5b, §9.
 - Caching and per-user rate limiting for the core pipeline: `ARCHITECTURE.md` §9, §11 Phase 4.
 
@@ -393,9 +363,8 @@ Not repeated in full here; see the cross-referenced section:
 Two connected product ideas, both aimed at the same theme: marola currently only reasons over live
 *sensor* data (Overpass, Open-Meteo). It has no grounding in the *body of knowledge* about the
 ocean (marine biology, oceanography, coastal-hazard research) and no concept of an
-out-of-distribution event. Both ideas below close real gaps identified in `AI-103-MAPPING.md`
-(RAG/fine-tuning, first-class text analysis) with one coherent feature rather than two disconnected
-checkbox exercises.
+out-of-distribution event. Both ideas below close real gaps (RAG/fine-tuning, first-class text
+analysis) with one coherent feature rather than two disconnected ones.
 
 ### 9.1 "marola knows the ocean": RAG and/or fine-tuning over marine literature
 
@@ -405,12 +374,12 @@ checkbox exercises.
 
 > **Built (first cut):** `docs/mips/MIP-0001-water-quality-and-sea-lore.md`: local RAG over
 > `knowledge/` with citations (`ARCHITECTURE.md` §5h), the sourced sea-lore paragraph, and a
-> fine-tuning scaffold under `finetune/` (Tier 1 built, Tier 2 written-not-run). Steps 1-3 below
-> are now real; step 4 (fine-tuning) has its recipe but no evaluation yet. The *retrieval* half is
+> fine-tuning scaffold under `finetune/` (Tier 1 built, Tier 2 written-not-run). Steps 1-3 below are
+> now real; step 4 (fine-tuning) has its recipe but no evaluation yet. The *retrieval* half is
 > revisited in `docs/mips/MIP-0045-nlp-and-parsing-over-llm.md` §5.1, which proposes a lexical
-> (TF-IDF) `KnowledgeStore` as the local default in place of the per-question embedding call.
-> The store and the chunker themselves (Lucene HNSW + BM25 locally, Azure AI Search opt-in, typed
-> chunks with provenance, a golden-set recall@k) are designed in
+> (TF-IDF) `KnowledgeStore` as the local default in place of the per-question embedding call. The
+> store and the chunker themselves (Lucene HNSW + BM25 locally, typed chunks with provenance, a
+> golden-set recall@k) are designed in
 > [`MIP-0055`](./mips/MIP-0055-vector-store-and-ocean-knowledge-chunking.md).
 
 **The pitch:** today, if a user asks "what should I do if I get stung by a jellyfish here," marola
@@ -426,14 +395,11 @@ actually answer open marine-safety/marine-biology questions, sourced, not halluc
    relevant coastal-hazard guidance for wherever marola is actually deployed. Licensing has to be
    checked per source before ingesting anything; this is a real constraint, not a footnote.
 2. **Retrieval.** A small local embedding model (Ollama serves embedding models too, e.g.
-   `nomic-embed-text`, which keeps the local-first, zero-Azure-account property this whole repo is built
-   around) over chunked documents, with **Azure AI Search** as the opt-in Azure-native alternative
-   (same local-default/Azure-opt-in pattern as every other integration in `ARCHITECTURE.md` §5),
-   this is also a clean way to close the "Azure AI Language / text analysis" gap flagged in
-   `AI-103-MAPPING.md` §5, since ingesting the corpus is itself a text-analysis/extraction task
-   (pulling structured hazard facts out of prose bulletins).
+   `nomic-embed-text`, which keeps the local-first, no-cloud-account property this whole repo is
+   built around) over chunked documents. Ingesting the corpus is itself a text-analysis/extraction
+   task (pulling structured hazard facts out of prose bulletins).
 3. **New module shape:** a `core/knowledge/` package (`KnowledgeStore` trait, mirroring the existing
-   `SightingStore`/`VisionClient` local-vs-Azure trait pattern) plus a new agent role: a
+   `SightingStore`/`VisionClient` trait pattern) plus a new agent role: a
    "marine-knowledge agent" distinct from the summarizer/reviewer pair, callable as its own MCP tool
    (`ask_ocean_question`) so it's usable independently of the swim-hour pipeline, not bolted onto it.
 4. **Fine-tuning** is a genuine later step, not a prerequisite: only worth it once RAG's retrieval
@@ -441,9 +407,6 @@ actually answer open marine-safety/marine-biology questions, sourced, not halluc
    actually fix (tone, domain vocabulary, a very narrow structured-output format). Fine-tuning a
    small open model (a `llama3.2` variant, via Ollama's `Modelfile` + a QLoRA-style adapter) on that
    specific gap is far cheaper and more honest than fine-tuning as a first move.
-
-This is squarely AI-103's generative-AI-solutions domain (RAG, done for real) and closes the NLP
-domain's text-analysis gap in the same feature; see `AI-103-MAPPING.md` for the exact mapping.
 
 ### 9.2 A fourth agent: catastrophe/hazard detection, competing with public alerts
 
@@ -463,22 +426,20 @@ question. It needs:
 - **A trend/anomaly view over the existing time-series data** (`OpenMeteoClient` already fetches
   hourly data: this needs looking at the *shape* of the next N hours, not just picking the best
   one), which is new logic, not a reuse of `Swimability.score`.
-- **A conservative, false-positive-averse threshold design**: see `AI-500-MAPPING.md` §4: this is
-  the first place marola would act *without being asked* (a proactive Telegram push), which is a
-  materially different risk/trust profile than answering a query, and needs its own human-
-  confirmation gate on the alerting behavior itself before it ever ships, not just on Azure spend.
+- **A conservative, false-positive-averse threshold design**: this is the first place marola would
+  act *without being asked* (a proactive Telegram push), which is a materially different risk/trust
+  profile than answering a query, and needs its own human- confirmation gate on the alerting
+  behavior itself before it ever ships, not just on cloud spend.
 - **Explicit, honest scoping against official sources**: cross-referencing (not replacing) whatever
   official public alert feed is available for the deployment region, and being clear in the product
   copy itself that this is a supplementary heads-up, never the authoritative source, particularly
   given the "competing with governance public announcements" framing carries real liability/trust
   implications if done carelessly.
 
-**Where this lands architecturally:** this is the concrete third agent proposed in
-`AI-500-MAPPING.md` §1 (summarize / critique / escalate): the escalation agent *is* this hazard
-detector. Building it is simultaneously a real safety feature, AI-103's generative-AI/agentic
-coverage, and the clearest path to a genuine AI-500-shaped multi-agent architecture (three agents,
-three distinct roles, one of them with a different orchestration trigger: a schedule/poll, not a
-user query).
+**Where this lands architecturally:** this is the third agent after summarize and critique: the
+escalation agent *is* this hazard detector. Building it is both a real safety feature and the
+clearest path to a genuine multi-agent architecture (three agents, three distinct roles, one of them
+with a different orchestration trigger: a schedule/poll, not a user query).
 
 ## 10. Scala/JVM gap in the prompt-engineering and LLMOps ecosystem — and `ds4s`
 
@@ -505,10 +466,10 @@ closing that gap would take.
 
 **What this means for marola specifically:** the DSPy compile step will likely stay a Python
 subprocess indefinitely. Porting DSPy itself is a large undertaking, not a marola-sized task (see
-below). The more immediately actionable gap is Langfuse-shaped tracing, since `Telemetry.scala`
-already has the OpenTelemetry plumbing in place; adding structured LLM-call spans (prompt,
-completion, model, latency, token count) to the existing `AzureFoundryLlmClient`/`LocalLlmClient`
-call sites is a scoped, real improvement that doesn't require adopting a whole new platform.
+below). The more immediately actionable gap is Langfuse-shaped tracing, since the MLflow tracing
+path (MIP-0010) already has the OpenTelemetry plumbing in place; adding structured LLM-call spans
+(prompt, completion, model, latency, token count) to the existing `LocalLlmClient` call sites is a
+scoped, real improvement that doesn't require adopting a whole new platform.
 
 **The larger idea, named and scoped honestly as a separate future project, not a marola subtask:
 `ds4s` ("DSPy for Scala").** A from-scratch Scala port of DSPy's core ideas: `Signature`
@@ -568,9 +529,9 @@ public API comparable to Overpass/Open-Meteo:
 
 **Recommended shape, if this gets built: start with (c), never (b).**
 
-1. A `core/history/` package (mirroring the existing local-vs-Azure trait pattern where it makes
-   sense) with a `SwimHistoryStore` reading manually-imported activity records: beach name (or
-   nearest-match by GPS coordinates against `BeachFinder`'s results), timestamp, duration.
+1. A `core/history/` package (mirroring the existing store-trait pattern where it makes sense) with
+   a `SwimHistoryStore` reading manually-imported activity records: beach name (or nearest-match by
+   GPS coordinates against `BeachFinder`'s results), timestamp, duration.
 2. A small **TCX parser first** (XML, human-readable, easier to hand-write correctly than FIT's
    binary format, same "small hand-rolled parser for one specific external shape" pattern as
    `Json.scala`, and this time it should ship with real unit tests from day one, unlike `Json.scala`

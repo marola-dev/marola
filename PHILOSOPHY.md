@@ -40,29 +40,28 @@ MIP discipline around it are the pillar's output, not a description of it.
 
 **Pillar 2: models reasoning over open water, with the deterministic parts kept deterministic.**
 Built today: the pipeline in `scoring/Swimability.scala` computes the score, the deductions and the
-bathing-water veto in plain Scala, and `llm/Reviewer.scala` is a second, independently prompted
-pass that grades the first model's sentence and may rewrite it. That is already the "LLM as judge
-over non-fuzzy APIs" shape: Open-Meteo, Overpass and the bathing-water agency are read literally;
-the model interprets and phrases them and can never overturn a veto. Not built: anomaly and hazard
+bathing-water veto in plain Scala, and `llm/Reviewer.scala` is a second, independently prompted pass
+that grades the first model's sentence and may rewrite it. That is already the "LLM as judge over
+non-fuzzy APIs" shape: Open-Meteo, Overpass and the bathing-water agency are read literally; the
+model interprets and phrases them and can never overturn a veto. Not built: anomaly and hazard
 detection over the same series, rough-sea and storm-surge events, heavy rain, the water-related
 emergency nobody subscribes to a beach app for. It is proposed in `docs/FUTURE-WORK.md` §9.2 and
-`docs/AI-500-MAPPING.md` §1/§4 and named in `docs/ROADMAP.md` §5 as the highest-value unbuilt item,
-with no MIP written yet; its own sketch puts a human-confirmation gate on alerting ahead of any
-code, since it would be the first thing marola does unasked. Forecasting proper is parked with an
-honest verdict attached: MIP-0007 (Draft, Phase 4) covers time-series foundation models, TimeGPT
-alongside the open-weight Chronos, TimesFM and Moirai, and concludes they are the wrong tool for
-waves and wind, where Open-Meteo's physics models win, and the right one only for the series marola
-itself accumulates.
+named in `docs/ROADMAP.md` §5 as the highest-value unbuilt item, with no MIP written yet; its own
+sketch puts a human-confirmation gate on alerting ahead of any code, since it would be the first
+thing marola does unasked. Forecasting proper is parked with an honest verdict attached: MIP-0007
+(Draft, Phase 4) covers time-series foundation models, TimeGPT alongside the open-weight Chronos,
+TimesFM and Moirai, and concludes they are the wrong tool for waves and wind, where Open-Meteo's
+physics models win, and the right one only for the series marola itself accumulates.
 
 **Pillar 3: models of the ocean domain, if affordable.** The management half exists first on
 purpose: MIP-0010 (Implemented, v1, local) makes MLflow the ledger for benchmark runs, prompt
 compiles and pipeline traces, so a model change is compared on recorded params and metrics rather
-than on impression. The model half is MIP-0025 (Draft): `marola-sea-1.0`, a 3B base post-trained
-in three layers and served through Ollama, where `finetune/`'s Tier 1 has run and Tier 2 is
-written, not run, for want of a GPU. Its own status line is `do when X lands`, and the X is money:
-compute is the gate, the same human go-ahead `AGENTS.md` requires before any paid resource applies
-to a rented GPU as much as to Azure, and whatever comes out still has to clear `just benchmark`'s
-existing gate rather than bypass it.
+than on impression. The model half is MIP-0025 (Draft): `marola-sea-1.0`, a 3B base post-trained in
+three layers and served through Ollama, where `finetune/`'s Tier 1 has run and Tier 2 is written,
+not run, for want of a GPU. Its own status line is `do when X lands`, and the X is money: compute is
+the gate, the same human go-ahead `AGENTS.md` requires before any paid resource applies to a rented
+GPU as much as to a cloud one, and whatever comes out still has to clear `just benchmark`'s existing
+gate rather than bypass it.
 
 ## Why marola
 
@@ -73,9 +72,7 @@ what any other question about the sea near you needs too. It needs live data (Ov
 a bathing-water agency), a decision that can get someone hurt if it is wrong (rough sea,
 contaminated water, darkness), and a sentence a person will actually read. That mix is exactly
 where an LLM alone fails and where an
-LLM inside a constrained pipeline is genuinely better than either alone. It also happens to
-exercise every AI-103 domain and most of AI-500 (`docs/AI-103-MAPPING.md`, `docs/AI-500-MAPPING.md`)
-without inventing a use case for the sake of an exam.
+LLM inside a constrained pipeline is genuinely better than either alone.
 
 ## Why LLMs, and where they are not allowed
 
@@ -125,7 +122,7 @@ out of the runtime path on purpose.
 
 A dev shell that is the same on every machine is the first constraint an agent meets. `flake.nix`
 pins JDK 25 (Kyo's artifacts will not load on 24: a real `UnsupportedClassVersionError`, not a
-hypothetical), sbt on that JDK, scala-cli, coursier, `just`, Python for the offline steps, `az`,
+hypothetical), sbt on that JDK, scala-cli, coursier, `just`, Python for the offline steps,
 `gh`; the lint toolchain (hadolint, actionlint, shellcheck, ruff, …) comes from `labs/lint` in
 h0ffmann/nix-config as one flake input. `nix develop` is the whole setup; there is no "works on my machine" left for the
 model to reason about, and no page of install instructions for it to skip. CI, the Docker `dev`
@@ -147,7 +144,7 @@ The agent runs in a sandbox (`just jail-claude`, `just jcf`, `just jcs`; bubblew
 seccomp; policy in `.ai-jail`, which can only tighten). It is containment for the filesystem and
 process blast radius: the agent can build, test and push; it cannot read `.env` or a key, and
 cannot touch the machine outside the repository. It does not replace the rules that live above it
-(no unattended `azd up`, every paid resource behind a human go-ahead), and it does not stop bad
+(no unattended deploy, every paid resource behind a human go-ahead), and it does not stop bad
 code or spent budget. It is the same idea one layer down: give the mistake a wall to hit.
 
 ## Why design docs before code, and a cost line on every PR
@@ -166,10 +163,9 @@ runs → review only when asked → merge.
 - Not a claim that a typed platform makes the model right. It makes the model *checkable*; the
   checks still have to be written (`scoring/`'s tests, the golden pipeline fixtures, the benchmark
   under `docs/benchmarks/`).
-- Not anti-Python, anti-cloud or anti-anything. Azure is opt-in per integration and every path has
-  a free local default (`docs/ARCHITECTURE.md` §5), because "runs entirely locally with a free
-  model" is also a constraint: it keeps the thing testable by anyone, including the agent, without
-  a bill.
+- Not anti-Python, anti-cloud or anti-anything. Every path has a free local default
+  (`docs/ARCHITECTURE.md` §5), because "runs entirely locally with a free model" is also a
+  constraint: it keeps the thing testable by anyone, including the agent, without a bill.
 - Not finished. The honest status vocabulary used everywhere here (*verified live*, *confirmed
   against the jar*, *written, not run*, *not checked*) is the last constraint: the docs are not
   allowed to sound more certain than the code.

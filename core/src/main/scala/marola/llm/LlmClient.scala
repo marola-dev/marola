@@ -17,8 +17,8 @@ object LlmClient:
   final case class NoCompletionException(message: String) extends Exception(message)
 
   /**
-   * Shared response-shape extraction: every OpenAI-compatible chat-completions response (Ollama,
-   * Azure OpenAI/Foundry) nests the reply at `choices[0].message.content`.
+   * Shared response-shape extraction: every OpenAI-compatible chat-completions response (Ollama
+   * included) nests the reply at `choices[0].message.content`.
    */
   def extractContent(responseBody: String): String =
     JsonValue

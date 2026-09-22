@@ -98,7 +98,7 @@ endpoint shape"):
 Everything below is file-based per this repo's established convention (MIP-0017 §5.1's
 already-accepted "flat file, not a database" pattern): no new Scala/Python runtime module, no new
 sbt subproject. Proposed as two small standalone scripts, not integrated into the Scala pipeline
-(`core`/`local`/`azure`/`cli` stay untouched):
+(`core`/`local`/`cli` stay untouched):
 
 ### 5.1 Post-planner: `scripts/post-planner.py` (proposed name)
 
@@ -225,11 +225,6 @@ output for marola's Telegram/CLI surface.
 - **`git subtree` for the cross-repo mechanic.** Rejected (§6 of `docs/SELF-DOCUMENTING.md`):
   marola and the blog repo share no real history, so subtree's shared-subdirectory-history model
   is the wrong tool; a plain copy-and-commit script is simpler and sufficient.
-
-## 10. Exam-coverage mapping
-
-None. This is personal dev-tooling / content-workflow automation, not marola's product agent
-architecture, and doesn't map to an AI-103 or AI-500 domain row.
 
 ## 11. Open questions
 

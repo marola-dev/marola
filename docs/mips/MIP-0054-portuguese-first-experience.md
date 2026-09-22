@@ -5,12 +5,12 @@
 | **Status** | Draft — **release blocker: Release 0 (MIP-0033) does not ship until this is Implemented** |
 | **Author** | Claude (Fable 5.1), for M. Hoffmann |
 | **Created** | 2026-09-12 |
-| **Phase** | 0 for the site, CLI, MCP and corpus (every surface that exists); the Telegram reply (Phase 1, MIP-0002, not built) inherits the same catalog. No Azure, no paid resource |
-| **Related** | MIP-0050 §11 named this as its follow-up ("corpus, prompts and site copy are English for a Brazilian audience"); MIP-0022 (`SafetyFooter` already has a pt-BR table — the one surface done right); MIP-0001 §6/§9 (the agency verdict shown verbatim — untouchable by translation); MIP-0039 (the fact guard — §5.4 is the same post-model shape); MIP-0046/MIP-0042 (share `app.js`/`site_check.js`; coordinate, not blocked); `AI-103-MAPPING.md` row "Translation" |
+| **Phase** | 0 for the site, CLI, MCP and corpus (every surface that exists); the Telegram reply (Phase 1, MIP-0002, not built) inherits the same catalog. No paid resource |
+| **Related** | MIP-0050 §11 named this as its follow-up ("corpus, prompts and site copy are English for a Brazilian audience"); MIP-0022 (`SafetyFooter` already has a pt-BR table — the one surface done right); MIP-0001 §6/§9 (the agency verdict shown verbatim — untouchable by translation); MIP-0039 (the fact guard — §5.4 is the same post-model shape); MIP-0046/MIP-0042 (share `app.js`/`site_check.js`; coordinate, not blocked) |
 | **Effort** | XL — a message catalog in two runtimes (Scala for CLI/MCP/board, JS for the site), a board-contract change (codes, not English prose), a pt-BR corpus with per-file sources, a pt-BR DSPy recompile of both prompts, a deterministic language guard, a rewrite of `scripts/site_check.js`'s copy assertions, and a language/location precedence in the client. No new dependency |
-| **Gain** | `user value` — the audience is Brazilian and every surface but the safety footer answers in English (§2); `infra/dev-loop` — one catalog file per language instead of strings scattered over `Swimability`, `Report`, `app.js` and the prompts; `exam coverage` — AI-103 "Translation" row, closed by native generation plus a guard, not a translation service (§10) |
+| **Gain** | `user value` — the audience is Brazilian and every surface but the safety footer answers in English (§2); `infra/dev-loop` — one catalog file per language instead of strings scattered over `Swimability`, `Report`, `app.js` and the prompts |
 | **Effort vs Gain** | `do next` — a declared release blocker, and §4.3 shows the default model can do it; nothing in it waits on another MIP |
-| **Depends on** | Nothing must merge first. MIP-0050's evaluation arm would give a second pt-BR model number, but `llama3.2` (today's default) is officially Portuguese (§4.3). MIP-0046 and MIP-0042 edit the same site files and `site_check.js`: land this before the `/v1/` freeze or rebase over it. No Phase 1 gate; no Azure cost gate |
+| **Depends on** | Nothing must merge first. MIP-0050's evaluation arm would give a second pt-BR model number, but `llama3.2` (today's default) is officially Portuguese (§4.3). MIP-0046 and MIP-0042 edit the same site files and `site_check.js`: land this before the `/v1/` freeze or rebase over it. No Phase 1 gate; no cost gate |
 | **Blocked by** | none |
 | **Risk** | The UI turns Portuguese and the model keeps answering in English — mixed-language output under a Portuguese header. §5.4's guard makes that show the deterministic line instead of English prose; §7's benchmark arm measures the rate per model before the default is chosen |
 | **Cost so far** | — |
@@ -245,21 +245,13 @@ failure mode: the only model-authored text is now also checked for language.
 ## 9. Alternatives considered
 
 - **Do nothing.** Rejected by the release decision this MIP records and MIP-0050 §2's argument.
-- **Translate at the edges** (English model, a translation pass after it, local or Azure AI
-  Translator): a second model call on the safety-relevant path, a second place to invent facts
-  (MIP-0050 §9), a paid resource for what `llama3.2` does natively; a machine-translated corpus is
-  unsourced by construction. Rejected.
-- **Portuguese only, no toggle**, wrong for a repo whose docs and exam mappings are English, and the
-  catalog costs the same once it exists. **Language from location**, rejected (§5.5): a denied
-  prompt must not cost the visitor their language. **IP geolocation in the page**, §4.5. **Regex
-  over the English notes client-side**, hard-codes English as the wire format; codes are the contract.
-
-## 10. Exam-coverage mapping
-
-AI-103 row "Translation" (`docs/AI-103-MAPPING.md:62`, "Not built, not currently a product need"):
-now a product need, answered *without* a translation service — native generation plus a
-deterministic guard, with Azure AI Translator recorded as considered and rejected on cost and safety.
-Row marked "proposed: MIP-0054". No AI-500 row.
+- **Translate at the edges** (English model, a translation pass after it): a second model call on
+  the safety-relevant path, a second place to invent facts (MIP-0050 §9), an extra component for
+  what `llama3.2` does natively; a machine-translated corpus is unsourced by construction. Rejected.
+- **Portuguese only, no toggle**, wrong for a repo whose docs are English, and the catalog costs the
+  same once it exists. **Language from location**, rejected (§5.5): a denied prompt must not cost
+  the visitor their language. **IP geolocation in the page**, §4.5. **Regex over the English notes
+  client-side**, hard-codes English as the wire format; codes are the contract.
 
 ## 11. Open questions
 

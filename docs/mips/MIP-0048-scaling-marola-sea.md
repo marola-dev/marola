@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude Opus 5, for M. Hoffmann (session of 2026-09-07, consolidating findings from PR #277) |
 | **Created** | 2026-09-07 |
-| **Phase** | 0 (local-only; no Azure, no earlier-phase prerequisite missing) |
-| **Related** | MIP-0025 (marola-sea itself), MIP-0032 (model × strategy benchmark matrix), MIP-0007 (a different kind of model entirely), `FUTURE-WORK.md` §9.1, `AI-103-MAPPING.md` row "Fine-tuning a model" |
+| **Phase** | 0 (local-only; no earlier-phase prerequisite missing) |
+| **Related** | MIP-0025 (marola-sea itself), MIP-0032 (model × strategy benchmark matrix), MIP-0007 (a different kind of model entirely), `FUTURE-WORK.md` §9.1 |
 | **Effort** | M — no new module: preset tables, training flags and a preflight estimator already exist on `experiment/qwen-presets-and-training-perf` (PR #277). The work left is corpus growth and one real GPU run, not new machinery |
-| **Gain** | user value (a domain model that answers ocean questions usefully rather than proving a pipeline); exam coverage (AI-103 "Fine-tuning a model" — today "Recipe written, not run (no GPU)"); infra/dev-loop (a preflight that says whether a run fits before four hours are spent finding out) |
+| **Gain** | user value (a domain model that answers ocean questions usefully rather than proving a pipeline); infra/dev-loop (a preflight that says whether a run fits before four hours are spent finding out) |
 | **Effort vs Gain** | do next for the 4B/7B step; **park 27B** — §4.4 shows it needs instruction data marola does not have and should not write |
-| **Depends on** | MIP-0025 (the pipeline this scales — merged tasks 1-5, publish tooling in place). No hardware prerequisite — the host's RTX 4090 is healthy (driver 595.84, CUDA 13.2). Coordinates with MIP-0032, which would benchmark whatever this produces; neither blocks the other. No Phase 1 gate, no paid Azure resource, so `AGENTS.md`'s cost rule does not apply |
+| **Depends on** | MIP-0025 (the pipeline this scales — merged tasks 1-5, publish tooling in place). No hardware prerequisite — the host's RTX 4090 is healthy (driver 595.84, CUDA 13.2). Coordinates with MIP-0032, which would benchmark whatever this produces; neither blocks the other. No Phase 1 gate, no paid resource, so `AGENTS.md`'s cost rule does not apply |
 | **Blocked by** | 0025 |
 | **Risk** | Spending a GPU day on a bigger model that answers no better, because the ceiling is the corpus (168 unique facts) and not the parameter count — §4.5 |
 | **Cost so far** | — |
@@ -356,13 +356,6 @@ someone to swim; that boundary is the point of `ARCHITECTURE.md` §3b.
 - **Skip fine-tuning; rely on RAG with a stock model.** Arguably the best answer for factual
   accuracy. It loses the tone and citation format the fine-tune teaches, and MIP-0032 is the right
   place to settle it with numbers.
-
-## 10. Exam-coverage mapping
-
-`AI-103-MAPPING.md` row **"Fine-tuning a model"** currently reads "Recipe written, not run (no
-GPU); Tier 1 built and used live". A completed Qwen run on the 4090 would move it to run-and-
-verified, closing one of the two gaps that section names explicitly. No AI-500 row is affected —
-this is a single-model change, not a multi-agent one.
 
 ## 11. Open questions
 

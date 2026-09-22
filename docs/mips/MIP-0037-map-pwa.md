@@ -5,7 +5,7 @@
 | **Status** | Draft |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-07: "review the mips in roadmap given by Kimi to check if they are still valid, if yes, create the MIP" — K8 in `docs/ROADMAP.md` §7) |
 | **Created** | 2026-09-07 |
-| **Phase** | 1 (site/static only — no bot, no Azure, no earlier-phase prerequisite missing) |
+| **Phase** | 1 (site/static only — no bot, no cloud, no earlier-phase prerequisite missing) |
 | **Related** | ROADMAP.md §7 K8 ("PWA for the map... cheap win after MIP-0009, same `app.js`, avoid two hands in one file"); MIP-0009 (its blocker — Accepted, done, unblocking this); MIP-0005 §9 ("plain files, no build" — a service worker is plain JS, still no build, K8's own note); MIP-0033 §5.2 (a second, unrelated reason `app.js`/`index.html` are getting busy this session — sequencing note in §11) |
 | **Effort** | S — one new file (`sw.js`), one `manifest.json`, ~15 lines in `index.html`, a cache-versioning line in `site.yml`. No new dependency, no build step, no server |
 | **Gain** | `user value` (the board keeps working — stale but visible — on a flaky beach connection, exactly where marola is used); `infra/dev-loop` (an install prompt is free distribution K8's own text names) |
@@ -193,11 +193,6 @@ honest "computed once" framing.
 - **A full PWA framework (Workbox, etc.)** pulls in a build step this repo's `site/static/`
   explicitly avoids (MIP-0005 §9); a ~30-line hand-written service worker covers this MIP's actual
   scope (two file types, one JSON endpoint) without one.
-
-## 10. Exam-coverage mapping
-
-None directly. (Offline-tolerant client design is a general web-platform practice, not an
-AI-103/AI-500 domain row.)
 
 ## 11. Open questions
 

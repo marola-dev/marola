@@ -10,7 +10,7 @@
 | **Effort** | M — one cache trait + decorator, concurrent fan-out; local file cache, no new module |
 | **Gain** | infra/dev-loop (unblocks MIP-0002 adoption); cost/ops (less Overpass/Open-Meteo load, fewer 429s) |
 | **Effort vs Gain** | do next — moderate effort, and MIP-0002 cannot ship to real users without it |
-| **Depends on** | none technically; MIP-0002 is the consumer that makes it worth building now; Phase 1 (Phase 4 for the shared/Azure cache); no Azure resource in v1 |
+| **Depends on** | none technically; MIP-0002 is the consumer that makes it worth building now; Phase 1 (Phase 4 for a shared cache); no cloud resource in v1 |
 | **Risk** | coarse-tile caching or a stale-served forecast could quietly mislead near a tile edge |
 | **Cost so far** | — (nothing merged beyond the design doc, same untracked commit as MIP-0002) |
 
@@ -47,8 +47,7 @@ of a minute.
   hourly; caching one hour per beach is lossless.
 - **IMA feed**: weekly-to-monthly data; one download per day is generous.
 - **Storage**: local = JSON files under `data/cache/` (already the pattern for the sighting store
-  and the RAG index); Azure opt-in = Cosmos DB (already a dependency) or Azure Cache for Redis
-  (not adopted — a new paid resource; `AGENTS.md` cost rule). Nothing new for the local path.
+  and the RAG index). Nothing new for the local path.
 
 ## 5. Design
 
@@ -60,7 +59,7 @@ trait Cache:
   def put(key: String, value: String): Unit < Sync
 ```
 
-`FileCache(dir)` (local default, one file per key, mtime = age) and `CosmosCache` (opt-in). Keys:
+`FileCache(dir)` (local default, one file per key, mtime = age). Keys:
 
 | Source | Key | TTL | Why |
 |---|---|---|---|
@@ -128,12 +127,6 @@ and stale water data already follows MIP-0001's 45-day rule.
   justifies it; caching first.
 - **SQLite instead of files**: nicer queries, one more dependency, no need yet.
 - **Redis**: right tool for a multi-instance bot; wrong tool for a laptop. Opt-in path noted.
-
-## 10. Exam-coverage mapping
-
-AI-103 §1 "plan resource requirements / manage costs": cache hit rate vs. upstream calls is the
-cost model for the eventual Azure deployment. AI-500 §3 "monitor": the cache/latency counters are
-the first operational metrics.
 
 ## 11. Open questions
 

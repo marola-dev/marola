@@ -6,9 +6,9 @@
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: build an arXiv digest script, cache the results, and turn real findings + trending repos into a MIP) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 — research/design only; nothing here touches the running product. Every design in §5 below is Phase-1-or-later work: `AGENTS.md`'s phase-discipline rule says do not start Phase 2 provisioning before Phase 1 (the Telegram bot) is done, and even Phase-1-compatible items here (a scoring-heuristic change) are proposals to accept later, not to build now |
-| **Related** | `docs/ARCHITECTURE.md` §5 (the local/Azure pluggable-integration pattern any new data source must follow), `docs/ARCHITECTURE.md`'s jellyfish/whale heuristic (what §5.2 below would replace or augment), `MIP-0017` (agentic-tooling survey — the dev-tooling counterpart of this MIP; that one surveyed how marola is *built*, this one surveys what marola's *forecasting/scoring logic* could learn from), `scripts/arxiv_digest.py` (the tool this MIP's findings came from) |
-| **Effort** | S for §5.1 (a citations/notes doc, no code); M for §5.2 (a new heuristic input needs a data source review per `docs/ARCHITECTURE.md` §5 and new tests); L for §5.3 (a new pluggable integration — CMEMS/Copernicus Marine or a self-hosted ocean-forecast model — is a new trait + local/Azure-shaped backend, not a small change) |
-| **Gain** | user value (better swim-safety and jellyfish-risk accuracy is the actual product); exam coverage (a new pluggable data source maps to AI-103's "integrate external data" domain the same way Open-Meteo/Overpass already do) |
+| **Related** | `docs/ARCHITECTURE.md` §5 (the local-default pluggable-integration pattern any new data source must follow), `docs/ARCHITECTURE.md`'s jellyfish/whale heuristic (what §5.2 below would replace or augment), `MIP-0017` (agentic-tooling survey — the dev-tooling counterpart of this MIP; that one surveyed how marola is *built*, this one surveys what marola's *forecasting/scoring logic* could learn from), `scripts/arxiv_digest.py` (the tool this MIP's findings came from) |
+| **Effort** | S for §5.1 (a citations/notes doc, no code); M for §5.2 (a new heuristic input needs a data source review per `docs/ARCHITECTURE.md` §5 and new tests); L for §5.3 (a new pluggable integration — CMEMS/Copernicus Marine or a self-hosted ocean-forecast model — is a new trait + backend, not a small change) |
+| **Gain** | user value (better swim-safety and jellyfish-risk accuracy is the actual product) |
 | **Effort vs Gain** | §5.1 is a cheap win — do next, it's free and improves the honesty of `docs/ARCHITECTURE.md`'s existing heuristic. §5.2 is do-when-X-lands: worth a real MIP with real data-source verification (this MIP is not that — see §4's caveats), timed for whenever jellyfish-risk accuracy becomes a stated priority. §5.3 is park — worth revisiting once Phase 1 (Telegram bot) ships and there is real usage data showing marola's current jellyfish/SST heuristics are the accuracy bottleneck, not before |
 | **Depends on** | Phase 1 (Telegram bot) shipping first for §5.2/§5.3 — this MIP itself has no dependency, it is pure research output |
 | **Risk** | arXiv/GitHub search precision is genuinely poor for this domain — "ocean" and "jellyfish" collide with unrelated fields (galaxy astronomy, personality psychology) constantly; this MIP is explicit about which findings are real signal vs. noise in the raw digest, but a future implementer must re-verify any paper/repo cited here before building against it, not trust this MIP's summary as ground truth |
@@ -157,7 +157,7 @@ table unless a much later MIP argues for one on its own evidence. Not started he
 If a future MIP determines marola's own SST/jellyfish-risk accuracy is meaningfully limited by
 Open-Meteo's own fields, `WHOIGit/whoi-hab-hub`-style live data APIs (real APIs to poll, not
 models to host) are the shape that fits `docs/ARCHITECTURE.md` §5's existing pattern: a new
-trait with a local/free default (if one exists) and an Azure-opt-in path only if a paid service is
+trait with a local/free default (if one exists) and a paid opt-in path only if a paid service is
 genuinely the only option, per `AGENTS.md`'s cost rule. This is explicitly parked: it needs its
 own MIP with real data-source verification (coverage, licence, update cadence, geographic
 overlap with Santa Catarina, where marola actually operates), none of which this survey MIP did.
@@ -176,7 +176,7 @@ ever built, would need its own scoring/safety-impact analysis in that future MIP
   sorted by submission date descending; the *shape* of the noise (galaxy jellyfish, OCEAN
   personality model) should reproduce reliably since those are structural query collisions, not
   a one-time artifact.
-- No new Scala/unit tests: nothing here touches `core`/`local`/`azure`/`cli`.
+- No new Scala/unit tests: nothing here touches `core`/`local`/`cli`.
 
 ## 8. Risks, limitations, and honest caveats
 
@@ -210,13 +210,6 @@ ever built, would need its own scoring/safety-impact analysis in that future MIP
   trending page has no public API and scraping it is fragile/against the spirit of using
   documented APIs this repo otherwise follows (arXiv's own API, Open-Meteo, Overpass); the search
   API's star-sort is a documented, honest substitute, clearly labeled as such in §8.
-
-## 10. Exam-coverage mapping
-
-None directly claimed: this MIP is a research survey, not a shipped feature. If §5.3 is ever
-built, a new pluggable data-source integration would map to AI-103's external-data-integration
-domain the same way Open-Meteo/Overpass currently do (see `docs/AI-103-MAPPING.md`); that mapping
-belongs in that future MIP, not claimed here.
 
 ## 11. Open questions
 

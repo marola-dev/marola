@@ -5,7 +5,7 @@
 | **Status** | Partially implemented (task 1 of 3 — #391); tasks 2–3 wait on §11.1 — `Tasks: docs/mips/MIP-0060.tasks.md` |
 | **Author** | Claude (Fable 5.1), for M. Hoffmann |
 | **Created** | 2026-09-19 |
-| **Phase** | 0 (dev-loop; no user-facing surface, no Azure) |
+| **Phase** | 0 (dev-loop; no user-facing surface) |
 | **Related** | `DEV-FLOW.md` §5 ("Final review — only when asked" — this MIP adds a fourth on-request route, it does not change the rule), `.github/workflows/pr-body.yml` (same trigger, same guard), `h0ffmann/nix-config` `labs/agentic` (ai-jail, `jail-run`), MIP-0008 (Ollama sidecar) |
 | **Effort** | L by the rubric (adds a CI workflow), small in lines: one workflow, one posting script with a self-test, a `just` recipe, a `DEV-FLOW.md` edit — plus one upstream change in `nix-config` `labs/agentic` (package `ocr`, add a `jail-run ocr` mode) |
 | **Gain** | `infra/dev-loop` (a first-pass reviewer, run when asked, before a paid `/code-review` looks); `cost/ops` (the default path is a local model: $0, and it can take the cheap findings off the paid reviews) |
@@ -162,9 +162,8 @@ posted, and that the check can never block a merge are plain code. Nothing here 
 
 ### 5.5 Opt-in hosted model
 
-`vars.OCR_PROVIDER` ∈ {unset → Ollama, `anthropic`, `azure`}; key in `secrets.OCR_LLM_TOKEN`; the
-summary names the provider. Azure OpenAI/Foundry is OpenAI-compatible (`llm_auth_header: api-key`,
-**not checked**). This path sends private source to a third party and spends money: it needs an
+`vars.OCR_PROVIDER` ∈ {unset → Ollama, `anthropic`}; key in `secrets.OCR_LLM_TOKEN`; the summary
+names the provider. This path sends private source to a third party and spends money: it needs an
 explicit go-ahead with a measured per-PR figure from §7, and `--max-tokens-budget` as the ceiling.
 
 ## 6. Scoring / safety impact
@@ -210,10 +209,6 @@ None. No change to `Swimability`, to any reply, or to what a user sees.
   maintainer's call: even local it is heavy on the workstation, and §7.1 has not yet shown useful output.
   Revisit with upstream's incremental mode if the runner pool grows.
 - **Do nothing.** Reviews stay manual and late. Costs nothing, fixes nothing.
-
-## 10. Exam-coverage mapping
-
-None claimed. (AI-103 "Responsible AI" is about the product's output, not the dev loop.)
 
 ## 11. Open questions
 

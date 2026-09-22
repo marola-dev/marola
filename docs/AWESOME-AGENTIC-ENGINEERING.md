@@ -149,7 +149,7 @@ states explicitly which axis(es) it matches and why.
     NOAA/DWD/ECMWF/JMA models, with a dedicated Marine Forecast API. **Domain axis**: the actual
     upstream data provider marola's sea/weather-conditions pipeline is built on, and its "free for
     non-commercial use, self-hostable, zero mandatory account" ethos mirrors marola's own
-    "zero-Azure-account-required, everything opt-in" design stance.
+    "zero-cloud-account-required, everything opt-in" design stance.
 
 Ruled out during research (kept here for honesty, not padding): `calimero-network/ai-code-reviewer`
 (real, ~9★, but a parallel multi-model *voting* reviewer, not a sequential generate→critique

@@ -6,11 +6,6 @@ for Claude Code; tools that read this file as plain text must open AGENTS.md the
 
 ## Claude Code-specific additions (MIP-0011 §5 item 10)
 
-- **Use plan mode before touching `azure/**`.** Any multi-file or unfamiliar change under
-  `azure/**`/`infra/**`/`*.bicep` should go through plan mode first, not just
-  `.claude/rules/azure.md`'s auto-loaded rule text: the cost/deployment stakes there are the
-  highest in the repo, and a plan the human can veto before code changes land is cheaper than a
-  mid-edit correction.
 - **`/clear` between features, `/rename` to the branch name.** Restated from `AGENTS.md`'s
   "One feature, one session" rule because it's a session-hygiene habit, not just a cost-tracking
   one: a fresh context per feature keeps a reviewer subagent's read of `git diff` uncontaminated

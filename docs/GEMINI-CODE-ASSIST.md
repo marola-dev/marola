@@ -182,17 +182,15 @@ MIP-0060's OCR job use):
 - `pull_request` touching `infra/gemini/**` → `pulumi preview`, diff posted as a PR comment.
   Read-only; fine to run unattended.
 - `workflow_dispatch` only → `pulumi up`. Never on push, never on merge: `AGENTS.md`'s
-  cost/deployment rule ("never provision without explicit human confirmation") is about Azure by
-  name but about paid/irreversible provisioning by intent, and a GitHub-triggered `up` is exactly
-  the shape it forbids an agent to run. The human presses the button.
+  cost/deployment rule ("never provision without explicit human confirmation") is about
+  paid/irreversible provisioning, and a GitHub-triggered `up` is exactly the shape it forbids an
+  agent to run. The human presses the button.
 - Auth: Workload Identity Federation from the repo's OIDC token to a service account with
   `roles/developerconnect.admin`, `roles/storage.objectAdmin` on the bucket, and the two Gemini
   roles, no JSON key in a GitHub secret.
 
 Follow-up for the MIP, not this PR: add `pulumi up` / `pulumi destroy` to
-`.claude/settings.json`'s `permissions.deny` next to `azd up`, and teach
-`.claude/hooks/guard-azure.sh` the wrapped forms, so the two-layer gate covers GCP as it covers
-Azure.
+`.claude/settings.json`'s `permissions.deny`, so an agent cannot run them directly.
 
 ## 7. What it costs, and what leaves the machine
 

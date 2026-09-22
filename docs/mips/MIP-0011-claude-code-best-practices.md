@@ -9,23 +9,23 @@
 | **Phase** | 0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite |
 | **Related** | `AGENTS.md` (the rules this turns from advisory into enforced), `docs/DEV-FLOW.md`, `docs/AGENT-SKILLS.md` §3 (skill candidates), `docs/FABLE_REVIEW.md` §3 (jail environment notes), `PHILOSOPHY.md` (why constraints, not prose), `.claude/settings.json`, `.claude/skills/`, `justfile` (`jail-claude`, `jcf`, `jcs`); MIP-0013 (an OpenCode tryout — most of tasks 1-5, 7 and 9 here have a one-config-key equivalent there); `docs/en/interactive-mode`, `docs/en/routines` (background/overnight execution, task 11) |
 | **Effort** | M — ten small, independent config/hook PRs; each individually small, but ten of them |
-| **Gain** | infra/dev-loop (turns "never `azd up`" from prose into a hook); cost/ops (fewer permission prompts, a shorter `AGENTS.md`) |
-| **Effort vs Gain** | do next — the cost gate (task 2) is "the rule that must be a hook, not prose" per AI-500 §4; cheap and overdue |
+| **Gain** | infra/dev-loop (turns advisory `AGENTS.md` rules into enforced config); cost/ops (fewer permission prompts, a shorter `AGENTS.md`) |
+| **Effort vs Gain** | do next — cheap and overdue |
 | **Depends on** | none blocking; Phase 0, developer tooling only; MIP-0013's tryout result may show which tasks are Claude-Code-specific |
-| **Risk** | a shell-text `permissions.deny` is a guard rail, not a boundary — `bash -c "azd up"` evades it; ai-jail and the human go-ahead remain the real boundary |
+| **Risk** | a shell-text `permissions.deny` is a guard rail, not a boundary — `bash -c "gh pr merge"` evades it; ai-jail and the human go-ahead remain the real boundary |
 | **Cost so far** | ~$12.86 total across the eleven merged task PRs (`Cost:` trailers, mostly measured via `scripts/cost-split.py`; task 6's `$3.40` is a diff-size estimate, no session log matched) — not counting the design/MIP-writing session bundled into MIP-0010's shared total (commit 3fdcd05), or the follow-on ultrareview verification (see §7 — a free-tier request this time, at $0 to the user; note the real per-review price here once a paid one is spent, so this line stays honest about what future reviews cost) |
 
 ## 1. Summary
 
-marola already follows the parts of Anthropic's guidance that are habits: a `CLAUDE.md` that
-imports `AGENTS.md`, two in-repo skills, one session per feature, a cost line per PR, the agent in
-a sandbox. What it does not have is the part that is **configuration the harness enforces**: no
-hooks (every rule in `AGENTS.md`, including "never `azd up`", is text the model may or may not
-weigh), no shared permission allowlist (every session re-approves `just test`), no path-scoped
-rules (`AGENTS.md` is 196 lines loaded into every session, on the edge of the documented
-adherence cliff), no subagents (the reviewer `DEV-FLOW.md` §5 describes is run by hand), no
-`.mcp.json` (marola's own MCP server is not offered to the agent working on marola). This MIP
-adopts the documented practices in that order, each as one small PR, with a measurable "done".
+marola already follows the parts of Anthropic's guidance that are habits: a `CLAUDE.md` that imports
+`AGENTS.md`, two in-repo skills, one session per feature, a cost line per PR, the agent in a
+sandbox. What it does not have is the part that is **configuration the harness enforces**: no hooks
+(every rule in `AGENTS.md` is text the model may or may not weigh), no shared permission allowlist
+(every session re-approves `just test`), no path-scoped rules (`AGENTS.md` is 196 lines loaded into
+every session, on the edge of the documented adherence cliff), no subagents (the reviewer
+`DEV-FLOW.md` §5 describes is run by hand), no `.mcp.json` (marola's own MCP server is not offered
+to the agent working on marola). This MIP adopts the documented practices in that order, each as one
+small PR, with a measurable "done".
 
 ## 2. Motivation
 
@@ -61,9 +61,6 @@ $ just jcf
 ▸ SessionStart: branch mip-0010/1-run-ledger · gh: not logged in (push works, PRs by hand) · 0 uncommitted
 > …edits core/src/main/scala/marola/ledger/RunLedger.scala…
 ▸ PostToolUse(Edit *.scala): scalafmt ok
-> azd up
-▸ PreToolUse(Bash) blocked: "azd up" provisions paid Azure resources — AGENTS.md cost rule.
-  Re-run with MAROLA_ALLOW_AZURE_DEPLOY=1 after a human go-ahead.
 > (turn ends with .scala changes and no test run)
 ▸ Stop: 3 Scala files changed since HEAD and `just test` has not run this session — run it or say why.
 ```
@@ -133,16 +130,14 @@ Each bullet is one task/PR (`mip-tasks` order), all under `.claude/` or the root
 self-test the `quality` recipe runs (`scripts/hooks/*.sh --self-test`, like the Python scripts).
 
 1. **`.claude/settings.json`, permissions.** `allow`: `Bash(just build*)`, `Bash(just test*)`,
-   `Bash(just quality*)`, `Bash(just fmt*)`, `Bash(sbt *)`, `Bash(git status*)`, `Bash(git
-   diff*)`, `Bash(git log*)`, `Bash(scripts/stack.sh status*)`, `Read`, `Grep`, `Glob`; `deny`:
-   `Bash(azd up*)`, `Bash(azd provision*)`, `Bash(az deployment *)`, `Bash(az group create*)`,
-   `Read(.env)`, `Read(**/*.pem)`, `Read(**/*.key)`. Derive the allow list from real transcripts
-   with the `fewer-permission-prompts` skill first; personal extras go to `settings.local.json`
-   (add it to `.gitignore`).
-2. **Hooks, cost gate.** `PreToolUse` on `Bash` → `.claude/hooks/guard-azure.sh`: exit 2 with
-   the `AGENTS.md` sentence when the command matches `azd (up|provision|deploy)` or `az deployment`
-   and `MAROLA_ALLOW_AZURE_DEPLOY` is unset. This is the rule that must be a hook, not prose
-   (`AI-500-MAPPING.md` §4 human-confirmation gate). ai-jail stays as the second layer.
+   `Bash(just quality*)`, `Bash(just fmt*)`, `Bash(sbt *)`, `Bash(git status*)`, `Bash(git diff*)`,
+   `Bash(git log*)`, `Bash(scripts/stack.sh status*)`, `Read`, `Grep`, `Glob`; `deny`: `Read(.env)`,
+   `Read(**/*.pem)`, `Read(**/*.key)`. Derive the allow list from real transcripts with the
+   `fewer-permission-prompts` skill first; personal extras go to `settings.local.json` (add it to
+   `.gitignore`).
+2. **Hooks, cost gate.** A `PreToolUse` hook on `Bash` that blocked paid-deploy commands until a
+   human go-ahead. It has since been removed, with the integrations it guarded. ai-jail and the
+   human go-ahead remain.
 3. **Hooks, format on write.** `PostToolUse` on `Edit|Write` matching `*.scala` → `scalafmt` on
    that file via the native binary (`coursier launch scalafmt` cached in the flake; **whether the
    flake already provides a native `scalafmt` was not checked**, §11). `*.py` → `ruff format`
@@ -154,14 +149,13 @@ self-test the `quality` recipe runs (`scripts/hooks/*.sh --self-test`, like the 
 5. **Hooks, session start.** `SessionStart` prints branch, `gh auth status` in one line,
    uncommitted count, and the two jail caveats from `FABLE_REVIEW.md` §3. Replaces two auto-memory
    notes with a fact the harness states.
-6. **`.claude/rules/`.** Move the path-specific halves of `AGENTS.md` into `rules/scala.md`
-   (`paths: ["**/*.scala", "build.sbt"]`: Kyo boundary, strictEquality, enum-over-exceptions,
-   verify-against-the-jar), `rules/azure.md` (`paths: ["azure/**", "infra/**", "**/*.bicep"]` —
-   the cost rule in full, managed identity), `rules/docs.md` (`paths: ["docs/**"]`: status
-   vocabulary, MIP template pointer). `AGENTS.md` keeps what every session needs (what the repo is,
-   commands, phase discipline, attribution, cost) and links the rules; target ≤ 150 lines; run
-   `/doctor` for the trim list. **Decision needed (§11):** `AGENTS.md` is read by non-Claude
-   agents too; rules are excerpts that link back, never the only copy.
+6. **`.claude/rules/`.** Move the path-specific halves of `AGENTS.md` into `rules/scala.md` (`paths:
+   ["**/*.scala", "build.sbt"]`: Kyo boundary, strictEquality, enum-over-exceptions,
+   verify-against-the-jar), `rules/docs.md` (`paths: ["docs/**"]`: status vocabulary, MIP template
+   pointer). `AGENTS.md` keeps what every session needs (what the repo is, commands, phase
+   discipline, attribution, cost) and links the rules; target ≤ 150 lines; run `/doctor` for the
+   trim list. **Decision needed (§11):** `AGENTS.md` is read by non-Claude agents too; rules are
+   excerpts that link back, never the only copy.
 7. **Subagents.** `.claude/agents/mip-reviewer.md` (tools `Read, Grep, Glob, Bash`, `model:
    fable`, `memory: project`): reviews a task branch against its `MIP-NNNN.tasks.md` row, reports
    gaps that affect correctness or the stated requirement only, `DEV-FLOW.md` §5's prompt, made a
@@ -172,11 +166,10 @@ self-test the `quality` recipe runs (`scripts/hooks/*.sh --self-test`, like the 
    one PR each, each with `evals/evals.json` and a `skill-creator` run before merge.
 9. **`.mcp.json`.** `marola` → `just mcp-server` (stdio) so a session working on marola can call
    `find_nearby_beaches` / `get_swim_recommendation`, dogfooding `ARCHITECTURE.md` §5c.
-10. **`CLAUDE.md` additions** under the import: plan mode for `azure/**`; `/clear` per feature and
-    `/rename` to the branch (already in `DEV-FLOW.md`, restated once); compaction instruction
-    "preserve the list of modified files, the test commands run, and the Cost figure"; a
-    `CLAUDE.local.md` mention. Optional: a statusline showing context use and branch (`statusline`
-    skill), personal, not committed.
+10. **`CLAUDE.md` additions** under the import: `/clear` per feature and `/rename` to the branch
+    (already in `DEV-FLOW.md`, restated once); compaction instruction "preserve the list of modified
+    files, the test commands run, and the Cost figure"; a `CLAUDE.local.md` mention. Optional: a
+    statusline showing context use and branch (`statusline` skill), personal, not committed.
 11. **Background/overnight MIP execution.** `/goal` + `/loop` locally, or a cloud
     [routine](https://code.claude.com/docs/en/routines) for something that survives the laptop
     sleeping, to run a `MIP-NNNN.tasks.md` row-by-row unattended, stopping at a stated condition
@@ -194,13 +187,10 @@ None. No product code changes.
 
 ## 7. Verification plan
 
-- `scripts/hooks/*.sh --self-test` in `just quality`: `guard-azure.sh` exits 2 on `azd up`, `azd
-  provision`, `az deployment group create`, exits 0 on `az account show` and on `azd up` with the
-  override set; `stop-gate.sh` blocks once then allows; `format.sh` leaves an already-formatted
-  file unchanged (byte-equal).
+- `scripts/hooks/*.sh --self-test` in `just quality`: `stop-gate.sh` blocks once then allows;
+  `format.sh` leaves an already-formatted file unchanged (byte-equal).
 - A session check per PR, recorded in the PR body: `/hooks` lists the hooks; `/context` shows
-  `rules/scala.md` only after a `.scala` file is read; a prompt "run azd up" is blocked with the
-  `AGENTS.md` sentence; `/skill-doctor` before/after the skills PR.
+  `rules/scala.md` only after a `.scala` file is read; `/skill-doctor` before/after the skills PR.
 - Measure: permission prompts per session (count from the transcript, before vs after task 1);
   `AGENTS.md` line count (196 → ≤ 150); Cost trailers on the next three task PRs vs the previous
   three (the hooks should not raise them; a Stop hook that loops would).
@@ -237,7 +227,7 @@ None. No product code changes.
   would tax every edit; native binaries only, per-file, timeouts set.
 - A `Stop` hook that blocks repeatedly burns tokens and trust; the once-per-session design and the
   self-test exist for that.
-- `permissions.deny` matches command text; `bash -c "azd up"` or a script can evade it. It is a
+- `permissions.deny` matches command text; `bash -c "gh pr merge"` or a script can evade it. It is a
   guard rail, not a boundary; ai-jail and the human go-ahead remain the boundary.
 - Auto mode's classifier and the deny list can disagree; deny wins for what it matches, and the
   rest stays the classifier's call.
@@ -267,12 +257,6 @@ None. No product code changes.
 - **ai-jail alone**: filesystem/process containment, no notion of a paid API call or a test gate.
 - **One giant `settings.json` PR**: harder to attribute a regression (a hook slowing sessions) to
   a change; ten small PRs match `DEV-FLOW.md`.
-
-## 10. Exam-coverage mapping
-
-AI-500 §4 "Secure, govern, and deploy" — the human-confirmation gate becomes a mechanism (a
-`PreToolUse` deny) rather than a paragraph; note it in that section's "Designed-not-built" list.
-Otherwise none: this is how the repo is built, not what it does.
 
 ## 11. Open questions
 

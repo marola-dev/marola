@@ -1,17 +1,17 @@
-# MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first, Azure ML as the opt-in
+# MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first
 
 | | |
 |---|---|
-| **Status** | Implemented — v1 (local server, Phase 0), all 7 tasks merged: PRs #44 → #51 → #52 → #49 → #48 → #47 → #50 (`docs/mips/MIP-0010.tasks.md`); cost ~$16.52 across the 7 PRs (summed `Cost:` trailers, below). The Azure ML tracking-server path (§4.5) stays Draft/unbuilt, blocked on Phase 1 (MIP-0002) and the cost-confirmation gate — not a task here by design |
-| **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "MIP for adding MLflow, and how to deploy it local/azure") |
+| **Status** | Implemented — v1 (local server, Phase 0), all 7 tasks merged: PRs #44 → #51 → #52 → #49 → #48 → #47 → #50 (`docs/mips/MIP-0010.tasks.md`); cost ~$16.52 across the 7 PRs (summed `Cost:` trailers, below) |
+| **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "MIP for adding MLflow") |
 | **Created** | 2026-09-05 |
 | **Tasks** | `docs/mips/MIP-0010.tasks.md` — stacked PRs, one per task |
-| **Phase** | 0 for the local server and the Scala/Python logging (developer tooling, no user-visible change); the Azure ML path is Phase 2 and waits on Phase 1 (MIP-0002) like every other Azure opt-in |
-| **Related** | `FUTURE-WORK.md` §10 (the Langfuse-shaped tracing gap this closes for the JVM side), `FUTURE-WORK.md` §4.1 (evaluation harness — the ledger this MIP adds is what a harness writes to), `ARCHITECTURE.md` §5f (`Telemetry.scala`, the existing OpenTelemetry plumbing), `docs/benchmarks/` and `scripts/benchmark_gate.py` (today's Markdown ledger), `dspy/` and `finetune/` (the offline Python steps), `AI-103-MAPPING.md` "Monitor an AI solution", `AI-500-MAPPING.md` §3 |
+| **Phase** | 0 for the local server and the Scala/Python logging (developer tooling, no user-visible change) |
+| **Related** | `FUTURE-WORK.md` §10 (the Langfuse-shaped tracing gap this closes for the JVM side), `FUTURE-WORK.md` §4.1 (evaluation harness — the ledger this MIP adds is what a harness writes to), `ARCHITECTURE.md` §5f (`Telemetry.scala`, the existing OpenTelemetry plumbing), `docs/benchmarks/` and `scripts/benchmark_gate.py` (today's Markdown ledger), `dspy/` and `finetune/` (the offline Python steps) |
 | **Effort** | L — 7 stacked PRs across three lanes (ledger, tracing, dspy), a new REST client, an OTel split |
-| **Gain** | infra/dev-loop (replaces a hand-pasted Markdown ledger with a queryable one); exam coverage (AI-103 "Monitor an AI solution", AI-500 §3) |
-| **Effort vs Gain** | cheap win, delivered — developer-only, no user-facing risk, closes a named exam-mapping gap |
-| **Depends on** | none for v1 (local only, delivered); the Azure ML path (§4.5) explicitly waits on Phase 1 (MIP-0002) and the cost-confirmation gate |
+| **Gain** | infra/dev-loop (replaces a hand-pasted Markdown ledger with a queryable one) |
+| **Effort vs Gain** | cheap win, delivered — developer-only, no user-facing risk |
+| **Depends on** | none (local only, delivered) |
 | **Risk** | MLflow's OTLP ingest and REST surface are both young (server 3.16.0 vs. a lagging Java client) — a version bump could break the REST contract silently |
 | **Cost so far** | ~$16.52 across the 7 implementation PRs (#44, #51, #52, #49, #48, #47, #50); the MIP's own drafting cost is bundled into a shared ~$9.65 session total with MIP-0011 and other PRs (commit 3fdcd05), not separately split |
 
@@ -26,9 +26,7 @@ corpus hash, git SHA), **metrics** (coverage per arm, cited %, latency; the DSPy
 **artifacts** (the Markdown report, the compiled prompt JSONs), and, because the MLflow server
 accepts OpenTelemetry traces over OTLP/HTTP from any language, **LLM-call traces** from the Scala
 pipeline itself (summariser + reviewer spans with model, latency and token counts). Local default:
-`mlflow server` on SQLite via a compose profile or `just mlflow-up`, no account. Azure opt-in: an
-Azure Machine Learning workspace is an MLflow-compatible tracking server; its limits for a JVM
-client are stated below, not glossed.
+`mlflow server` on SQLite via a compose profile or `just mlflow-up`, no account.
 
 ## 2. Motivation
 
@@ -41,12 +39,10 @@ client are stated below, not glossed.
   trainset, with what metric score, is in nobody's notes. Langfuse tracing is optional there today
   (`_init_langfuse_tracing`), Python-only, and needs a hosted account or a second server.
 - **The JVM side has OpenTelemetry but nothing LLM-shaped.** `Telemetry.scala` wraps one span
-  around the pipeline and exports only to Application Insights (`ARCHITECTURE.md` §5f, "unverified
+  around the pipeline and had no local export target (`ARCHITECTURE.md` §5f, "unverified
   against a live resource"). `FUTURE-WORK.md` §10 names "Langfuse-shaped tracing … a scoped, real
   improvement" as the actionable gap; Langfuse has no JVM SDK. MLflow's OTLP endpoint makes the
   existing OpenTelemetry plumbing enough.
-- **AI-103/AI-500 ask for it.** "Monitor an AI solution" is the one AI-103 row still at "no-op by
-  default"; AI-500 §3 (evaluate, optimise, monitor) has no evaluation ledger at all.
 
 ## 3. User-visible change
 
@@ -104,7 +100,7 @@ and `OTEL_EXPORTER_OTLP_TRACES_HEADERS=x-mlflow-experiment-id=123` (ingest page,
 2026-09-05). MLflow states GenAI semantic-convention support (`gen_ai.request.model`,
 `gen_ai.usage.input_tokens`, …) for ingestion. On the JVM side `io.opentelemetry:opentelemetry-exporter-otlp`
 is at 1.65.0 (Maven Central, 2026-08-07); the repo pins `opentelemetry-sdk-extension-autoconfigure`
-1.49.0 alongside `azure-monitor-opentelemetry-autoconfigure` 1.4.0; bump to one consistent
+1.49.0; bump to one consistent
 OpenTelemetry BOM in the implementation.
 
 ### 4.4 Writing runs from the Python steps
@@ -116,36 +112,10 @@ Prompt Registry (`mlflow.genai.register_prompt`) are **Python-only APIs** (docs 
 page fetched); usable in `dspy/` and `finetune/`, not from Scala. Whether `mlflow.dspy.autolog()`
 exists at the pinned DSPy/MLflow versions was **not checked** (§11).
 
-### 4.5 Azure paths
-
-- **Azure Machine Learning workspace as the tracking server** (Learn, `ms.date` 2025-10-06,
-  fetched 2026-09-05): "Azure Machine Learning workspaces are MLflow-compatible … use an Azure
-  Machine Learning workspace the same way you use an MLflow server." **Java limitation, quoted:**
-  "MLflow tracking is limited to tracking experiment metrics and parameters on Azure Machine
-  Learning jobs. Artifacts and models can't be tracked." Cost: "there is no additional charge to use
-  Azure Machine Learning" beyond compute and the companion resources it creates — Blob Storage,
-  Key Vault, Container Registry, Application Insights (pricing page, fetched 2026-09-05) — i.e.
-  cents per month idle, but a real resource group; **needs the human go-ahead `AGENTS.md`
-  requires.** How a Scala process *outside* an Azure ML job authenticates to the workspace's
-  tracking endpoint (the Python route is the `azureml-mlflow` plugin and `azureml://` URIs) was
-  **not verified** (§11).
-- **Azure AI Foundry tracing** stores traces in Application Insights via OpenTelemetry (Foundry
-  classic doc, updated 2026-06-26, fetched 2026-09-05); MLflow is not mentioned there. This is
-  `Telemetry.scala`'s existing path, unchanged by this MIP.
-- **Self-hosting the MLflow server on Azure** (Container App + Azure Database for PostgreSQL +
-  Blob artifacts) is the third option; it is the most complete for the JVM (OTLP ingest works, no
-  Java limitation) and the most expensive (a database). Not proposed for v1.
-
-**Pick:** local `mlflow server` as the default for everything; for Azure, in Phase 2, the Python
-offline steps log to an Azure ML workspace (fully supported), and the Scala side keeps logging
-metrics/params there only if the auth question resolves — otherwise the Scala ledger stays local
-or self-hosted. Stated as such in `ARCHITECTURE.md` §5's table when built.
-
 ## 5. Design
 
 **A new pluggable integration, same shape as the six others** (`ARCHITECTURE.md` §5): a trait in
-`core/`, a no-op default, an implementation in `local/` (MLflow is not Azure; `local/` keeps its
-zero-Azure-SDK guarantee since this is plain REST), env-var selection in `AppConfig`.
+`core/`, a no-op default, an implementation in `local/` (plain REST, no SDK), env-var selection in `AppConfig`.
 
 ```scala
 // core/src/main/scala/marola/ledger/RunLedger.scala
@@ -179,15 +149,14 @@ Where runs are written:
 - `finetune/train_lora.py` → experiment `marola/finetune` (later task; "written, not run" today).
 - **Traces:** `Telemetry` splits into a `core` trait (`Tracing.withSpan`, `Tracing.llmSpan`) with
   two backends: `local/MlflowTracing` (OTLP/HTTP exporter to `<tracking uri>/v1/traces`, header
-  from `MAROLA_MLFLOW_EXPERIMENT`) and `azure/AzureMonitorTracing` (today's code). A
-  `TracedLlmClient(inner, tracing)` decorator wraps `LocalLlmClient`/`AzureFoundryLlmClient` and
+  from `MAROLA_MLFLOW_EXPERIMENT`) and a no-op. A
+  `TracedLlmClient(inner, tracing)` decorator wraps `LocalLlmClient` and
   emits one span per `complete` with `gen_ai.request.model`, latency, and token counts when the
   response carries `usage`; prompt and completion text are attached **only** when
   `MAROLA_TRACE_CONTENT=1` (locations are personal data).
 
 Env vars (`AppConfig`): `MAROLA_MLFLOW_TRACKING_URI` (unset = `Noop`), `MAROLA_MLFLOW_EXPERIMENT`
-(default `marola`), `MAROLA_TRACES=off|mlflow|azure` (today's implicit switch on
-`APPLICATIONINSIGHTS_CONNECTION_STRING` keeps working as `azure`). Recipes: `just mlflow-up`
+(default `marola`), `MAROLA_TRACES=off|mlflow`. Recipes: `just mlflow-up`
 (compose profile `mlflow` on `ghcr.io/mlflow/mlflow`, SQLite + `.tmp/mlflow/` artifacts, bound to
 127.0.0.1) and `just mlflow-ui`. Deterministic: everything above. Through the LLM: nothing.
 
@@ -217,8 +186,6 @@ next benchmark PR's comparison paragraph links a run URL instead of pasting a ta
 - MLflow is a heavy Python dependency: it lives in a compose profile / `uvx`, never in the runtime
   image (`Dockerfile`) or in `flake.nix`'s default shell unless the nixpkgs package proves light
   (§11).
-- The Azure ML Java limitation (metrics and params only, inside jobs) means the Scala side may
-  never log artifacts there; the design keeps artifacts optional for that backend.
 - Two ledgers during the transition (Markdown + MLflow). Mitigated by keeping Markdown canonical
   for the gate until the MLflow query path is tested.
 
@@ -229,21 +196,11 @@ next benchmark PR's comparison paragraph links a run URL instead of pasting a ta
 - **Langfuse**: already optional in `dspy/`; no JVM SDK (`FUTURE-WORK.md` §10); whether its
   server accepts OTLP from other languages was **not checked**. One server for runs *and* traces
   favoured MLflow.
-- **Application Insights only**: Azure-only, no local default; violates the local-first rule.
 - **Weights & Biases / hosted trackers**: an account and a key for a personal project's ledger.
 - **Java client instead of REST**: see §4.2; kept as the fallback.
 
-## 10. Exam-coverage mapping
-
-AI-103 §1 "Monitor an AI solution" — from "no-op by default" to a local, verified ledger plus
-traces (mark "proposed: MIP-0010"). AI-500 §3 "Evaluate, optimize, and monitor" — the ledger a
-future eval harness (`FUTURE-WORK.md` §4.1) writes to; per-agent spans are the first step toward
-the cross-agent tracing that section calls out as missing.
-
 ## 11. Open questions
 
-1. Azure ML from the JVM outside a job: which tracking URI and credential (`DefaultAzureCredential`
-   bearer token?), verify against a real workspace before writing `ARCHITECTURE.md` §5's row.
 2. Is `python3Packages.mlflow` in nixpkgs light enough for the dev shell, or is the compose
    profile / `uvx mlflow` the only sane local path?
 3. `mlflow.dspy.autolog()` at the pinned DSPy version: exists? worth it, or log the two compile
@@ -261,9 +218,5 @@ the cross-agent tracing that section calls out as missing.
 - OTLP ingest: `https://mlflow.org/docs/latest/genai/tracing/opentelemetry/ingest/`: `/v1/traces`,
   OTLP/HTTP only, `x-mlflow-experiment-id`, MLflow ≥ 3.6.0, SQL store required (2026-09-05).
 - REST: `https://mlflow.org/docs/latest/api_reference/rest-api.html`: log-batch caps (2026-09-05).
-- Azure ML: `https://learn.microsoft.com/en-us/azure/machine-learning/concept-mlflow` (ms.date
-  2025-10-06) and `https://azure.microsoft.com/en-us/pricing/details/machine-learning/` (2026-09-05).
-- Foundry tracing: `https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/trace` → redirected
-  to the Foundry (classic) "trace-application" page, updated 2026-06-26 (2026-09-05).
 - OpenTelemetry Java: `io.opentelemetry:opentelemetry-exporter-otlp` 1.65.0 (Maven Central,
   2026-08-07).

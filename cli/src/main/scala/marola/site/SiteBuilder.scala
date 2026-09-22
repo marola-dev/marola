@@ -93,13 +93,10 @@ object SiteBuilder:
       static: Path,
       water: Coordinates => Option[WaterQualityClient],
       now: OffsetDateTime,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
       accessibility: Option[AccessibilityClient] = None
   ): List[Path] < Sync =
     for
-      boards <- Kyo.foreach(areas)(a =>
-        buildArea(a, out, water(a.origin), now, distanceRefiner, accessibility)
-      )
+      boards <- Kyo.foreach(areas)(a => buildArea(a, out, water(a.origin), now, accessibility))
       index <- Sync.defer(writeAreasIndex(areas, out))
       copied <- Sync.defer(copyStatic(static, out))
     yield boards.flatten ++ (index :: copied)
@@ -109,7 +106,6 @@ object SiteBuilder:
       out: Path,
       water: Option[WaterQualityClient],
       now: OffsetDateTime,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync],
       accessibility: Option[AccessibilityClient]
   ): List[Path] < Sync =
     val localNow = now.atZoneSameInstant(area.zone).toOffsetDateTime
@@ -120,7 +116,6 @@ object SiteBuilder:
         area.origin,
         area.radiusKm,
         area.beachLimit,
-        distanceRefiner,
         water,
         today = _ => today,
         days = days.size,

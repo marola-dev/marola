@@ -10,7 +10,7 @@
 | **Related** | MIP-0003 (precomputed boards — this is their first consumer), MIP-0002 (the bot links here), MIP-0001 (what a beach card shows), `ARCHITECTURE.md` §7 (Overpass fair use), `FUTURE-WORK.md` §1 (other activities become layers on the same map) |
 | **Effort** | L — a new site pipeline (board JSON, static builder, map page, scheduled CI deploy), 4 stacked PRs |
 | **Gain** | user value (the product a person actually glances at); cost/ops (compute-once-serve-many) |
-| **Effort vs Gain** | cheap win, delivered — high-visibility surface for one MIP's worth of static-site work, no Azure |
+| **Effort vs Gain** | cheap win, delivered — high-visibility surface for one MIP's worth of static-site work |
 | **Depends on** | none blocking; consumes MIP-0003's cache once it lands (not yet) |
 | **Risk** | OSM raster tiles violate their usage policy at real public-launch traffic — needs the Protomaps switch first |
 | **Cost so far** | ~$12.46 across 4 PRs (#17→#19→#20→#21), per the status row (`just cost-split MIP-0005`) |
@@ -175,12 +175,6 @@ no cookies).
 - **A native app** on a friend's developer account. Store review, two codebases, and nobody
   installs an app for a beach. The map URL forwards in a group; that is the growth loop.
 - **Supabase as the data store.** Not needed for read-only data; revisit with map-side sightings.
-
-## 10. Exam-coverage mapping
-
-AI-103 §1 "plan resources / manage costs": compute-once-serve-many is the cost model; the
-scheduled workflow is the first deploy artefact. AI-103 §1 "Responsible AI": no tracking, visible
-data provenance and freshness on every page.
 
 ## 11. Open questions
 

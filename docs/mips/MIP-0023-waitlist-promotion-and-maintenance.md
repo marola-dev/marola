@@ -9,8 +9,8 @@
 | **Related** | `ARCHITECTURE.md` §5/§11, `MIP-0005` (the static site this sits on), `MIP-0002` (Telegram bot, Phase 1 — prerequisite for promotion), `MIP-0004` (in-bot digest *subscriptions*, distinct from this pre-launch wait-list), `MIP-0017` (agentic dev-tooling survey — §4.3 extends it to the deploy/maintain axis), `MIP-0020` (Instagram bot account — a promotion channel §4.2 should link to once that MIP ships), `MIP-0020` §5.5 (the daily Instagram pipeline — the same promotion axis, platform-specific; the former MIP-0024 draft was folded into it), `MIP-0025` (custom-model work — orthogonal, not a promotion or deploy concern), `docs/DEV-FLOW.md`, `AGENTS.md` (cost/deployment-safety and phase-discipline gates) |
 | **Effort** | S for §5.1's default (a GitHub Discussion, zero new code); M if the Formspree-form alternative is chosen instead (one static form + one Pages redirect page, no server); L if a Cloudflare Worker + KV path is chosen (a new tiny stateful component, its own secrets and quota to watch) |
 | **Gain** | user value (a way to say "I want this" before the bot exists); infra/dev-loop (§5.3's maintenance recommendation); cost/ops (every option here is free or near-free by design) |
-| **Effort vs Gain** | cheap win for §5.1 (wait-list) and §5.3 (maintenance tooling) — both buildable now, zero Azure, zero paid resource; §5.2 (promotion) is `do when X lands` — it needs Phase 1 (a working bot) to be worth doing at all, per `AGENTS.md`'s phase-discipline rule |
-| **Depends on** | Phase 1 (MIP-0002) gates promotion (§4.2), not the wait-list (§4.1) or tooling (§4.3), both usable today; no paid Azure resource anywhere here, per `AGENTS.md`'s cost-safety rule |
+| **Effort vs Gain** | cheap win for §5.1 (wait-list) and §5.3 (maintenance tooling) — both buildable now, zero paid resource; §5.2 (promotion) is `do when X lands` — it needs Phase 1 (a working bot) to be worth doing at all, per `AGENTS.md`'s phase-discipline rule |
+| **Depends on** | Phase 1 (MIP-0002) gates promotion (§4.2), not the wait-list (§4.1) or tooling (§4.3), both usable today; no paid cloud resource anywhere here, per `AGENTS.md`'s cost-safety rule |
 | **Risk** | promoting before Phase 1 ships wastes a hobby project's one good first impression — a "sign up to be told later" link with no bot behind it reads as vaporware; no promotion push should start before MIP-0002 merges |
 | **Cost so far** | — (nothing from this MIP has merged yet) |
 
@@ -23,8 +23,8 @@ written answer for keeping the site and eventual bot maintained without babysitt
 proposes: (1) a wait-list that respects the site's "no cookies, no tracking, zero third-party
 requests" claim, defaulting to a GitHub Discussion thread over an embedded third-party form; (2) an
 honest, hobby-scale promotion plan gated on Phase 1 actually shipping; (3) a maintenance/deploy
-recommendation: GitHub Actions + Pages for the site (already built), Fly.io over a paid Azure
-Container App for the eventual bot, and the already-running Dependabot/scala-steward plus the
+recommendation: GitHub Actions + Pages for the site (already built), Fly.io for the eventual bot,
+and the already-running Dependabot/scala-steward plus the
 Claude Code GitHub Action as the "agentic" maintenance layer, instead of a bespoke system.
 
 ## 2. Motivation
@@ -35,9 +35,7 @@ Claude Code GitHub Action as the "agentic" maintenance layer, instead of a bespo
   asking friends by hand.
 - The repo already has the free deploy artefact for the site (`site.yml`, MIP-0005/§11 Phase 3),
   but nothing is written down about the equivalent decision for the *backend* once the bot exists.
-  `ARCHITECTURE.md` §11 names "Container App + webhook" as Phase 3's second artefact, an Azure-only
-  answer needing `AGENTS.md`'s human go-ahead before a cent is spent; no cheaper alternative has
-  been evaluated in writing.
+  No cheap option has been evaluated in writing.
 - `AGENTS.md`'s phase-discipline rule says not to promote or scale what isn't built: marola has
   zero live bot users because the bot doesn't exist. Any "get external users" plan must say, out
   loud, which part is gated on Phase 1 and which isn't.
@@ -132,25 +130,19 @@ row above: visual, beach-photo-friendly, and a natural fit once that MIP ships; 
 reading the workflow file directly (`.github/workflows/site.yml`), free (GitHub Actions minutes on
 a public repo, GitHub Pages hosting). No change proposed here; it already is the "easiest way."
 
-**Backend deploy, once Phase 1 ships: Fly.io vs. Hetzner vs. Azure Container Apps.**
-`ARCHITECTURE.md` §11 names Azure Container Apps as Phase 3's target: real spend, needs
-`AGENTS.md`'s human go-ahead before provisioning. Two cheaper alternatives, checked live
-2026-09-06: **Fly.io** (`fly.io/docs/about/pricing/`) quotes a shared-cpu-1x/256MB machine around
-**$2/mo** continuous, or a $36/yr reservation block (~40% off); whether a perpetual no-card free
-allowance still exists in 2026 is **unverified**, Open Questions (a long-polling bot needs one
-always-on process; webhooks could scale to zero; polling-vs-webhook is undecided, also Open
-Questions). **Hetzner Cloud** (`hetzner.com/cloud/`) didn't render numeric prices to this fetch;
-its cheapest shared-vCPU VMs are widely cited around €3-4/month but that figure is **unverified
-this session**, and Hetzner has no free tier: plain pay-for-what-you-provision, more OS-patching
-burden than a managed platform. **Azure Container Apps** (`ARCHITECTURE.md` §6): real scale-to-zero
-economics, but the one option gated by the cost-safety rule, plus an Azure identity surface the
-local-first design otherwise avoids.
+**Backend deploy, once Phase 1 ships: Fly.io vs. Hetzner.** Any paid host needs `AGENTS.md`'s human
+go-ahead before provisioning. Two options, checked live 2026-09-06: **Fly.io**
+(`fly.io/docs/about/pricing/`) quotes a shared-cpu-1x/256MB machine around **$2/mo** continuous, or
+a $36/yr reservation block (~40% off); whether a perpetual no-card free allowance still exists in
+2026 is **unverified**, Open Questions (a long-polling bot needs one always-on process; webhooks
+could scale to zero; polling-vs-webhook is undecided, also Open Questions). **Hetzner Cloud**
+(`hetzner.com/cloud/`) didn't render numeric prices to this fetch; its cheapest shared-vCPU VMs are
+widely cited around €3-4/month but that figure is **unverified this session**, and Hetzner has no
+free tier: plain pay-for-what-you-provision, more OS-patching burden than a managed platform.
 
 **Pick: Fly.io as the default recommendation.** Cheapest verified always-on option with the least
 operational surface; explicitly **not** provisioned by this MIP, a recommendation to revisit with
-a real go/no-go once Phase 1 ships and traffic is real. Azure Container Apps stays the documented
-alternative for anyone who wants Azure-native App Insights/Foundry integration enough to accept the
-extra cost, with the go-ahead gate intact.
+a real go/no-go once Phase 1 ships and traffic is real.
 
 **"Agentic" maintenance layer.** Already running in this repo, not proposed new:
 - **`scala-steward.yml`** (weekly Scala/sbt PRs) and **`.github/dependabot.yml`** (Actions + the
@@ -167,7 +159,7 @@ extra cost, with the go-ahead gate intact.
   `.claude/settings.json`'s `permissions.deny` already blocks `gh pr merge`/`close` project-wide
   with no override, matching `AGENTS.md`'s "merging is a human decision" stance.
 - **OpenTelemetry cost export** (`AGENTS.md`'s "heavier option"). Not adopted here; a future
-  Phase-2-adjacent nicety (agent spend next to marola's own traces) once App Insights exists.
+  Phase-2-adjacent nicety (agent spend next to marola's own traces).
 
 **Recommendation, cheapest-first:** keep `site.yml` as-is (already the answer for the site); add
 **one** new scheduled Claude Code GitHub Action workflow, in automation mode, that reports (does
@@ -179,7 +171,7 @@ until Phase 1 ships, per phase discipline.
 ## 5. Design
 
 This MIP proposes copy/workflow decisions, not new Scala modules; nothing in `core/`, `local/`,
-`azure/`, or `cli/` changes. Deferred to follow-up implementation PR(s) per the `mip` skill's
+or `cli/` changes. Deferred to follow-up implementation PR(s) per the `mip` skill's
 "don't build it in the same change" rule:
 
 - **`site/static/index.html`/`app.js`**: one new sentence + link in the existing footer block
@@ -261,14 +253,6 @@ None. No change to `Swimability.score`, ranking, or any user-facing swim recomme
   for a wait-list a free GitHub Discussion already solves with zero new code.
 - **Launch on Product Hunt/BetaList immediately, wait-list as the "product."** Rejected: a poor
   audience match for "not live yet," burning a one-shot slot on the weakest form of it.
-
-## 10. Exam-coverage mapping
-
-None directly. This MIP is about launch/growth process and deploy-cost tooling, not a new Azure
-integration or agentic pipeline capability. Loosely touches `AI-103-MAPPING.md`'s "manage costs"
-and "containerise and deploy" rows (already Documented/Built per that mapping) by naming a cheaper
-non-Azure alternative for the same decision point, and `docs/AI-500-MAPPING.md` §4's
-human-confirmation-gate theme by explicitly keeping the scheduled Claude Code Action read-only.
 
 ## 11. Open questions
 

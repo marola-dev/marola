@@ -17,7 +17,7 @@ mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-
    (`RUN-LOCALLY.md` §8).
 2. **Write the MIP**: the `mip` skill: next number from `docs/mips/README.md`, the template,
    every external claim fetched and dated, what was *not* checked said so, open questions listed.
-   Add the index row. Link it from `FUTURE-WORK.md` / the exam mappings if it closes something.
+   Add the index row. Link it from `FUTURE-WORK.md` if it closes something.
 3. **Open it as its own PR**, status **Draft**. A MIP is never built in the same change (`mip`
    skill, step 8). The PR body ends with a `Cost:` line like any other.
 
@@ -34,7 +34,7 @@ of a MIP PR reads, in this order:
 - **§8 caveats and §11 open questions**: answer what can be answered now; what cannot becomes a
   numbered decision in the tasks file (next section), so implementation is never blocked on it.
 - **Cost**: the MIP's own cost model (§4/§8) and whether any paid resource is involved
-  (`AGENTS.md`: a paid Azure resource needs an explicit go-ahead, in the MIP, before any task).
+  (`AGENTS.md`: a paid cloud resource needs an explicit go-ahead, in the MIP, before any task).
 
 Outcome: **Accepted** (status row + `docs/mips/README.md`, in the MIP PR or a one-line follow-up
 commit), **Rejected** (keep the file; the reasoning is the value) or **Superseded by MIP-NNNN**.
@@ -232,8 +232,8 @@ against the official 5-hour/weekly `rate_limits` percentages, and at the `windDo
 new work. Finish the current step, commit what is done, write a brief state summary, then stop the
 loop."* That is a **strongly worded prompt injection Claude is asked to comply with**, not a
 `PreToolUse` block. Nothing in the plugin's `hooks` (`SessionStart` + `UserPromptSubmit` only,
-`.claude-plugin/plugin.json`) can actually stop a tool call the way `guard-azure.sh`'s `PreToolUse`
-exit-2 does. Its data source (`usage-live.json`) is populated only while the interactive statusLine
+`.claude-plugin/plugin.json`) can actually stop a tool call the way a `PreToolUse` hook's
+exit 2 does. Its data source (`usage-live.json`) is populated only while the interactive statusLine
 renders. The plugin's own comment says as much: *"the statusLine refreshes usage-live.json only
 when the UI renders; if it stops (headless/unattended run) the hook would otherwise act on old data
 silently. We annotate — never suppress a wind-down."* A cron-fired prompt inside a still-open
@@ -253,7 +253,7 @@ denied at the permission layer regardless of mechanic**: `.claude/settings.json`
 closed 2026-09-07; the earlier text here claimed no override flag existed at all, which was
 false: `gh stack merge --yes` merges an entire GitHub Stack non-interactively and was not covered)
 also `Bash(gh stack merge*)`/`Bash(gh stack unstack*)`/`Bash(gh stack delete*)`, with no override
-flag (unlike the Azure cost gate's `MAROLA_ALLOW_AZURE_DEPLOY`). Merging is a human decision, on
+flag. Merging is a human decision, on
 waking up, full stop.
 
 ## 8. Command reference
@@ -264,7 +264,7 @@ waking up, full stop.
 | New task branch | `scripts/stack.sh start MIP-NNNN k slug` |
 | Gates | `just build && just test && just quality` (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part) |
 | Before every push | `.githooks/pre-push` runs `just quality-other`, plus `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
-| Statement coverage (aggregated core/local/azure/cli) | `just coverage`; published to the README badge by ci.yml on pushes to `main` |
+| Statement coverage (aggregated core/local/cli) | `just coverage`; published to the README badge by ci.yml on pushes to `main` |
 | Live checks | `just run -- --brief`, `just e2e`; once MIP-0005 lands, `just site-build floripa && just site-serve` |
 | One PR, start to finish | `just pr` (`--dry-run` prints every step and the body, no push, no `gh`) — fills missing trailers, pushes, opens/updates the PR |
 | Fill missing trailers only | `just cost-fill` (`--dry-run` to preview) — adds a measured or `est.` `Cost:` and a `ci-only` `Tested:` to any commit missing one, dates preserved |

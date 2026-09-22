@@ -5,7 +5,7 @@
 | **Status** | Draft — `Tasks: docs/mips/MIP-0056.tasks.md` |
 | **Author** | Claude Fable 5.1, from M. Hoffmann's brief of 2026-09-14 ("production-grade data management for water quality … OODS … first step a GHA ingesting IMA/SC … incremental and backfill … STATE or CITY as a parameter, adapters per use case … a common view for all BR data") |
 | **Created** | 2026-09-14 |
-| **Phase** | 0 — an offline data pipeline and a versioned dataset; nothing waits on the Telegram bot, no Azure resource |
+| **Phase** | 0 — an offline data pipeline and a versioned dataset; nothing waits on the Telegram bot, no cloud resource |
 | **Related** | MIP-0001 (the IMA/SC feed and `WaterQuality.scala`'s model — this MIP keeps its columns and adds history), MIP-0031 (INEA/INEMA PDF parsers and curated coordinate tables — the second and third adapters, §5.6), MIP-0016/MIP-0042 (the map's water layer — a consumer, via §5.5's export), `local/src/main/scala/marola/water/CachedWaterQualityClient.scala` (today's only persistence: one snapshot of the last five samples per point, gitignored), `PHILOSOPHY.md` "The Python question" (why the fetchers are Scala and the transform is SQL, §5.2/§9) |
 | **Effort** | L — a new sbt module (`oods/`), one new dependency (DuckDB JDBC, in that module only), a CI workflow that commits, a `.gitignore` carve-out, and a one-off ~40 MB data PR. No change to the runtime path until §5.5's opt-in export |
 | **Gain** | `user value` — 23 years of per-point history where today there are five samples: "this point is usually IMPRÓPRIA after rain", trends, seasonality (MIP-0001 §9 could only say "the agency's last five"); `infra/dev-loop` — the map's water layer stops depending on a portal that spent a week down in September, because the store is the fallback; `cost/ops` — a public dataset other people can query without running marola |
@@ -166,7 +166,7 @@ oods/sql/schema.sql  build.sql  views.sql   the DDL and the common view — code
 
 ### 5.2 The pipeline — Scala fetchers, SQL transform, one planner
 
-A new sbt module `oods/` (`.dependsOn(local)`, zero Azure, not aggregated into the runtime image)
+A new sbt module `oods/` (`.dependsOn(local)`, not aggregated into the runtime image)
 with `sbt oods/run` behind `just oods-ingest`. Per `PHILOSOPHY.md`, Scala where the parsers and
 HTTP helpers already are; Python only where its libraries are the only ones, here they are not
 (§9). The transform is SQL because a DDL is the artefact people read.
@@ -376,12 +376,6 @@ run green for a week, and `just oods-sql "SELECT count(*) FROM br_bathing_water"
   adapters reuse marola's parsers and the map is the first consumer. Split later if the store
   outgrows the app (the layout in §5.1 is already self-contained under one directory).
 - **SQLite / Delta / LFS**, §4.4.
-
-## 10. Exam-coverage mapping
-
-None directly. `docs/AI-103-MAPPING.md` has no data-ingestion row; the store is what a future
-RAG or fine-tune over conditions history (MIP-0025's layer 1, `FUTURE-WORK.md` §9) would ground
-on, but that is their mapping, not this MIP's.
 
 ## 11. Open questions
 

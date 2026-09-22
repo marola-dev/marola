@@ -6,11 +6,11 @@
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 2026-09-06: "create MIP for instagram bot account, with first post being github pages URL delivery … check if instagram bot account enable programatic posting"); the daily pipeline (§5.5) was drafted as MIP-0024 by Claude Sonnet 5 from the maintainer's pasted Graph API notes and folded in here on 2026-09-06 at the maintainer's request — "they are the same thing" |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 — outreach for the project, not marola-the-product. No earlier-phase prerequisite; nothing here touches `Swimability`, `Recommender`, the CLI or the map |
-| **Related** | MIP-0018 (self-documentation + multi-platform exporter — Instagram becomes one more export target, and the only one besides dev.to/Reddit with a publishing API a personal account can actually use), `docs/SELF-DOCUMENTING.md` (MIP-0018's research; it has no Instagram entry yet), MIP-0005 (the live map the first post points at), MIP-0014 (the other "community/outreach" MIP), MIP-0023 (wait-list and promotion — the platform-agnostic side of the same axis), `docs/AI-500-MAPPING.md` §4 (the human-confirmation gate §5.5 keeps), `.claude/skills/mip/SKILL.md` "no unsourced facts reach a user" |
+| **Related** | MIP-0018 (self-documentation + multi-platform exporter — Instagram becomes one more export target, and the only one besides dev.to/Reddit with a publishing API a personal account can actually use), `docs/SELF-DOCUMENTING.md` (MIP-0018's research; it has no Instagram entry yet), MIP-0005 (the live map the first post points at), MIP-0014 (the other "community/outreach" MIP), MIP-0023 (wait-list and promotion — the platform-agnostic side of the same axis), `.claude/skills/mip/SKILL.md` "no unsourced facts reach a user" |
 | **Effort** | M — no new module or JVM dependency: one Python script (`scripts/ig_publish.py`, stdlib, `--self-test` on a recorded fixture), one committed JPEG, one `just` recipe, one scheduled token-refresh workflow; the Meta developer-app setup is human clicking, not code. v3 (§5.5) adds one render script (Pillow — a new Python dependency), one cron workflow and one GitHub Environment with a required reviewer |
 | **Gain** | community/outreach (a public, visual channel for the map — the product's most shareable surface); infra/dev-loop (MIP-0018's exporter gets a target that publishes for real instead of "copy-paste by hand") |
 | **Effort vs Gain** | cheap win for v1 (a human posts the committed image from a phone with the exporter's caption — zero API work); `do when MIP-0018 lands` for the API path, since publishing without the planner/queue is a script with nothing to schedule; `do when X lands` for the daily pipeline — a daily approval click is only worth it once Phase 1 gives the caption something to say beyond "see the map" |
-| **Depends on** | MIP-0005 (live, `https://h0ffmann.github.io/marola/`); MIP-0018 for anything beyond the first post. No Phase 1 gate, no paid resource: the Instagram API is free, an Instagram professional account is free, no Facebook Page is needed (§4.1), no Azure anywhere |
+| **Depends on** | MIP-0005 (live, `https://h0ffmann.github.io/marola/`); MIP-0018 for anything beyond the first post. No Phase 1 gate, no paid resource: the Instagram API is free, an Instagram professional account is free, no Facebook Page is needed (§4.1) |
 | **Risk** | a dormant account — MIP-0018's own research found changelog-style posts fail; an "Instagram bot" that posts machine text on a schedule is that failure with pictures. The API path is only worth building if the human actually writes the captions weekly. v3 turns the typed-`yes` gate into a scheduled job, the autonomy step this section warns against — §5.5 keeps a human click on every post; a later edit that replaces that approval with `--publish --yes` on a cron is the wrong thing to build toward |
 | **Cost so far** | — |
 
@@ -186,7 +186,7 @@ single-image posts, image served by GitHub Pages itself. v1 needs none of it.
   publishing a container that is not `FINISHED` is the documented failure, so the poll is
   unconditional and cheap. `--self-test` covers `FINISHED`, `IN_PROGRESS`→`FINISHED`, and `ERROR`
   from the fixture.
-- **Who pulls the trigger, spelled out** (`AGENTS.md` → `AI-500-MAPPING.md` §4, the
+- **Who pulls the trigger, spelled out** (`AGENTS.md`, the
   human-confirmation rule for any proactive behaviour): the script never runs on a schedule. v1
   is a human posting from a phone. v2's `just ig-post` is run by a human, and its default is
   `--dry-run`; the real post needs `--publish`, which prints the caption and the image URL and
@@ -260,7 +260,7 @@ v2's `ig_publish.py`, unchanged, behind a human approval.
   a required reviewer, then runs `ig_publish.py --image-url … --caption-file … --publish` with the
   interactive prompt replaced by that approval. A run nobody approves expires (Environment wait
   timer) and posts nothing. Any failure fails the run visibly: no retry, no fallback post.
-- **The consent gate, explicitly** (`AI-500-MAPPING.md` §4): a cron job has no terminal for v2's
+- **The consent gate, explicitly**: a cron job has no terminal for v2's
   typed `yes`, which is the concrete reason the v2 model does not transfer unchanged. The approval
   is weaker than typing `yes` (a click) but is on *that day's* image and caption, not a blanket
   "automate this forever"; the day someone wants to remove it, that is a new decision, not a flag.
@@ -327,16 +327,11 @@ date) and never a recommendation the map itself would not show; the template is 
 - **A `--cron` flag on `ig_publish.py` that skips the typed `yes`.** Removes the consent step
   instead of replacing it; the Environment approval (§5.5) is the equivalent gate. Rejected.
 - **No gate at all (true autonomy).** The most literal reading of "autonomous daily posting
-  agent"; `AI-500-MAPPING.md` §4 and §8 above argue against removing a human confirmation from a
-  repeated public action. Rejected.
+  agent"; §8 above argues against removing a human confirmation from a repeated public action.
+  Rejected.
 - **A Telegram channel post first.** The same render + cron + approval shape with no Meta app,
   token or 60-day refresh; strictly simpler, and worth doing first if reach *outside* Instagram's
   audience is not the point. Noted for MIP-0004 (daily digest), not built here.
-
-## 10. Exam-coverage mapping
-
-None. Loosely, `AI-103-MAPPING.md` §1 "Responsible AI: transparency": the caption is
-deterministic data, labelled as such, but this MIP does not claim that row.
 
 ## 11. Open questions
 
@@ -440,7 +435,7 @@ Facebook Page" (dropped: not required on this path, §5.4 step 2); "`instagram_b
 
 Pasted by the maintainer on 2026-09-06; what could be checked cheaply is marked, the rest is
 carried as given. A domain is a purchase, so this is the human's call (`AGENTS.md` cost rule in
-spirit; it's not Azure, but it is money).
+spirit; it's not a cloud resource, but it is money).
 
 | Option | Pasted note | Checked 2026-09-06 |
 |---|---|---|

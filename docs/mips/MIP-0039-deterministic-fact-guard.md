@@ -6,9 +6,9 @@
 | **Author** | Claude Opus 5, for M. Hoffmann (deep review of every MIP + a live LLMOps/competitor research pass, 2026-09-07) |
 | **Created** | 2026-09-07 |
 | **Phase** | 0 (`--summarize`, the MCP tool, the MIP-0008 smoke panel) → 1 (the bot reply reuses the same function). No earlier-phase prerequisite is missing |
-| **Related** | `ARCHITECTURE.md` §5a (the "mentioned a whale despite `whaleSightingLikelihood=Low`" finding this MIP turns into a caught, reported failure); MIP-0022 (**the precedent this copies exactly** — safety text applied by the rendering code *after* the model, never by it); MIP-0008 §8 ("if the reviewer says `reject`, show the numbers only" — the fallback shape); MIP-0012 §4.1/§5.4 (llm4s's `GroundingGuardrail`/`SourceAttributionGuardrail`/`LLMFactualityGuardrail`, reviewed there and rejected on weight — §4.3 below says why a deterministic guard beats them *here* regardless); MIP-0025 §6 (DPO to make the model refuse better — the weights-side complement to this code-side check, not a substitute); MIP-0032 (the benchmark matrix, which gains a violation-rate column for free); `AI-103-MAPPING.md` §1 "Responsible AI" |
+| **Related** | `ARCHITECTURE.md` §5a (the "mentioned a whale despite `whaleSightingLikelihood=Low`" finding this MIP turns into a caught, reported failure); MIP-0022 (**the precedent this copies exactly** — safety text applied by the rendering code *after* the model, never by it); MIP-0008 §8 ("if the reviewer says `reject`, show the numbers only" — the fallback shape); MIP-0012 §4.1/§5.4 (llm4s's `GroundingGuardrail`/`SourceAttributionGuardrail`/`LLMFactualityGuardrail`, reviewed there and rejected on weight — §4.3 below says why a deterministic guard beats them *here* regardless); MIP-0025 §6 (DPO to make the model refuse better — the weights-side complement to this code-side check, not a substitute); MIP-0032 (the benchmark matrix, which gains a violation-rate column for free) |
 | **Effort** | M — one pure module in `core/llm`, one `enum`, three call sites re-pointed (`Main`, the MCP server, `SiteBuilder`'s smoke panel), one env var, specs. No new dependency, no new module, no prompt change |
-| **Gain** | `user value` (a swimmer never reads a fabricated wind direction or a contradicted jellyfish risk); `exam coverage (AI-103 §1 Responsible AI)` (a provable, non-removable check on generated text, one step past MIP-0022's non-removable footer) |
+| **Gain** | `user value` (a swimmer never reads a fabricated wind direction or a contradicted jellyfish risk) |
 | **Effort vs Gain** | `do next` — the failure it catches is reproduced live in §2 on today's default model, and the check is pure Scala over a `Map[String, String]` that already exists |
 | **Depends on** | Nothing blocking. No Phase 1 gate, no paid resource, no new API. MIP-0022 (merged, #195) is the pattern, not a prerequisite. MIP-0032 would consume this MIP's output as a column; neither blocks the other |
 | **Blocked by** | none |
@@ -130,7 +130,7 @@ unusually easy because its ground truth is typed and tiny.
   wrong answers more often, not fewer. So constrained generation would trade one failure mode
   (fabricated prose) for another (confidently mis-slotted numbers), which the guard in §5.1 would
   then have to catch anyway.
-- It also does not help the Azure Foundry path or any provider without schema decoding.
+- It also does not help any provider without schema decoding.
   **v1 is therefore the guard, which works on any provider's plain text; slot generation is a
   measured experiment in §5.3, not a planned successor.**
 
@@ -149,8 +149,8 @@ unusually easy because its ground truth is typed and tiny.
   cannot cost a token, and cannot be talked out of its verdict.
 - **llm4s's guardrails** (`GroundingGuardrail`, `SourceAttributionGuardrail`,
   `LLMFactualityGuardrail`, plus `ValidationMode.Block|Warn|Log`) were already inspected against the
-  published jar in MIP-0012 §4.1 and rejected there on weight (154 transitive jars, ~150 MB, Azure
-  and AWS SDKs on the `cli` classpath). Independent of that verdict, the two named grounding
+  published jar in MIP-0012 §4.1 and rejected there on weight (154 transitive jars, ~150 MB, cloud
+  vendor SDKs on the `cli` classpath). Independent of that verdict, the two named grounding
   guardrails are model-backed, so adopting them would replace one LLM checking an LLM with a
   different LLM checking an LLM. `ValidationMode.Block|Warn|Log` is a good *shape*, though, and §5
   borrows it verbatim as three words rather than as a dependency.
@@ -159,7 +159,7 @@ unusually easy because its ground truth is typed and tiny.
 
 marola's own pure module, over the existing fact map, with a deliberately small, high-precision
 rule set. Zero dependencies, runs in microseconds, deterministic under test, and applicable to every
-`LlmClient` backend including Azure Foundry. `Reviewer` stays exactly where it is. The two are
+`LlmClient` backend. `Reviewer` stays exactly where it is. The two are
 complementary and §6 says which one owns what.
 
 ## 5. Design
@@ -345,16 +345,6 @@ are independent, and the deterministic one is the only one that can be proven by
   `finetune/README.md`'s own caveat, tuning changes tone and format reliability, not factual
   grounding. It reduces the rate; it cannot make a guarantee.
 
-## 10. Exam-coverage mapping
-
-`AI-103-MAPPING.md` §1 "Responsible AI" — marola's strongest claim on that row today is MIP-0022's
-non-removable footer (safety text the model cannot delete). This is its converse and a strictly
-harder guarantee: model text the pipeline can refuse to print, decided by code the model never sees.
-Mark "proposed: MIP-0039". `AI-500-MAPPING.md` §3 — a per-agent output check with a machine-readable
-verdict is the first concrete artefact for "evaluate" that is not an LLM grading an LLM; noted
-there, not claimed as coverage of the eval-harness gap `ROADMAP.md` §5 still assigns to an unwritten
-MIP.
-
 ## 11. Open questions
 
 1. **Should `factInputsFor` grow?** `HourlyConditions` already has wind direction, UV, precipitation
@@ -416,7 +406,7 @@ All fetched or executed by the author on **2026-09-07**.
   compliance"; mechanism: "JSON Schema constraints are compiled into grammar-based token masks,
   causing tool-call tokens to become unreachable during decoding"; the authors' "Constraint Priority
   Inversion (CPI) hypothesis". The abstract names no specific models.
-- **Checked in this repo, not assumed** (`grep -rn "tools" core/…/llm local/…/llm azure/…/llm` →
+- **Checked in this repo, not assumed** (`grep -rn "tools" core/…/llm local/…/llm` →
   no match, exit 1; `local/…/LocalLlmClient.scala:18-28`): marola's request body is `model` +
   `messages` only: no `tools` array and no `format`/`response_format` on any client. So the
   tool-suppression interaction above is **not** a live bug in marola today, which is why §5.3 states

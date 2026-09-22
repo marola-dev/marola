@@ -7,10 +7,10 @@ this repo (the recommendation pipeline, `LlmClient`, `SightingStore`, `VisionCli
 built and works standalone via `Main`'s CLI flags (see `ARCHITECTURE.md` §3.1), waiting for this
 bot loop to call into it. Nothing below is faked to look more finished than it is.
 
-Both paths start the same way (§1), then diverge: §2 is pure local development, zero Azure; §3 is
-the path once you're deploying with Foundry/Azure backing the LLM step.
+§1 registers the bot. §2 is the local development path, and §3 covers how the bot will talk to
+Telegram once the loop exists.
 
-## 1. Register the bot (same for both paths)
+## 1. Register the bot
 
 1. Open Telegram, message [@BotFather](https://t.me/BotFather).
 2. Send `/newbot`, give it a display name, then a username ending in `bot` (e.g.
@@ -38,19 +38,19 @@ An invalid or malformed token returns `{"ok":false,"error_code":401,"description
 (confirmed against Telegram's real API while writing this); if you see that, re-copy the token
 from BotFather.
 
-## 2. Local development path (no Azure)
+## 2. Local development path
 
 This is the path that matches everything already built and verified this session: local Ollama for
 the LLM step, a local JSON-lines file for sighting reports, a local multimodal model for photo
-analysis: nothing needs an Azure account.
+analysis: nothing needs a cloud account.
 
 ```bash
 # .env (or your shell)
 MAROLA_TELEGRAM_BOT_TOKEN=123456789:AAH...
-# everything else can stay at its local-first defaults — see AppConfig.scala:
-#   MAROLA_LLM_PROVIDER=local (default)          -> Ollama at localhost:11434
-#   MAROLA_SIGHTING_STORE_PROVIDER=local (default) -> ./data/sightings.jsonl
-#   MAROLA_VISION_PROVIDER=local (default)         -> Ollama multimodal model
+# everything else stays local — see AppConfig.scala:
+#   LLM       -> Ollama at localhost:11434
+#   sightings -> ./data/sightings.jsonl
+#   vision    -> Ollama multimodal model
 ```
 
 Once Phase 1's polling loop exists, running it locally means **long polling**: the bot process
@@ -66,46 +66,16 @@ just run -- --report-sighting jellyfish Arpoador "note"  # what a future /report
 just run -- --analyze-photo ./some-beach-photo.jpg        # what a future photo handler will do
 ```
 
-## 3. Azure Foundry-backed path
+## 3. Long polling vs. webhook
 
-Same bot, same token from §1. What changes is which backend `AppConfig` picks for the pieces that
-have an Azure option (`ARCHITECTURE.md` §5's table):
-
-```bash
-MAROLA_TELEGRAM_BOT_TOKEN=123456789:AAH...
-
-# Query synthesis via a provisioned Foundry/Azure OpenAI deployment instead of local Ollama:
-MAROLA_LLM_PROVIDER=azure
-FOUNDRY_PROJECT_ENDPOINT=https://<your-resource>.openai.azure.com/openai/deployments/<deployment>
-# (the deployment name is part of the endpoint URL — there is no separate FOUNDRY_MODEL_DEPLOYMENT)
-FOUNDRY_API_VERSION=2026-01-01-preview
-# auth is DefaultAzureCredential (az login locally, managed identity once deployed) —
-# no API key env var, per AGENTS.md's "no API keys" rule.
-
-# Optionally also switch sighting storage and vision to their Azure backends:
-MAROLA_SIGHTING_STORE_PROVIDER=azure
-COSMOS_DB_ENDPOINT=https://<your-account>.documents.azure.com:443/
-COSMOS_DB_KEY=...
-MAROLA_VISION_PROVIDER=azure
-AZURE_VISION_ENDPOINT=https://<your-resource>.cognitiveservices.azure.com
-AZURE_VISION_KEY=...
-```
-
-Each of these is independent: set only the ones you actually want on Azure; anything left unset
-falls back to its local default (`AppConfig.llmClient`/`sightingStore`/`visionClient`, each
-returning `None`, and each CLI flag printing a clear "needs X set" message, if you pick a
-provider without fully configuring it; see `Main.scala`).
-
-**Long polling vs. webhook, once the loop exists:** long polling (§2) works fine even with Azure
-backends configured. Azure only changes *which LLM/storage/vision calls* the bot makes, not how
-it talks to Telegram. A **webhook** (Telegram pushes messages to a URL you register, instead of the
-bot asking) only becomes relevant once the service is actually deployed behind a stable HTTPS
-endpoint, i.e. Phase 3 in `ARCHITECTURE.md` §11 (Container App), not required for local dev even
-with Azure backends in play. Once that's real, registering one looks like:
+Once the loop exists, long polling (§2) is enough. A **webhook** (Telegram pushes messages to a URL
+you register, instead of the bot asking) only becomes relevant once the service is actually deployed
+behind a stable HTTPS endpoint, i.e. Phase 3 in `ARCHITECTURE.md` §11, not required for local dev.
+Once that's real, registering one looks like:
 
 ```bash
-# after `azd up` (or however it's deployed) gives you a public HTTPS URL:
-curl "https://api.telegram.org/bot<your-token>/setWebhook?url=https://<your-container-app-fqdn>/telegram/webhook"
+# once the deployed service has a public HTTPS URL:
+curl "https://api.telegram.org/bot<your-token>/setWebhook?url=https://<your-service-host>/telegram/webhook"
 ```
 
 This last command is documented for when Phase 3 lands: running it before any service exists at
@@ -113,7 +83,6 @@ that URL will just leave the bot unable to receive messages until one does.
 
 ## 4. Cost note
 
-Telegram's Bot API itself is free with no usage-based billing (`ARCHITECTURE.md` §7). The only
-spend §3's path introduces is whatever Azure resources you actually provision. The same
-`AGENTS.md` cost-safety rule as everywhere else in this repo: nothing gets provisioned without an
-explicit go-ahead, and each integration in §3 above is opt-in per env var, not a package deal.
+Telegram's Bot API itself is free with no usage-based billing (`ARCHITECTURE.md` §7), and §2's
+path runs on your own machine. Deploying for a webhook follows the same `AGENTS.md` cost-safety
+rule as everywhere else in this repo: nothing gets provisioned without an explicit go-ahead.

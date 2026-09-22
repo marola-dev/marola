@@ -268,7 +268,7 @@ Replace the whole file. The package list keeps every marola-specific tool and it
 
 ```nix
 {
-  description = "marola dev shell — Scala 3.9 / Kyo / Azure tooling, plus Python for the offline DSPy compile step; works on plain Ubuntu (not NixOS-specific)";
+  description = "marola dev shell — Scala 3.9 / Kyo tooling, plus Python for the offline DSPy compile step; works on plain Ubuntu (not NixOS-specific)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -310,10 +310,9 @@ Replace the whole file. The package list keeps every marola-specific tool and it
           # `uvx` runs GitHub's spec-kit ephemerally (`just specify`); spec-kit is PyPI-only.
           pkgs.uv
 
-          # The default local LLM/vision backend — what lets marola run with zero Azure account.
+          # The local LLM/vision backend.
           # `ollama serve` is started separately (docs/RUN-LOCALLY.md); this only puts it on PATH.
           pkgs.ollama
-          pkgs.azure-cli
           pkgs.gh
 
           # `just context-mips`: repomix packs docs for a browser session, wl-copy/xclip copy them.
@@ -356,9 +355,6 @@ Replace the whole file. The package list keeps every marola-specific tool and it
           JAVA_HOME = "${jdk}";
           # ai-jail's own devShell sets this; it does not propagate when consumed as a package.
           BWRAP_BIN = "${pkgs.bubblewrap}/bin/bwrap";
-
-          # `azd` is deliberately absent — its nixpkgs packaging status changes. If a deploy needs
-          # it: curl -fsSL https://aka.ms/install-azd.sh | bash
 
           shellHook = ''
             echo "marola dev shell"
@@ -429,7 +425,7 @@ Lines 266 and 272: change the comment to `# = labs/lint's ruff (nix develop .#li
 
 - [ ] **Step 5: Docs**
 
-`PHILOSOPHY.md` "Why Nix": replace `` `az`, `gh`, hadolint. `` with `` `az`, `gh`; the lint toolchain (hadolint, actionlint, shellcheck, ruff, …) comes from `labs/lint` in h0ffmann/nix-config as one flake input. `` `docs/RUN-LOCALLY.md:377`: `(in the flake)` → `(from the lint lab)`.
+`PHILOSOPHY.md` "Why Nix": replace `` `gh`, hadolint. `` with `` `gh`; the lint toolchain (hadolint, actionlint, shellcheck, ruff, …) comes from `labs/lint` in h0ffmann/nix-config as one flake input. `` `docs/RUN-LOCALLY.md:377`: `(in the flake)` → `(from the lint lab)`.
 
 - [ ] **Step 6: Gates**
 

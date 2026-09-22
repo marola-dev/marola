@@ -5,7 +5,7 @@
 | **Status** | Accepted — implemented, pending merge on `mip-0035/1-plugin-api` (itself stacked on `mip-0030/1-coastal-trails`, since both touch `site/static/index.html`/`app.js`); this doc lands on its own so the design is reviewable before that code is |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-07: "create mip to add plugin possibility like as in windycom/windy-plugin-template, does it require marola.dev move out from GitHub pages? it should be first requirement of release 1 (not 0)") |
 | **Created** | 2026-09-07 |
-| **Phase** | 0 (site/static only — no bot, no Azure, no earlier-phase prerequisite missing) |
+| **Phase** | 0 (site/static only — no bot, no cloud resource, no earlier-phase prerequisite missing) |
 | **Related** | MIP-0005 (the static site and its "no server" decision, `§9`), MIP-0009 (the Leaflet marker/tooltip layer this plugin API sits alongside), MIP-0030 (the trails `L.polyline` layer — the nearest precedent for "a new map layer with its own styling/tooltip", useful as a worked example of what a plugin would look like internally), MIP-0033 (Release 0 and the Milestones/`RELEASES.md` mechanism — this MIP is explicitly scoped as a **Release 1** item, not Release 0, per the request) |
 | **Effort** | M — one small, stable global API surface in `app.js` (no rewrite of its existing rendering), one committed manifest file, one `<script>`-injection loader, a CSP meta tag, docs and an example plugin. No new backend, no new dependency |
 | **Gain** | user value (a community-contributed layer — a custom hazard report, a webcam overlay, a personal trail log — without a marola PR per layer); community/outreach (the same leverage Windy's plugin ecosystem gets from letting anyone extend the map); infra/dev-loop (a template repo becomes the "start here" for a contributor who isn't ready to touch marola's own Scala pipeline) |
@@ -212,12 +212,6 @@ MIP does not claim otherwise.
   (every layer is reviewed marola code) at the cost of the leverage §2 describes. Reasonable if
   Release 1 doesn't end up needing outside contributors; this MIP exists because the request asked
   for the alternative to be designed, not because "do nothing" is wrong.
-
-## 10. Exam-coverage mapping
-
-None directly. This is a site-extensibility feature, not an AI/agent capability. (If a future
-plugin itself called an LLM client-side, that plugin's own author would be the one making an
-AI-103/AI-500-relevant design choice, not this MIP.)
 
 ## 11. Open questions
 

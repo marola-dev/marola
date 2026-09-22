@@ -9,23 +9,16 @@ this before writing, modifying, or deploying anything. Humans should read it too
 assistant: real nearby beach discovery (OpenStreetMap), live sea/weather conditions (Open-Meteo), a
 jellyfish/whale heuristic, an LLM-generated summary reviewed by a second LLM pass. Its first case
 is "what's the best hour tomorrow to swim nearby?", all runnable **entirely locally
-with a free Ollama model, zero Azure account needed**, with Azure Maps/Foundry/Cosmos DB/Vision/
-Application Insights as opt-in upgrades per integration, never a package deal. Also hands-on
-coverage of every [AI-103](https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-apps-and-agents-developer-associate/)
-exam domain and a design target for [AI-500](https://learn.microsoft.com/en-us/credentials/certifications/)
-(multi-agent, AI-103 is its prerequisite); see `docs/AI-103-MAPPING.md`/`docs/AI-500-MAPPING.md`.
+with a free Ollama model, no cloud account needed**. GCP (MIP-0057) is the opt-in cloud path.
 
-One sbt multi-project build (root `build.sbt`), split into four modules at the repo root so the
-local-only path carries zero Azure SDK dependency:
+One sbt multi-project build (root `build.sbt`), split into three modules at the repo root:
 
 - `core/`: pure pipeline logic, shared HTTP/JSON helpers, the traits (`LlmClient`, `VisionClient`,
-  `SightingStore`) `local/`/`azure/` implement. No Azure reference anywhere in this module.
-- `local/`: Ollama-backed implementations. Zero Azure SDK dependency, confirmed in `build.sbt`.
-- `azure/`: every optional Azure integration (Foundry, Azure Maps, Cosmos DB, AI Vision, App
-  Insights), all opt-in. `.claude/rules/azure.md` auto-loads the full cost/credential rules here.
-- `cli/`: `Main`, `AppConfig` (picks a backend per integration from env vars), the MCP tool
-  server. Depends on all three above; use `sbt cli/run`/`cli/runMain ...`, not `sbt run` at the
-  root (a pure aggregate with no source of its own).
+  `SightingStore`) `local/` implements.
+- `local/`: Ollama-backed implementations (LLM, vision) and the local-file sighting store.
+- `cli/`: `Main`, `AppConfig` (reads settings from env vars), the MCP tool server. Depends on
+  both above; use `sbt cli/run`/`cli/runMain ...`, not `sbt run` at the root (a pure aggregate
+  with no source of its own).
 - `dspy/`: offline Python DSPy prompt-compile step; produces a JSON artifact the Scala side
   loads, never a runtime dependency.
 
@@ -36,13 +29,11 @@ vocabulary and template pointer: `.claude/rules/docs.md`):
 
 | Doc | Covers |
 |---|---|
-| `docs/ARCHITECTURE.md` | The pipeline, the six pluggable integrations, what's verified live vs. written-not-run |
-| `docs/FUTURE-WORK.md` | Design sketches, reviewed-but-not-adopted libraries, harness ideas, exam-coverage ideas |
+| `docs/ARCHITECTURE.md` | The pipeline, its integrations, what's verified live vs. written-not-run |
+| `docs/FUTURE-WORK.md` | Design sketches, reviewed-but-not-adopted libraries, harness ideas |
 | `docs/EFFECTS-MAP.md` | A Scala/FP-purity review: what's pure, what's effectful, what's hidden |
-| `docs/RUN-LOCALLY.md` | Run it now, with Ollama, no Telegram/Azure |
-| `docs/TELEGRAM-SETUP.md` | Registering the bot, local-dev and Azure-Foundry credential paths |
-| `docs/AI-103-MAPPING.md` | AI-103 exam domain coverage, including honest gaps |
-| `docs/AI-500-MAPPING.md` | AI-500 (multi-agent) domain coverage: a design target, not a build record |
+| `docs/RUN-LOCALLY.md` | Run it now, with Ollama, no Telegram or cloud account |
+| `docs/TELEGRAM-SETUP.md` | Registering the bot and its local-dev credential path |
 | `docs/SKILLS.md` | A skills roadmap: what to practice, in order, using marola as the vehicle |
 | `docs/SCALA3-JDK-REVIEW.md` | Scala 3 / JDK 21-25 features reviewed against this code: adopt list and order |
 | `docs/AGENT-FRAMEWORKS-SURVEY.md` | Multi-agent frameworks survey: Python ideas → Scala shapes, Pekko fit, reading list |
@@ -56,7 +47,7 @@ vocabulary and template pointer: `.claude/rules/docs.md`):
 
 ```bash
 nix develop          # reproducible dev shell (JDK 25, sbt, scala-cli, coursier,
-                      # just, python3, ruff, az, gh, hadolint, actionlint — see flake.nix; Docker itself is the host's)
+                      # just, python3, ruff, gh, hadolint, actionlint — see flake.nix; Docker itself is the host's)
 just                  # list all available recipes
 just build            # sbt compile
 just test             # sbt test
@@ -64,7 +55,7 @@ just fmt              # scalafmtAll
 just run              # marola CLI (just run -- --summarize forwards flags)
 just mcp-server       # marola's MCP tool server
 just e2e              # marola's live E2E test (Overpass/Open-Meteo/Ollama) — excluded from `just test`
-just coverage         # sbt-scoverage: statement coverage across core/local/azure/cli (README badge, main only)
+just coverage         # sbt-scoverage: statement coverage across core/local/cli (README badge, main only)
 ```
 
 Always run `just build && just test && just quality` before considering a change done (`quality` =
@@ -79,28 +70,16 @@ JDK/Kyo-versioning detail and the jar-verification approach for Kyo's pre-1.0 AP
 ## Phase discipline (hard rule)
 
 Work **one phase at a time**, per `docs/ARCHITECTURE.md` §11: do not start Phase 2 (going live on
-Azure, provisioning any of the six optional integrations for real, `docs/ARCHITECTURE.md` §5/§6)
-before Phase 1 (Telegram bot actually working) is done. This exists to prevent an expensive
-mistake, so don't skip it because a later phase looks more interesting. If asked to jump ahead,
+a cloud backend, GCP per MIP-0057) before Phase 1 (Telegram bot actually working) is done. This
+exists to prevent an expensive mistake, so don't skip it because a later phase looks more interesting. If asked to jump ahead,
 implement the requested feature but flag which earlier-phase prerequisite is still missing.
 
 ## Cost & deployment safety (hard rule)
 
-**Never provision or deploy a paid Azure resource without explicit human confirmation first.**
-Propose the change, state the expected cost, wait for a go-ahead. This is enforced two ways, not
-only in prose, and they're deliberately not the same shape (an ultrareview on 2026-09-06 found the
-two layers described as interchangeable when they aren't; this section states the real relationship
-instead): `.claude/settings.json`'s `permissions.deny` refuses the exact literal command prefixes
-(`azd up`, `azd provision`, `az deployment `, `az group create`) before any hook runs at all. For
-those, `MAROLA_ALLOW_AZURE_DEPLOY=1` does nothing, because the tool call never reaches
-`.claude/hooks/guard-azure.sh`; the human runs the command directly, or adds a one-shot rule to
-`.claude/settings.local.json`. `guard-azure.sh` (`PreToolUse` on `Bash`) is the second, broader
-layer, catching every other invocation shape a Claude session might produce (a wrapped shell, an
-absolute path, `cd infra && azd up`). For those, and only those, `MAROLA_ALLOW_AZURE_DEPLOY=1`
-set after a human go-ahead lets the one command through. ai-jail is a third layer, orthogonal to
-both. Never hardcode a key/connection string/secret. Full detail (managed identity, the
-`.env.example` placeholder rule) is in `.claude/rules/azure.md`; this rule matters everywhere
-though, not only its auto-load paths, so the short version stays here too.
+**Never provision or deploy a paid cloud resource without explicit human confirmation first.**
+Propose the change, state the expected cost, wait for a go-ahead. Never hardcode a key/connection
+string/secret; `.env.example` holds placeholders only. ai-jail limits what a session can reach, but
+it does not replace this rule.
 
 ## Attribution and cost accounting (hard rule)
 
@@ -124,7 +103,7 @@ though, not only its auto-load paths, so the short version stays here too.
   `claude_code.token.usage` over OpenTelemetry (`CLAUDE_CODE_ENABLE_TELEMETRY=1`,
   `OTEL_METRICS_EXPORTER=otlp`, `OTEL_EXPORTER_OTLP_ENDPOINT=...`) tagged by `session.id`/`model`/
   `skill.name`/`mcp_tool.name`; a future Phase 2 could land agent spend next to marola's own
-  `Telemetry` traces in Application Insights.
+  `Telemetry` traces.
 
 ## Code style
 
@@ -179,15 +158,14 @@ user namespaces are blocked by default. Fix via a scoped AppArmor profile, or di
 
 ## Before implementing a feature
 
-Check `docs/AI-103-MAPPING.md` and `docs/AI-500-MAPPING.md`: is there an existing gap this closes?
-Building it is fine either way (a real product, not just exam prep), but note the mapping in the
-PR description if it applies. For a proactive/autonomous agent behavior (e.g. the escalation-agent
-idea in `docs/FUTURE-WORK.md`), see `docs/AI-500-MAPPING.md` §4 before removing a
-human-confirmation gate; this is not optional polish.
+Check `docs/mips/` and `docs/FUTURE-WORK.md` first: the idea may already be designed or decided.
+For a proactive/autonomous agent behavior (e.g. the escalation-agent idea in
+`docs/FUTURE-WORK.md`), keep the human-confirmation gate unless a MIP decides otherwise. This is not
+optional polish.
 
 ## When something here turns out to be wrong
 
-Update this file, `.claude/rules/*.md`, or the relevant `docs/*.md` in the same change (an Azure
+Update this file, `.claude/rules/*.md`, or the relevant `docs/*.md` in the same change (a cloud
 API/limit/version changes, a library moves past the version pinned in `build.sbt`, etc.). Rules
 files are excerpts that link back here, not the only copy. This file is read by non-Claude agents
 too, so a rule that matters everywhere stays stated here even if the full detail moved.

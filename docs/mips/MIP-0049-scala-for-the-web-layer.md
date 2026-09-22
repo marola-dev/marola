@@ -5,7 +5,7 @@
 | **Status** | Draft |
 | **Author** | Claude (Opus 5), for M. Hoffmann (request: "consider adoption any scala framework for helping building this webpage, possible candidates like tyrian, purplegames, scalajs, or just a better syntax to deal with web stuff") |
 | **Created** | 2026-09-08 |
-| **Phase** | 0 — the static site is a Phase 0 surface; nothing here needs Phase 1 or an Azure resource |
+| **Phase** | 0 — the static site is a Phase 0 surface; nothing here needs Phase 1 or a cloud resource |
 | **Related** | MIP-0005 (the site, and its "no templating engine, no build step" constraint), MIP-0042 §4.4 (the Scala.js cross-build research this MIP builds on rather than repeats), MIP-0044 (the page generator — §5.1's per-section HTML files are the concrete consumer of any server-side answer here), MIP-0009 (`scripts/site_check.js`, the no-browser harness a client framework would invalidate), MIP-0046 (the icon work in flight in the same files) |
 | **Effort** | Per option, not one number: S for §5.1 (a JVM HTML DSL behind the existing generator), L for §5.2 (a Scala.js view layer replacing `app.js` — a JS build target, a bundle, and a replacement for the harness), XL for §5.3 (both, plus MIP-0042's scorer cross-build) |
 | **Gain** | `infra/dev-loop` — one language for the page and the pipeline, and types across the board/JSON boundary that is currently string-matched twice; `user value` only indirectly, and §6 argues it is close to zero today |
@@ -161,10 +161,6 @@ For §5.2, before any commitment:
 - **TypeScript.** Real types, but adds a build step and a second language toolchain: the cost of
   Scala.js without the one-language benefit that is the entire point of asking.
 - **A game engine (Indigo).** §4.4.
-
-## 10. Exam-coverage mapping
-
-None. This is repo ergonomics, not an AI-103/AI-500 domain.
 
 ## 11. Open questions
 

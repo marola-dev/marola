@@ -21,7 +21,6 @@ COPY project/build.properties project/plugins.sbt project/
 RUN sbt --batch update
 COPY core core
 COPY local local
-COPY azure azure
 COPY cli cli
 RUN sbt --batch cli/assembly \
  && cp cli/target/scala-3.9.0/marola-cli-assembly-*.jar /marola.jar

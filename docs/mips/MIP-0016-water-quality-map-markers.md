@@ -6,11 +6,11 @@
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 6 Sep 2026: "attach in the map the points cited (water quality) with OK or not-OK signs over the map; be conscious to tag the point in the sea and not on the earth, as the map displays today") |
 | **Created** | 2026-09-06 |
 | **Phase** | 1 — the map exists (MIP-0005) and the data is already in its board JSON; nothing earlier-phase is missing |
-| **Related** | MIP-0001 (the IMA/SC feed and `WaterQualityMatcher`), MIP-0005 (the board JSON and `app.js`), MIP-0009 (wave markers and hover — same `render()`, must share one marker anchor), `ARCHITECTURE.md` §7 (Overpass fair use), `AI-103-MAPPING.md` row "Responsible AI: transparency" |
+| **Related** | MIP-0001 (the IMA/SC feed and `WaterQualityMatcher`), MIP-0005 (the board JSON and `app.js`), MIP-0009 (wave markers and hover — same `render()`, must share one marker anchor), `ARCHITECTURE.md` §7 (Overpass fair use) |
 | **Effort** | M — one pure geometry module (`core/geo/Coastline`), one extra Overpass query per site build, additive board fields, a JS/CSS layer with a legend; no new module, no new dependency |
-| **Gain** | user value (the safety-critical fact — *which* stretch of a beach is IMPRÓPRIA — becomes visible on the map instead of buried in a card); exam coverage (AI-103 "Responsible AI: transparency" — stale and unclassified readings are drawn as such, never rounded to OK) |
+| **Gain** | user value (the safety-critical fact — *which* stretch of a beach is IMPRÓPRIA — becomes visible on the map instead of buried in a card) |
 | **Effort vs Gain** | do next — the data is already shipped to the browser (§2), so most of the effort is the placement geometry, which also fixes today's inland beach markers |
-| **Depends on** | MIP-0005 (Implemented). Coordinates with MIP-0009 (Draft) on the marker anchor (§5.4). No Phase 1 gate, no Azure resource — the coastline comes from OpenStreetMap |
+| **Depends on** | MIP-0005 (Implemented). Coordinates with MIP-0009 (Draft) on the marker anchor (§5.4). No Phase 1 gate, no cloud resource — the coastline comes from OpenStreetMap |
 | **Risk** | the offshore offset lands in the wrong water — a river mouth, a lagoon, the far side of a spit — for a few points, and a wrong-looking pin costs more trust than no pin (§8) |
 | **Cost so far** | — |
 
@@ -107,8 +107,6 @@ water-side point by leaving it where it is.
   sea; the seaward edge of a multipolygon is not identifiable without the coastline anyway.
 - **Open-Meteo Marine's grid** as a "this is sea" oracle: the marine API answers for the nearest
   sea cell, it does not say whether the query point is wet. Rejected.
-- **Azure Maps** — no land/water test in its Search or Render APIs that this needs; an Azure-only
-  path would add a key and cost for nothing. Stated per the `mip` skill: **no Azure opt-in here.**
 - **Hand-placed offsets per point** (a JSON of corrections): works for 14 points, not for 260 and
   not for INEA/RJ later. Kept only as the manual-override escape hatch (§5.1, `pins.json`).
 
@@ -230,12 +228,6 @@ and how existing verdicts are drawn. `Coastline.place` never alters a `condition
   seaward. Rejected as a second mechanism for the same input.
 - **Colour the beach marker per worst point, no pins**: is what exists; loses *where*. Rejected.
 - **Do nothing**: the card lists the points; nobody opens five cards to find the stream mouth.
-
-## 10. Exam-coverage mapping
-
-`AI-103-MAPPING.md` "Responsible AI: transparency": stale, unclassified and unplaced states each
-have their own visual and their own words, and the pin's derivation is stated in the tooltip. No
-other row; no Azure service involved.
 
 ## 11. Open questions
 

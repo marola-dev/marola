@@ -183,10 +183,6 @@ Catarina, compared by hand. Done = that comparison recorded in this file.
   once sourced.
 - **Do nothing.** marola keeps calling a ressaca "rough seas" and scoring it above zero.
 
-## 10. Exam-coverage mapping
-
-None.
-
 ## 11. Open questions
 
 1. The 2010–2024 UFSC study (72 occurrences, 17 beaches), find it, then extend the record file.

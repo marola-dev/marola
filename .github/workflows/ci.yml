@@ -102,7 +102,6 @@ jobs:
           path: |
             core/target
             local/target
-            azure/target
             cli/target
             project/target
             project/project/target
@@ -119,8 +118,8 @@ jobs:
         run: sbt scalafmtCheckAll "scalafixAll --check" compile test
 
       # Main only, and only after the checks above pass: `sbt-scoverage` (project/plugins.sbt)
-      # re-instruments core/local/azure/cli, reruns the suite, and coverageAggregate sums one
-      # statement-coverage number across all four for the README badge.
+      # re-instruments core/local/cli, reruns the suite, and coverageAggregate sums one
+      # statement-coverage number across all three for the README badge.
       - name: Coverage (main only) — instrumented build, statement %, shields.io endpoint JSON
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |

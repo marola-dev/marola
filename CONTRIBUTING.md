@@ -12,7 +12,7 @@ a suggestion. Humans should read it too.
 nix develop && just ollama-up && just build && just test && just quality && just run -- --brief
 ```
 
-Full walkthrough: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md). No Telegram token, no Azure
+Full walkthrough: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md). No Telegram token, no cloud
 account, no API key needed for any of the above.
 
 ## The dev loop

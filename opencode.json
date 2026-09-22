@@ -22,10 +22,7 @@
       "git status*": "allow",
       "git diff*": "allow",
       "git log*": "allow",
-      "scripts/stack.sh status*": "allow",
-      "azd *": "deny",
-      "az deployment *": "deny",
-      "az group create*": "deny"
+      "scripts/stack.sh status*": "allow"
     },
     "read": {
       "*": "allow",

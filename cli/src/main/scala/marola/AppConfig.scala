@@ -2,19 +2,14 @@ package marola
 
 import kyo.*
 
-import marola.beaches.{
-  AccessibilityClient,
-  NoopAccessibilityClient,
-  OverpassAccessibilityClient,
-  RouteFinder
-}
+import marola.beaches.{AccessibilityClient, NoopAccessibilityClient, OverpassAccessibilityClient}
 import marola.knowledge.{FileKnowledgeStore, OceanQa, OllamaEmbedder}
 import marola.ledger.{MlflowRunLedger, RunLedger}
-import marola.llm.{AzureFoundryLlmClient, LlmClient, LocalLlmClient, TracedLlmClient}
+import marola.llm.{LlmClient, LocalLlmClient, TracedLlmClient}
 import marola.model.Coordinates
-import marola.observability.{AzureMonitorTracing, MlflowTracing, Tracing}
-import marola.sightings.{CosmosDbSightingStore, LocalFileSightingStore, SightingStore}
-import marola.vision.{AzureVisionClient, LocalVisionClient, VisionClient}
+import marola.observability.{MlflowTracing, Tracing}
+import marola.sightings.{LocalFileSightingStore, SightingStore}
+import marola.vision.{LocalVisionClient, VisionClient}
 import marola.water.{
   CachedWaterQualityClient,
   FallbackWaterQualityClient,
@@ -25,20 +20,7 @@ import marola.water.{
   WaterQualityClient
 }
 
-/** Which backend a pluggable integration uses — `Local` is always the zero-Azure default. */
-enum Provider derives CanEqual:
-  case Local, Azure
-
-object Provider:
-  def fromEnv(value: Option[String]): Provider =
-    value match
-      case Some(v) if v.equalsIgnoreCase("azure") => Azure
-      case _                                      => Local
-
-/**
- * Bathing-water data is regional, so its "provider" is an agency, not local-vs-Azure (MIP-0001
- * §5.2: there is no Azure water-quality service, and none is invented).
- */
+/** Bathing-water data is regional, so its "provider" is an agency (MIP-0001 §5.2). */
 enum WaterProvider derives CanEqual:
   case Auto, ImaSc, InemaBa, IneaRj, None
 
@@ -51,10 +33,7 @@ object WaterProvider:
       case Some("none") | Some("off")                            => None
       case _                                                     => Auto
 
-/**
- * MIP-0021 §5: `Overpass` (default) is the only real source — there is no Azure alternative for OSM
- * amenities — so this is a simple on/off switch, not a `Provider`-shaped local-vs-Azure choice.
- */
+/** MIP-0021 §5: `Overpass` (default) is the only real source, so this is an on/off switch. */
 enum FacilitiesProvider derives CanEqual:
   case Overpass, Off
 
@@ -65,19 +44,16 @@ object FacilitiesProvider:
       case _           => Overpass
 
 /**
- * Which `Tracing` backend `Main` wraps the pipeline in — `MAROLA_TRACES=off|mlflow|azure` (MIP-0010
- * §5).
+ * Which `Tracing` backend `Main` wraps the pipeline in — `MAROLA_TRACES=off|mlflow` (MIP-0010 §5).
  */
 enum TraceBackend derives CanEqual:
-  case Off, Mlflow, Azure
+  case Off, Mlflow
 
 object TraceBackend:
-  def fromEnv(value: Option[String], appInsightsConnectionString: Option[String]): TraceBackend =
+  def fromEnv(value: Option[String]): TraceBackend =
     value.map(_.trim.toLowerCase) match
-      case Some("off")    => Off
       case Some("mlflow") => Mlflow
-      case Some("azure")  => Azure
-      case _              => if appInsightsConnectionString.isDefined then Azure else Off
+      case _              => Off
 
 /**
  * Minimal env-driven config: plain Scala, no Kyo `Env` effect yet (nothing to inject it into at POC
@@ -85,8 +61,6 @@ object TraceBackend:
  */
 final case class AppConfig(
     telegramBotToken: Option[String],
-    foundryProjectEndpoint: Option[String],
-    foundryApiVersion: String,
     beachSearchRadiusKm: Double,
     originLat: Option[Double],
     originLon: Option[Double],
@@ -98,21 +72,10 @@ final case class AppConfig(
     seaLoreEnabled: Boolean,
     askFallback: OceanQa.Fallback,
     askMinScore: Double,
-    llmProvider: Provider,
     localLlmBaseUrl: String,
     localLlmModel: String,
-    azureMapsSubscriptionKey: Option[String],
-    sightingStoreProvider: Provider,
     localSightingStorePath: String,
-    cosmosDbEndpoint: Option[String],
-    cosmosDbKey: Option[String],
-    cosmosDbDatabase: String,
-    cosmosDbContainer: String,
-    visionProvider: Provider,
     localVisionModel: String,
-    azureVisionEndpoint: Option[String],
-    azureVisionKey: Option[String],
-    appInsightsConnectionString: Option[String],
     mlflowTrackingUri: Option[String],
     mlflowExperiment: String,
     tracesBackend: TraceBackend,
@@ -137,10 +100,7 @@ final case class AppConfig(
     def secret(v: Option[String]) = if v.isDefined then "<set>" else "unset"
     List(
       s"telegram=${secret(telegramBotToken)}",
-      s"llm=$llmProvider(${
-          if llmProvider == Provider.Local then s"$localLlmBaseUrl $localLlmModel"
-          else foundryProjectEndpoint.getOrElse("no endpoint") + " " + foundryApiVersion
-        })",
+      s"llm=$localLlmBaseUrl $localLlmModel",
       s"embed=$localEmbedModel",
       s"knowledge=$knowledgeDir -> $knowledgeIndexPath",
       s"lore=${if seaLoreEnabled then "on" else "off"}",
@@ -149,16 +109,8 @@ final case class AppConfig(
       f"radius=${beachSearchRadiusKm}%.0fkm",
       s"water=$waterQualityProvider",
       s"facilities=$facilitiesProvider",
-      s"maps=${secret(azureMapsSubscriptionKey)}",
-      s"sightings=$sightingStoreProvider(${
-          if sightingStoreProvider == Provider.Local then localSightingStorePath
-          else s"$cosmosDbDatabase/$cosmosDbContainer key=${secret(cosmosDbKey)}"
-        })",
-      s"vision=$visionProvider(${
-          if visionProvider == Provider.Local then localVisionModel
-          else s"endpoint=${secret(azureVisionEndpoint)} key=${secret(azureVisionKey)}"
-        })",
-      s"appinsights=${secret(appInsightsConnectionString)}",
+      s"sightings=$localSightingStorePath",
+      s"vision=$localVisionModel",
       s"mlflow=${secret(mlflowTrackingUri)}(experiment=$mlflowExperiment)",
       s"traces=$tracesBackend${if traceContent then "(content)" else ""}"
     ).mkString(" ")
@@ -217,69 +169,27 @@ final case class AppConfig(
       OllamaEmbedder(OllamaEmbedder.nativeBaseUrl(localLlmBaseUrl), localEmbedModel)
     )
 
-  /**
-   * `None` for `llmProvider = Azure` without `foundryProjectEndpoint` set — there's no reasonable
-   * Azure default to fall back to, unlike the local provider's `localhost` default.
-   */
-  def llmClient: Option[LlmClient] =
-    llmProvider match
-      case Provider.Azure => foundryProjectEndpoint.map(AzureFoundryLlmClient(_, foundryApiVersion))
-      case Provider.Local => Some(LocalLlmClient(localLlmBaseUrl, localLlmModel))
+  def llmClient: LlmClient = LocalLlmClient(localLlmBaseUrl, localLlmModel)
 
   /**
    * `llmClient` behind `TracedLlmClient` (MIP-0010 task 6): one `llm.<model>` span per call on the
    * given `Tracing` — transparent with `Tracing.Noop`.
    */
-  def tracedLlmClient(tracing: Tracing): Option[LlmClient] =
-    llmClient.map(TracedLlmClient(_, llmModelName, tracing, traceContent))
+  def tracedLlmClient(tracing: Tracing): LlmClient =
+    TracedLlmClient(llmClient, localLlmModel, tracing, traceContent)
 
-  def llmModelName: String =
-    llmProvider match
-      case Provider.Local => localLlmModel
-      case Provider.Azure =>
-        foundryProjectEndpoint.map(_.stripSuffix("/").split('/').last).getOrElse("foundry")
+  def sightingStore: SightingStore = LocalFileSightingStore(localSightingStorePath)
 
-  /**
-   * Same shape as `llmClient`: `None` for `sightingStoreProvider = Azure` without both Cosmos
-   * settings present.
-   */
-  def sightingStore: Option[SightingStore] =
-    sightingStoreProvider match
-      case Provider.Azure =>
-        for
-          endpoint <- cosmosDbEndpoint
-          key <- cosmosDbKey
-        yield CosmosDbSightingStore(endpoint, key, cosmosDbDatabase, cosmosDbContainer)
-      case Provider.Local => Some(LocalFileSightingStore(localSightingStorePath))
-
-  /** Same shape again: `None` for `visionProvider = Azure` without both Vision settings present. */
-  def visionClient: Option[VisionClient] =
-    visionProvider match
-      case Provider.Azure =>
-        for
-          endpoint <- azureVisionEndpoint
-          key <- azureVisionKey
-        yield AzureVisionClient(endpoint, key)
-      case Provider.Local => Some(LocalVisionClient(localLlmBaseUrl, localVisionModel))
+  def visionClient: VisionClient = LocalVisionClient(localLlmBaseUrl, localVisionModel)
 
   /**
    * `RunLedger.Noop` (MIP-0010) unless `MAROLA_MLFLOW_TRACKING_URI` is set — no network call, no
-   * mlflow server needed, matches every other pluggable integration's local-by-nothing default
-   * except this one has no Azure sibling yet (MIP §4.5 is still Draft).
+   * mlflow server needed.
    */
   def runLedger: RunLedger =
     mlflowTrackingUri match
       case Some(uri) => MlflowRunLedger(uri)
       case None      => RunLedger.Noop
-
-  /**
-   * `Recommender` (in `marola-core`) can't reference `RouteFinder` (in `marola-azure`) directly —
-   * `marola-core` has zero Azure SDK dependency by design (`FUTURE-WORK.md` §7.3).
-   */
-  def distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] =
-    azureMapsSubscriptionKey.map(key =>
-      (origin, dest) => RouteFinder.travelDistanceKm(key, origin, dest)
-    )
 
   /**
    * The `Tracing` instance `Main` wraps the pipeline in — resolved once per run, in `Main`, and
@@ -288,8 +198,6 @@ final case class AppConfig(
    */
   def tracing: Tracing < Sync =
     tracesBackend match
-      case TraceBackend.Azure =>
-        Sync.defer(appInsightsConnectionString.fold(Tracing.Noop)(AzureMonitorTracing(_)))
       case TraceBackend.Mlflow =>
         mlflowTrackingUri match
           case Some(uri) => MlflowTracing(uri, mlflowExperiment)
@@ -298,11 +206,8 @@ final case class AppConfig(
 
 object AppConfig:
   def fromEnv: AppConfig =
-    val appInsightsConnectionString = sys.env.get("APPLICATIONINSIGHTS_CONNECTION_STRING")
     AppConfig(
       telegramBotToken = sys.env.get("MAROLA_TELEGRAM_BOT_TOKEN"),
-      foundryProjectEndpoint = sys.env.get("FOUNDRY_PROJECT_ENDPOINT"),
-      foundryApiVersion = sys.env.getOrElse("FOUNDRY_API_VERSION", "2026-01-01-preview"),
       beachSearchRadiusKm =
         sys.env.get("MAROLA_BEACH_SEARCH_RADIUS_KM").flatMap(_.toDoubleOption).getOrElse(15.0),
       originLat = sys.env.get("MAROLA_ORIGIN_LAT").flatMap(_.toDoubleOption),
@@ -325,30 +230,18 @@ object AppConfig:
         .get("MAROLA_ASK_MIN_SCORE")
         .flatMap(_.toDoubleOption)
         .getOrElse(OceanQa.DefaultMinScore),
-      llmProvider = Provider.fromEnv(sys.env.get("MAROLA_LLM_PROVIDER")),
       localLlmBaseUrl =
         sys.env.getOrElse("MAROLA_LOCAL_LLM_BASE_URL", LocalLlmClient.DefaultBaseUrl),
       localLlmModel = sys.env.getOrElse("MAROLA_LOCAL_LLM_MODEL", LocalLlmClient.DefaultModel),
-      azureMapsSubscriptionKey = sys.env.get("AZURE_MAPS_SUBSCRIPTION_KEY"),
-      sightingStoreProvider = Provider.fromEnv(sys.env.get("MAROLA_SIGHTING_STORE_PROVIDER")),
       localSightingStorePath =
         sys.env.getOrElse("MAROLA_LOCAL_SIGHTING_STORE_PATH", LocalFileSightingStore.DefaultPath),
-      cosmosDbEndpoint = sys.env.get("COSMOS_DB_ENDPOINT"),
-      cosmosDbKey = sys.env.get("COSMOS_DB_KEY"),
-      cosmosDbDatabase = sys.env.getOrElse("COSMOS_DB_DATABASE", "marola"),
-      cosmosDbContainer = sys.env.getOrElse("COSMOS_DB_CONTAINER", "sightings"),
-      visionProvider = Provider.fromEnv(sys.env.get("MAROLA_VISION_PROVIDER")),
       localVisionModel =
         sys.env.getOrElse("MAROLA_LOCAL_VISION_MODEL", LocalVisionClient.DefaultModel),
-      azureVisionEndpoint = sys.env.get("AZURE_VISION_ENDPOINT"),
-      azureVisionKey = sys.env.get("AZURE_VISION_KEY"),
-      appInsightsConnectionString = appInsightsConnectionString,
       // MIP-0010 §5: unset ⇒ RunLedger.Noop (`just mlflow-up` prints the tracking URI to export).
       mlflowTrackingUri = sys.env.get("MAROLA_MLFLOW_TRACKING_URI"),
       // The experiment prefix (`marola/<kind>`), not a full experiment name — see `runLedger`.
       mlflowExperiment = sys.env.getOrElse("MAROLA_MLFLOW_EXPERIMENT", "marola"),
-      tracesBackend =
-        TraceBackend.fromEnv(sys.env.get("MAROLA_TRACES"), appInsightsConnectionString),
+      tracesBackend = TraceBackend.fromEnv(sys.env.get("MAROLA_TRACES")),
       // Off by default: the prompt carries the swimmer's coordinates (MIP-0010 §5).
       traceContent = TracedLlmClient.contentFromEnv(sys.env.get("MAROLA_TRACE_CONTENT"))
     )

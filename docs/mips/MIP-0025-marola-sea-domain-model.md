@@ -6,11 +6,11 @@
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: turn the maintainer's marola-sea-1.0 notes into a MIP) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (local training/eval only, no product surface change) — the model would first plug into the local `LlmClient` path that already exists (Phase-0-and-later work per `ARCHITECTURE.md` §11), not gated on Phase 1 |
-| **Related** | `finetune/README.md`, `finetune/build_dataset.py`, `finetune/train_lora.py`, `finetune/Modelfile`/`Modelfile.adapter` (**this exact 3-layer idea is partially built already** — see §2), `dspy/compile_recommendation_prompt.py` (the prompt-only alternative already in production), `knowledge/*.md` (the corpus layer 1's dataset would draw from), `cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala` (the real tool names layer 2 targets — `get_swim_recommendation`, `get_water_quality`, `find_nearby_beaches`, `ask_ocean_question`), `docs/AI-103-MAPPING.md` row "Fine-tuning a model" (line 37), `docs/benchmarks/` and `just benchmark`/`scripts/benchmark_gate.py` (MIP-0008's existing gate this MIP must clear, not bypass), `docs/mips/MIP-0008-docker-images-and-smoke-test.md` (`marola-local` image, the existing Tier-1 CI/gate precedent) |
+| **Related** | `finetune/README.md`, `finetune/build_dataset.py`, `finetune/train_lora.py`, `finetune/Modelfile`/`Modelfile.adapter` (**this exact 3-layer idea is partially built already** — see §2), `dspy/compile_recommendation_prompt.py` (the prompt-only alternative already in production), `knowledge/*.md` (the corpus layer 1's dataset would draw from), `cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala` (the real tool names layer 2 targets — `get_swim_recommendation`, `get_water_quality`, `find_nearby_beaches`, `ask_ocean_question`), `docs/benchmarks/` and `just benchmark`/`scripts/benchmark_gate.py` (MIP-0008's existing gate this MIP must clear, not bypass), `docs/mips/MIP-0008-docker-images-and-smoke-test.md` (`marola-local` image, the existing Tier-1 CI/gate precedent) |
 | **Effort** | M — no new Scala module or trait (the local `LlmClient` already picks a model by name via `MAROLA_LOCAL_LLM_MODEL`/Ollama `FROM`); the work is entirely in `finetune/` (already exists) plus a DPO stage and dataset-scale increase it doesn't yet have |
-| **Gain** | user value (better format/tool-call/safety adherence at zero added runtime cost — still local, still free); exam coverage (`AI-103-MAPPING.md`'s fine-tuning row, currently "recipe written, not run") |
+| **Gain** | user value (better format/tool-call/safety adherence at zero added runtime cost — still local, still free) |
 | **Effort vs Gain** | `do when X lands` — worth building once `finetune/`'s Tier 2 (QLoRA, already written but "not run — no GPU here") actually gets a GPU run and a real `docs/benchmarks/` comparison; building DPO and scaling the dataset before Tier 2 itself has ever completed once would be building on an unverified foundation |
-| **Depends on** | `finetune/`'s Tier 2 QLoRA path completing at least one real run — **satisfied 2026-09-06**, `tiny` preset (SmolLM2-360M), see `finetune/README.md`'s Tier 2 row for the real command sequence and eval-loss numbers; no Phase 1 gate (this is a local-LLM-quality change, independent of the bot existing); no paid Azure resource required — RunPod is optional, not Azure, and still needs the human cost go-ahead per `AGENTS.md` even though it isn't Azure specifically |
+| **Depends on** | `finetune/`'s Tier 2 QLoRA path completing at least one real run — **satisfied 2026-09-06**, `tiny` preset (SmolLM2-360M), see `finetune/README.md`'s Tier 2 row for the real command sequence and eval-loss numbers; no Phase 1 gate (this is a local-LLM-quality change, independent of the bot existing); no paid resource required — RunPod is optional, and still needs the human cost go-ahead per `AGENTS.md` |
 | **Risk** | a 3B model, however tuned, hallucinating a specific number (wave height, temperature) that a user reads as authoritative — `Reviewer`'s hallucination check (`core/llm/Reviewer.scala`) is the existing mitigation and must stay in the loop, not be assumed redundant because the model was "trained to know better" |
 | **Cost so far** | — (the `tiny`-preset run above was local CPU time, $0, not yet attributed to a merged PR under this MIP's own task list) |
 
@@ -62,9 +62,6 @@ when a question needs live data instead of hand-written prompt engineering to co
   weights need a HF login). This MIP's base-model choice (§4.2) plugs into this same script.
 - `Modelfile`/`Modelfile.adapter`: Tier 1 run and verified; Tier 2's adapter Modelfile written,
   waiting on an actual `out/marola-adapter.gguf` that doesn't exist yet.
-- `docs/AI-103-MAPPING.md` line 37 already cites this exact status: "Recipe written, not run (no
-  GPU); Tier 1 built and used live." This MIP does not change that row's honesty, only (if built)
-  its "not run" clause.
 
 ### 4.2 Base model licence — verified 2026-09-06 (WebSearch, not a direct HF/Meta page fetch)
 
@@ -173,7 +170,7 @@ or `ollama create` can pin an exact blob, the same "pin by hash, not mutable tag
   `.gguf` files, `CHECKSUMS`, and a model card (base model, training-data description (§4.3/§5's
   sources), `docs/benchmarks/` eval numbers, intended use ("a swim-conditions summarizer/tool-router
   for marola, not a standalone safety authority"), and the IMPRÓPRIA note from §6 verbatim): the
-  natural home for `AI-103-MAPPING.md`'s "Responsible AI: transparency" theme applied to a model card.
+  natural home for a "Responsible AI: transparency" note applied to a model card.
 - **Ollama's registry**: `ollama create marola/marola-sea:1.0 -f Modelfile` (namespace = the
   ollama.com account, `<namespace>/<model>:<tag>`) then `ollama push`. **Verified 2026-09-06**
   (`docs.ollama.com/import`): needs a registered ollama.com account and a local Ollama public key
@@ -307,13 +304,6 @@ after `marola-sea-1.0` exactly as it does after any other local model today.
   the maintainer specifically asked for this; the honest Effort-vs-Gain call above still says
   `do when X lands`, not `do next`.
 
-## 10. Exam-coverage mapping
-
-`docs/AI-103-MAPPING.md` line 37, "Fine-tuning a model": currently "Recipe written, not run (no
-GPU); Tier 1 built and used live." This MIP, if built, would move that status from "not run" to a
-real completed run, closing the honest gap `docs/AI-103-MAPPING.md`'s own §"the two real gaps"
-section (line 66) names explicitly.
-
 ## 11. Open questions
 
 1. Confirm Qwen2.5-3B's actual licence directly (§4.2) before considering it over Llama-3.2-3B.
@@ -327,7 +317,7 @@ section (line 66) names explicitly.
    `SwimConditionsMcpServer.scala`'s tool schemas change, to avoid the format-drift risk in §8? Not
    designed here.
 5. Who actually runs the RunPod session and pays the ~$10–15 (`AGENTS.md`'s cost-safety rule
-   applies to any paid resource, not only Azure): needs an explicit human go-ahead before this
+   applies to any paid resource): needs an explicit human go-ahead before this
    MIP's Phase moves from "designed" to "spend approved."
 6. Exact `convert_hf_to_gguf.py` filename/flags against llama.cpp's current tree (§5.1(1)), and
    whether `huggingface_hub`'s upload API surface has changed: neither was fetched directly.

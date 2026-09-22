@@ -24,17 +24,15 @@ object Recommender:
       origin: Coordinates,
       radiusKm: Double = 15.0,
       beachLimit: Int = 6,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
       waterQuality: Option[WaterQualityClient] = None,
       today: ZoneId => LocalDate = LocalDate.now(_),
       accessibility: Option[AccessibilityClient] = None
   ): List[BestHour] < Sync =
     for
       beaches <- BeachFinder.nearby(origin, radiusKm, beachLimit)
-      refined <- refineDistances(origin, beaches, distanceRefiner)
-      water <- fetchWaterQuality(waterQuality, refined)
-      facilities <- fetchFacilities(accessibility, refined)
-      scored <- traverse(refined)(beach =>
+      water <- fetchWaterQuality(waterQuality, beaches)
+      facilities <- fetchFacilities(accessibility, beaches)
+      scored <- traverse(beaches)(beach =>
         scoreTomorrow(beach, water.get(beach.name), facilities.get(beach.name), today)
       )
     yield scored.flatten.sortBy(b => (-b.score, Swimability.hourPreference(b.hour)))
@@ -89,28 +87,6 @@ object Recommender:
         }
 
   /**
-   * Upgrades each beach's haversine distance (`BeachFinder`'s "as the crow flies" default) to
-   * whatever `distanceRefiner` computes — a no-op when `None`, which is the entire local-vs-Azure
-   * toggle for this feature.
-   */
-  private def refineDistances(
-      origin: Coordinates,
-      beaches: List[Beach],
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync]
-  ): List[Beach] < Sync =
-    distanceRefiner match
-      case None => beaches
-      case Some(refine) =>
-        traverse(beaches) { beach =>
-          Abort
-            .run(Abort.catching[Throwable](refine(origin, beach.coordinates)))
-            .map {
-              case Result.Success(km) => beach.copy(distanceKm = km)
-              case _                  => beach
-            }
-        }
-
-  /**
    * One row per nearby beach (its single best hour tomorrow), ranked best-first — this is the
    * "conditions for each of them" view `Main` prints.
    */
@@ -118,7 +94,6 @@ object Recommender:
       origin: Coordinates,
       radiusKm: Double = 15.0,
       beachLimit: Int = 6,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
       waterQuality: Option[WaterQualityClient] = None,
       today: ZoneId => LocalDate = LocalDate.now(_),
       accessibility: Option[AccessibilityClient] = None
@@ -127,7 +102,6 @@ object Recommender:
       origin,
       radiusKm,
       beachLimit,
-      distanceRefiner,
       waterQuality,
       today,
       accessibility
@@ -149,7 +123,6 @@ object Recommender:
       origin: Coordinates,
       radiusKm: Double = 15.0,
       beachLimit: Int = 6,
-      distanceRefiner: Option[(Coordinates, Coordinates) => Double < Sync] = None,
       waterQuality: Option[WaterQualityClient] = None,
       today: ZoneId => LocalDate = LocalDate.now(_),
       days: Int = 2,
@@ -157,10 +130,9 @@ object Recommender:
   ): List[BestHour] < Sync =
     for
       beaches <- BeachFinder.nearby(origin, radiusKm, beachLimit)
-      refined <- refineDistances(origin, beaches, distanceRefiner)
-      water <- fetchWaterQuality(waterQuality, refined)
-      facilities <- fetchFacilities(accessibility, refined)
-      scored <- traverse(refined) { beach =>
+      water <- fetchWaterQuality(waterQuality, beaches)
+      facilities <- fetchFacilities(accessibility, beaches)
+      scored <- traverse(beaches) { beach =>
         OpenMeteoClient.forecastFor(beach, forecastDays = days).map { forecast =>
           val start = today(ZoneId.of(forecast.timezoneId))
           (0 until days).toList.flatMap(i =>

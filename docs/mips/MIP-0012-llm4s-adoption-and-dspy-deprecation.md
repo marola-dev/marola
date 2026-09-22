@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "implement llm4s in this repo, and deprecate DSPy — comprehensive, all llm4s capabilities, all marola ambitions, see PHILOSOPHY.md") |
 | **Created** | 2026-09-05 |
-| **Phase** | 0 for the Scala prompt compiler, the DSPy removal and the `llm4s/` module behind marola's own traits (developer tooling; the swimmer sees a re-compiled prompt, nothing else). The agent loop waits on Phase 1 (MIP-0002, still Draft); the HTTP MCP server for a Foundry agent is Phase 2/3 and behind the cost gate |
-| **Related** | `PHILOSOPHY.md` ("Why Scala 3 on the JVM" — the Python paragraph this MIP acts on), `FUTURE-WORK.md` §10 (`ds4s`, "DSPy stays a Python subprocess indefinitely" — revisited here) and §4.1 (held-out eval), `AGENT-FRAMEWORKS-SURVEY.md` §1.2 (llm4s row), `ARCHITECTURE.md` §5a (the DSPy step, `CompiledPrompt`) and §5c ("HTTP/SSE MCP transport — not built"), MIP-0010 (ledger + traces this step should write to; its task 7 becomes moot), MIP-0008 (native image — dependency weight), MIP-0002 (the first real agent surface), `AI-103-MAPPING.md` rows "Prompt engineering", "Optimize prompts systematically", "Agent orchestration frameworks", `AI-500-MAPPING.md` §1, §2, §4 |
+| **Phase** | 0 for the Scala prompt compiler, the DSPy removal and the `llm4s/` module behind marola's own traits (developer tooling; the swimmer sees a re-compiled prompt, nothing else). The agent loop waits on Phase 1 (MIP-0002, still Draft); the HTTP MCP server for a hosted agent is Phase 2/3 and behind the cost gate |
+| **Related** | `PHILOSOPHY.md` ("Why Scala 3 on the JVM" — the Python paragraph this MIP acts on), `FUTURE-WORK.md` §10 (`ds4s`, "DSPy stays a Python subprocess indefinitely" — revisited here) and §4.1 (held-out eval), `AGENT-FRAMEWORKS-SURVEY.md` §1.2 (llm4s row), `ARCHITECTURE.md` §5a (the DSPy step, `CompiledPrompt`) and §5c ("HTTP/SSE MCP transport — not built"), MIP-0010 (ledger + traces this step should write to; its task 7 becomes moot), MIP-0008 (native image — dependency weight), MIP-0002 (the first real agent surface) |
 | **Effort** | XL — a new module, a from-scratch Scala prompt compiler replacing DSPy, a dependency-boundary CI check, an agent/MCP layer gated on Phase 1 |
-| **Gain** | infra/dev-loop (removes the Python/DSPy toolchain and its training/serving skew); exam coverage (AI-103 §2/§3, AI-500 §1/§2) |
+| **Gain** | infra/dev-loop (removes the Python/DSPy toolchain and its training/serving skew) |
 | **Effort vs Gain** | do when X lands — tasks 1-3 (the prompt compiler) are dependency-free and could go now; tasks 4-7 (the agent) wait on MIP-0002 |
-| **Depends on** | MIP-0010 (the ledger the compiler logs to); MIP-0002/Phase 1 (the agent tasks); no Azure resource — llm4s's Azure path is explicitly rejected (key-only) |
+| **Depends on** | MIP-0010 (the ledger the compiler logs to); MIP-0002/Phase 1 (the agent tasks); no cloud resource |
 | **Risk** | llm4s is pre-1.0 with 154 transitive jars and one coordinate rename already — real churn for what would otherwise be a 30-line adapter |
 | **Cost so far** | n/a — the merged commit's own `Cost:` line was left as an unfilled placeholder ("~unmeasured in-agent · fill from `just claude-cost` before PR") |
 
@@ -25,10 +25,10 @@ marola that only had it by discipline. This part needs **no new dependency**: it
 existing `LlmClient`. **Second**, [llm4s](https://github.com/llm4s/llm4s) (`org.llm4s:llm4s-core`
 0.4.1, MIT, Scala 3, verified consumable from marola's 3.9.0 build, one live completion against
 the local Ollama) is adopted as an **opt-in fifth module `llm4s/`** behind marola's own traits, for
-what marola lacks and llm4s has: an agent loop with tools, handoffs and guardrails (AI-500 §1),
+what marola lacks and llm4s has: an agent loop with tools, handoffs and guardrails,
 structured output, an MCP *client*, and an HTTP/Streamable-HTTP MCP *server* (the §5c gap). It
-cannot live in `local/`: `llm4s-core` drags `com.azure:azure-ai-openai` and 150 other jars
-transitively, and `local/`'s zero-Azure rule is load-bearing.
+cannot live in `local/`: `llm4s-core` drags 154 jars transitively (§4.1), and `local/`'s small
+dependency set is load-bearing.
 
 ## 2. Motivation
 
@@ -49,9 +49,9 @@ transitively, and `local/`'s zero-Azure rule is load-bearing.
 - **`FUTURE-WORK.md` §4.1 never got built**: "run `dspy.Evaluate` after every compile" was the plan,
   but it lived on the Python side nobody ran. In Scala a held-out `Evaluate` is one function next to
   the compiler and one row in the ledger.
-- **The agent ambitions have no substrate.** `AI-500-MAPPING.md` §1 wants summarize / critique /
-  escalate as addressable agents with a named topology; `ARCHITECTURE.md` §5c says a Foundry agent
-  needs an HTTP MCP transport marola doesn't have; `AGENT-FRAMEWORKS-SURVEY.md` found "nothing in
+- **The agent ambitions have no substrate.** marola wants summarize / critique / escalate as
+  addressable agents with a named topology; `ARCHITECTURE.md` §5c says a hosted agent needs an
+  HTTP MCP transport marola doesn't have; `AGENT-FRAMEWORKS-SURVEY.md` found "nothing in
   this list is a Scala-native multi-agent framework" and listed llm4s as "pre-production per its
   own roadmap". Checked against the jar (§4), llm4s has an agent loop, handoffs, guardrails, an
   MCP client with three transports and an MCP server with two. It is the closest Scala-native fit.
@@ -91,14 +91,14 @@ the ambition each capability serves, with the phase it lands in (`ARCHITECTURE.m
 | llm4s capability (0.4.1) | Verified how | marola use | Phase |
 |---|---|---|---|
 | `LLMClient.complete/streamComplete`: `Either[LLMError, Completion]`, token usage | javap; **live**: Scala 3.9.0 probe, one completion on local Ollama (Appendix A) | `Llm4sLlmClient` adapter behind `marola.llm.LlmClient` (§5.2) | 0 |
-| Providers: OpenAI/Azure (Azure OpenAI Java SDK, **key only**), Ollama (native `/api/chat`, **drops tool messages, no JSON mode**), Anthropic, Gemini, DeepSeek, Cohere, Mistral, OpenRouter, Vertex, Z.ai | javap + `OpenAIClient.scala`/`OllamaClient.scala` | `llm4s-ollama`/`llm4s-openai` providers, opt-in; **not** the Azure path (`AGENTS.md`: managed identity) | 0 |
+| Providers: OpenAI (vendor Java SDK, **key only**), Ollama (native `/api/chat`, **drops tool messages, no JSON mode**), Anthropic, Gemini, DeepSeek, Cohere, Mistral, OpenRouter, Vertex, Z.ai | javap + `OpenAIClient.scala`/`OllamaClient.scala` | `llm4s-ollama`/`llm4s-openai` providers, opt-in | 0 |
 | Structured output: `ResponseFormat.Json`/`JsonSchema(schema, name, strict)` — OpenAI path only | javap + `ResponseFormat.scala` | `Reviewer` verdict as a strict JSON schema (§5.3) | 0 |
 | Tools: `ToolFunction`, `ToolBuilder`, `Schema` DSL, `ToolRegistry` (ujson) | jar + `tool-calling-api-design.md`; ScalaMeta code-gen claimed, not found | one `Tools.scala` source for MCP SDK + llm4s (§5.5) | 1 |
 | Agent loop: `Agent.run(query, tools, guardrails, handoffs, maxSteps=50)`, `runStep`, events; `Handoff.to`; `AgentStatus` | javap + `/guide/agents/`, `/handoffs` | the bot's `/ask` agent; escalation agent via handoff (§5.4) | 1 → 4 |
 | Guardrails: `InputGuardrail`/`OutputGuardrail`, `ValidationMode.Block/Warn/Log`, 18 built-ins | jar package + `/guardrails` | output checks on `/ask`; **never** the human gate (§5.4) | 1 |
-| Orchestration: `Plan` (DAG, topological order, parallel batches), `TypedAgent[I,O]`, `PlanRunner` — `Future`-based | javap | candidate for the named summarize/critique/escalate topology (AI-500 §1); `Future` sits awkwardly next to Kyo | 4 |
+| Orchestration: `Plan` (DAG, topological order, parallel batches), `TypedAgent[I,O]`, `PlanRunner` — `Future`-based | javap | candidate for the named summarize/critique/escalate topology; `Future` sits awkwardly next to Kyo | 4 |
 | MCP client: stdio / SSE / Streamable HTTP, `getTools: Either[String, Seq[ToolFunction]]` | javap | consume external servers from the agent — noted, not scoped | 4 |
-| MCP server: HTTP+SSE (2024-11-05) + Streamable HTTP (2025-06-18) on `com.sun.net.httpserver`, bearer auth, loopback-only without a key; **no stdio** | javap + `MCPServer.scala` | `just mcp-http`; the remote-tool transport a Foundry agent needs (§5.5) | 2/3, cost gate |
+| MCP server: HTTP+SSE (2024-11-05) + Streamable HTTP (2025-06-18) on `com.sun.net.httpserver`, bearer auth, loopback-only without a key; **no stdio** | javap + `MCPServer.scala` | `just mcp-http`; the remote-tool transport a hosted agent needs (§5.5) | 2/3, cost gate |
 | Tracing: `Tracing` trait, modes langfuse/otel/console/collector/noop; OTel module = **gRPC** exporter, `gen_ai.*` attrs | javap + `OpenTelemetryTracing.scala` | not adopted — MLflow is OTLP/HTTP; `TracedLlmClient` wraps the adapter (MIP-0010) | — |
 | Embeddings (`OllamaEmbeddingProvider`), `rag` + sqlite/pgvector stores, reranker, RAGAS-style eval | jar packages | not needed: `knowledge/` + `OllamaEmbedder` already live-verified (MIP-0001) | — |
 | `eval.dataset`: `Dataset`, `Example[I,O]`, `ExampleSelector`, `JsonlCodec` | javap | a dataset *model* only; `core/prompt/Example` stays marola's (§5.1) | — |
@@ -117,8 +117,8 @@ Pre-1.0: "API stabilizing", MiMa and "deprecate before removing" only after 1.0 
 modules; the pending module split will move coordinates again.
 
 **Dependency closure, the decisive number.** `cs resolve llm4s-core_3:0.4.1`: **154 jars, ~150 MB**
-versus ~32 MB for marola's Kyo + MCP SDK + logback today; includes `com.azure:azure-ai-openai
-1.0.0-beta.16` (+ `azure-core`, Netty, Reactor), `anthropic-java` (+ OkHttp, Kotlin), AWS S3/STS,
+versus ~32 MB for marola's Kyo + MCP SDK + logback today; includes a vendor OpenAI Java SDK
+1.0.0-beta.16 (+ its core library, Netty, Reactor), `anthropic-java` (+ OkHttp, Kotlin), AWS S3/STS,
 PDFBox, POI, Tika, PostgreSQL, sqlite-jdbc, HikariCP, `vosk`, Prometheus, cats-core, upickle/ujson,
 Jackson 2.19 (coursier flags Jackson 2.17→2.19 and JNA 5.7→5.19 conflicts).
 
@@ -152,8 +152,7 @@ v0.1.0), LangChain4j (Java). None is Scala-native *and* carries an agent loop wi
 ### Pick
 
 llm4s, **as an opt-in module behind marola's traits**, for the agent/MCP/guardrail/structured-output
-layer; **marola's own code** for the prompt compiler (llm4s has nothing there) and for the Azure
-client (llm4s is key-only; `AGENTS.md` requires managed identity).
+layer; **marola's own code** for the prompt compiler (llm4s has nothing there).
 
 ## 5. Design
 
@@ -195,10 +194,9 @@ very same method, so compile and serve cannot drift.
 `build.sbt` gains `lazy val llm4s = project.dependsOn(core)` with `"org.llm4s" %% "llm4s-core" %
 "0.4.1"`; `cli` depends on it. `core/` and `local/` are untouched, and `just quality` gains a
 dependency-boundary check (`sbt local/dependencyList core/dependencyList` must contain no
-`org.llm4s` and no `com.azure`) so the rule is enforced, not remembered. Why a module and not a
-replacement of `LlmClient`: (a) llm4s's Azure path is key-only — `AzureFoundryLlmClient` with
-`DefaultAzureCredential` must stay; (b) pre-1.0 coordinate churn stops at the adapter; (c) the
-local default keeps its 30-line client and its native image.
+`org.llm4s`) so the rule is enforced, not remembered. Why a module and not a replacement of
+`LlmClient`: (a) pre-1.0 coordinate churn stops at the adapter; (b) the local default keeps its
+30-line client and its native image.
 
 ```scala
 package marola.llm4s
@@ -217,7 +215,7 @@ object Llm4sLlmClient:
   def openAiCompatible(baseUrl: String, model: String, apiKey: String): LlmClient   // Ollama /v1 too (OQ2)
 ```
 
-`AppConfig`: `MAROLA_LLM_PROVIDER=local | azure | llm4s-ollama | llm4s-openai`; default stays
+`AppConfig`: `MAROLA_LLM_PROVIDER=local | llm4s-ollama | llm4s-openai`; default stays
 `local` until the parity gate in §7 passes (OQ1). `TracedLlmClient` (MIP-0010 task 6) wraps this
 client like any other, so traces arrive without llm4s's tracing.
 
@@ -235,9 +233,9 @@ loop. Where the loop earns its place is the bot's free-form `/ask` (MIP-0002): o
 over marola's four tools as `ToolFunction`s (`find_nearby_beaches`, `get_swim_recommendation`,
 `get_water_quality`, `ask_ocean_question`), `maxSteps = 4`, output guardrails `JSONValidator` /
 `GroundingGuardrail` in `ValidationMode.Block`, and a marola budget on model calls per request
-(survey §2). Handoffs (`Handoff.to(escalationAgent, …)`) are how AI-500 §1's third agent becomes
-addressable — **the human-confirmation gate before any proactive alert stays marola code
-(`AI-500-MAPPING.md` §4); a `Block` guardrail is not a human gate and never replaces one.** Caveat
+(survey §2). Handoffs (`Handoff.to(escalationAgent, …)`) are how the third agent becomes
+addressable — **the human-confirmation gate before any proactive alert stays marola code; a
+`Block` guardrail is not a human gate and never replaces one.** Caveat
 that shapes this: through llm4s's `OllamaClient` tool messages are dropped, so on the local default
 the loop must go through `openAiCompatible` at Ollama's `/v1` (OQ2) or wait.
 
@@ -245,7 +243,7 @@ the loop must go through `openAiCompatible` at Ollama's `/v1` (OQ2) or wait.
 
 `org.llm4s.mcp.MCPServer` over the same tool definitions gives the HTTP+SSE / Streamable-HTTP
 transport `ARCHITECTURE.md` §5c lacks, bound to loopback locally (`just mcp-http`), and the piece a
-Foundry agent's remote MCP tool needs once Phase 3 deploys it (cost gate, human go-ahead). The
+hosted agent's remote MCP tool needs once Phase 3 deploys it (cost gate, human go-ahead). The
 stdio server stays on the official Java SDK (llm4s has none). Tool definitions get one source
 (`cli/agent/Tools.scala`) rendering both the SDK's `McpSchema.Tool` and llm4s's `ToolFunction`
 (OQ4). `MCPClient` is what a future marola agent would use to consume external servers, noted,
@@ -265,7 +263,7 @@ tool selection, whose *outputs* are the same deterministic tools the CLI runs.
 3. Delete `dspy/` and its `requirements.txt`; `ci.yml`/`justfile` ruff paths drop `dspy`;
    `flake.nix` comments; README badge (`prompts-compiled in Scala`) and §"Offline prompt
    optimization"; `ARCHITECTURE.md` §5a rewritten around `core/prompt/`; `AGENTS.md` module list;
-   `AI-103-MAPPING.md` rows; `FUTURE-WORK.md` §10 (marola's need is met; `ds4s` as a *library* stays
+   `FUTURE-WORK.md` §10 (marola's need is met; `ds4s` as a *library* stays
    a non-marola idea) and §4.1 (built); `docs/README.md`; MIP-0010 task 7 marked superseded by task
    2 above. `finetune/build_dataset.py` reads the demos from the JSON artifacts; unchanged.
 4. `llm4s/` module, `Llm4sLlmClient`, `AppConfig` providers, dependency-boundary check.
@@ -298,7 +296,7 @@ a ledger run, all gates green, MIP flipped to Implemented with PR numbers and su
 
 ## 8. Risks, limitations, and honest caveats
 
-- **Weight.** 154 jars / ~150 MB for a client marola uses 30 lines of; Azure, AWS, PDF, Office and
+- **Weight.** 154 jars / ~150 MB for a client marola uses 30 lines of; cloud SDKs, PDF, Office and
   speech libraries on the `cli` classpath; Jackson version conflicts; native-image reachability
   unknown (MIP-0008). Mitigation: the module boundary, the size measurement in §7, and OQ6.
 - **Pre-1.0 churn.** One rename already (v0.4.0); the module split will move coordinates again;
@@ -308,7 +306,6 @@ a ledger run, all gates green, MIP flipped to Implemented with PR numbers and su
 - **The local provider is the weakest path in llm4s:** no tools, no JSON mode through `OllamaClient`.
   marola's own `LocalLlmClient` can do both via `/v1` (§4.3). llm4s is not an upgrade for the
   default path; it is the agent/MCP layer.
-- **Azure auth.** llm4s is key-only; a house rule forbids that. No llm4s on the Azure path.
 - **Tracing.** llm4s's OTel exporter is gRPC; MLflow wants HTTP. Use marola's `TracedLlmClient`.
 - **No optimiser in llm4s.** marola owns the compiler; `MIPROv2` is not ported (never used);
   Langfuse's DSPy instrumentation goes away (never verified anyway); the ledger replaces it.
@@ -321,20 +318,11 @@ a ledger run, all gates green, MIP flipped to Implemented with PR numbers and su
 - **Do nothing.** Keeps two toolchains and the admitted skew for a three-example bootstrap. Lost.
 - **Build `ds4s` as a library first** (`FUTURE-WORK.md` §10). Right scope for a general port, wrong
   for marola's need; §5.1 is what marola needs and it is small. `ds4s` stays a non-marola idea.
-- **Replace `LlmClient` with llm4s everywhere.** Lost on Azure auth, churn, and weight on the local
-  default.
+- **Replace `LlmClient` with llm4s everywhere.** Lost on churn and weight on the local default.
 - **Adopt llm4s only for the compile step.** Pointless: the compiler needs only `LlmClient`.
 - **Kyo's AI modules / sttp-ai instead of llm4s.** Cheaper effect fit; neither has an agent loop
   with handoffs and guardrails. Revisit when marola bumps past RC5 (survey §1.2).
 - **Make `llm4s-ollama` the default.** Rejected until tools/JSON mode reach the local path (OQ1/OQ2).
-
-## 10. Exam-coverage mapping
-
-AI-103 §2 "Prompt engineering" and "Optimize prompts systematically" (the artifact becomes Scala;
-`FUTURE-WORK.md` §4.1's held-out eval finally built), "Structured output / function calling"
-(`JsonSchema`), §3 "Agent orchestration frameworks" (from "reviewed, deferred" to an adopted,
-bounded one). AI-500 §1 (handoffs name the topology: summarize / critique / escalate), §2 (the HTTP
-MCP transport a Foundry agent needs), §4 (guardrails are *not* the human gate — the gate stays).
 
 ## 11. Open questions
 
@@ -346,8 +334,8 @@ MCP transport a Foundry agent needs), §4 (guardrails are *not* the human gate �
 4. **One tool-definition source** for the Java MCP SDK and llm4s: shape of `Tools.scala`.
 5. **`LlmClient` error channel**: keep throwing, or `String < (Sync & Abort[LlmFailure])` across all
    three clients in task 4 (the `enum` rule says the latter; the fan-out is `Main`/`Reviewer`/MCP).
-6. **Wait for llm4s's module split?** An `llm4s-ollama`/`llm4s-agent` without Azure/AWS would cut
-   most of §8's weight. Track the roadmap; do not block tasks 1-3 on it.
+6. **Wait for llm4s's module split?** An `llm4s-ollama`/`llm4s-agent` without the cloud SDKs would
+   cut most of §8's weight. Track the roadmap; do not block tasks 1-3 on it.
 7. **Which model compiles the artifacts** in task 2: `llama3.2` (runtime default) or the 8x7b that
    produced today's demos. Human decision; the ledger records it either way.
 
@@ -381,7 +369,7 @@ No warnings under the strict flags. `ModelRegistryService` is a `using` paramete
 `CompletionOptions(temperature, topP, maxTokens, presencePenalty, frequencyPenalty, tools:
 Seq[ToolFunction[?, ?]], reasoning: Option[ReasoningEffort], budgetTokens, responseFormat:
 Option[ResponseFormat])` · `OllamaConfig(model, baseUrl, contextWindow, reserveCompletion)` ·
-`AzureConfig(endpoint, apiKey, model, apiVersion, …)` · `Agent(client).run(String, ToolRegistry,
+`Agent(client).run(String, ToolRegistry,
 Seq[InputGuardrail], Seq[OutputGuardrail], Seq[Handoff], Option[Int], Option[String],
 CompletionOptions, AgentContext): Either[LLMError, AgentState]` · `MCPServer(MCPServerOptions(port,
 path, name, version, apiKey: Option[String], host), Seq[ToolFunction[?, ?]]).start(): Either[
@@ -424,17 +412,18 @@ llm4s.org (`/`, `/reference/roadmap`, `/reference/v1-scope`, `/migrations/0x-to-
   -Wnonunit-statement`) against `llm4s-core_3:0.4.1` and completed one chat turn against the local
   Ollama (`marola-llama3.2`) through llm4s's `OllamaClient` (Appendix A).
 - **Dependency closure (the decisive number).** `cs resolve` of `llm4s-core_3:0.4.1`: **154 jars,
-  ~150 MB** on disk, versus ~32 MB for marola's current Kyo + MCP SDK + logback set. It includes
-  `com.azure:azure-ai-openai:1.0.0-beta.16` (+ `azure-core`, Netty, Reactor), `com.anthropic:
-  anthropic-java:2.42.0` (+ OkHttp, Kotlin stdlib), the AWS SDK (S3, STS), PDFBox, POI, Tika,
-  PostgreSQL, sqlite-jdbc, HikariCP, `vosk` (speech), Prometheus, cats-core, upickle/ujson,
-  Jackson 2.19. Coursier flags conflicts (Jackson 2.17.2→2.19.4 under `azure-core`, JNA 5.7→5.19).
+  ~150 MB** on disk, versus ~32 MB for marola's current Kyo + MCP SDK + logback set. It includes a
+  vendor OpenAI Java SDK 1.0.0-beta.16 (+ its core library, Netty, Reactor),
+  `com.anthropic: anthropic-java:2.42.0` (+ OkHttp, Kotlin stdlib), the AWS SDK (S3, STS), PDFBox,
+  POI, Tika, PostgreSQL, sqlite-jdbc, HikariCP, `vosk` (speech), Prometheus, cats-core,
+  upickle/ujson, Jackson 2.19. Coursier flags conflicts (Jackson 2.17.2→2.19.4 under that SDK's core
+  library, JNA 5.7→5.19).
 - **Client API** (javap): `LLMClient.complete(Conversation, CompletionOptions): Either[LLMError,
   Completion]`, `streamComplete`, `validate`, `close` (`AutoCloseable`); `type Result[+A] =
   Either[LLMError, A]`, a sealed `LLMError` hierarchy of 20+ cases; `LLMConnect.getClient(config)(
   using ModelRegistryService)`; `Completion(id, created, message, usage: Option[TokenUsage])`.
-- **Providers** (javap + source): `OpenAIClient` wraps the **Azure OpenAI Java SDK** for both
-  OpenAI and Azure, **API key only** (`KeyCredential`/`AzureKeyCredential`, no `TokenCredential`);
+- **Providers** (javap + source): `OpenAIClient` wraps a vendor OpenAI Java SDK, **API key only**
+  (`KeyCredential`, no `TokenCredential`);
   `OllamaClient` posts to Ollama's native **`/api/chat`** over `java.net.http`, streams, and
   **drops tool messages** ("Tool messages are not supported by Ollama chat API; drop them") and
   **sends no `responseFormat`**. Also Anthropic, Gemini, DeepSeek, Cohere, Mistral, OpenRouter,

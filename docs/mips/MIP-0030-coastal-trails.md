@@ -8,7 +8,7 @@
 | **Phase** | 0 (CLI/board field only, no bot text) — no earlier-phase prerequisite is missing |
 | **Related** | `BeachFinder` (`core/src/main/scala/marola/beaches/BeachFinder.scala`, the Overpass client this reuses verbatim); MIP-0021 (beach accessibility — the closest existing precedent: an OSM amenity layer anchored on `BeachFinder`'s results, "no data" never "none"); MIP-0005/MIP-0009 (the map and its marker layer this adds a sibling to); `docs/ARCHITECTURE.md` §5 (pluggable-integration pattern) and §7 (Overpass fair use). **Not related to, and does not touch**, the water-quality provider gap this MIP's investigation also turned up — see §11 |
 | **Effort** | S — one new Overpass client in `core/beaches` (same package, same HTTP/retry helper `BeachFinder` already uses), one extra query per area per run, one new top-level array in the board JSON, a map layer reusing MIP-0009's `divIcon`/tooltip machinery for a new icon shape. No new dependency, no LLM |
-| **Gain** | user value (a beach's own OSM page rarely says "there's a lakeside trail 400m north"; marola already answers "is the water clean" — "can I walk somewhere from here" is the same kind of fact); exam coverage (AI-103 §1 responsible-AI transparency — deterministic labels, absence stated as "no data", same pattern MIP-0021 already established) |
+| **Gain** | user value (a beach's own OSM page rarely says "there's a lakeside trail 400m north"; marola already answers "is the water clean" — "can I walk somewhere from here" is the same kind of fact) |
 | **Effort vs Gain** | cheap win — the exact same one-extra-Overpass-query shape MIP-0021 already validated, verified live against real coordinates in §4 below, not just described |
 | **Depends on** | Nothing blocking. Doesn't need Phase 1 (the bot) or a paid resource |
 | **Risk** | OSM's hiking-trail coverage is **inconsistent by tagging convention, not by geography** — proper `route=hiking` relations are essentially absent near marola's three areas (§4: zero found), while named `highway=path`/`track` ways are well-populated. A query written against `route=hiking` (the "correct" OSM way to tag a trail) would return nothing and look like a bug. §4 verifies the actual tag shape to query before committing to it |
@@ -263,11 +263,6 @@ informational map/CLI layer, same category as MIP-0021's accessibility facts.
   coverage through one API.
 - **`route=hiking` relations only** (the "correct" OSM tagging convention). Rejected in §4.1:
   verified zero results near a known real trail; would ship a feature that silently finds nothing.
-
-## 10. Exam-coverage mapping
-
-AI-103 §1, responsible-AI transparency: absence stated as "no data" rather than inferred as
-"none exists", the same pattern MIP-0021 already maps to this row.
 
 ## 11. Open questions
 

@@ -28,7 +28,7 @@ in Florianópolis using it more than once a week.
 The product hypothesis (`ARCHITECTURE.md` §1) is untested because there is no product. Every
 feature since Phase 0 (sightings, vision, water quality, RAG) has a CLI stand-in "until the bot
 exists" (`SightingStore`, `VisionClient` doc comments). The bot is the missing prerequisite for
-learning anything from users, and `AGENTS.md`'s phase discipline says it comes before any Azure
+learning anything from users, and `AGENTS.md`'s phase discipline says it comes before any cloud
 spend.
 
 ## 3. User-visible change
@@ -115,12 +115,6 @@ None to the score. New: the per-chat rate limit and the first-aid footer.
   §2), an iOS/Android app (weeks, and nobody installs an app for a beach). Rejected as before.
 - A Telegram library (`java-telegram-bot-api`, `TelegramBots`): brings a framework and its threading
   model for five endpoints marola can call with `Http` in 100 lines. Rejected.
-
-## 10. Exam-coverage mapping
-
-AI-103 §3 "agentic solutions": a real user-facing agent loop with tools (pipeline, RAG, vision).
-AI-500 §4: the per-chat rate limit and "never persist location" are the first governance controls
-on a public surface.
 
 ## 11. Open questions
 

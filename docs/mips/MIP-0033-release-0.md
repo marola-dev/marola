@@ -5,7 +5,7 @@
 | **Status** | Partially implemented (§5.2 of 6) — §5.2 (chat server + widget) merged to main as PR #196 (`cli/src/main/scala/marola/agent/ChatServer.scala`, `site/static/chat.js`/`chatbot-config.js`), refined by PR #229; the `mip-0033/1-chat-server` branch it originally shipped on is stale/merged, not pending. §5.1 (repo visibility), §5.3 (model publish), §5.4 (Milestones/`RELEASES.md`) and the new §5.5/§5.6 (pre-flight checklist, GitHub Releases) not started |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "release public will match with release 0, site should be public and safe (static), chatbot must be present working with ollama running on my local computer... with first hugging face distributed model. Idea is to create link between MIPs - milestones - releases") |
 | **Created** | 2026-09-06 |
-| **Phase** | Spans Phase 0-1 work (`ARCHITECTURE.md` §11) — Release 0 is a **new, orthogonal axis**, not another phase: Phase tracks infra/deployment stage (local → bot → Azure → deployed), Release tracks a *bundled, versioned, publicly-announced* milestone. Release 0 draws from Phase 0/1 work already done or in flight; it does not require Phase 2/3 |
+| **Phase** | Spans Phase 0-1 work (`ARCHITECTURE.md` §11) — Release 0 is a **new, orthogonal axis**, not another phase: Phase tracks infra/deployment stage (local → bot → cloud → deployed), Release tracks a *bundled, versioned, publicly-announced* milestone. Release 0 draws from Phase 0/1 work already done or in flight; it does not require Phase 2/3 |
 | **Related** | MIP-0025 §5.1 (the already-verified HF publish plan this MIP's chatbot arm reuses); MIP-0005 §9 (the "no server" decision this MIP explicitly, narrowly overrides — see §6); the GitHub-Pages/hosting research this session already did (Cloudflare Tunnel confirmed as the free, no-port-forward path); the `finetune/` small-model ladder (already proven this session: a real tiny LoRA adapter trained, converted, running in Ollama, end-to-end through `just run -- --summarize`); the MIP-hardening research this session also produced (dependency-graph tooling this MIP's §7 reuses, once accepted) |
 | **Effort** | L — three real deliverables (public-repo security pass, a tunnel-backed chatbot widget with graceful degradation, a real HF model publish) plus one new lightweight doc mechanism (Milestones/Releases linking MIPs) |
 | **Gain** | user value (a working chatbot, a real published model); community/outreach (an open-source repo is itself outreach, ties to MIP-0014/0018/0020's stated goals); infra/dev-loop (the Milestones mechanism this MIP introduces) |
@@ -126,11 +126,7 @@ None to `Swimability`/scoring. Safety-adjacent note: the chatbot widget must car
 ## 9. Alternatives considered
 
 - **Keep the repo private, ship only the chatbot + model.** Loses the outreach/transparency value the maintainer explicitly asked for ("release public"); considered and rejected per the request itself.
-- **A hosted (Hetzner/Azure) chatbot origin instead of the maintainer's own machine.** Rejected per the maintainer's own explicit choice this session ("start with something on my personal computer") and because it reintroduces the cost questions the earlier hosting research already weighed against GitHub Pages' free baseline.
-
-## 10. Exam-coverage mapping
-
-AI-500: a chatbot with a stated, honest availability state (never a silent failure) is a small but real instance of the "observability/graceful degradation" theme `AI-500-MAPPING.md` §3 already tracks as a gap.
+- **A hosted (Hetzner) chatbot origin instead of the maintainer's own machine.** Rejected per the maintainer's own explicit choice this session ("start with something on my personal computer") and because it reintroduces the cost questions the earlier hosting research already weighed against GitHub Pages' free baseline.
 
 ## 11. Open questions
 

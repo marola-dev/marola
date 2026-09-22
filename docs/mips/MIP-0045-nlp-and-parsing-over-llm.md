@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude (Opus) |
 | **Created** | 2026-09-07 |
-| **Phase** | 0/1 (`ARCHITECTURE.md` §11) — no Azure resource, no paid API, nothing blocked on the Telegram bot |
-| **Related** | `FUTURE-WORK.md` §4.1 (an evaluation harness), §9.1 (RAG grounding), `AI-103-MAPPING.md` §5 rows "Text analysis / entity extraction" (**Partial gap**) and "Azure AI Language service" (**Gap**), MIP-0022 (the safety footer, whose trigger runs through retrieval), MIP-0032 (the model × strategy benchmark matrix — a lexical retriever is one more strategy row), branch `feat/pr-labels-nlp-classifier` |
+| **Phase** | 0/1 (`ARCHITECTURE.md` §11) — no cloud resource, no paid API, nothing blocked on the Telegram bot |
+| **Related** | `FUTURE-WORK.md` §4.1 (an evaluation harness), §9.1 (RAG grounding), MIP-0022 (the safety footer, whose trigger runs through retrieval), MIP-0032 (the model × strategy benchmark matrix — a lexical retriever is one more strategy row), branch `feat/pr-labels-nlp-classifier` |
 | **Effort** | M — one new `KnowledgeStore` implementation in `core` (pure Scala, no new dependency), one benchmark arm, one small change to `scripts/arxiv_digest.py`. No new module, no store, no CI workflow. Re-rated up from S after §4.1's probe showed the retrieval change needs a real benchmark re-run and a `SafetyFooter` interaction fixed (§6), not just a swapped class |
-| **Gain** | `cost/ops` — removes one Ollama embed call per question asked and a ~3 MB regenerated index; `infra/dev-loop` — a classification/ranking job in the dev loop that a local script does instead of a Claude Code session's tokens; `exam coverage (AI-103 §5 "Text analysis / entity extraction")` — closes a row that is honestly marked a partial gap today |
+| **Gain** | `cost/ops` — removes one Ollama embed call per question asked and a ~3 MB regenerated index; `infra/dev-loop` — a classification/ranking job in the dev loop that a local script does instead of a Claude Code session's tokens |
 | **Effort vs Gain** | `cheap win` for §5.1 (lexical retrieval) and §5.2 (merge the already-built PR-label classifier); `do next` for §5.4 (arXiv relevance); `park` for §5.3 (a deterministic query front door) until MIP-0002's bot gives it real free-text input to parse |
-| **Depends on** | Nothing blocks this. Not gated by `AGENTS.md`'s Phase 1 (Telegram) gate — every call-site surveyed already exists and is exercised by `just run --ask`, `just benchmark` and `just mcp-server`. Not gated by the cost-and-deployment-safety gate either: no Azure resource, no paid API, no new network dependency. Non-blocking coordination: §5.2 is the branch `feat/pr-labels-nlp-classifier` (already written and pushed, someone else's deliverable — this MIP references it, does not restate or modify it); §5.1 touches `core/src/main/scala/marola/knowledge/`, which MIP-0025 and MIP-0033 also read from |
+| **Depends on** | Nothing blocks this. Not gated by `AGENTS.md`'s Phase 1 (Telegram) gate — every call-site surveyed already exists and is exercised by `just run --ask`, `just benchmark` and `just mcp-server`. Not gated by the cost-and-deployment-safety gate either: no cloud resource, no paid API, no new network dependency. Non-blocking coordination: §5.2 is the branch `feat/pr-labels-nlp-classifier` (already written and pushed, someone else's deliverable — this MIP references it, does not restate or modify it); §5.1 touches `core/src/main/scala/marola/knowledge/`, which MIP-0025 and MIP-0033 also read from |
 | **Blocked by** | none |
 | **Risk** | §5.1 trades a semantically-aware retriever for a lexically-aware one. A question phrased entirely in words the corpus does not use ("is a bluebottle dangerous?" against a corpus that says "Portuguese man o' war") scores near zero under TF-IDF where an embedder might still have found it. The corpus is six documents today, so this is survivable; at ten times the corpus size it may invert, and the honest exit is a hybrid, not a rollback |
 | **Cost so far** | — |
@@ -189,7 +189,7 @@ object Lexical:
 ```
 
 `AppConfig` picks it via `MAROLA_KNOWLEDGE_RETRIEVER` (`lexical` | `embedding`), same
-env-var-per-integration shape as `MAROLA_LLM_PROVIDER` (`ARCHITECTURE.md` §5). Deterministic end
+env-var-per-integration shape as `MAROLA_TRACES` (`ARCHITECTURE.md` §5). Deterministic end
 to end: no model call, no `./data/knowledge-index.json`, no fingerprint/re-embed cycle. The
 embedding path stays and stays supported: this is a default change, not a deletion, and MIP-0032's
 matrix gains a row rather than losing one.
@@ -307,18 +307,6 @@ fixed.
 - **Delete the embedding path entirely.** Rejected: it would break `ARCHITECTURE.md` §5's
   local-default/opt-in-alternative shape and remove a MIP-0032 comparison arm.
 
-## 10. Exam-coverage mapping
-
-- **AI-103 §5, "Text analysis / entity extraction" — currently *Partial gap*.** §5.1 and §5.4 build
-  real text-analysis (tokenisation, IDF weighting, cosine ranking) rather than the "narrow,
-  single-purpose" `extractJsonObject` the mapping names as today's closest analog. That row now
-  carries "proposed: MIP-0045" (this change); it stays a *Partial gap* until §5.1 actually merges.
-- **AI-103 §5, "Azure AI Language service" — *Gap*.** Unchanged, and deliberately: this MIP's whole
-  argument is that the local path is sufficient here. The row's own note ("classifying source
-  documents before they go into a retrieval index") is precisely §5.1's job, done without the
-  service.
-- AI-500: none.
-
 ## 11. Open questions
 
 - How many merged PRs now carry an `area/*` label? §4.3's naive-Bayes option needs that number and
@@ -362,7 +350,7 @@ fixed.
   `cli/…/AppConfig.scala`, `cli/…/agent/ChatServer.scala`, `cli/…/bench/OceanBenchmark.scala`,
   `local/…/water/IneaPdfParser.scala`, `scripts/{arxiv_digest.py,cost-split.py,lib/pr_labels.sh,
   lib/mip_ref.sh}`, `docs/benchmarks/2026-09-05.md`, `docs/ARCHITECTURE.md` §5a/§11,
-  `docs/AI-103-MAPPING.md` §5, `docs/FUTURE-WORK.md` (no existing NLP/TF-IDF/BM25 section, grep
+  `docs/FUTURE-WORK.md` (no existing NLP/TF-IDF/BM25 section, grep
   over `docs/` and the root `*.md` returned nothing).
 
 ### Not checked

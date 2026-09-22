@@ -1,4 +1,4 @@
-# MIP-0007: Time-series foundation models for marola's own series — local open models first, Azure as the opt-in
+# MIP-0007: Time-series foundation models for marola's own series — local open models first
 
 | | |
 |---|---|
@@ -8,9 +8,9 @@
 | **Phase** | 4 (Harden & calibrate) — needs marola's own accumulated data first |
 | **Related** | `ARCHITECTURE.md` §8 (calibrating the heuristics on real reports), MIP-0001 (water-quality cadence), MIP-0004 (subscriptions produce usage series), MIP-0006 (looks produce observation series), `dspy/` (the existing offline-Python-produces-an-artifact pattern) |
 | **Effort** | L — a new Python offline step plus a Scala loader; needs weeks of accumulated series before any backtest |
-| **Gain** | infra/dev-loop (calibrates the jellyfish/whale heuristics against real reports); exam coverage (AI-103 §1/§2) |
+| **Gain** | infra/dev-loop (calibrates the jellyfish/whale heuristics against real reports) |
 | **Effort vs Gain** | park — Phase 4, explicitly needs marola's own accumulated data first; only accumulation is worth starting now |
-| **Depends on** | MIP-0001 (water cadence), MIP-0004 (usage series), MIP-0006 (observation series); Phase 4; Azure ML/Foundry opt-in gated behind the cost rule |
+| **Depends on** | MIP-0001 (water cadence), MIP-0004 (usage series), MIP-0006 (observation series); Phase 4 |
 | **Risk** | zero-shot foundation models may simply lose to "last result persists" on marola's tiny, noisy series |
 | **Cost so far** | ~$0.7 shared with MIP-0006 (same drafting commit 5abeecc, not split further) |
 
@@ -23,8 +23,7 @@ waves and wind, but it is useful for the series marola will *own* and nobody for
 water quality between the agency's weekly (off-season monthly) samples, jellyfish and man-o'-war
 strandings from sighting reports, sea-temperature anomalies at a beach, and the request/usage
 patterns MIP-0003 counts. This MIP scopes those uses, picks the open models that run locally,
-keeps Python offline like `dspy/`, and names the Azure path (Nixtla's model in the Foundry
-catalogue, or Azure ML for the open ones) as the opt-in.
+and keeps Python offline like `dspy/`.
 
 ## 2. Motivation
 
@@ -60,11 +59,11 @@ note, never the veto.
 
 | Model | Author | Weights | Runs where | Notes |
 |---|---|---|---|---|
-| **Chronos** (Chronos-Bolt) | Amazon | open (Apache-2.0), Hugging Face | local CPU (`chronos-forecasting` Python), Azure ML | Tokenises values into a T5-style LM; zero-shot; Bolt variants are small and fast |
-| **TimesFM** | Google Research | open weights, Hugging Face | local (`timesfm` Python), Azure ML | Decoder-only, up to 200M params; zero-shot point forecasts |
-| **Moirai** (Uni2TS) | Salesforce | open (Apache-2.0) | local, Azure ML | Handles covariates and multivariate series — relevant for "rain → contamination" |
+| **Chronos** (Chronos-Bolt) | Amazon | open (Apache-2.0), Hugging Face | local CPU (`chronos-forecasting` Python) | Tokenises values into a T5-style LM; zero-shot; Bolt variants are small and fast |
+| **TimesFM** | Google Research | open weights, Hugging Face | local (`timesfm` Python) | Decoder-only, up to 200M params; zero-shot point forecasts |
+| **Moirai** (Uni2TS) | Salesforce | open (Apache-2.0) | local | Handles covariates and multivariate series — relevant for "rain → contamination" |
 | **Lag-Llama** | open | open | local | Probabilistic; smaller community |
-| **TimeGPT / TimeGEN-1** | Nixtla | closed, API | Nixtla API (paid, free trial); **TimeGEN-1 listed in Azure AI Foundry's model catalogue as a serverless API** — to verify (§11) | The best-known; not local; the Azure route is the one consistent with the repo's opt-in pattern |
+| **TimeGPT / TimeGEN-1** | Nixtla | closed, API | Nixtla API (paid, free trial) | The best-known; not local |
 
 *Verification status:* the open models' existence, licences and Python packages are well
 documented as of 2026; **not run here**. Model quality on marola's series is unknown until §7.
@@ -89,13 +88,12 @@ Python offline, like `dspy/`: `forecast/` with a script that reads the accumulat
 (`data/series/*.jsonl`), runs the chosen open model, and writes `data/estimates/<day>.json`;
 the Scala side (`core/estimates/`) loads that artifact and renders the labelled note. No Python in
 the request path, no model call per user, and the artifact is one more input to the MIP-0005
-board. Azure opt-in: the same script pointed at an Azure ML endpoint (open model) or the
-Foundry serverless API (TimeGEN-1), selected by env var, `AGENTS.md` cost rule applying.
+board.
 
 ## 5. Design
 
 - `core/series/SeriesStore` (trait) — append-only per-series JSON lines: `water/<pointId>`,
-  `rain/<beach>`, `sightings/<beach>/<kind>`; `LocalFileSeriesStore` default, Cosmos later.
+  `rain/<beach>`, `sightings/<beach>/<kind>`; `LocalFileSeriesStore` default.
   `Recommender` appends what it fetched (water results, rain) as a side effect of a normal run.
 - `forecast/estimate_water.py`: per point, features = last N results + rainfall sums (24/48/72 h);
   model = Chronos-Bolt zero-shot as the baseline, **and** a plain logistic/GBM on the same features
@@ -131,31 +129,20 @@ failure, so the bar is the same as for the water veto.
   the forecast.
 - **Python in the loop again** (offline). Same tradeoff as `dspy/`, same mitigation: artifact in,
   no runtime dependency.
-- **Azure cost.** Foundry serverless models bill per call; the `AGENTS.md` gate applies before any
-  provisioning.
 
 ## 9. Alternatives considered
 
-- **Nixtla API from day one.** Fast to try, closed, paid, cloud — fails local-first; kept as the
-  Azure opt-in via Foundry if the catalogue listing checks out.
+- **Nixtla API from day one.** Fast to try, closed, paid, cloud — fails local-first.
 - **Hand-written rules only** ("rain > 30 mm in 48 h → warn"). Cheaper, explainable, and probably
   the control that wins early; the MIP keeps it as the baseline rather than the alternative.
 - **Do nothing until the bot exists.** The accumulation part (§4.2) must start now or there is no
   series when the models are ready; the modelling can wait.
 
-## 10. Exam-coverage mapping
-
-AI-103 §1 "select the right service": Azure ML (open weights) vs. Foundry serverless (TimeGEN-1)
-vs. local — a real decision with a cost model. AI-103 §2: a non-LLM model in an LLM app,
-evaluated properly.
-
 ## 11. Open questions
 
-1. Verify TimeGEN-1's presence and pricing in the Azure AI Foundry catalogue before naming it as
-   the opt-in.
-2. Start accumulating IMA + rain now (a 20-line change in `Recommender`) ahead of the rest?
+1. Start accumulating IMA + rain now (a 20-line change in `Recommender`) ahead of the rest?
    (Proposal: yes, it is the only time-critical part.)
-3. Which open model first: Chronos-Bolt (simplest) or Moirai (covariates)? (Proposal: both in the
+2. Which open model first: Chronos-Bolt (simplest) or Moirai (covariates)? (Proposal: both in the
    backtest; ship one.)
-4. Where do estimates appear first: CLI note, bot, or the MIP-0005 map? (Proposal: map + CLI, same
+3. Where do estimates appear first: CLI note, bot, or the MIP-0005 map? (Proposal: map + CLI, same
    artifact.)

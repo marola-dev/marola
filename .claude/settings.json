@@ -43,10 +43,6 @@
       "Bash(python3 scripts/cost-split.py *)"
     ],
     "deny": [
-      "Bash(azd up*)",
-      "Bash(azd provision*)",
-      "Bash(az deployment *)",
-      "Bash(az group create*)",
       "Read(.env)",
       "Read(**/*.pem)",
       "Read(**/*.key)",
@@ -58,18 +54,6 @@
     ]
   },
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-azure.sh\"",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",

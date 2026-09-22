@@ -5,7 +5,7 @@ Loose ends that are not a MIP and not an issue yet. One section per theme; strik
 ## Talks in Floripa
 
 Where to pitch marola talks: the ocean layer, Scala 3 + Kyo, a free local LLM path with Ollama,
-the MCP server, the AI-103 map. Checked 2026-09-13; dates are the editions found, refresh before
+the MCP server. Checked 2026-09-13; dates are the editions found, refresh before
 pitching. **Rule: 15 days minimum between accepting a slot and the talk**, so from today the
 earliest talk date is 28 Sep 2026; anything with a CFP deadline is fine as long as the talk
 itself is 15+ days out.

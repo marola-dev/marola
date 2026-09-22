@@ -144,34 +144,28 @@ object Main extends KyoApp:
    * passages only, print the passages' sources.
    */
   private def askOcean(config: AppConfig, question: String): Unit < Async =
-    config.llmClient match
-      case None =>
-        Console.printLine(
-          s"(--ask needs an LLM: llmProvider=${config.llmProvider} is not configured)"
+    for
+      tracing <- resolveTracing(config)
+      client = config.tracedLlmClient(tracing)
+      _ <- Console.printLine(
+        s"Searching ${config.knowledgeDir} (embedder: ${config.localEmbedModel}) and asking " +
+          s"${config.localLlmModel}..."
+      )
+      outcome <- Abort.run(
+        Abort.catching[Throwable](
+          OceanQa.answer(
+            question,
+            config.knowledgeStore,
+            client,
+            fallback = config.askFallback,
+            minScore = config.askMinScore
+          )
         )
-      case Some(untraced) =>
-        for
-          tracing <- resolveTracing(config)
-          client = config.tracedLlmClient(tracing).getOrElse(untraced)
-          _ <- Console.printLine(
-            s"Searching ${config.knowledgeDir} (embedder: ${config.localEmbedModel}) and asking " +
-              s"${config.localLlmModel}..."
-          )
-          outcome <- Abort.run(
-            Abort.catching[Throwable](
-              OceanQa.answer(
-                question,
-                config.knowledgeStore,
-                client,
-                fallback = config.askFallback,
-                minScore = config.askMinScore
-              )
-            )
-          )
-          _ <- outcome match
-            case Result.Success(answer) => Console.printLine("\n" + Report.answer(answer))
-            case failure                => Console.printLine(s"(ask failed: $failure)")
-        yield ()
+      )
+      _ <- outcome match
+        case Result.Success(answer) => Console.printLine("\n" + Report.answer(answer))
+        case failure                => Console.printLine(s"(ask failed: $failure)")
+    yield ()
 
   /**
    * `--serve-chat [port]` (MIP-0033 §5.2): runs `marola.agent.ChatServer` in the foreground —
@@ -185,12 +179,6 @@ object Main extends KyoApp:
         .flatMap(_.toIntOption)
         .getOrElse(marola.agent.ChatServer.DefaultPort)
     for
-      _ <-
-        if config.llmClient.isEmpty then
-          Console.printLine(
-            s"warning: llmProvider=${config.llmProvider} is not configured — /ask will 503 until it is"
-          )
-        else noop
       _ <- Sync.defer(marola.agent.ChatServer.start(config, port))
       _ <- Console.printLine(
         s"marola chat server listening on http://localhost:$port (GET /health, POST /ask) — Ctrl+C to stop"
@@ -229,7 +217,6 @@ object Main extends KyoApp:
               SiteBuilder.DefaultStatic,
               water = config.waterQualityClient,
               now = java.time.OffsetDateTime.now(),
-              distanceRefiner = config.distanceRefiner,
               accessibility = Some(config.accessibilityClient)
             )
           )
@@ -256,29 +243,27 @@ object Main extends KyoApp:
 
   /** `--benchmark` — marola vs. a plain prompt on ocean questions; see `bench/OceanBenchmark`. */
   private def runBenchmark(config: AppConfig): Unit < Async =
-    config.llmClient match
-      case None => Console.printLine("(--benchmark needs a configured local LLM)")
-      case Some(client) =>
-        for
-          _ <- Console.printLine(
-            s"Benchmarking ${OceanBenchmark.load().size} questions x 3 arms on ${config.localLlmModel} " +
-              s"(embedder ${config.localEmbedModel}) - a few minutes on CPU..."
-          )
-          outcome <- Abort.run(
-            Abort.catching[Throwable](
-              OceanBenchmark.run(config.knowledgeStore, client, config.askMinScore)
-            )
-          )
-          _ <- outcome match
-            case Result.Success(report) =>
-              for
-                path <- Sync.defer(OceanBenchmark.save(report))
-                _ <- Console.printLine("\n" + report.markdown)
-                _ <- Console.printLine(s"\nSaved to $path")
-                _ <- logBenchmarkRun(config, report, Paths.get(path))
-              yield ()
-            case failure => Console.printLine(s"(benchmark failed: $failure)")
-        yield ()
+    val client = config.llmClient
+    for
+      _ <- Console.printLine(
+        s"Benchmarking ${OceanBenchmark.load().size} questions x 3 arms on ${config.localLlmModel} " +
+          s"(embedder ${config.localEmbedModel}) - a few minutes on CPU..."
+      )
+      outcome <- Abort.run(
+        Abort.catching[Throwable](
+          OceanBenchmark.run(config.knowledgeStore, client, config.askMinScore)
+        )
+      )
+      _ <- outcome match
+        case Result.Success(report) =>
+          for
+            path <- Sync.defer(OceanBenchmark.save(report))
+            _ <- Console.printLine("\n" + report.markdown)
+            _ <- Console.printLine(s"\nSaved to $path")
+            _ <- logBenchmarkRun(config, report, Paths.get(path))
+          yield ()
+        case failure => Console.printLine(s"(benchmark failed: $failure)")
+    yield ()
 
   /**
    * MIP-0010 task 4: the same run into the configured `RunLedger` — `RunLedger.Noop` prints nothing
@@ -335,25 +320,19 @@ object Main extends KyoApp:
     yield ()
 
   private def analyzePhoto(config: AppConfig, photoPath: String): Unit < Async =
-    config.visionClient match
-      case None =>
-        Console.printLine(
-          s"(--analyze-photo needs AZURE_VISION_ENDPOINT/AZURE_VISION_KEY set for " +
-            s"visionProvider=${config.visionProvider})"
-        )
-      case Some(client) =>
-        for
-          _ <- Console.printLine(s"Analyzing $photoPath with ${config.visionProvider} vision...")
-          outcome <- Abort.run(
-            Abort.catching[Throwable] {
-              val bytes = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(photoPath))
-              client.describe(bytes)
-            }
-          )
-          _ <- outcome match
-            case Result.Success(description) => Console.printLine(s"Description: $description")
-            case failure                     => Console.printLine(s"(vision call failed: $failure)")
-        yield ()
+    val client = config.visionClient
+    for
+      _ <- Console.printLine(s"Analyzing $photoPath with ${config.localVisionModel} vision...")
+      outcome <- Abort.run(
+        Abort.catching[Throwable] {
+          val bytes = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(photoPath))
+          client.describe(bytes)
+        }
+      )
+      _ <- outcome match
+        case Result.Success(description) => Console.printLine(s"Description: $description")
+        case failure                     => Console.printLine(s"(vision call failed: $failure)")
+    yield ()
 
   private def reportSighting(
       config: AppConfig,
@@ -361,23 +340,16 @@ object Main extends KyoApp:
       beachName: String,
       note: Option[String]
   ): Unit < Async =
-    config.sightingStore match
-      case None =>
-        Console.printLine(
-          s"(--report-sighting needs COSMOS_DB_ENDPOINT/COSMOS_DB_KEY set for " +
-            s"sightingStoreProvider=${config.sightingStoreProvider})"
-        )
-      case Some(store) =>
-        val sighting = Sighting(beachName, kind, note, Instant.now())
-        for
-          outcome <- Abort.run(Abort.catching[Throwable](store.record(sighting)))
-          _ <- outcome match
-            case Result.Success(_) =>
-              Console.printLine(
-                s"Recorded: $kind sighting at $beachName${note.map(n => s" ($n)").getOrElse("")}"
-              )
-            case failure => Console.printLine(s"(failed to record sighting: $failure)")
-        yield ()
+    val sighting = Sighting(beachName, kind, note, Instant.now())
+    for
+      outcome <- Abort.run(Abort.catching[Throwable](config.sightingStore.record(sighting)))
+      _ <- outcome match
+        case Result.Success(_) =>
+          Console.printLine(
+            s"Recorded: $kind sighting at $beachName${note.map(n => s" ($n)").getOrElse("")}"
+          )
+        case failure => Console.printLine(s"(failed to record sighting: $failure)")
+    yield ()
 
   /**
    * `AppConfig.tracing` with its one failure mode handled: an MLflow server that is not up when
@@ -425,7 +397,6 @@ object Main extends KyoApp:
             Recommender.bestPerBeachTomorrow(
               origin.coordinates,
               origin.radiusKm,
-              distanceRefiner = config.distanceRefiner,
               waterQuality = water,
               accessibility = Some(config.accessibilityClient)
             )
@@ -490,17 +461,14 @@ object Main extends KyoApp:
       tracing: Tracing,
       top: Option[BestHour]
   ): Unit < Async =
-    (top, config.tracedLlmClient(tracing)) match
-      case (None, _) => Console.printLine("(nothing to summarize — no results)")
-      case (_, None) =>
-        Console.printLine(
-          s"(--summarize needs FOUNDRY_PROJECT_ENDPOINT set for llmProvider=${config.llmProvider})"
-        )
-      case (Some(best), Some(client)) =>
+    top match
+      case None => Console.printLine("(nothing to summarize — no results)")
+      case Some(best) =>
+        val client = config.tracedLlmClient(tracing)
         val factInputs = factInputsFor(best)
         for
           _ <- Console.printLine(
-            s"\nAsking ${config.llmProvider} LLM to summarize the top pick (this may take a while)..."
+            s"\nAsking ${config.localLlmModel} to summarize the top pick (this may take a while)..."
           )
           draftOutcome <- Abort.run(Abort.catching[Throwable] {
             val summaryPrompt = loadCompiledPrompt(SummaryPromptResource, outputField = "summary")

@@ -131,8 +131,8 @@ Low priority (the parser is tested and small), but it is the one file with mutab
 
 - **Macros / `inline`**: nothing here is hot enough; the CLI is bound by Overpass, not the JVM.
 - **Match types, dependent function types**: no type-level programming problem exists in marola.
-- **`export` clauses**: `marola.local`/`marola.azure` facades would save a few imports in
-  `AppConfig`; not worth the indirection yet.
+- **`export` clauses**: a `marola.local` facade would save a few imports in `AppConfig`; not
+  worth the indirection yet.
 - **Capture checking (experimental)**: track when it leaves experimental; the `AllowUnsafe`
   boundary is exactly what it's for, but not on 3.9 LTS.
 
@@ -151,7 +151,7 @@ Low priority (the parser is tested and small), but it is the one file with mutab
 | **Record patterns / pattern `switch`** (21), **unnamed variables** (22), **primitive patterns** (preview) | final/preview | Java-side language features; Scala has had all of them. | No action. |
 | **String templates** | withdrawn (23) | — | Do not use. |
 | **Foreign Function & Memory API** (22, JEP 454) | final | The only plausible use: calling llama.cpp in-process for embeddings instead of over HTTP to Ollama. Not worth it while Ollama is the deployment story. | Note for `FUTURE-WORK.md` only. |
-| **Stream Gatherers** (24), **Markdown Javadoc** (23), **KDF API** (24), **`synchronized` without pinning** (24, JEP 491) | final | Gatherers/Javadoc: Java-only. JEP 491 matters *for* virtual threads: libraries that `synchronized` (the MCP SDK, Cosmos SDK) no longer pin carriers. | Free benefit once on virtual threads. |
+| **Stream Gatherers** (24), **Markdown Javadoc** (23), **KDF API** (24), **`synchronized` without pinning** (24, JEP 491) | final | Gatherers/Javadoc: Java-only. JEP 491 matters *for* virtual threads: libraries that `synchronized` (the MCP SDK) no longer pin carriers. | Free benefit once on virtual threads. |
 
 ## 4. Suggested order
 

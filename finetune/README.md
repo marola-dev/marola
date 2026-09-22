@@ -311,7 +311,7 @@ already-verified plan.
 
 ## What is deliberately not here
 
-- No cloud training. Azure ML / Foundry fine-tuning is the Phase 2 opt-in (`AGENTS.md` cost rule).
+- No cloud training. Paid cloud fine-tuning would fall under `AGENTS.md`'s cost rule.
 - No attempt to fine-tune facts in. A 3B model with 40 examples will not learn marine biology; it
   will learn to sound like it did. Facts come from `knowledge/` via RAG, with citations.
 </content>

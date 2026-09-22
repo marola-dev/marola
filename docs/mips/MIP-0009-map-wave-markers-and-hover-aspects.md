@@ -7,11 +7,11 @@
 | **Created** | 2026-09-05 |
 | **Tasks** | `docs/mips/MIP-0009.tasks.md` — four stacked PRs, one per task; note its decision #1: the §5 test harness (`scripts/site_check.js`) did not exist on 2026-09-06 and is task 2 |
 | **Phase** | 1 — the map exists (MIP-0005) and this only changes what it draws; no earlier-phase prerequisite is missing for it |
-| **Related** | MIP-0005 (the map and its board JSON), MIP-0008 task 6 (the footer panel; same `app.js`), `FUTURE-WORK.md` §1 (other activities as layers on the same map), `AI-103-MAPPING.md` §1 "Responsible AI: transparency". **See also [MIP-0046](./MIP-0046-remove-ai-slop-ui.md)** (Draft) — it replaces this MIP's emoji map (§5) and the `〰️`-vs-`WAVE_PATH` split with one inline-SVG chart-mark set, and closes §8's "emoji fonts differ per platform — hence the words" caveat; the words, numbers and score colours are unchanged. **See also [MIP-0047](./MIP-0047-desmos-equation-art.md)** (Draft) — equation-drawn illustration motifs sharing the same inline-SVG sprite; its §5.5 deliberately leaves this MIP's `WAVE_PATH` marker and legend key untouched, because a hand-tuned filled path beats a sampled curve at 24 px |
+| **Related** | MIP-0005 (the map and its board JSON), MIP-0008 task 6 (the footer panel; same `app.js`), `FUTURE-WORK.md` §1 (other activities as layers on the same map). **See also [MIP-0046](./MIP-0046-remove-ai-slop-ui.md)** (Draft) — it replaces this MIP's emoji map (§5) and the `〰️`-vs-`WAVE_PATH` split with one inline-SVG chart-mark set, and closes §8's "emoji fonts differ per platform — hence the words" caveat; the words, numbers and score colours are unchanged. **See also [MIP-0047](./MIP-0047-desmos-equation-art.md)** (Draft) — equation-drawn illustration motifs sharing the same inline-SVG sprite; its §5.5 deliberately leaves this MIP's `WAVE_PATH` marker and legend key untouched, because a hand-tuned filled path beats a sampled curve at 24 px |
 | **Effort** | S — no new data; one pure Scala function (`windLevel`) plus a JS/CSS-only marker and tooltip change |
-| **Gain** | user value (answers "where's it calm now" without 40 clicks); exam coverage (AI-103 §1 responsible-AI transparency) |
+| **Gain** | user value (answers "where's it calm now" without 40 clicks) |
 | **Effort vs Gain** | cheap win — small, self-contained, no dependency on any other Draft MIP |
-| **Depends on** | MIP-0005 (the map and board this changes); no phase or Azure gate |
+| **Depends on** | MIP-0005 (the map and board this changes); no phase or cloud gate |
 | **Risk** | fixed-pixel wave `divIcon`s can overlap at 300m beach spacing (Ingleses/Santinho) — a legibility risk, not a data one |
 | **Cost so far** | ~$3.18 shared bucket with MIP-0008's wrap-up (commit 44b848c, "not split further" per its own `Cost:` line) |
 
@@ -166,12 +166,6 @@ the marker and says why in the tooltip (`water.summary`), exactly as the card do
 - **MapLibre with data-driven symbols**: richer, but a build step and a bigger vendor blob for
   one tooltip. Rejected while MIP-0005's "plain files, no build" holds.
 - **Do nothing**: the card works, but the map answers "where?" only after a click per beach.
-
-## 10. Exam-coverage mapping
-
-`AI-103-MAPPING.md` §1 "Responsible AI: transparency": everything shown is a deterministic label
-or a live number, none of it model text — the same argument MIP-0008's panel makes in the other
-direction (model text is labelled). No other row.
 
 ## 11. Open questions
 

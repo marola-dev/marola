@@ -10,7 +10,7 @@
 | **Effort** | S — one ~200-line stdlib Python script with a `--self-test` (the shape `scripts/*.py` already has), one equations file, a generated `<symbol>` block inside the sprite MIP-0046 introduces, and one `site_check.js` assertion. No new dependency, no CI workflow, no `site.yml` change, nothing added to `site/dist`. The *authoring* (tuning five drawings in Desmos until they look right) is hours of human eye-work, but it is not build effort and it produces no reviewable artefact except numbers |
 | **Gain** | `user value` — the site gets a visual identity that is about the sea rather than about the framework, at the one moment a first-time visitor decides whether to trust its numbers; `infra/dev-loop` — an illustration whose source is a formula is reviewable in a diff and reproducible by re-running a script, which no hand-drawn or generated image is |
 | **Effort vs Gain** | `do when MIP-0046 lands` — the mechanism is MIP-0046's sprite block. It is buildable first (this MIP would then introduce the block itself) but that duplicates ~25 lines of CSS and creates a mechanical conflict for whoever lands second, for no gain. MIP-0046 is the smaller, more urgent change; this one waits one merge |
-| **Depends on** | MIP-0046 for the delivery mechanism (`<symbol>`/`<use>`, `.sprite`/`.ic` CSS) — coordination, not a hard gate: if this landed first it would have to create that block, and MIP-0046 would then extend it. MIP-0044 (Draft) is where the large motifs get room; without it, only the map page exists and §5.6 limits the rollout to two placements. No Phase-1 gate, no Azure resource, no paid tier, no API key — §4.1 verifies the free path and §4.2 verifies exactly where the paid/keyed one starts |
+| **Depends on** | MIP-0046 for the delivery mechanism (`<symbol>`/`<use>`, `.sprite`/`.ic` CSS) — coordination, not a hard gate: if this landed first it would have to create that block, and MIP-0046 would then extend it. MIP-0044 (Draft) is where the large motifs get room; without it, only the map page exists and §5.6 limits the rollout to two placements. No Phase-1 gate, no cloud resource, no paid tier, no API key — §4.1 verifies the free path and §4.2 verifies exactly where the paid/keyed one starts |
 | **Blocked by** | none |
 | **Risk** | Five equation-drawn illustrations are five chances to ship something that looks like a maths homework screenshot rather than a considered drawing. The mechanism is cheap and verifiable; the *taste* is not, and nothing in `just quality` can tell the difference. If the first motif does not survive a look at 1280 px, the honest outcome is to ship one motif, not five |
 | **Cost so far** | — |
@@ -372,10 +372,6 @@ is a prompt, which cannot be reproduced or reviewed. The site-frontend skill exi
 with no illustrations is not broken. Rejected because the request is explicit, and because §5.6's
 v1 is two placements, which is close enough to "nearly nothing" that the do-nothing case is mostly
 answered by scope.
-
-## 10. Exam-coverage mapping
-
-None. This is presentation. It touches no AI-103 or AI-500 row, and claiming one would be padding.
 
 ## 11. Open questions
 

@@ -36,7 +36,7 @@ codebase as expected, not as something to guess past.
    assumed without a citation, or "this obviously works" reasoning about something that hasn't
    been tested.
 3. **Alignment with `AGENTS.md` and `PHILOSOPHY.md`.** Anything that skips the phase-discipline
-   rule, the cost-confirmation gate, or the project's stated local-first/Azure-opt-in stance.
+   rule, the cost-confirmation gate, or the project's stated local-first/cloud-opt-in stance.
 4. **Missing context you'd need but don't have.** This pack deliberately omits the MIP's own
    "Related" row targets (other MIPs, `docs/ARCHITECTURE.md` sections, etc.); if the MIP leans
    heavily on something you can't see, say so explicitly rather than reviewing around the gap

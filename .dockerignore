@@ -7,7 +7,6 @@
 !project/plugins.sbt
 !core
 !local
-!azure
 !cli
 !knowledge
 !site/areas.json

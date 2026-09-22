@@ -17,9 +17,6 @@ result
 result-*
 .direnv/
 
-# Azure Developer CLI
-.azure/
-
 # Env / secrets
 .env
 *.pem

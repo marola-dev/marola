@@ -15,7 +15,7 @@ not marola's and move to [h0ffmann/nix-config](https://github.com/h0ffmann/nix-c
 | CUDA host setup | `scripts/setup-cuda-cache.sh`, `scripts/setup-ml-venv.sh` | `labs/cuda` |
 
 Stays in marola: JDK 25, sbt on it, scala-cli, coursier, just, python with scikit-learn, uv,
-repomix and the clipboard tools it needs, nodejs (ccusage), jq, git, ollama, azure-cli, waydroid,
+repomix and the clipboard tools it needs, nodejs (ccusage), jq, git, ollama, waydroid,
 the github-runner package and its scripts (`gha-runner.sh`, `runner-preflight.sh`,
 `setup-runners.sh`), the shellHook, `.envrc`, the Docker `dev` stage.
 

@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude (Opus 5), for M. Hoffmann (request of 2026-09-10: "existe algum modelo que rode em GPU que compete com WW3 para forecast? XGBoost, DNN, transformer etc") |
 | **Created** | 2026-09-10 |
-| **Phase** | 0/3 — an offline Python training step plus a JSON artefact the Scala side loads, exactly the shape `dspy/` already has. No Azure, no paid resource, no runtime Python, no GPU |
+| **Phase** | 0/3 — an offline Python training step plus a JSON artefact the Scala side loads, exactly the shape `dspy/` already has. No paid resource, no runtime Python, no GPU |
 | **Related** | MIP-0051 (this consumes both of its outputs: the multi-model ensemble is the feature vector, the buoy ledger is the training set); MIP-0052 (the physical alternative — this MIP is the cheap end of the same problem, and undercuts it by two orders of magnitude in effort); MIP-0025/MIP-0048 (marola-sea — a different model for a different job, but the precedent for an offline training chain in this repo); MIP-0045 (choosing the simplest method that works over the fashionable one — the same argument arrives here from the literature rather than from taste); MIP-0001 (the verbatim-classification principle §6 extends) |
 | **Effort** | M — one offline trainer under a new `downscale/` directory, one JSON artefact, one deterministic Scala applier of a handful of coefficients, and tests. No new runtime dependency; the model form (§5.2) is deliberately small enough to apply in plain Scala |
 | **Gain** | `user value` — MIP-0051 §2 measured a 6.7× disagreement at Jurerê caused by 25 km grids that cannot see a 3 km bay; a learned correction is the only one of the three available fixes that costs days rather than months; `infra/dev-loop` — it turns MIP-0051's buoy ledger from a decision gate into a training set, so the same data earns twice |
 | **Effort vs Gain** | `do next` for the **offshore** correction, which can be trained the moment MIP-0051's ledger has data; **`park` for the sheltered-bay correction that actually motivated this MIP** — §4.3 establishes there is no local observation to train it on, and no model form fixes a missing dataset |
-| **Depends on** | MIP-0051 must land first: without the `models=` ensemble there is no feature vector, and without the buoy ledger there is no target. No Phase 1 gate, no Azure, no paid resource. Nothing in MIP-0052 is needed — this is explicitly the alternative to it |
+| **Depends on** | MIP-0051 must land first: without the `models=` ensemble there is no feature vector, and without the buoy ledger there is no target. No Phase 1 gate, no paid resource. Nothing in MIP-0052 is needed — this is explicitly the alternative to it |
 | **Blocked by** | 0051 |
 | **Risk** | That a correction trained on an offshore buoy is quietly applied to sheltered beaches it was never validated at, making a confident wrong number out of an honest uncertain one. §5.3 and §6 exist to make that structurally impossible rather than merely discouraged |
 | **Cost so far** | — |
@@ -296,13 +296,6 @@ work.
   quantity into an LLM, which `AGENTS.md` forbids.
 - **Buy a commercial nearshore forecast.** Still uncosted, still the honest alternative to all of the
   above, and still deserving its own investigation, the same note MIP-0052 §9 carries.
-
-## 10. Exam-coverage mapping
-
-**None directly.** No Azure service, no agent behaviour, no LLM surface. The nearest adjacency is
-AI-103's "Responsible AI: transparency" row that MIP-0051 already claims — §3's requirement that a
-corrected number always displays its sample count and error bar is the same principle applied to a
-fitted quantity rather than a sourced one. Not claimed as coverage.
 
 ## 11. Open questions
 

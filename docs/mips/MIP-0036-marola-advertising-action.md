@@ -5,13 +5,13 @@
 | **Status** | Draft |
 | **Author** | Claude Opus 5, for M. Hoffmann (request of 2026-09-07, verbatim: "growth strategy, create MAA marola advertising action.. after release 0 few things will happen and should happen. first. it needs to be planned ahead so all requirements meet. marola rss feed. marola repo becomes Public, LinkedIn post, reddit post, marola org LinkedIn post, YouTube post, Instagram post, medium post, stack post, try to be as loud as possible to gain traction and how to keep it up after, use opus for this one") |
 | **Created** | 2026-09-07 |
-| **Phase** | 0 — outreach about the project, not marola-the-product. Nothing here touches `Swimability`, `Recommender`, the CLI, the map or any Azure resource. It sits on MIP-0033's *Release* axis, not the `ARCHITECTURE.md` §11 Phase ladder |
+| **Phase** | 0 — outreach about the project, not marola-the-product. Nothing here touches `Swimability`, `Recommender`, the CLI, the map or any cloud resource. It sits on MIP-0033's *Release* axis, not the `ARCHITECTURE.md` §11 Phase ladder |
 | **Number note** | 0036, not 0034/0035 — both are claimed by open drafts on remote branches (`origin/docs/mip-0034-rss-feeds`, `origin/docs/mip-0035-map-plugin-api`) that the `docs/mips/README.md` index on `main` does not yet show. Confirmed free by `git fetch origin && git branch -r` on 2026-09-07 |
-| **Related** | MIP-0033 (Release 0 — the hard prerequisite; its §5.1 repo-visibility gate is respected here, never routed around), MIP-0029 (the settled positioning every line of copy below obeys), MIP-0020 (Instagram — cited, not redesigned: §5.7 delegates the whole channel to it), MIP-0018 (the weekly post-planner/exporter that owns everything after launch week — §5.10 hands off rather than inventing a second cadence mechanism), MIP-0034 (marola's own outbound Atom feed §5.6, and the "stack" = Substack reading this MIP adopts on its authority), MIP-0023 (wait-list and promotion — the platform-agnostic half of the same axis), MIP-0014 (the book — a later outreach artifact, not launch material), `docs/AI-500-MAPPING.md` §4 (the human-confirmation rule §5.11 keeps) |
+| **Related** | MIP-0033 (Release 0 — the hard prerequisite; its §5.1 repo-visibility gate is respected here, never routed around), MIP-0029 (the settled positioning every line of copy below obeys), MIP-0020 (Instagram — cited, not redesigned: §5.7 delegates the whole channel to it), MIP-0018 (the weekly post-planner/exporter that owns everything after launch week — §5.10 hands off rather than inventing a second cadence mechanism), MIP-0034 (marola's own outbound Atom feed §5.6, and the "stack" = Substack reading this MIP adopts on its authority), MIP-0023 (wait-list and promotion — the platform-agnostic half of the same axis), MIP-0014 (the book — a later outreach artifact, not launch material) |
 | **Effort** | M — no Scala, no new module, no new dependency. The build is a `content/launch/` copy kit, one screen-recorded demo, and the human account-creation and posting sequence in §5.11. If MIP-0018 lands first, the per-channel formatters it already designs absorb most of the copy kit and this drops toward S |
 | **Gain** | `community/outreach` (the whole point: Release 0 is currently a milestone nobody outside the repo would ever learn about); `infra/dev-loop` (a written, dependency-ordered launch sequence and a reusable copy kit make Release 1 cheap instead of another improvised week) |
 | **Effort vs Gain** | `do when MIP-0033 lands` — verified 2026-09-07: `https://github.com/h0ffmann/marola` returns **404 anonymously** (still private) while `https://marola.dev/` returns **200**. Every post below says "read the code"; until that 404 becomes a 200 the loudest possible launch points at a door that does not open |
-| **Depends on** | **MIP-0033 blocks execution outright** — the repo must be public, the chatbot live and the first HF model published before a single post goes out (§5.1 Stage 0), and MIP-0033 §5.1's secret-scan-then-flip checklist keeps its own in-the-moment human go-ahead; this MIP adds a gate, never removes one. **MIP-0029 must be reflected in the live copy** (README/site/CLI strings) before the posts quote it, or the posts and the landing page disagree. **MIP-0034 §5.6 (outbound Atom) is a should-have, not a blocker** — it gives a returning visitor a subscribe path on launch day; if it hasn't landed, launch anyway and add the feed link to the pinned follow-ups. **MIP-0020 owns Instagram**; **MIP-0018 owns week 2 onward**. No Phase 1 gate (nothing here needs the Telegram bot), no paid Azure resource, no `AGENTS.md` cost-rule exposure — every platform below is free at the tier used |
+| **Depends on** | **MIP-0033 blocks execution outright** — the repo must be public, the chatbot live and the first HF model published before a single post goes out (§5.1 Stage 0), and MIP-0033 §5.1's secret-scan-then-flip checklist keeps its own in-the-moment human go-ahead; this MIP adds a gate, never removes one. **MIP-0029 must be reflected in the live copy** (README/site/CLI strings) before the posts quote it, or the posts and the landing page disagree. **MIP-0034 §5.6 (outbound Atom) is a should-have, not a blocker** — it gives a returning visitor a subscribe path on launch day; if it hasn't landed, launch anyway and add the feed link to the pinned follow-ups. **MIP-0020 owns Instagram**; **MIP-0018 owns week 2 onward**. No Phase 1 gate (nothing here needs the Telegram bot), no paid cloud resource, no `AGENTS.md` cost-rule exposure — every platform below is free at the tier used |
 | **Blocked by** | 0033 |
 | **Risk** | The "as loud as possible" failure mode is not obscurity, it is **removal**: eight near-identical posts on one day, from accounts with no history, pointing at a repo with zero stars, is the exact shape moderated communities filter as spam — and a Reddit removal or account flag on launch day costs more than a quieter launch would have earned (§8) |
 | **Cost so far** | — |
@@ -241,8 +241,7 @@ data, sourced or clearly labelled, never invented.
 
 Every beach around a stretch of coast, ranked from Open-Meteo and OpenStreetMap, with official
 bathing-water quality per sampling point, tides, and jellyfish/whale odds. Scala 3 on Kyo. It
-runs entirely on your own machine with a free Ollama model — Azure is opt-in, per integration,
-never a package deal.
+runs entirely on your own machine with a free Ollama model.
 
 The part I would defend in review: everything that decides whether marola tells you to swim is
 plain, unit-tested Scala. The model writes the sentence; it never picks the number.
@@ -335,7 +334,7 @@ do not enrol, do not lock the story.
 the other seven posts are asking for. ~1,200–1,800 words, structured as the repo actually thinks:
 the question ("what is the best hour tomorrow to swim nearby?"), why it is harder than it sounds
 (live data, a decision that can hurt someone if it is wrong), the deterministic-scoring /
-LLM-writes-the-sentence boundary, local-first with Azure opt-in per integration, one thing that was
+LLM-writes-the-sentence boundary, local-first with a free Ollama model, one thing that was
 rejected and why (the MIP-0018 §5.2 "candidate why hooks" heuristic finds these; MIP-0034 §4.4's
 "checked the alternative and it failed anyway" is a good one), the honest limitations from §5.2,
 then the links and the embedded video. Canonical-link the article back to `marola.dev` if a blog
@@ -384,7 +383,7 @@ in the README as a follow path on launch day.
 
 ### 5.11 Human action items — everything this MIP will not do itself
 
-Per `AGENTS.md`'s risk-assessment culture and `docs/AI-500-MAPPING.md` §4: creating public-facing
+Per `AGENTS.md`'s risk-assessment culture: creating public-facing
 brand accounts and posting under them are irreversible, shared-state, identity-bearing actions.
 **No agent performs any line of this table.** MIP-0036 lists and sequences them; a human does them.
 
@@ -481,12 +480,6 @@ No test gate applies to a docs-and-copy change. Verification is a checklist, run
   (Instagram) already has a designed human gate in MIP-0020 §5.5.
 - **Product Hunt / Hacker News as launch channels.** Both are plausible and neither was researched
   here, so neither is designed in. Named in §11 rather than invented in §5.
-
-## 10. Exam-coverage mapping
-
-None. This is project outreach, not marola's agent architecture — it maps to no AI-103 or AI-500
-domain row. The only adjacent point is `docs/AI-500-MAPPING.md` §4's human-confirmation rule, which
-§5.11 obeys rather than covers.
 
 ## 11. Open questions
 

@@ -6,9 +6,9 @@
 | **Author** | Claude Fable 5.1, for M. Hoffmann (candidate K6 of the 2026-09-06 external consolidation, `docs/ROADMAP.md` §7 — the *rule* half; the corpus half is the `corpus-doc` skill, §9) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 (`--ask`, `ask_ocean_question`) → 1 (the bot's `/perguntar`, MIP-0002) |
-| **Related** | MIP-0001 (the curated corpus and its citation rule), `core/knowledge/OceanQa.scala` (`Answer`, `NoAnswerSentinel`, `Fallback`), `core/knowledge/Corpus.scala` (`CorpusChunk`), `knowledge/README.md` (the "wrong sentence becomes a confidently wrong answer" warning), `.claude/skills/corpus-doc/SKILL.md`, `AI-103-MAPPING.md` §1 responsible AI |
+| **Related** | MIP-0001 (the curated corpus and its citation rule), `core/knowledge/OceanQa.scala` (`Answer`, `NoAnswerSentinel`, `Fallback`), `core/knowledge/Corpus.scala` (`CorpusChunk`), `knowledge/README.md` (the "wrong sentence becomes a confidently wrong answer" warning), `.claude/skills/corpus-doc/SKILL.md` |
 | **Effort** | S — one boolean threaded from the corpus loader to `Answer`, one pure `SafetyFooter` renderer called by the three surfaces, specs; no dependency, no prompt change |
-| **Gain** | user value (a first-aid or rip-current answer always ends with who to call); exam coverage (AI-103 §1 responsible AI — a deterministic safety layer the model cannot remove) |
+| **Gain** | user value (a first-aid or rip-current answer always ends with who to call) |
 | **Effort vs Gain** | do next — the corpus is about to gain safety documents via `corpus-doc`; the footer must exist before the first one lands, or the highest-stakes answers ship without it |
 | **Depends on** | nothing for the CLI/MCP surfaces; MIP-0002 for the bot surface. Blocks: the first `knowledge/safety/*.md` PR should not merge before this does |
 | **Risk** | a footer on every safety answer becomes wallpaper users skip; mitigated by keeping it to two short lines and only on answers actually grounded in a safety document, not on every answer |
@@ -148,12 +148,6 @@ footer. The spec in §7 is the guard, and `corpus-doc`'s SKILL.md gets a line po
   `corpus-doc` skill (MIP-0011 task 8) does, one PR per document with a fetched source; bundling
   them here would hide safety text inside a plumbing PR. This MIP is the rule those PRs rely on.
 - **Do nothing.** The first first-aid document ships answers with no "call 193/192". Not chosen.
-
-## 10. Exam-coverage mapping
-
-`AI-103-MAPPING.md` §1 "Responsible AI": a deterministic safety layer applied after generation,
-provably not removable by the model; the same argument as MIP-0008's labelled model text and
-MIP-0009's deterministic labels, one step further (not just labelled, enforced).
 
 ## 11. Open questions
 

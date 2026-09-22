@@ -51,7 +51,7 @@ from pathlib import Path
 
 SCHEMA = 1
 
-SCALA_PATHS = ("core", "local", "azure", "cli")
+SCALA_PATHS = ("core", "local", "cli")
 PYTHON_PATHS = ("dspy", "finetune", "scripts")
 EXCLUDE_DIRS = ("target", "__pycache__", ".venv", "venv", "node_modules")
 

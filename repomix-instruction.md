@@ -15,7 +15,7 @@ proposals", do the following:
    two unrelated ideas. Ignore small talk.
 3. **Write each MIP in English** using the exact template in `.claude/skills/mip/SKILL.md` (every
    section present; "None" where nothing applies), following its house rules: local-first with
-   Azure opt-in, safety-relevant logic deterministic and outside the LLM, no unsourced text shown
+   cloud opt-in, safety-relevant logic deterministic and outside the LLM, no unsourced text shown
    to users, phase discipline (ARCHITECTURE.md §11), honest status vocabulary. Read the existing
    MIPs (docs/mips/) for tone and depth, and cross-reference FUTURE-WORK.md sections that already
    sketch the idea instead of re-inventing them.

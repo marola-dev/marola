@@ -9,11 +9,9 @@ enforces.
 
 - A hardcoded key, connection string, token or secret; a real value in `.env.example` (it holds
   placeholders only).
-- Anything that provisions or deploys a paid Azure resource, or adds a workflow step that could
-  (`azd up`, `azd provision`, `az deployment`, `az group create`), without a human gate.
-- An Azure SDK import or reference in `core/` or `local/`: those modules carry zero Azure
-  dependency by design; Azure code lives in `azure/` only.
-- A caller typed to an implementation class (`LocalLlmClient`, `AzureVisionClient`) instead of
+- Anything that provisions or deploys a paid cloud resource, or adds a workflow step that could,
+  without a human gate.
+- A caller typed to an implementation class (`LocalLlmClient`, `LocalVisionClient`) instead of
   its trait (`LlmClient`, `VisionClient`, `SightingStore`).
 - `catch`/`Abort.catching[Throwable]` that discards the failure with a lone `case _ =>`.
 - A bug fix with no test that reproduces the bug.

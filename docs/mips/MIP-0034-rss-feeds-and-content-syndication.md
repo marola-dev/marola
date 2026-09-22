@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude Opus 5, for M. Hoffmann (request of 2026-09-07, verbatim: "create a MIP to implement RSS feeds into marola (to knowledge base), and which specific media formats (youtube, medium, stack) we could use to transform RSS feed into a marola direct feed... think in other ideas for RSS feeds, marola could have its own feed in the website") |
 | **Created** | 2026-09-07 |
-| **Phase** | 0 (`--ask`, the corpus tooling, the static site — all three arms). §5.2's alert banner reaches Phase 1 users for free once MIP-0002's bot exists; nothing here requires Phase 2 or any Azure resource |
+| **Phase** | 0 (`--ask`, the corpus tooling, the static site — all three arms). §5.2's alert banner reaches Phase 1 users for free once MIP-0002's bot exists; nothing here requires Phase 2 or any cloud resource |
 | **Related** | MIP-0001 (the curated-corpus + "no unsourced fact reaches a user" rule this MIP refuses to relax), MIP-0022 (the `knowledge/safety/` directory convention — respected, not redesigned; merged as #195), MIP-0005 (`site/dist`, the 3-hourly rebuild the outbound feed rides), MIP-0019 + `scripts/arxiv_digest.py` (the Atom-parsing and flat-file-cache precedent this MIP copies rather than reinvents), MIP-0018 (Substack/blog exporter — the *outbound-to-platforms* half; this MIP is the *feed* half and defers to it), MIP-0031 (the "the agency publishes no machine-readable feed" finding this MIP partially overturns for INMET), MIP-0033 (Release 0 — a public repo is what makes an outbound feed worth having), `FUTURE-WORK.md` §9.1 (RAG grounding) and §9.2 (proactive hazard detection — deliberately *not* built here) |
 | **Effort** | S/M/L per §5 item — §5.6 outbound Atom is S (one pure serializer + one `SiteBuilder` write); §5.3 reading queue is S/M (one Python script cloned from `arxiv_digest.py`); §5.1 + §5.2 inbound alerts are M/L (a new `core/feeds` parser, a `core/alerts` client, an area-name mapping table, and a new user-visible surface) |
-| **Gain** | user value (a live INMET coastal-wind/storm warning next to the swim score; a subscribable daily "best hour" feed); infra/dev-loop (a reading queue that feeds `corpus-doc` instead of ad-hoc browsing); exam coverage (AI-103 §1 responsible AI — provenance and a human-in-the-loop ingestion gate; AI-500 §4 — a proactive-alert path whose human gate is explicit) |
+| **Gain** | user value (a live INMET coastal-wind/storm warning next to the swim score; a subscribable daily "best hour" feed); infra/dev-loop (a reading queue that feeds `corpus-doc` instead of ad-hoc browsing) |
 | **Effort vs Gain** | `cheap win` for §5.6 (outbound feed) and §5.3 (reading queue) — both ship alone, neither touches scoring; `do next` for §5.1/§5.2 (INMET alerts) once someone wants the banner; `park` for §5.5's transcript pipeline and §5.7c's alert feed; **reject** for auto-ingesting any feed into `knowledge/` (§9) |
-| **Depends on** | Nothing blocking. MIP-0022 already merged (#195), so `knowledge/safety/` and `CorpusChunk.safety` exist — §5.4's rule is written against the real loader, not a proposal. §5.6 assumes MIP-0005's `site/dist` build, which is Implemented. No Phase 1 gate (the CLI and the site are Phase 0 surfaces), no paid Azure resource, no API key anywhere in this MIP |
+| **Depends on** | Nothing blocking. MIP-0022 already merged (#195), so `knowledge/safety/` and `CorpusChunk.safety` exist — §5.4's rule is written against the real loader, not a proposal. §5.6 assumes MIP-0005's `site/dist` build, which is Implemented. No Phase 1 gate (the CLI and the site are Phase 0 surfaces), no paid cloud resource, no API key anywhere in this MIP |
 | **Blocked by** | none |
 | **Risk** | Feed rot that looks like health: a subscribed feed keeps returning HTTP 200 long after it stops being maintained (verified — NOAA's own `NOAAVisualizations` YouTube feed returns 200 with 15 entries whose newest is **2017-02-17**), so an ingestion path that trusts "the fetch worked" silently ages. The second risk is scope: an alert path that starts as a display banner and drifts into changing `Swimability.score` without a MIP of its own |
 | **Cost so far** | — |
@@ -206,7 +206,7 @@ occasional, and §5.4's rule is not licence-dependent.
 **None new.** Parsing is `java.xml`/`ElementTree` on the JDK and Python already in `flake.nix`;
 fetching is marola's own `core/http`. `scripts/arxiv_digest.py` already parses Atom with
 `xml.etree.ElementTree` and caches one JSON file per item plus a JSONL index; §5.3 clones that
-shape rather than inventing one. No new library, no key, no Azure service, nothing paid.
+shape rather than inventing one. No new library, no key, no cloud service, nothing paid.
 
 ## 5. Design
 
@@ -368,8 +368,8 @@ the last 14 days keeps the file small and diffable.
 - **(b) "Notable conditions only" feed**: an entry only when something crosses a threshold (score
   ≥ 85, water declared *imprópria*, an active INMET coastal warning, whale season opening). Highest
   signal-per-item of anything here, and the closest thing to a push channel that needs no bot. But
-  it is a **proactive/autonomous behaviour**: `AGENTS.md` and `docs/AI-500-MAPPING.md` §4 require an
-  explicit human gate before marola volunteers a hazard judgement, and it depends on §5.2 landing.
+  it is a **proactive/autonomous behaviour**: `AGENTS.md` requires an explicit
+  human gate before marola volunteers a hazard judgement, and it depends on §5.2 landing.
   **Park**, with §11.6 as the question to answer first.
 - **(c) MIP / release feed for build-in-public**: **rejected as redundant**: GitHub already serves
   `<repo>/releases.atom` (verified 200, `application/atom+xml`) and `commits/<branch>.atom`.
@@ -471,18 +471,6 @@ byte-identical after any `feed_digest.py` run.
 - **Only do the outbound feed**, skip inbound. Genuinely viable and the cheapest subset, which is
   why §5.6 is written to ship alone.
 
-## 10. Exam-coverage mapping
-
-- **AI-103 §1 Responsible AI**: provenance and a human-in-the-loop ingestion gate (§5.4) as an
-  enforced rule with a lint, plus a deterministic, non-model safety-adjacent banner (§5.2). Same
-  family as MIP-0022's footer, one step earlier in the pipeline: controlling what is allowed to
-  *become* grounding data, not just how a grounded answer is rendered.
-- **AI-103 grounding/RAG data ingestion**: a real, negative-result data point for the mapping: the
-  MIP documents *why* a source is excluded from the index, which is the part exam material usually
-  skips.
-- **AI-500 §4 (human gate on proactive behaviour)**: §5.7b is the textbook case and is parked
-  behind that gate deliberately; the MIP names the gate rather than routing around it.
-
 ## 11. Open questions
 
 1. **Confirm the "stack" reading.** This MIP assumes **Substack** (§4.4) and checked Stack
@@ -499,9 +487,9 @@ byte-identical after any `feed_digest.py` run.
 5. **Should an active alert reach the LLM summary prompt, or stay a Scala-printed banner?** (§5.2,
    §6). Proposal: banner only in v1; telling the model about a warning invites it to editorialise
    about safety, which MIP-0001/0022 exist to prevent.
-6. **Does §5.7b's "notable conditions" feed clear the AI-500 §4 human gate?** It is marola
-   volunteering a hazard judgement to a subscriber with no one in the loop. Needs a human decision
-   before it is designed, not after.
+6. **Does §5.7b's "notable conditions" feed clear the human gate on proactive behaviour?** It is
+   marola volunteering a hazard judgement to a subscriber with no one in the loop. Needs a human
+   decision before it is designed, not after.
 7. **Follow-up MIP:** the `Corpus.load` loader reads `knowledge/*.md` and `knowledge/safety/*.md`
    only, one level, no recursion (verified in the #195 loader). Any future corpus organisation
    into topic subdirectories is a loader change with an index-fingerprint consequence, and it is

@@ -8,7 +8,7 @@
 | **Phase** | Not a marola phase. This is a survey with a verdict, in the shape `docs/AGENT-FRAMEWORKS-SURVEY.md` uses: what exists, what it would cost, and what marola should do — which is mostly "not this" |
 | **Related** | MIP-0051 (the sibling, and the reason this question came up: §2's Jurerê case is what a nearshore grid would fix); MIP-0051 §5.3/§5.4 (the buoy ledger that gates any of this); `docs/AGENT-FRAMEWORKS-SURVEY.md` (the house convention this doc follows: a technology named here is a reference to read, not an adopted dependency) |
 | **Effort** | XL, and out of marola's tree entirely — the attached plan estimates 7–12 months solo part-time with ~40% stall risk. This MIP's own effort is S: it is a survey, and its deliverable is a decision |
-| **Gain** | `infra/dev-loop` — a costed answer to a question that will otherwise keep resurfacing, and a resolution threshold (§5) that says exactly when the answer changes; `exam coverage` — none |
+| **Gain** | `infra/dev-loop` — a costed answer to a question that will otherwise keep resurfacing, and a resolution threshold (§5) that says exactly when the answer changes |
 | **Effort vs Gain** | **park**, with a named trigger. marola's wave problem is ~87 core-hours per 48-h cycle at 1.1 km (§4.1) — real, but tractable on a workstation without any port. The port becomes worth reconsidering only at 550 m, and only after MIP-0051 §5.4's ledger shows nearshore resolution is the binding error |
 | **Depends on** | Nothing technically. Every rung of MIP-0051 stands without this. Do not read this MIP as a prerequisite for anything marola ships |
 | **Blocked by** | none |
@@ -337,11 +337,6 @@ the honest verification of a cost model is to measure it:
   is out of scope here because it replaces physics rather than accelerating it, a scientific
   decision, not an engineering one, and because marola has no baseline to judge it against. It
   deserves its own MIP if a nest is ever built.
-
-## 10. Exam-coverage mapping
-
-**None.** No AI-103 or AI-500 row is touched: there is no Azure service, no agent behaviour, no
-model deployment and no user-facing AI surface in this proposal.
 
 ## 11. Open questions
 

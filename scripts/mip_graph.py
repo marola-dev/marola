@@ -176,7 +176,7 @@ def source_paths(mip_path):
     text = mip_path.read_text(encoding="utf-8")
     return set(
         re.findall(
-            r"`((?:core|local|azure|cli|site|scripts)/[A-Za-z0-9_./-]+)`",
+            r"`((?:core|local|cli|site|scripts)/[A-Za-z0-9_./-]+)`",
             text,
         )
     )

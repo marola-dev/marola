@@ -179,10 +179,6 @@ links are independently true and verifiable today (§4); shipping them now costs
 self-contained PR and gives the artist visible thanks immediately, rather than making her wait for
 however long file delivery and layout design take.
 
-## 10. Exam-coverage mapping
-
-None — this is a site-content/credit change, not an AI/ML integration.
-
 ## 11. Open questions
 
 - **Which link is "the arte terapia link"?** No dedicated URL for that specific practice was found

@@ -6,9 +6,9 @@
 | **Author** | Claude Opus 5, for M. Hoffmann (deep review of every MIP + a live LLMOps/competitor research pass, 2026-09-07) |
 | **Created** | 2026-09-07 |
 | **Phase** | 0 (CLI notes and the board JSON) → 1 (the map card and the bot reply reuse the same field). No earlier-phase prerequisite is missing |
-| **Related** | `ARCHITECTURE.md` §9 ("nearby beaches often show near-identical numbers" — the *other* honest limitation of one forecast cell) and §5 (the pluggable pattern this does **not** need, since it's the same upstream); MIP-0001 (the detailed block this adds one line to); MIP-0005/MIP-0009 (the board JSON and the hover tooltip that render it); MIP-0007 (foundation models over marola's *own* series — explicitly not a sea forecast, so this MIP is not its overlap); `ROADMAP.md` §7 K5 (forecast verification — the parked work that would eventually say *which* model to trust, and the reason this MIP refuses to pick one today); `AI-103-MAPPING.md` §1 "Responsible AI: transparency" |
+| **Related** | `ARCHITECTURE.md` §9 ("nearby beaches often show near-identical numbers" — the *other* honest limitation of one forecast cell) and §5 (the pluggable pattern this does **not** need, since it's the same upstream); MIP-0001 (the detailed block this adds one line to); MIP-0005/MIP-0009 (the board JSON and the hover tooltip that render it); MIP-0007 (foundation models over marola's *own* series — explicitly not a sea forecast, so this MIP is not its overlap); `ROADMAP.md` §7 K5 (forecast verification — the parked work that would eventually say *which* model to trust, and the reason this MIP refuses to pick one today) |
 | **Effort** | M — one query-string change in `OpenMeteoClient` (no extra HTTP request, §4.1), one pure `ModelSpread` module in `core/conditions`, two additive board fields, one CLI line and one tooltip row. No new dependency, no new module, no new upstream |
-| **Gain** | `user value` (the swimmer learns that "1.3 m" is one model's answer and another says 2.1 m, at the hour they were about to swim); `exam coverage (AI-103 §1 Responsible AI — transparency)` (uncertainty shown rather than averaged away) |
+| **Gain** | `user value` (the swimmer learns that "1.3 m" is one model's answer and another says 2.1 m, at the hour they were about to swim) |
 | **Effort vs Gain** | `do next` — the data is one query parameter away in the request marola already makes, and §2's disagreement is measured, not hypothesised |
 | **Depends on** | Nothing blocking. No Phase 1 gate, no paid resource, no new API key. Coordinates with MIP-0009 (the hover tooltip gains one row) and MIP-0016 (same `render()`); neither must land first |
 | **Blocked by** | none |
@@ -261,13 +261,6 @@ one would silently lower every score on 23% of hours with nothing to justify it.
   confidence signal later, not for this.
 - **A numeric confidence percentage** ("72% confident"). A number marola cannot compute honestly
   from two models with no verification history. Rejected in favour of three words.
-
-## 10. Exam-coverage mapping
-
-`AI-103-MAPPING.md` §1 "Responsible AI: transparency" — the same row MIP-0009 and MIP-0021 claim,
-for the same reason and one step further: MIP-0021 shows "no data" rather than "none", MIP-0009
-shows deterministic labels rather than model text, and this shows *disagreement between sources*
-rather than a single confident figure. Mark "proposed: MIP-0038". No AI-500 row.
 
 ## 11. Open questions
 

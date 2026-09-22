@@ -76,8 +76,7 @@ object ChatServer:
     try
       cors(exchange)
       if exchange.getRequestMethod == "OPTIONS" then exchange.sendResponseHeaders(204, -1)
-      else if config.llmClient.isDefined then writeJson(exchange, 200, """{"status":"ok"}""")
-      else writeJson(exchange, 503, """{"status":"no LLM configured"}""")
+      else writeJson(exchange, 200, """{"status":"ok"}""")
     finally exchange.close()
 
   private def askHandler(config: AppConfig)(using AllowUnsafe): HttpHandler = exchange =>
@@ -95,7 +94,7 @@ object ChatServer:
               Sync.Unsafe.evalOrThrow(
                 Abort.run(
                   Abort.catching[Throwable](
-                    responseFor(question, config.knowledgeStore, config.llmClient)
+                    responseFor(question, config.knowledgeStore, Some(config.llmClient))
                   )
                 )
               )

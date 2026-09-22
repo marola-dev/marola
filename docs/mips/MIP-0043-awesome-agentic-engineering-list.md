@@ -6,10 +6,10 @@
 | **Author** | Claude (agent), for M. Hoffmann (request: a public curated "awesome list" of agentic-engineering projects, kept current by a semi-automated routine, plus a real "top 10 repos similar to marola" section) |
 | **Created** | 2026-09-07 |
 | **Phase** | 0 (`ARCHITECTURE.md` §11) — a repo/community doc plus a maintainer dev-tool script, not a Telegram/product feature. No earlier-phase prerequisite |
-| **Related** | `MIP-0017` (agentic-tooling survey — same dev-tooling category, Phase 0, S effort, `infra/dev-loop` gain), `MIP-0019` (`scripts/arxiv_digest.py` — the exact script conventions this MIP's script follows: stdlib-only `urllib.request`, `.tmp/`-cached store, `--self-test`, `--json`, wired into `quality-other`), `MIP-0041` (soft book ingestion — the "propose candidates, human curates, never auto-write" gate this MIP reuses as its own governing principle), `docs/AI-500-MAPPING.md` §4 (human-confirmation gate for autonomous/proactive behavior — the same reasoning applied here to "don't let a script silently edit a curated public doc") |
+| **Related** | `MIP-0017` (agentic-tooling survey — same dev-tooling category, Phase 0, S effort, `infra/dev-loop` gain), `MIP-0019` (`scripts/arxiv_digest.py` — the exact script conventions this MIP's script follows: stdlib-only `urllib.request`, `.tmp/`-cached store, `--self-test`, `--json`, wired into `quality-other`), `MIP-0041` (soft book ingestion — the "propose candidates, human curates, never auto-write" gate this MIP reuses as its own governing principle), `AGENTS.md` "Before implementing a feature" (human-confirmation gate for autonomous/proactive behavior — the same reasoning applied here to "don't let a script silently edit a curated public doc") |
 | **Effort** | S — one new Markdown doc (hand-curated, not generated), one new Python script matching an existing template almost line-for-line, one `justfile` wiring line. No new Scala module, no new runtime dependency, no paid API |
 | **Gain** | `community/outreach` (a public reference doc useful to anyone evaluating agentic-engineering tooling, and a discoverability surface for marola itself via its own "similar repos" section); `infra/dev-loop` (a repeatable way to find new entries instead of ad hoc memory) |
-| **Effort vs Gain** | cheap win — self-contained, file-based, no Azure spend, no Phase gate, no dependency on marola's own pipeline |
+| **Effort vs Gain** | cheap win — self-contained, file-based, no cloud spend, no Phase gate, no dependency on marola's own pipeline |
 | **Depends on** | Nothing blocking. Reuses `scripts/arxiv_digest.py`'s cache/self-test/CLI shape as precedent (MIP-0019), not as code |
 | **Blocked by** | none |
 | **Risk** | An unreviewed GitHub Search API result gets treated as a good match by inertia — a repo that ranks by stars/recency can be off-topic (parked, abandoned, or keyword-matched but architecturally unrelated) and get curated in without a human actually opening its README. The whole design below (§5) exists to make that require a deliberate manual step, exactly as MIP-0041's book-digest gate does — the script never writes to the curated doc itself |
@@ -157,7 +157,7 @@ with a rate-limit message, that confirms it empirically and the script's error h
   `scripts/arxiv_digest.py --self-test` (MIP-0019's own precedent for where a new digest script's
   self-test line goes).
 
-**Not changed:** no Scala module, no `core`/`local`/`azure`/`cli` file, no `AppConfig` entry, no
+**Not changed:** no Scala module, no `core`/`local`/`cli` file, no `AppConfig` entry, no
 Swimability/Recommender/MCP-server surface. This is a docs+`scripts/` change only.
 
 ## 6. Scoring / safety impact
@@ -207,12 +207,6 @@ None. No change to `Swimability.score`, thresholds, or any user-facing recommend
   that it genuinely belongs.
 - **Do nothing (no such doc)**: loses the community/outreach value and the discoverability the "top
   10 similar repos" section provides for marola itself; low effort to build, so not worth deferring.
-
-## 10. Exam-coverage mapping
-
-None directly — this is a community/outreach and dev-tooling doc, not an AI-103/AI-500 exam-domain
-build. (Loosely touches AI-103's general theme of evaluating/comparing AI tooling ecosystems, but
-not a scored mapping row.)
 
 ## 11. Open questions
 

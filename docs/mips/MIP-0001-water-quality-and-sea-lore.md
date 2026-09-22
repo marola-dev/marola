@@ -6,11 +6,11 @@
 | **Author** | Claude Fable 5.1, for M. Hoffmann |
 | **Created** | 2026-09-05 |
 | **Phase** | 0 (CLI) now; the reply format is designed for Phase 1 (Telegram) |
-| **Related** | `ARCHITECTURE.md` §5 (integration pattern), §8 (heuristics honesty); `FUTURE-WORK.md` §1.3 (wave period), §9.1 (ocean-knowledge grounding — this is its first concrete step); `AI-103-MAPPING.md` rows "Responsible AI" and "Text analysis" |
+| **Related** | `ARCHITECTURE.md` §5 (integration pattern), §8 (heuristics honesty); `FUTURE-WORK.md` §1.3 (wave period), §9.1 (ocean-knowledge grounding — this is its first concrete step) |
 | **Effort** | M — new client, a pure matcher, one scoring rule, a curated sourced lore corpus; no new module |
-| **Gain** | user value (a safety-critical water veto); exam coverage (AI-103 "Responsible AI", "Text analysis") |
+| **Gain** | user value (a safety-critical water veto) |
 | **Effort vs Gain** | cheap win, delivered — moderate effort for a real safety fix in the score |
-| **Depends on** | none; Phase 0/1; no Azure resource used or needed |
+| **Depends on** | none; Phase 0/1; no cloud resource used or needed |
 | **Risk** | the undocumented IMA endpoint can change or vanish without notice |
 | **Cost so far** | n/a — PRs #2/#3/#4 predate the `Cost:` trailer convention (Claude-Session links instead) |
 
@@ -102,8 +102,7 @@ Telegram (Phase 1) gets the same block, the lore paragraph last, under a `🌊` 
   "Indeterminado" the portal's legend mentions (only PRÓPRIO/IMPRÓPRIO seen in the 2026-09-05 feed).
 - **Also verified as the fallback:** the weekly PDF bulletins
   (`/relatorio/downloadPDF/YYYY-MM-DD`, 18 pages) carry the same rows minus coordinates and
-  counts. If the JSON endpoint disappears, this is the parse target — and the one place an Azure
-  service (Document Intelligence) would genuinely earn its place. Not needed today.
+  counts. If the JSON endpoint disappears, this is the parse target. Not needed today.
 
 ### 4.2 Open-Meteo Marine API — already used; three variables not yet fetched
 
@@ -171,9 +170,6 @@ ARMAÇÃO DO PÂNTANO DO SUL"). Unit-tested against a checked-in fixture trimmed
   takes an empty POST), `JsonValue` parse, strings → numbers with `toDoubleOption`/`toIntOption`,
   dates via `DateTimeFormatter.ofPattern("dd/MM/yyyy")`. A parse failure of one point drops that
   point, not the feed. Zero new dependencies.
-- **Azure opt-in:** none. There is no Azure water-quality service, and this MIP does not invent a
-  use for one. Stated per the `mip` skill rule. (If the JSON endpoint vanishes, Document
-  Intelligence over the PDF bulletin is the natural Azure-flagged fallback — §4.1.)
 - **Selection (`AppConfig`)**: `MAROLA_WATER_QUALITY_PROVIDER=ima-sc|none`, default `ima-sc` **only
   when the origin lies inside Santa Catarina's bounding box** (lat −29.4…−25.9, lon −53.9…−48.3),
   otherwise `none` with the note "no water-quality source for this region yet (MIP-0001 §11)". A
@@ -292,24 +288,12 @@ expected output replaced with a run that shows the block, this MIP flipped to Im
 ## 9. Alternatives considered
 
 - **Do nothing.** Leaves the Ponto 73 case unaddressed; rejected on safety grounds.
-- **Parse the PDF bulletins.** Works, no coordinates, brittle layout, needs a PDF library or an
-  Azure service. Kept as the fallback only.
+- **Parse the PDF bulletins.** Works, no coordinates, brittle layout, needs a PDF library. Kept as the fallback only.
 - **Let the LLM write the lore.** Cheapest to build, and exactly what §9.1 and the `mip` skill
   forbid: unsourced marine "facts" reaching users. Rejected.
 - **Score `RESULTADO` directly** (e.g. penalise 100-800 enterococci as "borderline"). Tempting, but
   it second-guesses the agency's own five-sample classification with a single number. Rejected;
   show the number, score the classification.
-
-## 10. Exam-coverage mapping
-
-- `AI-103-MAPPING.md` §1 "Responsible AI: transparency" — a safety-relevant signal handled
-  deterministically with the sample date and location printed; a concrete artefact for that row.
-- `AI-103-MAPPING.md` §5 "Text analysis" partial gap — the lore corpus is the seed of the
-  marine-knowledge corpus `FUTURE-WORK.md` §9.1 proposes for RAG; not RAG yet, and this MIP does
-  not claim it is.
-- Document Intelligence: *not* used, and this MIP records why (a JSON feed exists). If the fallback
-  is ever needed, that row becomes real.
-- AI-500: none.
 
 ## 11. Open questions
 

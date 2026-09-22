@@ -8,9 +8,9 @@
 | **Phase** | 0 (dev-loop and offline uses), 1 for anything user-facing |
 | **Related** | `ARCHITECTURE.md` §5a (query synthesis) and §5h (RAG), `FUTURE-WORK.md` §4.1 (eval harness), MIP-0001 (corpus/RAG), MIP-0010 (run ledger), MIP-0025 (fine-tuning) |
 | **Effort** | M — one new trait with two implementations, an `AppConfig` factory and an HTTP call through the existing `Http`/`Json` helpers; no new module, no SDK (there is no Scala SDK, §4) |
-| **Gain** | `infra/dev-loop` (a judge and a reranker that cannot emit malformed output); `cost/ops` (output tokens are free and input is $0.042/MTok, §4); `exam coverage (AI-103 "implement a generative AI solution" — structured output and guardrails)` |
+| **Gain** | `infra/dev-loop` (a judge and a reranker that cannot emit malformed output); `cost/ops` (output tokens are free and input is $0.042/MTok, §4) |
 | **Effort vs Gain** | `cheap win` for the two offline uses (§5.3 bootstrap), `do when Phase 1 lands` for anything a user sees |
-| **Depends on** | Nothing must merge first. Gated instead by *access*: Jev is early-access behind a waitlist and needs an API key (§4), so the opt-in path cannot be verified live until a key exists. No Azure resource and no paid Azure gate is involved; `AGENTS.md`'s Phase 1 gate applies only to the user-facing uses in §5.4. |
+| **Depends on** | Nothing must merge first. Gated instead by *access*: Jev is early-access behind a waitlist and needs an API key (§4), so the opt-in path cannot be verified live until a key exists. No cloud resource and no provisioning gate is involved; `AGENTS.md`'s Phase 1 gate applies only to the user-facing uses in §5.4. |
 | **Blocked by** | none |
 | **Risk** | Building a second decision path that nobody can run: no free tier, a waitlist, and a three-day-old API whose shape may change under us — while the local default it replaces is already good enough for everything except malformed-JSON retries. |
 | **Cost so far** | — |
@@ -87,7 +87,7 @@ default to `approve`.
   trial or a free tier `(v, all three checked 2026-09-19)`. Access is **early access behind a
   waitlist**; third-party write-ups report keys arriving in a day or two ⚠ (not verified). So the
   honest statement is: *not free, but nearly free*, at $0.042/MTok in and free output, the entire
-  bootstrap in §5.3 is cents, which is a different category from an Azure resource and does **not**
+  bootstrap in §5.3 is cents, which is a different category from a cloud resource and does **not**
   trip `AGENTS.md`'s provisioning gate (no resource is created; it is a metered API key).
 - **SDKs.** Official Python and JavaScript only `(v)`. **No Scala SDK and no JVM client**, so
   marola would call the HTTP API directly through its own `http/Http.scala` and `json/Json.scala`
@@ -137,10 +137,9 @@ rendered as JSON, the shape Jev's docs call "program state".
 - `local/`, `HeuristicDecisionClient`: deterministic Scala per call site (the matcher's existing
   normalisation; a keyword overlap score for reranking), and, where a model genuinely is needed,
   the existing Ollama path with today's parse-and-default behaviour. No new dependency.
-- A new `decide/JevClient` (in `core/`: it is not Azure, so it does not belong in `azure/`;
-  it is not Ollama, so it does not belong in `local/`; put it beside the trait and gate it on the
-  env var): one `POST` through `Http`, bearer token from `TYPESAFE_API_KEY`, questions serialised
-  with `Json`, answers parsed into `Answer`.
+- A new `decide/JevClient` (in `core/`: it is not Ollama, so it does not belong in `local/`; put it
+  beside the trait and gate it on the env var): one `POST` through `Http`, bearer token from
+  `TYPESAFE_API_KEY`, questions serialised with `Json`, answers parsed into `Answer`.
 - `AppConfig.decisionClient: Option[DecisionClient]` follows the established pattern exactly:
   `MAROLA_DECISION_PROVIDER=local|jev`, returning `None` when `jev` is selected without a key so
   `Main` fails with a clear message rather than a stack trace (`ARCHITECTURE.md` §5).
@@ -211,15 +210,7 @@ than guesses, which is the point of `confidence` being separate from `probabilit
   vendor, and it solves the *structural* half of the problem. It does not give calibrated
   probabilities or a confidence, and it is slower, not faster. **This is the real competitor** and
   should be benchmarked against Jev in the bootstrap ⚠ (not evaluated here).
-- **Azure AI Foundry structured output.** Already an opt-in path for 5a; same schema guarantee via
-  JSON-schema mode, but paid, Azure-gated, and Phase 2.
 - **A fine-tuned local classifier** (MIP-0025 tiers). Cheapest at runtime, most work up front.
-
-## 10. Exam-coverage mapping
-
-AI-103, "Implement a generative AI solution" — structured output, guardrails and a reviewer pass;
-this adds a second, type-level guardrail next to the existing prompt-level one. Not an AI-500 row:
-nothing here is multi-agent or autonomous.
 
 ## 11. Open questions
 

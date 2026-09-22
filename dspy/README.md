@@ -47,27 +47,12 @@ model marola will actually run at request time, so the optimized prompt matches 
 that'll replay it:
 
 ```bash
-# Azure OpenAI / Foundry — same deployment as FOUNDRY_MODEL_DEPLOYMENT elsewhere in this repo.
-# These are LiteLLM's own env var names (https://docs.litellm.ai/docs/providers/azure), not this
-# repo's usual FOUNDRY_* ones — DSPy doesn't know about azure-identity/managed-identity, it needs
-# a plain API key here.
-export AZURE_API_KEY=...
-export AZURE_API_BASE=https://<your-resource>.openai.azure.com
-export AZURE_API_VERSION=2026-01-01-preview
-export MAROLA_DSPY_MODEL=azure/<your-deployment-name>
-
-python compile_recommendation_prompt.py
-```
-
-Or, for quick local experimentation before Foundry is provisioned:
-
-```bash
 export OPENAI_API_KEY=sk-...
 python compile_recommendation_prompt.py   # defaults to openai/gpt-4o-mini
 ```
 
-Either way this writes both `recommendation_prompt.json` and `review_prompt.json` in one run. Re-run
-it whenever `TRAINSET`/`REVIEW_TRAINSET` grow (these double as hand-labeled eval sets; see
+This writes both `recommendation_prompt.json` and `review_prompt.json` in one run. Re-run it
+whenever `TRAINSET`/`REVIEW_TRAINSET` grow (these double as hand-labeled eval sets; see
 `../docs/FUTURE-WORK.md` §4.1 for the gap between "doubles as an eval set" and an actual held-out
 `dspy.Evaluate` loop, which doesn't exist yet) or the target model changes. There's no watch mode,
 it's a manual step you re-run and commit both resulting JSON files, same as any other compiled
@@ -162,6 +147,5 @@ deliberately-planted flaw in a draft summary.
 `langfuse==4.15.1` + `openinference-instrumentation-dspy` are confirmed importable and the
 graceful-degradation path (credentials set, endpoint unreachable) was exercised directly, but the
 actual Langfuse happy path (a trace landing in a real project) remains unverified: no Langfuse
-account was set up in this environment. `AzureFoundryLlmClient`'s live path is similarly unverified:
-no Foundry project provisioned (`AGENTS.md`'s cost-safety rule).
+account was set up in this environment.
 </content>

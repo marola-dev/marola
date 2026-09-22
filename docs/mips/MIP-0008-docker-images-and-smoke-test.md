@@ -6,12 +6,12 @@
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026, during the MIP-0005 implementation session) |
 | **Created** | 2026-09-05 |
 | **Tasks** | `docs/mips/MIP-0008.tasks.md` — stacked PRs, one per task |
-| **Phase** | 3 (deploy artefacts) — no Azure; the Phase 1 prerequisite (the Telegram bot, MIP-0002) is still missing and is not needed for anything here |
-| **Related** | `ARCHITECTURE.md` §11 (Phase 3), `RUN-LOCALLY.md` (what "everything I do with nix develop" means), `finetune/README.md` (the two fine-tuning tiers), MIP-0005 (the site that will show the smoke test), `marola-e2e.yml` (the existing Ollama-in-CI recipe), `AI-103-MAPPING.md` (deploy/containerise rows) |
+| **Phase** | 3 (deploy artefacts) — no cloud resource; the Phase 1 prerequisite (the Telegram bot, MIP-0002) is still missing and is not needed for anything here |
+| **Related** | `ARCHITECTURE.md` §11 (Phase 3), `RUN-LOCALLY.md` (what "everything I do with nix develop" means), `finetune/README.md` (the two fine-tuning tiers), MIP-0005 (the site that will show the smoke test), `marola-e2e.yml` (the existing Ollama-in-CI recipe) |
 | **Effort** | XL — four Dockerfile targets incl. a GraalVM native-image spike, compose, 3 CI workflows, a benchmark gate; 7 stacked PRs |
 | **Gain** | infra/dev-loop (anyone with Docker can run marola with no Nix); cost/ops (a versioned, gated `marola-local` artifact) |
-| **Effort vs Gain** | cheap win, delivered — high leverage for a scoped, no-Azure-spend Phase 3 deploy artifact |
-| **Depends on** | none blocking; Phase 3, explicitly does not need MIP-0002/Phase 1; no Azure resource (GHCR + Actions only) |
+| **Effort vs Gain** | cheap win, delivered — high leverage for a scoped, no-cloud-spend Phase 3 deploy artifact |
+| **Depends on** | none blocking; Phase 3, explicitly does not need MIP-0002/Phase 1; no cloud resource (GHCR + Actions only) |
 | **Risk** | the native-image path is one Kyo/GraalVM upgrade away from breaking silently — reachability metadata is hand-maintained |
 | **Cost so far** | ~$15.98 total (~$15.08 across 7 PRs #26–#32, per the status row, + ~$0.90 for the MIP draft itself) |
 
@@ -30,8 +30,8 @@ model, and publishes its output where the map (MIP-0005) shows it as a "last liv
 
 - `docs/RUN-LOCALLY.md` needs Nix, sbt, JDK 25 and a running Ollama. A friend with Docker and
   nothing else cannot run marola today; `docker compose up` should be enough.
-- Phase 3 (`ARCHITECTURE.md` §11) needs an image anyway; building it now, without Azure, keeps
-  the free-first rule and gives the Container App step a tested artefact.
+- Phase 3 (`ARCHITECTURE.md` §11) needs an image anyway; building it now, without a cloud
+  resource, keeps the free-first rule and gives the deploy step a tested artefact.
 - The `--summarize` path (LLM + reviewer) is only exercised by `just e2e` on a developer's
   machine or by the manual `marola-e2e.yml`. A scheduled/triggerable smoke test with a visible
   result is the cheapest continuous check that the whole thing (pipeline, prompt, reviewer,
@@ -193,12 +193,6 @@ next to it, and the deterministic list above it is the source of truth. No user 
 - **Smoke workflow deploying Pages itself**: races with `site.yml`; the `site-data` branch +
   trigger avoids it. Artifacts-only (no branch) expire after 90 days and need a token to read.
 - **Do nothing**: `nix develop` works; but Phase 3 needs the image and the friend needs Docker.
-
-## 10. Exam-coverage mapping
-
-AI-103 §1 "plan and manage — containerise and deploy an AI solution" (image + registry + workflow
-is the local-first half of the Container App row); "LLMOps": model versioning by image tag and a
-benchmark gate before promotion; "monitor": a scheduled smoke test with a visible result.
 
 ## 11. Open questions
 

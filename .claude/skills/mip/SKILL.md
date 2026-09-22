@@ -1,6 +1,6 @@
 ---
 name: mip
-description: Write or revise a Marola Improvement Proposal (MIP) — a numbered design doc under docs/mips/ for any non-trivial feature, integration, or architecture change in marola. Use when the user says "MIP", "improvement proposal", "propose a feature", "write up a design for", or wants a feature planned before it's built. Not the same thing as docs/SKILLS.md (an exam-skills roadmap).
+description: Write or revise a Marola Improvement Proposal (MIP) — a numbered design doc under docs/mips/ for any non-trivial feature, integration, or architecture change in marola. Use when the user says "MIP", "improvement proposal", "propose a feature", "write up a design for", or wants a feature planned before it's built. Not the same thing as docs/SKILLS.md (a skills roadmap).
 ---
 
 # Writing a Marola Improvement Proposal (MIP)
@@ -13,9 +13,9 @@ so proposals are comparable and don't rot.
 ## When a MIP is warranted
 
 - A new external data source or third-party API.
-- A new pluggable integration (a trait with local/Azure backends), or a new module.
+- A new pluggable integration (a trait with a local default and an opt-in backend), or a new module.
 - Anything that changes the ranking/scoring, the safety-relevant output, or what a user sees.
-- Anything touching autonomous/proactive behaviour (see `docs/AI-500-MAPPING.md` §4).
+- Anything touching autonomous/proactive behaviour.
 
 Not for: bug fixes, doc corrections, refactors with no behaviour change, or one-file tweaks: do
 those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md` if relevant.
@@ -27,20 +27,19 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
    `docs/mips/MIP-NNNN-<kebab-slug>.md`.
 2. **Read before writing.** Always: `AGENTS.md`, `docs/ARCHITECTURE.md` §5 (the integration
    pattern) and §11 (phases), `docs/FUTURE-WORK.md` (is this already sketched? link the section),
-   `docs/AI-103-MAPPING.md`/`docs/AI-500-MAPPING.md` (does this close a gap? say which row), and the
-   source files the proposal would touch. Read existing MIPs in `docs/mips/` for tone.
+   and the source files the proposal would touch. Read existing MIPs in `docs/mips/` for tone.
 3. **Verify every external claim.** Before naming a data source, library, or API: fetch its page,
    confirm the format, the update frequency, the licence/terms, and whether a key is needed. Record
    what was checked, when, and what was *not* checked. A source you could not verify goes in
    "Open questions", not in "Design".
 4. **Write the MIP** using the template below. Every section is required; write "None" rather than
-   deleting a heading. Keep it under ~250 lines; long research goes in an appendix at the end.
+   deleting a heading. The numbering skips §10 on purpose, so §11 stays Open questions in every
+   MIP. Keep it under ~250 lines; long research goes in an appendix at the end.
 5. **Add it to the index.** Append a row to `docs/mips/README.md`: number, title, status, date, and
    the four triage columns (Effort, Gain, Verdict, Cost so far) copied from the MIP's own metadata
    block; see "Filling the six triage fields" below.
 6. **Link it.** If it supersedes or implements a `FUTURE-WORK.md` section, add a one-line pointer
-   there ("see `docs/mips/MIP-NNNN-...md`"). If it closes an exam-mapping gap, note it in the
-   relevant mapping row's Status column as "proposed: MIP-NNNN".
+   there ("see `docs/mips/MIP-NNNN-...md`").
 7. **The implementation PR carries a `Cost` line** (AGENTS.md "Attribution and cost accounting")
    and updates the MIP's status to Implemented with a link to the PR.
 8. **Don't build it in the same change.** A MIP is merged as `Draft` or `Accepted`; implementation
@@ -64,8 +63,8 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
 
 ## Rules of the house (apply to every MIP)
 
-- **Local-first, Azure opt-in, per integration** (`ARCHITECTURE.md` §5). Every new data path needs a
-  free, keyless, zero-Azure default. If an Azure service is the *only* option, say so explicitly and
+- **Local-first, cloud opt-in, per integration** (`ARCHITECTURE.md` §5). Every new data path needs a
+  free, keyless, local default. If a paid cloud service is the *only* option, say so explicitly and
   state the expected cost; it needs a human go-ahead (`AGENTS.md` cost rule).
 - **Safety-relevant logic stays deterministic and out of the LLM.** Anything that changes whether
   marola tells someone to swim is plain Scala in `scoring/`, unit-tested, never model output.
@@ -88,11 +87,11 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
 | **Author** | <name or agent> |
 | **Created** | YYYY-MM-DD |
 | **Phase** | 0 / 1 / 2 / 3 / 4 (`ARCHITECTURE.md` §11) |
-| **Related** | `FUTURE-WORK.md` §N, `AI-103-MAPPING.md` row "...", MIP-NNNN |
+| **Related** | `FUTURE-WORK.md` §N, MIP-NNNN |
 | **Effort** | S / M / L / XL — one clause why (what's new: a module? a store? a CI workflow?). If §4's research changed the estimate from what a related MIP guessed, say so: `M, re-rated from S after §4` — copy the same clause into this MIP's `docs/mips/README.md` index cell, don't let the index show a bare letter that hides the correction |
-| **Gain** | one or more of `user value`, `exam coverage (AI-103/AI-500 domain …)`, `infra/dev-loop`, `cost/ops`, each with one clause |
+| **Gain** | one or more of `user value`, `infra/dev-loop`, `cost/ops`, each with one clause |
 | **Effort vs Gain** | `do next` / `do when X lands` / `cheap win` / `expensive, defer` / `park` — one sentence why |
-| **Depends on** | prose, for humans: other MIPs it needs or that need it, whether Phase 1 or a paid Azure resource gates it (`AGENTS.md`), and any non-blocking coordination (shared files, shared design decisions) — say the relationship in words, this field is never parsed |
+| **Depends on** | prose, for humans: other MIPs it needs or that need it, whether Phase 1 or a paid cloud resource gates it (`AGENTS.md`), and any non-blocking coordination (shared files, shared design decisions) — say the relationship in words, this field is never parsed |
 | **Blocked by** | machine-readable, for `scripts/mip_graph.py`: a comma-separated list of MIP numbers that must land first, or the literal `none`. Numbers only — no prose, no phase gates, no "not really, but". If a relationship doesn't cleanly reduce to "MIP-NNNN must merge before this one can", it belongs in `Depends on` only, not here — a wrong edge in the generated graph is worse than a missing one |
 | **Risk** | the one thing most likely to make this not worth it |
 | **Cost so far** | the summed `Cost:` trailers of its merged PRs, or "—" if nothing has merged yet |
@@ -128,9 +127,6 @@ What can go wrong, what the data can't tell you, what to print so users aren't m
 ## 9. Alternatives considered
 Including "do nothing". Why they lost.
 
-## 10. Exam-coverage mapping
-Which AI-103 / AI-500 rows this touches, if any. "None" is a fine answer.
-
 ## 11. Open questions
 Things that need a human decision or a check that couldn't be done yet. A finding that's real but
 out of this MIP's own scope (found while researching, not asked for) gets its own bullet prefixed
@@ -156,12 +152,12 @@ assumed from memory. Say so here rather than letting it read as verified by omis
 - **Effort**: size the *build*, not the design. S is a single-file, no-new-dependency change; M
   touches a few files or adds one small trait; L adds a module, a store, or a CI workflow; XL is
   several of those together or a new user-facing surface. Say what specifically drives the size.
-- **Gain**: pick every tag that genuinely applies from the fixed list (`user value`, `exam coverage
-  (name the AI-103/AI-500 row)`, `infra/dev-loop`, `cost/ops`); most MIPs carry two, not one.
+- **Gain**: pick every tag that genuinely applies from the fixed list (`user value`,
+  `infra/dev-loop`, `cost/ops`); most MIPs carry two, not one.
 - **Effort vs Gain**: the honest triage call given today's Effort and Gain, not a sales pitch: name
   the blocking MIP for `do when X lands`, the missing precondition for `park`.
 - **Depends on**: list other MIPs by number, and say explicitly whether `AGENTS.md`'s Phase 1 gate
-  (the Telegram bot) or its cost-and-deployment-safety gate (a paid Azure resource) blocks this one.
+  (the Telegram bot) or its cost-and-deployment-safety gate (a paid cloud resource) blocks this one.
 - **Blocked by**: the strict subset of `Depends on` that's a pure "must merge first" relationship:
   comma-separated numbers or `none`. When in doubt whether something belongs here, it doesn't:
   leave it in `Depends on`'s prose only.

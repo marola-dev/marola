@@ -1,9 +1,9 @@
-# marola — run it locally, no Telegram, no Azure
+# marola — run it locally, no Telegram, no cloud account
 
 A step-by-step guide to running marola's real pipeline end to end on your own machine: nearby
 beach discovery, live sea conditions, and an LLM-generated summary reviewed by a second LLM pass,
 with a small, fast Ollama model, so you can confirm the whole thing actually works before touching
-Telegram or Azure at all. Every command below is real and was run against a live Ollama install
+Telegram or any cloud. Every command below is real and was run against a live Ollama install
 while building this (see `ARCHITECTURE.md` §5's "Status" notes). The specific model recommended
 here is deliberately smaller/faster than the one used to build/verify the rest of this repo
 (`dolphin-mixtral:8x7b`, 26GB), chosen for this guide because it's cheap to download and quick to
@@ -77,7 +77,7 @@ mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --summarize"
 ...
 [info] running marola.Main -- --summarize
 marola :: best hour tomorrow to swim nearby (POC)
-config -> telegram=unset llm=Local(http://localhost:11434/v1 llama3.2) embed=llama3.2 knowledge=./knowledge -> ./data/knowledge-index.json lore=on ask=General>=0.0 origin=-27.6733,-48.4700 radius=15km water=Auto maps=unset sightings=Local(./data/sightings.jsonl) vision=Local(llava) appinsights=unset
+config -> telegram=unset llm=Local(http://localhost:11434/v1 llama3.2) embed=llama3.2 knowledge=./knowledge -> ./data/knowledge-index.json lore=on ask=General>=0.0 origin=-27.6733,-48.4700 radius=15km water=Auto sightings=Local(./data/sightings.jsonl) vision=Local(llava)
 origin -> lat=-27.6733, lon=-48.4700 (radius 15km, source: MAROLA_ORIGIN_LAT/MAROLA_ORIGIN_LON)
 water quality -> IMA/SC
  1. [ 55/100] Praia da Joaquina      (4.6km)  Sun 6 Sep, 10:00  |  water: PRÓPRIA (1/1 pts, 25 Aug)  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
@@ -117,7 +117,7 @@ the old one-line list; `--no-lore` drops the paragraph.
 
 If you see a `Draft summary:` line followed by a `Reviewer (score .../100, ...)` line, the full
 pipeline worked: beach discovery → conditions → scoring → summarization → review, all live, all
-local, zero Azure.
+local, zero cloud.
 
 Check the `origin ->` line too. With no `--lat/--lon` and no `MAROLA_ORIGIN_LAT/LON` set, marola
 geolocates your public IP (three providers, majority vote; see `ARCHITECTURE.md` §3.1) and says so,
@@ -442,6 +442,6 @@ starts both, neither depends on the other).
 ## 12. What this guide deliberately doesn't cover
 
 Telegram bot setup (there is no bot loop yet; see `TELEGRAM-SETUP.md` for credential setup ahead
-of that Phase 1 work) and any Azure integration (`ARCHITECTURE.md` §5/§6, all optional, none needed
-for anything above). This guide is specifically the "prove it works, cheaply, before touching
+of that Phase 1 work) and any cloud backend (`ARCHITECTURE.md` §6, all optional, none needed for
+anything above). This guide is specifically the "prove it works, cheaply, before touching
 anything else" path.

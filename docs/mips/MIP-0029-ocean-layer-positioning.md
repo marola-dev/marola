@@ -5,7 +5,7 @@
 | **Status** | Implemented — merged as PR #179 ("docs: implement MIP-0029 — marola as the ocean intelligence layer"), single-PR-sized per this MIP's own Effort row and the `mip-tasks` skill's "skip stacking for a single-PR change" rule |
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "rebrand marola to be the ocean layer intelligence, the best place to swim is just one of its own cases, consider this decision taking into consideration all planned mips"; refined the same day — "designed to be ocean intelligence layer, but acting like wave intelligence layer, but without being cocky … consider ALL MIP scopes") |
 | **Created** | 2026-09-06 |
-| **Number note** | 0029, not 0023 — 0020/0023/0024/0025 are already claimed by open drafts on remote branches (Instagram pipeline, waitlist-promotion, sea-model), and `docs/ROADMAP.md` §5 separately *proposes* 0023–0028 for unbuilt AI-500 work. Those two claims on 0023/0025 disagree and neither is this MIP's business to resolve — flagged here, revisited in §11 |
+| **Number note** | 0029, not 0023 — 0020/0023/0024/0025 are already claimed by open drafts on remote branches (Instagram pipeline, waitlist-promotion, sea-model), and `docs/ROADMAP.md` §5 separately *proposes* 0023–0028 for unbuilt multi-agent work. Those two claims on 0023/0025 disagree and neither is this MIP's business to resolve — flagged here, revisited in §11 |
 | **Phase** | 0 (docs and strings only; no pipeline, scoring, or infra change) — no earlier-phase prerequisite is missing |
 | **Related** | Every MIP in `docs/mips/README.md` (0001–0022, surveyed in §4); `docs/ROADMAP.md` §5/§7's proposed 0023–0028; `docs/FUTURE-WORK.md` §1 (multi-activity generalization — the structural argument this MIP is a naming consequence of); `.claude/skills/site-frontend/SKILL.md` (the ≤12-word, no-adjective copy rule this MIP's wording must obey); open drafts `docs/mip-0020-instagram-pipeline` (handle `@marola.swim`) and `docs/mip-0023-waitlist-promotion` (domain strategy §5.1) — both name identity choices this MIP's wording must stay consistent with, flagged in §8/§11 |
 | **Effort** | S — strings and docs only, no new module, no new dependency, no schema change. Touches ~9 files (§5) |
@@ -72,8 +72,8 @@ built against — not a ceiling on what the layer can be asked, and not a rename
 
 The maintainer's shorthand needs a fixed expansion or an explicit decision to stay internal.
 Proposed: **do not adopt "OIA" as a public name.** "Ocean Intelligence Agent" overstates what
-marola does today — no autonomous agent exists yet (`docs/AI-500-MAPPING.md`'s own gap: "one
-implicit two-agent pipeline… hardcoded"), and "Assistant" duplicates `AGENTS.md:8`'s existing
+marola does today — no autonomous agent exists yet (only one implicit,
+hardcoded two-agent pipeline), and "Assistant" duplicates `AGENTS.md:8`'s existing
 "Telegram assistant." Keep **"ocean intelligence layer"** as the prose phrase (matches the
 layer/pluggable-integration language `ARCHITECTURE.md` already uses for
 `LlmClient`/`VisionClient`/`SightingStore`); "OIA" stays an internal planning shorthand only,
@@ -178,7 +178,7 @@ the product's only stated use case.
 | 0022 safety answer footer | Lifeguard/193/SAMU grounding, activity-agnostic | all | No, §6 says this MIP doesn't touch safety text |
 | 0023 waitlist draft, wait-list/promotion/maintenance | Site copy ("soon, in the bot"), domain strategy | outreach | Wording: copy tracks §3.3; domain should read coastal, not swim-only, per §8 |
 | 0025 sea-model draft, marola-sea-1.0 fine-tune | Domain-tuned local model for the whole synthesis step (tool-calls, safety adherence) | all | No, "marola-sea" already reads layer-shaped |
-| ROADMAP §5's planned 0023–0028 (hazard/escalation agent, actor topology, Foundry+A2A, eval harness, managed identity, AI-103 RAG gap) | Multi-agent/AI-500 build-out: escalation agent on the same live series, addressable roles, shared state, governed identity | safety (activity-agnostic hazard), all (eval/identity underlie every use case) | No, architecture work; this frame makes "a third agent with a genuinely different responsibility" (`AI-500-MAPPING.md`) legible as a layer capability |
+| ROADMAP §5's planned 0023–0028 (hazard/escalation agent, actor topology, A2A, eval harness) | Multi-agent build-out: escalation agent on the same live series, addressable roles, shared state, governed identity | safety (activity-agnostic hazard), all (eval/identity underlie every use case) | No, architecture work; this frame makes "a third agent with a genuinely different responsibility" legible as a layer capability |
 | `FUTURE-WORK.md` §1, surf, dive, sail, whale-watch, fish | The naming consequence this MIP responds to: one `ActivityScoring` per activity, same data, same layer | surf, dive, sail, whale-watch, fishing | Not drafted; a second use case needs an `ActivityScoring` (§1.2), activity-aware `Recommender`/`BestHour`, per-activity card copy, a bot "what are you doing?" turn (`ROADMAP.md` K1); none built; this MIP only clears the naming precondition |
 
 ## 5. Design — what changes in code, and what doesn't
@@ -212,8 +212,8 @@ noting the frame is adopted, per that file's own maintenance instruction.
 - `scoring/Swimability.scala`'s thresholds or any ranking logic.
 - Safety text: the MIP-0022 footer (lifeguard/193/SAMU), the whale/jellyfish heuristic disclaimers
   in `docs/ARCHITECTURE.md` §8.
-- The local-first promise: "entirely locally with a free Ollama model, zero Azure account needed"
-  (`AGENTS.md:8`'s clause, unchanged) and every per-integration opt-in design in `ARCHITECTURE.md` §5.
+- The local-first promise: "entirely locally with a free Ollama model, no cloud account needed"
+  (`AGENTS.md`'s clause, unchanged) and every per-integration design in `ARCHITECTURE.md` §5.
 - The "no cookies, no tracking" line, verified live at `site/static/app.js:11` ("no analytics, no
   cookies") and `site/static/app.js:280` ("No cookies, no tracking…soon, in the Telegram bot"),
   stays verbatim; §3.3 only changes the *tagline* above it, not this footer sentence.
@@ -267,10 +267,6 @@ while writing this MIP:
   in §4 already assumes the layer framing works without a rename, so the only real cost of waiting
   is a second copy pass once MIP-0018/0020 have written more text against the swim-only wording.
 
-## 10. Exam-coverage mapping
-
-None. This is a product-positioning change; it does not touch any AI-103 or AI-500 domain row.
-
 ## 11. Open questions
 
 - **Does the Portuguese wording change?** "Marola" (a small wave) already carries the intended
@@ -292,7 +288,7 @@ None. This is a product-positioning change; it does not touch any AI-103 or AI-5
   `site/static/index.html:14`'s wave icon are unchanged, only `<title>` (browser tab) and the
   `<p class="tagline">` text change.
 - **Who resolves the 0023/0025 numbering collision noted in the metadata table?** Not this MIP's
-  job, but the collision (ROADMAP's proposed AI-500 numbers vs. the waitlist/sea-model drafts that
+  job, but the collision (ROADMAP's proposed multi-agent numbers vs. the waitlist/sea-model drafts that
   already claimed them) should be settled before either set of drafts merges, to avoid two MIPs
   sharing a number.
 

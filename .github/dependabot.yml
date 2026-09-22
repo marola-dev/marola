@@ -1,4 +1,4 @@
-# Scala/sbt dependencies (core/local/azure/cli) are watched by scala-steward.yml instead — see
+# Scala/sbt dependencies (core/local/cli) are watched by scala-steward.yml instead — see
 # CONTRIBUTING.md.
 #
 # One pull request for every dependency update, across all three ecosystems. Per-entry `groups`

@@ -5,28 +5,28 @@
 | **Status** | Draft |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (request of 2026-09-06, from a WhatsApp exchange: "is a RAG agent just an executor over retrieval?" → "marola needs its own head-to-head: GPT-raw vs marola-RAG vs marola-fine-tuned vs from-scratch; closed models (Claude Sonnet, 'Llama') vs open vs marola layer 1 / layer 2") |
 | **Created** | 2026-09-06 |
-| **Phase** | 0 (developer tooling; no swimmer-visible change). The local arms are Phase 0 today. A paid arm is not Azure and not gated on Phase 1, but it *is* gated on `AGENTS.md`'s cost rule (a human go-ahead per run, stated cost) — the same reading MIP-0025 §11 item 5 applies to RunPod. The Azure OpenAI arm additionally waits on Phase 2 (first Azure spend, `ARCHITECTURE.md` §11) |
-| **Related** | `cli/bench/OceanBenchmark.scala` + `BenchmarkLedger.scala` (the harness this generalises — one `LlmClient`, three fixed `Arms`), `scripts/benchmark_gate.py` + `.github/workflows/docker-local.yml` (the unattended gate that must stay free), `docs/benchmarks/2026-09-05.md`, MIP-0010 (the ledger the matrix writes to), MIP-0025 §7 (the tuned model's verification plan — a *row* of this matrix), MIP-0012 §5 (`Evaluate` — the summariser side, not this), `FUTURE-WORK.md` §4.1 (this is its benchmark half; the reviewer half and LLM-as-judge stay open) and §10 (Promptfoo), `ARCHITECTURE.md` §5a, `AI-103-MAPPING.md` rows "Select the right Azure AI service for a scenario", "Plan for … cost tiers", "Use Azure AI Foundry to explore/deploy models" |
+| **Phase** | 0 (developer tooling; no swimmer-visible change). The local arms are Phase 0 today. A paid arm is not gated on Phase 1, but it *is* gated on `AGENTS.md`'s cost rule (a human go-ahead per run, stated cost) — the same reading MIP-0025 §11 item 5 applies to RunPod |
+| **Related** | `cli/bench/OceanBenchmark.scala` + `BenchmarkLedger.scala` (the harness this generalises — one `LlmClient`, three fixed `Arms`), `scripts/benchmark_gate.py` + `.github/workflows/docker-local.yml` (the unattended gate that must stay free), `docs/benchmarks/2026-09-05.md`, MIP-0010 (the ledger the matrix writes to), MIP-0025 §7 (the tuned model's verification plan — a *row* of this matrix), MIP-0012 §5 (`Evaluate` — the summariser side, not this), `FUTURE-WORK.md` §4.1 (this is its benchmark half; the reviewer half and LLM-as-judge stay open) and §10 (Promptfoo), `ARCHITECTURE.md` §5a |
 | **Effort** | M — one small `LlmClient` implementation (OpenAI-compatible remote endpoint with a bearer key, ~30 lines beside `LocalLlmClient`), `OceanBenchmark` refactored from "three arms on one client" to "three arms × N models", three new report columns, a `just benchmark-matrix` recipe, an env-var paid gate; `benchmark_gate.py` and the kept-run format stay backward compatible by construction (§5.4). No new module, no new store |
-| **Gain** | infra/dev-loop (the question "is the local 3B + RAG good enough, or does a frontier model change the answer?" gets a number instead of an opinion; MIP-0025's own verification plan gets its comparison table for free); cost/ops (a per-arm cost and latency column is the evidence behind marola's local-first default); exam coverage (AI-103 §1 "Select the right Azure AI service for a scenario" and "Plan for resource requirements (cost tiers)" — a measured local-vs-hosted trade-off; AI-500 §3 "evaluate, optimize") |
+| **Gain** | infra/dev-loop (the question "is the local 3B + RAG good enough, or does a frontier model change the answer?" gets a number instead of an opinion; MIP-0025's own verification plan gets its comparison table for free); cost/ops (a per-arm cost and latency column is the evidence behind marola's local-first default) |
 | **Effort vs Gain** | `do next` for the free half (§5.1–§5.4: any Ollama model as a row, latency percentiles, token counts — no spend, reuses everything); `do when X lands` for the paid arm, where X = the maintainer's explicit go-ahead with a key in hand (§5.5) — cents per run (§4.6), but a spend nonetheless |
-| **Depends on** | MIP-0010 (Implemented — the ledger; the matrix adds params/metrics, changes nothing there). MIP-0025 is *not* a dependency: the matrix runs without a tuned model and gains a row when one exists. No Phase 1 gate. Paid arms: `AGENTS.md` cost rule (human go-ahead per run); the Azure OpenAI arm also needs a provisioned deployment, i.e. Phase 2 |
+| **Depends on** | MIP-0010 (Implemented — the ledger; the matrix adds params/metrics, changes nothing there). MIP-0025 is *not* a dependency: the matrix runs without a tuned model and gains a row when one exists. No Phase 1 gate. Paid arms: `AGENTS.md` cost rule (human go-ahead per run) |
 | **Risk** | The 22-question keyword-coverage metric is too small and too crude to rank frontier models against a 3B model honestly — `docs/benchmarks/2026-09-05.md` already measured ±0.1 run-to-run noise on the *same* model. A matrix that prints "Claude 0.91 vs llama3.2 0.84" invites reading noise as a verdict. §5.6 (repeats, ranges) and §8 mitigate; growing the question set (§11) is the real fix, and it is not this MIP's to do alone |
 | **Cost so far** | — |
 
 ## 1. Summary
 
-`just benchmark` today answers one question, "is marola's RAG better than the plain prompt?",
-for one model (`llama3.2`, local). This MIP turns it into a matrix: the same 22 questions and the
-same three prompting strategies (`baseline`, `rag-strict`, `rag-general`), run against a **list of
+`just benchmark` today answers one question, "is marola's RAG better than the plain prompt?", for
+one model (`llama3.2`, local). This MIP turns it into a matrix: the same 22 questions and the same
+three prompting strategies (`baseline`, `rag-strict`, `rag-general`), run against a **list of
 models**: local open models through Ollama (the free default, the only thing the unattended gate
 ever runs), a domain-tuned local model when MIP-0025 produces one, and, opt-in and human-confirmed
-per run, hosted closed models (Claude via Anthropic's OpenAI-compatible endpoint; GPT via OpenAI or
-an Azure OpenAI deployment), with **latency percentiles, token counts and estimated cost** as
-columns next to coverage. The output is the head-to-head the maintainer asked for, in marola's own
-terms: a "closed model, raw" arm is `(claude-sonnet-5, baseline)`; "marola-RAG" is `(llama3.2,
-rag-general)`; "marola-tuned" is `(marola-sea-1.0, rag-general)` and `(marola-sea-1.0, baseline)`
-side by side; "from scratch" stays an explicit non-arm (§9).
+per run, hosted closed models (Claude via Anthropic's OpenAI-compatible endpoint; GPT via OpenAI),
+with **latency percentiles, token counts and estimated cost** as columns next to coverage. The
+output is the head-to-head the maintainer asked for, in marola's own terms: a "closed model, raw"
+arm is `(claude-sonnet-5, baseline)`; "marola-RAG" is `(llama3.2, rag-general)`; "marola-tuned" is
+`(marola-sea-1.0, rag-general)` and `(marola-sea-1.0, baseline)` side by side; "from scratch" stays
+an explicit non-arm (§9).
 
 ## 2. Motivation
 
@@ -46,7 +46,7 @@ side by side; "from scratch" stays an explicit non-arm (§9).
   keeps coverage is exactly the tuned-vs-RAG row pair. Today only `mean ms` exists; p95 and tokens
   do not.
 - **The local-first default deserves a number, and so does the debate.** `ARCHITECTURE.md` §5a
-  argues local Ollama vs. Foundry in prose; "RAG is just an executor over retrieval" and
+  argues for local Ollama in prose; "RAG is just an executor over retrieval" and
   "fine-tuning moves knowledge from context into weights" are both claims about *where the domain
   layer lives*. One table settles both, with the caveat that the axis is a continuum (prompt →
   few-shot → RAG → adapter → full SFT → pretraining) and the matrix samples four points on it.
@@ -102,20 +102,8 @@ estimate rather than a wrong fact.
   `seed` is ignored (repeatability comes from repeats, §5.6, not seeds); system messages are hoisted
   and concatenated (marola sends one system message per call, no effect); `temperature` capped at
   1. **Not checked:** rate limits at a fresh account's tier for ~90 calls in a row.
-- **Auth is an API key** (`ANTHROPIC_API_KEY`), not a managed identity: `AGENTS.md`'s no-hardcoded-
-  keys rule applies (env var, `.env.example` placeholder, masked by ai-jail); the managed-identity
-  preference in `.claude/rules/azure.md` is Azure-specific and has no equivalent here.
-
-### 4.2 Claude in Microsoft Foundry — verified, and *not* the path for v1
-
-Claude Sonnet 5 / Opus 5 / Haiku 4.5 are deployable in Foundry (Learn, `ms.date` 2026-09-01,
-fetched 2026-09-06), billed in Claude Consumption Units at Anthropic's list prices. But the API is
-the **Anthropic Messages API** (`…services.ai.azure.com/anthropic/v1/messages`, Entra scope
-`https://ai.azure.com/.default`), **not** the chat-completions shape `AzureFoundryLlmClient`
-speaks, and a different token scope from its `cognitiveservices.azure.com/.default`. So "a closed
-arm just reuses the Foundry backend" is wrong for Claude: it needs a second codec, plus a
-pay-as-you-go subscription with a card (free-trial and credit-only excluded) and a Marketplace
-subscription. Deferred to §11; v1 reaches Claude through §4.1.
+- **Auth is an API key** (`ANTHROPIC_API_KEY`): `AGENTS.md`'s no-hardcoded-keys rule applies (env
+  var, `.env.example` placeholder, masked by ai-jail).
 
 ### 4.3 OpenAI (GPT) — first-party API
 
@@ -126,15 +114,6 @@ returned HTTP 403 to a plain fetch): `gpt-5-mini` **$0.25 / $2.00**, `gpt-5-nano
 key, the same shape as §4.1, so one client (§5.2) serves both. **Not checked:** OpenAI's terms on
 publishing benchmark comparisons; a search result claims `gpt-5-mini` is scheduled for shutdown on
 2026-12-11 (third-party page, not confirmed on OpenAI's site); pin whichever model runs, print it.
-
-### 4.4 Azure OpenAI — the existing backend, unchanged
-
-`AzureFoundryLlmClient` already speaks Azure OpenAI's chat-completions shape with
-`DefaultAzureCredential` ("unverified against a live deployment", `ARCHITECTURE.md` §5a). A GPT
-deployment is a valid row (`azure:<deployment>`) and would be that client's **first live use**. The
-Azure pricing page (fetched 2026-09-06) rendered every GPT price as "$-" and says GPT-6 prices are
-"in processing"; the claim that Global Standard tracks OpenAI's list rates is third-party, not
-confirmed. Provisioning is Phase 2 and paid: a human go-ahead. Not a v1 arm.
 
 ### 4.5 Open local models — Ollama, free
 
@@ -161,8 +140,7 @@ $0.03, `gpt-5.4` ≈ $0.28, **cents per run**. The risk is not one run; it is a 
 × five models × a growing question set) or a CI job that nobody meant to make paid. Hence §5.5.
 
 **Pick:** v1 = local Ollama rows (default, free, gated) + one OpenAI-compatible remote client for
-Anthropic and OpenAI (opt-in, key from env, human go-ahead per run). Azure OpenAI as a row when
-Phase 2 provisions a deployment; Claude-on-Foundry deferred (§4.2).
+Anthropic and OpenAI (opt-in, key from env, human go-ahead per run).
 
 ## 5. Design
 
@@ -170,7 +148,7 @@ Phase 2 provisions a deployment; Claude-on-Foundry deferred (§4.2).
 
 ```scala
 // cli/src/main/scala/marola/bench/OceanBenchmark.scala
-enum Provider derives CanEqual { case Local, OpenAiCompat, Azure }             // §5.2 picks the client
+enum Provider derives CanEqual { case Local, OpenAiCompat }                    // §5.2 picks the client
 final case class ModelSpec(provider: Provider, model: String, paid: Boolean)   // "local:llama3.2"
 final case class Arm(model: ModelSpec, strategy: String)                       // strategy ∈ Arms (unchanged)
 // Result gains tokensIn/tokensOut: Option[Int]; ArmSummary gains p50Ms, p95Ms, tokensIn, tokensOut,
@@ -196,11 +174,10 @@ final class OpenAiCompatLlmClient(baseUrl: String, model: String, apiKey: String
 
 Prefixes in `MAROLA_BENCH_MODELS`: `local:<model>` → `LocalLlmClient`; `anthropic:<model>` →
 `OpenAiCompatLlmClient("https://api.anthropic.com/v1", m, ANTHROPIC_API_KEY)`; `openai:<model>` →
-the same against `https://api.openai.com/v1` with `OPENAI_API_KEY`; `azure:<deployment>` → the
-existing `AzureFoundryLlmClient` (Phase 2). `AppConfig.benchModels` parses the list; an unknown
-prefix or a missing key is an `enum` error printed per row, never an exception. Token counts need
-the `usage` object `complete` discards, so both clients gain `completeWithUsage: Completion < Sync`
-(the field `TracedLlmClient` already reads for spans, MIP-0010 task 6).
+the same against `https://api.openai.com/v1` with `OPENAI_API_KEY`. `AppConfig.benchModels` parses
+the list; an unknown prefix or a missing key is an `enum` error printed per row, never an exception.
+Token counts need the `usage` object `complete` discards, so both clients gain `completeWithUsage:
+Completion < Sync` (the field `TracedLlmClient` already reads for spans, MIP-0010 task 6).
 
 ### 5.3 Cost and latency columns
 
@@ -225,15 +202,15 @@ wall-clock and hardware line (`nproc`, model tag) so "free" is not read as "fast
   `Arm`, 250-char key cap respected). Cost so far of paid arms becomes a metric, so the ledger is
   also the spend log.
 
-### 5.5 The paid gate — three layers, same shape as `guard-azure.sh`
+### 5.5 The paid gate — three layers
 
 1. **The CLI refuses by default.** A row with `paid = true` runs only when
    `MAROLA_ALLOW_PAID_LLM=1` *and* its key env var are set; otherwise it prints the row as
    `skipped (paid, not confirmed)` with the §4.6 estimate, and the run continues with the free rows.
-2. **A hook.** `.claude/hooks/guard-paid-llm.sh` (`PreToolUse` on `Bash`, beside `guard-azure.sh`):
+2. **A hook.** `.claude/hooks/guard-paid-llm.sh` (`PreToolUse` on `Bash`):
    exit 2 on any command text that sets `MAROLA_ALLOW_PAID_LLM=1` or names a paid prefix in
    `MAROLA_BENCH_MODELS`, unless the human exported the variable in *their* shell (the hook checks
-   the inherited environment). `--self-test` in `just quality`, like `guard-azure.sh`.
+   the inherited environment). `--self-test` in `just quality`.
 3. **Never unattended.** No workflow sets the variable; paid prefixes are grep-asserted absent from
    `.github/workflows/*.yml`; a scheduled paid run is out of scope (it would need a GitHub
    Environment approval, MIP-0020's pattern).
@@ -282,7 +259,7 @@ location is not part of this benchmark and is not sent to any third-party API by
   cheapest Claude row, ≈ $0.10): confirm the endpoint, the `usage` field and the measured-vs-
   estimated dollars; keep that run under `docs/benchmarks/` with the spend in its header.
 - **Done:** `docs/benchmarks/` holds one matrix run with ≥ 2 local models and repeats = 3; the gate
-  is green and still free; `ARCHITECTURE.md` §5a's local-vs-Foundry paragraph cites a row of it.
+  is green and still free; `ARCHITECTURE.md` §5a cites a row of it.
 
 ## 8. Risks, limitations, and honest caveats
 
@@ -321,15 +298,6 @@ location is not part of this benchmark and is not sent to any third-party API by
 - **Do nothing.** MIP-0025 would compare three Markdown files by hand and the local-vs-hosted
   argument would stay prose. Loses because the free half is a `do next`-sized change.
 
-## 10. Exam-coverage mapping
-
-AI-103 §1 "Select the right Azure AI service for a scenario" and "Plan for a solution's resource
-requirements (compute, cost tiers)": a measured per-arm cost/latency/coverage table is the
-evidence those rows currently argue in prose (mark "proposed: MIP-0032"). "Use Azure AI Foundry to
-explore/deploy models": the `azure:` row would be `AzureFoundryLlmClient`'s first live run (Phase
-2, not v1). AI-500 §3 "Evaluate, optimize, and monitor": the model axis on the eval harness
-`FUTURE-WORK.md` §4.1 asks for; the reviewer half of §4.1 stays open.
-
 ## 11. Open questions
 
 1. **"marola layer 1 / layer 2" — which layers?** Three readings fit the maintainer's words and
@@ -344,13 +312,11 @@ explore/deploy models": the `azure:` row would be `AzureFoundryLlmClient`'s firs
 3. Not checked: whether Ollama's non-streaming reply carries `usage` without
    `stream_options.include_usage`; Anthropic rate limits at the account's tier for ~60 sequential
    calls; OpenAI's terms on publishing comparisons.
-4. Claude via Foundry (§4.2): worth a Messages-API codec once Phase 2 provisions a project, or is
-   the first-party endpoint enough for a benchmark forever?
 5. Growing the question set past 22 (and past keyword coverage): who writes the next 50, and from
    where (MIP-0002's real user questions, per `docs/benchmarks/2026-09-05.md` item 4)?
-6. Housekeeping: should the hook (§5.5) be a second pattern in `guard-azure.sh` rather than a new
-   file? `.env.example` is an empty file today (0 bytes); the `ANTHROPIC_API_KEY`/`OPENAI_API_KEY`
-   placeholders would be its first content; confirm that is the intended home.
+6. Housekeeping: `.env.example` is an empty file today (0 bytes). The
+   `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` placeholders would be its first content. Confirm that is
+   the intended home.
 
 ## Appendix
 
@@ -358,21 +324,14 @@ Fetched 2026-09-06 (all via WebFetch/WebSearch, none assumed):
 
 - `https://platform.claude.com/docs/en/about-claude/pricing` — model table (Sonnet 5 $2/$10,
   Haiku 4.5 $1/$5, Opus 5 $5/$25), the Sonnet 5 "introductory price is now standard" note, the
-  Claude 4.7+ "~30% more tokens" note, Batch 50%, Foundry billed in CCUs at list price.
+  Claude 4.7+ "~30% more tokens" note, Batch 50%.
 - `https://platform.claude.com/docs/en/api/openai-sdk` (redirect from `docs.anthropic.com`) —
   base URL `https://api.anthropic.com/v1/`, "intended to test and compare model capabilities",
   `Authorization` supported, `usage.prompt_tokens`/`completion_tokens` supported, `seed` ignored,
   `n` = 1, system messages hoisted.
-- `https://learn.microsoft.com/en-us/azure/foundry/foundry-models/how-to/use-foundry-models-claude`
-  and `.../concepts/claude-models` (both `ms.date` 2026-09-01) — Messages API only
-  (`/anthropic/v1/messages`, `anthropic-version: 2023-06-01`), Entra scope `https://ai.azure.com/.default`,
-  paid pay-as-you-go subscription required, Sonnet 5 / Opus 5 / Haiku 4.5 GA on both hostings,
-  pay-go rate limits 40–80 RPM.
 - `https://developers.openai.com/api/docs/pricing` — `gpt-5-mini` $0.25/$2, `gpt-5-nano`
   $0.05/$0.40, `gpt-5` $1.25/$10, `gpt-5.4` $2.50/$15, Batch 50%. `https://openai.com/api/pricing/`
   → HTTP 403.
-- `https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/` — GPT
-  price cells rendered "$-" to a plain fetch; "GPT-6 prices are currently in processing".
 - `https://ollama.com/library/llama3.2` — tags `1b`, `3b` (default, 2.0 GB, 128K context), no
   licence stated on the page. `https://ollama.com/library/qwen3` — 0.6b–235b, `8b` = 5.2 GB.
 - `https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/LICENSE` — Llama 3.2
@@ -383,5 +342,4 @@ Fetched 2026-09-06 (all via WebFetch/WebSearch, none assumed):
   `Main.scala:251` (local-only guard), `benchmark_gate.py` (first table, `rag-general` vs `baseline`),
   `docker-local.yml` (20–40 min on 4 vCPUs, `main`-only triggers), `OceanQa.scala` (k = 4,
   sentinel, two-stage general fallback), `Corpus.MaxChunkChars = 700`, `Http.postJson(headers)`,
-  `AzureFoundryLlmClient` (chat-completions shape, `cognitiveservices.azure.com/.default`),
   `benchmark_questions.json` (22 questions, 10 in-corpus), `knowledge/` (6 documents, ~15 KB).

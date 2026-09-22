@@ -6,11 +6,11 @@
 | **Author** | Claude Fable 5.1, for M. Hoffmann |
 | **Created** | 2026-09-05 |
 | **Phase** | 1 (digest, subscriptions, pt-BR content) → 2 (other states' water data), after MIP-0002/0003 |
-| **Related** | `FUTURE-WORK.md` §1.5 (multi-activity subscriptions), §9.2 (proactive alerts — deliberately *not* this), MIP-0001 §4.3 (other agencies), `AI-500-MAPPING.md` §4 (human gate on proactive behaviour) |
+| **Related** | `FUTURE-WORK.md` §1.5 (multi-activity subscriptions), §9.2 (proactive alerts — deliberately *not* this), MIP-0001 §4.3 (other agencies) |
 | **Effort** | L — first persistent user-data store, a scheduler, i18n content, two unverified regional water providers |
-| **Gain** | user value (a push habit loop); exam coverage (AI-103 "Responsible AI" consent/deletion, AI-500 §4) |
+| **Gain** | user value (a push habit loop) |
 | **Effort vs Gain** | do when X lands — needs MIP-0002/MIP-0003 shipped first; RJ/SP providers add unverified effort |
-| **Depends on** | MIP-0002, MIP-0003; Phase 1 gated (the bot must exist to subscribe to); no Azure resource (INEA/CETESB are public agencies) |
+| **Depends on** | MIP-0002, MIP-0003; Phase 1 gated (the bot must exist to subscribe to); no cloud resource (INEA/CETESB are public agencies) |
 | **Risk** | INEA/CETESB feeds may not be machine-readable at all, deflating the "reach" half of the pitch |
 | **Cost so far** | — (nothing merged beyond the design doc, same untracked commit as MIP-0002/0003) |
 
@@ -56,8 +56,8 @@ Water quality shows for Rio and São Paulo beaches with the agency named (INEA /
   session**: no endpoint, format or coordinates confirmed (INEA is known to publish PDF bulletins;
   CETESB has a web portal). Per the `mip` skill rule these are *open questions*, not design inputs:
   each becomes a `WaterQualityClient` only after the same probing MIP-0001 §4.1 did for IMA.
-- **Preference storage**: `LocalFileUserPreferencesStore` (JSON-lines, like sightings) as the
-  default; `CosmosDbUserPreferencesStore` opt-in — `FUTURE-WORK.md` §1.5's exact shape. Stores
+- **Preference storage**: `LocalFileUserPreferencesStore` (JSON-lines, like sightings),
+  `FUTURE-WORK.md` §1.5's exact shape. Stores
   chat id, beach name, hour, language, activity. That is the first user data marola keeps; it needs
   a `/apagar` (delete everything) command from day one.
 
@@ -76,8 +76,8 @@ Water quality shows for Rio and São Paulo beaches with the agency named (INEA /
 - **Regional water providers**: `WaterProvider` gains `IneaRj`, `CetesbSp`; `Auto` picks by
   bounding box as it does for SC. Same matcher, same scoring, agency named in the column.
 - **Explicitly not in this MIP**: proactive *hazard* alerts (`FUTURE-WORK.md` §9.2). A digest the
-  user scheduled is consent; an unrequested "dangerous seas" push is the AI-500 §4 governance case
-  and gets its own MIP with a human gate.
+  user scheduled is consent; an unrequested "dangerous seas" push is a governance case and gets its
+  own MIP with a human gate.
 
 ## 6. Scoring / safety impact
 
@@ -108,12 +108,6 @@ and the store path documented in `TELEGRAM-SETUP.md`.
 - **Push for everyone who ever shared a location**: no consent, no. Subscription only.
 - **Instagram/WhatsApp status cards**: later; the forwardable text card gets 80% of the value.
 - **Only SC forever**: simpler, and caps the audience at one state.
-
-## 10. Exam-coverage mapping
-
-AI-103 §1 "responsible AI": consent-based push, data minimisation, user deletion. AI-500 §4:
-the explicit boundary between a scheduled digest (fine) and an autonomous alert (gated) is the
-governance decision the mapping asks for.
 
 ## 11. Open questions
 

@@ -67,7 +67,7 @@ a human.** Say this to the room, don't just build it quietly.
    to it and set its status to something like "Needs implementation": `gh project item-add`,
    `gh project item-edit`. **Never call `gh pr merge` or mark the PR ready-for-review on the
    user's behalf**: `disallowed-tools` above blocks the merge call at the tool level, not just
-   by instruction, matching the same deny-rule pattern as the Azure cost gate in MIP-0011.
+   by instruction, matching the project-level `gh pr merge` deny rule from MIP-0011.
 
 6. **Narrate the stop.** End by stating plainly what exists (a Draft PR with scaffolded
    structure) and what doesn't (working logic, tests, review). The whole point of the demo is

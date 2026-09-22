@@ -6,7 +6,7 @@
 | **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: survey `ai-job-search`'s agentic tooling and this week's trending agent repos for ideas marola could use) |
 | **Created** | 2026-09-06 |
 | **Phase** | 0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite |
-| **Related** | `MIP-0011` (Claude Code best practices — this MIP extends the same axis, dev-tooling skills/hooks, not marola's product), `docs/AGENT-SKILLS.md` §3 (skill candidates already on record), `docs/DEV-FLOW.md` §5 (the reviewer subagent pattern §1 below tightens), `.claude/skills/mip-solve-perpetual/SKILL.md` (the checkpointing contract §2 below extends), `AI-500-MAPPING.md` §4 (governance/audit-trail gap — analogous pattern, but for the dev-tooling agent working on this repo, not marola's own product agents) |
+| **Related** | `MIP-0011` (Claude Code best practices — this MIP extends the same axis, dev-tooling skills/hooks, not marola's product), `docs/AGENT-SKILLS.md` §3 (skill candidates already on record), `docs/DEV-FLOW.md` §5 (the reviewer subagent pattern §1 below tightens), `.claude/skills/mip-solve-perpetual/SKILL.md` (the checkpointing contract §2 below extends) |
 | **Effort** | S — each accepted idea below is a single skill/doc/script change, no new runtime dependency, no new module |
 | **Gain** | infra/dev-loop (cheaper, more auditable agent sessions on this repo) |
 | **Effort vs Gain** | cheap win for §5.1/§5.2 (build next); §5.3 is a nice-to-have housekeeping item with no urgency — do whenever MIP-0011 task 8 is picked up |
@@ -178,15 +178,6 @@ change to `Swimability`, ranking, or any user-facing safety text.
   now: marola's `SKILL.md` files are each already short enough (under ~150 lines) that splitting
   them would add navigation overhead without a real length problem to solve. Worth revisiting only
   if a future skill grows past that.
-
-## 10. Exam-coverage mapping
-
-None directly — this is Claude Code dev-tooling, not marola's product agent architecture, so it
-doesn't map to an AI-103 or AI-500 domain row the way MIP-0011 or the AI-500-MAPPING.md items do.
-§5.1's run-tracker idea is a loose structural echo of `AI-500-MAPPING.md` §4's "governance
-documentation for multi-agent audit trails" gap, but that gap is about marola's own future
-product agents (summarizer/reviewer/escalation), not the Claude Code agent developing marola —
-noted as a parallel, not claimed as coverage.
 
 ## 11. Open questions
 

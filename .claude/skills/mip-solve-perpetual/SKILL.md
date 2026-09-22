@@ -62,7 +62,7 @@ expect it to run. Stage everything so the typed command works first try instead.
 - Every commit gets `Tested:`/`Cost:` trailers per `AGENTS.md`, plus the Co-Authored-By line.
 - Push and open the PR with `just pr`. **Never** run `gh pr merge` or `gh pr close`, under any
   circumstances, even if a PR looks trivially safe: merging is the human's to do, on waking up.
-- Never run `azd up`/`provision` or `az deployment`. The cost/deployment safety gate stays
+- Never provision or deploy a paid cloud resource. The cost/deployment safety gate stays
   absolute, no exception for being unattended.
 - **If `gh` isn't authenticated, do not stop the loop and do not skip the PR step. Degrade and
   keep going.** Check once per task with `gh auth status`, then:

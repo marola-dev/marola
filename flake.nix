@@ -1,5 +1,5 @@
 {
-  description = "marola dev shell — Scala 3.9 / Kyo / Azure tooling, plus Python for the offline DSPy compile step; works on plain Ubuntu (not NixOS-specific)";
+  description = "marola dev shell — Scala 3.9 / Kyo tooling, plus Python for the offline DSPy compile step; works on plain Ubuntu (not NixOS-specific)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -46,10 +46,9 @@
           # `uvx` runs GitHub's spec-kit ephemerally (`just specify`); spec-kit is PyPI-only.
           pkgs.uv
 
-          # The default local LLM/vision backend — what lets marola run with zero Azure account.
+          # The local LLM/vision backend.
           # `ollama serve` is started separately (docs/RUN-LOCALLY.md); this only puts it on PATH.
           pkgs.ollama
-          pkgs.azure-cli
 
           # `just context-mips`: repomix packs docs for a browser session, wl-copy/xclip copy them.
           pkgs.repomix
@@ -83,9 +82,6 @@
 
           JAVA_HOME = "${jdk}";
           inherit (agentic.lib.${system}.env) BWRAP_BIN;
-
-          # `azd` is deliberately absent — its nixpkgs packaging status changes. If a deploy needs
-          # it: curl -fsSL https://aka.ms/install-azd.sh | bash
 
           shellHook = ''
             echo "marola dev shell"

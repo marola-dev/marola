@@ -15,7 +15,7 @@ which today only resolves via a PR's MIP number and falls back to `area/unscoped
 
 Method: TF-IDF vectorizes a real PR's title + body + commit subjects against a small per-label
 corpus (grep-generated below, so it's marola vocabulary, not generic English — the actual jargon
-this repo's own PRs use: PRÓPRIA/IMPRÓPRIA, Overpass, Kyo, DSPy, MLflow, Foundry, Cosmos DB,
+this repo's own PRs use: PRÓPRIA/IMPRÓPRIA, Overpass, Kyo, DSPy, MLflow,
 MCP, and so on) and reports the cosine-nearest label(s). It is used by
 scripts/backfill-pr-labels.sh's `--nlp` flag strictly as a side-by-side comparison against the
 deterministic result — never applied to a real PR unless `--nlp-apply-unscoped` is also passed,

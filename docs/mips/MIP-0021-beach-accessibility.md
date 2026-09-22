@@ -5,10 +5,10 @@
 | **Status** | Implemented — merged to main via PR #202 (`c775ebb`); the `mip-0021/1-beach-accessibility` branch is now stale/superseded by that squash-merge |
 | **Author** | Claude Fable 5.1, for M. Hoffmann (candidate K4 of the 2026-09-06 external consolidation, `docs/ROADMAP.md` §7) |
 | **Created** | 2026-09-06 |
-| **Phase** | 0 (CLI notes) → 1 (bot reply, map card); no Azure, no earlier-phase prerequisite for the CLI half |
+| **Phase** | 0 (CLI notes) → 1 (bot reply, map card); no cloud, no earlier-phase prerequisite for the CLI half |
 | **Related** | `BeachFinder` (the Overpass path this reuses), MIP-0005 (map card), MIP-0002 (bot reply), `docs/ARCHITECTURE.md` §5 (pluggable-integration pattern), `docs/ROADMAP.md` §7 provider-query checklist (first box, answered in §4). **See also [MIP-0046](./MIP-0046-remove-ai-slop-ui.md)** (Draft) — the map's facilities line (`FACILITY_LABEL` in `site/static/app.js`, where this MIP's counts reached the map in PR #233) loses its 🅿️🚻🚿🛟 for SVG pictograms; the "no data, never none" rule this MIP set is untouched |
 | **Effort** | S — one new trait + Overpass client in `core/beaches`, one extra query per run, a fixture and a spec; no new dependency, no LLM |
-| **Gain** | user value (where can I park / is there a lifeguard post — safety-relevant facts today's reply lacks); exam coverage (AI-103 §1 responsible-AI transparency: deterministic labels, "no data" stated as such) |
+| **Gain** | user value (where can I park / is there a lifeguard post — safety-relevant facts today's reply lacks) |
 | **Effort vs Gain** | cheap win — buildable today with no new provider; the only risk is the sparse data, which the design treats as a fact to show, not a gap to paper over |
 | **Depends on** | nothing blocking; the bot/map surfaces land with MIP-0002/MIP-0005's card, the CLI notes need neither |
 | **Risk** | OSM coverage is thin (§4: 4 showers, 5 lifeguard posts, 8 toilets near 40 beaches) — a feature that says "no lifeguard" when it means "no one mapped one" would be worse than nothing; hence the absence rule in §5 |
@@ -102,7 +102,7 @@ coverage outside the Florianópolis 20 km circle (Bahia/Rio areas from `site/are
   object (`{"parking": 3, "toilets": 1, "lifeguard": 1}`; absent keys = no data; schema stays 1,
   `additionalProperties` handled the way MIP-0009 task 1 does it).
 - `AppConfig`: `MAROLA_FACILITIES=off|overpass` (default `overpass`), so a run can skip the
-  extra query; no Azure backend, there is no Azure source for this data.
+  extra query; no cloud backend, there is no cloud source for this data.
 
 **What goes through the LLM: nothing.** Counts and fixed labels only; the summary prompt is not
 told about facilities in v1 (a later MIP may let the reviewer pass mention "lifeguard post: yes").
@@ -162,11 +162,6 @@ absence rule ("no data", never "none") is the safety property; the spec pins it.
   by the `mip` skill's own rule. Rejected.
 - **Do nothing.** The reply keeps answering "when" and not "how do I get there and is anyone
   watching". Not chosen; the cost is one small module.
-
-## 10. Exam-coverage mapping
-
-`AI-103-MAPPING.md` §1 "Responsible AI: transparency": deterministic labels with explicit
-"no data" states, the same argument MIP-0009 makes for the map aspects. No AI-500 row.
 
 ## 11. Open questions
 

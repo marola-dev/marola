@@ -1,6 +1,6 @@
 name: scala-steward (dependency update PRs)
 
-# Scans build.sbt/project/** for newer releases of every dependency (core/local/azure/cli — dspy/
+# Scans build.sbt/project/** for newer releases of every dependency (core/local/cli — dspy/
 # is Python-only, out of scope) and opens one PR per update it finds.
 
 on:

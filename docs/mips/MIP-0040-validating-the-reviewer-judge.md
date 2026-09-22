@@ -6,9 +6,9 @@
 | **Author** | Claude Opus 5, for M. Hoffmann (deep review of every MIP + a live LLMOps/competitor research pass, 2026-09-07) |
 | **Created** | 2026-09-07 |
 | **Phase** | 0 — developer tooling plus one runtime one-liner; nothing a swimmer sees changes except that the printed reviewer score stops moving. No earlier-phase prerequisite is missing |
-| **Related** | `core/llm/Reviewer.scala` (the judge this measures); `ARCHITECTURE.md` §5a (its status notes, including the reviewer "fixated on whale visibility instead of the more important jellyfish risk"); `FUTURE-WORK.md` §4.1 (**"Consider upgrading the metric itself to an LLM-as-judge"** — this MIP answers that proposal with evidence, and qualifies it) and §4.2 ("the layer now exists" ≠ "the layer is rigorously evaluated" — this MIP is the second half); MIP-0010 (Implemented — the ledger these runs are logged to); MIP-0032 (the model × strategy matrix — §5.7 there keeps LLM-as-judge explicitly out of scope; this MIP is what would have to land before it could come in); MIP-0039 (the deterministic fact guard — the *other* half of "is this sentence any good", and the reason this MIP does not need the judge to check facts); `ROADMAP.md` §5's still-unwritten multi-agent eval harness (**this MIP is not that harness** — §9); `AI-500-MAPPING.md` §3 |
+| **Related** | `core/llm/Reviewer.scala` (the judge this measures); `ARCHITECTURE.md` §5a (its status notes, including the reviewer "fixated on whale visibility instead of the more important jellyfish risk"); `FUTURE-WORK.md` §4.1 (**"Consider upgrading the metric itself to an LLM-as-judge"** — this MIP answers that proposal with evidence, and qualifies it) and §4.2 ("the layer now exists" ≠ "the layer is rigorously evaluated" — this MIP is the second half); MIP-0010 (Implemented — the ledger these runs are logged to); MIP-0032 (the model × strategy matrix — §5.7 there keeps LLM-as-judge explicitly out of scope; this MIP is what would have to land before it could come in); MIP-0039 (the deterministic fact guard — the *other* half of "is this sentence any good", and the reason this MIP does not need the judge to check facts); `ROADMAP.md` §5's still-unwritten multi-agent eval harness (**this MIP is not that harness** — §9) |
 | **Effort** | M — a hand-labelled set of ~100 reviews (real human hours, the honest bulk of it), one pure agreement/kappa module in `cli/bench`, a jury runner beside `OceanBenchmark`, and one `temperature` field threaded through `LlmClient`. No new dependency, no new module |
-| **Gain** | `infra/dev-loop` (a shipped component is either doing something or it is not, and today nobody can say which); `exam coverage (AI-500 §3 "Evaluate, optimize, and monitor")` (the first measurement of marola's own evaluator, rather than another thing to evaluate) |
+| **Gain** | `infra/dev-loop` (a shipped component is either doing something or it is not, and today nobody can say which) |
 | **Effort vs Gain** | `do next` for §5.1 (the temperature fix and the measurement harness — a day, and §2's spread is already measured); `do when X lands` for §5.3's jury, where X = the labelled set existing and kappa saying the single judge is not good enough |
 | **Depends on** | Nothing blocking. MIP-0010 is Implemented and the runs log to it unchanged. No Phase 1 gate, no paid resource, no API key — every judge in §5.3 is a local Ollama model. Coordinates with MIP-0032 (which would gain a judge column only *after* this) and with MIP-0039 (complementary, neither blocks the other) |
 | **Blocked by** | none |
@@ -40,7 +40,7 @@ twelve times each:
 | **As marola sends it today** (no `temperature` in the body) | 25, 30, 30, 40, 40, 40, 40, 50, 60, 60, 70, 80 | **7** | 12/12 |
 | Same, with `"temperature": 0` | 30 ×12 | **1** | 12/12 |
 
-`grep -rn "tools\|temperature" core/…/llm local/…/llm azure/…/llm` returns nothing:
+`grep -rn "tools\|temperature" core/…/llm local/…/llm` returns nothing:
 `LocalLlmClient.complete` posts `model` + `messages` and no decoding options
 (`LocalLlmClient.scala:18-28`), so the top row *is* the production configuration. The number marola
 prints to a user is, on this evidence, dominated by sampling noise, and `Main.reviewAndPrint`
@@ -176,7 +176,7 @@ ledger. No dependency, no service, no key.
 ### 5.1 Pin the judge's decoding — one line, `do next`, independent of everything else
 
 `LlmClient.complete` gains an optional `temperature: Option[Double] = None`, threaded into the
-request body by `LocalLlmClient`, `AzureFoundryLlmClient` and `TracedLlmClient` alike.
+request body by `LocalLlmClient` and `TracedLlmClient` alike.
 `Reviewer.review` passes `Some(0.0)`. The *summariser* keeps its current sampling: a summary is
 prose and some variety is fine; a **grade must be a function of its input**.
 
@@ -333,16 +333,6 @@ the conservative direction.
   means that harness, whenever it is written, inherits a validated instrument instead of assuming
   one, and this MIP deliberately does **not** claim that item's number or scope.
 
-## 10. Exam-coverage mapping
-
-`AI-500-MAPPING.md` §3 "Evaluate, optimize, and monitor" — its own stated gap is that `Reviewer`
-"is not yet framed as a formal eval harness". This MIP does not turn the reviewer into a harness; it
-does the step that mapping does not name and that has to come first — **measuring whether the
-evaluator evaluates**. Mark "proposed: MIP-0040". `AI-103-MAPPING.md` §1 "Responsible AI" —
-a user-visible model-generated score that is reproducible and whose agreement with a human is
-published is a transparency artefact; MIP-0039 is the stronger claim on that row and this is the
-honest companion.
-
 ## 11. Open questions
 
 1. **The kappa threshold must be set before the number is seen.** Proposal: 0.40. Choosing it
@@ -386,7 +376,7 @@ All fetched or executed by the author on **2026-09-07**.
   all twelve (1 distinct); verdict `revise` 12/12.
 - **`ollama /api/tags`** → `marola-sea-tiny`, `smollm2:360m`, `nomic-embed-text`,
   `marola-llama3.2`, `llama3.2`, `llama3.2:1b`, `dolphin-mixtral:8x7b`.
-- **Repo grep, not assumed**: `grep -rn "tools" core/…/llm local/…/llm azure/…/llm` → no match
+- **Repo grep, not assumed**: `grep -rn "tools" core/…/llm local/…/llm` → no match
   (exit 1); `local/…/LocalLlmClient.scala:18-28` posts `model` + `messages` only: no `temperature`,
   no `tools`, no `response_format`. This is what makes §2.1's first row the real configuration.
 - `https://arxiv.org/abs/2606.19544` → "Reliability without Validity: A Systematic, Large-Scale

@@ -6,10 +6,10 @@
 | **Author** | Claude (agent) |
 | **Created** | 2026-09-07 |
 | **Phase** | 0 (`ARCHITECTURE.md` §11) — a maintainer dev-tool, not a Telegram/product feature |
-| **Related** | `FUTURE-WORK.md` §9.1 (the RAG corpus pattern this deliberately does *not* reuse), `AI-500-MAPPING.md` §4 (human-confirmation gate for autonomous behavior), `AI-103-MAPPING.md` §5 (text-analysis/classification gap), MIP-0031 (`InemaPdfParser.scala` — the PDFBox/`pdftotext` precedent this reuses) |
+| **Related** | `FUTURE-WORK.md` §9.1 (the RAG corpus pattern this deliberately does *not* reuse), MIP-0031 (`InemaPdfParser.scala` — the PDFBox/`pdftotext` precedent this reuses) |
 | **Effort** | M — one new Python dev-tool script with its own self-test, a `.gitignore` convention for local-only book files, a new `docs/book-digests/` directory convention, and one `flake.nix` addition (`poppler-utils`, confirmed present on this host but not yet declared). No new Scala module, no new paid dependency |
-| **Gain** | `infra/dev-loop` (sources AGENTS.md/rule-file changes from a real, cited text instead of only ad hoc mid-session corrections); `exam coverage (AI-103 §5, Azure AI Language gap — v1 stays local, an opt-in Azure path is noted but not built)` |
-| **Effort vs Gain** | cheap win — self-contained `scripts/`-only tool, no Azure spend, no Phase gate, no dependency on marola's own pipeline; the only real cost is a maintainer's time reviewing candidates by hand, which is the point |
+| **Gain** | `infra/dev-loop` (sources AGENTS.md/rule-file changes from a real, cited text instead of only ad hoc mid-session corrections) |
+| **Effort vs Gain** | cheap win — self-contained `scripts/`-only tool, no cloud spend, no Phase gate, no dependency on marola's own pipeline; the only real cost is a maintainer's time reviewing candidates by hand, which is the point |
 | **Depends on** | Nothing blocking. Reuses `InemaPdfParser.scala`'s already-verified `pdftotext -layout` cross-check (MIP-0031) as precedent, not as code (this is a Python script, not Scala) |
 | **Blocked by** | none |
 | **Risk** | An unchecked, model-extracted "principle" gets merged into `AGENTS.md`/a rule file without a human actually opening the book and checking the cited page — quietly degrading the rule file's own trustworthiness with confidently-worded, unverified claims. The whole design (§5) exists to make that mistake require a deliberate extra step, not to make it impossible |
@@ -95,8 +95,8 @@ pre-existing given.
 The same local Ollama HTTP endpoint `LocalLlmClient` already targets
 (`/v1/chat/completions`, `docs/RUN-LOCALLY.md`); the Python script talks to it directly via
 `urllib.request` (stdlib only, matching `scripts/cost-split.py`'s own no-new-dependency
-convention). No Azure path for v1: a book-digest run is a one-off maintainer task, not a product
-feature needing an Azure opt-in (unlike `ARCHITECTURE.md` §5's six pluggable integrations).
+convention). No cloud path for v1: a book-digest run is a one-off maintainer task, not a product
+feature.
 
 ## 5. Design
 
@@ -135,8 +135,8 @@ part of marola's Telegram/CLI product surface:
 never writes to `AGENTS.md`, `.claude/rules/*.md`, or any skill file: only to
 `docs/book-digests/<slug>/candidates.md`. Turning one accepted `[agentic-behavior]` line into an
 actual rule-file change is always a separate, ordinary, human-reviewed PR, the same "explicit
-human-confirmation gate for autonomous/proactive behavior" this repo already designed in
-`AI-500-MAPPING.md` §4. The script proposes; a human disposes, one principle at a time, never in
+human-confirmation gate for autonomous/proactive behavior" this repo already applies. The
+script proposes; a human disposes, one principle at a time, never in
 bulk and never silently.
 
 ## 6. Scoring / safety impact
@@ -180,24 +180,15 @@ ever proposes changes to files a human already reviews before merge. The review 
   `mip_graph.py`): an unchecked-by-default checklist draft is strictly better than a blank page,
   as long as it's clearly unchecked, which §5's design guarantees.
 - **Auto-apply extracted `agentic-behavior` principles straight into `AGENTS.md`**: rejected
-  outright: violates `AI-500-MAPPING.md` §4's own explicit human-confirmation gate for autonomous
-  behavior, and the MIP culture's own "design before build."
+  outright: violates this repo's explicit human-confirmation gate for autonomous behavior,
+  and the MIP culture's own "design before build."
 - **Treat the book like another `knowledge/*.md` RAG corpus entry (`FUTURE-WORK.md` §9.1)**:
   rejected for this specific use: the value here is reshaping how the *dev-loop* agent behaves,
   not answering marine questions; folding it into the marine RAG pipeline would conflate two
   unrelated corpora with different review disciplines and different copyright postures (the marine
   corpus is freely licensed sources only, per §9.1 point 1).
-- **A cloud LLM instead of local Ollama**: available later as an opt-in exactly like
-  `ARCHITECTURE.md` §5's local-default/Azure-opt-in pattern, not needed for a first, low-volume,
-  maintainer-triggered tool.
-
-## 10. Exam-coverage mapping
-
-`AI-103-MAPPING.md` §5: "Azure AI Language service — Gap... would be a good fit for the RAG/
-grounding work below (summarizing/classifying source documents before they go into a retrieval
-index)." This MIP's classification step (`knowledge` vs. `agentic-behavior`) is exactly that kind
-of text-analysis/classification task, done locally for v1 — a real local precedent now exists, not
-a closed gap; an Azure AI Language opt-in path is a natural Phase 2 extension, not built here.
+- **A cloud LLM instead of local Ollama**: available later as an opt-in, not needed for a first,
+  low-volume, maintainer-triggered tool.
 
 ## 11. Open questions
 

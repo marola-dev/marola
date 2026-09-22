@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude (Opus 5), for M. Hoffmann (request of 2026-09-09: "create a MIP about adding WW3 and WRF to marola. Is it possible to already plug in the website with public data?") |
 | **Created** | 2026-09-10 |
-| **Phase** | 0/3 — `core` and the static site only. No Azure, no paid resource, no new dependency, no extra HTTP call per beach |
+| **Phase** | 0/3 — `core` and the static site only. No paid resource, no new dependency, no extra HTTP call per beach |
 | **Related** | MIP-0001 (added the marine fields this MIP re-sources, and set the "show the agency's classification verbatim, don't let a model blend a category" principle §6 reuses); MIP-0005 (the static site and its "no server" decision, which §5.3's deployment shape preserves); MIP-0038/0039/0040 (the honesty layer — a labelled model and a shown disagreement is exactly its subject matter); MIP-0042 (`/v2`'s live scorer, which would consume the spread client-side); MIP-0048 (scaling marola-sea — unrelated model, same "measure before you scale" discipline); **MIP-0052** (the sibling: porting a wave model's compute core to a GPU, which only becomes relevant at §5.3's rung C) |
 | **Effort** | M for §5.1/§5.2 (one query-string change, one `enum`, one case class, a median, a site label — no new call, no new dependency); M for §5.4 (a buoy-fetching job and an append-only ledger); L for §5.3 (running our own nearshore grid — designed here, deliberately not built) |
 | **Gain** | `user value` — marola currently shows one model's wave height as fact, and at Jurerê that number ranges from 0.20 m to 1.34 m depending on which model you ask (§2); `infra/dev-loop` — a buoy-scored ledger turns "is our forecast good?" from an opinion into a weekly number, and it is the gate that decides whether §5.3 is worth months |
 | **Effort vs Gain** | `do next` for §5.1/§5.2 — the disagreement is measured, it crosses live scoring thresholds, and the fix is one query parameter plus a median; `do next` for §5.4, which costs little and runs itself thereafter; `do when §5.4 has a season of data` for §5.3 — building a nearshore grid before knowing the public models' error at our beaches is building against an unmeasured bar |
-| **Depends on** | Nothing blocks §5.1/§5.2 — no Phase 1 gate, no Azure, no paid resource, and the marine call already exists. §5.3 depends on §5.4 producing a season of buoy scores, and on a human decision about running a model on a home machine. MIP-0052 is a sibling, not a prerequisite: it matters only if §5.3 is adopted *and* the CPU cost of running it proves to be the binding constraint |
+| **Depends on** | Nothing blocks §5.1/§5.2 — no Phase 1 gate, no paid resource, and the marine call already exists. §5.3 depends on §5.4 producing a season of buoy scores, and on a human decision about running a model on a home machine. MIP-0052 is a sibling, not a prerequisite: it matters only if §5.3 is adopted *and* the CPU cost of running it proves to be the binding constraint |
 | **Blocked by** | none |
 | **Risk** | The honest outcome of §5.4 may be that MFWAM at 8 km is already good enough at our beaches, and §5.3 is never worth building. That is a *successful* result of this MIP, but it means the WW3/WRF ambition that prompted it dies on the evidence — this MIP is written to make that outcome cheap to reach and easy to accept |
 | **Cost so far** | — |
@@ -298,14 +298,6 @@ Jurerê and Campeche in the PR body; the §3 line rendering on the static site.
 - **Copernicus Marine (CMEMS) direct.** A richer source than Open-Meteo, and MFWAM's actual origin.
   Rejected for now: it requires registration and credentials, which breaks the keyless, zero-setup
   default `ARCHITECTURE.md` §5 requires. Worth revisiting if Open-Meteo's terms change.
-
-## 10. Exam-coverage mapping
-
-**AI-103, "Responsible AI: transparency, content safety"** (`docs/AI-103-MAPPING.md:26`) — that row
-is currently satisfied by documented limitations plus MIP-0001's deterministic veto. Naming the model
-behind a number and showing forecast disagreement is transparency implemented in the product rather
-than described in a doc, and the row's Status can gain "proposed: MIP-0051". No AI-500 row applies:
-nothing here is agentic, and no human-confirmation gate is removed.
 
 ## 11. Open questions
 

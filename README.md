@@ -17,7 +17,7 @@ veto. The reasoning behind that split: <a href="./PHILOSOPHY.md"><code>PHILOSOPH
 <a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fcoverage%2Flatest.json" alt="Scala statement coverage (sbt-scoverage)" /></a>
 <!-- The Python half, measured the only way marola tests Python: statement coverage of scripts/**/*.py while each script's own --self-test runs (there is no pytest suite). scripts/repo_stats.py, same repo-stats job and site-data branch as the badges below. -->
 <a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fpython-coverage.json" alt="Python statement coverage under the scripts' own --self-tests" /></a>
-<!-- Same mechanism, ci.yml's repo-stats job (scripts/repo_stats.py): how many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line counts for the four Scala modules and the Python trees. -->
+<!-- Same mechanism, ci.yml's repo-stats job (scripts/repo_stats.py): how many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line counts for the three Scala modules and the Python trees. -->
 <a href="https://github.com/h0ffmann/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fci.json" alt="CI steps green on the last main run" /></a>
 <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fscala-loc.json" alt="Scala lines of code" />
 <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fpython-loc.json" alt="Python lines of code" />
@@ -67,7 +67,7 @@ just ask "what should I do if I get caught in a rip current?"      # grounded an
 just site-build floripa && just site-serve                         # the map, locally, at :8000
 ```
 
-No Azure account, no API key needed for any of the above. Full walkthrough with
+No cloud account, no API key needed for any of the above. Full walkthrough with
 real output: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md). Docker instead of Nix/sbt/Ollama
 ([MIP-0008](./docs/mips/MIP-0008-docker-images-and-smoke-test.md)):
 
@@ -75,20 +75,19 @@ real output: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md). Docker instead of N
 docker compose --profile ollama run --rm marola --summarize --lat -27.6733 --lon -48.4700
 ```
 
-## The six pluggable integrations: local default, Azure opt-in
+## The integrations: local and free
 
-Every integration is a trait with a free local implementation as the default and an Azure
-implementation that's opt-in per env var, never a package deal. Full detail, including what's
+Every integration is a trait with a free local implementation. Full detail, including what's
 verified live vs. written-not-run: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §5.
 
-| Capability | Local default → Azure opt-in | Switch |
+| Capability | Implementation | Switch |
 |---|---|---|
-| Query synthesis | Ollama chat completion → Foundry/Azure OpenAI (`azure-identity`) | `MAROLA_LLM_PROVIDER=azure` |
-| Beach distance | Haversine → Azure Maps real driving distance | `AZURE_MAPS_SUBSCRIPTION_KEY` |
-| Agentic tool access | MCP server over stdio (no Azure variant) | n/a |
-| Sighting reports | JSON-lines file → Cosmos DB container | `MAROLA_SIGHTING_STORE_PROVIDER=azure` |
-| Photo analysis | Multimodal Ollama (`llava`) → Azure AI Vision | `MAROLA_VISION_PROVIDER=azure` |
-| Observability | Off, or OTLP traces into local MLflow → Application Insights | `MAROLA_TRACES=off\|mlflow\|azure` |
+| Query synthesis | Ollama chat completion | n/a |
+| Beach distance | Haversine (straight line) | n/a |
+| Agentic tool access | MCP server over stdio | n/a |
+| Sighting reports | JSON-lines file | n/a |
+| Photo analysis | Multimodal Ollama (`llava`) | n/a |
+| Observability | Off, or OTLP traces into local MLflow | `MAROLA_TRACES=off\|mlflow` |
 
 **Next:** the rest of the sea (surf, diving, fishing) as new scoring functions over the same data;
 roadmap: [`docs/mips/README.md`](./docs/mips/README.md), [`docs/FUTURE-WORK.md`](./docs/FUTURE-WORK.md) §1.
@@ -100,10 +99,9 @@ roadmap: [`docs/mips/README.md`](./docs/mips/README.md), [`docs/FUTURE-WORK.md`]
 | Doc | What it covers |
 |---|---|
 | [`PHILOSOPHY.md`](./PHILOSOPHY.md) | Why marola is built the way it is: the three pillars, why agents, why Scala/Nix/`just` |
-| [`ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | The pipeline, the six pluggable local/Azure integrations, verified-live vs. written-not-run |
-| [`RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md) | Run it now with Ollama, no Azure account needed |
+| [`ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | The pipeline, its local integrations, verified-live vs. written-not-run |
+| [`RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md) | Run it now with Ollama, no cloud account needed |
 | [`FUTURE-WORK.md`](./docs/FUTURE-WORK.md) / [`EFFECTS-MAP.md`](./docs/EFFECTS-MAP.md) | Design sketches, reviewed-not-adopted libraries; a Scala/FP-purity review |
-| [`AI-103-MAPPING.md`](./docs/AI-103-MAPPING.md) / [`AI-500-MAPPING.md`](./docs/AI-500-MAPPING.md) | Exam domain coverage: AI-103 done, AI-500 (multi-agent) a design target |
 | [`SKILLS.md`](./docs/SKILLS.md) / [`AGENT-SKILLS.md`](./docs/AGENT-SKILLS.md) | A skills roadmap for humans; which Claude Code skills to use here |
 | [`AGENT-FRAMEWORKS-SURVEY.md`](./docs/AGENT-FRAMEWORKS-SURVEY.md) | Multi-agent frameworks: Python ideas, JVM/Scala libraries, where Apache Pekko fits |
 | [`benchmarks/`](./docs/benchmarks/2026-09-05.md) / [`mips/`](./docs/mips/README.md) | Kept benchmark runs; numbered design docs written before a feature is built |

@@ -25,17 +25,17 @@ rest gets migrated to richer Kyo effects.
 | `json/Json.scala`'s `render`/builders | Pure | `JsonValue.obj`/`arr`/`str`/`render` — deterministic, total (never throws) |
 | `json/Json.scala`'s `parse` | Hidden effect ⚠️ (partial) | Throws `JsonParseException` on malformed input — see §2 |
 | `http/Http.scala` (all 4 methods) | `< Sync` | Honest — every caller sees `< Sync` and knows real network I/O happens |
-| `beaches/BeachFinder`, `beaches/RouteFinder` | `< Sync` | Composed from `Http`, correctly propagates |
+| `beaches/BeachFinder` | `< Sync` | Composed from `Http`, correctly propagates |
 | `conditions/OpenMeteoClient` | `< Sync` | Same |
 | `water/WaterQualityMatcher`, `scoring/Swimability.waterVerdict`, `conditions/Tides`, `lore/SeaLore.pick` | Pure | MIP-0001's logic; all unit-tested |
 | `water/ImaScWaterQualityClient.samplingPoints`, `knowledge/OllamaEmbedder.embed` | `< Sync` | HTTP via `Http` |
 | `knowledge/FileKnowledgeStore` | `< Sync` | File I/O and embedding wrapped in `Sync.defer`/`Embedder`; `Corpus.chunkDocument`/`cosine` are pure |
 | `lore/SeaLore.loadDefault` | Hidden effect ⚠️ (minor) | Classpath read with no effect type — same class as `CompiledPrompt.loadFromFile` above |
 | `location/IpGeolocation.locate` | `< Sync` | Same; each provider call is individually `Abort.catching`-wrapped so a dead provider drops out of the vote. `consensus` (the vote itself) is pure and unit-tested |
-| `llm/LocalLlmClient`, `llm/AzureFoundryLlmClient`, `vision/*Client` | `< Sync` | Same; `AzureFoundryLlmClient` additionally wraps `azure-identity`'s blocking `getTokenSync` in `Sync.defer` — correctly tracked |
+| `llm/LocalLlmClient`, `vision/*Client` | `< Sync` | Same |
 | `llm/CompiledPrompt.loadFromFile`/`loadFromString` | Hidden effect ⚠️ (I/O + partial) | `loadFromFile` reads a file with **no effect type at all** — not even `< Sync`. `loadFromString` throws on malformed JSON. See §2 |
 | `llm/Reviewer.review` | `< Sync` | Correctly tracked; the `JsonValue.parse` it calls internally is where a hidden partiality lives (see above) |
-| `sightings/LocalFileSightingStore`, `sightings/CosmosDbSightingStore` | `< Sync` | Correctly tracked, including proper `try/finally` resource cleanup for file handles |
+| `sightings/LocalFileSightingStore` | `< Sync` | Correctly tracked, including proper `try/finally` resource cleanup for file handles |
 | `observability/Telemetry` | `< Sync` (shallow) | `withSpan` is honest about being `< Sync`, but see `ARCHITECTURE.md` §5f's own documented gap: no try/finally around the wrapped effect, so a thrown exception mid-span leaves it unclosed |
 | `AppConfig.fromEnv` | **Hidden effect ⚠️** | See §2 — the single most consequential finding here |
 | `agent/SwimConditionsMcpServer` | Unsafe boundary (contained) | See §3 |
@@ -109,9 +109,8 @@ same shape).
 
 ## 4. Resource lifecycle — not yet a problem, but worth naming
 
-`CosmosDbSightingStore`'s `container` is a `lazy val` that builds a `CosmosClient` on first use and
-never closes it; `AzureFoundryLlmClient`'s `credential` similarly lives for the object's lifetime.
-For a CLI process that runs once and exits, this is a non-issue: the OS reclaims everything on
+A client built on first use and never closed is a non-issue for a CLI process that runs once and
+exits: the OS reclaims everything on
 exit. It becomes a real question once marola runs as a long-lived service (the Telegram bot, Phase
 1) that might reconfigure or reconnect: Kyo's `kyo.Scope` effect (acquire/release, seen in the
 `kyo-core` dependency already) is the natural fit for that later, not needed now.

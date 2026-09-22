@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude (Opus 5), for M. Hoffmann |
 | **Created** | 2026-09-09 |
-| **Phase** | 1 — a local model swap; no Azure, no paid resource, no Phase 2 gate |
+| **Phase** | 1 — a local model swap; no cloud, no paid resource, no Phase 2 gate |
 | **Related** | MIP-0025 (the marola-sea training chain this would change the base of), MIP-0048 (scaling marola-sea — this is the "which base model" question it defers), MIP-0001 (the agency verdict shown verbatim, which §6 collides with), #273 (keeping Llama out of the derivation path — §4.1 establishes it does not apply here), #307 (the `sentencepiece` dependency, which Manacá would actually exercise) |
 | **Effort** | M for §5.1 (a preset row, a GGUF pull, a benchmark arm — no new code path); L for §5.2 (fine-tuning marola-sea on a Manacá base: a new tokenizer path through `convert_hf_to_gguf.py`, and a corpus that is currently English) |
 | **Gain** | `user value` — marola's users are Brazilian swimmers and the product answers them in English today; `infra/dev-loop` — a 1.7B Portuguese-native base is a better starting point for marola-sea than SmolLM2-360M, which is the honest reason the current model invents things |
 | **Effort vs Gain** | `do next` for §5.1's evaluation arm (cheap, and it is the measurement MIP-0048 needs anyway); `do when the corpus is Portuguese` for §5.2 — fine-tuning a PT-native base on English text throws away the thing being adopted; **reject** Sabiá-7B on licensing (§4.3) |
-| **Depends on** | Nothing blocks the evaluation. §5.2 depends on the language decision in §3, which is a product call, not a technical one. No Phase 1 gate, no Azure |
+| **Depends on** | Nothing blocks the evaluation. §5.2 depends on the language decision in §3, which is a product call, not a technical one. No Phase 1 gate, no cloud resource |
 | **Blocked by** | none |
 | **Risk** | Manacá is lowercase by construction (§4.1). marola shows the agency's `PRÓPRIA`/`IMPRÓPRIA` verdict verbatim because it is CONAMA's classification and not marola's (MIP-0001 §6/§9) — a model that cannot emit uppercase cannot quote it. That is a correctness constraint, not a styling one |
 | **Cost so far** | — |
@@ -189,11 +189,6 @@ assumes.
 - **Translate at the edges**: keep an English model, translate its output to Portuguese. Adds a
   second model call and a second place to invent facts, on the safety-relevant path. Rejected.
 - **Sabiá-7B.** §4.3.
-
-## 10. Exam-coverage mapping
-
-AI-103 §"fine-tune a model" — the same row MIP-0025 and MIP-0048 already touch; this changes which
-base is fine-tuned, not whether. No AI-500 row.
 
 ## 11. Open questions
 

@@ -37,7 +37,6 @@ GUIDES = [
 MODULES = [
     ("core", "pipeline logic, scoring, the pluggable traits"),
     ("local", "Ollama-backed implementations, the water-quality parsers"),
-    ("azure", "the opt-in Azure integrations"),
     ("cli", "Main, AppConfig, the MCP tool server"),
 ]
 

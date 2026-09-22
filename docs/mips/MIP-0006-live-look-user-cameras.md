@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude Fable 5.1, for M. Hoffmann; motivated by a surfer friend who pays for a camera app just to see the sea before going |
 | **Created** | 2026-09-05 |
-| **Phase** | 1 (bot photo handler, local vision) → 2 (Azure AI Vision opt-in) |
-| **Related** | `ARCHITECTURE.md` §5e (`VisionClient`, `--analyze-photo`), §5d (`SightingStore`), MIP-0002 (the photo arrives through the bot), MIP-0005 (the map shows it), `AI-500-MAPPING.md` §4 (content safety on public output) |
+| **Phase** | 1 (bot photo handler, local vision) |
+| **Related** | `ARCHITECTURE.md` §5e (`VisionClient`, `--analyze-photo`), §5d (`SightingStore`), MIP-0002 (the photo arrives through the bot), MIP-0005 (the map shows it) |
 | **Effort** | XL — new model+store, a bot photo pipeline, face-detection/rejection, retention/deletion, abuse controls |
-| **Gain** | user value (closes the "what does it look like now" gap); exam coverage (AI-103 §4 computer vision, AI-500 §4) |
+| **Gain** | user value (closes the "what does it look like now" gap) |
 | **Effort vs Gain** | do when X lands — needs MIP-0002 first; the privacy/face-rejection work alone is substantial |
-| **Depends on** | MIP-0002 (photos arrive via the bot), MIP-0005 (the map shows it); Phase 1 prerequisite missing; Azure AI Vision opt-in gated behind the cost rule |
+| **Depends on** | MIP-0002 (photos arrive via the bot), MIP-0005 (the map shows it); Phase 1 prerequisite missing |
 | **Risk** | a single leaked or misclassified face on the public map ends user trust — the reject-not-blur v1 design exists for exactly this |
 | **Cost so far** | ~$0.7 shared with MIP-0007 (same drafting commit 5abeecc, not split further) |
 
@@ -21,8 +21,8 @@ exist because that gap is real. marola can close it without owning a single came
 already at the beach send a photo (or a short clip) through the bot or the map; a vision model
 turns it into a structured, time-stamped observation (sea state, foam, crowd, jellyfish or
 man-o'-war visible, water colour), and the beach's card shows "latest look: 09:12, choppy, foam at
-the stream mouth", with the photo itself, for the next few hours. Local vision model by default,
-Azure AI Vision as the opt-in; strict rules on faces, retention and abuse from day one.
+the stream mouth", with the photo itself, for the next few hours. A local vision model does the
+work, with strict rules on faces, retention and abuse from day one.
 
 ## 2. Motivation
 
@@ -57,15 +57,12 @@ photo is ever shown that contains a recognisable face (§5.4).
   `llama3.2-vision` is the family-consistent option). Status in `ARCHITECTURE.md` §5e: request
   path verified, description not, because no vision model was pulled. Pulling one (`ollama pull
   llama3.2-vision`, ~7 GB) is the first task.
-- **Vision, Azure opt-in:** `AzureVisionClient` (Image Analysis 4.0: caption + tags + objects;
-  **People detection** is a documented feature that can flag faces for the privacy rule). Written,
-  not run — no resource provisioned (`AGENTS.md` cost rule).
 - **Public webcams** (municipal, surf shops, Windguru-linked cams): would make the feature work
   before there are users, but every cam has its own terms; embedding or re-serving frames without
   permission is exactly the "reverse-engineered workaround" this repo avoids. **Not in v1**;
   §11 keeps it as a per-source question.
 - **Storage:** photos and observations under `data/looks/` locally (files + JSON-lines, like
-  sightings); Azure Blob + Cosmos DB as the opt-in. Thumbnails only on the map; originals expire.
+  sightings). Thumbnails only on the map; originals expire.
 
 ## 5. Design
 
@@ -86,8 +83,8 @@ final case class Observation(               // structured, from the vision model
 
 `VisionClient` gains `observe(imageBytes): Observation < Sync` beside `describe`: the prompt asks
 the local model for compact JSON with exactly these fields (same JSON-recovery approach as
-`Reviewer`); the Azure client maps caption/tags/objects onto them. `Observation` is what the card
-shows; `caption` is the model's sentence, labelled as such.
+`Reviewer`). `Observation` is what the card shows; `caption` is the model's sentence, labelled as
+such.
 
 ### 5.2 Flow
 
@@ -99,21 +96,19 @@ Map (MIP-0005): the board build includes `looks[]` per beach still within `expir
 ### 5.3 Where it lives
 
 `core/looks/` (model, trait `LookStore`, `LookIntake` pure validation), `local/looks/`
-(`LocalFileLookStore`), `azure/looks/` (blob + Cosmos, later). The vision prompt is a resource
-(`observe_prompt.json`) so it can become DSPy-compiled once there are labelled photos.
+(`LocalFileLookStore`). The vision prompt is a resource (`observe_prompt.json`) so it can become
+DSPy-compiled once there are labelled photos.
 
 ### 5.4 Privacy, safety, abuse — the non-negotiables
 
 - **Faces.** Before storing: a face-detection pass (local: a small ONNX detector or the vision
-  model's own "people visible?" answer; Azure: People detection). A photo with a recognisable
-  person is either blurred at the detected boxes or **rejected** with a polite reply. v1 rejects;
-  blur is a follow-up.
+  model's own "people visible?" answer). A photo with a recognisable person is either blurred at the
+  detected boxes or **rejected** with a polite reply. v1 rejects; blur is a follow-up.
 - **Retention.** 6 h on the map, original deleted at 24 h, thumbnails with it; `/apagar-foto`
   deletes immediately. No chat id stored with the look, only a salted hash for rate-limiting.
 - **Consent line** in the bot's reply the first time: what is kept, for how long, how to delete.
 - **Abuse.** Not-a-beach photos (vision says so) are acknowledged and dropped, never displayed;
-  NSFW/violent content check via the same model (Azure: Content Safety is the natural opt-in);
-  repeat offenders rate-limited to zero.
+  NSFW/violent content check via the same model; repeat offenders rate-limited to zero.
 - **Never a safety claim.** The card says what the model *saw*, with its confidence; the water
   verdict and scores stay deterministic. "Looks calm" next to "IMPRÓPRIA" is exactly the point.
 
@@ -149,12 +144,6 @@ add a note to the current hour ("reported rough at 09:12"), never change the wat
 - **Scrape public cams.** No.
 - **Photos only in the bot, not on the map.** Halves the value; the map is where "now" belongs.
 
-## 10. Exam-coverage mapping
-
-AI-103 §4 computer vision — this is the real use case the mapping calls for, with a local and an
-Azure client; AI-103 §1 / AI-500 §4 responsible AI — face rejection, retention, deletion, content
-safety on public output.
-
 ## 11. Open questions
 
 1. Reject or blur faces in v1? (Proposal: reject.)
@@ -163,4 +152,4 @@ safety on public output.
 3. Short clips (Telegram video notes): first frame only, or three frames? (v1: first frame.)
 4. Public webcams: which, and under what terms? Per-cam email before any use.
 5. Should a look with `manOWarVisible` trigger a bot broadcast to subscribers of that beach
-   (MIP-0004)? It is the first *proactive* message — gated per `AI-500-MAPPING.md` §4.
+   (MIP-0004)? It is the first *proactive* message, so it needs a human-confirmation gate.

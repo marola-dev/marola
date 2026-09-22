@@ -20,7 +20,6 @@ PR_LABEL_TAXONOMY=(
   "area/unscoped:eeeeee:No MIP and no path matched a known area — needs a human look"
   "layer/core:f9d0c4:core/ — pure pipeline logic"
   "layer/local:f9d0c4:local/ — Ollama-backed implementations"
-  "layer/azure:f9d0c4:azure/ — opt-in Azure integrations"
   "layer/cli:f9d0c4:cli/ — Main, AppConfig, MCP server"
   "layer/dspy:f9d0c4:dspy/ — offline prompt-compile step"
   "layer/site:f9d0c4:site/ — the static map"
@@ -100,7 +99,6 @@ pr_label_layers() {
   local paths="$1" labels=()
   grep -q '^core/' <<<"$paths" && labels+=("layer/core")
   grep -q '^local/' <<<"$paths" && labels+=("layer/local")
-  grep -q '^azure/' <<<"$paths" && labels+=("layer/azure")
   grep -q '^cli/' <<<"$paths" && labels+=("layer/cli")
   grep -q '^dspy/' <<<"$paths" && labels+=("layer/dspy")
   grep -q '^site/' <<<"$paths" && labels+=("layer/site")

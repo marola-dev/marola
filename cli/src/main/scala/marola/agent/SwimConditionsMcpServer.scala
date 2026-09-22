@@ -16,10 +16,10 @@ import io.modelcontextprotocol.spec.McpSchema
 import tools.jackson.databind.json.JsonMapper
 
 /**
- * Exposes marola's own pipeline (`BeachFinder`, `Recommender`) as MCP tools — the "Foundry Agent
- * Service + MCP tool-calling" item from `ARCHITECTURE.md` §5b: instead of `Recommender` hardcoding
- * the call order (BeachFinder → OpenMeteoClient → Swimability), an agent (Claude Desktop locally,
- * or an Azure AI Foundry agent once deployed) can decide when/how to call these tools itself.
+ * Exposes marola's own pipeline (`BeachFinder`, `Recommender`) as MCP tools — the "MCP
+ * tool-calling" item from `ARCHITECTURE.md` §5b: instead of `Recommender` hardcoding the call order
+ * (BeachFinder → OpenMeteoClient → Swimability), an agent (Claude Desktop locally, or any other MCP
+ * client) can decide when/how to call these tools itself.
  */
 object SwimConditionsMcpServer:
 
@@ -186,14 +186,7 @@ object SwimConditionsMcpServer:
       request: McpSchema.CallToolRequest
   ): McpSchema.CallToolResult =
     val (origin, radiusKm) = originAndRadius(request.arguments())
-    val config = AppConfig.fromEnv
-    val results = runSync(
-      Recommender.bestPerBeachTomorrow(
-        origin,
-        radiusKm,
-        distanceRefiner = config.distanceRefiner
-      )
-    )
+    val results = runSync(Recommender.bestPerBeachTomorrow(origin, radiusKm))
     val json = JsonValue.arr(results.map(bestHourToJson)*).render
     McpSchema.CallToolResult.builder().addTextContent(json).build()
 
@@ -234,25 +227,22 @@ object SwimConditionsMcpServer:
   ): McpSchema.CallToolResult =
     val question = Option(request.arguments().get("question")).map(_.toString).getOrElse("")
     val config = AppConfig.fromEnv
-    val json = config.llmClient match
-      case None => JsonValue.obj("error" -> JsonValue.str("no LLM configured"))
-      case Some(llm) =>
-        val answer = runSync(OceanQa.answer(question, config.knowledgeStore, llm))
-        JsonValue.obj(
-          "answer" -> JsonValue.str(
-            marola.knowledge.SafetyFooter.append(answer.text, answer.safety)
-          ),
-          "safety" -> JsonValue.bool(answer.safety),
-          "sources" -> JsonValue.arr(
-            answer.passages.map(p =>
-              JsonValue.obj(
-                "title" -> JsonValue.str(p.docTitle),
-                "source" -> JsonValue.str(p.source),
-                "score" -> JsonValue.num(p.score)
-              )
-            )*
+    val answer = runSync(OceanQa.answer(question, config.knowledgeStore, config.llmClient))
+    val json = JsonValue.obj(
+      "answer" -> JsonValue.str(
+        marola.knowledge.SafetyFooter.append(answer.text, answer.safety)
+      ),
+      "safety" -> JsonValue.bool(answer.safety),
+      "sources" -> JsonValue.arr(
+        answer.passages.map(p =>
+          JsonValue.obj(
+            "title" -> JsonValue.str(p.docTitle),
+            "source" -> JsonValue.str(p.source),
+            "score" -> JsonValue.num(p.score)
           )
-        )
+        )*
+      )
+    )
     McpSchema.CallToolResult.builder().addTextContent(json.render).build()
 
   def main(args: Array[String]): Unit =

@@ -21,7 +21,7 @@ written.
   `-Wnonunit-statement`, the matching `-Wconf` promotion to error, and `-language:strictEquality`.
 - Keep pure business logic (e.g. `Swimability`'s scoring) as plain functional Scala with no effect
   type. Reserve Kyo (`Sync`, `Abort`, `Env`) for the I/O boundary: HTTP calls to
-  Foundry/Overpass/Open-Meteo, file/database reads, the Telegram polling loop. This keeps the
+  Ollama/Overpass/Open-Meteo, file/database reads, the Telegram polling loop. This keeps the
   decision logic trivially testable without a Kyo runtime.
 - **One trait per pluggable capability; the implementation class is never the type a caller
   depends on.** `trait X[F[_]]` (or, in marola's direct style, no `F[_]`) holds the methods, a
@@ -43,21 +43,18 @@ written.
   thrown exceptions for genuinely unexpected faults.
 - **Until the `Abort[E]` migration lands, a thrown domain failure still needs a root type and a
   message.** marola throws today (`.scalafix.conf` keeps `noThrows = false` for exactly this
-  reason), but its six domain exceptions share no ancestor and no convention: `Http.HttpError`
+  reason), but its four domain exceptions share no ancestor and no convention: `Http.HttpError`
   (`core/src/main/scala/marola/http/Http.scala:24`), `JsonValue.JsonParseException`
   (`core/src/main/scala/marola/json/Json.scala:89`), `LlmClient.NoCompletionException`
   (`core/src/main/scala/marola/llm/LlmClient.scala:21`), `Reviewer.MalformedReviewException`
-  (`core/src/main/scala/marola/llm/Reviewer.scala:27`), `AzureVisionClient.NoCaptionException`
-  (`azure/src/main/scala/marola/vision/AzureVisionClient.scala:23`),
-  `RouteFinder.RouteNotFoundException`
-  (`azure/src/main/scala/marola/beaches/RouteFinder.scala:26`), plus a bare `RuntimeException` at
+  (`core/src/main/scala/marola/llm/Reviewer.scala:27`), plus a bare `RuntimeException` at
   `local/src/main/scala/marola/ledger/MlflowApi.scala:51`. The fix is one root:
   `trait MarolaException extends Throwable with NoStackTrace: def message: String;
   override def getMessage() = message`, with a per-layer family extending it (one sealed trait per
-  layer: HTTP, LLM, vision, routing), each case a `case object`/`case class` carrying its own
+  layer: HTTP, LLM), each case a `case object`/`case class` carrying its own
   `message`. Give a new marola failure that shape: name it for the
   layer it comes from, extend a common root (introduce a `MarolaException` when you add the next
-  one rather than growing a seventh orphan), and mix in `NoStackTrace`: these are control flow, not
+  one rather than growing a fifth orphan), and mix in `NoStackTrace`: these are control flow, not
   crashes, and nothing ever reads the stack trace.
 - **Never catch `Throwable` at a boundary without saying what that boundary does with each case.**
   marola wraps in `Abort.catching[Throwable]` in 15+ places (`cli/src/main/scala/marola/Main.scala`
@@ -82,10 +79,10 @@ written.
   the same object a different way.** Scala inherits Java's several-constructors idiom, and it loses
   the answer to "which one is *the* one": a reader has to diff parameter lists to learn which fields
   a given path leaves defaulted, and a test that reaches for the short constructor quietly stops
-  exercising what production actually builds. Verified across `core/`, `local/`, `azure/`, `cli/`
+  exercising what production actually builds. Verified across `core/`, `local/`, `cli/`
   (2026-09-07): marola has **zero** `def this(...)` constructors, zero `apply` overloads and zero
-  private companion factories; keep it that way. The two classes with a `private` primary
-  constructor are the shape to copy, not to avoid:
+  private companion factories; keep it that way. The class with a `private` primary
+  constructor is the shape to copy, not to avoid:
   - `MlflowTracing` (`local/src/main/scala/marola/observability/MlflowTracing.scala:38`):
     `final class MlflowTracing private (tracer, current)` plus two *named* companion factories that
     say what each is for: `apply(trackingUri, experimentPrefix): MlflowTracing < Sync` (`:100`, the
@@ -94,9 +91,6 @@ written.
     in-memory exporter through). `apply` *delegates to* `withExporter` (`:108`), so exactly one line
     in the repo calls `new MlflowTracing`; that delegation is what makes two factories fine rather
     than two constructors.
-  - `AzureMonitorTracing` (`azure/src/main/scala/marola/observability/AzureMonitorTracing.scala:36`):
-    private primary constructor, one `apply(connectionString)` (`:55`) doing the
-    `AutoConfiguredOpenTelemetrySdk` wiring.
 
   So: when an invariant must hold before the object exists (an exporter is configured, an id was
   resolved), make the primary constructor `private` and expose named factories on the companion,
@@ -107,8 +101,7 @@ written.
 - **The rule applies to entry-point methods too, and marola does break it there.**
   `Recommender.bestHoursTomorrow` (`core/src/main/scala/marola/Recommender.scala:32`),
   `bestPerBeachTomorrow` (`:96`) and `scoreDays` (`:120`) each repeat the same five defaulted
-  parameters (`radiusKm = 15.0, beachLimit = 6, distanceRefiner = None, waterQuality = None,
-  today = LocalDate.now(_)`), with `scoreDays` adding `days = 2`. `bestPerBeachTomorrow` is
+  parameters (`radiusKm = 15.0, beachLimit = 6, waterQuality = None, today = LocalDate.now(_)`), with `scoreDays` adding `days = 2`. `bestPerBeachTomorrow` is
   `bestHoursTomorrow` plus a regroup; `scoreDays` re-implements its body. Three near-identical
   parameter lists is the multiple-constructor problem in method form: change a default in one and
   not the others and you get a silent behaviour split between the CLI, the site builder and the MCP
@@ -138,17 +131,16 @@ written.
   once the opaque-type work above lands.
 - **An enum that crosses a wire or a disk gets an explicit label, never `toString`/`ordinal`.** Pair
   it with `val label: String` and a total `fromLabel: String => Option[T]`, and build the wire/disk
-  codec from that pair; renaming a case can't silently change the persisted value. Both of marola's
-  sighting stores do the opposite: they write
-  `sighting.kind.toString` and read it back with `SightingKind.values.find(_.toString == kindStr)`
-  (`azure/src/main/scala/marola/sightings/CosmosDbSightingStore.scala:52`/`:79` and
-  `local/src/main/scala/marola/sightings/LocalFileSightingStore.scala:52`/`:66`), so renaming a
-  `SightingKind` case orphans every stored row in both backends. Add the `label`/`fromLabel` pair
+  codec from that pair; renaming a case can't silently change the persisted value. marola's
+  sighting store does the opposite: it writes
+  `sighting.kind.toString` and reads it back with `SightingKind.values.find(_.toString == kindStr)`
+  (`local/src/main/scala/marola/sightings/LocalFileSightingStore.scala:52`/`:66`), so renaming a
+  `SightingKind` case orphans every stored row. Add the `label`/`fromLabel` pair
   when you next touch a persisted enum.
 
 ## Modules
 
-- **`local/` having zero Azure SDK dependency is an invariant that today only a comment enforces**
+- **A module compiling only against what it declares is not enforced today**
   (`build.sbt`, the `lazy val local` block). The mechanical version is cheap: the sbt plugin
   `sbt-explicit-dependencies` supplies `undeclaredCompileDependenciesTest` and
   `unusedCompileDependenciesTest`, which fail the build when a module compiles against something it

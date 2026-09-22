@@ -2,8 +2,7 @@
 // JVM running sbt and the runtime executing the jar must be 25+ (flake.nix and the Dockerfile pin
 // it). An older JVM fails with `UnsupportedClassVersionError: kyo/Frame$package$Frame$`.
 //
-// Modules: core (pure pipeline), local (Ollama path, zero Azure SDK dependency), azure (optional
-// Azure integrations), cli (picks a backend per integration, so depends on all three).
+// Modules: core (pure pipeline), local (Ollama path), cli (wires them together).
 
 ThisBuild / scalaVersion := "3.9.0"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
@@ -17,7 +16,6 @@ val kyoVersion = "1.0.0-RC5"
 
 val munitFramework = new TestFramework("munit.Framework")
 
-// Azure SDK dependencies are deliberately not here: only the `azure` module may carry them.
 lazy val baseSettings = Seq(
   // Kyo's own docs recommend these flags to catch common effect-handling
   // mistakes (unused/discarded Kyo computations, unsafe equality).
@@ -77,8 +75,6 @@ lazy val core = (project in file("core"))
   .settings(baseSettings)
   .settings(name := "marola-core")
 
-// One OpenTelemetry version for `local` and `azure`: azure-monitor-opentelemetry-autoconfigure
-// pulls 1.49.0 transitively, and this evicts it so the CLI never carries two SDKs (MIP-0010 §4.3).
 val OpenTelemetryVersion = "1.65.0"
 
 val PdfboxVersion = "3.0.8"
@@ -88,8 +84,7 @@ lazy val local = (project in file("local"))
   .settings(baseSettings)
   .settings(
     name := "marola-local",
-    // Zero Azure SDK dependency (the module's invariant). OpenTelemetry: MLflow ingests traces
-    // over OTLP/HTTP only (MIP-0010). PDFBox: the agencies publish bulletins only as PDFs, and a
+    // OpenTelemetry: MLflow ingests traces over OTLP/HTTP only (MIP-0010). PDFBox: the agencies publish bulletins only as PDFs, and a
     // pure-JVM parser avoids bundling `pdftotext` into the image (MIP-0031 §4.3).
     libraryDependencies ++= Seq(
       "io.opentelemetry" % "opentelemetry-sdk" % OpenTelemetryVersion,
@@ -99,25 +94,8 @@ lazy val local = (project in file("local"))
     )
   )
 
-lazy val azure = (project in file("azure"))
-  .dependsOn(core)
-  .settings(baseSettings)
-  .settings(
-    name := "marola-azure",
-    libraryDependencies ++= Seq(
-      // --- managed identity everywhere, no API keys ---
-      "com.azure" % "azure-identity" % "1.18.1",
-      // --- Cosmos DB (optional sighting-report store) ---
-      "com.azure" % "azure-cosmos" % "4.71.0",
-      // --- Monitor / Application Insights (optional observability backend, no-op by default) ---
-      "com.azure" % "azure-monitor-opentelemetry-autoconfigure" % "1.4.0",
-      // Pinned explicitly so it evicts the 1.49.0 the line above pulls — see OpenTelemetryVersion.
-      "io.opentelemetry" % "opentelemetry-sdk-extension-autoconfigure" % OpenTelemetryVersion
-    )
-  )
-
 lazy val cli = (project in file("cli"))
-  .dependsOn(core, local, azure)
+  .dependsOn(core, local)
   .enablePlugins(NativeImagePlugin)
   .settings(baseSettings)
   .settings(
@@ -149,7 +127,7 @@ lazy val cli = (project in file("cli"))
   )
 
 lazy val root = (project in file("."))
-  .aggregate(core, local, azure, cli)
+  .aggregate(core, local, cli)
   .settings(
     name := "marola",
     publish / skip := true

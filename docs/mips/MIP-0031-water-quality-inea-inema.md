@@ -8,7 +8,7 @@
 | **Phase** | 0 (CLI + board field only) — no earlier-phase prerequisite is missing |
 | **Related** | `WaterQuality.scala`'s `WaterQualityClient` trait, whose own doc comment already names this exact gap ("INEA/RJ, CETESB/SP would be siblings"); `ImaScWaterQualityClient` (the pattern this cannot copy — see §4.2); `AppConfig.waterQualityClient`'s `Auto` case (`cli/src/main/scala/marola/AppConfig.scala:159`, the only place that needs to learn about new providers); MIP-0030 §4.3 (the investigation that surfaced this as a separate, real gap rather than a rendering bug); `knowledge/*.md`'s sourced-corpus pattern (the closest existing precedent for a hand-curated, sourced JSON resource, reused here for §5's coordinate table) |
 | **Effort** | **M**, not IMA/SC's S — re-assessed after live verification in §4: two new region-specific clients, a new PDF-text-extraction dependency, and (the real driver) a hand-curated point→coordinate lookup table per state, because neither institute's bulletin carries coordinates (§4.3) |
-| **Gain** | user value (Rio and Bahia currently show "no data" for every beach's water quality — the single biggest missing fact those two areas have relative to Florianópolis); exam coverage (AI-103 §1 transparency — same "no data, never guessed" discipline already applied elsewhere) |
+| **Gain** | user value (Rio and Bahia currently show "no data" for every beach's water quality — the single biggest missing fact those two areas have relative to Florianópolis) |
 | **Effort vs Gain** | `do next` — real, bounded, buildable work; not a cheap win like IMA/SC was, but not "expensive, defer" either: the hard parts (PDF structure, point universe size) are now measured, not guessed |
 | **Depends on** | Nothing blocking; no Phase 1 gate, no paid resource. Does depend on this MIP's own §5 design (the coordinate table) existing before either client can produce a correctly-matched result — sequencing note, not an external blocker |
 | **Risk** | The point→coordinate table is hand-curated and **will drift** as INEA/INEMA add or retire sampling points — unlike IMA/SC's JSON feed (which carries its own coordinates and self-updates), this needs a human to notice and fix drift, or points silently stop matching and quietly degrade to "no data" (safe failure mode, but a real maintenance cost this MIP should not undersell) |
@@ -223,12 +223,6 @@ reviewed for IMA/SC (MIP-0001 §6).
   ("Em frente à casa Vila Maria..."), for a one-time task (§4.4: a bounded ~50-100 points near
   marola's actual configured areas, not the full 291/134) that a human can do once, accurately,
   and cite. Revisit if a fourth area's point count makes hand-curation impractical.
-
-## 10. Exam-coverage mapping
-
-AI-103 §1, responsible-AI transparency: identical "no data, never guessed" pattern already mapped
-for MIP-0021; extends it to a second data-availability axis (per-region source coverage, not just
-per-amenity).
 
 ## 11. Open questions
 

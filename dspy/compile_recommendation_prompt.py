@@ -12,7 +12,7 @@ bootstrap calls cost real money.
 Usage (see dspy/README.md):
     pip install -r requirements.txt
     python compile_recommendation_prompt.py              # local Ollama by default
-    MAROLA_DSPY_MODEL=azure/<deployment> python ...      # LiteLLM's AZURE_API_KEY/_BASE/_VERSION
+    MAROLA_DSPY_MODEL=<litellm-model-id> python ...      # any LiteLLM provider, with its own env keys
     python compile_recommendation_prompt.py --self-test  # offline, no LLM, no MLflow
 
 Optional, both opt-in via env and silent when unset:

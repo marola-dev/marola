@@ -10,7 +10,7 @@
 | **Effort** | S — additive-only config files (`opencode.json`, a jail recipe, a second cost-log reader); no code deleted |
 | **Gain** | infra/dev-loop (vendor independence; tests which of MIP-0011's practices are harness-neutral) |
 | **Effort vs Gain** | cheap win — small and reversible ("rollback is stop typing opencode"); two tasks produce real comparison data |
-| **Depends on** | MIP-0011 (most of its ten tasks map onto OpenCode config keys); no phase or Azure gate |
+| **Depends on** | MIP-0011 (most of its ten tasks map onto OpenCode config keys); no phase or cloud-cost gate |
 | **Risk** | since 2026-04-04 Claude under OpenCode is pay-per-token API, not subscription — the tryout's `Cost:` figures become real bills, not a quota proxy |
 | **Cost so far** | ~289k tokens (forked subagent, ~8 min) for PR #53 — not priced; the commit's own note says `cost-split.py` cannot price subagent usage |
 
@@ -59,8 +59,6 @@ $ just jail-opencode                           # ai-jail, same policy as jail-cl
 opencode v1.18.28 · agent build · model ollama/llama3.2 (default) · AGENTS.md loaded · 3 skills
 > /mip 0014 …                                  # .opencode/commands/mip.md → the mip skill, same text
 > just build && just test && just quality      # allowed by opencode.json permission rules, no prompt
-> azd up
-✗ bash "azd *" is denied by permission config   # the cost rule, enforced by the harness
 $ just opencode-cost                           # ccusage opencode session — the per-session table
 $ just cost-split MIP-0014                     # reads OpenCode's storage too (task 2 below)
 ```
@@ -110,8 +108,8 @@ serve` (headless HTTP), `opencode run` (non-interactive, `--format json`, `--mod
 - **Permissions** (`/docs/permissions`): `permission.{read,edit,bash,glob,grep,task,skill,webfetch,
   external_directory,doom_loop,question}`, values `allow|ask|deny`, glob patterns per key, "the last
   matching rule winning", per-agent overrides, `.env` denied by default, `--auto` approves
-  everything not denied. → the cost gate is `"bash": {"azd *": "deny", "az deployment *": "deny"}`:
-  harness-enforced, no shell hook needed (MIP-0011 task 2).
+  everything not denied. → a cost gate is a `"bash"` pattern set to `"deny"`: harness-enforced, no
+  shell hook needed (MIP-0011 task 2).
 - **Plugins** (`/docs/plugins`): JS/TS in `.opencode/plugins/` or npm; events include
   `tool.execute.before/after`, `permission.asked`, `session.idle`, `file.edited`, `shell.env`;
   `throw new Error(…)` in `tool.execute.before` blocks the call. → MIP-0011's Stop-gate ("tests
@@ -128,7 +126,6 @@ serve` (headless HTTP), `opencode run` (non-interactive, `--format json`, `--mod
 
 `/docs/providers`: 75+ providers via the AI SDK and the models.dev catalogue; Ollama as
 `@ai-sdk/openai-compatible` with `baseURL: http://localhost:11434/v1` and a `models` block;
-Azure OpenAI via `AZURE_RESOURCE_NAME` + key through `/connect` (deployment name = model name);
 Anthropic via API key **or** "Claude Pro/Max authentication through browser-based login". That
 last path is no longer allowed: Anthropic's consumer terms since 2026-04-04 state that using OAuth
 tokens from Free/Pro/Max accounts "in any other product, tool, or service … is not permitted"
@@ -190,8 +187,7 @@ The tryout adds files next to `.claude/`, deletes nothing, and is one PR per bul
      "permission": {
        "bash": { "*": "ask", "just build*": "allow", "just test*": "allow", "just quality*": "allow",
                  "just fmt*": "allow", "sbt *": "allow", "git status*": "allow", "git diff*": "allow",
-                 "git log*": "allow", "scripts/stack.sh status*": "allow",
-                 "azd *": "deny", "az deployment *": "deny", "az group create*": "deny" },
+                 "git log*": "allow", "scripts/stack.sh status*": "allow" },
        "read": { "*": "allow", ".env": "deny", ".env.*": "deny", "**/*.pem": "deny", "**/*.key": "deny" },
        "skill": { "*": "allow", "mip-tasks": "ask" }
      },
@@ -202,7 +198,7 @@ The tryout adds files next to `.claude/`, deletes nothing, and is one PR per bul
    No secrets: API keys go through `/connect` into `~/.local/share/opencode/auth.json`, never here.
    Paid models are not configured by default; a developer adds `"model": "anthropic/…"` in
    `~/.config/opencode/opencode.json` (global, per-machine); the cost gate of `AGENTS.md` applies to
-   the harness's own bill as much as to Azure.
+   the harness's own bill as much as to cloud resources.
 2. **`scripts/cost-split.py` reads OpenCode storage too.** A second `messages()` source:
    `~/.local/share/opencode/storage/message/*/msg_*.json` (timestamp, model, `tokens.{input,
    output,cache.read,cache.write}` (**field names to confirm against a real file, §11**),
@@ -252,7 +248,7 @@ improvement over prose), and the local model stays the default (no new paid path
 - `opencode.json` validates against `https://opencode.ai/config.json` (a `just quality` step with
   `check-jsonschema` if it is in the shell, else a one-off).
 - Live, per tryout session, recorded in the PR body: `AGENTS.md` shown as loaded; `skill` tool
-  lists the three skills; `azd up` denied with no prompt; `just test` allowed with no prompt;
+  lists the three skills; `just test` allowed with no prompt;
   `opencode stats` and `just opencode-cost` agree on tokens for the session.
 - **Success criteria (all three, for both tasks):** gates green with at most one human
   intervention beyond review; a measured `Cost:` on the PR; a reviewer (superpowers
@@ -289,10 +285,6 @@ improvement over prose), and the local model stays the default (no new paid path
   same reason MIP-0011 declined `claude -p` in CI.
 - **Replace outright, skip the tryout**: would discard a working, measured flow on documentation
   alone; the house rule is verify first.
-
-## 10. Exam-coverage mapping
-
-None. Developer tooling.
 
 ## 11. Open questions
 

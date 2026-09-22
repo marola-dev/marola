@@ -100,7 +100,7 @@ object Http:
     headers.foreach { case (k, v) => builder.header(k, v) }
     builder
 
-  /** `headers`: e.g. an API key that must not go in the URL (`RouteFinder`). */
+  /** `headers`: e.g. an API key that must not go in the URL. */
   def getString(
       url: String,
       headers: Map[String, String] = Map.empty,
@@ -150,7 +150,7 @@ object Http:
       check(url, transport.get.send(req.build()), 500)
     }
 
-  /** Raw-binary POST — Azure AI Vision takes the image bytes as the body, not JSON. */
+  /** Raw-binary POST — for APIs that take the payload (e.g. image bytes) as the body, not JSON. */
   def postBytes(
       url: String,
       body: Array[Byte],

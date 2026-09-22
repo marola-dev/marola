@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude Opus 5, for M. Hoffmann (request of 2026-09-07: "how to keep existing map in marola.dev/v1 and start to build marola.dev/v2 the new not statically rendered map") |
 | **Created** | 2026-09-07 |
-| **Phase** | 3 (Deploy — the same phase MIP-0005's static site already occupies; still free, still no Azure account, no new hosting). Phase 1 (the Telegram bot) is still not done; per `AGENTS.md`'s phase-discipline rule that is flagged here explicitly, but it does not gate this work any more than it gated MIP-0005/0009/0030/0037 — the site has run alongside Phase 1 since it existed |
+| **Phase** | 3 (Deploy — the same phase MIP-0005's static site already occupies; still free, still no cloud account, no new hosting). Phase 1 (the Telegram bot) is still not done; per `AGENTS.md`'s phase-discipline rule that is flagged here explicitly, but it does not gate this work any more than it gated MIP-0005/0009/0030/0037 — the site has run alongside Phase 1 since it existed |
 | **Related** | MIP-0005 (v1 itself — its §5.3/§5.4 build-and-schedule design, and its §9 rejection of a "dynamic site (server + API)", which this MIP reopens on new evidence rather than overturning); MIP-0029 (positioning — a live layer is what "the ocean intelligence layer" claims to be); MIP-0033 (§5.2's Cloudflare-Tunnel-backed chat server — the repo's only precedent for a live origin behind `marola.dev`; researched here and deliberately **not** needed, §9.3); MIP-0035 (the plugin API's `ctx`/`onBoardUpdate` contract, which v2 must preserve — §5.5); MIP-0037 (the PWA — v1-shaped by construction, and v2's own offline story, §5.6) |
 | **Effort** | L — a Scala.js cross-build of the scorer (this repo's first JS build target), a second client tree, and a `site.yml` that publishes both. Re-rated from M once §4.4 established that the scorer cannot be hand-ported to JavaScript without duplicating safety-relevant logic — copy this clause into the index cell, not a bare `L` |
 | **Gain** | `user value` (a score for the hour you are actually standing on the beach in, from the newest forecast run — not a snapshot computed up to 3 h ago); `infra/dev-loop` (one scorer, two targets: the cross-build is reusable by every later browser-side feature); `cost/ops` (still exactly $0 per visitor — no server, no Worker, no account, no card on file) |
 | **Effort vs Gain** | `do next` for §5.1 (the v1 freeze — small, reversible, and it unblocks everything else); `do when the Scala.js cross-build proves out` for §5.3/§5.4 (the live half) — §4.4's `java.time` shim is the one genuine unknown, and it is cheap to settle in a spike before committing to the rest |
-| **Depends on** | Nothing blocks this. Real coordination, not blocking: MIP-0035 and MIP-0037 both edit `site/static/app.js`/`index.html`, and §5.1's freeze changes what "that file" means — so §5.1 should land either clearly before or clearly after them, not interleaved (MIP-0037 §8 already names this exact "two hands in one file" hazard). No Azure resource is involved, so `AGENTS.md`'s cost gate is not triggered; §8 states what would trigger it |
+| **Depends on** | Nothing blocks this. Real coordination, not blocking: MIP-0035 and MIP-0037 both edit `site/static/app.js`/`index.html`, and §5.1's freeze changes what "that file" means — so §5.1 should land either clearly before or clearly after them, not interleaved (MIP-0037 §8 already names this exact "two hands in one file" hazard). No paid cloud resource is involved, so `AGENTS.md`'s cost gate is not triggered; §8 states what would trigger it |
 | **Blocked by** | none |
 | **Risk** | Two clients, maintained forever. Every later map feature (MIP-0030's trails, MIP-0016's water markers, MIP-0035's plugins) has to choose a side or be built twice — and the honest failure mode is not that v2 breaks, it is that v1 quietly rots into a stale, half-featured page nobody removed |
 | **Cost so far** | — |
@@ -315,13 +315,6 @@ a "live" label. An `unfit` water verdict remains a veto to score 0 in both clien
 5. **Full client-side, Overpass included**: v2 discovers beaches anywhere. Rejected on §4.2's
    operator policy, in the operator's own words. Revisit only behind marola's own Overpass instance,
    which is a server, which is alternative 2 or 3 again.
-
-## 10. Exam-coverage mapping
-
-None directly — this is web-platform and build architecture, not an AI-103/AI-500 domain row. One
-adjacent note: §6's freshness labelling and §5.6's explicit fallback state are the same "graceful
-degradation, never a silent failure" theme `AI-500-MAPPING.md` §3 tracks as a gap and MIP-0033 §10
-already claims a small piece of.
 
 ## 11. Open questions
 

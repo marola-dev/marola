@@ -6,11 +6,11 @@
 | **Author** | Claude Sonnet 5, for M. Hoffmann (conversation with a collaborator, WhatsApp, 5 Sep 2026, 09:53–10:31) |
 | **Created** | 2026-09-05 |
 | **Phase** | 1 (product surface, alongside MIP-0002/MIP-0005) — this is the first MIP that puts one user's data in front of another user, which is a bigger step than a phase number captures (the source draft pointed here to "§11.3"; that didn't match any open question below — see the editorial note at the end of §11) |
-| **Related** | MIP-0002 (Telegram bot — the identity/messaging surface this depends on), MIP-0004 (daily digest — the existing precedent for opt-in proactive contact and unsubscribe), MIP-0005 (the board's beach+hour vocabulary, reused as-is), MIP-0009 (same board, shown per-beach), `FUTURE-WORK.md` §1 (other activities as layers — this is a cross-activity *social* layer, not a new activity; needs its own sketch there), `PHILOSOPHY.md` ("an unrequested push is the one feature that needs a governance gate"), `AI-500-MAPPING.md` §4 (human-confirmation gate) |
-| **Effort** | L — a new `intents` store (Cosmos DB in the Azure path, a local file/SQLite locally, per `ARCHITECTURE.md` §5's pattern), a pure matching module (§5), and two new bot commands (`/swim`, `/stop_intents`) riding on MIP-0002's not-yet-built bot — a new small subsystem, not a one-file change |
-| **Gain** | user value (a genuinely new feature, not an amendment to an existing one — §1); exam coverage (`AI-500-MAPPING.md` §4 — the first feature moving person-to-person data, not just a proactive push, per §10) |
+| **Related** | MIP-0002 (Telegram bot — the identity/messaging surface this depends on), MIP-0004 (daily digest — the existing precedent for opt-in proactive contact and unsubscribe), MIP-0005 (the board's beach+hour vocabulary, reused as-is), MIP-0009 (same board, shown per-beach), `FUTURE-WORK.md` §1 (other activities as layers — this is a cross-activity *social* layer, not a new activity; needs its own sketch there), `PHILOSOPHY.md` ("an unrequested push is the one feature that needs a governance gate") |
+| **Effort** | L — a new `intents` store (a local file/SQLite, per `ARCHITECTURE.md` §5's pattern), a pure matching module (§5), and two new bot commands (`/swim`, `/stop_intents`) riding on MIP-0002's not-yet-built bot — a new small subsystem, not a one-file change |
+| **Gain** | user value (a genuinely new feature, not an amendment to an existing one — §1) |
 | **Effort vs Gain** | park — depends on MIP-0002 (§5, not yet built) and, per open question 5 below, on the collaborator confirming real demand; the MIP is also reconstructed from an unconfirmed transcript (§11 Q1), so it shouldn't move past Draft on its own merits regardless of MIP-0002's status |
-| **Depends on** | MIP-0002 (Telegram identity/messaging surface — §5, hard blocker; also gated by `AGENTS.md`'s Phase 1 discipline, since MIP-0002 itself is still Draft); no paid Azure resource — the local default is a file/SQLite store, Cosmos DB is the opt-in per `ARCHITECTURE.md` §5 |
+| **Depends on** | MIP-0002 (Telegram identity/messaging surface — §5, hard blocker; also gated by `AGENTS.md`'s Phase 1 discipline, since MIP-0002 itself is still Draft); no paid cloud resource — the store is a local file/SQLite, per `ARCHITECTURE.md` §5 |
 | **Risk** | small-N deanonymization (§8) — "2 others near Joaquina at 10:00" narrows to a small, guessable set once marola's user base is a handful of people, the opposite of the anonymity a bigger app has |
 | **Cost so far** | — (nothing merged yet; this MIP is still Draft) |
 
@@ -121,8 +121,8 @@ marola: Marked — you're swimming at Praia da Joaquina around 10:00 today.
 
 ## 5. Design
 
-- A small `intents` store (Cosmos DB in the Azure path, a local file/SQLite in the local-first
-  path, mirroring `ARCHITECTURE.md` §5's per-integration pattern): `(user_id, beach_id, hour,
+- A small `intents` store (a local file/SQLite, mirroring `ARCHITECTURE.md` §5's
+  per-integration pattern): `(user_id, beach_id, hour,
   created_at, expires_at)`. No continuous GPS, no background tracking; an intent is a single
   explicit action (`/swim`), same shape as MIP-0004's subscription record.
 - Matching is a pure function: two intents match if `beach_id` is equal and `hour` windows
@@ -181,12 +181,6 @@ scoring change:
   Rejected.
 - **Do nothing until the audio is confirmed**: the honest default given §11.1. Recorded here so
   that shipping this MIP as Draft is visibly not the same as shipping the feature.
-
-## 10. Exam-coverage mapping
-
-`AI-500-MAPPING.md` §4 — this is the first feature where the "human-confirmation gate" language
-applies to *data about a person*, not just a proactive push; worth its own row rather than folding
-into the digest's.
 
 ## 11. Open questions
 

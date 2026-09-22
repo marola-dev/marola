@@ -34,7 +34,7 @@ you to check. Say so and stop, don't invent work.
    document, including the ones that already show their own sourcing (that would just repeat work
    the MIP's author already did correctly). If you cannot find a source for a claim, say so
    plainly rather than fetching more broadly than 3 to compensate.
-3. **Constitution check.** Read `AGENTS.md`'s five house rules (local-first/Azure-opt-in per
+3. **Constitution check.** Read `AGENTS.md`'s five house rules (local-first/cloud-opt-in per
    integration; safety-relevant logic deterministic and out of the LLM; no unsourced facts reach a
    user; phase discipline; honest status vocabulary; same list the `mip` skill's own "Rules of the
    house" section states). Flag any MIP design that conflicts with one of these as **Critical**,

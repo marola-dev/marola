@@ -1,22 +1,20 @@
 # marola — Architecture
 
-**Status:** POC pipeline plus six pluggable local/Azure integrations, all implemented and
-compiling; most exercised live (see the per-feature "Verified" notes in §3). No Azure resources
-provisioned, no Telegram bot registered yet. Everything Azure-flagged below is real, correct
-client code checked against real SDKs/API references, not yet run against a live Azure account.
+**Status:** POC pipeline plus six pluggable integrations, all with local implementations,
+implemented and compiling; most exercised live (see the per-feature "Verified" notes in §3). No
+cloud resources provisioned, no Telegram bot registered yet.
 
 Related docs: [`FUTURE-WORK.md`](./FUTURE-WORK.md) (multi-activity support: diving, surfing, any
 sea-related activity; three reviewed-not-adopted/deferred dependencies; evaluation-harness ideas),
 [`EFFECTS-MAP.md`](./EFFECTS-MAP.md) (a Scala/FP-purity review: what's pure, what's `< Sync`, and
 the one hidden untracked effect worth knowing about), [`RUN-LOCALLY.md`](./RUN-LOCALLY.md) (a
 step-by-step guide to running the whole pipeline with a small local Ollama model, no Telegram, no
-Azure), and [`TELEGRAM-SETUP.md`](./TELEGRAM-SETUP.md) (registering the bot and configuring
-credentials for both the local-dev and Azure-Foundry paths).
+cloud account), and [`TELEGRAM-SETUP.md`](./TELEGRAM-SETUP.md) (registering the bot and
+configuring its credentials).
 
-marola is a real product **and** hands-on coverage of every AI-103 exam domain (see §10), built
-around a language model synthesis step actually driven by an **offline-compiled DSPy prompt**, and
-a **local-first design**: every Azure integration below has a free, local default and is entirely
-optional, not a bootstrap-only stand-in.
+marola is built around a language model synthesis step actually driven by an **offline-compiled
+DSPy prompt**, and a **local-first design**: every integration below runs on a free, local
+backend.
 
 ## 1. Problem & product vision
 
@@ -47,11 +45,11 @@ Telegram wins on every axis that matters for this use case. **Decision: Telegram
 
 ## 3. What's actually built
 
-A real, runnable pipeline plus six independently pluggable local/Azure integrations: no mocks,
-no stubs pretending to be real:
+A real, runnable pipeline plus six independently pluggable integrations: no mocks, no stubs
+pretending to be real:
 
-Four sbt modules at the repo root: `core`, `local`, `azure`, `cli` (see `FUTURE-WORK.md` §7.3 for
-why, and the dependency-inversion fix that keeps `core` free of any Azure reference):
+Three sbt modules at the repo root: `core`, `local`, `cli` (see `FUTURE-WORK.md` §7.3 for why, and
+the dependency-inversion fix that keeps `core` free of any backend-specific reference):
 
 ```
 core/src/main/scala/marola/
@@ -82,30 +80,21 @@ core/src/main/scala/marola/
   model/Models.scala             Coordinates, Beach, HourlyConditions, BestHour, JellyfishRisk,
                                   WhaleSightingLikelihood
 
-local/src/main/scala/marola/     zero Azure SDK dependency — the always-available path
+local/src/main/scala/marola/     the local backends — the always-available path
   llm/LocalLlmClient.scala       local Ollama chat backend
   vision/LocalVisionClient.scala local multimodal Ollama backend
   sightings/LocalFileSightingStore.scala   JSON-lines file store
   water/ImaScWaterQualityClient.scala      §5g — IMA/SC bathing-water feed (Santa Catarina)
   knowledge/OllamaEmbedder.scala           §5h — embeddings via Ollama's native /api/embed
 
-azure/src/main/scala/marola/     every optional Azure integration lives here, nowhere else
-  llm/AzureFoundryLlmClient.scala   §5a — Azure AI Foundry
-  vision/AzureVisionClient.scala    §5e — Azure AI Vision
-  beaches/RouteFinder.scala         §5b — Azure Maps real travel distance
-  sightings/CosmosDbSightingStore.scala   §5d — Cosmos DB
-  observability/AzureMonitorTracing.scala  §5f — Application Insights via OpenTelemetry (the `azure` Tracing backend)
-
-cli/src/main/scala/marola/       depends on core + local + azure — the one place that picks
-                                  a backend per integration
+cli/src/main/scala/marola/       depends on core + local — the one place that wires the
+                                  backends together
   Main.scala                     CLI entry point (KyoApp) — see §3.1 for its flags
   Report.scala                   pure text rendering: ranked list, detailed block, lore, answers
   site/SiteBuilder.scala         MIP-0005 — `--site`: boards for every area of site/areas.json
                                   into site/dist/ (+ a copy of site/static/, the Leaflet page)
-  AppConfig.scala                env config + a llmClient/sightingStore/visionClient/
-                                  distanceRefiner factory method per pluggable integration
-                                  (each: local default, Azure opt-in, returns None if Azure
-                                  chosen but not fully configured)
+  AppConfig.scala                env config + a llmClient/sightingStore/visionClient/tracing
+                                  factory method per pluggable integration
   agent/SwimConditionsMcpServer.scala   §5c — exposes BeachFinder/Recommender as MCP tools
 
 dspy/
@@ -165,7 +154,7 @@ it used on the `origin ->` line:
    landed in the centro, and the island's beaches came back.
 4. The built-in Arpoador default, only if no provider answered at all (offline).
 
-No Azure setup, no Telegram token are needed for any of the above. Every integration defaults to
+No cloud account, no Telegram token are needed for any of the above. Every integration is
 free/local, see §5's table.
 
 ## 3b. Two different uses of AI today, a third planned — deliberately not one
@@ -213,8 +202,7 @@ Neither of the two above predicts anything. The map reports what the agencies an
 measured; the chat explains it. A third use, **forecasting marola's own accumulated series with a
 pretrained time-series transformer**, is designed in
 [MIP-0007](./mips/MIP-0007-time-series-foundation-models.md), prompted by Nixtla's TimeGPT, with
-the open-weight models (Chronos, TimesFM, Moirai) as the local-first candidates and TimeGEN-1 via
-Azure AI Foundry as the opt-in cloud path, consistent with the six-integration pattern in §5.
+the open-weight models (Chronos, TimesFM, Moirai) as the local-first candidates.
 
 It is a genuinely different shape from both: not a language model at all, but a numeric forecaster
 run zero-shot over a history: the kind of thing that could calibrate the jellyfish and whale
@@ -233,21 +221,21 @@ should not be quietly folded into either of the two that exist.
 ```mermaid
 flowchart TD
     User["User shares location/photo<br/>(native Telegram UI)"] --> Bot["Telegram Bot API<br/><i>long polling, or a webhook once hosted</i>"]
-    Bot --> Service["marola service (Kyo, Scala)<br/>Main / Telegram polling loop<br/><i>Container App, scale-to-zero</i>"]
-    Service --> Beaches["BeachFinder + RouteFinder<br/>(Overpass, +Azure Maps §5b)"]
+    Bot --> Service["marola service (Kyo, Scala)<br/>Main / Telegram polling loop"]
+    Service --> Beaches["BeachFinder<br/>(Overpass, haversine §5b)"]
     Service --> Weather["OpenMeteoClient<br/>(Open-Meteo, free)"]
     Service --> Vision["VisionClient (§5e)<br/>on a submitted photo"]
     Beaches --> Scoring["Swimability (pure)<br/>scores + jellyfish/whale heuristics (§8)"]
     Weather --> Scoring
-    Scoring --> Llm["LlmClient + CompiledPrompt (§5a)<br/>local Ollama / Azure Foundry"]
+    Scoring --> Llm["LlmClient + CompiledPrompt (§5a)<br/>local Ollama"]
     Vision --> Llm
     Llm --> Reviewer["Reviewer (§5a)<br/>second LLM pass: score + verdict + final_summary"]
     Reviewer --> Reply["Reply sent back via Telegram Bot API"]
-    Vision -.-> Sightings["SightingStore (§5d)<br/>local file / Cosmos DB"]
+    Vision -.-> Sightings["SightingStore (§5d)<br/>local file"]
 ```
 
 `SwimConditionsMcpServer` (§5c) exposes `BeachFinder`/`Recommender` as MCP tools for any MCP client
-(Claude Desktop locally, or a Foundry agent once deployed) to call directly, as an alternative
+(Claude Desktop, for example) to call directly, as an alternative
 entry point to the hardcoded pipeline above. Not shown in the diagram since it's a parallel access
 path, not a stage in this one.
 
@@ -257,23 +245,23 @@ span when configured; cross-cutting, not shown as a pipeline stage.
 Cross-cutting: rate limiting (per Telegram user ID) and a cost-governor check before any paid call,
 built early, not bolted on.
 
-## 5. The six pluggable integrations: local default, Azure opt-in
+## 5. The six pluggable integrations
 
-Every one of these follows the same shape: a trait, a local (free) implementation that's the
-default, an Azure implementation that's opt-in via env vars, and an `AppConfig` factory method
-(`llmClient`, `sightingStore`, `visionClient`) returning `None` if Azure is selected but not fully
-configured (so `Main` can fail gracefully with a clear message rather than a stack trace).
+Every one of these follows the same shape: a trait in `core`, a local (free) implementation, and an
+`AppConfig` factory method (`llmClient`, `sightingStore`, `visionClient`, `tracing`) that wires it
+in. A cloud backend is opt-in per integration, never a package deal (GCP is the path under
+discussion, MIP-0057).
 
-| # | Capability | Local default | Azure opt-in | Env var to switch |
-|---|---|---|---|---|
-| 5a | Query synthesis (turn the #1 result into a sentence) | Ollama-compatible chat completion | Foundry/Azure OpenAI chat completion via `azure-identity` | `MAROLA_LLM_PROVIDER=azure` |
-| 5b | Beach distance | Haversine ("as the crow flies") | Azure Maps real driving distance | set `AZURE_MAPS_SUBSCRIPTION_KEY` |
-| 5c | Agentic tool access | MCP server over stdio (any local MCP client) | *(same server; a Foundry agent needs the HTTP/SSE transport variant instead — not built, see §5c)* | n/a — always available |
-| 5d | Sighting reports | JSON-lines file | Cosmos DB container | `MAROLA_SIGHTING_STORE_PROVIDER=azure` |
-| 5e | Photo analysis | Multimodal Ollama model (`llava`) | Azure AI Vision Image Analysis | `MAROLA_VISION_PROVIDER=azure` |
-| 5f | Observability | Off (no-op); `MAROLA_TRACES=mlflow` → OTLP traces into the local MLflow server (MIP-0010) | Application Insights via OpenTelemetry | `MAROLA_TRACES=off\|mlflow\|azure` (unset + `APPLICATIONINSIGHTS_CONNECTION_STRING` ⇒ `azure`) |
-| 5g | Bathing-water quality (MIP-0001) | IMA/SC feed, auto-selected when the origin is in Santa Catarina; `none` elsewhere | *(none — regional agencies, not a cloud service; see MIP-0001 §5.2)* | `MAROLA_WATER_QUALITY_PROVIDER=auto\|ima-sc\|none` |
-| 5h | Ocean knowledge Q&A — local RAG (MIP-0001, `FUTURE-WORK.md` §9.1) | `knowledge/*.md` embedded by Ollama (`llama3.2` itself by default), JSON index under `data/` | *(not built — Azure AI Search is the obvious sibling in Phase 2)* | `MAROLA_LOCAL_EMBED_MODEL`, `MAROLA_KNOWLEDGE_DIR` |
+| # | Capability | Implementation | Env vars |
+|---|---|---|---|
+| 5a | Query synthesis (turn the #1 result into a sentence) | Ollama-compatible chat completion | `MAROLA_LOCAL_LLM_MODEL` |
+| 5b | Beach distance | Haversine ("as the crow flies") | n/a |
+| 5c | Agentic tool access | MCP server over stdio (any local MCP client) | n/a — always available |
+| 5d | Sighting reports | JSON-lines file | `MAROLA_LOCAL_SIGHTING_STORE_PATH` |
+| 5e | Photo analysis | Multimodal Ollama model (`llava`) | `MAROLA_LOCAL_VISION_MODEL` |
+| 5f | Observability | Off (no-op); `MAROLA_TRACES=mlflow` → OTLP traces into the local MLflow server (MIP-0010) | `MAROLA_TRACES=off\|mlflow` |
+| 5g | Bathing-water quality (MIP-0001) | IMA/SC feed, auto-selected when the origin is in Santa Catarina; `none` elsewhere | `MAROLA_WATER_QUALITY_PROVIDER=auto\|ima-sc\|none` |
+| 5h | Ocean knowledge Q&A — local RAG (MIP-0001, `FUTURE-WORK.md` §9.1) | `knowledge/*.md` embedded by Ollama (`llama3.2` itself by default), JSON index under `data/` | `MAROLA_LOCAL_EMBED_MODEL`, `MAROLA_KNOWLEDGE_DIR` |
 
 ### 5a. Query synthesis — `llm/`
 
@@ -299,12 +287,8 @@ byte-identical replay (DSPy's internal adapter formatting isn't accessible from 
 schema this parses was not guessed: it's the real, confirmed output of `dspy.Predict(...).save()`
 against a live `dspy==3.3.1` install (see the Status note below).
 
-**`llm/LlmClient.scala`** is the trait both backends implement: `LocalLlmClient` (an
-OpenAI-compatible endpoint, e.g. Ollama's `/v1/chat/completions`) and `AzureFoundryLlmClient` (a
-plain REST chat-completions call against a Foundry/Azure OpenAI deployment, authenticated via
-`DefaultAzureCredential`, deliberately *not* the full `azure-ai-agents` SDK, which is reserved for
-§5c's actual agent orchestration). `AppConfig.llmClient` picks one based on `MAROLA_LLM_PROVIDER`
-(default `local`).
+**`llm/LlmClient.scala`** is the trait `LocalLlmClient` implements (an OpenAI-compatible
+endpoint, e.g. Ollama's `/v1/chat/completions`). `AppConfig.llmClient` builds it.
 
 **`llm/Reviewer.scala` — a second LLM pass that grades and can override the first.** Originally a
 `FUTURE-WORK.md` §4.2 proposal, now built: a second DSPy signature (`ReviewSwimSummary`, compiled
@@ -336,9 +320,6 @@ the raw draft.
   instructions say only to mention it when Moderate/High: a small/quantized local model's
   imperfect instruction-following, not a bug in this code. Worth knowing if the model choice
   changes.
-- `AzureFoundryLlmClient` compiles against real `azure-identity`/`azure-core` APIs
-  (`DefaultAzureCredentialBuilder().build().getTokenSync(...)`) but is unverified against a live
-  Foundry deployment (none provisioned).
 - **The reviewer pass was also run live**, against both the 26GB model above and a much smaller
   one (`llama3.2:1b`, 1.3GB; see `RUN-LOCALLY.md`): it reliably returns well-formed JSON matching
   the requested schema from both, and in one bootstrap run correctly caught and fixed a
@@ -348,28 +329,21 @@ the raw draft.
   instruction-following gap at that model size, not a code bug; see `RUN-LOCALLY.md`'s
   troubleshooting section.
 
-### 5b. Real travel distance — `beaches/RouteFinder.scala`
+### 5b. Beach distance — haversine
 
-Fixes a real, confirmed limitation of `BeachFinder`'s haversine ("as the crow flies") distance:
-beaches across Guanabara Bay from Arpoador (Icaraí, Camboinhas in Niterói) show up "nearby" despite
-not being reachable without a boat or a long drive around the bay. `Recommender.refineDistances`
-upgrades each beach's distance via Azure Maps' Route Directions API
-(`GET .../route/directions/json?api-version=1.0&query=lat1,lon1:lat2,lon2&subscription-key=...`,
-`routes[0].summary.lengthInMeters` in the response) when `AZURE_MAPS_SUBSCRIPTION_KEY` is set,
-applied only to the already radius-filtered short list, not every Overpass hit, to keep call volume
-bounded, and a per-beach failure falls back to that beach's haversine distance rather than failing
-the whole recommendation. REST shape confirmed against Azure's own published API reference; not
-exercised against a live Azure Maps account (none provisioned).
+`BeachFinder` measures distance as the crow flies. That has a real, confirmed limitation: beaches
+across Guanabara Bay from Arpoador (Icaraí, Camboinhas in Niterói) show up "nearby" despite not
+being reachable without a boat or a long drive around the bay. There is no routing backend today.
 
 ### 5c. Agentic tool access — `agent/SwimConditionsMcpServer.scala`
 
 Exposes `BeachFinder.nearby` and `Recommender.bestPerBeachTomorrow` as two MCP tools
 (`find_nearby_beaches`, `get_swim_recommendation`) instead of `Recommender` hardcoding the call
-order. An agent (Claude Desktop locally, or an Azure AI Foundry agent once deployed) can decide
-when/how to call these itself. Runs over **stdio** (`StdioServerTransportProvider`), the simplest
-MCP transport and the one needing zero network exposure: point any local MCP client's config at
-`java -cp marola-assembly-*.jar marola.agent.SwimConditionsMcpServer` and it works, no Azure
-account, no public URL. A Foundry agent's *remote* MCP tool config would need the SDK's
+order. An agent (Claude Desktop, for example) can decide when/how to call these itself. Runs over
+**stdio** (`StdioServerTransportProvider`), the simplest MCP transport and the one needing zero
+network exposure: point any local MCP client's config at
+`java -cp marola-assembly-*.jar marola.agent.SwimConditionsMcpServer` and it works, no cloud
+account, no public URL. A *remote* MCP client would need the SDK's
 `HttpServletSseServerTransportProvider`/`HttpServletStreamableServerTransportProvider` instead:
 not wired up, since that needs an actual servlet container and a public endpoint, i.e. real
 deployment (`AGENTS.md`'s cost-safety rule).
@@ -395,16 +369,13 @@ way:
    (`No main class detected`). Fixed: `Compile / run / mainClass` pinned to `marola.Main`; the MCP
    server is run via `sbt cli/runMain marola.agent.SwimConditionsMcpServer` (`just mcp-server`) instead.
 
-NOT verified: an actual MCP client (Claude Desktop, a Foundry agent) launching and using this
+NOT verified: an actual MCP client (Claude Desktop, for example) launching and using this
 server. That needs configuring an external client, which wasn't available to test here.
 
 ### 5d. Sighting reports — `sightings/`
 
 The missing piece for the calibration feedback loop §8 describes: `SightingStore` (`record`,
-`recentFor`) with `LocalFileSightingStore` (JSON-lines, default) and `CosmosDbSightingStore`
-(partitioned by `beach_name`, since every query here filters by beach). Cosmos items are passed as
-plain `java.util.Map`, not a typed POJO, avoiding a Jackson-annotation dependency on `Sighting`
-itself, consistent with this module's "no JSON library dependency" stance elsewhere.
+`recentFor`) with `LocalFileSightingStore` (JSON-lines).
 
 **Phase-discipline note** (`AGENTS.md`): the natural way to *submit* a sighting is through the
 Telegram bot, which doesn't exist yet (§11 Phase 1). `Main`'s `--report-sighting` flag is the local
@@ -412,19 +383,14 @@ stand-in: fully testable end to end without the bot, but the bot is still the mi
 for how a real user would ever call this.
 
 **Status:** `--report-sighting jellyfish Arpoador "note"` run live, wrote a real, correctly-shaped
-JSON line to `./data/sightings.jsonl`, confirmed by reading the file back. `CosmosDbSightingStore`
-compiles against a real `com.azure:azure-cosmos:4.71.0` API surface (verified via jar inspection:
-`CosmosClientBuilder`, `createItem(item, PartitionKey, options)`, `queryItems(SqlQuerySpec, ...)`)
-but is unverified against a live Cosmos DB account (none provisioned).
+JSON line to `./data/sightings.jsonl`, confirmed by reading the file back.
 
 ### 5e. Photo analysis — `vision/`
 
 `VisionClient.describe(imageBytes)`: `LocalVisionClient` (a multimodal Ollama model, `llava`,
 `moondream`, over the same `/v1/chat/completions` endpoint as `LocalLlmClient`, with an
-`image_url` content part per the standard OpenAI vision message format) and `AzureVisionClient`
-(Azure AI Vision's Image Analysis 4.0 API: structured captioning with a confidence score, a
-genuinely different capability from a conversational model, not just a redundant path). Same
-phase-discipline note as §5d: photos arrive via the Telegram bot, which doesn't exist yet;
+`image_url` content part per the standard OpenAI vision message format). Same phase-discipline
+note as §5d: photos arrive via the Telegram bot, which doesn't exist yet;
 `--analyze-photo <path>` is the local stand-in.
 
 **Status:** run live against the real local Ollama server. No multimodal model was installed in
@@ -433,16 +399,14 @@ pulling a several-GB vision model wasn't done unprompted), so the actual descrip
 but everything up to that point is genuinely confirmed working: base64 image encoding, the
 multimodal JSON request shape, the HTTP round-trip to Ollama, and Ollama's own `model 'llava' not
 found` error surfacing cleanly through the `Abort`/`Result` error handling rather than crashing.
-Running `ollama pull llava` would complete the verification. `AzureVisionClient`'s REST shape is
-confirmed against Microsoft's own published docs, unverified against a live account.
+Running `ollama pull llava` would complete the verification.
 
-### 5f. Observability — `core/observability/Tracing`, `local/…/MlflowTracing`, `azure/…/AzureMonitorTracing`
+### 5f. Observability — `core/observability/Tracing`, `local/…/MlflowTracing`
 
 Infra-level tracing (the pipeline, the HTTP-bound steps, latency, errors) plus one span per LLM
 call, behind a vendor-free trait in `core` (`Tracing.withSpan`, `Tracing.llmSpan`; `Tracing.Noop`
-is the default): MIP-0010 tasks 5-6. `MAROLA_TRACES=off|mlflow|azure` picks the backend in
-`AppConfig.tracing`; unset keeps the pre-MIP behaviour (`azure` when
-`APPLICATIONINSIGHTS_CONNECTION_STRING` is set, off otherwise). `Main` resolves it once per run and
+is the default): MIP-0010 tasks 5-6. `MAROLA_TRACES=off|mlflow` picks the backend in
+`AppConfig.tracing`; unset means off. `Main` resolves it once per run and
 opens `marola.recommend` as the root span with `bestPerBeachTomorrow` and the two `llm.<model>`
 spans (draft, review) nested under it: one trace per recommendation, three or four spans.
 
@@ -455,26 +419,19 @@ spans (draft, review) nested under it: one trace per recommendation, three or fo
   stay on; exact for the CLI's one linear pipeline, documented as wrong for concurrent pipelines.
   A failing effect closes its span with `ERROR` and rethrows. If the server is down, `Main` prints
   a warning and traces nothing. Observability never fails a recommendation.
-- **`core/llm/TracedLlmClient`** wraps `LocalLlmClient`/`AzureFoundryLlmClient`
+- **`core/llm/TracedLlmClient`** wraps `LocalLlmClient`
   (`AppConfig.tracedLlmClient`): `gen_ai.operation.name=chat`, `gen_ai.request.model`, message count,
   prompt/completion character counts. **No token counts**: `LlmClient.complete` returns the text
   and drops the response's `usage` block; surfacing it means widening the trait (deliberately not
   done in MIP-0010). Prompt and completion *text* are attached only with `MAROLA_TRACE_CONTENT=1`:
   the prompt carries the swimmer's coordinates.
-- **`azure/observability/AzureMonitorTracing`** (`azure`): the former `Telemetry.scala` behind the
-  trait, unchanged in behaviour: `withSpan` only; `llmSpan` falls back to the trait default (same
-  span, result attributes dropped). Its shallow try/finally gap stands: a span is left unclosed if
-  the wrapped effect throws.
 
 **Status:** `MlflowTracing` verified offline against OpenTelemetry's in-memory exporter
 (`MlflowTracingSpec`: names, attributes, nesting, error status, endpoint/header); the OTLP endpoint
 and header are MLflow's documented contract (MIP-0010 §4.3, fetched 2026-09-05). Not yet verified
 against a live `just mlflow-up` server from this session (no Docker daemon there). Run
 `MAROLA_TRACES=mlflow MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000 just run -- --summarize`
-on the host and expect one trace in experiment `marola/traces`. `AzureMonitorTracing` compiles
-against the real `azure-monitor-opentelemetry-autoconfigure:1.4.0` API on OpenTelemetry 1.65.0
-(one `OpenTelemetryVersion` in `build.sbt` for both modules); unverified against a live Application
-Insights resource (none provisioned).
+on the host and expect one trace in experiment `marola/traces`.
 
 ### 5g. Bathing-water quality, tides, and sea lore — `water/`, `conditions/Tides`, `lore/`
 
@@ -540,30 +497,16 @@ scaffold.**
   GPU, gated base weights. Facts are deliberately *not* what the fine-tune targets: format and
   tone are; facts stay in RAG with citations.
 
-## 6. Azure infrastructure needed
+## 6. Cloud infrastructure needed
 
-Nothing is provisioned yet. Per `AGENTS.md`'s cost-safety rule, nothing gets provisioned without
-your explicit go-ahead. When it's time, per integration:
+Nothing is provisioned yet, and nothing is required. Per `AGENTS.md`'s cost-safety rule, nothing
+gets provisioned without your explicit go-ahead. GCP is the opt-in cloud path under discussion
+(MIP-0057).
 
-| Resource | Backs | Notes |
-|---|---|---|
-| Foundry project + one model deployment (e.g. `gpt-4o-mini`) | §5a | Cheapest capable model — this is short summarization, not reasoning |
-| Managed identity (`azure-identity`) | §5a | `DefaultAzureCredential` everywhere — no hardcoded keys, see `AGENTS.md` |
-| Azure Maps account | §5b | Has a free monthly transaction allotment — check current terms before relying on it at volume |
-| Cosmos DB account + container (partition key `beach_name`) | §5d | Serverless pricing tier keeps idle cost near zero |
-| Azure AI Vision resource | §5e | |
-| Application Insights resource | §5f | |
-| Container App (scale-to-zero) | Hosting the Telegram bot process | Only needed once running as a **webhook**; long-polling can run anywhere with outbound HTTPS, including a laptop |
-| Budget + Action Group | Cost guardrail across all of the above | An email-alert budget, not a hard cap — write the Bicep when Phase 3 actually provisions anything |
-
-**Not needed yet:** Document Intelligence (IMA has a JSON feed; the PDF bulletin is only the
-fallback), Azure AI Search (the RAG corpus is local, §5h; Search is its Phase 2 sibling), Event
-Grid/Communication Services (Telegram's own Bot API replaces that whole layer; see §2).
-
-**To actually test the Telegram bot without any Azure spend**: register a bot via
+**To actually test the Telegram bot without any cloud spend**: register a bot via
 [@BotFather](https://core.telegram.org/bots#botfather) (free), run the service locally with
-long-polling and `MAROLA_TELEGRAM_BOT_TOKEN` set. Every integration in §5 works with its local
-default, so the bot is fully testable end-to-end before spending anything on Azure.
+long-polling and `MAROLA_TELEGRAM_BOT_TOKEN` set. Every integration in §5 works locally, so the bot
+is fully testable end-to-end before spending anything.
 
 ## 7. Third-party APIs used (all free, no key, confirmed live against real data)
 
@@ -609,9 +552,9 @@ heuristics' thresholds/weights (the bigger lift) remains future work.
 
 ## 9. Other known limitations (POC-stage, not hidden)
 
-- **Beach distance defaults to haversine** ("as the crow flies") unless `AZURE_MAPS_SUBSCRIPTION_KEY`
-  is set (§5b), confirmed on real data: beaches across Guanabara Bay from Arpoador show up within
-  the 15km radius despite not being reachable without a boat or a long drive around the bay.
+- **Beach distance is haversine** ("as the crow flies", §5b), confirmed on real data: beaches
+  across Guanabara Bay from Arpoador show up within the 15km radius despite not being reachable
+  without a boat or a long drive around the bay.
 - **A beach's distance is measured to its OSM centroid, not its nearest shoreline.** Large beaches
   are multipolygon relations and Overpass's `out center` gives the polygon's centre, so a 4km-long
   beach you live 200m from can show as "2.1km away" (confirmed: Praia do Campeche). Ranking is
@@ -631,38 +574,26 @@ heuristics' thresholds/weights (the bigger lift) remains future work.
   tests are cheap" convention (`AGENTS.md`'s code style section). Every integration layer was
   instead verified by actually running it against live services/data; see each subsection of §5
   for exactly what was and wasn't exercised.
-- **`AzureMonitorTracing.withSpan`'s shallow try/finally gap**: see §5f (`MlflowTracing` does close its span on failure).
 - **`CompiledPrompt`'s chat-message replay is a good-faith approximation** of DSPy's own
   `ChatAdapter` formatting, not byte-identical; see §5a.
-
-## 10. Exam coverage: AI-103 and AI-500
-
-Full domain-by-domain mapping lives in its own docs now, not inline here:
-
-- [`AI-103-MAPPING.md`](./AI-103-MAPPING.md): every AI-103 skill area against what marola actually
-  builds, including an honest list of remaining gaps (RAG/fine-tuning, first-class text analysis).
-- [`AI-500-MAPPING.md`](./AI-500-MAPPING.md): the follow-on exam for which AI-103 is the mandatory prerequisite
-  (multi-agent solutions); a design target for where marola's summarizer/reviewer pipeline grows
-  into a real multi-agent architecture, not a record of what's built yet.
 
 ## 11. Development phases
 
 1. **Phase 0: POC pipeline + six pluggable integrations (done, this change).** Beach discovery,
-   live conditions, heuristic scoring, CLI entry point, and local/Azure options for query synthesis,
+   live conditions, heuristic scoring, CLI entry point, and local backends for query synthesis,
    distance, agentic tool access, sighting storage, photo analysis, and observability. Zero
-   Azure/Telegram setup required for any of it.
+   cloud/Telegram setup required for any of it.
 2. **Phase 1: Telegram bot.** Long-polling loop, native location sharing, `AppConfig`'s
    `telegramBotToken` actually wired up, `--report-sighting`/`--analyze-photo`'s CLI stand-ins
-   replaced by real Telegram message/photo handlers. Still zero Azure spend. See
+   replaced by real Telegram message/photo handlers. Still zero cloud spend. See
    `TELEGRAM-SETUP.md` for registering the bot and getting credentials ready ahead of this phase.
-3. **Phase 2: Go live on Azure, deliberately.** Provision whichever of §6's resources you actually
-   want (all optional, none required): Foundry for query synthesis, Azure Maps for real distances,
-   Cosmos DB for shared sighting storage, Azure AI Vision, Application Insights. First real Azure
-   spend, entirely your choice which pieces.
-4. **Phase 3: Deploy.** Container App + webhook (Bicep, `azd`). The first deploy artefact is
+3. **Phase 2: Go live on a cloud backend, deliberately.** Opt into a cloud backend (GCP,
+   MIP-0057) for whichever integrations you actually want (all optional, none required). First
+   real cloud spend, entirely your choice which pieces.
+4. **Phase 3: Deploy.** A hosted webhook. The first deploy artefact is
    already here and free: `.github/workflows/site.yml` builds MIP-0005's boards every 3 h and
-   publishes the static map to GitHub Pages: no Azure, no server, no per-visitor cost. The
-   second is the image the Container App will run: `Dockerfile` (`jvm` = Temurin 25 JRE + the
+   publishes the static map to GitHub Pages: no cloud account, no server, no per-visitor cost. The
+   second is the image a hosted service will run: `Dockerfile` (`jvm` = Temurin 25 JRE + the
    fat jar, `native` = the GraalVM binary on distroless, `dev` = the Nix dev shell) and
    `docker-compose.yml` (marola + an Ollama sidecar): MIP-0008, `RUN-LOCALLY.md` §10.
 5. **Phase 4: Harden & calibrate.** Caching, per-user rate limiting, feeding accumulated

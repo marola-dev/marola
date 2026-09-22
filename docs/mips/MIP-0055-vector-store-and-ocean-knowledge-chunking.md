@@ -5,12 +5,12 @@
 | **Status** | Draft |
 | **Author** | Claude Fable 5.1, from M. Hoffmann's design note of 2026-09-13 (issue [#354](https://github.com/h0ffmann/marola/issues/354)) |
 | **Created** | 2026-09-13 |
-| **Phase** | 0/1 for the local default (`ARCHITECTURE.md` §11 — nothing waits on the Telegram bot); 2 for the Azure AI Search backend, which is documented here and provisioned only after a human go-ahead |
-| **Related** | MIP-0001 (the first RAG cut this replaces the store of), MIP-0022 (the safety footer — its trigger is the `safety` flag that rides on every chunk), MIP-0032 (the model × strategy matrix — "marola-RAG" is the arm this sharpens), MIP-0045 §5.1 (a TF-IDF `KnowledgeStore`; Lucene's BM25 covers the same ground in the same index — coordinate, §9), MIP-0048 (the corpus, not the parameter count, is the ceiling), MIP-0054 §5.3 (the pt-BR corpus this must index), `FUTURE-WORK.md` §9.1, `AI-103-MAPPING.md` row "RAG" (its "Azure AI Search sibling not built" note), `ARCHITECTURE.md` §5h |
-| **Effort** | L — one new dependency (Lucene) and one new `KnowledgeStore` in `local/`, a typed chunk record and a kind-aware chunker in `core/`, an offline ingest pass that writes metadata, a golden set with an expected-document column, and an Azure AI Search backend in `azure/` (written, provisioned only on request). No new module, no CI workflow |
-| **Gain** | `user value` — answers that cite the right passage, in either language, for a corpus that is about to grow past what a flat JSON scan and a 3B model's own embeddings can rank; `infra/dev-loop` — recall@k on a golden set makes every chunking, embedder or corpus change a number instead of a read-through; `exam coverage (AI-103 "RAG" row — closes the "Azure AI Search sibling not built" note; AI-103 "Text analysis / entity extraction" — the ingest pass is one)` |
-| **Effort vs Gain** | `do next` for the local half (§5.1-§5.4, §7's golden set) — it is what MIP-0054's Portuguese corpus needs to be findable and what MIP-0032's RAG arm needs to be honest; `do when X lands` for the Azure backend (§5.5), X = Phase 1 plus a human go-ahead |
-| **Depends on** | Not blocked by any MIP. Coordinates with MIP-0054 §5.3 (its `knowledge/pt-BR/` layout is what the `lang` field and `Corpus.listFiles` must agree on — today `listFiles` walks only the top level and `safety/`, so a `pt-BR/` subdirectory would be silently skipped) and with MIP-0045 §5.1 (both add a lexical retriever; §9 says which survives). The Azure backend is gated by `AGENTS.md`'s cost-and-deployment-safety rule: the Free tier costs nothing but is still a provisioned resource. `AGENTS.md`'s Phase 1 gate does not block the local half |
+| **Phase** | 0/1 (`ARCHITECTURE.md` §11 — nothing waits on the Telegram bot) |
+| **Related** | MIP-0001 (the first RAG cut this replaces the store of), MIP-0022 (the safety footer — its trigger is the `safety` flag that rides on every chunk), MIP-0032 (the model × strategy matrix — "marola-RAG" is the arm this sharpens), MIP-0045 §5.1 (a TF-IDF `KnowledgeStore`; Lucene's BM25 covers the same ground in the same index — coordinate, §9), MIP-0048 (the corpus, not the parameter count, is the ceiling), MIP-0054 §5.3 (the pt-BR corpus this must index), `FUTURE-WORK.md` §9.1, `ARCHITECTURE.md` §5h |
+| **Effort** | L — one new dependency (Lucene) and one new `KnowledgeStore` in `local/`, a typed chunk record and a kind-aware chunker in `core/`, an offline ingest pass that writes metadata, and a golden set with an expected-document column. No new module, no CI workflow |
+| **Gain** | `user value` — answers that cite the right passage, in either language, for a corpus that is about to grow past what a flat JSON scan and a 3B model's own embeddings can rank; `infra/dev-loop` — recall@k on a golden set makes every chunking, embedder or corpus change a number instead of a read-through |
+| **Effort vs Gain** | `do next` (§5.1-§5.4, §7's golden set) — it is what MIP-0054's Portuguese corpus needs to be findable and what MIP-0032's RAG arm needs to be honest |
+| **Depends on** | Not blocked by any MIP. Coordinates with MIP-0054 §5.3 (its `knowledge/pt-BR/` layout is what the `lang` field and `Corpus.listFiles` must agree on — today `listFiles` walks only the top level and `safety/`, so a `pt-BR/` subdirectory would be silently skipped) and with MIP-0045 §5.1 (both add a lexical retriever; §9 says which survives). `AGENTS.md`'s Phase 1 gate does not block it |
 | **Blocked by** | none |
 | **Risk** | The corpus is seven documents. A Lucene index, a typed chunker and an ingest pass are a lot of machinery for ~60 chunks, and the golden set can only show they do no harm at this size — the gain is conditional on MIP-0034/MIP-0041/MIP-0054 actually growing the corpus. If they don't, §9's "keep the JSON file, swap the embedder" alternative gets most of the retrieval improvement for a one-line change |
 | **Cost so far** | — |
@@ -20,8 +20,8 @@
 `--ask` and `ask_ocean_question` retrieve over `knowledge/*.md` through `FileKnowledgeStore`: a flat
 JSON file, every chunk scanned with cosine, one Ollama embedding call per question, and a relevance
 threshold that is `0.0` because the default embedder's scores carry no signal. This MIP puts a real
-index behind the existing `KnowledgeStore` trait, an in-process Lucene HNSW + BM25 index as the
-local default, Azure AI Search as the opt-in, and, more importantly, makes the ingest side typed:
+index behind the existing `KnowledgeStore` trait, an in-process Lucene HNSW + BM25 index, and,
+more importantly, makes the ingest side typed:
 each chunk knows what kind of knowledge it is, which language, which beach, and where it came from,
 and carries a model-written one-line context header so a small query-time model finds it. A golden
 set with an expected document per question turns "is retrieval better" into recall@k.
@@ -105,15 +105,7 @@ Docker daemon (host or Actions only). Documented as an alternative backend; not 
 
 ### 4.4 pgvector — rejected
 
-marola runs no Postgres (MIP-0010's MLflow ledger is local; Postgres appears only as an Azure
-option there). A database process for ~60 chunks is the wrong trade.
-
-### 4.5 Azure AI Search — the opt-in
-
-Free tier, **verified live** 2026-09-13 against the limits page: one free service per subscription,
-shared hardware, no scale-up, **50 MB storage, 3 indexes**, "might be deleted after extended periods
-of inactivity", vector fields up to 4096 dimensions. Paid tiers: Basic pricing **not checked**.
-It is the sibling `ARCHITECTURE.md` §5h and the AI-103 "RAG" row already name.
+marola runs no Postgres (MIP-0010's MLflow ledger is local, on SQLite). A database process for ~60 chunks is the wrong trade.
 
 ### 4.6 Embedding models via Ollama (no ONNX, no DJL)
 
@@ -135,7 +127,7 @@ not ours, the pattern is adopted, the numbers are not assumed.
 ### Pick
 
 Lucene as the local default, `bge-m3` as the embedder it is paired with (`nomic-embed-text` as
-the smaller fallback), Azure AI Search as the opt-in. Qdrant documented, pgvector rejected.
+the smaller fallback). Qdrant documented, pgvector rejected.
 
 ## 5. Design
 
@@ -187,7 +179,7 @@ recursive walk.
 
 ### 5.3 The ingest pass (offline, once, `just knowledge-index`)
 
-For each chunk, `config.llmClient` (local Ollama by default; Foundry when the operator opted in)
+For each chunk, `config.llmClient` (local Ollama)
 writes: a one-sentence `contextHeader`; extracted fields, hazard, region/beach, season, any
 numeric threshold with its unit; a flag for claims that look unsourced. All stored as **metadata**
 beside the verbatim text. The header is embedded with the text and indexed for BM25; it is never
@@ -208,12 +200,6 @@ Selected by `MAROLA_KNOWLEDGE_STORE=file|lucene` in `AppConfig` (`file` stays th
 `MAROLA_LOCAL_EMBED_MODEL`. Index fingerprint = corpus files + embed model name + Lucene codec
 version; a mismatch re-indexes, as `FileKnowledgeStore` does today. Fusion is reciprocal rank
 fusion with one constant, tuned only against §7.
-
-### 5.5 `AzureSearchKnowledgeStore` (`azure/src/main/scala/marola/knowledge/`)
-
-Same trait, `azure-search-documents` SDK, one index with a vector field and the `kind`/`lang`/
-`beachId` filterable fields, hybrid query. Managed identity, no key in code (`.claude/rules/azure.md`).
-Written and unit-tested against a fake; provisioned only after the go-ahead `AGENTS.md` requires.
 
 ### 5.6 Where it plugs in
 
@@ -251,7 +237,7 @@ real is its own PR against `scoring/` with its own test. MIP-0022's footer keeps
   uses the Panama FFM API on JDK 21+, which native-image supports but with reachability metadata to
   hand-maintain. The fallback is `NIOFSDirectory`, or keeping `file` as the native image's store.
 - Multilingual embedding quality on Portuguese ocean vocabulary is unproven here; §7 measures it.
-- Free hosted tiers (Qdrant, Azure) delete inactive resources, never the store of record.
+- Free hosted tiers (Qdrant) delete inactive resources, never the store of record.
 - Sources go stale; `retrievedAt` per document is worth adding to the `Source:` contract when the
   corpus is next touched, out of this MIP's scope.
 - Hybrid fusion is one more knob; it is tuned only against the golden set, and the golden set is
@@ -271,12 +257,6 @@ real is its own PR against `scoring/` with its own test. MIP-0022's footer keeps
 - **Qdrant as default**: a process, a port and Docker for no gain at this scale.
 - **A bigger model at query time**: costs on every request, does not fix chunks, and pushes toward
   model-written user text.
-
-## 10. Exam-coverage mapping
-
-AI-103 "RAG" row — the Azure AI Search sibling moves from "not built" to "proposed: MIP-0055";
-AI-103 "Text analysis / entity extraction" — the ingest pass (§5.3) is structured extraction from
-prose; AI-500 §3 "evaluate, optimize" — recall@k on a golden set.
 
 ## 11. Open questions
 
@@ -312,9 +292,6 @@ prose; AI-500 §3 "evaluate, optimize" — recall@k on a golden set.
 - https://ollama.com/search?c=embedding, lists bge-m3, paraphrase-multilingual,
   snowflake-arctic-embed2, granite-embedding, nomic-embed-text-v2-moe, nomic-embed-text,
   mxbai-embed-large, qwen3-embedding.
-- https://learn.microsoft.com/en-us/azure/search/search-limits-quotas-capacity (ms.date 2026-09-04):
-  Free: 1 service per subscription, storage 50 MB, 3 indexes, 3 indexers, "might be deleted after
-  extended periods of inactivity", 4096 max dimensions per vector field.
 - https://qdrant.tech/documentation/cloud/create-cluster/, free tier 0.5 vCPU, 1 GB RAM, 4 GB disk,
   single node; suspended after 1 week unused, deleted after 4 weeks of inactivity.
 - https://api.github.com/repos/qdrant/java-client, "Official Java client for Qdrant", Apache-2.0,
@@ -332,7 +309,6 @@ prose; AI-500 §3 "evaluate, optimize" — recall@k on a golden set.
 - Whether a Lucene codec raises the 1024-dimension cap (`Lucene99HnswVectorsFormat.getMaxDimensions`).
 - Lucene under GraalVM native-image.
 - hnswlib's latest version and maintenance status.
-- Azure AI Search Basic-tier hourly price.
 - `bge-m3`'s retrieval quality on Portuguese ocean vocabulary, §7 measures it.
 - Licences of the seed sources for verbatim quotation (§11.2).
 - The contextual-retrieval numbers apply to Anthropic's corpora, not marola's.

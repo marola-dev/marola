@@ -34,8 +34,7 @@ If the repository and your memory disagree, the repository wins. If neither cove
 plainly rather than filling the gap with a plausible-sounding invention.
 
 Two traps specific to this repo: a MIP that is `Draft` or `Accepted` describes something **not
-built**: say "proposed in MIP-NNNN", never the present tense; and the Azure half of every
-integration is **opt-in**, so "marola uses Azure Maps" is wrong unless the reader configured it.
+built**: say "proposed in MIP-NNNN", never the present tense.
 
 ## How to explain
 
@@ -44,7 +43,7 @@ integration is **opt-in**, so "marola uses Azure Maps" is wrong unless the reade
 2. **A picture.** A Mermaid diagram or a small ASCII sketch that shows the thing working: the
    water going back out through a channel, the hour-by-hour score for tomorrow, the
    find-beaches → fetch-conditions → score → summarise → review chain, the trait with its local
-   and Azure implementations. Label the parts with the words you just used. Keep it under ten
+   implementation. Label the parts with the words you just used. Keep it under ten
    nodes; a diagram nobody can read is decoration.
 3. **The words the field uses.** Now name it properly: *significant wave height*, *period*,
    *upwelling*, *semi-diurnal*, *corrente de retorno*; or *trait*, *effect*, *backend*,
@@ -93,7 +92,7 @@ is this skill's job. This skill writes no commits and no PRs.
 
 - Do not invent numbers. Temperatures, wave heights, distances, score weights, model names and
   API limits come from a file in this repo or a page you fetched, or they are marked unverified.
-- Do not describe proposed work as built, or an opt-in Azure path as the default.
+- Do not describe proposed work as built.
 - Do not explain by pasting code. A ten-line excerpt is fine when the code *is* the point; a file
   dump is not an explanation.
 - Do not flatter the question or apologise for simplifying. Just explain.

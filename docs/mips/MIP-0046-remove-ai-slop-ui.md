@@ -10,7 +10,7 @@
 | **Effort** | M — three site files plus the test harness: ~10 hand-drawn SVG symbols, eight call sites in `app.js`, a sprite block and the legend key in `index.html`, ~25 lines of CSS, and every emoji assertion in `scripts/site_check.js` moving in lockstep. Not S: `just quality-other` runs the harness, so the assertions are a gate, and "done" needs a browser at 390 px and 1280 px (`site-frontend` step 6), which the stub DOM cannot substitute for |
 | **Gain** | `user value` — the page stops reading as machine-assembled at the exact moment a first-time visitor decides whether to trust its numbers; `infra/dev-loop` — one icon definition replaces two divergent wave glyphs and removes MIP-0009's Emoji-14 font-coverage caveat entirely |
 | **Effort vs Gain** | `do next` — cheap relative to any data work, self-contained in `site/static/` + one harness file, and it wants to land **before** MIP-0042 §5.1 freezes today's client at `/v1/`, or the frozen copy ships with the emoji in it |
-| **Depends on** | MIP-0005 and MIP-0009 are merged and are what this edits — nothing to wait for. Coordination, not blocking: MIP-0037 (Draft) derives its PWA icon from the same `<h1>` SVG this MIP leaves alone deliberately; MIP-0042 (Draft) copies `site/static/` into `/v1/` and `/v2/`, so landing after it means doing this twice. No Phase-1 gate, no Azure resource, no cost |
+| **Depends on** | MIP-0005 and MIP-0009 are merged and are what this edits — nothing to wait for. Coordination, not blocking: MIP-0037 (Draft) derives its PWA icon from the same `<h1>` SVG this MIP leaves alone deliberately; MIP-0042 (Draft) copies `site/static/` into `/v1/` and `/v2/`, so landing after it means doing this twice. No Phase-1 gate, no cloud resource, no cost |
 | **Blocked by** | none |
 | **Risk** | Hand-drawn 14 px marks read as mush where a system emoji read instantly — the stub-DOM harness cannot see this, only a screenshot can, so a rushed PR could trade "generated-looking" for "illegible" and call it done |
 | **Cost so far** | — |
@@ -262,12 +262,6 @@ beside it differs. The `.wdot` water signal and the five score colours are untou
   and `mask-image` is a bigger compatibility bet than a 2015-baseline `<use>`.
 - **Redesign the page.** Out of scope and against the skill's own advice: the layout, type scale and
   tokens are the product of a deliberate pass (`00c330c`) that still holds up in a 2026-09-07 grep.
-
-## 10. Exam-coverage mapping
-
-None materially. It touches the same AI-103 §1 "Responsible AI: transparency" row MIP-0009 claims —
-honest presentation of uncertain values, "no data" never shown as "none" — but this is a
-presentation change and claiming a new row for it would be padding.
 
 ## 11. Open questions
 

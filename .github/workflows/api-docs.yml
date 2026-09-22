@@ -32,8 +32,8 @@ jobs:
       - name: scaladoc, one tree per module
         run: |
           set -euo pipefail
-          sbt core/doc local/doc azure/doc cli/doc
-          for m in core local azure cli; do
+          sbt core/doc local/doc cli/doc
+          for m in core local cli; do
             mkdir -p out/docs/api/scala/"$m"
             cp -r "$m"/target/scala-*/api/. out/docs/api/scala/"$m"/
           done
