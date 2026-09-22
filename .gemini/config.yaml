@@ -1,0 +1,21 @@
+# Gemini Code Assist on GitHub. DEV-FLOW.md §5: nothing reviews a PR automatically —
+# a review starts with a `/gemini review` comment.
+have_fun: false
+memory_config:
+  disabled: false
+code_review:
+  disable: false
+  comment_severity_threshold: MEDIUM
+  max_review_comments: 10
+  pull_request_opened:
+    help: false
+    summary: false
+    code_review: false
+    include_drafts: false
+ignore_patterns:
+  - "docs/benchmarks/**"
+  - "finetune/data/**"
+  - "**/src/test/resources/fixtures/**"
+  - "**/reachability-metadata.json"
+  - "flake.lock"
+  - "site/static/vendor/**"

@@ -132,6 +132,11 @@ against its own base**, bottom of the stack first, because that is the diff a re
    plugin's confidence scorer only credits rules it can read, so keep that instruction there.
 3. **`/code-review ultra <PR#>`** — the multi-agent cloud review, for the riskiest PR of a stack
    (scoring, safety text, a new data source). User-triggered and billed; never launched by the agent.
+4. **`/gemini review`** as a PR comment — Gemini Code Assist on GitHub, free, advisory, on request
+   only (`.gemini/config.yaml` turns off review-on-open; `.gemini/styleguide.md` carries the
+   `AGENTS.md` subset a diff reviewer can check). Cheapest hosted pass; source goes to Google, so
+   it is installed by the human, never by an agent — `GEMINI-CODE-ASSIST.md` has the setup, by
+   hand or as Besom. Skips `.github/workflows/**` by design.
 
 Author side: superpowers `receiving-code-review` — verify each finding before implementing it,
 push back with reasoning when it is wrong, then fix → commit (`Cost:` trailer) → push → `just

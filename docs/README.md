@@ -19,6 +19,7 @@ big enough for a Marola Improvement Proposal (`mips/`, the `mip` skill) and wher
 | [`SCALA3-JDK-REVIEW.md`](./SCALA3-JDK-REVIEW.md) | review | the adopt list — direct PRs in the order §4 gives, no MIP |
 | [`AGENT-FRAMEWORKS-SURVEY.md`](./AGENT-FRAMEWORKS-SURVEY.md) | review | §1.2 llm4s → **MIP-0012** (opt-in module: agent loop, MCP client/server, guardrails, structured output); §2 Python ideas → Scala shapes and §3 Pekko for the multi-agent core: **candidate MIP** ("marola as actors: escalation, digest and answer agents on Pekko") once MIP-0002/0004 exist to orchestrate |
 | [`DEV-FLOW.md`](./DEV-FLOW.md) | how-to | none; MIP-0011 turns parts of it into hooks/agents |
+| [`GEMINI-CODE-ASSIST.md`](./GEMINI-CODE-ASSIST.md) | how-to | §4–§6 the GCP side as Besom under `infra/gemini/`, state in GCS, `preview`-on-PR / `up`-on-dispatch on marola's runners — **candidate MIP** (the repo's first IaC; verify §4's connection-label question first); the hosted counterpart of MIP-0060's parked local route |
 | [`ROADMAP.md`](./ROADMAP.md) | plan | the ordering: today's review bugs (P0), open MIPs, six proposed AI-500 MIPs (0021–0026), ten triaged external candidates with a provider-query checklist |
 | [`AGENT-SKILLS.md`](./AGENT-SKILLS.md) | how-to | §3 four skill candidates → MIP-0011 task 8 |
 | [`FABLE_REVIEW.md`](./FABLE_REVIEW.md) | review | D1 managed identity for Cosmos/Vision/Maps — **candidate MIP** (Phase 2 prerequisite; small but security-relevant); §3 jail notes → MIP-0011 task 5 |
