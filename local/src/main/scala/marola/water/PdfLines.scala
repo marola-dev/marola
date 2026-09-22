@@ -15,9 +15,6 @@ import org.apache.pdfbox.text.{PDFTextStripper, TextPosition}
  * so a line-based parse silently pairs a verdict with the wrong beach. For a swim-safety verdict
  * that is not a formatting bug, it is a wrong answer, so both agency parsers work from x/y
  * positions instead.
- *
- * Extracted from `IneaPdfParser`, which had this inline; `IneaPdfParserSpec` is the regression
- * guard that the extraction changed nothing.
  */
 private[water] object PdfLines:
 

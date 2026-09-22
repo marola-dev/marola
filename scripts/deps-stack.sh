@@ -12,89 +12,20 @@
 #   just deps-stack clean              # delete deps/* chain branches whose stacked PR is MERGED
 #   just deps-stack --self-test        # parse scripts/fixtures/deps-stack-prs.json, assert order
 #
-# Isolation: the whole local chain is built in a dedicated worktree, `.tmp/wt-deps-stack`
-# (`.tmp/` is gitignored; same convention scripts/cost-split.py already documents for stack
-# worktrees) — never in the caller's own checkout. Every `checkout -b`/cherry-pick/`branch
-# --show-current`/CHERRY_PICK_HEAD lookup runs `git -C .tmp/wt-deps-stack ...` against it, so
-# a run of this script never switches the caller's branch or touches its index, even mid-conflict
-# or across `--resume`/`status`/`clean`. A first (non-`--resume`) run removes and recreates the
-# worktree fresh off `origin/main` — including a stale one left over from an earlier date's run;
-# `clean` removes it (`git worktree remove --force`) once every chain branch is confirmed MERGED
-# and deleted. On a conflict, the printed instructions `cd` into that worktree, not the caller's
-# tree. Two dependency-bump commits landing on adjacent lines of the same file are the conflict
-# shapes here, and both auto-resolve before this script ever prints a human-resolve message:
-# `*requirements*.txt` (`scripts/lib/req_merge.py`, kept lower-bound = the higher of the two, per
-# package) and `.github/workflows/*.yml` `uses:` steps (`scripts/lib/uses_merge.py`, kept ref =
-# the higher version per action — actions/checkout@v7 next to hadolint-action@v3.5.0, the
-# 2026-09-06 case). Anything else still stops for a human.
+# The chain is built in a dedicated worktree, .tmp/wt-deps-stack, never the caller's checkout.
+# Branch k is deps/<date>/<k>-<slug>, off branch k-1 (k=1 off origin/main), with that PR's commits
+# cherry-picked on. Bump-vs-bump conflicts auto-resolve (requirements via scripts/lib/req_merge.py,
+# workflow `uses:` via scripts/lib/uses_merge.py); anything else stops for a human, then --resume
+# continues the plan cached in .tmp/deps-stack/plan.json.
 #
-# ---------------------------------------------------------------------------------------------
-# 1. Discovery (scripts/fixtures/deps-stack-prs.json shapes the same fields):
-#      gh pr list --state open --search "author:app/dependabot" \
-#        --json number,headRefName,title,baseRefName,mergeable,files
-#    `author:app/dependabot` is GitHub's documented search qualifier for issues/PRs opened by a
-#    GitHub App (docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests,
-#    "author:app/robot matches issues created by the integration account named robot", verified
-#    2026-09-05); `gh pr list --app dependabot` is an equivalent, newer convenience flag
-#    (cli.github.com/manual/gh_pr_list) — --search is used here since it works on older gh too.
-#    Order: github-actions PRs first, then pip, each group by PR number ascending (see order_prs).
-#    `--include-steward` runs a second discovery with `--search "author:app/scala-steward"` and
-#    appends those after the dependabot groups, keyed on the docs' own convention
-#    (scala-steward-org/scala-steward-action's README: a PAT makes PRs "look like it's you",
-#    implying the default GITHUB_TOKEN path shows a generic bot identity instead) — *this repo's
-#    scala-steward.yml uses the default GITHUB_TOKEN with no PAT (see that workflow's own header),
-#    so which author string actually shows up (app/scala-steward vs. the generic
-#    app/github-actions identity) is UNVERIFIED here: gh is not logged in in this environment, so
-#    the live query was never run against a real scala-steward PR. Confirm with
-#    `gh pr list --state open --json author --search "is:pr author:app/scala-steward"` before
-#    relying on `--include-steward`; if it returns nothing, scala-steward's PRs are simply not
-#    separable by author query with the default token, and this repo's own scala-steward.yml
-#    header may need the same caveat added once you know.
+# Publish opens one new PR per chain branch and closes the original dependabot PR. A PR's head
+# can't change, and force-pushing dependabot's own branches gets undone by its next rebase — so
+# dependabot's branches are never touched (--retarget-dependabot only explains this).
 #
-# 2. Local chain build (like `scripts/stack.sh start` for MIP tasks), in the dedicated worktree
-#    `.tmp/wt-deps-stack` (see "Isolation" above, not the caller's checkout): branch k is
-#    `deps/<YYYY-MM-DD>/<k>-<slug>`, created from branch k-1 (k=1 from `origin/main`), then that
-#    PR's own commits (`<base>..<head>` of the *original* dependabot branch) are cherry-picked
-#    onto it. A bump-vs-bump conflict auto-resolves — requirements files via
-#    scripts/lib/req_merge.py, workflow `uses:` lines via scripts/lib/uses_merge.py; anything
-#    else stops the script with the branch left mid-cherry-pick in that worktree: resolve with `cd
-#    .tmp/wt-deps-stack && git status`, fix, `git add`, `git cherry-pick --continue`, `cd -`, then
-#    re-run with `--resume` to build the remaining branches. The plan (which PRs, in what order,
-#    on what date) is cached at .tmp/deps-stack/plan.json so `--resume` continues the *same* chain
-#    rather than re-discovering (and possibly reordering) from a fresh `gh pr list`; run from the
-#    same working copy you started in.
+# --include-steward's author:app/scala-steward query is UNVERIFIED with the default GITHUB_TOKEN
+# (scala-steward.yml uses no PAT); check `gh pr list --search "is:pr author:app/scala-steward"`.
 #
-# 3. Publish — design choice, see also docs/DEV-FLOW.md:
-#    A PR's head branch cannot be changed after creation (`gh pr edit` has no `--head`; a PR is
-#    permanently tied to the branch it was opened from — GitHub API/gh docs, and it's also not
-#    dependabot's branch to move). That leaves two honest options:
-#      (a) rebase dependabot's own branches onto each other and force-push the result back to
-#          `dependabot/<...>` (dependabot allows force-pushes to its own branches), then
-#          `gh pr edit --base` each PR onto the previous one. Keeps the *same* PR numbers, but
-#          dependabot stops updating a PR once its branch no longer matches what it last pushed,
-#          and `@dependabot rebase`/a new run of the workflow can silently undo the stacking by
-#          re-pushing its own rebase over yours. This is a real, not theoretical, footgun — left
-#          as a **documented non-goal**, not implemented (see --retarget-dependabot below).
-#      (b) [DEFAULT, IMPLEMENTED] leave every dependabot branch untouched. Open one *new* PR per
-#          chain branch (`gh pr create --base <prev-chain-branch-or-main> --title "<original
-#          title>" --body-file <generated>`), with the body generated by
-#          `BRANCH=... BASE=... scripts/uprd.sh --dry-run` (reused, not reimplemented) plus a
-#          pointer back to the original PR. Then close the original dependabot PR with
-#          `gh pr close <n> --comment "stacked as #<m> via just deps-stack"`. dependabot's branch
-#          is never touched, so if the stack is abandoned dependabot can still update/re-open its
-#          own PR normally.
-#    `--retarget-dependabot` exists only to name option (a) and explain, on invocation, why it is
-#    not implemented — see above.
-#
-# 4. Link: `scripts/lib/stack_link.sh`'s `stack_link` (shared with `scripts/stack.sh link`) runs
-#    `gh stack link` over the chain's *open* PRs, bottom to top.
-#
-# 5. `just deps-stack clean`: deletes local+origin `deps/<date>/<k>-*` branches whose PR (the new
-#    stacked one from step 3b) gh confirms MERGED — same MERGED-only check as
-#    `scripts/branches.sh clean`, scoped to this chain's branches only.
-#
-# Needs `gh auth status` for anything that isn't --dry-run/--from-json/--self-test/status/clean's
-# local listing. Not available inside ai-jail (AGENTS.md) — run from the host.
+# Needs `gh auth status` except for --dry-run/--from-json/--self-test. Run from the host, not ai-jail.
 set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
@@ -152,11 +83,7 @@ print_conflict_instructions() {   # $1 = branch left mid-cherry-pick
   echo "  just deps-stack --resume"
 }
 
-# Auto-resolve the two bump-vs-bump conflict classes: every file `git diff --name-only
-# --diff-filter=U` reports in the worktree is either a `*requirements*.txt` (scripts/lib/
-# req_merge.py: keep the higher lower bound per package) or a `.github/workflows/*.yml|yaml`
-# (scripts/lib/uses_merge.py: keep the higher `uses: owner/action@vN` per step — the
-# actions/checkout-bump-next-to-a-hadolint-bump shape).
+# Auto-resolve only when every conflicted file is a requirements file or a workflow.
 auto_resolve_bumps() {
   local conflicted f
   conflicted="$(git -C "$wt_dir" diff --name-only --diff-filter=U)"
@@ -305,10 +232,8 @@ self_test() {
   echo "deps-stack self-test: PASSED"
 }
 
-# --- ref resolution: origin is the source of truth (a local "main"/task branch in a shared,
-# multi-worktree checkout can be stale); fall back to a same-named local branch only when origin
-# doesn't have the ref at all — the case for a not-yet-pushed chain branch, or a hand-made local
-# stand-in for a dependabot branch (as in this script's own test setup).
+# --- ref resolution: origin first (local refs in a multi-worktree checkout go stale), local
+# only when origin lacks the ref (an unpushed chain branch, the self-test's stand-ins).
 resolve_ref() {
   if git -C "$repo_root" rev-parse --verify -q "refs/remotes/origin/$1" >/dev/null; then echo "origin/$1"; else echo "$1"; fi
 }

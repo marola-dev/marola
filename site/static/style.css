@@ -118,21 +118,15 @@ button[aria-pressed="true"], .segmented button.on { background: var(--accent); c
 .footer { padding: .75rem 1rem 1.1rem; font-size: 13px; color: var(--muted); background: var(--panel); border-top: 1px solid var(--line); }
 .footer p { margin: .3rem 0; max-width: 65ch; }
 .footer .lore { font-size: 15px; color: var(--ink); }
-/* Lowercase house style. The exemptions are names marola does not own: the providers
- * (Open-Meteo, IMA/SC, OpenStreetMap) and the agency's own bathing-water verdict, which
- * MIP-0001 shows verbatim — lowercasing PRÓPRIA/IMPRÓPRIA would restate a classification
- * marola did not make. Style stops where someone else's words start. */
+/* Lowercase house style, except names marola did not choose: providers, the agency's verbatim
+ * PRÓPRIA/IMPRÓPRIA verdict (MIP-0001), beaches. Containers are exempted because app.js emits
+ * beach names as bare text nodes. */
 body { text-transform: lowercase; }
-/* Names marola did not choose keep their own case: providers, the agency's verdict, and the
- * beaches themselves. The containers are exempted rather than the strings wrapped — app.js emits
- * beach names as bare text nodes, and adding a span there would churn markup the list layout and
- * the harness both depend on. */
 .src, .water, .unfit, .leaflet-control-attribution,
-.list li, .card h2, .leaflet-tooltip .head, .marker-label { text-transform: none; }
-/* marola's own name is lowercase everywhere, including where a container above opted out. */
+.list li, .card h2, .leaflet-tooltip .head { text-transform: none; }
 .bar h1 { text-transform: lowercase; }
 
-/* Section row under the footer. Wraps rather than scrolls, so all six stay reachable at 390px. */
+/* Wraps rather than scrolls, so all six stay reachable at 390px. */
 .sitenav { display: flex; flex-wrap: wrap; gap: .35rem 1.1rem; align-items: baseline;
   padding: .45rem 1rem; font-size: 13px; background: var(--panel); border-bottom: 1px solid var(--line); }
 .sitenav a { color: var(--accent); font-weight: 600; text-decoration: none; }
@@ -153,32 +147,23 @@ body { text-transform: lowercase; }
 .leaflet-container .leaflet-control-zoom a { color: var(--ink); }
 .leaflet-tooltip { font-size: 13px; font-variant-numeric: tabular-nums; border-color: var(--line); border-radius: 6px; }
 .leaflet-control-attribution { font-size: 11px; color: var(--muted); }
-.marker-label { background: none; border: 0; box-shadow: none; font-weight: 600; color: #fff;
-  text-shadow: 0 0 3px rgba(0,0,0,.8); font-size: 11px; text-align: center; }
 
-/* wave markers + hover aspects (MIP-0009): the wave is the score colour, the tooltip is the six
- * aspects at the shown hour, two columns, one at a time, follows the mouse (sticky). */
+/* wave markers + hover aspects (MIP-0009) */
 .leaflet-marker-icon.wave { background: none; border: 0; cursor: pointer; }
 .wave svg { display: block; }
-/* an hour already past keeps its outline: the fill fades, the white stroke stays and goes dashed
- * (fading the whole element left the wave almost invisible over the sea tiles) */
+/* fading the whole element left a past wave almost invisible over the sea tiles */
 .wave.past path { fill-opacity: .45; stroke-dasharray: 2 1.5; }
 .leaflet-tooltip.aspects { padding: .45rem .65rem; font-size: 13px; line-height: 1.35; max-width: 21rem; white-space: normal; }
 .aspects .head { font-weight: 600; margin-bottom: .3rem; }
 .aspects .grid { display: grid; grid-template-columns: 1fr 1fr; gap: .15rem .8rem; }
 .aspects .grid span { white-space: nowrap; }
-/* the water verdict is a sentence, not a reading: full width, wrapping */
 .aspects .grid .wide { grid-column: 1 / -1; white-space: normal; }
 .aspects .unfit { color: var(--c0); font-weight: 600; }
-/* the water verdict's colour dot — same tokens as the score legend (.legend i), so green/red/grey
- * means the same thing everywhere on the page, not a second colour language to learn */
 .wdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: .25em; vertical-align: 1px; }
 .aspects .facilities { color: var(--muted); }
 .legend .wave-key { color: var(--ink); }
 .legend .wave-key svg { width: 18px; height: 18px; vertical-align: -4px; margin-right: .3em; }
-/* the same row as the first block of the card (touch has no hover); the head repeats the h2.
- * The card is narrower than the tooltip (min(26rem, 100vw - 1.5rem)), so here every cell wraps —
- * the tooltip can afford one line per reading, a 390 px card cannot. */
+/* in the card the head repeats the h2, and a 390 px card cannot fit one line per reading */
 .card .aspects { margin: .1rem 0 .6rem; font-size: 13px; }
 .card .aspects .head { display: none; }
 .card .aspects .grid { gap: .1rem .6rem; }
@@ -188,8 +173,7 @@ body { text-transform: lowercase; }
   select, button, .list li { transition: background-color .15s, border-color .15s, color .15s; }
 }
 
-/* Chat widget — MIP-0033 §5.2. Hidden by default (chat.js only reveals the toggle after a
- * successful /health check), so a visitor without the maintainer's tunnel up never sees it. */
+/* Chat widget — MIP-0033 §5.2. */
 .chat-toggle {
   position: fixed; right: 1rem; bottom: 1rem; z-index: 900;
   padding: .6rem 1rem; border-radius: 999px; border: 1px solid var(--line);

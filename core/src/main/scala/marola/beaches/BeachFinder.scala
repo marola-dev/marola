@@ -85,9 +85,7 @@ object BeachFinder:
               .flatMap(parseElement(_, origin))
               .groupBy(_.name)
               .values
-              .map(
-                _.minBy(_.distanceKm)
-              ) // dedupe node/way/relation for the same beach, keep the closer one
+              .map(_.minBy(_.distanceKm)) // one beach per name across node/way/relation
               .toList
               .sortBy(_.distanceKm)
               .take(limit)
@@ -124,22 +122,14 @@ object BeachFinder:
 
   /** Each mirror in turn; the last failure propagates so a total outage is still an error. */
   private def queryOverpass(query: String, endpoints: List[String]): String < Sync =
+    def post(endpoint: String) =
+      Http.postForm(endpoint, Map("data" -> query), HttpTimeoutSeconds, retries = OverpassRetries)
     endpoints match
-      case Nil => throw new IllegalStateException("no Overpass endpoint configured")
-      case endpoint :: Nil =>
-        Http.postForm(endpoint, Map("data" -> query), HttpTimeoutSeconds, retries = OverpassRetries)
+      case Nil             => throw new IllegalStateException("no Overpass endpoint configured")
+      case endpoint :: Nil => post(endpoint)
       case endpoint :: rest =>
         Abort
-          .run(
-            Abort.catching[Throwable](
-              Http.postForm(
-                endpoint,
-                Map("data" -> query),
-                HttpTimeoutSeconds,
-                retries = OverpassRetries
-              )
-            )
-          )
+          .run(Abort.catching[Throwable](post(endpoint)))
           .map {
             case Result.Success(body) => body
             case other =>

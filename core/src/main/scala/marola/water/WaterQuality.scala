@@ -60,22 +60,14 @@ final case class WaterQuality(points: List[SamplingPoint], source: String):
   def latestSamples: List[(SamplingPoint, WaterSample)] =
     points.flatMap(p => p.latest.map(s => (p, s)))
 
-  /**
-   * Samples no older than `maxAgeDays` — off-season IMA samples monthly, hence the 45-day default.
-   */
-  def fresh(
-      today: LocalDate,
-      maxAgeDays: Long = WaterQuality.MaxSampleAgeDays
-  ): List[(SamplingPoint, WaterSample)] =
+  /** Off-season IMA samples monthly, hence the 45-day window. */
+  def fresh(today: LocalDate): List[(SamplingPoint, WaterSample)] =
     latestSamples.filter {
-      case (_, s) => ChronoUnit.DAYS.between(s.sampledOn, today) <= maxAgeDays
+      case (_, s) => ChronoUnit.DAYS.between(s.sampledOn, today) <= WaterQuality.MaxSampleAgeDays
     }
 
   def improper(today: LocalDate): List[(SamplingPoint, WaterSample)] =
     fresh(today).filter { case (_, s) => s.condition == BathingCondition.Improper }
-
-  def proper(today: LocalDate): List[(SamplingPoint, WaterSample)] =
-    fresh(today).filter { case (_, s) => s.condition == BathingCondition.Proper }
 
   def newestSampleDate: Option[LocalDate] =
     latestSamples.map(_._2.sampledOn).sortBy(_.toEpochDay).lastOption

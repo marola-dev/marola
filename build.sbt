@@ -1,28 +1,11 @@
-// NOTE: this bootstrap was written without network access to Maven Central,
-// so nothing here has been compiled. Versions below were the latest
-// confirmed as of early September 2026 — check for newer ones,
-// especially Kyo (still pre-1.0, currently 1.0.0-RC5) and the Azure SDKs,
-// before trusting them long-term. `just build` is the real check.
+// REQUIRES JDK 25: Kyo 1.0.0-RC5's artifacts are compiled for class-file version 69, so both the
+// JVM running sbt and the runtime executing the jar must be 25+ (flake.nix and the Dockerfile pin
+// it). An older JVM fails with `UnsupportedClassVersionError: kyo/Frame$package$Frame$`.
 //
-// REQUIRES JDK 25. Kyo 1.0.0-RC5 compiles with -release 25 (confirmed via
-// Kyo's own release notes: "RC5's artifacts already could not run on JDK
-// 17"), so the JVM running sbt/scalac — and the runtime executing the
-// packaged jar — must both be JDK 25 or newer, regardless of what Scala
-// 3.9 itself requires (17+). This bit a real build with a JDK-24 error:
-// `UnsupportedClassVersionError: kyo/Frame$package$Frame$ ... class file
-// version 69.0 ... this version of the Java Runtime only recognizes class
-// file versions up to 68.0`. See flake.nix, which pins 25, and the Dockerfile (MIP-0008), whose
-// builder and JRE stages are Temurin 25 for the same reason.
-//
-// This repo is entirely marola — "best hour tomorrow to swim nearby" — split into four sbt
-// modules (core/local/azure/cli) at the repo root (FUTURE-WORK.md §7.3's module-split proposal,
-// implemented, then hoisted out of a marola/ subdirectory once this repo became marola's own
-// repo rather than a shared monorepo). core carries the pure pipeline and shared HTTP/JSON
-// helpers; local is the always-needed Ollama path with ZERO Azure SDK dependency; azure holds
-// the optional Azure integrations; cli (Main, AppConfig, the MCP server) depends on all three
-// since it's the one place that has to pick a backend per integration.
+// Modules: core (pure pipeline), local (Ollama path, zero Azure SDK dependency), azure (optional
+// Azure integrations), cli (picks a backend per integration, so depends on all three).
 
-ThisBuild / scalaVersion := "3.9.0" // Scala 3.9 LTS itself needs JDK 17+, but Kyo 1.0.0-RC5 requires JDK 25 (see build note above) — the JVM running sbt/scalac must be 25+
+ThisBuild / scalaVersion := "3.9.0"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "com.marola"
 
@@ -32,14 +15,9 @@ ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 
 val kyoVersion = "1.0.0-RC5"
 
-// Shared so `testFrameworks +=` and the E2E-tag-exclusion `Tests.Argument` below (see
-// baseSettings) both reference the exact same TestFramework value, rather than risk two
-// separately-constructed `new TestFramework("munit.Framework")` values behaving inconsistently.
 val munitFramework = new TestFramework("munit.Framework")
 
-// Every subproject in this build shares this: same Scala version, same scalac flags, same
-// effects library, same test setup. Azure-SDK dependencies are deliberately NOT here — see
-// the `azure` project below for why that module declares its own.
+// Azure SDK dependencies are deliberately not here: only the `azure` module may carry them.
 lazy val baseSettings = Seq(
   // Kyo's own docs recommend these flags to catch common effect-handling
   // mistakes (unused/discarded Kyo computations, unsafe equality).
@@ -62,22 +40,6 @@ lazy val baseSettings = Seq(
     "io.getkyo" %% "kyo-core"        % kyoVersion,
     "io.getkyo" %% "kyo-direct"      % kyoVersion, // direct-style (.now / defer) syntax
     "io.getkyo" %% "kyo-combinators" % kyoVersion,
-    // NOTE: kyo-sttp existed pre-1.0 but was never published in the 1.0.x
-    // line (last release May 2025) — Kyo replaced the sttp integration
-    // with its own in-house transport, published as kyo-http. Its
-    // getJson/postJson/Schema-derivation API (getkyo.io's docs describe
-    // this for 1.0.0-RC6) is confirmed REAL and present at this exact
-    // 1.0.0-RC5 version too — verified directly by decompiling the jar
-    // (kyo.HttpClient$package$HttpClient$'s real method list includes
-    // getJson/postJson/getText/postBinary/... all taking a `kyo.Schema[A]`
-    // — the codec typeclass lives in a separate `kyo-schema` artifact,
-    // already resolved transitively). Kept as a declared dependency for
-    // future direct use; marola's HTTP calls go through
-    // `java.net.http.HttpClient` wrapped in `Sync.defer` instead
-    // (`core`'s `Http.scala`), which is simpler and already
-    // live-verified against real APIs. Migrating is real, tracked future
-    // work — see `docs/FUTURE-WORK.md` §2.
-    "io.getkyo" %% "kyo-http"        % kyoVersion,
 
     // --- Logging ---
     "ch.qos.logback" % "logback-classic" % "1.5.13",
@@ -88,12 +50,8 @@ lazy val baseSettings = Seq(
 
   testFrameworks += munitFramework,
 
-  // Excludes tests tagged "E2E" (cli/src/test/scala/marola/E2ESpec.scala) from the default
-  // `sbt test`/`just test` run — those hit live Overpass/Open-Meteo/Ollama, which would make the
-  // normal fast unit-test suite flaky and slow. Run them explicitly with `just e2e`, which
-  // overrides this setting for that one invocation rather than layering an --include-tags on top
-  // of it — confirmed necessary: munit applies an exclude over a same-tag include when both are
-  // passed together, so simple layering doesn't work.
+  // E2E suites hit live services; `just e2e` overrides this setting rather than adding
+  // --include-tags, because munit lets an exclude win over a same-tag include.
   Test / testOptions += Tests.Argument(munitFramework, "--exclude-tags=E2E"),
 
   // `Http.withTransport` is a process-wide switch (core/.../Http.scala), so two suites replaying
@@ -103,12 +61,8 @@ lazy val baseSettings = Seq(
   Test / parallelExecution := false,
 
   assembly / assemblyMergeStrategy := {
-    // ServiceLoader registrations (e.g. the MCP Java SDK's JsonSchemaValidatorSupplier — see
-    // cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala) live under
-    // META-INF/services/* and must be concatenated, not discarded: confirmed the hard way —
-    // blanket-discarding all of META-INF (the line below this comment used to do that) produced a
-    // real `ServiceConfigurationError: No JsonSchemaValidatorSupplier available` at runtime in the
-    // assembled jar, even though the same code ran fine under `sbt run`'s unmerged classpath.
+    // Discarding these broke the MCP SDK's ServiceLoader lookup in the fat jar only
+    // (`No JsonSchemaValidatorSupplier available`).
     case PathList("META-INF", "services", xs @ _*) => MergeStrategy.concat
     // GraalVM reachability metadata (ours under com.marola/marola-cli, and every dependency's) must
     // survive into the fat jar too: the Dockerfile's `native-image -jar marola.jar` reads it from
@@ -123,18 +77,10 @@ lazy val core = (project in file("core"))
   .settings(baseSettings)
   .settings(name := "marola-core")
 
-// One OpenTelemetry version for both modules that touch it (MIP-0010 §4.3): `local`'s OTLP/HTTP
-// exporter to MLflow and `azure`'s Application Insights autoconfigure. `azure-monitor-opentelemetry-
-// autoconfigure:1.4.0` itself pulls 1.49.0 transitively (`cs resolve`, 2026-09-05); the explicit
-// 1.65.0 (Maven Central's latest, `cs complete-dep`, 2026-09-05) below evicts that so the assembled
-// CLI never carries two OpenTelemetry SDKs.
+// One OpenTelemetry version for `local` and `azure`: azure-monitor-opentelemetry-autoconfigure
+// pulls 1.49.0 transitively, and this evicts it so the CLI never carries two SDKs (MIP-0010 §4.3).
 val OpenTelemetryVersion = "1.65.0"
 
-// Pure-JVM PDF text extraction for the INEA/INEMA bulletin parsers (MIP-0031 §4.3): both agencies
-// publish bathing-water bulletins only as PDFs, never structured data, and PDFBox (Apache-2.0)
-// avoids shelling out to `pdftotext`, which would need a native binary bundled into the Docker
-// image. Maven Central's latest stable release at the time of writing (`maven-metadata.xml`,
-// 2026-09-07) is 3.0.8 — pinned explicitly rather than left to a range.
 val PdfboxVersion = "3.0.8"
 
 lazy val local = (project in file("local"))
@@ -142,21 +88,13 @@ lazy val local = (project in file("local"))
   .settings(baseSettings)
   .settings(
     name := "marola-local",
-    // Still zero Azure SDK dependency (the module's invariant). The non-JDK dependencies are the
-    // OpenTelemetry SDK + OTLP/HTTP exporter for `observability/MlflowTracing` (MIP-0010 task 6):
-    // MLflow ingests traces over OTLP/HTTP only, and hand-rolling the protobuf payload over
-    // `java.net.http` would be a worse dependency than the reference exporter; and Apache PDFBox
-    // for the water-quality bulletin PDF parsers (MIP-0031). Everything else in this module stays
-    // `Http`/`JsonValue` over `java.net.http`.
+    // Zero Azure SDK dependency (the module's invariant). OpenTelemetry: MLflow ingests traces
+    // over OTLP/HTTP only (MIP-0010). PDFBox: the agencies publish bulletins only as PDFs, and a
+    // pure-JVM parser avoids bundling `pdftotext` into the image (MIP-0031 §4.3).
     libraryDependencies ++= Seq(
       "io.opentelemetry" % "opentelemetry-sdk" % OpenTelemetryVersion,
       "io.opentelemetry" % "opentelemetry-exporter-otlp" % OpenTelemetryVersion,
       "io.opentelemetry" % "opentelemetry-sdk-testing" % OpenTelemetryVersion % Test,
-      // Text extraction for INEA/INEMA's PDF-only water-quality bulletins (MIP-0031 §4.3):
-      // neither institute exposes a JSON/HTML data feed, so `InemaPdfParser`/`IneaPdfParser` read
-      // the bulletin's table straight out of the PDF. Pure JVM, Apache-2.0, no native binary to
-      // bundle (unlike shelling out to `pdftotext`, which MIP-0031's own research used only to
-      // verify the approach, never as a runtime dependency).
       "org.apache.pdfbox" % "pdfbox" % PdfboxVersion
     )
   )
@@ -169,9 +107,6 @@ lazy val azure = (project in file("azure"))
     libraryDependencies ++= Seq(
       // --- managed identity everywhere, no API keys ---
       "com.azure" % "azure-identity" % "1.18.1",
-      // NOTE: `com.azure:azure-ai-agents` was declared here from the bootstrap onward but nothing
-      // imports it (`AzureFoundryLlmClient` is plain REST) — removed (FABLE_REVIEW C5). Add it back
-      // when a Foundry Agent Service integration actually uses it (AI-500-MAPPING.md §2).
       // --- Cosmos DB (optional sighting-report store) ---
       "com.azure" % "azure-cosmos" % "4.71.0",
       // --- Monitor / Application Insights (optional observability backend, no-op by default) ---
@@ -187,62 +122,29 @@ lazy val cli = (project in file("cli"))
   .settings(baseSettings)
   .settings(
     name := "marola-cli",
-    // --- GraalVM native-image (MIP-0008 task 3): `sbt cli/nativeImage` → cli/target/marola ---
-    // `nativeImageInstalled`: use the native-image of $GRAALVM_HOME (or JAVA_HOME) instead of
-    // letting the plugin download a GraalVM — `just native-image` provides one from nixpkgs. The
-    // arguments (build-time initialisation of slf4j/logback/Jackson, -march=compatibility) and the
-    // reachability metadata (the root *.json resources, sun.misc.Signal for Kyo's handler) are in
-    // cli/src/main/resources/META-INF/native-image/com.marola/marola-cli/, read from the
-    // classpath, so the Dockerfile's `native-image -jar marola.jar` builds the same binary.
-    // Verified 2026-09-05 (GraalVM CE 25.2.4 = JDK 25.0.4): 69 MB binary, --brief and --summarize
-    // live — see docs/mips/MIP-0008.tasks.md, decision 1.
+    // GraalVM native-image (MIP-0008): `nativeImageInstalled` uses $GRAALVM_HOME's native-image
+    // (`just native-image` provides one) instead of downloading a GraalVM. Its arguments and
+    // reachability metadata live under cli/src/main/resources/META-INF/native-image/, so the
+    // Dockerfile's `native-image -jar marola.jar` builds the same binary.
     Compile / mainClass := Some("marola.Main"),
     nativeImageInstalled := true,
     nativeImageOutput := target.value / "marola",
     // --- MCP (agent tool wiring — see agent/SwimConditionsMcpServer.scala) ---
     libraryDependencies += "io.modelcontextprotocol.sdk" % "mcp" % "2.0.0",
     assembly / mainClass := Some("marola.Main"),
-    // marola.agent.SwimConditionsMcpServer also has a `main` (see that file) — without pinning
-    // this, `sbt run` prompts interactively to pick one, which hangs in batch mode (confirmed:
-    // `No main class detected` under a non-interactive run). Use
-    // `sbt cli/runMain marola.agent.SwimConditionsMcpServer` to run the MCP server instead.
+    // SwimConditionsMcpServer has a `main` too; unpinned, `sbt run` prompts and hangs in batch mode.
     Compile / run / mainClass := Some("marola.Main"),
-    // Fork `run`/`runMain` into their own JVM and hand them sbt's stdin. The MCP server's `main`
-    // returns as soon as the stdio transport is registered and relies on the SDK's non-daemon
-    // reader thread to keep the process alive — fine under plain `java`, but sbt's in-process run
-    // treats `main` returning as task completion and exits, killing that thread: `.mcp.json`'s
-    // `just mcp-server` answered 0 bytes and exited ~2 s after start (MIP-0011 task 9 review,
-    // 2026-09-06, reproduced with a real initialize → tools/list handshake). A forked JVM lives
-    // until its non-daemon threads end and, with `connectInput`, actually receives the client's
-    // frames. `just run` forks too now — a stricter, more production-like isolation, not a loss.
-    // `StdoutOutput` is the other half: by default sbt captures a forked child's stdout and stderr
-    // and re-logs them through its own logger — child stdout as `[info]` (which `sbt -error`
-    // then drops: the initialize result vanished) and child stderr as `[error]` lines written to
-    // sbt's *stdout* (the server's INFO log line surfaced there, corrupting the transport again).
-    // Passthrough keeps child stdout on stdout and child stderr on stderr, unwrapped.
+    // Fork with sbt's stdin: the MCP server's `main` returns once the stdio transport is up and
+    // lives on its SDK's non-daemon reader thread, which an in-process run kills on return.
+    // `StdoutOutput` stops sbt re-logging child stdout/stderr, which corrupted the MCP transport.
     Compile / run / fork := true,
-    // Silences four lines on every forked run, from JDK 24's JEP 498 warning about
-    // sun.misc.Unsafe memory access: scala.runtime.LazyVals$ calls objectFieldOffset to
-    // initialise instance lazy vals. Nothing in marola calls Unsafe — it is scala-library
-    // 3.9.0, and 3.9.0 is the newest stable Scala (3.10.0 is at RC1), so there is no version
-    // to upgrade to today.
-    //
-    // A suppression, not a fix, and it has an expiry: JEP 471's roadmap goes warn -> deny by
-    // default -> removal, and when Unsafe is removed this flag stops being accepted and the JVM
-    // will refuse to start. Re-check on every Scala bump; the real fix is upstream moving
-    // LazyVals to VarHandles. Tests are unaffected — they do not fork.
+    // Silences JEP 498's sun.misc.Unsafe warning from scala-library 3.9.0's LazyVals. Expires:
+    // once Unsafe is removed the JVM rejects this flag, so re-check on every Scala bump.
     Compile / run / javaOptions += "--sun-misc-unsafe-memory-access=allow",
     Compile / run / connectInput := true,
     Compile / run / outputStrategy := Some(StdoutOutput),
-    // Real regression from the fork above, confirmed live 2026-09-07: a forked child's default
-    // working directory is the *task's own project* baseDirectory — `cli/`, since `cli` is
-    // `(project in file("cli"))` — not the repo root `sbt` itself was launched from. Every
-    // relative path in Main.scala/SiteBuilder.scala (`site/areas.json`, `knowledge/`, `data/`,
-    // ...) assumed cwd = repo root, which held before `fork := true` (an in-process run inherits
-    // sbt's own cwd) and silently broke the moment forking landed: `sbt "cli/run -- --site"`
-    // failed with `NoSuchFileException: site/areas.json` — reproduced live, both locally and in
-    // site.yml's real CI run. Pin it back to the repo root explicitly rather than relying on
-    // fork's default.
+    // A forked run's cwd defaults to `cli/`; every relative path (`site/`, `knowledge/`, `data/`)
+    // assumes the repo root.
     Compile / run / baseDirectory := (ThisBuild / baseDirectory).value
   )
 
@@ -250,11 +152,5 @@ lazy val root = (project in file("."))
   .aggregate(core, local, azure, cli)
   .settings(
     name := "marola",
-    publish / skip := true,
-    // sbt-scoverage (`just coverage`, or `sbt clean coverage test coverageReport
-    // coverageAggregate` directly): instruments core/local/azure/cli, runs the suite, and
-    // `coverageAggregate` sums one statement-coverage number across all four for the README
-    // badge (ci.yml, main only). Descriptive for now, not a merge gate — no minimum enforced.
-    coverageMinimumStmtTotal := 0,
-    coverageFailOnMinimum := false
+    publish / skip := true
   )

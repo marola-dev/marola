@@ -22,7 +22,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_dataset as bd  # reuse INPUT_FIELDS/render_inputs — same conditions shape
 
-REPO = bd.REPO
 RESOURCES = bd.RESOURCES
 OUT = Path(__file__).resolve().parent / "data"
 

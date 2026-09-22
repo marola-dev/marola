@@ -9,16 +9,9 @@ import marola.json.JsonValue
 import marola.model.{Beach, Coordinates}
 
 /**
- * A committed list of beaches for one (origin, radius, limit), so the site build does not ask
- * Overpass to rediscover the same coastline eight times a day.
- *
- * OSM beach polygons change on the order of years; the site rebuilds every three hours. Querying a
- * free shared API for effectively static data is both wasteful and the single most common way the
- * build dies — `HttpConnectTimeoutException` from overpass-api.de fails the whole run, and then no
- * board updates at all, water or otherwise.
- *
- * So: fetch once, locally, and commit the result. CI reads the file and never calls Overpass.
- * Refresh deliberately (`just beaches-refresh`), not on every build.
+ * A committed list of beaches for one (origin, radius, limit): OSM beaches change over years, and
+ * an Overpass timeout was the most common way the three-hourly site build died. CI reads the file
+ * and never calls Overpass; refresh deliberately with `just beaches-refresh`.
  */
 object BeachSnapshot:
 

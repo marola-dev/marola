@@ -1,13 +1,8 @@
 package marola.json
 
 /**
- * Minimal hand-rolled JSON reader and writer. marola has no JSON library dependency by choice, not
- * because one doesn't exist — `kyo-schema` (already resolved transitively via `kyo-http`) is a
- * real, substantial codec library confirmed present at the exact Kyo version this repo pins (see
- * `Http.scala`'s doc comment and `docs/FUTURE-WORK.md`) — every shape this module needs to
- * read/write (Open-Meteo, Overpass, Ollama, Azure Maps/Vision, Telegram's Bot API) is plain nested
- * object/array/string/number, so a small recursive-descent parser plus a matching renderer covers
- * it without pulling in a derivation-macro-based library for a handful of ad hoc shapes.
+ * Minimal hand-rolled JSON reader/writer, by choice: every shape marola reads or writes is plain
+ * nested object/array/string/number, not worth a derivation-macro codec library.
  */
 enum JsonValue derives CanEqual:
   case JObject(fields: Map[String, JsonValue])
@@ -38,10 +33,7 @@ enum JsonValue derives CanEqual:
     case JsonValue.JBool(v) => Some(v)
     case _                  => None
 
-  /**
-   * Serializes back to compact JSON text — the write side of this module, added for the `llm`/
-   * Cosmos DB/Vision clients that need to build request bodies, not just parse responses.
-   */
+  /** Compact JSON text. */
   def render: String = this match
     case JsonValue.JObject(fields) =>
       fields
@@ -49,9 +41,8 @@ enum JsonValue derives CanEqual:
         .mkString("{", ",", "}")
     case JsonValue.JArray(items) => items.map(_.render).mkString("[", ",", "]")
     case JsonValue.JString(s)    => JsonValue.renderString(s)
-    case JsonValue.JNumber(
-          n
-        ) => // NaN/Infinity aren't JSON; render as null rather than emit an invalid document
+    case JsonValue.JNumber(n)    =>
+      // NaN/Infinity aren't JSON; null rather than an invalid document.
       if n.isNaN || n.isInfinite then "null"
       else if n == n.toLong then n.toLong.toString
       else n.toString
@@ -60,10 +51,6 @@ enum JsonValue derives CanEqual:
 
 object JsonValue:
 
-  /**
-   * Builders for the write side — `JsonValue.obj("role" -> JsonValue.str("user"), ...)` reads
-   * better at call sites than nested `JObject(Map(...))` literals.
-   */
   def obj(fields: (String, JsonValue)*): JsonValue = JObject(fields.toMap)
   def arr(items: JsonValue*): JsonValue = JArray(items.toVector)
   def str(value: String): JsonValue = JString(value)

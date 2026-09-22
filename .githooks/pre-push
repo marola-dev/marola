@@ -29,10 +29,7 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
   if [[ -z "$base" ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
     continue    # same invalid-base case the scala check above already tolerates
   fi
-  # A commit that touches site/static/** (the user-visible frontend surface, "what a user sees"
-  # per .claude/skills/mip/SKILL.md's "When a MIP is warranted") must say why: either the MIP it's
-  # for, or an explicit "none — <reason>" for a bug fix/typo/refactor with no behaviour change
-  # (the mip skill's own "Not for" list).
+  # A commit touching site/static/** needs a `MIP: MIP-NNNN` or `MIP: none — <reason>` trailer.
   exclude=()
   if git rev-parse -q --verify origin/main >/dev/null 2>&1; then
     exclude=(--not origin/main)

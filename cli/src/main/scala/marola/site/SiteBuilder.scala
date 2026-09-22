@@ -97,7 +97,7 @@ object SiteBuilder:
       accessibility: Option[AccessibilityClient] = None
   ): List[Path] < Sync =
     for
-      boards <- traverse(areas)(a =>
+      boards <- Kyo.foreach(areas)(a =>
         buildArea(a, out, water(a.origin), now, distanceRefiner, accessibility)
       )
       index <- Sync.defer(writeAreasIndex(areas, out))
@@ -192,12 +192,3 @@ object SiteBuilder:
 
   private def write(path: Path, json: JsonValue): Path =
     Files.writeString(path, json.render, StandardCharsets.UTF_8)
-
-  private def traverse[A, B](items: List[A])(f: A => List[B] < Sync): List[List[B]] < Sync =
-    items match
-      case Nil => Nil
-      case head :: tail =>
-        for
-          b <- f(head)
-          bs <- traverse(tail)(f)
-        yield b :: bs

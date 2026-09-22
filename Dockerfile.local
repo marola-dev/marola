@@ -1,15 +1,7 @@
-# marola-local — MIP-0008 §5.3: the fine-tuned model as a versioned artefact. Ollama with
-# `marola-llama3.2` (finetune/Modelfile, Tier 1: llama3.2 + marola's persona and decoding
-# settings, no weight change — finetune/README.md says so plainly) already in its model store, so
-# `docker compose --profile local run --rm marola-local --summarize …` needs no pull and no
-# `ollama create`. Built and pushed by docker-local.yml as ghcr.io/h0ffmann/marola:local-<sha>;
-# the `:local` tag moves only after the benchmark gate (scripts/benchmark_gate.py) passes.
-# ~2 GB for the llama3.2 weights + the variant's manifest. Tier 2 (the QLoRA adapter) is not in
-# v1 (MIP-0008.tasks.md decision 5).
-#
-# Lint: `just quality` runs hadolint on this file too.
-# Pinned (hadolint DL3006/DL3007; 0.33.3 is the newest stable tag on Docker Hub, 2026-09-03 —
-# bump here and in docker-compose.yml together).
+# marola-local — MIP-0008 §5.3: Ollama with `marola-llama3.2` (finetune/Modelfile, Tier 1, no
+# weight change) already in its store, so no pull and no `ollama create` on the user's machine.
+# docker-local.yml moves the `:local` tag only after scripts/benchmark_gate.py passes.
+# Bump the tag here and in docker-compose.yml together.
 FROM ollama/ollama:0.33.3
 
 # The model store goes to a path of our own rather than /root/.ollama, so nothing depends on
@@ -18,8 +10,7 @@ FROM ollama/ollama:0.33.3
 ENV OLLAMA_MODELS=/models
 COPY finetune/Modelfile /finetune/Modelfile
 
-# `ollama pull`/`create` talk to a server: run one for the duration of this layer. Exactly what
-# `just finetune-model` does on a laptop (finetune/README.md).
+# `ollama pull`/`create` talk to a server: run one for the duration of this layer.
 RUN (ollama serve > /tmp/ollama-build.log 2>&1 &) \
  && for _ in $(seq 1 60); do ollama list >/dev/null 2>&1 && break; sleep 1; done \
  && ollama pull llama3.2 \

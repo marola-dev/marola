@@ -29,7 +29,6 @@ object InemaPdfParser:
     try new PDFTextStripper().getText(document)
     finally document.close()
 
-  // Table rows start right after the "Ponto - Código .
   private def tableLines(text: String): List[String] =
     text.linesIterator.toList
       .dropWhile(line => !rowStart.matches(line.trim))

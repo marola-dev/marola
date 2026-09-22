@@ -14,7 +14,7 @@
   var el = {
     area: $('area'), days: $('days'), near: $('near'), sound: $('sound'), toggleList: $('toggle-list'),
     hourbar: $('hourbar'), hour: $('hour'), hourLabel: $('hour-label'),
-    list: $('list'), card: $('card'), footer: $('footer'), status: $('status'), smoke: $('smoke')
+    list: $('list'), card: $('card'), footer: $('footer'), status: $('status')
   };
 
   var state = {
@@ -24,8 +24,7 @@
     selected: null,     // beach name
     here: null,         // {lat, lon} after "near me"
     markers: {}, trailLayers: [], tiles: null, map: null,
-    smoke: null, smokeHistory: null, smokeMarker: null,   // the last live run (MIP-0008)
-    waterPointMarkers: []   // the selected beach's own sampling points, real markers, not text
+    waterPointMarkers: []
   };
 
   // --- helpers -------------------------------------------------------------------------------.
@@ -119,12 +118,8 @@
       el.hour.max = state.hours.length - 1;
       el.hour.value = -1; state.hourIndex = -1;
       el.hourbar.hidden = state.hours.length === 0;
-      // a shared link can open straight on one beach: ?beach=Praia%20do%20Campeche.
       var beach = param('beach');
       if (beach && !state.selected && beachByName(beach)) state.selected = beach;
-      // Re-plot the selected beach's water points against *this* board (a shared-link initial
-      // load, or a day/area switch while a beach card was already open) — same board this render
-      // is about to use, never a stale one from before the fetch.
       renderWaterPoints(beachByName(state.selected));
       render();
     });
@@ -141,13 +136,11 @@
     state.map.setView([area.lat, area.lon], 11);
   }
 
-  // --- wave markers + hover aspects (MIP-0009)
-  // -------------------------------------------------.
+  // --- wave markers + hover aspects (MIP-0009) ----------------------------------------------.
   var WIND_EMOJI = { calm: '🍃', breezy: '🌬️', strong: '💨' };
   var COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   function compass(deg) { return deg === null || deg === undefined ? '' : COMPASS[Math.round(deg / 45) % 8]; }
 
-  /** One wave, filled with the score colour. */
   var WAVE_PATH = 'M3 10c2.6-7 6.4-7 9 0s6.4 5 9 0v10H3z';
   function waveIcon(fill, selected, past) {
     var size = selected ? 32 : 24;
@@ -159,26 +152,20 @@
     });
   }
 
-  /** The full hours[] entry behind what `shown()` returns (the best-hour shape carries no
-   * numbers). */
+  /** The best-hour shape `shown()` returns carries no numbers; this finds the hours[] entry. */
   function hourEntry(beach, s) {
     if (!s) return null;
     for (var i = 0; i < beach.hours.length; i++) if (beach.hours[i].h === s.h) return beach.hours[i];
     return null;
   }
 
-  /** A small colour-only dot for a beach's water verdict — green/red/grey, the same tokens the
-   * score legend already uses (--c70/--c0/--cna) — instead of the 💧 emoji, which reads the same
-   * regardless of PRÓPRIA/IMPRÓPRIA/no-data and doesn't scan at a glance the way the score
-   * markers' colour already does. */
   function waterDotClass(beach) {
     if (beach.water.unfit) return 'wdot c0';
     if (beach.water.summary === 'no data') return 'wdot cna';
     return 'wdot c70';
   }
 
-  /** The six aspects at the shown hour — every value a number or an enum from the board, every
-   * emoji followed by its word (older fonts lack 🪼). */
+  /** Every emoji is followed by its word: older fonts lack 🪼. */
   function aspectsHtml(beach, s) {
     var head = '<div class="head">🌊 ' + esc(beach.name) + (s ? ' · ' + s.score + '/100 at ' + esc(s.h) : ' · dark at this hour') + '</div>';
     var e = hourEntry(beach, s);
@@ -188,12 +175,7 @@
       (s.best && beach.sea.wind_dir_deg !== null ? ' ' + compass(beach.sea.wind_dir_deg) : '');
     var waves = '〰️ waves ' + fmt(e.wave_m, ' m') + (s.best && beach.sea.period_s !== null ? ' every ' + fmt(beach.sea.period_s, ' s', 0) : '');
     var whales = '🐋 whales ' + esc(e.whales) + (beach.whales.peak && beach.whales.peak !== e.h ? ' (best ' + esc(beach.whales.peak) + ')' : '');
-    // The verdict is a sentence ("8/9 PRÓPRIA — avoid Ponto 98 (25 Aug)"), not a reading: it gets
-    // the full width and wraps (.wide), while the short cells stay on one line each.
     var water = '<span class="wide ' + (beach.water.unfit ? 'unfit' : 'water') + '"><i class="' + waterDotClass(beach) + '"></i> ' + esc(beach.water.summary) + '</span>';
-    // Accessibility (MIP-0021): OSM amenity counts within 300m, already in every board — only
-    // rendered when the board actually has at least one count for this beach (an older board, or
-    // a beach with no matched amenities at all, has no `facilities` key: absent, not zeroed).
     var facilities = facilitiesHtml(beach.facilities);
     return head + '<div class="grid">' +
       '<span>' + wind + '</span>' +
@@ -206,9 +188,7 @@
       '</div>';
   }
 
-  // --- trails (MIP-0030)
-  // ------------------------------------------------------------------------ green = hiking,
-  // amber = mountain_hiking, grey = unclassified or no sac_scale tag at all — §3.
+  // --- trails (MIP-0030) --------------------------------------------------------------------.
   function trailColour(difficulty) {
     if (difficulty === 'hiking') return getCss('--c70');
     if (difficulty === 'mountain_hiking') return getCss('--c40');
@@ -234,13 +214,12 @@
 
   var FACILITY_LABEL = { parking: '🅿️ parking', toilets: '🚻 toilets', shower: '🚿 shower', lifeguard: '🛟 lifeguard' };
 
-  /** One short line, only the facilities the board actually has a count for, in a fixed order. */
   function facilitiesHtml(f) {
     if (!f) return '';
     var parts = ['parking', 'toilets', 'shower', 'lifeguard']
       .filter(function (k) { return f[k] !== undefined && f[k] !== null; })
       .map(function (k) { return FACILITY_LABEL[k] + ' ' + f[k]; });
-    return parts.length ? parts.join(' · ') : '';
+    return parts.join(' · ');
   }
 
   function render() {
@@ -256,9 +235,7 @@
       var m = L.marker([beach.lat, beach.lon], {
         icon: waveIcon(c, selected, !!(s && isPast(s.h))), zIndexOffset: selected ? 1000 : 0, keyboard: true
       }).addTo(state.map);
-      // No `title`: the browser would draw its own tooltip on top of Leaflet's after ~1 s.
-      // keyboard: true already makes the icon focusable (tabindex + role=button); name it for a
-      // screen reader directly instead.
+      // No `title`: the browser would draw a native tooltip on top of Leaflet's.
       if (m.getElement) { var mel = m.getElement(); if (mel) mel.setAttribute('aria-label', beach.name); }
       m.bindTooltip(aspectsHtml(beach, s), { sticky: true, direction: 'top', className: 'aspects', opacity: 0.97 });
       m.on('click', function (e) { L.DomEvent.stopPropagation(e); select(beach.name, false); });
@@ -321,18 +298,17 @@
     return state.board.beaches.filter(function (b) { return b.name === name; })[0] || null;
   }
 
-  /** The selected beach's own water-sampling points as real markers — "point by point", not just
-   * the one-line aggregate summary the tooltip/card text already shows. */
+  function condLabel(c) { return c === 'proper' ? 'PRÓPRIA' : c === 'improper' ? 'IMPRÓPRIA' : 'unclassified'; }
+
   function renderWaterPoints(beach) {
     state.waterPointMarkers.forEach(function (m) { state.map.removeLayer(m); });
     state.waterPointMarkers = [];
     if (!beach || !beach.water || !beach.water.points) return;
     beach.water.points.forEach(function (p) {
       var color = p.condition === 'improper' ? getCss('--c0') : p.condition === 'proper' ? getCss('--c70') : getCss('--cna');
-      var cond = p.condition === 'proper' ? 'PRÓPRIA' : p.condition === 'improper' ? 'IMPRÓPRIA' : 'unclassified';
       var m = L.circleMarker([p.lat, p.lon], { radius: 6, color: '#fff', weight: 2, fillColor: color, fillOpacity: 1 })
         .addTo(state.map)
-        .bindTooltip(esc(p.point) + ' (' + esc(p.location) + '): ' + cond + ', ' + esc(p.sampled_on), { direction: 'top', offset: [0, -6] });
+        .bindTooltip(esc(p.point) + ' (' + esc(p.location) + '): ' + condLabel(p.condition) + ', ' + esc(p.sampled_on), { direction: 'top', offset: [0, -6] });
       state.waterPointMarkers.push(m);
     });
   }
@@ -350,8 +326,7 @@
     var points = b.water.points.map(function (p) {
       var cls = p.condition === 'improper' ? 'improper' : p.condition === 'proper' ? 'proper' : '';
       var count = p.enterococci_per_100ml === null ? '' : ', ' + p.enterococci_per_100ml + ' enterococci/100mL';
-      var cond = p.condition === 'proper' ? 'PRÓPRIA' : p.condition === 'improper' ? 'IMPRÓPRIA' : 'unclassified';
-      return '<li><span class="' + cls + '">' + esc(p.point) + ' (' + esc(p.location) + '): ' + cond + '</span>, ' + esc(p.sampled_on) + count + '</li>';
+      return '<li><span class="' + cls + '">' + esc(p.point) + ' (' + esc(p.location) + '): ' + condLabel(p.condition) + '</span>, ' + esc(p.sampled_on) + count + '</li>';
     });
     var water = '<span class="' + (b.water.unfit ? 'unfit' : '') + '">' + esc(b.water.summary) + '</span>' +
       (points.length ? '<ul>' + points.join('') + '</ul>' : '') +
@@ -368,8 +343,7 @@
     el.card.innerHTML =
       '<button class="close" type="button" aria-label="Close">×</button>' +
       '<h2>' + esc(b.name) + '</h2>' +
-      // Touch has no hover: the same aspect row the tooltip shows, first, so a tap sees what a
-      // mouse sees (MIP-0009 §3).
+      // Touch has no hover: the tooltip's aspect row, first (MIP-0009 §3).
       '<div class="aspects">' + aspectsHtml(b, s) + '</div>' + head +
       '<dl>' +
       '<dt>Why</dt><dd>' + notes + '</dd>' +
@@ -391,7 +365,6 @@
     var srcs = [b.sources.beaches, b.sources.forecast, b.sources.water].filter(Boolean).map(function (s) {
       var href = SOURCE_LINKS[s.split(' ')[0]] || SOURCE_LINKS[s];
       var label = href ? '<a href="' + href + '" target="_blank" rel="noopener">' + esc(s) + '</a>' : esc(s);
-      // .src keeps third-party names out of the lowercase house style — Open-Meteo, IMA/SC.
       return '<span class="src">' + label + '</span>';
     }).join(' · ');
     var lore = b.lore ? '<p class="lore">' + (b.lore.kind === 'creature' ? '🐋 Sea life: ' : '🌊 Did you know? ') + esc(b.lore.text) +
@@ -405,83 +378,12 @@
     el.status = document.getElementById('status');
   }
 
-  // --- last live run (MIP-0008 §5.5)
-  // -----------------------------------------------------------.
-  var SMOKE_SCHEMA = 1;
-  function loadSmoke() {
-    // This build's index.html may not have the panel at all (an older/newer deploy than app.js —
-    // GitHub Pages caches each file independently, `cache-control: max-age=600`).
-    if (!el.smoke) return Promise.resolve();
-    return fetchJson('smoke/latest.json').then(function (run) {
-      if (run.schema !== SMOKE_SCHEMA) throw new Error('smoke schema ' + run.schema);
-      state.smoke = run;
-      return fetchJson('smoke/history.json').catch(function () { return null; });
-    }).then(function (h) {
-      state.smokeHistory = h && h.schema === SMOKE_SCHEMA ? h : null;
-      renderSmoke();
-    }).catch(function (err) {
-      if (el.smoke) el.smoke.hidden = true; // no run yet, or unreadable: no panel
-      console.error('smoke panel:', err);
-    });
-  }
-
-  function renderSmoke() {
-    var r = state.smoke; if (!r || !el.smoke) return;
-    var when = String(r.when).replace('T', ' ').slice(0, 16) + ' UTC';
-    var top = r.top_pick, rev = r.review;
-    var verdict = rev ? String(rev.verdict).toLowerCase() : '';
-    var where = r.lat !== null && r.lat !== undefined
-      ? '<a href="#" id="smoke-goto">' + r.lat.toFixed(4) + ', ' + r.lon.toFixed(4) + '</a>' : 'unknown location';
-    var image = String(r.image || '').replace(/^ghcr\.io\//, '');
-    var html = '<h3>Last live run <small>— ' + esc(r.model) + ' in ' + esc(image) + ', ' + esc(when) +
-      ' · <a href="' + esc(r.run_url) + '" target="_blank" rel="noopener">log</a></small></h3>';
-    if (!r.ok) {
-      html += '<p class="bad">This run did not complete: ' + esc((r.errors && r.errors[0]) || ('exit code ' + r.exit_code)) + '.</p>';
-    }
-    if (top) {
-      html += '<p>From ' + where + ' the pipeline picked <b>' + esc(top.name) + '</b>: score ' + top.score + '/100 at ' + esc(top.when) +
-        ', ' + top.distance_km + ' km away' + (r.ranked && r.ranked.length > 1 ? ' (' + r.ranked.length + ' beaches ranked)' : '') + '.</p>';
-    }
-    // MIP-0008 §6/§8: the sentence is model text, shown only with the reviewer's verdict next to
-    // it, and not at all when the reviewer rejected it — the numbers above are the source of
-    // truth.
-    if (r.ok && rev && verdict !== 'reject' && rev.summary) {
-      html += '<p class="llm">“' + esc(rev.summary) + '”</p>' +
-        '<p><small>Model text (' + esc(r.model) + '), reviewed by a second pass: <span class="verdict ' + esc(verdict) + '">' +
-        esc(verdict) + ' · ' + rev.score + '/100</span>. The ranked numbers are the source of truth.</small></p>';
-    } else if (rev && verdict === 'reject') {
-      html += '<p><small>The reviewer <span class="verdict reject">rejected</span> the model\'s sentence (' + rev.score + '/100) — numbers only.</small></p>';
-    }
-    var runs = state.smokeHistory && state.smokeHistory.runs ? state.smokeHistory.runs.slice(0, 10) : [];
-    if (runs.length > 1) {
-      html += '<details><summary>last ' + runs.length + ' runs</summary><ul>' + runs.map(function (e) {
-        var w = String(e.when).replace('T', ' ').slice(0, 16);
-        var what = e.ok && e.top_pick
-          ? esc(e.top_pick.name) + ' ' + e.top_pick.score + (e.review ? ', reviewer ' + e.review.score + ' <span class="verdict ' + esc(e.review.verdict) + '">' + esc(e.review.verdict) + '</span>' : '')
-          : '<span class="bad">failed</span>';
-        return '<li><a href="' + esc(e.run_url) + '" target="_blank" rel="noopener">' + esc(w) + '</a> · ' + esc(e.model) + ' · ' + what + '</li>';
-      }).join('') + '</ul></details>';
-    }
-    el.smoke.innerHTML = html;
-    el.smoke.hidden = false;
-    if (r.lat !== null && r.lat !== undefined && state.map) {
-      if (state.smokeMarker) state.map.removeLayer(state.smokeMarker);
-      state.smokeMarker = L.circleMarker([r.lat, r.lon], { radius: 7, color: '#0b6e99', dashArray: '3 3', weight: 2, fillColor: '#fff', fillOpacity: .9 })
-        .addTo(state.map).bindTooltip('last live run: ' + (top ? top.name + ' ' + top.score : 'failed') + ', ' + when, { direction: 'top', offset: [0, -6] });
-      var go = document.getElementById('smoke-goto');
-      if (go) go.addEventListener('click', function (e) { e.preventDefault(); state.map.setView([r.lat, r.lon], 12); });
-    }
-  }
-
-  // --- ambient wave sound (Web Audio API, synthesized — no audio file, nothing to fetch)
-  // --------.
+  // --- ambient wave sound (Web Audio, synthesized — nothing to fetch) ------------------------.
   var sound = { ctx: null, gain: null, lfoDepth: null, on: false };
   var SWELL_DEPTH = 0.05;   // how far the LFO swings the output gain when the sound is on
   var SOUND_LEVEL = 0.06;   // the output gain's own level when on
   var SILENT = 0.0001;
-  // Brown noise (integrated white noise, ~ -6dB/octave) through a low-pass filter reads as surf
-  // wash; a slow LFO on the gain (~0.15 Hz, one swell every ~6.7s) gives it the rise-and-fall of
-  // real waves instead of a flat hiss.
+  // Low-passed brown noise reads as surf wash; a ~0.15 Hz LFO on the gain adds the swell.
   function startWaveSound(ctx) {
     var seconds = 2, bufferSize = seconds * ctx.sampleRate;
     var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -497,7 +399,7 @@
     var filter = ctx.createBiquadFilter();
     filter.type = 'lowpass'; filter.frequency.value = 700;
     var gainNode = ctx.createGain();
-    gainNode.gain.value = 0.0001; // starts silent; the click handler ramps it up
+    gainNode.gain.value = SILENT;
     var lfo = ctx.createOscillator();
     lfo.frequency.value = 0.15;
     var lfoGain = ctx.createGain();
@@ -508,10 +410,8 @@
     filter.connect(gainNode);
     gainNode.connect(ctx.destination);
     noise.start(); lfo.start();
-    // The LFO's depth is returned alongside the output gain because BOTH have to be silenced to
-    // stop the sound: a signal connected to an AudioParam is added to that param's intrinsic
-    // value, so ramping gainNode.gain to ~0 on its own leaves the LFO still swinging it by
-    // ±SWELL_DEPTH — audible, and the reason the toggle used to never turn the sound off.
+    // Both must be silenced to stop the sound: a signal connected to an AudioParam is *added* to
+    // its value, so zeroing gainNode.gain alone leaves the LFO swinging it by ±SWELL_DEPTH.
     return { gain: gainNode, lfoDepth: lfoGain };
   }
 
@@ -560,22 +460,17 @@
       var now = sound.ctx.currentTime;
       sound.gain.gain.cancelScheduledValues(now);
       sound.gain.gain.setTargetAtTime(sound.on ? SOUND_LEVEL : SILENT, now, 0.5);
-      // Silence the swell too, or the sound never actually stops — see startWaveSound.
       sound.lfoDepth.gain.cancelScheduledValues(now);
       sound.lfoDepth.gain.setTargetAtTime(sound.on ? SWELL_DEPTH : 0, now, 0.5);
     } catch (e) { console.error(e); }
   });
 
-  // The hint is only right when the board JSON itself is missing (a fresh checkout, or a build
-  // that never ran) — fetchJson's own error is "<status> <path>", e.g. "404 data/areas.json".
-  function isMissingBoardJson(err) {
-    return /^404 data\/.*\.json$/.test((err && err.message) || '');
-  }
   function fail(err) {
-    var hint = isMissingBoardJson(err) ? ' — run `just site-build` first?' : '';
+    // fetchJson's error is "<status> <path>"; only a missing board JSON means "not built yet".
+    var hint = /^404 data\/.*\.json$/.test((err && err.message) || '') ? ' — run `just site-build` first?' : '';
     status('could not load the board: ' + err.message + hint);
     console.error(err);
   }
 
-  loadAreas().then(loadSmoke).catch(fail);
+  loadAreas().catch(fail);
 })();

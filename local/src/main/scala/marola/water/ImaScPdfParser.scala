@@ -1,6 +1,5 @@
 package marola.water
 
-import java.text.Normalizer
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -57,15 +56,8 @@ private[water] object ImaScPdfParser:
             .headOption
             .flatMap { dv =>
               Try(LocalDate.parse(dv.group(1), dateFormat)).toOption.map { date =>
-                Row(beach, point, date, condition(dv.group(2)))
+                Row(beach, point, date, ImaScWaterQualityClient.verdict(dv.group(2)))
               }
             }
         }
     }
-
-  /** Same accent-folding rule as the JSON client, so PRÓPRIA and PROPRIA read alike. */
-  private def condition(raw: String): BathingCondition =
-    Normalizer.normalize(raw, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toUpperCase.trim match
-      case s if s.startsWith("IMPR") => BathingCondition.Improper
-      case s if s.startsWith("PR")   => BathingCondition.Proper
-      case _                         => BathingCondition.Unknown

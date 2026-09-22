@@ -69,16 +69,15 @@ object ImaScWaterQualityClient:
       date <- Try(LocalDate.parse(raw.trim, dateFormat)).toOption
     yield WaterSample(
       date,
-      condition(a("CONDICAO").str),
+      a("CONDICAO").str.fold(BathingCondition.Unknown)(verdict),
       a("CHUVA").str,
       text(a("RESULTADO")).flatMap(_.trim.toIntOption),
       text(a("TEMP_AGUA")).flatMap(_.trim.toDoubleOption)
     )
 
-  private def condition(raw: Option[String]): BathingCondition =
-    raw.map(s =>
-      Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toUpperCase.trim
-    ) match
-      case Some(s) if s.startsWith("IMPR") => BathingCondition.Improper
-      case Some(s) if s.startsWith("PR")   => BathingCondition.Proper
-      case _                               => BathingCondition.Unknown
+  /** PRÓPRIA/IMPRÓPRIA, accent- and case-insensitive; shared by every agency parser. */
+  private[water] def verdict(raw: String): BathingCondition =
+    Normalizer.normalize(raw, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toUpperCase.trim match
+      case s if s.startsWith("IMPR") => BathingCondition.Improper
+      case s if s.startsWith("PR")   => BathingCondition.Proper
+      case _                         => BathingCondition.Unknown

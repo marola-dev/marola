@@ -34,10 +34,6 @@ BYTES_FP16 = 2.0
 QUANT_RATIO = {"Q4_K_M": 0.60, "Q8_0": 1.10}
 
 
-def gb(x: float) -> float:
-    return x
-
-
 def free_disk_gb(path: Path) -> float:
     s = os.statvfs(path)
     return s.f_frsize * s.f_bavail / 1e9

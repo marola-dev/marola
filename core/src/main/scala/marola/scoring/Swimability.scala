@@ -59,8 +59,7 @@ object Swimability:
    * spot a whale doesn't make an hour more or less safe/pleasant to swim in.
    */
   def whaleSightingLikelihood(hour: HourlyConditions): WhaleSightingLikelihood =
-    val inSeason = WhaleSeasonMonths.contains(hour.time.getMonthValue)
-    if !inSeason || !hour.isDaylight.contains(true) then WhaleSightingLikelihood.Low
+    if !isWhaleSeason(hour.time) || !hour.isDaylight.contains(true) then WhaleSightingLikelihood.Low
     else
       val goodVisibility = List(
         hour.windSpeedKmh.exists(_ <= WhaleCalmWindKmh),

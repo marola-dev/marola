@@ -54,9 +54,6 @@ object Recommender:
                 s"water: ${c.name} returned no sampling points — every beach will read 'no data'"
               )
             WaterQualityMatcher.assign(beaches, points, c.name)
-          // Was `case _ => Map.empty`, which made an unreachable agency indistinguishable from an
-          // agency that published nothing. Both IMA/SC (a self-signed cert on their production
-          // host) and INEA/RJ went dark for days without a single line of output.
           case Result.Failure(e) =>
             log.warn(s"water: ${c.name} failed — ${describe(e)}")
             Map.empty[String, WaterQuality]
@@ -104,7 +101,7 @@ object Recommender:
     distanceRefiner match
       case None => beaches
       case Some(refine) =>
-        traverseSingle(beaches) { beach =>
+        traverse(beaches) { beach =>
           Abort
             .run(Abort.catching[Throwable](refine(origin, beach.coordinates)))
             .map {
@@ -232,29 +229,12 @@ object Recommender:
       )
     }
 
-  /**
-   * Small hand-rolled effectful traverse — kept local rather than reaching for a kyo-combinators
-   * method because this module's dependency policy (see build.sbt/Http.scala) is to only rely on
-   * Kyo APIs actually confirmed against the pinned 1.0.0-RC5 build; `map`/`flatMap` on `< Sync` are
-   * confirmed (Http.scala, OpenMeteoClient.scala), so this is built from those alone.
-   */
-  private def traverse[A, B](items: List[A])(f: A => List[B] < Sync): List[List[B]] < Sync =
+  // Hand-rolled from `map`/`flatMap` only: Kyo's own combinators aren't verified against the pinned RC.
+  private def traverse[A, B](items: List[A])(f: A => B < Sync): List[B] < Sync =
     items match
       case Nil => Nil
       case head :: tail =>
         for
           b <- f(head)
           bs <- traverse(tail)(f)
-        yield b :: bs
-
-  /**
-   * Same rationale as `traverse` above, for the common one-in-one-out shape (`refineDistances`).
-   */
-  private def traverseSingle[A, B](items: List[A])(f: A => B < Sync): List[B] < Sync =
-    items match
-      case Nil => Nil
-      case head :: tail =>
-        for
-          b <- f(head)
-          bs <- traverseSingle(tail)(f)
         yield b :: bs

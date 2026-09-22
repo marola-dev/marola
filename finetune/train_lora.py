@@ -61,36 +61,37 @@ ATTENTION_AND_MLP = (
     "down_proj",
 )
 
+_DEFAULTS = {
+    "gated": False,
+    "licence": "apache-2.0",
+    "name_prefix": "",
+    "thinking": False,
+    "target_modules": ATTENTION_AND_MLP,
+}
+
 PRESETS = {
     "tiny": {
+        **_DEFAULTS,
         "hf": "HuggingFaceTB/SmolLM2-360M-Instruct",
         "ollama": "smollm2:360m",
-        "gated": False,
         "params_b": 0.36,
-        "licence": "apache-2.0",
-        "name_prefix": "",
-        "thinking": False,
-        "target_modules": ATTENTION_AND_MLP,
     },
     "small": {
+        **_DEFAULTS,
         "hf": "unsloth/Llama-3.2-1B-Instruct",
         "ollama": "llama3.2:1b",
-        "gated": False,
         "params_b": 1.24,
         "licence": "llama3.2",
         "name_prefix": "Llama-",
-        "thinking": False,
-        "target_modules": ATTENTION_AND_MLP,
     },
     "base": {
+        **_DEFAULTS,
         "hf": "meta-llama/Llama-3.2-3B-Instruct",
         "ollama": "llama3.2",
         "gated": True,
         "params_b": 3.2,
         "licence": "llama3.2",
         "name_prefix": "Llama-",
-        "thinking": False,
-        "target_modules": ATTENTION_AND_MLP,
     },
     # Qwen: Apache-2.0 throughout, so no naming obligation of any kind — the reason these are the
     # recommended step up from `tiny` rather than the Llama presets above. Sizes and licences
@@ -98,36 +99,24 @@ PRESETS = {
     # both on 2026-09-12. Qwen2.5-3B-Instruct is deliberately absent: its card says `other`, not
     # apache-2.0, unlike every other size in the family.
     "qwen-4b": {
+        **_DEFAULTS,
         "hf": "Qwen/Qwen3-4B-Instruct-2507",
         # NOT `qwen3:4b` — that tag is 4b-thinking-2507 (digest 359d7dd4bcda), a different
         # checkpoint from the Instruct-2507 weights trained here (0edcdef34593).
         "ollama": "qwen3:4b-instruct",
-        "gated": False,
         "params_b": 4.02,
-        "licence": "apache-2.0",
-        "name_prefix": "",
-        "thinking": False,
-        "target_modules": ATTENTION_AND_MLP,
     },
     "qwen-7b": {
+        **_DEFAULTS,
         "hf": "Qwen/Qwen2.5-7B-Instruct",
         "ollama": "qwen2.5:7b",
-        "gated": False,
         "params_b": 7.62,
-        "licence": "apache-2.0",
-        "name_prefix": "",
-        "thinking": False,
-        "target_modules": ATTENTION_AND_MLP,
     },
     "qwen-14b": {
+        **_DEFAULTS,
         "hf": "Qwen/Qwen2.5-14B-Instruct",
         "ollama": "qwen2.5:14b",
-        "gated": False,
         "params_b": 14.77,
-        "licence": "apache-2.0",
-        "name_prefix": "",
-        "thinking": False,
-        "target_modules": ATTENTION_AND_MLP,
     },
     # The odd one out, and the reason `target_modules`/`thinking` are preset fields at all.
     # Qwen3.8-27B is post-trained (not a base checkpoint), multimodal
@@ -137,12 +126,10 @@ PRESETS = {
     # train a quarter of the attention stack. Its template also wraps every assistant turn in an
     # empty <think></think> block. NOT RUN here — treat a first run as an experiment, not a build.
     "qwen-27b": {
+        **_DEFAULTS,
         "hf": "Qwen/Qwen3.8-27B",
         "ollama": "qwen3.8:27b",
-        "gated": False,
         "params_b": 27.78,
-        "licence": "apache-2.0",
-        "name_prefix": "",
         "thinking": True,
         "target_modules": "all-linear",
     },

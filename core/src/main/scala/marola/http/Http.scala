@@ -88,6 +88,18 @@ object Http:
 
   private def userAgent = "marola/0.1 (+https://github.com/h0ffmann/marola)"
 
+  private def request(
+      url: String,
+      timeoutSeconds: Long,
+      headers: Map[String, String] = Map.empty
+  ): HttpRequest.Builder =
+    val builder = HttpRequest
+      .newBuilder(URI.create(url))
+      .timeout(Duration.ofSeconds(timeoutSeconds))
+      .header("User-Agent", userAgent)
+    headers.foreach { case (k, v) => builder.header(k, v) }
+    builder
+
   /** `headers`: e.g. an API key that must not go in the URL (`RouteFinder`). */
   def getString(
       url: String,
@@ -96,13 +108,7 @@ object Http:
       backoffMs: Long = 1000
   ): String < Sync =
     Sync.defer {
-      val builder = HttpRequest
-        .newBuilder(URI.create(url))
-        .timeout(Duration.ofSeconds(15))
-        .header("User-Agent", userAgent)
-        .GET()
-      headers.foreach { case (k, v) => builder.header(k, v) }
-      check(url, sendRetrying(builder.build(), retries, backoffMs), 300)
+      check(url, sendRetrying(request(url, 15, headers).GET().build(), retries, backoffMs), 300)
     }
 
   /**
@@ -120,14 +126,11 @@ object Http:
       val encoded = form
         .map { case (k, v) => s"${URLEncoder.encode(k, UTF_8)}=${URLEncoder.encode(v, UTF_8)}" }
         .mkString("&")
-      val request = HttpRequest
-        .newBuilder(URI.create(url))
-        .timeout(Duration.ofSeconds(timeoutSeconds))
-        .header("User-Agent", userAgent)
+      val req = request(url, timeoutSeconds)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .POST(HttpRequest.BodyPublishers.ofString(encoded))
         .build()
-      check(url, sendRetrying(request, retries, backoffMs), 300)
+      check(url, sendRetrying(req, retries, backoffMs), 300)
     }
 
   /**
@@ -141,21 +144,13 @@ object Http:
       timeoutSeconds: Long = 120
   ): String < Sync =
     Sync.defer {
-      val builder = HttpRequest
-        .newBuilder(URI.create(url))
-        .timeout(Duration.ofSeconds(timeoutSeconds))
-        .header("User-Agent", userAgent)
+      val req = request(url, timeoutSeconds, headers)
         .header("Content-Type", "application/json")
         .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-      headers.foreach { case (k, v) => builder.header(k, v) }
-      check(url, transport.get.send(builder.build()), 500)
+      check(url, transport.get.send(req.build()), 500)
     }
 
-  /**
-   * Raw-binary POST (`application/octet-stream` by default) — Azure AI Vision's Image Analysis API
-   * takes the image bytes directly in the request body rather than as JSON (see
-   * `AzureVisionClient`'s doc comment).
-   */
+  /** Raw-binary POST — Azure AI Vision takes the image bytes as the body, not JSON. */
   def postBytes(
       url: String,
       body: Array[Byte],
@@ -164,21 +159,14 @@ object Http:
       timeoutSeconds: Long = 30
   ): String < Sync =
     Sync.defer {
-      val builder = HttpRequest
-        .newBuilder(URI.create(url))
-        .timeout(Duration.ofSeconds(timeoutSeconds))
-        .header("User-Agent", userAgent)
+      val req = request(url, timeoutSeconds, headers)
         .header("Content-Type", contentType)
         .POST(HttpRequest.BodyPublishers.ofByteArray(body))
-      headers.foreach { case (k, v) => builder.header(k, v) }
-      check(url, transport.get.send(builder.build()), 500)
+      check(url, transport.get.send(req.build()), 500)
     }
 
   /**
-   * Raw-binary PUT — `MlflowRunLedger.artifact`'s one caller: MLflow's artifact-store proxy
-   * (`mlflow/protos/mlflow_artifacts.proto`, `PUT .../mlflow-artifacts/artifacts/<path>`) takes the
-   * file bytes directly and, unlike every other write in this module, uses `PUT` rather than
-   * `POST`.
+   * Raw-binary PUT — MLflow's artifact-store proxy (`PUT .../mlflow-artifacts/artifacts/<path>`).
    */
   def putBytes(
       url: String,
@@ -188,14 +176,10 @@ object Http:
       timeoutSeconds: Long = 30
   ): String < Sync =
     Sync.defer {
-      val builder = HttpRequest
-        .newBuilder(URI.create(url))
-        .timeout(Duration.ofSeconds(timeoutSeconds))
-        .header("User-Agent", userAgent)
+      val req = request(url, timeoutSeconds, headers)
         .header("Content-Type", contentType)
         .PUT(HttpRequest.BodyPublishers.ofByteArray(body))
-      headers.foreach { case (k, v) => builder.header(k, v) }
-      check(url, transport.get.send(builder.build()), 500)
+      check(url, transport.get.send(req.build()), 500)
     }
 
   /** What a binary response is — the raw bytes, never decoded as text. */
@@ -205,12 +189,8 @@ object Http:
       extends Exception(s"HTTP $status for $url")
 
   /**
-   * Binary-GET's own transport seam, deliberately separate from `Transport`/`Response` above rather
-   * than adding a `bytes` field there: every existing caller of `getString`/`postForm`/etc. depends
-   * on `Response.body` being decoded as UTF-8 text (IMA/SC's own "PRÓPRIA"/"IMPRÓPRIA" accented
-   * strings, Overpass/Open-Meteo JSON) — switching the shared `HttpClient.send` call to
-   * `BodyHandlers.ofByteArray()` and re-deriving `body` from an ISO-8859-1 round-trip would
-   * silently corrupt every one of those already-verified text responses.
+   * Separate from `Transport` on purpose: every text caller relies on `Response.body` being decoded
+   * as UTF-8 by `HttpClient`; re-deriving it from bytes would risk corrupting accented responses.
    */
   trait BinaryTransport:
     def send(request: HttpRequest): BytesResponse
@@ -235,19 +215,10 @@ object Http:
       binaryTransport.set(previous)
       ()
 
-  /**
-   * Plain binary GET — a PDF bulletin today
-   * (`InemaBaWaterQualityClient`/`IneaRjWaterQualityClient`, MIP-0031), never text-decoded.
-   */
+  /** Binary GET (PDF bulletins, MIP-0031), never text-decoded. */
   def getBytes(url: String, timeoutSeconds: Long = 30): Array[Byte] < Sync =
     Sync.defer {
-      val request = HttpRequest
-        .newBuilder(URI.create(url))
-        .timeout(Duration.ofSeconds(timeoutSeconds))
-        .header("User-Agent", userAgent)
-        .GET()
-        .build()
-      val response = binaryTransport.get.send(request)
+      val response = binaryTransport.get.send(request(url, timeoutSeconds).GET().build())
       if response.status / 100 == 2 then response.bytes
       else throw HttpBytesError(response.status, url)
     }

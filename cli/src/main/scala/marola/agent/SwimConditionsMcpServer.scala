@@ -33,6 +33,12 @@ object SwimConditionsMcpServer:
       case other => other.toString.trim.toDoubleOption // bad input → default, not a crash
     }
 
+  private def originAndRadius(args: java.util.Map[String, Object]): (Coordinates, Double) =
+    (
+      Coordinates(numberArg(args, "lat").getOrElse(0.0), numberArg(args, "lon").getOrElse(0.0)),
+      numberArg(args, "radius_km").getOrElse(15.0)
+    )
+
   private def beachToJson(beach: Beach): JsonValue =
     JsonValue.obj(
       "name" -> JsonValue.str(beach.name),
@@ -53,7 +59,6 @@ object SwimConditionsMcpServer:
       "jellyfish_risk" -> JsonValue.str(best.jellyfishRisk.toString),
       "whale_sighting_likelihood" -> JsonValue.str(best.whaleSightingLikelihood.toString),
       "notes" -> JsonValue.arr(best.notes.map(JsonValue.str)*),
-      // MIP-0001.
       "water_quality" -> best.waterQuality.map(waterQualityToJson).getOrElse(JsonValue.JNull),
       "water_quality_summary" -> JsonValue.str(marola.Report.waterSummary(best)),
       "tides" -> JsonValue.arr(
@@ -171,11 +176,8 @@ object SwimConditionsMcpServer:
       exchange: McpSyncServerExchange,
       request: McpSchema.CallToolRequest
   ): McpSchema.CallToolResult =
-    val args = request.arguments()
-    val lat = numberArg(args, "lat").getOrElse(0.0)
-    val lon = numberArg(args, "lon").getOrElse(0.0)
-    val radiusKm = numberArg(args, "radius_km").getOrElse(15.0)
-    val beaches = runSync(BeachFinder.nearby(Coordinates(lat, lon), radiusKm))
+    val (origin, radiusKm) = originAndRadius(request.arguments())
+    val beaches = runSync(BeachFinder.nearby(origin, radiusKm))
     val json = JsonValue.arr(beaches.map(beachToJson)*).render
     McpSchema.CallToolResult.builder().addTextContent(json).build()
 
@@ -183,14 +185,11 @@ object SwimConditionsMcpServer:
       exchange: McpSyncServerExchange,
       request: McpSchema.CallToolRequest
   ): McpSchema.CallToolResult =
-    val args = request.arguments()
-    val lat = numberArg(args, "lat").getOrElse(0.0)
-    val lon = numberArg(args, "lon").getOrElse(0.0)
-    val radiusKm = numberArg(args, "radius_km").getOrElse(15.0)
+    val (origin, radiusKm) = originAndRadius(request.arguments())
     val config = AppConfig.fromEnv
     val results = runSync(
       Recommender.bestPerBeachTomorrow(
-        Coordinates(lat, lon),
+        origin,
         radiusKm,
         distanceRefiner = config.distanceRefiner
       )
@@ -202,10 +201,7 @@ object SwimConditionsMcpServer:
       exchange: McpSyncServerExchange,
       request: McpSchema.CallToolRequest
   ): McpSchema.CallToolResult =
-    val args = request.arguments()
-    val origin =
-      Coordinates(numberArg(args, "lat").getOrElse(0.0), numberArg(args, "lon").getOrElse(0.0))
-    val radiusKm = numberArg(args, "radius_km").getOrElse(15.0)
+    val (origin, radiusKm) = originAndRadius(request.arguments())
     val config = AppConfig.fromEnv
     val json = config.waterQualityClient(origin) match
       case None =>

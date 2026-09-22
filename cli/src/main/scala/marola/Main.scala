@@ -539,23 +539,20 @@ object Main extends KyoApp:
     val json = scala.io.Source.fromInputStream(stream).mkString
     CompiledPrompt.loadFromString(json, outputField)
 
-  // Sequential effect loop, hand-rolled for the same reason as Recommender.traverse: only
-  // map/flatMap on `< Async` are confirmed against the pinned Kyo 1.0.0-RC5 build.
   private def printLines(
       items: List[(BestHour, Int)],
       brief: Boolean,
       trails: List[Trail]
   ): Unit < Async =
-    items match
-      case Nil => ()
-      case (best, i) :: rest =>
-        for
-          _ <- Console.printLine(
-            if brief then Report.briefLine(i + 1, best) else Report.line(i + 1, best)
+    Console.printLine(
+      items
+        .flatMap((best, i) =>
+          List(
+            if brief then Report.briefLine(i + 1, best) else Report.line(i + 1, best),
+            Report.trailsLine(Report.nearestTrail(best.beach.name, trails))
           )
-          // MIP-0030 §3: one line per beach when a trail is within 500m, "no data" otherwise.
-          _ <- Console.printLine(Report.trailsLine(Report.nearestTrail(best.beach.name, trails)))
-          _ <- printLines(rest, brief, trails)
-        yield ()
+        )
+        .mkString("\n")
+    )
 
   run(bootstrap(args.toArray))

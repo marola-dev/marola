@@ -15,51 +15,19 @@
 #   just mip-stack clean              # delete mips/* chain branches whose stacked PR is MERGED
 #   just mip-stack --self-test        # parse scripts/fixtures/mip-stack-prs.json, assert order
 #
-# What counts as a MIP draft PR (discovery, 1. below): an open PR whose head is `docs/mip-*`, or
-# whose changed files include `docs/mips/MIP-NNNN-<slug>.md`, and whose head is NOT a task branch
-# (`mip-NNNN/<k>-*` — those are implementation stacks, `scripts/stack.sh`'s job, and they touch
-# the MIP file to mark tasks done). Order: by MIP number ascending (from the file, else from the
-# branch name), PR number as the tie-break — so the chain reads like the index.
+# A MIP draft PR: head `docs/mip-*` or touching docs/mips/MIP-NNNN-*.md, never a `mip-NNNN/<k>-*`
+# task branch (scripts/stack.sh's job). Ordered by MIP number, PR number as tie-break.
 #
-# Isolation: the whole local chain is built in a dedicated worktree, `.tmp/wt-mip-stack`, never
-# the caller's own checkout (same design as deps-stack.sh — see its header for the reasoning);
-# `status`/`clean`/`--resume` never switch the caller's branch either.
+# Built in .tmp/wt-mip-stack like deps-stack.sh, branch k = mips/<date>/<k>-<slug> off k-1. Only a
+# PR's own commits are picked: no merges, nothing reachable from an earlier draft, no rebased
+# copies (same author date + subject), no empty picks. A docs/mips/README.md conflict resolves via
+# scripts/lib/mip_index_merge.py; a file byte-identical to origin/main takes main's; a PR whose MIP
+# files are already on main is skipped as superseded (close it by hand). Anything else stops; the
+# plan in .tmp/mip-stack/plan.json lets --resume continue.
 #
-# ---------------------------------------------------------------------------------------------
-# 1. Discovery: `gh pr list --state open --limit 100 --json number,headRefName,title,baseRefName,
-#    mergeable,files`, filtered and ordered by order_prs (pure jq; the self-test runs it on the
-#    fixture with no gh). Task branches and PRs that merely mention a MIP in prose are excluded.
-# 2. Local chain build, in the worktree: branch k is `mips/<YYYY-MM-DD>/<k>-<slug>` (slug = the
-#    head branch minus a leading `docs/`), created from branch k-1 (k=1 from `origin/main`), then
-#    the PR's *own* commits are cherry-picked onto it — `git rev-list --reverse --no-merges
-#    origin/<head> --not origin/main <every earlier draft's head>`: merge commits are skipped (a
-#    draft that merged main or another draft to stay mergeable — the 2026-09-06 shape), commits
-#    that belong to an earlier draft are excluded by ancestry, a rebased *copy* of a commit the
-#    chain already carries (same author date and subject under a new SHA) is skipped, and a
-#    cherry-pick that turns out empty is dropped. A conflict in
-#    `docs/mips/README.md` — the two-rows-at-the-same-place shape — auto-resolves through
-#    scripts/lib/mip_index_merge.py (union of both sides' rows, one per MIP, in number order; a
-#    row that differs on both sides is a real edit and stops for a human), and a conflicted file
-#    whose content in the commit is byte-identical to origin/main's ("the same change already
-#    landed": squash-merged under another PR, or made on main too) takes main's version. A PR
-#    whose MIP file(s) are already identical on main is skipped altogether as superseded — the
-#    draft was squash-merged and its PR left open — recorded in the plan, shown by `status`,
-#    never published; close that PR by hand. Anything else stops
-#    with the branch left mid-cherry-pick in the worktree and prints the resolve steps; the plan
-#    is cached at .tmp/mip-stack/plan.json so `--resume` continues the same chain.
-# 3. Publish — option (b) of deps-stack.sh, for the same reason (a PR's head branch cannot be
-#    moved after creation): one *new* PR per chain branch, `--base` the previous chain branch
-#    (main for k=1), body from `BRANCH=… BASE=… scripts/uprd.sh --dry-run` plus a pointer to the
-#    original PR, then the original PR is closed with a pointer comment. The original `docs/mip-*`
-#    branches are left untouched, so nothing is lost if the chain is abandoned; delete them by
-#    hand once the chain has merged. Then `gh stack link` over the open chain PRs
-#    (scripts/lib/stack_link.sh). Retargeting the original PRs in place (force-push each
-#    `docs/mip-*` branch to its chain content + `gh pr edit --base`) would keep the PR numbers
-#    and their review threads — a reasonable follow-up, not implemented: it rewrites branches
-#    other sessions may have checked out.
+# Publish as deps-stack.sh does: new PRs, originals closed, `docs/mip-*` branches untouched.
 #
-# Needs `gh auth status` for anything that isn't --dry-run/--from-json/--self-test/status/clean's
-# local listing. Not available inside ai-jail (AGENTS.md) — run from the host.
+# Needs `gh auth status` except for --dry-run/--from-json/--self-test. Run from the host, not ai-jail.
 set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"

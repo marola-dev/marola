@@ -44,13 +44,8 @@ self_test() {
   local tmp; tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' RETURN
 
-  # An already-formatted .scala file comes out byte-equal (skipped if `cs` is absent — same guard
-  # as the .py check below; a cold coursier cache/no network/air-gapped CI must not fail `just
-  # quality-other` on a check that needs a coursier launch, an ultrareview finding, 2026-09-06 —
-  # this one was the only .scala/.py asymmetry: the .py check already skipped). $messy is used
-  # later too (the end-to-end JSON-path test below), regardless of whether cs is on PATH, so the
-  # file itself is written unconditionally — only the scalafmt-dependent assertions are skipped
-  # when cs is absent.
+  # Skipped without `cs`: a cold coursier cache must not fail quality-other. $messy is written
+  # regardless — the JSON-path test below uses it.
   local messy="$tmp/Messy.scala"
   printf 'package example\nfinal case class Messy(name:String,value:Int)\n' >"$messy"
   if command -v cs >/dev/null 2>&1; then

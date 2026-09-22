@@ -17,21 +17,11 @@
   var HealthTimeoutMs = 4000;
   var AskTimeoutMs = 30000;
 
-  function fetchWithTimeout(url, opts, timeoutMs) {
-    var controller = new AbortController();
-    var timer = setTimeout(function () { controller.abort(); }, timeoutMs);
-    return fetch(url, Object.assign({}, opts, { signal: controller.signal }))
-      .finally(function () { clearTimeout(timer); });
-  }
-
+  // Offline: the toggle stays hidden, no button that only leads to a dead end.
   function checkHealth() {
-    fetchWithTimeout(endpoint + '/health', {}, HealthTimeoutMs)
-      .then(function (res) {
-        if (res.ok) {
-          toggle.hidden = false;
-        } // offline: leave the toggle hidden, no button that only leads to a dead end
-      })
-      .catch(function () { /* offline: same — stay hidden */ });
+    fetch(endpoint + '/health', { signal: AbortSignal.timeout(HealthTimeoutMs) })
+      .then(function (res) { if (res.ok) toggle.hidden = false; })
+      .catch(function () {});
   }
 
   function addMessage(role, text) {
@@ -51,15 +41,12 @@
     log.appendChild(pending);
     log.scrollTop = log.scrollHeight;
 
-    fetchWithTimeout(
-      endpoint + '/ask',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: question })
-      },
-      AskTimeoutMs
-    )
+    fetch(endpoint + '/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: question }),
+      signal: AbortSignal.timeout(AskTimeoutMs)
+    })
       .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
       .then(function (r) {
         pending.remove();

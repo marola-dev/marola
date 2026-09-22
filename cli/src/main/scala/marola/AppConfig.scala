@@ -117,8 +117,6 @@ final case class AppConfig(
     mlflowExperiment: String,
     tracesBackend: TraceBackend,
     traceContent: Boolean,
-    // Defaulted so every existing construction still compiles, and injected rather than read
-    // inline from the environment (`.claude/rules/scala.md`) so a test can point it at a tmpdir.
     waterCacheDir: java.nio.file.Path = java.nio.file.Path.of("data", "water-cache")
 ):
   /**
@@ -171,9 +169,6 @@ final case class AppConfig(
    */
   def waterQualityClient(origin: Coordinates): Option[WaterQualityClient] =
     selectWaterClient(origin).map { c =>
-      // Live feed -> the agency's other publication channel -> last good fetch. IMA's JSON went
-      // down while its weekly bulletin PDF stayed up, so an outage in one channel should not be a
-      // blackout for the user.
       val withBackup = backupFor(c).fold(c)(FallbackWaterQualityClient(c, _))
       CachedWaterQualityClient(
         withBackup,
@@ -347,9 +342,6 @@ object AppConfig:
         sys.env.getOrElse("MAROLA_LOCAL_VISION_MODEL", LocalVisionClient.DefaultModel),
       azureVisionEndpoint = sys.env.get("AZURE_VISION_ENDPOINT"),
       azureVisionKey = sys.env.get("AZURE_VISION_KEY"),
-      // Azure's own standard env var name (every Azure Monitor SDK/agent auto-detects it) — used
-      // directly rather than bridged through a MAROLA_-prefixed name, unlike Langfuse's Python
-      // env vars (which don't share this repo's naming convention to begin with).
       appInsightsConnectionString = appInsightsConnectionString,
       // MIP-0010 §5: unset ⇒ RunLedger.Noop (`just mlflow-up` prints the tracking URI to export).
       mlflowTrackingUri = sys.env.get("MAROLA_MLFLOW_TRACKING_URI"),

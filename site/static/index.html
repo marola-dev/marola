@@ -6,19 +6,14 @@
   <title>marola — the ocean intelligence layer</title>
   <meta name="description" content="Every beach around the area ranked by conditions for today and tomorrow: sea, wind, waves, water quality, tides, jellyfish. Computed once, no tracking. First case: the best hour tomorrow to swim.">
   <meta name="theme-color" content="#ffffff">
-  <!-- MIP-0033 §5.2: img-src allows https: for OSM's tile.openstreetmap.org (site/areas.json's
-       "tiles" URL, loaded by every area) — default-src alone would silently break the map.
-       connect-src likewise allows https: for the chat widget's fetch() to whatever tunnel URL
-       chatbot-config.js names (the maintainer's own, set by them — not a fixed host).
-       script-src/object-src stay locked to same-origin: this page loads no third-party script. -->
+  <!-- img-src https: is the map tiles (site/areas.json); connect-src https: is the chat tunnel
+       URL in chatbot-config.js. Scripts stay same-origin (MIP-0033 §5.2). -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https:; connect-src 'self' https:; object-src 'none'">
   <link rel="stylesheet" href="vendor/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Kept out of #footer, which renderFooter() overwrites wholesale on every board load.
-       Sections with no page yet are <span>, never <a href="#">: a link that goes nowhere is
-       worse than one that says "soon". -->
+  <!-- Outside #footer, which renderFooter() overwrites. Sections with no page are <span>, not <a href="#">. -->
   <nav class="sitenav" aria-label="Sections">
     <a href="/docs/">Docs</a>
     <span aria-disabled="true">Alerts <i>soon</i></span>

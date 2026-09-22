@@ -125,8 +125,8 @@ client (`getJson`, `postJson`, `getText`, `postBinary`, ...) is real and present
 1.0.0-RC5 version this repo pins,** confirmed by decompiling the actual jar rather than relying on
 getkyo.io's docs (which are only published for the *latest* version, RC6, and don't cover RC5
 specifically, a documentation gap, not an API gap). Its JSON codec typeclass, `kyo.Schema[A]`,
-lives in a separate `kyo-schema` artifact that's *already* being pulled in transitively via
-`kyo-http`'s own dependency graph: no new dependency would be needed to use it.
+lives in a separate `kyo-schema` artifact that `kyo-http` pulls in transitively. `kyo-http` itself
+was dropped from `build.sbt` as unused, so migrating means adding it back.
 
 **What migrating would mean:** dropping `http/Http.scala` (currently ~130 lines: 4 methods,
 `getString`, `postForm`, `postJson`, `postBytes`) and `json/Json.scala` (~200 lines: a

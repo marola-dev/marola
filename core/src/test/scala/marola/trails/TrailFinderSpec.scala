@@ -6,12 +6,8 @@ import marola.json.JsonValue
 import marola.model.{Beach, Coordinates}
 
 /**
- * MIP-0030 §7: `TrailFinder.parse` against a real Overpass response, captured live 2026-09-07 by
- * replaying §4.1's exact third query — `[out:json][timeout:60]; way["natural"="beach"]["name"]
- * (around:20000,-27.6733,-48.4700)->.beaches; ...` (plus `.lakes out center;`, this
- * implementation's own addition — see `TrailFinder.nearby`'s doc comment) — against the real
- * `https://overpass-api.de/api/interpreter`, saved verbatim as
- * `core/src/test/resources/fixtures/overpass-trails-floripa.json`.
+ * MIP-0030 §7: `TrailFinder.parse` against a real Overpass response for §4.1's query around
+ * (-27.6733,-48.4700), 20km, captured live 2026-09-07 (`fixtures/overpass-trails-floripa.json`).
  */
 class TrailFinderSpec extends munit.FunSuite:
 
@@ -88,7 +84,6 @@ class TrailFinderSpec extends munit.FunSuite:
   }
 
   // --- synthetic: the merge algorithm in isolation, separate from the live fixture above
-  // ---------.
 
   test(
     "synthetic: merge concatenates geometry, sums length, keeps the first non-None tag, and finds a named lake anchor"

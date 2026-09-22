@@ -23,11 +23,11 @@ final class MlflowRunLedger(
   import MlflowRunLedger.*
 
   private val root = trackingUri.stripSuffix("/")
-  private val base = s"$root/api/2.0/mlflow"
+  private val base = MlflowApi.restBase(trackingUri)
 
   def start(experiment: String, name: String, params: Map[String, String]): RunHandle < Sync =
     for
-      experimentId <- getOrCreateExperiment(experiment)
+      experimentId <- MlflowApi.getOrCreateExperiment(trackingUri, experiment)
       runId <- createRun(experimentId, name)
       _ <- if params.isEmpty then Sync.defer(()) else logParams(runId, params)
     yield RunHandle(experimentId, runId, Some(runUrl(experimentId, runId)))
@@ -55,9 +55,6 @@ final class MlflowRunLedger(
   private def runUrl(experimentId: String, runId: String): String =
     s"$root/#/experiments/$experimentId/runs/$runId"
 
-  private def getOrCreateExperiment(name: String): String < Sync =
-    MlflowApi.getOrCreateExperiment(trackingUri, name)
-
   private def createRun(experimentId: String, name: String): String < Sync =
     val body = JsonValue.obj(
       "experiment_id" -> JsonValue.str(experimentId),
@@ -69,16 +66,13 @@ final class MlflowRunLedger(
       .map(resp => field(JsonValue.parse(resp)("run")("info"), "run_id"))
 
   private def logParams(runId: String, params: Map[String, String]): Unit < Sync =
-    sequence_(
-      params.grouped(MaxParamsPerCall).toList.map(chunk => sendLogBatch(runId, params = chunk))
+    Kyo.foreachDiscard(params.grouped(MaxParamsPerCall).toList)(chunk =>
+      sendLogBatch(runId, params = chunk)
     )
 
   private def logMetrics(runId: String, metrics: Map[String, Double], step: Int): Unit < Sync =
-    sequence_(
-      metrics
-        .grouped(MaxMetricsPerCall)
-        .toList
-        .map(chunk => sendLogBatch(runId, metrics = chunk, step = step))
+    Kyo.foreachDiscard(metrics.grouped(MaxMetricsPerCall).toList)(chunk =>
+      sendLogBatch(runId, metrics = chunk, step = step)
     )
 
   private def sendLogBatch(
@@ -119,19 +113,6 @@ final class MlflowRunLedger(
       .map(body => Http.postJson(s"$base/runs/log-batch", body))
       .map(_ => ())
 
-  /**
-   * Sequential, order-preserving `Unit < Sync` runner — same recursive-for-comprehension shape as
-   * `Recommender.traverseSingle`, specialised to "run each, keep none of the results".
-   */
-  private def sequence_(effects: List[Unit < Sync]): Unit < Sync =
-    effects match
-      case Nil => Sync.defer(())
-      case head :: tail =>
-        for
-          _ <- head
-          _ <- sequence_(tail)
-        yield ()
-
 object MlflowRunLedger:
 
   private val log = Log.forName(getClass.getName)
@@ -146,11 +127,7 @@ object MlflowRunLedger:
   /** "Metric, param, and tag keys can be up to 250 characters in length" (same source). */
   private val MaxKeyLength = 250
 
-  /**
-   * Truncates an oversized param/metric key to `MaxKeyLength` and warns on stderr — there is no
-   * operator should notice but that must not fail the run. It used a bare stderr line because
-   * `local/` had no logger; `marola.log.Log` is that logger now.
-   */
+  /** An oversized key is truncated with a warning rather than failing the run. */
   private def truncateKey(key: String): String =
     if key.length <= MaxKeyLength then key
     else

@@ -40,7 +40,6 @@ from train_lora import (  # noqa: E402  — same directory, shares the preset ta
     run_slug,
 )
 
-HERE = Path(__file__).parent
 QUANTIZATIONS = ("Q4_K_M", "Q8_0")
 
 
@@ -113,13 +112,7 @@ def plan(args) -> dict:
 
 
 def plan_json(p: dict) -> dict:
-    """The plan as JSON — what to publish, under which name and licence.
-
-    The publish step used to rebuild these strings in bash (`marola-sea-${PRESET#qwen-}-GGUF`,
-    a hardcoded apache-2.0), which silently disagreed with what this script had actually written:
-    a different repo name, the wrong file path for a preset whose name carries the Llama- prefix,
-    and the wrong licence for the two Llama presets. One producer, one consumer, no second guess.
-    """
+    """The publish step reads this instead of rebuilding names, paths and licence itself."""
     return {
         "base": p["base"],
         "name": p["name"],

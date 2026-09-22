@@ -15,8 +15,7 @@ install-hooks:
 # Git
 # ---------------------------------------------------------------------
 
-# Last 10 commits on the current branch, one line each (short hash, relative age, author,
-# subject, refs).
+# Last n commits, one line each.
 log n="10" *args="":
     @git --no-pager log -n {{ n }} --abbrev-commit --decorate --date=relative --format='%C(yellow)%h%C(reset) %C(dim)%ad%C(reset) %C(blue)%an%C(reset) %s%C(auto)%d%C(reset)' {{ args }}
 
@@ -56,15 +55,10 @@ quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
     for tool in ruff actionlint hadolint; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
-    # `just --fmt --check` looked like the obvious gate, but it disagreed with itself between this
-    # machine and the self-hosted CI runner on the exact same file and `just --version` (both
-    # 1.58.0) — its canonical style is still --unstable and evidently not yet deterministic across
-    # builds/environments. `just --list` has no opinion on formatting, only on whether the file
-    # parses, so it can't disagree that way; a syntax error (bad recipe header, unmatched quote,
-    # duplicate name) still fails it.
+    # Not `just --fmt --check`: its --unstable style differed between this machine and the CI
+    # runner on the same file and version. --list only checks that the file parses.
     just --list >/dev/null
-    # One command per line: under `set -e` a failing left side of `a && b` does not stop the
-    # script (errexit exempts it), and the first pre-push run sailed past a ruff finding that way.
+    # One command per line: `set -e` exempts the left side of `a && b`.
     ruff check .
     ruff format --check .
     python3 scripts/smoke_record.py --self-test
@@ -113,13 +107,11 @@ quality-fix:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
     ruff check --fix . && ruff format .
 
-# Runs marola's CLI (build.sbt's `cli` project;.
+# Run marola's CLI (build.sbt's `cli` project).
 run *args:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run {{ args }}"
 
-# Runs marola's MCP tool server (cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala)
-# — a separate main class from `run`'s (see build.sbt's Compile/run/mainClass note on why plain
-# `sbt run` can't pick this one).
+# Run marola's MCP tool server — a separate main class from `run`'s (see build.sbt).
 mcp-server:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt -error "cli/runMain marola.agent.SwimConditionsMcpServer"
 
@@ -130,8 +122,7 @@ watch:
 # Ollama — marola's default local LLM backend (LocalLlmClient, docs/RUN-LOCALLY.md)
 # ---------------------------------------------------------------------
 
-# Make sure an Ollama server is reachable, starting one if not. Split out of ollama-up so
-# marola-sea-pull can require a server without also pulling ollama-up's default models.
+# Make sure an Ollama server is reachable, starting one if not.
 ollama-serve:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -147,12 +138,8 @@ ollama-serve:
         curl -sf -m 2 "$api" >/dev/null || { echo "ollama: server did not come up — see .tmp/ollama.log" >&2; exit 1; }
     fi
 
-# Pull the *published* marola-sea model (the trained weights from Hugging Face) into Ollama and
-# name it `marola-sea`. Unlike finetune-model (Tier 1: persona on a stock base) and
-# Modelfile.adapter (Tier 2: an adapter needing the base locally), this is the real model the
-# publish workflow produced — standalone GGUFs, no Modelfile involved.
-#   just marola-sea-pull                 # tiny, Q4_K_M, owner from the git remote
-# just marola-sea-pull small Q8_0      # another preset/quant
+# Pull the published marola-sea GGUF from Hugging Face into Ollama as `marola-sea`.
+#   just marola-sea-pull small Q8_0
 marola-sea-pull preset="tiny" quant="Q4_K_M" owner="": ollama-serve
     scripts/marola-sea-pull.sh {{ preset }} {{ quant }} {{ owner }}
 
@@ -169,9 +156,7 @@ ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2") embed=e
         fi
     done
 
-# Runs marola's E2E test (cli/src/test/scala/marola/E2ESpec.scala) against live
-# Overpass/Open-Meteo, plus a local Ollama server if one's reachable (skipped gracefully
-# otherwise — see that file's own `assume(...)` checks).
+# marola's live E2E test (E2ESpec) against Overpass/Open-Meteo, plus Ollama if reachable.
 e2e:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt \
         'set cli/Test/testOptions := Seq(Tests.Argument(new TestFramework("munit.Framework"), "--include-tags=E2E"))' \
@@ -189,9 +174,7 @@ ask question:
 knowledge-index:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --reindex"
 
-# Tier 2: a trained adapter attached to its own base, as `marola-sea-<preset>`. FROM and ADAPTER
-# come from the preset table, so switching base produces a second Ollama model rather than
-# overwriting the first.
+# Tier 2: a trained adapter on its own base, as the Ollama model `marola-sea-<preset>`.
 finetune-adapter-model preset="tiny":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -242,8 +225,7 @@ ml-venv *args:
 gpu-cache-setup *args:
     setup-cuda-cache {{ args }}
 
-# Merge a LoRA adapter into its base and export runnable GGUFs (MIP-0025 §5.1) — the step
-# between training and publishing.
+# Merge a LoRA adapter into its base and export GGUFs. MIP-0025 §5.1.
 finetune-merge preset="tiny" llama_cpp="" *args="":
     python3 finetune/merge_export.py --preset {{ preset }} {{ if llama_cpp != "" { "--llama-cpp " + llama_cpp } else { "--dry-run" } }} {{ args }}
 
@@ -281,14 +263,12 @@ site-deploy target="github":
 # Docker — MIP-0008: the CLI as an image (Dockerfile, docker-compose.yml)
 # ---------------------------------------------------------------------
 
-# Build one target of the Dockerfile locally as marola:<target> — `jvm` (default), `native`,
 # Build the CLI image. target=jvm (default), dev, or local (Dockerfile.local). MIP-0008.
 docker-build target="jvm":
     #!/usr/bin/env bash
     set -euo pipefail
     if [ "{{ target }}" = local ]; then docker build -f Dockerfile.local -t marola:local .; else docker build --target {{ target }} -t marola:{{ target }} .; fi
 
-# Run the locally built jvm image against the Ollama on this machine (`--network host`, so
 # Run the CLI image with host networking, so a local Ollama on :11434 is reachable.
 docker-run *args:
     docker run --rm --network host --env-file <(env | grep '^MAROLA_' || true) marola:jvm {{ args }}
@@ -324,7 +304,7 @@ mlflow-ui:
     curl -fsS "$url/health" >/dev/null 2>&1 || echo "mlflow is not answering at $url — run 'just mlflow-up' first" >&2
     if command -v xdg-open >/dev/null; then xdg-open "$url"; elif command -v open >/dev/null; then open "$url"; else echo "$url"; fi
 
-# Stop the ledger;.
+# Stop the MLflow server.
 mlflow-down:
     docker compose --profile mlflow down
 
@@ -338,9 +318,7 @@ context-mips:
     mkdir -p .tmp && "$(just _repomix)" -c repomix.config.json
     @just _clip .tmp/marola-context-mips.md
 
-# A second opinion on one already-written MIP, for a reviewer who is NOT this project's own
-# coding agent (a different LLM, or a human) — the point is independence from same-model review
-# bias — MIP-0010.
+# Pack one MIP for a reviewer outside this project's coding agent (another model, or a human).
 context-mip mip:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -355,30 +333,19 @@ context-mip mip:
     out=".tmp/marola-context-mip-MIP-$num.md"
     cfg=".tmp/repomix-mip-review-MIP-$num.config.json"
     header="marola — MIP-$num review request pack for a reviewer outside this project's own coding agent (a different model, or a human). README, AGENTS.md, PHILOSOPHY.md plus this one MIP — no other code or docs. See the instruction section for what is being asked."
-    # A dedicated config, not --include on the CLI: repomix auto-loads repomix.config.json from
-    # the repo root regardless (its `include: docs/mips/**` pulls in every MIP), and CLI --include
-    # does not override that — confirmed by testing, not assumed. -c fully replaces it. Built with
-    # printf (one indented line), not a heredoc: an unindented heredoc body reads to `just` itself
-    # as the recipe having ended, not as bash script content.
+    # A dedicated -c config: repomix auto-loads repomix.config.json (every MIP) and CLI --include
+    # doesn't override it. printf, not a heredoc: an unindented heredoc body ends the recipe.
     printf '{\n  "$schema": "https://repomix.com/schemas/latest/schema.json",\n  "output": {\n    "filePath": "%s",\n    "style": "markdown",\n    "headerText": "%s",\n    "instructionFilePath": "repomix-instruction-mip-review.md"\n  },\n  "include": [%s],\n  "ignore": { "useGitignore": true, "useDefaultPatterns": true }\n}\n' "$out" "$header" "$include" > "$cfg"
     "$(just _repomix)" -c "$cfg"
     just _clip "$out"
 
-# Same idea for the whole repo (code included, comments stripped) — big;.
+# The whole repo, code included, comments stripped — big.
 context-full:
     mkdir -p .tmp && "$(just _repomix)" --style markdown --compress --remove-comments -o .tmp/marola-context-full.md .
     @just _clip .tmp/marola-context-full.md
 
-# The Node repomix (nixpkgs, flake.nix) — not the unrelated PyPI "repomix" Python port, which a
-# pip/pipx/uv install can shadow it with on PATH: same command name, but it parses our
-# repomix.config.json's "$schema" key as a constructor kwarg and dies
-# (`RepomixConfig.__init__() got an unexpected keyword argument '$schema'`) instead of the clear
-# usage error the old comment here assumed. A bare `--version` number doesn't tell the two apart
-# — the Python port prints one too — so require the resolved binary's own path to name the
-# nixpkgs derivation (".../-repomix-<ver>/bin/repomix"), not just live under /nix/store: some
-# other nix-packaged tool could otherwise squat there. If that's not on PATH at all, this may just
-# mean the caller isn't inside `nix develop` yet (a fresh shell/tmux pane that skipped it) — retry
-# once through the flake's own devShell before giving up.
+# The nixpkgs (Node) repomix, matched by store path: the unrelated PyPI "repomix" can shadow it
+# on PATH and dies on repomix.config.json's "$schema" key. Falls back to the flake's devShell.
 _repomix:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -410,12 +377,11 @@ _clip file:
         echo "no clipboard tool/display found — open the file instead: {{ file }} ($size bytes)"
     fi
 
-# Update the current branch's PR description on GitHub from its commits — "What changed" (one
 # Write or refresh a PR body from the branch's commits — pr-body.yml runs the same generator.
 uprd *args:
     scripts/uprd.sh {{ args }}
 
-# Same for a whole MIP stack (scripts/uprds.sh): — MIP-0005.
+# Same for a whole MIP stack. MIP-0005.
 uprds *args:
     scripts/uprds.sh {{ args }}
 
@@ -437,7 +403,7 @@ pr-label *args:
 pr-labels-backfill *args:
     scripts/backfill-pr-labels.sh {{ args }}
 
-# scripts/stack.sh passthrough: — MIP-0005.
+# scripts/stack.sh passthrough. MIP-0005.
 stack *args:
     scripts/stack.sh {{ args }}
 
@@ -446,7 +412,7 @@ stack *args:
 docs-mip-stack *args:
     scripts/docs-mip-stack.sh {{ args }}
 
-# Stack every open dependency-update PR (dependabot;.
+# Stack every open dependency-update PR.
 deps-stack *args:
     scripts/deps-stack.sh {{ args }}
 
@@ -463,9 +429,7 @@ runner-preflight:
 runner-up *args:
     scripts/gha-runner.sh up {{ args }}
 
-# Stop every runner listening on that directory — discovered from the process table, not from a
-# pidfile, so one started by hand or by a shell that has since closed is stopped too. Refuses
-# while a job is executing; --force stops it anyway and cleans up the worker.
+# Stop every runner on that directory. Refuses while a job runs; --force stops it anyway.
 runner-down *args:
     scripts/gha-runner.sh down {{ args }}
 
@@ -482,14 +446,11 @@ alias ghar := runner-up
 alias gha := runner-status
 alias ghas := runner-down
 
-# Stack every open MIP *draft* PR (a `docs/mip-NNNN-*` branch, or any PR adding a
-# `docs/mips/MIP-NNNN-*.md`;.
+# Stack every open MIP draft PR.
 mip-stack *args:
     scripts/mip-stack.sh {{ args }}
 
-# Regenerate the Mermaid dependency graph in docs/mips/README.md from every MIP's own **Blocked
-# by** metadata row (comma-separated MIP numbers, or `none` — never the prose **Depends on**
-# field, which legitimately mixes four relations in one cell a regex can't tell apart).
+# Regenerate docs/mips/README.md's dependency graph from each MIP's **Blocked by** row.
 mip-graph *args:
     python3 scripts/mip_graph.py {{ args }}
 
@@ -509,8 +470,7 @@ stack-setup:
     gh extension list | grep -q 'github/gh-stack' || gh extension install github/gh-stack
     gh skill install github/gh-stack || echo "gh skill install failed (older gh?) — the extension works without the skill"
 
-# Link a MIP's *open* PRs into one GitHub Stack, bottom to top (`scripts/stack.sh link`): —
-# MIP-0005.
+# Link a MIP's open PRs into one GitHub Stack, bottom to top. MIP-0005.
 stack-link mip="":
     scripts/stack.sh link {{ mip }}
 
@@ -518,7 +478,7 @@ stack-link mip="":
 stack-view *args:
     gh stack view {{ args }}
 
-# After a bottom PR was squash-merged: — MIP-0005.
+# Restack after a bottom PR was squash-merged. MIP-0005.
 stack-sync mip="":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -535,8 +495,7 @@ stack-merge *args:
 # Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"
 # ---------------------------------------------------------------------
 
-# Split a session's real token usage across the commits it produced (scripts/cost-split.py): —
-# MIP-0005.
+# Split a session's real token usage across the commits it produced.
 cost-split *args:
     python3 scripts/cost-split.py {{ args }}
 
@@ -551,28 +510,15 @@ gh-billing *args:
     scripts/gh-billing.sh {{ args }}
 
 # ---------------------------------------------------------------------
-# ai-jail — sandbox AI coding agents (bubblewrap/Landlock/seccomp on
-# Linux). https://github.com/akitaonrails/ai-jail
-# Project policy lives in `.ai-jail` (committed, untrusted layer — can
-# only tighten, never grant). Per-machine trust/capabilities go in
-# ~/.ai-jail, not here. `--network` is on for these because Claude Code
-# needs it (dependency resolution / API calls) — this is containment for
-# the filesystem/process blast radius, not a network firewall; see
-# AGENTS.md for the actual credential/cost rules.
+# ai-jail — https://github.com/akitaonrails/ai-jail. Policy: `.ai-jail`.
 # ---------------------------------------------------------------------
 
-# Print the sandbox invocation ai-jail would run, without running it — use this to audit a
-# command's jail before trusting it for real.
+# Print the sandbox invocation ai-jail would run, without running it.
 jail-dry-run *cmd:
     jail-run --dry-run -- {{ cmd }}
 
-# --no-save-config keeps a jailed run from writing the host's config.
-
-# Make sure the HOST has a GitHub credential the jail can borrow, then say which one. Run this
-# on the host before `just jco` — never inside a jail, where a login goes to an ephemeral HOME.
-# Already logged in is the normal case and costs nothing: gh's OAuth token does not expire, so
-# this just confirms it and exits. `just gh-auth --refresh` re-runs gh's flow to ADD scopes (that
-# one does need a browser approval); `just gh-auth --login` forces a fresh login.
+# Make sure the HOST has a GitHub credential the jail can borrow. Run on the host, never in a
+# jail (a login there goes to an ephemeral HOME). --refresh adds scopes, --login forces a new one.
 gh-auth *args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -589,18 +535,14 @@ gh-auth *args:
         gh auth login
         gh-token --source >/dev/null && echo "gh-auth: done — now run: just jco"
     fi
+
 # CPU/GPU temperature with a verdict — for watching a long marola-sea training run.
-# `just temps` for one snapshot, `just temps --watch` to follow it, `just temps --json` for a log.
-# Thresholds are the hardware's own (coretemp max/crit, nvidia-smi slowdown/shutdown), not
-# invented numbers. GPU readings need the host: /dev/nvidia* is not mapped into the jail.
+# --watch to follow, --json for a log. GPU readings need the host (no /dev/nvidia* in the jail).
 temps *args:
     scripts/temps.sh {{ args }}
 
-# Analyse a finished training run and say what the next one should change. Reads HF Trainer's
-# trainer_state.json (both trainers set report_to=[], so there is no MLflow/W&B run to open).
-#   just analyze-training                       # the local checkpoints, both stages
-#   just analyze-training ../some/adapter       # a specific run
-# For a run that happened in CI: `just training-logs <run-id>` first, then point this at it.
+# Analyse a finished training run (HF trainer_state.json) and say what the next should change.
+# Defaults to the local checkpoints; for a CI run, `just training-logs <run-id>` first.
 analyze-training *args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -611,10 +553,7 @@ analyze-training *args:
         python3 scripts/analyze_training.py "$root/adapter" "$root/dpo-adapter"
     fi
 
-# Pull a marola-sea CI run's full logs and report down from GitHub, into .tmp/training-logs/.
-# Works for the self-hosted runner too — the artifact is uploaded to GitHub either way.
-#   just training-logs              # the most recent marola-sea publish run
-# just training-logs 12345678     # a specific run id
+# Download a marola-sea publish run's logs (default: the latest) into .tmp/training-logs/.
 training-logs run_id="":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -629,18 +568,8 @@ training-logs run_id="":
     echo "training-logs: downloaded to .tmp/training-logs — analyse with:"
     echo "  just analyze-training .tmp/training-logs/*/"
 
-# A second checkout of this repo that tracks origin/main, so you can build and test what has
-# just merged while an agent works on a branch in the main checkout — no marola2 clone, no
-# second remote, one .git. Lives at .tmp/wt-main, which is already gitignored and already
-# excluded from ruff/scoverage/cloc as a `.tmp/wt-*` path.
-#
-# DETACHED at origin/main on purpose, not `checkout main`: git refuses to check out one branch in
-# two worktrees, so a worktree holding `main` breaks the moment the main checkout goes back to it.
-# Detached sidesteps that entirely and is what "always synced on main" actually wants — you read
-# and run here, you commit in the other checkout.
-#
-#   just worktree            # create it, or fast-forward it to the latest origin/main
-# cd .tmp/wt-main && nix develop
+# A second checkout at origin/main (.tmp/wt-main), created or fast-forwarded. Detached on
+# purpose: git refuses one branch in two worktrees, so holding `main` would break the main checkout.
 worktree dir=".tmp/wt-main":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -649,7 +578,6 @@ worktree dir=".tmp/wt-main":
     git -C "$root" fetch origin --quiet
     target="$(git -C "$root" rev-parse origin/main)"
     if git -C "$root" worktree list --porcelain | grep -qx "worktree $wt"; then
-        # Never clobber work in progress — say so and stop, the same contract as sync-main.
         if [ -n "$(git -C "$wt" status --porcelain)" ]; then
             echo "worktree: $wt has uncommitted changes — not touching it" >&2
             echo "          commit/stash them there, or pass a different dir" >&2
@@ -669,30 +597,15 @@ worktree dir=".tmp/wt-main":
     fi
     echo "  cd {{ dir }} && nix develop"
 
-# Drop worktree registrations whose directories are gone (this repo accumulates them from agent
-# runs and /tmp experiments). Only removes bookkeeping for already-deleted directories — it never
-# deletes a worktree that still exists, so it is safe to run any time.
+# Drop worktree registrations whose directories are gone. Never deletes a live worktree.
 worktree-prune:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    before=$(git worktree list | wc -l)
     git worktree prune -v
-    after=$(git worktree list | wc -l)
-    echo "worktree-prune: $before -> $after registered ($((before - after)) stale entries removed)"
 
-# Register N self-hosted Actions runners so CI runs in parallel, not FIFO. One runner takes one
-# job at a time, and ci.yml alone has four that used to run concurrently.
-#   just runners            # 3, installed as services
-#   just runners 4          # 4
-# just runners --status   # what is registered and running
+# Register N (default 3) self-hosted Actions runners so CI jobs run in parallel. --status lists them.
 runners *args:
     scripts/setup-runners.sh {{ args }}
 
-# Check what marola.dev actually serves — that the boards carry water sampling points, that the
-# canary beach is present, that the schema is one the page understands. Every other gate checks
-# inputs (fixtures, schemas, a stub DOM); this is the only one that looks at the published result.
-#   just site-live-check                          # https://marola.dev
-# just site-live-check --base http://localhost:8000
+# Check what marola.dev actually serves (or --base http://localhost:8000).
 site-live-check *args:
     python3 scripts/site_live_check.py {{ args }}
 
@@ -700,9 +613,6 @@ site-live-check *args:
 # still work for one release; the lab's names are JAIL_CLIPBOARD / JAIL_CLIPBOARD_PASTE.
 jail-claude *args:
     JAIL_CLIPBOARD="${JAIL_CLIPBOARD:-${MAROLA_JAIL_CLIPBOARD:-0}}" JAIL_CLIPBOARD_PASTE="${JAIL_CLIPBOARD_PASTE:-${MAROLA_JAIL_CLIPBOARD_PASTE:-0}}" jail-run claude {{ args }}
-
-# The two below pin the model via Claude Code's own alias (always the latest of that line), and
-# still forward any further args to `claude`, e.g.
 
 # jail-claude with --model fable.
 jcf *args: (jail-claude "--model" "fable" args)
@@ -730,24 +640,21 @@ specify *args:
     fi
     uvx --from specify-cli specify "${args[@]:-}"
 
-# What OpenCode sessions consumed, from its local storage (~/.local/share/opencode), priced at
-# list rates — ccusage's OpenCode support (MIP-0013 §4.5;.
+# What OpenCode sessions consumed, priced at list rates. MIP-0013.
 opencode-cost *args="session":
     npx --yes ccusage@latest opencode {{ args }}
 
-# Push stdin (or --text "…") to the clipboard — write-only, no paste counterpart;.
+# Push stdin (or --text "…") to the clipboard — write-only.
 clip *args:
     clip {{ args }}
 
-# Fast-forward local `main` from origin — always fetches (safe, no working-tree effect);.
+# Fetch origin and fast-forward local `main` when it is checked out and clean.
 sync-main:
     #!/usr/bin/env bash
     set -euo pipefail
     git fetch origin --quiet
     branch="$(git branch --show-current)"
     if [ -z "$branch" ]; then
-        # A detached checkout — `just worktree`'s main mirror is the common case, and printing
-        # "on ''" made it look broken. That mirror is fast-forwarded by `just worktree`, not here.
         echo "sync-main: detached HEAD (a worktree mirror?) — fetched origin only, no ref updated"
         exit 0
     fi

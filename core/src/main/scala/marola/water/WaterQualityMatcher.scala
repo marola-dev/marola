@@ -9,9 +9,11 @@ object WaterQualityMatcher:
 
   val MaxDistanceKm = 2.5
 
+  private def foldAccents(s: String): String =
+    Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toLowerCase
+
   def normalise(name: String): String =
-    val ascii = Normalizer.normalize(name, Normalizer.Form.NFD).replaceAll("\\p{M}", "")
-    ascii.toLowerCase
+    foldAccents(name)
       .replaceAll("\\(.*?\\)", " ")
       .replaceAll("^\\s*(praia|prainha|praias)\\s+(do|da|de|dos|das)\\s+", "")
       .replaceAll("^\\s*(praia|prainha|praias)\\s+", "")
@@ -27,11 +29,7 @@ object WaterQualityMatcher:
    * distance.
    */
   def isInlandWater(providerBeachName: String): Boolean =
-    val n = Normalizer
-      .normalize(providerBeachName, Normalizer.Form.NFD)
-      .replaceAll("\\p{M}", "")
-      .toLowerCase
-      .trim + " "
+    val n = foldAccents(providerBeachName).trim + " "
     InlandWaterPrefixes.exists(n.startsWith)
 
   def namesMatch(a: String, b: String): Boolean =

@@ -1,7 +1,5 @@
 package marola.water
 
-import java.text.Normalizer
-
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -36,8 +34,6 @@ object IneaPdfParser:
   // real row).
   private val BeachColumnMaxX = 200.0f
 
-  /** One extracted text run and its real PDF position — the geometry the attribution rule needs. */
-  // Geometry-aware extraction now lives in PdfLines, shared with ImaScPdfParser.
   import PdfLines.Line
 
   def parseTable(pdfBytes: Array[Byte]): List[Row] =
@@ -95,12 +91,7 @@ object IneaPdfParser:
     // belongs with the latter.
     names.minBy(n => (math.abs(n.y - y), -n.y)).name
 
-  private val PointCodePattern = "^[A-Z]{2,4}[0-9]{2,3}$".r
-
-  private def codePrefix(code: String): String =
-    PointCodePattern.findFirstMatchIn(code) match
-      case Some(_) => code.takeWhile(_.isLetter)
-      case None    => code
+  private def codePrefix(code: String): String = code.takeWhile(_.isLetter)
 
   private enum Classified:
     case RowFound(
@@ -128,7 +119,15 @@ object IneaPdfParser:
           if locPrefix.nonEmpty then locPrefix
           else locChunks.headOption.map(_.text.trim).getOrElse("")
         val embeddedName = nameChunks.headOption.map(_.text.trim)
-        Some(Classified.RowFound(code, location, condition(category.get), embeddedName, line.y))
+        Some(
+          Classified.RowFound(
+            code,
+            location,
+            ImaScWaterQualityClient.verdict(category.get),
+            embeddedName,
+            line.y
+          )
+        )
       case None if line.chunks.sizeIs == 1 =>
         val text = line.chunks.head.text.trim
         val looksLikeName =
@@ -137,9 +136,3 @@ object IneaPdfParser:
             !CategoryLabels.exists(text.contains)
         if looksLikeName then Some(Classified.NameFound(text, line.y)) else None
       case _ => None
-
-  private def condition(label: String): BathingCondition =
-    Normalizer.normalize(label, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toUpperCase.trim match
-      case s if s.startsWith("IMPR") => BathingCondition.Improper
-      case s if s.startsWith("PR")   => BathingCondition.Proper
-      case _                         => BathingCondition.Unknown

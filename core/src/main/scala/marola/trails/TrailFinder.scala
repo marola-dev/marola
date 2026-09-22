@@ -30,12 +30,7 @@ object TrailFinder:
 
   private val OverpassEndpoint = "https://overpass-api.de/api/interpreter"
 
-  /**
-   * Same timeout/retry shape `BeachFinder` uses for the same public Overpass instance — duplicated
-   * here rather than shared (MIP-0030 §5 leaves that call to the implementer; a second
-   * near-identical constant set for a client this small isn't worth a shared `OverpassConfig` yet —
-   * promote both to one when a third Overpass client needs the same numbers).
-   */
+  // Same numbers as `BeachFinder`; share them once a third Overpass client needs them too.
   private val OverpassTimeoutSeconds = 45
   private val HttpTimeoutSeconds = 60L
   private val OverpassRetries = 2
@@ -48,16 +43,8 @@ object TrailFinder:
   val NearRadiusKm = 0.5
 
   /**
-   * Queries named `highway=path`/`track` ways within `NearRadiusKm` of `beaches` (already fetched
-   * by `BeachFinder` for this `origin`/`radiusKm` — no second beach query) or of a named lake found
-   * in the same request, merges same-named segments into one `Trail` each (MIP-0030 §8: OSM splits
-   * one named trail into many small ways), and returns them sorted by name.
-   */
-  /**
-   * `nearby`, degraded to no trails when Overpass fails — 429 is its documented back-pressure, not
-   * an exception. Trails are enrichment on an already-complete result, so a failure here must not
-   * discard the run; `Recommender.fetchFacilities` treats its Overpass call the same way. The beach
-   * query itself still fails loudly: with no beaches there is nothing to report.
+   * `nearby`, degraded to no trails when Overpass fails (429 is its documented back-pressure):
+   * trails are enrichment on an already-complete result, so a failure must not discard the run.
    */
   def nearbyOrEmpty(
       origin: Coordinates,
@@ -66,20 +53,20 @@ object TrailFinder:
   ): List[Trail] < Sync =
     soften(nearby(origin, radiusKm, beaches))
 
-  /** Split out so the recovery is testable without reaching Overpass. */
   private[trails] def soften(effect: List[Trail] < Sync): List[Trail] < Sync =
     Abort.run(Abort.catching[Throwable](effect)).map {
       case Result.Success(trails) => trails
       case _                      => Nil
     }
 
+  /**
+   * Named `highway=path`/`track` ways within `NearRadiusKm` of a beach or a named lake, same-named
+   * segments merged into one `Trail` (MIP-0030 §8: OSM splits one trail into many ways).
+   */
   def nearby(origin: Coordinates, radiusKm: Double, beaches: List[Beach]): List[Trail] < Sync =
     val radiusM = (radiusKm * 1000).toInt
     val nearM = (NearRadiusKm * 1000).toInt
-    // MIP-0030 §4.1's verified query shape, plus `.lakes out center;` — the literal §4.1 text
-    // never outputs the lake anchors themselves, but `nearLake` needs their name/position to
-    // label a trail found only via a lake anchor, so this adds one more `out` statement to the
-    // same single request rather than issuing a second one.
+    // MIP-0030 §4.1's query plus `.lakes out center;`: `nearLake` needs the lake anchors' names.
     val query =
       s"""[out:json][timeout:$OverpassTimeoutSeconds];
          |way["natural"="beach"]["name"](around:$radiusM,${origin.lat},${origin.lon})->.beaches;
@@ -111,7 +98,6 @@ object TrailFinder:
       surface: Option[String]
   )
 
-  /** Package-visible for `TrailFinderSpec`: parses a raw Overpass response into merged trails. */
   private[trails] def parse(root: JsonValue, beaches: List[Beach]): List[Trail] =
     val elements = root("elements").arr.toList
     val lakes = elements.flatMap(parseLake)

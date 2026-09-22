@@ -1,7 +1,5 @@
 package marola.water
 
-import java.text.Normalizer
-
 import kyo.*
 
 import marola.http.Http
@@ -51,10 +49,10 @@ object InemaBaWaterQualityClient:
   // count (unlike IMA/SC's feed) — `sampledOn` is "today" at fetch time, the honest reading of
   // "this is the bulletin's current verdict," not a real lab date the source doesn't provide.
   private def sampleOf(row: InemaPdfParser.Row): WaterSample =
-    WaterSample(java.time.LocalDate.now(), condition(row.category), None, None, None)
-
-  private def condition(raw: String): BathingCondition =
-    Normalizer.normalize(raw, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toUpperCase.trim match
-      case s if s.startsWith("IMPR") => BathingCondition.Improper
-      case s if s.startsWith("PR")   => BathingCondition.Proper
-      case _                         => BathingCondition.Unknown
+    WaterSample(
+      java.time.LocalDate.now(),
+      ImaScWaterQualityClient.verdict(row.category),
+      None,
+      None,
+      None
+    )

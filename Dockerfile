@@ -7,13 +7,8 @@
 #   native-build  GraalVM native-image over the same jar (never shipped)
 #   native   one static-ish binary on distroless — `docker run --rm ghcr.io/h0ffmann/marola:native --brief --lat … --lon …`
 #
-# Every base image tag below was checked on its registry on 2026-09-05 (sizes in the tasks file,
-# decision 2). Secrets are never copied: `.dockerignore` is an allowlist and `.env` is not on it —
-# mount it (`docker compose` does) or pass `-e MAROLA_…`. Lint: `just quality` runs hadolint.
-
-# Base images are written literally, with a tag, on every FROM line: hadolint's DL3006 (in the
-# CI action's hadolint version) does not resolve an ARG default, and a pinned tag is what we
-# want anyway. Bump them here, one place.
+# Secrets are never copied: `.dockerignore` is an allowlist and `.env` is not on it.
+# Base images are literal tags, not ARGs: hadolint's DL3006 does not resolve an ARG default.
 
 # --- builder ---------------------------------------------------------------------------------
 # Built once, on the build platform: the jar is the same bytes for every target platform, so a

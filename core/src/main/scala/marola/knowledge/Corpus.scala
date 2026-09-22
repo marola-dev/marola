@@ -31,21 +31,16 @@ object Corpus:
    * corpus.
    */
   def listFiles(dir: Path): List[Path] =
-    if !Files.isDirectory(dir) then Nil
-    else
-      val top = Files.list(dir).iterator().asScala.toList
-      val direct = top.filter(p => Files.isRegularFile(p) && p.toString.endsWith(".md"))
-      val safetyDir = dir.resolve("safety")
-      val safety =
-        if Files.isDirectory(safetyDir) then
-          Files
-            .list(safetyDir)
-            .iterator()
-            .asScala
-            .filter(p => Files.isRegularFile(p) && p.toString.endsWith(".md"))
-            .toList
-        else Nil
-      (direct ++ safety).sortBy(_.toString)
+    def markdownIn(d: Path): List[Path] =
+      if !Files.isDirectory(d) then Nil
+      else
+        Files
+          .list(d)
+          .iterator()
+          .asScala
+          .filter(p => Files.isRegularFile(p) && p.toString.endsWith(".md"))
+          .toList
+    (markdownIn(dir) ++ markdownIn(dir.resolve("safety"))).sortBy(_.toString)
 
   def load(dir: Path): List[CorpusChunk] < Sync =
     Sync.defer {
@@ -64,12 +59,8 @@ object Corpus:
     val body = lines
       .filterNot(l => l.startsWith("# ") || l.toLowerCase.startsWith("source:"))
       .mkString("\n")
-    paragraphs(body)
-      .flatMap(mergeUpTo(_, MaxChunkChars))
-      .map(text => CorpusChunk(title, source, text, safety))
-
-  private def paragraphs(body: String): List[List[String]] =
-    List(body.split("\\n\\s*\\n").toList.map(_.trim).filter(_.nonEmpty))
+    val paragraphs = body.split("\\n\\s*\\n").toList.map(_.trim).filter(_.nonEmpty)
+    mergeUpTo(paragraphs, MaxChunkChars).map(text => CorpusChunk(title, source, text, safety))
 
   private def mergeUpTo(paras: List[String], max: Int): List[String] =
     paras

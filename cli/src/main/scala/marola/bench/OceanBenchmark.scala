@@ -100,9 +100,8 @@ object OceanBenchmark:
       llm: LlmClient,
       minScore: Double
   ): List[Result] < Sync =
-    qs match
-      case Nil => Nil
-      case q :: rest =>
+    Kyo
+      .foreach(qs) { q =>
         for
           b <- timed("baseline", q, llm.complete(OceanQa.generalMessages(q.question)))
           s <- timed(
@@ -131,8 +130,9 @@ object OceanBenchmark:
               )
               .map(_.text)
           )
-          tail <- runAll(rest, store, llm, minScore)
-        yield b :: s :: g :: tail
+        yield List(b, s, g)
+      }
+      .map(_.flatten)
 
   private def timed(arm: String, q: Question, effect: String < Sync): Result < Sync =
     for

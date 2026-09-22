@@ -7,20 +7,11 @@ Sources (all local files, no network, no model calls):
      compact JSON verdict out. Teaches the JSON-only discipline small models break most.
   3. core/src/main/resources/sea_lore.json — "tell me something about X" → the sourced paragraph,
      with the source URL kept in the answer so the habit of citing survives.
-  4. knowledge/*.md (recursively, e.g. knowledge/safety/) — one Q/A per chunk, *and* one Q/A per
-     individual sentence within that chunk, each asked with several paraphrased question templates
-     (MIP-0025 §4.3, Layer 1 "Marine Corpus Domain"). This is data augmentation, not fact
-     invention: every answer is still either a real chunk or a real sentence copied verbatim from
-     the knowledge file it cites, just asked more than one way — enough to move from "a few dozen
-     examples" (format/tone only) to thousands (real domain facts too), without a live model call
-     to generate anything. Deliberately deterministic and reproducible: MIP-0025 §4.3 notes that
-     LLM-based synthetic generation (e.g. Reviewer-filtered) was "not run or estimated for real
-     cost" — that stays future work, not something this script does silently.
-  5. Tool-call SFT (MIP-0025 §4.3 Layer 2): synthetic questions → a single JSON tool call, for the
-     four real MCP tools cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala exposes
-     (`find_nearby_beaches`, `get_swim_recommendation`, `get_water_quality`,
-     `ask_ocean_question` — names and argument schemas read directly from that file, not guessed).
-     Teaches *when and how* to call each tool, not new facts — the tool itself returns the facts.
+  4. knowledge/*.md (recursively) — one Q/A per chunk and per sentence, each asked through several
+     question templates (MIP-0025 §4.3 Layer 1). Every answer is verbatim text from the file it
+     cites; no model call generates anything.
+  5. Tool-call SFT (MIP-0025 §4.3 Layer 2): questions → one JSON call to the four MCP tools in
+     cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala. Teaches when to call, not facts.
 
 Output: finetune/data/train.jsonl and eval.jsonl in the chat format most trainers accept:
   {"messages": [{"role": "system", ...}, {"role": "user", ...}, {"role": "assistant", ...}]}
@@ -59,12 +50,8 @@ INPUT_FIELDS = (
 )
 
 
-def label(field: str) -> str:
-    return " ".join(w.capitalize() for w in field.split("_"))
-
-
 def render_inputs(demo: dict, fields: tuple[str, ...]) -> str:
-    return "\n".join(f"{label(f)}: {demo[f]}" for f in fields if f in demo)
+    return "\n".join(f"{f.replace('_', ' ').title()}: {demo[f]}" for f in fields if f in demo)
 
 
 def example(user: str, assistant: str) -> dict:
@@ -220,11 +207,7 @@ KNOWLEDGE_EXAMPLE_FLOOR = 2000
 
 
 # --- Layer 2: tool-call SFT (MIP-0025 §4.3) --------------------------------------------------
-#
-# Tool names and argument schemas below are transcribed from the *actual* MCP tool definitions in
-# cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala (latLonRadiusSchema:
-# lat/lon required, radius_km optional; questionSchema: question required) — read from that file,
-# not guessed or invented. If that file's tool set changes, this dict must change with it.
+# Transcribed from SwimConditionsMcpServer.scala's tool schemas; change both together.
 TOOL_CALL_SYSTEM = (
     "You are marola, a swim-conditions assistant for open-water swimmers in Brazil. When a "
     "question needs live data you don't have, reply with exactly one JSON object of the shape "
@@ -238,8 +221,7 @@ TOOL_SCHEMAS: dict[str, dict[str, tuple[str, ...]]] = {
     "ask_ocean_question": {"required": ("question",), "optional": ()},
 }
 
-# Same coordinates as site/fixtures/board.json's fixture beaches — real marola locations, not
-# invented ones.
+# site/fixtures/board.json's beaches.
 LOCATIONS: tuple[tuple[float, float], ...] = ((-27.6296, -48.4487), (-27.4021, -48.4157))
 RADII: tuple[float | None, ...] = (None, 10.0, 20.0)
 
@@ -349,12 +331,6 @@ def from_tool_calls(knowledge_dir: Path, sea_lore_path: Path) -> list[dict]:
 
 
 def _self_test() -> None:
-    # Two independent checks in one self-test: MIP-0025 task 2's Layer 1 knowledge
-    # augmentation (count floor + every fact verbatim in its cited source) and task 3's
-    # Layer 2 tool calls (real MCP tool names, valid JSON, real argument schemas). They were
-    # written on separate branches and each owned this function; both sets of assertions
-    # matter, so neither is dropped.
-
     rows = from_knowledge(KNOWLEDGE)
     assert len(rows) >= KNOWLEDGE_EXAMPLE_FLOOR, (
         f"knowledge-derived example count {len(rows)} below floor {KNOWLEDGE_EXAMPLE_FLOOR} "

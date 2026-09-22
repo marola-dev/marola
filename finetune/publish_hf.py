@@ -46,13 +46,7 @@ def model_card(
     gguf_paths: list[Path],
     eval_note: str,
 ) -> str:
-    """Pure — no network, no filesystem beyond the already-read `gguf_paths` names/sizes, so this
-    is what `PublishHfSpec`-style tests would exercise if this script grows Python tests; today it
-    is checked by hand against MIP-0025 §5.1(2)'s required sections (base model, training-data
-    description, eval numbers, intended use, the IMPRÓPRIA/safety caveat) before every real
-    publish, since there is no Python test harness in this repo (`just quality-other` lints
-    `scripts/*.py`, not `finetune/*.py`, which stays a maintainer-run tool, same as `train_lora.py`).
-    """
+    """Check by hand against MIP-0025 §5.1(2)'s required sections before a real publish."""
     files = "\n".join(f"- `{p.name}` ({p.stat().st_size / 1e6:.0f} MB)" for p in gguf_paths)
     return f"""---
 base_model: {base_model}

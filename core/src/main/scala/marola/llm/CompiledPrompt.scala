@@ -1,7 +1,5 @@
 package marola.llm
 
-import scala.io.Source
-
 import marola.json.JsonValue
 
 /**
@@ -40,10 +38,6 @@ object CompiledPrompt:
 
   private def toFieldLabel(snakeCase: String): String =
     snakeCase.split('_').map(_.capitalize).mkString(" ")
-
-  def loadFromFile(path: String, outputField: String): CompiledPrompt =
-    val content = Source.fromFile(path).mkString
-    loadFromString(content, outputField)
 
   def loadFromString(jsonText: String, outputField: String): CompiledPrompt =
     val json = JsonValue.parse(jsonText)
