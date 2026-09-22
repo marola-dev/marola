@@ -17,7 +17,7 @@ so proposals are comparable and don't rot.
 - Anything that changes the ranking/scoring, the safety-relevant output, or what a user sees.
 - Anything touching autonomous/proactive behaviour (see `docs/AI-500-MAPPING.md` §4).
 
-Not for: bug fixes, doc corrections, refactors with no behaviour change, or one-file tweaks — do
+Not for: bug fixes, doc corrections, refactors with no behaviour change, or one-file tweaks: do
 those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md` if relevant.
 
 ## Steps
@@ -37,7 +37,7 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
    deleting a heading. Keep it under ~250 lines; long research goes in an appendix at the end.
 5. **Add it to the index.** Append a row to `docs/mips/README.md`: number, title, status, date, and
    the four triage columns (Effort, Gain, Verdict, Cost so far) copied from the MIP's own metadata
-   block — see "Filling the six triage fields" below.
+   block; see "Filling the six triage fields" below.
 6. **Link it.** If it supersedes or implements a `FUTURE-WORK.md` section, add a one-line pointer
    there ("see `docs/mips/MIP-NNNN-...md`"). If it closes an exam-mapping gap, note it in the
    relevant mapping row's Status column as "proposed: MIP-NNNN".
@@ -47,18 +47,18 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
    is a separate PR that flips the status to `Implemented` and links the PR. If the user asks for
    both, do the MIP first and confirm the design before writing code.
 9. **Before pushing a new draft branch, check for an existing one.** Run `just docs-mip-stack list`
-   (`scripts/docs-mip-stack.sh`) first — it discovers pending, un-merged `docs/mip-NNNN-*` design-doc
+   (`scripts/docs-mip-stack.sh`) first: it discovers pending, un-merged `docs/mip-NNNN-*` design-doc
    branches and flags duplicates/staleness for the same MIP number. A real scan of this repo found
    several MIPs with *more than one* candidate branch (an original `docs/mip-NNNN-*` draft and a
-   later rebuilt `mips/YYYY-MM-DD/K-mip-NNNN-*` branch, not always identical) — several turned out to
+   later rebuilt `mips/YYYY-MM-DD/K-mip-NNNN-*` branch, not always identical); several turned out to
    be already-merged duplicates nobody had cleaned up, with the merged MIP's own Status field still
    pointing at the stale branch name. `just docs-mip-stack plan <branch> ...` chains the drafts you
-   pick into a base-linked stack of `gh pr create` commands once you've resolved which is canonical
-   — it never guesses for you. This is distinct from `just mip-stack` (`scripts/mip-stack.sh`), which
+   pick into a base-linked stack of `gh pr create` commands once you've resolved which is canonical.
+   It never guesses for you. This is distinct from `just mip-stack` (`scripts/mip-stack.sh`), which
    stacks an *implementation* task's PRs (`mip-NNNN/k-*` branches against a `.tasks.md`), not design
    docs.
 10. **After a merge, double-check the MIP's own Status field names the branch/PR that actually
-    landed** — not a branch that was superseded or renamed along the way. A MIP's Status field
+    landed**, not a branch that was superseded or renamed along the way. A MIP's Status field
     naming a stale branch/PR is easy to miss because the doc still reads as internally consistent;
     verify against `git log origin/main --grep="MIP-NNNN"`, not against what the doc itself claims.
 
@@ -66,12 +66,12 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
 
 - **Local-first, Azure opt-in, per integration** (`ARCHITECTURE.md` §5). Every new data path needs a
   free, keyless, zero-Azure default. If an Azure service is the *only* option, say so explicitly and
-  state the expected cost — it needs a human go-ahead (`AGENTS.md` cost rule).
+  state the expected cost; it needs a human go-ahead (`AGENTS.md` cost rule).
 - **Safety-relevant logic stays deterministic and out of the LLM.** Anything that changes whether
   marola tells someone to swim is plain Scala in `scoring/`, unit-tested, never model output.
 - **No unsourced facts reach a user.** If the proposal shows text to users that isn't computed from
   live data (lore, tips, explanations), the text must be curated with a source per entry, shown
-  verbatim or fact-checked by `Reviewer` — an LLM does not get to invent it.
+  verbatim or fact-checked by `Reviewer`; an LLM does not get to invent it.
 - **Phase discipline.** State which phase (`ARCHITECTURE.md` §11) the work lands in and what
   earlier-phase prerequisite, if any, is still missing.
 - **Honest status vocabulary**, same as the rest of the docs: "verified live", "confirmed against
@@ -153,19 +153,19 @@ assumed from memory. Say so here rather than letting it read as verified by omis
 
 ## Filling the six triage fields
 
-- **Effort**: size the *build*, not the design — S is a single-file, no-new-dependency change; M
+- **Effort**: size the *build*, not the design. S is a single-file, no-new-dependency change; M
   touches a few files or adds one small trait; L adds a module, a store, or a CI workflow; XL is
   several of those together or a new user-facing surface. Say what specifically drives the size.
 - **Gain**: pick every tag that genuinely applies from the fixed list (`user value`, `exam coverage
-  (name the AI-103/AI-500 row)`, `infra/dev-loop`, `cost/ops`) — most MIPs carry two, not one.
-- **Effort vs Gain**: the honest triage call given today's Effort and Gain, not a sales pitch — name
+  (name the AI-103/AI-500 row)`, `infra/dev-loop`, `cost/ops`); most MIPs carry two, not one.
+- **Effort vs Gain**: the honest triage call given today's Effort and Gain, not a sales pitch: name
   the blocking MIP for `do when X lands`, the missing precondition for `park`.
 - **Depends on**: list other MIPs by number, and say explicitly whether `AGENTS.md`'s Phase 1 gate
   (the Telegram bot) or its cost-and-deployment-safety gate (a paid Azure resource) blocks this one.
-- **Blocked by**: the strict subset of `Depends on` that's a pure "must merge first" relationship —
+- **Blocked by**: the strict subset of `Depends on` that's a pure "must merge first" relationship:
   comma-separated numbers or `none`. When in doubt whether something belongs here, it doesn't:
   leave it in `Depends on`'s prose only.
-- **Risk**: one real failure mode, not a hedge — the thing that would make you regret building it.
+- **Risk**: one real failure mode, not a hedge: the thing that would make you regret building it.
 - **Cost so far**: pull it from the merged PRs' `Cost:` trailers (`just cost-split MIP-NNNN`); write
   "—" for nothing merged yet, never a guess.
 
@@ -176,9 +176,10 @@ Cost so far |` (`Verdict` = the MIP's `Effort vs Gain` field). Keep it sorted by
 with the first MIP if it doesn't exist.
 
 **Dependency graph.** `just mip-graph` regenerates a Mermaid graph from every MIP's `Blocked by`
-field into `docs/mips/README.md` (between `<!-- mip-graph:start -->`/`-end -->` markers) —
+field into `docs/mips/README.md` (between `<!-- mip-graph:start -->`/`-end -->` markers);
 `just quality`'s `quality-other` fails if it's stale, same as any other generated-and-checked-in
 artifact here. `just mip-graph --parallel NNNN MMMM` answers "can these two be worked on at once":
 no path between them in the `Blocked by` graph **and** no overlap in the backticked source paths
-their §5 Design sections name — the graph alone only catches the first kind of collision, not two
+their §5 Design sections name: the graph alone only catches the first kind of collision, not two
 MIPs quietly touching the same file.
+</content>

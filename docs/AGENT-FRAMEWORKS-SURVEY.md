@@ -22,8 +22,8 @@ not an adopted dependency, until a MIP says otherwise.
   component with session memory, declarative model orchestration and error handling, plus
   workflows, durable entities/views, endpoints and timers in one runtime. Akka cites Fox cutting a
   personalisation engine from 150,000 to 22,000 cores after porting. It is the most complete
-  "actors as agents" runtime on the JVM — and proprietary (BSL), which is exactly why Pekko matters
-  for an open project.
+  "actors as agents" runtime on the JVM, and it's proprietary (BSL), which is exactly why Pekko
+  matters for an open project.
 
 ### 1.2 Scala libraries
 
@@ -55,7 +55,7 @@ per-step observability. That absence is the design space, not a reason to import
 
 Pekko earns its place the moment marola has more than one **long-lived, stateful** thing running
 concurrently: the Telegram poll loop, per-chat conversations, a digest scheduler, an escalation
-agent watching conditions. Those are actors — they have state, outlive a request, need supervision
+agent watching conditions. Those are actors: they have state, outlive a request, need supervision
 and backpressure. The current request-scoped pipeline does not need it; Kyo `Async` covers
 fan-out inside one request (`SCALA3-JDK-REVIEW.md` §3).
 
@@ -76,16 +76,16 @@ Pekko Typed's `Behavior` API keeps actors pure and testable with `BehaviorTestKi
 this repo's "logic outside the effect boundary" rule; Kyo effects run inside message handlers via
 the same `AllowUnsafe` boundary the MCP server already uses. Actors give **concurrency and
 resilience, not agent semantics**: termination, budgets and observability per step still have to be
-designed — that is §2's last row, and the part a MIP must not skip.
+designed. That is §2's last row, and the part a MIP must not skip.
 
 ## 4. Reading list, in order
 
-1. Pekko Typed actors guide — the `Behavior` model and testkit.
-2. agent4s's graph module — the smallest LangGraph-in-Scala to steal the shape from.
-3. sttp-ai's Ollama + tool-calling API — if marola ever replaces `Http`/`JsonValue` for LLM calls
+1. Pekko Typed actors guide: the `Behavior` model and testkit.
+2. agent4s's graph module: the smallest LangGraph-in-Scala to steal the shape from.
+3. sttp-ai's Ollama + tool-calling API, if marola ever replaces `Http`/`JsonValue` for LLM calls
    (`FUTURE-WORK.md` §2 already considers kyo-http; sttp-ai is the alternative).
-4. Akka SDK's Agent/Workflow docs — the most complete design to compare against, licence aside.
-5. LangGraph's and PydanticAI's docs — for the *ideas* in §2, not the code.
+4. Akka SDK's Agent/Workflow docs: the most complete design to compare against, licence aside.
+5. LangGraph's and PydanticAI's docs: for the *ideas* in §2, not the code.
 
 ## Sources
 

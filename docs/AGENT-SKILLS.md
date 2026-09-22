@@ -5,7 +5,7 @@ rule of thumb from `AGENTS.md`: every loaded skill costs context on every turn, 
 that map to a real step of this repo's workflow and skip the rest.
 
 Harness note: the in-repo skills (§1) are plain `SKILL.md` files that OpenCode also discovers
-(`.claude/skills/` is on its search path); the superpowers plugin (§2) is Claude Code only — see
+(`.claude/skills/` is on its search path); the superpowers plugin (§2) is Claude Code only. See
 `docs/mips/MIP-0013-opencode-tryout.md`.
 
 ## 1. In-repo skills (`.claude/skills/`)
@@ -26,7 +26,7 @@ Harness note: the in-repo skills (§1) are plain `SKILL.md` files that OpenCode 
 The plugin (Jesse Vincent, `obra/superpowers`) ships workflow skills that activate from context.
 It is **declared in the repo**, not installed by hand: `.claude/settings.json` has
 `"enabledPlugins": {"superpowers@claude-plugins-official": true}`, so Claude Code installs and
-enables it for whoever opens this folder and accepts the trust dialog — the nearest thing to
+enables it for whoever opens this folder and accepts the trust dialog: the nearest thing to
 `nix develop` for plugins (plugin code is cached under `~/.claude/plugins`, not vendored; it is not
 pinned to a version). Opt out on one machine with the same key set to `false` in
 `.claude/settings.local.json`. Verify with `/plugin` → installed list. Manual install elsewhere:
@@ -57,7 +57,7 @@ for a MIP, with which skill does what and which session it runs in:
 Session A (plan, Fable):
   /brainstorming            → refine the raw idea until §1-§3 of a MIP have answers
   /mip                      → write docs/mips/MIP-NNNN-*.md (sources verified, open questions listed)
-  (superpowers: writing-plans is skipped — the MIP is the plan)
+  (superpowers: writing-plans is skipped: the MIP is the plan)
   mip-tasks, step 1         → docs/mips/MIP-NNNN.tasks.md: ordered tasks, each with its test
   /clear
 
@@ -73,7 +73,7 @@ Session B..N (execute, one per task, Sonnet is usually enough):
   superpowers: requesting-code-review → self-checklist before asking for review
   /clear
 
-Review session (only when the human asks — "review the stack", "claude review #21"):
+Review session (only when the human asks, e.g. "review the stack", "claude review #21"):
   per PR, bottom-up, against its own base:
   superpowers: requesting-code-review → reviewer subagent with BASE_SHA = origin/<base>, HEAD_SHA = origin/<branch>,
                                         PLAN = the task row + MIP §6/§7; fix Critical/Important, note Minor
@@ -85,12 +85,12 @@ After each merge (bottom of the stack first):
   superpowers: finishing-a-development-branch → delete the merged branch, flip the MIP when the last task lands
 ```
 
-The whole loop — including how a MIP gets *accepted* and what GitHub shows for a stack — is
+The whole loop (including how a MIP gets *accepted* and what GitHub shows for a stack) is
 written once in `docs/DEV-FLOW.md`; this section is the skill-by-skill view of it.
 
 ## 2.2 Other plugins in use on the maintainer's machine
 
-Beyond superpowers, the maintainer's own `~/.claude/settings.json` (user-scope, not committed —
+Beyond superpowers, the maintainer's own `~/.claude/settings.json` (user-scope, not committed;
 these are personal tool choices, not a repo requirement the way superpowers is) has these
 enabled. Listed here so anyone reading a session transcript or a PR this repo produced knows what
 tooling might have shaped it:
@@ -102,12 +102,12 @@ tooling might have shaped it:
 | `heavy-usage@heavy-usage` (`heavyc-dev/heavy-usage`) | Third-party marketplace | Usage-window tracking (`/heavy-usage:usage`) feeding `/mip-solve-perpetual`'s wind-down math — see `docs/DEV-FLOW.md`'s "verified against its actual source" section for exactly what it can and can't do (soft signal only, no hard `PreToolUse` block). |
 | `portal@portal` (`spotify/portal-ai-plugins`) | Third-party marketplace, added 2026-09-07 | Spotify Portal (Backstage software-catalog) workflows — setup/search/service-briefing/diagnostics against the maintainer's own Portal instance via the Portal CLI. **Not used for marola's own code or workflow** — marola isn't cataloged in Backstage — this is general dev tooling the maintainer runs day to day, unrelated to this repo's own process. |
 
-None of these are required to work on marola — only the in-repo skills (§1) and the committed
+None of these are required to work on marola: only the in-repo skills (§1) and the committed
 superpowers declaration (§2) are. A contributor without them installed loses nothing but the
 on-request review/design passes and the maintainer's personal usage dashboard.
 
 What you don't need to invoke by name: superpowers' skills trigger on phrases like "let's plan",
-"write the test first", "it's still failing" — say what you're doing and the right one loads.
+"write the test first", "it's still failing": say what you're doing and the right one loads.
 `using-git-worktrees` is optional: with one task per session, a plain branch switch is enough;
 use worktrees when two tasks of the same stack are in flight at once.
 
@@ -116,14 +116,14 @@ use worktrees when two tasks of the same stack are in flight at once.
 Proposed, with hooks, rules, subagents and a permission allowlist, as
 `docs/mips/MIP-0011-claude-code-best-practices.md` (task 8 is these four skills).
 
-- **`fixture-refresh`** — re-record the golden fixtures (`docs/RUN-LOCALLY.md` §7) and bump the
+- **`fixture-refresh`**: re-record the golden fixtures (`docs/RUN-LOCALLY.md` §7) and bump the
   pinned date in `PipelineGoldenSpec`; the most repeated manual procedure here.
-- **`benchmark-compare`** — run `just benchmark` twice at temperature 0, diff against
+- **`benchmark-compare`**: run `just benchmark` twice at temperature 0, diff against
   `docs/benchmarks/`, and write the comparison paragraph a PR needs when it touches prompts, corpus
   or embedder.
-- **`corpus-doc`** — add a `knowledge/*.md` document: title, one `Source:` URL, paragraphs, then the
+- **`corpus-doc`**: add a `knowledge/*.md` document: title, one `Source:` URL, paragraphs, then the
   human-check note in `knowledge/README.md`, then re-index and one `just ask` that should now cite it.
-- **`water-provider`** — probe a new agency feed the way MIP-0001 §4.1 probed IMA, and scaffold a
+- **`water-provider`**: probe a new agency feed the way MIP-0001 §4.1 probed IMA, and scaffold a
   `WaterQualityClient` + fixture + spec.
 
 ## 4. Not adopted, and why

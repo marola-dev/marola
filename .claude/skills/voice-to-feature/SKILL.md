@@ -7,7 +7,7 @@ disallowed-tools: Bash(gh pr merge*) Bash(gh pr close*)
 ---
 
 Note: `${CLAUDE_PROJECT_DIR}` in the `allowed-tools` line above is substituted by the harness in
-hooks and skills only — not in a statusLine command. This repo has already hit that mismatch once;
+hooks and skills only, not in a statusLine command. This repo has already hit that mismatch once;
 don't copy this pattern into `.claude/settings.json`'s `statusLine` expecting the same expansion.
 
 # Voice → feature (demo pipeline)
@@ -17,7 +17,7 @@ don't copy this pattern into `.claude/settings.json`'s `statusLine` expecting th
 marola's real dev flow (`DEV-FLOW.md`) is MIP → human reads it → Accepted → tasks → stacked
 PRs → review → merge, on purpose kept as separate steps so a plausible design gets checked
 before code exists. This skill collapses all of that into one pass, on purpose, to show what a
-"say it, get a feature" pipeline looks like. **It is not a replacement for that flow — it is a
+"say it, get a feature" pipeline looks like. **It is not a replacement for that flow. It is a
 demonstration of the pipeline shape, gated at the one point that matters: nothing merges without
 a human.** Say this to the room, don't just build it quietly.
 
@@ -38,22 +38,22 @@ a human.** Say this to the room, don't just build it quietly.
    note on why Whisper's built-in translation isn't used). Anonymize any name beyond the
    repo owner's, per that skill's default.
 
-2. **Draft the MIP.** Use the `mip` skill's template and process in full — number, slug, the
+2. **Draft the MIP.** Use the `mip` skill's template and process in full: number, slug, the
    required reading (`AGENTS.md`, `ARCHITECTURE.md` §5/§11, `FUTURE-WORK.md`), verify every
    external claim before naming it. Status starts `Draft`. If the voice note doesn't describe a
-   real feature (it's a status update, a question, small talk), say so and stop here — this
+   real feature (it's a status update, a question, small talk), say so and stop here: this
    pipeline is for feature ideas, not everything that gets recorded.
 
 3. **Scaffold, don't implement.** From the MIP's own §5 (Design), create the files and
-   signatures it names — new case classes, trait methods, a new module file — following
+   signatures it names (new case classes, trait methods, a new module file), following
    `AGENTS.md`'s conventions (Scala 3 strictEquality, enum-over-exceptions, the Kyo boundary
    pattern). Method bodies that need real logic get `???` (idiomatic Scala for "not yet
    implemented," compiles cleanly) or a single obviously-fake return value, never invented
-   correct-looking logic — a scaffold that *looks* done is worse than one that visibly isn't.
+   correct-looking logic: a scaffold that *looks* done is worse than one that visibly isn't.
    Add one pending or `???`-bodied test per new piece, not a full suite.
 
 4. **Prove it compiles, not that it works.** Run `just build`. A scaffold with `???` bodies
-   should compile; it should not pass `just test` yet, and that's expected — don't force tests
+   should compile; it should not pass `just test` yet, and that's expected: don't force tests
    green by writing fake-passing assertions to make the demo look further along than it is.
 
 5. **Branch and Draft PR, never further.** `git checkout -b voice-feature/<slug>`, commit,
@@ -64,22 +64,22 @@ a human.** Say this to the room, don't just build it quietly.
    needs a human to write the actual logic, then normal review. Not ready to merge."
    ```
    If a GitHub Project board is set up (see the earlier `gh project` conversation), add the PR
-   to it and set its status to something like "Needs implementation" — `gh project item-add`,
+   to it and set its status to something like "Needs implementation": `gh project item-add`,
    `gh project item-edit`. **Never call `gh pr merge` or mark the PR ready-for-review on the
-   user's behalf** — `disallowed-tools` above blocks the merge call at the tool level, not just
+   user's behalf**: `disallowed-tools` above blocks the merge call at the tool level, not just
    by instruction, matching the same deny-rule pattern as the Azure cost gate in MIP-0011.
 
 6. **Narrate the stop.** End by stating plainly what exists (a Draft PR with scaffolded
-   structure) and what doesn't (working logic, tests, review) — the whole point of the demo is
+   structure) and what doesn't (working logic, tests, review). The whole point of the demo is
    that step 5 is where the machine's part ends, not a soft suggestion to look at it later.
 
 ## Why this is safe to demo
 
-- Nothing reaches `main` — it's a Draft PR, and the merge tool is blocked outright, not just
+- Nothing reaches `main`: it's a Draft PR, and the merge tool is blocked outright, not just
   discouraged.
-- Nothing pretends to be more finished than it is — `???` bodies and a failing `just test` are
+- Nothing pretends to be more finished than it is: `???` bodies and a failing `just test` are
   the honest state, not smoothed over for the demo.
-- Nothing about a person is invented — the anonymization step from `voice-note-ingest` still
+- Nothing about a person is invented: the anonymization step from `voice-note-ingest` still
   applies; a live demo audience seeing an unredacted name would be the actual failure mode here.
 
 ## When not to use this
@@ -87,3 +87,4 @@ a human.** Say this to the room, don't just build it quietly.
 Real marola feature work. Use the `mip` skill, get it read and Accepted, then `mip-tasks` for
 the stacked-PR breakdown. This skill exists to be shown, not to become how the repo actually
 grows.
+</content>

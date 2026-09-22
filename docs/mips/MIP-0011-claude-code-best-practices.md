@@ -40,17 +40,17 @@ Quoted from the docs fetched 2026-09-05 (`code.claude.com/docs/en/…`):
   hooks, telemetry, and plugins."* (`settings`). Ours holds attribution and one plugin.
 - *"Use `disable-model-invocation: true` for workflows with side effects"* (`skills`). `mip-tasks`
   creates branches and PRs and can be auto-invoked.
-- Local evidence: `docs/FABLE_REVIEW.md` §3 — `gh` unauthenticated inside the jail, `.env.example`
-  reading as empty — is re-discovered per session; auto-memory currently carries it. A
+- Local evidence: `docs/FABLE_REVIEW.md` §3 (`gh` unauthenticated inside the jail, `.env.example`
+  reading as empty) is re-discovered per session; auto-memory currently carries it. A
   `SessionStart` hook can print it once.
 - *"When a claude.ai usage limit stops Claude mid-task, Claude Code waits in the open session
   and continues the task on its own after the limit resets... automatic continue is on by
   default."* (`interactive-mode`, fetched 2026-09-05). This closes what was, until recently, a
-  well-documented gap — `anthropics/claude-code` issues #35744, #26775, #18980, #36320, #38263,
+  well-documented gap: `anthropics/claude-code` issues #35744, #26775, #18980, #36320, #38263,
   #62788 all requested exactly this, several as late as March 2026, with a small ecosystem of
   third-party wrappers (`claude-auto-retry`, `claude-auto-resume`, `claude-delayed-message`)
   built to work around its absence. What it does and doesn't cover matters before relying on it
-  for an unattended overnight run — see the new risks below.
+  for an unattended overnight run; see the new risks below.
 
 ## 3. User-visible change
 
@@ -97,7 +97,7 @@ disappear; anything not on the allowlist still asks.
 - **Settings** (`/docs/en/settings`): precedence managed → CLI → `.claude/settings.local.json` →
   `.claude/settings.json` → `~/.claude/settings.json`; `permissions.allow/deny/ask`, `hooks`,
   `env`, `attribution`, `enabledPlugins`, `autoMemoryEnabled`; the local file is git-ignored by
-  Claude Code when it creates it — add it to `.gitignore` when created by hand.
+  Claude Code when it creates it; add it to `.gitignore` when created by hand.
 - **Skills** (`/docs/en/skills`): frontmatter `name`, `description`, `disable-model-invocation`,
   `allowed-tools`, `context: fork`, `paths`, `arguments`; dynamic context via `` !`cmd` ``;
   `/skill-doctor` for token cost and hit rate; the `skill-creator` plugin runs evals in
@@ -108,13 +108,13 @@ disappear; anything not on the allowlist still asks.
 
 ### 4.2 Community (fetched 2026-09-05)
 
-- `hesreallyhim/awesome-claude-code` — 53.5k stars, pushed 2026-09-05: the index of hooks,
+- `hesreallyhim/awesome-claude-code`: 53.5k stars, pushed 2026-09-05, the index of hooks,
   skills, statuslines and CLAUDE.md examples; used as a directory, no single claim taken from it.
 - `MuhammadUsmanGM/claude-code-best-practices` (wiki, "Last updated May 12, 2026 v1.6"):
   format-on-write and test-on-stop hooks, pre-commit secret blocking, a `PreToolUse` hook that
   validates edits to CLAUDE.md itself, worktrees for parallel tasks, cost budgeting per task type.
   Its model advice ("Claude 3.5 Sonnet") is stale and ignored.
-- Several 2026 blog guides (DEV, SmartScope, mcp.directory — search results, not fetched) converge
+- Several 2026 blog guides (DEV, SmartScope, mcp.directory; search results, not fetched) converge
   on the same list: lean CLAUDE.md, plan mode, subagents for noisy research, worktrees, hooks as
   guardrails, verification loop. Nothing beyond the official docs was adopted from them.
 
@@ -122,7 +122,7 @@ disappear; anything not on the allowlist still asks.
 
 `CLAUDE.md` = `@AGENTS.md` + two lines; `.claude/settings.json` = attribution + `superpowers`
 plugin; `.claude/skills/mip`, `mip-tasks` (no `disable-model-invocation`); `.githooks/pre-commit`
-(sbt compile of staged Scala — a git hook, not a Claude hook, keep it); `.ai-jail`; `just
+(sbt compile of staged Scala, a git hook, not a Claude hook, keep it); `.ai-jail`; `just
 jail-claude|jcf|jcs`; `scripts/uprd.sh`, `stack.sh`, `cost-split.py`; auto-memory notes about `gh`
 and Docker in sessions. No `.claude/hooks/`, `.claude/rules/`, `.claude/agents/`, `.mcp.json`,
 `CLAUDE.local.md`, statusline.
@@ -132,46 +132,46 @@ and Docker in sessions. No `.claude/hooks/`, `.claude/rules/`, `.claude/agents/`
 Each bullet is one task/PR (`mip-tasks` order), all under `.claude/` or the root, each with a
 self-test the `quality` recipe runs (`scripts/hooks/*.sh --self-test`, like the Python scripts).
 
-1. **`.claude/settings.json` — permissions.** `allow`: `Bash(just build*)`, `Bash(just test*)`,
+1. **`.claude/settings.json`, permissions.** `allow`: `Bash(just build*)`, `Bash(just test*)`,
    `Bash(just quality*)`, `Bash(just fmt*)`, `Bash(sbt *)`, `Bash(git status*)`, `Bash(git
    diff*)`, `Bash(git log*)`, `Bash(scripts/stack.sh status*)`, `Read`, `Grep`, `Glob`; `deny`:
    `Bash(azd up*)`, `Bash(azd provision*)`, `Bash(az deployment *)`, `Bash(az group create*)`,
    `Read(.env)`, `Read(**/*.pem)`, `Read(**/*.key)`. Derive the allow list from real transcripts
    with the `fewer-permission-prompts` skill first; personal extras go to `settings.local.json`
    (add it to `.gitignore`).
-2. **Hooks — cost gate.** `PreToolUse` on `Bash` → `.claude/hooks/guard-azure.sh`: exit 2 with
+2. **Hooks, cost gate.** `PreToolUse` on `Bash` → `.claude/hooks/guard-azure.sh`: exit 2 with
    the `AGENTS.md` sentence when the command matches `azd (up|provision|deploy)` or `az deployment`
    and `MAROLA_ALLOW_AZURE_DEPLOY` is unset. This is the rule that must be a hook, not prose
    (`AI-500-MAPPING.md` §4 human-confirmation gate). ai-jail stays as the second layer.
-3. **Hooks — format on write.** `PostToolUse` on `Edit|Write` matching `*.scala` → `scalafmt` on
+3. **Hooks, format on write.** `PostToolUse` on `Edit|Write` matching `*.scala` → `scalafmt` on
    that file via the native binary (`coursier launch scalafmt` cached in the flake; **whether the
-   flake already provides a native `scalafmt` was not checked** — §11). `*.py` → `ruff format`
+   flake already provides a native `scalafmt` was not checked**, §11). `*.py` → `ruff format`
    when present. A slow hook is worse than none: 30 s timeout, single file only.
-4. **Hooks — test on stop, once.** `Stop` → `.claude/hooks/stop-gate.sh`: if `git diff --name-only
+4. **Hooks, test on stop, once.** `Stop` → `.claude/hooks/stop-gate.sh`: if `git diff --name-only
    HEAD` has `.scala` files and no marker from a `just test` run exists for this session, block
    once with "run `just test` or say why", write the marker, allow the next stop. Never loop (the
    harness stops blocking after 8; this stops after 1).
-5. **Hooks — session start.** `SessionStart` prints branch, `gh auth status` in one line,
+5. **Hooks, session start.** `SessionStart` prints branch, `gh auth status` in one line,
    uncommitted count, and the two jail caveats from `FABLE_REVIEW.md` §3. Replaces two auto-memory
    notes with a fact the harness states.
 6. **`.claude/rules/`.** Move the path-specific halves of `AGENTS.md` into `rules/scala.md`
-   (`paths: ["**/*.scala", "build.sbt"]` — Kyo boundary, strictEquality, enum-over-exceptions,
+   (`paths: ["**/*.scala", "build.sbt"]`: Kyo boundary, strictEquality, enum-over-exceptions,
    verify-against-the-jar), `rules/azure.md` (`paths: ["azure/**", "infra/**", "**/*.bicep"]` —
-   the cost rule in full, managed identity), `rules/docs.md` (`paths: ["docs/**"]` — status
+   the cost rule in full, managed identity), `rules/docs.md` (`paths: ["docs/**"]`: status
    vocabulary, MIP template pointer). `AGENTS.md` keeps what every session needs (what the repo is,
    commands, phase discipline, attribution, cost) and links the rules; target ≤ 150 lines; run
    `/doctor` for the trim list. **Decision needed (§11):** `AGENTS.md` is read by non-Claude
-   agents too — rules are excerpts that link back, never the only copy.
+   agents too; rules are excerpts that link back, never the only copy.
 7. **Subagents.** `.claude/agents/mip-reviewer.md` (tools `Read, Grep, Glob, Bash`, `model:
    fable`, `memory: project`): reviews a task branch against its `MIP-NNNN.tasks.md` row, reports
-   gaps that affect correctness or the stated requirement only — `DEV-FLOW.md` §5's prompt, made a
+   gaps that affect correctness or the stated requirement only, `DEV-FLOW.md` §5's prompt, made a
    file. `.claude/agents/jar-verifier.md` (tools `Bash`, `model: sonnet`): `javap` a pinned Kyo
-   class and report the real signature — `AGENTS.md`'s rule as a cheap delegate.
+   class and report the real signature; `AGENTS.md`'s rule as a cheap delegate.
 8. **Skills.** `disable-model-invocation: true` on `mip-tasks`; the four candidates from
    `AGENT-SKILLS.md` §3 (`fixture-refresh`, `benchmark-compare`, `corpus-doc`, `water-provider`),
    one PR each, each with `evals/evals.json` and a `skill-creator` run before merge.
 9. **`.mcp.json`.** `marola` → `just mcp-server` (stdio) so a session working on marola can call
-   `find_nearby_beaches` / `get_swim_recommendation` — dogfooding `ARCHITECTURE.md` §5c.
+   `find_nearby_beaches` / `get_swim_recommendation`, dogfooding `ARCHITECTURE.md` §5c.
 10. **`CLAUDE.md` additions** under the import: plan mode for `azure/**`; `/clear` per feature and
     `/rename` to the branch (already in `DEV-FLOW.md`, restated once); compaction instruction
     "preserve the list of modified files, the test commands run, and the Cost figure"; a
@@ -182,9 +182,9 @@ self-test the `quality` recipe runs (`scripts/hooks/*.sh --self-test`, like the 
     sleeping, to run a `MIP-NNNN.tasks.md` row-by-row unattended, stopping at a stated condition
     rather than running indefinitely. Same guard rails as a daytime session, not fewer: the
     branch/PR boundaries tasks 1-2 already set, and the `gh pr merge` deny rule from the earlier
-    GitHub-hygiene work — an overnight run still never merges itself.
+    GitHub-hygiene work; an overnight run still never merges itself.
 
-Not adopted: `claude -p` in CI (a paid run per PR with no reviewer — revisit with MIP-0010's
+Not adopted: `claude -p` in CI (a paid run per PR with no reviewer, revisit with MIP-0010's
 ledger measuring it); `/batch` fan-out (nothing here is a 2 000-file migration); agent teams
 (experimental).
 
@@ -203,69 +203,69 @@ None. No product code changes.
   `AGENTS.md` sentence; `/skill-doctor` before/after the skills PR.
 - Measure: permission prompts per session (count from the transcript, before vs after task 1);
   `AGENTS.md` line count (196 → ≤ 150); Cost trailers on the next three task PRs vs the previous
-  three (the hooks should not raise them — a Stop hook that loops would).
+  three (the hooks should not raise them; a Stop hook that loops would).
 - **Done:** all eleven tasks merged (PRs #102, #108-110, #115-122), `FABLE_REVIEW.md` §3's jail
   caveats are printed by the `SessionStart` hook; `gh-not-logged-in-in-sessions.md` (the one
-  matching auto-memory note that actually existed — task 5's PR found only one of the "two" this
+  matching auto-memory note that actually existed (task 5's PR found only one of the "two" this
   row originally expected) is deleted.
 - **Ultrareview, 2026-09-06:** `/code-review ultra` run against the full stack diff
   (`mip-0011/11-overnight-run-guardrail` → `main`, 22 files, +1118/-134) after all eleven tasks
-  merged, at the user's request. A free-tier request this session (`Free ultrareview 1 of 3`) — $0
+  merged, at the user's request. A free-tier request this session (`Free ultrareview 1 of 3`): $0
   to the user; log the real price here the first time a paid one is spent, so this line doesn't
   silently imply every future review is free. Findings tracked separately, not folded into this
-  MIP's own scope (a design doc doesn't get rewritten post-hoc for review findings — those become
+  MIP's own scope (a design doc doesn't get rewritten post-hoc for review findings; those become
   new fix commits/PRs against `main`, referencing this MIP for context).
 - **How to refresh the Cost so far figure above**, since all eleven PRs are already merged (the
   normal `just uprds MIP-0011` flow only updates *open* PR bodies, not this row):
-  1. `git log --oneline main | grep 'mip-0011 task'` — the eleven merged commit SHAs.
-  2. `for c in <shas>; do git show -s --format=%B "$c" | grep '^Cost:'; done` — pull each
+  1. `git log --oneline main | grep 'mip-0011 task'`: the eleven merged commit SHAs.
+  2. `for c in <shas>; do git show -s --format=%B "$c" | grep '^Cost:'; done`: pull each
      commit's own `Cost:` trailer (already measured via `scripts/cost-split.py` at PR time,
      except task 6, still the one diff-size `est.`) and sum the dollar figures by hand; there is
      no single command that re-sums an already-merged, cross-session stack's trailers today
      (`just cost-split MIP-0011` is for an *open*, unmerged stack in one session's own log).
-  3. Edit this row and the matching one in `docs/mips/README.md` together — they must always
+  3. Edit this row and the matching one in `docs/mips/README.md` together; they must always
      agree; `docs/DEV-FLOW.md` has no automation for that agreement, so it's a manual pair-edit.
   4. If task 6's `est.` figure is ever superseded by a real measured one (e.g. a later session
-     finds the original log), update this row's total — the merged commit's own `Cost:` trailer
-     stays as originally written (commit messages are historical, not corrected in place) — and
+     finds the original log), update this row's total (the merged commit's own `Cost:` trailer
+     stays as originally written, commit messages are historical, not corrected in place), and
      note in the doc edit that the figure changed from estimate to measured, so a reader doesn't
      assume it was always precise.
 
 ## 8. Risks, limitations, and honest caveats
 
 - Hooks run shell on every matching event inside the jail: a slow formatter or an sbt-backed hook
-  would tax every edit — native binaries only, per-file, timeouts set.
+  would tax every edit; native binaries only, per-file, timeouts set.
 - A `Stop` hook that blocks repeatedly burns tokens and trust; the once-per-session design and the
   self-test exist for that.
 - `permissions.deny` matches command text; `bash -c "azd up"` or a script can evade it. It is a
-  guard rail, not a boundary — ai-jail and the human go-ahead remain the boundary.
+  guard rail, not a boundary; ai-jail and the human go-ahead remain the boundary.
 - Auto mode's classifier and the deny list can disagree; deny wins for what it matches, and the
   rest stays the classifier's call.
 - Splitting `AGENTS.md` risks two copies of one rule drifting; rules link back and CI can grep
   for the sentinel sentences.
 - Docs quoted here are a moving target (the hooks page lists events that did not exist months
   ago); each task re-fetches the page it relies on and notes the date in its PR.
-- **Auto-continue is reactive, not a throttle.** It waits out a hit limit and resumes — nothing
+- **Auto-continue is reactive, not a throttle.** It waits out a hit limit and resumes; nothing
   in the docs describes pacing usage to avoid hitting the wall mid-task. A long unattended run
   can still burn the 5-hour window in one uncontrolled burst. (The community `heavy-usage`
-  plugin claims to "stop safely before the wall" — **not verified against its source**, treat as
+  plugin claims to "stop safely before the wall", **not verified against its source**, treat as
   an unconfirmed community claim, not confirmed Claude Code behavior, until checked.)
-- **It needs a session that stays alive.** The doc says it "waits in the *open* session" — a
+- **It needs a session that stays alive.** The doc says it "waits in the *open* session"; a
   closed terminal or a sleeping laptop breaks this, the same gap the OS-level community
   schedulers exist to work around. A [routine](https://code.claude.com/docs/en/routines) doesn't
   depend on the local machine staying awake and is the safer default for a genuine walk-away
-  run — check its own cost model first (§11).
-- **A 7-day reset is not an overnight wait.** Same mechanism, different practical meaning — a
+  run; check its own cost model first (§11).
+- **A 7-day reset is not an overnight wait.** Same mechanism, different practical meaning: a
   task that exhausts the weekly window stops for up to a week. Check which window
   (`rate_limits.five_hour` vs. `.seven_day`, per the statusline schema) is actually at risk
   before planning an overnight run around it.
 
 ## 9. Alternatives considered
 
-- **Do nothing** — the prose works most of the time; "most" is the problem for the cost rule.
-- **Managed settings** (`managed-settings.json`) — organisation-level; this is a personal repo.
-- **ai-jail alone** — filesystem/process containment, no notion of a paid API call or a test gate.
-- **One giant `settings.json` PR** — harder to attribute a regression (a hook slowing sessions) to
+- **Do nothing**: the prose works most of the time; "most" is the problem for the cost rule.
+- **Managed settings** (`managed-settings.json`): organisation-level; this is a personal repo.
+- **ai-jail alone**: filesystem/process containment, no notion of a paid API call or a test gate.
+- **One giant `settings.json` PR**: harder to attribute a regression (a hook slowing sessions) to
   a change; ten small PRs match `DEV-FLOW.md`.
 
 ## 10. Exam-coverage mapping
@@ -285,33 +285,33 @@ Otherwise none: this is how the repo is built, not what it does.
 4. Which allowlist entries, from real transcripts (`fewer-permission-prompts`) rather than from
    the list above.
 5. Statusline: worth committing a project default, or personal only?
-6. Should `.mcp.json` also register a local MLflow (MIP-0010) or Overpass helper — or nothing
+6. Should `.mcp.json` also register a local MLflow (MIP-0010) or Overpass helper, or nothing
    beyond marola's own server?
 7. **Resolved by task 11's spike, see `docs/DEV-FLOW.md` §7.** Routines vs. local `/goal`+`/loop`
-   for overnight MIP runs — local `/goal`+`/loop` (via `CronCreate`) was run for real this session
+   for overnight MIP runs: local `/goal`+`/loop` (via `CronCreate`) was run for real this session
    to work through this very MIP's own task stack (real pushed branches, real `GH_POST_MORTEM.md`
    entries), and is the chosen default: no extra environment setup, demonstrated working. A cloud
    routine survives the laptop closing but needs Claude Code on the web/a cloud environment, not
-   confirmed available in every setup — adopt it once that's confirmed, not assumed as a
+   confirmed available in every setup; adopt it once that's confirmed, not assumed as a
    prerequisite.
 8. **Resolved by task 11's spike, see `docs/DEV-FLOW.md` §7.** `heavy-usage`'s "stop before the
    wall" claim, checked against its actual source (`~/.claude/plugins/cache/heavy-usage`): real,
-   but soft — a `UserPromptSubmit` prompt injection at a linear-projection threshold (90%
+   but soft: a `UserPromptSubmit` prompt injection at a linear-projection threshold (90%
    five-hour / 95% weekly), not a `PreToolUse` block, so compliance is advisory; its data source
    (`usage-live.json`) is populated only while the interactive statusLine renders and can go
    stale in a genuinely headless run (the plugin's own comment: "never suppress a wind-down" even
    on stale data). Treat it as `mip-solve-perpetual`'s own backup usage-guard layer, never the
-   sole or primary stop condition — consistent with how the skill already used it before this
+   sole or primary stop condition, consistent with how the skill already used it before this
    check.
 
 ## Appendix
 
-- `https://code.claude.com/docs/en/best-practices` (2026-09-05) — the redirect target of
+- `https://code.claude.com/docs/en/best-practices` (2026-09-05), the redirect target of
   `https://www.anthropic.com/engineering/claude-code-best-practices` (HTTP 308).
 - `https://code.claude.com/docs/en/hooks`, `/memory`, `/settings`, `/skills`, `/sub-agents`
   (2026-09-05).
-- `https://github.com/hesreallyhim/awesome-claude-code` — 53 559 stars, pushed 2026-09-05T18:10Z
+- `https://github.com/hesreallyhim/awesome-claude-code`: 53 559 stars, pushed 2026-09-05T18:10Z
   (GitHub API).
-- `https://github.com/MuhammadUsmanGM/claude-code-best-practices` — v1.6, 2026-05-12.
+- `https://github.com/MuhammadUsmanGM/claude-code-best-practices`: v1.6, 2026-05-12.
 - Repo state read on 2026-09-05: `AGENTS.md` 196 lines; `.claude/settings.json` keys
   `attribution`, `enabledPlugins`; skills `mip`, `mip-tasks`.

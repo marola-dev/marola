@@ -19,10 +19,10 @@
 
 A service worker (`site/static/sw.js`) caches the app shell (`index.html`, `app.js`, `style.css`,
 `vendor/leaflet.*`) and the last successfully fetched board JSON, so a visitor who loses signal
-mid-session — a real scenario at a beach — keeps a working, if stale, map instead of a blank
+mid-session (a real scenario at a beach) keeps a working, if stale, map instead of a blank
 error. A `manifest.json` makes the site installable (add-to-home-screen) on Android/desktop; iOS
 Safari gets the same caching benefit without a real install prompt (§8). No build step, no new
-dependency — the same "plain files" constraint MIP-0005 §9 already commits to.
+dependency: the same "plain files" constraint MIP-0005 §9 already commits to.
 
 ## 2. Motivation
 
@@ -36,10 +36,10 @@ direct fix for the one failure mode most likely for this product's actual use ca
 ## 3. User-visible change
 
 - First visit online: nothing changes, except a browser install prompt may appear (Android Chrome/
-  desktop; not iOS Safari — §8) and the app registers a service worker silently in the background.
+  desktop; not iOS Safari, §8) and the app registers a service worker silently in the background.
 - A later visit with no signal: the map loads from cache instead of a blank error page, with a new
-  banner in the existing `#footer`/`#status` line: `"offline — showing the last board from <time>"`
-  — reusing the footer's existing `status()`/`el.status` plumbing, not a new UI element.
+  banner in the existing `#footer`/`#status` line: `"offline — showing the last board from <time>"`,
+  reusing the footer's existing `status()`/`el.status` plumbing, not a new UI element.
 - A later visit *with* signal after being offline: the fetch succeeds normally, the banner clears,
   no special-casing needed beyond the existing `fail()`/`status()` calls already in `app.js`.
 
@@ -48,18 +48,18 @@ direct fix for the one failure mode most likely for this product's actual use ca
 ### 4.1 GitHub Pages serves over HTTPS — required for a service worker
 
 Service workers only register on a secure origin (`https:` or `localhost`) per the Service Worker
-spec (well-established web-platform constraint, not independently re-fetched this session — the
+spec (well-established web-platform constraint, not independently re-fetched this session, the
 same "check before trusting" rule flags this as **not checked live**, §11). `marola.dev` is
 already HTTPS via GitHub Pages (`.github/workflows/site.yml`'s own comments: custom domain,
-"Enforce HTTPS" ticked in Settings → Pages, MIP-0005) — the precondition already holds.
+"Enforce HTTPS" ticked in Settings → Pages, MIP-0005). The precondition already holds.
 
 ### 4.2 Cache-busting against Pages' CDN — verified against this repo's own file
 
 **Read directly, 2026-09-07:** `.github/workflows/site.yml` line ~101 already documents Pages' CDN
-caching each file independently at `cache-control: max-age=600` — a fact this repo already knows
+caching each file independently at `cache-control: max-age=600`, a fact this repo already knows
 and has hit before (the file's own comment cites `fix/site-smoke-panel-null` as a real incident
 from this exact caching behavior). A service worker cache is a *second*, longer-lived cache layer
-on top of that 600s CDN cache — the service worker's own cache must be explicitly versioned and
+on top of that 600s CDN cache. The service worker's own cache must be explicitly versioned and
 invalidated by `site.yml`'s deploy step (§5), or a stale service-worker cache could outlive even a
 real site update, worse than the 600s CDN case this repo has already been burned by once.
 
@@ -67,9 +67,9 @@ real site update, worse than the 600s CDN case this repo has already been burned
 
 ROADMAP.md §7's own checklist already named this as unverified ("iOS Safari install-prompt
 behaviour"). Widely known, not re-fetched here: iOS Safari supports the offline cache (service
-workers work) but not the `beforeinstallprompt` install-banner Android/Chrome uses — an iOS user
+workers work) but not the `beforeinstallprompt` install-banner Android/Chrome uses. An iOS user
 adds to home screen manually via the Share sheet, same as any web page. **Flagged as not checked
-live** — §11.
+live**, §11.
 
 ## 5. Design
 
@@ -122,7 +122,7 @@ self.addEventListener('fetch', (e) => {
 }
 ```
 
-(An `icon-192.png` needs to exist — reuse the existing wave-and-swell `<svg>` already inline in
+(An `icon-192.png` needs to exist: reuse the existing wave-and-swell `<svg>` already inline in
 `index.html`'s `<h1>`, rendered to a PNG once, checked in; not designed further here.)
 
 **`site/static/index.html`**: `<link rel="manifest" href="manifest.json">`, plus a small
@@ -136,19 +136,19 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 **Offline banner**: `app.js`'s existing `fail(err)` function already sets `status(...)` on a fetch
 failure; extend it to check `!navigator.onLine` (or that the failed fetch resolved from the service
 worker's cache fallback) and print the "offline — showing the last board from `<time>`" text
-instead of the current raw error message — reusing the existing `#status` element, not a new one.
+instead of the current raw error message, reusing the existing `#status` element, not a new one.
 
 **`.github/workflows/site.yml`**: the deploy step stamps `sw.js`'s `{{VERSION}}` placeholder with
 the deploy's commit SHA (`sed`, the exact pattern this file already uses for the `?v=<sha>` cache
 buster on `app.js`/`style.css` tags per `docs/RUN-LOCALLY.md`'s own description of that existing
-mechanism) — so every real deploy forces the `activate` handler to drop the previous cache,
+mechanism), so every real deploy forces the `activate` handler to drop the previous cache,
 directly closing the §4.2 risk.
 
 ## 6. Scoring / safety impact
 
 None. A cached board is, by construction, the same board `Swimability`/`Recommender` already
-computed and served — nothing about scoring changes. The one safety-adjacent property is
-**staleness must be visible, not silent** (§3's banner) — an offline visitor seeing yesterday's
+computed and served. Nothing about scoring changes. The one safety-adjacent property is
+**staleness must be visible, not silent** (§3's banner). An offline visitor seeing yesterday's
 water-quality verdict without knowing it's yesterday's would be a real regression from today's
 honest "computed once" framing.
 
@@ -159,8 +159,8 @@ honest "computed once" framing.
   harness's stub DOM — no `ServiceWorkerRegistration` stub exists there, and adding one is out of
   scope for a first PR) and that `index.html` links the manifest.
 - A live check before merge: `just site-build`, serve `site/dist/` locally over HTTPS (or
-  `localhost`, which the Service Worker spec exempts from the HTTPS requirement — usable for local
-  testing without a cert), load once online, go offline (devtools "Offline" throttle), reload —
+  `localhost`, which the Service Worker spec exempts from the HTTPS requirement, usable for local
+  testing without a cert), load once online, go offline (devtools "Offline" throttle), reload:
   confirm the map still renders with the offline banner, and that reload does *not* show the
   before-any-registration blank-error state MIP-0037 exists to fix.
 - "Done" = an installed/added-to-home-screen icon works (Android/desktop at minimum, per §4.3's
@@ -170,18 +170,18 @@ honest "computed once" framing.
 
 ## 8. Risks, limitations, and honest caveats
 
-- **iOS Safari has no install-prompt UI** (§4.3) — the offline-cache benefit still applies there,
+- **iOS Safari has no install-prompt UI** (§4.3). The offline-cache benefit still applies there,
   only the "installable" half of this MIP's title doesn't, on that one platform.
 - **A service worker is a second cache layer this repo has already been burned by the first layer
-  of** (§4.2's `fix/site-smoke-panel-null` precedent) — the version-stamped cache name plus
+  of** (§4.2's `fix/site-smoke-panel-null` precedent). The version-stamped cache name plus
   `activate`'s cache-eviction loop is the mitigation; skipping either would recreate that bug one
   layer deeper and harder to debug (a visitor's own browser cache, not just Pages' CDN).
-- **Board-JSON is network-first by design** (§5), not cache-first — an online visitor must always
+- **Board-JSON is network-first by design** (§5), not cache-first. An online visitor must always
   see marola's actual live computation, never a stale cache preferred over a fresh fetch; this is
   the one place "PWA" and "always show the freshest board" could conflict, and network-first
   resolves it in the direction MIP-0005's own honesty framing requires.
 - **Two other branches this same session also touch `app.js`/`index.html`** (MIP-0030's trail
-  layer, MIP-0033's chat widget, MIP-0035's plugin API) — exactly the "avoid two hands in one
+  layer, MIP-0033's chat widget, MIP-0035's plugin API), exactly the "avoid two hands in one
   file" collision K8's own ROADMAP entry warned about. This MIP should be sequenced *after* those
   land, not merged into the same busy window, to keep each diff reviewable on its own (§11).
 
@@ -190,7 +190,7 @@ honest "computed once" framing.
 - **Do nothing.** The site already works when online; a flaky-signal visitor is a real but not
   catastrophic gap. Rejected only because the fix is genuinely cheap (§Effort) and the exact
   failure mode (beach = bad signal) is this product's own primary use case, not a hypothetical.
-- **A full PWA framework (Workbox, etc.)** — pulls in a build step this repo's `site/static/`
+- **A full PWA framework (Workbox, etc.)** pulls in a build step this repo's `site/static/`
   explicitly avoids (MIP-0005 §9); a ~30-line hand-written service worker covers this MIP's actual
   scope (two file types, one JSON endpoint) without one.
 
@@ -202,28 +202,28 @@ AI-103/AI-500 domain row.)
 ## 11. Open questions
 
 - **Sequencing**: land after MIP-0030/MIP-0033/MIP-0035 merge, per §8's "two hands in one file"
-  caveat — not a technical blocker, a review-hygiene one.
-- iOS Safari's exact current PWA capability set (§4.3) — not independently verified live this
+  caveat, not a technical blocker, a review-hygiene one.
+- iOS Safari's exact current PWA capability set (§4.3): not independently verified live this
   session, carried over from `ROADMAP.md`'s own unchecked item; worth a direct fetch of Apple's
   current WebKit/Safari PWA docs before the implementing PR, not assumed stable since ROADMAP was
   written.
 - Whether the app-shell cache-first strategy needs a "new version available, reload?" prompt (the
-  classic PWA UX question) — not designed here; `activate`'s forced cache-drop on redeploy means a
+  classic PWA UX question): not designed here; `activate`'s forced cache-drop on redeploy means a
   visitor with the tab already open keeps the *old* shell until they navigate again, a smaller gap
   than not caching at all but worth a follow-up if it proves confusing in practice.
 
 ## Appendix
 
 ### Checked live
-- `.github/workflows/site.yml` — read directly, 2026-09-07: confirms Pages CDN's
+- `.github/workflows/site.yml`, read directly, 2026-09-07: confirms Pages CDN's
   `cache-control: max-age=600` per file (§4.2) and the existing `?v=<sha>` cache-buster mechanism
   this MIP's `sw.js` versioning reuses; confirms HTTPS via the custom-domain/Enforce-HTTPS setup
   (§4.1).
-- `docs/ROADMAP.md` §7 (K8's own row and the provider-query checklist's K8 line) — read directly,
+- `docs/ROADMAP.md` §7 (K8's own row and the provider-query checklist's K8 line), read directly,
   2026-09-07: the source of this MIP's scope and its own flagged-unverified items (§4.3, §11).
 
 ### Not checked
-- The Service Worker spec's HTTPS requirement (§4.1) — well-established web-platform behavior,
+- The Service Worker spec's HTTPS requirement (§4.1): well-established web-platform behavior,
   not independently re-fetched from a spec/MDN page this session.
-- iOS Safari's current PWA support matrix (§4.3, §11) — carried over from `ROADMAP.md`'s own
+- iOS Safari's current PWA support matrix (§4.3, §11): carried over from `ROADMAP.md`'s own
   unchecked item, not independently verified.

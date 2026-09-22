@@ -18,8 +18,8 @@
 
 A pretrained time-series transformer (Nixtla's TimeGPT, or the open-weight models Chronos,
 TimesFM, Moirai) forecasts a numeric series from its history alone, zero-shot. That is **not**
-useful for the sea forecast — Open-Meteo's physics models already beat any generic model on
-waves and wind — but it is useful for the series marola will *own* and nobody forecasts: bathing-
+useful for the sea forecast: Open-Meteo's physics models already beat any generic model on
+waves and wind, but it is useful for the series marola will *own* and nobody forecasts: bathing-
 water quality between the agency's weekly (off-season monthly) samples, jellyfish and man-o'-war
 strandings from sighting reports, sea-temperature anomalies at a beach, and the request/usage
 patterns MIP-0003 counts. This MIP scopes those uses, picks the open models that run locally,
@@ -32,7 +32,7 @@ catalogue, or Azure ML for the open ones) as the opt-in.
   (MIP-0001 §4.1). A user sees "PRÓPRIA, 25 Aug" on 5 Sep after a week of rain. Rainfall (which
   Open-Meteo gives hourly, past and future) is the known driver of contamination
   (`knowledge/bathing-water-quality.md`); a model over (rain, past results) per point would give a
-  daily *estimate* between samples — labelled as an estimate.
+  daily *estimate* between samples, labelled as an estimate.
 - **The heuristics have no ground truth.** `Swimability.jellyfishRisk` is four correlates and a
   count (`ARCHITECTURE.md` §8). Sightings (MIP-0001 `Pollution`, MIP-0006 looks) will accumulate a
   labelled series per beach; forecasting strandings from sea temp, wind direction and recent
@@ -73,7 +73,7 @@ documented as of 2026; **not run here**. Model quality on marola's series is unk
 
 | Series | Source | Exists? |
 |---|---|---|
-| Water-quality results per point, weekly/monthly | IMA feed (last 5 samples per point) | Yes, but only 5 points of history per point per fetch — needs **accumulation** (store every fetch) |
+| Water-quality results per point, weekly/monthly | IMA feed (last 5 samples per point) | Yes, but only 5 points of history per point per fetch; needs **accumulation** (store every fetch) |
 | Hourly rainfall, past and forecast, per beach | Open-Meteo (past_days + forecast) | Available, not fetched yet |
 | Sea temperature, wind, waves per beach hourly | Open-Meteo | Yes (forecast); past needs the archive/`past_days` |
 | Sightings (jellyfish, whale, pollution) | `SightingStore` | Store exists; series empty |
@@ -97,19 +97,19 @@ Foundry serverless API (TimeGEN-1), selected by env var, `AGENTS.md` cost rule a
 - `core/series/SeriesStore` (trait) — append-only per-series JSON lines: `water/<pointId>`,
   `rain/<beach>`, `sightings/<beach>/<kind>`; `LocalFileSeriesStore` default, Cosmos later.
   `Recommender` appends what it fetched (water results, rain) as a side effect of a normal run.
-- `forecast/estimate_water.py` — per point: features = last N results + rainfall sums (24/48/72 h);
+- `forecast/estimate_water.py`: per point, features = last N results + rainfall sums (24/48/72 h);
   model = Chronos-Bolt zero-shot as the baseline, **and** a plain logistic/GBM on the same features
   as the control (the honest comparison the DS team never showed). Output: P(unfit today) with a
   one-line rationale (rain mm).
-- `forecast/estimate_strandings.py` — per beach: sighting counts + sea temp + wind direction →
+- `forecast/estimate_strandings.py`: per beach, sighting counts + sea temp + wind direction →
   next-7-day expected reports; Moirai for the covariate version.
-- `core/estimates/Estimates.scala` — loads the artifacts, exposes `waterEstimate(pointId, today)`,
+- `core/estimates/Estimates.scala`: loads the artifacts, exposes `waterEstimate(pointId, today)`,
   `strandingTrend(beach)`; `Report`/board add the labelled notes. Stale artifact (> 24 h) → no note.
 
 ## 6. Scoring / safety impact
 
 **None in v1, by rule.** Estimates are notes. Promotion to a score input requires a measured
-precision/recall on held-out weeks (§7) and its own MIP — a wrong "likely fit" is a safety
+precision/recall on held-out weeks (§7) and its own MIP; a wrong "likely fit" is a safety
 failure, so the bar is the same as for the water veto.
 
 ## 7. Verification plan
@@ -124,7 +124,7 @@ failure, so the bar is the same as for the water veto.
 
 ## 8. Risks, limitations, and honest caveats
 
-- **Tiny, noisy series.** Weekly samples, 5 to 50 points per series — foundation models were
+- **Tiny, noisy series.** Weekly samples, 5 to 50 points per series: foundation models were
   pretrained on millions of series but zero-shot on 20 points is a coin toss; the control model may
   win. That is a fine outcome and gets recorded.
 - **It is not a sea forecast.** Never present an estimate as a wave/wind forecast; Open-Meteo is
@@ -154,8 +154,8 @@ evaluated properly.
 1. Verify TimeGEN-1's presence and pricing in the Azure AI Foundry catalogue before naming it as
    the opt-in.
 2. Start accumulating IMA + rain now (a 20-line change in `Recommender`) ahead of the rest?
-   (Proposal: yes — it is the only time-critical part.)
+   (Proposal: yes, it is the only time-critical part.)
 3. Which open model first: Chronos-Bolt (simplest) or Moirai (covariates)? (Proposal: both in the
    backtest; ship one.)
-4. Where do estimates appear first — CLI note, bot, or the MIP-0005 map? (Proposal: map + CLI, same
+4. Where do estimates appear first: CLI note, bot, or the MIP-0005 map? (Proposal: map + CLI, same
    artifact.)

@@ -2,10 +2,10 @@
 
 A one-pass review of the whole repo at the initial import (`45f5628`), done before the first push to
 GitHub. Every finding below was verified against the actual file, not inferred from a doc. Nothing
-here was fixed as part of the review — this is the to-do list, ordered by how much each item
+here was fixed as part of the review. This is the to-do list, ordered by how much each item
 matters. Update or delete rows as they're addressed, same rule as every other doc under `docs/`.
 
-**What was verified live:** `just build` and `just test` pass (12 unit tests, all green — see
+**What was verified live:** `just build` and `just test` pass (12 unit tests, all green; see
 D9 for why the docs say 16). The pre-commit hook's `sbt Test/compile` also passed on commit.
 
 ## 1. Code findings
@@ -30,7 +30,7 @@ non-secret settings only).
 string, and `Http.HttpError` (`core/src/main/scala/marola/http/Http.scala:24`) embeds the full URL in
 the exception message. `Recommender.refineDistances` swallows the failure today, but any future
 caller that logs it would log the key. Azure Maps accepts the key as a `subscription-key` request
-header instead — move it there.
+header instead. Move it there.
 
 ### C3. The DSPy compile step writes to a directory that no longer exists — **fixed**
 
@@ -47,20 +47,20 @@ That resolves to `<repo>/src/main/resources`, a leftover from before the module 
 
 ### C4. `.env.example` suggests a Foundry endpoint the client can't use
 
-`.env.example` (committed content — see §3 on why it reads empty in-sandbox):
+`.env.example` (committed content; see §3 on why it reads empty in-sandbox):
 
 ```
 FOUNDRY_PROJECT_ENDPOINT=https://<resource-name>.services.ai.azure.com/api/projects/<project-name>
 ```
 
 `AzureFoundryLlmClient` appends `/chat/completions?api-version=...` directly to that value and
-expects the `https://<resource>.openai.azure.com/openai/deployments/<deployment>` shape —
+expects the `https://<resource>.openai.azure.com/openai/deployments/<deployment>` shape,
 which is what `docs/TELEGRAM-SETUP.md` §3 correctly shows. Align `.env.example` with the client.
 
 ### C5. Dead config and a dead dependency — **fixed** (both removed)
 
 - `FOUNDRY_MODEL_DEPLOYMENT` is read into `AppConfig.foundryModelDeployment`
-  (`cli/src/main/scala/marola/AppConfig.scala:41,110`) and never used anywhere — the deployment name
+  (`cli/src/main/scala/marola/AppConfig.scala:41,110`) and never used anywhere. The deployment name
   is expected to be part of the endpoint URL instead. Either use it to build the URL or remove it
   from `AppConfig`, `.env.example`, and `TELEGRAM-SETUP.md`.
 - `com.azure:azure-ai-agents:2.2.0` is declared in `build.sbt` for the `azure` module, but no source
@@ -96,11 +96,11 @@ the two residual limitations (centroid distance, Overpass slowness).
 
 Four docs say every Azure client authenticates via `DefaultAzureCredential`:
 
-- `AGENTS.md:92-94` — "Every Azure client in this repo authenticates via `azure-identity`'s
+- `AGENTS.md:92-94`: "Every Azure client in this repo authenticates via `azure-identity`'s
   `DefaultAzureCredential`"
-- `docs/AI-103-MAPPING.md:22` — "Every Azure client in `azure/` authenticates via ... | Built"
-- `docs/AI-500-MAPPING.md:80` — "managed identity everywhere"
-- `docs/SKILLS.md:17` — tells the reader to trace how `DefaultAzureCredential` reaches
+- `docs/AI-103-MAPPING.md:22`: "Every Azure client in `azure/` authenticates via ... | Built"
+- `docs/AI-500-MAPPING.md:80`: "managed identity everywhere"
+- `docs/SKILLS.md:17`: tells the reader to trace how `DefaultAzureCredential` reaches
   `CosmosDbSightingStore` and `AzureVisionClient`
 
 Only `AzureFoundryLlmClient` does. `CosmosDbSightingStore` uses `.key(key)`, `AzureVisionClient`
@@ -136,9 +136,9 @@ that swallows the "Cross-cutting: rate limiting..." paragraph and §5's table on
 
 ### D5. References to files that don't exist — **fixed**
 
-- `docs/ARCHITECTURE.md:370` — "Same email-alert pattern as `infra/main.bicep` ... (see that file's
+- `docs/ARCHITECTURE.md:370`: "Same email-alert pattern as `infra/main.bicep` ... (see that file's
   own caveat)". There is no `infra/` directory; it stayed behind with nf-organizer.
-- `build.sbt:14` — "See flake.nix and Dockerfile — both pin 25." There is no Dockerfile.
+- `build.sbt:14`: "See flake.nix and Dockerfile — both pin 25." There is no Dockerfile.
 
 ### D6. A method that doesn't exist is cited as the structured-output mechanism — **fixed**
 
@@ -163,14 +163,14 @@ The docstring is stale.
 
 ### D9. Numbers and ordering — **fixed**
 
-- `docs/FUTURE-WORK.md:363` — "all 16 tests pass". There are 12 unit tests (`SwimabilitySpec`) plus
+- `docs/FUTURE-WORK.md:363`: "all 16 tests pass". There are 12 unit tests (`SwimabilitySpec`) plus
   2 E2E tests; `just test` reports 12.
 - `docs/FUTURE-WORK.md` §7 runs 7.1 → 7.3 → 7.2.
 - `docs/SKILLS.md:37` points at "`ARCHITECTURE.md` §5b's Status note" for the MCP JSON-RPC
   verification; that note is in §5c.
 - `docs/AI-500-MAPPING.md:14-17` says the summarizer/reviewer pair is "hardcoded as two sequential
   calls in `Recommender`"; the two LLM calls live in `Main.summarizeTop`/`reviewAndPrint`, not in
-  `Recommender`, which has no LLM call at all (by design — `Recommender.scala:16-18`).
+  `Recommender`, which has no LLM call at all (by design; `Recommender.scala:16-18`).
 
 ### D10. Things the docs get right that are worth keeping
 
@@ -186,14 +186,14 @@ into the initial commit.
 Found from a real run after merge: every beach's best hour printed as `00:00` and the LLM
 rightly called it "not a good night for swimming". `Swimability.score` ignored `isDaylight`, so on
 a flat day all 24 hours tied and the first one won. Fixed: a −60 "dark" deduction, and equal
-scores now break ties toward 10:00 (`Swimability.hourPreference`) — staffed lifeguard posts, best
+scores now break ties toward 10:00 (`Swimability.hourPreference`): staffed lifeguard posts, best
 light, calmest sea. Same run showed `Tides.extrema` reporting a 2cm wobble as a high/low pair;
 turns now need ≥ 0.1m of range. Golden test asserts every recommended hour is daylight.
 
 ### Regression mechanism added after the review
 
 `cli/src/test/scala/marola/PipelineGoldenSpec.scala` replays recorded real responses (Overpass,
-Open-Meteo, IMA — `cli/src/test/resources/fixtures/`) through the unchanged production code via
+Open-Meteo, IMA: `cli/src/test/resources/fixtures/`) through the unchanged production code via
 `Http.withTransport`, and `core/.../llm/SummarizeFlowSpec.scala` / `knowledge/RagOfflineSpec.scala`
 script the LLM/embedder. That is the every-push regression check in `ci.yml`; the live E2E workflow
 is manual, two-job, model-cached, and skips Ollama unless asked (`marola-e2e.yml`).

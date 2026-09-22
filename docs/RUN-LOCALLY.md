@@ -1,17 +1,17 @@
 # marola — run it locally, no Telegram, no Azure
 
-A step-by-step guide to running marola's real pipeline end to end on your own machine — nearby
-beach discovery, live sea conditions, and an LLM-generated summary reviewed by a second LLM pass —
+A step-by-step guide to running marola's real pipeline end to end on your own machine: nearby
+beach discovery, live sea conditions, and an LLM-generated summary reviewed by a second LLM pass,
 with a small, fast Ollama model, so you can confirm the whole thing actually works before touching
 Telegram or Azure at all. Every command below is real and was run against a live Ollama install
-while building this (see `ARCHITECTURE.md` §5's "Status" notes) — the specific model recommended
+while building this (see `ARCHITECTURE.md` §5's "Status" notes). The specific model recommended
 here is deliberately smaller/faster than the one used to build/verify the rest of this repo
 (`dolphin-mixtral:8x7b`, 26GB), chosen for this guide because it's cheap to download and quick to
 try, not because it was the model marola was verified against everywhere else.
 
 ## 1. Prerequisites
 
-- This repo cloned, with `nix develop` (or `direnv allow`) entered at least once — this puts JDK 25,
+- This repo cloned, with `nix develop` (or `direnv allow`) entered at least once. This puts JDK 25,
   sbt, `just`, and `ollama` itself on `PATH` (`flake.nix` was updated to include `pkgs.ollama` for
   exactly this guide).
 - ~2GB free disk for the model below.
@@ -31,7 +31,7 @@ ollama pull llama3.2:1b
 Why this model specifically: `llama3.2:1b` is small enough to download in a couple of minutes on a
 normal connection and fast enough on CPU alone to get a reply in seconds rather than the ~45
 seconds a full-size model can take (confirmed against `dolphin-mixtral:8x7b`, a 26GB model, while
-building this repo — see `ARCHITECTURE.md`). It's not the most capable model Ollama can run, but
+building this repo; see `ARCHITECTURE.md`). It's not the most capable model Ollama can run, but
 "is the whole pipeline wired correctly end to end" doesn't need a capable model, just a working
 one.
 
@@ -44,7 +44,7 @@ curl http://localhost:11434/api/tags
 
 ## 3. Point marola at it
 
-`llama3.2:1b`'s Ollama tag is the `:1b` variant — marola's own default
+`llama3.2:1b`'s Ollama tag is the `:1b` variant. marola's own default
 (`LocalLlmClient.DefaultModel`) is the plain `llama3.2` tag (Ollama's 3B-parameter default), so
 point at the small one explicitly for this guide:
 
@@ -66,7 +66,7 @@ just run
 just run -- --summarize
 ```
 
-Expected shape of the output — this is a real run from Campeche, Florianópolis, with
+Expected shape of the output: this is a real run from Campeche, Florianópolis, with
 `MAROLA_ORIGIN_LAT/LON` set in `.env` (see §4.1) and `llama3.2` as the model. Your beach names and
 numbers will differ: it's live data.
 
@@ -106,10 +106,10 @@ Reviewer (score 75/100, verdict: approve): Praia da Joaquina is a great spot for
 ```
 
 Things in that output worth knowing: Campeche, Armação and Gravatá lost 20 points because one or
-more of IMA's sampling points on them was IMPRÓPRIA on 25 Aug — the column names the points, the
-detail block (for the top pick) lists every point with its latest count — see `ARCHITECTURE.md`
+more of IMA's sampling points on them was IMPRÓPRIA on 25 Aug. The column names the points, the
+detail block (for the top pick) lists every point with its latest count; see `ARCHITECTURE.md`
 §5g; best hours are daylight hours, and on a flat day ties resolve toward 10:00 (staffed lifeguard
-posts, best light) — `Swimability.hourPreference`; "2.1km" for a beach 200m from the origin is the
+posts, best light), `Swimability.hourPreference`; "2.1km" for a beach 200m from the origin is the
 distance to the beach polygon's centroid, not its shoreline (§9); most of the 41s is Overpass's
 relation query, not the LLM; and the closing paragraph is one of the sourced entries in
 `core/src/main/resources/sea_lore.json`, rotated daily, never touched by the LLM. `--brief` gives
@@ -120,9 +120,9 @@ pipeline worked: beach discovery → conditions → scoring → summarization �
 local, zero Azure.
 
 Check the `origin ->` line too. With no `--lat/--lon` and no `MAROLA_ORIGIN_LAT/LON` set, marola
-geolocates your public IP (three providers, majority vote — see `ARCHITECTURE.md` §3.1) and says so,
+geolocates your public IP (three providers, majority vote; see `ARCHITECTURE.md` §3.1) and says so,
 including how many providers agreed and that the radius was widened to 20km. If the city it names is
-wrong (VPN, or an ISP whose block geolocates elsewhere — common in Brazil), pin it:
+wrong (VPN, or an ISP whose block geolocates elsewhere, common in Brazil), pin it:
 
 ```bash
 just run -- --lat -27.6733 --lon -48.4700 --summarize     # one-off
@@ -131,12 +131,12 @@ export MAROLA_ORIGIN_LAT=-27.6733 MAROLA_ORIGIN_LON=-48.4700   # once per shell
 ```
 
 `--location-url` reads the `@lat,lon`, `q=lat,lon` or `!3dlat!4dlon` part of a Google Maps URL
-(quote it — the URL has `!` and `&` in it). A `maps.app.goo.gl` short link needs expanding first:
+(quote it: the URL has `!` and `&` in it). A `maps.app.goo.gl` short link needs expanding first:
 `curl -sIL <short link> | grep -i '^location:' | tail -1`.
 
 ### 4.1 Pinning it permanently: `.env`
 
-Put the two lines in `.env` at the repo root (gitignored, never committed — `.env.example` lists
+Put the two lines in `.env` at the repo root (gitignored, never committed; `.env.example` lists
 every variable):
 
 ```
@@ -148,7 +148,7 @@ Both ways into the dev shell load it: `flake.nix`'s `shellHook` sources it on `n
 see `loaded .../.env`), and `.envrc`'s `dotenv_if_exists` does the same under direnv (run
 `direnv allow` once after any `.envrc` change). Re-enter the shell after editing `.env`; the
 `origin ->` line then reports `source: MAROLA_ORIGIN_LAT/MAROLA_ORIGIN_LON`. Lines must be plain
-`KEY=VALUE` shell syntax — no spaces around `=`.
+`KEY=VALUE` shell syntax, no spaces around `=`.
 
 ## 5. The other two CLI paths, same local setup
 
@@ -187,7 +187,7 @@ MAROLA_LOCAL_LLM_MODEL=marola-llama3.2 just run -- --summarize
 See `finetune/README.md` for the QLoRA (Tier 2) recipe, which is written but not run here.
 
 `--ask` answers from the corpus when a passage scores above `MAROLA_ASK_MIN_SCORE` (default 0.3)
-and otherwise, by default, from the model's general knowledge with a visible "(unsourced)" label —
+and otherwise, by default, from the model's general knowledge with a visible "(unsourced)" label;
 `MAROLA_ASK_FALLBACK=strict` makes it abstain instead. Which is better, and by how much, is what
 the benchmark measures:
 
@@ -196,12 +196,12 @@ just benchmark        # 22 ocean questions × {plain prompt, marola strict, maro
                       # → coverage / citations / abstentions / latency, verdict, data/benchmark-*.md
 ```
 
-Compare with `docs/benchmarks/2026-09-05.md` — the kept reference run and what it taught.
+Compare with `docs/benchmarks/2026-09-05.md`: the kept reference run and what it taught.
 
 ## 5.2 Plug your local model into the public site's chat widget (MIP-0033)
 
 `marola.dev` (or wherever `site/dist/` is served) ships a chat widget that stays hidden until it
-finds a working endpoint — no server dependency by default. To turn it on, run marola's own tiny
+finds a working endpoint, no server dependency by default. To turn it on, run marola's own tiny
 HTTP server and expose it through a **named** Cloudflare Tunnel (a quick/ephemeral tunnel's URL
 changes every restart, which would break the widget's saved config):
 
@@ -220,39 +220,39 @@ cloudflared tunnel route dns marola-chat chat.<your-domain>   # or use the trycl
 cloudflared tunnel run --url http://localhost:8787 marola-chat
 ```
 
-Then point the widget at that URL — edit `site/static/chatbot-config.js`:
+Then point the widget at that URL: edit `site/static/chatbot-config.js`:
 
 ```js
 window.MAROLA_CHAT_ENDPOINT = "https://chat.<your-domain>"; // or the trycloudflare.com URL
 ```
 
 `just site-build` copies `site/static/*` (including this file) into `site/dist/` as-is. Leave
-`MAROLA_CHAT_ENDPOINT` empty to keep the widget hidden — that's the default, committed state, so a
+`MAROLA_CHAT_ENDPOINT` empty to keep the widget hidden. That's the default, committed state, so a
 fresh clone's site never shows a chat button pointing nowhere. The widget calls `/health` on page
 load and only reveals its toggle button on a 200; a later failure while chatting shows an honest
 "chatbot offline" message rather than hanging. This narrowly overrides MIP-0005 §9's "no server"
-decision for the site — the maintainer's own machine becomes a real, if intermittent, origin;
+decision for the site: the maintainer's own machine becomes a real, if intermittent, origin;
 uptime is whatever the maintainer's machine and tunnel happen to be, by design (MIP-0033 §6).
 
 ## 6. Troubleshooting
 
-- **`HTTP 404 ... model 'X' not found`** — the model named in `MAROLA_LOCAL_LLM_MODEL` (or
+- **`HTTP 404 ... model 'X' not found`**: the model named in `MAROLA_LOCAL_LLM_MODEL` (or
   `MAROLA_LOCAL_VISION_MODEL`) isn't pulled. Run `ollama list` to see what you actually have, or
   `ollama pull <name>` to get it.
-- **Connection refused to `localhost:11434`** — `ollama serve` isn't running, or isn't running in
+- **Connection refused to `localhost:11434`**: `ollama serve` isn't running, or isn't running in
   this same environment (e.g. a container that can't reach the host's Ollama). `flake.nix`'s
   `shellHook` checks for this and prints a reminder every time you enter the dev shell.
-- **It's slow** — CPU-only inference is genuinely slow for bigger models; that's exactly why this
+- **It's slow**: CPU-only inference is genuinely slow for bigger models; that's exactly why this
   guide recommends `llama3.2:1b` instead of whatever larger model you might already have pulled for
   other purposes. If it's still too slow, an even smaller model exists (e.g. `qwen2.5:0.5b`), at
-  the cost of noticeably worse instruction-following — the reviewer pass in particular depends on
+  the cost of noticeably worse instruction-following. The reviewer pass in particular depends on
   the model reliably producing well-formed JSON (see `llm/Reviewer.scala`), which smaller models
   are more likely to get wrong.
-- **The reviewer's JSON parsing fails** (`MalformedReviewException` or similar in the output) — a
+- **The reviewer's JSON parsing fails** (`MalformedReviewException` or similar in the output): a
   known, if infrequent, failure mode with smaller/quantized models that ignore the "respond with
-  ONLY JSON" instruction (see `Reviewer.scala`'s `extractJsonObject` — it already recovers from a
+  ONLY JSON" instruction (see `Reviewer.scala`'s `extractJsonObject`; it already recovers from a
   JSON block wrapped in prose, but a model that doesn't produce JSON *at all* isn't recoverable).
-  Confirms `llama3.2:1b`'s instruction-following limits, not a marola bug — try a larger model if
+  Confirms `llama3.2:1b`'s instruction-following limits, not a marola bug. Try a larger model if
   this happens consistently.
 
 ## 7. Regression checks without the network (and how to re-record them)
@@ -264,7 +264,7 @@ points) through the unchanged production code, and asserts the ranking, the wate
 the tide turns and the exact number of HTTP calls. `SummarizeFlowSpec` and `RagOfflineSpec` do the
 same for the LLM and RAG plumbing with scripted models. This is what CI runs on every push.
 
-When an upstream format changes, re-record — the fixture diff is the change report:
+When an upstream format changes, re-record: the fixture diff is the change report:
 
 ```bash
 # Overpass (the exact query BeachFinder builds, 15km around Campeche)
@@ -281,7 +281,7 @@ workflow (its network job needs no Ollama; the LLM job is opt-in and caches the 
 ## 8. Writing MIPs from voice notes in a browser session
 
 `just context-mips` packs the documents a MIP author needs (README, AGENTS.md, ARCHITECTURE,
-FUTURE-WORK, the `mip` skill, every existing MIP — no code, ~35k tokens) with repomix into
+FUTURE-WORK, the `mip` skill, every existing MIP, no code, ~35k tokens) with repomix into
 `.tmp/marola-context-mips.md` and copies it to the clipboard. In a browser Claude chat: paste, attach
 the WhatsApp voice notes (`.ogg`) or chat text, and say "convert the audios into MIP proposals".
 The pack's own instruction section (`repomix-instruction.md`) fixes the template, numbering, the
@@ -300,18 +300,18 @@ just site-serve                # http://localhost:8000 — tap Praia do Campeche
 
 `site/dist/` (git-ignored) then holds `index.html` + `app.js` + vendored Leaflet from
 `site/static/`, and under `data/`: `areas.json`, and per area `<today>.json`, `<tomorrow>.json`
-(the board — `site/board.schema.json` is the contract, checked by `BoardSpec`) and `latest.json`
-pointing at both. The page shows every beach as a wave marker coloured by score — hover it (tap, on a phone: the same row opens first in the card) for the six aspects at that hour: wind band with its emoji and km/h, water temperature, waves, jellyfish, whales, water verdict (MIP-0009) — a card with the same
+(the board; `site/board.schema.json` is the contract, checked by `BoardSpec`) and `latest.json`
+pointing at both. The page shows every beach as a wave marker coloured by score: hover it (tap, on a phone: the same row opens first in the card) for the six aspects at that hour: wind band with its emoji and km/h, water temperature, waves, jellyfish, whales, water verdict (MIP-0009), a card with the same
 numbers the CLI prints, a day picker, an hour slider, the generated-at time and every source. No
 cookies, no analytics; "near me" is the browser's own geolocation, on request, never sent anywhere.
-If `site/dist/smoke/latest.json` exists (the docker smoke test's last run, §10 — `site.yml` copies
+If `site/dist/smoke/latest.json` exists (the docker smoke test's last run, §10; `site.yml` copies
 it from the `site-data` branch; locally `git archive origin/site-data smoke | tar -x -C site/dist`,
 or `python3 scripts/smoke_record.py record …` on any `--summarize` transcript) the footer adds a
-"Last live run" panel — model, image, top pick, the reviewed sentence labelled as model text with
-the reviewer's verdict (hidden on `reject`), the last ten runs — and a dashed marker at the run's
+"Last live run" panel: model, image, top pick, the reviewed sentence labelled as model text with
+the reviewer's verdict (hidden on `reject`), the last ten runs, and a dashed marker at the run's
 origin.
 
-Keep it fresh locally with a timer — a plain cron line (`crontab -e`):
+Keep it fresh locally with a timer, a plain cron line (`crontab -e`):
 
 ```
 15 */3 * * *  cd /path/to/marola && nix develop -c just site-build >> .tmp/site-build.log 2>&1
@@ -319,20 +319,20 @@ Keep it fresh locally with a timer — a plain cron line (`crontab -e`):
 
 or a `systemd --user` timer with the same command. Only `site/dist` is ever published, and
 `site.yml` fails if anything outside its allowlist (the page, `vendor/`, `data/`, `smoke/`) is
-in there — the repository is private, the map is public, and `docs/*.md` stay on GitHub rather
+in there. The repository is private, the map is public, and `docs/*.md` stay on GitHub rather
 than becoming pages (Pages source must be "GitHub Actions", never "Deploy from a branch", which
 would run Jekyll over the whole branch). Publishing: `just site-deploy` triggers
-`.github/workflows/site.yml` (build on the runner, deploy to GitHub Pages — the same workflow runs
+`.github/workflows/site.yml` (build on the runner, deploy to GitHub Pages; the same workflow runs
 every 3 h on its own and on every merge to `main` that touches `site/` or the pipeline; the result
-is https://marola.dev/, GitHub Pages' custom domain — see `.github/workflows/site.yml`'s header
+is https://marola.dev/, GitHub Pages' custom domain; see `.github/workflows/site.yml`'s header
 comment for the CNAME/DNS setup), `just site-deploy cloudflare` pushes a local `site/dist` with wrangler.
 Tiles come from OpenStreetMap's public servers, which is fine for a link shared among friends and
-not for a public launch — switch `tiles` in `site/areas.json` to a Protomaps/MapTiler source
+not for a public launch. Switch `tiles` in `site/areas.json` to a Protomaps/MapTiler source
 before that (MIP-0005 §8).
 
 ## 10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)
 
-**Published tags** (`ghcr.io/h0ffmann/marola:<tag>` — this repo is private, so pulling needs
+**Published tags** (`ghcr.io/h0ffmann/marola:<tag>`; this repo is private, so pulling needs
 `docker login ghcr.io` first: a GitHub PAT with `read:packages`, or `gh auth token | docker login
 ghcr.io -u <user> --password-stdin`):
 
@@ -347,7 +347,7 @@ ghcr.io -u <user> --password-stdin`):
 | `dev` / `dev-<sha>` | the literal `nix develop` shell in a container, for reading/hacking without installing Nix | `docker.yml`, `workflow_dispatch` only | amd64 |
 
 The `-<sha>` tags accumulate on every qualifying push (`local-<sha>` even for rejected candidates,
-which bundle the ~2 GB Ollama model) — `ghcr-retention.yml` prunes them weekly, keeping the last 10
+which bundle the ~2 GB Ollama model). `ghcr-retention.yml` prunes them weekly, keeping the last 10
 per target (5 for `local`) and never touching the moving tags above, which is what everything below
 and `docker-compose.yml`/`docker-smoke.yml` actually pull. `just gh-billing` shows current GHCR/Actions
 usage against the account's plan (this repo gets no public-repo free tier).
@@ -361,7 +361,7 @@ docker compose --profile ollama run --rm marola --summarize --lat -27.6733 --lon
 docker compose --profile local run --rm marola-local --summarize --lat -27.6733 --lon -48.47   # the marola-llama3.2 variant, built from finetune/Modelfile
 ```
 
-`.env` is read if present (origin, provider switches — `.env.example`) and never copied into
+`.env` is read if present (origin, provider switches; `.env.example`) and never copied into
 the image; `MAROLA_LOCAL_LLM_MODEL=llama3.2:1b` picks the small model from §2. Without compose,
 against an Ollama already running on the host:
 
@@ -372,11 +372,11 @@ docker run --rm --network host ghcr.io/h0ffmann/marola:jvm --summarize --lat -27
 `:local` is `finetune/README.md`'s "As an image". `just docker-build` builds any target here and
 `just docker-run -- …` runs it with `--network host`. The
 `Dockerfile` is one multi-stage file: `builder` (sbt, Temurin 25) → `jvm` (Temurin 25 JRE on
-Alpine, ~70 MB + the 55 MB jar), `native-build` → `native` (below), and `dev` — the literal
+Alpine, ~70 MB + the 55 MB jar), `native-build` → `native` (below), and `dev`: the literal
 `nix develop` in an image, for reading or hacking on the code without installing Nix
 (`docker run -it marola:dev bash`). Lint: `just quality` runs hadolint on it (from the lint lab).
 
-**Native binary (GraalVM).** The same CLI compiled ahead of time — one 69 MB executable, no JVM,
+**Native binary (GraalVM).** The same CLI compiled ahead of time: one 69 MB executable, no JVM,
 ~75 MB of RSS, on a distroless image (`ghcr.io/h0ffmann/marola:native`, amd64). Everything
 `just run` does works, `--summarize` and the reviewer included (verified live 2026-09-05 with
 `llama3.2:1b`); the MCP server stays on the JVM image. Locally:
@@ -389,7 +389,7 @@ just docker-build native                                     # the distroless im
 
 **The smoke test.** GitHub → Actions → "docker smoke test" → Run workflow (`lat`/`lon`, or a
 Google Maps pin in `maps_url`, `model`, `image`) runs `--summarize` in the published image on a
-runner with a cached `llama3.2:1b` — also every morning at 09:30 UTC. `scripts/smoke_record.py`
+runner with a cached `llama3.2:1b`, also every morning at 09:30 UTC. `scripts/smoke_record.py`
 turns the transcript into `smoke/latest.json` + `smoke/history.json` on the orphan `site-data`
 branch (never deployed by that workflow: `site.yml` copies it into the map, so two deploys never
 race), the map's footer shows it as "Last live run" and the job fails when the pipeline, the
@@ -405,8 +405,8 @@ the Dockerfile's `native-image -jar` build the same thing.
 
 Optional, developer-only, off unless you ask for it. `just benchmark` writes a Markdown report under
 `data/` and that stays the canonical result (`scripts/benchmark_gate.py` reads it); with a tracking
-URI set, the same run is *also* logged to a local MLflow server — params, per-arm metrics, the
-report as an artifact — so runs can be compared in a UI instead of by diffing tables. Needs Docker
+URI set, the same run is *also* logged to a local MLflow server (params, per-arm metrics, the
+report as an artifact) so runs can be compared in a UI instead of by diffing tables. Needs Docker
 (the server is a compose profile, never part of the Nix shell or the runtime image):
 
 ```bash
@@ -418,10 +418,10 @@ just mlflow-down                                 # stop it; .tmp/mlflow/ keeps t
 ```
 
 **Traces too.** The same server ingests OpenTelemetry traces: with `MAROLA_TRACES=mlflow` every
-recommendation is one trace — `marola.recommend` → `bestPerBeachTomorrow` + `llm.<model>` for the
+recommendation is one trace: `marola.recommend` → `bestPerBeachTomorrow` + `llm.<model>` for the
 draft and for the review, each LLM span with `gen_ai.request.model`, message count and prompt/
 completion sizes (latency is the span itself). Prompt and completion *text* are attached only if
-you also set `MAROLA_TRACE_CONTENT=1` — the prompt has your coordinates in it.
+you also set `MAROLA_TRACE_CONTENT=1`: the prompt has your coordinates in it.
 
 ```bash
 MAROLA_TRACES=mlflow MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000 just run -- --summarize
@@ -430,18 +430,18 @@ MAROLA_TRACES=mlflow MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000 just run -
 
 If the server is not up, marola prints `(traces disabled: …)` and carries on untraced.
 
-`MAROLA_MLFLOW_EXPERIMENT` (default `marola`) is the experiment *prefix* — runs land in
+`MAROLA_MLFLOW_EXPERIMENT` (default `marola`) is the experiment *prefix*: runs land in
 `marola/benchmark`, the DSPy compile step's in `marola/prompt-compile`, traces (§5f of
 `ARCHITECTURE.md`, `MAROLA_TRACES=mlflow`) in `marola/traces`. Unset `MAROLA_MLFLOW_TRACKING_URI`
 and nothing changes: no network call, `RunLedger.Noop`, the report is still written. The server is
-bound to `127.0.0.1` only and has no authentication — do not expose the port. `docker compose run`
+bound to `127.0.0.1` only and has no authentication. Do not expose the port. `docker compose run`
 of the `marola` services passes the two variables through from your shell/`.env` when they are set
 and omits them otherwise (the `mlflow` profile is independent: `--profile mlflow --profile ollama`
 starts both, neither depends on the other).
 
 ## 12. What this guide deliberately doesn't cover
 
-Telegram bot setup (there is no bot loop yet — see `TELEGRAM-SETUP.md` for credential setup ahead
+Telegram bot setup (there is no bot loop yet; see `TELEGRAM-SETUP.md` for credential setup ahead
 of that Phase 1 work) and any Azure integration (`ARCHITECTURE.md` §5/§6, all optional, none needed
 for anything above). This guide is specifically the "prove it works, cheaply, before touching
 anything else" path.

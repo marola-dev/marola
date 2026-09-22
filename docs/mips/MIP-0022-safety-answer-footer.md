@@ -17,8 +17,8 @@
 ## 1. Summary
 
 When an `--ask` / `ask_ocean_question` / `/perguntar` answer was grounded in a document under
-`knowledge/safety/`, the rendered reply ends with a fixed two-line footer — who to call (guarda-
-vidas / Bombeiros 193, SAMU 192) and "this does not replace professional help" — appended by the
+`knowledge/safety/`, the rendered reply ends with a fixed two-line footer, who to call (guarda-
+vidas / Bombeiros 193, SAMU 192) and "this does not replace professional help", appended by the
 rendering code **after** the model's text. The model never sees the footer, cannot rephrase it,
 and cannot drop it: a test proves it is present even when the model's output already contains a
 look-alike, and even when the model returned the no-answer sentinel.
@@ -55,7 +55,7 @@ Esta resposta não substitui socorro profissional.
 
 ## 4. Data sources and dependencies reviewed
 
-**No new source.** Emergency numbers: 193 (Corpo de Bombeiros — the service that runs the
+**No new source.** Emergency numbers: 193 (Corpo de Bombeiros, the service that runs the
 guarda-vidas in Santa Catarina, CBMSC) and 192 (SAMU) are the national numbers; **not fetched
 for this draft** — §11.1 requires the implementing PR to cite the CBMSC/SAMU pages in the string
 table's comment, the same "verify, don't guess" rule the corpus itself follows.
@@ -70,7 +70,7 @@ to a safety question is exactly where the footer matters most.
 
 ## 5. Design
 
-**Where "safety" is decided — the directory, not a marker.** A document is a safety document iff
+**Where "safety" is decided: the directory, not a marker.** A document is a safety document iff
 its path is under `knowledge/safety/`. Reasons: the corpus already keys everything on file layout
 (`# Title` + `Source:` lines, `.md` in the directory); a front-matter marker would need a parser
 change and is invisible in `ls`; a directory is reviewable in a PR's file list and `corpus-doc`
@@ -81,16 +81,16 @@ can say "put first-aid docs here" in one sentence. `knowledge/README.md` gains t
 - `CorpusChunk` gains `safety: Boolean`; `Corpus.load` sets it from the relative path
   (`safety/` prefix). The index fingerprint changes (a new field) → one automatic re-embed, as any
   corpus change causes today.
-- `OceanQa.Answer` gains `safety: Boolean = passages.exists(_.chunk.safety)` — computed from the
+- `OceanQa.Answer` gains `safety: Boolean = passages.exists(_.chunk.safety)`, computed from the
   passages actually retained after `minScore`, i.e. the ones the model was shown.
-- `object SafetyFooter { enum Lang { PtBr, En }; def render(lang: Lang): String }` — a pure
+- `object SafetyFooter { enum Lang { PtBr, En }; def render(lang: Lang): String }`, a pure
   string table, two lines, the numbers as literals with a source comment. `def append(text:
   String, safety: Boolean, lang: Lang): String` = `text` when `!safety`, else `text` + blank line
   + `render(lang)`. No trimming or matching of the model text: if the model already wrote
   something footer-like, the real footer still follows — duplicate beats absent.
 - The three surfaces call `SafetyFooter.append` on `answer.text` before printing/returning;
   citations (`[n]` list) print after the footer on the CLI as today's layout dictates, or the
-  footer is the last block — decided by the golden output in §7, not by taste.
+  footer is the last block; decided by the golden output in §7, not by taste.
 - The prompt (`buildMessages`) is **unchanged**. The model is not told about the footer.
 
 **What goes through the LLM: nothing new.** The footer is the one string in the reply the model
@@ -101,7 +101,7 @@ cannot influence.
 No change to `Swimability`. Safety text changes: a fixed, sourced footer is added to answers
 grounded in safety documents; nothing is removed or reworded. The property to protect is
 *monotonic*: from this MIP on, no code path may return a safety-grounded answer without the
-footer — the spec in §7 is the guard, and `corpus-doc`'s SKILL.md gets a line pointing at it.
+footer. The spec in §7 is the guard, and `corpus-doc`'s SKILL.md gets a line pointing at it.
 
 ## 7. Verification plan
 
@@ -112,7 +112,7 @@ footer — the spec in §7 is the guard, and `corpus-doc`'s SKILL.md gets a line
   a question whose retained passages include the safety doc yields `Answer.safety = true`; one
   retained from the ordinary doc only yields `false`; strict no-answer on a safety question
   yields `NoPassagesReply` with `safety = true`; `Fallback.General` on a safety question keeps
-  `safety = true` (the passages were retrieved, the model declined them — the numbers still
+  `safety = true` (the passages were retrieved, the model declined them; the numbers still
   apply).
 - Golden: `--ask` output for the rip-current question against the fixture corpus, byte-equal,
   footer as the last block before citations; the MCP `ask_ocean_question` result text ends with
@@ -123,7 +123,7 @@ footer — the spec in §7 is the guard, and `corpus-doc`'s SKILL.md gets a line
 ## 8. Risks, limitations, and honest caveats
 
 - **Footer fatigue.** Two lines, only on safety-grounded answers. If `knowledge/safety/` grows to
-  dominate the corpus, most answers will carry it — acceptable; the alternative is guessing which
+  dominate the corpus, most answers will carry it; acceptable, since the alternative is guessing which
   safety answers don't need it.
 - **Retrieval decides, not the question.** A safety question whose passages all score below
   `minScore` and whose corpus has no safety doc yet gets no footer — the flag follows evidence.
@@ -137,31 +137,31 @@ footer — the spec in §7 is the guard, and `corpus-doc`'s SKILL.md gets a line
 
 ## 9. Alternatives considered
 
-- **Put the footer in the prompt** ("always end safety answers with…") — the model can drop,
+- **Put the footer in the prompt** ("always end safety answers with…"). The model can drop,
   reword or translate it, and a review-pass LLM could strip it as "repetitive". Rejected: safety
   text under model control is the thing MIP-0001 forbids.
-- **Front-matter marker per document** instead of a directory — needs a `Corpus` parser change,
+- **Front-matter marker per document** instead of a directory. Needs a `Corpus` parser change,
   invisible in file listings, easy to forget on a new doc. Rejected for the directory.
-- **Footer on every answer** — simpler, but turns the numbers into wallpaper on whale-season
+- **Footer on every answer.** Simpler, but turns the numbers into wallpaper on whale-season
   questions. Rejected; evidence-gated instead.
-- **Make the corpus part of this MIP** — no: adding sourced documents is exactly what the
+- **Make the corpus part of this MIP.** No: adding sourced documents is exactly what the
   `corpus-doc` skill (MIP-0011 task 8) does, one PR per document with a fetched source; bundling
   them here would hide safety text inside a plumbing PR. This MIP is the rule those PRs rely on.
-- **Do nothing** — the first first-aid document ships answers with no "call 193/192". Not chosen.
+- **Do nothing.** The first first-aid document ships answers with no "call 193/192". Not chosen.
 
 ## 10. Exam-coverage mapping
 
-`AI-103-MAPPING.md` §1 "Responsible AI" — a deterministic safety layer applied after generation,
+`AI-103-MAPPING.md` §1 "Responsible AI": a deterministic safety layer applied after generation,
 provably not removable by the model; the same argument as MIP-0008's labelled model text and
 MIP-0009's deterministic labels, one step further (not just labelled, enforced).
 
 ## 11. Open questions
 
 1. Confirm 193 as the number CBMSC wants the public to use for beach emergencies (vs 190/192
-   routing) — fetch and cite in the string table before merging. Proposal: 193 + 192 as drafted.
+   routing); fetch and cite in the string table before merging. Proposal: 193 + 192 as drafted.
 2. Should the footer also fire on `Fallback.General` answers to a safety question when *no*
-   passage was retained (so `safety` would be false by the evidence rule)? Proposal: no in v1 —
-   the rule stays evidence-based; revisit if the benchmark shows safety questions falling to
+   passage was retained (so `safety` would be false by the evidence rule)? Proposal: no in v1.
+   The rule stays evidence-based; revisit if the benchmark shows safety questions falling to
    general mode often.
 3. Placement on the CLI: footer before or after the `[n]` citation list? Proposal: before, so
    the last thing on screen is the source links, as today.

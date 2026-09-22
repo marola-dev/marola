@@ -2,21 +2,21 @@
 
 A layer-by-layer map of every module's actual purity/effect status, done as part of a Scala 3/
 ergonomics review (see git history around this file's addition). The goal isn't "everything should
-be maximally effect-tracked" — it's finding the places where the *type signature lies about what
+be maximally effect-tracked"; it's finding the places where the *type signature lies about what
 the function actually does*, since those are the ones worth fixing regardless of how much of the
 rest gets migrated to richer Kyo effects.
 
 ## How to read the table
 
-- **Pure** — deterministic, no I/O, referentially transparent. Safe to call anywhere, test without
+- **Pure**: deterministic, no I/O, referentially transparent. Safe to call anywhere, test without
   a runtime.
-- **`< Sync`** — Kyo-tracked, genuinely blocking I/O. The type signature is honest: a caller sees
+- **`< Sync`**: Kyo-tracked, genuinely blocking I/O. The type signature is honest: a caller sees
   `< Sync` and knows this does real work.
-- **Unsafe boundary** — deliberately escapes Kyo's effect tracking (`Sync.Unsafe.evalOrThrow`,
+- **Unsafe boundary**: deliberately escapes Kyo's effect tracking (`Sync.Unsafe.evalOrThrow`,
   `AllowUnsafe`), for a specific, documented, contained reason.
-- **Hidden effect** ⚠️ — the type signature says "pure" (no effect type at all) but the function
+- **Hidden effect** ⚠️: the type signature says "pure" (no effect type at all) but the function
   actually does something effectful (reads mutable external state, can throw on bad input).
-  **This is the category worth fixing** — see §2.
+  **This is the category worth fixing**; see §2.
 
 | Module | Classification | Notes |
 |---|---|---|
@@ -53,13 +53,13 @@ object AppConfig:
 
 This reads **mutable external process state** (environment variables can differ between calls in
 principle, and definitely differ between processes/test runs) through a method with no effect type
-at all — its signature (`AppConfig.fromEnv: AppConfig`) looks exactly like a pure function. Called
+at all. Its signature (`AppConfig.fromEnv: AppConfig`) looks exactly like a pure function. Called
 fresh in multiple places (`Main.bootstrap`, `SwimConditionsMcpServer.recommendationHandler` calls
 it per-request), each call is a real, untracked side effect.
 
 **Why this matters more than it looks like it should:** every other I/O boundary in this codebase
 (§ table above) correctly wears its effect on its sleeve via `< Sync`. `AppConfig.fromEnv` is the
-one place that doesn't, and it's called from nearly everywhere — meaning a reader scanning function
+one place that doesn't, and it's called from nearly everywhere. A reader scanning function
 signatures to find "where does this touch the outside world" will miss it entirely.
 
 **The fix, if this gets migrated:** thread `AppConfig` through Kyo's `Env[AppConfig]` effect instead
@@ -75,7 +75,7 @@ def runRecommendation(args: Array[String]): Unit < (Async & Env[AppConfig]) =
 with the actual `sys.env` read happening exactly once, at `KyoApp`'s boundary, via
 `Env.run(AppConfig.fromEnv)(bootstrap(args))`. This is a real, contained refactor (touches every
 function that currently takes `config: AppConfig` as a plain parameter, changing it to read from
-`Env` instead) — not done here, flagged as the top candidate if/when this codebase adopts more of
+`Env` instead), not done here, flagged as the top candidate if/when this codebase adopts more of
 Kyo's effect-tracking beyond the I/O boundary.
 
 ### The smaller version of the same problem: exceptions as untracked failure channels
@@ -83,11 +83,11 @@ Kyo's effect-tracking beyond the I/O boundary.
 `JsonValue.parse`, `CompiledPrompt.loadFromString`, `LlmClient.extractContent`, and several others
 throw a specific exception type on bad input rather than returning `Either`/`Abort[E]`. Every call
 site currently wraps the *outermost* effectful call in a broad `Abort.catching[Throwable]` (see
-`Main.scala`'s `summarizeTop`/`analyzePhoto`/`reportSighting`) — which works, and is honest about
+`Main.scala`'s `summarizeTop`/`analyzePhoto`/`reportSighting`), which works, and is honest about
 "something in here can fail," but loses the specific failure type. A stricter version would have
 each function declare its own `Abort[JsonParseException]`/`Abort[NoCompletionException]` and let
 Kyo's effect system compose the union automatically. Lower priority than the `AppConfig` finding
-above — the current broad-catch pattern is simple and was live-verified working (see `Main.scala`'s
+above. The current broad-catch pattern is simple and was live-verified working (see `Main.scala`'s
 own comment on why `loadCompiledPrompt` had to move inside the `Abort.catching` block after a real
 bug), but worth naming as the same class of gap.
 
@@ -101,7 +101,7 @@ private def runSync[A](effect: A < Sync): A = Sync.Unsafe.evalOrThrow(effect)
 This is Kyo's own documented escape hatch, used for exactly the reason it exists: the MCP Java
 SDK's tool-handler API (`BiFunction<Exchange, CallToolRequest, CallToolResult>`) is a plain
 synchronous Java callback, not a Kyo-aware one, so there's no way to hand it a `< Sync` value
-without unwrapping it first. This is the *correct* place for `AllowUnsafe` — a foreign-callback
+without unwrapping it first. This is the *correct* place for `AllowUnsafe`: a foreign-callback
 boundary, contained to one file, with the reason documented right there in the code and again in
 `ARCHITECTURE.md` §5c. Not a finding to fix; a pattern to recognize as legitimate when it shows up
 elsewhere for the same reason (a future Telegram SDK's callback API, if it turns out to have the
@@ -111,19 +111,19 @@ same shape).
 
 `CosmosDbSightingStore`'s `container` is a `lazy val` that builds a `CosmosClient` on first use and
 never closes it; `AzureFoundryLlmClient`'s `credential` similarly lives for the object's lifetime.
-For a CLI process that runs once and exits, this is a non-issue — the OS reclaims everything on
+For a CLI process that runs once and exits, this is a non-issue: the OS reclaims everything on
 exit. It becomes a real question once marola runs as a long-lived service (the Telegram bot, Phase
 1) that might reconfigure or reconnect: Kyo's `kyo.Scope` effect (acquire/release, seen in the
 `kyo-core` dependency already) is the natural fit for that later, not needed now.
 
 ## 5. Net assessment
 
-Nothing here is unsafe in the memory/concurrency sense — this is a Scala/JVM codebase with no raw
+Nothing here is unsafe in the memory/concurrency sense. This is a Scala/JVM codebase with no raw
 mutation escaping module boundaries (the one `var` in `Json.scala`'s recursive-descent parser is
 fully encapsulated in a private class). The gap is specifically the FP-purity sense: one function
 (`AppConfig.fromEnv`) whose type signature hides that it does I/O, and a handful of functions that
 can throw without saying so in their type. Both are real, both are fixable with Kyo's own `Env`/
 `Abort` effects, and neither is urgent enough to have blocked shipping the features this review
-accompanied — captured here as the concrete next step for whoever picks up
+accompanied. Captured here as the concrete next step for whoever picks up
 `FUTURE-WORK.md` §2's kyo-http/kyo-schema migration, since that's the natural moment to also
 tighten these two effect boundaries.

@@ -26,7 +26,7 @@ in Florianópolis using it more than once a week.
 ## 2. Motivation
 
 The product hypothesis (`ARCHITECTURE.md` §1) is untested because there is no product. Every
-feature since Phase 0 — sightings, vision, water quality, RAG — has a CLI stand-in "until the bot
+feature since Phase 0 (sightings, vision, water quality, RAG) has a CLI stand-in "until the bot
 exists" (`SightingStore`, `VisionClient` doc comments). The bot is the missing prerequisite for
 learning anything from users, and `AGENTS.md`'s phase discipline says it comes before any Azure
 spend.
@@ -54,7 +54,7 @@ English stays available (`/idioma en`). The CLI keeps working unchanged.
 
 - **Telegram Bot API** (`https://core.telegram.org/bots/api`): `getUpdates` long polling needs no
   public endpoint; `sendMessage` with MarkdownV2 or HTML, inline keyboards, `Location`, `PhotoSize`
-  + `getFile`. Free, rate-limited (~30 messages/s per bot, 1/s per chat). Plain JSON over HTTPS —
+  + `getFile`. Free, rate-limited (~30 messages/s per bot, 1/s per chat). Plain JSON over HTTPS:
   `Http` + `JsonValue` already cover it; **no SDK** (consistent with §5's dependency stance, and
   the Java Telegram libraries are Spring-shaped). Verified: `TELEGRAM-SETUP.md` §1's `getMe` check
   against the real API.
@@ -64,23 +64,23 @@ English stays available (`/idioma en`). The CLI keeps working unchanged.
 ## 5. Design
 
 - **New sbt module `bot/`** (`marola-bot`, the fifth module `FUTURE-WORK.md` §7.3 left for this
-  moment), depending on `cli`'s `AppConfig`/`Report` — or better, move `AppConfig` and `Report`
+  moment), depending on `cli`'s `AppConfig`/`Report`, or better, move `AppConfig` and `Report`
   to a small `app/` module both `cli` and `bot` depend on.
 - **`telegram/TelegramClient`** (`< Sync`): `getUpdates(offset, timeoutSeconds = 30)`,
   `sendMessage`, `sendChatAction("typing")`, `getFile`. Errors typed (`Abort[TelegramError]`, see
   `SCALA3-JDK-REVIEW.md` §2.3).
-- **`bot/Bot`**: a Kyo `Async` loop — poll, dispatch each update as its own fiber (a slow Overpass
+- **`bot/Bot`**: a Kyo `Async` loop: poll, dispatch each update as its own fiber (a slow Overpass
   query for one user must not block another), reply. Commands: `/start`, `/nadar` (or a location
   message), `/agua`, `/perguntar`, `/avistei`, `/idioma`, `/ajuda`. Per-chat state is only the
-  last shared location, kept **in memory** with a 24h TTL — nothing written to disk about a user.
+  last shared location, kept **in memory** with a 24h TTL; nothing written to disk about a user.
 - **Language**: `Report` gains a `Locale`; strings move to a small `i18n` map (pt-BR, en). Lore and
   corpus get their `lang` field used: Portuguese entries first, since the users are here.
-- **Rate limiting**: token bucket per chat (e.g. 6 requests/minute) *before* any external call —
+- **Rate limiting**: token bucket per chat (e.g. 6 requests/minute) *before* any external call;
   Overpass's fair-use policy is the constraint (`ARCHITECTURE.md` §7), and MIP-0003's cache is
   what makes the bucket generous enough to feel unlimited.
 - **Vision**: `VisionClient.describe` on `getFile` bytes; local `llava`/`moondream` needs a pull
   (`RUN-LOCALLY.md` §5).
-- **Safety of output**: the MIP-0001 rules stand — water veto deterministic, lore verbatim, RAG
+- **Safety of output**: the MIP-0001 rules stand: water veto deterministic, lore verbatim, RAG
   cited or labelled unsourced. The bot adds one: any `--ask` answer about first aid ends with
   "procure um guarda-vidas / SAMU 192".
 
@@ -95,7 +95,7 @@ None to the score. New: the per-chat rate limit and the first-aid footer.
   `getUpdates` payloads (record them from a real bot chat once).
 - Live: `just bot` from a laptop with `MAROLA_TELEGRAM_BOT_TOKEN`; a real phone shares a location
   and gets the list under the MIP-0003 budget; photo → description; `/perguntar` → cited answer.
-- Adoption instrumentation (no PII): counts per command per day in a local JSON-lines file —
+- Adoption instrumentation (no PII): counts per command per day in a local JSON-lines file,
   enough to know whether anyone comes back.
 
 ## 8. Risks, limitations, and honest caveats
@@ -124,10 +124,10 @@ on a public surface.
 
 ## 11. Open questions
 
-1. `bot/` as a module vs. a second `main` in `cli/` — module is cleaner and matches the plan; it
+1. `bot/` as a module vs. a second `main` in `cli/`: module is cleaner and matches the plan; it
    costs an `app/` extraction. Decide before code.
 2. pt-BR default with `/idioma en`, or detect from Telegram's `language_code`? (Detect, with
    override.)
 3. Should `/perguntar` default to `general` fallback (labelled) as the CLI does, or `strict` for a
    public surface? Proposal: `general`, because the benchmark shows strict abstains on most
-   questions people actually ask — but the label must be visible in Telegram formatting.
+   questions people actually ask, but the label must be visible in Telegram formatting.

@@ -20,13 +20,13 @@
 
 Release 0 (MIP-0033) is a milestone with no audience: the repo goes public, a chatbot goes live, a
 model lands on Hugging Face, and by default nobody outside this repository ever finds out. **MAA is
-the launch plan** — a dependency-ordered sequence (prerequisites → owned surfaces → earned surfaces,
+the launch plan**: a dependency-ordered sequence (prerequisites → owned surfaces → earned surfaces,
 staggered over eight days rather than fired simultaneously), one subsection per channel with that
 platform's real, checked account and posting requirements, and draft copy that uses MIP-0029's
 settled positioning verbatim instead of inventing marketing language. It deliberately **stops at the
 end of launch week** and hands the sustaining problem to MIP-0018, which already designed a
 post-planner and multi-platform exporter for exactly that. This MIP creates no account, flips no
-repo, and posts nothing — every such step is a listed human action item (§5.11).
+repo, and posts nothing. Every such step is a listed human action item (§5.11).
 
 ## 2. Motivation
 
@@ -48,7 +48,7 @@ Three concrete gaps, none of them "we should do marketing":
 
 ## 3. User-visible change
 
-None for marola's CLI/map/bot users — Phase 0. For the public: marola becomes findable. The shape
+None for marola's CLI/map/bot users (Phase 0). For the public: marola becomes findable. The shape
 of the copy, using MIP-0029's positioning and this repo's tone (a number and its source, no
 adjectives, no exclamation marks):
 
@@ -71,7 +71,7 @@ Model:     https://huggingface.co/<user>/<repo>        (exact URL from MIP-0033 
 ## 4. Platform requirements reviewed
 
 Each subsection: what was fetched, on what date, what it actually said. Everything not fetched is
-in "Not checked" — including two platforms whose help centres refused this session.
+in "Not checked", including two platforms whose help centres refused this session.
 
 ### 4.1 LinkedIn — Page creation (fetched 2026-09-07)
 
@@ -86,11 +86,11 @@ needed checked, and it checks out.
 
 ### 4.2 YouTube — channel and posts (fetched 2026-09-07)
 
-- `https://support.google.com/youtube/answer/1646861`: a Google Account alone is not enough — "to
+- `https://support.google.com/youtube/answer/1646861`: a Google Account alone is not enough: "to
   upload videos, comment, or make playlists, you need a YouTube channel", created via Settings →
   "Add or manage channel(s)", with a profile picture, name and Handle.
 - `https://support.google.com/youtube/answer/9890437`: the **Posts tab is a *standard* feature**,
-  listed with a "Limited daily limit" — i.e. available to a brand-new channel. Longer videos
+  listed with a "Limited daily limit", i.e. available to a brand-new channel. Longer videos
   (>15 min), custom thumbnails and computer live-streaming are **intermediate**.
 - `https://support.google.com/youtube/answer/9891124`: **"If you complete phone verification,
   you'll get access to intermediate features."** Advanced needs phone verification *plus* either
@@ -103,7 +103,7 @@ needed checked, and it checks out.
 Community/Posts-tab text post.** The widely repeated "you need 500/1,000 subscribers for the
 Community tab" did **not** appear on the current pages fetched here (it was historically true; the
 fetched page today lists Posts under standard). §5.6 therefore plans the video as the deliverable
-and treats the text post as a free extra — and schedules phone verification in Stage 1 anyway,
+and treats the text post as a free extra, and schedules phone verification in Stage 1 anyway,
 because a custom thumbnail needs it.
 
 ### 4.3 Reddit — sitewide rule verified, per-subreddit rules **not obtainable this session**
@@ -134,17 +134,17 @@ assert what any subreddit permits. It makes reading each sidebar a blocking huma
 (a Zendesk-wide block, not a marola-specific one), so nothing below is a fetched quote. From search
 summaries only (**not verified**): Partner Program eligibility is a complete profile, ≥ 6 published
 stories, ≥ 3 months active, a bank account and taxes in an eligible country, 18+, and accepting
-Medium's terms and AI-content policy — and **a paid Medium membership is not required to apply**.
+Medium's terms and AI-content policy, and **a paid Medium membership is not required to apply**.
 
 The design does not lean on any of those numbers: the Partner Program governs *being paid* for a
-story, and §5.8's launch article is published free and un-paywalled regardless — a paywalled launch
+story, and §5.8's launch article is published free and un-paywalled regardless: a paywalled launch
 announcement defeats its own purpose. What §5.8 needs is only a free Medium account, which is not a
 claim in dispute. Flagged in §11 for a human to confirm on the way in.
 
 ### 4.5 Substack — start-up requirements (fetched 2026-09-07)
 
 `https://on.substack.com/p/start-basics` (Substack's own guide, HTTP 200): setup asks for a writer
-profile with your name, a publication name, a one-line description, and a URL — automatically
+profile with your name, a publication name, a one-line description, and a URL: automatically
 `<name>.substack.com`, with a custom domain optional. **No approval, no minimum cadence:** the page
 recommends no posting frequency, and explicitly accommodates "start[ing] slow, devoting a few hours
 to your publications each week or month". Cost is not stated verbatim on that page (→ "Not
@@ -163,13 +163,13 @@ redesigned here.** §5.7 delegates the channel entirely.
 ### 4.7 "stack" — relying on MIP-0034's finding, not re-verifying it
 
 The request's "stack post" is the same ambiguous word MIP-0034 §4.4 hit ("youtube, medium, stack").
-That MIP concluded **Substack**, and — importantly — checked the alternative rather than assuming:
+That MIP concluded **Substack**, and, importantly, checked the alternative rather than assuming:
 `https://stackoverflow.com/feeds/tag/scala` returned **HTTP 403** behind a Cloudflare interstitial,
 its content is CC BY-SA, and it is programming Q&A, not ocean knowledge; rejected on all three
 grounds. Stack Overflow's self-promotion norms are strict in any case and it does not function as
 an announcement channel.
 
-**This MIP adopts that reading on MIP-0034's authority and did not re-verify it independently** —
+**This MIP adopts that reading on MIP-0034's authority and did not re-verify it independently**,
 stated plainly here rather than left to read as a second confirmation. If the maintainer meant
 Stack Overflow, §5.9 is the wrong plan and the honest answer is "that is not an announcement
 channel", not a worse post.
@@ -196,7 +196,7 @@ Why this order and not "everything on Monday":
   reason to click. It also means each later post links to something that already exists rather than
   to a promise.
 - **Reddit comes after the owned surfaces, never on day one, and never twice in one day.** By T+2
-  the repo has a release tag, a video, and an article — a submission with context instead of a
+  the repo has a release tag, a video, and an article, a submission with context instead of a
   drive-by link, which is the difference Rule 2's "participate authentically" is pointing at.
 - **The two Reddit posts are two days apart and are not the same text** (§5.5).
 - **Substack is last and conditional**, because it is the only channel that is worse to start than
@@ -213,7 +213,7 @@ One directory, one file per channel, human-written, plain Markdown; the same con
 chapters, the spoken outline), `linkedin-personal.md`, `linkedin-page.md`, `reddit-<sub>.md`,
 `instagram.md` (or the MIP-0020 caption), `substack.md`. Shared, non-negotiable across all of them:
 
-- **MIP-0029's positioning, verbatim** (§3) — "the ocean intelligence layer", swim as the *first
+- **MIP-0029's positioning, verbatim** (§3): "the ocean intelligence layer", swim as the *first
   case*. No "AI-powered", "smart", "seamless", "revolutionary"; no exclamation marks.
 - **The three links of §3**, and nothing that does not resolve.
 - **The honest framing MIP-0033 §8 already commits to:** the chatbot's uptime is one person's
@@ -227,7 +227,7 @@ mechanism as much as a quality one (§8).
 ### 5.3 Personal LinkedIn post
 
 **Requirements:** none beyond the maintainer's existing account (§4.1 covers the Page; a personal
-post needs nothing). No API — MIP-0018 §4 already established that LinkedIn's Community Management
+post needs nothing). No API: MIP-0018 §4 already established that LinkedIn's Community Management
 API is gated to verified companies and unusable for an individual, so this is copy-paste, by hand,
 by design.
 
@@ -259,7 +259,7 @@ have the right to act for the organization. **No company registration.** Created
 **Why bother, honestly:** a Page is a durable, followable surface that outlives one post in a feed,
 and it is the only LinkedIn object a future collaborator can follow without following the
 maintainer personally. **What it is not:** an audience. A new Page has zero followers, so its first
-post reaches nobody on its own — the reach comes from the personal post (§5.3), which is why the
+post reaches nobody on its own. The reach comes from the personal post (§5.3), which is why the
 sequence publishes the personal post *first* and the Page post after, with the personal account
 resharing the Page's post rather than duplicating its text.
 
@@ -273,7 +273,7 @@ industry ≈ software / environmental services (the maintainer's call), location
 subreddit's rules, which is where posts actually get removed.
 
 **Therefore the design is a procedure, not a subreddit list.** Candidate communities, in the order
-this MIP would try them — none of them confirmed active or confirmed to permit project posts:
+this MIP would try them (none of them confirmed active or confirmed to permit project posts):
 
 | Candidate | Why it might fit | Must check before posting |
 |---|---|---|
@@ -287,24 +287,24 @@ read the last two weeks of front page, and confirm (a) posts like this exist the
 removed, (b) which flair to use, (c) whether a weekly showcase thread is the correct venue instead
 of a top-level post. If the answer is unclear, post in the weekly thread or not at all.
 
-**The post itself:** a **text self-post**, not a link post — a bare link from a new account is the
+**The post itself:** a **text self-post**, not a link post: a bare link from a new account is the
 canonical spam shape. Lead with the technical substance and the honest limitation; put the links at
 the bottom; no hashtags (MIP-0018 §5.3 already notes hashtags read as spam on Reddit); answer every
 comment for 48 h. Two posts, two days apart, two different texts: r/scala gets the Kyo/effect-
 boundary story, r/opensource gets the local-first/zero-key story. If the maintainer's Reddit account
-is brand new with no history, prefer **one** post and the weekly-thread route — a new account
+is brand new with no history, prefer **one** post and the weekly-thread route. A new account
 link-dropping into multiple subreddits is precisely the "content manipulation" pattern Rule 2 names.
 
 ### 5.6 YouTube
 
 **Requirements, verified (§4.2):** a Google Account *plus* an explicitly created channel with a
 handle. Posts tab is standard; **phone verification (intermediate) is needed for a custom thumbnail
-and for videos over 15 minutes** — do it in Stage 1, it takes minutes and cannot be done under time
+and for videos over 15 minutes**: do it in Stage 1, it takes minutes and cannot be done under time
 pressure on launch day.
 
 **The deliverable is a 60–120 second screen-recorded demo**, not a talking-head or a slideshow:
 `just run -- --summarize` producing a real answer, then the map at `marola.dev`, then the chatbot.
-Unlisted first, reviewed, then public on T+0 — and embedded in the Medium article (§5.8), which is
+Unlisted first, reviewed, then public on T+0, and embedded in the Medium article (§5.8), which is
 where most of its views will come from. Title and description from `content/launch/youtube.md`,
 using §3's one-liner as the first description line so it survives truncation. The Community/Posts
 text post is a free extra on launch day; it is not the channel's deliverable and reaches nobody at
@@ -328,15 +328,15 @@ MAA's only additions are scheduling and consistency:
 ### 5.8 Medium
 
 **Requirements:** a free Medium account. The Partner Program is about being paid and is not needed
-to publish (§4.4 — search-summary only, flagged). The launch article is **free and un-paywalled**;
+to publish (§4.4, search-summary only, flagged). The launch article is **free and un-paywalled**;
 do not enrol, do not lock the story.
 
-**This is the anchor artifact of the whole launch** — the piece with enough room to earn the clicks
+**This is the anchor artifact of the whole launch**, the piece with enough room to earn the clicks
 the other seven posts are asking for. ~1,200–1,800 words, structured as the repo actually thinks:
 the question ("what is the best hour tomorrow to swim nearby?"), why it is harder than it sounds
 (live data, a decision that can hurt someone if it is wrong), the deterministic-scoring /
 LLM-writes-the-sentence boundary, local-first with Azure opt-in per integration, one thing that was
-rejected and why (the MIP-0018 §5.2 "candidate why hooks" heuristic finds these — MIP-0034 §4.4's
+rejected and why (the MIP-0018 §5.2 "candidate why hooks" heuristic finds these; MIP-0034 §4.4's
 "checked the alternative and it failed anyway" is a good one), the honest limitations from §5.2,
 then the links and the embedded video. Canonical-link the article back to `marola.dev` if a blog
 repo exists (MIP-0018 §11's open question); otherwise Medium is the canonical home of this one post.
@@ -348,13 +348,13 @@ a URL. No approval, no cost stated on the fetched page, **no required cadence**.
 
 **And that is the problem.** Starting is free; *sustaining* is the commitment. A Substack with one
 launch issue and then eight months of silence is a public artifact that says the project was
-abandoned — strictly worse than never having created it, and worse than the same text as a Medium
+abandoned, strictly worse than never having created it, and worse than the same text as a Medium
 post, which nobody expects a sequel to. A newsletter is a promise of a next issue; a blog post is
 not.
 
 **So the recommendation is conditional, and the condition is written down:** create the publication
-in Stage 1 (reserve the name — that part is cheap and reversible), and publish the launch issue at
-T+6 **only if** the maintainer commits to a realistic minimum — *one issue a month for six months* —
+in Stage 1 (reserve the name, that part is cheap and reversible), and publish the launch issue at
+T+6 **only if** the maintainer commits to a realistic minimum (*one issue a month for six months*)
 and MIP-0018's planner is the thing that will feed it. If that commitment is not real on launch day,
 leave the publication dormant and unlaunched, and skip the channel. Choosing not to post is a valid
 outcome of this subsection, not a failure of it.
@@ -364,18 +364,18 @@ outcome of this subsection, not a failure of it.
 MIP-0018 already designed the sustaining mechanism: a weekly post-planner that mines merged PRs,
 MIP metadata and operator logs for "candidate why hooks", a human-written `content/posts/YYYY-Www.md`
 draft, and a multi-platform exporter emitting per-platform files (LinkedIn, blog, Substack, Reddit).
-Its §9 already rejected LLM-generated post text for the right reason — "reads like a changelog".
+Its §9 already rejected LLM-generated post text for the right reason: "reads like a changelog".
 **MAA does not build a second content-cadence mechanism.** Its hand-off is three concrete asks on
 MIP-0018, no more:
 
-1. Treat `content/launch/` as the seed corpus of `content/exports/` — same shape, one week earlier.
+1. Treat `content/launch/` as the seed corpus of `content/exports/`, same shape, one week earlier.
 2. Add `instagram` and `youtube-post` to §5.3's formatter list (MIP-0020 §5.1 step 3 already asks
    for the first).
 3. Name the launch channels in the planner's output so week 2 asks "which of these seven do you
    want this week?" rather than starting from a blank page.
 
 **The RSS tie-in:** MIP-0034 §5.6's outbound Atom feed is the only sustaining channel that needs no
-human writing at all — it updates itself from the board on every site build. It should be **live and
+human writing at all. It updates itself from the board on every site build. It should be **live and
 linked from every launch post's landing page before T+0** if it has landed, because it converts a
 launch-day visitor into a subscriber without asking the maintainer to post again; and MIP-0034
 §5.7a's corpus-changelog feed becomes genuinely useful the moment the repo is public. Neither blocks
@@ -406,7 +406,7 @@ brand accounts and posting under them are irreversible, shared-state, identity-b
 product code. Two safety-adjacent constraints on the copy, which are real:
 
 - **No launch post, caption, video line or article sentence may state a marine-safety fact that is
-  not already sourced in `knowledge/`** — the `mip` skill's "no unsourced facts reach a user" rule
+  not already sourced in `knowledge/`**: the `mip` skill's "no unsourced facts reach a user" rule
   does not stop applying because the surface is LinkedIn. Marketing copy is the easiest place for an
   invented "jellyfish risk is highest at dawn" to appear.
 - **The demo video and any screenshot must show a real, unedited run**, including MIP-0022's safety
@@ -422,11 +422,11 @@ No test gate applies to a docs-and-copy change. Verification is a checklist, run
   machine that never had it; every link in every `content/launch/*` file resolves (a `just`
   recipe or one `curl` loop, not by eye).
 - **Copy check:** grep each `content/launch/*` for "AI-powered", "smart", "seamless",
-  "revolutionary", "!" — zero hits, per MIP-0029 §3.3 and the site-frontend rule.
+  "revolutionary", "!": zero hits, per MIP-0029 §3.3 and the site-frontend rule.
 - **Positioning check:** every file contains "ocean intelligence layer" and frames swim as the
   first case, not the product.
 - **Per channel:** the post exists at a public URL, and is still there 72 h later (the removal
-  check that matters — see §5.1's stop rule).
+  check that matters; see §5.1's stop rule).
 - **"Done" for MAA** = all nine §5.11 items executed or explicitly declined, with each post's URL
   recorded in `docs/mips/RELEASES.md`'s Release 0 section (MIP-0033 §5.4), so the launch is part of
   the release record rather than scattered across seven platforms.
@@ -450,13 +450,13 @@ No test gate applies to a docs-and-copy change. Verification is a checklist, run
   read this session at all (§4.3), the "9:1 rule" everyone repeats is not in Reddit's policy, and a
   removal or account flag on launch day is a real, plausible outcome. This is why §5.5 is a
   procedure with a blocking human read step rather than a list of subreddits to fire at.
-- **Two help centres refused this session** (Medium, Substack support — Zendesk 403s), so §4.4's
+- **Two help centres refused this session** (Medium, Substack support, Zendesk 403s), so §4.4's
   Partner Program figures and Substack's free-tier cost are search summaries, not fetched pages.
   Neither drives a design decision (§5.8 publishes free; §5.9's caveat is about cadence, not price),
   but they are not verified and are listed as such.
 - **A launch is not traction.** Everything here produces a spike. Whether marola has an audience in
   three months is decided by MIP-0018's weekly habit and MIP-0034's self-updating feed, not by this
-  week — and no amount of launch-day loudness substitutes for that.
+  week, and no amount of launch-day loudness substitutes for that.
 - **Nothing here is measured.** MAA proposes no analytics, and `site/static/app.js` says "no
   analytics, no cookies" (MIP-0029 §6 keeps that verbatim). Follower counts, GitHub stars and each
   platform's own post stats are the only signal, and they are weak. Not a gap to fix with tracking.
@@ -473,7 +473,7 @@ No test gate applies to a docs-and-copy change. Verification is a checklist, run
 - **One post, one channel (Reddit or LinkedIn only).** Lowest risk, lowest cost, and genuinely the
   right answer if the maintainer's time is the binding constraint. Not chosen because the request
   named eight channels, but it remains the fallback if Stage 1 runs out of time: **do §5.8 (Medium)
-  and §5.3 (LinkedIn) and nothing else** — those two are the highest value per hour spent.
+  and §5.3 (LinkedIn) and nothing else**: those two are the highest value per hour spent.
 - **Paid promotion** (LinkedIn/Reddit ads). Rejected: money for reach with no product-market
   evidence yet, and `AGENTS.md` keeps paid tooling out unless nothing free works.
 - **Automating the posting.** Rejected on this MIP's own §5.11 grounds and MIP-0018 §4's finding that
@@ -491,22 +491,22 @@ domain row. The only adjacent point is `docs/AI-500-MAPPING.md` §4's human-conf
 ## 11. Open questions
 
 1. **The "stack" reading.** §4.7 adopts MIP-0034 §4.4's Substack conclusion without re-verifying it.
-   If Stack Overflow was actually meant, §5.9 is the wrong plan — and the honest answer is that it
+   If Stack Overflow was actually meant, §5.9 is the wrong plan, and the honest answer is that it
    is not an announcement channel.
 2. **Does the Substack cadence commitment exist?** §5.9's whole recommendation turns on it. A human
    decision, needed by T+6, not before.
-3. **The Instagram handle and bio URL** — `@marola.swim` vs. MIP-0029's positioning, and MIP-0020's
+3. **The Instagram handle and bio URL**: `@marola.swim` vs. MIP-0029's positioning, and MIP-0020's
    `h0ffmann.github.io/marola` bio vs. the live `marola.dev`. Both belong to MIP-0020; MAA cannot
    post on T+1 until they are settled.
 4. **Which subreddits, and does the maintainer have an account with history?** Unanswerable from
    here (§4.3's 403s). Needs the human read step in §5.5 before any Reddit post.
-5. **The Medium/blog canonical question** — MIP-0018 §11 still asks what the blog repo is; if one
+5. **The Medium/blog canonical question**: MIP-0018 §11 still asks what the blog repo is; if one
    exists, §5.8's article should be canonical there and syndicated to Medium, not the reverse.
 6. **Is a launch-day tag/release worth cutting** (`v0.0`) so `releases.atom` has an entry to carry?
    Cheap, and it gives the free GitHub feed something to say. MIP-0033's call, not this one's.
 7. **Follow-up MIP:** Product Hunt and Hacker News were named as plausible channels and deliberately
    not researched (§9). If the maintainer wants either, they need their own MIP with the same
-   requirements pass — both have strong community norms about self-submission and timing, and
+   requirements pass; both have strong community norms about self-submission and timing, and
    guessing at them is exactly what §4 exists to prevent. Would need the next free MIP number.
 
 ## Appendix
@@ -515,42 +515,42 @@ domain row. The only adjacent point is `docs/AI-500-MAPPING.md` §4's human-conf
 
 All fetched 2026-09-07 unless stated.
 
-- `https://github.com/h0ffmann/marola` — **HTTP 404** anonymously (browser UA, redirects followed);
-  `https://api.github.com/repos/h0ffmann/marola` — **404**. The repo is still private, re-confirming
+- `https://github.com/h0ffmann/marola`: **HTTP 404** anonymously (browser UA, redirects followed);
+  `https://api.github.com/repos/h0ffmann/marola`: **404**. The repo is still private, re-confirming
   MIP-0033 §3's finding of 2026-09-06.
-- `https://marola.dev/` — **HTTP 200**. The site is already public (and is the live URL, not
+- `https://marola.dev/`: **HTTP 200**. The site is already public (and is the live URL, not
   MIP-0020's older `h0ffmann.github.io/marola`).
-- `https://www.linkedin.com/help/linkedin/answer/a543852` — "You must have a LinkedIn account to
+- `https://www.linkedin.com/help/linkedin/answer/a543852`: "You must have a LinkedIn account to
   create a Page"; a creation-time confirmation that "you have the right to act on behalf of the
   company or school"; **no** other prerequisite listed (no profile strength, connections, account
   age, or email domain).
-- `https://support.google.com/youtube/answer/1646861` — a Google Account is not sufficient; a
+- `https://support.google.com/youtube/answer/1646861`: a Google Account is not sufficient; a
   channel must be created (profile picture, name, Handle) to upload, comment or make playlists.
-- `https://support.google.com/youtube/answer/9890437` — "Posts tab" listed under **standard**
+- `https://support.google.com/youtube/answer/9890437`: "Posts tab" listed under **standard**
   features with a "Limited daily limit"; longer videos (>15 min), custom thumbnails and computer
   live-streaming listed under **intermediate**. No subscriber threshold on the page.
-- `https://support.google.com/youtube/answer/9891124` — "If you complete phone verification, you'll
+- `https://support.google.com/youtube/answer/9891124`: "If you complete phone verification, you'll
   get access to intermediate features"; advanced = phone verification + channel history or ID/video
   verification; "Active channels … can usually rebuild sufficient channel history within 2 months."
-- `https://support.google.com/youtube/answer/9409631` — posts unavailable for supervised accounts
+- `https://support.google.com/youtube/answer/9409631`: posts unavailable for supervised accounts
   and "Made for Kids" channels; no subscriber requirement stated.
-- `https://www.redditinc.com/policies/content-policy` — **HTTP 200**, ~478 KB. Rule 2 quoted
+- `https://www.redditinc.com/policies/content-policy`: **HTTP 200**, ~478 KB. Rule 2 quoted
   verbatim in §4.3. **No 9:1 / 90-10 self-promotion ratio appears anywhere in the policy.**
 - `https://www.reddit.com/r/opensource/about/rules.json` and the same path for `scala`, `surfing`,
-  `oceanography`, `SideProject` — **HTTP 403** on all five (browser UA, redirects followed).
+  `oceanography`, `SideProject`: **HTTP 403** on all five (browser UA, redirects followed).
   `www.reddit.com` and `old.reddit.com` are both refused by the fetch tool. Per-subreddit rules
   could not be read this session.
-- `https://on.substack.com/p/start-basics` — setup requires a writer profile with your name, a
+- `https://on.substack.com/p/start-basics`: setup requires a writer profile with your name, a
   publication name, a one-line description and a URL (`<name>.substack.com`, custom domain
   optional); no approval step; no recommended cadence, and it explicitly accommodates "start[ing]
   slow, devoting a few hours to your publications each week or month".
-- `https://help.medium.com/hc/en-us/articles/39121627791639-Medium-Partner-Program-eligibility` —
+- `https://help.medium.com/hc/en-us/articles/39121627791639-Medium-Partner-Program-eligibility`:
   **HTTP 403**, both via the fetch tool and via `curl` with a desktop-Chrome User-Agent (Zendesk
   block).
 - `https://support.substack.com/hc/en-us/articles/360037825111-...` and
-  `https://support.reddithelp.com/hc/en-us/articles/360043504051-Content-Policy` — **HTTP 403**,
+  `https://support.reddithelp.com/hc/en-us/articles/360043504051-Content-Policy`: **HTTP 403**,
   same Zendesk block. `redditinc.com` was used instead for the content policy, successfully.
-- `git fetch origin && git branch -r` — `origin/docs/mip-0034-rss-feeds` and
+- `git fetch origin && git branch -r`: `origin/docs/mip-0034-rss-feeds` and
   `origin/docs/mip-0035-map-plugin-api` exist; **0036 is free**. `docs/mips/README.md` on `main`
   ends at MIP-0033.
 
@@ -559,19 +559,19 @@ All fetched 2026-09-07 unless stated.
 - **Every individual subreddit's rules, activity level and subscriber count** (§4.3's 403s). The
   counts appearing in search summaries (r/opensource ≈ 378K, r/scala ≈ 43K) are third-party
   aggregator figures, not read from Reddit, and a claim that Reddit removed public subscriber counts
-  in September 2025 came from the same kind of summary — repeated nowhere in this MIP's design.
+  in September 2025 came from the same kind of summary, repeated nowhere in this MIP's design.
 - **Medium's Partner Program eligibility list** (complete profile, ≥ 6 stories, ≥ 3 months active,
-  bank account, 18+, terms accepted; membership not required to apply) — search-summary only, the
+  bank account, 18+, terms accepted; membership not required to apply), search-summary only, the
   help page 403'd. §5.8 does not depend on any of it.
-- **Substack's free-tier cost and the $5/month paid minimum** — not stated on the page fetched;
+- **Substack's free-tier cost and the $5/month paid minimum**: not stated on the page fetched;
   search-summary only.
-- **Instagram's entire requirement set** — deliberately not re-verified; taken from MIP-0020 §4.1
+- **Instagram's entire requirement set**: deliberately not re-verified; taken from MIP-0020 §4.1
   (verified there 2026-09-06).
-- **The "stack" = Substack reading** — taken from MIP-0034 §4.4 (verified there 2026-09-07,
+- **The "stack" = Substack reading**: taken from MIP-0034 §4.4 (verified there 2026-09-07,
   including the Stack Overflow 403 and CC BY-SA check), not independently re-derived here.
 - **LinkedIn's own posting rate limits, and whether a Page post from a zero-follower Page is
-  distributed at all** — assumed to reach nobody organically in §5.4 based on how feeds generally
+  distributed at all**: assumed to reach nobody organically in §5.4 based on how feeds generally
   work, not on a LinkedIn-documented statement.
-- **Whether the Hugging Face model URL of MIP-0033 §5.3 exists yet** — it does not; §5.11 item 1's
+- **Whether the Hugging Face model URL of MIP-0033 §5.3 exists yet**: it does not; §5.11 item 1's
   prerequisites are unmet, so it could not be link-checked.
-- **Product Hunt and Hacker News norms** — not researched at all (§9, §11.7).
+- **Product Hunt and Hacker News norms**: not researched at all (§9, §11.7).

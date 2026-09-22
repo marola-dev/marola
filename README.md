@@ -1,12 +1,12 @@
 <h1 align="center">🌊 marola</h1>
 
-<p align="center"><b>marola — the ocean intelligence layer.</b><br/>
+<p align="center"><b>marola: the ocean intelligence layer.</b><br/>
 The ocean near you: conditions, official bathing-water quality per sampling point, tides,
-jellyfish and whale odds, and a grounded "ask the ocean" — first case, the best hour tomorrow to
+jellyfish and whale odds, and a grounded "ask the ocean": first case, the best hour tomorrow to
 swim, all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or clearly
 labelled, never invented.<br/>
 Not a weather or surf app with a chatbot bolted on: the score and its safety veto are deterministic
-Scala, and the model is on judge duty over that — it interprets and phrases, it never overturns a
+Scala, and the model is on judge duty over that: it interprets and phrases; it never overturns a
 veto. The reasoning behind that split: <a href="./PHILOSOPHY.md"><code>PHILOSOPHY.md</code></a>,
 "models reasoning over open water, with the deterministic parts kept deterministic."</p>
 
@@ -29,13 +29,13 @@ veto. The reasoning behind that split: <a href="./PHILOSOPHY.md"><code>PHILOSOPH
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT" /></a>
 </p>
 
-**Live map:** [marola.dev](https://marola.dev/) — every beach around
+**Live map:** [marola.dev](https://marola.dev/): every beach around
 Florianópolis, Rio de Janeiro and Salvador, ranked for today and tomorrow, water quality, tides
 and the hour slider;
 rebuilt every 3 hours and on every relevant merge to `main` ([`site.yml`](./.github/workflows/site.yml),
 [MIP-0005](./docs/mips/MIP-0005-map-and-static-site.md)). Live data decides the numbers,
 deterministic rules decide anything safety-related, a sourced corpus decides what the model may
-say, and a second model reviews the first — the reasoning behind each choice: [`PHILOSOPHY.md`](./PHILOSOPHY.md).
+say, and a second model reviews the first. The reasoning behind each choice: [`PHILOSOPHY.md`](./PHILOSOPHY.md).
 
 <p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view.png" alt="marola.dev — best hour per beach, ranked, with the water-quality popup for a sampling point" width="720" /></a></p>
 
@@ -51,10 +51,10 @@ water quality -> IMA/SC
 
 ## What you get
 
-- **Best hour tomorrow, per beach** — OpenStreetMap beaches, Open-Meteo sea/weather/tide forecasts, a 0-100 swimability score with the reasons, never at night.
-- **Official bathing-water quality, per sampling point** — Santa Catarina's IMA feed; unfit water zeroes the score in code, not a prompt.
+- **Best hour tomorrow, per beach**: OpenStreetMap beaches, Open-Meteo sea/weather/tide forecasts, a 0-100 swimability score with the reasons, never at night.
+- **Official bathing-water quality, per sampling point**: Santa Catarina's IMA feed; unfit water zeroes the score in code, not a prompt.
 - **Tides, swell, wind, UV, jellyfish and whale odds**, and a sourced "did you know?" about the sea in front of you.
-- **Ask the ocean** — local RAG with `[n]` citations; off-corpus questions get an "unsourced" label instead of a refusal.
+- **Ask the ocean**: local RAG with `[n]` citations; off-corpus questions get an "unsourced" label instead of a refusal.
 
 ## Run it in five minutes
 
@@ -78,7 +78,7 @@ docker compose --profile ollama run --rm marola --summarize --lat -27.6733 --lon
 ## The six pluggable integrations: local default, Azure opt-in
 
 Every integration is a trait with a free local implementation as the default and an Azure
-implementation that's opt-in per env var — never a package deal. Full detail, including what's
+implementation that's opt-in per env var, never a package deal. Full detail, including what's
 verified live vs. written-not-run: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §5.
 
 | Capability | Local default → Azure opt-in | Switch |
@@ -90,7 +90,7 @@ verified live vs. written-not-run: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.
 | Photo analysis | Multimodal Ollama (`llava`) → Azure AI Vision | `MAROLA_VISION_PROVIDER=azure` |
 | Observability | Off, or OTLP traces into local MLflow → Application Insights | `MAROLA_TRACES=off\|mlflow\|azure` |
 
-**Next:** the rest of the sea (surf, diving, fishing) as new scoring functions over the same data —
+**Next:** the rest of the sea (surf, diving, fishing) as new scoring functions over the same data;
 roadmap: [`docs/mips/README.md`](./docs/mips/README.md), [`docs/FUTURE-WORK.md`](./docs/FUTURE-WORK.md) §1.
 
 ## Documentation
@@ -99,11 +99,11 @@ roadmap: [`docs/mips/README.md`](./docs/mips/README.md), [`docs/FUTURE-WORK.md`]
 
 | Doc | What it covers |
 |---|---|
-| [`PHILOSOPHY.md`](./PHILOSOPHY.md) | Why marola is built the way it is — the three pillars, why agents, why Scala/Nix/`just` |
+| [`PHILOSOPHY.md`](./PHILOSOPHY.md) | Why marola is built the way it is: the three pillars, why agents, why Scala/Nix/`just` |
 | [`ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | The pipeline, the six pluggable local/Azure integrations, verified-live vs. written-not-run |
 | [`RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md) | Run it now with Ollama, no Azure account needed |
 | [`FUTURE-WORK.md`](./docs/FUTURE-WORK.md) / [`EFFECTS-MAP.md`](./docs/EFFECTS-MAP.md) | Design sketches, reviewed-not-adopted libraries; a Scala/FP-purity review |
-| [`AI-103-MAPPING.md`](./docs/AI-103-MAPPING.md) / [`AI-500-MAPPING.md`](./docs/AI-500-MAPPING.md) | Exam domain coverage — AI-103 done, AI-500 (multi-agent) a design target |
+| [`AI-103-MAPPING.md`](./docs/AI-103-MAPPING.md) / [`AI-500-MAPPING.md`](./docs/AI-500-MAPPING.md) | Exam domain coverage: AI-103 done, AI-500 (multi-agent) a design target |
 | [`SKILLS.md`](./docs/SKILLS.md) / [`AGENT-SKILLS.md`](./docs/AGENT-SKILLS.md) | A skills roadmap for humans; which Claude Code skills to use here |
 | [`AGENT-FRAMEWORKS-SURVEY.md`](./docs/AGENT-FRAMEWORKS-SURVEY.md) | Multi-agent frameworks: Python ideas, JVM/Scala libraries, where Apache Pekko fits |
 | [`benchmarks/`](./docs/benchmarks/2026-09-05.md) / [`mips/`](./docs/mips/README.md) | Kept benchmark runs; numbered design docs written before a feature is built |
@@ -121,7 +121,7 @@ just marola-sea-pull tiny Q8_0     # pull it into Ollama as `marola-sea`
 MAROLA_LOCAL_LLM_MODEL=marola-sea just run -- --summarize
 ```
 
-The `tiny` preset is SmolLM2-360M — a **pipeline proof, not a quality bar**, exactly as
+The `tiny` preset is SmolLM2-360M, a **pipeline proof, not a quality bar**, exactly as
 [`finetune/README.md`](./finetune/README.md) frames it. On a real swim summary it ignores the
 facts it is given and invents its own; `marola-llama3.2` (Llama 3.2 with marola's persona, built
 locally by `just finetune-model`) produces a usable answer from the same input. Scaling it is
@@ -145,15 +145,15 @@ Full guide: [`CONTRIBUTING.md`](./CONTRIBUTING.md). Please also read the
 
 marola stands on other people's work. Five it could not exist without, alphabetically:
 
-- **[Kyo](https://getkyo.io/)** — the effect system the entire Scala side is written in. Its
+- **[Kyo](https://getkyo.io/)**: the effect system the entire Scala side is written in. Its
   direct-style `.now`/`defer` is what lets the pipeline read like ordinary code while keeping
   effects visible in the types.
-- **[Leaflet](https://leafletjs.com/)** — draws the map, with no account, key or tracker.
-- **[Ollama](https://ollama.com/)** — runs the models locally, which is what makes marola usable
+- **[Leaflet](https://leafletjs.com/)**: draws the map, with no account, key or tracker.
+- **[Ollama](https://ollama.com/)**: runs the models locally, which is what makes marola usable
   with no cloud account and no API key.
-- **[Open-Meteo](https://open-meteo.com/)** — the sea temperature, wind and wave forecasts every
+- **[Open-Meteo](https://open-meteo.com/)**: the sea temperature, wind and wave forecasts every
   score is computed from, free and keyless.
-- **[OpenStreetMap](https://www.openstreetmap.org/copyright)** contributors — every beach, trail
+- **[OpenStreetMap](https://www.openstreetmap.org/copyright)** contributors: every beach, trail
   and facility on the map is theirs, under ODbL.
 
 Also relied on daily: Scala 3, MUnit, sbt, Nix, just, DSPy, Hugging Face (`transformers`, `peft`,
@@ -163,4 +163,5 @@ published by INEA (Rio de Janeiro), INEMA (Bahia) and IMA/SC (Santa Catarina).
 
 ## License
 
-[MIT](./LICENSE) — © 2026 Matheus Hoffmann and marola contributors.
+[MIT](./LICENSE), © 2026 Matheus Hoffmann and marola contributors.
+</content>

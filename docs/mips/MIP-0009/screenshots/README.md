@@ -16,7 +16,7 @@ both columns of the aspect grid, past hours fading only their fill, and an 18 px
 | File | Shows |
 |---|---|
 | `desk-hover.png` | Joaquina's tooltip at the best hour: head, the six cells, wind band + compass, period, "best 07:00" for whales |
-| `desk-north.png` | Ingleses' tooltip, where the water verdict is long — it now has the full width of the grid and stays inside the tooltip |
+| `desk-north.png` | Ingleses' tooltip, where the water verdict is long: it now has the full width of the grid and stays inside the tooltip |
 | `desk-area.png` | The whole area at the fitted zoom: 80 waves, each still showing its score colour where the coast is crowded |
 | `desk-today-past.png` | Today's board after 13:10: every past-hour wave with a faded fill and a dashed white outline, legible over the sea tiles |
 | `desk-card.png` | The card with the aspect row as its first block, before the score headline; the selected wave at 32 px on the map |

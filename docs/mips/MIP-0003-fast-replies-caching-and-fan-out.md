@@ -20,14 +20,14 @@ A marola answer today costs one 30-45s Overpass query, twelve sequential Open-Me
 IMA download, every time, for every user, even for the same beach twice in a minute. That is fine
 for one developer and fatal for adoption. This MIP adds three things, in order of payoff: a local
 cache with per-source TTLs, concurrent forecast fetches, and a precomputed "board" for the places
-people actually ask about — targeting a warm reply in under three seconds and a cold one under
+people actually ask about, targeting a warm reply in under three seconds and a cold one under
 fifteen, while *reducing* load on the free upstreams marola depends on.
 
 ## 2. Motivation
 
 Measured on 2026-09-05 (`RUN-LOCALLY.md` §4): 35-47s per run, of which ~30s is Overpass's
 relation query and ~5s is twelve serial Open-Meteo round-trips. Overpass also rate-limits per IP
-(two slots) — ten users would hit 429s within a minute (`ARCHITECTURE.md` §9). Beaches do not move;
+(two slots), so ten users would hit 429s within a minute (`ARCHITECTURE.md` §9). Beaches do not move;
 forecasts change hourly; water quality changes weekly. Re-fetching all three per request is waste
 that gets marola throttled and users bored.
 
@@ -72,7 +72,7 @@ trait Cache:
 Wrapped where the calls are made (`BeachFinder.nearby`, `OpenMeteoClient.forecastFor`,
 `ImaScWaterQualityClient.samplingPoints`, `IpGeolocation.locate`) via a `Cached(cache)` decorator,
 so `Recommender` doesn't know. A miss that then fails upstream serves a *stale* entry if one exists
-(up to 7 days for beaches, 6 hours for forecasts) with a note — better a slightly old forecast than
+(up to 7 days for beaches, 6 hours for forecasts) with a note: better a slightly old forecast than
 "Overpass is down".
 
 ### 5.2 Concurrent forecast fetches
@@ -85,8 +85,8 @@ calls stop pinning (`SCALA3-JDK-REVIEW.md` §3). Expected: 12 serial calls → ~
 
 ### 5.3 Precomputed boards (Phase 4)
 
-For the top-N origin tiles by request count (a JSON-lines counter, no PII), a `just board` task —
-or the bot's own scheduler — recomputes the ranked list every hour and stores it under
+For the top-N origin tiles by request count (a JSON-lines counter, no PII), a `just board` task,
+or the bot's own scheduler, recomputes the ranked list every hour and stores it under
 `boards/<tile>/<hour>`. A request from a hot tile is then a cache read: sub-second. This is also
 the substrate for MIP-0004's daily digest.
 
@@ -106,7 +106,7 @@ and stale water data already follows MIP-0001's 45-day rule.
   proving the second call makes **zero** HTTP requests (extend `PipelineGoldenSpec`'s call-count
   test: warm run = 0 upstream calls).
 - Latency budget test: golden suite measures wall-clock of the fan-out with an artificial 200ms
-  transport delay — serial ≈ 2.4s, concurrent ≈ 0.6s; assert the ratio.
+  transport delay: serial ≈ 2.4s, concurrent ≈ 0.6s; assert the ratio.
 - Live: `just run` twice; second `origin ->` line shows all hits and completes < 3s.
 - Upstream courtesy: after a day of bot use, the counter shows ≤ 1 Overpass query per tile per
   month.
@@ -115,9 +115,9 @@ and stale water data already follows MIP-0001's 45-day rule.
 
 - **Stale beaches**: a newly mapped beach appears up to 30 days late. Acceptable; `--no-cache`
   flag for the impatient.
-- **Disk growth**: forecasts per beach per hour — cap the cache dir at, say, 200MB with oldest-first
+- **Disk growth**: forecasts per beach per hour; cap the cache dir at, say, 200MB with oldest-first
   eviction; note it in `.gitignore` (already covers `data/`).
-- **Coarse tiles**: two origins 5km apart share a beach list computed from the tile centre — the
+- **Coarse tiles**: two origins 5km apart share a beach list computed from the tile centre; the
   distance column is recomputed per origin, so ranking stays right; only the *set* of candidates is
   shared. Fine at 15-20km radii.
 - **Concurrency + Overpass**: never parallelise Overpass; it's the one upstream that punishes it.

@@ -11,11 +11,11 @@ mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-
 
 ## 1. From an idea to a MIP (Draft)
 
-1. **Refine the idea** — superpowers `brainstorming` (activates on "let's plan", "I have an idea"):
+1. **Refine the idea**: superpowers `brainstorming` (activates on "let's plan", "I have an idea"):
    Socratic questions until MIP §1-§3 (summary, motivation, user-visible change) have answers.
    Voice notes and chat pastes go through `just context-mips` + a browser session first
    (`RUN-LOCALLY.md` §8).
-2. **Write the MIP** — the `mip` skill: next number from `docs/mips/README.md`, the template,
+2. **Write the MIP**: the `mip` skill: next number from `docs/mips/README.md`, the template,
    every external claim fetched and dated, what was *not* checked said so, open questions listed.
    Add the index row. Link it from `FUTURE-WORK.md` / the exam mappings if it closes something.
 3. **Open it as its own PR**, status **Draft**. A MIP is never built in the same change (`mip`
@@ -26,14 +26,14 @@ mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-
 Acceptance is a human decision, recorded in the MIP's status table and the index. The reviewer
 of a MIP PR reads, in this order:
 
-- **§4 sources and dependencies** — was each claim verified (URL + date)? Anything unverified must
+- **§4 sources and dependencies**: was each claim verified (URL + date)? Anything unverified must
   sit in §11, not in §5.
-- **§6 scoring / safety** — deterministic, in `scoring/`, unit-tested; never model output.
+- **§6 scoring / safety**: deterministic, in `scoring/`, unit-tested; never model output.
   **Phase** row against `AGENTS.md`'s phase discipline: a later-phase MIP is fine to accept, but
   the missing earlier-phase prerequisite must be named.
-- **§8 caveats and §11 open questions** — answer what can be answered now; what cannot becomes a
+- **§8 caveats and §11 open questions**: answer what can be answered now; what cannot becomes a
   numbered decision in the tasks file (next section), so implementation is never blocked on it.
-- **Cost** — the MIP's own cost model (§4/§8) and whether any paid resource is involved
+- **Cost**: the MIP's own cost model (§4/§8) and whether any paid resource is involved
   (`AGENTS.md`: a paid Azure resource needs an explicit go-ahead, in the MIP, before any task).
 
 Outcome: **Accepted** (status row + `docs/mips/README.md`, in the MIP PR or a one-line follow-up
@@ -43,7 +43,7 @@ status to `Accepted` and links the tasks file.
 
 ## 3. The task list
 
-`mip-tasks` step 1 (superpowers `writing-plans` is skipped — the MIP is the plan): read the MIP,
+`mip-tasks` step 1 (superpowers `writing-plans` is skipped: the MIP is the plan): read the MIP,
 `AGENTS.md` and the code it touches, write `docs/mips/MIP-NNNN.tasks.md`:
 
 - one row per task = one PR: ≤ ~400 changed lines, one concern, **its test named up front** (from
@@ -68,10 +68,10 @@ just pr                                            # fills any missing trailer (
 ```
 
 `just pr --dry-run` prints every step (the trailers `cost-fill` would add, the body `uprd` would
-write) without pushing or touching `gh` — refuses the same way the real run would (on `main`, or a
+write) without pushing or touching `gh`. It refuses the same way the real run would (on `main`, or a
 dirty tree) so the preview matches what actually happens.
 
-Every push — `scripts/stack.sh pr`, `just uprds`, a plain `git push` — goes through
+Every push (`scripts/stack.sh pr`, `just uprds`, a plain `git push`) goes through
 `.githooks/pre-push`, which runs `just quality-other` (ruff on every `.py`, the script self-tests,
 actionlint, hadolint) and, when a pushed commit touches Scala, `just quality-scala` (scalafmt +
 scalafix). Code is linted before the last push, not found red in CI after the merge; `git push
@@ -90,22 +90,22 @@ What GitHub shows: a stacked PR is a PR whose base is the previous branch; its p
 feature, `gh stack`) adds the ordered list at the top of each PR; `just uprds` writes the same list
 at the end of each body, with the summed Cost, for readers without the feature.
 
-A PR opened any other way — the GitHub UI's "Compare & pull request", a bare `gh pr create` — gets
+A PR opened any other way (the GitHub UI's "Compare & pull request", a bare `gh pr create`) gets
 the same body without anyone running `just uprd`: `.github/workflows/pr-body.yml` runs
 `scripts/uprd.sh <PR#>` when the PR is opened, reopened, marked ready, or gets new commits, as long
 as the body is empty, still the raw template, or carries uprd's own first-line marker (a
 hand-written body is left alone; delete the marker line to stop regeneration). It also replaces a
 title that is still the branch name with the first commit's subject. Forks and bot PRs are skipped.
 
-The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape — bold labels, a compact
+The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape: bold labels, a compact
 MIP/Tested/Cost table, no `#` headings, one screen for a typical two-commit PR; the PR title is
 the first commit's subject on the branch, capped at 70 characters (`scripts/lib/uprd_title.sh`) so
-it stays skimmable — `just uprd`/`just uprds` print a warning when a title had to be cut, worth a
+it stays skimmable. `just uprd`/`just uprds` print a warning when a title had to be cut, worth a
 manual retitle if the cut reads awkwardly.
 
 Cost: a measured figure is always preferred over an estimate. One session per task → `/usage` or
 `just claude-cost`. One session for several tasks → `just cost-split MIP-NNNN` splits the session
-log by commit time (subagent transcripts included — `<session>/subagents/*.jsonl`) and prints the
+log by commit time (subagent transcripts included: `<session>/subagents/*.jsonl`) and prints the
 trailer per branch; amend with `GIT_COMMITTER_DATE` preserved so the split stays stable, re-stack,
 force-push with lease, `just uprds`. Nothing logged at all for a commit (a subagent whose worktree
 session never re-attached, a commit from another machine) → `just cost-fill` (or plain `just pr`)
@@ -114,12 +114,12 @@ reads differently from a measured number at a glance.
 
 ## 5. Final review — only when asked
 
-Nothing reviews a PR automatically. (Proposed change: `docs/mips/MIP-0060-open-code-review-on-ready.md` —
+Nothing reviews a PR automatically. (Proposed change: `docs/mips/MIP-0060-open-code-review-on-ready.md`:
 an advisory local-model pass when a PR is marked ready.) Reviews start when the human says so ("review the stack",
 "claude review #21", `/code-review`). Three ways, cheapest first; all of them review **one PR
 against its own base**, bottom of the stack first, because that is the diff a reviewer sees.
 
-1. **superpowers `requesting-code-review`** — in a fresh session, per PR: dispatch the reviewer
+1. **superpowers `requesting-code-review`**: in a fresh session, per PR: dispatch the reviewer
    subagent with `BASE_SHA = git rev-parse origin/<base branch>`, `HEAD_SHA = git rev-parse
    origin/<task branch>`, `PLAN_OR_REQUIREMENTS` = the task's row in `MIP-NNNN.tasks.md` plus the
    MIP's §6/§7, `DESCRIPTION` = the PR title. It returns Critical/Important/Minor findings; fix
@@ -128,17 +128,17 @@ against its own base**, bottom of the stack first, because that is the diff a re
 2. **`/code-review <PR#>`** (built-in; `--comment` posts the findings as inline PR comments) or the
    `code-review` plugin's `/code-review` (five parallel agents, ≥ 80-confidence findings only,
    one comment on the PR). Both look for `CLAUDE.md`; in this repo it imports `AGENTS.md` for
-   Claude Code sessions and tells any tool reading it as plain text to open `AGENTS.md` — the
+   Claude Code sessions and tells any tool reading it as plain text to open `AGENTS.md`. The
    plugin's confidence scorer only credits rules it can read, so keep that instruction there.
-3. **`/code-review ultra <PR#>`** — the multi-agent cloud review, for the riskiest PR of a stack
+3. **`/code-review ultra <PR#>`**: the multi-agent cloud review, for the riskiest PR of a stack
    (scoring, safety text, a new data source). User-triggered and billed; never launched by the agent.
-4. **`/gemini review`** as a PR comment — Gemini Code Assist on GitHub, free, advisory, on request
+4. **`/gemini review`** as a PR comment: Gemini Code Assist on GitHub, free, advisory, on request
    only (`.gemini/config.yaml` turns off review-on-open; `.gemini/styleguide.md` carries the
    `AGENTS.md` subset a diff reviewer can check). Cheapest hosted pass; source goes to Google, so
-   it is installed by the human, never by an agent — `GEMINI-CODE-ASSIST.md` has the setup, by
+   it is installed by the human, never by an agent. `GEMINI-CODE-ASSIST.md` has the setup, by
    hand or as Besom. Skips `.github/workflows/**` by design.
 
-Author side: superpowers `receiving-code-review` — verify each finding before implementing it,
+Author side: superpowers `receiving-code-review`: verify each finding before implementing it,
 push back with reasoning when it is wrong, then fix → commit (`Cost:` trailer) → push → `just
 uprds MIP-NNNN`. Pre-review checklist (superpowers `requesting-code-review` + this repo): Cost
 line present and measured; docs updated in the same PR; the test named in the tasks row exists and
@@ -152,9 +152,9 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 - One at a time: **bottom-up**, squash (the repo's habit). GitHub retargets the next PR to `main`
   when the merged branch is deleted; the commits still need a rebase:
   `scripts/stack.sh restack` on the next branch, or `just stack-sync MIP-NNNN` for the whole
-  stack (it adopts the stack from GitHub first — `gh stack link` keeps no local state).
+  stack (it adopts the stack from GitHub first; `gh stack link` keeps no local state).
 - `scripts/stack.sh status` / `just stack-view` until every PR is merged.
-- Last merge: superpowers `finishing-a-development-branch` — full suite green, delete the task
+- Last merge: superpowers `finishing-a-development-branch`: full suite green, delete the task
   branches, flip the MIP to **Implemented** with the PR numbers and the summed Cost in its status
   row, update `docs/mips/README.md`. A follow-up after a merge is a new branch off `main`, never a
   child of the old one.
@@ -164,17 +164,17 @@ is green; MIP status right; `docs/FABLE_REVIEW.md` item closed if one applies.
 dependabot (`.github/dependabot.yml`) and scala-steward (`.github/workflows/scala-steward.yml`)
 each open their own one-off PR per bump. Left alone, ten open bumps cost ten separate CI runs to
 land. `just deps-stack` chains the open **dependabot** PRs (`--include-steward` adds
-scala-steward's, once its author identity on this repo is confirmed — see
+scala-steward's, once its author identity on this repo is confirmed; see
 `scripts/deps-stack.sh`'s header) into one `deps/<date>/k-slug` stack, github-actions PRs first
 then pip, same shape as a MIP's task branches: run it weekly, or right before a release, rather
 than merging bumps one at a time. A PR's head branch can't be moved after it's opened, so the
 default (and only implemented) path opens one *new* PR per chain branch, stacked on the previous,
-and closes each original dependabot PR with a pointer comment — dependabot's own branches are
+and closes each original dependabot PR with a pointer comment. dependabot's own branches are
 never touched, so an abandoned stack doesn't stop dependabot from re-opening or updating them
 normally. The whole chain is built in a dedicated worktree, `.tmp/wt-deps-stack`, never your own
-checkout — a run of `just deps-stack` (`status`, `clean`, `--resume`, or a conflict mid-run
+checkout: a run of `just deps-stack` (`status`, `clean`, `--resume`, or a conflict mid-run
 included) never switches your branch or touches your index. Two dependency bumps landing on
-adjacent lines of the same file — the only conflict shape dependabot produces — resolve
+adjacent lines of the same file (the only conflict shape dependabot produces) resolve
 themselves: `*requirements*.txt` keeps the higher lower bound per package
 (`scripts/lib/req_merge.py`), a workflow's `uses: owner/action@vN` steps keep the higher version
 per action (`scripts/lib/uses_merge.py`, the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0`
@@ -187,8 +187,8 @@ clean` deletes the chain branches (and the worktree) once every stacked PR shows
 
 ### MIP draft PRs
 
-Drafts pile up the same way bumps do — one `docs/mip-NNNN-*` branch per proposal, each open for
-days — and they fight over one line: every draft appends its row to `docs/mips/README.md` at the
+Drafts pile up the same way bumps do: one `docs/mip-NNNN-*` branch per proposal, each open for
+days, and they fight over one line: every draft appends its row to `docs/mips/README.md` at the
 same place, so the moment one merges the rest conflict there. `just mip-stack` chains the open
 draft PRs (any PR whose head is `docs/mip-*` or that adds a `docs/mips/MIP-NNNN-*.md`; task
 branches `mip-NNNN/k-*` are left to `scripts/stack.sh`) into one `mips/<date>/k-slug` stack
@@ -198,62 +198,62 @@ PR closed with a pointer, `gh stack link` at the end, `just mip-stack status` / 
 `--resume` / `--skip` / `--dry-run` as for deps. The index-row conflict resolves itself
 (`scripts/lib/mip_index_merge.py`: both sides' rows, one per MIP, in number order; the same row
 edited differently on both sides is a real edit and stops for a human). A draft that merged
-another draft's branch to stay mergeable is fine — merge commits are skipped and commits the
+another draft's branch to stay mergeable is fine: merge commits are skipped and commits the
 chain already carries are dropped by patch-id. Then `just stack-merge <stack#> --squash` lands
 the lot bottom-up.
 
 ## 7. Overnight/unattended runs
 
 `.claude/skills/mip-solve-perpetual/SKILL.md` works through a `MIP-NNNN.tasks.md` file one task at
-a time, unattended, via a `/goal` + `/loop`. Two mechanics can drive the recurring re-invocation —
-pick one per run, don't build both (MIP-0011 §11's OQ7 spike, resolved below):
+a time, unattended, via a `/goal` + `/loop`. Two mechanics can drive the recurring re-invocation.
+Pick one per run, don't build both (MIP-0011 §11's OQ7 spike, resolved below):
 
 - **Local `/goal` + `/loop`** (the one actually run, end to end, while writing this MIP's own
   task stack): the human types `/mip-solve-perpetual NNNN` once and that single turn works through
-  the whole task file, checkpointing per task. **Chosen as the default** — no extra setup, and
+  the whole task file, checkpointing per task. **Chosen as the default**: no extra setup, and
   demonstrated for real (eleven MIP-0011 tasks, real pushed branches, real `GH_POST_MORTEM.md`
   entries when `gh` had no session auth). **What it cannot do, verified 2026-09-06 05:01:** start
-  itself later. A `CronCreate`/wakeup whose prompt is the slash command arrives as plain text — the
+  itself later. A `CronCreate`/wakeup whose prompt is the slash command arrives as plain text; the
   harness does not expand it and the Skill tool refuses it (`disable-model-invocation`). The
   earlier claim here that a 15-minute cron "re-invokes the skill" was never exercised (the stack
   finished inside the one typed turn) and is wrong. For a start at a fixed hour, the human types
-  the command at that hour, or creates a cloud routine themselves — the agent's job is staging.
+  the command at that hour, or creates a cloud routine themselves: the agent's job is staging.
 - **A cloud [routine](https://code.claude.com/docs/en/routines)** runs even after the laptop closes,
-  but needs Claude Code on the web / a cloud environment — not confirmed available in every
+  but needs Claude Code on the web / a cloud environment. Not confirmed available in every
   contributor's setup, and MIP-0013's OpenCode tryout doesn't cover it either. Worth adopting once
   that access is confirmed; not assumed as a prerequisite here.
 
 **The `heavy-usage` plugin's "stop before the wall" claim, verified against its actual source**
-(MIP-0011 §11's OQ8 — this needed reading `~/.claude/plugins/cache/heavy-usage`'s scripts, not
+(MIP-0011 §11's OQ8: this needed reading `~/.claude/plugins/cache/heavy-usage`'s scripts, not
 trusting its marketplace description): it is **real, but soft, not a hard block**.
 `usage-meter.js`'s `UserPromptSubmit` hook computes a linear projection (`used% / elapsed_frac`)
 against the official 5-hour/weekly `rate_limits` percentages, and at the `windDown` threshold
 (90% five-hour / 95% weekly, `usage-lib.js`'s `STATE_DEFAULTS.thresholds`) injects: *"Do not start
 new work. Finish the current step, commit what is done, write a brief state summary, then stop the
 loop."* That is a **strongly worded prompt injection Claude is asked to comply with**, not a
-`PreToolUse` block — nothing in the plugin's `hooks` (`SessionStart` + `UserPromptSubmit` only,
+`PreToolUse` block. Nothing in the plugin's `hooks` (`SessionStart` + `UserPromptSubmit` only,
 `.claude-plugin/plugin.json`) can actually stop a tool call the way `guard-azure.sh`'s `PreToolUse`
 exit-2 does. Its data source (`usage-live.json`) is populated only while the interactive statusLine
-renders — the plugin's own comment says as much: *"the statusLine refreshes usage-live.json only
+renders. The plugin's own comment says as much: *"the statusLine refreshes usage-live.json only
 when the UI renders; if it stops (headless/unattended run) the hook would otherwise act on old data
 silently. We annotate — never suppress a wind-down."* A cron-fired prompt inside a still-open
 interactive session (this repo's chosen mechanic above) keeps the statusLine rendering, so this
 staleness risk is mainly a concern for a genuinely headless/detached invocation, not the local
 `/goal`+`/loop` mechanic chosen here. **Conclusion: treat `heavy-usage` as the backup layer
-`mip-solve-perpetual`'s own usage guard already does** (`SKILL.md`'s "more conservative wins" rule)
-— never as the sole or primary stop condition, since compliance is advisory and its data can be
+`mip-solve-perpetual`'s own usage guard already does** (`SKILL.md`'s "more conservative wins" rule),
+never as the sole or primary stop condition, since compliance is advisory and its data can be
 stale exactly when unattended.
 
 **Stated stop condition for any overnight run**, regardless of mechanic: every task in the given
 file has an open PR (or is logged blocked, per `GH_POST_MORTEM.md`'s convention when `gh` has no
-session auth) or a real usage/blocker limit is hit — see `mip-solve-perpetual`'s own "Stop and
+session auth) or a real usage/blocker limit is hit. See `mip-solve-perpetual`'s own "Stop and
 report" and checkpointing-contract sections for the exact contract. **Merging and closing PRs stay
-denied at the permission layer regardless of mechanic** — `.claude/settings.json`'s
+denied at the permission layer regardless of mechanic**: `.claude/settings.json`'s
 `permissions.deny` blocks `Bash(gh pr merge*)`/`Bash(gh pr close*)` project-wide, and (found and
-closed 2026-09-07 — the earlier text here claimed no override flag existed at all, which was
+closed 2026-09-07; the earlier text here claimed no override flag existed at all, which was
 false: `gh stack merge --yes` merges an entire GitHub Stack non-interactively and was not covered)
 also `Bash(gh stack merge*)`/`Bash(gh stack unstack*)`/`Bash(gh stack delete*)`, with no override
-flag (unlike the Azure cost gate's `MAROLA_ALLOW_AZURE_DEPLOY`) — merging is a human decision, on
+flag (unlike the Azure cost gate's `MAROLA_ALLOW_AZURE_DEPLOY`). Merging is a human decision, on
 waking up, full stop.
 
 ## 8. Command reference

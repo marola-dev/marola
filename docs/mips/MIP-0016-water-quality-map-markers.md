@@ -19,7 +19,7 @@
 The map gets one small marker per bathing-water sampling point: a green circle with a ✓ for
 PRÓPRIA, a red circle with a ✕ for IMPRÓPRIA, grey with a ? when the agency has not classified it,
 hollow when the newest sample is older than the 45-day freshness window. Each is drawn **in the
-water**, a fixed distance off the OpenStreetMap coastline nearest the point — because the
+water**, a fixed distance off the OpenStreetMap coastline nearest the point, because the
 agency's coordinates, and OSM's own beach centres, are on land (§2). The same placement function
 moves the existing beach markers offshore, so MIP-0009's wave glyphs inherit a sea anchor. No new
 data source: every field the layer draws is already in `beaches[].water.points[]` of the board.
@@ -31,7 +31,7 @@ the board JSON (`site/board.schema.json`, `water.points[]`: point, location, lat
 sampled_on, enterococci, rain). The page, however, only lists them as text inside the card
 (`app.js`, `renderCard()`); on the map a beach is one dot coloured by score. Praia do Campeche has
 five points 3 km apart with one IMPRÓPRIA among them (Ponto 73, Riozinho, 749 enterococci/100 mL
-in the 2026-09-03 bulletin) — the map cannot show *where* to avoid.
+in the 2026-09-03 bulletin): the map cannot show *where* to avoid.
 
 The placement problem is real and measured, not a hunch. Checked 2026-09-06 against the OSM
 coastline around Campeche (one Overpass query, 13 `natural=coastline` ways, appendix A):
@@ -84,13 +84,13 @@ carry the same information, and every tooltip says it in words.
 Per point: coordinates, `PONTO_NOME`, `LOCALIZACAO`, last five samples. Verified 2026-09-05 (MIP-0001)
 and re-read from the checked-in fixture `local/src/test/resources/ima-mapa-sample.json` on
 2026-09-06 for the table in §2. **Not verified:** whether any point in the full 260-point feed is
-already water-side — the fixture's 14 are all land-side or lagoon; the function in §5.1 handles a
+already water-side: the fixture's 14 are all land-side or lagoon; the function in §5.1 handles a
 water-side point by leaving it where it is.
 
 ### 4.2 OpenStreetMap `natural=coastline` via Overpass — **the pick for "which way is the sea"**
 
 - One query per area at site-build time: `way["natural"="coastline"](around:R, lat, lon); out
-  geom;` — 29 KB for 3 km around Campeche, 13 ways, 392 segments (2026-09-06). For an area radius of
+  geom;`: 29 KB for 3 km around Campeche, 13 ways, 392 segments (2026-09-06). For an area radius of
   30 km (`site/areas.json`) expect a few hundred KB; one call per build, well inside the fair use
   `ARCHITECTURE.md` §7 already documents for `BeachFinder`'s query.
 - Direction convention: OSM coastline ways are drawn with **land on the left, water on the right**
@@ -99,17 +99,17 @@ water-side point by leaving it where it is.
   appendix A and agreed with the known geography for all six test points.
 - Licence: ODbL, already attributed on the page (tiles and Overpass, `SOURCE_LINKS`).
 - **Not verified:** how often the convention is violated in this region (a reversed way would flip
-  a pin onto land — §5.1's centroid check catches that case); Overpass load at 30 km radius.
+  a pin onto land; §5.1's centroid check catches that case); Overpass load at 30 km radius.
 
 ### 4.3 Reviewed and not picked
 
-- **Beach polygon geometry** (`out geom` on the beach relation itself) — gives the sand, not the
+- **Beach polygon geometry** (`out geom` on the beach relation itself): gives the sand, not the
   sea; the seaward edge of a multipolygon is not identifiable without the coastline anyway.
-- **Open-Meteo Marine's grid** as a "this is sea" oracle — the marine API answers for the nearest
+- **Open-Meteo Marine's grid** as a "this is sea" oracle: the marine API answers for the nearest
   sea cell, it does not say whether the query point is wet. Rejected.
 - **Azure Maps** — no land/water test in its Search or Render APIs that this needs; an Azure-only
   path would add a key and cost for nothing. Stated per the `mip` skill: **no Azure opt-in here.**
-- **Hand-placed offsets per point** (a JSON of corrections) — works for 14 points, not for 260 and
+- **Hand-placed offsets per point** (a JSON of corrections): works for 14 points, not for 260 and
   not for INEA/RJ later. Kept only as the manual-override escape hatch (§5.1, `pins.json`).
 
 ## 5. Design
@@ -141,7 +141,7 @@ object Coastline:
   def place(p: Coordinates, coast: Coastline, landHint: Coordinates): SeaPin
 ```
 
-Equirectangular projection around the point (the same maths as appendix A) — sub-metre error at
+Equirectangular projection around the point (the same maths as appendix A): sub-metre error at
 this scale, and no dependency. A manual override file `site/pins.json` (`{"<provider>/<point id>":
 {"lat":…, "lon":…}}`) wins over `place` when present, for the handful of river-mouth cases §8 names.
 
@@ -171,11 +171,11 @@ computed from `today` with `WaterQuality.MaxSampleAgeDays`, so the page never re
 
 ### 5.4 Page — `site/static/app.js`, `style.css`
 
-- A `waterLayer` (`L.layerGroup`) rebuilt in `render()`: one `L.marker` per point with a `divIcon`
-  — inline SVG circle, fill by condition, a ✓ / ✕ / ? path, `stroke-dasharray` when `!fresh`, a
+- A `waterLayer` (`L.layerGroup`) rebuilt in `render()`: one `L.marker` per point with a `divIcon`,
+  inline SVG circle, fill by condition, a ✓ / ✕ / ? path, `stroke-dasharray` when `!fresh`, a
   dashed grey ring and "position unverified" in the tooltip when `placement == "unplaced"`. Shown at
   zoom ≥ 13; below that the beach marker's colour carries the verdict as today (§11 Q1).
-- Beach markers anchor at `marker.lat/lon` when present, else `lat/lon` — an old board still
+- Beach markers anchor at `marker.lat/lon` when present, else `lat/lon`; an old board still
   renders. This is the anchor MIP-0009's wave `divIcon` will use.
 - Tooltip text is the board's strings and numbers plus fixed labels; **nothing goes through the
   LLM.**
@@ -188,7 +188,7 @@ and how existing verdicts are drawn. `Coastline.place` never alters a `condition
 
 ## 7. Verification plan
 
-- `CoastlineSpec` (core, pure, deterministic): a synthetic N→S coastline with water to the east —
+- `CoastlineSpec` (core, pure, deterministic): a synthetic N→S coastline with water to the east;
   a land point 80 m west moves to 120 m east of the foot point (`Offset`); a point 200 m east stays
   (`Provider`); the same coastline reversed flips the side only until `landHint` corrects it; a
   point 3 km away is `Unplaced`; `coastMetres` matches the analytic distance within 1 m.
@@ -211,25 +211,25 @@ and how existing verdicts are drawn. `Coastline.place` never alters a `condition
   always says "pin placed N m off the nearest coastline", so the pin is read as a marker, not a
   GPS fix.
 - **Coastline gaps.** Where OSM has no coastline within 2 km, or Overpass fails, pins are
-  `Unplaced` and drawn dashed with the words — never silently on land as today.
+  `Unplaced` and drawn dashed with the words, never silently on land as today.
 - **The agency's point is not the swim spot.** IMA samples at the access point; the pin says
   "this stretch", not "this square metre". The tooltip keeps the agency's own `LOCALIZACAO`.
 - **Lagoon points stay off the map.** `WaterQualityMatcher` never attaches inland water to a sea
   beach (MIP-0001), so Lagoa da Conceição's eight points are absent, as they are today (§11 Q3).
 - **Stale is not clean.** A hollow ✓ is still drawn as ✓ because that is the agency's last word;
   the ring and the age in the tooltip are what say "old". Absence of a point is never drawn as OK.
-- **Clutter.** Five pins over 3 km at zoom 11 would overlap the beach marker — hence the zoom gate.
+- **Clutter.** Five pins over 3 km at zoom 11 would overlap the beach marker; hence the zoom gate.
 
 ## 9. Alternatives considered
 
-- **Draw the points where the agency puts them** — measured to be on land for every fixture point
+- **Draw the points where the agency puts them**: measured to be on land for every fixture point
   (§2); the user's explicit objection. Rejected.
-- **Fixed bearing per area** ("the sea is east of Florianópolis") — wrong for the south and west
+- **Fixed bearing per area** ("the sea is east of Florianópolis"): wrong for the south and west
   coasts of the same island. Rejected.
-- **Snap to the beach polygon's seaward edge** — needs the coastline anyway to know which edge is
+- **Snap to the beach polygon's seaward edge**: needs the coastline anyway to know which edge is
   seaward. Rejected as a second mechanism for the same input.
-- **Colour the beach marker per worst point, no pins** — is what exists; loses *where*. Rejected.
-- **Do nothing** — the card lists the points; nobody opens five cards to find the stream mouth.
+- **Colour the beach marker per worst point, no pins**: is what exists; loses *where*. Rejected.
+- **Do nothing**: the card lists the points; nobody opens five cards to find the stream mouth.
 
 ## 10. Exam-coverage mapping
 
@@ -249,7 +249,7 @@ other row; no Azure service involved.
 4. Commit the per-area coastline as a fixture-like cache (`site/dist/data/<area>/coastline.json`)
    so a Pages build survives an Overpass outage with yesterday's coast? Proposal: yes if task 2's
    live builds show any Overpass failure; otherwise not.
-5. Should `Report` (CLI) and the MCP `get_water_quality` return the sea pin too? Proposal: no —
+5. Should `Report` (CLI) and the MCP `get_water_quality` return the sea pin too? Proposal: no,
    they serve the agency's coordinates; the pin is a map presentation choice.
 
 ## Appendix

@@ -17,12 +17,12 @@
 
 ## 1. Summary
 
-The question that prompted this MIP was whether a GPU model — XGBoost, a DNN, a transformer — can
+The question that prompted this MIP was whether a GPU model (XGBoost, a DNN, a transformer) can
 compete with WAVEWATCH III. The honest answer is that the good ones do not compete with it, they
 *depend* on it, and the ones that appear to beat it mostly rediscovered persistence. But the question
 has a better answer hiding behind it: marola does not need a wave model at all. It needs wave height
 at eighty fixed points, and the right shape for that is a **learned correction on top of the
-forecasts it already fetches** — trained offline, exported as coefficients, applied deterministically
+forecasts it already fetches**, trained offline, exported as coefficients, applied deterministically
 in Scala, in milliseconds, on a CPU.
 
 ## 2. Motivation
@@ -36,12 +36,12 @@ There are exactly three ways to fix that, and they differ in cost by two orders 
 
 | Fix | What it is | Cost |
 |---|---|---|
-| Ask a finer public model | There isn't one — MFWAM's 8 km is the finest available (MIP-0051 §4.1) | n/a |
+| Ask a finer public model | There isn't one; MFWAM's 8 km is the finest available (MIP-0051 §4.1) | n/a |
 | Run our own nest at 1.1 km | MIP-0051 §5.3 / MIP-0052 | ~87 core-hours per cycle, months of setup |
 | **Learn the correction** | This MIP | days, and the training data is a by-product of work already proposed |
 
 The third is not a worse version of the second. A 25 km model's error inside a sheltered bay is
-**systematic** — the same shelter, the same orientation, the same swell windows, every time. Systematic
+**systematic**: the same shelter, the same orientation, the same swell windows, every time. Systematic
 error is exactly what a regression removes, and it is exactly what more resolution would also remove.
 The difference is that one costs a workstation-quarter and the other costs a JSON file.
 
@@ -65,7 +65,7 @@ Jurere - tomorrow 09:00
   (learned from 214 days of observation here; typical error +/- 0.15 m)
 ```
 
-Where no correction has been validated, **nothing changes** — the MIP-0051 line is shown unmodified.
+Where no correction has been validated, **nothing changes**: the MIP-0051 line is shown unmodified.
 The corrected number never appears without the sample count and the error bar that earn it.
 
 ## 4. Data sources and dependencies reviewed
@@ -73,7 +73,7 @@ The corrected number never appears without the sample count and the error bar th
 ### 4.1 Aurora 0.25° Wave — reviewed, rejected for this purpose
 
 Microsoft's Aurora has a wave variant, and it is genuinely open: `aurora-0.25-wave.ckpt` in the
-`microsoft/aurora` Hugging Face repository, **MIT-licensed** (verified 2026-09-10 — a far better
+`microsoft/aurora` Hugging Face repository, **MIT-licensed** (verified 2026-09-10, a far better
 licence position than WW3's, MIP-0052 §4.2). It predicts `swh`, `mwp`, `pp1d`, `mwd` and swell
 partitions, and Microsoft reports it outperforming operational forecasts on ocean waves "at orders of
 magnitude lower computational cost". It is the strongest AI wave model available today.
@@ -81,7 +81,7 @@ magnitude lower computational cost". It is the strongest AI wave model available
 **Rejected on two grounds, both structural:**
 
 1. **It requires HRES-WAM as input.** Its own documentation states it needs ocean-wave variables from
-   HRES-WAM — ECMWF's operational wave model — plus HRES atmospheric fields. It does not replace a
+   HRES-WAM (ECMWF's operational wave model) plus HRES atmospheric fields. It does not replace a
    wave model; it accelerates one. The dependency marola would acquire is on ECMWF operational wave
    output, which is not the free, keyless path `ARCHITECTURE.md` §5 requires.
 2. **It runs at 0.25°.** That is the same ~25 km that MIP-0051 §2 showed cannot see Jurerê. Aurora is
@@ -90,13 +90,13 @@ magnitude lower computational cost". It is the strongest AI wave model available
 
 ### 4.2 Station-level ML, and the finding that disciplines this whole MIP
 
-The literature reports ML beating physical models at buoys — one Lake Erie study gives XGBoost a mean
+The literature reports ML beating physical models at buoys; one Lake Erie study gives XGBoost a mean
 absolute error of 0.11–0.18 m against WW3's 0.12–0.48 m. Taken alone that would argue for a large
 model.
 
-It should not be taken alone. A 2024 comment paper — *"Comment on papers using machine learning for
+It should not be taken alone. A 2024 comment paper, *"Comment on papers using machine learning for
 significant wave height time series prediction: **Complex models do not outperform auto-regression**"*
-— compared AutoRegressive, XGBoost, ANN, LSTM and WaveNet across 16 buoy locations and found the
+compared AutoRegressive, XGBoost, ANN, LSTM and WaveNet across 16 buoy locations and found the
 differences **negligible**, concluding that the complex models "have only 'learned' the linear
 auto-regression from the data".
 
@@ -122,9 +122,9 @@ descriptors (coastline orientation, exposure) derivable from the OSM data marola
 
 The **target** is the problem, and it splits:
 
-- **Offshore / exposed beaches** — PNBOIA's Itajaí buoy gives a real target. A correction can be
+- **Offshore / exposed beaches**: PNBOIA's Itajaí buoy gives a real target. A correction can be
   trained here as soon as MIP-0051 §5.4's ledger accumulates. This part is buildable.
-- **Sheltered bays — the case that motivated this MIP — have no target at all.** The Itajaí buoy is
+- **Sheltered bays, the case that motivated this MIP, have no target at all.** The Itajaí buoy is
   ~90 km north and offshore; it cannot observe Jurerê. There is no public observation inside these
   bays. **No model form fixes this**: XGBoost, a transformer and a linear fit are equally helpless
   without a label. This is why §5.3 refuses to extrapolate a correction to beaches it was not trained
@@ -178,14 +178,14 @@ final case class LocalCorrection(
 
 Trained offline under a new `downscale/` directory (ridge regression, scikit-learn), exported to
 `core/src/main/resources/local_corrections.json`, loaded by a `LocalCorrections` object in `core`.
-The applier is plain arithmetic — deterministic, unit-testable, and inspectable by a human reading the
+The applier is plain arithmetic: deterministic, unit-testable, and inspectable by a human reading the
 JSON. No Python at runtime, no new dependency, no GPU, and inference is microseconds.
 
 ### 5.3 Three rules that make a bad correction structurally impossible
 
 1. **No correction without validation at that beach.** A beach absent from the artefact gets the
    MIP-0051 ensemble median unchanged. There is no default correction, no nearest-neighbour fallback
-   and no regional average — those are exactly how an Itajaí-trained correction would leak into
+   and no regional average; those are exactly how an Itajaí-trained correction would leak into
    Jurerê.
 2. **Clamped magnitude.** A correction may move the value by at most ±0.5 m or ±50%, whichever is
    smaller. This bounds the blast radius of a bad fit or a corrupt artefact; it cannot produce 0.0 m
@@ -196,7 +196,7 @@ JSON. No Python at runtime, no new dependency, no GPU, and inference is microsec
 ### 5.4 What is not proposed
 
 Not a wave model. Not a GPU. Not a neural network. Not Aurora. Not a correction for temperature,
-current, jellyfish risk or the water-quality verdict — this MIP touches wave height only, and
+current, jellyfish risk or the water-quality verdict; this MIP touches wave height only, and
 MIP-0001's rule that the agency's classification is shown verbatim is untouched and unextendable by
 anything here.
 
@@ -212,10 +212,10 @@ validated correction exists, and the ensemble median everywhere else. The thresh
 **The asymmetric rule, stated precisely.** Let `raw` be the ensemble median and `corr` the corrected
 value:
 
-- If `corr > raw` — conditions look **worse** than the public models said — apply `corr` in full. A
+- If `corr > raw`, conditions look **worse** than the public models said: apply `corr` in full. A
   learned correction warning of more wave than the coarse grid saw is exactly the case worth trusting,
   and being wrong costs a cancelled swim.
-- If `corr < raw` — conditions look **safer** — apply `corr`, but **never let it cross a threshold
+- If `corr < raw`, conditions look **safer**: apply `corr`, but **never let it cross a threshold
   the raw value did not**. Concretely, if `raw >= RoughWaveHeightM` then the scored value is
   `max(corr, RoughWaveHeightM)`; the same for the `CalmWaveHeightM` and `WhaleCalmWaveHeightM`
   boundaries. Clearing a danger classification requires the physical models to agree, not a
@@ -236,7 +236,7 @@ Unit tests (`core`):
   present returns the corrected value; a malformed artefact fails loudly at load, not silently at
   request time.
 - `LocalCorrectionsSpec`: the ±0.5 m / ±50% clamp binds in both directions.
-- `LocalCorrectionsSpec`: **the asymmetric rule** — `raw = 1.6`, `corr = 0.9` scores as 1.5, not 0.9;
+- `LocalCorrectionsSpec`: **the asymmetric rule**: `raw = 1.6`, `corr = 0.9` scores as 1.5, not 0.9;
   `raw = 0.9`, `corr = 1.6` scores as 1.6 in full. One named test per threshold.
 - `SwimabilitySpec`: an existing scoring test re-run with a correction present, asserting the bucket
   only moves in the permitted direction.
@@ -251,7 +251,7 @@ Offline (`downscale/`, with a self-test in `quality-other` like every other `scr
 ### 7.1 The one experiment that settles the sheltered-bay half
 
 Everything above validates the offshore case. The case that motivated the MIP needs a target, and the
-cheapest honest test is to obtain one for **a single bay** — one sensor, one season, one beach — and
+cheapest honest test is to obtain one for **a single bay** (one sensor, one season, one beach) and
 ask whether a correction trained there beats the ensemble. If it does, the method generalises to the
 other sheltered beaches as a data-collection problem. If it does not, this MIP is closed and MIP-0052's
 physical route is the only remaining answer. That experiment is worth more than any model-selection
@@ -264,7 +264,7 @@ work.
   exists so that the gap produces *no correction* rather than a confident wrong one.
 - **A learned correction is only valid while the source models are unchanged.** Open-Meteo can update
   MFWAM's version, or change which model backs a field; the correction was fitted to the old one.
-  Coefficients must carry `trainedThrough`, and drift needs monitoring — the ledger already collects
+  Coefficients must carry `trainedThrough`, and drift needs monitoring; the ledger already collects
   what is needed to notice it.
 - **Autocorrelation flatters everything** (§4.2). Every reported result must name its baseline. A
   number without a baseline is not evidence of skill.
@@ -272,7 +272,7 @@ work.
   bathymetry in a night. A correction fitted last season may be wrong this one, in a way no in-sample
   metric will reveal.
 - **This adds a fitted quantity to a safety-relevant path.** Mitigated by §5.3's clamp, §6's
-  asymmetry, and the artefact being human-readable — but the honest statement is that MIP-0051's
+  asymmetry, and the artefact being human-readable, but the honest statement is that MIP-0051's
   output is measurement plus a median, and this MIP's output is measurement plus a model.
 - **Sample counts will be small.** A season is a few hundred usable observations per beach, against a
   dozen features. This is a strong argument for ridge over anything larger, and a reason to expect
@@ -280,22 +280,22 @@ work.
 
 ## 9. Alternatives considered
 
-- **Do nothing — ship MIP-0051 and stop.** A real option, and the fallback if §7.1 fails. marola would
+- **Do nothing: ship MIP-0051 and stop.** A real option, and the fallback if §7.1 fails. marola would
   keep showing the spread honestly and never resolve it. Rejected as the *end state* only because the
   spread at sheltered beaches is large enough to make the forecast unhelpful there, not merely uncertain.
 - **Run our own 1.1 km nest (MIP-0051 §5.3 / MIP-0052).** The physically correct fix, and the one that
-  needs no local observation because it computes the shelter instead of learning it. Not rejected —
+  needs no local observation because it computes the shelter instead of learning it. Not rejected,
   deferred, on the two-orders-of-magnitude cost difference. If §7.1's experiment fails for want of
   data, this becomes the answer by elimination.
-- **Aurora 0.25° Wave** — §4.1. Rejected: needs HRES-WAM, and shares the resolution limit.
-- **XGBoost or an LSTM instead of a linear fit** — §4.2 and §4.4. Rejected *as the starting point*, not
+- **Aurora 0.25° Wave**: §4.1. Rejected: needs HRES-WAM, and shares the resolution limit.
+- **XGBoost or an LSTM instead of a linear fit**: §4.2 and §4.4. Rejected *as the starting point*, not
   forever: they must beat ridge on held-out data at 24–48 h before they earn a runtime cost that plain
   Scala cannot pay.
 - **Fine-tune marola-sea (MIP-0025/0048) to predict wave height.** Rejected: a language model is the
   wrong instrument for a regression on twelve numeric features, and it would move a safety-relevant
   quantity into an LLM, which `AGENTS.md` forbids.
 - **Buy a commercial nearshore forecast.** Still uncosted, still the honest alternative to all of the
-  above, and still deserving its own investigation — the same note MIP-0052 §9 carries.
+  above, and still deserving its own investigation, the same note MIP-0052 §9 carries.
 
 ## 10. Exam-coverage mapping
 
@@ -306,7 +306,7 @@ fitted quantity rather than a sourced one. Not claimed as coverage.
 
 ## 11. Open questions
 
-- **Where does local truth come from for a sheltered bay?** §4.3 lists three unverified candidates —
+- **Where does local truth come from for a sheltered bay?** §4.3 lists three unverified candidates:
   a cheap sensor, satellite altimetry, dated user reports via `SightingStore`. None was investigated.
   This is the question the MIP lives or dies by, and §7.1 is the cheapest way to answer it.
 - **Is Itajaí's buoy transmitting, and in what format?** Inherited unresolved from MIP-0051 §11. Both
@@ -316,7 +316,7 @@ fitted quantity rather than a sourced one. Not claimed as coverage.
   be set by the backtest's variance, not by a guess written here.
 - **Does an orientation-aware feature actually capture shelter**, or does a bay need a per-swell-window
   term? Settled by §7.1's data, not by argument.
-- **Follow-up MIP:** the same correction machinery would apply to **wind** — `Swimability` reads wind
+- **Follow-up MIP:** the same correction machinery would apply to **wind**: `Swimability` reads wind
   speed too, and coarse models miss the sea-breeze onset that decides a Florianópolis afternoon. It is
   a different target with a different truth source (INMET stations, which are on land and plentiful,
   unlike buoys) and needs its own number.
@@ -327,42 +327,42 @@ fitted quantity rather than a sourced one. Not claimed as coverage.
 
 All 2026-09-10.
 
-- **`microsoft/aurora` on Hugging Face** — the repository contains **`aurora-0.25-wave.ckpt`**
+- **`microsoft/aurora` on Hugging Face**: the repository contains **`aurora-0.25-wave.ckpt`**
   (alongside `aurora-0.25-wave-static.nc` / `.pickle`), among nine checkpoints including
   `aurora-0.25-v1.5.ckpt` and `aurora-0.4-air-pollution.ckpt`. Card metadata reports **`license: mit`**.
   Queried via the Hugging Face API.
-- **`microsoft/aurora` on GitHub** — 1,013 stars, last pushed 2026-08-19; GitHub reports the repository
+- **`microsoft/aurora` on GitHub**: 1,013 stars, last pushed 2026-08-19; GitHub reports the repository
   licence as `NOASSERTION` (unparsed), which is why the MIT statement above cites the **weights'** card
   metadata and not the repository.
-- **Aurora 0.25° Wave documentation** (https://microsoft.github.io/aurora/example_wave.html) — predicts
+- **Aurora 0.25° Wave documentation** (https://microsoft.github.io/aurora/example_wave.html): predicts
   `swh`, `mwp`, `pp1d`, `mwd` and swell partitions (`shts`, `mdts`, `mpts`, `swh1`, `swh2`); **requires
   ocean-wave variables from HRES-WAM plus HRES T0 atmospheric fields**; 0.25° resolution; the worked
   example runs two 6-hour rollout steps on a CUDA GPU.
 - **Microsoft Research / Aurora** (https://www.microsoft.com/en-us/research/project/aurora-forecasting/)
-  — Aurora "outperforms operational forecasts in predicting air quality, ocean waves, tropical cyclone
+  Aurora "outperforms operational forecasts in predicting air quality, ocean waves, tropical cyclone
   tracks and high-resolution weather, all at orders of magnitude lower computational cost".
 - **"Complex models do not outperform auto-regression"**
-  (https://www.sciencedirect.com/science/article/abs/pii/S1463500324000519, 2024) — AR, XGBoost, ANN,
+  (https://www.sciencedirect.com/science/article/abs/pii/S1463500324000519, 2024): AR, XGBoost, ANN,
   LSTM and WaveNet compared at **16 buoy locations**; performance differences **negligible**; the
   models "have only 'learned' the linear auto-regression from the data".
 - **XGBoost/LSTM at buoys, Lake Erie**
-  (https://www.sciencedirect.com/science/article/pii/S1463500321000846) — XGBoost wave-height MAE
+  (https://www.sciencedirect.com/science/article/pii/S1463500321000846): XGBoost wave-height MAE
   ~**0.11–0.18 m** against WW3's ~**0.12–0.48 m**.
-- **The repo's offline-artefact pattern** — `dspy/README.md`: Python "run **offline only** — this never
+- **The repo's offline-artefact pattern**: `dspy/README.md`: Python "run **offline only**, this never
   runs in production and marola's Scala/Kyo runtime never imports Python", producing JSON loaded by
   `marola.llm.CompiledPrompt`. §4.4/§5.2 follow it exactly.
-- `Swimability.scala:27,28,39` — the three thresholds §6's asymmetric rule protects.
+- `Swimability.scala:27,28,39`: the three thresholds §6's asymmetric rule protects.
 
 ### Not checked
 
-- **PNBOIA in every respect** — inherited from MIP-0051 §4.2 and still unfetched: endpoint, format,
+- **PNBOIA in every respect**: inherited from MIP-0051 §4.2 and still unfetched: endpoint, format,
   cadence, licence, and whether the Itajaí buoy transmits today.
 - **Every claim in §4.2's literature was read from search-result summaries, not from the papers.** The
   Lake Erie MAE figures and the comment paper's conclusion are quoted as reported, not verified against
   the PDFs. The comment paper's *conclusion* drives §5.2's model choice, so it is the one most worth
   reading properly before building.
 - Aurora's actual VRAM requirement, its inference time on a consumer GPU, and whether HRES-WAM
-  initial conditions are obtainable free in near-real-time — the last determines whether §4.1's
+  initial conditions are obtainable free in near-real-time; the last determines whether §4.1's
   rejection is structural or merely inconvenient.
 - Whether `microsoft/aurora`'s repository `LICENSE` file is also MIT; only the weights' card metadata
   was read.

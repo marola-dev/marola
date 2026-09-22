@@ -5,32 +5,32 @@ this before writing, modifying, or deploying anything. Humans should read it too
 
 ## What this repo is
 
-**marola** — the ocean intelligence layer for a stretch of coast, reachable as a Telegram
+**marola** is the ocean intelligence layer for a stretch of coast, reachable as a Telegram
 assistant: real nearby beach discovery (OpenStreetMap), live sea/weather conditions (Open-Meteo), a
-jellyfish/whale heuristic, an LLM-generated summary reviewed by a second LLM pass — its first case
-is "what's the best hour tomorrow to swim nearby?" — all runnable **entirely locally
+jellyfish/whale heuristic, an LLM-generated summary reviewed by a second LLM pass. Its first case
+is "what's the best hour tomorrow to swim nearby?", all runnable **entirely locally
 with a free Ollama model, zero Azure account needed**, with Azure Maps/Foundry/Cosmos DB/Vision/
 Application Insights as opt-in upgrades per integration, never a package deal. Also hands-on
 coverage of every [AI-103](https://learn.microsoft.com/en-us/credentials/certifications/azure-ai-apps-and-agents-developer-associate/)
 exam domain and a design target for [AI-500](https://learn.microsoft.com/en-us/credentials/certifications/)
-(multi-agent, AI-103 is its prerequisite) — see `docs/AI-103-MAPPING.md`/`docs/AI-500-MAPPING.md`.
+(multi-agent, AI-103 is its prerequisite); see `docs/AI-103-MAPPING.md`/`docs/AI-500-MAPPING.md`.
 
 One sbt multi-project build (root `build.sbt`), split into four modules at the repo root so the
 local-only path carries zero Azure SDK dependency:
 
-- `core/` — pure pipeline logic, shared HTTP/JSON helpers, the traits (`LlmClient`, `VisionClient`,
+- `core/`: pure pipeline logic, shared HTTP/JSON helpers, the traits (`LlmClient`, `VisionClient`,
   `SightingStore`) `local/`/`azure/` implement. No Azure reference anywhere in this module.
-- `local/` — Ollama-backed implementations. Zero Azure SDK dependency, confirmed in `build.sbt`.
-- `azure/` — every optional Azure integration (Foundry, Azure Maps, Cosmos DB, AI Vision, App
+- `local/`: Ollama-backed implementations. Zero Azure SDK dependency, confirmed in `build.sbt`.
+- `azure/`: every optional Azure integration (Foundry, Azure Maps, Cosmos DB, AI Vision, App
   Insights), all opt-in. `.claude/rules/azure.md` auto-loads the full cost/credential rules here.
-- `cli/` — `Main`, `AppConfig` (picks a backend per integration from env vars), the MCP tool
+- `cli/`: `Main`, `AppConfig` (picks a backend per integration from env vars), the MCP tool
   server. Depends on all three above; use `sbt cli/run`/`cli/runMain ...`, not `sbt run` at the
   root (a pure aggregate with no source of its own).
-- `dspy/` — offline Python DSPy prompt-compile step; produces a JSON artifact the Scala side
+- `dspy/`: offline Python DSPy prompt-compile step; produces a JSON artifact the Scala side
   loads, never a runtime dependency.
 
-`PHILOSOPHY.md` (repo root) holds the reasons behind the rules below — why Scala 3 on the JVM, Nix,
-`just`, ai-jail, MIPs. Docs live under `docs/` — `docs/README.md` indexes them and marks which ideas
+`PHILOSOPHY.md` (repo root) holds the reasons behind the rules below: why Scala 3 on the JVM, Nix,
+`just`, ai-jail, MIPs. Docs live under `docs/`. `docs/README.md` indexes them and marks which ideas
 are MIP material; check these before assuming something is undecided or unbuilt (MIP status
 vocabulary and template pointer: `.claude/rules/docs.md`):
 
@@ -38,19 +38,19 @@ vocabulary and template pointer: `.claude/rules/docs.md`):
 |---|---|
 | `docs/ARCHITECTURE.md` | The pipeline, the six pluggable integrations, what's verified live vs. written-not-run |
 | `docs/FUTURE-WORK.md` | Design sketches, reviewed-but-not-adopted libraries, harness ideas, exam-coverage ideas |
-| `docs/EFFECTS-MAP.md` | A Scala/FP-purity review — what's pure, what's effectful, what's hidden |
+| `docs/EFFECTS-MAP.md` | A Scala/FP-purity review: what's pure, what's effectful, what's hidden |
 | `docs/RUN-LOCALLY.md` | Run it now, with Ollama, no Telegram/Azure |
 | `docs/TELEGRAM-SETUP.md` | Registering the bot, local-dev and Azure-Foundry credential paths |
 | `docs/AI-103-MAPPING.md` | AI-103 exam domain coverage, including honest gaps |
-| `docs/AI-500-MAPPING.md` | AI-500 (multi-agent) domain coverage — a design target, not a build record |
-| `docs/SKILLS.md` | A skills roadmap — what to practice, in order, using marola as the vehicle |
-| `docs/SCALA3-JDK-REVIEW.md` | Scala 3 / JDK 21-25 features reviewed against this code — adopt list and order |
-| `docs/AGENT-FRAMEWORKS-SURVEY.md` | Multi-agent frameworks survey — Python ideas → Scala shapes, Pekko fit, reading list |
+| `docs/AI-500-MAPPING.md` | AI-500 (multi-agent) domain coverage: a design target, not a build record |
+| `docs/SKILLS.md` | A skills roadmap: what to practice, in order, using marola as the vehicle |
+| `docs/SCALA3-JDK-REVIEW.md` | Scala 3 / JDK 21-25 features reviewed against this code: adopt list and order |
+| `docs/AGENT-FRAMEWORKS-SURVEY.md` | Multi-agent frameworks survey: Python ideas → Scala shapes, Pekko fit, reading list |
 | `docs/DEV-FLOW.md` | The loop end to end: idea → MIP → acceptance → tasks → stacked PRs (verified, costed) → review on request → merge/restack → Implemented; command reference |
 | `docs/AGENT-SKILLS.md` | Which agent skills to use in this repo: `mip` (plan), `mip-tasks` (tasks → stacked PRs, `scripts/stack.sh`), superpowers walkthrough, candidates to write |
-| `docs/benchmarks/` | Kept `just benchmark` runs — re-run and compare before changing prompt/corpus/embedder/model |
-| `docs/mips/` | Marola Improvement Proposals — design a non-trivial change here first, via the `mip` skill (`.claude/skills/mip/SKILL.md`), before building it. `just context-mips` packs what a browser session needs to draft one from voice notes; `just context-mip MIP-NNNN` packs one already-written MIP for an independent, non-Claude reviewer |
-| `docs/FABLE_REVIEW.md` | Code and documentation review at the initial import — open findings, ranked, with file:line references |
+| `docs/benchmarks/` | Kept `just benchmark` runs: re-run and compare before changing prompt/corpus/embedder/model |
+| `docs/mips/` | Marola Improvement Proposals: design a non-trivial change here first, via the `mip` skill (`.claude/skills/mip/SKILL.md`), before building it. `just context-mips` packs what a browser session needs to draft one from voice notes; `just context-mip MIP-NNNN` packs one already-written MIP for an independent, non-Claude reviewer |
+| `docs/FABLE_REVIEW.md` | Code and documentation review at the initial import: open findings, ranked, with file:line references |
 
 ## Setup & commands
 
@@ -69,61 +69,61 @@ just coverage         # sbt-scoverage: statement coverage across core/local/azur
 
 Always run `just build && just test && just quality` before considering a change done (`quality` =
 `quality-scala`, scalafmt + scalafix, plus `quality-other`, ruff + actionlint + hadolint +
-`scripts/*.py` self-tests — the same gates as `ci.yml`; a missing lint tool fails rather than
+`scripts/*.py` self-tests: the same gates as `ci.yml`; a missing lint tool fails rather than
 skips, so use `nix develop`). `.githooks/pre-push` runs `quality-other` before every push and
-`quality-scala` too when Scala changed — `git push --no-verify` bypasses it, CI does not.
-**JDK 25 is required, not just "17+"** — Kyo's artifacts won't load on an older JVM. See
+`quality-scala` too when Scala changed. `git push --no-verify` bypasses it, CI does not.
+**JDK 25 is required, not just "17+".** Kyo's artifacts won't load on an older JVM. See
 `.claude/rules/scala.md` (loaded automatically while editing `.scala`/`build.sbt`) for the full
 JDK/Kyo-versioning detail and the jar-verification approach for Kyo's pre-1.0 API surface.
 
 ## Phase discipline (hard rule)
 
 Work **one phase at a time**, per `docs/ARCHITECTURE.md` §11: do not start Phase 2 (going live on
-Azure — provisioning any of the six optional integrations for real, `docs/ARCHITECTURE.md` §5/§6)
-before Phase 1 (Telegram bot actually working) is done — this exists to prevent an expensive
+Azure, provisioning any of the six optional integrations for real, `docs/ARCHITECTURE.md` §5/§6)
+before Phase 1 (Telegram bot actually working) is done. This exists to prevent an expensive
 mistake, so don't skip it because a later phase looks more interesting. If asked to jump ahead,
 implement the requested feature but flag which earlier-phase prerequisite is still missing.
 
 ## Cost & deployment safety (hard rule)
 
-**Never provision or deploy a paid Azure resource without explicit human confirmation first** —
-propose the change, state the expected cost, wait for a go-ahead. Enforced two ways, not only
-prose, and they're deliberately not the same shape (an ultrareview on 2026-09-06 found the two
-layers described as interchangeable when they aren't — this section states the real relationship
+**Never provision or deploy a paid Azure resource without explicit human confirmation first.**
+Propose the change, state the expected cost, wait for a go-ahead. This is enforced two ways, not
+only in prose, and they're deliberately not the same shape (an ultrareview on 2026-09-06 found the
+two layers described as interchangeable when they aren't; this section states the real relationship
 instead): `.claude/settings.json`'s `permissions.deny` refuses the exact literal command prefixes
-(`azd up`, `azd provision`, `az deployment `, `az group create`) before any hook runs at all —
-for those, `MAROLA_ALLOW_AZURE_DEPLOY=1` does nothing, because the tool call never reaches
+(`azd up`, `azd provision`, `az deployment `, `az group create`) before any hook runs at all. For
+those, `MAROLA_ALLOW_AZURE_DEPLOY=1` does nothing, because the tool call never reaches
 `.claude/hooks/guard-azure.sh`; the human runs the command directly, or adds a one-shot rule to
 `.claude/settings.local.json`. `guard-azure.sh` (`PreToolUse` on `Bash`) is the second, broader
 layer, catching every other invocation shape a Claude session might produce (a wrapped shell, an
-absolute path, `cd infra && azd up`) — for those, and only those, `MAROLA_ALLOW_AZURE_DEPLOY=1`
+absolute path, `cd infra && azd up`). For those, and only those, `MAROLA_ALLOW_AZURE_DEPLOY=1`
 set after a human go-ahead lets the one command through. ai-jail is a third layer, orthogonal to
 both. Never hardcode a key/connection string/secret. Full detail (managed identity, the
-`.env.example` placeholder rule) is in `.claude/rules/azure.md` — this rule matters everywhere
+`.env.example` placeholder rule) is in `.claude/rules/azure.md`; this rule matters everywhere
 though, not only its auto-load paths, so the short version stays here too.
 
 ## Attribution and cost accounting (hard rule)
 
 - **Commits carry three trailers and nothing else:** `Tested:`, `Cost:` (both below) and
   `Co-Authored-By: Claude <noreply@anthropic.com>`. No session links, no "Generated with" banners,
-  no PR-body attribution — enforced by `.claude/settings.json` (`attribution.commit`,
+  no PR-body attribution. This is enforced by `.claude/settings.json` (`attribution.commit`,
   `attribution.pr: ""`, `attribution.sessionUrl: false`), the shared project settings. Don't add
   attribution text by hand.
-- **The whole PR workflow is one command.** Write the commit — a body plus `Tested:`/`Cost:`
-  trailers — then `just pr`: fills any missing trailer (`just cost-fill`), pushes, writes the PR
-  from `.github/PULL_REQUEST_TEMPLATE.md` (`just uprd`, or `scripts/stack.sh pr` on a
-  `mip-NNNN/k-*` branch); `Cost:` prefers `just cost-split`'s measured figure over
+- **The whole PR workflow is one command.** Write the commit (a body plus `Tested:`/`Cost:`
+  trailers), then `just pr`: it fills any missing trailer (`just cost-fill`), pushes, and writes
+  the PR from `.github/PULL_REQUEST_TEMPLATE.md` (`just uprd`, or `scripts/stack.sh pr` on a
+  `mip-NNNN/k-*` branch). `Cost:` prefers `just cost-split`'s measured figure over
   `scripts/cost-split.py --estimate`'s diff-size fallback, labelled `est.`.
 - **One feature, one session.** Start a feature with `/clear` and `/rename` it to the branch name
   so `/usage`'s session block and ccusage's per-session rows map to one PR. Re-runs of
   `just benchmark`/`just e2e` driven by the agent count toward the feature; note them. When one
   session produces several PRs (a MIP stack), `just cost-split MIP-NNNN` attributes usage to each
-  commit by time and prints the per-branch `Cost:` trailer — measured, not estimated;
+  commit by time and prints the per-branch `Cost:` trailer, measured, not estimated.
   `just uprds MIP-NNNN` refreshes every PR of the stack with its Cost section.
 - **Heavier option, when it matters:** Claude Code exports `claude_code.cost.usage`/
   `claude_code.token.usage` over OpenTelemetry (`CLAUDE_CODE_ENABLE_TELEMETRY=1`,
   `OTEL_METRICS_EXPORTER=otlp`, `OTEL_EXPORTER_OTLP_ENDPOINT=...`) tagged by `session.id`/`model`/
-  `skill.name`/`mcp_tool.name` — a future Phase 2 could land agent spend next to marola's own
+  `skill.name`/`mcp_tool.name`; a future Phase 2 could land agent spend next to marola's own
   `Telemetry` traces in Application Insights.
 
 ## Code style
@@ -133,59 +133,62 @@ auto-loaded while editing `.scala`/`build.sbt`. Short version for every language
 exhaustive matching over exceptions for expected failure modes, and reproduce a bug with a failing
 test before fixing it.
 
-**Comments: write few, and only what the code cannot say.** Agents overshoot here badly — #280,
-#284, #286 and #287 were four separate passes cutting comment lines roughly in half (Scala 1882 →
-793, shell 1071 → 565, the justfile 392 → 135, JavaScript 166 → 115), and the same verbosity grows
-straight back unless it is refused in review. Before writing a comment, check it is one of these:
+**Comments: write few, and only what the code cannot say.** Agents overshoot here badly: #280,
+#284, #286 and #287 were four separate passes cutting comment lines roughly in half (Scala 1882 to
+793, shell 1071 to 565, the justfile 392 to 135, JavaScript 166 to 115), and the same verbosity
+grows straight back unless it is refused in review. Before writing a comment, check it is one of
+these:
 
-- **why, not what** — a non-obvious decision, a rejected alternative, a constraint from outside the
+- **why, not what**: a non-obvious decision, a rejected alternative, a constraint from outside the
   file (an API's behaviour, a licence, a version pin). `// increment i` is noise; "429 is Overpass's
   documented back-pressure, not an exception" is not.
-- **a trap** — something that will look like a bug, or bite the next reader, and is invisible here.
-- **a pointer** — the MIP or issue that explains the shape, in one reference, not a summary of it.
+- **a trap**: something that will look like a bug, or bite the next reader, and is invisible here.
+- **a pointer**: the MIP or issue that explains the shape, in one reference, not a summary of it.
 
 Everything else belongs in the commit message, the MIP, or nowhere. Specifically: do not restate
 the code in prose, do not narrate the history of a fix in the file it fixed, do not re-explain in a
 comment what a good name already says, and do not paste a paragraph where a clause works. A
 docstring that is longer than the function it documents is a defect, not thoroughness. The commit
-message is the right home for reasoning and evidence — it is versioned, it is read once, and it
+message is the right home for reasoning and evidence: it is versioned, it is read once, and it
 does not have to be maintained forever alongside the code.
-Prefer running agent tools through [ai-jail](https://github.com/akitaonrails/ai-jail) —
-`just jail-claude` (or `jcf`/`jcs`, pinned to fable/sonnet) — over bare. It sandboxes the process
+
+Prefer running agent tools through [ai-jail](https://github.com/akitaonrails/ai-jail), via
+`just jail-claude` (or `jcf`/`jcs`, pinned to fable/sonnet), over bare. It sandboxes the process
 (bubblewrap/Landlock/seccomp); it doesn't replace the rules above or stop bad code/overspend, only
 out-of-sandbox access. `.env`/`*.pem`/`*.key` are masked regardless of disk content;
 `just jail-dry-run <cmd>` previews a jailed command. **A jail never has a `gh` login of its own,
 and cannot acquire one:** `~/.config/gh` is not mapped in, so `gh auth login` *inside* the jail
-writes to an ephemeral HOME and is gone by the next session — that is the "reauth every time" loop,
+writes to an ephemeral HOME and is gone by the next session. That is the "reauth every time" loop,
 not a bug in `gh`. `just jail-claude`/`just jail-opencode` therefore resolve a token on the host,
-via labs/agentic's `gh-token` (h0ffmann/nix-config, a flake input), and forward the value with `--env GH_TOKEN`: a fine-grained key in the
-gitignored `.env` first (the shellHook loads it — narrowest credential, so it wins), otherwise the
-host's own `gh auth token`. Authenticate **once on the host**, never inside the jail. If neither
-exists, `jail-claude` says so at startup rather than letting you discover it when `just uprd`
-fails. `jail-claude` runs `ai-jail --exec` — direct execution, no PTY proxy/status bar —
-because the proxy is what broke Ctrl+C (it owns the raw terminal and must relay the interrupt
-byte itself) and mangled multi-line/bracketed pastes; see the justfile comment above `jail-claude`
-for the full diagnosis. `JAIL_CLIPBOARD=1` opts into a write-only clipboard bridge
-(`just clip`), off by default. Plain text Ctrl+V paste needs nothing extra (the terminal emulator
-injects it as ordinary input); Claude Code's own image-paste needs a real X11/Wayland socket,
-which `JAIL_CLIPBOARD_PASTE=1` opts into — off by default, and a bigger grant than the
-write-only bridge (a full display socket, not a one-way pipe; on X11 specifically, any client on
-that socket can read other windows and inject input, not just read the clipboard). **Ubuntu
-24.04:** `bwrap: setting up uid map: Permission denied` means unprivileged user namespaces are
-blocked by default — fix via a scoped AppArmor profile, or disable the sysctl (weakens the
-protection globally).
+via labs/agentic's `gh-token` (h0ffmann/nix-config, a flake input), and forward the value with
+`--env GH_TOKEN`: a fine-grained key in the gitignored `.env` first (the shellHook loads it, the
+narrowest credential, so it wins), otherwise the host's own `gh auth token`. Authenticate **once on
+the host**, never inside the jail. If neither exists, `jail-claude` says so at startup rather than
+letting you discover it when `just uprd` fails. `jail-claude` runs `ai-jail --exec`, direct
+execution with no PTY proxy/status bar, because the proxy is what broke Ctrl+C (it owns the raw
+terminal and must relay the interrupt byte itself) and mangled multi-line/bracketed pastes; see the
+justfile comment above `jail-claude` for the full diagnosis. `JAIL_CLIPBOARD=1` opts into a
+write-only clipboard bridge (`just clip`), off by default. Plain text Ctrl+V paste needs nothing
+extra (the terminal emulator injects it as ordinary input); Claude Code's own image-paste needs a
+real X11/Wayland socket, which `JAIL_CLIPBOARD_PASTE=1` opts into. That is off by default, and a
+bigger grant than the write-only bridge (a full display socket, not a one-way pipe; on X11
+specifically, any client on that socket can read other windows and inject input, not just read the
+clipboard). **Ubuntu 24.04:** `bwrap: setting up uid map: Permission denied` means unprivileged
+user namespaces are blocked by default. Fix via a scoped AppArmor profile, or disable the sysctl
+(weakens the protection globally).
 
 ## Before implementing a feature
 
-Check `docs/AI-103-MAPPING.md` and `docs/AI-500-MAPPING.md` — is there an existing gap this closes?
+Check `docs/AI-103-MAPPING.md` and `docs/AI-500-MAPPING.md`: is there an existing gap this closes?
 Building it is fine either way (a real product, not just exam prep), but note the mapping in the
 PR description if it applies. For a proactive/autonomous agent behavior (e.g. the escalation-agent
 idea in `docs/FUTURE-WORK.md`), see `docs/AI-500-MAPPING.md` §4 before removing a
-human-confirmation gate — not optional polish.
+human-confirmation gate; this is not optional polish.
 
 ## When something here turns out to be wrong
 
-Update this file, `.claude/rules/*.md`, or the relevant `docs/*.md` in the same change — an Azure
-API/limit/version changes, a library moves past the version pinned in `build.sbt`, etc. Rules
-files are excerpts that link back here, not the only copy — this file is read by non-Claude agents
+Update this file, `.claude/rules/*.md`, or the relevant `docs/*.md` in the same change (an Azure
+API/limit/version changes, a library moves past the version pinned in `build.sbt`, etc.). Rules
+files are excerpts that link back here, not the only copy. This file is read by non-Claude agents
 too, so a rule that matters everywhere stays stated here even if the full detail moved.
+</content>

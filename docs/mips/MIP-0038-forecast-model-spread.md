@@ -18,10 +18,10 @@
 ## 1. Summary
 
 marola shows one wave height per beach-hour, from Open-Meteo's `best_match` model, and never says
-that other wave models disagree — sometimes by enough to move the hour across `Swimability`'s own
+that other wave models disagree, sometimes by enough to move the hour across `Swimability`'s own
 `rough seas` threshold. This MIP adds `models=` to the marine request already being made (**the
 same single HTTP call**, §4.1), computes a deterministic **spread** across the models that answered,
-and shows one word — `agreed` / `mixed` / `split` — next to the wave figure, with the per-model
+and shows one word (`agreed` / `mixed` / `split`) next to the wave figure, with the per-model
 numbers in the detailed block. **The score does not change**: `best_match` stays the number
 `Swimability` scores, and the spread is a note beside it, never a new input to the veto.
 
@@ -36,13 +36,13 @@ Verified live on 2026-09-07 against the Marine API (Appendix, "Checked live"), a
 ```
 
 Those two hours are not cherry-picked: across the 48 forecast hours returned in that one request,
-the two models that answered land in **different `Swimability` score bands on 11 of them** — one
+the two models that answered land in **different `Swimability` score bands on 11 of them**. One
 model says `rough seas ($h%.1fm waves)` (−40, `Swimability.scala:87`), the other says
 `choppy` (−15, `:88`). That is a 25-point swing in a 0–100 score, on 23% of the hours, and marola's
 output today contains no trace of it. The same 0.6 m threshold is also one of the four signals
 `jellyfishRisk` counts (`:58`), so the model choice can flip a hazard label too.
 
-marola's existing honesty about forecasts is about *resolution* — `ARCHITECTURE.md` §9, "beaches a
+marola's existing honesty about forecasts is about *resolution*: `ARCHITECTURE.md` §9, "beaches a
 few km apart genuinely get the same or near-same forecast cell". This is the complementary
 limitation nothing in the repo records: the *same* cell has several models behind it and they do
 not agree. Windy's most-used feature is showing ECMWF/GFS/ICON side by side and letting the reader
@@ -64,7 +64,7 @@ Top pick — Praia da Joaquina, Tue 8 Sep 09:00-10:00
                   Scored on Open-Meteo's best_match (1.3m). Source: Open-Meteo Marine API.
 ```
 
-Board JSON (`site/board.schema.json`, both fields optional — an old board still renders):
+Board JSON (`site/board.schema.json`, both fields optional, an old board still renders):
 
 ```json
 "sea": { "wave_m": 1.3, "wave_spread": "split",
@@ -73,7 +73,7 @@ Board JSON (`site/board.schema.json`, both fields optional — an old board stil
 ```
 
 Map (MIP-0009's tooltip): one extra row, `〰️ waves 1.3 m · models split`, and the same block inside
-the card. When every model that answered agrees (`agreed`), **nothing new is shown anywhere** — the
+the card. When every model that answered agrees (`agreed`), **nothing new is shown anywhere**. The
 line only appears when it carries information. `--brief` is unchanged.
 
 ## 4. Data sources and dependencies reviewed
@@ -83,35 +83,35 @@ line only appears when it carries information. `--brief` is unchanged.
 - **What:** the same endpoint `OpenMeteoClient` already calls
   (`https://marine-api.open-meteo.com/v1/marine`, `OpenMeteoClient.scala:33`) accepts a
   comma-separated `models=` parameter and returns one suffixed column per model in the *same*
-  response — `wave_height_gwam`, `wave_height_meteofrance_wave`, and so on.
+  response: `wave_height_gwam`, `wave_height_meteofrance_wave`, and so on.
 - **Verified live 2026-09-07** (Appendix): a single request with
   `models=ecmwf_wam025,gwam,ncep_gfswave025` returned `hourly_units` keyed
   `wave_height_ecmwf_wam025` / `wave_height_gwam` / `wave_height_ncep_gfswave025`. This matters more
   than it sounds: marola's site build is ~2 calls × 80 beaches (`OpenMeteoClient.scala:30`'s own
-  comment), and **this change adds no call at all** — only columns to a request already in flight.
+  comment), and **this change adds no call at all**: only columns to a request already in flight.
   Against the free tier's documented ceilings (fetched 2026-09-07: "600 calls / min", "5.000 calls /
   hour", "10.000 calls / day", CC-BY 4.0, non-commercial only, no key), the call budget is untouched.
 - **Models the docs list** for this endpoint (fetched 2026-09-07): `best_match`, MeteoFrance Wave,
   MeteoFrance Ocean Currents, DWD EWAM, DWD GWAM, ECMWF WAM, ECMWF WAM 0.25, GFS Wave 0.25°,
   GFS Wave 0.16°, ERA5-Ocean. The docs describe `best_match` as "the best forecast for any given
-  location worldwide" but **do not document the `models=` parameter for this endpoint in prose** —
-  the live probe is what confirms it, and that is stated here rather than glossed.
+  location worldwide" but **do not document the `models=` parameter for this endpoint in prose**.
+  The live probe is what confirms it, and that is stated here rather than glossed.
 - **Two traps found by the same probe, and the design turns on them:**
-  1. `ecmwf_wam025` returned **`null`** for every hour at both Florianópolis points — the model's
+  1. `ecmwf_wam025` returned **`null`** for every hour at both Florianópolis points. The model's
      grid does not resolve these coastal cells. A null is *absence*, not agreement.
-  2. `ncep_gfswave025` returned **`0.0` for every hour** at both points — a land-masked cell, not a
+  2. `ncep_gfswave025` returned **`0.0` for every hour** at both points, a land-masked cell, not a
      forecast of a flat sea. **A constant 0.0 must never be counted as a model opinion**; §5's
      filter drops it, and §8 states why that filter is itself a guess.
-  3. `ewam` was requested at Joaquina and came back with no column at all — DWD's EWAM is a European
+  3. `ewam` was requested at Joaquina and came back with no column at all. DWD's EWAM is a European
      regional model. A requested model that does not answer is normal, not an error.
-- **Terms:** unchanged from what marola already relies on (`ARCHITECTURE.md` §7) — same endpoint,
+- **Terms:** unchanged from what marola already relies on (`ARCHITECTURE.md` §7): same endpoint,
   same free non-commercial CC-BY 4.0 terms, still no key.
 
 ### 4.2 Open-Meteo Ensemble API — reviewed, **not** the pick
 
 Fetched 2026-09-07: `https://ensemble-api.open-meteo.com/v1/ensemble`, no key, free for
 non-commercial use, 14 ensemble systems (ICON EPS 40 members, ECMWF IFS 0.25° 51, GFS Ensemble 31,
-Google WeatherNext 2 64, …). It is the textbook way to get a probabilistic forecast — and its
+Google WeatherNext 2 64, …). It is the textbook way to get a probabilistic forecast, and its
 variable list is atmospheric only: **marine/wave variables are not available at that endpoint**
 (stated on the page, confirmed 2026-09-07). It could give a *wind* ensemble, which is a second,
 separate feature; waves are the field that actually moves marola's score, so the multi-model
@@ -124,12 +124,12 @@ approach in §4.1 is what this MIP builds. Named here so a later MIP doesn't re-
   for 10,000 requests/day, and its free "Testing" tier "returns randomly shuffled and slightly
   modified data" (both fetched 2026-09-07 from `api.windy.com/point-forecast/pricing`). marola gets
   the same multi-model signal from Open-Meteo for free, without a key.
-- **Windy makes the reader do the comparison.** marola's whole shape is the opposite — a
+- **Windy makes the reader do the comparison.** marola's whole shape is the opposite, a
   deterministic score and one sentence. So this MIP does *not* copy the layered-models UI; it
   reduces the comparison to one deterministic word and keeps the numbers one level down. That is the
   actual design decision here, and §9 records the rejected alternative.
-- **Safeswim (NZ)** and **NSW Beachwatch** — the two services that genuinely forecast *water*
-  quality rather than reporting a sample — both publish a modelled prediction with an accuracy claim
+- **Safeswim (NZ)** and **NSW Beachwatch**, the two services that genuinely forecast *water*
+  quality rather than reporting a sample, both publish a modelled prediction with an accuracy claim
   attached. Neither is a wave forecaster, and neither is copyable here (their models run on
   agency-held rainfall and sewer telemetry). Noted as the standard of honesty about a modelled
   number, not as a data source.
@@ -139,7 +139,7 @@ and `MAROLA_WAVE_MODELS` to override, plus the `best_match` column exactly as fe
 
 ## 5. Design
 
-**`core/conditions/ModelSpread.scala` — pure, deterministic, unit-tested.**
+**`core/conditions/ModelSpread.scala`: pure, deterministic, unit-tested.**
 
 ```scala
 enum SpreadLevel derives CanEqual:
@@ -161,18 +161,18 @@ object ModelSpread:
 
 The band boundaries are **not** copied into this file. `Swimability.windLevel`'s precedent
 (MIP-0009 §5: "computed in Scala so the page never re-implements a scoring threshold") applies
-verbatim — `Swimability` exposes a `waveBand(h: Double): WaveBand` that `waveDelta` itself calls, so
+verbatim: `Swimability` exposes a `waveBand(h: Double): WaveBand` that `waveDelta` itself calls, so
 one threshold serves the score, the note and the spread. A `SwimabilitySpec` case proves band and
 delta agree, exactly as MIP-0009 did for wind.
 
-**`core/conditions/OpenMeteoClient.scala`** — the marine query string gains `&models=…` (the
+**`core/conditions/OpenMeteoClient.scala`**: the marine query string gains `&models=…` (the
 `best_match` values keep arriving as the unsuffixed columns; the per-model ones arrive alongside).
 `merge` reads the suffixed columns into a new `HourlyConditions.waveByModel: List[ModelReading]`
 (empty when the models are not requested). Nothing else in the merge changes. The land-mask filter
-is applied once per beach over the whole series, not per hour — a single 0.0 at slack water is real,
+is applied once per beach over the whole series, not per hour: a single 0.0 at slack water is real,
 a series of 48 of them is a mask.
 
-**`core/site/Board.scala`** — `sea` gains optional `wave_spread` and `wave_models`; schema stays
+**`core/site/Board.scala`**: `sea` gains optional `wave_spread` and `wave_models`; schema stays
 version 1 (additive and optional, MIP-0009 §5's precedent). `Report` prints the §3 block.
 `site/static/app.js` renders the tooltip row and the card block; absence of the fields renders
 exactly today's page.
@@ -181,7 +181,7 @@ exactly today's page.
 sees the disagreement rather than a bare number.
 
 **What goes through the LLM: nothing.** The spread word is an enum label. The summariser's
-`factInputs` (`Main.factInputsFor`) is **deliberately left unchanged in v1** — adding a spread field
+`factInputs` (`Main.factInputsFor`) is **deliberately left unchanged in v1**. Adding a spread field
 there would invite the model to editorialise about uncertainty, which is exactly the class of claim
 MIP-0039 exists to catch. The block in §3 is rendered by `Report`, after the model, like MIP-0022's
 footer.
@@ -189,7 +189,7 @@ footer.
 ## 6. Scoring / safety impact
 
 **`Swimability.score` is unchanged, deliberately and by rule.** The score, the notes, the water
-veto and the jellyfish signals keep reading `best_match`'s `waveHeightM` exactly as they do today —
+veto and the jellyfish signals keep reading `best_match`'s `waveHeightM` exactly as they do today:
 the same field, the same thresholds, the same numbers. Nothing in this MIP can raise or lower a
 score.
 
@@ -198,7 +198,7 @@ behind a `Swimability.waveBand` the delta itself calls, so the spread computatio
 the scoring. `SwimabilitySpec` gains the boundary cases (just below 0.6, at 0.6, just below 1.5, at
 1.5) proving band and delta still agree.
 
-Promotion of the spread to a *scoring* input — a conservative "score the roughest model" rule —
+Promotion of the spread to a *scoring* input, a conservative "score the roughest model" rule,
 is explicitly **out of scope and needs its own MIP**, on the same reasoning MIP-0007 §6 uses for its
 estimates: marola has no evidence which model is right for this coast, and picking the pessimistic
 one would silently lower every score on 23% of hours with nothing to justify it. `ROADMAP.md` §7 K5
@@ -227,7 +227,7 @@ one would silently lower every score on 23% of hours with nothing to justify it.
 
 - **A hedge is not information.** Four numbers where there was one makes the page worse. The
   mitigations are structural: one word on the ranked row, the numbers only in the detailed block,
-  and **nothing at all** when the models agree — which, on the 2026-09-07 run, was 37 of 48 hours.
+  and **nothing at all** when the models agree, which, on the 2026-09-07 run, was 37 of 48 hours.
 - **The land-mask filter is a heuristic about a heuristic.** "A whole series of 0.0 means a masked
   cell" is inferred from two points on one coast on one day, not from Open-Meteo documentation.
   A model that genuinely forecasts a flat 48 hours would be dropped. Stated in the code comment and
@@ -240,9 +240,9 @@ one would silently lower every score on 23% of hours with nothing to justify it.
   both points on both days probed; that is two points and two days, not a bias measurement.
 - **Coverage is uneven by design.** ECMWF WAM 0.25° answers nowhere near these beaches and EWAM is
   Europe-only, so on this coast the "ensemble" is realistically two models. Where only one answers,
-  `Single` shows nothing, and the page looks exactly as it does today — the honest outcome.
+  `Single` shows nothing, and the page looks exactly as it does today, the honest outcome.
 - **`best_match` may itself be one of the compared models.** At Campeche on 2026-09-07 `best_match`
-  returned 0.80 m, equal to MeteoFrance Wave's 0.80 m for that hour — so the "spread" is partly
+  returned 0.80 m, equal to MeteoFrance Wave's 0.80 m for that hour, so the "spread" is partly
   between the scored model and its rivals, not around it. Worth saying in the block's wording
   ("scored on best_match"), which §3 does.
 
@@ -252,7 +252,7 @@ one would silently lower every score on 23% of hours with nothing to justify it.
   hours. Lost on the repo's own "sourced or clearly labelled" rule.
 - **Show every model as a layer, Windy-style.** Honest and free, and it turns a five-second read
   into a comparison exercise. Rejected: marola's product is the decision, not the data.
-- **Average the models into one number.** Tempting and wrong — it invents a forecast no model made,
+- **Average the models into one number.** Tempting and wrong. It invents a forecast no model made,
   and it would silently change every score. Rejected on §6's rule.
 - **Score the roughest model (conservative).** Defensible for a safety product, and unjustifiable
   today: no evidence exists that the roughest model is the right one here, and it would lower scores
@@ -276,12 +276,12 @@ rather than a single confident figure. Mark "proposed: MIP-0038". No AI-500 row.
    cells where the 0.25° one is masked. Probe it before fixing the default.
 2. **`MixedSpreadM = 0.3`** is a guess at "far enough apart to mention inside one band". Tune it
    against a week of boards before merging, or drop `Mixed` entirely and ship only `Split`.
-3. **Should the spread appear on the *hour slider* colours** (MIP-0009) — e.g. a hatched marker for
-   split hours — or only in text? Proposal: text only in v1; a second visual channel on the same
+3. **Should the spread appear on the *hour slider* colours** (MIP-0009), e.g. a hatched marker for
+   split hours, or only in text? Proposal: text only in v1; a second visual channel on the same
    markers risks the clutter MIP-0009 §8 already flags.
 4. **Sea-surface temperature and wind spread.** The same `models=` mechanism returns per-model SST,
    and the Forecast API takes `models=` for wind. Both are score inputs too. Proposal: waves only in
-   v1 — one signal, one column, one word — and revisit once the wave version has been read by real
+   v1, one signal, one column, one word, and revisit once the wave version has been read by real
    users.
 5. **Follow-up MIP: a normalised, openly licensed Brazilian bathing-water dataset.** Found while
    researching this MIP's competitor set, out of scope here, and genuinely undesigned: the only
@@ -290,7 +290,7 @@ rather than a single confident figure. Mark "proposed: MIP-0038". No AI-500 row.
    agencies and appears stale, CETESB's own open-data catalogue has listed balneabilidade as
    "coming soon" since 2024, and INEMA suspended and only resumed publishing in March 2026.
    MIP-0031 builds the *ingestion* for RJ/BA and MIP-0034 §5.6 builds an *outbound Atom feed*;
-   nothing yet proposes publishing the normalised, source-traceable dataset itself — including
+   nothing yet proposes publishing the normalised, source-traceable dataset itself, including
    whether to adopt the existing `swimdrinkfish/opendata` exchange schema rather than inventing one.
    Needs the next free MIP number and its own provider verification pass.
 
@@ -316,7 +316,7 @@ All fetched or executed by the author on **2026-09-07**.
 - `https://open-meteo.com/en/docs/marine-weather-api` → model dropdown lists `best_match`,
   MeteoFrance Wave, MeteoFrance Ocean Currents, DWD EWAM, DWD GWAM, ECMWF WAM, ECMWF WAM 0.25,
   GFS Wave 0.25°, GFS Wave 0.16°, ERA5-Ocean; full hourly variable list; "No API key is required"
-  for non-commercial use. **The page does not document `models=` in prose** — the probes above are
+  for non-commercial use. **The page does not document `models=` in prose**. The probes above are
   the evidence.
 - `https://open-meteo.com/en/terms` → free tier "600 calls / min", "5.000 calls / hour",
   "10.000 calls / day"; "You accept to the CC-BY 4.0 licence"; "You may only use the free API
@@ -335,14 +335,14 @@ All fetched or executed by the author on **2026-09-07**.
 
 ### Not checked
 
-- `ncep_gfswave016`, `ecmwf_wam` (the coarser grid) and `era5_ocean` were never requested — the
+- `ncep_gfswave016`, `ecmwf_wam` (the coarser grid) and `era5_ocean` were never requested. The
   claim that a finer GFS grid *would* resolve these cells is a hypothesis (§11.1), not a finding.
-- Whether Open-Meteo's `models=` behaviour on the marine endpoint is contractual or incidental — it
+- Whether Open-Meteo's `models=` behaviour on the marine endpoint is contractual or incidental: it
   is undocumented in prose there, so it could change without notice. The degradation path (no
   suffixed columns → `Single` → today's page) is designed for that, but the risk is not eliminated.
 - Whether the `0.0` columns are truly land-masking. Inferred from the constant series, not confirmed
   by Open-Meteo docs or support.
-- Windy.com's consumer subscription price and Windy.app's API price — reported by a research pass
+- Windy.com's consumer subscription price and Windy.app's API price, reported by a research pass
   from search summaries, not fetched from a primary page, and therefore not cited in §4.3.
-- Safeswim's and NSW Beachwatch's stated model accuracy figures — reported from search summaries
+- Safeswim's and NSW Beachwatch's stated model accuracy figures, reported from search summaries
   only; §4.3 cites them for their *approach*, not for any number.

@@ -46,7 +46,7 @@ Reply to an inline comment to argue with it. Same discipline as a Claude review 
 The Feb-2025 "free for individuals, install the GitHub app" path is gone from Google's docs; the
 only documented install now goes through **Google Cloud Developer Connect** and needs a **GCP
 project with a billing account attached**. Google states there are no charges during Preview, but a
-card is on file. This is a human's action, never an agent's — it is the moment private source
+card is on file. This is a human's action, never an agent's: it is the moment private source
 starts going to Google.
 
 1. Pick or create a project; confirm billing is linked. You need Owner/Admin on it, or Service
@@ -67,7 +67,7 @@ Then open any PR and comment `/gemini review`.
 
 Every GCP-side piece has a Pulumi resource, and Besom is current: `besom-core` **0.5.2**
 (2026-09-18) and `besom-gcp` **9.0.0-core.0.5** (2025-09-27, wrapping Pulumi GCP provider 9.0.0
-of 2025-09-18) on Maven Central. Do not trust `search.maven.org`'s index for these — it lags a
+of 2025-09-18) on Maven Central. Do not trust `search.maven.org`'s index for these: it lags a
 year; read `repo1.maven.org/maven2/org/virtuslab/` directly.
 
 | Need | Resource | In pulumi-gcp since |
@@ -79,7 +79,7 @@ year; read `repo1.maven.org/maven2/org/virtuslab/` directly.
 | Data-sharing opt-out, as code | `gcp.gemini.DataSharingWithGoogleSetting` + `…Binding` | 8.20.0 |
 | Gemini enablement, as code | `gcp.gemini.GeminiGcpEnablementSetting` + `…Binding` | 8.20.0 |
 
-Layout: a standalone scala-cli project under `infra/gemini/`, **not** an sbt module — the
+Layout: a standalone scala-cli project under `infra/gemini/`, **not** an sbt module. The
 `besom-gcp` jar is the whole GCP surface and `just build` must not pay for it. `CLAUDE.md` puts
 `infra/**` behind plan mode, and it would be the repo's first IaC, so it is a MIP before it is a
 branch.
@@ -127,7 +127,7 @@ Two things Besom does not remove:
 - **The GitHub app install is a browser step.** The first `pulumi up` creates the connection
   pending and exports `installationStates[0].actionUri`; open it, install the app on marola only;
   the flow writes an OAuth token to Secret Manager. Set `appInstallationId` and
-  `oauthSecretVersion` in stack config and run `up` again. Two runs, one click — the workflow
+  `oauthSecretVersion` in stack config and run `up` again. Two runs, one click: the workflow
   Pulumi's own docs describe, not a Besom limit.
 - **Whether an API-created connection counts as a "Code Assist" connection is undocumented.**
   If the console just makes a plain connection in `us-east1`, Besom's is identical. If it stamps
@@ -140,13 +140,13 @@ Toolchain notes: nixpkgs has `pulumi` (3.255.0 today) but no Scala language plug
 `pulumiPackages.pulumi-gcp`; both install with `pulumi plugin install language scala 0.5.2
 --server github://api.github.com/VirtusLab/besom` and `pulumi plugin install resource gcp 9.0.0`
 into `~/.pulumi/plugins`. Inside `just jail-claude` `HOME` is ephemeral, so install them on the
-host or the plan has to map the plugin dir in — same trap as `gh auth login` in the jail.
+host or the plan has to map the plugin dir in, same trap as `gh auth login` in the jail.
 
 ## 5. State: GCS self-managed, or Pulumi Cloud
 
 Pulumi's CLI, engine and SDKs are Apache-2.0 and run without any account. What is paid is
-**Pulumi Cloud**, the hosted state/secrets/deployments service. Its Individual tier is free — one
-user, unlimited stacks and updates, no resource cap, no card — and marola's one maintainer fits it
+**Pulumi Cloud**, the hosted state/secrets/deployments service. Its Individual tier is free: one
+user, unlimited stacks and updates, no resource cap, no card, and marola's one maintainer fits it
 by definition. There is no separate open-source programme and none is needed.
 
 The choice is therefore not about money but about where the state file lives. The state holds
@@ -165,7 +165,7 @@ cd infra/gemini && pulumi stack init prod --secrets-provider=passphrase   # $0; 
 `pulumi login gs://…` reads Application Default Credentials (`gcloud auth application-default
 login` once on the host). A passphrase secrets provider costs nothing and is enough for a stack
 whose only secret is a config value; Cloud KMS is the upgrade when more than one person runs it.
-Switch to Pulumi Cloud the day a second person needs the stack — that is the collaboration
+Switch to Pulumi Cloud the day a second person needs the stack: that is the collaboration
 feature it sells, at $40/month (Essentials), not free.
 
 ## 6. A CD layer
@@ -173,7 +173,7 @@ feature it sells, at $40/month (Essentials), not free.
 **Pulumi Deployments** (Pulumi's own CD: run `preview`/`up` on their compute or a self-hosted
 agent, triggered by a PR or a `git push`) is a Pulumi Cloud feature. It needs Pulumi Cloud as the
 backend; the Individual tier includes up to 500 workflow minutes/month. With state in GCS (§5) it
-is not available — that is the trade.
+is not available: that is the trade.
 
 The equivalent without Pulumi Cloud is a GitHub Actions workflow with `pulumi/actions`, which
 marola can run on its own self-hosted runners (the same ones `ci.yml`'s profile ping and
@@ -187,7 +187,7 @@ MIP-0060's OCR job use):
   the shape it forbids an agent to run. The human presses the button.
 - Auth: Workload Identity Federation from the repo's OIDC token to a service account with
   `roles/developerconnect.admin`, `roles/storage.objectAdmin` on the bucket, and the two Gemini
-  roles — no JSON key in a GitHub secret.
+  roles, no JSON key in a GitHub secret.
 
 Follow-up for the MIP, not this PR: add `pulumi up` / `pulumi destroy` to
 `.claude/settings.json`'s `permissions.deny` next to `azd up`, and teach
@@ -220,13 +220,13 @@ Azure.
 
 ## Sources
 
-- [Customize Gemini Code Assist behavior in GitHub](https://docs.cloud.google.com/gemini/docs/code-review/customize-repo-review) — `config.yaml` schema
+- [Customize Gemini Code Assist behavior in GitHub](https://docs.cloud.google.com/gemini/docs/code-review/customize-repo-review): `config.yaml` schema
 - [Set up Gemini Code Assist on GitHub](https://docs.cloud.google.com/gemini/docs/code-review/set-up-code-assist-github)
-- [Use Gemini Code Assist on GitHub](https://docs.cloud.google.com/gemini/docs/code-review/use-code-assist-github) — commands
+- [Use Gemini Code Assist on GitHub](https://docs.cloud.google.com/gemini/docs/code-review/use-code-assist-github): commands
 - [Gemini for Google Cloud — quotas](https://docs.cloud.google.com/gemini/docs/quotas)
 - [pulumi `gcp.developerconnect.Connection`](https://www.pulumi.com/registry/packages/gcp/api-docs/developerconnect/connection/)
 - [pulumi `gcp.gemini`](https://www.pulumi.com/registry/packages/gcp/api-docs/gemini/)
-- [pulumi-gcp releases](https://github.com/pulumi/pulumi-gcp/releases) — v8.2.0, v8.20.0, v9.0.0 notes
+- [pulumi-gcp releases](https://github.com/pulumi/pulumi-gcp/releases): v8.2.0, v8.20.0, v9.0.0 notes
 - [Besom](https://virtuslab.github.io/besom/docs/getting_started) · [`org.virtuslab` on Maven Central](https://repo1.maven.org/maven2/org/virtuslab/)
 - [Pulumi pricing](https://www.pulumi.com/pricing/) · [Pulumi Deployments](https://www.pulumi.com/docs/pulumi-cloud/deployments/)
 - [CodeRabbit pricing](https://www.coderabbit.ai/pricing) · [Qodo pricing](https://www.qodo.ai/pricing/) · [Greptile pricing](https://www.greptile.com/pricing) · [Copilot plans](https://github.com/features/copilot/plans) · [GitHub Models retirement](https://docs.github.com/en/github-models/use-github-models/prototyping-with-ai-models)

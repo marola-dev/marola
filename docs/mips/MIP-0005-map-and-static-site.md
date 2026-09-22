@@ -36,7 +36,7 @@ links to it; the CLI keeps working as the workbench.
   fan-out entirely: one Overpass query per area per month (cached), one Open-Meteo pair per beach
   per run, one IMA download per run.
 - The static site is the cheapest possible surface to share: a URL forwarded in a WhatsApp group.
-  It is also the honest MVP of "product adoption" — if nobody opens the map, the bot won't be
+  It is also the honest MVP of "product adoption": if nobody opens the map, the bot won't be
   opened either.
 
 ## 3. User-visible change
@@ -62,20 +62,20 @@ change to the CLI output.
 - **Map tiles.** OpenStreetMap's public tile servers have a usage policy that forbids heavy or
   commercial use; fine for a private link among friends, not for a public launch. Free
   alternatives with a key-free or generous tier: Protomaps (self-hosted PMTiles on the same static
-  host — fully static, no third party at runtime, the local-first answer), MapTiler/Stadia free
+  host, fully static, no third party at runtime, the local-first answer), MapTiler/Stadia free
   tiers (key, quotas). Decision in §11.
 - **Map library.** Leaflet (small, no build step, vendored as static files) for markers/popups;
   MapLibre GL if Protomaps vector tiles are chosen. Both are plain JS files copied into `site/`;
   no Node build, consistent with the repo's dependency stance.
 - **Hosting.** Cloudflare Pages (free tier, `wrangler pages deploy site/dist`, generous bandwidth)
-  or GitHub Pages (free for the repo). Both serve static files only — which is the point. The
+  or GitHub Pages (free for the repo). Both serve static files only, which is the point. The
   author's friend runs projects on Cloudflare; either works, nothing in the design depends on the
   choice.
 - **Scheduling.** Locally: a cron/systemd timer running `just site-build && just site-deploy`. In
-  CI: a scheduled GitHub Actions workflow — no Ollama needed (the LLM summary is optional and off
+  CI: a scheduled GitHub Actions workflow, no Ollama needed (the LLM summary is optional and off
   by default for the site), so a run is ~2-3 minutes of the free minutes; every 3 hours ≈ 8 runs/day
   ≈ 20 min/day. Verified cost model, not verified execution (no scheduled workflow exists yet).
-- **Not needed:** Supabase or any database — the site is read-only. It becomes relevant only if
+- **Not needed:** Supabase or any database: the site is read-only. It becomes relevant only if
   visitors *write* (sightings from the map), which is MIP-0002/MIP-0004 territory and would slot
   in as another `SightingStore` provider.
 
@@ -86,7 +86,7 @@ change to the CLI output.
 `site/areas.json`: named areas the scheduler computes — `{ "id": "floripa", "name":
 "Florianópolis", "lat": -27.60, "lon": -48.48, "radius_km": 30, "beach_limit": 80 }`. The
 pipeline already takes `radiusKm`/`beachLimit`; `BeachFinder`'s 500-element cap covers an island.
-Distances on the map are not "from you" (there is no you) — the card shows the beach's own
+Distances on the map are not "from you" (there is no you); the card shows the beach's own
 coordinates and the list is ranked by score, with a "near me" sort only if the browser grants
 location, client-side, never sent anywhere.
 
@@ -114,7 +114,7 @@ compute every field; `Board` is a serializer, unit-tested against the golden fix
 - `just site-build [area]` → `cli/run -- --site area` → `Board` JSON under `site/dist/data/`, plus
   `site/static/` (index.html, app.js, leaflet, css) copied over. No templating engine: the page is
   static and reads JSON at load. `--site` runs the pipeline with `waterQuality` auto-selected by
-  the area's origin, LLM summary off unless `--summarize` (it's one call per beach — on by
+  the area's origin, LLM summary off unless `--summarize` (it's one call per beach, on by
   default only when a GPU host does the build).
 - `site/static/app.js`: fetch `latest.json`, draw markers (score → colour scale: ≥70 green,
   40-69 amber, 1-39 orange, 0 red, no-data grey), popup card, list, hour slider re-colouring
@@ -132,7 +132,7 @@ Ollama. Uses MIP-0003's cache when it lands; until then it is still one Overpass
 ### 5.5 Bot and CLI integration
 
 MIP-0002's bot replies end with the map link for the user's area; `/mapa` returns it. The MCP
-`get_swim_recommendation` can read a board instead of recomputing when one is fresh (< 3 h) —
+`get_swim_recommendation` can read a board instead of recomputing when one is fresh (< 3 h);
 that is MIP-0003's "board as cache" and stays there.
 
 ## 6. Scoring / safety impact
@@ -162,14 +162,14 @@ no cookies).
   generated-at; the bot can always recompute live for one user.
 - **Overpass per run.** Until MIP-0003's cache exists, each build is one heavy Overpass query per
   area. Keep areas few and runs ≤ 8/day.
-- **Scope creep.** A map invites "add surf/dive layers" (`FUTURE-WORK.md` §1) — those are new
+- **Scope creep.** A map invites "add surf/dive layers" (`FUTURE-WORK.md` §1); those are new
   scoring functions writing extra fields into the same board, not new pages. Keep v1 to swimming.
 - **No summary text on the site by default.** Without a GPU host, per-beach LLM summaries make the
   build slow; the deterministic notes carry the "why". Documented as a choice, not a limitation.
 
 ## 9. Alternatives considered
 
-- **Dynamic site (server + API).** Needs hosting, auth, rate limiting — everything the static
+- **Dynamic site (server + API).** Needs hosting, auth, rate limiting: everything the static
   board avoids. Rejected for v1.
 - **Map inside Telegram** (`sendLocation`/venue messages). Useful for one beach, useless for thirty.
 - **A native app** on a friend's developer account. Store review, two codebases, and nobody
@@ -192,7 +192,7 @@ was open when the MIP was written.
 1. Tiles: OSM public tiles for the friends-only phase and Protomaps before any public link, or
    Protomaps from day one? (Proposal: Protomaps from day one; it is also the local-first answer.)
 2. Areas: Florianópolis only, or also Rio (Arpoador is the E2E default) to prove multi-area?
-3. Hour slider vs. just the best hour in v1. (Proposal: slider — the hours are already computed.)
+3. Hour slider vs. just the best hour in v1. (Proposal: slider; the hours are already computed.)
 4. Should the board include the LLM summary when built on a machine with a GPU, behind
    `--summarize`? (Proposal: yes, as an optional field the page shows if present.)
 5. Cloudflare Pages vs. GitHub Pages for the first deploy. Either; the friend's Cloudflare habit

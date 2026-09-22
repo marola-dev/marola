@@ -457,7 +457,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 just pr
 ```
-(No `Cost:` line by hand — `just pr` measures it. Never write a placeholder.)
+(No `Cost:` line by hand: `just pr` measures it. Never write a placeholder.)
 
 ---
 
@@ -1156,7 +1156,7 @@ In `finetune/merge_export.py`'s `self_test()`, add before its final verdict:
     for dep in ("gguf", "sentencepiece", "protobuf"):
         ok(dep in req, f"{dep} is in finetune/requirements.txt — convert_hf_to_gguf.py needs it")
 ```
-(`ok(cond, msg)` is the helper the function already uses; `Path` is already imported — check the file's imports and add `from pathlib import Path` if not.)
+(`ok(cond, msg)` is the helper the function already uses; `Path` is already imported. Check the file's imports and add `from pathlib import Path` if not.)
 
 - [ ] **Step 5: Gates**
 

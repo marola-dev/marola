@@ -20,7 +20,7 @@
 Every beach on the map becomes a **wave marker** coloured by its score instead of a plain dot,
 and **hovering** it (tapping, on a phone) shows every aspect marola already knows for that beach
 at the selected hour: wind level with an emoji, whale-sighting likelihood, jellyfish risk, water
-temperature, waves, water-quality verdict — the numbers the CLI prints, without opening the card.
+temperature, waves, water-quality verdict: the numbers the CLI prints, without opening the card.
 No new data: every value is in the board JSON today; the one addition is a deterministic wind
 band computed in Scala so the page never re-implements a scoring threshold.
 
@@ -31,7 +31,7 @@ Today `app.js` draws `L.circleMarker` per beach and its tooltip says only `Praia
 all one click away in the card. On a map with 40 beaches the question "where is it calm and warm
 right now?" means 40 clicks. The board already carries, per beach and per daylight hour,
 `wind_kmh`, `sea_temp_c`, `wave_m`, `jellyfish`, `whales` and `score` (checked 2026-09-05 against
-`site/dist/data/floripa/2026-09-06.json`, appendix A) — the page just does not show them.
+`site/dist/data/floripa/2026-09-06.json`, appendix A), but the page does not show them.
 
 The marker itself is a dot because MIP-0005 §5.3 chose the cheapest thing that works; a wave
 glyph is what the product is about and, unlike an emoji marker, can still carry the score colour.
@@ -48,14 +48,14 @@ Hover (desktop) or tap (touch) on a beach:
 ```
 
 - The marker is a wave shape filled with the score colour (green ≥ 70, amber ≥ 40, orange ≥ 1,
-  red = 0 or unfit water, grey = dark/no data — the same scale as today's legend). The selected
+  red = 0 or unfit water, grey = dark/no data, the same scale as today's legend). The selected
   beach's wave is larger; the hour slider changes both the colour and the tooltip, as it changes
   the dots today.
 - The tooltip follows the mouse (Leaflet `sticky`), one at a time, and closes on leave. On touch
   there is no hover: a tap opens the card as today, and the **same aspect row is the first block
   of the card**, so both inputs see the same thing.
 - Every emoji is followed by its word ("🪼 jellyfish Low"), so a platform without the glyph still
-  reads correctly; the legend gains a wave key — the same path the markers draw, at 18 px in
+  reads correctly; the legend gains a wave key, the same path the markers draw, at 18 px in
   `--ink`, labelled "hover a wave". It is hidden under 640 px: a phone has no hover to offer and
   the hour bar has no room for the line (it clipped at 390 px).
 - The card, the list, the day picker and the footer panel (MIP-0008) are unchanged.
@@ -80,25 +80,25 @@ which is private. The band shown on the map must be the same one, so it is compu
 and written to the board as `wind_level` (§5), not re-derived in JavaScript from a copied number.
 
 **Leaflet 1.9.4** (vendored, `site/static/vendor/leaflet.js`): `L.divIcon` (HTML/SVG markers)
-and tooltips with `sticky`/`permanent`/`direction` are present — confirmed by grepping the vendored
-file on 2026-09-05, not from docs. No new library, no build step (MIP-0005's constraint holds).
+and tooltips with `sticky`/`permanent`/`direction` are present (confirmed by grepping the vendored
+file on 2026-09-05, not from docs). No new library, no build step (MIP-0005's constraint holds).
 
 **Emoji.** 🌊 U+1F30A, 🌬️ U+1F32C, 🌡️ U+1F321, 🐋 U+1F40B, 💧 U+1F4A7, 🍃 U+1F343, 💨 U+1F4A8
-are Emoji 1.0-era; 🪼 jellyfish is U+1FABC, **Emoji 14.0 (2021)** — older Android/Windows fonts
+are Emoji 1.0-era; 🪼 jellyfish is U+1FABC, **Emoji 14.0 (2021)**: older Android/Windows fonts
 show a box, which is why every emoji is followed by its word. Rendered by the system font
 (Noto Color Emoji, Apple Color Emoji, Segoe UI Emoji); nothing is downloaded. Not checked: how
-the wave SVG looks on a Retina display at 26 px — the manual check in §7.
+the wave SVG looks on a Retina display at 26 px; the manual check in §7.
 
 ## 5. Design
 
 **Scala (deterministic, tested).**
 
-- `Swimability.windLevel(kmh: Option[Double]): WindLevel` — `enum WindLevel { Calm, Breezy,
+- `Swimability.windLevel(kmh: Option[Double]): WindLevel`: `enum WindLevel { Calm, Breezy,
   Strong }` (plus `None` when the forecast lacks wind), using the same `CalmWindKmh`/
   `StrongWindKmh` constants `windDelta` uses; `windDelta` calls it, so there is one threshold.
 - `Board`: each `hours[]` entry gains `"wind_level": "calm" | "breezy" | "strong" | null`.
   Additive, optional → **schema stays 1** (`site/board.schema.json` lists it as optional;
-  the page tolerates its absence — an old board still renders, without the band).
+  the page tolerates its absence: an old board still renders, without the band).
 
 **JavaScript (`site/static/app.js`, plain, no framework).**
 
@@ -126,7 +126,7 @@ the wave SVG looks on a Retina display at 26 px — the manual check in §7.
 ## 6. Scoring / safety impact
 
 None to `Swimability.score` or the notes. `windLevel` is a pure function over the existing
-thresholds, and `windDelta` is refactored to use it — `SwimabilitySpec` gains three cases (below
+thresholds, and `windDelta` is refactored to use it; `SwimabilitySpec` gains three cases (below
 calm, between, at/above strong) proving the band and the delta agree. Unfit water stays red on
 the marker and says why in the tooltip (`water.summary`), exactly as the card does.
 
@@ -136,7 +136,7 @@ the marker and says why in the tooltip (`water.summary`), exactly as the card do
 - `BoardSpec`: every hour entry carries `wind_level`, consistent with its `wind_kmh`; the schema
   validator accepts it and accepts a board without it.
 - `scripts/site_check.js` in `just quality` (assertions above); `node --check app.js`.
-- Manual: `just site-build floripa && just site-serve` — hover Joaquina on a desktop, tap it on a
+- Manual: `just site-build floripa && just site-serve`: hover Joaquina on a desktop, tap it on a
   phone (Safari + Chrome), zoom out to the whole area and check the waves stay legible over the
   OSM tiles; screenshot into the PR.
 - "Done": the live map after the merge shows waves and hover aspects; the footer panel and the
@@ -146,26 +146,26 @@ the marker and says why in the tooltip (`water.summary`), exactly as the card do
 
 - **Hover does not exist on touch.** The card's aspect row is the touch equivalent; no long-press
   gesture is invented (it fights the map's pan).
-- **Emoji fonts differ** per platform and 🪼 is missing on older ones — hence the words.
+- **Emoji fonts differ** per platform and 🪼 is missing on older ones, hence the words.
 - **Clutter:** tooltips are one at a time and only on hover, so 40 beaches stay readable; the
-  waves are fixed-pixel `divIcon`s and do not scale with zoom — at the area zoom they may overlap
+  waves are fixed-pixel `divIcon`s and do not scale with zoom; at the area zoom they may overlap
   where beaches are 300 m apart (Ingleses/Santinho); the selected one is drawn on top.
 - **Colour is not the only signal:** the score number is in the tooltip and the card; unfit water
   says "IMPRÓPRIA" in words.
-- The wind band shown is the *forecast* wind at that hour — the tooltip says the hour.
+- The wind band shown is the *forecast* wind at that hour; the tooltip says the hour.
 
 ## 9. Alternatives considered
 
-- **An emoji as the marker** (🌊 in a `divIcon`) — cannot take the score colour, renders
+- **An emoji as the marker** (🌊 in a `divIcon`): cannot take the score colour, renders
   differently everywhere, and overlaps badly. Rejected; emoji only in the text.
-- **A heat/density layer** (leaflet.heat) — explicitly not wanted; it also hides the per-beach
+- **A heat/density layer** (leaflet.heat): explicitly not wanted; it also hides the per-beach
   truth behind a blur. Rejected.
-- **Permanent labels on every marker** — unreadable at area zoom. Rejected in favour of hover.
-- **Popups on hover** — Leaflet popups close on mouse-out and steal the map's focus; tooltips are
+- **Permanent labels on every marker**: unreadable at area zoom. Rejected in favour of hover.
+- **Popups on hover**: Leaflet popups close on mouse-out and steal the map's focus; tooltips are
   the hover primitive. Rejected.
-- **MapLibre with data-driven symbols** — richer, but a build step and a bigger vendor blob for
+- **MapLibre with data-driven symbols**: richer, but a build step and a bigger vendor blob for
   one tooltip. Rejected while MIP-0005's "plain files, no build" holds.
-- **Do nothing** — the card works; but the map answers "where?" only after a click per beach.
+- **Do nothing**: the card works, but the map answers "where?" only after a click per beach.
 
 ## 10. Exam-coverage mapping
 
@@ -182,7 +182,7 @@ direction (model text is labelled). No other row.
 3. Should the same aspect row become the first line of the Telegram reply (MIP-0002)? It is the
    compact form of `Report.line`. Out of scope here; noted for MIP-0002.
 4. Wave glyph: one shape for all, or a rougher wave for `strong wind`/`wave_m ≥ 1.5`? Proposal:
-   one shape in v1 — the colour and the text already say it.
+   one shape in v1: the colour and the text already say it.
 
 ## Appendix
 

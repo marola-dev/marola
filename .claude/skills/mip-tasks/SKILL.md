@@ -12,11 +12,11 @@ pieces and `main` only ever receives green, tested steps. Mechanics live in `scr
 
 ## Arguments
 
-`$ARGUMENTS` — **one** MIP number, the same shape `/mip-solve-perpetual` takes: `/mip-tasks 0009`.
+`$ARGUMENTS`: **one** MIP number, the same shape `/mip-solve-perpetual` takes: `/mip-tasks 0009`.
 Accept the sloppy forms too and normalise before anything else: `9`, `009`, `0009`, `MIP-009`,
 `MIP-0009`, `mip-0009` all mean `MIP-0009` (digits only, zero-padded to four, `MIP-` prefix
 restored). Say the normalised number out loud in the first line, then confirm
-`docs/mips/MIP-0009-*.md` exists — if it doesn't, stop and say so; never pick a neighbour.
+`docs/mips/MIP-0009-*.md` exists; if it doesn't, stop and say so; never pick a neighbour.
 
 - **Empty → stop and ask** which MIP. Unlike `/mip-solve-perpetual`, this skill has no auto-pick:
   slicing a MIP into reviewable PRs is the human decision the perpetual loop defers to, so it does
@@ -50,7 +50,7 @@ Rules for a good list:
 - **Each task is one reviewable PR**: ≤ ~400 changed lines, one concern, its own tests, green on
   `just build && just test && just quality` by itself.
 - **Order by dependency, then by risk**: the task most likely to change the design goes first.
-- **Tests are named up front** — the MIP's §7 verification plan is the source; every task row
+- **Tests are named up front**: the MIP's §7 verification plan is the source; every task row
   says which test proves it. A task with no test is either docs or a smell.
 - **Docs travel with the task that changes behaviour**, not in a final "docs" task (except
   workflows/deploy docs).
@@ -77,8 +77,8 @@ does.
 
 When several tasks came out of one session, `just cost-split MIP-NNNN` splits that session's
 logged usage by commit time and prints the measured `Cost:` trailer per branch (amend before the
-PR, or note the split in the body). `just uprds MIP-NNNN` refreshes every PR of the stack at once
-— regenerated body plus a shared "Stack" section (merge order, states, summed Cost) — and opens
+PR, or note the split in the body). `just uprds MIP-NNNN` refreshes every PR of the stack at once,
+regenerated body plus a shared "Stack" section (merge order, states, summed Cost), and opens
 any PR still missing on its right base.
 
 ## Step 3 — after a base PR merges: restack
@@ -109,12 +109,13 @@ branches, and put the summed `Cost:` figures from the PRs into the MIP's status 
 - `gh` needs a login (not available inside the ai-jail sandbox): `scripts/stack.sh pr --dry-run`
   prints the commands; run them from the host if needed.
 - GitHub's native Stacks: `just stack-setup` once (installs the official `gh stack` extension),
-  then `just stack-link MIP-NNNN` links the PRs bottom-to-top into a Stack — `just uprds` does
-  it automatically when the extension is present (open PRs only — a merged bottom branch is
+  then `just stack-link MIP-NNNN` links the PRs bottom-to-top into a Stack; `just uprds` does
+  it automatically when the extension is present (open PRs only; a merged bottom branch is
   skipped). `just stack-view` shows it; `just stack-sync MIP-NNNN` is the extension's `restack`
   for the whole stack (it adopts the stack locally first, since `link` keeps no local state). The script stays the source of truth for
   branch naming and bases; the extension is the UI.
-- Review happens **only when the human asks** — per PR, bottom-up, against the PR's own base:
+- Review happens **only when the human asks**: per PR, bottom-up, against the PR's own base:
   superpowers `requesting-code-review` (reviewer subagent with BASE/HEAD SHAs and the task row as
   the plan), `/code-review <PR#>`, or `/code-review ultra`. The whole loop, with the acceptance
   step for a MIP, is in `docs/DEV-FLOW.md`.
+</content>

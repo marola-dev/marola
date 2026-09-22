@@ -20,8 +20,8 @@
 `--ask` and `ask_ocean_question` retrieve over `knowledge/*.md` through `FileKnowledgeStore`: a flat
 JSON file, every chunk scanned with cosine, one Ollama embedding call per question, and a relevance
 threshold that is `0.0` because the default embedder's scores carry no signal. This MIP puts a real
-index behind the existing `KnowledgeStore` trait — an in-process Lucene HNSW + BM25 index as the
-local default, Azure AI Search as the opt-in — and, more importantly, makes the ingest side typed:
+index behind the existing `KnowledgeStore` trait, an in-process Lucene HNSW + BM25 index as the
+local default, Azure AI Search as the opt-in, and, more importantly, makes the ingest side typed:
 each chunk knows what kind of knowledge it is, which language, which beach, and where it came from,
 and carries a model-written one-line context header so a small query-time model finds it. A golden
 set with an expected document per question turns "is retrieval better" into recall@k.
@@ -41,7 +41,7 @@ Three gaps, all already written down in this repo.
   mirroring every English file; MIP-0034's reading queue and MIP-0041's book ingestion feed more.
   "corrente de retorno" and "rip current" must land in the same neighbourhood, and today's chunker
   (`Corpus.chunkDocument`: split on blank lines, merge up to 700 chars) has no notion of language,
-  place, or kind — a tide table and a lifeguard rule would be cut the same way.
+  place, or kind, a tide table and a lifeguard rule would be cut the same way.
 - **Retrieval has no metric of its own.** `just benchmark` scores the *answer* (keyword coverage,
   cited, abstained). Whether the right document was in the top-4 is never measured, so a chunking
   change can only be judged by reading the per-question table.
@@ -58,7 +58,7 @@ $ just ask "Why is the sea sometimes green?"
 ... [1] Rip currents (https://www.weather.gov/safety/ripcurrent) [2] Whales off Santa Catarina ...
 ```
 
-After — the citation names the document that answers, and a beach-scoped question is filtered by
+After, the citation names the document that answers, and a beach-scoped question is filtered by
 place before it is ranked:
 
 ```
@@ -79,15 +79,15 @@ embedder and its dimensions, the chunk count per kind and per language; `just be
 
 ### 4.1 Apache Lucene (local default)
 
-`lucene-core` 10.5.1 on Maven Central (2026-08-12), Apache-2.0, runs on **Java 21 or greater** —
+`lucene-core` 10.5.1 on Maven Central (2026-08-12), Apache-2.0, runs on **Java 21 or greater**;
 marola is on JDK 25. `KnnFloatVectorField` / `KnnFloatVectorQuery` give HNSW; the same index gives
 BM25, so hybrid retrieval needs no second store. **Verified live** 2026-09-13 (Appendix).
 
 The trap: `KnnVectorsFormat.DEFAULT_MAX_DIMENSIONS` is **1024**. marola's default embedder is
 `llama3.2` at **3072** dimensions (confirmed against the local Ollama's `/api/show`). The Lucene
 backend therefore cannot take the default embedder; it forces `nomic-embed-text` (768) or `bge-m3`
-(1024). That is the right constraint anyway — the 3072-dim vectors are the ones §2 says carry no
-signal — but it must be a startup error with a message, not a stack trace from Lucene. Whether a
+(1024). That is the right constraint anyway, the 3072-dim vectors are the ones §2 says carry no
+signal, but it must be a startup error with a message, not a stack trace from Lucene. Whether a
 codec can raise the cap (`Lucene99HnswVectorsFormat.getMaxDimensions`) is **not checked**.
 
 ### 4.2 hnswlib (jelmerk) — lighter in-process alternative
@@ -99,7 +99,7 @@ behaviour (§8) turns out to be a problem.
 ### 4.3 Qdrant — out-of-process alternative
 
 Official Java client, Apache-2.0, last pushed 2026-09-11. Hosted free tier: single node, 0.5 vCPU,
-1 GB RAM, 4 GB disk, **suspended after 1 week unused, deleted after 4 weeks** — a prototyping
+1 GB RAM, 4 GB disk, **suspended after 1 week unused, deleted after 4 weeks**, a prototyping
 tier, never the store of record. Locally it is a Docker container, and agent sessions here have no
 Docker daemon (host or Actions only). Documented as an alternative backend; not built now.
 
@@ -123,14 +123,14 @@ lists `bge-m3` (BAAI, MIT, 1024 dims, 8192 tokens, 100+ languages, dense **and**
 `nomic-embed-text-v2-moe`, `paraphrase-multilingual`, `snowflake-arctic-embed2`,
 `granite-embedding`. `bge-m3` is the candidate: multilingual, exactly at Lucene's cap, and its
 sparse output is a second hybrid option. Its retrieval quality on Portuguese ocean vocabulary is
-**not checked** — that is what §7's golden set is for.
+**not checked**: that is what §7's golden set is for.
 
 ### 4.7 Contextual retrieval (the ingest-time header)
 
 Anthropic's 2024 write-up: prepend a 50-100-token chunk-specific context before embedding and before
 building the BM25 index. Reported top-20 retrieval-failure reduction: 35% with contextual
 embeddings, 49% adding contextual BM25, 67% adding a reranker. Those numbers are on their corpora,
-not ours — the pattern is adopted, the numbers are not assumed.
+not ours, the pattern is adopted, the numbers are not assumed.
 
 ### Pick
 
@@ -139,8 +139,8 @@ the smaller fallback), Azure AI Search as the opt-in. Qdrant documented, pgvecto
 
 ## 5. Design
 
-Everything builds on what `core/knowledge/` already has — `KnowledgeStore`, `Embedder`,
-`CorpusChunk`, `Passage`, `Corpus` — rather than a new `VectorStore` trait beside them.
+Everything builds on what `core/knowledge/` already has, `KnowledgeStore`, `Embedder`,
+`CorpusChunk`, `Passage`, `Corpus`, rather than a new `VectorStore` trait beside them.
 
 ### 5.1 The chunk record (`core/src/main/scala/marola/knowledge/Corpus.scala`)
 
@@ -180,18 +180,18 @@ half-have (`# Title`, `Source:`) plus three optional ones: `Kind:`, `Lang:`, `Be
 | `Lore` | one paragraph, `beachId` required | retrieval filters by `beachId` when the question names a beach, then ranks |
 | `Structured` | a Markdown table or a `Units:` block — **not chunked as prose**; the chunker rejects it with the file and line | numbers go to a typed table or to a `scoring/` proposal (§6), never through the LLM |
 
-Cross-cutting: units normalised at ingest (m/ft, kn/km/h, °C/°F — a pure function with a spec);
+Cross-cutting: units normalised at ingest (m/ft, kn/km/h, °C/°F, a pure function with a spec);
 `contentHash` per chunk, re-ingest replaces by hash; live data is never chunked. `Corpus.listFiles`
-learns `pt-BR/` (MIP-0054 §5.3) as it learned `safety/` (MIP-0022) — one level, named, no
+learns `pt-BR/` (MIP-0054 §5.3) as it learned `safety/` (MIP-0022), one level, named, no
 recursive walk.
 
 ### 5.3 The ingest pass (offline, once, `just knowledge-index`)
 
 For each chunk, `config.llmClient` (local Ollama by default; Foundry when the operator opted in)
-writes: a one-sentence `contextHeader`; extracted fields — hazard, region/beach, season, any
+writes: a one-sentence `contextHeader`; extracted fields, hazard, region/beach, season, any
 numeric threshold with its unit; a flag for claims that look unsourced. All stored as **metadata**
 beside the verbatim text. The header is embedded with the text and indexed for BM25; it is never
-shown to a user — the house rule that no model-written text reaches a user is kept by construction.
+shown to a user, the house rule that no model-written text reaches a user is kept by construction.
 A numeric threshold found here is written to `data/knowledge-thresholds.md` as a proposal, §6.
 
 ### 5.4 `LuceneKnowledgeStore` (`local/src/main/scala/marola/knowledge/`)
@@ -233,11 +233,11 @@ real is its own PR against `scoring/` with its own test. MIP-0022's footer keeps
   field on every in-corpus question, and from 22 to ~30 questions (the new ones in Portuguese once
   MIP-0054's files exist). `OceanBenchmark` gains `recall@5` and MRR per store, plus retrieval
   latency, and runs `file` and `lucene` side by side with the same embedder.
-- **Unit tests** (no Ollama, fake embedder like `RagOfflineSpec`): `ChunkerSpec` — one chunk per
+- **Unit tests** (no Ollama, fake embedder like `RagOfflineSpec`): `ChunkerSpec`, one chunk per
   heading, a table rejected with file and line, units normalised, `pt-BR/` listed, `safety/`
-  still flagged; `LuceneKnowledgeStoreSpec` — round-trip, hybrid returns a BM25-only hit for an
+  still flagged; `LuceneKnowledgeStoreSpec`, round-trip, hybrid returns a BM25-only hit for an
   exact term the fake embedder cannot see, a 3072-dim embedder refused at construction;
-  `ProvenanceSpec` — no chunk without a `source`, no `Lore` chunk without a `beachId`.
+  `ProvenanceSpec`, no chunk without a `source`, no `Lore` chunk without a `beachId`.
 - **Live**: `just knowledge-index` with `MAROLA_KNOWLEDGE_STORE=lucene MAROLA_LOCAL_EMBED_MODEL=bge-m3`;
   `just benchmark`; a new snapshot under `docs/benchmarks/` compared against 2026-09-05.
 - **Done** = recall@5 on the local default at or above an agreed floor (proposed 0.9 on the
@@ -251,9 +251,9 @@ real is its own PR against `scoring/` with its own test. MIP-0022's footer keeps
   uses the Panama FFM API on JDK 21+, which native-image supports but with reachability metadata to
   hand-maintain. The fallback is `NIOFSDirectory`, or keeping `file` as the native image's store.
 - Multilingual embedding quality on Portuguese ocean vocabulary is unproven here; §7 measures it.
-- Free hosted tiers (Qdrant, Azure) delete inactive resources — never the store of record.
+- Free hosted tiers (Qdrant, Azure) delete inactive resources, never the store of record.
 - Sources go stale; `retrievedAt` per document is worth adding to the `Source:` contract when the
-  corpus is next touched — out of this MIP's scope.
+  corpus is next touched, out of this MIP's scope.
 - Hybrid fusion is one more knob; it is tuned only against the golden set, and the golden set is
   small.
 - The 3072 → 1024 constraint changes the default embed model for anyone who switches stores; the
@@ -263,7 +263,7 @@ real is its own PR against `scoring/` with its own test. MIP-0022's footer keeps
 
 - **Do nothing / keyword only** (MIP-0045 §5.1's TF-IDF store): loses PT↔EN and paraphrase
   matching; keeps everything else. If Lucene lands, its BM25 half is that store with a better
-  scorer — MIP-0045 §5.1 then becomes "the lexical arm of the hybrid" rather than a separate class.
+  scorer, MIP-0045 §5.1 then becomes "the lexical arm of the hybrid" rather than a separate class.
   If Lucene does not land, MIP-0045 §5.1 stands.
 - **Keep the JSON file, swap the embedder.** `MAROLA_LOCAL_EMBED_MODEL=bge-m3` today, with no code
   change, may recover most of the ranking signal. §7 runs this arm too; if it clears the floor, the
@@ -281,12 +281,12 @@ prose; AI-500 §3 "evaluate, optimize" — recall@k on a golden set.
 ## 11. Open questions
 
 1. Does a Lucene codec lift the 1024-dimension default, and is it worth using? Not needed if
-   `bge-m3`/`nomic-embed-text` are the pairing — decide after §7's first run.
-2. Seed-corpus licences for verbatim quoting — NOAA (public domain), Marinha do Brasil / DHN,
+   `bge-m3`/`nomic-embed-text` are the pairing, decide after §7's first run.
+2. Seed-corpus licences for verbatim quoting, NOAA (public domain), Marinha do Brasil / DHN,
    IMA/SC, local lifeguard bodies: each recorded before ingest; **not checked** this session.
 3. The recall@5 floor: set from the first measured run.
 4. Native-image: test `lucene` in `sbt cli/nativeImage` once, before making it the default.
-5. **Follow-up MIP:** corpus retrieval in the *summarizer* path (issue #354 item 2 — passages as an
+5. **Follow-up MIP:** corpus retrieval in the *summarizer* path (issue #354 item 2, passages as an
    input to the swim-summary prompt, checked by `Reviewer`). Deliberately not here: it changes what
    the summarizer sees and needs its own benchmark arm; it needs the next MIP number.
 6. **Follow-up MIP:** `retrievedAt` and a licence field in the `Source:` contract for every corpus
@@ -296,31 +296,31 @@ prose; AI-500 §3 "evaluate, optimize" — recall@k on a golden set.
 
 ### Checked live (2026-09-13)
 
-- https://lucene.apache.org/core/downloads.html — latest release 10.5.1.
-- https://repo1.maven.org/maven2/org/apache/lucene/lucene-core/ — `10.5.1/` dated 2026-08-12 (also
+- https://lucene.apache.org/core/downloads.html, latest release 10.5.1.
+- https://repo1.maven.org/maven2/org/apache/lucene/lucene-core/, `10.5.1/` dated 2026-08-12 (also
   10.5.0 2026-06-25, 10.4.0 2026-02-25); Maven Central's search API `latestVersion` field said
   10.4.0, i.e. it lags the directory.
-- https://lucene.apache.org/core/10_5_1/SYSTEM_REQUIREMENTS.html — "Apache Lucene runs on Java 21 or greater."
-- https://lucene.apache.org/core/10_5_1/core/org/apache/lucene/document/KnnFloatVectorField.html —
+- https://lucene.apache.org/core/10_5_1/SYSTEM_REQUIREMENTS.html, "Apache Lucene runs on Java 21 or greater."
+- https://lucene.apache.org/core/10_5_1/core/org/apache/lucene/document/KnnFloatVectorField.html:
   class exists; `constant-values.html` for the same release: `KnnVectorsFormat.DEFAULT_MAX_DIMENSIONS = 1024`,
   `DEFAULT_MAX_CONN = 16`, `DEFAULT_BEAM_WIDTH = 100`.
 - Local Ollama `/api/show`: `llama3.2` embedding_length 3072; `nomic-embed-text` 768. `bge-m3` and
   `all-minilm` not pulled on this machine.
-- https://ollama.com/library/bge-m3 — 1.2 GB, 567M params, `ollama pull bge-m3`, "more than 100
-  working languages", inputs up to 8192 tokens. https://huggingface.co/BAAI/bge-m3 — dimension 1024,
+- https://ollama.com/library/bge-m3, 1.2 GB, 567M params, `ollama pull bge-m3`, "more than 100
+  working languages", inputs up to 8192 tokens. https://huggingface.co/BAAI/bge-m3, dimension 1024,
   MIT licence, dense + sparse + multi-vector output.
-- https://ollama.com/search?c=embedding — lists bge-m3, paraphrase-multilingual,
+- https://ollama.com/search?c=embedding, lists bge-m3, paraphrase-multilingual,
   snowflake-arctic-embed2, granite-embedding, nomic-embed-text-v2-moe, nomic-embed-text,
   mxbai-embed-large, qwen3-embedding.
-- https://learn.microsoft.com/en-us/azure/search/search-limits-quotas-capacity (ms.date 2026-09-04) —
+- https://learn.microsoft.com/en-us/azure/search/search-limits-quotas-capacity (ms.date 2026-09-04):
   Free: 1 service per subscription, storage 50 MB, 3 indexes, 3 indexers, "might be deleted after
   extended periods of inactivity", 4096 max dimensions per vector field.
-- https://qdrant.tech/documentation/cloud/create-cluster/ — free tier 0.5 vCPU, 1 GB RAM, 4 GB disk,
+- https://qdrant.tech/documentation/cloud/create-cluster/, free tier 0.5 vCPU, 1 GB RAM, 4 GB disk,
   single node; suspended after 1 week unused, deleted after 4 weeks of inactivity.
-- https://api.github.com/repos/qdrant/java-client — "Official Java client for Qdrant", Apache-2.0,
+- https://api.github.com/repos/qdrant/java-client, "Official Java client for Qdrant", Apache-2.0,
   pushed 2026-09-11.
-- https://github.com/jelmerk/hnswlib — Java HNSW, Apache-2.0, Scala wrapper; version not shown.
-- https://www.anthropic.com/news/contextual-retrieval — 35% / 49% / 67% top-20 failure-rate
+- https://github.com/jelmerk/hnswlib, Java HNSW, Apache-2.0, Scala wrapper; version not shown.
+- https://www.anthropic.com/news/contextual-retrieval, 35% / 49% / 67% top-20 failure-rate
   reductions (embeddings / + BM25 / + rerank).
 - This repo: `OceanQa.DefaultMinScore = 0.0`; `Corpus.chunkDocument` splits on blank lines, merges
   to 700 chars, walks only the top level and `safety/`; no Markdown table in any corpus document
@@ -333,6 +333,6 @@ prose; AI-500 §3 "evaluate, optimize" — recall@k on a golden set.
 - Lucene under GraalVM native-image.
 - hnswlib's latest version and maintenance status.
 - Azure AI Search Basic-tier hourly price.
-- `bge-m3`'s retrieval quality on Portuguese ocean vocabulary — §7 measures it.
+- `bge-m3`'s retrieval quality on Portuguese ocean vocabulary, §7 measures it.
 - Licences of the seed sources for verbatim quotation (§11.2).
 - The contextual-retrieval numbers apply to Anthropic's corpora, not marola's.

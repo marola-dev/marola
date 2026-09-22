@@ -32,18 +32,18 @@ This session's own work exposed two concrete gaps `ai-job-search`'s design happe
   `perf/mip-perpetual-skill`) added a "checkpointing contract" in prose, but there is still no
   single file a human (or the next run) can read to see *which tasks in an overnight run actually
   landed, in what order, at what cost* without reconstructing it from git log and `GH_POST_MORTEM.md`
-  by hand. `ai-job-search`'s `job_search_tracker.csv` is exactly this — one flat file, one row per
+  by hand. `ai-job-search`'s `job_search_tracker.csv` is exactly this: one flat file, one row per
   unit of work, machine- and human-readable.
 - `docs/DEV-FLOW.md` §5's reviewer-subagent invocation doesn't say whether the reviewer re-reads
   the diff itself or receives it inline. `ai-job-search`'s drafter-reviewer pattern says explicitly:
   *"The reviewer agent receives drafts inline rather than re-reading them, and the verification
-  checklist runs once"* — a token-efficiency detail worth stating as a rule here too, especially
+  checklist runs once"*, a token-efficiency detail worth stating as a rule here too, especially
   given this session's own throttle rework was prompted by "Sonnet/medium wastes tokens on basic
   things."
 
 ## 3. User-visible change
 
-None — Phase 0, developer tooling only. No CLI or Telegram-facing output changes.
+None: Phase 0, developer tooling only. No CLI or Telegram-facing output changes.
 
 ## 4. Data sources and dependencies reviewed
 
@@ -54,7 +54,7 @@ and preps interviews, run entirely from a personal fork (`github.com/MadsLorentz
 `AGENTS.md` and repo root fetched via WebFetch on 2026-09-06). Verified structure:
 
 - `.claude/skills/job-application-assistant/` holds seven numbered instruction files
-  (`01-candidate-profile.md` … `07-interview-prep.md`) rather than one monolithic `SKILL.md` —
+  (`01-candidate-profile.md` … `07-interview-prep.md`) rather than one monolithic `SKILL.md`:
   ordered sub-documents within one skill.
 - `.claude/commands/` holds thirteen single-purpose slash commands (`apply.md`, `scrape.md`,
   `rank.md`, `outcome.md`, `interview.md`, `gmail-sync.md`, etc.), each a thin workflow trigger.
@@ -68,12 +68,12 @@ and preps interviews, run entirely from a personal fork (`github.com/MadsLorentz
   (archived submitted artifacts).
 - `AGENTS.md` itself is a **thin pointer**: it states a "unified thin-pointer design" so multiple
   agent frameworks (Claude Code, others) read one canonical set of files rather than duplicating
-  config — the same shape marola's own `CLAUDE.md` → `@AGENTS.md` import already uses. This
+  config; the same shape marola's own `CLAUDE.md` → `@AGENTS.md` import already uses. This
   confirms marola's existing pattern rather than suggesting a new one.
 
 What was **not** checked: the repo's actual commit history/quality, whether its LaTeX
 compile-and-inspect verification loop has a documented failure mode, or its Notion-sync
-implementation — none of those are candidates for marola, which has no CV/PDF or CRM surface.
+implementation; none of those are candidates for marola, which has no CV/PDF or CRM surface.
 
 ### 4.2 GitHub trending agentic-tooling repos, week of 2026-09-04 (WebSearch, 2026-09-06)
 
@@ -82,10 +82,10 @@ each at the level of "what is this repo's one idea," not a deep audit:
 
 | Repo | What it does | Relevant idea for marola? |
 |---|---|---|
-| `anthropics/skills` | Anthropic's own public agent-skills repo | Yes — a reference to audit marola's `SKILL.md` frontmatter/structure conventions against, §5.3 |
-| `pacifio/atlas` | "source control layer for tracking and querying changes made by multiple coding agents" | Partially — the *idea* (a queryable ledger of agent-authored changes) is worth having; the *tool* is not (assumes a fleet-of-agents SaaS shape marola doesn't have) — see §9 |
-| `Graphify-Labs/graphify` | Converts a codebase into a queryable knowledge graph for agent use | No — new heavy dependency for a problem `Explore`/`Grep` already solve at marola's size; rejected, §9 |
-| `eneskirca/nodeterm` | Terminal manager showing parallel agent sessions as a pan/zoomable node canvas | No — a UI tool for managing *many concurrent* agent sessions; marola's own convention is one session per feature (`AGENTS.md`), so the problem it solves doesn't exist here — rejected, §9 |
+| `anthropics/skills` | Anthropic's own public agent-skills repo | Yes: a reference to audit marola's `SKILL.md` frontmatter/structure conventions against, §5.3 |
+| `pacifio/atlas` | "source control layer for tracking and querying changes made by multiple coding agents" | Partially: the *idea* (a queryable ledger of agent-authored changes) is worth having; the *tool* is not (assumes a fleet-of-agents SaaS shape marola doesn't have); see §9 |
+| `Graphify-Labs/graphify` | Converts a codebase into a queryable knowledge graph for agent use | No: new heavy dependency for a problem `Explore`/`Grep` already solve at marola's size; rejected, §9 |
+| `eneskirca/nodeterm` | Terminal manager showing parallel agent sessions as a pan/zoomable node canvas | No: a UI tool for managing *many concurrent* agent sessions; marola's own convention is one session per feature (`AGENTS.md`), so the problem it solves doesn't exist here; rejected, §9 |
 | `garrytan/gstack` | 23 Claude Code tools spanning CEO/designer/engineering-manager/QA roles | Not adopted directly (role-per-tool is overkill for a one-repo project), but confirms `docs/AGENT-SKILLS.md` §3's existing direction (named, scoped subagents) is the right shape at marola's scale |
 
 ## 5. Design
@@ -95,11 +95,11 @@ Three concrete, additive changes, each a single file/skill edit, no new runtime 
 ### 5.1 A flat-file run tracker for `mip-solve-perpetual`
 
 Add `docs/mips/MIP-NNNN.run-log.csv` (one per MIP being worked overnight, gitignored like
-`GH_POST_MORTEM.md` — it's an operator artifact, not a deliverable) with columns: `timestamp,
+`GH_POST_MORTEM.md`; it's an operator artifact, not a deliverable) with columns: `timestamp,
 task_k, branch, throttle_level, model, effort, outcome, cost_usd, pr_status`. `mip-solve-perpetual`
 appends one row per task attempt (including failed attempts, so a human sees the retry history,
 not just the final state). This is strictly additive to the checkpointing contract this session
-already wrote into the skill (`perf/mip-perpetual-skill`, unmerged) — that contract defines *when*
+already wrote into the skill (`perf/mip-perpetual-skill`, unmerged): that contract defines *when*
 the loop may stop; this tracker records *what happened*, in one grep-able/`csv`-parseable place,
 the same shape as `ai-job-search`'s `job_search_tracker.csv`. A future `just cost-split` run could
 cross-check its numbers against this file's `cost_usd` column as a sanity check.
@@ -109,7 +109,7 @@ cross-check its numbers against this file's `cost_usd` column as a sanity check.
 Add one sentence to `docs/DEV-FLOW.md` §5's reviewer-subagent bullet: the reviewer subagent's
 prompt should paste `git diff <BASE_SHA>..<HEAD_SHA>` inline rather than instructing the subagent
 to re-run that diff itself, and the verification checklist (build/test/quality) is not something
-the reviewer re-derives — it's already reported by the author's own PR body. This is a one-line
+the reviewer re-derives; it's already reported by the author's own PR body. This is a one-line
 efficiency rule, not a new mechanism: `docs/AGENT-SKILLS.md` §2.1's existing `requesting-code-review`
 sequence already does most of this; the addition is naming the "inline, not re-read" detail so it
 survives a future rewrite of that section.
@@ -119,7 +119,7 @@ survives a future rewrite of that section.
 A one-time housekeeping task, not a new skill: read `anthropics/skills`' published skill
 frontmatter conventions (`name`, `description`, `allowed-tools`/`disallowed-tools` shape) and
 diff against marola's six in-repo skills (`.claude/skills/{mip,mip-tasks,mip-solve-perpetual,
-site-frontend,voice-note-ingest,voice-to-feature}/SKILL.md`) for drift — e.g. whether
+site-frontend,voice-note-ingest,voice-to-feature}/SKILL.md`) for drift: e.g. whether
 `disable-model-invocation` is used consistently everywhere it should be (already flagged as
 task 8 of MIP-0011), or whether a `description` could be tightened to Anthropic's own phrasing
 convention for better trigger-matching. Output: a short paragraph in `docs/AGENT-SKILLS.md`
@@ -127,7 +127,7 @@ recording what was checked and what (if anything) changed, not a new file.
 
 ## 6. Scoring / safety impact
 
-None — this MIP touches only Claude Code dev-tooling (skills, docs, an operator-facing CSV). No
+None: this MIP touches only Claude Code dev-tooling (skills, docs, an operator-facing CSV). No
 change to `Swimability`, ranking, or any user-facing safety text.
 
 ## 7. Verification plan
@@ -139,42 +139,42 @@ change to `Swimability`, ranking, or any user-facing safety text.
   the diff was pasted inline in the dispatch prompt, not re-fetched by the subagent.
 - §5.3: a diff of marola's six `SKILL.md` frontmatter blocks against `anthropics/skills`'
   convention, pasted into the implementing PR's description.
-- No new unit tests — nothing here is Scala/Python runtime code. `just build && just test &&
+- No new unit tests: nothing here is Scala/Python runtime code. `just build && just test &&
   just quality` still run per `AGENTS.md`'s hard rule and are expected to be no-ops content-wise.
 
 ## 8. Risks, limitations, and honest caveats
 
 - The `ai-job-search` structure was read via WebFetch (an AI summarization pass over the page),
-  not by cloning the repo and reading raw file contents — the described directory layout and
+  not by cloning the repo and reading raw file contents; the described directory layout and
   drafter-reviewer mechanics are reported *as WebFetch's model summarized them*, not verified
   byte-for-byte against the source. Treat §4.1 as "confirmed shape, not confirmed exact wording."
 - The trending-repos list (§4.2) is a snapshot of one digest plus one search, not an exhaustive or
-  reproducible ranking — GitHub's own trending page is unauthenticated and time-windowed
+  reproducible ranking; GitHub's own trending page is unauthenticated and time-windowed
   differently than the digest queried; a different day would likely surface a different five.
 - §5.1's CSV tracker only has value once `mip-solve-perpetual` actually runs unattended for a full
-  MIP — it can't be verified end-to-end until then, which is why this MIP doesn't propose building
+  MIP; it can't be verified end-to-end until then, which is why this MIP doesn't propose building
   it inside this same change (per the `mip` skill's own rule: design here, build in a separate PR).
 
 ## 9. Alternatives considered
 
-- **Do nothing** (skip this survey's ideas entirely) — loses two real efficiency/auditability
+- **Do nothing** (skip this survey's ideas entirely): loses two real efficiency/auditability
   ideas at zero-cost, and the counterfactual is another agent session re-doing this exact research
   because the "should marola pace/track its own dev-agent runs better" question resurfaces. Not
   chosen.
-- **Adopt `pacifio/atlas`** (a real dependency) instead of §5.1's plain-CSV tracker — rejected:
+- **Adopt `pacifio/atlas`** (a real dependency) instead of §5.1's plain-CSV tracker; rejected:
   `atlas` is built for orchestrating *fleets* of concurrent coding agents across a team; marola's
   own convention is one session per feature (`AGENTS.md`), so the coordination problem it solves
   (whose agent touched what, concurrently) doesn't exist here. A flat CSV a human can open in a
   spreadsheet is proportionate to the actual problem.
-- **Adopt `Graphify-Labs/graphify`** for codebase context — rejected: marola is a four-module sbt
+- **Adopt `Graphify-Labs/graphify`** for codebase context; rejected: marola is a four-module sbt
   project small enough that `Explore`/`Grep`/reading `AGENTS.md`'s own doc-index table already
   gives an agent working context in seconds; a knowledge-graph dependency solves a scale problem
   marola doesn't have yet.
-- **Adopt `eneskirca/nodeterm`**-style parallel-session tooling — rejected: it manages *many*
+- **Adopt `eneskirca/nodeterm`**-style parallel-session tooling; rejected: it manages *many*
   concurrent agent sessions visually; marola's workflow is explicitly one feature, one session
   (`AGENTS.md` "Attribution and cost accounting"), so there is nothing for it to visualize here.
 - **Mirror `ai-job-search`'s numbered sub-file skill layout** (`01-…md`, `02-…md` inside one skill
-  directory) for marola's own skills — considered for `mip`'s multi-step template, but rejected for
+  directory) for marola's own skills; considered for `mip`'s multi-step template, but rejected for
   now: marola's `SKILL.md` files are each already short enough (under ~150 lines) that splitting
   them would add navigation overhead without a real length problem to solve. Worth revisiting only
   if a future skill grows past that.
@@ -198,8 +198,8 @@ noted as a parallel, not claimed as coverage.
   quoting/escaping edge cases with commit messages containing commas) be more robust for a script
   to append to reliably? `ai-job-search` uses CSV because its rows are simple; marola's rows would
   need to embed a PR title, which can contain commas. Leaning JSONL for that reason, but not
-  decided — whichever implementation task builds §5.1 should pick and justify it.
-- §5.3 (skill-frontmatter audit) has no owner or scheduled time yet — it's a nice-to-have
+  decided; whichever implementation task builds §5.1 should pick and justify it.
+- §5.3 (skill-frontmatter audit) has no owner or scheduled time yet; it's a nice-to-have
   housekeeping task, not blocking anything; it may be worth folding into MIP-0011's still-open
   task 8 (skills hardening) rather than becoming its own task, since both touch the same files.
 
@@ -210,7 +210,7 @@ Raw findings, for reference:
 - `ai-job-search` AGENTS.md fetch (2026-09-06): described as a "thin-pointer design" workspace
   file, delegating to `CLAUDE.md` (candidate profile) and `.claude/skills/job-application-assistant/`
   (methodology), plus `.agents/skills/` for portable Agent-Skills-format portal tools. No explicit
-  workflow-phase, memory, or cost-tracking mechanism documented in the file itself — those live in
+  workflow-phase, memory, or cost-tracking mechanism documented in the file itself; those live in
   the skill/command files instead, per the pointer design.
 - Repo root fetch (2026-09-06) confirmed directory layout: `.agents/skills/` (portal CLI tools),
   `cv/`, `cover_letters/`, `documents/`, `templates/`, `job_scraper/`, `job_search_tracker.csv`.
@@ -218,5 +218,5 @@ Raw findings, for reference:
   WebSearch for "github trending agentic AI tools September 2026 claude code skills subagents"
   (2026-09-06). Also surfaced but not reviewed in depth (visual-builder platforms, out of scope
   for a CLI/Telegram project): Langflow, Dify, Flowise; multi-agent orchestration frameworks
-  MetaGPT, LobeHub, CrewAI, AutoGen — none reviewed against marola's Scala/Kyo stack, noted only
+  MetaGPT, LobeHub, CrewAI, AutoGen; none reviewed against marola's Scala/Kyo stack, noted only
   because they came up in the same search.

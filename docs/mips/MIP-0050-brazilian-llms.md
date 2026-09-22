@@ -19,7 +19,7 @@
 
 marola is a Brazilian product that answers in English, running a 360M English-centric model that
 demonstrably invents facts. Brazil now has Portuguese-native open models. This evaluates them, and
-concludes that the useful one — Manacá-1B — is worth adopting as a **fine-tuning base** for
+concludes that the useful one, Manacá-1B, is worth adopting as a **fine-tuning base** for
 marola-sea rather than as a drop-in chat model, and that two of its properties (a NonCommercial
 instruct licence and a lowercase-only tokenizer) decide the shape of any adoption.
 
@@ -28,9 +28,9 @@ instruct licence and a lowercase-only tokenizer) decide the shape of any adoptio
 Two facts sit badly together.
 
 **The current model is not good enough, and the reason is size and language.** On a real
-`--summarize` for Praia da Saudade — jellyfish High, whales High, 20.0 °C, 15:00 — marola-sea
+`--summarize` for Praia da Saudade (jellyfish High, whales High, 20.0 °C, 15:00), marola-sea
 (SmolLM2-360M) produced: *"Swim out to the beach when you see a sign and keep your eyes open for an
-uncontested point on the sand — that's where they usually are. If at night, after dark: check
+uncontested point on the sand, that's where they usually are. If at night, after dark: check
 conditions before you go."* Not one given fact appears; it breaks marola's own rule that jellyfish
 risk is always mentioned when High; and its reviewer scored it 74/100. `marola-llama3.2` (3B) on the
 same input answered correctly. `finetune/README.md` has always called the `tiny` preset a pipeline
@@ -39,7 +39,7 @@ proof rather than a quality bar, and this is what that means in practice.
 **The audience is Brazilian and the output is English.** Beach names, the IMA/INEA/INEMA bulletins,
 CONAMA's verdicts and the users are all Portuguese; the summary, the corpus and the prompts are
 English. That is a translation layer nobody asked for, and it is the strongest argument for a
-Portuguese-native model — stronger than any benchmark number.
+Portuguese-native model, stronger than any benchmark number.
 
 ## 3. User-visible change
 
@@ -62,10 +62,10 @@ Note the second is lowercase throughout. That is not a style choice; see §4.1.
 
 All resolved live from the Hugging Face API on 2026-09-09; see the Appendix.
 
-**4.1 Manacá-1B — the pick, as a base.**
+**4.1 Manacá-1B: the pick, as a base.**
 `menezesbruno/manaca-1b-base`, **CC-BY-4.0**, 1,315 downloads, updated 2026-09-01. ~1.72B
 parameters, decoder-only, Llama-3-*style* architecture but **trained from scratch** for Brazilian
-Portuguese ("treinado do zero"), on Megatron-LM. Actively maintained — the instruct variant moved
+Portuguese ("treinado do zero"), on Megatron-LM. Actively maintained; the instruct variant moved
 on 2026-09-04.
 
 Three findings that decide how it can be used:
@@ -74,40 +74,40 @@ Three findings that decide how it can be used:
   the *base* is CC-BY-4.0 and unrestricted. Since marola is MIT and public (MIP-0033), building on
   the base keeps the licence story simple, and building on the instruct model does not.
 - **Trained from scratch, so #273 does not apply.** It is Llama-*architecture*, not Llama-*derived*,
-  so the Community Licence's `Llama-` naming requirement — which `merge_export.py`'s `llama_prefix`
-  enforces for the `small`/`base` presets — is not triggered. Verified from the model card, not
+  so the Community Licence's `Llama-` naming requirement, which `merge_export.py`'s `llama_prefix`
+  enforces for the `small`/`base` presets, is not triggered. Verified from the model card, not
   inferred from the `llama` tag.
 - **Lowercase by construction.** The tokenizer is a 64k SentencePiece *unigram* with `nmt_nfkc_cf`
   normalisation: input is lowercased before segmentation. The card is explicit that a tokenizer
-  without that normaliser "degrada os resultados de forma invisível" — invisible degradation, which
+  without that normaliser "degrada os resultados de forma invisível", invisible degradation, which
   is the failure class marola has spent this month removing. §6 covers what it means for output.
 
 GGUF quants exist, which is what makes this runnable at all here:
 `mradermacher/manaca-1b-base-GGUF` (CC-BY-4.0) ships `Q2_K`, `Q3_K_M`, `Q3_K_L`, `IQ4_XS` and more;
 `sulfierry/manaca-1b-instruct-GGUF` ships F16 only, named `...-F16-UGM.gguf` for the unigram
-tokenizer. That unigram path is why `convert_hf_to_gguf.py` needs `sentencepiece` — the dependency
+tokenizer. That unigram path is why `convert_hf_to_gguf.py` needs `sentencepiece`: the dependency
 added in #307 for a different reason is the one Manacá would genuinely exercise, where SmolLM2 falls
 through to the GPT-2 vocab path instead.
 
-**4.2 Gervásio-7B PT-BR — permissive, but unusable here today.**
+**4.2 Gervásio-7B PT-BR: permissive, but unusable here today.**
 `PORTULAN/gervasio-7b-portuguese-ptbr-decoder`, **MIT**, updated 2025-06-12, 73 downloads. The best
 licence of the set. No official GGUF, and 7B is beyond what the `tiny`/`small` presets target;
 `RichardErkhov`'s community GGUF exists (526 downloads) but is a third-party conversion of a model
 whose own repo publishes none. Worth revisiting if marola ever runs a 7B locally.
 
-**4.3 Sabiá-7B — rejected on licensing.**
+**4.3 Sabiá-7B: rejected on licensing.**
 `maritaca-ai/sabia-7b`, 146 likes and the best-known name here, but **no licence declared** in its
 card metadata, and last updated 2024-04-04. An undeclared licence is not a permissive one. marola
 does not ship models it cannot state the terms of, and #273 is the precedent for taking that
 seriously.
 
-**4.4 The small models — TeenyTinyLlama (`nicholasKluge/TeenyTinyLlama-160m`, Apache-2.0,
+**4.4 The small models: TeenyTinyLlama (`nicholasKluge/TeenyTinyLlama-160m`, Apache-2.0,
 2025-01-15) and Tucano-160m (`cnmoro/Tucano-160m-Portuguese-Instruct-v2`, community GGUF via
-mradermacher).** Both permissive, both ~160M — *smaller* than the SmolLM2-360M that is already too
+mradermacher).** Both permissive, both ~160M, *smaller* than the SmolLM2-360M that is already too
 small to be trusted with marola's facts. They are interesting as fine-tuning targets for a narrow
 classification task, not as summarisers.
 
-**4.5 The status quo — SmolLM2-360M (`tiny`) and Llama-3.2 (`small`/`base`).** Unchanged and
+**4.5 The status quo: SmolLM2-360M (`tiny`) and Llama-3.2 (`small`/`base`).** Unchanged and
 already documented in `finetune/train_lora.py`'s `PRESETS`. `marola-llama3.2` is the thing to beat,
 because it demonstrably produces a correct summary today.
 
@@ -117,13 +117,13 @@ because it demonstrably produces a correct summary today.
 Add `manaca` to `finetune/train_lora.py`'s `PRESETS` (`menezesbruno/manaca-1b-base`, ungated,
 CC-BY-4.0) and a benchmark arm so the claim "a Portuguese-native 1.7B beats an English 360M on
 marola's own questions" is measured rather than asserted. `just marola-sea-pull` already handles
-GGUF from Hugging Face, so running it needs no new code path — `ollama pull
+GGUF from Hugging Face, so running it needs no new code path: `ollama pull
 hf.co/mradermacher/manaca-1b-base-GGUF:Q4_K_M` and a `MAROLA_LOCAL_LLM_MODEL`.
 
 This is also the measurement MIP-0048 §"which model" needs, so it is not a detour.
 
 ### 5.2 Fine-tuning marola-sea on a Manacá base (do when the corpus is Portuguese)
-Same chain as MIP-0025 — dataset → SFT → DPO → merge → GGUF — with the base swapped. Two things
+Same chain as MIP-0025 (dataset → SFT → DPO → merge → GGUF) with the base swapped. Two things
 change:
 
 - **The conversion path.** Manacá's unigram SentencePiece means `convert_hf_to_gguf.py` takes
@@ -140,11 +140,11 @@ redistribute in a Docker image. The base model has no such condition and is the 
 
 ## 6. Scoring / safety impact
 
-`Swimability.score` is untouched — the model never computes a score, and this MIP does not change
+`Swimability.score` is untouched: the model never computes a score, and this MIP does not change
 that.
 
 One real interaction, and it is the Risk field. MIP-0001 §6/§9 shows the agency's bathing-water
-verdict verbatim — `PRÓPRIA` / `IMPRÓPRIA` — because it is CONAMA 274/2000's classification, applied
+verdict verbatim, `PRÓPRIA` / `IMPRÓPRIA`, because it is CONAMA 274/2000's classification, applied
 by IMA, not re-derived by marola. `site/static/style.css` exempts it from the site's lowercase house
 style for exactly that reason. **A model that is lowercase by construction cannot reproduce that
 string.** Options, none free: keep the verdict out of the model's output entirely and render it
@@ -155,12 +155,12 @@ assumes.
 ## 7. Verification plan
 
 - A benchmark run with `MAROLA_LOCAL_LLM_MODEL` set to a Manacá GGUF, kept in `docs/benchmarks/`
-  next to the existing arms — the same `just benchmark` shape, no new harness.
+  next to the existing arms: the same `just benchmark` shape, no new harness.
 - The specific regression that started this: the Praia da Saudade prompt from §2, asserted to
   mention jellyfish when the risk is High. That is a rule marola states and the 360M model breaks;
   it is the cheapest single measure of whether a candidate is usable.
 - If §5.2 proceeds: `convert_hf_to_gguf.py` on a merged Manacá adapter, confirming the unigram
-  vocab path completes — the failure mode #307 fixed for a different tokenizer.
+  vocab path completes: the failure mode #307 fixed for a different tokenizer.
 - **Done** for this MIP = the numbers exist and the licence position is written down; not a model
   adopted.
 
@@ -173,7 +173,7 @@ assumes.
   is against a 3B model that already works. Manacá may lose that comparison; the MIP is written so
   that outcome is a result, not a failure.
 - **A one-maintainer model.** Manacá is a personal Hugging Face account, actively maintained but
-  without an institution behind it. That is not a reason to reject it — it is a reason to pin a
+  without an institution behind it. That is not a reason to reject it; it is a reason to pin a
   revision rather than track `main`.
 - **Switching output language is a product decision** wearing technical clothes, and it affects the
   corpus, the DSPy prompts, the site copy and the safety footer. §5.2 should not be the vehicle for
@@ -184,9 +184,9 @@ assumes.
 - **Do nothing.** Defensible: `marola-llama3.2` produces correct summaries today. This MIP's value
   is mostly in §4's licence findings, which are worth having written down either way.
 - **A bigger general model (Llama-3.2-3B, the `base` preset).** Already available, already works,
-  no new licence question — but English-centric and subject to the Llama naming rules #273 exists
+  no new licence question, but English-centric and subject to the Llama naming rules #273 exists
   for. The right fallback if Manacá underperforms.
-- **Translate at the edges** — keep an English model, translate its output to Portuguese. Adds a
+- **Translate at the edges**: keep an English model, translate its output to Portuguese. Adds a
   second model call and a second place to invent facts, on the safety-relevant path. Rejected.
 - **Sabiá-7B.** §4.3.
 
@@ -211,24 +211,24 @@ base is fine-tuned, not whether. No AI-500 row.
 ### Checked live
 Hugging Face API, 2026-09-09.
 
-- `menezesbruno/manaca-1b-base` — **cc-by-4.0**, lang `pt`, tags include `llama`, `megatron-lm`,
+- `menezesbruno/manaca-1b-base`: **cc-by-4.0**, lang `pt`, tags include `llama`, `megatron-lm`,
   `brazilian-portuguese`; updated 2026-09-01; 1,315 downloads; `model.safetensors`.
-- `menezesbruno/manaca-1b-instruct` — **cc-by-nc-4.0**, base_model `manaca-1b-base`, tags include
+- `menezesbruno/manaca-1b-instruct`: **cc-by-nc-4.0**, base_model `manaca-1b-base`, tags include
   `instruction-tuned`, `safety-alignment`; updated 2026-09-04; 822 downloads.
 - Model card of `manaca-1b-base` (raw README, 12,802 bytes): "~1.72B", "treinado do zero"/"trained
   from scratch", Megatron-LM (LLM-jp fork), and the tokenizer section headed "Tokenizador (leia
   isto)" stating the model is "lowercase por construção" with `nmt_nfkc_cf`, and that a tokenizer
   lacking the normaliser "degrada os resultados de forma invisível".
-- `mradermacher/manaca-1b-base-GGUF` — cc-by-4.0, updated 2026-08-31, 545 downloads; files include
+- `mradermacher/manaca-1b-base-GGUF`: cc-by-4.0, updated 2026-08-31, 545 downloads; files include
   `IQ4_XS`, `Q2_K`, `Q3_K_L`, `Q3_K_M`.
-- `sulfierry/manaca-1b-instruct-GGUF` — cc-by-nc-4.0, updated 2026-09-04, 100 downloads; one file,
+- `sulfierry/manaca-1b-instruct-GGUF`: cc-by-nc-4.0, updated 2026-09-04, 100 downloads; one file,
   `manaca-1b-instruct-F16-UGM.gguf`.
-- `maritaca-ai/sabia-7b` — **no `license` in card metadata**; updated 2024-04-04; 804 downloads;
+- `maritaca-ai/sabia-7b`: **no `license` in card metadata**; updated 2024-04-04; 804 downloads;
   146 likes.
-- `PORTULAN/gervasio-7b-portuguese-ptbr-decoder` — **mit**; updated 2025-06-12; 73 downloads; no
+- `PORTULAN/gervasio-7b-portuguese-ptbr-decoder`: **mit**; updated 2025-06-12; 73 downloads; no
   GGUF in the repo.
-- `nicholasKluge/TeenyTinyLlama-160m` — **apache-2.0**; updated 2025-01-15; 194 downloads; no GGUF.
-- `cnmoro/Tucano-160m-Portuguese-Instruct-v2` — found via search (53 downloads); GGUF via
+- `nicholasKluge/TeenyTinyLlama-160m`: **apache-2.0**; updated 2025-01-15; 194 downloads; no GGUF.
+- `cnmoro/Tucano-160m-Portuguese-Instruct-v2`: found via search (53 downloads); GGUF via
   `mradermacher` (294 downloads). Licence **not** fetched.
 
 ### Not checked

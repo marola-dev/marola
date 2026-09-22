@@ -18,8 +18,8 @@
 ## 1. Summary
 
 marola's users are Brazilian swimmers; its beach names, bulletins and CONAMA verdicts are Portuguese;
-everything marola itself says — site copy, CLI output, scoring notes, sea lore, corpus, prompts, the
-model's summary — is English. This MIP makes pt-BR the default on every surface, makes English a
+everything marola itself says, site copy, CLI output, scoring notes, sea lore, corpus, prompts, the
+model's summary, is English. This MIP makes pt-BR the default on every surface, makes English a
 choice the visitor can flip and keep, and opens the site on the coast the visitor is on when they
 allow it, with an honest "not covered here yet" elsewhere. **It blocks Release 0: MIP-0033's release
 is not cut until §7's gates are green on `main`.** Translation at the edges is rejected (§9): the
@@ -36,14 +36,14 @@ What a visitor meets today, from the real files:
   "Location not granted — the list stays ranked by score."
 - **The board JSON carries English prose**: `Swimability.scala:76-126` writes `"cold water (19.2°C)"`,
   `"elevated jellyfish likelihood"` into `hours[].notes` (`board.schema.json:103`); `wind_level` is
-  the English enum `calm|breezy|strong` (`:107`); `water.summary` is `"1/1 PRÓPRIA (25 Aug)"` — a
+  the English enum `calm|breezy|strong` (`:107`); `water.summary` is `"1/1 PRÓPRIA (25 Aug)"`, a
   Portuguese verdict with an English month. A client cannot re-word what the build baked in.
 - CLI: `Report.scala:42-150` ("parking nearby", "few of the warm-calm signals present");
   `Main.scala:150,497` errors; `OceanQa.scala:21-22` the no-answer reply, `:86-104` two English
   system prompts. MCP descriptions `SwimConditionsMcpServer.scala:123-163`; `docs/RUN-LOCALLY.md`.
-- LLM path: `recommendation_prompt.json` / `review_prompt.json` — English instructions, three English
+- LLM path: `recommendation_prompt.json` / `review_prompt.json`, English instructions, three English
   bootstrapped demos each. Corpus: seven `knowledge/*.md`, all English, which `--ask` is told to
-  answer *from* — so an English corpus pulls the answer to English.
+  answer *from*, so an English corpus pulls the answer to English.
 - The exception: `SafetyFooter.scala:8-22` defaults to `Lang.PtBr` (MIP-0022). Nothing else in the
   repo knows a locale (Appendix: the grep).
 
@@ -72,7 +72,7 @@ ordenada por pontuação. escolha a área acima.` **Outside coverage** (allowed,
 `você está a ~410 km da área coberta mais próxima (Rio de Janeiro). o marola ainda não cobre esta
 costa — sem balneabilidade oficial, não há recomendação de banho aqui. mostrando Rio.`
 
-**CLI, `just run -- --summarize`** — same numbers, same order; the model's sentence last and only
+**CLI, `just run -- --summarize`**, same numbers, same order; the model's sentence last and only
 if it passed §5.4:
 
 ```
@@ -101,7 +101,7 @@ prompt), and the board (English notes baked in at build time). §5 addresses eac
 
 ### 4.3 Can the local models write pt-BR? — the decisive question
 Cards checked 2026-09-12 (Appendix):
-- **`llama3.2`** — the runtime default (`LocalLlmClient.scala:29`): "English, German, French, Italian,
+- **`llama3.2`**, the runtime default (`LocalLlmClient.scala:29`): "English, German, French, Italian,
   **Portuguese**, Hindi, Spanish, and Thai are officially supported." The pt-BR default is built on it.
 - **`qwen2.5`** (the `qwen-*` presets): "over 29 languages, including … **Portuguese**". A second row.
 - **`smollm2:360m`** (the `tiny` preset): "SmolLM2 models primarily understand and generate content in
@@ -119,17 +119,17 @@ sessions, throws `SecurityError` when the user blocks storage, cleared with the 
 
 ### 4.5 IP geolocation from the page — permitted by the gates, rejected by the promise
 `index.html:14`'s CSP is `connect-src 'self' https:`, and `scripts/strip_external_scripts.py` only
-strips `<script src="https://…">` from the generated docs tree (`out/scala`, `out/python`) — a
+strips `<script src="https://…">` from the generated docs tree (`out/scala`, `out/python`), a
 `fetch()` to an HTTPS geo API would pass both. `ipwho.is` (the CLI's second provider) is keyless,
 HTTPS, CORS, 1,000 requests/day *per domain*; `ip-api.com` (its third) is `http://` on the free tier
 ("SSL and commercial use" are Pro), so the CSP blocks it anyway. But `app.js:403` says "No cookies,
 no tracking" and `index.html:7` "no tracking": sending every visitor's IP to a third party on load is
 tracking, and 1,000/day per domain is a budget one good day exhausts. **Rejected for the site.** The
-CLI keeps `IpGeolocation` — one's own machine asking about its own IP is a different consent story.
+CLI keeps `IpGeolocation`, one's own machine asking about its own IP is a different consent story.
 
 ### 4.6 A zero-network coarse hint: the timezone
 `site/areas.json` already carries `tz` per area. `Intl.DateTimeFormat().resolvedOptions().timeZone`
-needs no permission, request or storage; §5.5 uses it to pick a default *area* — never shown as a
+needs no permission, request or storage; §5.5 uses it to pick a default *area*, never shown as a
 position. Not verified against MDN this session (Not checked).
 
 ## 5. Design
@@ -141,7 +141,7 @@ position. Not verified against MDN this session (Not checked).
 `app.js` fetches the active one and renders every string via `t(key, args)`.
 **Scoring notes become codes**: `Swimability` returns `Note(code: NoteCode, args)` instead of
 `String`; `Report` and the board render it. The board gains `hours[].note_codes` next to `notes`
-(additive — an older `app.js` still reads a new board; `schema` enum becomes `[1, 2]`). `wind_level`
+(additive, an older `app.js` still reads a new board; `schema` enum becomes `[1, 2]`). `wind_level`
 stays the wire enum, rendered through the catalog. `water.summary`'s month is formatted per language
 in `Report`; the verdict token is never touched.
 
@@ -154,13 +154,13 @@ the artefact. The reviewer's three checks are language-agnostic but it is recomp
 lines beside the sentence, as today.
 
 ### 5.3 The corpus: a Portuguese one, sourced line by line
-`knowledge/pt-BR/<same-name>.md` for every English file — same `# Title` + `Source:` contract, same
+`knowledge/pt-BR/<same-name>.md` for every English file, same `# Title` + `Source:` contract, same
 rule (say only what the source supports), same human sentence-by-sentence check `knowledge/README.md`
 already demands before Phase 1. A Portuguese source (IMA/SC) is cited directly; an English one (NOAA,
 Wikipedia) is cited as is, optionally with a Portuguese page beside it. `MAROLA_KNOWLEDGE_DIR`
 selects the tree; the index fingerprint already follows it. `OceanQa`'s prompts move to the catalog;
-`NO_ANSWER_IN_PASSAGES` stays the language-neutral sentinel. **`--ask` is one language at a time** —
-the corpus's — and the UI says so instead of pretending otherwise.
+`NO_ANSWER_IN_PASSAGES` stays the language-neutral sentinel. **`--ask` is one language at a time**,
+the corpus's, and the UI says so instead of pretending otherwise.
 
 ### 5.4 The language guard — deterministic, after the model
 `marola.i18n.LanguageGuard.looksLike(text, lang)`: a stopword-ratio test over two fixed lists (pt:
@@ -170,15 +170,15 @@ dropped for the deterministic line plus a `summary_language_mismatch` note. An E
 appears under a Portuguese header. Same shape as MIP-0022's footer and MIP-0039's fact guard.
 
 ### 5.5 Precedence — language, then location
-**Language**, first hit wins: (1) `?lang=` — a shared link renders as shared; (2)
-`localStorage['marola.lang']` — the toggle writes it and (1); (3) `navigator.languages`, any `pt*` →
+**Language**, first hit wins: (1) `?lang=`: a shared link renders as shared; (2)
+`localStorage['marola.lang']`: the toggle writes it and (1); (3) `navigator.languages`, any `pt*` →
 `pt-BR`, else `en`; (4) `pt-BR`. The toggle beats inference because it writes (1) and (2). **Location
 never selects language**: a denied prompt, a missing API, a thrown `localStorage` all still land on
 (3)/(4). CLI: `--lang`, `MAROLA_LANG`, `Locale.getDefault`, `pt-BR`.
 **Location** picks an *area*, never a language: (1) `?area=` (exists, `app.js:87,94`); (2) stored
 `marola.area`; (3) on the "perto de mim" click, the nearest area whose `radius_km` contains the
 position, else §3's outside-coverage line and the nearest area; (4) the area whose `tz` matches the
-browser's (§4.6); (5) `areas[0]`. No prompt on load — Geolocation stays behind the click. `code 1`
+browser's (§4.6); (5) `areas[0]`. No prompt on load; Geolocation stays behind the click. `code 1`
 shows the denied line; `2`/`3` show "não foi possível obter a localização" and keep the picker.
 **Outside coverage is a data statement.** Overpass and Open-Meteo are global; water quality is not
 (`ARCHITECTURE.md` §5g: IMA/SC in SC, `none` elsewhere; INEA/INEMA partial, MIP-0031). With no
@@ -187,12 +187,12 @@ the same "no data" path as today. No beach is added that the pipeline cannot bac
 
 ### 5.6 Privacy, exactly
 Collected: a position, after a click and a browser prompt, held in `state.here` for the page's life,
-never written; a language and an area id in `localStorage`, per origin. Sent: nothing — no request
+never written; a language and an area id in `localStorage`, per origin. Sent: nothing; no request
 carries position, language or area; board and catalog fetches are same-origin static files. Stored
 server-side: nothing (there is no server). The CLI's IP lookup is unchanged and CLI-only.
 
 ### 5.7 Not proposed
-No translation API, free or paid — `AGENTS.md`'s cost gate is untouched. No machine-translated
+No translation API, free or paid: `AGENTS.md`'s cost gate is untouched. No machine-translated
 corpus. No change to `Swimability`'s thresholds, weights or vetoes. No English removed: `en.json`
 keeps every string the site shows today.
 
@@ -217,11 +217,11 @@ failure mode: the only model-authored text is now also checked for language.
   lowercase-exemption assertions stay as they are.
 - `scripts/i18n_check.py --self-test` in `quality-other`: key parity between the two catalogs, no
   empty value, an English denylist (`jellyfish`, `waves`, `unfit`, `loading`…) in `pt-BR.json`, and a
-  `Source:`-bearing `knowledge/pt-BR/` twin for every `knowledge/*.md` — a missing one fails the build.
+  `Source:`-bearing `knowledge/pt-BR/` twin for every `knowledge/*.md`, a missing one fails the build.
 - `MessagesSpec` (every `NoteCode` in both languages, placeholders consumed); `ReportSpec` (a fixed
   `BestHour` renders §3's block byte-for-byte); `BoardSpec` (`note_codes`, `schema` 2, a schema-1
   fixture still validates); `LanguageGuardSpec` (the three English demos fail `PtBr`; §3's sentence
-  passes; an empty string passes — the guard refuses only what it can tell).
+  passes; an empty string passes, the guard refuses only what it can tell).
 - `just benchmark` pt-BR arm: `benchmark_questions.pt-BR.json` (the 22 questions), reporting per model
   the share of answers passing the guard. **Acceptance: the default model passes 22/22; the run is
   kept in `docs/benchmarks/`.**
@@ -231,11 +231,11 @@ failure mode: the only model-authored text is now also checked for language.
 
 ## 8. Risks, limitations, and honest caveats
 
-- **Two corpora drift.** `i18n_check` catches a missing file, not a stale sentence — the human job
+- **Two corpora drift.** `i18n_check` catches a missing file, not a stale sentence, the human job
   `knowledge/README.md` already names. **The guard is a heuristic**: it cannot tell pt-BR from pt-PT
   and a sentence of names and numbers can fool it; it refuses English, it does not certify Portuguese.
 - **Recompiled prompts are new prompts.** MIP-0040's "the reviewer was never validated" applies twice.
-  **Small models, small margins**: with `smollm2:360m` the fallback line shows often — the design
+  **Small models, small margins**: with `smollm2:360m` the fallback line shows often, the design
   working, as the card predicts (§4.3).
 - **Outside coverage stays honest and unhelpful** (a visitor in Recife sees Salvador and a line saying
   so; the fix is a provider, MIP-0031's shape). **Storage can vanish** (private tabs, blocked cookies):
@@ -245,14 +245,14 @@ failure mode: the only model-authored text is now also checked for language.
 ## 9. Alternatives considered
 
 - **Do nothing.** Rejected by the release decision this MIP records and MIP-0050 §2's argument.
-- **Translate at the edges** (English model, a translation pass after it — local or Azure AI
+- **Translate at the edges** (English model, a translation pass after it, local or Azure AI
   Translator): a second model call on the safety-relevant path, a second place to invent facts
   (MIP-0050 §9), a paid resource for what `llama3.2` does natively; a machine-translated corpus is
   unsourced by construction. Rejected.
-- **Portuguese only, no toggle** — wrong for a repo whose docs and exam mappings are English, and the
-  catalog costs the same once it exists. **Language from location** — rejected (§5.5): a denied
-  prompt must not cost the visitor their language. **IP geolocation in the page** — §4.5. **Regex
-  over the English notes client-side** — hard-codes English as the wire format; codes are the contract.
+- **Portuguese only, no toggle**, wrong for a repo whose docs and exam mappings are English, and the
+  catalog costs the same once it exists. **Language from location**, rejected (§5.5): a denied
+  prompt must not cost the visitor their language. **IP geolocation in the page**, §4.5. **Regex
+  over the English notes client-side**, hard-codes English as the wire format; codes are the contract.
 
 ## 10. Exam-coverage mapping
 
@@ -265,16 +265,16 @@ Row marked "proposed: MIP-0054". No AI-500 row.
 
 - **Which model backs the pt-BR default in Release 0?** `llama3.2` by the card; the benchmark decides.
   If it misses a question, does the release ship with the fallback line or wait for 22/22?
-- **A native-speaker pass** on `pt-BR.json` and the corpus — the author is a model, §3's strings are
+- **A native-speaker pass** on `pt-BR.json` and the corpus, the author is a model, §3's strings are
   proposals. Who reviews, and does it gate the merge or the release?
 - **Does `notes` (English prose) stay on the wire**, or drop at `schema` 3 once `/v1/` is frozen
   (MIP-0042)?
 - **Telegram's language** (MIP-0002, unbuilt): its user `language_code` as precedence (3), `/lang` as
-  the toggle — MIP-0002's design when it resumes.
+  the toggle, MIP-0002's design when it resumes.
 - **`docs/RUN-LOCALLY.md`**: a Portuguese twin, or a pt-BR pointer paragraph at the top? Proposed: the
   pointer.
 - **Follow-up MIP:** MIP-0050 §5.2 (fine-tuning marola-sea on a Portuguese-native base) is unblocked
-  once `knowledge/pt-BR/` exists — `build_dataset.py` already verifies excerpts verbatim against the
+  once `knowledge/pt-BR/` exists, `build_dataset.py` already verifies excerpts verbatim against the
   corpus it reads. That is MIP-0050's own next task, not this one's.
 
 ## Appendix
@@ -282,25 +282,25 @@ Row marked "proposed: MIP-0054". No AI-500 row.
 ### Checked live
 All 2026-09-12.
 
-- MDN Geolocation API (https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API) — "available only in secure contexts (HTTPS)"; "users must grant explicit permission via a prompt when either `Geolocation.getCurrentPosition()` or `Geolocation.watchPosition()` is called (unless the permission state is already `granted` or `denied`)"; default Permissions-Policy allowlist `self`; a grant "may be time based, session based, or even permanent".
-- MDN `GeolocationPositionError.code` (https://developer.mozilla.org/en-US/docs/Web/API/GeolocationPositionError/code) — `1 PERMISSION_DENIED`, `2 POSITION_UNAVAILABLE`, `3 TIMEOUT`.
-- MDN `Navigator.languages` (https://developer.mozilla.org/en-US/docs/Web/API/Navigator/languages) — BCP-47 tags "ordered by preference with the most preferred language first"; `navigator.language` "is the first element"; Safari (always) and Chrome incognito list one language.
-- MDN `Window.localStorage` (https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) — `SecurityError` when "the user has configured the browsers to prevent the page from persisting data"; per protocol/origin; "saved across browser sessions"; private-browsing data cleared with the last private tab; `file:` undefined.
-- Ollama `llama3.2` (https://ollama.com/library/llama3.2) — "Supported Languages: English, German, French, Italian, Portuguese, Hindi, Spanish, and Thai are officially supported."
-- Ollama `qwen2.5` (https://ollama.com/library/qwen2.5) — "multilingual support for over 29 languages, including Chinese, English, French, Spanish, Portuguese, …"; sizes 0.5B–72B.
-- Ollama `smollm2` (https://ollama.com/library/smollm2) — sizes 135M/360M/1.7B; no language statement on the page.
-- Hugging Face `HuggingFaceTB/SmolLM2-360M-Instruct` (https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct) — "SmolLM2 models primarily understand and generate content in English."; Apache-2.0.
-- IMA/SC (https://balneabilidade.ima.sc.gov.br/) — Portuguese only: "BALNEABILIDADE", "Selecione o município, o balneário e clique no botão 'Balneabilidade'", legend "Próprio"/"Impróprio"; no language switch.
-- Open-Meteo Marine API (https://open-meteo.com/en/docs/marine-weather-api) — numeric arrays plus `hourly_units` (`"wave_height": "m"`); no locale parameter; key "Only required to commercial use"; DWD attribution required.
-- ipwho.is docs (https://ipwhois.io/docs) — "No API key required"; "1,000 requests per day"; HTTPS "especially for browser-based requests from secure websites"; CORS requests "counted per domain, not per individual visitor IP"; "Commercial use allowed".
-- ip-api.com docs (https://ip-api.com/docs) — "Go pro" lists "unlimited queries, SSL and commercial use", i.e. the free tier is HTTP-only; the CLI calls it over `http://` (`IpGeolocation.scala:62`).
-- ipinfo.io developers (https://ipinfo.io/developers) — "JSONP and CORS are supported"; the documented *Lite* response has country fields and no `loc`.
+- MDN Geolocation API (https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API): "available only in secure contexts (HTTPS)"; "users must grant explicit permission via a prompt when either `Geolocation.getCurrentPosition()` or `Geolocation.watchPosition()` is called (unless the permission state is already `granted` or `denied`)"; default Permissions-Policy allowlist `self`; a grant "may be time based, session based, or even permanent".
+- MDN `GeolocationPositionError.code` (https://developer.mozilla.org/en-US/docs/Web/API/GeolocationPositionError/code): `1 PERMISSION_DENIED`, `2 POSITION_UNAVAILABLE`, `3 TIMEOUT`.
+- MDN `Navigator.languages` (https://developer.mozilla.org/en-US/docs/Web/API/Navigator/languages): BCP-47 tags "ordered by preference with the most preferred language first"; `navigator.language` "is the first element"; Safari (always) and Chrome incognito list one language.
+- MDN `Window.localStorage` (https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage): `SecurityError` when "the user has configured the browsers to prevent the page from persisting data"; per protocol/origin; "saved across browser sessions"; private-browsing data cleared with the last private tab; `file:` undefined.
+- Ollama `llama3.2` (https://ollama.com/library/llama3.2): "Supported Languages: English, German, French, Italian, Portuguese, Hindi, Spanish, and Thai are officially supported."
+- Ollama `qwen2.5` (https://ollama.com/library/qwen2.5): "multilingual support for over 29 languages, including Chinese, English, French, Spanish, Portuguese, …"; sizes 0.5B–72B.
+- Ollama `smollm2` (https://ollama.com/library/smollm2): sizes 135M/360M/1.7B; no language statement on the page.
+- Hugging Face `HuggingFaceTB/SmolLM2-360M-Instruct` (https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct): "SmolLM2 models primarily understand and generate content in English."; Apache-2.0.
+- IMA/SC (https://balneabilidade.ima.sc.gov.br/): Portuguese only: "BALNEABILIDADE", "Selecione o município, o balneário e clique no botão 'Balneabilidade'", legend "Próprio"/"Impróprio"; no language switch.
+- Open-Meteo Marine API (https://open-meteo.com/en/docs/marine-weather-api): numeric arrays plus `hourly_units` (`"wave_height": "m"`); no locale parameter; key "Only required to commercial use"; DWD attribution required.
+- ipwho.is docs (https://ipwhois.io/docs): "No API key required"; "1,000 requests per day"; HTTPS "especially for browser-based requests from secure websites"; CORS requests "counted per domain, not per individual visitor IP"; "Commercial use allowed".
+- ip-api.com docs (https://ip-api.com/docs): "Go pro" lists "unlimited queries, SSL and commercial use", i.e. the free tier is HTTP-only; the CLI calls it over `http://` (`IpGeolocation.scala:62`).
+- ipinfo.io developers (https://ipinfo.io/developers): "JSONP and CORS are supported"; the documented *Lite* response has country fields and no `loc`.
 - This repo: `index.html:2,7,14,34,38-39,46,64,73`; `app.js:87,94,349,397,402-403,538-545`; `site_check.js:69,169,207-211,239,339,347-356`; `style.css:121-133`; `Swimability.scala:76-179`; `Report.scala:42-150`; `OceanQa.scala:21-104`; `SafetyFooter.scala:8-22`; `LocalLlmClient.scala:29`; `train_lora.py:64-89`; `IpGeolocation.scala:28-70`; `Main.scala:26-77`; `board.schema.json:90-133`; `strip_external_scripts.py:1-14`; `areas.json` (`tz` per area); both compiled prompts (English instructions, 3 English demos each); seven English corpus files; `grep -rn 'i18n|locale|pt-BR'` → only `SafetyFooter`, `<html lang="en">` and a `repo_stats.py` flag.
 
 ### Not checked
 - **No model was run in Portuguese.** §4.3 quotes cards; §7's arm is the measurement.
-- `Intl.DateTimeFormat().resolvedOptions().timeZone` — from general knowledge, not fetched from MDN.
+- `Intl.DateTimeFormat().resolvedOptions().timeZone`: from general knowledge, not fetched from MDN.
 - Whether `https://ipinfo.io/json` without a token still returns `loc` (the CLI relies on it); only the Lite docs were read. Moot for the site (§4.5), relevant to the CLI's provider list.
 - ip-api.com's free-tier rate limit; whether GitHub Pages sends a `Permissions-Policy` header.
-- The Portuguese strings in §3 — grammar, register and Brazilian usage unreviewed by a native speaker.
-- Telegram's `language_code` field — from memory, not fetched. MIP-0050's Manacá findings — cited, not re-verified.
+- The Portuguese strings in §3, grammar, register and Brazilian usage unreviewed by a native speaker.
+- Telegram's `language_code` field, from memory, not fetched. MIP-0050's Manacá findings, cited, not re-verified.

@@ -21,10 +21,10 @@ Everything marola computes is deterministic, and then one 3B model writes a sent
 second 3B model checks that sentence, and whatever comes back is printed. This MIP adds a
 **deterministic** check between the model and the reader: `FactGuard` compares the generated text
 against the same eight-field fact map the prompt was built from, and flags a claim the facts do not
-support — a number that matches no field, a categorical risk stated at a level the data contradicts,
+support: a number that matches no field, a categorical risk stated at a level the data contradicts,
 an attribute (a compass bearing, a tide state) marola never supplied. On a hard violation the
 sentence is withheld and the deterministic block is shown instead; nothing is silently rewritten.
-Pure Scala, unit-tested, no new dependency, and — like MIP-0022's footer — applied *after* the model,
+Pure Scala, unit-tested, no new dependency, and, like MIP-0022's footer, applied *after* the model,
 so no model can remove it.
 
 ## 2. Motivation
@@ -49,23 +49,23 @@ llama3.2    → "...swimmers should be aware that there is a moderate jellyfish 
 Two distinct, reproducible failures, both invisible to every check marola has:
 
 1. **A fabricated attribute.** "from the northwest" is a wind *direction*. `factInputsFor` has no
-   wind-direction field — the model invented a compass bearing and attached it to a real wind speed.
+   wind-direction field. The model invented a compass bearing and attached it to a real wind speed.
    Nothing in the pipeline can even notice, because there is no field to compare it to.
 2. **A contradicted category.** `jellyfish_risk` was `Low`; the 3B model wrote "moderate jellyfish
-   risk present". That is not a policy slip, it is the opposite of the datum — and jellyfish risk is
+   risk present". That is not a policy slip, it is the opposite of the datum, and jellyfish risk is
    the one heuristic that feeds `Swimability.score` (`ARCHITECTURE.md` §8).
 
-**Today the only guard against both is `Reviewer` — which is the same model class making the
+**Today the only guard against both is `Reviewer`, which is the same model class making the
 mistake.** `Reviewer.review` (`Reviewer.scala:29-44`) sends the draft to an LLM, parses a
 `{score, verdict, final_summary}`, and `Main.reviewAndPrint` (`Main.scala:511-514`) prints
-`final_summary` **regardless of the verdict** — a `revise` verdict changes the text shown, not
+`final_summary` **regardless of the verdict**. A `revise` verdict changes the text shown, not
 whether text is shown. `ARCHITECTURE.md` §5a's own status note says the smaller model's reviewer
 "fixated on whale visibility instead of the more important jellyfish risk in one live run". An LLM
 grading an LLM is the state of the art for open-ended prose (§4.2); it is the *wrong* tool when the
 ground truth is eight typed fields sitting in memory one function call away.
 
 This is also where the competitive argument lands. A research pass on 2026-09-07 found that "an LLM
-writes a summary" is table stakes — Google shipped WeatherNext 3 into Search, Gemini and Maps on
+writes a summary" is table stakes: Google shipped WeatherNext 3 into Search, Gemini and Maps on
 2026-09-03, and shipped surf products already ship AI scores. What a general assistant cannot do is
 prove its sentence agrees with IMA bulletin 43/2026 and a specific `Swimability` field. The
 deterministic layer is marola's asset; this MIP extends it over the one output that currently
@@ -73,7 +73,7 @@ escapes it.
 
 ## 3. User-visible change
 
-Clean case — nothing changes at all:
+Clean case. Nothing changes at all:
 
 ```
 Draft summary: Conditions at Praia da Joaquina at 09:00 are fair: 19.0°C water, 1.3 m waves and a
@@ -81,7 +81,7 @@ Draft summary: Conditions at Praia da Joaquina at 09:00 are fair: 19.0°C water,
 Reviewer (score 80/100, verdict: approve): ...
 ```
 
-Hard violation — the sentence is withheld, the numbers stand on their own:
+Hard violation. The sentence is withheld, the numbers stand on their own:
 
 ```
 Draft summary: (withheld — the summary contradicted the data)
@@ -90,7 +90,7 @@ Draft summary: (withheld — the summary contradicted the data)
   with the numbers it was given.
 ```
 
-Soft violation — the sentence is shown, with the flag under it, never edited:
+Soft violation. The sentence is shown, with the flag under it, never edited:
 
 ```
 Reviewer (score 70/100, verdict: approve): ... a 20 km/h wind from the northwest ...
@@ -106,7 +106,7 @@ shows `withheld` as "numbers only", which is what §8 of that MIP already asked 
 ## 4. Data sources and dependencies reviewed
 
 **No new external data source.** The "context" this checks against is `Main.factInputsFor`'s
-`Map[String, String]` — eight fields, already built, already passed to both the summariser and the
+`Map[String, String]`: eight fields, already built, already passed to both the summariser and the
 reviewer (`Main.scala:484`, `:508`). That is the whole point: marola's grounding problem is
 unusually easy because its ground truth is typed and tiny.
 
@@ -120,15 +120,15 @@ unusually easy because its ground truth is typed and tiny.
   schema, `temperature: 0` → returned `{"headline": "...", "sea_temp_c": 19, "wave_height_m": 1.3,
   "mentions_jellyfish": false}`, schema-valid, 52 output tokens, 1.66 s wall (1.31 s of it model
   load). The numbers came back **exactly equal** to the input facts.
-- That makes a different design possible — have the model emit *slots* and render the sentence
+- That makes a different design possible: have the model emit *slots* and render the sentence
   deterministically, so a fabricated compass bearing has nowhere to live. **It is not obviously
   better, and the 2026 evidence says so.** "The Constraint Tax" (arXiv:2605.26128, Jaideep Ray,
   submitted 2026-05-20, abstract fetched 2026-09-07) measured exactly this trade on models the size
-  marola runs — Qwen2.5-0.5B, Qwen2.5-1.5B, SmolLM2-1.7B: hard answer-only schema decoding raised
+  marola runs, Qwen2.5-0.5B, Qwen2.5-1.5B, SmolLM2-1.7B: hard answer-only schema decoding raised
   schema validity **61.5% → 100.0%** while answer accuracy *fell* **19.7% → 11.0%** and
   wrong-but-schema-valid outputs rose **49.5% → 88.9%**. A constrained model produces well-formed
   wrong answers more often, not fewer. So constrained generation would trade one failure mode
-  (fabricated prose) for another (confidently mis-slotted numbers) — which the guard in §5.1 would
+  (fabricated prose) for another (confidently mis-slotted numbers), which the guard in §5.1 would
   then have to catch anyway.
 - It also does not help the Azure Foundry path or any provider without schema decoding.
   **v1 is therefore the guard, which works on any provider's plain text; slot generation is a
@@ -137,15 +137,15 @@ unusually easy because its ground truth is typed and tiny.
 ### 4.2 How the field checks generated text in 2026 — reviewed, and why marola should not copy it
 
 - **Ragas `Faithfulness`** (docs fetched 2026-09-07) is the reference metric: "measures how
-  factually consistent a response is with the retrieved context", computed in three steps —
+  factually consistent a response is with the retrieved context", computed in three steps:
   "Identify all the claims in the response", "Check each claim to see if it can be inferred from the
   retrieved context", then supported-claims ÷ total-claims. **Both the decomposition and the
   verification are done by an LLM** (`Faithfulness(llm=llm)`); the one non-LLM variant substitutes
   a dedicated hallucination-detection model (`FaithfulnesswithHHEM`), not rules.
-- That design is correct for its problem — verifying prose against retrieved *prose*, where no
+- That design is correct for its problem: verifying prose against retrieved *prose*, where no
   rule can enumerate the claims. marola's summariser has the opposite shape: the context is eight
   labelled scalars and three closed enums. Decomposing "1.3 meters" out of a sentence and comparing
-  it to `wave_height_m=1.3` needs a regex, not a model — and a regex cannot itself hallucinate,
+  it to `wave_height_m=1.3` needs a regex, not a model, and a regex cannot itself hallucinate,
   cannot cost a token, and cannot be talked out of its verdict.
 - **llm4s's guardrails** (`GroundingGuardrail`, `SourceAttributionGuardrail`,
   `LLMFactualityGuardrail`, plus `ValidationMode.Block|Warn|Log`) were already inspected against the
@@ -159,7 +159,7 @@ unusually easy because its ground truth is typed and tiny.
 
 marola's own pure module, over the existing fact map, with a deliberately small, high-precision
 rule set. Zero dependencies, runs in microseconds, deterministic under test, and applicable to every
-`LlmClient` backend including Azure Foundry. `Reviewer` stays exactly where it is — the two are
+`LlmClient` backend including Azure Foundry. `Reviewer` stays exactly where it is. The two are
 complementary and §6 says which one owns what.
 
 ## 5. Design
@@ -195,7 +195,7 @@ object FactGuard:
   def check(text: String, facts: Map[String, String], mode: Mode): GuardResult
 ```
 
-**The rule set is deliberately four rules, all high precision** — every one anchored to a field that
+**The rule set is deliberately four rules, all high precision**: every one anchored to a field that
 exists, none of them a general entailment check:
 
 | Rule | How | Fields |
@@ -206,7 +206,7 @@ exists, none of them a general entailment check:
 | Unsupported attribute | a closed list of attribute classes marola has **no field for**: compass bearings (`north-west`, `NE`, `nordeste`…), tide words (`high tide`, `maré alta`), UV, rain chance, water-quality verdicts — flagged only when `factInputs` lacks that key | n/a (absence) |
 
 Everything else the model writes is left alone. There is no sentiment rule, no style rule, and no
-"does this sound right" rule — those are `Reviewer`'s job (§6).
+"does this sound right" rule. Those are `Reviewer`'s job (§6).
 
 Precision, not recall, is the design target: the guard must never flag a correct sentence, and it is
 allowed to miss a wrong one. A missed fabrication leaves marola exactly where it is today; a false
@@ -221,8 +221,8 @@ touched: the model is never told the guard exists, so it cannot be prompted arou
 `Withheld` verdict cannot be produced by the model's own text (`Reviewer` could be talked into
 `approve`; a regex cannot).
 
-`AppConfig`: `MAROLA_FACT_GUARD=block|warn|off`, default **`warn`** for one release — flags printed,
-nothing withheld — then `block` once §7's false-positive budget is measured on real output. Shipping
+`AppConfig`: `MAROLA_FACT_GUARD=block|warn|off`, default **`warn`** for one release: flags printed,
+nothing withheld, then `block` once §7's false-positive budget is measured on real output. Shipping
 straight to `block` would risk suppressing good summaries before anyone has counted how often the
 rules misfire.
 
@@ -230,7 +230,7 @@ rules misfire.
 
 Slot-constrained generation (§4.1): a second compiled artifact whose output field is a JSON object
 of slots, `format`-constrained on the Ollama path, rendered into a sentence by `Report`. It would
-put three of the four rules out of reach of the model — and, per the constraint-tax numbers in
+put three of the four rules out of reach of the model, and, per the constraint-tax numbers in
 §4.1, would probably make the *contents* of those slots less accurate at 3B. It also changes every
 summary's wording and needs its own `docs/benchmarks/` comparison. Named here so it is not
 re-derived as an obvious win; if it is ever tried, the guard is the instrument that measures
@@ -242,9 +242,9 @@ that paper's own recommendation.
 fetched 2026-09-07) reports that "when Tool Calling and JSON Schema constraints are simultaneously
 enabled, multiple open-weight models cease invoking tools despite maintaining high schema
 compliance", because "JSON Schema constraints are compiled into grammar-based token masks, causing
-tool-call tokens to become unreachable during decoding". marola does not combine the two today —
+tool-call tokens to become unreachable during decoding". marola does not combine the two today.
 `SwimConditionsMcpServer` exposes tools to an *external* client and marola's own `LlmClient` never
-sends a `tools` array — so this is not a live bug here, and it was checked rather than assumed
+sends a `tools` array, so this is not a live bug here, and it was checked rather than assumed
 (§Appendix). It becomes one the moment a future MIP (MIP-0025's Layer 2 tool-call work, or an
 agent loop) sets both on one call. Recorded here so that MIP inherits the warning instead of
 rediscovering it.
@@ -253,7 +253,7 @@ rediscovering it.
 
 ## 6. Scoring / safety impact
 
-`Swimability.score`, its thresholds, its notes and the water veto are **unchanged** — this MIP does
+`Swimability.score`, its thresholds, its notes and the water veto are **unchanged**. This MIP does
 not touch `scoring/` at all.
 
 The safety property it adds is the same *monotonic* one MIP-0022 §6 established, in the other
@@ -280,8 +280,8 @@ are independent, and the deterministic one is the only one that can be proven by
   `llama3.2` sentence must produce `CategoryContradicted("jellyfish_risk", "moderate", "Low")` as
   `Hard` plus `MentionPolicy("whale_sighting_likelihood", "Low")` as `Soft`.
 - **A false-positive corpus is a required deliverable, not a nice-to-have.** At least 20 *correct*
-  summaries — the DSPy demos in `recommendation_prompt.json`, plus real drafts captured from
-  `just run -- --summarize` — must every one come back `Clean`. A rule that flags any of them does
+  summaries, the DSPy demos in `recommendation_prompt.json`, plus real drafts captured from
+  `just run -- --summarize`, must every one come back `Clean`. A rule that flags any of them does
   not ship.
 - Rounding and locale cases: "19 °C" and "19.0°C" both match `sea_temp_c=19.0`; "19,0 °C" (pt-BR
   decimal comma) matches; "1.9 m" against `wave_height_m=1.3` is a `NumberMismatch`; a bare `55`
@@ -292,7 +292,7 @@ are independent, and the deterministic one is the only one that can be proven by
 - MCP: `get_swim_recommendation` carries `fact_guard` and the CLI text and the JSON agree.
 - Live: re-run the §2 probes through `just run -- --summarize` with `MAROLA_FACT_GUARD=warn` and
   confirm the flags appear on the real path; `just e2e`; `just benchmark` unchanged (this path is
-  not benchmarked today — see §11.3).
+  not benchmarked today; see §11.3).
 - **Done** = the above green, `ARCHITECTURE.md` §5a's whale finding gains "caught by `FactGuard`
   since MIP-0039" instead of standing as an open caveat, and one release has run in `warn` with the
   violation counts recorded before the default flips to `block`.
@@ -301,14 +301,14 @@ are independent, and the deterministic one is the only one that can be proven by
 
 - **The rule set is the entire risk, and it is a rule set, not an understanding.** Every rule is a
   regex over English and Portuguese surface forms. "not a moderate risk", "less than moderate",
-  "moderada" with an accent, a number spelled as a word ("one point three metres") — each is a way
+  "moderada" with an accent, a number spelled as a word ("one point three metres"). Each is a way
   to be wrong in either direction. `warn`-by-default, the false-positive corpus, and the
   precision-over-recall rule are the mitigations; none of them makes the guard complete.
 - **It cannot catch a fabrication that names nothing.** "The sea looks inviting today" asserts
   something unsupported and matches no rule. This guard bounds a class of error, it does not
   eliminate hallucination, and the docs must not claim it does.
 - **`Withheld` costs the user something real.** A suppressed summary is a worse page than a correct
-  summary. That is the trade this MIP makes deliberately — the deterministic block above it is
+  summary. That is the trade this MIP makes deliberately. The deterministic block above it is
   always still there, which is why withholding is affordable here and would not be in a product
   whose only output was prose.
 - **Portuguese doubles the surface area.** The bot (MIP-0002) replies in pt-BR; the vocabulary lists
@@ -316,7 +316,7 @@ are independent, and the deterministic one is the only one that can be proven by
 - **Two probes are not a failure rate.** §2 shows the failure is real and reproducible on two models
   at temperature 0; it does not establish how often it happens. Counting that is §7's `warn` release.
 - **The unsupported-attribute list is an argument from absence.** It flags a compass bearing because
-  `factInputs` has no wind-direction key — but `HourlyConditions` *does* carry `windDirectionDeg`
+  `factInputs` has no wind-direction key, but `HourlyConditions` *does* carry `windDirectionDeg`
   (`OpenMeteoClient.scala:61`), it is simply not passed to the prompt. If a later MIP adds it to
   `factInputsFor`, that rule must be dropped in the same PR or it will flag a now-supported fact.
   Noted in the code, and in §11.
@@ -325,10 +325,10 @@ are independent, and the deterministic one is the only one that can be proven by
 
 - **Do nothing.** The `--summarize` path keeps printing a contradicted jellyfish level to a swimmer,
   with the repo's own architecture doc describing the failure and nothing catching it. Lost.
-- **Make the prompt stricter.** Already tried — the compiled prompt *does* state the mention policy,
+- **Make the prompt stricter.** Already tried: the compiled prompt *does* state the mention policy,
   and §2 shows both models breaking it anyway. Prompting is what failed; that is the motivation.
 - **Trust `Reviewer` and gate on its verdict** (don't print when `verdict=revise`). Cheaper, and it
-  makes a 3B model the sole arbiter of whether a 3B model lied — `ARCHITECTURE.md` §5a already
+  makes a 3B model the sole arbiter of whether a 3B model lied. `ARCHITECTURE.md` §5a already
   records the reviewer fixating on the wrong issue. Worth doing *as well*, not instead; §11.2.
 - **An LLM-as-judge grounding metric (Ragas-style, §4.2).** The right tool for prose-vs-prose, the
   wrong tool for eight scalars: it costs a model call per summary, it is non-deterministic, it
@@ -341,7 +341,7 @@ are independent, and the deterministic one is the only one that can be proven by
   (arXiv:2605.26128). It also does not exist on providers without schema decoding, and it changes
   every summary's wording before anyone has measured the problem. Rejected as a *replacement*;
   kept as an experiment the guard itself would referee.
-- **A fine-tune that refuses better** (MIP-0025 Layer 3, DPO). A real complement — and by
+- **A fine-tune that refuses better** (MIP-0025 Layer 3, DPO). A real complement, and by
   `finetune/README.md`'s own caveat, tuning changes tone and format reliability, not factual
   grounding. It reduces the rate; it cannot make a guarantee.
 
@@ -360,15 +360,15 @@ MIP.
 1. **Should `factInputsFor` grow?** `HourlyConditions` already has wind direction, UV, precipitation
    probability and tide extrema; the prompt gets eight fields. Giving the model more true facts
    would remove the *cause* of §2's first failure rather than catch it. But every added field is one
-   more thing a 3B model can misstate, so it is not obviously an improvement — a real decision,
+   more thing a 3B model can misstate, so it is not obviously an improvement, a real decision,
    deliberately not made here, and it interacts with the §8 caveat about the absence-based rule.
-2. **Gate on `Reviewer`'s verdict too?** Proposal: yes, as a separate one-line change — `revise`
+2. **Gate on `Reviewer`'s verdict too?** Proposal: yes, as a separate one-line change: `revise`
    with a score below some threshold shows numbers only. It is not this MIP's mechanism and should
    not hide behind it.
 3. **Benchmark the summariser path at all.** `just benchmark` measures the *answering* path (22
    questions × 3 arms); the summariser/reviewer path has no held-out check, as `FUTURE-WORK.md`
    §4.1 and §4.2 both say. The guard's violation rate is the first automatic, deterministic quality
-   number that path has ever had — MIP-0032's matrix should carry it as a column, which needs one
+   number that path has ever had. MIP-0032's matrix should carry it as a column, which needs one
    line in its `ArmSummary` and that MIP's agreement, not this one's assumption.
 4. **`warn` → `block` criteria.** Proposal: flip when a release's worth of real runs shows zero
    false positives on the §7 corpus and a hard-violation rate above zero. Whoever flips it records
@@ -386,10 +386,10 @@ All fetched or executed by the author on **2026-09-07**.
   prompt's own mention policy as the system message:
   - `llama3.2:1b` → *"…with a wind speed of 20 km/h **from the northwest**. The wave height is
     relatively low at 1.3 meters, and there are no reported jellyfish sightings or whale sighting
-    likelihoods for this hour."* — a compass bearing marola never supplied.
+    likelihoods for this hour."*, a compass bearing marola never supplied.
   - `llama3.2` (3B, the repo's `LocalLlmClient.DefaultModel` family) → *"…swimmers should be aware
     that there is a **moderate jellyfish risk** present, and while whale sightings are unlikely,
-    they cannot be entirely ruled out at this hour."* — with `jellyfish_risk: Low` and
+    they cannot be entirely ruled out at this hour."*, with `jellyfish_risk: Low` and
     `whale_sighting_likelihood: Low` in the facts.
   Both are the §2 fixtures.
 - **Local Ollama probe, structured output**: same endpoint, `llama3.2`, `format` set to a JSON
@@ -413,17 +413,17 @@ All fetched or executed by the author on **2026-09-07**.
   Tool Calling Suppression Under Structured Output Constraints", Fangzheng Li, Aimin Zhang, Chen Lv,
   submitted **2026-06-24**. "when Tool Calling and JSON Schema constraints are simultaneously
   enabled, multiple open-weight models cease invoking tools despite maintaining high schema
-  compliance"; mechanism — "JSON Schema constraints are compiled into grammar-based token masks,
+  compliance"; mechanism: "JSON Schema constraints are compiled into grammar-based token masks,
   causing tool-call tokens to become unreachable during decoding"; the authors' "Constraint Priority
   Inversion (CPI) hypothesis". The abstract names no specific models.
 - **Checked in this repo, not assumed** (`grep -rn "tools" core/…/llm local/…/llm azure/…/llm` →
   no match, exit 1; `local/…/LocalLlmClient.scala:18-28`): marola's request body is `model` +
-  `messages` only — no `tools` array and no `format`/`response_format` on any client. So the
+  `messages` only: no `tools` array and no `format`/`response_format` on any client. So the
   tool-suppression interaction above is **not** a live bug in marola today, which is why §5.3 states
   it as an inherited warning rather than a finding.
 - `https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/faithfulness/` → "The
   Faithfulness metric measures how factually consistent a response is with the retrieved context";
-  three steps — "Identify all the claims in the response", "Check each claim to see if it can be
+  three steps: "Identify all the claims in the response", "Check each claim to see if it can be
   inferred from the retrieved context", supported ÷ total; scorer constructed as
   `Faithfulness(llm=llm)`, i.e. **LLM-based decomposition and verification**; `FaithfulnesswithHHEM`
   substitutes Vectara's hallucination-detection model for the verification step.
@@ -441,15 +441,15 @@ All fetched or executed by the author on **2026-09-07**.
   repeat runs, no other models, no other beaches or fact combinations. The `warn` release in §7 is
   what would produce a rate, and §8 says so.
 - Whether `dolphin-mixtral:8x7b` (present locally, the model that compiled today's artifacts) makes
-  the same mistakes — not probed. A larger model failing less would not change the design, since the
+  the same mistakes: not probed. A larger model failing less would not change the design, since the
   shipped default is the 3B.
 - Ollama's `format` behaviour through marola's own `LocalLlmClient` (which posts to the
-  OpenAI-compatible `/v1/chat/completions`, not `/api/chat`) — the probe used the native endpoint.
+  OpenAI-compatible `/v1/chat/completions`, not `/api/chat`). The probe used the native endpoint.
   §5.3 depends on `response_format` working on the `/v1` path; MIP-0012 §4.3 reports a live check of
   `response_format: {"type":"json_object"}` there, but **not** of a full `json_schema`. Verify
   before building §5.3.
 - NVIDIA NeMo Guardrails, Guardrails AI, Llama Guard and constrained-decoding libraries (Outlines,
-  XGrammar) were named in the research pass but not fetched or evaluated here — none is a candidate,
+  XGrammar) were named in the research pass but not fetched or evaluated here. None is a candidate,
   since the design adds no dependency, but they are not dismissed on evidence gathered in this MIP.
 - The claim that "an LLM writes a summary" is commoditised (§2's competitive paragraph) rests on a
   research pass's search-result summaries about Google's WeatherNext 3 launch of 2026-09-03; the

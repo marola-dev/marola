@@ -34,7 +34,7 @@ data" until the PDF backup client landed (`ImaScPdfWaterQualityClient`). The dat
 our copy of it was one file on one machine. Meanwhile the portal holds a history export nobody
 in this repo had found: `POST /relatorio/exportarCSV` with `municipioID`, `localID`, `ano` returns
 every sample for one beach and year since 2003, with wind, tide, rain, water and air temperature,
-the bacteria count (censored values like `<20` included) and the verdict — none of which the JSON
+the bacteria count (censored values like `<20` included) and the verdict, none of which the JSON
 feed carries any more (its `ANALISES` array is gone; today it returns 260 points with coordinates
 and a current `CONDICAO` only, verified 2026-09-14).
 
@@ -44,7 +44,7 @@ place to accumulate what they parse. This MIP is that place.
 
 ## 3. User-visible change
 
-Nothing in the CLI or the map changes in the first tasks — the deliverable is a dataset and a
+Nothing in the CLI or the map changes in the first tasks, the deliverable is a dataset and a
 pipeline. Concretely, after §5.5's one-line opt-in the site build reads water quality from the
 store first, so a portal outage no longer blanks the water layer. For a person who is not a marola
 user:
@@ -84,7 +84,7 @@ Municipio,Balneario,"Ponto Coleta",Localização,Data,Hora,Vento,Maré,Chuva,"Á
 - Coverage: 2003 → the current year; Campeche 2003 has 31 rows, 2025 has 145 (five points).
   Off-season sampling is monthly and in-season weekly, as the captured Campeche exports show (Appendix). The current year's export is as fresh as the
   HTML history page (both end 2026-08-25 for Campeche; the 2026-09-10 bulletin adds 10 points
-  sampled 2026-09-08, none of them Campeche — so no channel is systematically ahead).
+  sampled 2026-09-08, none of them Campeche, so no channel is systematically ahead).
 - Edge cases verified: a year with no data returns HTTP 200 and one row `…,1999,"Sem registros"`;
   an unknown `localID` returns HTTP 200 with the header only (137 B). Both are "empty", not errors.
 - Volume: 143 beaches × 24 years = 3,432 requests; observed sizes 4–24 KB and 0.07–0.23 s each.
@@ -93,7 +93,7 @@ Municipio,Balneario,"Ponto Coleta",Localização,Data,Hora,Vento,Maré,Chuva,"Á
 - The CSV has no point id and no coordinates; the join key to the points feed is
   (`Municipio`, `Balneario`, `Ponto Coleta`), verified unique across all 260 live points.
   `PONTO_NOME` alone is not unique (88 distinct names for 260 points, Appendix).
-- Not verified: whether the portal rate-limits (no `robots.txt` — it 404s; no documented limit).
+- Not verified: whether the portal rate-limits (no `robots.txt`, it 404s; no documented limit).
   The planner is polite by construction (§5.2) and the workflow is daily, not hourly.
 
 ### 4.2 Kept as a second channel: the weekly bulletin PDF
@@ -109,7 +109,7 @@ a later task (§5.2, task 7): the CSV alone delivers the history.
 ### 4.3 Rejected as the primary: the JSON feed `/relatorio/mapa`
 
 It is the point registry (coordinates, IBGE municipality code, current verdict) and nothing else
-now — `ANALISES` is gone (verified 2026-09-14: keys are `BALNEARIO, CODIGO, CONDICAO, LATITUDE,
+now; `ANALISES` is gone (verified 2026-09-14: keys are `BALNEARIO, CODIGO, CONDICAO, LATITUDE,
 LOCALIZACAO, LONGITUDE, MUNICIPIO, MUNICIPIO_COD_IBGE, PONTO_NOME`). It is fetched every run as
 `raw/ima-sc/points.json`, overwritten, so git history is its time series.
 
@@ -138,7 +138,7 @@ No licence, terms of use, or open-data statement anywhere on `balneabilidade.ima
 (home page grepped for licença/termos/dados abertos/Creative Commons: none); `robots.txt` 404s;
 `dados.sc.gov.br`'s CKAN search for "balneabilidade" returns 0 datasets (all 2026-09-14). The data
 is public administrative information under Lei 12.527/2011 (LAI), which is the basis every
-Brazilian civic-data project cites — but that is not a licence grant. §11 asks for the decision.
+Brazilian civic-data project cites, but that is not a licence grant. §11 asks for the decision.
 
 ## 5. Design
 
@@ -168,7 +168,7 @@ oods/sql/schema.sql  build.sql  views.sql   the DDL and the common view — code
 
 A new sbt module `oods/` (`.dependsOn(local)`, zero Azure, not aggregated into the runtime image)
 with `sbt oods/run` behind `just oods-ingest`. Per `PHILOSOPHY.md`, Scala where the parsers and
-HTTP helpers already are; Python only where its libraries are the only ones — here they are not
+HTTP helpers already are; Python only where its libraries are the only ones, here they are not
 (§9). The transform is SQL because a DDL is the artefact people read.
 
 ```scala
@@ -204,7 +204,7 @@ Rules the planner (`Ingest.plan`, pure, tested) enforces, the same for every ada
 - **A partition is the unit of work and of idempotency.** For IMA's CSV channel it is (beach,
   year). A partition is `immutable` when its year is older than the refetch window; an immutable
   partition already in the manifest is skipped without a request. Mutable ones (the current year,
-  and the previous year while `today − 45 days` still falls in it — late-December samples post
+  and the previous year while `today − 45 days` still falls in it, late-December samples post
   in January) are refetched every run and written only when the bytes differ.
 - **Incremental** = mutable partitions only (≈ 143–286 requests, ~1 minute). **Backfill** = every
   partition in `[fromYear, toYear]` not in the manifest. Both are the same code path with a
@@ -215,7 +215,7 @@ Rules the planner (`Ingest.plan`, pure, tested) enforces, the same for every ada
 - **`--state SC`, `--city Florianópolis`, `--source ima-sc`** filter `partitions` before fetching;
   a city that no adapter covers is an error, not an empty success.
 - **Failure is visible:** the run exits non-zero if any partition failed, after writing the ones
-  that succeeded and their manifest entries — never a half-written file (write to a temp path,
+  that succeeded and their manifest entries, never a half-written file (write to a temp path,
   rename).
 
 ### 5.3 The DDL and the common view
@@ -224,7 +224,7 @@ Rules the planner (`Ingest.plan`, pure, tested) enforces, the same for every ada
 `raw/**/*.csv` and `points.json` with DuckDB's `read_csv`/`read_json` and writes one partition
 per year, sorted by (`point_key`, `sampled_on`, `sampled_at`), so equal input gives equal bytes.
 The Scala side runs it through DuckDB JDBC and rewrites a partition only when the content hash
-of its sorted rows differs from the manifest's — Parquet writer determinism is then a
+of its sorted rows differs from the manifest's, Parquet writer determinism is then a
 nice-to-have, not a requirement (`just oods-build` twice must produce no diff; task 4 tests it).
 
 ```sql
@@ -268,12 +268,12 @@ CREATE VIEW point_stats AS …;              -- per point: n, share impropria, s
 Two rules the schema encodes on purpose: censored counts (`<20`, `<10`) keep their number and a
 qualifier instead of becoming NULL, because "below detection" is information; and the indicator is
 a column, because IMA's CSV header says `E. coli` while marola's `WaterSample` field is named
-`enterococciPer100ml` — one of them is wrong for this source and the store must not inherit the
+`enterococciPer100ml`, one of them is wrong for this source and the store must not inherit the
 guess (§8, §11 follow-up).
 
 ### 5.4 The workflow: `oods-ingest.yml`
 
-- `schedule: "0 12 * * *"` (daily; IMA's bulletin days are irregular — the ten dates the index links fall on Tue ×5, Thu ×2, Fri ×2, Wed ×1, Appendix) plus `workflow_dispatch` inputs: `source` (choice, `ima-sc`), `mode`
+- `schedule: "0 12 * * *"` (daily; IMA's bulletin days are irregular, the ten dates the index links fall on Tue ×5, Thu ×2, Fri ×2, Wed ×1, Appendix) plus `workflow_dispatch` inputs: `source` (choice, `ima-sc`), `mode`
   (`incremental`/`backfill`), `from_year`, `to_year`, `dry_run`. Runs on
   `${{ vars.CI_RUNNER || 'self-hosted' }}` like `site.yml`, same JDK/sbt/coursier cache steps,
   `concurrency: oods-ingest, cancel-in-progress: false`.
@@ -284,7 +284,7 @@ guess (§8, §11 follow-up).
 - **Committing to `main` needs a decision** (§11): the `main-rule` ruleset requires a pull request
   (verified via the API 2026-09-14; bypass only for the admin role). Either add the GitHub Actions
   integration as a bypass actor (keyless, preferred) or store a fine-grained PAT as
-  `OODS_PUSH_TOKEN`. The alternative — a PR per run with auto-merge — collides with
+  `OODS_PUSH_TOKEN`. The alternative, a PR per run with auto-merge, collides with
   `require_code_owner_review` and `CODEOWNERS`'s `* @h0ffmann`.
 - `ci.yml` is untouched: its `dorny/paths-filter` matches nothing under `data/`, so a data-only
   push runs only the cheap `changes` job. `site.yml`'s 3-hourly build picks the new store up on its
@@ -320,18 +320,18 @@ store's samples out on the agency's own dates.
 
 Unit tests (all offline, on captured fixtures checked into `oods/src/test/resources/ima-sc/`):
 
-- `ImaScCsvParserSpec` — Campeche 2003/2010/2025/2026 fixtures: BOM stripped, quoted commas in
+- `ImaScCsvParserSpec`, Campeche 2003/2010/2025/2026 fixtures: BOM stripped, quoted commas in
   `Localização`, `<20` → (20, Below), `Sem registros` → empty, header-only → empty, `PRÓPRIA` and
   `IMPRÓPRIA` → labels, `dd/MM/yyyy` + `HH:mm`; the join to `points.json` by (municipio, beach,
   point) resolves every Campeche row to a UUID and a coordinate.
-- `IngestPlanSpec` — which partitions each mode selects on a given date; the January rule; a
+- `IngestPlanSpec`, which partitions each mode selects on a given date; the January rule; a
   manifest hit skips an immutable partition and never a mutable one; `--city` with no adapter fails.
-- `ManifestSpec` — round trip, sorted keys, byte-stable rewrite, atomic replace.
-- `IngestRunSpec` — against a stub `Http`: a second run over identical responses writes nothing;
+- `ManifestSpec`, round trip, sorted keys, byte-stable rewrite, atomic replace.
+- `IngestRunSpec`, against a stub `Http`: a second run over identical responses writes nothing;
   a 500 retries then records the failure and the run exits non-zero; a 429 aborts.
-- `OodsBuildSpec` — `build.sql` over the fixtures: row count, primary-key uniqueness, the channel
+- `OodsBuildSpec`, `build.sql` over the fixtures: row count, primary-key uniqueness, the channel
   precedence in `br_bathing_water`, and **two builds produce identical file hashes**.
-- `LatestExportSpec` — `latest/ima-sc.json` round-trips through `CachedWaterQualityClient.read`.
+- `LatestExportSpec`, `latest/ima-sc.json` round-trips through `CachedWaterQualityClient.read`.
 
 Live checks, in order: `just oods-ingest --source ima-sc --mode incremental --dry-run` lists ≈143
 partitions and fetches nothing; without `--dry-run` it writes them and a second run commits
@@ -343,11 +343,11 @@ run green for a week, and `just oods-sql "SELECT count(*) FROM br_bathing_water"
 ## 8. Risks, limitations, and honest caveats
 
 - **Licence** (§4.5): the store republishes IMA's data; until §11's decision lands, `data/oods/
-  README.md` states the source, the LAI basis and that IMA has granted no licence — no CC badge.
+  README.md` states the source, the LAI basis and that IMA has granted no licence, no CC badge.
 - **Names are the join key** for the CSV channel. A beach renamed on the portal splits its history
   into two `localID`s; a point renumbered breaks the (municipio, beach, point) join and the row is
   kept with `point_key = NULL`-free fallback `ima-sc:<slug>` and `geo_source = 'none'` rather than
-  dropped — visible in `just oods-check`'s "unmatched" count.
+  dropped, visible in `just oods-check`'s "unmatched" count.
 - **`Localização` in the CSV is today's text for every year**; the PDF channel (task 7) is the
   only record of what a point's description was in a given week.
 - **E. coli vs enterococci**: the CSV header says E. coli; marola's field name says enterococci; `WaterQuality.scala`'s own doc comment quotes CONAMA 274/2000's enterococci limit, and the recollection that the resolution names both indicators with different limits is from memory (Not checked). Stored as `indicator = 'e_coli'` for
@@ -356,26 +356,26 @@ run green for a week, and `just oods-sql "SELECT count(*) FROM br_bathing_water"
   Above ~200 MB in the tree, move raw to LFS and keep Parquet + manifest in git.
 - **A portal outage is not an error in the data**: incremental runs simply commit nothing; the
   workflow's failure notifications are the signal, not "no data" on the map (§5.5).
-- **The PDF channel's Wayback backfill** (192 bulletins) is a one-off download of roughly 60 MB (192 × the ~300 KB observed per bulletin — an estimate); the PDFs
+- **The PDF channel's Wayback backfill** (192 bulletins) is a one-off download of roughly 60 MB (192 × the ~300 KB observed per bulletin, an estimate); the PDFs
   are not stored, only their parsed rows plus sha256 and URL in the manifest.
 
 ## 9. Alternatives considered
 
-- **Do nothing** — keep the five-sample cache. Loses 23 years of history the portal already
+- **Do nothing**: keep the five-sample cache. Loses 23 years of history the portal already
   serves and leaves the map's water layer one outage away from blank.
-- **Python (`oods/` package, DuckDB + pdfplumber)** — the natural ETL toolchain and the more
+- **Python (`oods/` package, DuckDB + pdfplumber)**, the natural ETL toolchain and the more
   familiar one for outside contributors. Lost on `PHILOSOPHY.md`'s own rule: Python stays where
   its libraries are the only ones, and here `Http`, `JsonValue`, `ImaScPdfParser`, `PdfLines`,
   `WaterQualityMatcher.normalise` and DuckDB JDBC all exist on the JVM; a second CSV/PDF parser
   in another language is exactly the duplicated safety-adjacent logic MIP-0042 §4.4 refused. The
   transform being SQL keeps the part contributors read language-neutral. Revisit if adapter
   contributors turn out to be Python-only people.
-- **Store the weekly PDFs as the primary** — what the app parses today. 300 KB binary each,
+- **Store the weekly PDFs as the primary**, what the app parses today. 300 KB binary each,
   no indicator value, and 2023-onwards only; the CSV is richer and text.
-- **A separate `oods` repository** — cleaner licence story and a smaller marola tree; but the
+- **A separate `oods` repository**, cleaner licence story and a smaller marola tree; but the
   adapters reuse marola's parsers and the map is the first consumer. Split later if the store
   outgrows the app (the layout in §5.1 is already self-contained under one directory).
-- **SQLite / Delta / LFS** — §4.4.
+- **SQLite / Delta / LFS**, §4.4.
 
 ## 10. Exam-coverage mapping
 
@@ -396,9 +396,9 @@ on, but that is their mapping, not this MIP's.
   labels `E. coli`; resolving which CONAMA 274 threshold applies (and renaming the field) needs its
   own number.
 - **Follow-up MIP:** trend and seasonality features on the map and in replies ("usually improper
-  after rain") — the first consumer of `point_stats` beyond the fallback export.
+  after rain"), the first consumer of `point_stats` beyond the fallback export.
 - **Not checked:** IMA's rate limits; whether `getLocaisByMunicipio`'s beach list ever drops a
-  beach that still has history (a retired beach's CSV would then never be enumerated — the
+  beach that still has history (a retired beach's CSV would then never be enumerated, the
   backfill should also iterate the historical municipality list from old `points.json` snapshots
   once they exist).
 
@@ -406,7 +406,7 @@ on, but that is their mapping, not this MIP's.
 
 ### Checked live (2026-09-14)
 
-- `GET https://balneabilidade.ima.sc.gov.br/` → 200, links the ten newest `/relatorio/downloadPDF/<date>` (2026-07-07, 07-14, 07-23, 07-31, 08-04, 08-11, 08-18, 08-28, 09-02, 09-10 — Tue, Tue, Thu, Fri, Tue, Tue, Tue, Fri, Wed, Thu); its JS names `/relatorio/exportarCSV`, `/relatorio/historico`, `/municipio/getMunicipios`, `/local/getLocaisByMunicipio`, `/registro/anosAnalisados`. No licence/terms text; `/robots.txt` → 404.
+- `GET https://balneabilidade.ima.sc.gov.br/` → 200, links the ten newest `/relatorio/downloadPDF/<date>` (2026-07-07, 07-14, 07-23, 07-31, 08-04, 08-11, 08-18, 08-28, 09-02, 09-10, Tue, Tue, Thu, Fri, Tue, Tue, Tue, Fri, Wed, Thu); its JS names `/relatorio/exportarCSV`, `/relatorio/historico`, `/municipio/getMunicipios`, `/local/getLocaisByMunicipio`, `/registro/anosAnalisados`. No licence/terms text; `/robots.txt` → 404.
 - `POST /relatorio/mapa` (empty body) → 200, 85,318 B, JSON array of 260 points, keys `BALNEARIO, CODIGO, CONDICAO, LATITUDE, LOCALIZACAO, LONGITUDE, MUNICIPIO, MUNICIPIO_COD_IBGE, PONTO_NOME`; no `ANALISES`; `CONDICAO ∈ {PRÓPRIO, IMPRÓPRIO}`; the 260 `CODIGO`s equal the 2026-09-10 cache's ids; (MUNICIPIO, BALNEARIO, PONTO_NOME) unique; `PONTO_NOME` alone has 88 distinct values.
 - `POST /registro/anosAnalisados` → 24 years, 2003–2026. `POST /municipio/getMunicipios` → 28 rows `{CODIGO, DESCRICAO}` (both the name). `POST /local/getLocaisByMunicipio` × 28 → 143 beaches total, Florianópolis 43, keys `BALNEARIO, CODIGO, LATITUDE, LONGITUDE, MUNICIPIO`.
 - `POST /relatorio/exportarCSV` Florianópolis / Praia do Campeche / 2025 → 200 `text/csv`, 23,600 B, 145 rows, header as §4.1; 2010 → 4,302 B, 29 rows, values `<20`; 2003 → 4,559 B, 31 rows; 2026 → 14,671 B, 90 rows, newest 2026-08-25, its off-season dates a month apart (07-01, 07-28, 08-25) while the 2025 export's December dates are a week apart (12-02, 12-10, 12-16, 12-29); 1999 → 200, one `"Sem registros"` row; `localID=Nope` → 200, header only, 137 B. Bombinhas 2022–2024 → 12–20 KB, 0.07–0.23 s each.
@@ -424,4 +424,4 @@ on, but that is their mapping, not this MIP's.
 - Any rate limit or fair-use policy on IMA's portal; the number of rows statewide (extrapolated from Campeche); whether the CSV's `E. coli` header reflects IMA's laboratory method or a template label.
 - Whether DuckDB's Parquet writer is byte-deterministic across runs of the same version (the design does not depend on it, §5.3).
 - INEA/INEMA backfill mechanisms and every 4+ source in §5.6.
-- The "git scraping" pattern (commit a scrape on every run, git history as the time series) that §4.4 follows — cited from memory, not re-read.
+- The "git scraping" pattern (commit a scrape on every run, git history as the time series) that §4.4 follows, cited from memory, not re-read.

@@ -18,7 +18,7 @@
 ## 1. Summary
 
 Three separable things, deliberately not one pipeline. **In:** marola subscribes to a small
-allow-list of feeds, split by *what kind of thing the item is* — perishable operational warnings
+allow-list of feeds, split by *what kind of thing the item is*: perishable operational warnings
 (INMET's live South-America `avisos` RSS, which covers all three `site/areas.json` areas and
 carries a real `Início`/`Fim` validity window) become a deterministic, expiring alert banner and
 **never** a corpus document; durable explanatory articles become a *reading queue* that a human
@@ -34,11 +34,11 @@ Two concrete gaps, one opportunity.
 `knowledge/README.md` states the corpus rule plainly: "a wrong sentence here becomes a confidently
 wrong answer", and admits the existing six documents have not yet had their human
 sentence-by-sentence check. Growing that corpus today means a human browsing for sources by hand.
-A reading queue is the cheap half of that problem — finding candidates is automatable, *trusting*
+A reading queue is the cheap half of that problem: finding candidates is automatable, *trusting*
 them is not.
 
 Second, marola tells a user the sea is fine at 07:00 tomorrow while INMET has an active
-`Aviso de Ventos Costeiros` over `Metropolitana do Rio de Janeiro` — verified live on 2026-09-07,
+`Aviso de Ventos Costeiros` over `Metropolitana do Rio de Janeiro`, verified live on 2026-09-07,
 85 active warnings, 5 of them coastal-wind. MIP-0031 concluded that Brazilian agencies publish no
 machine-readable feed; that is true of INEA/INEMA's bathing-water bulletins and of the Marinha's
 weather warnings (Cloudflare-blocked, §4.6), but **not** of INMET, which publishes RSS 2.0 marked
@@ -47,12 +47,12 @@ currently ignoring.
 
 Third: marola's site rebuilds every 3 hours (`.github/workflows/site.yml`, `cron: "15 */3 * * *"`)
 and produces a board per area per day. An Atom file is ~40 lines of pure serializer over data that
-already exists — the cheapest subscribable surface marola will ever have, and one that works
+already exists, the cheapest subscribable surface marola will ever have, and one that works
 before MIP-0002's bot exists.
 
 ## 3. User-visible change
 
-**Outbound (§5.6)** — a new file, and one `<link>` in the page head:
+**Outbound (§5.6)**: a new file, and one `<link>` in the page head:
 
 ```xml
 <!-- https://marola.dev/feed.xml (also data/<area>/feed.xml per area) -->
@@ -68,7 +68,7 @@ before MIP-0002's bot exists.
 </entry>
 ```
 
-**Inbound alerts (§5.2)** — one deterministic line above the existing output, present only while
+**Inbound alerts (§5.2)**: one deterministic line above the existing output, present only while
 the warning is inside its own validity window:
 
 ```
@@ -80,7 +80,7 @@ Best hour tomorrow: 07:00 at Praia Vermelha — 78/100
 ...
 ```
 
-**Inbound reading queue (§5.3)** — developer-facing only, no user surface:
+**Inbound reading queue (§5.3)**: developer-facing only, no user surface:
 
 ```
 $ python3 scripts/feed_digest.py
@@ -105,25 +105,25 @@ one snapshot: Baixa Umidade 33, Tempestade 29, Chuvas Intensas 11, **Ventos Cost
 Vendaval 4, plus Geada/Declínio de Temperatura/Acumulado de Chuva. Coverage of marola's areas is
 real: `Catarinense` 62 mentions, `Florianópolis` 20, `Sul Baiano` 44, `Metropolitana do Rio de
 Janeiro` 17, `Metropolitana de Salvador` 1. **No key, no quota published, free.** The catch:
-`Área` is a list of **IBGE mesoregion names, not coordinates or a polygon** — matching a warning to
+`Área` is a list of **IBGE mesoregion names, not coordinates or a polygon**: matching a warning to
 a beach needs a hand-written mesoregion→`areas.json` table (§5.2, §11.2). Not verified: any rate
 limit or terms-of-use page beyond the embedded copyright line.
 
-**Revision, 2026-09-08 — the mesoregion table is not needed.** A second probing pass (originally
+**Revision, 2026-09-08: the mesoregion table is not needed.** A second probing pass (originally
 drafted as a separate MIP before finding this one already owned the source, and folded in here
 rather than given a number of its own) found three things that change §5.2's design:
 
 - **Each item's `<guid>`/`<link>` resolves to a full OASIS CAP 1.2 document.**
   `GET https://apiprevmet3.inmet.gov.br/avisos/rss/55649` → 200, `text/xml`, 8 973 bytes,
   `urn:oasis:names:tc:emergency:cap:1.2`. It carries `event`, `severity`, `urgency`, `certainty`,
-  `onset`, `expires`, `description`, `instruction`, `web`, `<area><areaDesc>` — and a
+  `onset`, `expires`, `description`, `instruction`, `web`, `<area><areaDesc>`, and a
   **`<polygon>` of 291 `lat,lon` pairs**. Real geometry. So a beach is matched by point-in-polygon
   against the alert's own boundary, and `AlertAreas.byArea` (§5.2) is deleted rather than written:
   no hand-maintained table, no per-area entry when `areas.json` grows, and the match is exact
   instead of "this mesoregion name sounds like that area".
 - **Severity has two vocabularies.** RSS says `Perigo Potencial` / `Perigo` / `Grande Perigo`
   (80 / 8 / 1 of 89 live items); CAP says `Moderate` / `Severe` / `Extreme`. Alert 55649 is
-  `Perigo Potencial` in RSS and `Moderate` in CAP — the same alert. Show INMET's Portuguese
+  `Perigo Potencial` in RSS and `Moderate` in CAP, the same alert. Show INMET's Portuguese
   verbatim, order by the CAP enum.
 - **INMET returns no HTTP response at all to curl's default User-Agent.** TCP connects, the TLS
   handshake completes (`Client hello` … both `Finished`), then nothing until timeout. With a
@@ -135,7 +135,7 @@ rather than given a number of its own) found three things that change §5.2's de
 `{"hoje": [...], "futuro": [...]}`. Strictly richer than RSS or CAP: `poligono` is already
 **GeoJSON**, `municipios` carries **IBGE municipality codes** ("Aracruz - ES (3200607)"), plus
 `estados`, `mesorregioes`, `microrregioes`, `geocodes`, `riscos`, `instrucoes`, and `aviso_cor`
-(`#FFFE00`) — INMET's own severity colour. It is **not** the primary source: no INMET page
+(`#FFFE00`), INMET's own severity colour. It is **not** the primary source: no INMET page
 documenting it was found, so its shape can change without notice, whereas RSS 2.0 and CAP 1.2 are
 published standards. Use it best-effort for municipality names and the official colour; losing it
 must not take the alert path down.
@@ -144,7 +144,7 @@ must not take the alert path down.
 `/avisos` and `/avisos/todos` both 404. But ids are dense and monotonic in time and old ones stay
 served: `/avisos/rss/55000` → `sent` 2026-07-15, `50000` → 2025-02-28, `40000` → 2022-08-29, all
 200 with full CAP; `/avisos/rss/1000` → 500. So history back to at least **2022** is reachable by
-walking ids downward from the newest, a few KB each. Only five ids were sampled — density and the
+walking ids downward from the newest, a few KB each. Only five ids were sampled; density and the
 exact floor are **not** established (Appendix, "Not checked").
 
 ### 4.2 YouTube channel Atom — fetchable, but thin (§5.5)
@@ -152,9 +152,9 @@ exact floor are **not** established (Appendix, "Not checked").
 against a real id resolved from a channel page (`UC-87aDLv5WFJ83fxt21gsEQ`, NOAAVisualizations):
 **exactly 15 entries, no paging**, each with `yt:videoId`, title, link, `media:description`
 (the video description) and `media:community` stats. **No transcript, no captions, no article
-text.** The newest entry on that NOAA channel is dated **2017-02-17** — a live-looking feed for a
+text.** The newest entry on that NOAA channel is dated **2017-02-17**, a live-looking feed for a
 dead channel, which is §8's headline risk in one example. Getting usable *text* out of a video
-needs either YouTube's unofficial `timedtext` endpoint or `yt-dlp` + local Whisper — see §5.5 and
+needs either YouTube's unofficial `timedtext` endpoint or `yt-dlp` + local Whisper; see §5.5 and
 §9 for why that is parked, not designed.
 
 ### 4.3 Medium RSS — **rejected for ingestion, link-only** (§5.5)
@@ -170,7 +170,7 @@ Medium stays in the reading queue as **title + link only**, never as stored body
 ### 4.4 "stack" — reading the request
 The user wrote "youtube, medium, stack". **The plausible reading is Substack**, because the other
 two are publishing platforms and because MIP-0018 §5 already names Substack as a marola export
-destination — this MIP adopts that reading and says so rather than guessing silently. Substack
+destination. This MIP adopts that reading and says so rather than guessing silently. Substack
 verified: `https://<pub>.substack.com/feed` → 200, `application/xml`, RSS 2.0 with `content:encoded`
 full text (checked against a large public newsletter, 1.2 MB). Same copyright position as Medium
 (author-owned, no blanket licence) → same verdict: link-only inbound; the interesting Substack
@@ -178,14 +178,14 @@ direction is **outbound**, and that is MIP-0018's, not this MIP's.
 **The alternate reading, Stack Overflow / Stack Exchange, was checked and fails anyway**:
 `https://stackoverflow.com/feeds/tag/scala` returns **HTTP 403** with a Cloudflare "Just a moment…"
 interstitial, both with a default and with a desktop-browser User-Agent. Even if it were
-reachable, the content is CC BY-SA — a share-alike obligation on anything derived from it — and
+reachable, the content is CC BY-SA (a share-alike obligation on anything derived from it), and
 is programming Q&A, not ocean knowledge. Rejected on all three grounds.
 
 ### 4.5 NASA Earth Observatory RSS — accepted into the reading queue (§5.3)
 `https://earthobservatory.nasa.gov/feeds/earth-observatory.rss` → 200, `application/rss+xml`,
 512 KB, 10 items **with `content:encoded`** (full article text), covering marine heatwaves, algal
 blooms, cyclones. Licence checked at NASA's open-data policy page: "data and information generated
-under NASA sponsorship are available to all users", with citation encouraged — free and open, but
+under NASA sponsorship are available to all users", with citation encouraged: free and open, but
 the page does **not** use the words "public domain", so this MIP does not claim that it does. Still
 a reading-queue source, not an auto-ingest source: relevance to "can I swim at Joaquina" is
 occasional, and §5.4's rule is not licence-dependent.
@@ -205,7 +205,7 @@ occasional, and §5.4's rule is not licence-dependent.
 ### 4.7 Dependencies
 **None new.** Parsing is `java.xml`/`ElementTree` on the JDK and Python already in `flake.nix`;
 fetching is marola's own `core/http`. `scripts/arxiv_digest.py` already parses Atom with
-`xml.etree.ElementTree` and caches one JSON file per item plus a JSONL index — §5.3 clones that
+`xml.etree.ElementTree` and caches one JSON file per item plus a JSONL index; §5.3 clones that
 shape rather than inventing one. No new library, no key, no Azure service, nothing paid.
 
 ## 5. Design
@@ -236,7 +236,7 @@ object FeedParser:
 Pure and unit-tested against **saved fixtures of the real feeds** under
 `core/src/test/resources/feeds/` (`inmet-avisos.xml`, `youtube-channel.xml`,
 `medium-tag.xml`, `nasa-eo.xml`), the same discipline `Corpus.chunkDocument` follows. Network
-lives in the callers. An unparseable item is dropped and counted, not fatal — one bad item in an
+lives in the callers. An unparseable item is dropped and counted, not fatal: one bad item in an
 85-item government feed must not take out the whole banner.
 
 ### 5.2 Inbound A — operational alerts (`core/alerts`), never corpus
@@ -266,11 +266,11 @@ object Geo:
 - **Geometry, not names.** The RSS gives the item list; each item's link gives CAP 1.2 with a
   `<polygon>`, and a beach is in the alert iff `Geo.contains` says so. This replaces the
   hand-written `AlertAreas.byArea` the first draft needed, removes §11.2's maintenance question,
-  and is what makes the path work for **all of Brazil** — a new entry in `areas.json` needs no new
+  and is what makes the path work for **all of Brazil**: a new entry in `areas.json` needs no new
   mapping row. A CAP document with no `<polygon>` degrades to an alert with an empty area that
   matches nothing, and its `areaDesc` is still shown.
 - The RSS `<description>` HTML table is then only a **fallback** for fields CAP does not carry,
-  not the parse path — deterministic either way, no LLM anywhere on this path.
+  not the parse path, deterministic either way, no LLM anywhere on this path.
 - **Expiry is load-bearing.** An alert is shown iff `now` is within `[startsAt, endsAt]`. Nothing
   from this path is ever persisted into the knowledge index, precisely because the index has no
   concept of expiry: a cached "storm warning" answered three weeks later is the worst failure this
@@ -287,17 +287,17 @@ object Geo:
 
 A near-clone of `scripts/arxiv_digest.py`, same flat-file cache convention (MIP-0017 §5.1):
 
-- Sources come from a tracked allow-list, `knowledge/feeds.json` — safe to put there because
+- Sources come from a tracked allow-list, `knowledge/feeds.json`, safe to put there because
   `Corpus.load` reads only `*.md` in `knowledge/` and `knowledge/safety/` (verified in the merged
   #195 loader), so a JSON file next to the corpus is invisible to the index. Each entry:
   `{id, url, kind: "reading", licence, notes, store_body: false}`.
 - Cache under `.tmp/feed_cache/` (gitignored): `items/<sha1-of-guid>.json` + `index.jsonl`,
-  rewritten from the item files each run so it can't drift — `arxiv_digest.py`'s exact pattern.
+  rewritten from the item files each run so it can't drift, `arxiv_digest.py`'s exact pattern.
 - **`store_body` defaults to `false`.** For Medium/Substack sources it is forced false (§4.3/§4.4)
   and the cache keeps title, link, date and nothing else.
 - Scores candidates by keyword overlap with marola's domain and prints them. **It writes nothing
   under `knowledge/`.** The output is a to-do list for a human running the `corpus-doc` skill,
-  which then writes a normal `# Title` / `Source:` document citing the *original* source URL — not
+  which then writes a normal `# Title` / `Source:` document citing the *original* source URL, not
   the feed, and not the aggregator.
 - `--self-test` (offline, fixture-based) is added to `just quality-other` next to the other
   script self-tests.
@@ -311,12 +311,12 @@ someone who may be standing on a beach.
 
 **Rule: no automated process writes to `knowledge/` at all, and `knowledge/safety/` additionally
 requires the same human-authored `corpus-doc` PR it requires today.** Recommended: *no*, feed
-content should never land there automatically — the human review gate is not a nice-to-have here.
-Reasons, in order: (a) a feed item's provenance is the feed, not the fact — a syndicated summary of
+content should never land there automatically. The human review gate is not a nice-to-have here.
+Reasons, in order: (a) a feed item's provenance is the feed, not the fact: a syndicated summary of
 a first-aid guideline is a copy of a copy; (b) feed items are undated in practice (a 2017 video
 looks identical to a 2026 one through the feed, §4.2); (c) MIP-0001's rule that no unsourced fact
 reaches a user is enforced today by a human writing each sentence, and there is no cheaper
-mechanism that keeps it true; (d) the failure is asymmetric — a missed corpus addition costs
+mechanism that keeps it true; (d) the failure is asymmetric: a missed corpus addition costs
 nothing, a wrong sting-treatment sentence with an emergency footer under it costs a person.
 Enforced, not just written: `feed_digest.py --self-test` asserts the writer path is absent, and a
 `quality-other` check fails if any file under `knowledge/` contains an `Ingested-from:` line
@@ -330,8 +330,8 @@ Enforced, not just written: `feed_digest.py --self-test` asserts the writer path
 | Medium tag feed | excerpt only | — | **Link-only.** `robots.txt` disallows AI crawlers (§4.3) |
 | Medium user feed | full `content:encoded` | — | **Link-only**, same reason; being *able* to read it is not permission |
 | Substack `<pub>/feed` | full `content:encoded` | — | **Link-only inbound**; outbound Substack publishing belongs to MIP-0018 |
-| Stack Overflow / Stack Exchange | none — 403 | — | **Rejected** (§4.4): blocked, CC BY-SA share-alike, off-domain |
-| INMET avisos | structured HTML table | label parsing (§5.2) | **Picked** — the only one that carries operational value |
+| Stack Overflow / Stack Exchange | none, 403 | — | **Rejected** (§4.4): blocked, CC BY-SA share-alike, off-domain |
+| INMET avisos | structured HTML table | label parsing (§5.2) | **Picked**, the only one that carries operational value |
 | NASA Earth Observatory | full `content:encoded` | — | **Reading queue**, licence-clean, occasionally on-topic |
 
 The honest summary: of the three media formats named in the request, **none is a good corpus
@@ -349,32 +349,32 @@ object SiteFeed:
 `SiteBuilder.build` writes `data/<area>/feed.xml` per area and a combined `feed.xml` at the root;
 `site/static/index.html` gains `<link rel="alternate" type="application/atom+xml">`. One entry per
 `(area, day)`: title = the day's best hour and beach with its score, summary = the same
-deterministic facts the board already carries plus its `sources` line, verbatim — **no LLM text in
+deterministic facts the board already carries plus its `sources` line, verbatim. **No LLM text in
 the feed**, so nothing unsourced is syndicated (MIP-0001's rule applies to a feed reader exactly as
 it applies to the page).
 
 The one real design point: the site rebuilds **8×/day**, so a naive builder would emit 8 entries
-per day per area. Entry `id` is therefore keyed on `(area, day)` — `tag:marola.dev,2026:floripa/
-2026-09-08` — so a rebuild *updates* an entry (new `<updated>`) instead of appending one, and a
+per day per area. Entry `id` is therefore keyed on `(area, day)` (`tag:marola.dev,2026:floripa/
+2026-09-08`), so a rebuild *updates* an entry (new `<updated>`) instead of appending one, and a
 reader shows one item per day per area. `<published>` is the first build of that day; retaining
 the last 14 days keeps the file small and diffable.
 
 ### 5.7 Other outbound-feed ideas, evaluated
 
-- **(a) Corpus changelog feed** (`/knowledge.xml`) — one entry per `knowledge/*.md` document added
+- **(a) Corpus changelog feed** (`/knowledge.xml`): one entry per `knowledge/*.md` document added
   or materially changed, generated from `git log` at site-build time, linking the document and its
   `Source:` URL. **Worth doing** (S): it is marola's provenance story made subscribable, it costs
   one `git log` call, and it becomes genuinely useful the moment MIP-0033 makes the repo public.
-- **(b) "Notable conditions only" feed** — an entry only when something crosses a threshold (score
+- **(b) "Notable conditions only" feed**: an entry only when something crosses a threshold (score
   ≥ 85, water declared *imprópria*, an active INMET coastal warning, whale season opening). Highest
   signal-per-item of anything here, and the closest thing to a push channel that needs no bot. But
   it is a **proactive/autonomous behaviour**: `AGENTS.md` and `docs/AI-500-MAPPING.md` §4 require an
   explicit human gate before marola volunteers a hazard judgement, and it depends on §5.2 landing.
   **Park**, with §11.6 as the question to answer first.
-- **(c) MIP / release feed for build-in-public** — **rejected as redundant**: GitHub already serves
+- **(c) MIP / release feed for build-in-public**: **rejected as redundant**: GitHub already serves
   `<repo>/releases.atom` (verified 200, `application/atom+xml`) and `commits/<branch>.atom`.
   MIP-0018's exporter is the right home for narrative posts.
-- **(d) Podcast-style feed with a TTS reading of the daily summary** — **rejected**: needs TTS (a
+- **(d) Podcast-style feed with a TTS reading of the daily summary**: **rejected**: needs TTS (a
   cost or a heavy local model), audio can't carry MIP-0001's `[n]` citations, and a spoken safety
   sentence loses MIP-0022's footer. Novelty over value.
 - **(e) JSON Feed 1.1 alongside Atom** — ~20 extra lines, no consumer asked for it. **Defer**.
@@ -384,7 +384,7 @@ the last 14 days keeps the file small and diffable.
 **No change to `Swimability.score` in any arm of this MIP.** §5.2's alert is a display banner,
 deterministic, computed from the feed's own `Início`/`Fim` window and an event allow-list; it
 ranks nothing and suppresses nothing. Making a warning *lower a score* is a separate decision that
-needs its own MIP (§11.5) — the mesoregion granularity (§4.1) is far coarser than a beach, and
+needs its own MIP (§11.5). The mesoregion granularity (§4.1) is far coarser than a beach, and
 silently down-ranking every beach in "Metropolitana do Rio de Janeiro" on a coastal-wind advisory
 would be a scoring change disguised as a data feed.
 
@@ -417,10 +417,10 @@ byte-identical after any `feed_digest.py` run.
 - `GeoSpec` (pure): point-in-polygon inside, outside, on a vertex, on an edge, and a point whose
   latitude exactly equals a vertex's (the classic ray-casting off-by-one). Plus the test that
   earns its keep: a Joaquina coordinate is **not** covered by 55649's real Amazonas polygon, and a
-  coordinate inside it is — this is what catches an inverted lat/lon, the likeliest silent bug on
+  coordinate inside it is: this is what catches an inverted lat/lon, the likeliest silent bug on
   this path.
 - Live checks, run by hand before merging the implementation: `curl -sS -A "$(scripts/…ua)"
-  https://apiprevmet3.inmet.gov.br/avisos/rss | head` (**a User-Agent is required — see §4.1**),
+  https://apiprevmet3.inmet.gov.br/avisos/rss | head` (**a User-Agent is required, see §4.1**),
   `just site-build floripa && xmllint --noout site/dist/feed.xml`, and the feed pasted into one
   real reader.
 - **Done** = the alert banner appears for a real active warning and disappears after its `Fim`;
@@ -440,70 +440,70 @@ byte-identical after any `feed_digest.py` run.
   more authoritative for sea state than INMET's land-oriented warnings. marola will be showing the
   second-best warning source and should say "INMET" in the banner, not "official marine warning".
 - **Babysitting cost is real.** Every added feed is a URL that can move, start requiring a UA, or
-  fall behind Cloudflare — two sources checked for this MIP already have. Keep
+  fall behind Cloudflare; two sources checked for this MIP already have. Keep
   `knowledge/feeds.json` short; a source that breaks twice gets deleted, not fixed.
 - **Licence and robots are not the same question as "can I fetch it".** Medium serves full text
   over `/feed/@user` while its `robots.txt` tells AI agents to stay out; this MIP treats the stated
   wish as binding.
-- **An outbound feed is not an audience** — realistically a handful of subscribers. Proposed
+- **An outbound feed is not an audience.** Realistically a handful of subscribers. Proposed
   because it is nearly free and the right shape (open, no account, no tracking), not because it
   will move numbers.
 
 ## 9. Alternatives considered
 
-- **Do nothing.** Costs nothing and loses nothing today — the corpus grows by hand either way. It
+- **Do nothing.** Costs nothing and loses nothing today; the corpus grows by hand either way. It
   loses the INMET warning, which is the one piece here with real user value.
 - **Auto-ingest feed items into `knowledge/` with an LLM summarisation + `Reviewer` pass.** The
   obvious reading of "RSS feeds into the knowledge base", and **rejected**: MIP-0001's rule is that
   curated text is written by a human with a source per entry, and `Reviewer` is a fact-check pass
   over marola's *own* generated summary, not a substitute for provenance. It would also put
-  arbitrary third-party prose into a retrieval index the model answers from verbatim — the exact
+  arbitrary third-party prose into a retrieval index the model answers from verbatim, the exact
   "wrong sentence = confidently wrong answer" hazard `knowledge/README.md` names.
 - **Store feed bodies in the index with a freshness decay** instead of a hard corpus/alert split.
   Much more work: the index has no expiry, `FileKnowledgeStore` re-embeds on fingerprint change,
   and a decayed-but-present storm warning is still a retrievable sentence. §5's two-path split is
   the cheap version of the same goal.
-- **A hosted aggregator (Feedly/Inoreader API)** — an account, a key, a quota and a paid tier, to
+- **A hosted aggregator (Feedly/Inoreader API).** An account, a key, a quota and a paid tier, to
   replace ~80 lines of `ElementTree`. Rejected against the local-first, keyless default rule.
 - **Scrape Marinha/CHM with a headless browser** past Cloudflare. Rejected: it is an explicit
   anti-bot measure, adds a browser dependency, and breaks on their next change. Ask them for a
   feed instead (§11.3).
-- **Only do the outbound feed**, skip inbound. Genuinely viable and the cheapest subset — which is
+- **Only do the outbound feed**, skip inbound. Genuinely viable and the cheapest subset, which is
   why §5.6 is written to ship alone.
 
 ## 10. Exam-coverage mapping
 
-- **AI-103 §1 Responsible AI** — provenance and a human-in-the-loop ingestion gate (§5.4) as an
+- **AI-103 §1 Responsible AI**: provenance and a human-in-the-loop ingestion gate (§5.4) as an
   enforced rule with a lint, plus a deterministic, non-model safety-adjacent banner (§5.2). Same
   family as MIP-0022's footer, one step earlier in the pipeline: controlling what is allowed to
   *become* grounding data, not just how a grounded answer is rendered.
-- **AI-103 grounding/RAG data ingestion** — a real, negative-result data point for the mapping: the
+- **AI-103 grounding/RAG data ingestion**: a real, negative-result data point for the mapping: the
   MIP documents *why* a source is excluded from the index, which is the part exam material usually
   skips.
-- **AI-500 §4 (human gate on proactive behaviour)** — §5.7b is the textbook case and is parked
+- **AI-500 §4 (human gate on proactive behaviour)**: §5.7b is the textbook case and is parked
   behind that gate deliberately; the MIP names the gate rather than routing around it.
 
 ## 11. Open questions
 
 1. **Confirm the "stack" reading.** This MIP assumes **Substack** (§4.4) and checked Stack
-   Overflow anyway (403, CC BY-SA, off-domain — rejected either way). If Stack Exchange was meant
+   Overflow anyway (403, CC BY-SA, off-domain, rejected either way). If Stack Exchange was meant
    as a *developer* knowledge source for marola's own docs rather than the ocean corpus, that is a
    different MIP. Proposal: Substack, link-only, outbound handled by MIP-0018.
 2. **Who maintains the mesoregion→area table** (§5.2)? It is hand-written and IBGE names change
    rarely but not never. Proposal: unit-tested against the saved INMET fixture, refreshed when
-   `AlertAreasSpec` fails — i.e. it breaks loudly, not silently.
+   `AlertAreasSpec` fails, i.e. it breaks loudly, not silently.
 3. **Ask the Marinha/CHM for a feed.** Worth one email before assuming 403 forever; their Avisos de
    Mau Tempo are the authoritative marine source (§4.6). Needs a human.
-4. **Find NOAA's actual ocean-news feed URL** — `oceanservice.noaa.gov/rss/` is a 404 (§4.6). Low
+4. **Find NOAA's actual ocean-news feed URL.** `oceanservice.noaa.gov/rss/` is a 404 (§4.6). Low
    priority; NASA EO (§4.5) already covers the reading-queue need.
 5. **Should an active alert reach the LLM summary prompt, or stay a Scala-printed banner?** (§5.2,
-   §6). Proposal: banner only in v1 — telling the model about a warning invites it to editorialise
+   §6). Proposal: banner only in v1; telling the model about a warning invites it to editorialise
    about safety, which MIP-0001/0022 exist to prevent.
 6. **Does §5.7b's "notable conditions" feed clear the AI-500 §4 human gate?** It is marola
    volunteering a hazard judgement to a subscriber with no one in the loop. Needs a human decision
    before it is designed, not after.
 7. **Follow-up MIP:** the `Corpus.load` loader reads `knowledge/*.md` and `knowledge/safety/*.md`
-   only — one level, no recursion (verified in the #195 loader). Any future corpus organisation
+   only, one level, no recursion (verified in the #195 loader). Any future corpus organisation
    into topic subdirectories is a loader change with an index-fingerprint consequence, and it is
    out of this MIP's scope; it needs the next free MIP number if someone wants it.
 

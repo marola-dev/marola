@@ -17,7 +17,7 @@
 
 ## 1. Summary
 
-Six places in marola call — or are one step from calling — a language model for a job that is
+Six places in marola call (or are one step from calling) a language model for a job that is
 classification, ranking, matching, or extraction rather than generation. This MIP surveys them
 against five classic (non-LLM) techniques, verifies each technique's real cost and its real
 nixpkgs installability, and recommends converting four while explicitly recommending **against**
@@ -25,7 +25,7 @@ converting two, including the one the reader would most expect this MIP to attac
 `llm/Reviewer.scala`. The headline finding is `FileKnowledgeStore`: marola's own benchmark record
 already documents that the embedder it uses carries *inverted* relevance signal, and a TF-IDF
 probe over the same corpus and the same 22-question set separates in-corpus from off-corpus
-questions where the embedder could not — at zero model calls.
+questions where the embedder could not, at zero model calls.
 
 ## 2. Motivation
 
@@ -45,8 +45,8 @@ comparing it against a threshold of zero. Relevance is decided downstream by ask
 second time (`NoAnswerSentinel`). That is an LLM call buying nothing.
 
 **The dev-loop one already has a landed proof.** Earlier in this same session the PR-label
-`area/*` classification — a prose-classification job the deterministic taxonomy explicitly
-declines to guess at — was given a local TF-IDF classifier (`scripts/pr_label_nlp.py`, branch
+`area/*` classification, a prose-classification job the deterministic taxonomy explicitly
+declines to guess at, was given a local TF-IDF classifier (`scripts/pr_label_nlp.py`, branch
 `feat/pr-labels-nlp-classifier`). It runs offline, needs no key, no network and no GPU, and
 classifies correctly on 8 of 8 marola-domain fixtures. §4.1 treats that as this survey's first
 data point rather than a proposal.
@@ -81,14 +81,14 @@ here is from memory.
 
 `scikit-learn` 1.8.0 in nixpkgs, bundled into the dev shell's interpreter via
 `python3.withPackages` on `feat/pr-labels-nlp-classifier` (a bare `python3Packages.scikit-learn`
-entry would sit in its own store path and never be importable by plain `python3` — that branch's
+entry would sit in its own store path and never be importable by plain `python3`: that branch's
 flake comment documents the gotcha). Verified this session, not repeated from that branch's own
 `Tested:` trailer: `scripts/pr_label_nlp.py --self-test` was run against a freshly-substituted
 scikit-learn and printed `pr_label_nlp self-test: ok`, 8/8 classification cases plus 2 taxonomy
 checks. **This is the first landed evidence that a local, free, marola-vocabulary-aware
 statistical classifier is good enough for a real classification job in this repo**, and the shape
-it landed in — suggest-only, never overriding a confident deterministic call, applying only into
-an `area/unscoped` gap — is the shape §5 reuses everywhere.
+it landed in, suggest-only, never overriding a confident deterministic call, applying only into
+an `area/unscoped` gap, is the shape §5 reuses everywhere.
 
 Independently, a throwaway probe (not shipped; it exists only to inform this MIP) chunked
 `knowledge/**.md` exactly as `Corpus.chunkDocument` does (blank-line paragraphs merged to 700
@@ -101,16 +101,16 @@ chars → 32 chunks, 951-term vocabulary) and scored all 22 questions of
 | off-corpus questions | 12 | 0.1441 | **0.1785** | 0.2195 |
 
 The separation runs the *right* way, unlike the embedder's. The best single threshold (0.2186)
-keeps 8/10 in-corpus and rejects 11/12 off-corpus — 19/22, 0.86. Honest caveat, stated here rather
+keeps 8/10 in-corpus and rejects 11/12 off-corpus: 19/22, 0.86. Honest caveat, stated here rather
 than buried: that threshold was chosen on the same 22 questions it is scored against, so 0.86 is
 an in-sample optimum, not a held-out result, and the distributions still overlap (q05, an
-in-corpus question about PRÓPRIA, scores 0.1248 — below every off-corpus question but one).
+in-corpus question about PRÓPRIA, scores 0.1248, below every off-corpus question but one).
 
 ### 4.2 spaCy and rule-based NER
 
-`spacy` 3.8.14 in nixpkgs. The question this MIP had to answer before naming it — does a spaCy
+`spacy` 3.8.14 in nixpkgs. The question this MIP had to answer before naming it, does a spaCy
 model need a network call at first use, which would violate this repo's "no undeclared network
-dependency" ethos — is **no**: `python3Packages.spacy-models` is a real attribute set in nixpkgs
+dependency" ethos, is **no**: `python3Packages.spacy-models` is a real attribute set in nixpkgs
 carrying `en_core_web_sm/md/lg/trf` and `pt_core_news_sm/md/lg` (`pt_core_news_sm` 3.8.0), each a
 fixed-output derivation fetching
 `github.com/explosion/spacy-models/releases/download/<model>-<ver>/<model>-<ver>.tar.gz` at *build*
@@ -124,7 +124,7 @@ next person does not re-derive it.
 
 The precondition is labeled data. The PR-label backfill has only just started producing it and
 there was no `gh` auth available in this sandbox to count how many PRs now carry an `area/*` label,
-so the training-set size is unknown — see Open questions. A naive Bayes classifier over commit
+so the training-set size is unknown: see Open questions. A naive Bayes classifier over commit
 subjects is a plausible future upgrade path *from* TF-IDF, not a replacement for it: TF-IDF needs
 no labels at all, which is exactly why §4.1's classifier could be built the day the idea came up.
 
@@ -132,13 +132,13 @@ no labels at all, which is exactly why §4.1's classifier could be built the day
 
 `sentence-transformers` 5.7.0 exists in nixpkgs. Its propagated build inputs are
 `huggingface-hub, numpy, scikit-learn, scipy, tokenizers, torch, tqdm, transformers,
-typing-extensions` — i.e. adopting it pulls PyTorch (`python3Packages.torch` 2.12.0) into the dev
+typing-extensions`: i.e. adopting it pulls PyTorch (`python3Packages.torch` 2.12.0) into the dev
 shell, and `huggingface-hub` means the *weights* still arrive over the network at first use, which
 is the exact thing §4.2 checked and cleared spaCy of.
 
 **Honest verdict: over-engineering, and the benchmark already says so.** Run 3 of
-`docs/benchmarks/2026-09-05.md` swapped in `nomic-embed-text` — a genuinely better embedder,
-already free through Ollama, needing *no* new dependency at all — and it was not clearly better
+`docs/benchmarks/2026-09-05.md` swapped in `nomic-embed-text`, a genuinely better embedder,
+already free through Ollama, needing *no* new dependency at all, and it was not clearly better
 (in-corpus 0.85 vs 0.92; general 0.67 vs 0.78, at n=22 where ±0.1 is noise). If a better embedder
 that costs nothing does not help at this corpus size, a heavier one that costs a PyTorch closure
 will not either. Revisit only if the corpus grows ~10×, which that benchmark's own closing note
@@ -149,26 +149,26 @@ predicts as the crossover.
 This survey is not introducing the idea of non-LLM parsing to marola; it is naming a pattern the
 repo already relies on in its most correctness-sensitive paths, and asking where else it fits.
 
-- `scripts/lib/pr_labels.sh` — a deterministic label taxonomy whose header states the rule
+- `scripts/lib/pr_labels.sh`: a deterministic label taxonomy whose header states the rule
   outright: every label is "derived from a fact already on the PR … never guessed from prose, and
   never an LLM call".
-- `scripts/lib/mip_ref.sh` — three-tier MIP-number detection (branch name → commit subject →
+- `scripts/lib/mip_ref.sh`: three-tier MIP-number detection (branch name → commit subject →
   the single `docs/mips/MIP-NNNN-*.md` file touched). Pure regex; no model has ever been asked
   "which MIP is this PR about".
-- `scripts/cost-split.py` — cost attribution by branch and author date, arithmetic over session
+- `scripts/cost-split.py`: cost attribution by branch and author date, arithmetic over session
   logs, no model call.
-- `core/…/water/WaterQualityMatcher.scala` — NFD accent stripping, a `Praia do/da/de` prefix rule,
+- `core/…/water/WaterQualityMatcher.scala`: NFD accent stripping, a `Praia do/da/de` prefix rule,
   word-prefix matching, and an inland-water prefix list, with haversine distance only as the
   fallback. This is name-normalisation NLP in ~74 lines, and it decides which sampling point's
   verdict attaches to which beach.
-- `local/…/water/IneaPdfParser.scala` / `InemaPdfParser.scala` — PDF table extraction with
+- `local/…/water/IneaPdfParser.scala` / `InemaPdfParser.scala`: PDF table extraction with
   rowspan reconstruction from real glyph Y-positions, verified against a captured fixture of a
   real bulletin. Nobody proposed handing those PDFs to a multimodal model.
-- `core/…/knowledge/OceanQa.saysNoAnswer` — a rule-based classifier over *model output*, matching
+- `core/…/knowledge/OceanQa.saysNoAnswer`: a rule-based classifier over *model output*, matching
   the sentinel plus five free-text ways a small model says the same thing.
 
 **The pick.** TF-IDF/cosine (§4.1) for everything recommended in §5, implemented in whichever
-language the call-site already lives in — Python where it is a script, plain Scala where it is
+language the call-site already lives in: Python where it is a script, plain Scala where it is
 `core` (a TF-IDF scorer is ~60 lines of `Map[String, Double]` arithmetic; adding a Python
 dependency to `core` to avoid writing them would be the wrong trade, and `core` carries no such
 dependency today). spaCy and sentence-transformers are recorded as verified-and-rejected.
@@ -191,7 +191,7 @@ object Lexical:
 `AppConfig` picks it via `MAROLA_KNOWLEDGE_RETRIEVER` (`lexical` | `embedding`), same
 env-var-per-integration shape as `MAROLA_LLM_PROVIDER` (`ARCHITECTURE.md` §5). Deterministic end
 to end: no model call, no `./data/knowledge-index.json`, no fingerprint/re-embed cycle. The
-embedding path stays and stays supported — this is a default change, not a deletion, and MIP-0032's
+embedding path stays and stays supported: this is a default change, not a deletion, and MIP-0032's
 matrix gains a row rather than losing one.
 
 The LLM keeps doing exactly what it does today after retrieval: answering from the passages,
@@ -201,7 +201,7 @@ citing them, and emitting `NO_ANSWER_IN_PASSAGES`. Nothing about the grounding c
 
 `feat/pr-labels-nlp-classifier` (`scripts/pr_label_nlp.py` + `--nlp` / `--nlp-apply-unscoped` on
 `scripts/backfill-pr-labels.sh`). This MIP's recommendation is simply: **merge it as-is, in the
-role it already has** — comparison by default, applying only into an `area/unscoped` gap, never
+role it already has**: comparison by default, applying only into an `area/unscoped` gap, never
 overriding the deterministic taxonomy. No change proposed. It is listed here because a survey that
 omitted its own strongest evidence would be dishonest.
 
@@ -209,7 +209,7 @@ omitted its own strongest evidence would be dishonest.
 
 Verified before proposing: there is **no** free-text location parsing in marola today.
 `Main`'s CLI takes typed flags, and `ChatServer.responseFor` hands the raw question straight to
-`OceanQa.answer`. So this is not a conversion — it is a "build the cheap half first" note for
+`OceanQa.answer`. So this is not a conversion: it is a "build the cheap half first" note for
 whoever implements MIP-0002's bot. A gazetteer matcher reusing `WaterQualityMatcher.normalise` and
 `namesMatch` against the OSM beach list resolves the structured majority ("Joaquina amanhã",
 "praia mole hoje") with zero model calls; anything unmatched falls through to the LLM unchanged.
@@ -218,7 +218,7 @@ phrasings is how you get a parser tuned to nobody.
 
 ### 5.4 `arxiv_digest.py` relevance — recommended, small
 
-`relevance_score` is today the sum of the weights of the queries that matched — it cannot rank two
+`relevance_score` is today the sum of the weights of the queries that matched: it cannot rank two
 papers that matched the same query. Replacing it with TF-IDF cosine between the paper's abstract
 and marola's own corpus vocabulary reuses §4.1's method and machinery exactly. Still no LLM, still
 offline after the arXiv fetch.
@@ -227,21 +227,21 @@ offline after the arXiv fetch.
 
 - **`llm/Reviewer.scala` stays an LLM call.** Its job is two-part: (a) does the draft mention
   jellyfish risk when Moderate/High and whale likelihood when Moderate/High, and (b) does it assert
-  anything not present in the given facts. Part (a) is a keyword check and could short-circuit —
+  anything not present in the given facts. Part (a) is a keyword check and could short-circuit:
   worth doing as a pre-filter that skips the review call when every mention rule is already
   satisfied. Part (b) is a hallucination check, which requires deciding whether a sentence is
   *entailed* by a set of structured facts. Term overlap cannot do that: a draft that says "the sea
   will be warm" shares every content word with facts that say the sea will be 17 °C. This is the
-  case where an LLM earns its cost, and the blast radius is already bounded — PHILOSOPHY.md's
+  case where an LLM earns its cost, and the blast radius is already bounded: PHILOSOPHY.md's
   Pillar 2 keeps the reviewer able to rewrite prose and unable to overturn a veto.
 - **The summarizer (`Main.summarizeTop`) stays an LLM call.** Turning `BestHour` into a sentence is
   generation. A template would work and would be worse; that is the whole reason the DSPy compile
   step exists.
 - **Nothing about safety scoring changes.** `Swimability.score`, `WaterVerdict.veto`, and the notes
-  they produce stay pure Scala, unit-tested, with no statistical component of any kind — not an
+  they produce stay pure Scala, unit-tested, with no statistical component of any kind: not an
   LLM, and not a TF-IDF classifier either. "Use NLP more" is not a licence to make a swim/don't-swim
   decision probabilistic. `MIP-0022`'s safety footer is the one adjacent thing this MIP does touch,
-  and only because retrieval feeds it — see §6.
+  and only because retrieval feeds it, see §6.
 - **spaCy / NER for the agency PDFs.** INEA/INEMA parsing is geometry and table structure, not
   language; §4.2 confirms spaCy is installable and this confirms it is the wrong tool.
 
@@ -260,7 +260,7 @@ yield Answer(reply, relevant, relevant.exists(_.safety))
 
 The MIP-0022 footer trigger is computed from the *thresholded* list. With `DefaultMinScore = 0.0`
 that filter is inert, so the bug is latent. §5.1's whole point is to make the threshold meaningful
-— which would let a safety passage that scored below it drop out and silently take the emergency
+, which would let a safety passage that scored below it drop out and silently take the emergency
 footer (lifeguard / 193 / SAMU 192) with it. Fix: compute `safety` from the unfiltered top-k
 before the threshold filter is applied, and add a unit test that a safety chunk scoring below
 `minScore` still sets `Answer.safety = true`. Whichever way §5.1 is decided, this line should be
@@ -277,7 +277,7 @@ fixed.
 - `OceanQaSpec` (extend): a safety chunk scoring below `minScore` still yields
   `Answer.safety = true` (§6).
 - Live: `just benchmark` with `MAROLA_KNOWLEDGE_RETRIEVER=lexical`, results appended to
-  `docs/benchmarks/` as a fourth run and compared against 2026-09-05's three — per that file's own
+  `docs/benchmarks/` as a fourth run and compared against 2026-09-05's three, per that file's own
   closing instruction to re-run before changing the embedder. **Done** = `rag-general` coverage no
   worse than run 2's 0.84 with the embed call removed, or a written explanation of the regression.
 - `just build && just test && just quality`.
@@ -298,9 +298,9 @@ fixed.
 
 - **Do nothing.** Defensible for §5.3/§5.4. Not for §5.1: the code itself documents that it is
   paying for a signal it then discards.
-- **A better embedder instead** (`nomic-embed-text`, free via Ollama). Already tried — run 3 of
+- **A better embedder instead** (`nomic-embed-text`, free via Ollama). Already tried: run 3 of
   the 2026-09-05 benchmark. Not clearly better, and still one model call per question.
-- **sentence-transformers.** §4.4 — rejected on a verified dependency footprint.
+- **sentence-transformers.** §4.4: rejected on a verified dependency footprint.
 - **An LLM-as-judge relevance filter** (ask the model whether each passage is relevant). Strictly
   more expensive than the thing it would replace; it is the direction this MIP exists to argue
   against.
@@ -337,24 +337,24 @@ fixed.
 
 ### Checked live
 
-- `nix eval nixpkgs#python3Packages.scikit-learn.version` — 2026-09-07 → `1.8.0`.
-- `nix eval nixpkgs#python3Packages.spacy.version` — 2026-09-07 → `3.8.14`.
-- `nix eval nixpkgs#python3Packages.spacy-models` (attrNames) — 2026-09-07 → includes
+- `nix eval nixpkgs#python3Packages.scikit-learn.version`, 2026-09-07 → `1.8.0`.
+- `nix eval nixpkgs#python3Packages.spacy.version`, 2026-09-07 → `3.8.14`.
+- `nix eval nixpkgs#python3Packages.spacy-models` (attrNames), 2026-09-07 → includes
   `en_core_web_sm/md/lg/trf`, `pt_core_news_sm/md/lg`; `pt_core_news_sm.version` → `3.8.0`;
   `en_core_web_sm.src.url` →
   `https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0.tar.gz`
-  (a build-time fixed-output fetch — no runtime `spacy download`).
-- `nix eval nixpkgs#python3Packages.sentence-transformers.version` — 2026-09-07 → `5.7.0`;
+  (a build-time fixed-output fetch, no runtime `spacy download`).
+- `nix eval nixpkgs#python3Packages.sentence-transformers.version`, 2026-09-07 → `5.7.0`;
   its `propagatedBuildInputs` → `huggingface-hub, numpy, scikit-learn, scipy, tokenizers, torch,
   tqdm, transformers, typing-extensions`. `nix path-info --derivation
   nixpkgs#python3Packages.torch` → `python3.14-torch-2.12.0.drv`.
-- `nix eval nixpkgs#python3Packages.{numpy,nltk,rank-bm25,gensim}.version` — 2026-09-07 →
+- `nix eval nixpkgs#python3Packages.{numpy,nltk,rank-bm25,gensim}.version`, 2026-09-07 →
   `2.5.1`, `3.10.0`, `0.2.2`, `4.4.0` (recorded as available; none proposed).
 - `scripts/pr_label_nlp.py --self-test` from `origin/feat/pr-labels-nlp-classifier`, run
   2026-09-07 under a `python3.withPackages [scikit-learn]` shell → `pr_label_nlp self-test: ok`,
   8/8 classification cases, 2/2 taxonomy checks.
 - TF-IDF probe over `knowledge/**.md` (32 chunks, 951-term vocabulary) × all 22 questions of
-  `cli/src/main/resources/benchmark_questions.json`, run 2026-09-07 — numbers in §4.1. Throwaway
+  `cli/src/main/resources/benchmark_questions.json`, run 2026-09-07, numbers in §4.1. Throwaway
   script, scratchpad only, not committed.
 - Read at `origin/main` 07882ae, 2026-09-07: `core/…/knowledge/{OceanQa,FileKnowledgeStore,
   KnowledgeStore,Corpus}.scala`, `core/…/llm/Reviewer.scala`, `core/…/water/WaterQualityMatcher.scala`,
@@ -362,7 +362,7 @@ fixed.
   `cli/…/AppConfig.scala`, `cli/…/agent/ChatServer.scala`, `cli/…/bench/OceanBenchmark.scala`,
   `local/…/water/IneaPdfParser.scala`, `scripts/{arxiv_digest.py,cost-split.py,lib/pr_labels.sh,
   lib/mip_ref.sh}`, `docs/benchmarks/2026-09-05.md`, `docs/ARCHITECTURE.md` §5a/§11,
-  `docs/AI-103-MAPPING.md` §5, `docs/FUTURE-WORK.md` (no existing NLP/TF-IDF/BM25 section — grep
+  `docs/AI-103-MAPPING.md` §5, `docs/FUTURE-WORK.md` (no existing NLP/TF-IDF/BM25 section, grep
   over `docs/` and the root `*.md` returned nothing).
 
 ### Not checked
@@ -373,8 +373,8 @@ fixed.
 - Whether `huggingface-hub` can be pointed at a purely local model directory with no first-use
   network call. Assumed it would need one; not tested, because §4.4 is rejected on other grounds
   anyway.
-- The number of merged PRs carrying an `area/*` label (§11) — no `gh` auth in this sandbox.
-- The `--nlp` / `--nlp-apply-unscoped` flags on `scripts/backfill-pr-labels.sh` against a real PR —
+- The number of merged PRs carrying an `area/*` label (§11): no `gh` auth in this sandbox.
+- The `--nlp` / `--nlp-apply-unscoped` flags on `scripts/backfill-pr-labels.sh` against a real PR:
   same reason; that branch's own `Tested:` trailer says the same.
 - Any BM25 variant's behaviour on this corpus. Only TF-IDF/cosine was probed; `rank-bm25`'s
   presence in nixpkgs was confirmed but its ranking was not measured.

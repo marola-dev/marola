@@ -25,7 +25,7 @@ whale watching. **The product name doesn't change — marola stays marola everyw
 site `<h1>`, the repo, the bot, the CLI banner).** What changes is the slogan paired with the name:
 **"marola — the ocean intelligence layer,"** the deterministic, sourced layer that knows the sea
 near you (conditions, water quality, sea life, tides, hazards, lore) and answers questions about
-it — with "what's the best hour tomorrow to swim nearby" named as its first case, not the whole
+it, with "what's the best hour tomorrow to swim nearby" named as its first case, not the whole
 product. No scoring, safety text, or architecture changes; only the strings and docs that describe
 the product.
 
@@ -48,7 +48,7 @@ swimming is the use case they built):
 | CLI banner (`--summarize`/default run) | `cli/src/main/scala/marola/Main.scala:394` | `Console.printLine("marola :: best hour tomorrow to swim nearby (POC)")` |
 | CLI entry-point doc comment | `cli/src/main/scala/marola/Main.scala:19` | "POC entry point for 'what's the best hour tomorrow to swim nearby?'." |
 
-Notably, `README.md:4` already says "ocean intelligence" — the phrase exists, but is immediately
+Notably, `README.md:4` already says "ocean intelligence": the phrase exists, but is immediately
 narrowed to "for open-water swimmers" in the same sentence, and every other surface above still
 frames the whole product as the swim question, not one case of a broader layer. `PHILOSOPHY.md:23`
 and `AGENTS.md:8` are the strongest examples: both use the swim question to justify the *entire*
@@ -77,7 +77,7 @@ implicit two-agent pipeline… hardcoded"), and "Assistant" duplicates `AGENTS.m
 "Telegram assistant." Keep **"ocean intelligence layer"** as the prose phrase (matches the
 layer/pluggable-integration language `ARCHITECTURE.md` already uses for
 `LlmClient`/`VisionClient`/`SightingStore`); "OIA" stays an internal planning shorthand only,
-never in README/site/bot copy — an initialism in front of a five-second read works against the
+never in README/site/bot copy. An initialism in front of a five-second read works against the
 site-frontend skill's own rule (`.claude/skills/site-frontend/SKILL.md:74`, "nouns from the
 data," not an acronym).
 
@@ -148,17 +148,17 @@ once, no tracking. First case: the best hour tomorrow to swim."
 ## 4. MIP-by-MIP fit — every planned or drafted MIP as part of one ocean-intelligence project
 
 Read against the new frame, not a swim app with extras bolted on. "Scope/wording change?" is
-almost always **no** — the point of the rebrand is that it costs nothing to adopt, because the
+almost always **no**: the point of the rebrand is that it costs nothing to adopt, because the
 work these MIPs describe was never swim-specific; it was described in swim terms because that was
 the product's only stated use case.
 
 | MIP | What it adds to the ocean layer | Use case(s) served | Scope/wording change? |
 |---|---|---|---|
-| 0001 water quality + sea lore | Bathing-water quality per point; sourced sea-lore corpus (any topic) | swim, sea life/lore | No — already layer-shaped |
-| 0002 Telegram bot, Phase 1 | The addressable surface the layer is reached through | all | No — only its description text (§3) |
+| 0001 water quality + sea lore | Bathing-water quality per point; sourced sea-lore corpus (any topic) | swim, sea life/lore | No, already layer-shaped |
+| 0002 Telegram bot, Phase 1 | The addressable surface the layer is reached through | all | No, only its description text (§3) |
 | 0003 fast replies / caching | Answers in under 3s regardless of question | all | No |
-| 0004 daily digest / subscriptions | Push habit; digest content is swim-shaped today | swim now; any case once parameterized | Wording — "conditions," not "swim conditions" |
-| 0005 the map, static site | Visual face of the layer, one marker per beach | all (renders swim score today) | Wording only — §3.3's title/tagline/meta |
+| 0004 daily digest / subscriptions | Push habit; digest content is swim-shaped today | swim now; any case once parameterized | Wording: "conditions," not "swim conditions" |
+| 0005 the map, static site | Visual face of the layer, one marker per beach | all (renders swim score today) | Wording only, §3.3's title/tagline/meta |
 | 0006 live look, user cameras | Ground-truth visual conditions, activity-independent | swim, dive, surf | No |
 | 0007 time-series foundation models | Better forecasts of the same live series | all | No |
 | 0008 Docker images | Ships the layer, any backend | all | No |
@@ -167,39 +167,39 @@ the product's only stated use case.
 | 0011 Claude Code best practices | Dev-tooling only | none (infra) | No |
 | 0012 llm4s / DSPy deprecation | Synthesis step's implementation, not its scope | all | No |
 | 0013 OpenCode tryout | Dev-tooling only | none (infra) | No |
-| 0014 marola book | Outreach artifact explaining the project | outreach | Wording — lead with the layer, not "swim app" |
-| 0015 Interação swim matching | Who else is swimming here — deliberately swim-only | swim only | No — correctly scoped, no need to generalize |
+| 0014 marola book | Outreach artifact explaining the project | outreach | Wording: lead with the layer, not "swim app" |
+| 0015 Interação swim matching | Who else is swimming here, deliberately swim-only | swim only | No, correctly scoped, no need to generalize |
 | 0016 water-quality map markers | Water quality placed correctly on the map | swim, any water-touching activity | No |
 | 0017 agentic tooling survey | Dev-tooling ideas | none (infra) | No |
-| 0018 self-documentation / exporter | Publishes about the project (LinkedIn/blog/Reddit) | outreach | Wording — posts lead with the layer, swim as example |
+| 0018 self-documentation / exporter | Publishes about the project (LinkedIn/blog/Reddit) | outreach | Wording: posts lead with the layer, swim as example |
 | 0019 arXiv ocean-forecasting survey | Better forecast/jellyfish-prediction techniques | all (activity-agnostic) | No |
-| 0020 Instagram bot (draft) | Promotion; bio/captions say "best hour…to swim" today, handle `@marola.swim` | outreach | Wording — bio should follow §3.3; handle is that MIP's call, flagged §8 |
+| 0020 Instagram bot (draft) | Promotion; bio/captions say "best hour…to swim" today, handle `@marola.swim` | outreach | Wording: bio should follow §3.3; handle is that MIP's call, flagged §8 |
 | 0021 beach accessibility | Parking/toilets/showers/lifeguard from OSM | swim, any beach-based activity | No |
-| 0022 safety answer footer | Lifeguard/193/SAMU grounding, activity-agnostic | all | No — §6 says this MIP doesn't touch safety text |
-| 0023 waitlist draft — wait-list/promotion/maintenance | Site copy ("soon, in the bot"), domain strategy | outreach | Wording — copy tracks §3.3; domain should read coastal, not swim-only, per §8 |
-| 0025 sea-model draft — marola-sea-1.0 fine-tune | Domain-tuned local model for the whole synthesis step (tool-calls, safety adherence) | all | No — "marola-sea" already reads layer-shaped |
-| ROADMAP §5's planned 0023–0028 (hazard/escalation agent, actor topology, Foundry+A2A, eval harness, managed identity, AI-103 RAG gap) | Multi-agent/AI-500 build-out: escalation agent on the same live series, addressable roles, shared state, governed identity | safety (activity-agnostic hazard), all (eval/identity underlie every use case) | No — architecture work; this frame makes "a third agent with a genuinely different responsibility" (`AI-500-MAPPING.md`) legible as a layer capability |
-| `FUTURE-WORK.md` §1 — surf, dive, sail, whale-watch, fish | The naming consequence this MIP responds to: one `ActivityScoring` per activity, same data, same layer | surf, dive, sail, whale-watch, fishing | Not drafted; a second use case needs an `ActivityScoring` (§1.2), activity-aware `Recommender`/`BestHour`, per-activity card copy, a bot "what are you doing?" turn (`ROADMAP.md` K1) — none built; this MIP only clears the naming precondition |
+| 0022 safety answer footer | Lifeguard/193/SAMU grounding, activity-agnostic | all | No, §6 says this MIP doesn't touch safety text |
+| 0023 waitlist draft, wait-list/promotion/maintenance | Site copy ("soon, in the bot"), domain strategy | outreach | Wording: copy tracks §3.3; domain should read coastal, not swim-only, per §8 |
+| 0025 sea-model draft, marola-sea-1.0 fine-tune | Domain-tuned local model for the whole synthesis step (tool-calls, safety adherence) | all | No, "marola-sea" already reads layer-shaped |
+| ROADMAP §5's planned 0023–0028 (hazard/escalation agent, actor topology, Foundry+A2A, eval harness, managed identity, AI-103 RAG gap) | Multi-agent/AI-500 build-out: escalation agent on the same live series, addressable roles, shared state, governed identity | safety (activity-agnostic hazard), all (eval/identity underlie every use case) | No, architecture work; this frame makes "a third agent with a genuinely different responsibility" (`AI-500-MAPPING.md`) legible as a layer capability |
+| `FUTURE-WORK.md` §1, surf, dive, sail, whale-watch, fish | The naming consequence this MIP responds to: one `ActivityScoring` per activity, same data, same layer | surf, dive, sail, whale-watch, fishing | Not drafted; a second use case needs an `ActivityScoring` (§1.2), activity-aware `Recommender`/`BestHour`, per-activity card copy, a bot "what are you doing?" turn (`ROADMAP.md` K1); none built; this MIP only clears the naming precondition |
 
 ## 5. Design — what changes in code, and what doesn't
 
 **Only strings and docs change.** No trait, module, schema, or scoring function is touched. Files
 this MIP's implementation PR would edit:
 
-- `README.md:3-7` — hero paragraph (§3.3)
-- `PHILOSOPHY.md:23` — "Why marola" opening sentence (§3.3)
-- `docs/ARCHITECTURE.md:23-24` — reframe "MVP hypothesis" as the layer's first use case, keep the
+- `README.md:3-7`: hero paragraph (§3.3)
+- `PHILOSOPHY.md:23`: "Why marola" opening sentence (§3.3)
+- `docs/ARCHITECTURE.md:23-24`: reframe "MVP hypothesis" as the layer's first use case, keep the
   Telegram-message example verbatim (it's still accurate)
-- `AGENTS.md:8` — "What this repo is" (§3.3); this is also where `CLAUDE.md`'s `@AGENTS.md` import
-  means the change propagates automatically to Claude Code's view — no separate `CLAUDE.md` edit
-- `docs/TELEGRAM-SETUP.md:22` — add the proposed `/setdescription` text as guidance (§3.3); leave
+- `AGENTS.md:8`: "What this repo is" (§3.3); this is also where `CLAUDE.md`'s `@AGENTS.md` import
+  means the change propagates automatically to Claude Code's view, no separate `CLAUDE.md` edit
+- `docs/TELEGRAM-SETUP.md:22`: add the proposed `/setdescription` text as guidance (§3.3); leave
   the `/swim` command example as-is
-- `site/static/index.html:6,7,16` — title, meta description, tagline (§3.3)
-- `cli/src/main/scala/marola/Main.scala:19,394` — doc comment and banner string (§3.3)
-- `docs/mips/README.md` — this MIP's index row (this same PR, per the `mip` skill step 5)
+- `site/static/index.html:6,7,16`: title, meta description, tagline (§3.3)
+- `cli/src/main/scala/marola/Main.scala:19,394`: doc comment and banner string (§3.3)
+- `docs/mips/README.md`: this MIP's index row (this same PR, per the `mip` skill step 5)
 
-**Docs index update:** `docs/README.md` (the doc-index file `AGENTS.md` points to) gets no new row
-— it already indexes `docs/mips/` as a directory, not per-MIP; nothing there names the swim
+**Docs index update:** `docs/README.md` (the doc-index file `AGENTS.md` points to) gets no new row.
+It already indexes `docs/mips/` as a directory, not per-MIP; nothing there names the swim
 question specifically enough to need a change. `docs/ROADMAP.md` is left untouched by this MIP
 (it's a snapshot dated 2026-09-06, and editing history there is out of scope) but its own "How this
 file stays true" rule means whoever files the MIP-0029 implementation PR should add one line
@@ -207,18 +207,18 @@ noting the frame is adopted, per that file's own maintenance instruction.
 
 ## 6. Scoring / safety impact
 
-**None — and this MIP explicitly must not touch:**
+**None, and this MIP explicitly must not touch:**
 
 - `scoring/Swimability.scala`'s thresholds or any ranking logic.
 - Safety text: the MIP-0022 footer (lifeguard/193/SAMU), the whale/jellyfish heuristic disclaimers
   in `docs/ARCHITECTURE.md` §8.
 - The local-first promise: "entirely locally with a free Ollama model, zero Azure account needed"
   (`AGENTS.md:8`'s clause, unchanged) and every per-integration opt-in design in `ARCHITECTURE.md` §5.
-- The "no cookies, no tracking" line — verified live at `site/static/app.js:11` ("no analytics, no
-  cookies") and `site/static/app.js:280` ("No cookies, no tracking…soon, in the Telegram bot") —
+- The "no cookies, no tracking" line, verified live at `site/static/app.js:11` ("no analytics, no
+  cookies") and `site/static/app.js:280` ("No cookies, no tracking…soon, in the Telegram bot"),
   stays verbatim; §3.3 only changes the *tagline* above it, not this footer sentence.
 - MIP-0005's own constraints (plain files, no build step, one accent colour, the score-colour
-  tokens) — this MIP changes copy inside `index.html`, not layout, markers, or the schema
+  tokens): this MIP changes copy inside `index.html`, not layout, markers, or the schema
   `site/board.schema.json` depends on.
 
 ## 7. Verification plan
@@ -228,11 +228,11 @@ actionlint/hadolint — none of it checks prose). Verification here is manual, a
 while writing this MIP:
 
 - Every file:line cited in §2 and §5 was read directly (`grep -n` against the actual file in this
-  worktree, not memory) before being quoted — see the Appendix for the raw commands.
+  worktree, not memory) before being quoted; see the Appendix for the raw commands.
 - The proposed one-liner and tagline (§3.3) were word-counted by hand: 11 words each, under the
   site-frontend skill's ≤12-word rule (`.claude/skills/site-frontend/SKILL.md:74`).
 - No instance of "smart", "AI-powered", "seamless", "revolutionary", "world-class", or an
-  exclamation mark appears in any proposed replacement string above — checked by re-reading §3.3.
+  exclamation mark appears in any proposed replacement string above; checked by re-reading §3.3.
 - Once implemented: `node --check site/static/app.js` (unaffected — no JS changes), the
   site-frontend skill's `site_check.js` harness re-run to confirm the tagline renders (its DOM
   assertions target markers/list rendering, not copy content, so this is a smoke check not a gate).
@@ -241,29 +241,29 @@ while writing this MIP:
 
 - **A vaguer name loses five-second clarity.** "Best hour to swim, every beach" tells a stranger
   exactly what to tap; "the ocean near you" needs one more glance to land on an action. §3.3 keeps
-  a concrete verb ("swim tomorrow," in the README hero and CLI line) to hedge this — bounded to
+  a concrete verb ("swim tomorrow," in the README hero and CLI line) to hedge this, bounded to
   the site tagline and title, which stay short by design.
 - **Identity choices in open drafts must agree with this name.** The waitlist draft's §5.1 domain
-  strategy (`marola.app.br` etc.) doesn't reference "ocean"/"layer" — fine, a domain needn't
+  strategy (`marola.app.br` etc.) doesn't reference "ocean"/"layer": fine, a domain needn't
   restate the tagline, but its site-copy quote should be re-checked against §3.3 when finalized.
   The Instagram draft's handle `@marola.swim` is a stronger conflict: a handle saying "swim" next
   to a site saying "the ocean near you" is a real cross-surface inconsistency. This MIP doesn't
-  resolve it — flagged for whoever finalizes that MIP, repeated in §11.
+  resolve it; flagged for whoever finalizes that MIP, repeated in §11.
 - **Nothing here needed external verification.** No web search or pricing check was made or
-  needed — every citation in §2/§5 is a local file read.
+  needed: every citation in §2/§5 is a local file read.
 
 ## 9. Alternatives considered
 
 - **Keep "swim" as the brand.** Zero cost, maximum clarity, but caps the story as MIP-0009/0016/
   0021's non-swim work keeps growing past what "swim app" implies.
 - **"Beach intelligence."** Anchors to a place rather than the sea itself (which matters offshore,
-  for divers and sailors who never touch the beach) — narrower than "ocean," not chosen.
+  for divers and sailors who never touch the beach): narrower than "ocean," not chosen.
 - **"Sea assistant."** Duplicates `AGENTS.md:8`'s existing "assistant" noun and undersells the
-  deterministic-layer framing `PHILOSOPHY.md` argues for — not chosen.
+  deterministic-layer framing `PHILOSOPHY.md` argues for; not chosen.
 - **A separate product name per use case** ("marola-swim," "marola-surf"). Multiplies the branding
   work `FUTURE-WORK.md` §1 explicitly designed against (one `ActivityScoring` object per activity,
-  no other code touched) — rejected as the opposite of that design goal.
-- **Do nothing.** Cheapest, and not wrong today since no second use case is built — but every MIP
+  no other code touched); rejected as the opposite of that design goal.
+- **Do nothing.** Cheapest, and not wrong today since no second use case is built, but every MIP
   in §4 already assumes the layer framing works without a rename, so the only real cost of waiting
   is a second copy pass once MIP-0018/0020 have written more text against the swim-only wording.
 
@@ -274,10 +274,10 @@ None. This is a product-positioning change; it does not touch any AI-103 or AI-5
 ## 11. Open questions
 
 - **Does the Portuguese wording change?** "Marola" (a small wave) already carries the intended
-  modesty — big scope by design (asks about anything the sea is doing), small and concrete in what
+  modesty: big scope by design (asks about anything the sea is doing), small and concrete in what
   it says (one beach, one hour, one number with its source). No Portuguese string in the repo was
   found that needs a corresponding English-side change (`grep -rn "marola" *.md docs/*.md` returns
-  only the product name itself, never translated prose) — open question is whether a future
+  only the product name itself, never translated prose). Open question is whether a future
   Portuguese-language bot reply (`docs/ROADMAP.md` K10, i18n) should state the wordplay explicitly
   or leave it implicit, as English copy does today.
 - **Do the Telegram handle / domain choices follow this rebrand?** `@marola.swim` (MIP-0020) and
@@ -285,7 +285,7 @@ None. This is a product-positioning change; it does not touch any AI-103 or AI-5
   A human decision is needed on whether to hold those MIPs' identity sections for this MIP to
   merge first, or let them proceed and reconcile wording only (not the handle/domain itself, which
   has its own registration-cost and availability constraints unrelated to naming taste).
-- **Does the map's `<h1>` stay "marola"?** Resolved by the maintainer, 2026-09-06: yes — the
+- **Does the map's `<h1>` stay "marola"?** Resolved by the maintainer, 2026-09-06: yes, the
   product name stays marola everywhere (README/site `<h1>`, repo, bot, CLI banner); "the ocean
   intelligence layer" is a slogan paired with the name (in the site's `<title>` and the README's
   title line), not a replacement for the wordmark. §3.3 reflects this; the on-page `<h1>` and

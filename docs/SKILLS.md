@@ -2,7 +2,7 @@
 
 `AI-103-MAPPING.md` and `AI-500-MAPPING.md` map marola's **features** to exam **domains**. This
 doc is the complementary view: a roadmap of **skills to actually practice**, in order, using this
-repo as the vehicle — the thing to work through if the goal is "get good enough at this to pass
+repo as the vehicle: the thing to work through if the goal is "get good enough at this to pass
 AI-103, then AI-500," not just "check which boxes marola happens to tick."
 
 Each item names the concrete marola artifact that exercises it and whether it's practice-ready
@@ -55,29 +55,29 @@ AI-103 first (it's the prerequisite), then AI-500.
 
 ## Stage 6 — Scala/engineering craft (implementation quality, not a named exam domain, but exercised on every task above)
 
-marola's own code was reviewed for this directly (September 2026) — treat these as the concrete
+marola's own code was reviewed for this directly (September 2026). Treat these as the concrete
 skill gaps to close by practicing on this codebase, not abstract advice:
 
 - **Typed error channels over `throw`+catch-all.** Every I/O boundary (`Http.scala`, `Json.scala`,
   `Reviewer.scala`, vision/route clients) defines a real exception type but throws it and catches
-  it as bare `Throwable` via `Abort.catching[Throwable]` at the call site — which discards the type
+  it as bare `Throwable` via `Abort.catching[Throwable]` at the call site, which discards the type
   information Kyo's `Abort[E]` effect exists to track. Practice: pick one client, change its
   signature to `... < (Sync & Abort[HttpError])`, and thread the typed error through instead.
 - **Kyo's own bulk-effect combinators over hand-rolled recursion.** `Recommender.traverse`/
   `traverseSingle` reimplement what `kyo.Async.foreach`/`collectAll` already provide (confirmed
-  present in the exact pinned `kyo-core`/`kyo-combinators` 1.0.0-RC5 jars via `javap`) — kept
+  present in the exact pinned `kyo-core`/`kyo-combinators` 1.0.0-RC5 jars via `javap`), kept
   hand-rolled specifically because only `map`/`flatMap` on `< Sync` were confirmed at the time.
   Practice: verify live whether `Async.foreach` works over `< Sync` callers (does the effect type
-  widen to `Sync & Abort[...]` correctly?) and replace the hand-rolled version if so — a real,
+  widen to `Sync & Abort[...]` correctly?) and replace the hand-rolled version if so. A real,
   scoped verification exercise, not a guess.
 - **Property-based tests where they're an obvious fit.** `Swimability.score`'s 0-100 clamped range
   and monotonic threshold behavior is a textbook ScalaCheck property (`score` is never outside
-  [0,100]; a strictly worse wave height never increases the score) — none exist yet; only
+  [0,100]; a strictly worse wave height never increases the score), none exist yet; only
   example-based tests do (`SwimabilitySpec`).
 - **Test coverage is thin outside the one pure module.** ~1900 lines of main source, ~280 lines of
-  test source, and exactly one deterministic unit-test file (`SwimabilitySpec`) — the hand-rolled
+  test source, and exactly one deterministic unit-test file (`SwimabilitySpec`): the hand-rolled
   JSON parser (`Json.scala`, escape sequences and all), `Recommender`'s grouping/sorting, and
-  `AppConfig.fromEnv`'s parsing have zero unit tests today. Practice: write `JsonSpec` first — it's
+  `AppConfig.fromEnv`'s parsing have zero unit tests today. Practice: write `JsonSpec` first. It's
   the highest-value, lowest-effort gap (pure function, pure input/output, no mocking needed).
 - **Scalafix, not just scalafmt.** Formatting is enforced (`scalafmtCheckAll` in CI); nothing
   enforces the code's own unwritten conventions (no stray `var`, no bare `throw` outside an

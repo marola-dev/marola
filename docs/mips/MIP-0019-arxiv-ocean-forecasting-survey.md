@@ -18,12 +18,12 @@
 
 `scripts/arxiv_digest.py` (new, this MIP's companion change) queried the live arXiv API across
 seven oceanography/forecasting/jellyfish-prediction search terms and cached 40 papers. Filtering
-out the (substantial) cross-domain noise, a handful of genuinely relevant results — a marine
-stinger beaching predictor, a harmful-algal-bloom predictor, several sea-surface-temperature and
-regional ocean-forecasting systems, and two LLM-for-forecast-report-generation papers — map
+out the (substantial) cross-domain noise, a handful of genuinely relevant results, including a marine
+stinger beaching predictor, a harmful-algal-bloom predictor, and several sea-surface-temperature and
+regional ocean-forecasting systems, and two LLM-for-forecast-report-generation papers, map
 concretely onto marola's own jellyfish heuristic and LLM-summary pipeline. A parallel GitHub
 search found a small number of real, moderately-used open-source ocean-forecasting and
-harmful-algal-bloom-detection projects. None of this is "build it now" — Phase 1 isn't done — but
+harmful-algal-bloom-detection projects. None of this is "build it now" (Phase 1 isn't done), but
 §5 below turns the strongest findings into three concretely scoped, honestly-risk-flagged future
 proposals.
 
@@ -35,15 +35,15 @@ built from live Open-Meteo data plus a hand-written heuristic (see `Swimability`
 never explicitly checked against the actual marine-biology/oceanography literature or against
 what other open-source projects already do for the same problem (jellyfish/stinger risk
 prediction, sea-surface-temperature forecasting). This MIP does that check, once, honestly, and
-records what's actually out there — separating real transferable technique from noise — so a
+records what's actually out there, separating real transferable technique from noise, so a
 future MIP that *does* propose changing the heuristic starts from evidence instead of a blank
 page.
 
 ## 3. User-visible change
 
-None from this MIP itself — it is research output (a script + this document). §5's proposals, if
+None from this MIP itself: it is research output (a script + this document). §5's proposals, if
 later accepted and built, would eventually change what a user sees (jellyfish-risk confidence, an
-SST-forecast note, a richer LLM summary) — that user-visible shape is sketched in each subsection
+SST-forecast note, a richer LLM summary). That user-visible shape is sketched in each subsection
 but is explicitly a future MIP's job to finalize, not this one's.
 
 ## 4. Data sources and dependencies reviewed
@@ -51,43 +51,43 @@ but is explicitly a future MIP's job to finalize, not this one's.
 ### 4.1 arXiv (`export.arxiv.org/api/query`, live, verified 2026-09-06)
 
 Seven queries (see `scripts/arxiv_digest.py`'s `QUERIES` constant), all confirmed against the
-real API to return results before being finalized — `abs:jellyfish AND abs:forecast` returned
+real API to return results before being finalized. `abs:jellyfish AND abs:forecast` returned
 zero hits and was dropped in favor of `abs:jellyfish AND abs:prediction`, which does return real
 marine-biology results alongside astronomy noise ("jellyfish galaxies" is an established term in
 ram-pressure-stripping literature, unrelated to the animal). 40 papers cached
-(`.tmp/arxiv_cache/`, gitignored — re-run `scripts/arxiv_digest.py` to reproduce). Of those, the
+(`.tmp/arxiv_cache/`, gitignored; re-run `scripts/arxiv_digest.py` to reproduce). Of those, the
 genuinely on-topic, highest-signal results (relevance-scored by how many distinct queries matched
-each paper — see the script's `relevance_score`):
+each paper; see the script's `relevance_score`):
 
 - **"A Machine Learning Framework for Handling Unreliable Absence Label and Class Imbalance for
-  Marine Stinger Beaching Prediction"** (arXiv 2501.11293) — directly analogous to marola's
-  jellyfish-risk problem: predicting when a stinging marine organism will beach, from noisy/absent
+  Marine Stinger Beaching Prediction"** (arXiv 2501.11293): directly analogous to marola's
+  jellyfish-risk problem, predicting when a stinging marine organism will beach, from noisy/absent
   negative labels. The class-imbalance/unreliable-absence-label framing is exactly the shape of
   problem marola's own heuristic faces (jellyfish sightings are sparse and absence-of-report ≠
   absence-of-risk).
 - **"Predicting Pseudo-nitzschia harmful algal blooms along the Portuguese Coast using
-  satellite-derived predictors"** (found via the marine-heatwave/ao-ph-ml queries) — a real,
+  satellite-derived predictors"** (found via the marine-heatwave/ao-ph-ml queries): a real,
   regionally-specific harmful-bloom predictor built on satellite data, the same class of live data
   Open-Meteo/Overpass already give marola.
 - **"Extending SST Anomaly Forecasts Through Simultaneous Decomposition of Seasonal and PDO
   Modes"** (2601.01864) and **"Deep Learning-Based Statistical Downscaling of Sea Surface
   Temperature Using a Residual Corrective Neural Network"** (2608.10022, this digest's
-  highest-relevance-scored result) — two different SST-forecasting techniques, neither assessed
+  highest-relevance-scored result): two different SST-forecasting techniques, neither assessed
   here for whether they'd beat Open-Meteo's own SST field for marola's purposes (not checked).
 - **"Marine Heatwaves in the Arabian Sea: Drivers and Impacts"** (2603.18319) and **"OceanCBM: A
-  Concept Bottleneck Model for Mechanistic Interpretability in Ocean Forecasting"** (2605.12639) —
-  the latter is notable for the same reason `AGENTS.md`'s code-style section insists on plain,
+  Concept Bottleneck Model for Mechanistic Interpretability in Ocean Forecasting"** (2605.12639).
+  The latter is notable for the same reason `AGENTS.md`'s code-style section insists on plain,
   interpretable Scala for `Swimability`: a concept-bottleneck approach to ocean forecasting is an
   interpretable-ML analogue of that same design principle, in case marola's heuristic is ever
   replaced with a learned model instead of hand-written rules.
 - **"AFDBench: A Reasoning-First AI Scientist for National Weather Service Forecast Discussions"**
   (2608.24954) and **"WeatherSyn: An Instruction Tuning MLLM For Weather Forecasting Report
-  Generation"** (2605.07522) — both about using an LLM to turn forecast data into a written
+  Generation"** (2605.07522): both about using an LLM to turn forecast data into a written
   discussion/report, which is structurally what marola's own LLM-summary-plus-reviewer-pass step
   already does; worth reading before any future change to that prompt, not adopted here.
 - **"Borey: A High-Resolution Regional Atmosphere-Ocean-Sea Ice-Wave Forecasting System"**
   (2608.09957) and **"DLESyM-Ocean: A Deep Learning Probabilistic Global Model for Simulating
-  Present-Day Upper Ocean and Sea Ice"** (2608.11545) — both are regional/global ocean-forecast
+  Present-Day Upper Ocean and Sea Ice"** (2608.11545): both are regional/global ocean-forecast
   *systems*, i.e. the kind of thing a future CMEMS-style pluggable integration (§5.3) would sit
   in front of, not something marola would run itself.
 
@@ -99,7 +99,7 @@ use. Cited as literature to be aware of, not as verified building blocks.
 **Known false positives in the raw digest** (left in the cache, filtered out here, to be honest
 about query precision): "OCEAN" as an acronym for the Big-Five personality-trait model matched
 `abs:ocean` searches (e.g. "Fine-Tuned Multi-Agent Framework for Detecting OCEAN in Life
-Narratives") — nothing to do with the sea. "Jellyfish galaxies" (ram-pressure-stripped galaxies in
+Narratives"), nothing to do with the sea. "Jellyfish galaxies" (ram-pressure-stripped galaxies in
 astronomy) matched every jellyfish query. A `physics.ao-ph`-tagged exoplanet-atmosphere paper
 matched on "ocean" appearing in "magma ocean." A future re-run of this script should expect this
 same noise ratio and not assume every cached paper is on-topic without reading it.
@@ -108,28 +108,28 @@ same noise ratio and not assume every cached paper is on-topic without reading i
 
 Searched `ocean forecasting`, `sea surface temperature forecast`, and `harmful algal bloom`
 (sorted by stars). Most results are small (0-20 star) student/hackathon projects, not
-production-grade tools — named here for completeness, not endorsement:
+production-grade tools; named here for completeness, not endorsement:
 
 - **`Ocean-Intelligent-Forecasting/XiHe-GlobalOceanForecasting`** (64★) and
-  **`huangqiusheng/FuXi-Ocean`** (22★) — global ocean-forecasting deep-learning models, likely
-  research-lab releases (Fuxi is a known Huawei/Fudan weather-model lineage) — heavy, not a fit
+  **`huangqiusheng/FuXi-Ocean`** (22★): global ocean-forecasting deep-learning models, likely
+  research-lab releases (Fuxi is a known Huawei/Fudan weather-model lineage). Heavy, not a fit
   for marola's keyless-local-first constraint without independent verification of their
   compute/data requirements.
 - **`deinal/seacast`** (22★, "Regional Ocean Forecasting with Hierarchical Graph Neural
   Networks") and **`iocaswolfteam/LangYa_v1_0`** ("Ocean Large Model v1.0 for Ocean State
-  Variables Forecast") — both plausible research-grade regional models; not evaluated for
+  Variables Forecast"): both plausible research-grade regional models; not evaluated for
   license, data dependency, or inference cost here.
-- **`WHOIGit/whoi-hab-hub`** (10★, "Harmful Algal Bloom data API and map project") — from Woods
-  Hole Oceanographic Institution, a credible source; worth a real look if §5.2 is ever built,
+- **`WHOIGit/whoi-hab-hub`** (10★, "Harmful Algal Bloom data API and map project"): from Woods
+  Hole Oceanographic Institution, a credible source. Worth a real look if §5.2 is ever built,
   since a maintained HAB *data API* (rather than a model to run yourself) is a much better fit
   for marola's pattern (consume a live external API, per `docs/ARCHITECTURE.md` §5) than any of
   the DL models above.
 - **`drivendataorg/tick-tick-bloom`** (33★, winning solutions to a DrivenData harmful-algal-bloom
-  detection competition) — a source of technique, not a runnable service.
+  detection competition): a source of technique, not a runnable service.
 
 **What was not checked**: none of these repos' actual code was read beyond the search result's
 own description; star count is not a proxy for correctness or maintenance status, and this MIP
-does not claim these are "trending" in the sense of a curated trending page — they're simply the
+does not claim these are "trending" in the sense of a curated trending page. They're simply the
 highest-starred matches for these exact search terms on 2026-09-06.
 
 ## 5. Design
@@ -141,14 +141,14 @@ Three separately-scoped future proposals, none built by this MIP:
 Add a short subsection to `docs/ARCHITECTURE.md` next to the jellyfish/whale heuristic's
 description, linking to this MIP and naming the 2-3 most relevant papers from §4.1 (the marine
 stinger beaching predictor and the harmful-algal-bloom predictor) as "literature the current
-heuristic hasn't been checked against" — an honesty note, not a design change. Zero code.
+heuristic hasn't been checked against": an honesty note, not a design change. Zero code.
 
 ### 5.2 Re-evaluate the jellyfish heuristic against §4.1's marine-stinger literature (do when X lands)
 
 A future MIP (not this one) would read the marine-stinger beaching-prediction paper (2501.11293)
 in full, check whether its unreliable-absence-label framing suggests a concrete change to how
 marola currently treats "no jellyfish sighting reported" (per `docs/ARCHITECTURE.md`'s existing
-heuristic), and — if warranted — propose a scoring change to `Swimability`. Per `AGENTS.md`'s code
+heuristic), and, if warranted, propose a scoring change to `Swimability`. Per `AGENTS.md`'s code
 style, any such change must stay plain, deterministic, testable Scala; an ML model is not on the
 table unless a much later MIP argues for one on its own evidence. Not started here.
 
@@ -156,15 +156,15 @@ table unless a much later MIP argues for one on its own evidence. Not started he
 
 If a future MIP determines marola's own SST/jellyfish-risk accuracy is meaningfully limited by
 Open-Meteo's own fields, `WHOIGit/whoi-hab-hub`-style live data APIs (real APIs to poll, not
-models to host) are the shape that fits `docs/ARCHITECTURE.md` §5's existing pattern — a new
+models to host) are the shape that fits `docs/ARCHITECTURE.md` §5's existing pattern: a new
 trait with a local/free default (if one exists) and an Azure-opt-in path only if a paid service is
 genuinely the only option, per `AGENTS.md`'s cost rule. This is explicitly parked: it needs its
 own MIP with real data-source verification (coverage, licence, update cadence, geographic
-overlap with Santa Catarina, where marola actually operates) — none of which this survey MIP did.
+overlap with Santa Catarina, where marola actually operates), none of which this survey MIP did.
 
 ## 6. Scoring / safety impact
 
-None from this MIP — no code here changes `Swimability` or any user-facing safety text. §5.2, if
+None from this MIP: no code here changes `Swimability` or any user-facing safety text. §5.2, if
 ever built, would need its own scoring/safety-impact analysis in that future MIP.
 
 ## 7. Verification plan
@@ -172,11 +172,11 @@ ever built, would need its own scoring/safety-impact analysis in that future MIP
 - `scripts/arxiv_digest.py --self-test` (no network, fixture-based) is green and wired into
   `just quality-other`.
 - A live run (`python3 scripts/arxiv_digest.py`) reproduces roughly the same result set as §4.1
-  describes — exact papers will drift over time as new arXiv submissions land, since queries are
+  describes; exact papers will drift over time as new arXiv submissions land, since queries are
   sorted by submission date descending; the *shape* of the noise (galaxy jellyfish, OCEAN
   personality model) should reproduce reliably since those are structural query collisions, not
   a one-time artifact.
-- No new Scala/unit tests — nothing here touches `core`/`local`/`azure`/`cli`.
+- No new Scala/unit tests: nothing here touches `core`/`local`/`azure`/`cli`.
 
 ## 8. Risks, limitations, and honest caveats
 
@@ -184,36 +184,36 @@ ever built, would need its own scoring/safety-impact analysis in that future MIP
   used across astronomy, psychology, and biology in ways that dominate naive keyword search. A
   future re-run of `scripts/arxiv_digest.py` will keep surfacing this noise; the script does not
   attempt semantic filtering (an LLM-based relevance re-ranker was considered and rejected for
-  v1, see §9) — a human (or a future MIP) still has to read the index and judge relevance.
+  v1, see §9); a human (or a future MIP) still has to read the index and judge relevance.
 - **Nothing in §4 was independently reproduced.** No cited paper's code was run, no accuracy claim
   was checked against an independent source. This is a literature *pointer*, not a literature
   *review*.
 - **GitHub star count is a weak trending signal**, and the search used (repository search API,
-  sorted by stars, no time-window filter that reliably returned real "trending this week" data —
+  sorted by stars, no time-window filter that reliably returned real "trending this week" data:
   an attempt at a `created:>2026-08-01` filter returned only 0-star throwaway repos, so this MIP
   fell back to all-time star-sorted results and says so plainly rather than presenting them as
   "trending").
-- **This MIP proposes nothing that violates phase discipline** — §5.2/§5.3 are explicitly gated on
+- **This MIP proposes nothing that violates phase discipline.** §5.2/§5.3 are explicitly gated on
   Phase 1 shipping and a future MIP's own verification, per `AGENTS.md`.
 
 ## 9. Alternatives considered
 
-- **Do nothing** (skip this survey) — loses a real, if imperfect, literature pointer at near-zero
+- **Do nothing** (skip this survey). Loses a real, if imperfect, literature pointer at near-zero
   cost; the counterfactual is marola's jellyfish heuristic staying unchecked against the actual
   field indefinitely. Not chosen, since the script itself is cheap and reusable going forward.
 - **An LLM-based relevance re-ranker** on top of the raw arXiv results (ask a model "is this
-  paper actually about marine jellyfish, not personality psychology or astronomy") — considered,
+  paper actually about marine jellyfish, not personality psychology or astronomy"): considered,
   rejected for v1: adds an LLM call (cost, a new failure mode) to what is currently a deterministic,
   offline-testable script; the noise is honestly documented instead. Worth revisiting if the
   digest is run regularly enough that manual triage becomes the bottleneck.
-- **Scraping GitHub's actual Trending page** instead of the search API — rejected: GitHub's
+- **Scraping GitHub's actual Trending page** instead of the search API. Rejected: GitHub's
   trending page has no public API and scraping it is fragile/against the spirit of using
   documented APIs this repo otherwise follows (arXiv's own API, Open-Meteo, Overpass); the search
   API's star-sort is a documented, honest substitute, clearly labeled as such in §8.
 
 ## 10. Exam-coverage mapping
 
-None directly claimed — this MIP is a research survey, not a shipped feature. If §5.3 is ever
+None directly claimed: this MIP is a research survey, not a shipped feature. If §5.3 is ever
 built, a new pluggable data-source integration would map to AI-103's external-data-integration
 domain the same way Open-Meteo/Overpass currently do (see `docs/AI-103-MAPPING.md`); that mapping
 belongs in that future MIP, not claimed here.
@@ -222,11 +222,11 @@ belongs in that future MIP, not claimed here.
 
 - Is `.tmp/arxiv_cache/`'s cache worth re-running on a schedule (e.g. weekly, alongside a future
   MIP-0018 post-planner digest) or is a one-time survey (this MIP) sufficient until someone
-  decides to act on §5.2/§5.3? Not decided — no automation is proposed here.
+  decides to act on §5.2/§5.3? Not decided; no automation is proposed here.
 - Should `scripts/arxiv_digest.py`'s query set be tuned further (e.g. add `abs:"beach closure"`,
   `abs:"rip current"` for other marola-relevant hazards beyond jellyfish/SST) before the next
   run, given how much noise the current jellyfish query alone produces? Left for whoever next
   runs it to decide based on what they're specifically looking for.
 - Whether `WHOIGit/whoi-hab-hub`'s API (§4.2) is actually usable (rate limits, geographic
-  coverage — Woods Hole is a US East Coast institution, marola operates in Santa Catarina, Brazil)
+  coverage; Woods Hole is a US East Coast institution, marola operates in Santa Catarina, Brazil)
   was not checked. A prerequisite for §5.3 if that specific source is ever pursued.

@@ -16,8 +16,8 @@
 
 ## 1. Summary
 
-Two new `WaterQualityClient` implementations — `IneaRjWaterQualityClient` (Rio de Janeiro) and
-`InemaBaWaterQualityClient` (Bahia) — extend `AppConfig`'s `Auto` provider selection so beaches in
+Two new `WaterQualityClient` implementations, `IneaRjWaterQualityClient` (Rio de Janeiro) and
+`InemaBaWaterQualityClient` (Bahia), extend `AppConfig`'s `Auto` provider selection so beaches in
 those states get a real PRÓPRIA/IMPRÓPRIA verdict instead of "no data", matching what Santa
 Catarina already gets from `ImaScWaterQualityClient`. Unlike IMA/SC, neither state publishes a
 JSON feed: both publish PDF bulletins with no coordinates, so this MIP also introduces a small,
@@ -29,12 +29,12 @@ and kept current by whoever notices drift.
 
 MIP-0030's investigation into "why doesn't the site show water quality for Bahia/Rio" found the
 real boards are correct and complete in every other respect (56/63 real beaches, zero rendering
-errors) — the one thing genuinely missing is water quality, because `AppConfig.waterQualityClient`'s
+errors). The one thing genuinely missing is water quality, because `AppConfig.waterQualityClient`'s
 `Auto` case (`cli/src/main/scala/marola/AppConfig.scala:159-165`) only knows how to check whether
 an origin is inside Santa Catarina; anywhere else it returns `None`, honestly, by design. That
 design already anticipated growth: `WaterQuality.scala:71-76`'s own doc comment on
 `WaterQualityClient` says *"One implementation per agency/portal... INEA/RJ, CETESB/SP would be
-siblings"* — this MIP is that sibling-building, for the two states marola already has configured
+siblings"*: this MIP is that sibling-building, for the two states marola already has configured
 areas in (`site/areas.json`: rio, salvador).
 
 ## 3. User-visible change
@@ -48,7 +48,7 @@ beaches already have:
 ```
 
 A beach whose nearest bulletin point isn't in the curated coordinate table yet (§8) keeps saying
-"no data" — never a guess, and never silently wrong.
+"no data", never a guess, and never silently wrong.
 
 ## 4. Data sources and dependencies reviewed
 
@@ -58,26 +58,26 @@ Every claim below was checked live, 2026-09-06, not assumed from search-result s
 
 Initially the leading candidate (structured, no auth, per earlier search results). **Verified
 live and rejected**: `curl https://brasil.io/api/v1/dataset/balneabilidade-bahia/` returns
-**HTTP 401** — Brasil.IO's API has required an auth token since a documented October 2020 policy
+**HTTP 401**: Brasil.IO's API has required an auth token since a documented October 2020 policy
 change. Worse: the underlying scraper feeding that dataset,
 [turicas/balneabilidade-brasil](https://github.com/turicas/balneabilidade-brasil) (checked via
-GitHub's API), has not been pushed to since **2020-03-14** — the dataset is a frozen historical
+GitHub's API), has not been pushed to since **2020-03-14**: the dataset is a frozen historical
 snapshot, not a live feed. Unusable for "is the water safe today" regardless of the auth question.
 
 ### 4.2 Rejected as a mechanism: an IMA/SC-style undocumented JSON endpoint — none found
 
 IMA/SC's client works because Santa Catarina's bathing-water portal happens to expose its own
 map's data as an undocumented `POST /relatorio/mapa` JSON endpoint. The equivalent hunt for
-Bahia: INEMA has its own dedicated portal at `balneabilidade.inema.ba.gov.br` — the same
+Bahia: INEMA has its own dedicated portal at `balneabilidade.inema.ba.gov.br`, the same
 dedicated-subdomain shape as IMA/SC's `balneabilidade.ima.sc.gov.br`, including a live interactive
-Leaflet map — but its map-loading JS (`mapa.min.js`, `script.js`, both fetched and inspected live)
+Leaflet map. But its map-loading JS (`mapa.min.js`, `script.js`, both fetched and inspected live)
 references only a static coastline shape file (`costas-simplify.json`) and a PDF-generation
 controller, `index.php/relatoriodebalneabilidade/geraBoletim?idcampanha=N` (confirmed live: `curl`
-against `idcampanha=83453` returns a real 77KB PDF, HTTP 200) — no JSON data endpoint was found in
+against `idcampanha=83453` returns a real 77KB PDF, HTTP 200). No JSON data endpoint was found in
 either script. Rio's INEA has no equivalent dedicated portal found at all; only bulletin pages.
 **Not fully ruled out**: INEMA's search form (referenced by `script.js`'s `.campanha`/
 `.alert-resultado` selectors) might POST to an endpoint returning structured HTML rather than a
-PDF — not verified; the form was not actually submitted this session. Flagged as an open question
+PDF, not verified; the form was not actually submitted this session. Flagged as an open question
 (§11), not assumed.
 
 ### 4.3 The pick: parse the PDF bulletins directly — and the real blocker this surfaces
@@ -88,7 +88,7 @@ PDF — not verified; the form was not actually submitted this session. Flagged 
 `https://www.ba.gov.br/inema/sites/site-inema/files/2026-05/Boletim_Balneabilidade_Salvador_2026_05_08.pdf`
 for Bahia). **Verified live**: `curl` + `pdftotext -layout` against the real `idcampanha=83453`
 bulletin (Salvador, Bulletin N°13/2025, issued 04/04/2025) produces a clean, genuinely
-machine-parseable fixed-column table — not a scanned image:
+machine-parseable fixed-column table, not a scanned image:
 
 ```
 Ponto - Código                    Local da Coleta                                          Categoria
@@ -98,17 +98,17 @@ Tubarão - SSA PR 200              Em frente ao conjunto habitacional abandonado
 ```
 
 **The real blocker this reveals: no coordinates anywhere in the bulletin.** Each row has a point
-name, a state-assigned code (`SSA IN 100`), and a free-text street/landmark description — never a
-latitude/longitude. `SamplingPoint.coordinates` (`WaterQuality.scala:37`) is a **mandatory** field
-— `WaterQualityMatcher` (`core/src/main/scala/marola/water/WaterQualityMatcher.scala`) assigns
+name, a state-assigned code (`SSA IN 100`), and a free-text street/landmark description, never a
+latitude/longitude. `SamplingPoint.coordinates` (`WaterQuality.scala:37`) is a **mandatory** field.
+`WaterQualityMatcher` (`core/src/main/scala/marola/water/WaterQualityMatcher.scala`) assigns
 points to beaches by geographic distance, not by name-string matching, because IMA/SC's own feed
 already carries real coordinates per point. Neither INEA nor INEMA's bulletin does. This is the
-actual reason this MIP is Effort M rather than S — not "PDF vs. JSON" but "no coordinates at all."
+actual reason this MIP is Effort M rather than S: not "PDF vs. JSON" but "no coordinates at all."
 
 **Pick, therefore**: parse the PDF for point code, description, and category (Própria/Imprópria/
 Indisponível), and resolve each point's coordinate from a small hand-curated lookup resource
 (§5) rather than from the bulletin itself. `Apache PDFBox` (Apache-2.0, pure JVM, no native binary
-dependency — unlike shelling out to `pdftotext`, which this session used only for verification, not
+dependency, unlike shelling out to `pdftotext`, which this session used only for verification, not
 as a runtime dependency a Docker image would need to bundle) is the concrete library pick for text
 extraction; not yet added to `build.sbt`, done in the implementation PR.
 
@@ -134,7 +134,7 @@ rules: every entry has a source, nothing invented):
 ```
 
 Populated only for points near marola's configured areas (`site/areas.json`'s `rio`/`salvador`
-radii), not the full 291/134 — bounds the curation effort to what's actually rendered, expanded
+radii), not the full 291/134, bounds the curation effort to what's actually rendered, expanded
 later if more areas are added.
 
 ```scala
@@ -156,7 +156,7 @@ object InemaBaWaterQualityClient:
 no `idcampanha`-style stable parameter (it publishes dated, per-zone PDFs as static uploads, not a
 generate-on-demand endpoint), the client first fetches INEA's bulletin-listing page
 (`inea.rj.gov.br/ar-agua-e-solo/balneabilidade-das-praias/`), finds the newest PDF link whose
-filename matches the zone(s) marola's `rio` area needs, then parses it exactly like INEMA's —
+filename matches the zone(s) marola's `rio` area needs, then parses it exactly like INEMA's:
 same `PdfBulletinParser`, a different column layout and point-code convention.
 
 `AppConfig.waterQualityClient`'s `Auto` case (`AppConfig.scala:159`) gains two more `if` branches,
@@ -165,15 +165,15 @@ uses; `WaterProvider` enum gains `IneaRj`/`InemaBa` cases alongside `ImaSc` for 
 via `MAROLA_WATER_QUALITY_PROVIDER`.
 
 A row whose point code isn't in the curated table is **dropped, not defaulted to a guessed
-coordinate** — same tolerant-parsing discipline `ImaScWaterQualityClient`'s own doc comment
+coordinate**: same tolerant-parsing discipline `ImaScWaterQualityClient`'s own doc comment
 states ("a malformed point or sample is dropped, never fatal").
 
 ## 6. Scoring / safety impact
 
-None to the scoring *function* — `Swimability.waterVerdict` already handles `Option[WaterQualityClient]`
+None to the scoring *function*: `Swimability.waterVerdict` already handles `Option[WaterQualityClient]`
 and a populated-vs-empty `samplingPoints` list identically to how it treats IMA/SC today. The
 *safety-relevant* change is that more beaches will now show a real IMPRÓPRIA veto instead of no
-data — strictly an improvement in coverage, using the same deterministic veto logic already
+data, strictly an improvement in coverage, using the same deterministic veto logic already
 reviewed for IMA/SC (MIP-0001 §6).
 
 ## 7. Verification plan
@@ -196,25 +196,25 @@ reviewed for IMA/SC (MIP-0001 §6).
 - **The curated coordinate table is the single point of failure and the ongoing cost.** IMA/SC's
   feed self-updates when the state adds/retires a point; this table does not. A retired point
   silently stops matching (safe: falls back to "no data" for that point, never wrong) but a *new*
-  point near a configured beach won't be picked up until someone notices and adds it — this MIP
+  point near a configured beach won't be picked up until someone notices and adds it. This MIP
   should ship with a stated re-check cadence (e.g. "check when re-running `just benchmark`"), not
   left implicit.
 - **Only Bahia's endpoint was verified live this session.** Rio's INEA client (§5) is designed by
-  analogy, not verified against a real current bulletin URL the way §4.3 verified INEMA's — a real
+  analogy, not verified against a real current bulletin URL the way §4.3 verified INEMA's: a real
   risk that INEA's actual bulletin table layout differs enough that the same parser doesn't
   transfer cleanly. Flagged, not assumed away.
 - **PDF layout is not a contract.** Unlike IMA/SC's (undocumented but structured) JSON, a
-  government PDF template can change without notice — `benchmark_gate.py`'s "re-run and compare"
+  government PDF template can change without notice; `benchmark_gate.py`'s "re-run and compare"
   discipline should extend to periodically checking the parser still produces sane output, not
   just that it doesn't throw.
-- **This does not fix Rio/Bahia's water quality *today*** — it is a design for the next
+- **This does not fix Rio/Bahia's water quality *today*.** It is a design for the next
   implementation PR(s), per the `mip` skill's own rule not to build in the same change as the MIP.
 
 ## 9. Alternatives considered
 
-- **Do nothing.** Leaves the honest "no data" state MIP-0030 confirmed is not a bug — a legitimate
+- **Do nothing.** Leaves the honest "no data" state MIP-0030 confirmed is not a bug, a legitimate
   choice, but leaves real, available public data unused for two of marola's three configured areas.
-- **Brasil.IO's dataset anyway, ignoring staleness.** Rejected outright (§4.1) — a 2020 snapshot
+- **Brasil.IO's dataset anyway, ignoring staleness.** Rejected outright (§4.1): a 2020 snapshot
   presented as "water quality" would be actively misleading, the opposite of "sourced or clearly
   labelled, never invented."
 - **Geocode automatically** (a geocoding API against each point's free-text description) instead
@@ -236,31 +236,31 @@ per-amenity).
   2026-09-07.** Fetched and `pdftotext`-verified a real, current INEA bulletin: `https://www.inea
   .rj.gov.br/wp-content/uploads/2026/06/Zona-sudoeste-e-Zona-sul-17-06-26.pdf` (Boletim N°24,
   17/06/2026, found via WebSearch for a recent `inea.rj.gov.br/wp-content/uploads` PDF). Same
-  category of table as INEMA's — clean, text-based, four columns (`PRAIAS`, `LOCALIZAÇÃO (*)`,
+  category of table as INEMA's: clean, text-based, four columns (`PRAIAS`, `LOCALIZAÇÃO (*)`,
   `Ponto Coleta`, `CONAMA 274/2000` classification), point codes in INEA's own convention (e.g.
-  `BG00`, `GM00`, `PS01`) instead of INEMA's `SSA IN 100` style, and — the important part — **no
+  `BG00`, `GM00`, `PS01`) instead of INEMA's `SSA IN 100` style, and, the important part, **no
   coordinates here either**, confirming §4.3's blocker (a curated coordinate table, not just a
   parser) applies identically to both institutes. One real difference from INEMA:
-  **INEA has no `idcampanha`-style stable "get the current bulletin" parameter** — it publishes
+  **INEA has no `idcampanha`-style stable "get the current bulletin" parameter.** It publishes
   dated, per-zone PDFs (this one covers "Zonas Sudoeste e Sul" only; Rio's other zones get their
   own PDFs) directly as static uploads, discovered by checking INEA's own bulletin-listing page
-  (`inea.rj.gov.br/ar-agua-e-solo/balneabilidade-das-praias/`) rather than by parameterizing a URL
-  — `IneaRjWaterQualityClient` needs a "find the latest PDF for the zone(s) marola's `rio` area
+  (`inea.rj.gov.br/ar-agua-e-solo/balneabilidade-das-praias/`) rather than by parameterizing a URL.
+  `IneaRjWaterQualityClient` needs a "find the latest PDF for the zone(s) marola's `rio` area
   covers" step INEMA's client doesn't, not just a different table parser.
 - ~~Submit INEMA's search form~~ **Resolved 2026-09-07.** Fetched the search form
   (`balneabilidade.inema.ba.gov.br/index.php/relatoriodebalneabilidade/boletim`) and read its
   actual JS handler: `$("#btnGeraBoletim").click(...)` builds a plain `GET` form submit straight
-  to `.../geraBoletim` with only `idcampanha` as a parameter — i.e. the form is a UI wrapper
+  to `.../geraBoletim` with only `idcampanha` as a parameter, i.e. the form is a UI wrapper
   around the exact same PDF endpoint §4.3 already found, not a separate structured-data path.
   **No HTML alternative exists for INEMA.** PDF parsing is confirmed as the only viable mechanism,
   not just the pragmatic pick.
-- **Curate the actual coordinate tables** (§5) — a real data-entry task against OSM/Google Maps
+- **Curate the actual coordinate tables** (§5), a real data-entry task against OSM/Google Maps
   for each point's free-text description, scoped to points near `site/areas.json`'s `rio`/
   `salvador` radii; not started, and the single largest remaining unknown for how much work §5
-  really is. Still open — this is implementation labor, not a research question, and is scoped
+  really is. Still open: this is implementation labor, not a research question, and is scoped
   as its own task in `docs/mips/MIP-0031.tasks.md`.
 - Whether Niterói's municipal ArcGIS "Pontos de Balneabilidade" map
-  (`sigeo.niteroi.rj.gov.br`) exposes a real queryable feature service — found via search, not
+  (`sigeo.niteroi.rj.gov.br`) exposes a real queryable feature service, found via search, not
   fetched or verified this session, and would only cover Niterói, not all of Rio de Janeiro city.
   Lower priority now that INEA's own bulletin PDF is confirmed workable directly.
 

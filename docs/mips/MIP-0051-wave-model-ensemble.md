@@ -18,17 +18,17 @@
 ## 1. Summary
 
 marola quotes a wave height for every beach and never says where it came from. It comes from
-Météo-France's MFWAM — verified today by matching values, not by any code that records it — and
+Météo-France's MFWAM, verified today by matching values, not by any code that records it, and
 three other wave models are available from the same endpoint, in the same request, for free.
 They disagree enough to move marola's own scoring thresholds. This MIP labels the number, shows
-the disagreement instead of hiding it, scores every model against a real buoy, and uses that score
-— not enthusiasm — to decide whether marola should ever run a wave model of its own.
+the disagreement instead of hiding it, scores every model against a real buoy, and uses that score,
+not enthusiasm, to decide whether marola should ever run a wave model of its own.
 
 ## 2. Motivation
 
 **marola is already running WAVEWATCH III, and doesn't know it.** `OpenMeteoClient.scala:25` calls
-`marine-api.open-meteo.com`. That endpoint is fed by several wave models, one of which — NCEP
-GFS-Wave — *is* WAVEWATCH III. marola sends no `models=` parameter, takes the default, and stores
+`marine-api.open-meteo.com`. That endpoint is fed by several wave models, one of which, NCEP
+GFS-Wave, *is* WAVEWATCH III. marola sends no `models=` parameter, takes the default, and stores
 the result in `HourlyConditions.waveHeightM` with no record of its origin. The question that
 prompted this MIP ("is it possible to already plug in the website with public data?") is therefore
 already answered in the affirmative, blindly, and has been since MIP-0001.
@@ -42,14 +42,14 @@ already answered in the affirmative, blindly, and has been since MIP-0001.
 | Hours where the three models fall in **different `Swimability` penalty buckets** (`RoughWaveHeightM = 1.5` → −40, `CalmWaveHeightM = 0.6` → −15, else 0) | **110/384 — 29%** |
 | Hours where they disagree on the **whale-calm flag** (`WhaleCalmWaveHeightM = 1.0`, `Swimability.scala:39`) | **372/384 — 97%** |
 
-The single worst case is physical, not random. At **Jurerê** — a sheltered, north-facing bay —
+The single worst case is physical, not random. At **Jurerê**, a sheltered, north-facing bay,
 MFWAM reports **0.20 m** and DWD GWAM reports **1.34 m** for the same hour, a factor of 6.7, and
 the models disagree on the bucket in **48 of 48 hours**. MFWAM runs at 0.08° (~8 km) and partially
 resolves the shelter; GWAM and GFS-Wave run at 0.25° (~25 km) and cannot see the bay at all. Every
 sheltered beach marola covers has this problem, and marola currently reports one side of it as a
 fact.
 
-**One model returns a masked cell as a flat calm.** `ncep_gfswave025` returns `0.0` — not `null` —
+**One model returns a masked cell as a flat calm.** `ncep_gfswave025` returns `0.0`, not `null`,
 for `wave_height` *and* `wave_period` at Campeche, Joaquina, Barra da Lagoa and Armação, because the
 0.25° cell containing them is masked as land. It returns a genuine 1.48 m at Pântano do Sul. A 0.0 m
 wave height fed to `Swimability.waveNote` scores as a perfect swim day. marola does not hit this
@@ -84,18 +84,18 @@ Jurere - tomorrow 09:00
   the 25 km models cannot resolve it. MFWAM (8 km) reports 0.2 m.
 ```
 
-When the models agree, nothing new is printed — the line appears only above the threshold in §5.2.
+When the models agree, nothing new is printed; the line appears only above the threshold in §5.2.
 The site's beach panel gains the same one-line treatment; the map marker itself is unchanged.
 
 ## 4. Data sources and dependencies reviewed
 
-### 4.1 Open-Meteo Marine API, `models=` parameter — **picked**
+### 4.1 Open-Meteo Marine API, `models=` parameter: **picked**
 
 Same endpoint marola already calls, same one request per beach. Verified live 2026-09-10 (see
 Appendix): valid identifiers are `meteofrance_wave`, `ecmwf_wam`, `ecmwf_wam025`,
 `ncep_gfswave025`, `dwd_gwam`, `gwam`, `era5_ocean`, `meteofrance_currents`. The identifiers
-`gfs_wave`, `ewam`, `dwd_ewam`, `ncep_gfswave016` — which appear in Open-Meteo's own blog post and
-in search-result summaries — are **rejected by the API** with
+`gfs_wave`, `ewam`, `dwd_ewam`, `ncep_gfswave016`, which appear in Open-Meteo's own blog post and
+in search-result summaries, are **rejected by the API** with
 `Cannot initialize MultiDomains from invalid String value`. Do not copy model names from the docs
 prose; they were wrong when checked.
 
@@ -110,7 +110,7 @@ non-zero hours at every beach tested. `ncep_gfswave025` is *excluded by default*
 WAVEWATCH III one, because it is land-masked at most of marola's beaches; §5.2's zero-rule means
 including it later is safe, but it would add nothing at four of five.
 
-### 4.2 PNBOIA / Marinha do Brasil (CHM) — **picked for §5.4, endpoint not yet verified**
+### 4.2 PNBOIA / Marinha do Brasil (CHM): **picked for §5.4, endpoint not yet verified**
 
 Brazil's national buoy programme, run by the Marinha do Brasil's Centro de Hidrografia (CHM),
 publishing wave height, period, direction, wind and SST. Buoys have been deployed at nine points;
@@ -149,7 +149,7 @@ nearshore wave nest, not a substitute for kilometre-scale downscaling. Parked; r
 ### 5.1 Ask for the models by name (`core`, do next)
 
 `OpenMeteoClient.forecastFor` appends `&models=meteofrance_wave,ecmwf_wam,dwd_gwam` to the **marine**
-URL only. This remains **one HTTP call per beach** — the call-count discipline from #333 is
+URL only. This remains **one HTTP call per beach**: the call-count discipline from #333 is
 untouched, and Open-Meteo's non-commercial terms are unaffected. The weather URL is unchanged.
 
 ```scala
@@ -173,7 +173,7 @@ final case class ModelSpread(perModel: Map[WaveModel, Double]):
     waveModelSpread: Option[ModelSpread] = None
 ```
 
-`waveHeightM` keeps its type and its meaning and is populated with `spread.consensusM` — the
+`waveHeightM` keeps its type and its meaning and is populated with `spread.consensusM`, the
 **median** across available models. `Swimability`, `Recommender`, `Board`, the MCP tools and every
 other consumer are untouched by §5.1. Using the median rather than a mean means one model dropping
 out shifts the number as little as possible, and no averaging artefact can produce a value no model
@@ -209,7 +209,7 @@ it (to this repo or an object store). `marola.dev` stays a static site that serv
 anyone's house; no inbound network, no tunnel, no Cloudflare dependency, and a missed cycle
 degrades to the §5.1 ensemble rather than to an error page.
 
-The first rung is a **nearshore WW3 nest driven by public winds**, not WRF — §4.4's evidence removed
+The first rung is a **nearshore WW3 nest driven by public winds**, not WRF: §4.4's evidence removed
 the GPU argument for WRF, and §2's Jurerê case is a *wave-resolution* problem before it is a
 wind-resolution one. Atmospheric downscaling (MPAS, per §4.4) is a later, separate decision.
 None of this is built by this MIP.
@@ -228,18 +228,18 @@ deserves to be named first in §3's line.
 ## 6. Scoring / safety impact
 
 `Swimability.score` is **unchanged**. It reads `waveHeightM`, which is now a median instead of one
-model's value — a different number from the same field, with the same type and the same thresholds
+model's value, a different number from the same field, with the same type and the same thresholds
 (`CalmWaveHeightM = 0.6`, `RoughWaveHeightM = 1.5`, `WhaleCalmWaveHeightM = 1.0`).
 
 Disagreement affects the **confidence text, not the numeric score**. This is deliberate and follows
 MIP-0001 §6/§9: marola shows the agency's `PRÓPRIA`/`IMPRÓPRIA` verbatim because the classification
-belongs to CONAMA, not to marola. The same reasoning applies here — a spread is evidence about how
+belongs to CONAMA, not to marola. The same reasoning applies here: a spread is evidence about how
 much to trust the number, and folding it into the score would manufacture a false precision while
 hiding the very uncertainty it represents. The safety footer stays deterministic and stays plain
 Scala.
 
 One consequence must be stated plainly: because `waveHeightM` becomes a median, **some hours will
-change score** relative to today — the −15/−40 penalties will land differently at sheltered
+change score** relative to today: the −15/−40 penalties will land differently at sheltered
 beaches. That is the point (today's number is one arbitrary model), but it is a user-visible change
 in ranking and the implementation PR should show a before/after board for at least one beach.
 
@@ -250,7 +250,7 @@ Unit tests (`core`):
   a mix where only one model has data.
 - `ModelSpreadSpec`: median across 1, 2, 3 and 4 values; `disagrees` false for a tight cluster; true
   on a 0.4 m range; **true when straddling 1.0 m with a 0.3 m range** (the whale-flag case).
-- `ModelSpreadSpec`: the zero rule — `(0.0, 0.0)` dropped; a genuine `(0.0, 7.5)` **kept**, since a
+- `ModelSpreadSpec`: the zero rule: `(0.0, 0.0)` dropped; a genuine `(0.0, 7.5)` **kept**, since a
   real calm has a period.
 - `BoardSpec`: `wave_m` unchanged in shape; `wave_models`/`wave_spread` present and omitted cleanly
   when only one model is available.
@@ -265,7 +265,7 @@ Jurerê and Campeche in the PR body; the §3 line rendering on the static site.
 ## 8. Risks, limitations, and honest caveats
 
 - **The buoy is at Itajaí, not at our beaches.** It sits ~90 km north and offshore. It can validate
-  *swell*, and it cannot say anything about nearshore transformation inside Jurerê bay — which is
+  *swell*, and it cannot say anything about nearshore transformation inside Jurerê bay, which is
   precisely where §2 shows the models diverge most. §5.4 therefore bounds the public models' *open
   ocean* skill, and the case for §5.3 rests on that plus physics, not on a direct measurement of
   the thing being fixed. Anyone reading the ledger as proof about sheltered beaches is misreading it.
@@ -277,7 +277,7 @@ Jurerê and Campeche in the PR body; the §3 line rendering on the static site.
   rather than discarded after taking the median.
 - **Open-Meteo's model list is not stable.** Identifiers already documented incorrectly in the
   provider's own blog (§4.1) may also be renamed or retired. A model that stops resolving must
-  degrade to the remaining ones, never fail the request — covered by §5.2 and tested in §7.
+  degrade to the remaining ones, never fail the request; covered by §5.2 and tested in §7.
 - **Response size grows ~3× for the marine call.** Call count is unchanged; the board build fetches
   ~80 beaches, so this is bandwidth, not rate limit.
 
@@ -287,7 +287,7 @@ Jurerê and Campeche in the PR body; the §3 line rendering on the static site.
   97% the whale flag, with no user-visible indication that a choice was made at all.
 - **Pick the single best model and hard-code it.** Cheaper, and it is what marola accidentally does
   today. Rejected because we have no evidence for which is best (that is §5.4's job), and because
-  at Jurerê the honest answer is "the coarse models cannot see this bay" — a fact worth showing, not
+  at Jurerê the honest answer is "the coarse models cannot see this bay", a fact worth showing, not
   resolving silently.
 - **Average instead of median.** Rejected: the mean can report a height no model produced, and it is
   more sensitive to the land-mask zeros that §5.2 exists to catch.
@@ -317,7 +317,7 @@ nothing here is agentic, and no human-confirmation gate is removed.
 - **Is 0.4 m the right disagreement threshold?** Chosen because it is two thirds of the gap between
   `CalmWaveHeightM` and `RoughWaveHeightM`; not tuned against anything. Cheap to change once the
   site shows it.
-- **Follow-up MIP:** the same `models=` treatment applies to the *weather* call — wind speed and
+- **Follow-up MIP:** the same `models=` treatment applies to the *weather* call: wind speed and
   direction drive `Swimability` too, Open-Meteo exposes ICON/GFS/IFS/GEM there, and no equivalent
   disagreement measurement has been done. That is a separate proposal and needs its own number.
 - **Follow-up MIP:** §5.3's deployment shape (a home machine pushing artefacts consumed by a static
@@ -336,40 +336,40 @@ All fetched 2026-09-10 unless stated.
   `Cannot initialize MultiDomains from invalid String value`:** `gfs_wave`, `ncep_gfswave016`,
   `gfswave025`, `dwd_ewam`, `ewam`.
 - Multi-model request at −27.68/−48.48 (Campeche), `hourly=wave_height,wave_period`: response keys
-  are `<variable>_<model>`. Values at hour 0 — `meteofrance_wave` 0.98 m / 8.1 s, `ecmwf_wam`
+  are `<variable>_<model>`. Values at hour 0: `meteofrance_wave` 0.98 m / 8.1 s, `ecmwf_wam`
   1.30 m / 8.35 s, `dwd_gwam` 1.34 m / 8.5 s, `ecmwf_wam025` **all null (0/24 hours)**,
   `ncep_gfswave025` **0.0 for both height and period, all 24 hours**.
 - `ncep_gfswave025` at five beaches: `0.00` at Campeche, Joaquina, Barra da Lagoa, Armação;
   `1.48 m` at Pântano do Sul.
 - marola's **exact current** marine URL (no `models=`, 8 hourly variables, `forecast_days=2`) at
-  Campeche returned 48/48 non-null for every field, `wave_height` `[0.98, 0.96, 0.96, ...]` —
+  Campeche returned 48/48 non-null for every field, `wave_height` `[0.98, 0.96, 0.96, ...]`,
   **identical to the `meteofrance_wave` column**, which is the evidence for §2's claim that marola
   is on MFWAM today. No code records this; it is inferred from matching values.
 - Eight beaches × 48 hours × 3 models (384 beach-hours), buckets computed against
   `Swimability.scala`'s own constants: **110/384 (29%)** bucket disagreements, **372/384 (97%)**
   whale-flag disagreements. Per-beach: Jurerê 48/48 bucket disagreements (range 0.20–1.34 m at
   hour 0), Armação and Pântano do Sul 31/48 each, the other five 0/48.
-- `Swimability.scala:27,28,39,75-77` — thresholds and penalties quoted in §2/§6 read from the file.
-- `OpenMeteoClient.scala:24,25,33-37` — the two base URLs and the marine query string.
-- `Board.scala:117,131` — the two `wave_m` emission sites.
+- `Swimability.scala:27,28,39,75-77`: thresholds and penalties quoted in §2/§6 read from the file.
+- `OpenMeteoClient.scala:24,25,33-37`: the two base URLs and the marine query string.
+- `Board.scala:117,131`: the two `wave_m` emission sites.
 - NCAR WRF & MPAS-A support forum, "GPU support for WRF/MPAS"
-  (https://forum.mmm.ucar.edu/threads/gpu-support-for-wrf-mpas.12381/) — WRF GPU support
+  (https://forum.mmm.ucar.edu/threads/gpu-support-for-wrf-mpas.12381/): WRF GPU support
   "decentralized... not officially supported, unlike MPAS".
 - ECMWF AIFS open weights, CC BY 4.0 (https://huggingface.co/ecmwf/aifs-single-1.0); operational
   25 February 2025; ~2.5 min for a 10-day forecast on one A100
   (https://www.ecmwf.int/en/about/media-centre/aifs-blog/2024/first-aifs-model-weights-are-now-open).
-- Open-Meteo Marine docs (https://open-meteo.com/en/docs/marine-weather-api) — model table with
+- Open-Meteo Marine docs (https://open-meteo.com/en/docs/marine-weather-api): model table with
   MFWAM 0.08°, ECMWF WAM 9 km, ECMWF WAM 0.25°, NCEP GFS Wave 0.25° and 0.16°, DWD EWAM 0.05°,
   DWD GWAM 0.25°, ERA5-Ocean 0.5°, and the confirmation that NCEP GFS Wave is a NOAA product.
 
 ### Not checked
 
-- **PNBOIA in every respect** — the CHM page was read only as a search-result summary, not fetched.
+- **PNBOIA in every respect.** The CHM page was read only as a search-result summary, not fetched.
   Buoy count, which buoys are live, the download URL, the format and the licence are all unverified
   (§4.2, §11).
 - Whether NCEP GFS-Wave's `0.0` returns are Open-Meteo's land-mask handling or NOAA's own output;
   only the symptom was observed. The design (§5.2) is safe either way.
-- That MFWAM is *why* marola's values match it — the match is exact across 48 hours at one
+- That MFWAM is *why* marola's values match it: the match is exact across 48 hours at one
   coordinate, which is strong but is not the same as Open-Meteo documenting its `best_match` choice.
 - Whether ECMWF's 9 km WAM and the 0.25° variant differ in coverage for reasons other than the grid
   (`ecmwf_wam025` was simply null here).

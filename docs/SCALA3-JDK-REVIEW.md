@@ -1,6 +1,6 @@
 # marola — Scala 3 and JDK feature review (2026-09-05)
 
-What the codebase already uses well, what it should adopt, and what to leave alone — judged
+What the codebase already uses well, what it should adopt, and what to leave alone, judged
 against *this* code (Scala 3.9 LTS, Kyo 1.0.0-RC5, JDK 25), not a generic feature list. Each row
 names where it would land. "Adopt" items are ordered by payoff-for-effort; the first three are
 worth a PR each.
@@ -114,18 +114,18 @@ checks, and an `Ordering[LocalDate]` `given` so `sortBy(_.sampledOn)` works with
 
 ### 2.7 Compiler and tooling flags
 
-- `-Wunused:all` and `-Wsafe-init` (3.9): the review found no unused imports by eye — the compiler
+- `-Wunused:all` and `-Wsafe-init` (3.9): the review found no unused imports by eye. The compiler
   should be doing that. Promote via the existing `-Wconf` rule.
 - `-source:future` to get the `for` and given-syntax cleanups early and stop new code using
   deprecated forms.
 - Scalafix with `DisableSyntax` (no `var` outside `Json.Parser`, no `null`, no `throw` outside
-  `Abort` boundaries) — `SKILLS.md` Stage 6 names it; it's a day's work.
+  `Abort` boundaries): `SKILLS.md` Stage 6 names it; it's a day's work.
 
 ### 2.8 `boundary`/`break` for the recursive-descent parser
 
 `Json.Parser` uses `var continue = true; while continue do` loops. Scala 3.3's
 `scala.util.boundary` expresses the early exits without the flag variable and stays stack-safe.
-Low priority — the parser is tested and small — but it is the one file with mutable control flow.
+Low priority (the parser is tested and small), but it is the one file with mutable control flow.
 
 ### 2.9 Leave alone (for now)
 
@@ -159,7 +159,7 @@ Low priority — the parser is tested and small — but it is the one file with 
    wall-clock check in `just e2e`).
 2. §2.1 opaque units, then Iron.
 3. §2.3 `Abort[E]` on `Http` and the two feed clients.
-4. §2.2 `WaterVerdict` as an enum; §2.4 named tuples — mechanical, do together.
+4. §2.2 `WaterVerdict` as an enum; §2.4 named tuples: mechanical, do together.
 5. §2.5 `Clock`/`Env[AppConfig]` capabilities.
 6. §2.7 flags + scalafix.
 7. Scoped values for the transport seam once 1 is in.

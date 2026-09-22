@@ -75,11 +75,11 @@ every declared system. `just shell`, `just versions`. No scripts.
 sandbox the Nix build sandbox does not give), bubblewrap (Linux only), opencode, gh, and four
 script packages:
 
-- `gh-token` — `scripts/gh-token.sh` as is (`--source`, `--self-test`).
-- `clip`, `clip-relay` — the write-only clipboard bridge, as is. The fifo stays at
+- `gh-token`: `scripts/gh-token.sh` as is (`--source`, `--self-test`).
+- `clip`, `clip-relay`: the write-only clipboard bridge, as is. The fifo stays at
   `<project>/.tmp/clip.fifo`: the project directory is what ai-jail maps into the sandbox, so a
   path under `$XDG_RUNTIME_DIR` would be invisible from inside.
-- `jail-run` — the `jail-claude` / `jail-opencode` / `jail-dry-run` recipe bodies as one script:
+- `jail-run`: the `jail-claude` / `jail-opencode` / `jail-dry-run` recipe bodies as one script:
   `jail-run claude [args]`, `jail-run opencode [args]`, `jail-run --dry-run -- <cmd>`. Runs in
   the current directory, which must hold the project's `.ai-jail`. Opt-ins `JAIL_CLIPBOARD=1`
   and `JAIL_CLIPBOARD_PASTE=1` (the `MAROLA_`/`PRATICO_` prefixes go). Resolves `GH_TOKEN` on the
@@ -96,11 +96,11 @@ making it consume `labs/agentic` is a follow-up in nix-config.
 
 x86_64-linux only (`systems = [ "x86_64-linux" ]`). Two script packages:
 
-- `setup-cuda-cache` — as today, with the conf marker `# nix-config/labs/cuda: CUDA binary
+- `setup-cuda-cache`: as today, with the conf marker `# nix-config/labs/cuda: CUDA binary
   cache`, still removing the stale Cachix block, and `--verify [expr-file]` defaulting to a
   `nix build --dry-run nixpkgs#python3Packages.torchWithCuda` instead of a file that no longer
   exists.
-- `setup-ml-venv` — takes `REQUIREMENTS=<file>` (required; the script refuses without it),
+- `setup-ml-venv`: takes `REQUIREMENTS=<file>` (required; the script refuses without it),
   `VENV_ROOT` (default `~/.ml-venv`), `CUDA_INDEX`; writes `$VENV_ROOT/bin/python-cuda`. The
   libstdc++ and driver-library logic is unchanged. The self-test keeps the generic assertions and
   loses the three that check marola's requirements file.

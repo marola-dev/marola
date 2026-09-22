@@ -21,19 +21,20 @@ still current.
 ## What to do
 
 1. Find the jar in the local coursier cache: `find ~/.cache/coursier -iname '*kyo*<module>*.jar'`
-   (or `cs fetch` it first if it isn't cached — this repo's `nix develop` shell has `coursier` on
+   (or `cs fetch` it first if it isn't cached; this repo's `nix develop` shell has `coursier` on
    `PATH`). Confirm the version in the filename matches `build.sbt`'s pin before trusting it.
 2. Decompile the specific class: `javap -p -classpath <jar> <fully.qualified.ClassName>` (`-p` to
-   include private/package-private members — Kyo's API surface sometimes hides the real signature
+   include private/package-private members: Kyo's API surface sometimes hides the real signature
    behind a private helper the public method delegates to).
 3. If the class is nested/companion-object-shaped (common in Scala), also check
-   `<ClassName>$` and `<ClassName>$.MODULE$` — `javap` on the wrong half of a Scala
+   `<ClassName>$` and `<ClassName>$.MODULE$`: `javap` on the wrong half of a Scala
    object/companion pair is the most common way this check silently gives a misleading answer.
 
 ## Output
 
-Report the exact `javap` output for the signature(s) in question, verbatim — not a paraphrase.
+Report the exact `javap` output for the signature(s) in question, verbatim, not a paraphrase.
 State plainly whether it confirms or contradicts what was assumed (a published-doc method name,
 an overload's parameter order, a return type). If the jar isn't in the coursier cache and can't be
-fetched (no network), say so explicitly rather than falling back to guessing from docs — that
+fetched (no network), say so explicitly rather than falling back to guessing from docs: that
 defeats the entire point of this delegate.
+</content>

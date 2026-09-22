@@ -16,14 +16,14 @@
 
 ## 1. Summary
 
-Try [OpenCode](https://opencode.ai) — MIT, `anomalyco/opencode`, v1.18.29 on 2026-09-04, in
-nixpkgs at 1.18.28 — as the day-to-day coding agent for this repository, for a bounded experiment:
+Try [OpenCode](https://opencode.ai) (MIT, `anomalyco/opencode`, v1.18.29 on 2026-09-04, in
+nixpkgs at 1.18.28) as the day-to-day coding agent for this repository, for a bounded experiment:
 two MIP-0010-sized tasks delivered end to end under OpenCode, measured on the things this repo
 already measures (gates green, `Cost:` per PR, review findings), against the same two tasks'
 Claude Code figures. Nothing under `.claude/` is removed during the tryout; OpenCode reads
 `AGENTS.md` and `.claude/skills/` natively, so the overlap is large by construction. What is *not*
 free: the `Cost:` pipeline (`cost-split.py` parses `~/.claude/projects/*.jsonl`), the commit
-attribution line, the ai-jail recipes, and — the material one — **billing**: since 2026-04-04
+attribution line, the ai-jail recipes, and, the material one, **billing**: since 2026-04-04
 Anthropic's terms forbid Claude Pro/Max subscription OAuth in third-party harnesses, so Claude
 models under OpenCode are pay-per-token API, not the subscription that makes today's `Cost:`
 figure a quota proxy rather than a bill. The MIP proposes the tryout with that stated up front,
@@ -39,10 +39,10 @@ the local Ollama model as the default per `PHILOSOPHY.md`, and a rollback that i
 - **Open source, one config file, the same instruction files.** OpenCode reads `AGENTS.md`
   first, `CLAUDE.md` as a fallback, `.claude/skills/*/SKILL.md` as skills, and puts permissions,
   MCP servers, agents, commands, formatters and plugins in one `opencode.json` (docs, fetched
-  2026-09-05 — §4). MIP-0011's ten tasks are largely a port of practices OpenCode expresses as
+  2026-09-05, §4). MIP-0011's ten tasks are largely a port of practices OpenCode expresses as
   config keys.
 - **Model choice per task, local first.** `PHILOSOPHY.md` wants a free local default everywhere;
-  OpenCode's `provider.ollama` block (OpenAI-compatible, `http://localhost:11434/v1` — the same
+  OpenCode's `provider.ollama` block (OpenAI-compatible, `http://localhost:11434/v1`, the same
   endpoint `LocalLlmClient` uses) plus a per-agent `model` makes "cheap agent on `llama3.2`, hard
   agent on a paid API" a config line, not a discipline.
 - **Cost transparency is a house rule** (`AGENTS.md` "Attribution and cost accounting"), and a
@@ -65,13 +65,13 @@ $ just opencode-cost                           # ccusage opencode session — th
 $ just cost-split MIP-0014                     # reads OpenCode's storage too (task 2 below)
 ```
 
-Commits keep one trailer. Under OpenCode it reads `Co-Authored-By: opencode <noreply@opencode.ai>`
-— OpenCode's own default (§4.5) — and `AGENTS.md`'s attribution rule is amended to name both.
+Commits keep one trailer. Under OpenCode it reads `Co-Authored-By: opencode <noreply@opencode.ai>`,
+OpenCode's own default (§4.5), and `AGENTS.md`'s attribution rule is amended to name both.
 
 ## 4. Data sources and dependencies reviewed
 
 All fetched 2026-09-05 unless noted. OpenCode is not installed on this machine; nothing below was
-exercised live — every claim is from the documentation or the GitHub API, and §11 lists what a
+exercised live; every claim is from the documentation or the GitHub API, and §11 lists what a
 live check must confirm.
 
 ### 4.1 The project
@@ -95,7 +95,7 @@ serve` (headless HTTP), `opencode run` (non-interactive, `--format json`, `--mod
   `~/.config/opencode/skills/`, **and the Claude-compatible `.claude/skills/`** (project and global).
   Frontmatter recognised: `name`, `description`, `license`, `compatibility`, `metadata` only.
   Loaded on demand by a native `skill` tool; access via pattern permissions. → `mip`, `mip-tasks`,
-  `site-frontend` load unchanged; MIP-0011's `disable-model-invocation` has no equivalent — the
+  `site-frontend` load unchanged; MIP-0011's `disable-model-invocation` has no equivalent; the
   `skill` permission (`"mip-tasks": "ask"`) is the nearest.
 - **Commands** (`/docs/commands`): `.opencode/commands/*.md` with `description`, `agent`, `model`,
   `subtask`; `$ARGUMENTS`/`$1`, `` !`cmd` `` shell injection, `@file`. → the `/mip`, `/mip-tasks`
@@ -138,18 +138,18 @@ The local default (`ollama/llama3.2`, or the `marola-llama3.2` variant) costs no
 
 ### 4.5 Cost logs and attribution
 
-- **Storage:** `~/.local/share/opencode/` — since v1.2 a SQLite `opencode.db` plus
+- **Storage:** `~/.local/share/opencode/`: since v1.2 a SQLite `opencode.db` plus
   `storage/message/<session>/msg_*.json` and `storage/session/<projectHash>/*.json`, with
   per-message token usage; `cost` is stored as 0 and priced downstream. `opencode stats` ("Show
   token usage and cost statistics for your OpenCode sessions") and `opencode export` (session JSON)
   exist in the CLI. **ccusage** (the tool behind `just claude-cost`) has `ccusage opencode
   daily|weekly|monthly|session`, reads the JSON storage (`OPENCODE_DATA_DIR` to point elsewhere),
-  prices from LiteLLM — "experimental, expects breaking changes"; unknown models show $0.00.
+  prices from LiteLLM ("experimental, expects breaking changes"); unknown models show $0.00.
   → `just claude-cost` has a drop-in sibling; `cost-split.py` needs a second reader (§5, task 2).
 - **Attribution:** OpenCode adds `Co-Authored-By: opencode <noreply@opencode.ai>` to commits by
   default; issue #919 ("Disabling co-authoring", closed) records that prompt instructions did not
   override it and asked for a Claude-Code-like `includeCoAuthoredBy`. **How #919 was resolved
-  (a config key, or honouring `AGENTS.md`) was not verified** — §11. The community plugin
+  (a config key, or honouring `AGENTS.md`) was not verified** (§11). The community plugin
   `lannuttia/opencode-git-trailers` standardises trailers (`{{model}}`, `{{provider}}` variables)
   if the built-in behaviour cannot be shaped.
 - **Privacy:** `share` defaults to `manual`; `"share": "disabled"` in the committed `opencode.json`
@@ -163,7 +163,7 @@ ai-jail's job: `just jail-claude` is `ai-jail … --rw-map ~/.claude --rw-map ~/
 claude`; the OpenCode twin maps `~/.config/opencode`, `~/.local/share/opencode`, `~/.cache/opencode`
 (Bun's plugin installs) instead. `.ai-jail` has `command = ["claude"]` and can only tighten.
 CI: `anomalyco/opencode/github@latest`, triggered by `/opencode` or `/oc` in comments, needs
-`ANTHROPIC_API_KEY`, runs on the repo's own minutes — a paid run per mention; not part of the tryout.
+`ANTHROPIC_API_KEY`, runs on the repo's own minutes, a paid run per mention; not part of the tryout.
 
 ### Pick
 
@@ -201,20 +201,20 @@ The tryout adds files next to `.claude/`, deletes nothing, and is one PR per bul
    ```
    No secrets: API keys go through `/connect` into `~/.local/share/opencode/auth.json`, never here.
    Paid models are not configured by default; a developer adds `"model": "anthropic/…"` in
-   `~/.config/opencode/opencode.json` (global, per-machine) — the cost gate of `AGENTS.md` applies to
+   `~/.config/opencode/opencode.json` (global, per-machine); the cost gate of `AGENTS.md` applies to
    the harness's own bill as much as to Azure.
 2. **`scripts/cost-split.py` reads OpenCode storage too.** A second `messages()` source:
    `~/.local/share/opencode/storage/message/*/msg_*.json` (timestamp, model, `tokens.{input,
-   output,cache.read,cache.write}` — **field names to confirm against a real file, §11**),
+   output,cache.read,cache.write}` (**field names to confirm against a real file, §11**),
    priced from the same LiteLLM table; `--harness claude|opencode|all` (default `all`), so the
    `Cost:` trailer rule survives unchanged. Self-test on a recorded fixture, in `just quality`.
 3. **Commands and agents.** `.opencode/commands/mip.md`, `mip-tasks.md`, `site-frontend.md`
    (three lines each: load the skill, pass `$ARGUMENTS`); `.opencode/agents/mip-reviewer.md` and
-   `jar-verifier.md` — MIP-0011 task 7's two subagents, `mode: subagent`, `permission.edit: deny`,
+   `jar-verifier.md`, MIP-0011 task 7's two subagents, `mode: subagent`, `permission.edit: deny`,
    `model` unset (inherits the default). Skills themselves stay in `.claude/skills/` (read by both).
 4. **Attribution.** `AGENTS.md`'s trailer rule names the harness: `Co-Authored-By: Claude
    <noreply@anthropic.com>` from Claude Code, `Co-Authored-By: opencode <noreply@opencode.ai>` from
-   OpenCode — one trailer, whichever harness made the commit; `scripts/uprd.sh` keeps working (it
+   OpenCode, one trailer, whichever harness made the commit; `scripts/uprd.sh` keeps working (it
    reads `Cost:` trailers, not the co-author). If OpenCode's trailer cannot be pinned to that exact
    text (§11 OQ1), the `opencode-git-trailers` plugin sets it.
 5. **Docs.** `DEV-FLOW.md` §8 (Command reference) gains an OpenCode column for the three
@@ -222,8 +222,8 @@ The tryout adds files next to `.claude/`, deletes nothing, and is one PR per bul
    `/code-review` → the `mip-reviewer` agent); `AGENT-SKILLS.md` notes which skills load under
    OpenCode (all three) and
    that superpowers (a Claude Code plugin) does not.
-6. **The experiment itself** (no code): two tasks from an accepted MIP's task list — one Scala
-   task with a named test, one docs/config task — each in a fresh OpenCode session, `just jo`,
+6. **The experiment itself** (no code): two tasks from an accepted MIP's task list, one Scala
+   task with a named test, one docs/config task, each in a fresh OpenCode session, `just jo`,
    default model first, escalating to a paid model only when the local one fails the task's test
    twice; PR bodies carry the `Cost:` from task 2's reader and one line "harness: opencode
    1.18.x, model …".
@@ -237,7 +237,7 @@ its size is known now: `.claude/settings.json` → the attribution line moves to
 are rewritten; MIP-0011 is marked *Superseded by MIP-0013* for tasks 1-5, 7, 9 (config here) and
 *still applies* for 6, 8, 10 (rules split, skills, memory); `docs/AGENT-SKILLS.md` §2 (superpowers)
 is dropped or replaced by OpenCode-native skills; the auto-memory directory under
-`~/.claude/projects/` is left as a file the harness no longer reads — its notes move into
+`~/.claude/projects/` is left as a file the harness no longer reads; its notes move into
 `AGENTS.md` or a `SessionStart`-equivalent plugin.
 
 ## 6. Scoring / safety impact
@@ -269,25 +269,25 @@ improvement over prose), and the local model stays the default (no new paid path
   answer; writing Kyo code against `-Wnonunit-statement` is another matter).
 - **Everything in §4 is documentation, not use.** OpenCode is not installed here; version drift
   is fast (1.18.29 the day after 1.18.28); each task re-fetches the page it relies on.
-- **ccusage's OpenCode support is experimental** and prices unknown models at $0.00 — a local
+- **ccusage's OpenCode support is experimental** and prices unknown models at $0.00; a local
   Ollama model shows $0.00 for the right reason, an unknown paid model for the wrong one.
 - **Plugins are TypeScript run by Bun** at startup; a plugin is a third toolchain (after Scala and
   Python) in a repo that prizes few. The design uses none; the Stop-gate stays MIP-0011's.
 - **Two harnesses at once double the config surface** (`.claude/` and `.opencode/`/`opencode.json`)
-  during the tryout; the skills are shared, the permission lists are not — drift is possible and
+  during the tryout; the skills are shared, the permission lists are not; drift is possible and
   the tryout is short on purpose.
 - **Prose rules are still prose** for anything not expressible as a permission (phase discipline,
   the `Cost:` trailer). OpenCode does not make `AGENTS.md` more binding than Claude Code does.
 
 ## 9. Alternatives considered
 
-- **Do nothing** — Claude Code works and the subscription covers it; the argument for trying is
+- **Do nothing**: Claude Code works and the subscription covers it; the argument for trying is
   vendor independence and a harness whose config is one committed file, not that anything is broken.
 - **Other harnesses** (Codex CLI, Gemini CLI, Aider): none reads `.claude/skills/` and `AGENTS.md`
   as OpenCode does; not researched here, and one tryout at a time.
 - **OpenCode for CI only** (`/oc` in PR comments): a paid run per mention with no reviewer; the
   same reason MIP-0011 declined `claude -p` in CI.
-- **Replace outright, skip the tryout** — would discard a working, measured flow on documentation
+- **Replace outright, skip the tryout**: would discard a working, measured flow on documentation
   alone; the house rule is verify first.
 
 ## 10. Exam-coverage mapping
@@ -296,16 +296,16 @@ None. Developer tooling.
 
 ## 11. Open questions
 
-1. **Attribution:** how was #919 resolved — is there a config key for the co-author trailer, does
+1. **Attribution:** how was #919 resolved: is there a config key for the co-author trailer, does
    an `AGENTS.md` instruction now shape it, or is the `opencode-git-trailers` plugin needed to get
    exactly one trailer with the required text?
-2. ~~**Message JSON schema**~~ — **Resolved 2026-09-07**, live: a real `opencode run --model
+2. ~~**Message JSON schema**~~, **Resolved 2026-09-07**, live: a real `opencode run --model
    ollama/llama3.2 "..."` (opencode 1.18.25, task 1's `pkgs.opencode`) writes no
-   `storage/message/*/msg_*.json` at all — everything lives in a SQLite database at
+   `storage/message/*/msg_*.json` at all; everything lives in a SQLite database at
    `$XDG_DATA_HOME/opencode/opencode-stable.db`, table `message(id, session_id, time_created,
    time_updated, data)`, `data` a JSON blob. An assistant message's `data` carries
    `tokens.{total,input,output,reasoning,cache.{read,write}}`, `modelID`, `providerID`, `cost`
-   (always `0`, priced downstream — matches §4.5's own note), `time.{created,completed}`. Task 2
+   (always `0`, priced downstream, matches §4.5's own note), `time.{created,completed}`. Task 2
    (`MIP-0013.tasks.md`) is updated with the exact mapping needed against `cost-split.py`'s
    existing `price()` shape.
 3. **Can `llama3.2` (or `marola-llama3.2`) drive OpenCode's tool loop at all** on a marola task?
@@ -338,7 +338,7 @@ override); `https://ccusage.com/guide/opencode/` (`ccusage opencode daily|weekly
 `OPENCODE_DATA_DIR`, "cost: 0 in message files", experimental); search results on storage
 (`opencode.db` since v1.2; `storage/message/<session>/msg_*.json`) and on the Anthropic consumer
 terms change (2026-01-09 block, 2026-02 ToS update, enforced 2026-04-04; sources: dev.to,
-alternativeto.net, decodethefuture.org — secondary coverage, the ToS text itself was not fetched).
+alternativeto.net, decodethefuture.org, secondary coverage, the ToS text itself was not fetched).
 Not fetched: `/docs/enterprise/`, `/docs/acp/`, `/docs/sdk/`, `/docs/custom-tools/`, the OpenCode
 config JSON schema, any OpenCode source file. Repo state read: `.ai-jail` (`command = ["claude"]`,
 rw_maps `~/.claude`, `~/.claude.json`), `.claude/settings.json` (attribution + superpowers plugin),

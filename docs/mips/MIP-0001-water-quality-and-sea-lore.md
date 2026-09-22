@@ -17,12 +17,12 @@
 ## 1. Summary
 
 marola ranks beaches by waves, wind, temperature and a jellyfish heuristic, but says nothing about
-whether the water is fit to swim in — and in Santa Catarina that is published, per sampling point,
+whether the water is fit to swim in, and in Santa Catarina that is published, per sampling point,
 by the state environment agency (IMA). This proposal adds a `WaterQualityClient` integration with
 IMA's feed as the local default, folds PRÓPRIA/IMPRÓPRIA into the score deterministically, makes
 the top pick's output a detailed block (water quality, tide, wave period) instead of one line, and
-ends every reply with one short, sourced paragraph of sea lore — either a "thing most people don't
-know about the sea" or a portrait of one sea creature — rotated daily so it doesn't repeat.
+ends every reply with one short, sourced paragraph of sea lore, either a "thing most people don't
+know about the sea" or a portrait of one sea creature, rotated daily so it doesn't repeat.
 
 ## 2. Motivation
 
@@ -33,7 +33,7 @@ Campeche: four PRÓPRIO, and Ponto 73 at the mouth of the Riozinho do Campeche I
 "choppy, cold water" note and nothing else. That is exactly the "safety-relevant, deterministic,
 outside the LLM" category `AGENTS.md` says marola must get right.
 
-The second half — the lore paragraph — is product, not safety: the reply is currently a number
+The second half, the lore paragraph, is product, not safety: the reply is currently a number
 and a sentence. One well-sourced paragraph about the sea in front of the reader is the cheapest
 way to make it something people open on purpose, and it seeds the marine-knowledge corpus
 `FUTURE-WORK.md` §9.1 needs anyway.
@@ -82,7 +82,7 @@ Telegram (Phase 1) gets the same block, the lore paragraph last, under a `🌊` 
 - **Format, verified 2026-09-05:** `POST https://balneabilidade.ima.sc.gov.br/relatorio/mapa`
   with no body returns a JSON array of every point: `CODIGO`, `MUNICIPIO`, `MUNICIPIO_COD_IBGE`,
   `BALNEARIO`, `PONTO_NOME` ("Ponto 89"), `LOCALIZACAO` (street-level), `LATITUDE`, `LONGITUDE`
-  (strings), and `ANALISES` — the last five samples, each `DATA` (dd/mm/yyyy), `CONDICAO`
+  (strings), and `ANALISES`: the last five samples, each `DATA` (dd/mm/yyyy), `CONDICAO`
   (`PRÓPRIO`/`IMPRÓPRIO`), `CHUVA` (Ausente/Fraca/Intensa), `RESULTADO` (enterococci/100mL),
   `TEMP_AGUA`. 207KB, 1.2s, no key, no auth, no cookie. This is the endpoint the portal's own
   OpenLayers map calls; it is not documented anywhere. Sibling endpoints (`municipio/getMunicipios`,
@@ -93,7 +93,7 @@ Telegram (Phase 1) gets the same block, the lore paragraph last, under a `🌊` 
   are sampled **once a month, in the last week**. So off-season a result can be up to ~5 weeks old.
 - **Coverage near the author:** five points on Praia do Campeche, 1.0-3.3km from the origin used in
   `RUN-LOCALLY.md`; Joaquina, Mole, Armação, Morro das Pedras, Pântano do Sul, Matadeiro all have
-  points. Lagoa da Conceição (a lagoon, not sea) has eight, several IMPRÓPRIO — relevant because
+  points. Lagoa da Conceição (a lagoon, not sea) has eight, several IMPRÓPRIO, relevant because
   Overpass tags some lagoon shores `natural=beach`.
 - **Terms:** public agency, public data, no terms page found on the portal. Treat as: one request
   per run, identify with marola's `User-Agent`, cache, degrade to "no data" on any failure.
@@ -110,7 +110,7 @@ Telegram (Phase 1) gets the same block, the lore paragraph last, under a `🌊` 
 Verified 2026-09-05 against the docs: `wave_period`, `wave_direction`, `swell_wave_height`/
 `swell_wave_period`/`swell_wave_direction`, `ocean_current_direction`, and **`sea_level_height`
 (tides, above global mean)** are all available hourly at the same endpoint `OpenMeteoClient`
-already calls. **No water-quality, turbidity or chlorophyll variables exist** — Open-Meteo cannot
+already calls. **No water-quality, turbidity or chlorophyll variables exist**: Open-Meteo cannot
 replace §4.1. Adding the wave/tide fields is free (query-string change) and is what the detailed
 block in §3 uses. `FUTURE-WORK.md` §1.3 wanted the same fields for surf scoring.
 
@@ -124,7 +124,7 @@ block in §3 uses. `FUTURE-WORK.md` §1.3 wanted the same fields for surf scorin
   `WaterQualityClient` without touching `Recommender`.
 - **Crowd reports:** `SightingStore` exists. Adding `SightingKind.Pollution` is a five-line
   complement (people see oil, foam, sewage before any bulletin does), included in §5 because it's
-  nearly free — but it is *not* a data source for the score.
+  nearly free, but it is *not* a data source for the score.
 
 ### 4.4 Sea lore — no third party; a curated, sourced file in the repo
 
@@ -167,7 +167,7 @@ ARMAÇÃO DO PÂNTANO DO SUL"). Unit-tested against a checked-in fixture trimmed
 
 ### 5.2 Providers
 
-- **`local/`: `ImaScWaterQualityClient`** — `Http.postForm(mapaUrl, Map.empty)` (the endpoint
+- **`local/`: `ImaScWaterQualityClient`**: `Http.postForm(mapaUrl, Map.empty)` (the endpoint
   takes an empty POST), `JsonValue` parse, strings → numbers with `toDoubleOption`/`toIntOption`,
   dates via `DateTimeFormatter.ofPattern("dd/MM/yyyy")`. A parse failure of one point drops that
   point, not the feed. Zero new dependencies.
@@ -187,10 +187,10 @@ ARMAÇÃO DO PÂNTANO DO SUL"). Unit-tested against a checked-in fixture trimmed
 - `OpenMeteoClient` fetches `wave_period`, `wave_direction`, `swell_wave_height`,
   `swell_wave_period`, `sea_level_height`; `HourlyConditions` gains the matching `Option[Double]`s.
   Tide "low/high" times for the block are the local minima/maxima of `sea_level_height` over
-  tomorrow's 24 hours — no tide-table API needed.
+  tomorrow's 24 hours; no tide-table API needed.
 - `Main`: the column and the detailed block in §3; `--brief` keeps today's one-line format.
 - MCP: `get_swim_recommendation` output gains a `water_quality` object per beach; new tool
-  `get_water_quality(lat, lon, radius_km)` returning matched points — useful to an agent on its own.
+  `get_water_quality(lat, lon, radius_km)` returning matched points, useful to an agent on its own.
 - `SightingKind.Pollution` added; `--report-sighting pollution <beach> [note]` just works.
 
 ### 5.4 Sea lore
@@ -200,30 +200,30 @@ ARMAÇÃO DO PÂNTANO DO SUL"). Unit-tested against a checked-in fixture trimmed
 Selection is pure (`lore/SeaLore.pick(today, beachName, regionTags)`): filter by region and month,
 then choose with a seeded shuffle (`seed = today.toEpochDay * 31 + beachName.hashCode`) so the same
 beach shows the same entry all day and a different one tomorrow, and neighbouring beaches differ.
-The text is appended **verbatim** — it never passes through the LLM, so it can't be paraphrased into
+The text is appended **verbatim**: it never passes through the LLM, so it can't be paraphrased into
 something the source doesn't say. `Reviewer` receives it as a `lore` input field only so it can
 flag a summary that contradicts it.
 
-Seed entries (sources to be attached and checked one by one before merge — that check is part of
+Seed entries (sources to be attached and checked one by one before merge; that check is part of
 the implementation PR, not assumed here):
 
-- *creature* — caravela-portuguesa (*Physalia physalis*) is a siphonophore colony, not a jellyfish;
+- *creature*: caravela-portuguesa (*Physalia physalis*) is a siphonophore colony, not a jellyfish;
   strands on SC beaches in winter/spring with onshore winds; sting active after death. Region BR-S,
   months 6-10.
-- *creature* — baleia-franca (*Eubalaena australis*) calves in the shallows off Santa Catarina's
+- *creature*: baleia-franca (*Eubalaena australis*) calves in the shallows off Santa Catarina's
   south coast June-November; the APA da Baleia Franca protects the stretch from Florianópolis to
   Balneário Rincão. Region BR-S, months 6-11.
-- *creature* — humpbacks (baleia-jubarte) migrate past the island July-November — the same fact
+- *creature*: humpbacks (baleia-jubarte) migrate past the island July-November, the same fact
   `Swimability.whaleSightingLikelihood` already uses. Region BR-S, months 7-11.
-- *creature* — green turtles (*Chelonia mydas*) graze year-round on the island's rocky points.
+- *creature*: green turtles (*Chelonia mydas*) graze year-round on the island's rocky points.
   Region BR-S.
-- *secret* — sea foam is whipped-up dissolved organic matter (algal proteins, lipids), not
-  pollution by itself — but persistent brown foam at a stream mouth is worth reporting. Global.
-- *secret* — summer water in Santa Catarina can be *colder* than winter's on a NE-wind day:
+- *secret*: sea foam is whipped-up dissolved organic matter (algal proteins, lipids), not
+  pollution by itself, but persistent brown foam at a stream mouth is worth reporting. Global.
+- *secret*: summer water in Santa Catarina can be *colder* than winter's on a NE-wind day:
   wind-driven upwelling brings South Atlantic Central Water to the surface. Region BR-S, months 11-3.
-- *secret* — the ocean has absorbed roughly a quarter of the CO₂ humans emitted, and it is
+- *secret*: the ocean has absorbed roughly a quarter of the CO₂ humans emitted, and it is
   measurably more acidic for it. Global.
-- *secret* — most of the light in the deep sea is made by animals: bioluminescence is the norm
+- *secret*: most of the light in the deep sea is made by animals: bioluminescence is the norm
   below 200m, not the exception. Global.
 
 Eight is enough to rotate for a week without repeats; the file is meant to grow. Every entry needs
@@ -238,7 +238,7 @@ Deterministic, in `Swimability`, alongside the existing deltas:
 | ≥ 1 point, **all** IMPRÓPRIO (fresh) | score forced to **0** | `water unfit for bathing — IMA <bulletin date>, Ponto NN (<location>), <n> enterococci/100mL` |
 | mixed | **−20** | `<k>/<n> points PRÓPRIA — avoid <location of each IMPRÓPRIO point>` |
 | all PRÓPRIO (fresh) | 0 | `water PRÓPRIA (<n> pts, <sample date>)` |
-| no match, or provider `none` | 0 | `no water quality data` (no penalty — absence of data is not evidence of pollution) |
+| no match, or provider `none` | 0 | `no water quality data` (no penalty: absence of data is not evidence of pollution) |
 | any match but latest sample older than **45 days** | treated as *no match* | `water quality data stale (<date>)` |
 
 45 days covers the off-season monthly cadence (§4.1) with margin; in season it will never trigger.
@@ -283,8 +283,8 @@ expected output replaced with a run that shows the block, this MIP flipped to Im
   rule (−20 + named locations) exists precisely so one bad point doesn't erase a 4km beach, and so
   the reader knows *where* not to swim. Full veto only when every point agrees.
 - **Lagoon shores tagged as beaches.** Lagoa da Conceição's IMPRÓPRIO points will match "beaches"
-  Overpass returns on the lagoon. That's correct behaviour — those are the spots people actually
-  swim — but the name-vs-distance matcher must not attach lagoon points to sea beaches.
+  Overpass returns on the lagoon. That's correct behaviour (those are the spots people actually
+  swim), but the name-vs-distance matcher must not attach lagoon points to sea beaches.
 - **Lore correctness is a human job.** The seeded shuffle and verbatim display are the technical
   guard; the source check is the real one. No entry without a checked URL.
 - **Regional.** SC only, by design; everywhere else the feature is invisible except for one note.

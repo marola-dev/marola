@@ -17,14 +17,14 @@
 
 ## 1. Summary
 
-marola already measures itself — `just benchmark` scores three answer modes on 22 questions,
-the DSPy compile step optimises two prompts against a metric, the fine-tune tiers produce model
-variants — but every result is a Markdown file under `data/` or `docs/benchmarks/`, compared by
+marola already measures itself: `just benchmark` scores three answer modes on 22 questions,
+the DSPy compile step optimises two prompts against a metric, and the fine-tune tiers produce model
+variants. But every result is a Markdown file under `data/` or `docs/benchmarks/`, compared by
 hand and parsed back by a regex (`scripts/benchmark_gate.py`). This MIP adds **MLflow** as the
 ledger those steps write to: one **experiment** per kind of run, **params** (model, embedder,
 corpus hash, git SHA), **metrics** (coverage per arm, cited %, latency; the DSPy metric scores),
-**artifacts** (the Markdown report, the compiled prompt JSONs), and — because the MLflow server
-accepts OpenTelemetry traces over OTLP/HTTP from any language — **LLM-call traces** from the Scala
+**artifacts** (the Markdown report, the compiled prompt JSONs), and, because the MLflow server
+accepts OpenTelemetry traces over OTLP/HTTP from any language, **LLM-call traces** from the Scala
 pipeline itself (summariser + reviewer spans with model, latency and token counts). Local default:
 `mlflow server` on SQLite via a compose profile or `just mlflow-up`, no account. Azure opt-in: an
 Azure Machine Learning workspace is an MLflow-compatible tracking server; its limits for a JVM
@@ -75,7 +75,7 @@ gate still reads it, no network call is made.
 
 Apache-2.0; latest release v3.16.0 on 2026-09-04 (GitHub API, fetched 2026-09-05). Container
 image `ghcr.io/mlflow/mlflow` exists (GHCR tag list fetched 2026-09-05; the first page reached
-`v3.9.0rc0` — the newest tag was not confirmed, pin whatever `just mlflow-up` first uses). Local
+`v3.9.0rc0`; the newest tag was not confirmed, pin whatever `just mlflow-up` first uses). Local
 server: `mlflow server --backend-store-uri sqlite:///… --artifacts-destination … --serve-artifacts
 --host 127.0.0.1 --port 5000`; `--app-name basic-auth` adds basic authentication (CLI reference,
 raw page fetched 2026-09-05; `--host` default 127.0.0.1, `--port` default 5000).
@@ -83,12 +83,12 @@ raw page fetched 2026-09-05; `--host` default 127.0.0.1, `--port` default 5000).
 ### 4.2 Writing runs from Scala — REST, not the Java client
 
 - **REST API** (fetched 2026-09-05): `POST /api/2.0/mlflow/experiments/create`, `runs/create`,
-  `runs/update`, `runs/search`, `runs/log-batch` — the last capped at 1000 items per call (≤ 1000
-  metrics, ≤ 100 params, ≤ 100 tags), 1 MB payload, 250-character keys and param/tag values.
+  `runs/update`, `runs/search`, `runs/log-batch` (the last capped at 1000 items per call, ≤ 1000
+  metrics, ≤ 100 params, ≤ 100 tags, 1 MB payload, 250-character keys and param/tag values).
   Artifact upload goes through `artifacts/presigned-upload-url` or the server's artifact proxy
   when started with `--serve-artifacts`.
 - **Java client** `org.mlflow:mlflow-client`: latest 3.11.1, Maven Central metadata last updated
-  2026-04-08 (fetched 2026-09-05) — five minor versions behind the server; `MlflowClient` offers
+  2026-04-08 (fetched 2026-09-05), five minor versions behind the server; `MlflowClient` offers
   `createExperiment`, `createRun`, `logParam/logMetric/setTag/logBatch`, `logArtifact(s)`,
   `searchRuns`, `setTerminated` (Javadoc, fetched 2026-09-05). No tracing API.
 - **Pick: REST via the existing `Http`/`Json` helpers.** Four endpoints, the same shape as every
@@ -104,7 +104,7 @@ and `OTEL_EXPORTER_OTLP_TRACES_HEADERS=x-mlflow-experiment-id=123` (ingest page,
 2026-09-05). MLflow states GenAI semantic-convention support (`gen_ai.request.model`,
 `gen_ai.usage.input_tokens`, …) for ingestion. On the JVM side `io.opentelemetry:opentelemetry-exporter-otlp`
 is at 1.65.0 (Maven Central, 2026-08-07); the repo pins `opentelemetry-sdk-extension-autoconfigure`
-1.49.0 alongside `azure-monitor-opentelemetry-autoconfigure` 1.4.0 — bump to one consistent
+1.49.0 alongside `azure-monitor-opentelemetry-autoconfigure` 1.4.0; bump to one consistent
 OpenTelemetry BOM in the implementation.
 
 ### 4.4 Writing runs from the Python steps
@@ -113,7 +113,7 @@ OpenTelemetry BOM in the implementation.
 log_artifact`. MLflow's GenAI evaluation (`mlflow.genai.evaluate`, scorers, LLM judges) and the
 Prompt Registry (`mlflow.genai.register_prompt`) are **Python-only APIs** (docs fetched
 2026-09-05; the prompt registry's REST surface for non-Python clients was not documented on the
-page fetched) — usable in `dspy/` and `finetune/`, not from Scala. Whether `mlflow.dspy.autolog()`
+page fetched); usable in `dspy/` and `finetune/`, not from Scala. Whether `mlflow.dspy.autolog()`
 exists at the pinned DSPy/MLflow versions was **not checked** (§11).
 
 ### 4.5 Azure paths
@@ -171,7 +171,7 @@ Where runs are written:
   `min_score`, `corpus_sha` (hash of `knowledge/*.md`), `git_sha`, `questions`; metrics per arm
   (`<arm>.coverage_in_corpus`, `.coverage_general`, `.coverage_all`, `.cited_pct`,
   `.abstained_pct`, `.mean_ms`); artifact: the Markdown report. **The Markdown report stays the
-  canonical gate input in v1** — `benchmark_gate.py` is unchanged; reading the best kept run from
+  canonical gate input in v1**: `benchmark_gate.py` is unchanged; reading the best kept run from
   MLflow is v2.
 - `dspy/compile_recommendation_prompt.py` → experiment `marola/prompt-compile`: params (model,
   optimiser, trainset size), metrics (the metric's score per compiled program), artifacts (both
@@ -197,12 +197,12 @@ None. No scoring code is touched; `Swimability` is unchanged.
 
 ## 7. Verification plan
 
-Unit tests (all offline, munit): `MlflowRunLedgerSpec` — the exact JSON of `runs/create` and
+Unit tests (all offline, munit): `MlflowRunLedgerSpec`, the exact JSON of `runs/create` and
 `runs/log-batch` for a `Report`, chunking at 1000 metrics / 100 params, 250-character key
 truncation, FAILED status on `end(ok = false)`, via a scripted `Http.Transport`;
-`NoopRunLedgerSpec` — no transport call ever; `TracedLlmClientSpec` — span name, `gen_ai.*`
-attributes and the content-off default, using `opentelemetry-sdk-testing`'s in-memory exporter;
-`BenchmarkLedgerSpec` — the params/metrics map derived from an `OceanBenchmark.Report`.
+`NoopRunLedgerSpec` (no transport call ever); `TracedLlmClientSpec` (span name, `gen_ai.*`
+attributes and the content-off default, using `opentelemetry-sdk-testing`'s in-memory exporter);
+`BenchmarkLedgerSpec` (the params/metrics map derived from an `OceanBenchmark.Report`).
 Live checks: `just mlflow-up && MAROLA_MLFLOW_TRACKING_URI=… just benchmark` shows the run and
 its artifact at `127.0.0.1:5000`; `MAROLA_TRACES=mlflow just run -- --summarize` shows one trace
 with the summariser and reviewer spans; `dspy` compile logs a run with two artifacts. **Done:** the
@@ -211,7 +211,7 @@ next benchmark PR's comparison paragraph links a run URL instead of pasting a ta
 ## 8. Risks, limitations, and honest caveats
 
 - MLflow 3 moves fast (server 3.16.0 vs Java client 3.11.1); REST is the stable surface, and OTLP
-  ingest only exists from 3.6.0 — pin the image tag and say so in `RUN-LOCALLY.md`.
+  ingest only exists from 3.6.0, so pin the image tag and say so in `RUN-LOCALLY.md`.
 - Traces can carry prompts, which carry a user's location. Content off by default; the local
   server binds to loopback; the MLflow UI has no auth unless `--app-name basic-auth`.
 - MLflow is a heavy Python dependency: it lives in a compose profile / `uvx`, never in the runtime
@@ -224,14 +224,14 @@ next benchmark PR's comparison paragraph links a run URL instead of pasting a ta
 
 ## 9. Alternatives considered
 
-- **Do nothing** — the Markdown ledger and regex gate work today; they do not scale past one
+- **Do nothing**: the Markdown ledger and regex gate work today; they do not scale past one
   benchmark and record nothing about prompt compiles or traces.
-- **Langfuse** — already optional in `dspy/`; no JVM SDK (`FUTURE-WORK.md` §10); whether its
+- **Langfuse**: already optional in `dspy/`; no JVM SDK (`FUTURE-WORK.md` §10); whether its
   server accepts OTLP from other languages was **not checked**. One server for runs *and* traces
   favoured MLflow.
-- **Application Insights only** — Azure-only, no local default; violates the local-first rule.
-- **Weights & Biases / hosted trackers** — an account and a key for a personal project's ledger.
-- **Java client instead of REST** — see §4.2; kept as the fallback.
+- **Application Insights only**: Azure-only, no local default; violates the local-first rule.
+- **Weights & Biases / hosted trackers**: an account and a key for a personal project's ledger.
+- **Java client instead of REST**: see §4.2; kept as the fallback.
 
 ## 10. Exam-coverage mapping
 
@@ -243,13 +243,13 @@ the cross-agent tracing that section calls out as missing.
 ## 11. Open questions
 
 1. Azure ML from the JVM outside a job: which tracking URI and credential (`DefaultAzureCredential`
-   bearer token?) — verify against a real workspace before writing `ARCHITECTURE.md` §5's row.
+   bearer token?), verify against a real workspace before writing `ARCHITECTURE.md` §5's row.
 2. Is `python3Packages.mlflow` in nixpkgs light enough for the dev shell, or is the compose
    profile / `uvx mlflow` the only sane local path?
-3. `mlflow.dspy.autolog()` at the pinned DSPy version — exists? worth it, or log the two compile
+3. `mlflow.dspy.autolog()` at the pinned DSPy version: exists? worth it, or log the two compile
    metrics by hand?
 4. Keep the Langfuse hook in `dspy/` alongside MLflow, or remove it once MLflow logs the compile?
-5. Artifact upload over REST vs the Java client's `logArtifact` — decide after the first spike.
+5. Artifact upload over REST vs the Java client's `logArtifact`: decide after the first spike.
 6. Experiment naming: one `marola` experiment with tags, or `marola/<kind>` as sketched here.
 
 ## Appendix
@@ -258,9 +258,9 @@ the cross-agent tracing that section calls out as missing.
   2026-09-04; licence Apache-2.0 (2026-09-05).
 - Java client: `https://repo1.maven.org/maven2/org/mlflow/mlflow-client/maven-metadata.xml` →
   3.11.1, lastUpdated 20260408 (2026-09-05).
-- OTLP ingest: `https://mlflow.org/docs/latest/genai/tracing/opentelemetry/ingest/` — `/v1/traces`,
+- OTLP ingest: `https://mlflow.org/docs/latest/genai/tracing/opentelemetry/ingest/`: `/v1/traces`,
   OTLP/HTTP only, `x-mlflow-experiment-id`, MLflow ≥ 3.6.0, SQL store required (2026-09-05).
-- REST: `https://mlflow.org/docs/latest/api_reference/rest-api.html` — log-batch caps (2026-09-05).
+- REST: `https://mlflow.org/docs/latest/api_reference/rest-api.html`: log-batch caps (2026-09-05).
 - Azure ML: `https://learn.microsoft.com/en-us/azure/machine-learning/concept-mlflow` (ms.date
   2025-10-06) and `https://azure.microsoft.com/en-us/pricing/details/machine-learning/` (2026-09-05).
 - Foundry tracing: `https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/trace` → redirected

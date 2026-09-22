@@ -34,7 +34,7 @@ started by hand, and a stack of nine PRs (MIP-0056: #372–#380) gets reviewed l
 
 A free local pass, run when the human asks, catches the cheap findings (null handling, a missed `Using`, a
 shell quoting bug) before the expensive reviewer spends tokens on them. Upstream's own benchmark
-claim — higher precision than a general-purpose agent at ~1/9 the tokens, lower recall — is the
+claim (higher precision than a general-purpose agent at ~1/9 the tokens, lower recall) is the
 right trade for an unattended bot: few comments, mostly real. **Not verified here**; §7 tests it.
 
 ## 3. User-visible change
@@ -71,19 +71,19 @@ Scala Steward PR, or a fork.
   `npm install -g "@alibaba-group/open-code-review@${ocr_version}"` with **default `latest`**, does
   its own `fetch-depth: 0` checkout, runs the review, posts inline comments + a sticky summary via
   `actions/github-script`, supports incremental re-review. Inner actions are SHA-pinned. Upstream's
-  own docs say pinning the Action alone does not freeze behaviour — `ocr_version` must be pinned too.
+  own docs say pinning the Action alone does not freeze behaviour; `ocr_version` must be pinned too.
   The demo workflow uses `pull_request_target` and `@main`.
-- **JSON output schema: confirmed against the source at `v1.12.7`** (§11.2) — `internal/model/review.go`
+- **JSON output schema: confirmed against the source at `v1.12.7`** (§11.2), `internal/model/review.go`
   and `cmd/opencodereview/output.go`.
 - **Not checked:** the agent's exact tool list (assumed read-only file/search
-  tools — no evidence it executes repo code, but not confirmed in source); whether an MCP server can
+  tools, no evidence it executes repo code, but not confirmed in source); whether an MCP server can
   be configured from inside the reviewed repo (`.opencodereview/`); the benchmark numbers; whether
-  the release tag `v1.12.7` (ref object `03b362a…`) is annotated — dereference before pinning.
+  the release tag `v1.12.7` (ref object `03b362a…`) is annotated, dereference before pinning.
 
 ### 4.2 The runners and the model — checked on the machine, 2026-09-19
 
 - Workflows use `runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}`; runners are registered by
-  `just runners` under `/home/hoffmann/code/actions-runner*` — **persistent, on the dev machine**.
+  `just runners` under `/home/hoffmann/code/actions-runner*`, **persistent, on the dev machine**.
 - `marola` is a **private** repo (`gh repo view`). Fork PRs are possible only from collaborators.
 - Ollama on that host already has `qwen2.5-coder:7b` (4.7 GB), the model `labs/pratico` pins.
   OpenAI-compatible endpoint: `http://127.0.0.1:11434/v1/chat/completions`. **Not checked:** that
@@ -102,10 +102,10 @@ those two modes (plus `--dry-run -- <cmd>`) and forwards the GitHub token on pur
 
 ### 5.1 `nix-config` first (upstream PR, its own repo's rules)
 
-- `labs/agentic`: a package `ocr` — `buildGoModule` from the tagged source with `vendorHash`, or, if
+- `labs/agentic`: a package `ocr`, `buildGoModule` from the tagged source with `vendorHash`, or, if
   the locked nixpkgs has no Go ≥ 1.25.5, `fetchurl` of `opencodereview-linux-amd64` with the hash
   from `sha256sum.txt`. Added to `lib.<system>.tools`; `ocr version` in the lab's self-test.
-- `jail-run ocr [args]`: a third mode that differs from the agent modes in three ways — **no**
+- `jail-run ocr [args]`: a third mode that differs from the agent modes in three ways, **no**
   `GH_TOKEN` forwarded, **no** `~/.claude` maps, project directory mapped **read-only** with a
   writable `$RUNNER_TEMP` for the JSON. Self-test asserts the token is absent from the sandbox line.
 - marola: `nix flake update agentic`, nothing else in `flake.nix`.
@@ -140,8 +140,8 @@ Steps: checkout (`fetch-depth: 0`) → compute merge-base → **review** → **p
   `knowledge/**`, `*.lock`, generated parquet manifests). No GitHub token in this step's env.
 - **Post:** `scripts/ocr-post.py` (stdlib, `--self-test` on fixture JSON, wired into
   `quality-other`): validates the JSON, drops findings whose path/line is not in the PR diff, caps at
-  15 inline comments (rest go to the summary), posts **one** `COMMENT` review — never
-  `REQUEST_CHANGES` — and upserts the sticky summary by its `<!-- marola-ocr -->` marker.
+  15 inline comments (rest go to the summary), posts **one** `COMMENT` review, never
+  `REQUEST_CHANGES`, and upserts the sticky summary by its `<!-- marola-ocr -->` marker.
 
 ### 5.3 What is deterministic and what is the LLM
 
@@ -163,7 +163,7 @@ posted, and that the check can never block a merge are plain code. Nothing here 
 ### 5.5 Opt-in hosted model
 
 `vars.OCR_PROVIDER` ∈ {unset → Ollama, `anthropic`, `azure`}; key in `secrets.OCR_LLM_TOKEN`; the
-summary names the provider. Azure OpenAI/Foundry is OpenAI-compatible (`llm_auth_header: api-key` —
+summary names the provider. Azure OpenAI/Foundry is OpenAI-compatible (`llm_auth_header: api-key`,
 **not checked**). This path sends private source to a third party and spends money: it needs an
 explicit go-ahead with a measured per-PR figure from §7, and `--max-tokens-budget` as the ceiling.
 
@@ -174,7 +174,7 @@ None. No change to `Swimability`, to any reply, or to what a user sees.
 ## 7. Verification plan
 
 1. **Go/no-go, before any workflow exists:** `ocr review` by hand on three already-merged PRs (one
-   Scala — required, upstream lists no supported code languages —, one Python/shell, one docs-only) against `qwen2.5-coder:7b`. Record wall time, comment
+   Scala, required because upstream lists no supported code languages, one Python/shell, one docs-only) against `qwen2.5-coder:7b`. Record wall time, comment
    count, and a human true/false-positive call per comment in the MIP's appendix. Fewer than half
    useful → stop, flip this MIP to `park`.
 2. `nix-config`: `just self-test` in `labs/agentic` (token absent in `jail-run ocr`), `nix flake check`.
@@ -200,7 +200,7 @@ None. No change to `Swimability`, to any reply, or to what a user sees.
 - **Upstream's Action as-is** (`uses: alibaba/open-code-review@<sha>` + `ocr_version`). Least work,
   and its incremental posting is better than ours. Lost because it npm-installs globally on a
   persistent host, runs unsandboxed with the token in scope, and its 1049 lines are not ours to
-  audit on every bump. Reasonable fallback if §5.1 stalls: run it on `ubuntu-latest` instead — but
+  audit on every bump. Reasonable fallback if §5.1 stalls: run it on `ubuntu-latest` instead, but
   then there is no local model, so it becomes the paid path by default.
 - **Upstream's Action inside a `container: node:24` job** (their self-hosted recipe). Better
   isolation, but needs Docker on the runner path and host networking to reach Ollama; more moving
@@ -217,10 +217,10 @@ None claimed. (AI-103 "Responsible AI" is about the product's output, not the de
 
 ## 11. Open questions
 
-1. ~~Is `qwen2.5-coder:7b` good enough (§7.1)?~~ **No — measured 2026-09-19, see the appendix:** it
+1. ~~Is `qwen2.5-coder:7b` good enough (§7.1)?~~ **No, measured 2026-09-19, see the appendix:** it
    never emits a valid tool call, so OCR produces nothing. Still open: which local model with
    working tool calls fits the runner's GPU (RTX 4090), once Ollama's context is raised.
-2. ~~OCR's JSON schema~~ — **resolved**, confirmed against the source at `v1.12.7` (2026-09-19):
+2. ~~OCR's JSON schema~~, **resolved**, confirmed against the source at `v1.12.7` (2026-09-19):
    `internal/model/review.go` defines `LlmComment` (`path`, `content`, `suggestion_code`,
    `existing_code`, `start_line`, `end_line`, `category` ∈ bug/security/performance/maintainability/
    test/style/documentation/other, `severity` ∈ critical/high/medium/low) and
@@ -251,7 +251,7 @@ the runner host.
 
 `ocr` v1.12.7 (release binary, sha256 verified before first run) inside ai-jail on a throwaway
 clone: no token, no real HOME, `--network` (see below). Endpoint
-`http://127.0.0.1:11434/v1/chat/completions` — `OCR_LLM_URL` wants the full path.
+`http://127.0.0.1:11434/v1/chat/completions`, `OCR_LLM_URL` wants the full path.
 
 | PR | Kind | Lines | Model | Wall | status | Comments | Tool calls | Tokens |
 |---|---|---|---|---|---|---|---|---|
@@ -260,19 +260,19 @@ clone: no token, no real HOME, `--network` (see below). Endpoint
 | #333 Scala, #386 docs | — | — | not run | — | — | — | — | — |
 
 - The bar in §7.1 ("fewer than half useful") was never reached: there were **no comments to judge**.
-  `qwen2.5-coder:7b` writes the tool call as JSON text in `content` instead of `tool_calls` — 5 of 5
+  `qwen2.5-coder:7b` writes the tool call as JSON text in `content` instead of `tool_calls`, 5 of 5
   attempts at temperature 0, on `/v1` and on native `/api/chat`, reproducible on a 198-token prompt.
   OCR logged 300 "No tool calls parsed … retrying" lines and failed every file with
   `classification: budget`. The other two PRs were not run: the failure is content-independent.
   **What this does not show:** that a 7B model reviews badly. Review quality and line-number
   accuracy are both untested.
 - **Confound, host-side:** this host's Ollama (server 0.12.11; the client on PATH is 0.33.1)
-  truncates every prompt to **4096 tokens** — a ~9,000-token prompt returned
+  truncates every prompt to **4096 tokens**, a ~9,000-token prompt returned
   `prompt_eval_count: 4096`; `OLLAMA_CONTEXT_LENGTH` is unset. `llama3.2:latest` does emit real
   `tool_calls` on upstream's probe, but its 8-second, zero-call review says little under that
   truncation. No retest of any model here is meaningful until the context is raised. Not changed:
   it is a service setting on the workstation.
-- Ollama accepts and ignores upstream's default `extra_body` (`{"thinking":{"type":"disabled"}}`) —
+- Ollama accepts and ignores upstream's default `extra_body` (`{"thinking":{"type":"disabled"}}`);
   §4.2's "not checked" is now checked.
 - **§8's network caveat is stronger than written:** ai-jail 1.21.0 *refuses* `--allow-tcp-port`
   ("UDP cannot be isolated"), and `--lockdown` discards `--rw-map`. Loopback-only is not merely

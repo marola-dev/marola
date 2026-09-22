@@ -19,7 +19,7 @@
 A bot people query once is a novelty; a message that arrives at 18:00 saying "amanhã 07:00 na
 Joaquina: 82/100, água própria, baleias prováveis" is a habit. This MIP adds an opt-in daily
 digest per subscribed spot and activity, a persistent per-user preference store (the first one),
-Portuguese-first content, a one-tap "share this" text, and — the reach part — bathing-water
+Portuguese-first content, a one-tap "share this" text, and, the reach part, bathing-water
 providers for Rio de Janeiro and São Paulo so the water-quality feature works where most Brazilian
 swimmers are. Success metric: weekly retention of digest subscribers above 50% after four weeks.
 
@@ -28,7 +28,7 @@ swimmers are. Success metric: weekly retention of digest subscribers above 50% a
 Everything so far is pull. Adoption for a conditions product is driven by the push: surf and
 weather apps live on the morning notification. `FUTURE-WORK.md` §1.5 already sketched
 subscriptions; MIP-0003's precomputed boards make a digest nearly free to produce. And the single
-biggest feature of MIP-0001 — official water quality — currently covers one state; the bot will be
+biggest feature of MIP-0001, official water quality, currently covers one state; the bot will be
 shared by people in Rio and São Paulo within a week of existing.
 
 ## 3. User-visible change
@@ -49,11 +49,11 @@ Water quality shows for Rio and São Paulo beaches with the agency named (INEA /
 ## 4. Data sources and dependencies reviewed
 
 - **Telegram scheduled sends**: just `sendMessage` from a timer in the bot process; no Telegram
-  feature needed. Bots can message a chat that has messaged them first — subscription is
+  feature needed. Bots can message a chat that has messaged them first; subscription is
   consent.
 - **INEA (Rio de Janeiro) balneabilidade** and **CETESB (São Paulo) balneabilidade**: both publish
   weekly PRÓPRIA/IMPRÓPRIA per point under the same CONAMA 274 rule. **Not verified in this
-  session** — no endpoint, format or coordinates confirmed (INEA is known to publish PDF bulletins;
+  session**: no endpoint, format or coordinates confirmed (INEA is known to publish PDF bulletins;
   CETESB has a web portal). Per the `mip` skill rule these are *open questions*, not design inputs:
   each becomes a `WaterQualityClient` only after the same probing MIP-0001 §4.1 did for IMA.
 - **Preference storage**: `LocalFileUserPreferencesStore` (JSON-lines, like sightings) as the
@@ -68,7 +68,7 @@ Water quality shows for Rio and São Paulo beaches with the agency named (INEA /
   beach: read the MIP-0003 board if present, else run the pipeline once, then render with
   `Report` in the user's language and send. Batched per beach so a hundred subscribers to Joaquina
   cost one computation.
-- **Sharing**: `Report.shareCard(best)` — six lines, emoji, no markdown, under 400 characters, with
+- **Sharing**: `Report.shareCard(best)`: six lines, emoji, no markdown, under 400 characters, with
   "via marola" at the end. Forwardable; the cheapest growth loop there is.
 - **Portuguese-first content**: pt-BR entries in `sea_lore.json` (the `lang` field exists) and
   pt-BR corpus documents alongside the English ones (`knowledge/pt/`), selected by the user's
@@ -81,7 +81,7 @@ Water quality shows for Rio and São Paulo beaches with the agency named (INEA /
 
 ## 6. Scoring / safety impact
 
-None to scoring. Governance: a stored subscription is personal data — minimal fields, `/apagar`,
+None to scoring. Governance: a stored subscription is personal data, minimal fields, `/apagar`,
 and the store path documented in `TELEGRAM-SETUP.md`.
 
 ## 7. Verification plan

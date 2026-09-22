@@ -1,7 +1,7 @@
 # marola review rules
 
 The full rules are in `AGENTS.md` and `.claude/rules/*.md`; this file is the subset a reviewer
-can check from a diff. Report only findings that affect correctness, safety or a stated rule —
+can check from a diff. Report only findings that affect correctness, safety or a stated rule;
 not style, not restating what a linter (scalafmt, scalafix, ruff, actionlint, hadolint) already
 enforces.
 
@@ -11,7 +11,7 @@ enforces.
   placeholders only).
 - Anything that provisions or deploys a paid Azure resource, or adds a workflow step that could
   (`azd up`, `azd provision`, `az deployment`, `az group create`), without a human gate.
-- An Azure SDK import or reference in `core/` or `local/` — those modules carry zero Azure
+- An Azure SDK import or reference in `core/` or `local/`: those modules carry zero Azure
   dependency by design; Azure code lives in `azure/` only.
 - A caller typed to an implementation class (`LocalLlmClient`, `AzureVisionClient`) instead of
   its trait (`LlmClient`, `VisionClient`, `SightingStore`).
@@ -35,8 +35,9 @@ enforces.
 
 ## Context
 
-- Scala 3 on JDK 25 with Kyo (pre-1.0; the pinned version's API may differ from current docs —
+- Scala 3 on JDK 25 with Kyo (pre-1.0; the pinned version's API may differ from current docs;
   do not flag a call as "nonexistent" from memory).
 - Commit messages, not code comments, are where reasoning and evidence belong.
 - A change under `docs/mips/` is a design document; review it for internal consistency and
   unsourced external claims (prices, limits, licence terms), not for code.
+</content>

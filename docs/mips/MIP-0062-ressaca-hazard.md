@@ -17,8 +17,8 @@
 
 ## 1. Summary
 
-A *ressaca* — heavy surf driven onto the coast, worst when a spring tide and a southerly wind
-coincide — is the event that erodes Florianópolis's beaches and the one condition under which the
+A *ressaca* (heavy surf driven onto the coast, worst when a spring tide and a southerly wind
+coincide) is the event that erodes Florianópolis's beaches and the one condition under which the
 right advice is "do not go in". marola has the inputs (wave height and direction, swell, wind
 speed and direction, sea level) and no notion of it. This MIP adds a deterministic
 `ressacaRisk` to `Swimability`: a **veto** at the wave height at which the Brazilian Navy issues a
@@ -30,8 +30,8 @@ the national disaster registry. No model is involved anywhere.
 
 The prompt for this MIP is a video essay, *"Florianópolis vai afundar?"* (channel Elementar,
 2026-09-18, 11 min, https://www.youtube.com/watch?v=3nbNHs8Jq_s). Its argument, in summary: the
-2100 inundation maps make headlines, but the island is not subsiding — the ground failures it
-shows (two schools on soft clay, a road on landfill) are local engineering problems — and the real,
+2100 inundation maps make headlines, but the island is not subsiding (the ground failures it
+shows, two schools on soft clay and a road on landfill, are local engineering problems), and the real,
 present-day damage is coastal erosion from ressacas hitting the same beaches year after year, with
 emergency works destroyed within months and more than half of the municipal Civil Defense
 call-outs never reaching the national statistics. It explains the mechanism as a spring tide (full
@@ -72,7 +72,7 @@ The MCP tools and MIP-0061's agent show the same strings: they already relay `no
 ### 4.1 The video — watched as captions, 2026-09-19
 YouTube's automatic pt captions were read in full (kept locally, gitignored, not committed: the
 narration is the channel's work). **Used from it:** the framing above and the mechanism, which it
-attributes to Prof. Paulo Horta (UFSC). **Not used:** its figures — 72 occurrences on 17 beaches
+attributes to Prof. Paulo Horta (UFSC). **Not used:** its figures, 72 occurrences on 17 beaches
 2010–2024, 32 officially recognised, "55.6% under-reporting", R$ 141 M, Campeche 16 / Morro das
 Pedras 11 / Armação 7, 66 state records, seven municipalities in emergency in 2025, and the
 sea-level projections (24 cm by 2050, 65 cm by 2100). The description lists **no sources**, the
@@ -88,8 +88,8 @@ erosion), Florianópolis, 2010–2022. Findings used here: **9** emergency decre
 beaches, 5,058 people affected, R$ 140,023,990.54 (IGP-M, Dec 2022), most frequent in **May and
 September**; the 13 beaches (its Figure 1): Armação do Pântano do Sul, Balneário Açores, Barra da
 Lagoa, Campeche, Canasvieiras, Ingleses, Joaquina, Jurerê Internacional, Morro das Pedras, Praia
-Brava, Praia Mole, Caldeirão, Matadeiro. It names the drivers — storm tides, spring tides
-(*sizígia*), extratropical cyclones, meteorological tide — and concludes that the registry does
+Brava, Praia Mole, Caldeirão, Matadeiro. It names the drivers, storm tides, spring tides
+(*sizígia*), extratropical cyclones, meteorological tide, and concludes that the registry does
 not reflect what actually happens on the coast. This is evidently the predecessor of the study the
 video cites; its numbers are the ones this MIP uses.
 URL: https://files.abrhidro.org.br/Eventos/Trabalhos/190/III-END0080-2-0-20230124-211520.pdf
@@ -135,14 +135,14 @@ private def ressacaDelta(hour): (Int, Option[String], Boolean /* veto */)
 `BestHour` gains `ressacaRisk`; `bestHourToJson` and `Report` print it; MIP-0061's `hazards`
 needs no change because the note is already in `notes`.
 
-**Erosion record.** `data/coastal-erosion-record.json`: one row per beach from §4.2's Figure 1 —
-`{beach, osm_name_variants, source, period, url}` — matched to OSM beach names the way
+**Erosion record.** `data/coastal-erosion-record.json`: one row per beach from §4.2's Figure 1:
+`{beach, osm_name_variants, source, period, url}`, matched to OSM beach names the way
 `WaterQualityMatcher` matches sampling points. A matched beach gets one fixed sentence (§3),
 shown verbatim; it never changes the score. Beaches outside Florianópolis get nothing: absence of
 a row means "no record in this source", not "no erosion", and the note says which source.
 
 **Knowledge.** `knowledge/ressaca-and-coastal-erosion.md` for `OceanQa`: the mechanism, the
-months, the registry's blind spot — written from §4.2, each paragraph cited.
+months, the registry's blind spot, written from §4.2, each paragraph cited.
 
 ## 6. Scoring / safety impact
 
@@ -172,7 +172,7 @@ Catarina, compared by hand. Done = that comparison recorded in this file.
   constant is one line.
 - The erosion record is a registry of *declared disasters*, which the paper itself says undercounts.
   The note must not read as a ranking of dangerous beaches.
-- Spring tide by date ignores the meteorological tide a cyclone adds — the part that does the damage.
+- Spring tide by date ignores the meteorological tide a cyclone adds, the part that does the damage.
 
 ## 9. Alternatives considered
 
@@ -189,10 +189,10 @@ None.
 
 ## 11. Open questions
 
-1. The 2010–2024 UFSC study (72 occurrences, 17 beaches) — find it, then extend the record file.
+1. The 2010–2024 UFSC study (72 occurrences, 17 beaches), find it, then extend the record file.
 2. Read the Navy's criterion at source; is there any machine-readable channel (the PAM app's API)?
 3. Should the veto threshold be lower for beaches in the erosion record?
-4. Defesa Civil SC alerts as a second official signal — not checked.
+4. Defesa Civil SC alerts as a second official signal, not checked.
 
 ## Appendix
 

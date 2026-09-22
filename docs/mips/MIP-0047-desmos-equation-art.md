@@ -17,34 +17,34 @@
 
 ## 1. Summary
 
-marola's visual vocabulary becomes **equation-drawn**: a small set of illustrative motifs — a
+marola's visual vocabulary becomes **equation-drawn**: a small set of illustrative motifs, a
 trochoidal swell, a right-whale silhouette, a jellyfish, a two-constituent tide curve, a rip-current
-streamline pair — designed by tuning real equations in Desmos's free graphing calculator, then
+streamline pair, designed by tuning real equations in Desmos's free graphing calculator, then
 **brought home as the equations, not as the picture**, and rendered by a small in-repo script into
 the same inline SVG `<symbol>` sprite MIP-0046 introduces. Nothing from Desmos is fetched at runtime
 and no Desmos-exported file is committed; the shipped asset is marola's own rendering of marola's
-own formulae, MIT like the rest of the repo. §11 proposes one paragraph in `PHILOSOPHY.md` — with a
+own formulae, MIT like the rest of the repo. §11 proposes one paragraph in `PHILOSOPHY.md`, with a
 real call on what that paragraph may and may not claim.
 
 ## 2. Motivation
 
 The site has exactly one piece of artwork: the two-stroke wave in `index.html`'s `<h1>` and the
 filled `WAVE_PATH` marker it echoes (`app.js:172`). Everything else a visitor sees is data,
-chrome, or — until MIP-0046 lands — a system emoji. There is no illustration, and there is no rule
+chrome, or (until MIP-0046 lands) a system emoji. There is no illustration, and there is no rule
 about what an illustration here may be: a grep of `AGENTS.md`, `PHILOSOPHY.md`, `docs/*.md` and the
 `site-frontend` skill for `AI-generated|generated image|stock photo|illustration` returns exactly
 one hit, and it is the skill's own trigger phrase, not a policy (checked 2026-09-07).
 
 So the first illustration this repo commits also decides the category. Three options were actually
 open: a stock/AI-generated image, a hand-drawn vector, or a drawing that is a formula. The repo
-already has a strong opinion about the analogous question for *text* — "no unsourced text reaches a
-user", the `mip` skill's shortest rule — and no opinion at all about pictures. An equation-drawn
+already has a strong opinion about the analogous question for *text*: "no unsourced text reaches a
+user", the `mip` skill's shortest rule, and no opinion at all about pictures. An equation-drawn
 motif is the only one of the three whose review surface is a diff: `h_w = 0.42` changing to `0.31`
 is a reviewable line, and a re-run of the generator reproduces the artwork byte-for-byte. That is
 the *infra* argument, and it is the one that holds; §8 says plainly which stronger argument does not.
 
 The aesthetic argument is separate and also real: marola is about the sea, and the shapes the sea
-actually makes are the ones its physics writes down. A trochoid is not a decorative wave — it is
+actually makes are the ones its physics writes down. A trochoid is not a decorative wave: it is
 the wave (§5.1.1). Drawing the site's furniture from the same families the pipeline reasons about
 is the visual version of what `scoring/` already is.
 
@@ -52,13 +52,13 @@ is the visual version of what `scoring/` already is.
 
 No text, no number, no colour, no threshold changes. What changes is that the page has drawings.
 
-Today, `site/static/index.html` — the whole of the site's artwork:
+Today, `site/static/index.html`, the whole of the site's artwork:
 
 ```html
 <h1><svg …><path d="M2 9c2.5 0 2.5-2.5 5-2.5S9.5 9 12 9…"/>…</svg>marola</h1>
 ```
 
-After (the sprite MIP-0046 §5.1 introduces, extended — ids namespaced `art-` so the two sets never
+After (the sprite MIP-0046 §5.1 introduces, extended, ids namespaced `art-` so the two sets never
 collide with its 14 px functional marks):
 
 ```html
@@ -74,7 +74,7 @@ collide with its 14 px functional marks):
 </svg>
 ```
 
-Placements in v1 (two, deliberately few — §5.6): the swell as a full-width rule under the header,
+Placements in v1 (two, deliberately few, §5.6): the swell as a full-width rule under the header,
 replacing nothing; the whale, jellyfish or rip as the illustration of the empty/loading state the
 map shows before a board arrives, where there is currently blank panel. Everything else waits for
 MIP-0044's sections to exist.
@@ -92,7 +92,7 @@ localization strings `account-shell-button-download-png = Download PNG`,
 Format`. So a keyless, free SVG export genuinely exists.
 
 **It is still not what gets committed**, and the reason is licensing, not convenience. Desmos's
-Terms of Service (fetched 2026-09-07 — the page is a JS shell, so the text was read out of
+Terms of Service (fetched 2026-09-07, the page is a JS shell, so the text was read out of
 `/assets/build/frontpage/terms-967a1656….js`) says two things that matter, and they point in
 opposite directions:
 
@@ -107,11 +107,11 @@ opposite directions:
 Read together: **the equations come home under the author's own copyright; the exported picture
 comes home under CC-BY-SA-4.0 with a Desmos attribution.** This repo is MIT (`LICENSE`, "MIT
 License, Copyright (c) 2026 Matheus Hoffmann"). Committing a Desmos-exported SVG would put a
-share-alike, attribution-bearing asset inside an MIT tree — a real obligation, not a formality, and
+share-alike, attribution-bearing asset inside an MIT tree, a real obligation, not a formality, and
 one that would have to be tracked in a NOTICE for the life of the file. Re-rendering the author's
 own equations in-repo avoids it entirely and costs one small script (§5.4). §5 of the same terms
 also restricts the Desmos *Tools* to "personal, non-commercial use"; marola is a free personal
-project with no paid tier, so authoring there is inside that limit today — worth re-reading if that
+project with no paid tier, so authoring there is inside that limit today, worth re-reading if that
 ever changes.
 
 ### 4.2 The Desmos JS API (`calculator.js`) and `asyncScreenshot` — reviewed, rejected (§9.1)
@@ -125,7 +125,7 @@ ever changes.
   either a URI string or SVG string as its argument … the ability to output SVG in addition to PNG
   images. … `opts.format` String that determines the format of the generated image. May be either
   `'png'` or `'svg'`. Defaults to `'png'`." It operates on a *live calculator instance in a page*,
-  so any programmatic use means a headless browser — a dependency this repo does not have and this
+  so any programmatic use means a headless browser, a dependency this repo does not have and this
   MIP does not add.
 - **The API's own terms are stricter than the calculator's.** `https://www.desmos.com/api-terms`
   (same JS-shell trick, fetched 2026-09-07): a free "Trial Tier" whose limit is "solely for (a)
@@ -153,13 +153,13 @@ Two candidates from the same searches were checked and **failed**: `Jellyfish Gr
 renders an empty grid. Both are named plausibly and neither draws anything; they are recorded here
 because the failure mode of this section is citing a title.
 
-**Licensing of the above — the finding that decides §9.3.** Desmos's ToS §6 assigns ownership of a
+**Licensing of the above: the finding that decides §9.3.** Desmos's ToS §6 assigns ownership of a
 user's submissions to *that user*. The CC-BY-SA carve-out in §5 authorizes **you** to distribute
 Content generated from **your** submissions; nothing in the terms grants one user a licence to
 another user's graph, and "public" on Desmos means visible, not licensed. So these five graphs are
 cited as prior art and inspection material only. The one thing taken from them is a *fact about
-mathematics* — the trochoid parametrization, published by Gerstner in 1802 and in every coastal-
-engineering text — which is not anyone's expression to license.
+mathematics*, the trochoid parametrization, published by Gerstner in 1802 and in every coastal-
+engineering text, which is not anyone's expression to license.
 
 ### 4.4 The renderer: Python 3 stdlib, already in the shell
 
@@ -172,45 +172,45 @@ nothing else. No new dependency, no `flake.nix` change.
 
 ### 5.1 The five motifs, and the actual mathematics behind each
 
-Each is a real family a human can build in Desmos in an evening — parameters below are starting
+Each is a real family a human can build in Desmos in an evening: parameters below are starting
 points to tune, not results.
 
-**5.1.1 `art-swell` — a trochoidal wave train.** Parametric, one curve:
+**5.1.1 `art-swell`: a trochoidal wave train.** Parametric, one curve:
 `x(t) = (L/2π)·t − h·sin t`, `y(t) = h·cos t`, `t ∈ [0, 2πn]` for `n` crests. This is the trochoid
-(Gerstner) surface: sharp crests, broad flat troughs — visibly *not* a sine, which is the whole
+(Gerstner) surface: sharp crests, broad flat troughs, visibly *not* a sine, which is the whole
 point, because a sine is what a generic wave graphic is. Two or three trains superposed at
 different `(L, h)` and offset vertically give the layered-swell band; the sea is a spectrum, not one
 wave, so the superposition is the honest drawing. Verified prior art: `rqvqvf6uy8` (§4.3). Deep
 water relates `L` to period by `L = gT²/2π`, and the board already carries `sea.period_s` and
-`wave_m` per beach — see §11 for why v1 does **not** make the drawing data-driven.
+`wave_m` per beach, see §11 for why v1 does **not** make the drawing data-driven.
 
-**5.1.2 `art-whale` — a southern right whale silhouette** (the species `knowledge/whales-santa-
-catarina.md` is about). Body: a superellipse `|x/a|^n + |y/b|^n = 1` with `n ≈ 2.6` — blunter than
+**5.1.2 `art-whale`: a southern right whale silhouette** (the species `knowledge/whales-santa-
+catarina.md` is about). Body: a superellipse `|x/a|^n + |y/b|^n = 1` with `n ≈ 2.6`, blunter than
 an ellipse, which is exactly the right whale's shape, and the one parameter that separates it from
 a dolphin. Fluke: two lobes of the rose `r(θ) = c·sin 2θ` rotated onto the tail root. Head
 callosity: a small circle differenced out of the outline near `x = −a`. Drawn as one closed
 parametric outline so it fills as a silhouette. Honest: the fluke-as-rose-lobe is a design bet, and
 `gaeav8oi2q` (§4.3) is evidence that whales cost more expressions than one expects.
 
-**5.1.3 `art-jelly` — a jellyfish.** Bell: the upper half of a lobe-modulated circle,
-`r(θ) = a(1 − ε·cos 4θ)`, `θ ∈ [0, π]`, `ε ≈ 0.12` — a dome with four soft scallops, not a rose;
+**5.1.3 `art-jelly`: a jellyfish.** Bell: the upper half of a lobe-modulated circle,
+`r(θ) = a(1 − ε·cos 4θ)`, `θ ∈ [0, π]`, `ε ≈ 0.12`, a dome with four soft scallops, not a rose;
 a true rose (`r = a sin kθ`) makes a flower, which is the mistake this note exists to avoid.
 Tentacles: `k` damped, phase-shifted sinusoids hanging from the rim,
 `y_j(s) = −s`, `x_j(s) = x_j0 + A·e^(−λs)·sin(ω s + jφ)`, `s ∈ [0, S]`, with `A` and `S` varying per
 strand so they do not read as a comb. Evidence: `a83ylfdj0s` uses restricted phase-shifted
 sinusoids for exactly this and it works.
 
-**5.1.4 `art-tide` — a real tide curve, not a sine.** `h(t) = A_M2·cos(2πt/T_M2 + φ₁) +
+**5.1.4 `art-tide`: a real tide curve, not a sine.** `h(t) = A_M2·cos(2πt/T_M2 + φ₁) +
 A_S2·cos(2πt/T_S2 + φ₂)` over `t ∈ [0, 30] h`, with `T_M2 ≈ 12.42 h` (principal lunar semidiurnal)
 and `T_S2 = 12.00 h` (principal solar semidiurnal). NOAA's own page (fetched 2026-09-07) states M2
 "has 2 peaks every 24-hours and 50 minutes" and S2 "2 peaks every 24-hours", which is where those
 two periods come from. With `A_M2 ≈ 2·A_S2` the sum gives the unequal successive highs a real tide
-has and a single sinusoid cannot — the drawing is the same harmonic model tide prediction uses, at
+has and a single sinusoid cannot: the drawing is the same harmonic model tide prediction uses, at
 two terms.
 
-**5.1.5 `art-rip` — a rip current, as streamlines.** Level curves of a stream function for uniform
+**5.1.5 `art-rip`: a rip current, as streamlines.** Level curves of a stream function for uniform
 onshore flow plus a sink at the rip neck: `ψ(x, y) = U·y − (m/2π)·arctan(y/x)`; plot two or three
-level sets `ψ = c_k`. They converge into a narrow seaward jet and spread into the head — the shape
+level sets `ψ = c_k`. They converge into a narrow seaward jet and spread into the head: the shape
 `knowledge/safety/rip-currents.md` describes in words. This is the one motif that could later carry
 meaning rather than mood, and the one to draw most carefully, because a decorative safety diagram
 that misleads is worse than none (§8).
@@ -226,7 +226,7 @@ Only numbers and formulae, in one checked-in file, `site/equations.json`:
       "stroke": 2, "fill": null } ] } }
 ```
 
-The expression strings are evaluated by the generator against a whitelisted `math`-only namespace —
+The expression strings are evaluated by the generator against a whitelisted `math`-only namespace:
 no `eval` of arbitrary Python, which is the one security note this file carries (a `site/` data file
 is not attacker-controlled here, but a generator that `eval`s is a bad habit to install).
 
@@ -235,7 +235,7 @@ is not attacker-controlled here, but a generator that `eval`s is a bad habit to 
 The generator handles **explicit parametric curves** `x(t), y(t)` and closed outlines built from
 them. It does **not** handle Desmos's implicit/inequality forms (`4 ≥ (x−4)² + (y−2)²`,
 `−y² + 2x ≥ −8 {x < −2}`), which is how much of the prior art in §4.3 is actually written, nor
-Desmos's automatic domain restrictions. There is **no lossless equation-to-SVG-path pipeline** —
+Desmos's automatic domain restrictions. There is **no lossless equation-to-SVG-path pipeline**:
 any claim of one would be wrong. A drawing sketched with inequalities in Desmos has to be
 re-expressed parametrically by its author before it can come home. That is real authoring friction
 and it is the reason §5.1 chose five motifs that are naturally parametric.
@@ -251,15 +251,15 @@ when it is stale (`AGENTS.md`, `scripts/mip_graph.py`). This follows it exactly:
 
 - `just equation-art` regenerates the block.
 - `python3 scripts/equation_art.py --check` fails if the committed block does not match what
-  `site/equations.json` produces — added to `quality-other` beside the other six self-tests.
+  `site/equations.json` produces, added to `quality-other` beside the other six self-tests.
 - `python3 scripts/equation_art.py --self-test` covers the sampler (a circle's path closes, a known
-  trochoid's crest lands where the closed form says) — the `--self-test` convention `quality-other`
+  trochoid's crest lands where the closed form says), the `--self-test` convention `quality-other`
   already enforces on every other `scripts/*.py`.
 
 **No CI change and no build step.** The generated markup is committed inside `index.html`, which is
 already on `site.yml`'s publish allowlist (`site.yml:162-170`: `index.html app.js style.css chat.js
 chatbot-config.js CNAME` plus `vendor/ data/ smoke/ coverage/`, `exit 1` on anything else). Nothing
-new lands in `site/dist`, so the allowlist is untouched — the same reason MIP-0046 §4.1 picked an
+new lands in `site/dist`, so the allowlist is untouched: the same reason MIP-0046 §4.1 picked an
 inline sprite over a separate `icons.svg`. The generator runs on a human's machine, like
 `just mip-graph`, and `--check` is what keeps it honest.
 
@@ -278,7 +278,7 @@ nothing else.
 
 Two placements only, both on the existing page: the swell band under the header, and one motif in
 the map's empty/loading state. MIP-0044's `/about/`, `/news/` and `/dev/` sections are the natural
-home for the rest — a section header per motif — and that is where the remaining three go once it
+home for the rest, a section header per motif, and that is where the remaining three go once it
 lands. Shipping five illustrations onto a one-page map would be exactly the "decorated" look
 MIP-0046 is removing.
 
@@ -286,7 +286,7 @@ MIP-0046 is removing.
 
 None. No board field, no threshold, no note text, no `Swimability` call, no LLM. One caveat that is
 about safety even though the code is not: `art-rip` (§5.1.5) draws a hazard. It must never sit next
-to a beach's own numbers where it could read as "the rip is here" — it is a motif for a knowledge
+to a beach's own numbers where it could read as "the rip is here": it is a motif for a knowledge
 or about section, never a map overlay. Stated here so a later PR cannot quietly promote it.
 
 ## 7. Verification plan
@@ -296,7 +296,7 @@ or about section, never a map overlay. Stated here so a later PR cannot quietly 
   every `art-*` id referenced by a `<use>` resolves to a `<symbol id>` present in `index.html` (the
   generalized form of the assertion MIP-0046 §7 adds for `i-*`).
 - `ruff check .` / `ruff format --check .` on the new script.
-- `just site-build floripa && just site-serve`, then **screenshots at 390 px and 1280 px** — the
+- `just site-build floripa && just site-serve`, then **screenshots at 390 px and 1280 px**: the
   `site-frontend` step-6 rule and the only check that can see whether a motif is any good.
 - Reproducibility check, which is the whole claim: `just equation-art` twice from a clean tree
   produces a byte-identical `index.html`.
@@ -314,61 +314,61 @@ or about section, never a map overlay. Stated here so a later PR cannot quietly 
 - **The philosophy claim has a ceiling, and here it is.** It is true that an equation-drawn asset is
   deterministic and reproducible, and true that its source is inspectable in a way a raster is not.
   It is **not** true that this makes it "sourced, never invented" in the sense `PHILOSOPHY.md` and
-  the `mip` skill use those words. That rule is about *facts shown to a user* — a wave height, a
-  water-quality verdict, a line of lore — and an illustration asserts no fact. Stretching Pillar 2
+  the `mip` skill use those words. That rule is about *facts shown to a user*, a wave height, a
+  water-quality verdict, a line of lore, and an illustration asserts no fact. Stretching Pillar 2
   ("the deterministic parts kept deterministic", which is about the scoring path) to cover a
   decorative whale would be the kind of inflation `PHILOSOPHY.md`'s own "What this is not" section
-  exists to prevent. §11's proposed paragraph therefore claims the narrow thing — *the source of a
-  picture can be a formula, and then review is a diff* — and not the wide one.
+  exists to prevent. §11's proposed paragraph therefore claims the narrow thing: *the source of a
+  picture can be a formula, and then review is a diff*, and not the wide one.
 - **Authoring is manual and unattributed.** Desmos is a sketchpad, so the record of *how* a curve
   was tuned is the parameters in `site/equations.json` and nothing else; there is no saved graph the
   repo can point at unless the author chooses to publish one (and publishing it makes it a User
   Submission under §4.1's terms, which is fine, but it is a choice, not a requirement).
-- **`art-rip` can mislead** — §6.
+- **`art-rip` can mislead**, §6.
 - **Sampling artefacts.** 240 points on a trochoid is smooth at 240 px and visibly polygonal at
   1200 px. The `samples` figure is per-motif and per-placement, and the swell band is the one most
   likely to be scaled up by MIP-0044.
 - **One file, two generators.** After MIP-0046, `index.html` holds a hand-written sprite block; after
   this, a generated one too, inside the same `<svg class="sprite">`. Whoever edits by hand inside
-  the `equation-art` markers will have it silently overwritten — the `--check` gate catches it in
+  the `equation-art` markers will have it silently overwritten: the `--check` gate catches it in
   `quality-other`, before push, which is why it is a gate rather than a comment.
 
 ## 9. Alternatives considered
 
-**9.1 Embed the live Desmos calculator (`calculator.js`) in the page — rejected, firmly.** It is a
+**9.1 Embed the live Desmos calculator (`calculator.js`) in the page: rejected, firmly.** It is a
 third-party runtime script on a page whose CSP is `default-src 'self'` with no `script-src` opening
 and whose own source comment says "script-src/object-src stay locked to same-origin: this page loads
 no third-party script" (`index.html:13-14`, read 2026-09-07). It would need an API key in the page
 (§4.2: 403 without one), it would put a personal-non-commercial Trial Tier term on a public site, it
 forbids obscuring Desmos branding, and it would make every visitor download a calculator engine to
-look at a picture — against a vendored Leaflet of 147,552 bytes for the entire map. MIP-0044 §4
+look at a picture, against a vendored Leaflet of 147,552 bytes for the entire map. MIP-0044 §4
 found the generated scaladoc pages already breaking the "no third-party script" claim and treats
 that as a bug to fix; adding a second violation on purpose, in the same session, would be
 incoherent.
 
-**9.2 Vendor Desmos's own SVG export (`asyncScreenshot`, or the UI's Download SVG) — rejected.**
+**9.2 Vendor Desmos's own SVG export (`asyncScreenshot`, or the UI's Download SVG): rejected.**
 It works and it is free (§4.1, §4.2), but distributing that output is licensed to the author under
 CC-BY-SA-4.0 with a Desmos attribution, inside an MIT repo. A share-alike asset with a permanent
 NOTICE obligation, to avoid writing 200 lines of Python, is a bad trade. The programmatic path
 additionally needs a headless browser and an API key.
 
-**9.3 Adapt the equations from an existing public graph (e.g. `gaeav8oi2q`'s whale) — rejected.**
+**9.3 Adapt the equations from an existing public graph (e.g. `gaeav8oi2q`'s whale): rejected.**
 Desmos's ToS §6 gives ownership of a submission to the user who made it, and grants no user-to-user
 licence; public means visible, not reusable. The graphs in §4.3 are cited as prior art and as
 evidence that the technique works. The trochoid parametrization is taken as mathematics, not as
 anyone's artwork.
 
-**9.4 Hand-draw the motifs in a vector editor — the real alternative, rejected on review surface.**
+**9.4 Hand-draw the motifs in a vector editor: the real alternative, rejected on review surface.**
 It is faster and probably prettier. It gives up the property this MIP is actually for: a change is a
 number in a diff, and the artwork is reproducible from the repo. Note this is *not* a rejection of
-hand-drawing in general — MIP-0046's twelve 14 px marks stay hand-drawn, and §5.5 says why.
+hand-drawing in general: MIP-0046's twelve 14 px marks stay hand-drawn, and §5.5 says why.
 
-**9.5 An AI-generated illustration — rejected.** It is the fastest option and it is the one thing
+**9.5 An AI-generated illustration: rejected.** It is the fastest option and it is the one thing
 this repo's entire culture argues against for text: an artefact nobody can check, whose provenance
 is a prompt, which cannot be reproduced or reviewed. The site-frontend skill exists because a page
 "looks AI-generated" is already treated here as a defect.
 
-**9.6 Do nothing — a serious option.** The page is disciplined and MIP-0046 makes it more so; a site
+**9.6 Do nothing: a serious option.** The page is disciplined and MIP-0046 makes it more so; a site
 with no illustrations is not broken. Rejected because the request is explicit, and because §5.6's
 v1 is two placements, which is close enough to "nearly nothing" that the do-nothing case is mostly
 answered by scope.
@@ -380,17 +380,17 @@ None. This is presentation. It touches no AI-103 or AI-500 row, and claiming one
 ## 11. Open questions
 
 1. **Should the swell be data-driven?** The board carries `sea.period_s` and `wave_m` per beach, and
-   deep water gives `L = gT²/2π` — so the header band *could* be drawn from today's actual swell.
+   deep water gives `L = gT²/2π`, so the header band *could* be drawn from today's actual swell.
    That is a genuinely good idea and a different MIP: it turns an illustration into a data display,
    which brings the honesty rules with it (what is drawn when there is no data?). v1 is static.
    Proposal: static now, revisit after MIP-0042's live-map work has an opinion.
 2. **Five motifs or one?** §8's fallback. A human should look at the first one before the other four
    are drawn.
-3. **Where does `art-rip` live** — a knowledge/safety page (MIP-0044 §5.5) or nowhere in v1?
+3. **Where does `art-rip` live**: a knowledge/safety page (MIP-0044 §5.5) or nowhere in v1?
    Proposal: nowhere in v1, per §6.
-4. **`PHILOSOPHY.md` — the call, made.** Yes, this earns a paragraph, and no, it does not go in this
+4. **`PHILOSOPHY.md`: the call, made.** Yes, this earns a paragraph, and no, it does not go in this
    change. The connection that is real is the one `PHILOSOPHY.md` already makes about everything
-   else — *the gate is there by construction, not by discipline* — applied to pictures: an
+   else, *the gate is there by construction, not by discipline*, applied to pictures: an
    equation-drawn asset carries its own source, so reviewing it is reading a diff and reproducing it
    is running a script, whereas a raster (drawn, photographed or generated) can only be looked at
    and believed. The connection that is **not** real is the Pillar 2 / "sourced, never invented"
@@ -410,7 +410,7 @@ None. This is presentation. It touches no AI-103 or AI-500 row, and claiming one
    separable from implementation.
 5. **Reciprocal cross-references.** This MIP's "see also" line landed in `MIP-0009` on this branch.
    MIP-0046 is still unmerged on `docs/mip-0046-remove-ai-slop-ui`, so its pointer back to this MIP
-   has to be added on that branch (or after it merges) — noted rather than done, to avoid editing
+   has to be added on that branch (or after it merges), noted rather than done, to avoid editing
    another draft's branch.
 
 ## Appendix
@@ -484,12 +484,12 @@ None. This is presentation. It touches no AI-103 or AI-500 row, and claiming one
 ### Not checked
 
 - **No browser was opened and no curve was sampled.** Every visual claim in §3 and §5.1 is written,
-  not run — including whether a 240-point trochoid path looks smooth, and whether a superellipse
+  not run: including whether a 240-point trochoid path looks smooth, and whether a superellipse
   with `n = 2.6` reads as a right whale rather than a blob.
 - Whether Desmos's own SVG export is true vector paths or an embedded raster: not verified, no file
   was produced. §9.2 rejects that path on licence, which does not depend on the answer.
 - Whether graphing on desmos.com without an account is possible (as opposed to *saving*): assumed
-  from the calculator page loading anonymously, not confirmed against a Desmos statement — the help
+  from the calculator page loading anonymously, not confirmed against a Desmos statement: the help
   centre is behind Cloudflare (above).
 - `saved-work.desmos.com/calc-states/production/<id>` is **undocumented**; it returned the states
   quoted above today, and may change or disappear without notice. Nothing in §5 depends on it.

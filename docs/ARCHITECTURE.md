@@ -2,12 +2,12 @@
 
 **Status:** POC pipeline plus six pluggable local/Azure integrations, all implemented and
 compiling; most exercised live (see the per-feature "Verified" notes in §3). No Azure resources
-provisioned, no Telegram bot registered yet — everything Azure-flagged below is real, correct
+provisioned, no Telegram bot registered yet. Everything Azure-flagged below is real, correct
 client code checked against real SDKs/API references, not yet run against a live Azure account.
 
-Related docs: [`FUTURE-WORK.md`](./FUTURE-WORK.md) (multi-activity support — diving, surfing, any
+Related docs: [`FUTURE-WORK.md`](./FUTURE-WORK.md) (multi-activity support: diving, surfing, any
 sea-related activity; three reviewed-not-adopted/deferred dependencies; evaluation-harness ideas),
-[`EFFECTS-MAP.md`](./EFFECTS-MAP.md) (a Scala/FP-purity review — what's pure, what's `< Sync`, and
+[`EFFECTS-MAP.md`](./EFFECTS-MAP.md) (a Scala/FP-purity review: what's pure, what's `< Sync`, and
 the one hidden untracked effect worth knowing about), [`RUN-LOCALLY.md`](./RUN-LOCALLY.md) (a
 step-by-step guide to running the whole pipeline with a small local Ollama model, no Telegram, no
 Azure), and [`TELEGRAM-SETUP.md`](./TELEGRAM-SETUP.md) (registering the bot and configuring
@@ -22,10 +22,10 @@ optional, not a bootstrap-only stand-in.
 
 marola is the ocean intelligence layer for a stretch of coast; its first use case (this MVP) is:
 
-**MVP hypothesis:** a Telegram message — "what's the best hour tomorrow to swim nearby?" — gets
+**MVP hypothesis:** a Telegram message ("what's the best hour tomorrow to swim nearby?") gets
 back a ranked list of nearby open-water swim spots, each with its best hour tomorrow, sea
 temperature, wind, wave height, a jellyfish-likelihood heuristic, and (informational, not
-safety-relevant — see §8) a whale-sighting-likelihood heuristic, backed by live marine/weather data
+safety-relevant; see §8) a whale-sighting-likelihood heuristic, backed by live marine/weather data
 and a Telegram-native location share, not a typed-in address.
 
 **Non-goals for the POC:** multi-day forecasts, saved/favorite spots, push notifications
@@ -47,10 +47,10 @@ Telegram wins on every axis that matters for this use case. **Decision: Telegram
 
 ## 3. What's actually built
 
-A real, runnable pipeline plus six independently pluggable local/Azure integrations — no mocks,
+A real, runnable pipeline plus six independently pluggable local/Azure integrations: no mocks,
 no stubs pretending to be real:
 
-Four sbt modules at the repo root — `core`, `local`, `azure`, `cli` (see `FUTURE-WORK.md` §7.3 for
+Four sbt modules at the repo root: `core`, `local`, `azure`, `cli` (see `FUTURE-WORK.md` §7.3 for
 why, and the dependency-inversion fix that keeps `core` free of any Azure reference):
 
 ```
@@ -150,8 +150,8 @@ daylight); confirmed against live September daytime data instead: `06:00-10:00` 
 **Where "nearby" is measured from.** `Main` resolves the origin in this order and prints which one
 it used on the `origin ->` line:
 
-1. `--lat`/`--lon` flags (both required — one without the other is ignored with a warning).
-2. `--location-url <url>`: a Google Maps pin — the `/@lat,lon` viewport, `q=`/`query=`/`ll=`, or the
+1. `--lat`/`--lon` flags (both required: one without the other is ignored with a warning).
+2. `--location-url <url>`: a Google Maps pin, the `/@lat,lon` viewport, `q=`/`query=`/`ll=`, or the
    `!3dlat!4dlon` of a place URL (`Coordinates.fromMapsUrl`, pure, `CoordinatesSpec`). A short
    `maps.app.goo.gl` link has to be expanded first (`curl -sIL`); an unreadable URL warns and is
    ignored.
@@ -165,23 +165,23 @@ it used on the `origin ->` line:
    landed in the centro, and the island's beaches came back.
 4. The built-in Arpoador default, only if no provider answered at all (offline).
 
-No Azure setup, no Telegram token are needed for any of the above — every integration defaults to
+No Azure setup, no Telegram token are needed for any of the above. Every integration defaults to
 free/local, see §5's table.
 
 ## 3b. Two different uses of AI today, a third planned — deliberately not one
 
 marola runs AI in two places that answer to different rules, and conflating them is the easiest way
-to misread the codebase. The distinction is not stylistic — it decides what may be wrong, and how
+to misread the codebase. The distinction is not stylistic: it decides what may be wrong, and how
 you would find out. A third use is designed but not built, and is kept separate from both for the
 same reason.
 
 **The map is deterministic. No model writes any number a visitor sees.** The board is built by
-`cli/src/main/scala/marola/site/SiteBuilder.scala`, which contains no LLM reference at all — grep
+`cli/src/main/scala/marola/site/SiteBuilder.scala`, which contains no LLM reference at all. Grep
 it. Every value on the map comes from a measured source or a pure function over one: Open-Meteo
 for sea temperature, wind and waves, OSM/Overpass for the beaches, trails and facilities, the
 agency PDF parsers (INEA/RJ, INEMA/BA, IMA/SC) for water quality, and `Tides` for the tide curve.
 The score and the water sentence in each card come from `core/.../scoring/Swimability.scala`'s
-`score`, an ordinary function with no effect type — the same inputs give the same board, on any
+`score`, an ordinary function with no effect type: the same inputs give the same board, on any
 machine, forever. A wrong number there is a bug with a stack trace, not a hallucination, and
 `SwimabilitySpec` can pin it.
 
@@ -190,10 +190,10 @@ answers questions through `config.llmClient` grounded on `config.knowledgeStore`
 `knowledge/*.md`), and the model behind it can be marola's own: marola-sea, a QLoRA SFT + tool-call
 SFT + DPO fine-tune of an open base, served through Ollama (MIP-0025, `finetune/`). Point
 `MAROLA_LOCAL_LLM_MODEL` at it and the chat runs on a model trained on marola's corpus. This half
-*is* generative, so it gets the treatment generative output needs — which is the third piece:
+*is* generative, so it gets the treatment generative output needs, which is the third piece:
 
 **Around that model sit a judge and tools, not trust.** `core/.../llm/Reviewer.scala` is a second,
-separate LLM pass whose only job is to grade the first one's draft before a user sees it — the
+separate LLM pass whose only job is to grade the first one's draft before a user sees it. The
 LLM-as-judge pattern, and its own docstring explains why a model grading itself in the same call
 catches less. `cli/.../agent/SwimConditionsMcpServer.scala` exposes the deterministic half to
 agents as four MCP tools (`find_nearby_beaches`, `get_swim_recommendation`, `get_water_quality`,
@@ -203,26 +203,26 @@ labelled, never invented" rule are the same instinct.
 
 So: **measured data rendered deterministically on the map; a fine-tuned open model in the chat,
 fenced by a judge, a corpus and tools.** When something looks wrong, that split tells you where to
-look — a bad map value is a parser or a scoring bug, a bad chat answer is a model, a retrieval or a
+look: a bad map value is a parser or a scoring bug, a bad chat answer is a model, a retrieval or a
 prompt problem. It is also why the map needs no GPU, no token and no network beyond the free APIs,
 while the chat is the only part that depends on a model at all.
 
 ### Use 3, planned: forecasting with time-series foundation models
 
 Neither of the two above predicts anything. The map reports what the agencies and Open-Meteo
-measured; the chat explains it. A third use — **forecasting marola's own accumulated series with a
-pretrained time-series transformer** — is designed in
+measured; the chat explains it. A third use, **forecasting marola's own accumulated series with a
+pretrained time-series transformer**, is designed in
 [MIP-0007](./mips/MIP-0007-time-series-foundation-models.md), prompted by Nixtla's TimeGPT, with
 the open-weight models (Chronos, TimesFM, Moirai) as the local-first candidates and TimeGEN-1 via
 Azure AI Foundry as the opt-in cloud path, consistent with the six-integration pattern in §5.
 
 It is a genuinely different shape from both: not a language model at all, but a numeric forecaster
-run zero-shot over a history — the kind of thing that could calibrate the jellyfish and whale
+run zero-shot over a history: the kind of thing that could calibrate the jellyfish and whale
 heuristics (§8) against real accumulated reports instead of the hand-tuned thresholds they use
 today.
 
 **Deliberately not started.** MIP-0007 is Draft, Phase 4, and parked on purpose: it needs weeks of
-marola's own series before any backtest is meaningful, and the MIP states its own risk plainly —
+marola's own series before any backtest is meaningful, and the MIP states its own risk plainly:
 zero-shot foundation models may simply lose to "last result persists" on series this small and
 noisy. Only the accumulation is worth doing now. That honesty is the point of listing it here as a
 third *use*: when it arrives it will be a third thing that can be wrong in a third way, and it
@@ -248,11 +248,11 @@ flowchart TD
 
 `SwimConditionsMcpServer` (§5c) exposes `BeachFinder`/`Recommender` as MCP tools for any MCP client
 (Claude Desktop locally, or a Foundry agent once deployed) to call directly, as an alternative
-entry point to the hardcoded pipeline above — not shown in the diagram since it's a parallel access
+entry point to the hardcoded pipeline above. Not shown in the diagram since it's a parallel access
 path, not a stage in this one.
 
 Tracing (§5f) wraps the pipeline in a `marola.recommend` span and each LLM call in an `llm.<model>`
-span when configured — cross-cutting, not shown as a pipeline stage.
+span when configured; cross-cutting, not shown as a pipeline stage.
 
 Cross-cutting: rate limiting (per Telegram user ID) and a cost-governor check before any paid call,
 built early, not bolted on.
@@ -277,32 +277,32 @@ configured (so `Main` can fail gracefully with a clear message rather than a sta
 
 ### 5a. Query synthesis — `llm/`
 
-The ranked list in §3 is already useful without an LLM in the loop — every number comes straight
+The ranked list in §3 is already useful without an LLM in the loop. Every number comes straight
 from real data and a deterministic heuristic. The LLM's job is narrower: turn the winning row into
 one or two natural-language sentences, not decide the ranking itself. Keeping the ranking
 deterministic and outside the model is deliberate: let the model do the part only it's good at, and
 keep anything safety/correctness-sensitive in plain, testable code.
 
 **The DSPy step** (`dspy/compile_recommendation_prompt.py`) optimizes the prompt that does
-that summarization — a `dspy.Signature` over the structured `BestHour` fields (including
+that summarization: a `dspy.Signature` over the structured `BestHour` fields (including
 `whale_sighting_likelihood`), compiled offline with `dspy.teleprompt.BootstrapFewShot` against a
 small hand-labeled trainset, using a metric that rewards mentioning jellyfish risk when
-Moderate/High (weighted heavily) and whale sighting likelihood when Moderate/High (weighted lower —
+Moderate/High (weighted heavily) and whale sighting likelihood when Moderate/High (weighted lower:
 a nice-to-know, per the Signature's own instruction not to let it crowd out the jellyfish/
 conditions takeaway). `.compile(...).save(...)` produces a JSON artifact (instructions + few-shot
 demos, not weights) at `core/src/main/resources/recommendation_prompt.json`.
 
 **`llm/CompiledPrompt.scala`** loads that JSON and turns it into a plain chat message list any
-`LlmClient` can replay — a good-faith replication of DSPy's own `ChatAdapter` format (instructions
+`LlmClient` can replay: a good-faith replication of DSPy's own `ChatAdapter` format (instructions
 as the system message, each demo as a user/assistant pair, the real input as the final turn), not a
 byte-identical replay (DSPy's internal adapter formatting isn't accessible from Scala). The JSON
-schema this parses was not guessed — it's the real, confirmed output of `dspy.Predict(...).save()`
+schema this parses was not guessed: it's the real, confirmed output of `dspy.Predict(...).save()`
 against a live `dspy==3.3.1` install (see the Status note below).
 
-**`llm/LlmClient.scala`** is the trait both backends implement — `LocalLlmClient` (an
+**`llm/LlmClient.scala`** is the trait both backends implement: `LocalLlmClient` (an
 OpenAI-compatible endpoint, e.g. Ollama's `/v1/chat/completions`) and `AzureFoundryLlmClient` (a
 plain REST chat-completions call against a Foundry/Azure OpenAI deployment, authenticated via
-`DefaultAzureCredential` — deliberately *not* the full `azure-ai-agents` SDK, which is reserved for
+`DefaultAzureCredential`, deliberately *not* the full `azure-ai-agents` SDK, which is reserved for
 §5c's actual agent orchestration). `AppConfig.llmClient` picks one based on `MAROLA_LLM_PROVIDER`
 (default `local`).
 
@@ -311,40 +311,40 @@ plain REST chat-completions call against a Foundry/Azure OpenAI deployment, auth
 alongside the summarizer in the same `compile_recommendation_prompt.py` run, saved separately to
 `review_prompt.json`) checks the draft summary against the same jellyfish/whale mention policy plus
 a hallucination check (does it assert anything not in the given facts), and returns a `0-100`
-score, a `verdict` (`approve`/`revise`), and a `final_summary` — the reviewer's own correction when
+score, a `verdict` (`approve`/`revise`), and a `final_summary`: the reviewer's own correction when
 `revise`. `CompiledPrompt` was generalized to support this: it now takes an explicit `outputField`
 name (`"summary"` for the summarizer, `"review_json"` for the reviewer) rather than hardcoding
 `"summary"`, since each DSPy signature's output field is a fact about that specific compiled
 artifact. The review signature's output is deliberately a single JSON-string field rather than
-three separate output fields — that's what let this reuse `CompiledPrompt`'s existing single-output
+three separate output fields, which is what let this reuse `CompiledPrompt`'s existing single-output
 replay mechanics unchanged, instead of needing a second, structurally different prompt-building
 path. `Main --summarize` now always runs both passes and prints the reviewer's verdict, not just
 the raw draft.
 
-**Status — genuinely run end to end, not just written:**
+**Status: genuinely run end to end, not just written.**
 - The DSPy compile step was actually run against a real local Ollama model
   (`ollama_chat/dolphin-mixtral:8x7b`, `MAROLA_DSPY_API_BASE=http://localhost:11434`), producing a
   real compiled artifact with genuine LLM-bootstrapped demos (confirmed by inspecting the output
-  JSON — each demo carries `"augmented": true`). Hit and fixed a real environment issue along the
+  JSON: each demo carries `"augmented": true`). Hit and fixed a real environment issue along the
   way: `tokenizers`' Rust extension needs `libstdc++.so.6`, which a Nix-based Python environment
-  doesn't put on the default linker path — fixed via `LD_LIBRARY_PATH`, documented in
+  doesn't put on the default linker path. Fixed via `LD_LIBRARY_PATH`, documented in
   `dspy/README.md`.
 - `just run -- --summarize` was run against that same local Ollama model end to end: it
   loads the real compiled JSON artifact, replays it via `LocalLlmClient`, and got back a real
   natural-language summary. One honest finding: the model mentioned a whale despite
   `whaleSightingLikelihood=Low` (midnight, outside the visibility window) even though the compiled
-  instructions say only to mention it when Moderate/High — a small/quantized local model's
+  instructions say only to mention it when Moderate/High: a small/quantized local model's
   imperfect instruction-following, not a bug in this code. Worth knowing if the model choice
   changes.
 - `AzureFoundryLlmClient` compiles against real `azure-identity`/`azure-core` APIs
   (`DefaultAzureCredentialBuilder().build().getTokenSync(...)`) but is unverified against a live
   Foundry deployment (none provisioned).
 - **The reviewer pass was also run live**, against both the 26GB model above and a much smaller
-  one (`llama3.2:1b`, 1.3GB — see `RUN-LOCALLY.md`): it reliably returns well-formed JSON matching
+  one (`llama3.2:1b`, 1.3GB; see `RUN-LOCALLY.md`): it reliably returns well-formed JSON matching
   the requested schema from both, and in one bootstrap run correctly caught and fixed a
   deliberately-planted flaw (a draft summary missing a required jellyfish mention). With the
   smaller model, the reviewer's own correction was noticeably lower quality (fixated on whale
-  visibility instead of the more important jellyfish risk in one live run) — a real, honest
+  visibility instead of the more important jellyfish risk in one live run), a real, honest
   instruction-following gap at that model size, not a code bug; see `RUN-LOCALLY.md`'s
   troubleshooting section.
 
@@ -355,7 +355,7 @@ beaches across Guanabara Bay from Arpoador (Icaraí, Camboinhas in Niterói) sho
 not being reachable without a boat or a long drive around the bay. `Recommender.refineDistances`
 upgrades each beach's distance via Azure Maps' Route Directions API
 (`GET .../route/directions/json?api-version=1.0&query=lat1,lon1:lat2,lon2&subscription-key=...`,
-`routes[0].summary.lengthInMeters` in the response) when `AZURE_MAPS_SUBSCRIPTION_KEY` is set —
+`routes[0].summary.lengthInMeters` in the response) when `AZURE_MAPS_SUBSCRIPTION_KEY` is set,
 applied only to the already radius-filtered short list, not every Overpass hit, to keep call volume
 bounded, and a per-beach failure falls back to that beach's haversine distance rather than failing
 the whole recommendation. REST shape confirmed against Azure's own published API reference; not
@@ -365,28 +365,28 @@ exercised against a live Azure Maps account (none provisioned).
 
 Exposes `BeachFinder.nearby` and `Recommender.bestPerBeachTomorrow` as two MCP tools
 (`find_nearby_beaches`, `get_swim_recommendation`) instead of `Recommender` hardcoding the call
-order — an agent (Claude Desktop locally, or an Azure AI Foundry agent once deployed) can decide
+order. An agent (Claude Desktop locally, or an Azure AI Foundry agent once deployed) can decide
 when/how to call these itself. Runs over **stdio** (`StdioServerTransportProvider`), the simplest
 MCP transport and the one needing zero network exposure: point any local MCP client's config at
 `java -cp marola-assembly-*.jar marola.agent.SwimConditionsMcpServer` and it works, no Azure
 account, no public URL. A Foundry agent's *remote* MCP tool config would need the SDK's
-`HttpServletSseServerTransportProvider`/`HttpServletStreamableServerTransportProvider` instead —
+`HttpServletSseServerTransportProvider`/`HttpServletStreamableServerTransportProvider` instead:
 not wired up, since that needs an actual servlet container and a public endpoint, i.e. real
 deployment (`AGENTS.md`'s cost-safety rule).
 
 Kyo effects (`< Sync`) are bridged into the MCP SDK's plain synchronous `BiFunction` tool handlers
-via `Sync.Unsafe.evalOrThrow` under `AllowUnsafe.embrace.danger` — confirmed as the documented,
+via `Sync.Unsafe.evalOrThrow` under `AllowUnsafe.embrace.danger`, confirmed as the documented,
 intended escape hatch for exactly this kind of foreign-callback boundary (Kyo's own docs: "at
 application boundaries... you can import the proof directly").
 
-**Status — verified live, not just compiled**, including two real bugs found and fixed along the
+**Status: verified live, not just compiled**, including two real bugs found and fixed along the
 way:
 1. Piped raw JSON-RPC (`initialize` → `notifications/initialized` → `tools/list` → `tools/call`)
    into the assembled jar's stdin and got back correct, real responses: `tools/list` returned both
    tool schemas; `tools/call find_nearby_beaches` and `tools/call get_swim_recommendation` both
    returned real live Overpass/Open-Meteo data.
 2. **Bug found:** the first assembly run threw `ServiceConfigurationError: No
-   JsonSchemaValidatorSupplier available` — `build.sbt`'s merge strategy blanket-discarded all of
+   JsonSchemaValidatorSupplier available`. `build.sbt`'s merge strategy blanket-discarded all of
    `META-INF`, which silently dropped the MCP SDK's `META-INF/services/*` ServiceLoader
    registration. Fixed: `META-INF/services/*` now merges via `MergeStrategy.concat` before the
    general `META-INF` discard rule.
@@ -396,7 +396,7 @@ way:
    server is run via `sbt cli/runMain marola.agent.SwimConditionsMcpServer` (`just mcp-server`) instead.
 
 NOT verified: an actual MCP client (Claude Desktop, a Foundry agent) launching and using this
-server — that needs configuring an external client, which wasn't available to test here.
+server. That needs configuring an external client, which wasn't available to test here.
 
 ### 5d. Sighting reports — `sightings/`
 
@@ -404,11 +404,11 @@ The missing piece for the calibration feedback loop §8 describes: `SightingStor
 `recentFor`) with `LocalFileSightingStore` (JSON-lines, default) and `CosmosDbSightingStore`
 (partitioned by `beach_name`, since every query here filters by beach). Cosmos items are passed as
 plain `java.util.Map`, not a typed POJO, avoiding a Jackson-annotation dependency on `Sighting`
-itself — consistent with this module's "no JSON library dependency" stance elsewhere.
+itself, consistent with this module's "no JSON library dependency" stance elsewhere.
 
 **Phase-discipline note** (`AGENTS.md`): the natural way to *submit* a sighting is through the
 Telegram bot, which doesn't exist yet (§11 Phase 1). `Main`'s `--report-sighting` flag is the local
-stand-in — fully testable end to end without the bot, but the bot is still the missing prerequisite
+stand-in: fully testable end to end without the bot, but the bot is still the missing prerequisite
 for how a real user would ever call this.
 
 **Status:** `--report-sighting jellyfish Arpoador "note"` run live, wrote a real, correctly-shaped
@@ -419,17 +419,17 @@ but is unverified against a live Cosmos DB account (none provisioned).
 
 ### 5e. Photo analysis — `vision/`
 
-`VisionClient.describe(imageBytes)`: `LocalVisionClient` (a multimodal Ollama model — `llava`,
-`moondream` — over the same `/v1/chat/completions` endpoint as `LocalLlmClient`, with an
+`VisionClient.describe(imageBytes)`: `LocalVisionClient` (a multimodal Ollama model, `llava`,
+`moondream`, over the same `/v1/chat/completions` endpoint as `LocalLlmClient`, with an
 `image_url` content part per the standard OpenAI vision message format) and `AzureVisionClient`
-(Azure AI Vision's Image Analysis 4.0 API — structured captioning with a confidence score, a
+(Azure AI Vision's Image Analysis 4.0 API: structured captioning with a confidence score, a
 genuinely different capability from a conversational model, not just a redundant path). Same
 phase-discipline note as §5d: photos arrive via the Telegram bot, which doesn't exist yet;
 `--analyze-photo <path>` is the local stand-in.
 
 **Status:** run live against the real local Ollama server. No multimodal model was installed in
-this environment (only the text-only `dolphin-mixtral:8x7b` — confirmed via `ollama list`, and
-pulling a several-GB vision model wasn't done unprompted), so the actual description call fails —
+this environment (only the text-only `dolphin-mixtral:8x7b`, confirmed via `ollama list`, and
+pulling a several-GB vision model wasn't done unprompted), so the actual description call fails,
 but everything up to that point is genuinely confirmed working: base64 image encoding, the
 multimodal JSON request shape, the HTTP round-trip to Ollama, and Ollama's own `model 'llava' not
 found` error surfacing cleanly through the `Abort`/`Result` error handling rather than crashing.
@@ -440,36 +440,36 @@ confirmed against Microsoft's own published docs, unverified against a live acco
 
 Infra-level tracing (the pipeline, the HTTP-bound steps, latency, errors) plus one span per LLM
 call, behind a vendor-free trait in `core` (`Tracing.withSpan`, `Tracing.llmSpan`; `Tracing.Noop`
-is the default) — MIP-0010 tasks 5-6. `MAROLA_TRACES=off|mlflow|azure` picks the backend in
+is the default): MIP-0010 tasks 5-6. `MAROLA_TRACES=off|mlflow|azure` picks the backend in
 `AppConfig.tracing`; unset keeps the pre-MIP behaviour (`azure` when
 `APPLICATIONINSIGHTS_CONNECTION_STRING` is set, off otherwise). `Main` resolves it once per run and
 opens `marola.recommend` as the root span with `bestPerBeachTomorrow` and the two `llm.<model>`
-spans (draft, review) nested under it — one trace per recommendation, three or four spans.
+spans (draft, review) nested under it: one trace per recommendation, three or four spans.
 
 - **`local/observability/MlflowTracing`** (`mlflow`): OTLP/HTTP to `<MAROLA_MLFLOW_TRACKING_URI>/v1/traces`
   with the `x-mlflow-experiment-id` header MLflow requires (experiment `<prefix>/traces`, resolved
   by name over REST at startup through `ledger/MlflowApi`, the same call the run ledger uses).
-  Synchronous export per span (`SimpleSpanProcessor`) — a short-lived CLI has no place to flush a
+  Synchronous export per span (`SimpleSpanProcessor`): a short-lived CLI has no place to flush a
   batch. Parent/child nesting is explicit (an `AtomicReference` to the current span, restored on
   end) rather than OpenTelemetry's thread-local context, which a Kyo effect cannot be trusted to
   stay on; exact for the CLI's one linear pipeline, documented as wrong for concurrent pipelines.
   A failing effect closes its span with `ERROR` and rethrows. If the server is down, `Main` prints
-  a warning and traces nothing — observability never fails a recommendation.
+  a warning and traces nothing. Observability never fails a recommendation.
 - **`core/llm/TracedLlmClient`** wraps `LocalLlmClient`/`AzureFoundryLlmClient`
   (`AppConfig.tracedLlmClient`): `gen_ai.operation.name=chat`, `gen_ai.request.model`, message count,
-  prompt/completion character counts. **No token counts** — `LlmClient.complete` returns the text
+  prompt/completion character counts. **No token counts**: `LlmClient.complete` returns the text
   and drops the response's `usage` block; surfacing it means widening the trait (deliberately not
   done in MIP-0010). Prompt and completion *text* are attached only with `MAROLA_TRACE_CONTENT=1`:
   the prompt carries the swimmer's coordinates.
 - **`azure/observability/AzureMonitorTracing`** (`azure`): the former `Telemetry.scala` behind the
-  trait, unchanged in behaviour — `withSpan` only; `llmSpan` falls back to the trait default (same
+  trait, unchanged in behaviour: `withSpan` only; `llmSpan` falls back to the trait default (same
   span, result attributes dropped). Its shallow try/finally gap stands: a span is left unclosed if
   the wrapped effect throws.
 
 **Status:** `MlflowTracing` verified offline against OpenTelemetry's in-memory exporter
 (`MlflowTracingSpec`: names, attributes, nesting, error status, endpoint/header); the OTLP endpoint
 and header are MLflow's documented contract (MIP-0010 §4.3, fetched 2026-09-05). Not yet verified
-against a live `just mlflow-up` server from this session (no Docker daemon there) — run
+against a live `just mlflow-up` server from this session (no Docker daemon there). Run
 `MAROLA_TRACES=mlflow MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000 just run -- --summarize`
 on the host and expect one trace in experiment `marola/traces`. `AzureMonitorTracing` compiles
 against the real `azure-monitor-opentelemetry-autoconfigure:1.4.0` API on OpenTelemetry 1.65.0
@@ -492,12 +492,12 @@ refuses inland-water points (LAGOA/CANAL/RIO...), because Lagoa da Conceição's
   `OpenMeteoClient` now also fetches `wave_period`, `wave_direction`, `swell_wave_height`,
   `swell_wave_period` for the detailed block.
 - `SeaLore.pick`: eight sourced entries in `core/src/main/resources/sea_lore.json`, filtered by
-  region/season, chosen deterministically by date × beach, appended verbatim — never through the
+  region/season, chosen deterministically by date × beach, appended verbatim: never through the
   LLM. The reviewer does **not** receive the lore (deviation from MIP-0001 §5.4, deliberately:
   the lore never enters a model, so there is nothing for the reviewer to check).
 - `SightingKind.Pollution`; MCP gains `get_water_quality` and `water_quality`/`tides` fields.
 
-**Status — verified live from Campeche on 2026-09-05:** Ponto 73 (Riozinho) shows IMPRÓPRIA with
+**Status: verified live from Campeche on 2026-09-05.** Ponto 73 (Riozinho) shows IMPRÓPRIA with
 749 enterococci/100mL, the other four PRÓPRIA, Campeche scores −20 with the location named; tide
 turns print from the sea-level series. Unit tests: matcher, verdict rows, tides, lore, IMA parser
 on a real-feed fixture (44 tests total). Known limits: §9 (centroid distance, Overpass slowness)
@@ -510,39 +510,39 @@ scaffold.**
 
 - **RAG.** `knowledge/*.md` (six documents: rip currents, jellyfish/man o' war and sting first aid,
   bathing-water quality, whales off Santa Catarina, waves/tides/upwelling glossary, sea foam and
-  water colour — each with a `Source:` URL; see `knowledge/README.md` for their honest status) is
-  chunked by `Corpus`, embedded by `OllamaEmbedder` (`/api/embed`, `llama3.2` itself by default —
+  water colour, each with a `Source:` URL; see `knowledge/README.md` for their honest status) is
+  chunked by `Corpus`, embedded by `OllamaEmbedder` (`/api/embed`, `llama3.2` itself by default;
   no extra model to pull; `nomic-embed-text` is a one-env-var upgrade), stored as a JSON vector
   index under `data/` by `FileKnowledgeStore`, and searched by cosine. `OceanQa` has the local LLM
   answer **only** from the top passages, citing `[n]`, and never calls the model when nothing was
-  retrieved — in `strict` mode. The default `--ask` mode is `general` (`MAROLA_ASK_FALLBACK`):
+  retrieved, in `strict` mode. The default `--ask` mode is `general` (`MAROLA_ASK_FALLBACK`):
   when no passage clears `MAROLA_ASK_MIN_SCORE` the model answers from its own knowledge with a
-  visible "(unsourced)" label rather than refusing — the corpus covers swim safety, users ask
+  visible "(unsourced)" label rather than refusing. The corpus covers swim safety, users ask
   about the whole ocean. Surfaces: `just ask "..."` / `--ask`, MCP `ask_ocean_question`.
-- **Benchmark.** `just benchmark` (`cli/bench/OceanBenchmark`) runs 22 ocean questions — science,
-  history, animals, nature, safety; ten inside the corpus, twelve deliberately outside — through
+- **Benchmark.** `just benchmark` (`cli/bench/OceanBenchmark`) runs 22 ocean questions (science,
+  history, animals, nature, safety; ten inside the corpus, twelve deliberately outside) through
   three arms on the same local model: the plain prompt, marola strict, marola general. Scores are
   deterministic (keyword coverage, citation present, abstained, latency) and the report ends with a
   computed verdict and what would beat the baseline where it loses (more corpus documents on the
   topics where strict abstained; a sharper embedder). Output under `data/benchmark-*.md`; the
   2026-09-05 baseline is kept in [`benchmarks/2026-09-05.md`](./benchmarks/2026-09-05.md): the
   default mode beat the plain prompt 0.84 vs 0.75 overall, 0.92 vs 0.55 inside the corpus, citing
-  on 41% of answers — after adding the `NO_ANSWER_IN_PASSAGES` two-stage fallback, without which
+  on 41% of answers, after adding the `NO_ANSWER_IN_PASSAGES` two-stage fallback, without which
   `llama3.2`'s own embeddings could not tell relevant passages from irrelevant ones.
   With `MAROLA_MLFLOW_TRACKING_URI` set (MIP-0010, `just mlflow-up`), the same run is also
-  logged to the `RunLedger` — experiment `marola/benchmark`, params `model`/`embed_model`/
+  logged to the `RunLedger`: experiment `marola/benchmark`, params `model`/`embed_model`/
   `min_score`/`corpus_sha`/`git_sha`/`questions`, one metric per arm column, the Markdown report
   as the artifact (`cli/bench/BenchmarkLedger`); the Markdown file stays what the gate reads.
 - **Fine-tuning.** `finetune/` (README there is the honest status): Tier 1 is an Ollama
-  `Modelfile` variant `marola-llama3.2` (persona + decoding parameters, no weight change) — built
+  `Modelfile` variant `marola-llama3.2` (persona + decoding parameters, no weight change), built
   and run. Tier 2 is a QLoRA recipe (`build_dataset.py` → 41 chat examples from the DSPy demos,
-  sea lore and corpus; `train_lora.py` with peft/trl; `Modelfile.adapter`) — written, not run: no
-  GPU, gated base weights. Facts are deliberately *not* what the fine-tune targets — format and
+  sea lore and corpus; `train_lora.py` with peft/trl; `Modelfile.adapter`), written, not run: no
+  GPU, gated base weights. Facts are deliberately *not* what the fine-tune targets: format and
   tone are; facts stay in RAG with citations.
 
 ## 6. Azure infrastructure needed
 
-Nothing is provisioned yet — per `AGENTS.md`'s cost-safety rule, nothing gets provisioned without
+Nothing is provisioned yet. Per `AGENTS.md`'s cost-safety rule, nothing gets provisioned without
 your explicit go-ahead. When it's time, per integration:
 
 | Resource | Backs | Notes |
@@ -557,12 +557,12 @@ your explicit go-ahead. When it's time, per integration:
 | Budget + Action Group | Cost guardrail across all of the above | An email-alert budget, not a hard cap — write the Bicep when Phase 3 actually provisions anything |
 
 **Not needed yet:** Document Intelligence (IMA has a JSON feed; the PDF bulletin is only the
-fallback), Azure AI Search (the RAG corpus is local, §5h — Search is its Phase 2 sibling), Event
-Grid/Communication Services (Telegram's own Bot API replaces that whole layer — see §2).
+fallback), Azure AI Search (the RAG corpus is local, §5h; Search is its Phase 2 sibling), Event
+Grid/Communication Services (Telegram's own Bot API replaces that whole layer; see §2).
 
 **To actually test the Telegram bot without any Azure spend**: register a bot via
 [@BotFather](https://core.telegram.org/bots#botfather) (free), run the service locally with
-long-polling and `MAROLA_TELEGRAM_BOT_TOKEN` set — every integration in §5 works with its local
+long-polling and `MAROLA_TELEGRAM_BOT_TOKEN` set. Every integration in §5 works with its local
 default, so the bot is fully testable end-to-end before spending anything on Azure.
 
 ## 7. Third-party APIs used (all free, no key, confirmed live against real data)
@@ -578,31 +578,31 @@ default, so the bot is fully testable end-to-end before spending anything on Azu
 
 | [OpenStreetMap tile servers](https://operations.osmfoundation.org/policies/tiles/) | Base map behind the static site's markers (MIP-0005; `tiles` in `site/areas.json`) | No key; the usage policy forbids heavy or commercial use — acceptable for a link among friends, not for a public launch. Switch to self-hosted Protomaps PMTiles or a MapTiler/Stadia free tier before going public |
 
-No jellyfish- or whale-specific API exists (checked) — see §8.
+No jellyfish- or whale-specific API exists (checked); see §8.
 
 ## 8. The jellyfish and whale heuristics — honest limitations
 
-**Jellyfish (safety-relevant — feeds into `score`):** there is no free (or, as far as could be
+**Jellyfish (safety-relevant, feeds into `score`):** there is no free (or, as far as could be
 found, any) public jellyfish-bloom forecast API. `Swimability.jellyfishRisk` scores four commonly
-cited ecological correlates instead — warm sea surface temperature, weak wind, calm seas, weak
-current — and calls it "High" when at least three line up. This is a heuristic, not a validated
+cited ecological correlates instead (warm sea surface temperature, weak wind, calm seas, weak
+current) and calls it "High" when at least three line up. This is a heuristic, not a validated
 model, and it has a real quirk: three of its four signals are also exactly what makes for
 *pleasant* swimming conditions, so a genuinely great, calm day is often also flagged as
 jellyfish-elevated (confirmed in `SwimabilitySpec`). Treat the output as "worth a visual check
 before wading in," not a guarantee either way.
 
-**Whale sighting likelihood (informational only — never feeds into `score`):**
+**Whale sighting likelihood (informational only, never feeds into `score`):**
 `Swimability.whaleSightingLikelihood` combines one calendar fact (humpback whales migrate along the
 Brazilian coast roughly July-November, austral winter/spring) with two visibility signals from the
 same Open-Meteo data: daylight (a hard requirement) and calm-enough wind/seas (rougher thresholds
-than swim comfort — you only need to *see* a whale, not swim in those conditions). Same honesty
+than swim comfort: you only need to *see* a whale, not swim in those conditions). Same honesty
 caveat as jellyfish: a heuristic, not a validated sighting-probability model. Deliberately excluded
-from `score` — whether you might see a whale doesn't make an hour more or less safe or pleasant to
+from `score`: whether you might see a whale doesn't make an hour more or less safe or pleasant to
 swim in.
 
 **How §5d/§5e actually close this loop, not just gesture at it:** `SightingStore` (§5d) and
 `VisionClient` (§5e) are the concrete mechanism for "let users report sightings back... accumulate
-that as real labeled data" — not yet wired into either heuristic's thresholds, but the storage and
+that as real labeled data", not yet wired into either heuristic's thresholds, but the storage and
 photo-analysis pieces now exist, which they didn't before this change. Feeding accumulated reports
 back into `dspy/compile_recommendation_prompt.py`'s trainset (LLM phrasing) or retraining the
 heuristics' thresholds/weights (the bigger lift) remains future work.
@@ -610,14 +610,14 @@ heuristics' thresholds/weights (the bigger lift) remains future work.
 ## 9. Other known limitations (POC-stage, not hidden)
 
 - **Beach distance defaults to haversine** ("as the crow flies") unless `AZURE_MAPS_SUBSCRIPTION_KEY`
-  is set (§5b) — confirmed on real data: beaches across Guanabara Bay from Arpoador show up within
+  is set (§5b), confirmed on real data: beaches across Guanabara Bay from Arpoador show up within
   the 15km radius despite not being reachable without a boat or a long drive around the bay.
 - **A beach's distance is measured to its OSM centroid, not its nearest shoreline.** Large beaches
   are multipolygon relations and Overpass's `out center` gives the polygon's centre, so a 4km-long
   beach you live 200m from can show as "2.1km away" (confirmed: Praia do Campeche). Ranking is
-  unaffected in practice — it's the same beach — but the printed distance undersells how close it is.
+  unaffected in practice (it's the same beach), but the printed distance undersells how close it is.
   Nearest-edge distance would need the full geometry (`out geom`), a much bigger payload.
-- **Overpass relation queries are slow** — ~30s observed for a 15km radius on the public instance,
+- **Overpass relation queries are slow**: ~30s observed for a 15km radius on the public instance,
   and it enforces a per-IP slot/rate limit (2 concurrent), so hammering `just run` back-to-back can
   return 429s. `BeachFinder` allows 45s server-side / 60s client-side; caching (Phase 4) is the real fix.
 - **Nearby beaches often show near-identical numbers.** Open-Meteo's underlying weather models
@@ -626,48 +626,48 @@ heuristics' thresholds/weights (the bigger lift) remains future work.
 - **No caching, no persistence for the core pipeline, no rate limiting yet.** Every query re-fetches
   from Overpass and Open-Meteo live. Fine for a personal POC; a public bot needs both before real
   usage (Overpass's fair-use policy, §7, is the more pressing one).
-- **No tests for any of the HTTP/JSON integration layer** — only the pure `Swimability` scoring
+- **No tests for any of the HTTP/JSON integration layer**: only the pure `Swimability` scoring
   logic is unit-tested (`SwimabilitySpec`), consistent with this repo's "pure logic is where the
   tests are cheap" convention (`AGENTS.md`'s code style section). Every integration layer was
-  instead verified by actually running it against live services/data — see each subsection of §5
+  instead verified by actually running it against live services/data; see each subsection of §5
   for exactly what was and wasn't exercised.
-- **`AzureMonitorTracing.withSpan`'s shallow try/finally gap** — see §5f (`MlflowTracing` does close its span on failure).
+- **`AzureMonitorTracing.withSpan`'s shallow try/finally gap**: see §5f (`MlflowTracing` does close its span on failure).
 - **`CompiledPrompt`'s chat-message replay is a good-faith approximation** of DSPy's own
-  `ChatAdapter` formatting, not byte-identical — see §5a.
+  `ChatAdapter` formatting, not byte-identical; see §5a.
 
 ## 10. Exam coverage: AI-103 and AI-500
 
 Full domain-by-domain mapping lives in its own docs now, not inline here:
 
-- [`AI-103-MAPPING.md`](./AI-103-MAPPING.md) — every AI-103 skill area against what marola actually
+- [`AI-103-MAPPING.md`](./AI-103-MAPPING.md): every AI-103 skill area against what marola actually
   builds, including an honest list of remaining gaps (RAG/fine-tuning, first-class text analysis).
-- [`AI-500-MAPPING.md`](./AI-500-MAPPING.md) — the follow-on exam for which AI-103 is the mandatory prerequisite
+- [`AI-500-MAPPING.md`](./AI-500-MAPPING.md): the follow-on exam for which AI-103 is the mandatory prerequisite
   (multi-agent solutions); a design target for where marola's summarizer/reviewer pipeline grows
   into a real multi-agent architecture, not a record of what's built yet.
 
 ## 11. Development phases
 
-1. **Phase 0 — POC pipeline + six pluggable integrations (done, this change).** Beach discovery,
+1. **Phase 0: POC pipeline + six pluggable integrations (done, this change).** Beach discovery,
    live conditions, heuristic scoring, CLI entry point, and local/Azure options for query synthesis,
    distance, agentic tool access, sighting storage, photo analysis, and observability. Zero
    Azure/Telegram setup required for any of it.
-2. **Phase 1 — Telegram bot.** Long-polling loop, native location sharing, `AppConfig`'s
+2. **Phase 1: Telegram bot.** Long-polling loop, native location sharing, `AppConfig`'s
    `telegramBotToken` actually wired up, `--report-sighting`/`--analyze-photo`'s CLI stand-ins
    replaced by real Telegram message/photo handlers. Still zero Azure spend. See
    `TELEGRAM-SETUP.md` for registering the bot and getting credentials ready ahead of this phase.
-3. **Phase 2 — Go live on Azure, deliberately.** Provision whichever of §6's resources you actually
+3. **Phase 2: Go live on Azure, deliberately.** Provision whichever of §6's resources you actually
    want (all optional, none required): Foundry for query synthesis, Azure Maps for real distances,
    Cosmos DB for shared sighting storage, Azure AI Vision, Application Insights. First real Azure
    spend, entirely your choice which pieces.
-4. **Phase 3 — Deploy.** Container App + webhook (Bicep, `azd`). The first deploy artefact is
+4. **Phase 3: Deploy.** Container App + webhook (Bicep, `azd`). The first deploy artefact is
    already here and free: `.github/workflows/site.yml` builds MIP-0005's boards every 3 h and
-   publishes the static map to GitHub Pages — no Azure, no server, no per-visitor cost. The
+   publishes the static map to GitHub Pages: no Azure, no server, no per-visitor cost. The
    second is the image the Container App will run: `Dockerfile` (`jvm` = Temurin 25 JRE + the
    fat jar, `native` = the GraalVM binary on distroless, `dev` = the Nix dev shell) and
-   `docker-compose.yml` (marola + an Ollama sidecar) — MIP-0008, `RUN-LOCALLY.md` §10.
-5. **Phase 4 — Harden & calibrate.** Caching, per-user rate limiting, feeding accumulated
+   `docker-compose.yml` (marola + an Ollama sidecar): MIP-0008, `RUN-LOCALLY.md` §10.
+5. **Phase 4: Harden & calibrate.** Caching, per-user rate limiting, feeding accumulated
    `SightingStore` reports back into the jellyfish/whale heuristics (§8).
 
-Do not skip Phase 1 to get to Phase 2 early — see `AGENTS.md`'s phase-discipline rule: a Telegram
+Do not skip Phase 1 to get to Phase 2 early; see `AGENTS.md`'s phase-discipline rule: a Telegram
 bot that can't yet share a real location or photo has nothing meaningful to feed §5's integrations
 in production, even though every one of them is independently testable today via `Main`'s CLI flags.

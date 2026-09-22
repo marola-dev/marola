@@ -19,8 +19,8 @@
 Forecasts say what the sea should be doing; a photo says what it *is* doing. Paid surf-cam apps
 exist because that gap is real. marola can close it without owning a single camera: users who are
 already at the beach send a photo (or a short clip) through the bot or the map; a vision model
-turns it into a structured, time-stamped observation — sea state, foam, crowd, jellyfish or
-man-o'-war visible, water colour — and the beach's card shows "latest look: 09:12, choppy, foam at
+turns it into a structured, time-stamped observation (sea state, foam, crowd, jellyfish or
+man-o'-war visible, water colour), and the beach's card shows "latest look: 09:12, choppy, foam at
 the stream mouth", with the photo itself, for the next few hours. Local vision model by default,
 Azure AI Vision as the opt-in; strict rules on faces, retention and abuse from day one.
 
@@ -50,7 +50,7 @@ photo is ever shown that contains a recognisable face (§5.4).
 
 ## 4. Data sources and dependencies reviewed
 
-- **User photos via Telegram** (`getFile`, JPEG, EXIF often stripped by Telegram — location must
+- **User photos via Telegram** (`getFile`, JPEG, EXIF often stripped by Telegram; location must
   come from the chat's last shared location or a beach name, not from the image). Verified: the
   Bot API's photo flow is documented; not exercised yet (no bot, MIP-0002).
 - **Vision, local:** `LocalVisionClient` with a multimodal Ollama model (`llava`, `moondream`;
@@ -109,7 +109,7 @@ Map (MIP-0005): the board build includes `looks[]` per beach still within `expir
   person is either blurred at the detected boxes or **rejected** with a polite reply. v1 rejects;
   blur is a follow-up.
 - **Retention.** 6 h on the map, original deleted at 24 h, thumbnails with it; `/apagar-foto`
-  deletes immediately. No chat id stored with the look — a salted hash for rate-limiting only.
+  deletes immediately. No chat id stored with the look, only a salted hash for rate-limiting.
 - **Consent line** in the bot's reply the first time: what is kept, for how long, how to delete.
 - **Abuse.** Not-a-beach photos (vision says so) are acknowledged and dropped, never displayed;
   NSFW/violent content check via the same model (Azure: Content Safety is the natural opt-in);

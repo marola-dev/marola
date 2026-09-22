@@ -22,9 +22,9 @@ Nix: a **lightweight JVM image** (`marola:jvm`), a **native binary image** (`mar
 GraalVM native-image, JDK 25), a **`marola-ollama` compose stack** (marola + an Ollama sidecar
 with the model pre-pulled, the `just run -- --summarize` path), and **`marola-local`**: the same
 stack with the fine-tuned `marola-llama3.2` model baked in (`finetune/`), versioned like code.
-All built and published to GHCR by CI. A manually triggered workflow runs a **smoke test** —
+All built and published to GHCR by CI. A manually triggered workflow runs a **smoke test**:
 `--summarize` at a fixed or given location (lat/lon fields, or a Google Maps pin URL) with a small
-model — and publishes its output where the map (MIP-0005) shows it as a "last live run" panel.
+model, and publishes its output where the map (MIP-0005) shows it as a "last live run" panel.
 
 ## 2. Motivation
 
@@ -34,8 +34,8 @@ model — and publishes its output where the map (MIP-0005) shows it as a "last 
   the free-first rule and gives the Container App step a tested artefact.
 - The `--summarize` path (LLM + reviewer) is only exercised by `just e2e` on a developer's
   machine or by the manual `marola-e2e.yml`. A scheduled/triggerable smoke test with a visible
-  result is the cheapest continuous check that the whole thing — pipeline, prompt, reviewer,
-  model — still produces a sane sentence.
+  result is the cheapest continuous check that the whole thing (pipeline, prompt, reviewer,
+  model) still produces a sane sentence.
 - The fine-tune work (`finetune/`, Tier 1 verified, Tier 2 written-not-run) has no delivery path:
   a model that only exists on one laptop's Ollama is not an artefact. An image tag is.
 
@@ -52,8 +52,8 @@ GitHub → Actions → "docker smoke test" → Run workflow: fields `lat`, `lon`
 (a Google Maps pin, e.g. `https://www.google.com/maps/@-27.6733,-48.47,15z` or a `maps.app.goo.gl`
 short link), `model` (default `llama3.2:1b`), `image` (default the latest `:jvm`). The run's
 stdout (the same text `just run -- --summarize` prints) is uploaded as an artifact **and** pushed
-as JSON to the site: the map's footer gains a **"Last live run"** panel — when, where (a marker),
-top pick, the model's summary, the reviewer's verdict, a link to the run — refreshed by the next
+as JSON to the site: the map's footer gains a **"Last live run"** panel (when, where (a marker),
+top pick, the model's summary, the reviewer's verdict, a link to the run), refreshed by the next
 site build (see §5.5 for how the refresh works without two deploys racing).
 
 ## 4. Data sources and dependencies reviewed
@@ -61,7 +61,7 @@ site build (see §5.5 for how the refresh works without two deploys racing).
 All checked 2026-09-05 against the live registries/APIs; nothing below was run yet.
 
 - **GraalVM.** `graalvm/graalvm-ce-builds` latest release `graal-25.3.4.1` (2026-08-25) ships
-  `graalvm-community-jdk-25i3-25.0.4.1_linux-x64` — JDK 25 native-image exists. Container:
+  `graalvm-community-jdk-25i3-25.0.4.1_linux-x64`: JDK 25 native-image exists. Container:
   `ghcr.io/graalvm/native-image-community` (tag for 25 **not checked**, GHCR needs a token to
   list). sbt plugin: `scalameta/sbt-native-image` v0.5.0 (2026-06-14). Feasibility with **Kyo
   1.0.0-RC5 + Scala 3.9** is the open question (§11): Kyo's `Frame` is compile-time, `java.net.http`
@@ -73,7 +73,7 @@ All checked 2026-09-05 against the live registries/APIs; nothing below was run y
   `gcr.io/distroless/java-base`. Fat jar via `sbt-assembly` (already in the build).
   `sbt/sbt-native-packager` v1.11.7 (2026-01-13) can produce the Dockerfile itself; a hand-written
   multi-stage Dockerfile is simpler to reason about and lint (`hadolint`), which is the pick.
-- **Ollama.** Docker Hub `ollama/ollama` — `0.34.0-rc1` (2026-09-05) is **3.7 GB** (CUDA libs),
+- **Ollama.** Docker Hub `ollama/ollama`: `0.34.0-rc1` (2026-09-05) is **3.7 GB** (CUDA libs),
   the `-rocm` tag 1.4 GB; no CPU-only tag seen. Model sizes from the registry manifests:
   `llama3.2:1b` **1.32 GB**, `llama3.2` (3b) **2.02 GB**. For CI the existing `marola-e2e.yml`
   approach (the ~100 MB Linux binary + a cached `~/.ollama/models`) is far cheaper than the image;
@@ -102,7 +102,7 @@ Dockerfile
   dev       FROM nixos/nix  COPY flake.* .  RUN nix develop --command true      (tag :dev — the literal `nix develop` for people without Nix)
 ```
 
-`ENTRYPOINT` is `Main`; `docker run … --mcp` is not a thing — the MCP server is a second
+`ENTRYPOINT` is `Main`; `docker run … --mcp` is not a thing: the MCP server is a second
 `CMD` (`java -cp marola.jar marola.agent.SwimConditionsMcpServer`) documented in the compose file.
 Env vars are the existing `MAROLA_*`; `.env` is mounted, never copied.
 
@@ -112,7 +112,7 @@ Services: `marola` (image `:jvm`, `MAROLA_LOCAL_LLM_BASE_URL=http://ollama:11434
 `ollama` (official image, volume `ollama-models`), `ollama-pull` (one-shot: `ollama pull
 ${MAROLA_LOCAL_LLM_MODEL:-llama3.2}`), profiles `ollama` and `local`. Profile `local` swaps the
 pull step for `ollama create marola-llama3.2 -f /finetune/Modelfile` (Tier 1) and, if
-`finetune/out/adapter.gguf` exists, `Modelfile.adapter` (Tier 2) — the same two paths
+`finetune/out/adapter.gguf` exists, `Modelfile.adapter` (Tier 2), the same two paths
 `finetune/README.md` documents, now reproducible from a clean machine.
 
 ### 5.3 `marola-local` as an artefact (LLMOps)
@@ -121,13 +121,13 @@ The model is versioned like the code: image tag `marola-local:<git-sha>` carries
 layer with `marola-llama3.2` created from `finetune/Modelfile` (Tier 1, ~2 GB layer) and, when a
 `finetune-adapter-<version>.gguf` release asset exists, the Tier 2 adapter. Promotion gate: the
 CI job runs `just benchmark` against the image's model and diffs the summary table against
-`docs/benchmarks/` — a regression in the marola-vs-plain arms fails the job. What is *not*
+`docs/benchmarks/`; a regression in the marola-vs-plain arms fails the job. What is *not*
 promised: training Tier 2 in CI (no GPU; the adapter is built elsewhere and uploaded).
 
 ### 5.4 Workflows
 
 - `docker.yml`: on PR → build `:jvm` only (cache-from GHCR), run `--brief` against the golden
-  fixtures? — no: images are runtime, the offline check is `sbt test` in `ci.yml`. The image job
+  fixtures? No: images are runtime, the offline check is `sbt test` in `ci.yml`. The image job
   runs `docker run … --help`-level checks plus `hadolint`. On `main` and tags → build+push
   `:jvm`, `:native`, `:dev`, `marola-local`.
 - `docker-smoke.yml` (`workflow_dispatch`, optionally `schedule` daily): inputs `lat`, `lon`,
@@ -141,7 +141,7 @@ promised: training Tier 2 in CI (no GPU; the adapter is built elsewhere and uplo
 
 Two workflows must not both deploy Pages (the last one wins and would erase the other's files).
 So the smoke workflow **does not deploy**: it commits its JSON to an orphan branch `site-data`
-(`smoke/latest.json`, `smoke/history.json` capped at 50 runs — tiny files, a bot commit per run)
+(`smoke/latest.json`, `smoke/history.json` capped at 50 runs, tiny files, a bot commit per run)
 and then triggers `site.yml` (`workflow_dispatch` via `gh workflow run`, or `workflow_run` on
 completion). `site.yml` gains one step: check out `site-data` and copy `smoke/` into
 `site/dist/smoke/`. `app.js` fetches `smoke/latest.json` if present and renders the panel plus a
@@ -165,7 +165,7 @@ next to it, and the deterministic list above it is the source of truth. No user 
 - `hadolint` on the Dockerfile in `just quality`; `docker build --target jvm` locally, then
   `docker run … --brief --lat -27.6733 --lon -48.47` (live) prints the ranked list.
 - Native: `sbt cli/nativeImage` locally first (spike, task 1); the binary runs `--brief` live and
-  `PipelineGoldenSpec`'s fixture path via a `--replay` flag is *not* planned — the golden suite
+  `PipelineGoldenSpec`'s fixture path via a `--replay` flag is *not* planned; the golden suite
   stays on the JVM.
 - `docker compose --profile ollama run marola --summarize` locally with `llama3.2:1b`.
 - One manual `docker-smoke.yml` run; the panel appears on the map after the next site build.
@@ -177,22 +177,22 @@ next to it, and the deterministic list above it is the source of truth. No user 
   If the spike fails, `:native` is dropped from v1 and the MIP says so; `:jvm` is the deliverable.
 - **Image sizes**: `ollama/ollama` is 3.7 GB; compose users pull it once. CI never uses it.
 - **Smoke test cost**: a `llama3.2:1b` summary + review on 4 vCPU is ~1-2 min, the pipeline ~1
-  min, image pull ~30 s: ~5 min per run. Daily = trivial; per-PR would not be — it stays manual /
+  min, image pull ~30 s: ~5 min per run. Daily = trivial; per-PR would not be, so it stays manual /
   daily.
 - **Public model text**: the map would show an LLM sentence to visitors. Keep the reviewer verdict
   visible and the panel clearly labelled; if the reviewer says `reject`, show the numbers only.
-- **Tier 2 fine-tune** remains written-not-run until a GPU (or a paid job) trains the adapter —
+- **Tier 2 fine-tune** remains written-not-run until a GPU (or a paid job) trains the adapter;
   `marola-local` v1 is the Tier 1 Modelfile model, said plainly in the image's README.
 
 ## 9. Alternatives considered
 
-- **Nix-built images (`dockerTools`)** — reproducible and small, but the friend without Nix
+- **Nix-built images (`dockerTools`)**: reproducible and small, but the friend without Nix
   cannot rebuild them, and the whole point is a Dockerfile they can read. Kept as `:dev` only.
-- **A single fat `marola-ollama` image** (Ollama + JRE + jar in one) — 4+ GB, rebuilt on every
+- **A single fat `marola-ollama` image** (Ollama + JRE + jar in one): 4+ GB, rebuilt on every
   code change; a sidecar compose service is the normal shape. Rejected.
-- **Smoke workflow deploying Pages itself** — races with `site.yml`; the `site-data` branch +
+- **Smoke workflow deploying Pages itself**: races with `site.yml`; the `site-data` branch +
   trigger avoids it. Artifacts-only (no branch) expire after 90 days and need a token to read.
-- **Do nothing** — `nix develop` works; but Phase 3 needs the image and the friend needs Docker.
+- **Do nothing**: `nix develop` works; but Phase 3 needs the image and the friend needs Docker.
 
 ## 10. Exam-coverage mapping
 
@@ -202,11 +202,11 @@ benchmark gate before promotion; "monitor": a scheduled smoke test with a visibl
 
 ## 11. Open questions
 
-1. Native-image feasibility with Kyo 1.0.0-RC5 — a two-hour spike before the task list.
+1. Native-image feasibility with Kyo 1.0.0-RC5: a two-hour spike before the task list.
 2. `eclipse-temurin:25-jre-alpine` vs `jlink` + distroless for `:jvm` (size vs. simplicity).
 3. Should the smoke test also run on a schedule (daily) or only on demand? (Proposal: daily.)
 4. `site-data` branch vs. storing smoke results in the `site.yml` build itself by re-running the
-   `--summarize` step there (couples the site build to Ollama — rejected above, but cheaper).
+   `--summarize` step there (couples the site build to Ollama, rejected above, but cheaper).
 5. Where the Tier 2 adapter is trained and how it is uploaded (a `finetune-adapter` release?).
 6. Whether the smoke panel belongs on the public map at all, or on a `/status.html` page.
 

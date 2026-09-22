@@ -23,16 +23,16 @@ This MIP costs that idea before anyone builds it, and answers the language quest
 it.
 
 The answer is that marola should run stock WW3 in Fortran on CPUs, if it runs anything at all: a
-1.1 km nest — the coarsest that resolves the bay in MIP-0051 §2 — costs about **87 core-hours per
+1.1 km nest, the coarsest that resolves the bay in MIP-0051 §2, costs about **87 core-hours per
 forecast cycle**, which is 2.7 hours on 32 cores and needs no port, no GPU and no new language.
 Only a 550 m nest, 8× more expensive again, would make the question live.
 
 Three findings from the review matter more than the language comparison itself. **The DOE Kokkos
-kernels the attached plan is built around do not exist** — the repository was enumerated. **WW3's
+kernels the attached plan is built around do not exist**; the repository was enumerated. **WW3's
 licence is not open source**, and while it plainly permits running the model and publishing its
-output, it restricts *redistributing the code* — which constrains publishing a port but nothing
+output, it restricts *redistributing the code*, which constrains publishing a port but nothing
 marola would actually ship. And **an equivalent spectral wave model already reached 37× on GPUs
-without leaving Fortran**, while a partial offload of WW3's own hotspot reached 1.4× per node —
+without leaving Fortran**, while a partial offload of WW3's own hotspot reached 1.4× per node,
 so residency, not language, is what decides the outcome.
 
 ## 2. Motivation
@@ -45,15 +45,15 @@ is a means. Nobody had costed the end.
 Four premises in the request also need testing before any language is discussed, and **three of them
 did not survive checking**:
 
-1. *That DOE has WW3 source terms in C++/Kokkos to adopt.* **False** — §4.2. The repository was
+1. *That DOE has WW3 source terms in C++/Kokkos to adopt.* **False**: §4.2. The repository was
    enumerated; there are none, and the attached plan's Route B' and Task 0 depend on them.
-2. *That WRF and WW3 are the same kind of problem, both GPU-accelerable.* **False** — §4.3. WRF has
+2. *That WRF and WW3 are the same kind of problem, both GPU-accelerable.* **False**: §4.3. WRF has
    no officially supported GPU path; MPAS is the model in that family that does.
-3. *That the choice of target language is what decides the outcome.* **Not supported** — §4.2.3. The
+3. *That the choice of target language is what decides the outcome.* **Not supported**: §4.2.3. The
    published evidence says residency decides it: an equivalent spectral wave model reached 37× on
    GPUs **without leaving Fortran**, while a language-agnostic partial offload of WW3's own hotspot
    reached 1.4× per node.
-4. *That a GPU helps at marola's scale.* **Not at 1.1 km** — §4.1.
+4. *That a GPU helps at marola's scale.* **Not at 1.1 km**: §4.1.
 
 A fifth issue nobody raised is legal rather than technical, and may matter more than all of them:
 WW3's licence forbids disclosing the software to third parties and requires modifications be offered
@@ -72,10 +72,10 @@ Cost scales as (sea points) × (time steps), and the CFL condition ties the time
 spacing, so **halving the grid costs 8×**: 4× the points and 2× the steps. That ratio is pure
 geometry and holds whatever a single point-update actually costs.
 
-Anchoring the magnitude to a published figure — a WW3 hindcast at global 0.5° costs roughly
+Anchoring the magnitude to a published figure (a WW3 hindcast at global 0.5° costs roughly
 17,800 core-hours per simulated year, corroborated by a separate figure of 100–500 cores for
-0.5–2 hours per 7-day global forecast (both taken from a search-result summary and **not fetched
-from the paper**, see "Not checked") — a domain covering Florianópolis and its approaches
+0.5–2 hours per 7-day global forecast; both taken from a search-result summary and **not fetched
+from the paper**, see "Not checked"), a domain covering Florianópolis and its approaches
 (27.2–28.2 S, 48.2–48.8 W) costs, per 48-hour forecast cycle:
 
 | Nest | Sea points | Cost vs one global 0.5° run | Core-hours / cycle | On 32 cores |
@@ -84,31 +84,31 @@ from the paper**, see "Not checked") — a domain covering Florianópolis and it
 | **1.1 km** | ~3,300 | 0.89× | **~87** | **2.7 h** |
 | 550 m | ~13,200 | 7.1× | ~693 | 22 h |
 
-**Jurerê bay — MIP-0051's worst case — is about 3 km wide.** At 2.2 km it spans one or two cells,
+**Jurerê bay, MIP-0051's worst case, is about 3 km wide.** At 2.2 km it spans one or two cells,
 which is not a resolved bay. At 1.1 km it spans three, which is the coarsest grid that answers the
 question that motivated all of this. So 1.1 km is the target, and 1.1 km is ~2.7 hours on 32 CPU
 cores per cycle: **demanding but entirely feasible on one workstation, with no port, no GPU and no
 new language.** Twice-daily fits in a day with room to spare.
 
-The memory footprint is negligible at every resolution — 3,300 sea points × 1,152 spectral bins in
+The memory footprint is negligible at every resolution: 3,300 sea points × 1,152 spectral bins in
 FP32 is about 15 MB, against the 4.6 GB a global 0.25° spectrum needs. marola's problem is
 compute-bound in wall-clock terms and nowhere near any memory limit, which matters for §4.2: the
-attached plan's central engineering concern — keeping a multi-gigabyte state device-resident — is
+attached plan's central engineering concern, keeping a multi-gigabyte state device-resident, is
 not marola's concern at all.
 
 ### 4.2 Two findings that change the attached plan before any language is chosen
 
-**The DOE Kokkos kernels do not exist.** The attached plan's Task 0 — "the first action of this
-project is to contact that team", with Route B' promising to "subtract 2–4 months" — rests on the
+**The DOE Kokkos kernels do not exist.** The attached plan's Task 0, "the first action of this
+project is to contact that team", with Route B' promising to "subtract 2–4 months", rests on the
 claim that E3SM/Omega is rebuilding WW3 in C++/Kokkos. Checked directly against the repository trees
 on 2026-09-10: `E3SM-Project/Omega` is public, its C++/Kokkos code under `components/omega/` is an
 **ocean circulation model** (the MPAS-Ocean successor), and a recursive enumeration of its 10,445
-paths finds **no wave source terms of any kind**. E3SM does carry WW3 — as a **Fortran git
+paths finds **no wave source terms of any kind**. E3SM does carry WW3, as a **Fortran git
 submodule** (`components/ww3/src/WW3` → `E3SM-Project/WW3`, branch `e3sm`). A GitHub-wide code search
 for `wavewatch kokkos` returns **zero results**. The E3SM wave group's actual trajectory went
 OpenACC (2023) → **ML emulation** (2026, §4.2.6), never Kokkos. Route B' should be struck.
 
-**WAVEWATCH III's licence is not open source — but it restricts less than it first appears, and the
+**WAVEWATCH III's licence is not open source, but it restricts less than it first appears, and the
 distinction decides which parts of this MIP are affected.** The repository clones anonymously with no
 registration, and downloading makes you a Licensee; there is no approval step to request. The full
 text of `LICENSE.md` ("WAVEWATCH III® Software License", © 2009 National Weather Service) was read,
@@ -127,25 +127,25 @@ not summarised. At a glance:
 
 In detail, what it **permits outright**:
 
-- **Use** — "The Licensee may use the software **for any purpose relating to sea state prediction**."
+- **Use**: "The Licensee may use the software **for any purpose relating to sea state prediction**."
   Running a nest for marola is the central case, not a loophole. There is **no non-commercial
   clause**, unlike MIP-0050's CC-BY-NC problem.
-- **Private copies and private forks** — "A Licensee may reproduce sufficient software to satisfy its
+- **Private copies and private forks**: "A Licensee may reproduce sufficient software to satisfy its
   needs", provided copies keep the name, version and notices, and modifications are declared as such.
 - **Publishing the model's output.** The licence governs software, not forecasts. Nothing restricts
   publishing wave heights on marola.dev.
 
 What it **restricts**:
 
-- **Redistribution** — "no disclosure of any portion of the software, whether by means of a media or
+- **Redistribution**: "no disclosure of any portion of the software, whether by means of a media or
   verbally, may be made to any third party". On a literal reading this bars publishing WW3 source, or
   a derived port, to a public repository.
-- **Modifications to the model proper** — a licensee who changes "numerical and physical approaches
+- **Modifications to the model proper**: a licensee who changes "numerical and physical approaches
   to wave modeling" **"is required to offer same to NOAA"** (to offer; NOAA need not accept).
-- **Per-person acknowledgement** — everyone with access must state **in writing** that they have read
+- **Per-person acknowledgement**: everyone with access must state **in writing** that they have read
   and accepted the licence. Trivial for one developer; a real obligation if contributors ever touch
   WW3 code.
-- **The trademark** — WAVEWATCH III® may not be used as a product name without permission.
+- **The trademark**: WAVEWATCH III® may not be used as a product name without permission.
 
 The licence dates from 2009, before the code was on GitHub, when distribution meant requesting a
 tarball from NOAA; the no-disclosure clause reads as "do not redistribute — send people to us", not
@@ -160,24 +160,24 @@ workaround: "A Licensee may reproduce sufficient software to satisfy its needs."
 on making a fork *public*, not on having one.
 
 **"Do I have to ask permission for any use at all?"** No. There is no registration, no application
-and no approval step — the licence is already the grant, and cloning the repository makes you a
+and no approval step. The licence is already the grant, and cloning the repository makes you a
 Licensee bound by it. This matters because "the licence is restrictive" is easily misread as "the
 project needs NOAA's sign-off before it can start". It does not.
 
 **"Then why is the code public?"** Because the licence is from **2009** and the distribution model
 changed underneath it. It was written when obtaining WW3 meant asking NOAA for a tarball, and the
 no-disclosure clause served to keep NOAA the single source rather than to keep the code secret. NOAA
-itself later published everything on GitHub — which means NOAA disclosed it to the world — so the
+itself later published everything on GitHub, which means NOAA disclosed it to the world, so the
 clause no longer protects what it was written to protect. It is a licence that aged without being
 rewritten, not a trap. That reading is inference from the dates and the clause's wording, however,
 and it is not NOAA speaking; §11 keeps the question open rather than treating this paragraph as an
 answer.
 
-**The practical consequence is narrow.** Everything MIP-0051 §5.3 would do — run the model, publish
-the forecast — is squarely permitted. Only publishing a *port* is constrained, and that is precisely
+**The practical consequence is narrow.** Everything MIP-0051 §5.3 would do (run the model, publish
+the forecast) is squarely permitted. Only publishing a *port* is constrained, and that is precisely
 the thing §5 already recommends against on cost grounds. **Whether NOAA/EMC would permit a public
 port is an open question (§11), not a blocker for anything marola would ship.** For contrast: Kokkos
-is Apache-2.0, and Oceananigans.jl — a from-scratch GPU ocean model — is MIT.
+is Apache-2.0, and Oceananigans.jl, a from-scratch GPU ocean model, is MIT.
 
 ### 4.2.1 The candidates, compared
 
@@ -196,7 +196,7 @@ is Apache-2.0, and Oceananigans.jl — a from-scratch GPU ocean model — is MIT
 ### 4.2.2 On Scala specifically, since marola is a Scala repo
 
 The tempting answer is wrong and should be said plainly. Scala Native targets LLVM for CPU and has
-**no GPU backend**. TornadoVM — the one JVM framework that JITs bytecode to PTX — **supports Java and
+**no GPU backend**. TornadoVM, the one JVM framework that JITs bytecode to PTX, **supports Java and
 not Scala** (its FAQ is explicit; Kotlin support has been an open issue since 2020), and it targets
 data-parallel array code, not a five-dimensional spectral solver. `Compute.scala` is dormant. Chisel
 is a hardware description language: it emits Verilog, which is §4.2.1's FPGA row, not a GPU path.
@@ -209,7 +209,7 @@ spectral wave physics in Scala would mean inventing a GPU story no one in numeri
 ### 4.2.3 The number that should decide this
 
 WW3's source terms are **82% of runtime**. ORNL moved exactly those to GPU and measured
-**4.7–6.6× per MPI rank against a single CPU core — but only 1.36–1.41× on a fair whole-node
+**4.7–6.6× per MPI rank against a single CPU core, but only 1.36–1.41× on a fair whole-node
 comparison** (42 CPU cores and 6 V100s on Summit). Meanwhile **WAM6-GPU achieved 37× on 8 A100s for
 an equivalent spectral wave model without leaving Fortran**, by refactoring layout and keeping the
 whole step on the device.
@@ -224,7 +224,7 @@ The request pairs WRF with high-performance GPU languages. NCAR's own support fo
 work in WRF is "decentralized and difficult to track down, and is not officially supported, unlike
 MPAS which does have official GPU support built in." WRF on the described hardware would run on the
 host's **CPU** cores. If atmospheric downscaling is ever wanted, **MPAS** is the model in that family
-with an official GPU path — and it is the same E3SM lineage as the Omega work the attached plan
+with an official GPU path, and it is the same E3SM lineage as the Omega work the attached plan
 builds on, which makes it the more coherent choice on every axis, not just this one.
 
 ### 4.4 ECMWF AIFS — the option that actually suits the hardware
@@ -243,31 +243,31 @@ revisit it.
 **Recommendation: park the port; run nothing yet; measure one thing.**
 
 1. **Do not port anything.** §4.1 shows marola's target resolution (1.1 km, the coarsest grid that
-   resolves Jurerê) costs ~87 core-hours per cycle — a workstation job. The published evidence on
+   resolves Jurerê) costs ~87 core-hours per cycle: a workstation job. The published evidence on
    porting WW3 is also discouraging at any scale: ORNL moved the source terms, which are 82% of
    runtime, onto GPUs and measured **1.36–1.41× per node** against 42 CPU cores. A 12-month project
    for 1.4× is a bad trade even for the people who need it; for marola it is not a trade at all.
 2. **If MIP-0051 §5.4's ledger says nearshore resolution is the binding error**, run stock WW3 in
    Fortran, on CPUs, at 1.1 km, on the existing machine. No new language, no port, no GPU.
    The licence permits this without asking anyone (§4.2); a private fork is permitted too.
-3. **Revisit this MIP only if 1.1 km proves insufficient** — that is, if the buoy scores and the
+3. **Revisit this MIP only if 1.1 km proves insufficient**: that is, if the buoy scores and the
    physics say 550 m is needed. At 550 m the cost is ~693 core-hours per cycle (§4.1), which one
    workstation cannot do twice a day, and a GPU becomes a genuine question rather than an
    aspiration. That is the trigger, and it is the only one.
 
 **If the trigger ever fires, the order of attempts is:** (a) tune and parallelise the stock Fortran
-first — the attached plan's own Route 0, and the cheapest by a wide margin; (b) reduce the domain or
+first, the attached plan's own Route 0, and the cheapest by a wide margin; (b) reduce the domain or
 the spectral resolution, which is free and is what operational centres actually do; (c) GPU-offload
-**in Fortran**, via `do concurrent` or OpenACC — this is what WAM6-GPU did to reach 37× on an
-equivalent spectral wave model, and it keeps the CPU reference and the port in one source tree;
+**in Fortran**, via `do concurrent` or OpenACC (this is what WAM6-GPU did to reach 37× on an
+equivalent spectral wave model, and it keeps the CPU reference and the port in one source tree);
 (d) only if that fails, a language port, and then Kokkos on the attached plan's method.
 
-Route B' of the attached plan — adopting DOE's Kokkos WW3 kernels — must be struck outright: §4.2
+Route B' of the attached plan, adopting DOE's Kokkos WW3 kernels, must be struck outright: §4.2
 establishes those kernels do not exist. Any schedule that subtracts months for them is subtracting
 from nothing.
 
 **On the hardware in the request:** the RTX 4090's FP64 throughput is 1/64 of its FP32, which sounds
-disqualifying and is not — WW3 is single-precision by default, so the 4090 is a reasonable
+disqualifying and is not: WW3 is single-precision by default, so the 4090 is a reasonable
 development target. The binding constraint is not precision or memory (§4.1: ~15 MB), it is that
 the work is not there to be accelerated at marola's scale.
 
@@ -293,7 +293,7 @@ the honest verification of a cost model is to measure it:
 
 - **§4.1's magnitude anchor is unverified, and two of its inputs are assumptions.** The 17,800
   core-hours figure came from a search summary, not from the source. The domain's sea fraction is
-  assumed at 55% and is probably higher — the box extends east into open ocean — which would raise
+  assumed at 55% and is probably higher (the box extends east into open ocean), which would raise
   every core-hour figure proportionally. The spectral grid is assumed at 36×32 bins; the ORNL study
   used 36×50, which is 56% more work per point. The *ratios between resolutions* are sound
   arithmetic and survive all three; the absolute core-hours could be off by a factor of two or more,
@@ -304,7 +304,7 @@ the honest verification of a cost model is to measure it:
 - **A nearshore wave nest does not fix wind.** MIP-0051 §2's Jurerê case is partly a sheltering
   problem in the wave field and partly a local wind problem. A wave nest driven by 25 km winds
   inherits the coarse wind. This bounds how much a wave-only nest can deliver, and is the strongest
-  argument for eventually pairing it with MPAS — and the strongest argument for measuring first.
+  argument for eventually pairing it with MPAS, and the strongest argument for measuring first.
 - **A port is not a speedup on its own.** The comparable projects in the attached plan report first
   GPU runs *slower* than the CPU baseline until the whole state stayed on the device. The
   attached plan's own estimate is 9–14 months before beating the current CPU code.
@@ -313,7 +313,7 @@ the honest verification of a cost model is to measure it:
 
 ## 9. Alternatives considered
 
-- **Do nothing at all — don't write this MIP.** Rejected: the question came with a 12-month plan
+- **Do nothing at all, don't write this MIP.** Rejected: the question came with a 12-month plan
   attached and will return. A costed "no", with a named trigger for "yes", is worth more than
   silence.
 - **Adopt the attached C++/Kokkos plan as written.** Rejected on §4.1 and §5: it is a good plan for
@@ -323,19 +323,19 @@ the honest verification of a cost model is to measure it:
   Kokkos plan is: the choice of target language is a question about *how* to port, and this MIP's
   answer is that marola should not port. The survey is kept because it was asked for, and because it
   is the right reference if the §5 trigger ever fires.
-- **Use MPAS for atmosphere instead of WRF.** Not rejected — deferred. §4.3 establishes MPAS is the
+- **Use MPAS for atmosphere instead of WRF.** Not rejected, deferred. §4.3 establishes MPAS is the
   model with an official GPU path, so if downscaling is ever wanted it is the right starting point.
   It is a different proposal and needs its own number.
 - **Buy the data instead of computing it.** Not seriously costed here, and it deserves to be: a
   commercial nearshore forecast for one stretch of coast may be cheaper than any of this. It is the
   honest alternative to every option above, and it belongs in whatever MIP proposes the nest.
-- **AI surrogates for the source terms.** Not rejected — deferred, and more seriously than the
-  attached plan treats it. **NLML** (Ikuyajolu et al., *JGR: Machine Learning and Computation*, 2026 —
+- **AI surrogates for the source terms.** Not rejected, deferred, and more seriously than the
+  attached plan treats it. **NLML** (Ikuyajolu et al., *JGR: Machine Learning and Computation*, 2026,
   the same authors as the 2023 OpenACC WW3 paper) emulates WW3's exact nonlinear interactions at
   **136× the speed of WRT, 1.04× the cost of DIA and twice DIA's accuracy**, stable through a
   year-long integration. That is the direction the E3SM wave group actually went after OpenACC. It
-  is out of scope here because it replaces physics rather than accelerating it — a scientific
-  decision, not an engineering one — and because marola has no baseline to judge it against. It
+  is out of scope here because it replaces physics rather than accelerating it, a scientific
+  decision, not an engineering one, and because marola has no baseline to judge it against. It
   deserves its own MIP if a nest is ever built.
 
 ## 10. Exam-coverage mapping
@@ -355,10 +355,10 @@ model deployment and no user-facing AI surface in this proposal.
 - **May a public GPU port of WW3 be published at all?** §4.2's licence reading says no on a literal
   construction, and NOAA publishes the code itself, so the answer is genuinely unclear and only
   NOAA/EMC can settle it. Scope, stated precisely so this is not over-read: it does **not** affect
-  running stock WW3, keeping a private fork, or publishing forecasts — all of which the licence
+  running stock WW3, keeping a private fork, or publishing forecasts, all of which the licence
   permits. It affects only options ending in a **publicly redistributed derivative**.
 - **Follow-up MIP:** if a nearshore nest is ever adopted, the "home machine computes, pushes an
-  artefact, static site consumes" deployment pattern needs designing once for the repo — it would
+  artefact, static site consumes" deployment pattern needs designing once for the repo; it would
   also serve MIP-0048's training runs. MIP-0051 §11 raises the same point; it needs one number, not
   two.
 
@@ -373,23 +373,23 @@ All 2026-09-10, by clone-and-grep or direct API/page fetch, not from search summ
   the CPU-side `OMPG`/`OMPH` switches. `git ls-remote --heads` returns exactly **11 branches**, none
   GPU-related. `E3SM-Project/WW3` branch `bluepulse` likewise has zero hits for the same patterns.
 - **WW3 licence** (https://raw.githubusercontent.com/NOAA-EMC/WW3/main/LICENSE.md, "WAVEWATCH III®
-  Software License", © 2009 National Weather Service) — the four clauses quoted in §4.2 are verbatim:
+  Software License", © 2009 National Weather Service): the four clauses quoted in §4.2 are verbatim:
   no third-party disclosure; modifications must be offered to NOAA; per-employee written
   acknowledgement; use "for any purpose relating to sea state prediction"; WAVEWATCH III® is a
   trademark. Not OSI-approved.
-- **WW3 is FP32 by default** — `model/src/w3wdatmd.F90:491` allocates `VA(NSPEC,0:NSEALM)`, declared
+- **WW3 is FP32 by default**: `model/src/w3wdatmd.F90:491` allocates `VA(NSPEC,0:NSEALM)`, declared
   `REAL, POINTER :: VA(:,:)` at line 150: default real unless built `-r8`.
 - **E3SM Omega contains no WW3 source terms.** `E3SM-Project/Omega` recursive tree enumerated
   (10,445 paths, not truncated); searching `wave|ww3|wavewatch|spect|source_?term` over
   `components/omega/` finds none. `.gitmodules` on `Omega@develop` carries
-  `components/ww3/src/WW3` → `git@github.com:E3SM-Project/WW3.git`, branch `e3sm` — a Fortran
+  `components/ww3/src/WW3` → `git@github.com:E3SM-Project/WW3.git`, branch `e3sm`, a Fortran
   gitlink. GitHub code search `wavewatch kokkos` → **`"total_count": 0`**.
 - **Ikuyajolu et al. 2023** (https://gmd.copernicus.org/articles/16/1445/2023/, fetched): WW3 v6.07,
   unstructured 59K/228K-node meshes, **36 directions × 50 frequencies**, ST4/DB1/BT1/NL1;
   `W3SRCEMD` is **~82% of execution time**; **2.3–2.4× (P100), 4.7–6.6× (V100) per rank vs one CPU
   core**; **whole-node 1.36–1.41×** (42 cores vs 6 V100, 7 ranks/GPU). Code frozen on Zenodo
   (doi 10.5281/zenodo.6483401, CC-BY-4.0), **not a branch**.
-- **WAM6-GPU v1.0** (https://gmd.copernicus.org/articles/17/6123/2024/) — a spectral wave model fully
+- **WAM6-GPU v1.0** (https://gmd.copernicus.org/articles/17/6123/2024/): a spectral wave model fully
   GPU-accelerated **in Fortran + OpenACC**: 37× on 8 A100s vs a dual-socket Xeon 6236 node; global
   1/10° (2,923,286 points) 7-day run cut from >2 h to **7.6 min**.
 - **`do concurrent` on GPUs II**, arXiv:2608.20586 (20 Aug 2026, authors include NVIDIA and E3SM/Omega
@@ -397,7 +397,7 @@ All 2026-09-10, by clone-and-grep or direct API/page fetch, not from search summ
   OpenMP-target version**; Fortran 2023's `reduce` clause works. Authors still advise keeping data
   directives in production.
 - **NLML** (https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2025JH000699, Ikuyajolu, Van Roekel,
-  Brus & Thomas, 2026): NN emulator of WW3's exact nonlinear interactions — **136× faster than WRT,
+  Brus & Thomas, 2026): NN emulator of WW3's exact nonlinear interactions: **136× faster than WRT,
   1.04× DIA's cost, ~2× DIA's accuracy**, stable through a year-long standalone integration.
 - **Kokkos**: current release **5.2.1** (2026-08-17); **5.0+ requires C++20**; nvcc ≥ 12.2;
   `cmake/kokkos_arch.cmake` on `develop` carries `ADA89`→`sm_89` (RTX 4090) and `HOPPER90`→`sm_90`
@@ -440,12 +440,12 @@ All 2026-09-10, by clone-and-grep or direct API/page fetch, not from search summ
 - `fesom_kokkos`'s licence (GitHub reports none) and its last-commit date; whether its bit-for-bit
   CPU claim holds under `-O3`/vectorisation or only at one optimisation level.
 - Whether FESOM2-JAX's code is public.
-- CUDA.jl's compile latency (TTFX), determinism guarantees and CPU-fallback semantics — the JuliaGPU
+- CUDA.jl's compile latency (TTFX), determinism guarantees and CPU-fallback semantics: the JuliaGPU
   2026 ecosystem review explicitly does not address these. CUDA.jl's and ClimaOcean.jl's exact
   licences (GitHub reports `NOASSERTION`).
 - Whether `cutile-rs`/`cuda-oxide` produce reproducible FP32 results, or support FP64 at all.
 - Numba and CuPy precedent in production Earth-system models: **not found**, which is not the same as
-  does not exist — the search was not exhaustive.
+  does not exist; the search was not exhaustive.
 - Halide's and Futhark's current release versions; Halide's scientific production users.
 - WW3's full GPU working set beyond the spectral state arrays (halos, propagation scratch, per-thread
   temporaries, I/O buffers).

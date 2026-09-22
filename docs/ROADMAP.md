@@ -1,10 +1,10 @@
 # marola roadmap — 2026-09-06
 
-What to do next, in what order, and why — balancing the bugs two reviews found today, the
+What to do next, in what order, and why, balancing the bugs two reviews found today, the
 eighteen MIPs already on file, and what AI-500 (the multi-agent certification `AGENTS.md` names as
 the design target) still needs. Written the day MIP-0011 finished: every hook, rule, subagent and
 skill it proposed is merged (#102, #108–110, #115–122), and the two reviews that ran on that stack
-are the first evidence of whether the tooling holds up. Statuses below are evidence-based — a row
+are the first evidence of whether the tooling holds up. Statuses below are evidence-based: a row
 is "merged" only if `git log main` says so.
 
 ## 1. Where things stand
@@ -16,12 +16,12 @@ proactive usage routing (#125), `mip-tasks` taking a bare number (#126), MIP-000
 (#127), and the arXiv digest + MIP-0019 (#118).
 
 **Verified today, for real.** `mip-reviewer` (MIP-0011 task 7) ran live against PR #120 and
-found a Critical the author's check missed — the subagent pattern works. `/code-review ultra`
+found a Critical the author's check missed: the subagent pattern works. `/code-review ultra`
 ran on the whole stack (free tier) and found 2 normal + 7 nit issues, all reproduced by hand
 before filing. The `heavy-usage` "stop before the wall" claim was read from source: real but
-soft — a prompt injection at a projected threshold, not a hard block (`DEV-FLOW.md` §7).
+soft, a prompt injection at a projected threshold, not a hard block (`DEV-FLOW.md` §7).
 
-**Honest gaps.** MIP-0002 — the Telegram bot, Phase 1, the product's first user surface — is
+**Honest gaps.** MIP-0002 (the Telegram bot, Phase 1, the product's first user surface) is
 still Draft. `AGENTS.md`'s phase discipline gates every Azure-live step behind it, so the AI-500
 Azure-side domains (§2 below) cannot be *built for real* until it ships; they can be designed and
 built local-first now. `docs/AI-500-MAPPING.md` names no MIP that targets its domains directly.
@@ -30,7 +30,7 @@ built local-first now. `docs/AI-500-MAPPING.md` names no MIP that targets its do
 
 Two P0 blocks, and they are not the same kind of thing: **2a** is the bug backlog (fix it), **2b**
 is the one shipping goal that outranks every new MIP (do it). Section numbers below 2 are left
-alone on purpose — `MIP-0037`'s index row and others cite this file by section ("ROADMAP.md §7
+alone on purpose: `MIP-0037`'s index row and others cite this file by section ("ROADMAP.md §7
 K8"), so renumbering would break those pointers.
 
 ### 2a. Bugs found today
@@ -53,7 +53,7 @@ operator log. Ordered by consequence.
 | 09 | `CLAUDE.md:10-11` wraps a code span across lines → renders `.claude/rules/   azure.md` | nit | open, trivial |
 
 Two lessons that outlive the fixes: (a) a test that can't distinguish "works" from "died silently"
-isn't a test — `< /dev/null → 0 bytes` passed while the server was dead; the reviewer's piped
+isn't a test: `< /dev/null → 0 bytes` passed while the server was dead; the reviewer's piped
 handshake is now the reference check for anything stdio; (b) safety gates get adversarial
 self-tests (path prefixes, wrappers, hostile env values), not happy-path ones.
 
@@ -61,11 +61,11 @@ self-tests (path prefixes, wrappers, hostile env values), not happy-path ones.
 
 **P0. The gate is the merge queue, not the calendar**: this starts once every open PR has landed,
 because the model that gets published has to be built from a main that already contains the
-MIP-0025 dataset and training work. Merging first also keeps the model card honest — it cites
+MIP-0025 dataset and training work. Merging first also keeps the model card honest: it cites
 `docs/benchmarks/` numbers, and those move as the finetune PRs land.
 
 What it is: MIP-0025 §5.1's export chain, task 6 (`hf-publish`) of
-[`MIP-0025.tasks.md`](./mips/MIP-0025.tasks.md) — `peft` merge → `convert_hf_to_gguf.py` →
+[`MIP-0025.tasks.md`](./mips/MIP-0025.tasks.md): `peft` merge → `convert_hf_to_gguf.py` →
 quantize (Q4_K_M + Q8_0) → `CHECKSUMS` → Hugging Face `upload_folder` with a model card carrying
 the base model, the training-data description, the `docs/benchmarks/` numbers and the IMPRÓPRIA
 safety note from §6 verbatim.
@@ -76,24 +76,24 @@ short of that is tooling, not a publish.
 
 Two things to check before starting, both real today:
 
-- The tooling already exists on an open PR — `finetune/publish_hf.py`, on
+- The tooling already exists on an open PR: `finetune/publish_hf.py`, on
   `mip-0025/2-hf-publish-tooling` (**#206**). Its PR title still reads "mip-0025 task 1:
   tier2-baseline-evidence", which is stale; the branch's actual diff is `publish_hf.py` +
   `finetune/README.md` + `requirements.txt` + `justfile`. Retitle it when it comes up for merge.
 - The branch numbers in `mip-0025/N-*` do **not** line up with the task numbers in
-  `MIP-0025.tasks.md` — `hf-publish` is task 6 there but branch 2 here. Read the task list as
+  `MIP-0025.tasks.md`: `hf-publish` is task 6 there but branch 2 here. Read the task list as
   authoritative for order and the branch name as a label only.
 
 ## 3. Now (this week) — existing MIPs, cheapest first
 
 1. **Merge the open PRs** in `GH_POST_MORTEM.md`'s order: the two P0 fixes, `docs/mip-0011-mark-verified`
    (flips MIP-0011 to Implemented with its real ~$12.86), the auto-pick step-4 fix. Decide issue 02.
-2. **MIP-0009** (S, cheap win) — task list merged; run `/mip-solve-perpetual 0009`. Four PRs; task 2
+2. **MIP-0009** (S, cheap win): task list merged; run `/mip-solve-perpetual 0009`. Four PRs; task 2
    builds the Node harness the MIP wrongly assumed existed.
-3. **MIP-0017 §5.1/§5.2** (S) — the flat-file run tracker for overnight runs and the "reviewer gets
+3. **MIP-0017 §5.1/§5.2** (S): the flat-file run tracker for overnight runs and the "reviewer gets
    the diff inline" rule. §5.3 (skill-frontmatter audit) has no urgency.
-4. **MIP-0016** (M, "do next") — water-quality marks placed in the sea; user value, no new source.
-5. **MIP-0018** (M, cheap win) — the post-planner + exporter; MIP-0020 (Instagram, in draft) becomes
+4. **MIP-0016** (M, "do next"): water-quality marks placed in the sea; user value, no new source.
+5. **MIP-0018** (M, cheap win): the post-planner + exporter; MIP-0020 (Instagram, in draft) becomes
    one more export target with a real API, unlike LinkedIn/Substack.
 6. **Nits 03–09** as one or two small PRs once the P0s are in.
 
@@ -101,7 +101,7 @@ Two things to check before starting, both real today:
 
 **MIP-0002, the Telegram bot** (L, "do next"). Until it ships, nothing may be provisioned on Azure
 (`AGENTS.md`), so the AI-500 items in §5 that need Foundry/Cosmos/Content Safety stay design-only.
-MIP-0003 (fast replies, M) follows it — a bot that takes ten seconds loses the user. MIP-0004
+MIP-0003 (fast replies, M) follows it: a bot that takes ten seconds loses the user. MIP-0004
 (daily digest, L) is the retention story after that.
 
 ## 5. AI-500 — domain by domain, what's missing and which MIP closes it
@@ -117,11 +117,11 @@ here start at 0023 (0020 is the Instagram bot, in draft; 0021 accessibility and 
 | §3 Evaluate / monitor (20-25%) | `Reviewer` covers "one agent evaluating another's output" but is "not yet framed as a formal eval harness"; "Langfuse-style multi-agent tracing has no direct JVM/Scala equivalent today" | **MIP-0026 — multi-agent eval harness + cross-agent traces**: per-agent contribution scoring on top of `just benchmark`, traces with a shared run id across summarizer/reviewer/escalation into MIP-0010's MLflow ledger (local) with the App Insights sink as the opt-in | yes |
 | §4 Secure / govern (20-25%) | managed identity only on the Foundry client, "the other Azure clients still use keys"; Content Safety on escalation output; governance/audit-trail docs | **MIP-0027 — managed identity everywhere + Content Safety on the escalation path** (FABLE_REVIEW D1, "migrate before Phase 2"); the audit trail is MIP-0017 §5.1's run log generalised to product agents | identity: pre-Phase 2 prep; Content Safety: Phase 2 |
 
-**AI-103, the prerequisite.** Broadly built and live-verified; two named gaps — the Azure AI Search
-RAG sibling (local RAG is built) and a first-class Azure AI Language use — both point at
+**AI-103, the prerequisite.** Broadly built and live-verified; two named gaps (the Azure AI Search
+RAG sibling (local RAG is built) and a first-class Azure AI Language use) both point at
 `FUTURE-WORK.md` §9 "ocean-knowledge grounding". One MIP, **MIP-0028**, Phase 2. Also fix the
 internal inconsistency: the RAG table row says "Built, local-only, live-verified" while the
-summary still calls RAG "a real gap" — the gap is Search-specific.
+summary still calls RAG "a real gap"; the gap is Search-specific.
 
 **Order among the new MIPs:** 0021 → 0022 → 0024 (all local, all raise the AI-500 §1/§3 story
 before any Azure spend) → 0025's identity half (cheap, unblocks Phase 2 safely) → then, after
@@ -132,14 +132,14 @@ MIP-0002: 0023, 0025's Content Safety half, 0026.
 MIP-0011 delivered gates-as-hooks, path-scoped rules, two subagents, a proactive perpetual runner,
 MCP registration. Still missing, per `docs/AGENT-FRAMEWORKS-SURVEY.md` and `AGENT-SKILLS.md`:
 
-- **Product agents as addressable units** — `.claude/agents/` holds only dev-tooling reviewers;
+- **Product agents as addressable units**: `.claude/agents/` holds only dev-tooling reviewers;
   nothing represents summarizer/reviewer/escalation. MIP-0024 closes it.
-- **A2A is unreviewed** — the mapping says so itself; MIP-0025's review section.
-- **Adversarial self-tests for gates** — today's fail-open finding is the argument; extend the
+- **A2A is unreviewed**: the mapping says so itself; MIP-0025's review section.
+- **Adversarial self-tests for gates**: today's fail-open finding is the argument; extend the
   pattern to `stop-gate.sh` and any future `PreToolUse` hook.
 - **The three remaining `AGENT-SKILLS.md` §3 skills** (`fixture-refresh`, `benchmark-compare`,
-  `water-provider`) — follow-ups off `main`, one PR each, per MIP-0011.tasks decision #1.
-- **Cost accounting for reviews** — an ultrareview is free 3×, then paid; MIP-0011's Cost row now
+  `water-provider`): follow-ups off `main`, one PR each, per MIP-0011.tasks decision #1.
+- **Cost accounting for reviews**: an ultrareview is free 3×, then paid; MIP-0011's Cost row now
   says to log the real price the first time one is spent. Do it.
 
 ## 7. Candidate MIPs — external consolidation (Kimi, 2026-09-06), triaged
@@ -172,48 +172,48 @@ The `mip` skill's step 3: fetch the page, confirm format, update frequency, lice
 needed; record what was *not* checked. One line per external claim the candidates above make.
 Tick with the date and the URL you actually read.
 
-- [ ] **Overpass / OSM tags (K4)** — `wheelchair`, `parking`, `shower`, `lifeguard`, `amenity`
+- [ ] **Overpass / OSM tags (K4)**: `wheelchair`, `parking`, `shower`, `lifeguard`, `amenity`
       coverage on Santa Catarina beaches: run the query, count how many of the ~40 beaches carry
       each tag (sparse tags make a feature that lies by omission); Overpass rate limits (the 429
       rate K7 wants to measure); ODbL attribution already satisfied by MIP-0005?
-- [ ] **Copernicus Marine (K1 dive)** — chlorophyll-a / turbidity product for the SW Atlantic
+- [ ] **Copernicus Marine (K1 dive)**: chlorophyll-a / turbidity product for the SW Atlantic
       coast: product id, spatial resolution (is 4 km useful 300 m off a beach?), update cadence,
       account/key requirement, licence; whether the free tier is enough.
-- [ ] **Open-Meteo Marine (K1 surf)** — `swell_wave_direction`, `swell_wave_period`, tide/sea-level
+- [ ] **Open-Meteo Marine (K1 surf)**: `swell_wave_direction`, `swell_wave_period`, tide/sea-level
       fields already used by the golden fixtures; confirm which are hourly vs 3-hourly for the
       surf score.
-- [ ] **Open-Meteo "past" observations (K5)** — the historical/`past_days` endpoint: is it
+- [ ] **Open-Meteo "past" observations (K5)**: the historical/`past_days` endpoint: is it
       re-analysis or the earlier forecast? (If it's the model's own hindcast, "verification" is
       circular.) Retention window, resolution, terms for storing series.
-- [ ] **IMA/SC bulletins (K2)** — publication cadence and the flip latency PRÓPRIA→IMPRÓPRIA:
+- [ ] **IMA/SC bulletins (K2)**: publication cadence and the flip latency PRÓPRIA→IMPRÓPRIA:
       how soon after sampling does the page change? (Determines whether a "push within 6 h" claim
       is honest.) Existing parser's failure modes (K7's "IMA parse failure rate").
-- [ ] **Telegram push limits (K2)** — Bot API broadcast limits (messages/second, per-chat), and
+- [ ] **Telegram push limits (K2)**: Bot API broadcast limits (messages/second, per-chat), and
       what "unsolicited" means under Telegram's terms once MIP-0004 has subscribers.
-- [ ] **iCalendar (K3)** — RFC 5545 `VEVENT` with `VALARM`; how Telegram delivers an `.ics`
-      (document vs link); timezone handling for `America/Sao_Paulo` (no DST since 2019 — verify).
-- [ ] **Service-worker constraints (K8)** — GitHub Pages serves over HTTPS (required); scope and
+- [ ] **iCalendar (K3)**: RFC 5545 `VEVENT` with `VALARM`; how Telegram delivers an `.ics`
+      (document vs link); timezone handling for `America/Sao_Paulo` (no DST since 2019, verify).
+- [ ] **Service-worker constraints (K8)**: GitHub Pages serves over HTTPS (required); scope and
       cache-busting for `latest.json` written by `site.yml`; iOS Safari install-prompt behaviour.
-- [ ] **Google Maps route URL shapes (K9)** — what `Coordinates.fromMapsUrl` parses today vs a
-      directions URL (`/dir/…`); no Google API call is implied — confirm the corridor is computed
+- [ ] **Google Maps route URL shapes (K9)**: what `Coordinates.fromMapsUrl` parses today vs a
+      directions URL (`/dir/…`); no Google API call is implied. Confirm the corridor is computed
       locally from the two coordinates only.
-- [ ] **Sources for `knowledge/safety/` (K6)** — Brazilian lifeguard (CBMSC/GBS) rip-current
+- [ ] **Sources for `knowledge/safety/` (K6)**: Brazilian lifeguard (CBMSC/GBS) rip-current
       guidance, SAMU 192, a jellyfish first-aid reference from a health authority; each must be a
-      fetchable, citable URL — the corpus rule is "anything you can't verify, delete".
-- [ ] **Prometheus/OTel metrics (K7)** — Kyo/JVM OTel metrics exporter availability vs the
+      fetchable, citable URL: the corpus rule is "anything you can't verify, delete".
+- [ ] **Prometheus/OTel metrics (K7)**: Kyo/JVM OTel metrics exporter availability vs the
       `claude_code.*` OTLP path `AGENTS.md` already names; Azure Monitor's OTLP ingestion terms.
-- [ ] **pt-BR plural rules (K10)** — CLDR data for `pt` (one/other) and whether a JVM
+- [ ] **pt-BR plural rules (K10)**: CLDR data for `pt` (one/other) and whether a JVM
       `MessageFormat` suffices before adding a dependency.
 
 ## 8. Parked, deliberately
 
-MIP-0007 (time-series foundation models), MIP-0015 (Interação matching — a social feature, weak
-AI-500 tie despite its tag), MIP-0014 (the book, XL), MIP-0012 (llm4s, XL — revisit when
-MIP-0024's actor shape shows what the LLM layer needs), MIP-0013 (OpenCode tryout, S — cheap, but
+MIP-0007 (time-series foundation models), MIP-0015 (Interação matching, a social feature, weak
+AI-500 tie despite its tag), MIP-0014 (the book, XL), MIP-0012 (llm4s, XL, revisit when
+MIP-0024's actor shape shows what the LLM layer needs), MIP-0013 (OpenCode tryout, S, cheap, but
 only worth running once the hooks it would compare against have a month of use).
 
 ## 9. How this file stays true
 
 Update it in the same PR that changes a status above (a MIP flipping to Implemented, a P0 closing,
-a new review run). Stale roadmaps are worse than none — `docs/mips/README.md` is the index of
+a new review run). Stale roadmaps are worse than none. `docs/mips/README.md` is the index of
 record for MIP status; this page is the ordering and the reasons, and defers to it on facts.

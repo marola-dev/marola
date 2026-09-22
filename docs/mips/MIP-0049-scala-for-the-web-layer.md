@@ -34,8 +34,8 @@ Three real frictions, none of them "JavaScript is bad":
   concatenates HTML in Python; `app.js` concatenates it in JavaScript with a hand-rolled `esc()`.
   MIP-0044 §5.1 adds a third generator. Escaping is a per-site-author responsibility today.
 - **`app.js` is deliberately old-fashioned** (`var`, no modules, no build step) because MIP-0005
-  forbade a build step. That constraint bought real things — no toolchain, instant deploys, a page
-  that works with a text editor — and it is worth keeping unless something pays for its removal.
+  forbade a build step. That constraint bought real things: no toolchain, instant deploys, a page
+  that works with a text editor, and it is worth keeping unless something pays for its removal.
 
 What is *not* a motivation: the page being slow or broken. It is 32 KB, has no framework, and
 renders on a phone. Any change here is for the developer, and §6 says so plainly.
@@ -43,7 +43,7 @@ renders on a phone. Any change here is for the developer, and §6 says so plainl
 ## 3. User-visible change
 
 For §5.1: **none.** Identical HTML, generated from typed Scala instead of string concatenation.
-That is the point — a refactor a visitor cannot detect.
+That is the point: a refactor a visitor cannot detect.
 
 For §5.2, the honest before/after is a payload table, not a screenshot:
 
@@ -52,40 +52,40 @@ today      app.js 31,830 B + style.css 13,066 B + leaflet.js 147,553 B   (no bui
 Scala.js   bundle instead of app.js, fullOptJS, +sbt-scalajs, + a bundle step in site.yml
 ```
 
-The bundle size is the number that decides §5.2 and it is **not measured here** — see §11.
+The bundle size is the number that decides §5.2 and it is **not measured here**; see §11.
 
 ## 4. Data sources and dependencies reviewed
 
 Versions resolved live from Maven Central via `cs complete-dep`, 2026-09-08.
 
-**4.1 ScalaTags — `com.lihaoyi:scalatags_3:0.13.1`. Stable. The pick for §5.1.**
+**4.1 ScalaTags: `com.lihaoyi:scalatags_3:0.13.1`. Stable. The pick for §5.1.**
 A JVM-side HTML DSL: `html(body(h1("marola")))` produces a string. No browser runtime, no Scala.js,
 no build step for the visitor, no bundle. Escaping is the library's job rather than a hand-rolled
 `esc()`. It runs where `SiteBuilder` already runs. This is the only candidate that costs a reader
 nothing.
 
-**4.2 Tyrian — `io.indigoengine:tyrian_3:0.30.0-M6`. A milestone release.**
+**4.2 Tyrian: `io.indigoengine:tyrian_3:0.30.0-M6`. A milestone release.**
 An Elm-architecture (model/update/view) framework for Scala.js by PurpleKingdomGames. The
 architecture is a genuinely good fit for this page: `app.js`'s `state` object plus `render()` is
-already a hand-rolled TEA loop. **But 0.30.0-M6 is a milestone, not a stable release** — marola
+already a hand-rolled TEA loop. **But 0.30.0-M6 is a milestone, not a stable release.** marola
 already carries one pre-1.0 dependency (Kyo 1.0.0-RC5) and `.claude/rules/scala.md` documents the
 cost: verifying API against the jar because published docs drift. A second pre-1.0 dependency, in
 the layer a visitor actually loads, is a different risk from one in the pipeline.
 
-**4.3 Laminar — `com.raquo:laminar_sjs1_3:18.0.0-M5`. Also a milestone.**
+**4.3 Laminar: `com.raquo:laminar_sjs1_3:18.0.0-M5`. Also a milestone.**
 Reactive-signal DOM library, no virtual DOM, widely used. Same Scala.js prerequisites as Tyrian and
 the same pre-1.0 caveat at the version resolved. Would suit the map page's fine-grained updates
 (one hour slider changing 80 markers) better than a full re-render.
 
-**4.4 Indigo — `io.indigoengine:indigo_sjs1_3:0.30.0-M6`. Resolves; wrong tool.**
-This is "purplegames": PurpleKingdomGames publish both Tyrian and Indigo. Indigo is a *game engine*
-— a game loop, a scene graph, WebGL. marola's page is a Leaflet map with panels; a game engine
+**4.4 Indigo: `io.indigoengine:indigo_sjs1_3:0.30.0-M6`. Resolves; wrong tool.**
+This is "purplegames": PurpleKingdomGames publish both Tyrian and Indigo. Indigo is a *game engine*:
+a game loop, a scene graph, WebGL. marola's page is a Leaflet map with panels; a game engine
 would replace Leaflet, not help it. Rejected on purpose, not availability.
 
-**4.5 Scala.js itself — 1.22.0.** Not a framework, the substrate all of §4.2–§4.4 need.
+**4.5 Scala.js itself: 1.22.0.** Not a framework, the substrate all of §4.2–§4.4 need.
 **Deliberately not re-researched here**: MIP-0042 §4.4 already establishes the current version, the
-`sbt-scalajs` 1.22.0 / `sbt-scalajs-crossproject` 1.3.2 plugin pair, and the one open unknown —
-a `java.time` shim. That unknown is shared, and settling it twice would be waste.
+`sbt-scalajs` 1.22.0 / `sbt-scalajs-crossproject` 1.3.2 plugin pair, and the one open unknown: a
+`java.time` shim. That unknown is shared, and settling it twice would be waste.
 
 **4.6 The status quo.** `app.js` is 31,830 B, dependency-free, and tested by `scripts/site_check.js`
 in a stub DOM with no browser and no `node_modules`. Any client-side option must state what replaces
@@ -96,15 +96,15 @@ that harness. None of §4.2–§4.4 can be tested that way.
 ### 5.1 Server-side HTML in Scala (the cheap win)
 Put ScalaTags behind the generators that already exist rather than adding a new surface:
 MIP-0044 §5.1's page generator emits typed HTML instead of concatenated strings, and
-`SiteBuilder.copyStatic` is unchanged. `scripts/build_docs_index.py` stays Python for now — moving
+`SiteBuilder.copyStatic` is unchanged. `scripts/build_docs_index.py` stays Python for now; moving
 it is a separate call, and the Python side has its own `--self-test`.
 
-No visitor-facing change, no build step, no bundle, one stable dependency in `cli/` only —
+No visitor-facing change, no build step, no bundle, one stable dependency in `cli/` only:
 `core/` and `local/` stay as they are.
 
 ### 5.2 A Scala.js view layer (deferred, not rejected)
 If MIP-0042's cross-build lands, the scorer is already compiling to JS and the marginal cost of a
-Scala.js *view* drops sharply — that is the moment to reconsider, and the reason this is `do when`
+Scala.js *view* drops sharply. That is the moment to reconsider, and the reason this is `do when`
 rather than `park`. The shape would be Laminar or Tyrian owning the panels while Leaflet keeps the
 map, with the board decoded into the same case classes `Board.scala` writes.
 
@@ -120,21 +120,21 @@ is editing the same files.
 **None, in every option.** `Swimability` stays where it is. This matters more than it sounds:
 MIP-0042 §4.4's whole argument for a Scala.js cross-build is that the scorer must not be hand-ported
 to JavaScript, because a second copy of safety-relevant logic is a second thing to get wrong. This
-MIP inherits that rule and adds nothing to it — the view layer displays a score, it never computes
+MIP inherits that rule and adds nothing to it: the view layer displays a score, it never computes
 one.
 
 ## 7. Verification plan
 
 For §5.1:
 - `build_docs_index`-equivalent tests on the Scala side: generated HTML contains the expected
-  links, and a value containing `<script>` is escaped — the property a hand-rolled `esc()` only
+  links, and a value containing `<script>` is escaped, a property a hand-rolled `esc()` only
   has by inspection.
 - Byte-comparison of the generated page before and after the ScalaTags rewrite, so "no
   user-visible change" is checked rather than asserted.
 - `just build && just test && just quality` green.
 
 For §5.2, before any commitment:
-- A spike measuring `fullOptJS` bundle size for a page that renders one board — the number §3
+- A spike measuring `fullOptJS` bundle size for a page that renders one board: the number §3
   leaves open, against today's 31,830 B.
 - A demonstrated CI-runnable page test with no browser, or an explicit decision to accept a
   browser in CI.
@@ -146,7 +146,7 @@ For §5.2, before any commitment:
 - **Losing the harness** (the Risk field). It is the concrete cost and it is easy to under-weigh.
 - **Two pre-1.0 dependencies.** Kyo is already one; Tyrian and Laminar both resolve to milestones.
 - **A build step is a deploy risk.** Today `site/dist` is copyable files; site.yml has no bundler.
-  Every added step is a way the 3-hourly build can fail — and this week alone the site quietly
+  Every added step is a way the 3-hourly build can fail, and this week alone the site quietly
   shipped a stale docs tree and two dead water providers, all through steps that failed silently.
 - **This is developer ergonomics, not user value**, and should be argued as such rather than
   dressed up.
@@ -155,10 +155,10 @@ For §5.2, before any commitment:
 
 - **Do nothing.** Entirely defensible: the page works, is small and is tested. This MIP exists
   because the question was asked, and "no" is a legitimate outcome for §5.2.
-- **Modernise the JavaScript instead** — `const`/`let`, ES modules, JSDoc types checked by `tsc`.
+- **Modernise the JavaScript instead**: `const`/`let`, ES modules, JSDoc types checked by `tsc`.
   Gets much of the type safety with no build step for the visitor and keeps `site_check.js`
   working. **The strongest alternative to §5.2** and the one to compare against when the time comes.
-- **TypeScript.** Real types, but adds a build step and a second language toolchain — the cost of
+- **TypeScript.** Real types, but adds a build step and a second language toolchain: the cost of
   Scala.js without the one-language benefit that is the entire point of asking.
 - **A game engine (Indigo).** §4.4.
 
@@ -176,7 +176,7 @@ None. This is repo ergonomics, not an AI-103/AI-500 domain.
   two languages is the status quo either way until MIP-0044 §5.1 lands.
 - **Follow-up MIP:** `app.js` reads board fields as string literals while `Board.scala` writes them
   as string literals, with a JSON schema and two test harnesses guarding the gap. A generated
-  shared contract would remove the class of bug without any framework — worth its own number,
+  shared contract would remove the class of bug without any framework, worth its own number,
   and it is the cheapest real win identified while writing this.
 
 ## Appendix
@@ -192,7 +192,7 @@ All 2026-09-08, `cs complete-dep` against Maven Central:
   `vendor/leaflet.js` **147,553 B**.
 
 ### Not checked
-- **No bundle size was measured for any Scala.js option** — the single number §5.2 depends on.
+- **No bundle size was measured for any Scala.js option**: the single number §5.2 depends on.
   Nothing in this MIP should be read as a claim about it.
 - Scala.js 1.22.0 and the plugin versions are taken from MIP-0042 §4.4, not re-verified here.
 - No Tyrian, Laminar or ScalaTags code was written or compiled against this repo. Their fitness is

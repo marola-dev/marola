@@ -18,8 +18,8 @@
 ## 1. Summary
 
 Every emoji on the map is replaced by a small monochrome mark drawn from **nautical- and
-weather-chart vernacular** — a barb-derived wind shaft, the site's own wave, a sounding bulb, a
-whale and a jellyfish silhouette, four plain facility pictograms — defined once as SVG `<symbol>`s
+weather-chart vernacular**: a barb-derived wind shaft, the site's own wave, a sounding bulb, a
+whale and a jellyfish silhouette, four plain facility pictograms, defined once as SVG `<symbol>`s
 inside `index.html` and referenced by `<use href="#…">`. No new file, no new network request, no
 font download, no build step, no data-colour change. The pattern is not new here: on 2026-09-07 the
 water verdict already swapped 💧 for a `.wdot` colour dot reusing the score tokens (commit `131fdb9`,
@@ -27,7 +27,7 @@ PR #233); this MIP generalizes that one decision across the whole page.
 
 ## 2. Motivation
 
-The visual chrome is already disciplined — the 2026-09-05 typography pass (commit `00c330c`, the
+The visual chrome is already disciplined: the 2026-09-05 typography pass (commit `00c330c`, the
 first application of the `site-frontend` skill) removed the classic generated-page tells, and a grep
 of today's `site/static/` confirms **none of them came back**: no gradient, no `backdrop-filter`, no
 Tailwind palette hex, no `@keyframes`, no uppercase eyebrow labels (checked 2026-09-07, appendix).
@@ -37,7 +37,7 @@ What is left is the emoji layer, and it is the layer a visitor reads first. `app
 header button. Three specific problems, all visible in the source:
 
 - **The page draws two different waves.** `WAVE_PATH` (`app.js:172`) is a real, deliberately tuned
-  wave — one filled path, the score colour, matched by the legend key in `index.html:38` and
+  wave: one filled path, the score colour, matched by the legend key in `index.html:38` and
   asserted identical by `site_check.js:214-216`. Two lines below it, the *waves* aspect is `〰️`
   (U+3030 with VS16), an unrelated wavy dash. One page, one concept, two glyphs.
 - **MIP-0009 shipped a workaround it documented as a workaround.** Its §5 fixes the emoji map and
@@ -45,7 +45,7 @@ header button. Three specific problems, all visible in the source:
   words." Every aspect is `emoji + word` because the emoji cannot be relied on. A `<symbol>` renders
   identically everywhere and carries no Emoji-14 dependency.
 - **`.head` opens with an emoji.** `aspectsHtml` builds `<div class="head">🌊 <beach name></div>`
-  (`app.js:210`) — the tooltip's heading, and the `site-frontend` red-flags list names "an emoji …
+  (`app.js:210`): the tooltip's heading, and the `site-frontend` red-flags list names "an emoji …
   in the `h1`" explicitly.
 
 Two adjacent findings, both measured, neither strictly emoji (§5.6, §8): white text on the score
@@ -63,7 +63,7 @@ The hovered/tapped aspect row, before (today, verbatim from `site_check.js`'s fi
 🅿️ parking 3 · 🚻 toilets 1
 ```
 
-After — same words, same numbers, same colour dot; the marks are chart glyphs in `currentColor`,
+After: same words, same numbers, same colour dot; the marks are chart glyphs in `currentColor`,
 and the numbers align because the grid gains `tabular-nums` (it does not have it today):
 
 ```
@@ -81,7 +81,7 @@ Header button: `🌊 sound` → a small ripple mark plus the word `sound`. Foote
 
 No data source changes. What was reviewed is the *delivery mechanism* for the icons, against this
 repo's real constraints (no `package.json` anywhere in the tree; `site.yml` runs sbt for the boards,
-`scripts/stamp_site_version.sh` for cache-busting, and nothing else — no bundler exists to add to).
+`scripts/stamp_site_version.sh` for cache-busting, and nothing else: no bundler exists to add to).
 
 ### 4.1 Inline `<symbol>` + `<use href="#id">` in `index.html` — **the pick**
 
@@ -96,7 +96,7 @@ Works under the page's own CSP (`default-src 'self'`; inline SVG is markup, not 
 Adds one network request, and `site.yml`'s allowlist step (`… ! -name index.html ! -name app.js …
 -print` then `exit 1`) fails the build on any unlisted file, so it needs a workflow edit for a
 cosmetic gain. Cross-file `<use>` also needs a same-origin fetch, which breaks a `file://` open of
-`site/dist` — a real local-dev path here.
+`site/dist`, a real local-dev path here.
 
 ### 4.3 An icon font (or any CDN font) — rejected
 
@@ -114,19 +114,19 @@ NWS (weather.gov/hfo/windbarbinfo, fetched 2026-09-07): a long barb is 10 knots,
 pennant 50, and calm (0-2 kt) is drawn as a circle. marola has **km/h and a three-band level**, not
 knots, so the proposal is explicitly *barb-derived, not a station-model barb*: one shaft with zero
 barbs plus a small ring (calm), one barb (breezy), two barbs (strong). The word stays beside it, so
-nothing depends on the reader knowing the convention — the shape only has to make three states
+nothing depends on the reader knowing the convention: the shape only has to make three states
 distinguishable at 14 px.
 
 ## 5. Design
 
 **Design plan** (the `frontend-design` two-pass, compressed). *Subject*: a hydrographic reading of
 one stretch of coast, for someone on a phone deciding within the hour whether to swim. *Colour*: no
-new tokens — the five score colours are data and untouched, chrome stays `--ink / --muted / --bg /
+new tokens: the five score colours are data and untouched, chrome stays `--ink / --muted / --bg /
 --panel / --line / --accent`. *Type*: unchanged system stack and 13/15/17/20/26 scale; the one
 addition is `tabular-nums` on the aspect grid. *Layout*: unchanged panels; the aspect grid gains a
 fixed icon column so the marks form a vertical rail and the readings align. *Principle*: one mark
 per fact, never a mark the word does not already say; colour means score and water, nothing else.
-Reviewed against the skill's calibration list before committing to it — this is not cream+serif,
+Reviewed against the skill's calibration list before committing to it: this is not cream+serif,
 not near-black+acid, not a SaaS-card kit, and the one structural device (barb count) encodes a real
 reading rather than decorating one.
 
@@ -136,7 +136,7 @@ One `<svg class="sprite" aria-hidden="true">` immediately after `<body>`, holdin
 id="i-*" viewBox="0 0 24 24">` for: `i-wind-0` `i-wind-1` `i-wind-2` `i-temp` `i-wave` `i-jelly`
 `i-whale` `i-parking` `i-toilets` `i-shower` `i-lifeguard` `i-sound`. Strokes only,
 `stroke="currentColor"`, no `fill` attribute (so a `<use>` can set one), `stroke-width="2"`,
-`stroke-linecap="round"` — the same drawing style as the wordmark SVG already in `<h1>`.
+`stroke-linecap="round"`: the same drawing style as the wordmark SVG already in `<h1>`.
 `i-wave` **reuses `WAVE_PATH` verbatim** so the marker, the legend key and the waves aspect are
 finally the same shape.
 
@@ -164,8 +164,8 @@ Leaflet `divIcon`s is an untested change with nothing to gain (§9).
 
 ### 5.3 `site/static/index.html`, outside the sprite
 
-- `28` — `🌊 sound` → `icon('i-sound')` markup + `sound`.
-- `38` — the legend's wave key stops inlining a duplicate `<path d="…">` and becomes
+- `28`: `🌊 sound` → `icon('i-sound')` markup + `sound`.
+- `38`: the legend's wave key stops inlining a duplicate `<path d="…">` and becomes
   `<use href="#i-wave">`, so one definition feeds marker, key and aspect.
 
 ### 5.4 `site/static/style.css` (~25 lines, budget below)
@@ -183,22 +183,22 @@ flex-wrap: wrap; gap: .15rem .8rem; }`. No new colour, no new radius, no new sha
 - `185-196`: the six emoji needles become `use href="#i-…"` needles plus the unchanged word/number;
   the `<span>`-count and `wide`-count assertions stay exactly as they are.
 - `194`: `'🅿️ parking 3 · 🚻 toilets 1'` → the icon+word+count form **without** ` · `.
-- `213-216`: the legend-key check compares the two `<use>` targets instead of two `d` strings — it
+- `213-216`: the legend-key check compares the two `<use>` targets instead of two `d` strings: it
   must still fail if the key and the marker ever diverge, which is the point of that assertion.
 - `269-270`: the no-`wind_level` fallback needle `'🌬️ wind 27 km/h'` → the icon form.
-- `209-212` (no `title`, `keyboard: true`, `aria-label` on the marker) — **unchanged, and must stay
+- `209-212` (no `title`, `keyboard: true`, `aria-label` on the marker), **unchanged, and must stay
   passing**: this MIP adds no `title`, and every `<svg class="ic">` carries `aria-hidden="true"`
   with the word beside it, so nothing a screen reader reads today changes.
 
 ### 5.6 Two measured fixes that are not emoji
 
 - **Score-chip contrast.** Computed 2026-09-07 (WCAG 2.x formula, appendix): white on `--c70`
-  3.39:1, `--c40` 2.06:1, `--c1` 3.76:1, `--cna` 3.36:1, `--c0` 5.19:1 — four of five bands below
+  3.39:1, `--c40` 2.06:1, `--c1` 3.76:1, `--cna` 3.36:1, `--c0` 5.19:1: four of five bands below
   4.5:1 for the 13 px bold chip. Commit `00c330c` measured 2.06:1 and deferred it to MIP-0009,
-  which did not take it. **This MIP does not re-hue a token** — that would change what a score
+  which did not take it. **This MIP does not re-hue a token**: that would change what a score
   colour means and needs its own decision. The in-scope option is to stop using the band colour as
   a *text background*: render the score as `--ink` on `--panel` with the band colour as a 4 px rule
-  beside it. Proposed, not decided — §11.
+  beside it. Proposed, not decided, §11.
 - **`index.html:36`** puts `aria-hidden="true"` on the entire `.legend`, so the score legend does
   not exist for a screen reader. The colour swatches should keep it; the words `≥70 / 40-69 / …`
   should not.
@@ -216,14 +216,14 @@ beside it differs. The `.wdot` water signal and the five score colours are untou
 ## 7. Verification plan
 
 - `node --check site/static/app.js` and `node scripts/site_check.js` (both already in
-  `just quality-other`) — green, with the assertions of §5.5 rewritten, **not deleted**.
+  `just quality-other`), green, with the assertions of §5.5 rewritten, **not deleted**.
 - The three accessibility assertions at `site_check.js:209-212` unchanged and passing.
 - One new assertion: every `<use href="#i-…">` emitted by `app.js` resolves to a `<symbol id>`
-  present in `index.html` — a broken reference renders nothing at all and is otherwise invisible.
+  present in `index.html`: a broken reference renders nothing at all and is otherwise invisible.
 - One new assertion: no character in `U+1F300–U+1FAFF` / `U+2600–U+27BF` / `U+FE0F` appears in
-  `site/static/*.{html,js}` — the regression gate for this whole MIP.
+  `site/static/*.{html,js}`: the regression gate for this whole MIP.
 - `just quality` (scalafmt/scalafix are untouched; `quality-other` is the real gate).
-- `just site-build floripa && just site-serve`, then **screenshots at 390 px and 1280 px** — the
+- `just site-build floripa && just site-serve`, then **screenshots at 390 px and 1280 px**: the
   `site-frontend` step-6 rule, and the only check that catches the §-8 legibility risk.
 - Budget: `style.css` is 11,399 bytes today against the skill's 15 KB ceiling; the sprite lands in
   `index.html`, not the CSS. Zero new network requests, zero new files in `site/dist`.
@@ -235,17 +235,17 @@ beside it differs. The `.wdot` water signal and the five score colours are untou
 - **Legibility.** A system emoji is a full-colour, hinted, professionally drawn glyph. Twelve
   hand-drawn 14 px strokes can be worse, especially the three wind states, which differ by one
   barb. If the 390 px screenshot cannot tell calm from breezy, the barb idea fails and the fallback
-  is band-as-word-only (no wind mark at all) — that is an acceptable outcome, not a failure to hide.
+  is band-as-word-only (no wind mark at all), that is an acceptable outcome, not a failure to hide.
 - **Nothing here is rendered yet.** Every claim about how this looks is *written, not run*; the
   sprite mechanism is verified against MDN, the drawing is not verified against a browser.
 - **`<use>` and Leaflet.** The aspect row lives inside a Leaflet tooltip, which is in the same
-  document, so a same-document fragment resolves — but this is reasoned from the DOM, not observed.
+  document, so a same-document fragment resolves, but this is reasoned from the DOM, not observed.
   It is the reason §5.2 deliberately leaves the 80 markers on inline paths.
 - **Three drafts touch these same files this session** (MIP-0037's `index.html` shell,
   MIP-0042's `/v1/` copy, MIP-0030's trail layer). Whoever lands second rebases; the sprite block is
   additive, which keeps the conflict mechanical.
 - **The harness's colour stub is already stale.** `site_check.js:140` asserts against
-  `{'--c70':'#2a9d4b','--c40':'#e0a800',…}` while `style.css:5-9` defines `#1b9e77`, `#e6ab02`, … —
+  `{'--c70':'#2a9d4b','--c40':'#e0a800',…}` while `style.css:5-9` defines `#1b9e77`, `#e6ab02`, …:
   the marker-colour assertions at `197`/`199` therefore test the stub, not the page. Found while
   reading the file, out of this MIP's own scope to fix properly, but noted because this MIP is
   editing the lines next to it (§11).
@@ -272,23 +272,23 @@ presentation change and claiming a new row for it would be padding.
 ## 11. Open questions
 
 - **The score chip.** Is §5.6's "band colour as a rule, not a text background" acceptable, or does
-  the coloured chip carry meaning worth its 2.06:1? A human call — it borders the "the data colours
+  the coloured chip carry meaning worth its 2.06:1? A human call: it borders the "the data colours
   are data" rule, so it does not get made inside an implementation PR.
 - **Ordering against MIP-0042.** If the `/v1/` freeze lands first, this work is done twice or not at
   all. Recommend: this MIP first, it is smaller.
 - **The wordmark.** `index.html`'s `<h1>` SVG is deliberately left alone. MIP-0037 §5 plans to render
   it to `icon-192.png`; if it is ever redrawn, those two must move together.
 - **Follow-up (no MIP needed):** `site_check.js:140`'s stub palette has drifted from `style.css`
-  (§8). A one-line fix, but it belongs to whoever next touches that file — it is not a design
+  (§8). A one-line fix, but it belongs to whoever next touches that file: it is not a design
   decision and does not need its own number.
 
 ## Appendix
 
 ### Checked live
-- `https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/use` (2026-09-07) — `href` is
+- `https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/use` (2026-09-07): `href` is
   the SVG2 attribute, `xlink:href` deprecated in its favour; "Baseline: Widely available… since July
   2015"; same-document `href="#myCircle"` is the documented example. Basis for §4.1.
-- `https://www.weather.gov/hfo/windbarbinfo` (2026-09-07) — long barb 10 kt, short barb 5 kt,
+- `https://www.weather.gov/hfo/windbarbinfo` (2026-09-07): long barb 10 kt, short barb 5 kt,
   pennant 50 kt; calm (0-2 kt) drawn as a circle. Basis for §4.5, and for the statement that
   marola's three-band mark is *derived from*, not compliant with, the convention.
 
@@ -312,9 +312,9 @@ presentation change and claiming a new row for it would be padding.
 
 ### Not checked
 - No browser was opened. Every rendering claim (legibility at 14 px, `<use>` inside a Leaflet
-  tooltip, how the barb reads at 390 px) is written, not run — §7 exists to close exactly that gap.
+  tooltip, how the barb reads at 390 px) is written, not run: §7 exists to close exactly that gap.
 - MIP-0042's status is read from the unmerged branch `origin/docs/mip-0042-map-v2-live-not-static`;
   if that draft changes before it merges, §11's ordering advice may need revisiting.
 - The claim that no MIP has ever covered the site's overall look is from a grep of `docs/mips/`
-  for `redesign|first impression|looks AI|visual design|site-frontend` — the history lives in
+  for `redesign|first impression|looks AI|visual design|site-frontend`: the history lives in
   `docs/AGENT-SKILLS.md` §1 and the `site-frontend` skill, not in a numbered proposal.
