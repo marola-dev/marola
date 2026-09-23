@@ -1,5 +1,8 @@
 # marola — multi-agent frameworks survey: Python ideas, JVM/Scala reality, Pekko (2026-09-05)
 
+> Updated 2026-09-23: `AGENT-STACK-SURVEY.md` re-checks agent4s and llm4s, adds Google's ADK, and
+> maps all three to the MIPs.
+
 What exists for building multi-agent LLM systems on the JVM and in Scala, which ideas from the
 Python agent frameworks are worth porting, and where Apache Pekko would fit marola. Written from a
 web survey on 2026-09-05; every external claim links to its source at the bottom, and anything not

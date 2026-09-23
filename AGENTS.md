@@ -37,6 +37,7 @@ vocabulary and template pointer: `.claude/rules/docs.md`):
 | `docs/SKILLS.md` | A skills roadmap: what to practice, in order, using marola as the vehicle |
 | `docs/SCALA3-JDK-REVIEW.md` | Scala 3 / JDK 21-25 features reviewed against this code: adopt list and order |
 | `docs/AGENT-FRAMEWORKS-SURVEY.md` | Multi-agent frameworks survey: Python ideas → Scala shapes, Pekko fit, reading list |
+| `docs/AGENT-STACK-SURVEY.md` | agent4s / llm4s / ADK mapped to the MIPs, how they compose, the project Q&A agent |
 | `docs/DEV-FLOW.md` | The loop end to end: idea → MIP → acceptance → tasks → stacked PRs (verified, costed) → review on request → merge/restack → Implemented; command reference |
 | `docs/AGENT-SKILLS.md` | Which agent skills to use in this repo: `mip` (plan), `mip-tasks` (tasks → stacked PRs, `scripts/stack.sh`), superpowers walkthrough, candidates to write |
 | `docs/benchmarks/` | Kept `just benchmark` runs: re-run and compare before changing prompt/corpus/embedder/model |
