@@ -92,7 +92,7 @@ which today only resolves via a PR's MIP number and falls back to <code>area/uns
 
 <p>Method: TF-IDF vectorizes a real PR's title + body + commit subjects against a small per-label
 corpus (grep-generated below, so it's marola vocabulary, not generic English — the actual jargon
-this repo's own PRs use: PRÓPRIA/IMPRÓPRIA, Overpass, Kyo, DSPy, MLflow, Foundry, Cosmos DB,
+this repo's own PRs use: PRÓPRIA/IMPRÓPRIA, Overpass, Kyo, DSPy, MLflow,
 MCP, and so on) and reports the cosine-nearest label(s). It is used by
 scripts/backfill-pr-labels.sh's <code>--nlp</code> flag strictly as a side-by-side comparison against the
 deterministic result — never applied to a real PR unless <code>--nlp-apply-unscoped</code> is also passed,
@@ -121,7 +121,7 @@ call. Same "judge, never veto" shape as llm/Reviewer.scala over Swimability.scal
 </span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a>
 </span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a><span class="sd">Method: TF-IDF vectorizes a real PR&#39;s title + body + commit subjects against a small per-label</span>
 </span><span id="L-17"><a href="#L-17"><span class="linenos"> 17</span></a><span class="sd">corpus (grep-generated below, so it&#39;s marola vocabulary, not generic English — the actual jargon</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos"> 18</span></a><span class="sd">this repo&#39;s own PRs use: PRÓPRIA/IMPRÓPRIA, Overpass, Kyo, DSPy, MLflow, Foundry, Cosmos DB,</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos"> 18</span></a><span class="sd">this repo&#39;s own PRs use: PRÓPRIA/IMPRÓPRIA, Overpass, Kyo, DSPy, MLflow,</span>
 </span><span id="L-19"><a href="#L-19"><span class="linenos"> 19</span></a><span class="sd">MCP, and so on) and reports the cosine-nearest label(s). It is used by</span>
 </span><span id="L-20"><a href="#L-20"><span class="linenos"> 20</span></a><span class="sd">scripts/backfill-pr-labels.sh&#39;s `--nlp` flag strictly as a side-by-side comparison against the</span>
 </span><span id="L-21"><a href="#L-21"><span class="linenos"> 21</span></a><span class="sd">deterministic result — never applied to a real PR unless `--nlp-apply-unscoped` is also passed,</span>
@@ -329,7 +329,7 @@ call. Same "judge, never veto" shape as llm/Reviewer.scala over Swimability.scal
                 <section id="REPO_ROOT">
                     <div class="attr variable">
             <span class="name">REPO_ROOT</span>        =
-<span class="default_value">PosixPath(&#39;/home/hoffmann/.marola-runners/marola-5/_work/marola/marola&#39;)</span>
+<span class="default_value">PosixPath(&#39;/home/hoffmann/.marola-runners/marola-6/_work/marola/marola&#39;)</span>
 
         
     </div>
@@ -341,7 +341,7 @@ call. Same "judge, never veto" shape as llm/Reviewer.scala over Swimability.scal
                 <section id="PR_LABELS_SH">
                     <div class="attr variable">
             <span class="name">PR_LABELS_SH</span>        =
-<span class="default_value">PosixPath(&#39;/home/hoffmann/.marola-runners/marola-5/_work/marola/marola/scripts/lib/pr_labels.sh&#39;)</span>
+<span class="default_value">PosixPath(&#39;/home/hoffmann/.marola-runners/marola-6/_work/marola/marola/scripts/lib/pr_labels.sh&#39;)</span>
 
         
     </div>
