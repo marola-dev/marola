@@ -15,7 +15,7 @@
 </div>
 <div class="cover">
  <div class="doc">
-  <p>Minimal hand-rolled JSON reader and writer. marola has no JSON library dependency by choice, not because one doesn't exist — <code>kyo-schema</code> (already resolved transitively via <code>kyo-http</code>) is a real, substantial codec library confirmed present at the exact Kyo version this repo pins (see <code>Http.scala</code>'s doc comment and <code>docs/FUTURE-WORK.md</code>) — every shape this module needs to read/write (Open-Meteo, Overpass, Ollama, Azure Maps/Vision, Telegram's Bot API) is plain nested object/array/string/number, so a small recursive-descent parser plus a matching renderer covers it without pulling in a derivation-macro-based library for a handful of ad hoc shapes.</p>
+  <p>Minimal hand-rolled JSON reader/writer, by choice: every shape marola reads or writes is plain nested object/array/string/number, not worth a derivation-macro codec library.</p>
  </div>
  <section id="attributes">
   <h2 class="h500">Attributes</h2>

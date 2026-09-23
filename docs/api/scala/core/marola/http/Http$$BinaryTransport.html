@@ -15,7 +15,7 @@
 </div>
 <div class="cover">
  <div class="doc">
-  <p>Binary-GET's own transport seam, deliberately separate from <code>Transport</code>/<code>Response</code> above rather than adding a <code>bytes</code> field there: every existing caller of <code>getString</code>/<code>postForm</code>/etc. depends on <code>Response.body</code> being decoded as UTF-8 text (IMA/SC's own "PRÓPRIA"/"IMPRÓPRIA" accented strings, Overpass/Open-Meteo JSON) — switching the shared <code>HttpClient.send</code> call to <code>BodyHandlers.ofByteArray()</code> and re-deriving <code>body</code> from an ISO-8859-1 round-trip would silently corrupt every one of those already-verified text responses.</p>
+  <p>Separate from <code>Transport</code> on purpose: every text caller relies on <code>Response.body</code> being decoded as UTF-8 by <code>HttpClient</code>; re-deriving it from bytes would risk corrupting accented responses.</p>
  </div>
  <section id="attributes">
   <h2 class="h500">Attributes</h2>

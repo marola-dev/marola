@@ -15,10 +15,7 @@
 </div>
 <div class="cover">
  <div class="doc">
-  <p>The logger marola uses. <code>System.err.println</code> was creeping in — unfilterable, unformatted, no level, and invisible to any log collector — so this replaces it everywhere.</p>
-  <p>A thin wrapper over SLF4J rather than scala-logging: logback is already a direct dependency, and scala-logging's only Scala 3 release is 4.0.0-RC1. This repo already carries one pre-1.0 dependency (Kyo) and the cost of that is documented; a second one, for something this small, is not worth it.</p>
-  <p><code>inline</code> plus the level guard is what scala-logging's macros buy: the interpolated string is never built when the level is off.</p>
-  <p>Deliberately not effectful. These are diagnostics at the edges of I/O that already happened, and threading a <code>Log</code> effect through <code>Recommender</code>'s pipeline would change signatures across four modules to describe something that cannot fail.</p>
+  <p>Thin SLF4J wrapper, not scala-logging (whose only Scala 3 release is 4.0.0-RC1). <code>inline</code> plus the level guard skips building the message when the level is off. Deliberately not effectful: these are diagnostics after I/O that already happened.</p>
  </div>
  <section id="attributes">
   <h2 class="h500">Attributes</h2>
@@ -109,15 +106,6 @@ node3 -> node2;
           <div class="header monospace mono-medium">
            <div class="signature">
             <span class="modifiers"><span t="k">inline </span></span><span class="kind"><span t="k">def </span></span><a href="Log.html#info-571" t="n" class="documentableName ">info</a>(<span t="k"></span><span t="k">inline </span><span data-unresolved-link="" t="n">message</span>: <span data-unresolved-link="" t="t">String</span>): <span data-unresolved-link="" t="t">Unit</span>
-           </div>
-          </div>
-         </div>
-        </div>
-        <div class="documentableElement" id="name-0">
-         <div class="documentableElement-expander">
-          <div class="header monospace mono-medium">
-           <div class="signature">
-            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="Log.html#name-0" t="n" class="documentableName ">name</a>: <span data-unresolved-link="" t="t">String</span>
            </div>
           </div>
          </div>

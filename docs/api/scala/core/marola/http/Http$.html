@@ -152,11 +152,11 @@ node3 -> node2;
            <div class="originInfo"></div>
            <div class="memberDocumentation">
             <div class="documentableBrief doc">
-             <p>Binary-GET's own transport seam, deliberately separate from <code>Transport</code>/<code>Response</code> above rather than adding a <code>bytes</code> field there: every existing caller of <code>getString</code>/<code>postForm</code>/etc. depends on <code>Response.body</code> being decoded as UTF-8 text (IMA/SC's own "PRÓPRIA"/"IMPRÓPRIA" accented strings, Overpass/Open-Meteo JSON) — switching the shared <code>HttpClient.send</code> call to <code>BodyHandlers.ofByteArray()</code> and re-deriving <code>body</code> from an ISO-8859-1 round-trip would silently corrupt every one of those already-verified text responses.</p>
+             <p>Separate from <code>Transport</code> on purpose: every text caller relies on <code>Response.body</code> being decoded as UTF-8 by <code>HttpClient</code>; re-deriving it from bytes would risk corrupting accented responses.</p>
             </div>
             <div class="cover">
              <div class="doc">
-              <p>Binary-GET's own transport seam, deliberately separate from <code>Transport</code>/<code>Response</code> above rather than adding a <code>bytes</code> field there: every existing caller of <code>getString</code>/<code>postForm</code>/etc. depends on <code>Response.body</code> being decoded as UTF-8 text (IMA/SC's own "PRÓPRIA"/"IMPRÓPRIA" accented strings, Overpass/Open-Meteo JSON) — switching the shared <code>HttpClient.send</code> call to <code>BodyHandlers.ofByteArray()</code> and re-deriving <code>body</code> from an ISO-8859-1 round-trip would silently corrupt every one of those already-verified text responses.</p>
+              <p>Separate from <code>Transport</code> on purpose: every text caller relies on <code>Response.body</code> being decoded as UTF-8 by <code>HttpClient</code>; re-deriving it from bytes would risk corrupting accented responses.</p>
              </div>
              <h2 class="h200">Attributes</h2>
              <dl class="attributes attributes-small">
@@ -529,11 +529,11 @@ node3 -> node2;
            <div class="originInfo"></div>
            <div class="memberDocumentation">
             <div class="documentableBrief doc">
-             <p>Plain binary GET — a PDF bulletin today (<code>InemaBaWaterQualityClient</code>/<code>IneaRjWaterQualityClient</code>, MIP-0031), never text-decoded.</p>
+             <p>Binary GET (PDF bulletins, MIP-0031), never text-decoded.</p>
             </div>
             <div class="cover">
              <div class="doc">
-              <p>Plain binary GET — a PDF bulletin today (<code>InemaBaWaterQualityClient</code>/<code>IneaRjWaterQualityClient</code>, MIP-0031), never text-decoded.</p>
+              <p>Binary GET (PDF bulletins, MIP-0031), never text-decoded.</p>
              </div>
              <h2 class="h200">Attributes</h2>
              <dl class="attributes attributes-small"></dl>
@@ -585,11 +585,11 @@ node3 -> node2;
            <div class="originInfo"></div>
            <div class="memberDocumentation">
             <div class="documentableBrief doc">
-             <p>Raw-binary POST (<code>application/octet-stream</code> by default) — Azure AI Vision's Image Analysis API takes the image bytes directly in the request body rather than as JSON (see <code>AzureVisionClient</code>'s doc comment).</p>
+             <p>Raw-binary POST — Azure AI Vision takes the image bytes as the body, not JSON.</p>
             </div>
             <div class="cover">
              <div class="doc">
-              <p>Raw-binary POST (<code>application/octet-stream</code> by default) — Azure AI Vision's Image Analysis API takes the image bytes directly in the request body rather than as JSON (see <code>AzureVisionClient</code>'s doc comment).</p>
+              <p>Raw-binary POST — Azure AI Vision takes the image bytes as the body, not JSON.</p>
              </div>
              <h2 class="h200">Attributes</h2>
              <dl class="attributes attributes-small"></dl>
@@ -669,11 +669,11 @@ node3 -> node2;
            <div class="originInfo"></div>
            <div class="memberDocumentation">
             <div class="documentableBrief doc">
-             <p>Raw-binary PUT — <code>MlflowRunLedger.artifact</code>'s one caller: MLflow's artifact-store proxy (<code>mlflow/protos/mlflow_artifacts.proto</code>, <code>PUT .../mlflow-artifacts/artifacts/</code>) takes the file bytes directly and, unlike every other write in this module, uses <code>PUT</code> rather than <code>POST</code>.</p>
+             <p>Raw-binary PUT — MLflow's artifact-store proxy (<code>PUT .../mlflow-artifacts/artifacts/</code>).</p>
             </div>
             <div class="cover">
              <div class="doc">
-              <p>Raw-binary PUT — <code>MlflowRunLedger.artifact</code>'s one caller: MLflow's artifact-store proxy (<code>mlflow/protos/mlflow_artifacts.proto</code>, <code>PUT .../mlflow-artifacts/artifacts/</code>) takes the file bytes directly and, unlike every other write in this module, uses <code>PUT</code> rather than <code>POST</code>.</p>
+              <p>Raw-binary PUT — MLflow's artifact-store proxy (<code>PUT .../mlflow-artifacts/artifacts/</code>).</p>
              </div>
              <h2 class="h200">Attributes</h2>
              <dl class="attributes attributes-small"></dl>

@@ -87,9 +87,28 @@ node3 -> node2;
         </div>
         <div class="documentableElement" id="nearby-fffff9c6">
          <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
           <div class="header monospace mono-medium">
            <div class="signature">
             <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="TrailFinder$.html#nearby-fffff9c6" t="n" class="documentableName ">nearby</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">origin</span>: <a href="../model/Coordinates.html" t="t">Coordinates</a>, <span t="k"></span><span data-unresolved-link="" t="n">radiusKm</span>: <span data-unresolved-link="" t="t">Double</span>, <span t="k"></span><span data-unresolved-link="" t="n">beaches</span>: <span data-unresolved-link="" t="t">List</span>[<a href="../model/Beach.html" t="t">Beach</a>]): <span data-unresolved-link="" t="t">List</span>[<a href="Trail.html" t="t">Trail</a>] <span data-unresolved-link="" t="t">&lt;</span> <span data-unresolved-link="" t="t">Sync</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Named <code>highway=path</code>/<code>track</code> ways within <code>NearRadiusKm</code> of a beach or a named lake, same-named segments merged into one <code>Trail</code> (MIP-0030 §8: OSM splits one trail into many ways).</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Named <code>highway=path</code>/<code>track</code> ways within <code>NearRadiusKm</code> of a beach or a named lake, same-named segments merged into one <code>Trail</code> (MIP-0030 §8: OSM splits one trail into many ways).</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
            </div>
           </div>
          </div>
@@ -109,11 +128,11 @@ node3 -> node2;
            <div class="originInfo"></div>
            <div class="memberDocumentation">
             <div class="documentableBrief doc">
-             <p><code>nearby</code>, degraded to no trails when Overpass fails — 429 is its documented back-pressure, not an exception. Trails are enrichment on an already-complete result, so a failure here must not discard the run; <code>Recommender.fetchFacilities</code> treats its Overpass call the same way. The beach query itself still fails loudly: with no beaches there is nothing to report.</p>
+             <p><code>nearby</code>, degraded to no trails when Overpass fails (429 is its documented back-pressure): trails are enrichment on an already-complete result, so a failure must not discard the run.</p>
             </div>
             <div class="cover">
              <div class="doc">
-              <p><code>nearby</code>, degraded to no trails when Overpass fails — 429 is its documented back-pressure, not an exception. Trails are enrichment on an already-complete result, so a failure here must not discard the run; <code>Recommender.fetchFacilities</code> treats its Overpass call the same way. The beach query itself still fails loudly: with no beaches there is nothing to report.</p>
+              <p><code>nearby</code>, degraded to no trails when Overpass fails (429 is its documented back-pressure): trails are enrichment on an already-complete result, so a failure must not discard the run.</p>
              </div>
              <h2 class="h200">Attributes</h2>
              <dl class="attributes attributes-small"></dl>
