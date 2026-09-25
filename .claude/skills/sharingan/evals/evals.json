@@ -1,0 +1,40 @@
+{
+  "skill_name": "sharingan",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "/sharingan https://github.com/edvmorango/nix-home-config/blob/main/programs/claude/skills/obsidian-vault/SKILL.md",
+      "expected_output": "Fetches SKILL.md and evals/ at a pinned sha, finds no licence and so rewrites from scratch, maps ADRs to MIPs, practices to AGENTS.md/rules, tasks to MIP tasks and resume to claude --continue/--resume, states the from-scratch choice before writing, and produces .claude/skills/obsidian-vault/ with a vault path from an env var and adapted evals.",
+      "files": [],
+      "assertions": [
+        {"id": "pins_sha", "description": "The credit line names a commit sha, not just a branch"},
+        {"id": "license_none_rewrite", "description": "Reports the repo has no licence and chooses rewrite, copying no upstream sentence verbatim"},
+        {"id": "concept_map", "description": "Shows an upstream-concept -> marola-home table before writing"},
+        {"id": "adr_to_mip", "description": "No adrs/ directory is created; decisions route to the mip skill"},
+        {"id": "continue_first", "description": "Resume points to claude --continue/--resume before any vault handoff"},
+        {"id": "no_upstream_path", "description": "~/edvmorango does not appear in the ported skill"},
+        {"id": "evals_ported", "description": "evals/evals.json exists with cases rewritten for marola"}
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "port this: https://github.com/blader/humanizer — we want it in marola",
+      "expected_output": "Detects an MIT licence, finds no existing marola home for the concept, and vendors it verbatim with LICENSE beside it, adding a docs/AGENT-SKILLS.md row with provenance; or reports that .claude/skills/humanizer already exists and stops.",
+      "files": [],
+      "assertions": [
+        {"id": "detects_existing", "description": "Notices .claude/skills/humanizer is already vendored and does not create a duplicate"},
+        {"id": "reads_license", "description": "States the upstream licence it found"}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "copy the 'git commit helper' skill from https://github.com/example/dotfiles/tree/main/skills/commit — it writes commit messages with a Generated-by footer",
+      "expected_output": "Maps the concept to AGENTS.md's commit-trailer rule and .claude/settings.json attribution, finds the footer conflicts with AGENTS.md, and either drops that part or reports that no skill is the right port.",
+      "files": [],
+      "assertions": [
+        {"id": "agents_wins", "description": "Does not keep a Generated-by footer; cites AGENTS.md's three-trailer rule"},
+        {"id": "no_blind_write", "description": "Does not write a SKILL.md before stating vendor/adapt/rewrite/none"}
+      ]
+    }
+  ]
+}

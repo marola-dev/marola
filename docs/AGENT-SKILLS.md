@@ -20,6 +20,7 @@ Harness note: the in-repo skills (§1) are plain `SKILL.md` files that OpenCode 
 | `eli5` | Someone needs a topic explained from zero — a rip current, swell period, upwelling, the swimability score, the Kyo effect boundary — or `/eli5 <topic>` | The teaching layer, read-only: grounds the explanation in `knowledge/*.md` (for sea topics, the same corpus `--ask` answers from) or `docs/ARCHITECTURE.md`/`docs/mips/` (for internals), one picture before the prose, pt-BR or English to match the question. Writes nothing but an optional page under `.tmp/eli5/`; a fact that belongs in the corpus goes through `corpus-doc` instead. Adapted from the community `eli5` skill (Thariq Shihipar, MIT) |
 | `humanizer` | Editing or reviewing prose — a doc, a MIP, a PR body, a comment — that reads as generated: staged contrasts, one-line closers, forced triads, dashes everywhere, inflated claims | Vendored verbatim from `blader/humanizer` v3.0.0 (MIT, `LICENSE` beside it), based on Wikipedia's "Signs of AI writing". It rewrites wording only; a claim, number or file reference stays exactly as it was |
 | `ponytail`, `ponytail-review`, `ponytail-audit` | Writing code (`ponytail`), reviewing a diff for over-engineering (`ponytail-review`), or auditing the whole tree for it (`ponytail-audit`) | Vendored verbatim from `DietrichGebert/ponytail` (MIT, `LICENSE` beside each): reuse what the repo has, then the stdlib, then the platform, before writing new code. Review and audit list findings only. Where it disagrees with `AGENTS.md` (comment restraint, the `just build && just test && just quality` gate), `AGENTS.md` wins |
+| `sharingan` (alias `/skill-copy`) | A URL to a skill, workflow or pattern in another repo that should exist here too | Runs on Opus 5.5 at `xhigh`. Fetches the whole unit at a pinned sha, lets the licence decide vendor / adapt / rewrite, and maps every upstream concept to what Claude Code or marola already has (ADR → MIP, practices → `AGENTS.md`, resume → `claude --continue`) before writing, so a port never rebuilds a built-in. Evals go through skill-creator (§2.3) |
 
 ## 2. superpowers — what fits, what doesn't
 
@@ -117,9 +118,11 @@ use worktrees when two tasks of the same stack are in flight at once.
 superpowers rather than vendored: its SKILL.md, scripts and eval viewer track upstream, and a copy
 here would drift. Use it for the parts of skill work `writing-skills` leaves to you:
 
-- **Evals** — `evals/evals.json` in one of skill-creator's two formats: `{query, should_trigger}`
-  trigger sets (`corpus-doc`) or `{prompt, expected_output, assertions}` output cases
-  (`obsidian-vault`). `scripts/quick_validate.py` checks a SKILL.md's frontmatter.
+- **Evals** — skill-creator's two formats: `{prompt, expected_output, assertions}` output cases in
+  `evals/evals.json`, `{query, should_trigger}` trigger sets in `evals/trigger-evals.json`
+  (`corpus-doc` predates the split and keeps its trigger set in `evals.json`).
+  `scripts/quick_validate.py` checks frontmatter against the portable spec only, so it flags
+  Claude Code's own keys (`model`, `effort`, `argument-hint`, …) — expected.
 - **Description tuning** — its trigger-rate loop, when a skill fires too often or never.
 - **A new skill from scratch.** Porting one from another repo is `sharingan` (§1) instead, which
   hands off to skill-creator for the evals step when it is installed.
