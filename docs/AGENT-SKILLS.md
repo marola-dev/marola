@@ -103,13 +103,26 @@ tooling might have shaped it:
 | `portal@portal` (`spotify/portal-ai-plugins`) | Third-party marketplace, added 2026-09-07 | Spotify Portal (Backstage software-catalog) workflows — setup/search/service-briefing/diagnostics against the maintainer's own Portal instance via the Portal CLI. **Not used for marola's own code or workflow** — marola isn't cataloged in Backstage — this is general dev tooling the maintainer runs day to day, unrelated to this repo's own process. |
 
 None of these are required to work on marola: only the in-repo skills (§1) and the committed
-superpowers declaration (§2) are. A contributor without them installed loses nothing but the
+superpowers and skill-creator declarations (§2, §2.3) are. A contributor without them installed loses nothing but the
 on-request review/design passes and the maintainer's personal usage dashboard.
 
 What you don't need to invoke by name: superpowers' skills trigger on phrases like "let's plan",
 "write the test first", "it's still failing": say what you're doing and the right one loads.
 `using-git-worktrees` is optional: with one task per session, a plain branch switch is enough;
 use worktrees when two tasks of the same stack are in flight at once.
+
+## 2.3 skill-creator — declared like superpowers
+
+`skill-creator@claude-plugins-official` (Anthropic, Apache-2.0) is in `enabledPlugins` next to
+superpowers rather than vendored: its SKILL.md, scripts and eval viewer track upstream, and a copy
+here would drift. Use it for the parts of skill work `writing-skills` leaves to you:
+
+- **Evals** — `evals/evals.json` in one of skill-creator's two formats: `{query, should_trigger}`
+  trigger sets (`corpus-doc`) or `{prompt, expected_output, assertions}` output cases
+  (`obsidian-vault`). `scripts/quick_validate.py` checks a SKILL.md's frontmatter.
+- **Description tuning** — its trigger-rate loop, when a skill fires too often or never.
+- **A new skill from scratch.** Porting one from another repo is `sharingan` (§1) instead, which
+  hands off to skill-creator for the evals step when it is installed.
 
 ## 3. Skills this repo could still write (candidates for `writing-skills`)
 

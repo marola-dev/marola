@@ -5,7 +5,8 @@
     "sessionUrl": false
   },
   "enabledPlugins": {
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true
   },
   "statusLine": {
     "type": "command",
