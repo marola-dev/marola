@@ -85,6 +85,7 @@ quality-other:
     python3 scripts/lib/mip_index_merge.py --self-test
     python3 scripts/ocr-post.py --self-test
     python3 scripts/mip_graph.py --self-test
+    scripts/issues.sh --self-test
     python3 scripts/strip_external_scripts.py --self-test
     python3 scripts/build_docs_index.py --self-test
     python3 scripts/mip_graph.py --check
@@ -401,6 +402,11 @@ pr-label *args:
 # never a PR that already has a label — re-running is a no-op scan).
 pr-labels-backfill *args:
     scripts/backfill-pr-labels.sh {{ args }}
+
+# Reconcile GitHub's labels against .github/labels.yml, the versioned taxonomy (MIP-0063 §5.2).
+# Orphans are reported, never deleted, unless --prune is passed.
+labels-sync *args:
+    scripts/issues.sh labels sync {{ args }}
 
 # scripts/stack.sh passthrough. MIP-0005.
 stack *args:
