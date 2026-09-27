@@ -33,4 +33,5 @@ Pick the tier, then the matching issue form:
 
 An issue becomes `agent-ready` only once it passes the five-rule Definition of Ready in §5.4 of
 the MIP — acceptance criteria, a named test, `area/*` + `layer/*`, `size/*`, and no open
-`blocked by` dependency. `AGENTS.md` requires an agent to hold `agent-ready` before starting work.
+`blocked by` dependency. Task 7 adds the `AGENTS.md` rule that an agent must hold `agent-ready`
+before starting work.

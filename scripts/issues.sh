@@ -31,7 +31,8 @@ commands:
 options:
   --dry-run     print the mutating `gh` calls instead of making them (the reads they are
                 computed from still happen, so this needs a login)
-  --self-test   run the pure-function checks (parser, diff, plan); no `gh`, no network
+  --self-test   run the pure-function checks (parser, diff, plan, issue-form heading parse);
+                no `gh`, no network, but needs python3
   --help        this text
 
 Live mode needs `gh` logged in. Inside ai-jail there is no login and none can be acquired
@@ -384,7 +385,7 @@ run() {
 # --- self-test ---
 
 self_test() {
-  local failed=0 tmp got want
+  local failed=0 tmp got
   tmp="$(mktemp -d)"
   # EXIT, not RETURN: bash fires a RETURN trap when a *sourced file* finishes as well as when a
   # function does, so `source scripts/lib/pr_labels.sh` below deleted $tmp half way through the
@@ -673,11 +674,8 @@ row-3"
   # indentation-based subset GitHub issue forms use — mappings, block/flow sequences, quoted and
   # literal-block scalars — and errors on anything left over rather than silently truncating, the
   # same trade manifest_json makes for labels.yml's fixed shape.
-  # Own scratch file, not $tmp: bash's RETURN trap fires when `source` finishes too, not only
-  # when self_test() itself returns, so the `source scripts/lib/pr_labels.sh` above already ran
-  # the `rm -rf "$tmp"` trap early — $tmp is gone by the time a section placed after it looks.
   local form_dir="$root/.github/ISSUE_TEMPLATE" form_parser
-  form_parser="$(mktemp)"
+  form_parser="$tmp/parse_form.py"
   cat > "$form_parser" <<'PYEOF'
 import json, re, sys
 
@@ -758,7 +756,7 @@ if __name__ == "__main__":
         print(json.dumps(parse_yaml_subset(f.read())))
 PYEOF
 
-  local form_doc form_labels form_rc
+  local form_doc form_labels form_rc f
   for f in bug_report.yml task.yml story.yml mip_proposal.yml config.yml; do
     if form_doc="$(python3 "$form_parser" "$form_dir/$f" 2>&1)"; then form_rc=ok; else form_rc=fail; fi
     check "$f parses" "$form_rc" "ok"
@@ -804,14 +802,14 @@ PYEOF
   form_doc="$(python3 "$form_parser" "$form_dir/config.yml" 2>/dev/null || echo '{}')"
   check "config.yml still disables blank issues" "$(jq -r '.blank_issues_enabled' <<<"$form_doc")" "false"
   check "config.yml points questions at Discussions" \
-    "$(jq -r '.contact_links[0].url' <<<"$form_doc")" "https://github.com/marola-dev/marola/discussions"
+    "$(jq -r '.contact_links[] | select(.name == "Ask a question") | .url' <<<"$form_doc")" \
+    "https://github.com/marola-dev/marola/discussions"
 
   if [ -e "$form_dir/feature_request.yml" ]; then
     echo "FAILED: feature_request.yml still exists — story.yml was meant to replace it" >&2; failed=1
   else
     echo "ok: feature_request.yml is gone, replaced by story.yml"
   fi
-  rm -f "$form_parser"
 
   echo
   if [ "$failed" -eq 1 ]; then echo "issues.sh self-test: FAILED" >&2; return 1; fi
