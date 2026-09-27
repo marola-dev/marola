@@ -90,10 +90,12 @@ Native parent/child issues with a rollup progress field. Verified live on this r
 carries `sub_issues_summary: {completed, percent_completed, total}`. Documented limits — **100
 sub-issues per parent, 8 levels** — are comfortably above anything a MIP task list produces.
 
-**The trap, verified:** `POST /issues/{n}/sub_issues` takes `sub_issue_id`, documented verbatim as
-*"The id of the sub-issue to add"* — the **database id**, not the issue number. Passing the number
-attaches an arbitrary issue, silently and successfully. Gets a comment in the script (`AGENTS.md`'s
-"a trap" category) and a self-test.
+**The trap:** `POST /issues/{n}/sub_issues` takes `sub_issue_id`, documented verbatim as *"The id
+of the sub-issue to add"* — the **database id**, not the issue number. The POST itself is executed
+as of 2026-09-27 (Appendix) and ids on this repo are ten digits against three-digit issue numbers,
+so a number passed here addresses an issue in some unrelated repository: refused or attached to
+the wrong thing, with nothing in the response to say which. Gets a comment in the script
+(`AGENTS.md`'s "a trap" category) and a self-test.
 
 ### 4.2 Issue dependencies — **adopted, and it replaces the `blocked` label**
 
@@ -232,8 +234,9 @@ computed property, and they cost nothing to apply, so they are used at **every**
   draft of this design left these untracked, on the reasoning that one owner drives a story and
   can hold the order in their head. That reasoning only holds while recording the order is
   expensive. It isn't: GitHub gives the edge away, so the ordering stops being something the owner
-  has to remember and becomes something the tracker answers. Documented as unrestricted, not yet
-  executed — §7 step 7 is where it is proven, and the Appendix says so plainly.
+  has to remember and becomes something the tracker answers. **Proven live on 2026-09-27**
+  (§7 step 7, Appendix): GitHub accepts the edge between two sub-issues of the same parent and
+  reads it back from both ends.
 
 Because the edges are free, **nothing asks a human to draw them by hand**: `tasks-to-issues`
 derives each edge from the **`depends on` column** that `MIP-NNNN.tasks.md` already carries. That
@@ -491,18 +494,40 @@ All on 2026-09-27, from this checkout.
   §5.2's manifest reconciliation has to fold case on the name and address every edit and delete by
   the spelling the repo currently holds. Nothing in the design moves; the constraint is on any
   script that writes labels.
+- **A dependency between two sub-issues of the same parent is allowed** — 2026-09-27, §7 step 7,
+  the one assumption §5.3 leans on. Three throwaway issues, since closed as `not_planned`: #426
+  parent, #427 child A, #428 child B (database ids `5606620709`, `5606620805`, `5606620913`).
+
+      POST /issues/426/sub_issues            {"sub_issue_id":5606620805}
+        -> the *parent* #426, sub_issues_summary {total:1, completed:0}
+      POST /issues/426/sub_issues            {"sub_issue_id":5606620913}    (issues.sh sub add)
+        -> accepted; both children now carry parent_issue_url .../issues/426
+      POST /issues/428/dependencies/blocked_by {"issue_id":5606620805}      (issues.sh deps add)
+        -> accepted: #428 blocked by #427, two sub-issues of one parent
+      GET  /issues/428/dependencies/blocked_by
+        -> [{"number":427, "state":"open", "parent_issue_url":".../issues/426",
+             "sub_issues_summary":{"total":0,...}}]
+      GET  /issues/427/dependencies/blocking  -> [{"number":428}]
+
+  §5.3 stands as written and Decision 8's fallback does not apply. Three things worth carrying:
+  the POST to `sub_issues` answers with the **parent**, not the sub-issue; `parent_issue_id` is
+  `null` in the `sub_issues` listing while `parent_issue_url` is set on the issue itself, so a
+  reader of the wrong field sees an orphan; and the edge **survives closing both issues** and then
+  reads `"state":"closed"`, which is exactly what §5.4's rule 5 needs to distinguish. The parent's
+  rollup went to `{completed:2, total:2, percent_completed:100}` on closing the children.
+- **`POST /issues/{n}/sub_issues` executed** — same probe. The `sub_issue_id` in each call above is
+  a database id resolved from the issue number, and the attachment landed on the issue asked for.
+  `scripts/issues.sh` resolves numbers to ids in one place and refuses anything under nine digits;
+  live ids on this repo are ten (`5606620913` against issue number `428`).
 
 ### Not checked
 
-- **`POST /issues/{n}/sub_issues` has not been executed.** The database-id semantics in §4.1 come
-  from the parameter's documented description, not from a successful call. §7 step 5 is where that
-  gets confirmed or corrected — treat it as documented-not-run until then.
-- **Dependencies between *sub-issues* remain unproven.** The 2026-09-27 run settled the rest:
-  edges between ordinary issues work, with `repo` scope, and read back correctly. It never created
-  a parent/child pair, so the case §5.3 leans on hardest — **two sub-issues of the same parent
-  depending on each other** — still rests on the docs stating no restriction and on the schema
-  carrying `parent_issue_url` beside the dependency fields. Evidence, not proof. §7 step 7 settles
-  it, and names the fallback if GitHub refuses.
+- **The mis-attach half of §4.1's trap was not probed.** That passing an issue *number* as
+  `sub_issue_id` silently attaches a different issue is still the documented reading, not an
+  observed one: the ids that collide with marola's three-digit numbers belong to issues in
+  unrelated repositories, and the probe would have written a sub-issue link onto a stranger's
+  issue. `scripts/issues.sh`'s guard is therefore built on the parameter's documented semantics
+  plus the order-of-magnitude gap between the two spaces, not on a reproduction.
 - **Nothing was re-read for the board.** Projects v2 writes are still unexercised (no `project`
   scope on the host token), so §5.2's four views remain specified rather than built.
 - **Projects v2 write operations have not been exercised**, because the host token lacks `project`
