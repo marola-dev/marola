@@ -10,7 +10,7 @@
 | **Effort** | M — one script family (`scripts/issues.sh`, `scripts/lib/tasks_issues.py`), four issue forms, a `labels.yml` manifest, one new skill and one extended skill, four doc edits. No Scala, no new module, no CI workflow (§11.1 defers those) |
 | **Gain** | `infra/dev-loop` (the backlog stops being 58 Draft design docs and a prose ROADMAP, and becomes a queue an agent can query in one call); `infra/dev-loop` again on the intake side (a contributor, human or agent, has one standard way to propose work instead of four half-documented ones) |
 | **Effort vs Gain** | `do next` — every later harness layer the maintainer wants (validation gates, graphify, autonomous triage) needs a machine-readable work queue to operate on, and there isn't one today |
-| **Depends on** | No other MIP. Not gated by Phase 1: this is dev-loop work, which `ARCHITECTURE.md` §11 puts outside the phase sequence. Creates no paid resource, so `AGENTS.md`'s cost gate does not apply. Two actions only the maintainer can take: `gh auth refresh -s project` on the host (§4.3) and enabling Discussions (§4.5) |
+| **Depends on** | No other MIP. Not gated by Phase 1: this is dev-loop work, which `ARCHITECTURE.md` §11 puts outside the phase sequence. Creates no paid resource, so `AGENTS.md`'s cost gate does not apply. Two actions only the maintainer can take: `gh auth refresh -s project` on the host (§4.4) and enabling Discussions (§4.6) |
 | **Blocked by** | none |
 | **Risk** | Taxonomy nobody maintains. Filing ~6 issues per accepted MIP turns a 58-MIP backlog into several hundred issues; if triage lapses, `agent-ready` rots and the queue becomes actively misleading — worse than the prose ROADMAP it replaced, because it looks authoritative |
 | **Cost so far** | — |
@@ -73,7 +73,7 @@ $ just issue-ready 435
   ✗ 2. named test — no "### Named test" section in the body
   ✓ 3. area/* and layer/* labels set
   ✗ 4. size/* label missing
-  ✓ 5. not blocked
+  ✓ 5. no open blocked-by dependency
   label `agent-ready` not added
 ```
 
@@ -94,7 +94,18 @@ sub-issues per parent, 8 levels** — are comfortably above anything a MIP task 
 attaches an arbitrary issue, silently and successfully. Gets a comment in the script (`AGENTS.md`'s
 "a trap" category) and a self-test.
 
-### 4.2 Issue types — **rejected, unavailable**
+### 4.2 Issue dependencies — **adopted, and it replaces the `blocked` label**
+
+Native blocked-by / blocking edges between issues, generally available and included on GitHub
+Free. Verified live: `GET /repos/h0ffmann/marola/issues/412/dependencies/blocked_by` → `[]` (live,
+not 404), and this host's `gh` 2.95.0 carries `gh issue create --blocked-by/--blocking` plus
+`gh issue edit --add-blocked-by/--add-blocking/--remove-*`. Up to 50 issues per relationship type.
+A blocked issue shows a **Blocked** marker on the board and the issues list with no label set.
+
+Consequence: §5.2 drops the `blocked` label, and §5.3's readiness rule is checked against the API
+instead of against a label somebody has to remember to remove.
+
+### 4.3 Issue types — **rejected, unavailable**
 
 GitHub's typed issues (task / bug / feature, up to 25) would carry the story-vs-task distinction
 better than labels, but they are an **organization** feature. Verified empirically:
@@ -102,7 +113,7 @@ better than labels, but they are an **organization** feature. Verified empirical
 `/users/{user}/issue-types` endpoint exists. `issue.type` is present in the payload but reads
 `null` and cannot be set here. Labels carry the roles instead. Revisit if marola moves to an org.
 
-### 4.3 Projects v2 and token scopes — **adopted, with a human prerequisite**
+### 4.4 Projects v2 and token scopes — **adopted, with a human prerequisite**
 
 `gh project list --owner h0ffmann` → `{"projects":[],"totalCount":0}`; the repo has
 `has_projects: true`. Scopes verified against GitHub's OAuth table: **`project`** = *"read/write
@@ -112,20 +123,20 @@ token carries `read:project` only, so `just board-sync` fails until the maintain
 token's scope. Projects' **built-in workflows** (auto-add, closed → Done) are configured in the
 project UI; this MIP uses them rather than reimplementing them as Actions.
 
-### 4.4 Issue forms → parseable bodies — **adopted, verified on real data**
+### 4.5 Issue forms → parseable bodies — **adopted, verified on real data**
 
 GitHub renders each form field into the body as a `### <Label>` heading plus the value. Verified
 against this repo rather than the docs: issue **#412**'s body begins `### Problem` /
 `### Proposed behaviour`, matching its form's field labels exactly. This is what makes the
-Definition of Ready checkable by `grep` rather than by a model, and why §5.5 fixes the heading
+Definition of Ready checkable by `grep` rather than by a model, and why §5.6 fixes the heading
 spellings across all four forms.
 
-### 4.5 Discussions — **adopted, off today**
+### 4.6 Discussions — **adopted, off today**
 
 `has_discussions: false`. Enabling it is a repository setting (maintainer action). Narrow purpose:
 keep "how do I…" out of a tracker meant to be a work queue.
 
-### 4.6 Prior art — `brunogbv/cv` and GitHub spec-kit — **borrowed, not vendored**
+### 4.7 Prior art — `brunogbv/cv` and GitHub spec-kit — **borrowed, not vendored**
 
 `brunogbv/cv` runs GitHub spec-kit (`.specify/` plus nine `speckit-*` skills). Its
 `speckit-taskstoissues` is the closest existing thing to §5.4, and three of its decisions are
@@ -149,9 +160,10 @@ that role, and replacing it would invalidate five skills and `DEV-FLOW.md` for n
 | **Sub-issue** | a subtask, only when a story genuinely splits | native sub-issues (§4.1) |
 
 Milestone names are descriptive and carry **no sequence** — `Telegram bot answers a real shared
-location`, `Water quality on the map`, `Trilingual marola — pt-BR, English, Japanese`. Ordering
-between milestones is a board decision, never a property of the milestone, because priorities
-change as the repo learns what must come first.
+location`, `Water quality on the map`, `Trilingual marola — pt-BR, English, Japanese`. Those three
+are illustrations of the shape, not a proposal; the real ones are named by the maintainer when the
+first deliverables are cut. Ordering between milestones is a board decision, never a property of
+the milestone, because priorities change as the repo learns what must come first.
 
 Milestone and MIP are **n:m**: a deliverable is a use case, a MIP is a design. `Water quality on
 the map` spans MIP-0016 and MIP-0031; one MIP files its tasks into one milestone.
@@ -167,9 +179,13 @@ Three intake tiers (`AGENTS.md`'s MIP trigger list is unchanged; this names the 
 
 ### 5.2 Labels, milestones, the board
 
-Six new labels: `epic`, `agent-ready`, `blocked`, `size/S`, `size/M`, `size/L`. Existing
-`area/*` (12), `layer/*` (8), `kind/*`, `priority/high` and `mip` are untouched. **`layer/azure`
-is orphaned** — 993b469 removed Azure — and is deleted here.
+Four new labels: `agent-ready`, `size/S`, `size/M`, `size/L`. Existing `area/*` (12), `layer/*`
+(8), `kind/*`, `priority/high` and `mip` are untouched. **`layer/azure` is orphaned** — 993b469
+removed Azure — and is deleted here.
+
+Two labels an earlier draft of this design carried are gone: `blocked`, because §4.2's native
+dependencies express it better and without hand-maintenance, and `epic`, because §5.1 makes the
+*milestone* the epic and leaves no issue role for it to mark.
 
 Size carries a rule, not a feeling: **S < 100 changed lines, M 100–400, L means split it.**
 `DEV-FLOW.md` §3 caps a task at ~400 lines, so `size/L` is only ever legal on a parent issue.
@@ -190,7 +206,25 @@ own and a narrow `GH_TOKEN`; `gh issue list --label agent-ready` is one REST cal
 while a Project field needs `project` scope and GraphQL. The `just` commands own keeping the two in
 step; nothing else may write either.
 
-### 5.3 The Definition of Ready
+### 5.3 Dependencies, and where they are *not* tracked
+
+Dependency management exists so a contributor can tell what is ready to pick up. That need is real
+between issues and absent below them:
+
+- **Between issues** — tracked, with §4.2's native `blocked by` edges. This is what makes "ready"
+  a computable property rather than a guess, and it is what the board's Blocked marker reads.
+- **Between sub-issues** — **deliberately not tracked.** One person or agent owns a story and
+  drives its subtasks to completion; ordering them is that owner's business, not the tracker's.
+  Once the parent issue is unblocked, nothing below it needs a gate. Sub-issues therefore carry no
+  dependency edges, and nothing in the command surface creates any.
+
+**Phase discipline falls out of the same mechanism.** Each of `ARCHITECTURE.md` §11's phases gets
+one tracking issue ("Phase 1 — Telegram bot working"), and every `phase/2` issue is `blocked by`
+it. Closing that one issue unblocks the whole phase at once, visibly and without editing anything
+else. `phase/1..4` stay pure facet labels with no ordering power, and `AGENTS.md`'s hard rule
+stops being a paragraph people skim. Five gate issues total; they hold no work, only the edge.
+
+### 5.4 The Definition of Ready
 
 An issue is `agent-ready` when all five hold:
 
@@ -199,17 +233,12 @@ An issue is `agent-ready` when all five hold:
    forward onto the issue, so the test is decided before the work is claimed, not after.
 3. `area/*` **and** `layer/*` set.
 4. `size/*` set.
-5. Not `blocked`.
-
-**Phase discipline is not a sixth rule.** A `phase/2` issue that is not yet legal is simply
-`blocked` with a named blocker in its body ("Phase 1, `ARCHITECTURE.md` §11, not done"), the same
-as any other dependency. `phase/1..4` remain pure facet labels with no ordering power. This keeps
-one mechanism for "you may not start this yet" instead of two.
+5. **No open `blocked by` dependency**, read from the API (§4.2) — not from a label.
 
 **`AGENTS.md` gains one hard rule:** an agent may only begin implementation on an issue carrying
 `agent-ready`. Everything else is a human's problem first.
 
-### 5.4 The command surface
+### 5.5 The command surface
 
 Six recipes over one `scripts/issues.sh`, each with the repo's usual `--dry-run`:
 
@@ -227,9 +256,9 @@ after that, issues own status and the file owns the plan.** One-way, re-runnable
 ai-jail with no token can still read the whole plan from disk — which is why the file is not
 replaced by the issues.
 
-### 5.5 Forms and skills
+### 5.6 Forms and skills
 
-Four forms, blank issues still disabled, all sharing heading spellings so §5.3's checks are
+Four forms, blank issues still disabled, all sharing heading spellings so §5.4's checks are
 one `grep`:
 
 | Form | Tier | Change |
@@ -239,12 +268,18 @@ one `grep`:
 | `story.yml` *(replaces `feature_request.yml`)* | 2 | Problem · Proposed behaviour · Acceptance criteria · Named test · Out of scope · Deliverable |
 | `mip_proposal.yml` | 3 | kept; now states what happens next (MIP PR → milestone → `tasks-to-issues`) |
 
-`config.yml` points questions at Discussions (§4.5).
+`config.yml` points questions at Discussions (§4.6).
 
 Skills: **`mip-tasks` gains a final step** that calls `tasks-to-issues` — no new skill, since it
 already authors the file. **New `triage` skill**: takes a raw idea, voice-note fragment or bug
 report, picks the tier, drafts the body in the matching form's heading shape, runs the DoR check,
-files it. Human-invoked in v1 (§11.2).
+files it.
+
+**`triage` stays human-invoked — decided, not deferred.** No label, no webhook and no schedule may
+start it. `AGENTS.md` requires a human-confirmation gate for proactive agent behaviour unless a MIP
+decides otherwise, and this MIP declines to lift it: an agent that files its own issues, against a
+standard whose whole purpose is to say what is real and ready, would pollute the queue faster than
+anyone can triage it.
 
 ## 6. Scoring / safety impact
 
@@ -260,24 +295,34 @@ In the order that proves the most for the least:
    checkbox→link rewrite, including idempotence on an already-linked line and preservation of
    `[P]` / `[US#]` markers. No network, no GitHub. Runs under `just quality-other`, so
    `.githooks/pre-push` exercises it on every push.
-2. `scripts/issues.sh --self-test` — argument handling and each of the five DoR rules, against
-   fixture bodies.
-3. `just labels-sync --dry-run` — must print exactly the six additions and flag `layer/azure` as
+2. `scripts/issues.sh --self-test` — argument handling and each of the five DoR rules against
+   fixture bodies, including rule 5 reading a stubbed `blocked_by` list rather than a label.
+3. `just labels-sync --dry-run` — must print exactly the four additions and flag `layer/azure` as
    orphaned. Nothing else moves.
 4. `just tasks-to-issues MIP-0060 --dry-run` against the real existing `MIP-0060.tasks.md` —
    inspect titles and rewritten lines before anything is created.
 5. **Live idempotence check**: one throwaway milestone, run for real, run again. Second run must
    create zero issues and rewrite zero lines. This is also where §4.1's `sub_issue_id` trap is
    confirmed against the live API or corrected.
+6. **The first real use, on real debt**: file `docs/ROADMAP.md` §2a's five still-open findings
+   (`stop-gate.sh` untracked files, `stop-gate.sh` read-only exit code, `format.sh` offline
+   hard-fail, `mip-reviewer`'s unlisted `git rev-parse`, the §7→§8 pointer sweep) as Tier-1 issues
+   through `triage`, and the `cost-fill` git-version bug found while opening this MIP's own PR.
+   Six real issues exercise the forms, the labels, the DoR check and the board in one pass —
+   better evidence than a synthetic fixture, and it clears a backlog that has been sitting in a
+   markdown table since 2026-09-06.
 
 Done looks like: the four forms in place, `labels.yml` synced, the board created with its four
-views, `just issue-queue` returning a real list, and `docs/ISSUE-FLOW.md` describing exactly what
-the scripts do.
+views, the five phase gate issues open with `phase/*` work blocked by them, `just issue-queue`
+returning a real list, and `docs/ISSUE-FLOW.md` describing exactly what the scripts do.
 
 ## 8. Risks, limitations, and honest caveats
 
-- **Taxonomy rot** (the metadata `Risk`). Mitigation is scope: v1 files issues only for MIPs as
-  they are accepted, not for the 42 Draft MIPs (§11.3). The board fills as work arrives.
+- **Taxonomy rot** (the metadata `Risk`). Mitigation is scope: **the board starts empty.** v1
+  files issues only for MIPs accepted from here on, never retroactively for the 42 Draft MIPs.
+  Consolidating the existing backlog is a deliberate later step, taken once this standard has been
+  validated in use and not before — filing several hundred issues against an unvalidated taxonomy
+  is precisely how it rots.
 - **The duplicated `agent-ready`/Status pair** (§5.2) is the design's one soft spot. If anything
   other than `issues.sh` writes either, they drift. A CI reconciliation job is the fix, deferred
   to §11.1.
@@ -296,7 +341,7 @@ the scripts do.
   layer.
 - **Adopt spec-kit wholesale**, as `brunogbv/cv` does — `.specify/`, nine skills, `taskstoissues`
   for free. marola's MIP pipeline already holds that role and five skills are built on it, so the
-  migration is pure churn. Ideas borrowed instead (§4.6).
+  migration is pure churn. Ideas borrowed instead (§4.7).
 - **Milestones as phases** (this design's first draft). Rejected by the maintainer during
   brainstorming, correctly: it bakes sequence into milestone identity, so re-prioritising means
   renaming milestones. Phases became facet labels; deliverables became milestones.
@@ -305,31 +350,30 @@ the scripts do.
 - **Status as a label family** (`status/triage`, …) instead of a board field. That is what a board
   is for, and six more labels per issue makes the list unreadable. The one exception
   (`agent-ready`) is argued in §5.2.
+- **A `blocked` label with the blocker named in prose**, which is what this design carried until
+  the maintainer's review of PR #413 asked how a contributor is supposed to know what is ready.
+  Rejected once §4.2's native dependencies turned out to be GA on Free: a label has to be added
+  and removed by hand, says nothing about *what* blocks, and goes stale the moment the blocker
+  closes. The native edge is computed, shows a Blocked marker on the board, and lets readiness be
+  derived instead of asserted.
 
 ## 11. Open questions
 
+Decisions taken during review are recorded where they belong — the board starts empty (§8),
+`triage` stays human-invoked (§5.6), dependencies are tracked between issues and never between
+sub-issues (§5.3), and the milestone names in §5.1 are illustrations. What is left genuinely open:
+
 1. **CI gates — deferred, not dropped.** PR-must-link-an-issue, parent-can't-close-with-open-
    children, auto-add-to-project, and the `agent-ready`↔Status reconciliation of §8. Scoped out of
-   v1 by the maintainer. §5.5's fixed heading spellings and `labels.yml` exist so these drop in
-   later without re-templating anything.
-2. **Automated triage.** Should a labelled issue trigger an agent that drafts the spec body?
-   `AGENTS.md` requires a human-confirmation gate for proactive agent behaviour unless a MIP
-   decides otherwise. This MIP does **not** decide it: the `triage` skill is human-invoked in v1.
-3. **Backfill.** Do the 42 Draft MIPs get milestones and issues retroactively, or does the board
-   start empty? Recommendation: start empty, backfill only MIPs as they are accepted. Needs a call.
-4. **Does `docs/ROADMAP.md` survive?** Its §2a bug table is a tracker inside a file and should
-   become issues. The rest (the narrative of where things stand) has no GitHub equivalent and
-   should stay. Not resolved here.
-5. **Sub-issues vs. the stack.** A MIP's tasks are *stacked PRs* with a dependency order that
-   sub-issues do not express — GitHub has no "blocked by" edge between issues. v1 records order in
-   `tasks.md` only. Whether the board needs a `Depends on` field is unanswered.
-6. **Milestone naming is unvalidated.** The three examples in §5.1 are invented for this document.
-   The first real milestones should be named by the maintainer, not by an agent reading MIP titles.
-7. **Follow-up MIP:** `docs/ROADMAP.md`'s §2a lists six findings, five still open (`stop-gate.sh`
-   untracked files, `stop-gate.sh` read-only exit code, `format.sh` offline hard-fail,
-   `mip-reviewer` permission prompt, the §7→§8 pointer sweep). Found while researching, not asked
-   for. These are Tier-1 issues, not a MIP — they should be filed as the first real use of this
-   standard once it lands.
+   v1 by the maintainer. §5.6's fixed heading spellings and `labels.yml` exist so these drop in
+   later without re-templating anything. What is unanswered is the *trigger*: what evidence says
+   the standard has earned enforcement — a count of issues filed, a stretch with no drift, or a
+   second contributor arriving?
+2. **`docs/ROADMAP.md`'s long-term role — deliberately not resolved here.** The maintainer's
+   stated direction (PR #413 review): the roadmap's source of truth should become the project and
+   its milestones in the long run, but nothing moves until this standard has been validated in
+   use. Until then ROADMAP stays exactly as written, and the consolidation is a later decision
+   with its own evidence.
 
 ## Appendix
 
@@ -345,6 +389,15 @@ All on 2026-09-27, from this checkout.
   parent issue"*. No limits or token permissions stated on that page.
 - `docs.github.com` "Adding sub-issues" (via search) → **100 sub-issues per parent, 8 levels of
   nesting**.
+- `GET /repos/h0ffmann/marola/issues/412/dependencies/blocked_by` → `[]`. Issue-dependencies
+  endpoint live on this repo.
+- `gh issue create --help` → `--blocked-by`, `--blocking`; `gh issue edit --help` →
+  `--add-blocked-by`, `--add-blocking`, `--remove-blocked-by`, `--remove-blocking`. Present in this
+  host's `gh` 2.95.0.
+- `docs.github.com` "Creating issue dependencies" + `github.blog` "Dependencies on issues"
+  (2025-08-21) and "Manage sub-issues, types, and dependencies from GitHub CLI" (2026-06-10) →
+  generally available, included on GitHub Free, up to 50 issues per relationship type, blocked
+  issues marked on the board and the issues list.
 - `GET /orgs/h0ffmann/issue-types` → 404 (`h0ffmann` is a user account). `GET
   /users/h0ffmann/issue-types` → 404, no such endpoint. Issue types unavailable here.
 - `https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps` →
@@ -369,6 +422,10 @@ All on 2026-09-27, from this checkout.
 - **`POST /issues/{n}/sub_issues` has not been executed.** The database-id semantics in §4.1 come
   from the parameter's documented description, not from a successful call. §7 step 5 is where that
   gets confirmed or corrected — treat it as documented-not-run until then.
+- **No issue dependency has actually been created.** §4.2's endpoint was read, and the `gh` flags
+  were confirmed to exist in `--help`, but nothing was written. Whether a `blocked by` edge can
+  point at an issue in the same repo with only `repo` scope is assumed, not shown — and §5.3's
+  phase-gate design rests on it.
 - **Projects v2 write operations have not been exercised**, because the host token lacks `project`
   scope. The four views in §5.2 are specified, not built; whether all four filters are expressible
   in the Projects UI as written is unverified.
