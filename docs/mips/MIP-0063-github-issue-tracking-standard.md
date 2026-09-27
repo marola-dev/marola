@@ -472,6 +472,25 @@ All on 2026-09-27, from this checkout.
   chain this MIP first assumed.
 - `scripts/docs-mip-stack.sh list` → `docs/mip-0061-swim-brief-agent` is an unmerged draft holding
   MIP-0061; 0062 is in `main`. 0063 is the first free number.
+- **Task 1 run, 2026-09-27** (PR #423) — `.github/labels.yml` generated from the live repo, then
+  `labels sync --dry-run` reported `layer/azure` as the only orphan with nothing to create or
+  edit, and `labels sync --prune` deleted it. The repo went 40 labels → 39, matching the manifest
+  exactly. `layer/azure` was carried by four closed PRs (#3, #47, #48, #286), which lost it.
+  Recorded here because the check is not repeatable: once the orphan is pruned the same command
+  prints `in sync`, so the manifest-vs-repo drift path lives on in `--self-test`'s fixtures only.
+- **Label names are case-insensitive, label paths are not** — 2026-09-27, probed on this repo
+  because neither the REST reference nor the labels docs say either way:
+
+      gh label create zz-probe-case   -> created
+      gh label create ZZ-PROBE-CASE   -> "already exists; use --force"
+      gh label delete ZZ-PROBE-CASE   -> HTTP 404
+      gh label delete zz-probe-case   -> deleted            (probe labels removed)
+
+  Lookup on create folds case; the DELETE (and so PATCH) path does not. A sync that matched names
+  case-sensitively would therefore plan a create that fails *and* a delete of the real label, so
+  §5.2's manifest reconciliation has to fold case on the name and address every edit and delete by
+  the spelling the repo currently holds. Nothing in the design moves; the constraint is on any
+  script that writes labels.
 
 ### Not checked
 
