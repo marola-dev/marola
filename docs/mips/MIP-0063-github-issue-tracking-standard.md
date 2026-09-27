@@ -501,13 +501,16 @@ All on 2026-09-27, from this checkout.
       POST /issues/426/sub_issues            {"sub_issue_id":5606620805}
         -> the *parent* #426, sub_issues_summary {total:1, completed:0}
       POST /issues/426/sub_issues            {"sub_issue_id":5606620913}    (issues.sh sub add)
-        -> accepted; both children now carry parent_issue_url .../issues/426
+        -> accepted
       POST /issues/428/dependencies/blocked_by {"issue_id":5606620805}      (issues.sh deps add)
         -> accepted: #428 blocked by #427, two sub-issues of one parent
       GET  /issues/428/dependencies/blocked_by
         -> [{"number":427, "state":"open", "parent_issue_url":".../issues/426",
              "sub_issues_summary":{"total":0,...}}]
       GET  /issues/427/dependencies/blocking  -> [{"number":428}]
+      GET  /issues/427  and  GET /issues/428                               (checked separately)
+        -> parent_issue_url .../issues/426 on both, so the edge above really is between two
+           sub-issues of one parent and not between two loose issues
 
   §5.3 stands as written and Decision 8's fallback does not apply. Three things worth carrying:
   the POST to `sub_issues` answers with the **parent**, not the sub-issue; `parent_issue_id` is

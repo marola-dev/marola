@@ -133,12 +133,14 @@ labels_plan() {
 # --- number -> database id ---
 
 # Both `POST /issues/{n}/sub_issues` (`sub_issue_id`) and `POST /issues/{n}/dependencies/blocked_by`
-# (`issue_id`) want the **database id**, not the issue number. An issue number is a valid database
-# id belonging to some *other* issue, so passing one is accepted and attaches the wrong issue,
-# silently (MIP-0063 §4.1). marola's issue numbers are three digits; database ids are nine or more.
+# (`issue_id`) want the **database id**, not the issue number. marola's numbers are three digits
+# and this repo's ids are ten, so a number passed here addresses an issue in some unrelated
+# repository: refused, or attached to the wrong thing, with nothing in the response to say which.
+# MIP-0063 §4.1 — the POST is executed, the mis-attach is documented rather than reproduced.
 id_min_digits=9
 
-# guard_id <value> <what> — sits immediately upstream of every POST that takes an id.
+# guard_id <value> <what> — the refusal itself. issue_id_of applies it to everything it returns,
+# which is where both POSTs get their id from.
 guard_id() {
   local id="$1" what="$2"
   case "$id" in
@@ -160,6 +162,13 @@ issue_id_of() {
     echo "issues.sh: asked for issue #$number, payload is #${got:-<none>} — refusing to use its id" >&2
     return 1
   }
+  # `GET /issues/{n}` answers for pull requests as well — they share one number sequence with
+  # issues — and a PR's database id is a real id that guard_id would pass. `sub add 414 413` with
+  # a PR number would attach the PR, which is the silent-wrong-object case this file exists for.
+  if jq -e 'has("pull_request")' <<<"$payload" >/dev/null 2>&1; then
+    echo "issues.sh: #$number is a pull request, not an issue — refusing to use its id" >&2
+    return 1
+  fi
   id="$(jq -r '.id // empty' <<<"$payload" 2>/dev/null)" || id=""
   guard_id "$id" "issue #$number" || return 1
   printf '%s\n' "$id"
@@ -178,7 +187,7 @@ arg_number() {
 
 require_gh() {
   command -v gh >/dev/null || { echo "issues.sh: gh is not installed" >&2; exit 1; }
-  gh auth status >/dev/null 2>&1 || {
+  gh auth status </dev/null >/dev/null 2>&1 || {
     echo "issues.sh: gh is not logged in. Inside ai-jail there is no login and none can be acquired (AGENTS.md) — run this from the host, or use --dry-run." >&2
     exit 1
   }
@@ -189,15 +198,25 @@ require_gh() {
 # against marola's taxonomy — and --prune would delete the difference. Resolve once, from $root;
 # `gh api` has no --repo, so for those calls the pin is spelling $nwo into the path.
 resolve_nwo() {
-  [ -n "$nwo" ] || nwo="$(cd "$root" && gh repo view --json nameWithOwner -q .nameWithOwner)"
+  [ -n "$nwo" ] || nwo="$(cd "$root" && gh repo view --json nameWithOwner -q .nameWithOwner </dev/null)"
 }
 
 # The one place a number becomes an id. Both POSTs below go through it.
 resolve_issue_id() {
-  local number="$1" payload
-  payload="$(gh api "repos/$nwo/issues/$number" 2>/dev/null)" || {
-    echo "issues.sh: issue #$number not found on $nwo" >&2; return 1
-  }
+  local number="$1" payload err rc=0
+  err="$(mktemp)"
+  payload="$(gh api "repos/$nwo/issues/$number" </dev/null 2>"$err")" || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    # A 401, a 403 rate-limit and a DNS failure are not "no such issue". Reporting all of them as
+    # one sends an unattended run after the wrong cause, so anything but a 404 quotes gh.
+    if grep -q 'HTTP 404' "$err"; then
+      echo "issues.sh: issue #$number not found on $nwo" >&2
+    else
+      { echo "issues.sh: looking up issue #$number on $nwo failed:"; sed 's/^/  /' "$err"; } >&2
+    fi
+  fi
+  rm -f "$err"
+  [ "$rc" -eq 0 ] || return 1
   issue_id_of "$payload" "$number"
 }
 
@@ -223,6 +242,7 @@ cmd_deps_add() {
     case "$1" in
       --blocked-by)
         [ $# -ge 2 ] || { echo "issues.sh deps add: --blocked-by needs an issue number" >&2; exit 1; }
+        [ -z "$blocker" ] || { echo "issues.sh deps add: --blocked-by given twice (#$blocker, then $2) — one edge per call" >&2; exit 1; }
         blocker="$(arg_number "$2" "deps add --blocked-by")" || exit 1
         shift 2 ;;
       *) echo "issues.sh deps add: unknown argument: $1" >&2; usage >&2; exit 1 ;;
@@ -244,7 +264,9 @@ cmd_deps_list() {
   resolve_nwo
   # --paginate: the default page is 30 and §4.2 allows 50 edges per relationship type, so an
   # unpaginated read would silently drop the rest — and a dropped blocker reads as no blocker.
-  gh api --paginate "repos/$nwo/issues/$issue/dependencies/blocked_by" \
+  # </dev/null on this and every other read: only run()'s mutating calls were protected, and a
+  # `gh` that reads stdin eats the caller's — task 5 drives these commands from a read loop.
+  gh api --paginate "repos/$nwo/issues/$issue/dependencies/blocked_by" </dev/null \
     --jq '.[] | "#\(.number)\t\(.state)\t\(.title)"'
 }
 
@@ -275,7 +297,7 @@ cmd_labels_sync() {
   require_gh
   resolve_nwo
   local limit=500 rjson n_repo
-  rjson="$(gh label list --repo "$nwo" --limit "$limit" --json name,color,description)"
+  rjson="$(gh label list --repo "$nwo" --limit "$limit" --json name,color,description </dev/null)"
   n_repo="$(jq 'length' <<<"$rjson")"
   # Past the limit gh stops silently, and an unseen label reads as "missing from the repo": sync
   # would try to create labels that already exist and, with --prune, never report the real orphans.
@@ -368,6 +390,7 @@ self_test() {
   # function does, so `source scripts/lib/pr_labels.sh` below deleted $tmp half way through the
   # run. The path is expanded into the trap body now, because this local is out of scope by the
   # time EXIT fires.
+  # shellcheck disable=SC2064 # expanding now is the point: $tmp is local and gone by EXIT.
   trap "rm -rf $(printf %q "$tmp")" EXIT
 
   check() {   # check <label> <got> <want>
@@ -515,6 +538,34 @@ EOF
 plan-line-3"
 
   echo
+  echo "-- the read calls must not eat the caller's stdin either --"
+  # run() protects the mutating calls; the reads (auth status, repo view, GET) are called
+  # directly. Task 5 drives `sub add`/`deps add` from a loop over the `depends on` column, so
+  # the caller's stdin is the loop's input — one gh child that reads it ends the loop early.
+  mkdir -p "$tmp/bin"
+  cat > "$tmp/bin/gh" <<'STUB'
+#!/usr/bin/env bash
+cat >/dev/null          # a gh that reads stdin; `gh api --input -` really does
+case "$*" in
+  *"repo view"*)              echo "marola-dev/marola" ;;
+  *"dependencies/blocked_by"*) printf '#414\tclosed\tstub\n' ;;
+  *"issues/415")              printf '{"number":415,"id":5601728372}\n' ;;
+esac
+STUB
+  chmod +x "$tmp/bin/gh"
+  got="$(printf 'row-2\nrow-3\n' | { PATH="$tmp/bin:$PATH" nwo="" cmd_deps_list 415 >/dev/null; cat; })"
+  check "deps list leaves the caller's stdin untouched (auth status, repo view and the GET)" "$got" "row-2
+row-3"
+  got="$(printf 'row-2\nrow-3\n' | { PATH="$tmp/bin:$PATH" nwo="marola-dev/marola" resolve_issue_id 415 >/dev/null; cat; })"
+  check "resolve_issue_id leaves the caller's stdin untouched" "$got" "row-2
+row-3"
+  if ( cmd_deps_add 428 --blocked-by 427 --blocked-by 426 ) >/dev/null 2>&1; then
+    echo "FAILED: a repeated --blocked-by was accepted; the last one silently won" >&2; failed=1
+  else
+    echo "ok: --blocked-by given twice is refused, not quietly overwritten"
+  fi
+
+  echo
   echo "-- the parser survives a CRLF manifest and names a control character --"
   printf -- '- name: "x"\r\n  color: "aaaaaa"\r\n  description: "d"\r\n' > "$tmp/crlf.yml"
   got="$(manifest_json "$tmp/crlf.yml" 2>/dev/null || true)"
@@ -583,6 +634,11 @@ plan-line-3"
   else
     echo "ok: an unparseable payload is an error"
   fi
+  if issue_id_of '{"number":423,"id":5605746769,"pull_request":{"html_url":"..."}}' 423 >/dev/null 2>&1; then
+    echo "FAILED: a pull request resolved to an id — GET /issues/{n} answers for PRs too, and they share the issue numbering" >&2; failed=1
+  else
+    echo "ok: a pull request is refused where an issue is required"
+  fi
   check "an issue number reads with or without its #" "$(arg_number '#415' t)/$(arg_number 415 t)" "415/415"
   if arg_number "4a5" t >/dev/null 2>&1; then
     echo "FAILED: a non-numeric issue number was accepted" >&2; failed=1
@@ -592,8 +648,9 @@ plan-line-3"
 
   echo
   echo "-- the id guard: the regression test for the trap itself --"
-  # Passing an issue number where the API wants a database id does not fail — it attaches some
-  # other issue and returns success. Nothing downstream can detect that, so the guard is the test.
+  # An issue number where the API wants a database id addresses an unrelated repository's issue:
+  # refused, or attached to the wrong thing, and nothing downstream can tell which. The guard is
+  # the only thing standing there, so the guard is what gets tested.
   if guard_id 415 "issue #415" 2>/dev/null; then
     echo "FAILED: a 3-digit issue number passed the database-id guard" >&2; failed=1
   else
