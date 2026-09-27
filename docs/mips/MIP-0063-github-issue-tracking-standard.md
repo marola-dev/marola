@@ -151,9 +151,13 @@ keep "how do I…" out of a tracker meant to be a work queue.
 `brunogbv/cv` runs GitHub spec-kit (`.specify/` plus nine `speckit-*` skills). Its
 `speckit-taskstoissues` is the closest existing thing to §5.4, and three of its decisions are
 adopted directly: a **feature-scoped task id in the title** (`003-T001: …`) so per-feature ids
-restarting at `T001` do not collide during dedup; **rewriting the checkbox into a link** rather
-than keeping two states; and declaring that afterwards issues own status while the file owns the
-plan. Its `harness` label is not adopted — `area/dev-tooling` covers it.
+restarting at `T001` do not collide during dedup; **rewriting the row into a link** to its issue
+rather than keeping two states; and declaring that afterwards issues own status while the file owns
+the plan. **What does not transfer is the shape:** spec-kit's `tasks.md` is a checkbox list, so its
+rewrite targets `- [ ] T001 …`. marola's twelve task files are all markdown *tables* with an
+explicit `depends on` column, which is both a different rewrite target and a better dependency
+source. An earlier draft of this MIP copied the checkbox mechanism unchecked; the 2026-09-27 run
+caught it. Its `harness` label is not adopted — `area/dev-tooling` covers it.
 
 Read 2026-09-27: the skill source, the label set, and 15 issues showing `003-T0NN:` titles in
 practice. **Not adopted:** spec-kit itself. marola's MIP + `tasks.md` + `mip-tasks` pipeline holds
@@ -232,9 +236,12 @@ computed property, and they cost nothing to apply, so they are used at **every**
   executed — §7 step 7 is where it is proven, and the Appendix says so plainly.
 
 Because the edges are free, **nothing asks a human to draw them by hand**: `tasks-to-issues`
-derives each task's `blocked by` edge from the stack order already written in `MIP-NNNN.tasks.md`,
-where task *k* depends on *k-1* by construction (`DEV-FLOW.md` §4). The dependency graph that has
-been implicit in the branch stack all along becomes explicit at no authoring cost.
+derives each edge from the **`depends on` column** that `MIP-NNNN.tasks.md` already carries. That
+column is a DAG, not a chain — MIP-0034 has `6 ← 1`, MIP-0031 has three roots and two parallel
+branches, MIP-0056 has `7 ← 4`, and MIP-0011's task 11 says in words that it "can be built any time
+relative to 1-10". A dependency graph marola has been writing by hand for twelve task lists becomes
+machine-readable at no authoring cost, and it is a *truer* graph than the branch stack, which only
+ever expresses merge order.
 
 **Phase discipline falls out of the same mechanism.** Each of `ARCHITECTURE.md` §11's phases gets
 one tracking issue ("Phase 1 — Telegram bot working"), and every `phase/2` issue is `blocked by`
@@ -262,7 +269,7 @@ Six recipes over one `scripts/issues.sh`, each with the repo's usual `--dry-run`
 
 | Command | Does |
 |---|---|
-| `just tasks-to-issues MIP-NNNN --milestone "<name>"` | creates missing issues titled `0063-T3: …`, dedups on `\b0063-T\d+\b`, rewrites `- [ ] T3 …` → `- [T3](…/issues/415) …`, wires each task's `blocked by` edge from the stack order (§5.3); idempotent |
+| `just tasks-to-issues MIP-NNNN --milestone "<name>"` | creates missing issues titled `0063-T3: …`, dedups on `\b0063-T\d+\b`, rewrites each row's `#` cell into a link to its issue, wires each `blocked by` edge from the `depends on` column (§5.3); idempotent |
 | `just issue-queue` | `agent-ready`, unassigned, sorted size then priority — the read an agent makes |
 | `just issue-ready <n>` | runs the five rules, adds/removes `agent-ready`, prints which rule failed |
 | `just issue-claim <n>` | assigns, drops `agent-ready`, sets board Status, prints the `scripts/stack.sh start` line |
@@ -309,18 +316,19 @@ this MIP goes near `Swimability` or the safety footer.
 In the order that proves the most for the least:
 
 1. `scripts/lib/tasks_issues.py --self-test` — the dedup regex (`\b0063-T\d+\b` matches
-   `0063-T001`, `[0063-T1]`, `0063-T1:`; does **not** match `S0063-T1` or `0063-T0010`) and the
-   checkbox→link rewrite, including idempotence on an already-linked line and preservation of
-   `[P]` / `[US#]` markers. No network, no GitHub. Runs under `just quality-other`, so
-   `.githooks/pre-push` exercises it on every push.
+   `0063-T001`, `[0063-T1]`, `0063-T1:`; does **not** match `S0063-T1` or `0063-T0010`), the
+   table-row parser, the `#`-cell→link rewrite including idempotence on an already-linked row, and
+   the `depends on` column parser against a non-linear graph (`–`, `—`, `1`, `5, 6`). No network,
+   no GitHub. Runs under `just quality-other`, so `.githooks/pre-push` exercises it every push.
 2. `scripts/issues.sh --self-test` — argument handling and each of the five DoR rules against
    fixture bodies, including rule 5 reading a stubbed `blocked_by` list rather than a label.
 3. `just labels-sync --dry-run` — must print exactly the four additions and flag `layer/azure` as
    orphaned. Nothing else moves.
 4. `just tasks-to-issues MIP-0060 --dry-run` against the real existing `MIP-0060.tasks.md` —
    inspect titles and rewritten lines before anything is created.
-5. **Live idempotence check**: one throwaway milestone, run for real, run again. Second run must
-   create zero issues and rewrite zero lines. This is also where §4.1's `sub_issue_id` trap is
+5. **Live idempotence check**: re-run against this MIP's own task list, whose issues were filed by
+   hand on 2026-09-27. The second run must create zero issues and rewrite zero rows — the strongest
+   available fixture, since the data is real and already linked. This is also where §4.1's `sub_issue_id` trap is
    confirmed against the live API or corrected.
 6. **The first real use, on real debt**: file `docs/ROADMAP.md` §2a's five still-open findings
    (`stop-gate.sh` untracked files, `stop-gate.sh` read-only exit code, `format.sh` offline
@@ -356,12 +364,12 @@ returning a real list, and `docs/ISSUE-FLOW.md` describing exactly what the scri
   v1 makes the standard *checkable*; it does not make it *unavoidable*.
 - **Public means public.** A project board and an open triage queue expose what is not being done
   as clearly as what is. That is the point, and it is worth stating before switching it on.
-- **Stack order is not the same as logical dependency.** §5.3 wires task *k* `blocked by` *k-1*
-  because that is how the branch stack is built, which makes a MIP's tasks look strictly serial:
-  `issue-queue` will show exactly one ready task per MIP even when two of them touch nothing in
-  common and could be written at once. The edges are truthful about *merge* order and pessimistic
-  about *work* order. Letting a `tasks.md` row declare itself independent would fix it and is not
-  in v1; until then, a contributor who wants the parallel task takes it off the board by hand.
+- **The edges are only as good as the `depends on` column.** §5.3 reads that column rather than
+  inferring a chain, so parallelism survives — but a task list that overstates a dependency will
+  serialise work that could have run at once, and one that understates it will show an issue as
+  ready when it is not. Nothing checks the column against reality; `mip-tasks` authors it by hand
+  and review is the only gate. That is the same trust the stacked-PR workflow already places in
+  it, now with more consequence attached.
 - **50 edges per relationship type** (§4.2). Far above a MIP's task count, but a milestone that
   accumulated dependencies across many MIPs could reach it. Nothing in v1 checks for the ceiling.
 
@@ -392,7 +400,8 @@ returning a real list, and `docs/ISSUE-FLOW.md` describing exactly what the scri
 
 Decisions taken during review are recorded where they belong — the board starts empty (§8),
 `triage` stays human-invoked (§5.6), dependencies are tracked at every level and derived from the
-stack order rather than drawn by hand (§5.3), and the milestone names in §5.1 are illustrations.
+`depends on` column rather than drawn by hand (§5.3), and §5.1's milestone names are illustrations
+— the first real one, `Issue tracking standard live`, was named by the maintainer on 2026-09-27.
 What is left genuinely open:
 
 1. **CI gates — deferred, not dropped.** PR-must-link-an-issue, parent-can't-close-with-open-
@@ -451,6 +460,16 @@ All on 2026-09-27, from this checkout.
   `phase:*` and `harness`; 15 issues sampled showing `003-T0NN: …` titles. No milestones.
 - `github.com/brunogbv/marilegal-frontend` → stock `.md` issue templates, default label set, no
   milestones, no `.specify/`. Nothing adopted from it.
+- **Dogfood run, 2026-09-27** — this MIP's own task list filed through its own design, by hand,
+  because `tasks-to-issues` is task 5. Created milestone #1 `Issue tracking standard live`, the
+  four new labels, and issues #414–#421 (`0063-T1`…`T8`) with bodies in the `task.yml` heading
+  shape. **Ten `blocked by` edges created and read back**: `415←414`, `416←414`, `417←415,416`,
+  `418←415,417`, `419←417`, `420←418,419`, `421←420`. The graph round-tripped exactly as authored,
+  and the computed ready set was `{#414}` alone — rule 5 of §5.4 working against the live API with
+  no script in between. `#414` then passed all five rules by hand and was labelled `agent-ready`.
+  The run also found the two defects corrected in §4.7, §5.3, §5.5, §7 and §8: marola's task files
+  are tables, not checkbox lists, and their `depends on` column is a DAG rather than the `k ← k-1`
+  chain this MIP first assumed.
 - `scripts/docs-mip-stack.sh list` → `docs/mip-0061-swim-brief-agent` is an unmerged draft holding
   MIP-0061; 0062 is in `main`. 0063 is the first free number.
 
@@ -459,12 +478,14 @@ All on 2026-09-27, from this checkout.
 - **`POST /issues/{n}/sub_issues` has not been executed.** The database-id semantics in §4.1 come
   from the parameter's documented description, not from a successful call. §7 step 5 is where that
   gets confirmed or corrected — treat it as documented-not-run until then.
-- **No issue dependency has actually been created.** §4.2's endpoint was read and the `gh` flags
-  confirmed in `--help`, but nothing was written. Two things therefore rest on documentation
-  rather than on a run: that a `blocked by` edge can be created with only `repo` scope, and — the
-  one §5.3 leans on hardest — that **two sub-issues of the same parent may depend on each other**.
-  The docs state no restriction and the schema suggests none exists, which is evidence, not proof.
-  §7 step 7 settles it, and names the fallback if GitHub refuses.
+- **Dependencies between *sub-issues* remain unproven.** The 2026-09-27 run settled the rest:
+  edges between ordinary issues work, with `repo` scope, and read back correctly. It never created
+  a parent/child pair, so the case §5.3 leans on hardest — **two sub-issues of the same parent
+  depending on each other** — still rests on the docs stating no restriction and on the schema
+  carrying `parent_issue_url` beside the dependency fields. Evidence, not proof. §7 step 7 settles
+  it, and names the fallback if GitHub refuses.
+- **Nothing was re-read for the board.** Projects v2 writes are still unexercised (no `project`
+  scope on the host token), so §5.2's four views remain specified rather than built.
 - **Projects v2 write operations have not been exercised**, because the host token lacks `project`
   scope. The four views in §5.2 are specified, not built; whether all four filters are expressible
   in the Projects UI as written is unverified.
