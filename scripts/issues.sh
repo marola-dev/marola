@@ -41,6 +41,7 @@ manifest_json() {
   awk -v file="$file" '
     function esc(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); return s }
     function val(line) {
+      sub(/\r$/, "", line)
       sub(/^[^:]*:[ \t]*/, "", line)
       sub(/[ \t]+$/, "", line)
       if (line ~ /^".*"$/) line = substr(line, 2, length(line) - 2)
@@ -50,6 +51,12 @@ manifest_json() {
       if (name == "") return
       if (color == "" || !have_desc) {
         printf "issues.sh: %s:%d: label \"%s\" is missing color or description\n", file, nr_name, name > "/dev/stderr"
+        _abort = 1; exit 1
+      }
+      # A raw control character would reach jq as invalid JSON and surface as its parse error
+      # instead of the file:line diagnostic every other malformed line here gets.
+      if (name ~ /[[:cntrl:]]/ || color ~ /[[:cntrl:]]/ || desc ~ /[[:cntrl:]]/) {
+        printf "issues.sh: %s:%d: label \"%s\" has a control character in its name, colour or description\n", file, nr_name, name > "/dev/stderr"
         _abort = 1; exit 1
       }
       k = tolower(name)
@@ -148,8 +155,14 @@ cmd_labels_sync() {
   fi
 
   require_gh
+  # gh picks its target repo from the current directory, but the manifest always comes from this
+  # script's own checkout. Run issues.sh from inside another clone and it would reconcile that
+  # repo against marola's taxonomy — and --prune would delete the difference. Resolve the repo
+  # once, from $root, and pin every call to it.
+  local nwo
+  nwo="$(cd "$root" && gh repo view --json nameWithOwner -q .nameWithOwner)"
   local limit=500 rjson n_repo
-  rjson="$(gh label list --limit "$limit" --json name,color,description)"
+  rjson="$(gh label list --repo "$nwo" --limit "$limit" --json name,color,description)"
   n_repo="$(jq 'length' <<<"$rjson")"
   # Past the limit gh stops silently, and an unseen label reads as "missing from the repo": sync
   # would try to create labels that already exist and, with --prune, never report the real orphans.
@@ -164,8 +177,14 @@ cmd_labels_sync() {
   orphans="$(jq -r '.orphan[].name' <<<"$diff")"
   n_orphan="$(jq -r '.orphan | length' <<<"$diff")"
 
-  if [ "$n_orphan" -gt 0 ] && [ "$prune" -eq 0 ]; then
-    echo "orphaned on the repo, not in $(basename "$manifest") — re-run with --prune to delete:" >&2
+  # Printed whether or not --prune is set: the run that deletes them is the one that most needs
+  # to say which labels it means, and --prune --force skips the guard below entirely.
+  if [ "$n_orphan" -gt 0 ]; then
+    if [ "$prune" -eq 1 ]; then
+      echo "orphaned on the repo, not in $(basename "$manifest") — --prune will DELETE these $n_orphan:" >&2
+    else
+      echo "orphaned on the repo, not in $(basename "$manifest") — re-run with --prune to delete:" >&2
+    fi
     sed 's/^/  /' <<<"$orphans" >&2
   fi
   # Pruning most of the repo is the same accident as the empty manifest, one step less obvious: a
@@ -190,14 +209,14 @@ cmd_labels_sync() {
   while IFS=$'\t' read -r action addr name color desc; do
     rc=0
     case "$action" in
-      create) run gh label create "$addr" --color "$color" --description "$desc" || rc=$? ;;
+      create) run gh label create --repo "$nwo" "$addr" --color "$color" --description "$desc" || rc=$? ;;
       edit)
         if [ "$addr" != "$name" ]; then
-          run gh label edit "$addr" --name "$name" --color "$color" --description "$desc" || rc=$?
+          run gh label edit --repo "$nwo" "$addr" --name "$name" --color "$color" --description "$desc" || rc=$?
         else
-          run gh label edit "$addr" --color "$color" --description "$desc" || rc=$?
+          run gh label edit --repo "$nwo" "$addr" --color "$color" --description "$desc" || rc=$?
         fi ;;
-      delete) run gh label delete "$addr" --yes || rc=$? ;;
+      delete) run gh label delete --repo "$nwo" "$addr" --yes || rc=$? ;;
     esac
     if [ "$rc" -eq 0 ]; then applied=$((applied + 1)); else failed=$((failed + 1)); fi
   done <<<"$plan"
@@ -217,7 +236,11 @@ run() {
   # command, so without this `run` would always return 0 and the caller's failure tally would
   # never see a failed `gh` call.
   local rc=0
-  "$@" >/dev/null || rc=$?
+  # </dev/null, not just >/dev/null: the apply loop feeds the plan in on stdin as a here-string,
+  # which every child inherits. One `gh` that reads stdin swallows the rest of the plan and the
+  # loop ends early having applied a fraction of it, with failed=0 and exit 0. Verified with a
+  # stdin-draining stub: 1 of 39 edits ran and the script reported success.
+  "$@" </dev/null >/dev/null || rc=$?
   if [ "$rc" -eq 0 ]; then { printf ' %q' "$@"; printf '\n'; }
   else { printf 'FAILED (exit %d):' "$rc"; printf ' %q' "$@"; printf '\n'; } >&2; fi
   return "$rc"
@@ -365,17 +388,41 @@ EOF
   dry=0
 
   echo
+  echo "-- the apply loop feeds the plan on stdin; run() must not pass it on --"
+  # A `gh` that reads stdin would otherwise eat the rest of the plan: verified with a draining
+  # stub, 1 of 39 edits ran and the script exited 0 reporting success.
+  dry=0
+  got="$(printf 'plan-line-2\nplan-line-3\n' | { run cat >/dev/null; cat; })"
+  check "run leaves the caller's stdin untouched" "$got" "plan-line-2
+plan-line-3"
+
+  echo
+  echo "-- the parser survives a CRLF manifest and names a control character --"
+  printf -- '- name: "x"\r\n  color: "aaaaaa"\r\n  description: "d"\r\n' > "$tmp/crlf.yml"
+  got="$(manifest_json "$tmp/crlf.yml" 2>/dev/null || true)"
+  check "a CRLF manifest parses, quotes and all" "$(jq -r '.[0] | "\(.name)/\(.color)/\(.description)"' <<<"$got" 2>/dev/null)" "x/aaaaaa/d"
+  printf -- '- name: "x"\n  color: "aaaaaa"\n  description: "has\ta tab"\n' > "$tmp/tab.yml"
+  got="$(manifest_json "$tmp/tab.yml" 2>&1 >/dev/null || true)"
+  case "$got" in
+    *"control character"*) echo "ok: a control character is this script's own diagnostic, not a jq crash" ;;
+    *) echo "FAILED: expected a control-character diagnostic, got: $got" >&2; failed=1 ;;
+  esac
+
+  echo
   echo "-- scripts/lib/pr_labels.sh agrees with the manifest --"
   # `just pr-label` creates its taxonomy with `gh label create --force` (ensure_pr_labels), so a
   # second copy of these colours exists. If the two disagree, pr-label and labels-sync overwrite
   # each other on every run and neither file is the source of truth any more.
   # shellcheck source=scripts/lib/pr_labels.sh
   source "$root/scripts/lib/pr_labels.sh"
-  local entry n c d want_c want_d
+  # Parsed again here rather than reusing $got from an earlier section: a shared scratch variable
+  # across sections meant inserting a test in between silently broke this one.
+  local mj entry n c d want_c want_d
+  mj="$(manifest_json "$manifest_default")"
   for entry in "${PR_LABEL_TAXONOMY[@]}"; do
     n="${entry%%:*}"; c="${entry#*:}"; c="$(tr 'A-Z' 'a-z' <<<"${c%%:*}")"; d="${entry#*:*:}"
-    want_c="$(jq -r --arg n "$n" '.[] | select(.name == $n) | .color' <<<"$got")"
-    want_d="$(jq -r --arg n "$n" '.[] | select(.name == $n) | .description' <<<"$got")"
+    want_c="$(jq -r --arg n "$n" '.[] | select(.name == $n) | .color' <<<"$mj")"
+    want_d="$(jq -r --arg n "$n" '.[] | select(.name == $n) | .description' <<<"$mj")"
     if [ -z "$want_c" ]; then
       echo "FAILED: $n is in PR_LABEL_TAXONOMY but not in $(basename "$manifest_default")" >&2; failed=1
     elif [ "$c" != "$want_c" ] || [ "$d" != "$want_d" ]; then
