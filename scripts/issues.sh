@@ -12,10 +12,11 @@ usage: issues.sh [--dry-run] <command> [args]
        issues.sh --self-test | --help
 
 commands:
-  labels sync [--prune] [--manifest FILE]
+  labels sync [--prune] [--force] [--manifest FILE]
       Reconcile GitHub's labels against .github/labels.yml: create what is missing, edit what
       differs, report what is on the repo but not in the manifest. Orphans are only deleted
-      with --prune.
+      with --prune, and --prune refuses to delete more than half the repo's labels without
+      --force. A manifest that defines no labels is refused outright.
 
 options:
   --dry-run     print the mutating `gh` calls instead of making them (the repo's current
@@ -45,12 +46,18 @@ manifest_json() {
       if (line ~ /^".*"$/) line = substr(line, 2, length(line) - 2)
       return line
     }
-    function flush() {
+    function flush(   k) {
       if (name == "") return
       if (color == "" || !have_desc) {
         printf "issues.sh: %s:%d: label \"%s\" is missing color or description\n", file, nr_name, name > "/dev/stderr"
         _abort = 1; exit 1
       }
+      k = tolower(name)
+      if (k in seen) {
+        printf "issues.sh: %s:%d: label \"%s\" is already defined on line %d (GitHub label names are case-insensitive)\n", file, nr_name, name, seen[k] > "/dev/stderr"
+        _abort = 1; exit 1
+      }
+      seen[k] = nr_name
       out = out sprintf("%s{\"name\":\"%s\",\"color\":\"%s\",\"description\":\"%s\"}", (n++ ? "," : ""), esc(name), esc(color), esc(desc))
       name = ""; color = ""; desc = ""; have_desc = 0
     }
@@ -66,30 +73,43 @@ manifest_json() {
 }
 
 # labels_diff <manifest-json> <repo-json> -> {add,update,orphan}, each an array of label objects.
-# Colour is compared case-insensitively: GitHub stores whatever case it was created with, and a
-# label added through the UI in uppercase is the same label, not a change to apply.
+# Matching is case-insensitive on both name and colour, because GitHub is:
+#   - colour: it stores whatever case the label was created with, so 0E8A16 and 0e8a16 are one
+#     colour, not a change to apply.
+#   - name: `gh label create ZZ-PROBE-CASE` on a repo holding `zz-probe-case` is refused with
+#     "already exists" (probed live, 2026-09-27). A case-sensitive match would put one label in
+#     `add` *and* `orphan`: sync would abort on the failed create, and --prune would delete the
+#     real label out from under every issue carrying it.
+# `update` therefore carries `repo_name`, the spelling the label has today. That is the one the
+# API can address: the same probe found DELETE case-*sensitive* on the path — deleting
+# ZZ-PROBE-CASE 404'd where zz-probe-case worked.
 labels_diff() {
   jq -n --argjson m "$1" --argjson r "$2" '
-    def norm: {name, color: (.color // "" | ascii_downcase), description: (.description // "")};
+    def norm: {name, key: (.name | ascii_downcase), color: (.color // "" | ascii_downcase), description: (.description // "")};
     ($m | map(norm)) as $M | ($r | map(norm)) as $R |
-    ($M | map({key: .name, value: .}) | from_entries) as $MB |
-    ($R | map({key: .name, value: .}) | from_entries) as $RB |
+    ($M | map({key: .key, value: .}) | from_entries) as $MB |
+    ($R | map({key: .key, value: .}) | from_entries) as $RB |
     {
-      add:    [ $M[] | select($RB[.name] == null) ],
-      update: [ $M[] | select($RB[.name] != null)
-                     | select($RB[.name].color != .color or $RB[.name].description != .description) ],
-      orphan: [ $R[] | select($MB[.name] == null) ]
+      add:    [ $M[] | select($RB[.key] == null) ],
+      update: [ $M[] | . as $want | $RB[$want.key] // empty | . as $have
+                     | select($have.color != $want.color
+                           or $have.description != $want.description
+                           or $have.name != $want.name)
+                     | $want + {repo_name: $have.name} ],
+      orphan: [ $R[] | select($MB[.key] == null) ]
     }'
 }
 
-# labels_plan <diff-json> <prune 0|1> -> one TSV action per line: create|edit|delete, name,
-# colour, description. Without --prune an orphan yields no line at all, which is what makes
-# "sync never deletes by accident" a property of the plan rather than of the caller.
+# labels_plan <diff-json> <prune 0|1> -> one TSV action per line: create|edit|delete, the name to
+# address the label by, the name it should end up with, colour, description. The two differ only
+# when the manifest restyles an existing label's case, which is a rename (`gh label edit --name`)
+# rather than a create. Without --prune an orphan yields no line at all, which makes "sync never
+# deletes by accident" a property of the plan rather than of the caller remembering.
 labels_plan() {
   jq -r --argjson prune "$2" '
-    ( .add[]    | ["create", .name, .color, .description] ),
-    ( .update[] | ["edit",   .name, .color, .description] ),
-    ( if $prune == 1 then (.orphan[] | ["delete", .name, "", ""]) else empty end )
+    ( .add[]    | ["create", .name,      .name, .color, .description] ),
+    ( .update[] | ["edit",   .repo_name, .name, .color, .description] ),
+    ( if $prune == 1 then (.orphan[] | ["delete", .name, .name, "", ""]) else empty end )
     | @tsv' <<<"$1"
 }
 
@@ -104,47 +124,88 @@ require_gh() {
 }
 
 cmd_labels_sync() {
-  local prune=0 manifest="$manifest_default"
+  local prune=0 force=0 manifest="$manifest_default"
   while [ $# -gt 0 ]; do
     case "$1" in
       --prune) prune=1; shift ;;
-      --manifest) manifest="$2"; shift 2 ;;
+      --force) force=1; shift ;;
+      --manifest)
+        [ $# -ge 2 ] || { echo "issues.sh labels sync: --manifest needs a file" >&2; usage >&2; exit 1; }
+        manifest="$2"; shift 2 ;;
       *) echo "issues.sh labels sync: unknown argument: $1" >&2; usage >&2; exit 1 ;;
     esac
   done
 
-  local mjson rjson diff plan
+  local mjson n_manifest
   mjson="$(manifest_json "$manifest")"
+  n_manifest="$(jq 'length' <<<"$mjson")"
+  # A manifest that parses to nothing is the shape of an accident — --manifest aimed at the wrong
+  # path, or labels.yml truncated by a bad merge. Every label on the repo would read as an orphan,
+  # and with --prune that is the whole taxonomy gone in one unattended run.
+  if [ "$n_manifest" -eq 0 ]; then
+    echo "issues.sh: $manifest defines no labels — refusing to sync. An empty or truncated manifest makes every label on the repo an orphan." >&2
+    exit 1
+  fi
+
   require_gh
-  rjson="$(gh label list --limit 200 --json name,color,description)"
+  local limit=500 rjson n_repo
+  rjson="$(gh label list --limit "$limit" --json name,color,description)"
+  n_repo="$(jq 'length' <<<"$rjson")"
+  # Past the limit gh stops silently, and an unseen label reads as "missing from the repo": sync
+  # would try to create labels that already exist and, with --prune, never report the real orphans.
+  if [ "$n_repo" -ge "$limit" ]; then
+    echo "issues.sh: the repo has at least $limit labels, this script's page limit — raise it before trusting the diff." >&2
+    exit 1
+  fi
+
+  local diff plan orphans n_orphan
   diff="$(labels_diff "$mjson" "$rjson")"
   plan="$(labels_plan "$diff" "$prune")"
-
-  local orphans
   orphans="$(jq -r '.orphan[].name' <<<"$diff")"
-  if [ -n "$orphans" ] && [ "$prune" -eq 0 ]; then
+  n_orphan="$(jq -r '.orphan | length' <<<"$diff")"
+
+  if [ "$n_orphan" -gt 0 ] && [ "$prune" -eq 0 ]; then
     echo "orphaned on the repo, not in $(basename "$manifest") — re-run with --prune to delete:" >&2
     sed 's/^/  /' <<<"$orphans" >&2
   fi
+  # Pruning most of the repo is the same accident as the empty manifest, one step less obvious: a
+  # manifest that parses fine but belongs to some other repo.
+  if [ "$prune" -eq 1 ] && [ "$force" -eq 0 ] && [ $((n_orphan * 2)) -gt "$n_repo" ]; then
+    echo "issues.sh: --prune would delete $n_orphan of the repo's $n_repo labels — most of the taxonomy. Check $manifest is the right manifest, then re-run with --force." >&2
+    exit 1
+  fi
 
   if [ -z "$plan" ]; then
-    local n_orphan; n_orphan="$(jq -r '.orphan | length' <<<"$diff")"
     if [ "$n_orphan" -gt 0 ]; then
-      echo "labels: nothing to create or edit ($(jq 'length' <<<"$mjson") in the manifest); $n_orphan orphaned, listed above"
+      echo "labels: nothing to create or edit ($n_manifest in the manifest); $n_orphan orphaned, listed above"
     else
-      echo "labels: in sync ($(jq 'length' <<<"$mjson") in the manifest)"
+      echo "labels: in sync ($n_manifest in the manifest)"
     fi
     return 0
   fi
 
-  local action name color desc
-  while IFS=$'\t' read -r action name color desc; do
+  # Each action stands on its own: `set -e` would abort the loop on the first failure, having
+  # already mutated whatever sorted before it, and the output would read like a clean run.
+  local action addr name color desc rc=0 applied=0 failed=0
+  while IFS=$'\t' read -r action addr name color desc; do
+    rc=0
     case "$action" in
-      create) run gh label create "$name" --color "$color" --description "$desc" ;;
-      edit)   run gh label edit   "$name" --color "$color" --description "$desc" ;;
-      delete) run gh label delete "$name" --yes ;;
+      create) run gh label create "$addr" --color "$color" --description "$desc" || rc=$? ;;
+      edit)
+        if [ "$addr" != "$name" ]; then
+          run gh label edit "$addr" --name "$name" --color "$color" --description "$desc" || rc=$?
+        else
+          run gh label edit "$addr" --color "$color" --description "$desc" || rc=$?
+        fi ;;
+      delete) run gh label delete "$addr" --yes || rc=$? ;;
     esac
+    if [ "$rc" -eq 0 ]; then applied=$((applied + 1)); else failed=$((failed + 1)); fi
   done <<<"$plan"
+
+  if [ "$failed" -gt 0 ]; then
+    echo "issues.sh: $failed of $((applied + failed)) label actions failed, $applied applied — the repo is part-way through the plan. Fix the cause and re-run; sync is idempotent." >&2
+    exit 1
+  fi
 }
 
 dry=0
@@ -152,8 +213,14 @@ dry=0
 # that looks copy-pasteable and isn't.
 run() {
   if [ "$dry" -eq 1 ]; then printf '+'; printf ' %q' "$@"; printf '\n'; return 0; fi
-  "$@" >/dev/null
-  printf ' %q' "$@"; printf '\n'
+  # rc is captured rather than relied on implicitly: the echo below is the function's last
+  # command, so without this `run` would always return 0 and the caller's failure tally would
+  # never see a failed `gh` call.
+  local rc=0
+  "$@" >/dev/null || rc=$?
+  if [ "$rc" -eq 0 ]; then { printf ' %q' "$@"; printf '\n'; }
+  else { printf 'FAILED (exit %d):' "$rc"; printf ' %q' "$@"; printf '\n'; } >&2; fi
+  return "$rc"
 }
 
 # --- self-test ---
@@ -239,8 +306,40 @@ EOF
   fi
   check "without --prune the orphan yields no line at all" "$(grep -c 'layer/azure' <<<"$got" || true)" "0"
   check "the add is planned as a create" "$(cut -f1,2 <<<"$got" | tr '\t' ' ')" "create size/S"
+  check "a create addresses and names the same label" "$(cut -f2,3 <<<"$got" | tr '\t' ' ')" "size/S size/S"
   got="$(labels_plan "$diff" 1)"
   check "with --prune the orphan is a delete" "$(grep '^delete' <<<"$got" | cut -f2)" "layer/azure"
+
+  echo
+  echo "-- GitHub treats label names case-insensitively (probed live 2026-09-27) --"
+  # `gh label create ZZ-PROBE-CASE` on a repo holding `zz-probe-case` is refused as already
+  # existing, so a case-sensitive match would plan a create that fails and a delete that
+  # destroys the real label.
+  diff="$(labels_diff \
+    '[{"name":"bug","color":"d73a4a","description":"d"}]' \
+    '[{"name":"Bug","color":"d73a4a","description":"d"}]')"
+  check "a name differing only in case is not an add" "$(jq -r '.add | length' <<<"$diff")" "0"
+  check "a name differing only in case is not an orphan" "$(jq -r '.orphan | length' <<<"$diff")" "0"
+  check "it is an update that renames" "$(jq -r '.update | map("\(.repo_name)->\(.name)") | join(",")' <<<"$diff")" "Bug->bug"
+  # DELETE and PATCH are case-*sensitive* on the path (ZZ-PROBE-CASE 404'd, zz-probe-case did
+  # not), so the edit has to address the spelling the repo actually has.
+  check "the edit addresses the repo's spelling, not the manifest's" \
+    "$(labels_plan "$diff" 0 | cut -f2,3 | tr '\t' ' ')" "Bug bug"
+
+  diff="$(labels_diff \
+    '[{"name":"bug","color":"d73a4a","description":"d"}]' \
+    '[{"name":"bug","color":"D73A4A","description":"d"}]')"
+  check "same name, same colour, different case is no change at all" \
+    "$(jq -r '[.add, .update, .orphan] | map(length) | join(",")' <<<"$diff")" "0,0,0"
+
+  echo
+  echo "-- the manifest parser rejects a duplicate name --"
+  printf -- '- name: "dup"\n  color: "aaaaaa"\n  description: "first"\n\n- name: "DUP"\n  color: "bbbbbb"\n  description: "second"\n' > "$tmp/dup.yml"
+  if manifest_json "$tmp/dup.yml" >/dev/null 2>&1; then
+    echo "FAILED: two stanzas for the same name (differing in case) parsed" >&2; failed=1
+  else
+    echo "ok: a duplicate name is an error, case-insensitively"
+  fi
 
   echo
   echo "-- the repo's own manifest --"
@@ -253,6 +352,17 @@ EOF
     "$(jq -r '[.[] | select(.color | test("^[0-9a-f]{6}$") | not)] | length' <<<"$got")" "0"
   check "no duplicate names" \
     "$(jq -r '(map(.name) | length) == (map(.name) | unique | length)' <<<"$got")" "true"
+
+  echo
+  echo "-- run() reports a failure to its caller --"
+  # The apply loop counts failures from run()'s status. An earlier version ended with the echo,
+  # so every action looked applied and a part-way sync printed a clean run.
+  dry=0
+  if run true >/dev/null; then echo "ok: a successful action returns 0"; else echo "FAILED: run true returned nonzero" >&2; failed=1; fi
+  if run false 2>/dev/null; then echo "FAILED: run false returned 0 — failures would go uncounted" >&2; failed=1; else echo "ok: a failing action returns nonzero"; fi
+  dry=1
+  if run false >/dev/null; then echo "ok: --dry-run never executes, so it cannot fail"; else echo "FAILED: dry-run executed the command" >&2; failed=1; fi
+  dry=0
 
   echo
   echo "-- scripts/lib/pr_labels.sh agrees with the manifest --"
