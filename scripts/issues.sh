@@ -363,7 +363,12 @@ run() {
 
 self_test() {
   local failed=0 tmp got want
-  tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  tmp="$(mktemp -d)"
+  # EXIT, not RETURN: bash fires a RETURN trap when a *sourced file* finishes as well as when a
+  # function does, so `source scripts/lib/pr_labels.sh` below deleted $tmp half way through the
+  # run. The path is expanded into the trap body now, because this local is out of scope by the
+  # time EXIT fires.
+  trap "rm -rf $(printf %q "$tmp")" EXIT
 
   check() {   # check <label> <got> <want>
     if [ "$2" = "$3" ]; then echo "ok: $1"; else echo "FAILED: $1" >&2; echo "  got:  $2" >&2; echo "  want: $3" >&2; failed=1; fi
@@ -546,6 +551,18 @@ plan-line-3"
     fi
   done
   [ "$failed" -eq 1 ] || echo "ok: all ${#PR_LABEL_TAXONOMY[@]} PR_LABEL_TAXONOMY entries match the manifest"
+
+  echo
+  echo "-- the scratch dir survives the source above --"
+  # Keep these two after the only `source` in this function. A RETURN trap fires when a sourced
+  # file finishes, so cleaning up on RETURN silently removed $tmp here and the next section
+  # appended below failed for a reason that looked nothing like its cause.
+  check "no RETURN trap is installed; cleanup is on EXIT" "$(trap -p RETURN)" ""
+  if [ -d "$tmp" ]; then
+    echo "ok: the scratch dir is still there after sourcing a file"
+  else
+    echo "FAILED: the scratch dir was removed mid-run — something re-armed a RETURN trap" >&2; failed=1
+  fi
 
   echo
   echo "-- number -> database id --"
