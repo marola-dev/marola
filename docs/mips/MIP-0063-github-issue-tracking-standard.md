@@ -102,7 +102,16 @@ not 404), and this host's `gh` 2.95.0 carries `gh issue create --blocked-by/--bl
 `gh issue edit --add-blocked-by/--add-blocking/--remove-*`. Up to 50 issues per relationship type.
 A blocked issue shows a **Blocked** marker on the board and the issues list with no label set.
 
-Consequence: §5.2 drops the `blocked` label, and §5.3's readiness rule is checked against the API
+**The same trap, a second time:** `POST .../dependencies/blocked_by` takes `issue_id` — the
+database id again, not the issue number. `scripts/issues.sh` therefore resolves numbers to ids in
+exactly one place, used by both this and §4.1's sub-issue call.
+
+Neither the feature docs nor the REST reference places any restriction on *which* issues may carry
+dependencies — nothing about hierarchy, parents or sub-issues — and the dependency response schema
+itself carries `parent_issue_url` and `sub_issues_summary`, which is what one would expect if a
+sub-issue is simply an issue. §5.3 relies on that; §7 step 6 proves it.
+
+Consequence: §5.2 drops the `blocked` label, and §5.4's readiness rule is checked against the API
 instead of against a label somebody has to remember to remove.
 
 ### 4.3 Issue types — **rejected, unavailable**
@@ -206,17 +215,25 @@ own and a narrow `GH_TOKEN`; `gh issue list --label agent-ready` is one REST cal
 while a Project field needs `project` scope and GraphQL. The `just` commands own keeping the two in
 step; nothing else may write either.
 
-### 5.3 Dependencies, and where they are *not* tracked
+### 5.3 Dependencies
 
-Dependency management exists so a contributor can tell what is ready to pick up. That need is real
-between issues and absent below them:
+Dependency management exists so that whoever picks work up — a contributor, or an agent running
+unattended — can tell what is ready without reading anything else. §4.2's native edges make that a
+computed property, and they cost nothing to apply, so they are used at **every** level:
 
-- **Between issues** — tracked, with §4.2's native `blocked by` edges. This is what makes "ready"
-  a computable property rather than a guess, and it is what the board's Blocked marker reads.
-- **Between sub-issues** — **deliberately not tracked.** One person or agent owns a story and
-  drives its subtasks to completion; ordering them is that owner's business, not the tracker's.
-  Once the parent issue is unblocked, nothing below it needs a gate. Sub-issues therefore carry no
-  dependency edges, and nothing in the command surface creates any.
+- **Between issues** — what makes "ready" computable rather than a guess, and what the board's
+  Blocked marker reads.
+- **Between sub-issues of the same parent** — the same mechanism, for the same reason. An earlier
+  draft of this design left these untracked, on the reasoning that one owner drives a story and
+  can hold the order in their head. That reasoning only holds while recording the order is
+  expensive. It isn't: GitHub gives the edge away, so the ordering stops being something the owner
+  has to remember and becomes something the tracker answers. Documented as unrestricted, not yet
+  executed — §7 step 6 is where it is proven, and the Appendix says so plainly.
+
+Because the edges are free, **nothing asks a human to draw them by hand**: `tasks-to-issues`
+derives each task's `blocked by` edge from the stack order already written in `MIP-NNNN.tasks.md`,
+where task *k* depends on *k-1* by construction (`DEV-FLOW.md` §4). The dependency graph that has
+been implicit in the branch stack all along becomes explicit at no authoring cost.
 
 **Phase discipline falls out of the same mechanism.** Each of `ARCHITECTURE.md` §11's phases gets
 one tracking issue ("Phase 1 — Telegram bot working"), and every `phase/2` issue is `blocked by`
@@ -311,6 +328,11 @@ In the order that proves the most for the least:
    Six real issues exercise the forms, the labels, the DoR check and the board in one pass —
    better evidence than a synthetic fixture, and it clears a backlog that has been sitting in a
    markdown table since 2026-09-06.
+7. **The one assumption §5.3 rests on**, proven in the same pass: give one of those six a parent
+   and a sibling sub-issue, add a `blocked by` edge between the two siblings, and read it back. If
+   GitHub refuses a dependency between sub-issues, §5.3 falls back to the earlier position —
+   edges between issues only, sub-issue ordering left to whoever owns the story — and nothing else
+   in the design moves.
 
 Done looks like: the four forms in place, `labels.yml` synced, the board created with its four
 views, the five phase gate issues open with `phase/*` work blocked by them, `just issue-queue`
@@ -360,8 +382,9 @@ returning a real list, and `docs/ISSUE-FLOW.md` describing exactly what the scri
 ## 11. Open questions
 
 Decisions taken during review are recorded where they belong — the board starts empty (§8),
-`triage` stays human-invoked (§5.6), dependencies are tracked between issues and never between
-sub-issues (§5.3), and the milestone names in §5.1 are illustrations. What is left genuinely open:
+`triage` stays human-invoked (§5.6), dependencies are tracked at every level and derived from the
+stack order rather than drawn by hand (§5.3), and the milestone names in §5.1 are illustrations.
+What is left genuinely open:
 
 1. **CI gates — deferred, not dropped.** PR-must-link-an-issue, parent-can't-close-with-open-
    children, auto-add-to-project, and the `agent-ready`↔Status reconciliation of §8. Scoped out of
@@ -398,6 +421,11 @@ All on 2026-09-27, from this checkout.
   (2025-08-21) and "Manage sub-issues, types, and dependencies from GitHub CLI" (2026-06-10) →
   generally available, included on GitHub Free, up to 50 issues per relationship type, blocked
   issues marked on the board and the issues list.
+- `docs.github.com` "Creating issue dependencies" and `.../rest/issues/issue-dependencies`, read
+  for restrictions → **none stated** on which issues may carry dependencies (no mention of
+  hierarchy, parents or sub-issues); the REST `POST .../dependencies/blocked_by` body takes
+  `issue_id`, the database id; the dependency response schema includes `parent_issue_url` and
+  `sub_issues_summary`.
 - `GET /orgs/h0ffmann/issue-types` → 404 (`h0ffmann` is a user account). `GET
   /users/h0ffmann/issue-types` → 404, no such endpoint. Issue types unavailable here.
 - `https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps` →
@@ -422,10 +450,12 @@ All on 2026-09-27, from this checkout.
 - **`POST /issues/{n}/sub_issues` has not been executed.** The database-id semantics in §4.1 come
   from the parameter's documented description, not from a successful call. §7 step 5 is where that
   gets confirmed or corrected — treat it as documented-not-run until then.
-- **No issue dependency has actually been created.** §4.2's endpoint was read, and the `gh` flags
-  were confirmed to exist in `--help`, but nothing was written. Whether a `blocked by` edge can
-  point at an issue in the same repo with only `repo` scope is assumed, not shown — and §5.3's
-  phase-gate design rests on it.
+- **No issue dependency has actually been created.** §4.2's endpoint was read and the `gh` flags
+  confirmed in `--help`, but nothing was written. Two things therefore rest on documentation
+  rather than on a run: that a `blocked by` edge can be created with only `repo` scope, and — the
+  one §5.3 leans on hardest — that **two sub-issues of the same parent may depend on each other**.
+  The docs state no restriction and the schema suggests none exists, which is evidence, not proof.
+  §7 step 6 settles it, and names the fallback if GitHub refuses.
 - **Projects v2 write operations have not been exercised**, because the host token lacks `project`
   scope. The four views in §5.2 are specified, not built; whether all four filters are expressible
   in the Projects UI as written is unverified.
