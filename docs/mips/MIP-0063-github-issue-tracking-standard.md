@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted — `Tasks: docs/mips/MIP-0063.tasks.md` |
 | **Author** | Claude (Opus 5), for B. Valério |
 | **Created** | 2026-09-27 |
 | **Phase** | 0 (dev-loop; no user-facing surface) |
