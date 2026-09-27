@@ -20,9 +20,10 @@
 marola already does spec-driven development: a MIP is the spec, `MIP-NNNN.tasks.md` is the plan,
 a stacked PR is the increment. All three live in files, so the backlog is invisible in GitHub's UI
 and unqueryable by anything that isn't already inside the repo. This MIP puts the *work* into
-GitHub — issues as stories and tasks, milestones as deliverables, one public project board — and
-defines a five-rule **Definition of Ready** that gates what an agent is allowed to pick up. The
-spec layer does not move: MIPs stay files, and `tasks.md` stays the authored plan.
+GitHub — issues as stories and tasks, milestones as deliverables, one public project board,
+native dependency edges so "ready" is computed rather than asserted — and defines a five-rule
+**Definition of Ready** that gates what an agent is allowed to pick up. The spec layer does not
+move: MIPs stay files, and `tasks.md` stays the authored plan.
 
 ## 2. Motivation
 
@@ -109,7 +110,7 @@ exactly one place, used by both this and §4.1's sub-issue call.
 Neither the feature docs nor the REST reference places any restriction on *which* issues may carry
 dependencies — nothing about hierarchy, parents or sub-issues — and the dependency response schema
 itself carries `parent_issue_url` and `sub_issues_summary`, which is what one would expect if a
-sub-issue is simply an issue. §5.3 relies on that; §7 step 6 proves it.
+sub-issue is simply an issue. §5.3 relies on that; §7 step 7 proves it.
 
 Consequence: §5.2 drops the `blocked` label, and §5.4's readiness rule is checked against the API
 instead of against a label somebody has to remember to remove.
@@ -228,7 +229,7 @@ computed property, and they cost nothing to apply, so they are used at **every**
   can hold the order in their head. That reasoning only holds while recording the order is
   expensive. It isn't: GitHub gives the edge away, so the ordering stops being something the owner
   has to remember and becomes something the tracker answers. Documented as unrestricted, not yet
-  executed — §7 step 6 is where it is proven, and the Appendix says so plainly.
+  executed — §7 step 7 is where it is proven, and the Appendix says so plainly.
 
 Because the edges are free, **nothing asks a human to draw them by hand**: `tasks-to-issues`
 derives each task's `blocked by` edge from the stack order already written in `MIP-NNNN.tasks.md`,
@@ -261,7 +262,7 @@ Six recipes over one `scripts/issues.sh`, each with the repo's usual `--dry-run`
 
 | Command | Does |
 |---|---|
-| `just tasks-to-issues MIP-NNNN --milestone "<name>"` | creates missing issues titled `0063-T3: …`, dedups on `\b0063-T\d+\b`, rewrites `- [ ] T3 …` → `- [T3](…/issues/415) …`; idempotent |
+| `just tasks-to-issues MIP-NNNN --milestone "<name>"` | creates missing issues titled `0063-T3: …`, dedups on `\b0063-T\d+\b`, rewrites `- [ ] T3 …` → `- [T3](…/issues/415) …`, wires each task's `blocked by` edge from the stack order (§5.3); idempotent |
 | `just issue-queue` | `agent-ready`, unassigned, sorted size then priority — the read an agent makes |
 | `just issue-ready <n>` | runs the five rules, adds/removes `agent-ready`, prints which rule failed |
 | `just issue-claim <n>` | assigns, drops `agent-ready`, sets board Status, prints the `scripts/stack.sh start` line |
@@ -355,6 +356,14 @@ returning a real list, and `docs/ISSUE-FLOW.md` describing exactly what the scri
   v1 makes the standard *checkable*; it does not make it *unavoidable*.
 - **Public means public.** A project board and an open triage queue expose what is not being done
   as clearly as what is. That is the point, and it is worth stating before switching it on.
+- **Stack order is not the same as logical dependency.** §5.3 wires task *k* `blocked by` *k-1*
+  because that is how the branch stack is built, which makes a MIP's tasks look strictly serial:
+  `issue-queue` will show exactly one ready task per MIP even when two of them touch nothing in
+  common and could be written at once. The edges are truthful about *merge* order and pessimistic
+  about *work* order. Letting a `tasks.md` row declare itself independent would fix it and is not
+  in v1; until then, a contributor who wants the parallel task takes it off the board by hand.
+- **50 edges per relationship type** (§4.2). Far above a MIP's task count, but a milestone that
+  accumulated dependencies across many MIPs could reach it. Nothing in v1 checks for the ceiling.
 
 ## 9. Alternatives considered
 
@@ -455,7 +464,7 @@ All on 2026-09-27, from this checkout.
   rather than on a run: that a `blocked by` edge can be created with only `repo` scope, and — the
   one §5.3 leans on hardest — that **two sub-issues of the same parent may depend on each other**.
   The docs state no restriction and the schema suggests none exists, which is evidence, not proof.
-  §7 step 6 settles it, and names the fallback if GitHub refuses.
+  §7 step 7 settles it, and names the fallback if GitHub refuses.
 - **Projects v2 write operations have not been exercised**, because the host token lacks `project`
   scope. The four views in §5.2 are specified, not built; whether all four filters are expressible
   in the Projects UI as written is unverified.
