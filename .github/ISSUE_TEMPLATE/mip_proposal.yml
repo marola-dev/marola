@@ -8,6 +8,10 @@ body:
         A quick sketch before the real thing — the `mip` skill (`.claude/skills/mip/SKILL.md`)
         turns this into `docs/mips/MIP-NNNN-<slug>.md` using the fields below plus the full
         template (sources reviewed, design, scoring/safety impact, verification plan).
+
+        Tier 3 (MIP-0063 §5.1) — what happens next: this issue is **relabelled**, not replaced,
+        once the MIP PR opens, so the design discussion stays attached; then MIP PR → Accepted →
+        milestone → `tasks-to-issues` files each task as its own issue.
   - type: input
     id: title
     attributes:

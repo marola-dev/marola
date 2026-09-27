@@ -1,0 +1,59 @@
+name: Story
+description: A small enhancement — tier 2, one issue whose body is the spec, no MIP file.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tier 2: a small enhancement (roughly two tasks or fewer, no new dependency). See
+        `docs/ISSUE-FLOW.md` for the three tiers. Bigger — a new data source, a scoring change, a
+        new integration, anything paid — use the **MIP proposal** form instead; that is tier 3.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What's missing or annoying today, ideally with a real example.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: What you'd want to see instead — a CLI output, a Telegram reply, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Testable checkboxes. This is what `agent-ready` checks for (MIP-0063 §5.4).
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: named-test
+    attributes:
+      label: Named test
+      description: >-
+        The file and test name that proves this is done, decided before the work is claimed
+        (MIP-0063 §5.4).
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this deliberately does not cover, so a reviewer knows where the line is.
+    validations:
+      required: false
+  - type: input
+    id: deliverable
+    attributes:
+      label: Deliverable
+      description: >-
+        The milestone this belongs to, if it's part of one (MIP-0063 §5.1) — leave blank if it
+        stands alone.
+    validations:
+      required: false

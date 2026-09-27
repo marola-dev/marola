@@ -668,6 +668,150 @@ row-3"
     fi
   done
   if [ "$bad_ok" -eq 1 ]; then echo "ok: empty, 8-digit, trailing-garbage and #-prefixed values are refused too"; fi
+  echo "-- issue forms parse, and their field labels are the exact headings §5.4 greps for --"
+  # No pyyaml on this host (AGENTS.md) and the repo avoids adding one. This hand-parses the
+  # indentation-based subset GitHub issue forms use — mappings, block/flow sequences, quoted and
+  # literal-block scalars — and errors on anything left over rather than silently truncating, the
+  # same trade manifest_json makes for labels.yml's fixed shape.
+  # Own scratch file, not $tmp: bash's RETURN trap fires when `source` finishes too, not only
+  # when self_test() itself returns, so the `source scripts/lib/pr_labels.sh` above already ran
+  # the `rm -rf "$tmp"` trap early — $tmp is gone by the time a section placed after it looks.
+  local form_dir="$root/.github/ISSUE_TEMPLATE" form_parser
+  form_parser="$(mktemp)"
+  cat > "$form_parser" <<'PYEOF'
+import json, re, sys
+
+def parse_yaml_subset(text):
+    entries = []
+    for raw in text.replace("\r\n", "\n").split("\n"):
+        stripped = raw.strip()
+        if stripped == "" or stripped.startswith("#"):
+            continue
+        entries.append([len(raw) - len(raw.lstrip(" ")), stripped])
+    pos = 0
+
+    def split_kv(s):
+        m = re.match(r'^([A-Za-z0-9_.-]+):\s*(.*)$', s)
+        if not m:
+            raise ValueError(f"cannot parse line: {s!r}")
+        return m.group(1), m.group(2).strip()
+
+    def scalar(v):
+        v = v.strip()
+        if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+            return v[1:-1]
+        if v.startswith("[") and v.endswith("]"):
+            return [scalar(x) for x in v[1:-1].split(",") if x.strip() != ""]
+        return v
+
+    def parse_block(min_indent):
+        nonlocal pos
+        if pos >= len(entries) or entries[pos][0] < min_indent:
+            return {}
+        return parse_sequence(entries[pos][0]) if entries[pos][1].startswith("- ") else parse_mapping(entries[pos][0])
+
+    def parse_mapping(indent):
+        nonlocal pos
+        result = {}
+        while pos < len(entries):
+            ind, content = entries[pos]
+            if ind != indent or content.startswith("- "):
+                break
+            key, val = split_kv(content)
+            pos += 1
+            if val == "":
+                result[key] = parse_block(indent + 2)
+            elif val in ("|", ">", "|-", ">-"):
+                while pos < len(entries) and entries[pos][0] > indent:
+                    pos += 1
+                result[key] = None
+            else:
+                result[key] = scalar(val)
+        return result
+
+    def parse_sequence(indent):
+        nonlocal pos
+        result = []
+        while pos < len(entries):
+            ind, content = entries[pos]
+            if ind != indent or not content.startswith("- "):
+                break
+            rest = content[2:]
+            if rest == "":
+                pos += 1
+                result.append(parse_block(indent + 2))
+            elif re.match(r'^[A-Za-z0-9_.-]+:(\s|$)', rest):
+                entries[pos] = [indent + 2, rest]
+                result.append(parse_mapping(indent + 2))
+            else:
+                pos += 1
+                result.append(scalar(rest))
+        return result
+
+    doc = parse_mapping(0)
+    if pos != len(entries):
+        raise ValueError(f"unparsed content at indent {entries[pos][0]}: {entries[pos][1]!r}")
+    return doc
+
+if __name__ == "__main__":
+    with open(sys.argv[1], encoding="utf-8") as f:
+        print(json.dumps(parse_yaml_subset(f.read())))
+PYEOF
+
+  local form_doc form_labels form_rc
+  for f in bug_report.yml task.yml story.yml mip_proposal.yml config.yml; do
+    if form_doc="$(python3 "$form_parser" "$form_dir/$f" 2>&1)"; then form_rc=ok; else form_rc=fail; fi
+    check "$f parses" "$form_rc" "ok"
+  done
+
+  form_doc="$(python3 "$form_parser" "$form_dir/bug_report.yml" 2>/dev/null || echo '{}')"
+  form_labels="$(jq -r '[(.body // [])[].attributes.label] | map(select(. != null)) | join("|")' <<<"$form_doc")"
+  check "bug_report.yml field labels" "$form_labels" \
+    "What happened|What you expected instead|How to reproduce|Backend|Failing test|Relevant logs or output"
+
+  form_doc="$(python3 "$form_parser" "$form_dir/task.yml" 2>/dev/null || echo '{}')"
+  form_labels="$(jq -r '[(.body // [])[].attributes.label] | map(select(. != null)) | join("|")' <<<"$form_doc")"
+  check "task.yml field labels" "$form_labels" "What|Acceptance criteria|Named test|Size"
+  check "task.yml's acceptance-criteria field renders as the DoR rule 1 heading" \
+    "### $(jq -r '(.body // [])[] | select(.id == "acceptance-criteria") | .attributes.label' <<<"$form_doc")" \
+    "### Acceptance criteria"
+  check "task.yml's named-test field renders as the DoR rule 2 heading" \
+    "### $(jq -r '(.body // [])[] | select(.id == "named-test") | .attributes.label' <<<"$form_doc")" \
+    "### Named test"
+
+  form_doc="$(python3 "$form_parser" "$form_dir/story.yml" 2>/dev/null || echo '{}')"
+  form_labels="$(jq -r '[(.body // [])[].attributes.label] | map(select(. != null)) | join("|")' <<<"$form_doc")"
+  check "story.yml field labels" "$form_labels" \
+    "Problem|Proposed behaviour|Acceptance criteria|Named test|Out of scope|Deliverable"
+  check "story.yml's acceptance-criteria field renders as the DoR rule 1 heading" \
+    "### $(jq -r '(.body // [])[] | select(.id == "acceptance-criteria") | .attributes.label' <<<"$form_doc")" \
+    "### Acceptance criteria"
+  check "story.yml's named-test field renders as the DoR rule 2 heading" \
+    "### $(jq -r '(.body // [])[] | select(.id == "named-test") | .attributes.label' <<<"$form_doc")" \
+    "### Named test"
+
+  form_doc="$(python3 "$form_parser" "$form_dir/mip_proposal.yml" 2>/dev/null || echo '{}')"
+  form_labels="$(jq -r '[(.body // [])[].attributes.label] | map(select(. != null)) | join("|")' <<<"$form_doc")"
+  check "mip_proposal.yml field labels are unchanged" "$form_labels" "Title|Motivation|Sketch|Effort / gain guess"
+  if grep -q "MIP PR" "$form_dir/mip_proposal.yml" && grep -q "milestone" "$form_dir/mip_proposal.yml" \
+      && grep -q "tasks-to-issues" "$form_dir/mip_proposal.yml"; then
+    echo "ok: mip_proposal.yml states what happens next (MIP PR, milestone, tasks-to-issues)"
+  else
+    echo "FAILED: mip_proposal.yml is missing the MIP PR / milestone / tasks-to-issues next-steps text" >&2
+    failed=1
+  fi
+
+  form_doc="$(python3 "$form_parser" "$form_dir/config.yml" 2>/dev/null || echo '{}')"
+  check "config.yml still disables blank issues" "$(jq -r '.blank_issues_enabled' <<<"$form_doc")" "false"
+  check "config.yml points questions at Discussions" \
+    "$(jq -r '.contact_links[0].url' <<<"$form_doc")" "https://github.com/marola-dev/marola/discussions"
+
+  if [ -e "$form_dir/feature_request.yml" ]; then
+    echo "FAILED: feature_request.yml still exists — story.yml was meant to replace it" >&2; failed=1
+  else
+    echo "ok: feature_request.yml is gone, replaced by story.yml"
+  fi
+  rm -f "$form_parser"
 
   echo
   if [ "$failed" -eq 1 ]; then echo "issues.sh self-test: FAILED" >&2; return 1; fi

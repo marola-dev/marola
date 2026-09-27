@@ -1,0 +1,42 @@
+name: Task
+description: A chore, refactor, or docs change — tier 1, one issue, no milestone, no spec.
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: The change, in one or two sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Testable checkboxes. This is what `agent-ready` checks for (MIP-0063 §5.4).
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: named-test
+    attributes:
+      label: Named test
+      description: >-
+        The file and test name that proves this is done, decided before the work is claimed
+        (MIP-0063 §5.4).
+      placeholder: |
+        scripts/issues.sh --self-test — "-- <new section> --"
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size
+      description: Rough size, applied as a `size/*` label once triaged.
+      options:
+        - "S — under ~100 changed lines"
+        - "M — roughly 100-400 changed lines"
+        - "L — over ~400 lines (split it)"
+    validations:
+      required: true
