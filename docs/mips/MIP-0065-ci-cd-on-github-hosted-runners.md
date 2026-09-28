@@ -178,8 +178,8 @@ still an error. Self-test cases: `0064-T4` resolves against a stub issue list, a
 raises, `1, 0064-T4` yields both edges. This keeps "edges come from the column and nowhere else"
 true for cross-MIP edges too.
 
-[`MIP-0065.tasks.md`](./MIP-0065.tasks.md) has one root, task 1, whose `depends on` cell becomes
-`0064-T4` (#458) once the prerequisite lands. MIP-0064 is a chain, so that one edge blocks the
+[`MIP-0065.tasks.md`](./MIP-0065.tasks.md) has one root, task 1, whose `depends on` cell is
+`0064-T4` (#458), resolved by #462. MIP-0064 is a chain, so that one edge blocks the
 whole stack until MIP-0064's last task closes, and readiness rule 5 keeps `just issue-claim` from
 handing any task out early.
 
