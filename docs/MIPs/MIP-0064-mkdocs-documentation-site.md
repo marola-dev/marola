@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Implemented — PRs #459 (mkdocs-build) → #463 (strict-links) → #465 (api-docs-rewire) → #473 (docs grouped by audience, which revisited decision 1) → #475 (docs-live); tasks and v1 decisions: [`MIP-0064.tasks.md`](./MIP-0064.tasks.md). Verified live per §7.6 |
+| **Status** | Implemented — PRs #459 (mkdocs-build) → #463 (strict-links) → #465 (api-docs-rewire) → #473 (docs grouped by audience, which revisited decision 1) → #475 (docs-live); tasks and v1 decisions: [`MIP-0064.tasks.md`](./MIP-0064.tasks.md). **§7.6 is not verified**: the build is green and `site-data` carries the rendered tree, but every `site.yml` run since 2026-09-28 13:40 failed on the Overpass step (#476), so nothing has deployed. marola.dev/docs still serves the pre-#465 index. Re-run §7.6's three checks once a `site.yml` run goes green — expected with MIP-0065 T1 (#466) |
 | **Author** | Claude (Opus 5), with Bruno |
 | **Created** | 2026-09-28 |
 | **Phase** | 3 — extends `site.yml`'s already-live Pages deploy; no Phase 1 or Phase 2 prerequisite, no cloud spend |
