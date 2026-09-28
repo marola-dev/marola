@@ -27,6 +27,7 @@ jobs:
       docker: ${{ steps.filter.outputs.docker }}
       site: ${{ steps.filter.outputs.site }}
       justfile: ${{ steps.filter.outputs.justfile }}
+      docs: ${{ steps.filter.outputs.docs }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -69,6 +70,9 @@ jobs:
               - 'mkdocs/**'          # its Dockerfile and compose stack are linted below too
             justfile:
               - 'justfile'
+            docs:
+              - 'docs/**'
+              - 'mkdocs/**'
 
   build-test:
     needs: changes
@@ -244,6 +248,20 @@ jobs:
   # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/, a
   # linter for these workflow files themselves, and hadolint for the Dockerfiles — the same gates
   # as `just quality`.
+  # The docs build is strict, and since MIP-0064 task 3 it is also the step api-docs.yml publishes
+  # through. Without this gate a broken internal link merges green, then fails on main and takes
+  # the whole publish with it — scaladoc and pdoc included, since site.yml only deploys when that
+  # workflow succeeded. Runs the same script `just docs` does, so there is one build to keep green.
+  docs-build:
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
+    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: mkdocs --strict, in the Kroki container stack
+        run: scripts/mkdocs.sh
+
   quality-other:
     needs: changes
     if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true' || needs.changes.outputs.justfile == 'true'

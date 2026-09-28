@@ -1,11 +1,20 @@
 # api-docs — generate Scala/Python API docs and push them to the `site-data` branch. MIP-0044 §5.6.
-# Not on the site's 3-hourly schedule: ~20 MB is uploaded when code changes, not eight times a day.
+# Not on the site's 3-hourly schedule: ~20 MB is uploaded when an input changes, not eight times a
+# day. Since MIP-0064 the prose is an input too, so a doc edit runs the whole job — scaladoc,
+# pdoc and the Kroki/mkdocs containers — not just the cheap half.
 name: API docs
 
 on:
   push:
     branches: [main]
-    paths: ['**/*.scala', 'build.sbt', 'project/**', 'scripts/**.py', 'finetune/build_dataset.py']
+    paths:
+      - '**/*.scala'
+      - 'build.sbt'
+      - 'project/**'
+      - 'scripts/**.py'
+      - 'finetune/build_dataset.py'
+      - 'docs/**'          # the prose is published from here now, so a docs-only edit republishes
+      - 'mkdocs/**'        # and so does a change to the build that renders it
   workflow_dispatch:
 
 permissions:
@@ -54,14 +63,31 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/strip_external_scripts.py out/docs/api/scala out/docs/api/python
-          # --check reuses the stripper's own regex. The previous guard grepped for `src="http`,
-          # which matched pdoc's rendering of strip_external_scripts.py's own docstring.
-          python3 scripts/strip_external_scripts.py --check out/docs
 
-      - name: build the docs index (guides, MIPs, API — one page, MIP-0044 §5.6)
+      # MIP-0064: this replaces build_docs_index.py, which published a page of links to GitHub
+      # because docs/*.md could not be mirrored. The repo is public, so it can be.
+      - name: mkdocs (material + kroki), with the API trees folded in
         run: |
           set -euo pipefail
-          python3 scripts/build_docs_index.py --out out/docs/index.html
+          scripts/mkdocs.sh
+          # Loudly, not silently: `cp -r src dest/api` creates dest/api when it is free and nests
+          # into dest/api/api when it is not. It is free only because the page is API.md and the
+          # output is case-sensitive — rename it to api.md, or build on a case-insensitive disk,
+          # and /docs/api/ would serve the prose page with every link in it broken.
+          [ ! -e mkdocs/generated-docs/api ] || {
+            echo "mkdocs output already has an api/ directory — the API trees would nest inside it" >&2
+            exit 1
+          }
+          cp -r out/docs/api mkdocs/generated-docs/api
+          rm -rf out/docs && mv mkdocs/generated-docs out/docs
+
+      # After the merge, not before: the check has to see the tree that actually ships, which is
+      # now mkdocs' output plus api/. --check reuses the stripper's own regex; the previous guard
+      # grepped for `src="http`, which matched pdoc's rendering of the stripper's own docstring.
+      - name: the published tree keeps script-src 'self'
+        run: |
+          set -euo pipefail
+          python3 scripts/strip_external_scripts.py --check out/docs
           find out/docs -maxdepth 3 -name index.html | sort
 
       - name: push to the site-data branch

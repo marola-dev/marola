@@ -77,7 +77,6 @@ SELF_TEST_SCRIPTS = (
     "scripts/mip_graph.py",
     "scripts/lib/tasks_issues.py",
     "scripts/strip_external_scripts.py",
-    "scripts/build_docs_index.py",
     "scripts/analyze_training.py",
     "scripts/site_live_check.py",
 )

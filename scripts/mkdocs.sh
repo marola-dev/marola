@@ -11,7 +11,15 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 image="marola/mkdocs"
-container="marola-mkdocs"
+
+# Compose names its project after the directory it runs in, which is `mkdocs` in every checkout of
+# this repo. With fixed container_names on top of that, two builds on one host were the same stack:
+# each one's `down` deleted the other's containers mid-run. That is not hypothetical — it turned a
+# green docs-build red the first time two docs PRs built at once on the self-hosted runner. The
+# checkout path makes the project unique; cksum keeps it short and shell-safe.
+project_name() {
+  printf 'marola-mkdocs-%s' "$(printf '%s' "$1" | cksum | cut -d" " -f1)"
+}
 
 # Ported from the reference (MIP-0064 §4.1), including the part that matters: a runtime counts only
 # when its daemon answers. An installed `docker` whose current context points at a dead endpoint is
@@ -23,6 +31,17 @@ pick_runtime() {
     command -v "$rt" >/dev/null 2>&1 && "$rt" info >/dev/null 2>&1 && { echo "$rt"; return 0; }
   done
   return 1
+}
+
+# mkdocs serve mounts the site under site_url's path, so with a site_url of .../docs/ the dev
+# server answers on /docs/ and redirects / to it. Read it back rather than hardcoding the banner.
+serve_path() {
+  local url
+  url="$(sed -n 's|^site_url:[[:space:]]*|&|p' "$1" | sed 's|^site_url:[[:space:]]*||')"
+  case "$url" in
+    *://*/*) printf '/%s\n' "${url#*://*/}" ;;
+    *)       printf '/\n' ;;
+  esac
 }
 
 compose_files() {
@@ -49,7 +68,8 @@ run() {
     exit 1
   }
   read -r -a files <<<"$(compose_files "$mode")"
-  compose=("$rt" compose)
+  local project; project="$(project_name "$repo_root")"
+  compose=("$rt" compose -p "$project")
   export PODMAN_COMPOSE_WARNING_LOGS=false
 
   cd "$repo_root/mkdocs"
@@ -67,7 +87,7 @@ run() {
   # shellcheck disable=SC2064  # $files/$compose are locals; bind them now, not at trap time
   trap "$(printf '%q ' "${compose[@]}" "${files[@]}") down >/dev/null 2>&1 || true" EXIT INT TERM
 
-  [ "$mode" = serve ] && echo "docs on http://localhost:8001 — Ctrl+C to stop"
+  [ "$mode" = serve ] && echo "docs on http://localhost:8001$(serve_path mkdocs.yml) — Ctrl+C to stop"
   "${compose[@]}" logs -f mkdocs
 
   # `logs -f` returns when the container stops, whatever it stopped with. Without reading the code
@@ -75,14 +95,21 @@ run() {
   # --strict, whose entire job is to make that exit code non-zero. The fallbacks matter as much as
   # the check: under `set -e` a failing `inspect` would abort the script, and an empty result would
   # reach `exit ""`, which bash rejects with "numeric argument required".
-  local code
-  code="$("$rt" inspect -f '{{.State.ExitCode}}' "$container" 2>/dev/null || echo 1)"
+  # Find the container by compose's own labels, not by name: without container_name the two
+  # runtimes spell it differently (`-mkdocs-1` vs `_mkdocs_1`), and their `compose ps` flags differ
+  # too — podman-compose's takes neither `-a` nor a service argument. podman-compose sets the
+  # `com.docker.compose.*` labels as well, so the runtime's own `ps --filter` reads both.
+  local cid code
+  cid="$("$rt" ps -aq --filter "label=com.docker.compose.project=$project" \
+                      --filter "label=com.docker.compose.service=mkdocs" 2>/dev/null | head -1)"
+  [ -n "$cid" ] || { echo "mkdocs: no mkdocs container found for compose project $project" >&2; exit 1; }
+  code="$("$rt" inspect -f '{{.State.ExitCode}}' "$cid" 2>/dev/null || echo 1)"
   [ -n "$code" ] || code=1
   [ "$code" = "0" ] || { echo "mkdocs: $mode failed (exit $code) — see the log above" >&2; exit "$code"; }
 
   if [ "$mode" = build ]; then
     rm -rf docs generated-docs
-    "$rt" cp "$container:/mkdocs/generated-docs/" .
+    "$rt" cp "$cid:/mkdocs/generated-docs/" .
     # strict mode does not cover this: a site with no index.md builds green and simply has no
     # landing page, which reaches marola.dev/docs/ as a 404. Checked here instead.
     [ -f generated-docs/index.html ] || {
@@ -94,7 +121,8 @@ run() {
 }
 
 self_test() {
-  local fails=0 tmp stub
+  local fails=0 tmp stub tmpcfg
+  tmpcfg="$(mktemp)"
   ok() { if [ "$1" = "$2" ]; then echo "  ok   $3"; else echo "  FAIL $3 — got '$1' want '$2'"; fails=$((fails + 1)); fi; }
 
   # A stub runtime whose `info` succeeds is reachable; one whose `info` fails is installed but dead.
@@ -108,6 +136,11 @@ self_test() {
   ok "$(PATH="$stub" pick_runtime || echo none)" "none" "two installed-but-dead runtimes fail rather than being picked"
   ok "$(PATH="$stub/empty" pick_runtime || echo none)" "none" "neither installed fails too"
   rm -rf "$stub"
+
+  ok "$(project_name /a/b/c)" "$(project_name /a/b/c)" "the project name is stable for one checkout"
+  ok "$([ "$(project_name /a/b/c)" = "$(project_name /a/b/d)" ] && echo same || echo different)" "different" \
+     "two checkouts get different projects, so their stacks cannot collide"
+  ok "$(project_name /a/b/c | grep -cE '^marola-mkdocs-[0-9]+$')" "1" "and it is a shell-safe compose project name"
 
   ok "$(compose_files build)" "-f docker-compose.yml -f docker-compose.build.yml" "build mode layers the build override"
   ok "$(compose_files serve)" "-f docker-compose.yml -f docker-compose.serve.yml" "serve mode layers the serve override"
@@ -131,6 +164,9 @@ self_test() {
   ok "$(grep -c 'http_method: POST' "$cfg")" "1" "http_method is POST, so SVGs are written into the output"
   ok "$(grep -c 'fence_prefix: ""' "$cfg")" "1" 'fence_prefix is empty, so plain mermaid fences render'
   ok "$(grep -c '^nav:' "$cfg")" "0" "there is no hand-written nav to drift (decision 1)"
+  ok "$(grep -c '^ *- privacy' "$cfg")" "1" "the privacy plugin is on, so Material's webfont is served locally"
+  ok "$(serve_path "$cfg")" "/docs/" "the serve banner follows site_url's path, which is where the dev server answers"
+  ok "$(printf 'site_url: https://example.com\n' >"$tmpcfg"; serve_path "$tmpcfg")" "/" "a site_url with no path serves at the root"
   ok "$(grep -c '^strict: true' "$cfg")" "1" "the build is strict, so a broken internal link fails it"
   ok "$([ -f "$repo_root/docs/index.md" ] && echo yes || echo no)" "yes" "docs/index.md exists — strict does not check for it, and without it the site has no landing page"
 

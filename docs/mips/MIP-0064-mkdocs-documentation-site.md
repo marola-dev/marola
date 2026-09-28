@@ -233,9 +233,15 @@ and, after the pdoc step and before the strip/push steps:
     rm -rf out/docs && mv mkdocs/generated-docs out/docs
 ```
 
-The runners are self-hosted with Docker on the host (`AGENTS.md`, "Docker itself is the host's"),
-which is what `docker-smoke.yml` already relies on. The job's `timeout-minutes: 30` covers three
-extra containers.
+The runners are self-hosted with Docker on the host (`AGENTS.md`, "Docker itself is the host's").
+**Corrected during task 3:** this section originally said `docker-smoke.yml` already relies on
+that, and it does not — that workflow pins `runs-on: ubuntu-latest` precisely because it needs a
+daemon. Nothing in this repo had ever run a container on the self-hosted runner, so a reachable
+daemon there was an assumption this MIP introduced rather than inherited. **Now measured:** task
+3's `docs-build` job ran the Kroki + mkdocs stack on `self-hosted` runner `marola-6` and passed in
+5m43s (PR #465, run 36471621516). The assumption holds, and that job is what keeps checking it on
+every docs change. The `timeout-minutes: 30` on api-docs.yml covers those containers on top of
+scaladoc and pdoc.
 
 `scripts/build_docs_index.py` is deleted, along with its `--self-test` entry in `quality-other`.
 

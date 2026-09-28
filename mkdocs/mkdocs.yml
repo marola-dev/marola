@@ -1,5 +1,10 @@
 site_name: marola docs
 site_description: The ocean intelligence layer for a stretch of coast — guides and design proposals.
+# Load-bearing, not cosmetic: with no site_url the privacy plugin force-adds Mermaid.js to every
+# page (its own special case, plugins/privacy/plugin.py — Material normally injects it on demand,
+# and it cannot tell on demand without a canonical URL). Kroki already renders the diagrams to SVG
+# server-side, so that is 3.5 MB of dead JavaScript on all 97 pages, republished every docs change.
+site_url: https://marola.dev/docs/
 repo_url: https://github.com/marola-dev/marola
 edit_uri: edit/main/docs/
 
@@ -51,6 +56,16 @@ markdown_extensions:
 
 plugins:
   - search
+  # Downloads Material's webfont (and any other external asset) at build time and rewrites the
+  # references to local copies, so the pages keep Roboto without asking fonts.googleapis.com for
+  # it on every visit. This is the only thing keeping that true — strip_external_scripts.py
+  # matches <script src>, and a webfont is a stylesheet <link>, so its check cannot see it.
+  - privacy:
+      # Mermaid.js is fetched but referenced by nothing: Kroki renders the diagrams to SVG at
+      # build time, so the page never needs it. Without this it is 3.5 MB — most of the vendored
+      # payload — written into every publish for no reader.
+      assets_exclude:
+        - unpkg.com/*
   # No `offline`. The reference repo carries it, but it is for handing someone a zip they open
   # from file://, and it silently forces use_directory_urls: false — which would publish
   # /docs/ARCHITECTURE.html instead of /docs/architecture/, against MIP-0064 §7.2.
