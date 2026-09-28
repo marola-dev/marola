@@ -1,0 +1,61 @@
+site_name: marola docs
+site_description: The ocean intelligence layer for a stretch of coast — guides and design proposals.
+repo_url: https://github.com/marola-dev/marola
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+site_dir: generated-docs
+
+# No `nav:`. mkdocs builds one from the file tree, sorted alphanumerically with index files first,
+# which is why MIP-0001…MIP-0064 order correctly (four-digit zero padding) and why adding a MIP
+# needs no edit here. MIP-0064 §4.4, decision 1.
+
+theme:
+  name: material
+  features:
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+plugins:
+  - search
+  # No `offline`. The reference repo carries it, but it is for handing someone a zip they open
+  # from file://, and it silently forces use_directory_urls: false — which would publish
+  # /docs/ARCHITECTURE.html instead of /docs/architecture/, against MIP-0064 §7.2.
+  - kroki:
+      # Not kroki.io: rendering happens in the compose stack next door, so no doc content leaves
+      # the build host. `kroki` is the service name in docker-compose.yml.
+      server_url: http://kroki:8000
+      # Default is `kroki-`, which would render only ```kroki-mermaid fences. Empty claims plain
+      # ```mermaid too, so the repo's two diagrams render here *and* on GitHub, unedited.
+      fence_prefix: ""
+      # POST writes the SVG next to the page in site_dir. GET would emit an <img> pointing at
+      # this container, i.e. a localhost URL on the deployed site, and break `script-src 'self'`.
+      http_method: POST

@@ -87,6 +87,7 @@ quality-other:
     python3 scripts/ocr-post.py --self-test
     python3 scripts/mip_graph.py --self-test
     scripts/issues.sh --self-test
+    scripts/mkdocs.sh --self-test
     python3 scripts/lib/tasks_issues.py --self-test
     python3 scripts/strip_external_scripts.py --self-test
     python3 scripts/build_docs_index.py --self-test
@@ -102,8 +103,8 @@ quality-other:
     node --check site/static/app.js
     node scripts/site_check.js
     actionlint
-    hadolint Dockerfile Dockerfile.local
-    if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
+    hadolint Dockerfile Dockerfile.local mkdocs/Dockerfile
+    if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
 
 quality-fix:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
@@ -260,6 +261,19 @@ site-deploy target="github":
             npx --yes wrangler pages deploy site/dist --project-name "${MAROLA_SITE_PROJECT:-marola}" ;;
         *) echo "unknown target '{{ target }}' — github | cloudflare" >&2; exit 1 ;;
     esac
+
+# ---------------------------------------------------------------------
+# The docs site — MIP-0064: mkdocs-material + a self-hosted Kroki (mkdocs/)
+# ---------------------------------------------------------------------
+
+# Build docs/ into mkdocs/generated-docs. Needs a Docker or Podman daemon; not strict yet (task 2).
+docs:
+    scripts/mkdocs.sh
+
+# Serve the docs on http://localhost:8001 (8000 is `just site-serve`'s). The docs are baked into
+# the image, so a doc edit needs a restart — there is no live reload.
+docs-serve:
+    scripts/mkdocs.sh --serve
 
 # ---------------------------------------------------------------------
 # Docker — MIP-0008: the CLI as an image (Dockerfile, docker-compose.yml)

@@ -103,7 +103,7 @@ pr_label_layers() {
   grep -q '^dspy/' <<<"$paths" && labels+=("layer/dspy")
   grep -q '^site/' <<<"$paths" && labels+=("layer/site")
   grep -qE '^(docs/|README\.md$|AGENTS\.md$|PHILOSOPHY\.md$|CLAUDE\.md$)' <<<"$paths" && labels+=("layer/docs")
-  grep -qE '^(\.github/|scripts/|justfile$|flake\.nix$|flake\.lock$|\.githooks/|\.claude/)' <<<"$paths" && labels+=("layer/infra")
+  grep -qE '^(\.github/|scripts/|mkdocs/|justfile$|flake\.nix$|flake\.lock$|\.githooks/|\.claude/)' <<<"$paths" && labels+=("layer/infra")
   printf '%s\n' "${labels[@]}"
 }
 

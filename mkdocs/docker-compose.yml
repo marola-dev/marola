@@ -1,0 +1,42 @@
+# Kroki, self-hosted, so diagram rendering never leaves the build host (MIP-0064 §4.3). Mermaid is
+# a separate image — kroki delegates to it over HTTP and cannot render one without it.
+#
+# Neither kroki port is published: only the mkdocs container talks to them, over this network.
+# Publishing would also collide with `just docs-serve` on 8001.
+services:
+  kroki:
+    container_name: marola-kroki
+    image: yuzutech/kroki:0.32.1
+    environment:
+      - KROKI_MERMAID_HOST=mermaid
+    depends_on:
+      mermaid:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      # Kroki is a JVM starting cold, often right after its first pull. Without this the 30 probes
+      # are the whole budget and a slow start reads as an unhealthy dependency.
+      start_period: 30s
+
+  mermaid:
+    container_name: marola-kroki-mermaid
+    image: yuzutech/kroki-mermaid:0.32.1
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8002"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 30s
+
+  mkdocs:
+    container_name: marola-mkdocs
+    image: marola/mkdocs
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      kroki:
+        condition: service_healthy

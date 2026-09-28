@@ -68,3 +68,8 @@ repomix-output/
 # they conflicted on every rebase of a branch that touched a .py file.
 __pycache__/
 *.pyc
+
+# MIP-0064: `just docs` stages a copy of docs/ into mkdocs/docs and builds into
+# mkdocs/generated-docs. Both are throwaway; the site is published from CI, not from here.
+/mkdocs/docs/
+/mkdocs/generated-docs/

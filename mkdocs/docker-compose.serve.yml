@@ -1,0 +1,6 @@
+# 8001 on the host: `just site-serve` already owns 8000 (justfile).
+services:
+  mkdocs:
+    command: mkdocs serve -a 0.0.0.0:8000
+    ports:
+      - "8001:8000"

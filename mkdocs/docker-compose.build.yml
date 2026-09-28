@@ -1,0 +1,3 @@
+services:
+  mkdocs:
+    command: mkdocs build -d /mkdocs/generated-docs
