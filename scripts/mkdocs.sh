@@ -25,9 +25,11 @@ project_name() {
 # when its daemon answers. An installed `docker` whose current context points at a dead endpoint is
 # the normal case on a machine that also runs podman, and picking it by binary alone fails late,
 # after the image build, with an error about the context rather than about the daemon.
+# CONTAINER_RUNTIME=docker pins one: GitHub's hosted image has a podman whose `info` answers but
+# no podman socket, so its compose provider fails to reach a daemon (MIP-0065).
 pick_runtime() {
   local rt
-  for rt in podman docker; do
+  for rt in ${CONTAINER_RUNTIME:-podman docker}; do
     command -v "$rt" >/dev/null 2>&1 && "$rt" info >/dev/null 2>&1 && { echo "$rt"; return 0; }
   done
   return 1
@@ -129,6 +131,8 @@ self_test() {
   stub="$(mktemp -d)"
   printf '#!/bin/sh\nexit 0\n' >"$stub/podman"; chmod +x "$stub/podman"
   ok "$(PATH="$stub" pick_runtime)" "podman" "a reachable podman is picked"
+  printf '#!/bin/sh\nexit 0\n' >"$stub/docker"; chmod +x "$stub/docker"
+  ok "$(CONTAINER_RUNTIME=docker PATH="$stub" pick_runtime)" "docker" "CONTAINER_RUNTIME=docker skips a live podman"
   printf '#!/bin/sh\nexit 1\n' >"$stub/podman"
   printf '#!/bin/sh\nexit 0\n' >"$stub/docker"; chmod +x "$stub/docker"
   ok "$(PATH="$stub" pick_runtime)" "docker" "a podman whose daemon does not answer is skipped for a live docker"

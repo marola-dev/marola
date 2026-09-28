@@ -67,6 +67,8 @@ jobs:
       # MIP-0064: this replaces build_docs_index.py, which published a page of links to GitHub
       # because docs/*.md could not be mirrored. The repo is public, so it can be.
       - name: mkdocs (material + kroki), with the API trees folded in
+        env:
+          CONTAINER_RUNTIME: docker
         run: |
           set -euo pipefail
           scripts/mkdocs.sh

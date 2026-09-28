@@ -249,6 +249,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: mkdocs --strict, in the Kroki container stack
+        env:
+          CONTAINER_RUNTIME: docker
         run: scripts/mkdocs.sh
 
   quality-other:
