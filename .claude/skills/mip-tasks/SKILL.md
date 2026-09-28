@@ -60,6 +60,22 @@ Rules for a good list:
 Commit the task file on the first task's branch (it is part of task 1) and add a line to the
 MIP: `Tasks: docs/mips/MIP-NNNN.tasks.md`.
 
+Then project the table into GitHub, so the plan and the tracker say the same thing:
+
+```bash
+just milestone-new "<deliverable>" --mip MIP-NNNN     # once, if it doesn't exist yet
+just tasks-to-issues MIP-NNNN --milestone "<deliverable>" --dry-run
+just tasks-to-issues MIP-NNNN --milestone "<deliverable>"
+```
+
+It files one issue per row that has none (`NNNN-Tk: <slug>`), rewrites each row's `#` cell into a
+link to its issue, and draws one native `blocked by` edge per entry of the `depends on` column.
+Idempotent: a second run creates nothing and adds no edge, so re-run it after adding a row.
+Filing issues is human-gated (MIP-0063 §5.6) — show the `--dry-run` output and get a go-ahead
+before the real run. It sets no `area/*`, `layer/*` or `size/*`, so a filed row is not
+`agent-ready` until a human labels it and `just issue-ready <n>` passes; §8 of `docs/DEV-FLOW.md`
+and `docs/ISSUE-FLOW.md` have the rest.
+
 ## Step 2 — one task, one branch, one PR (execution sessions)
 
 Start a fresh session per task (`/clear`, `/rename mip-NNNN/k-slug`), then:

@@ -359,7 +359,7 @@ Two of §5.6's four forms carry neither heading, and they are not the same case:
 
 ### 5.5 The command surface
 
-Six recipes over one `scripts/issues.sh`, each with the repo's usual `--dry-run`:
+Seven recipes over one `scripts/issues.sh`, each with the repo's usual `--dry-run`:
 
 | Command | Does |
 |---|---|
@@ -369,12 +369,16 @@ Six recipes over one `scripts/issues.sh`, each with the repo's usual `--dry-run`
 | `just issue-claim <n>` | assigns, drops `agent-ready`, sets board Status, prints the `scripts/stack.sh start` line |
 | `just milestone-new "<name>" [--mip MIP-NNNN]` | thin, but keeps deliverables discoverable from `just` |
 | `just board-sync` | adds un-added open issues to the project, sets Status from state |
+| `just labels-sync [--prune]` | reconciles the repo against `.github/labels.yml`, the manifest; orphans are reported, never deleted without `--prune` |
 
-Two commands have no recipe on purpose, both one-time bootstraps rather than anything in the loop:
-`scripts/issues.sh board setup` brings the project up to §5.2 (the Status options it lacks, the
-four views), and `board gates` files §5.3's five phase gate issues. Filing issues is human-gated
-in this repo (§5.6, Decision 2), and reshaping a shared board is the same kind of act, so both stay
-something a person runs with `--dry-run` first rather than something `just` offers.
+Five subcommands have no recipe, for two different reasons. **`board setup`** (the Status options
+§5.2 lacks, the four views) and **`board gates`** (§5.3's five phase gate issues) are one-time
+bootstraps rather than anything in the loop: filing issues is human-gated in this repo (§5.6,
+Decision 2), reshaping a shared board is the same kind of act, so both stay something a person runs
+with `--dry-run` first rather than something `just` offers. **`sub add <parent> <child>`**,
+**`deps add <issue> --blocked-by <n>`** and **`deps list <issue>`** are not bootstraps at all:
+`tasks-to-issues` calls `deps add` for a whole task table, and all three are called directly for a
+one-off edge.
 
 Direction of truth: **`mip-tasks` authors `tasks.md`; `tasks-to-issues` projects it into GitHub;
 after that, issues own status and the file owns the plan.** One-way, re-runnable. An agent in

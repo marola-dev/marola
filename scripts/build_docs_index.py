@@ -27,6 +27,7 @@ GUIDES = [
     ("docs/ARCHITECTURE.md", "The pipeline, the six pluggable integrations, what is verified live"),
     ("docs/RUN-LOCALLY.md", "Run it now with Ollama — no account, no key"),
     ("docs/DEV-FLOW.md", "The development loop end to end"),
+    ("docs/ISSUE-FLOW.md", "How work is tracked: tiers, the Definition of Ready, the commands"),
     ("docs/EFFECTS-MAP.md", "What is pure, what is effectful, what is hidden"),
     ("docs/FUTURE-WORK.md", "Design sketches and reviewed-but-not-adopted ideas"),
     ("docs/ROADMAP.md", "What to do next, and why"),

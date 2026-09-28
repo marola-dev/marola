@@ -39,6 +39,7 @@ vocabulary and template pointer: `.claude/rules/docs.md`):
 | `docs/AGENT-FRAMEWORKS-SURVEY.md` | Multi-agent frameworks survey: Python ideas → Scala shapes, Pekko fit, reading list |
 | `docs/AGENT-STACK-SURVEY.md` | agent4s / llm4s / ADK mapped to the MIPs, how they compose, the project Q&A agent |
 | `docs/DEV-FLOW.md` | The loop end to end: idea → MIP → acceptance → tasks → stacked PRs (verified, costed) → review on request → merge/restack → Implemented; command reference |
+| `docs/ISSUE-FLOW.md` | The GitHub tracking standard in use: the object model, the three intake tiers, the Definition of Ready, and every `issues.sh`/`just` command (MIP-0063) |
 | `docs/AGENT-SKILLS.md` | Which agent skills to use in this repo: `mip` (plan), `mip-tasks` (tasks → stacked PRs, `scripts/stack.sh`), superpowers walkthrough, candidates to write |
 | `docs/benchmarks/` | Kept `just benchmark` runs: re-run and compare before changing prompt/corpus/embedder/model |
 | `docs/mips/` | Marola Improvement Proposals: design a non-trivial change here first, via the `mip` skill (`.claude/skills/mip/SKILL.md`), before building it. `just context-mips` packs what a browser session needs to draft one from voice notes; `just context-mip MIP-NNNN` packs one already-written MIP for an independent, non-Claude reviewer |
@@ -74,6 +75,15 @@ Work **one phase at a time**, per `docs/ARCHITECTURE.md` §11: do not start Phas
 a cloud backend, GCP per MIP-0057) before Phase 1 (Telegram bot actually working) is done. This
 exists to prevent an expensive mistake, so don't skip it because a later phase looks more interesting. If asked to jump ahead,
 implement the requested feature but flag which earlier-phase prerequisite is still missing.
+
+## Issue tracking (hard rule)
+
+**An agent may only begin implementation on an issue carrying `agent-ready`.** That label is the
+only statement that a human has decided what done means and what proves it; `just issue-ready <n>`
+adds it when the five-rule Definition of Ready passes (`docs/ISSUE-FLOW.md`). Read the queue with
+`just issue-queue`, take one with `just issue-claim <n>` — it re-checks the rules and prints the
+branch command. An idea with no issue is not work yet, and **filing is a human's act**: the
+`triage` skill drafts, a person files (MIP-0063 §5.6).
 
 ## Cost & deployment safety (hard rule)
 

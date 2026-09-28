@@ -15,13 +15,56 @@ nix develop && just ollama-up && just build && just test && just quality && just
 Full walkthrough: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md). No Telegram token, no cloud
 account, no API key needed for any of the above.
 
+## Find something to work on
+
+Everything claimable is a GitHub issue carrying **`agent-ready`**: someone has already decided what
+done means for it and which test proves it, so you can start without asking anyone. In a browser,
+that is <https://github.com/marola-dev/marola/issues?q=is:open+label:agent-ready>. From the
+terminal, after `gh auth login` once (every command below reads the GitHub API and fails without
+it):
+
+```bash
+just issue-queue      # the unassigned agent-ready issues, smallest first
+just issue-claim <n>  # assigns it to you, drops the label, prints the branch command
+```
+
+The **Good first issues** view on the [Marola board](https://github.com/orgs/marola-dev/projects/1)
+is the same list, narrower. If that link 404s for you, the board is not public yet; the issue URL
+above always works.
+
+Then branch. Names are `<type>/<slug>` — `fix/queue-sort-order`, `docs/issue-flow`, `feat/…`,
+`chore/…`, `ci/…` — unless the issue came from a MIP's task list, in which case `issue-claim`
+prints the `scripts/stack.sh start` line to use instead. Write the failing test first, then open
+the PR:
+
+```bash
+just build && just test && just quality && just pr
+```
+
+## Opening an issue
+
+Pick the tier; the form follows from it, and blank issues are off.
+
+- **Tier 1 — bug, chore, docs.** One issue, no milestone, no spec: **Bug report** for something
+  broken, **Task** otherwise.
+- **Tier 2 — small enhancement** (≈ two tasks or fewer, no new dependency). One issue **whose body
+  is the spec**: **Story**. No design doc.
+- **Tier 3 — initiative** (a new data source, a scoring change, a new integration, anything paid).
+  **MIP proposal** → MIP PR → accepted → milestone → issues.
+
+Fill in the acceptance criteria and the named test — a bug report asks for the same two things
+under **What you expected instead** and **Failing test**. Those two fields, plus an `area/*`, a
+`layer/*` and a `size/*` label, are what a maintainer's `just issue-ready <n>` checks before the
+issue becomes claimable; without them it stays in triage. The whole standard — the commands, the
+board, the dependency edges — is [`docs/ISSUE-FLOW.md`](./docs/ISSUE-FLOW.md).
+
 ## The dev loop
 
-Idea → **MIP** (`docs/mips/`, via the `mip` skill) → acceptance → task list → stacked PRs (one
-task, one branch, one PR) → review on request → merge/restack → done. The whole loop, with the
-exact commands, is [`docs/DEV-FLOW.md`](./docs/DEV-FLOW.md). Skip the MIP for bug fixes, doc
-corrections, and behaviour-free refactors; everything else that changes scoring, a data source,
-or what a user sees goes through one first.
+Idea → **issue** → **MIP** (`docs/mips/`, via the `mip` skill) → acceptance → task list →
+stacked PRs (one task, one branch, one PR) → review on request → merge/restack → done. The whole
+loop, with the exact commands, is [`docs/DEV-FLOW.md`](./docs/DEV-FLOW.md). Skip the MIP for bug
+fixes, doc corrections, and behaviour-free refactors; everything else that changes scoring, a data
+source, or what a user sees goes through one first.
 
 - **Small PRs, one topic.** `scripts/stack.sh` and `just uprds` exist so a MIP ships as several
   reviewable PRs instead of one large one.

@@ -1,7 +1,8 @@
 # marola — the development flow, end to end
 
-Idea → **MIP** (Draft) → **acceptance** → **task list** → **stacked PRs** (one per task, verified,
-costed) → **review, when asked** → merge bottom-up, restack → **finish** (MIP → Implemented).
+**Issue** → **MIP** (Draft) → **acceptance** → **task list** → **stacked PRs** (one per task,
+verified, costed) → **review, when asked** → merge bottom-up, restack → **finish**
+(MIP → Implemented).
 This page is the one place the whole loop is written down; the pieces live in the `mip` and
 `mip-tasks` skills (`.claude/skills/`), `AGENTS.md` (the hard rules), `docs/AGENT-SKILLS.md`
 (which superpowers skill does what) and the scripts under `scripts/`.
@@ -9,16 +10,24 @@ This page is the one place the whole loop is written down; the pieces live in th
 Sessions: one per MIP for planning, one per task for execution (`/clear`, `/rename
 mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-cost` map to PRs.
 
-## 1. From an idea to a MIP (Draft)
+## 1. From an idea to an issue, then a MIP (Draft)
 
-1. **Refine the idea**: superpowers `brainstorming` (activates on "let's plan", "I have an idea"):
+1. **File the issue first** — the idea is not work until it is one, and the tier decides what
+   follows: tier 1 (bug, chore, docs) and tier 2 (small enhancement, the issue body *is* the spec)
+   stop here and go straight to §4; only tier 3 (a new data source, a scoring change, a new
+   integration, anything paid) continues into a MIP, as a **MIP proposal** issue that is
+   relabelled rather than replaced when the MIP PR opens. Filing is a human's act: the `triage`
+   skill drafts the body and runs the readiness check, a person presses the button
+   (`docs/ISSUE-FLOW.md`, MIP-0063 §5.6). An agent picks work up from `just issue-queue` and takes
+   it with `just issue-claim <n>`; it may not start on an issue without `agent-ready`.
+2. **Refine the idea**: superpowers `brainstorming` (activates on "let's plan", "I have an idea"):
    Socratic questions until MIP §1-§3 (summary, motivation, user-visible change) have answers.
    Voice notes and chat pastes go through `just context-mips` + a browser session first
    (`RUN-LOCALLY.md` §8).
-2. **Write the MIP**: the `mip` skill: next number from `docs/mips/README.md`, the template,
+3. **Write the MIP**: the `mip` skill: next number from `docs/mips/README.md`, the template,
    every external claim fetched and dated, what was *not* checked said so, open questions listed.
    Add the index row. Link it from `FUTURE-WORK.md` if it closes something.
-3. **Open it as its own PR**, status **Draft**. A MIP is never built in the same change (`mip`
+4. **Open it as its own PR**, status **Draft**. A MIP is never built in the same change (`mip`
    skill, step 8). The PR body ends with a `Cost:` line like any other.
 
 ## 2. Acceptance
@@ -52,7 +61,10 @@ status to `Accepted` and links the tasks file.
 - a **Decisions** list answering the MIP's §11 for v1, so nothing is re-litigated per task;
 - a restack note: no task rewrites a file an earlier task created.
 
-The tasks file is committed on task 1's branch; the MIP gets a `Tasks:` row.
+The tasks file is committed on task 1's branch; the MIP gets a `Tasks:` row. Project it into
+GitHub with `just tasks-to-issues MIP-NNNN --milestone "<name>"`: one issue per row, each row's
+`#` cell rewritten into a link, one native `blocked by` edge per `depends on` entry. One-way and
+re-runnable — after it, the issues own status and the file owns the plan.
 
 ## 4. Stacked PRs — one task, one branch, one PR
 
@@ -260,6 +272,14 @@ waking up, full stop.
 
 | Step | Command |
 |---|---|
+| What is ready to be claimed | `just issue-queue [--milestone NAME]` |
+| Claim one | `just issue-claim <n>` — re-checks the Definition of Ready, assigns, drops `agent-ready`, prints the branch line |
+| Re-check one issue's readiness | `just issue-ready <n>` — names the rule that failed; adds or removes `agent-ready` |
+| A MIP's task table into issues | `just tasks-to-issues MIP-NNNN [--milestone "<name>"]` — idempotent; the milestone must exist |
+| New deliverable milestone | `just milestone-new "<name>" [--mip MIP-NNNN]` |
+| Labels back in sync with the manifest | `just labels-sync` (`.github/labels.yml`; `--prune` to delete orphans) |
+| The board | `just board-sync`; the one-time bootstraps have no recipe: `scripts/issues.sh board setup`, `scripts/issues.sh board gates` |
+| One dependency or sub-issue edge by hand | `scripts/issues.sh deps add <n> --blocked-by <m>`, `deps list <n>`, `sub add <parent> <child>` — no recipe either; `tasks-to-issues` calls `deps add` for a whole table's worth |
 | Pack docs for a browser MIP session | `just context-mips` |
 | New task branch | `scripts/stack.sh start MIP-NNNN k slug` |
 | Gates | `just build && just test && just quality` (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part) |
