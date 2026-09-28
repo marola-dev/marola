@@ -706,6 +706,10 @@ def self_test():
         (worktree_dir / "b.txt").write_text("b\n")
         sh("git", "add", "b.txt", cwd=worktree_dir)
         sh("git", "commit", "-q", "-m", "the commit under test", cwd=worktree_dir)
+        target_sha = sh("git", "rev-parse", "HEAD", cwd=worktree_dir).strip()
+        target_when = dt.datetime.fromisoformat(
+            sh("git", "log", "-1", "--format=%aI", cwd=worktree_dir).strip()
+        )
 
         pdir = Path(wt_tmp) / "project-logs"
         sid = "ses-parent"
@@ -720,21 +724,21 @@ def self_test():
         (pdir / f"{sid}.jsonl").write_text(
             jsonl_line(
                 message={"id": "msg-parent", "usage": usage_small, "model": "claude-sonnet-5"},
-                timestamp="2026-09-28T10:00:00Z",
+                timestamp="2000-01-01T10:00:00Z",
                 gitBranch="main",
                 cwd="/no/such/worktree",
             )
         )
         sub_a = jsonl_line(
             message={"id": "msg-sub-a", "usage": usage_big, "model": "claude-sonnet-5"},
-            timestamp="2026-09-28T10:05:00Z",
+            timestamp="2000-01-01T10:05:00Z",
             gitBranch="main",
             cwd=str(worktree_dir),
             isSidechain=True,
         )
         sub_b = jsonl_line(
             message={"id": "msg-sub-b", "usage": usage_small, "model": "claude-sonnet-5"},
-            timestamp="2026-09-28T10:06:00Z",
+            timestamp="2000-01-01T10:06:00Z",
             gitBranch="main",
             cwd="/no/such/worktree/either",
             isSidechain=True,
@@ -758,14 +762,44 @@ def self_test():
         # a wrong branch would be discarded outright, "" is only less precise.
         assert sub_b_branch == "", sub_b_branch
 
-        # End to end (issue #433): sub_a's usage is large next to "the commit under test"'s tiny
-        # diff. Its resolved branch now equals the branch carrying that commit, so main()'s
-        # attribution loop (`mbranch not in ours`, ~line 890) keeps it as measured usage instead
-        # of discarding it and falling back to a diff-size --estimate.
-        ours = {"feature-x"}
-        assert sub_a_branch in ours, (
-            "subagent's large usage must land on the branch that carries the commit under test, "
-            "or main() discards it and --estimate substitutes a diff-size guess for a measured total"
+        # End to end (issue #433): run the fixture through `attribute()` itself — the same
+        # function main() calls — not a re-implementation of its `ts <= when` pairing or
+        # summation. `branches_containing`/`branches_with_equivalent` read the ambient cwd (no
+        # `cwd=` param, same as `commits()`), so chdir into the synthetic repo for the call.
+        cs = [(target_when, "feature-x", target_sha, "the commit under test")]
+        saved_cwd = os.getcwd()
+        try:
+            os.chdir(worktree_dir)
+            buckets = attribute(got, cs, {})
+        finally:
+            os.chdir(saved_cwd)
+
+        # sub_a lands on target_sha by branch (feature-x, resolved from cwd); sub_b lands there
+        # too, by the time-only rule (its cwd matched no worktree, so its branch is ""), since cs
+        # holds only this one commit. parent (branch "main", not in {"feature-x"}) is discarded
+        # entirely — it must not appear anywhere, not even "uncommitted".
+        bucket = buckets[target_sha]
+        actual_total = bucket["in"] + bucket["out"] + bucket["cache_w"] + bucket["cache_r"]
+        expected_total = (
+            usage_big["input_tokens"]
+            + usage_big["output_tokens"]
+            + usage_small["input_tokens"]
+            + usage_small["output_tokens"]
+        )
+        # Exact match, no tolerance: every field summed here is an int token count, so there is
+        # no rounding for a tolerance to absorb.
+        assert actual_total == expected_total, (
+            f"attribute() must land the subagent-shaped fixture's measured total on "
+            f"{target_sha[:7]} exactly (int summation, 0 tolerance): got {actual_total}, "
+            f"expected {expected_total} — a regression in the ts<=when pairing or the "
+            "summation would silently change this"
+        )
+        uncommitted_total = sum(
+            buckets["uncommitted"][k] for k in ("in", "out", "cache_w", "cache_r")
+        )
+        assert uncommitted_total == 0, (
+            f"the parent message's branch ({parent_branch!r}) doesn't carry the commit under "
+            f"test and must be discarded outright, not misrouted to uncommitted: {uncommitted_total}"
         )
 
     # --- messages_opencode(): a synthetic DB built against the real schema (MIP-0013 task 2,
@@ -846,6 +880,60 @@ def self_test():
 
 
 # ---------------------------------------------------------------------------------------------
+
+
+def attribute(msgs, cs, prices):
+    """[(ts, session, model, usage, branch)], [(when, branch, sha, subject)] -> sha/"uncommitted"
+    -> totals. A message counts toward a branch only if it was made *on* that branch (its
+    `mbranch`), then falls into the first commit whose author date is after it. Without the
+    branch test, every session on the machine that ran before a branch's first commit — other
+    agents, other features — landed on that commit (seen: 335M tokens on a 500-line commit). A
+    message with no branch (older logs, or a sidechain whose `cwd` matched no worktree) keeps the
+    time-only rule.
+
+    "On that branch" means: the message's branch contains the commit — a commit authored on
+    feat/a and now priced from feat/b (stacked on a) is still paid for by the messages made on
+    feat/a. Computed once per commit from `git branch -a --contains`.
+    """
+    buckets = defaultdict(
+        lambda: {
+            "in": 0,
+            "out": 0,
+            "cache_w": 0,
+            "cache_r": 0,
+            "usd": 0.0,
+            "models": set(),
+            "sessions": set(),
+            "priced": True,
+        }
+    )
+    contains = {
+        sha: branches_containing(sha) | branches_with_equivalent(sha) for _w, _b, sha, _s in cs
+    }
+    ours = {c[1] for c in cs}.union(*contains.values()) if cs else set()
+    for ts, session, model, u, mbranch in msgs:
+        if mbranch and mbranch not in ours:
+            continue
+        target = "uncommitted"
+        for when, _cbranch, sha, _s in cs:
+            if mbranch and mbranch not in contains[sha]:
+                continue
+            if ts <= when:
+                target = sha
+                break
+        b = buckets[target]
+        b["in"] += u.get("input_tokens", 0)
+        b["out"] += u.get("output_tokens", 0)
+        b["cache_w"] += u.get("cache_creation_input_tokens", 0)
+        b["cache_r"] += u.get("cache_read_input_tokens", 0)
+        b["models"].add(model)
+        b["sessions"].add(session[:8])
+        usd = price(prices, model, u)
+        if usd is None:
+            b["priced"] = False
+        else:
+            b["usd"] += usd
+    return buckets
 
 
 def build_rows(cs, buckets, order, prices, do_estimate, coeff):
@@ -978,53 +1066,8 @@ def main():
 
     # Only sessions that overlap the commit window are relevant: from the first message of any
     # session that produced a commit, up to now.
-    buckets = defaultdict(
-        lambda: {
-            "in": 0,
-            "out": 0,
-            "cache_w": 0,
-            "cache_r": 0,
-            "usd": 0.0,
-            "models": set(),
-            "sessions": set(),
-            "priced": True,
-        }
-    )
     order = [c[2] for c in cs] + ["uncommitted"]
-    # A message counts toward a branch only if it was made *on* that branch (its `gitBranch`),
-    # then falls into the first commit whose author date is after it. Without the branch test,
-    # every session on the machine that ran before a branch's first commit — other agents,
-    # other features — landed on that commit (seen: 335M tokens on a 500-line commit). A message
-    # with no `gitBranch` (older logs) keeps the time-only rule.
-    # "On that branch" means: the message's branch contains the commit — a commit authored on
-    # feat/a and now priced from feat/b (stacked on a) is still paid for by the messages made on
-    # feat/a. Computed once per commit from `git branch -a --contains`.
-    contains = {
-        sha: branches_containing(sha) | branches_with_equivalent(sha) for _w, _b, sha, _s in cs
-    }
-    ours = {c[1] for c in cs}.union(*contains.values()) if cs else set()
-    for ts, session, model, u, mbranch in msgs:
-        if mbranch and mbranch not in ours:
-            continue
-        target = "uncommitted"
-        for when, _cbranch, sha, _s in cs:
-            if mbranch and mbranch not in contains[sha]:
-                continue
-            if ts <= when:
-                target = sha
-                break
-        b = buckets[target]
-        b["in"] += u.get("input_tokens", 0)
-        b["out"] += u.get("output_tokens", 0)
-        b["cache_w"] += u.get("cache_creation_input_tokens", 0)
-        b["cache_r"] += u.get("cache_read_input_tokens", 0)
-        b["models"].add(model)
-        b["sessions"].add(session[:8])
-        usd = price(prices, model, u)
-        if usd is None:
-            b["priced"] = False
-        else:
-            b["usd"] += usd
+    buckets = attribute(msgs, cs, prices)
 
     rows = build_rows(cs, buckets, order, prices, a.estimate, coeff)
 
