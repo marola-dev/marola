@@ -42,6 +42,15 @@
     return getCss('--c1');
   }
   function getCss(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  // The chip is coloured by class, not `style=`: index.html's CSP (default-src 'self', no
+  // style-src) blocks every inline style attribute, so a style= chip renders white on white.
+  function band(score, unfit) {
+    if (score === null || score === undefined) return 'cna';
+    if (unfit || score <= 0) return 'c0';
+    if (score >= 70) return 'c70';
+    if (score >= 40) return 'c40';
+    return 'c1';
+  }
   function fetchJson(path) {
     return fetch(path, { cache: 'no-cache' }).then(function (r) {
       if (!r.ok) throw new Error(r.status + ' ' + path);
@@ -274,7 +283,7 @@
       var water = b.water.unfit ? '<span class="water unfit">' + esc(b.water.summary) + '</span>'
         : (b.water.points.length ? '<span class="water">' + esc(b.water.summary) + '</span>' : '');
       var dist = state.here ? ' <span class="dist">' + b._km.toFixed(1) + ' km</span>' : '';
-      return '<li data-name="' + esc(b.name) + '"><span class="score" style="background:' + colour(s ? s.score : null, b.water.unfit) + '">' + score + '</span>' +
+      return '<li data-name="' + esc(b.name) + '"><span class="score ' + band(s ? s.score : null, b.water.unfit) + '">' + score + '</span>' +
         esc(b.name) + (s ? ' <span class="dist">' + esc(s.h) + '</span>' : ' <span class="dist">dark</span>') + dist + water + '</li>';
     });
     el.list.innerHTML = '<ol>' + items.join('') + '</ol>';
@@ -318,7 +327,7 @@
     if (!b) { el.card.hidden = true; return; }
     var s = shown(b);
     var head = s
-      ? '<p class="headline"><span class="score" style="background:' + colour(s.score, b.water.unfit) + '">' + s.score + '/100</span> ' +
+      ? '<p class="headline"><span class="score ' + band(s.score, b.water.unfit) + '">' + s.score + '/100</span> ' +
         (s.best ? 'best at <b>' + esc(s.h) + '</b>' : 'at <b>' + esc(s.h) + '</b> (best ' + esc(b.best.hour) + ', ' + b.best.score + ')') +
         (isPast(s.h) ? ' <span class="past">already past</span>' : '') + '</p>'
       : '<p class="headline past">dark at this hour</p>';

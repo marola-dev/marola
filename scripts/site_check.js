@@ -235,6 +235,11 @@ async function runPage(board) {
   ok(!!keyPath && keyPath === iconPath, 'index.html\'s legend key draws the same path as the marker', keyPath + ' vs ' + iconPath);
   ok((els.list.innerHTML.match(/<li /g) || []).length === 2 && els.list.innerHTML.indexOf('Joaquina') < els.list.innerHTML.indexOf('Brava'),
     'the list has two entries, best score first');
+  // #460: index.html's CSP has no style-src, so a `style=` chip renders white on white. The
+  // score chip must carry a band class (style.css .c70/.c40/.c1/.c0/.cna) and no inline style.
+  ok(/<span class="score c40">55<\/span>/.test(els.list.innerHTML) && /<span class="score c0">0<\/span>/.test(els.list.innerHTML),
+    'score chip carries a band class and no inline style (list: c40 for Joaquina, c0 for unfit Brava)', els.list.innerHTML);
+  ok(!/style=/.test(els.list.innerHTML), 'the list HTML has no style= attribute (blocked by the CSP)', els.list.innerHTML);
   ok(els.card.hidden === true || els.card.innerHTML === '', 'the card starts closed');
   ok(els['hour-label'].textContent === 'best hour per beach', 'the slider label starts at "best hour per beach"');
   ok(els.sound.attrs['aria-pressed'] !== 'true', 'the sound toggle does not start pressed=true');
@@ -263,6 +268,8 @@ async function runPage(board) {
     joaq.handlers.click({});
     ok(els.card.hidden === false && els.card.innerHTML.includes('Praia da Joaquina') && els.card.innerHTML.includes('55/100'),
       'clicking Joaquina\'s wave opens its card with the score');
+    ok(/<span class="score c40">55\/100<\/span>/.test(els.card.innerHTML) && !/style=/.test(els.card.innerHTML),
+      'score chip carries a band class and no inline style (card headline)', els.card.innerHTML.slice(0, 300));
     // task 4: the card's first block is the very same aspect row the tooltip shows (touch
     // parity).
     const card = els.card.innerHTML;
