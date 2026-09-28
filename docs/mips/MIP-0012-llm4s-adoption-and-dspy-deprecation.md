@@ -264,7 +264,7 @@ tool selection, whose *outputs* are the same deterministic tools the CLI runs.
    `flake.nix` comments; README badge (`prompts-compiled in Scala`) and §"Offline prompt
    optimization"; `ARCHITECTURE.md` §5a rewritten around `core/prompt/`; `AGENTS.md` module list;
    `FUTURE-WORK.md` §10 (marola's need is met; `ds4s` as a *library* stays
-   a non-marola idea) and §4.1 (built); `docs/README.md`; MIP-0010 task 7 marked superseded by task
+   a non-marola idea) and §4.1 (built); `docs/index.md`; MIP-0010 task 7 marked superseded by task
    2 above. `finetune/build_dataset.py` reads the demos from the JSON artifacts; unchanged.
 4. `llm4s/` module, `Llm4sLlmClient`, `AppConfig` providers, dependency-boundary check.
 5. `Reviewer` JSON schema on the OpenAI-compatible path.

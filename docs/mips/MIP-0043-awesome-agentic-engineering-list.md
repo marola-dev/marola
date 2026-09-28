@@ -210,7 +210,7 @@ None. No change to `Swimability.score`, thresholds, or any user-facing recommend
 
 ## 11. Open questions
 
-- Should `docs/README.md`'s doc-index table get a row for this new file? (Decided in this MIP's own
+- Should `docs/index.md`'s doc-index table get a row for this new file? (Decided in this MIP's own
   implementation: yes, it's a `docs/*.md` file like any other, and the doc index is meant to be
   complete. Kind: *reference*, no MIP material inside beyond this MIP itself.)
 - Whether to eventually submit `docs/AWESOME-AGENTIC-ENGINEERING.md` to the real

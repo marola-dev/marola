@@ -266,7 +266,8 @@ site-deploy target="github":
 # The docs site — MIP-0064: mkdocs-material + a self-hosted Kroki (mkdocs/)
 # ---------------------------------------------------------------------
 
-# Build docs/ into mkdocs/generated-docs. Needs a Docker or Podman daemon; not strict yet (task 2).
+# Build docs/ into mkdocs/generated-docs. Needs a Docker or Podman daemon. Strict: a broken
+# internal link anywhere in docs/ fails this.
 docs:
     scripts/mkdocs.sh
 

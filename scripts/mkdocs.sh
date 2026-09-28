@@ -7,10 +7,6 @@
 #
 # Needs a working Docker or Podman daemon. That is the documented prerequisite rather than a
 # nix-native mkdocs (MIP-0064 decision 4): the container stack is what pins Kroki too.
-#
-# The build is NOT strict yet — `--strict` arrives with task 2, once docs/README.md has become
-# docs/index.md and the link-shaped prose strings are resolved. Until then strict mode fails on
-# work this task deliberately leaves alone (MIP-0064 decision 5).
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -87,6 +83,12 @@ run() {
   if [ "$mode" = build ]; then
     rm -rf docs generated-docs
     "$rt" cp "$container:/mkdocs/generated-docs/" .
+    # strict mode does not cover this: a site with no index.md builds green and simply has no
+    # landing page, which reaches marola.dev/docs/ as a 404. Checked here instead.
+    [ -f generated-docs/index.html ] || {
+      echo "mkdocs: built no generated-docs/index.html — docs/index.md is missing or was renamed" >&2
+      exit 1
+    }
     echo "built: mkdocs/generated-docs/index.html"
   fi
 }
@@ -129,6 +131,13 @@ self_test() {
   ok "$(grep -c 'http_method: POST' "$cfg")" "1" "http_method is POST, so SVGs are written into the output"
   ok "$(grep -c 'fence_prefix: ""' "$cfg")" "1" 'fence_prefix is empty, so plain mermaid fences render'
   ok "$(grep -c '^nav:' "$cfg")" "0" "there is no hand-written nav to drift (decision 1)"
+  ok "$(grep -c '^strict: true' "$cfg")" "1" "the build is strict, so a broken internal link fails it"
+  ok "$([ -f "$repo_root/docs/index.md" ] && echo yes || echo no)" "yes" "docs/index.md exists — strict does not check for it, and without it the site has no landing page"
+
+  # --help slices the header by line number, which silently starts printing code when the header
+  # grows or shrinks. It shrank once already, when task 2 deleted the not-strict-yet caveat.
+  ok "$(bash "${BASH_SOURCE[0]}" --help | grep -c '^set -euo')" "0" "--help prints the header only, not the code under it"
+  ok "$(bash "${BASH_SOURCE[0]}" --help | grep -c 'self-test')" "1" "and it still reaches the last usage line"
 
   if [ "$fails" -eq 0 ]; then echo "mkdocs self-test: ok"; return 0; fi
   echo "mkdocs self-test: $fails failure(s)" >&2
@@ -138,7 +147,7 @@ self_test() {
 case "${1:-}" in
   --self-test) self_test ;;
   --serve)     run serve ;;
-  -h|--help)   sed -n '2,13p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ;;
+  -h|--help)   sed -n '2,9p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ;;
   "")          run build ;;
   *)           echo "mkdocs: unknown argument '$1' (try --help)" >&2; exit 2 ;;
 esac

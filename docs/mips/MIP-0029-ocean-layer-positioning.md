@@ -198,7 +198,7 @@ this MIP's implementation PR would edit:
 - `cli/src/main/scala/marola/Main.scala:19,394`: doc comment and banner string (§3.3)
 - `docs/mips/README.md`: this MIP's index row (this same PR, per the `mip` skill step 5)
 
-**Docs index update:** `docs/README.md` (the doc-index file `AGENTS.md` points to) gets no new row.
+**Docs index update:** `docs/index.md` (the doc-index file `AGENTS.md` points to) gets no new row.
 It already indexes `docs/mips/` as a directory, not per-MIP; nothing there names the swim
 question specifically enough to need a change. `docs/ROADMAP.md` is left untouched by this MIP
 (it's a snapshot dated 2026-09-06, and editing history there is out of scope) but its own "How this

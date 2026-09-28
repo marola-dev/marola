@@ -255,5 +255,5 @@ output for marola's Telegram/CLI surface.
 See `docs/SELF-DOCUMENTING.md` for the full research write-up (session-transcript tooling,
 git-to-narrative tools, LinkedIn norms, the per-platform API survey table, and cross-repo
 publishing patterns), kept as a separate durable reference doc rather than duplicated here, since
-`docs/README.md`'s convention treats MIPs as proposals and other `docs/*.md` files as living
+`docs/index.md`'s convention treats MIPs as proposals and other `docs/*.md` files as living
 reference material that outlives any one MIP's Draft/Accepted/Implemented lifecycle.

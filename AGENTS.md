@@ -23,7 +23,7 @@ One sbt multi-project build (root `build.sbt`), split into three modules at the 
   loads, never a runtime dependency.
 
 `PHILOSOPHY.md` (repo root) holds the reasons behind the rules below: why Scala 3 on the JVM, Nix,
-`just`, ai-jail, MIPs. Docs live under `docs/`. `docs/README.md` indexes them and marks which ideas
+`just`, ai-jail, MIPs. Docs live under `docs/`. `docs/index.md` indexes them and marks which ideas
 are MIP material; check these before assuming something is undecided or unbuilt (MIP status
 vocabulary and template pointer: `.claude/rules/docs.md`):
 

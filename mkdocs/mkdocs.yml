@@ -6,6 +6,11 @@ edit_uri: edit/main/docs/
 docs_dir: docs
 site_dir: generated-docs
 
+# Any unresolved internal link across all 90 pages fails the build instead of shipping a 404.
+# It does NOT cover a missing docs/index.md: mkdocs builds that with exit 0 and no warning at all,
+# just without a landing page, so scripts/mkdocs.sh checks for the file itself. MIP-0064 §4.4.
+strict: true
+
 # No `nav:`. mkdocs builds one from the file tree, sorted alphanumerically with index files first,
 # which is why MIP-0001…MIP-0064 order correctly (four-digit zero padding) and why adding a MIP
 # needs no edit here. MIP-0064 §4.4, decision 1.

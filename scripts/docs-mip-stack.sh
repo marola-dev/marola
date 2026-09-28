@@ -33,7 +33,7 @@ usage: docs-mip-stack.sh [auto]
   list    scan `origin` for un-merged docs/mip-NNNN-*  and mips/*/K-mip-NNNN-* branches, group by
           MIP number, flag any number with more than one candidate branch (pick one yourself —
           this script never guesses), and flag any candidate whose diff against origin/main
-          touches a file outside docs/mips/** or docs/README.md as "stale — rebase onto main
+          touches a file outside docs/mips/** or docs/index.md as "stale — rebase onto main
           first" rather than including it in a stack blindly.
 
   plan    given an explicit, ordered list of branches (your own choice — usually list's output
@@ -111,7 +111,7 @@ is_stale() {
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     case "$f" in
-      docs/mips/*|docs/README.md) ;;
+      docs/mips/*|docs/index.md) ;;
       *) return 0 ;;
     esac
   done < <(git diff --name-only "$fork..origin/$branch" 2>/dev/null)

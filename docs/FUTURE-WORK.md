@@ -487,7 +487,7 @@ Scala" as an unrecorded aside.
 **Update (2026-09-05):** the "Langfuse-shaped tracing" half of this section is proposed as
 `docs/mips/MIP-0010-mlflow-experiment-tracking.md`: MLflow's server ingests OpenTelemetry traces
 over OTLP/HTTP from any language, so the JVM side needs no LLMOps SDK; `ds4s` stays a separate
-project by its own definition above. `docs/README.md` classifies every section of this file.
+project by its own definition above. `docs/index.md` classifies every section of this file.
 
 **Update (2026-09-05, continued):** `MIP-0010.tasks.md` tasks 5-6 (tracing core split,
 `local/MlflowTracing.scala` + `TracedLlmClient`) are the JVM half that actually closes this

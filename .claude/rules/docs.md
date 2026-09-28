@@ -19,7 +19,7 @@ one task has actually landed.
 
 ## Everything else under `docs/`
 
-`docs/README.md` indexes every doc and marks which ideas are MIP material; check it before
+`docs/index.md` indexes every doc and marks which ideas are MIP material; check it before
 assuming something is undecided or unbuilt. When something in a doc turns out to be wrong (an
 API/limit/version changes, a library moves past the version pinned in `build.sbt`, etc.),
 update it in the same change that discovers the problem: these are living reference docs, not a
