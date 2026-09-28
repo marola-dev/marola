@@ -3556,7 +3556,7 @@
 <tbody>
 <tr>
 <td><strong>Status</strong></td>
-<td>Accepted — <code>Tasks: docs/MIPs/MIP-0064.tasks.md</code></td>
+<td>Implemented — PRs #459 (mkdocs-build) → #463 (strict-links) → #465 (api-docs-rewire) → #473 (docs grouped by audience, which revisited decision 1) → #475 (docs-live); tasks and v1 decisions: <a href="../MIP-0064.tasks/"><code>MIP-0064.tasks.md</code></a>. Verified live per §7.6</td>
 </tr>
 <tr>
 <td><strong>Author</strong></td>
@@ -3600,7 +3600,7 @@
 </tr>
 <tr>
 <td><strong>Cost so far</strong></td>
-<td>—</td>
+<td>~$76.42 total — $0.58 for this document (#454) plus ~$75.84 across the implementation PRs: $11.80 (#459), $16.10 (#463), $17.90 (#465), $30.04 (#473), from their <code>Cost:</code> trailers; #475's own figure is in its commit</td>
 </tr>
 </tbody>
 </table>
@@ -3798,7 +3798,9 @@ cannot put generated HTML in a Markdown-driven nav, so:</p>
 <span class="w">    </span><span class="no">cp -r out/docs/api mkdocs/generated-docs/api</span>
 <span class="w">    </span><span class="no">rm -rf out/docs &amp;&amp; mv mkdocs/generated-docs out/docs</span>
 </code></pre></div>
-<p>The runners are self-hosted with Docker on the host (<code>AGENTS.md</code>, "Docker itself is the host's").
+<p>The runners were self-hosted with Docker on the host (<code>AGENTS.md</code>, "Docker itself is the host's").
+<strong>Superseded by MIP-0065:</strong> every job here, <code>api-docs.yml</code> and <code>docs-build</code> included, now runs on
+<code>ubuntu-latest</code>, whose image ships Docker and Compose; the paragraph below is the self-hosted record.
 <strong>Corrected during task 3:</strong> this section originally said <code>docker-smoke.yml</code> already relies on
 that, and it does not — that workflow pins <code>runs-on: ubuntu-latest</code> precisely because it needs a
 daemon. Nothing in this repo had ever run a container on the self-hosted runner, so a reachable

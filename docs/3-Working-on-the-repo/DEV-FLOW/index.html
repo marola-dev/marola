@@ -807,10 +807,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#8-command-reference" class="md-nav__link">
+  <a href="#8-the-docs-site" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8. Command reference
+        8. The docs site
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-command-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Command reference
       
     </span>
   </a>
@@ -3227,10 +3238,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#8-command-reference" class="md-nav__link">
+  <a href="#8-the-docs-site" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8. Command reference
+        8. The docs site
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-command-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Command reference
       
     </span>
   </a>
@@ -3498,7 +3520,59 @@ false: <code>gh stack merge --yes</code> merges an entire GitHub Stack non-inter
 also <code>Bash(gh stack merge*)</code>/<code>Bash(gh stack unstack*)</code>/<code>Bash(gh stack delete*)</code>, with no override
 flag. Merging is a human decision, on
 waking up, full stop.</p>
-<h2 id="8-command-reference">8. Command reference<a class="headerlink" href="#8-command-reference" title="Permanent link">&para;</a></h2>
+<h2 id="8-the-docs-site">8. The docs site<a class="headerlink" href="#8-the-docs-site" title="Permanent link">&para;</a></h2>
+<p>Everything under <code>docs/</code> is published at <a href="https://marola.dev/docs/">https://marola.dev/docs/</a>, rendered and full-text
+searchable, by mkdocs-material with a self-hosted Kroki rendering the Mermaid fences to SVG
+(MIP-0064). The prose ships the same way the code does, so it carries the same gates.</p>
+<p><strong>Where a new doc goes.</strong> One of the four audience directories. Their <code>1-</code>…<code>4-</code> prefixes exist
+only to order the sidebar: there is no <code>nav:</code> key, mkdocs builds the tree from the filenames, so
+adding a doc needs no edit to <code>mkdocs/mkdocs.yml</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/1-Using-marola/</code></td>
+<td>someone running marola</td>
+</tr>
+<tr>
+<td><code>docs/2-Building-marola/</code></td>
+<td>someone reading or changing the code</td>
+</tr>
+<tr>
+<td><code>docs/3-Working-on-the-repo/</code></td>
+<td>someone working the process — this file, <code>ISSUE-FLOW.md</code>, <code>AGENT-SKILLS.md</code></td>
+</tr>
+<tr>
+<td><code>docs/4-Research-and-plans/</code></td>
+<td>surveys, roadmaps, reviews: ideas, most of them not built</td>
+</tr>
+<tr>
+<td><code>docs/MIPs/</code></td>
+<td>the proposals; no prefix — digits sort before letters, so it lands last on its own</td>
+</tr>
+</tbody>
+</table>
+<p>Add its row to <code>docs/index.md</code> in the same change: that file is the site's landing page as well as
+the index of what inside each doc is MIP material. <code>docs/benchmarks/</code> and <code>docs/superpowers/</code> are
+<code>exclude_docs</code>'d — repo artefacts, not documentation — and are linked at GitHub when referenced.</p>
+<p><strong>Preview, and the gate.</strong> <code>just docs-serve</code> serves the real build on
+<a href="http://localhost:8001/docs/">http://localhost:8001/docs/</a>; the docs are baked into the image, so a doc edit needs a restart,
+not a reload. <code>just docs</code> is the build alone, and it is <code>--strict</code>: one unresolved internal link
+anywhere in <code>docs/</code> turns it red. Links that leave <code>docs/</code> — <code>AGENTS.md</code>, <code>PHILOSOPHY.md</code>,
+<code>docs/benchmarks/</code> — are absolute GitHub URLs for exactly that reason. Both need a Docker or
+Podman daemon (MIP-0064 decision 4); neither is part of <code>just quality</code>, so a docs change is
+previewed by hand.</p>
+<p><strong>How it ships.</strong> A push to <code>main</code> touching <code>docs/**</code> or <code>mkdocs/**</code> runs <code>api-docs.yml</code>: scaladoc
+and pdoc, then <code>scripts/mkdocs.sh</code>, then the API trees folded into the site under <code>api/</code>, then
+<code>strip_external_scripts.py --check</code> over the merged tree, then the whole thing pushed to the
+<code>site-data</code> branch. <code>site.yml</code> deploys from there. A docs-only edit therefore pays for the whole
+job, scaladoc included, and appears on marola.dev after the next site deploy rather than on merge.</p>
+<h2 id="9-command-reference">9. Command reference<a class="headerlink" href="#9-command-reference" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -3562,6 +3636,10 @@ waking up, full stop.</p>
 <tr>
 <td>Live checks</td>
 <td><code>just run -- --brief</code>, <code>just e2e</code>; once MIP-0005 lands, <code>just site-build floripa &amp;&amp; just site-serve</code></td>
+</tr>
+<tr>
+<td>The docs site</td>
+<td><code>just docs</code> (strict build into <code>mkdocs/generated-docs</code>), <code>just docs-serve</code> (preview on <code>localhost:8001/docs/</code>) — both need a Docker or Podman daemon</td>
 </tr>
 <tr>
 <td>One PR, start to finish</td>

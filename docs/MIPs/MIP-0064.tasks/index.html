@@ -2974,6 +2974,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#what-shipped" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What shipped
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3082,6 +3093,45 @@ the post-deploy check.</p>
   in different regions; neither is worth reordering to avoid, but expect them in a restack.</li>
 <li>Nothing after task 2 touches <code>docs/*.md</code> filenames, so the rename lands once.</li>
 </ul>
+<h2 id="what-shipped">What shipped<a class="headerlink" href="#what-shipped" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>PR</th>
+<th>note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://github.com/marola-dev/marola/pull/459">#459</a></td>
+<td>as planned</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://github.com/marola-dev/marola/pull/463">#463</a></td>
+<td>as planned</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://github.com/marola-dev/marola/pull/465">#465</a></td>
+<td>as planned</td>
+</tr>
+<tr>
+<td>—</td>
+<td><a href="https://github.com/marola-dev/marola/pull/473">#473</a></td>
+<td><strong>decision 1 reversed.</strong> Seeing the flat nav on the built site was the trigger the decision named: <code>docs/*.md</code> moved into <code>1-Using-marola/</code> … <code>4-Research-and-plans/</code>, <code>mips/</code> became <code>MIPs/</code>, and <code>benchmarks/</code>/<code>superpowers/</code> left the site via <code>exclude_docs</code>. Every inbound link was rewritten in the same PR, which is the cost the decision was deferring</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="https://github.com/marola-dev/marola/pull/475">#475</a></td>
+<td>the docs flow written down, MIP flipped to Implemented</td>
+</tr>
+</tbody>
+</table>
+<p><code>--strict</code> is what made #473 safe to do at all: the rename broke inbound links across the repo and
+the build named each one.</p>
 
 
 
