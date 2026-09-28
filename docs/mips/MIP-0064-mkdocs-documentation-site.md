@@ -55,7 +55,8 @@ documentation, which is what mkdocs is actually for.
 `github.com/h0ffmann/marola/blob/main/...`. No search box. The MIP section is 59 links titled by
 de-kebabed filename.
 
-**After** — `marola.dev/docs/`: mkdocs-material. `README.md` as the landing page, a left sidebar
+**After** — `marola.dev/docs/`: mkdocs-material. `docs/index.md` (today's `docs/README.md`) as the
+landing page, a left sidebar
 built from the file tree (Guides, MIPs, API), a working search box over the full text of every
 page, `docs/ARCHITECTURE.md`'s pipeline diagram rendered as an SVG, and `/docs/api/scala/core/` and
 `/docs/api/python/` still exactly where they are today, now linked from the sidebar instead of
@@ -87,7 +88,7 @@ docker-compose.build.yml,docker-compose.serve.yml}` and `scripts/mkdocs.sh`. The
 `python:3.13-slim` plus four pinned pips (`mkdocs==1.6.1`, `mkdocs-material==9.5.42`,
 `mkdocs-kroki-plugin==0.9.0`, `mkdocs-render-swagger-plugin==0.1.2`). `mkdocs.sh` detects podman or
 docker, wipes `mkdocs/docs/` and `mkdocs/generated-docs/`, copies `../docs/` and `../README.md`
-into place, builds the image, and either builds (compose up, then `cp` the output out of the
+into place (marola skips the second copy — §5.2), builds the image, and either builds (compose up, then `cp` the output out of the
 container) or serves on 8000. `mkdocs.yml` sets `site_dir: generated-docs/`, the material theme, and
 plugins `search`, `offline`, `render_swagger`, `kroki`. The compose file runs Kroki plus
 `kroki-mermaid` and `kroki-excalidraw` companions, healthchecked, with `KROKI_VERSION=0.25.0`.
@@ -171,21 +172,24 @@ scripts/mkdocs.sh             ported from vrp-solver; `--serve` flag
 
 ```sh
 cp -R ../docs/ docs          # 18 guides + docs/mips/ (59 MIPs) + docs/img, docs/benchmarks
-cp ../README.md docs/index.md
 ```
 
-Two departures from the reference:
+One departure from the reference:
 
-1. **`docs/README.md` is renamed to `docs/index.md` in the repo.** mkdocs lists index files first
-   within a sub-section, so the docs-directory guide becomes that section's landing page rather than
-   a page called "README" sorted among the rest. GitHub still renders `index.md`-free directories
-   fine, and every in-repo reference to `docs/README.md` is updated in the same PR.
-2. **Out-of-tree links are rewritten.** `docs/index.md` points at `../AGENTS.md`,
-   `../PHILOSOPHY.md` and `finetune/README.md`; those files are out of scope for the site (they are
-   repo-operating instructions, not reader documentation). `mkdocs.sh` rewrites `](../<file>.md` to
-   the GitHub blob URL — the repo URL — note `build_docs_index.py`'s own `REPO` constant still says `h0ffmann/marola`,
-   which only works because GitHub redirects the rename to `marola-dev/marola`; `mkdocs.sh` uses
-   the current name — before building. `--strict` then guarantees nothing else dangles.
+**`docs/README.md` is renamed to `docs/index.md`, and the repo root `README.md` is not copied in
+at all.** The reference does `cp ../README.md docs/index.md` because vrp-solver has no docs-level
+index; marola does, and it is the better landing page — it is a map of what every doc is *for*,
+whereas the root README is an install-and-badges page written for someone standing in the repo.
+Copying both would put two files at `docs/index.md`, one silently overwriting the other. mkdocs
+lists index files first within a section, so the rename also makes it the section's first entry
+instead of a page called "README" sorted among the rest.
+
+This removes the link-rewriting step an earlier draft of this MIP specified. **Verified
+2026-09-28:** every relative link in `docs/*.md` is in-tree — 28 of them, all `./<file>.md` or
+`./mips/...`; `docs/README.md` names `AGENTS.md` and `PHILOSOPHY.md` in backticks, not as links.
+Nothing escapes `docs/`, so there is nothing to rewrite. Three strings in the prose *look* like
+links and may trip `--strict`: `](URL)`, `](around:15000,-27.6733,-48.47)` and
+`](effect: A < Sync)`. They are checked when strict mode goes on, not pre-emptively edited.
 
 ### 5.3 Where the API docs go
 
@@ -215,7 +219,6 @@ on:
       - 'scripts/**.py'
       - 'finetune/build_dataset.py'
       - 'docs/**'          # new — a docs-only edit must republish
-      - 'README.md'        # new — it is the landing page
       - 'mkdocs/**'        # new
 ```
 
