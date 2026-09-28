@@ -1,0 +1,86 @@
+# Throwaway diagnostic for the 2026-09-28 site.yml outage: every run since 13:29 failed on the
+# Overpass step with an *instant* ConnectException to overpass-api.de, a host that answers fine
+# from elsewhere. This runs on the same runner pool and reports what it can actually reach.
+# Delete the branch and this file once the cause is known.
+name: diag — runner egress
+
+on:
+  push:
+    branches: ['diag/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
+    timeout-minutes: 10
+    steps:
+      - name: who and where
+        run: |
+          echo "runner: ${RUNNER_NAME:-?}  host: $(hostname)  user: $(whoami)"
+          echo "--- proxy env (empty is normal)"
+          env | grep -iE '^(http_proxy|https_proxy|no_proxy|all_proxy)=' || echo "(none)"
+          echo "--- resolv.conf"
+          cat /etc/resolv.conf 2>/dev/null || echo "(unreadable)"
+          echo "--- overpass lines in /etc/hosts"
+          grep -i overpass /etc/hosts || echo "(none)"
+          echo "--- default routes"
+          ip -4 route show default || true
+          ip -6 route show default || echo "(no IPv6 default route)"
+
+      - name: DNS
+        run: |
+          for h in overpass-api.de overpass.private.coffee overpass.kumi.systems api.open-meteo.com github.com; do
+            echo "== $h"
+            getent ahosts "$h" | awk '{print $1}' | sort -u | sed 's/^/   /' || echo "   (no resolution)"
+          done
+
+      - name: TCP 443, per address family
+        run: |
+          for h in overpass-api.de overpass.private.coffee overpass.kumi.systems api.open-meteo.com github.com; do
+            for fam in -4 -6; do
+              out="$(curl $fam -sS -o /dev/null -m 15 \
+                      -w 'http=%{http_code} ip=%{remote_ip} connect=%{time_connect}s total=%{time_total}s' \
+                      "https://$h/" 2>&1)" || true
+              echo "$h $fam -> $out"
+            done
+          done
+
+      - name: the exact call marola makes
+        run: |
+          # BeachFinder POSTs an Overpass QL body; a reachable mirror answers 200 with JSON.
+          for h in overpass-api.de overpass.private.coffee overpass.kumi.systems; do
+            out="$(curl -sS -o /dev/null -m 45 \
+                    -w 'http=%{http_code} ip=%{remote_ip} connect=%{time_connect}s total=%{time_total}s' \
+                    --data 'data=[out:json][timeout:25];node["natural"="beach"](-27.7,-48.6,-27.6,-48.4);out 1;' \
+                    "https://$h/api/interpreter" 2>&1)" || true
+            echo "$h -> $out"
+          done
+
+      - name: same call from the JVM, which is what actually failed
+        run: |
+          cat > /tmp/Probe.java <<'JAVA'
+          import java.net.*; import java.net.http.*; import java.time.Duration;
+          public class Probe {
+            public static void main(String[] a) {
+              for (String h : new String[]{"overpass-api.de","overpass.private.coffee","overpass.kumi.systems"}) {
+                String url = "https://" + h + "/api/interpreter";
+                long t0 = System.nanoTime();
+                try {
+                  var c = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
+                  var r = c.send(HttpRequest.newBuilder(URI.create(url))
+                      .timeout(Duration.ofSeconds(40))
+                      .POST(HttpRequest.BodyPublishers.ofString(
+                          "data=[out:json][timeout:25];node[\"natural\"=\"beach\"](-27.7,-48.6,-27.6,-48.4);out 1;"))
+                      .build(), HttpResponse.BodyHandlers.ofString());
+                  System.out.printf("%s -> %d in %.1fs%n", h, r.statusCode(), (System.nanoTime()-t0)/1e9);
+                } catch (Exception e) {
+                  System.out.printf("%s -> %s in %.1fs%n", h, e, (System.nanoTime()-t0)/1e9);
+                }
+              }
+            }
+          }
+          JAVA
+          java /tmp/Probe.java
