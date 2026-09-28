@@ -332,8 +332,8 @@ before that (MIP-0005 §8).
 
 ## 10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)
 
-**Published tags** (`ghcr.io/marola-dev/marola:<tag>`; this repo is private, so pulling needs
-`docker login ghcr.io` first: a GitHub PAT with `read:packages`, or `gh auth token | docker login
+**Published tags** (`ghcr.io/marola-dev/marola:<tag>`; until the package is made public (MIP-0065 §4.3), pulling
+needs `docker login ghcr.io` first: a GitHub PAT with `read:packages`, or `gh auth token | docker login
 ghcr.io -u <user> --password-stdin`):
 
 | Tag | What it is | Built by | Platforms |

@@ -33,6 +33,7 @@ on:
 permissions:
   contents: write # push to the site-data branch
   actions: write # gh workflow run site.yml
+  packages: read # the image is private until the maintainer flips it (MIP-0065 §4.3)
 
 concurrency:
   group: docker-smoke
@@ -63,7 +64,7 @@ jobs:
         if: steps.ollama-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p ~/.local/bin
-          curl -fsSL https://ollama.com/download/ollama-linux-amd64.tgz | tar -xz -C /tmp
+          curl -fsSL https://ollama.com/download/ollama-linux-amd64.tar.zst | tar --zstd -x -C /tmp
           cp /tmp/bin/ollama ~/.local/bin/ollama
 
       - name: Start Ollama and ensure the model
@@ -72,6 +73,12 @@ jobs:
           nohup ollama serve >/tmp/ollama.log 2>&1 &
           for _ in $(seq 1 30); do curl -sf http://localhost:11434/api/tags >/dev/null && break; sleep 1; done
           ollama list | awk 'NR>1{print $1}' | grep -qx "$MODEL" || ollama pull "$MODEL"
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # `--network host` so the container reaches the runner's Ollama at localhost:11434, the
       # image's default.

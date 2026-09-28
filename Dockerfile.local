@@ -19,5 +19,5 @@ RUN (ollama serve > /tmp/ollama-build.log 2>&1 &) \
  && rm -f /tmp/ollama-build.log
 
 EXPOSE 11434
-HEALTHCHECK --interval=5s --timeout=5s --retries=12 CMD ollama list || exit 1
+HEALTHCHECK --interval=5s --timeout=5s --retries=12 CMD ["ollama", "list"]
 # ENTRYPOINT/CMD inherited: `ollama serve`.
