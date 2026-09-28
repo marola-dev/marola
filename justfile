@@ -86,6 +86,7 @@ quality-other:
     python3 scripts/ocr-post.py --self-test
     python3 scripts/mip_graph.py --self-test
     scripts/issues.sh --self-test
+    python3 scripts/lib/tasks_issues.py --self-test
     python3 scripts/strip_external_scripts.py --self-test
     python3 scripts/build_docs_index.py --self-test
     python3 scripts/mip_graph.py --check
@@ -418,6 +419,12 @@ issue-ready *args:
 # dependency edges, not read from the board's Status.
 issue-queue *args:
     scripts/issues.sh queue {{ args }}
+
+# Project a MIP's task table into GitHub: an issue per row that has none, each row's `#` cell
+# linked to it, and one native `blocked by` edge per entry of the `depends on` column
+# (MIP-0063 §5.5). Idempotent; the milestone must already exist.
+tasks-to-issues *args:
+    scripts/issues.sh tasks-to-issues {{ args }}
 
 # scripts/stack.sh passthrough. MIP-0005.
 stack *args:

@@ -312,6 +312,9 @@ jobs:
       - name: self-test — issues.sh (label manifest, number→id resolution, issue forms, the DoR, MIP-0063)
         if: needs.changes.outputs.python == 'true'
         run: scripts/issues.sh --self-test
+      - name: "self-test — tasks_issues (MIP task table → issues: dedup, row link, the depends-on DAG)"
+        if: needs.changes.outputs.python == 'true'
+        run: python3 scripts/lib/tasks_issues.py --self-test
       - name: site harness — app.js against site/fixtures in a stub DOM (MIP-0009)
         if: needs.changes.outputs.site == 'true'
         run: |

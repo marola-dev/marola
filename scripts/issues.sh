@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # issues — the command surface for MIP-0063's GitHub tracking standard. One subcommand family
-# per task of the stack; so far `labels sync`, `sub add`, `deps add|list` and `ready`/`queue`.
+# per task of the stack; so far `labels sync`, `sub add`, `deps add|list`, `ready`/`queue` and
+# `tasks-to-issues`.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -38,6 +39,14 @@ commands:
       The unassigned `agent-ready` issues, sorted size then priority, with a count of what is
       ready, blocked and still in triage. Those counts are derived from the labels and the
       dependency edges, not read from the board's Status field, which needs `project` scope.
+
+  tasks-to-issues <MIP-NNNN|path> [--milestone NAME]
+      File a MIP's task table as issues: one per row that has none, titled `NNNN-Tk: <slug>`
+      and deduped on that id, each row's `#` cell rewritten into a link to its issue, and one
+      native `blocked by` edge per entry of the `depends on` column. Idempotent — a second run
+      creates nothing, rewrites nothing and adds no edge. The milestone must already exist.
+      `area/*`, `layer/*` and `size/*` are a human's call and are not set here, so a filed row
+      is not `agent-ready` until someone labels it.
 
 options:
   --dry-run     print the mutating `gh` calls instead of making them (the reads they are
@@ -548,6 +557,148 @@ cmd_labels_sync() {
     echo "issues.sh: $failed of $((applied + failed)) label actions failed, $applied applied — the repo is part-way through the plan. Fix the cause and re-run; sync is idempotent." >&2
     exit 1
   fi
+}
+
+# --- tasks-to-issues (MIP-0063 §5.5) ---
+
+# One MIP's task table projected into GitHub: an issue per row that has none, the row's `#` cell
+# rewritten into a link to it, and one native `blocked by` edge per entry of the `depends on`
+# column. scripts/lib/tasks_issues.py does the reading and the rewrite; this does the gh calls.
+# One-way and re-runnable: after this, issues own status and the file owns the plan.
+cmd_tasks_to_issues() {
+  local arg="" milestone="" file=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --milestone)
+        [ $# -ge 2 ] || { echo "issues.sh tasks-to-issues: --milestone needs a name" >&2; exit 1; }
+        milestone="$2"; shift 2 ;;
+      -*) echo "issues.sh tasks-to-issues: unknown argument: $1" >&2; usage >&2; exit 1 ;;
+      *)
+        [ -z "$arg" ] || { echo "issues.sh tasks-to-issues: one task list per run (got \"$arg\" and \"$1\")" >&2; exit 1; }
+        arg="$1"; shift ;;
+    esac
+  done
+  [ -n "$arg" ] || { echo "issues.sh tasks-to-issues: expects <MIP-NNNN|path/to/MIP-NNNN.tasks.md>" >&2; usage >&2; exit 1; }
+  case "$arg" in
+    MIP-[0-9][0-9][0-9][0-9]) file="$root/docs/mips/$arg.tasks.md" ;;
+    *) file="$arg" ;;
+  esac
+  [ -f "$file" ] || { echo "issues.sh tasks-to-issues: no such task list: $file" >&2; exit 1; }
+
+  require_gh
+  resolve_nwo
+
+  local -a ms_args=()
+  if [ -n "$milestone" ]; then
+    # Decision 6: this command never invents a milestone. Checked before anything is created, not
+    # at the first `gh issue create`, which is the difference between "nothing happened" and
+    # "three of eight rows are filed and the rest aborted".
+    local ms_titles
+    ms_titles="$(gh api --paginate "repos/$nwo/milestones?state=all" </dev/null --jq '.[].title')"
+    grep -qxF "$milestone" <<<"$ms_titles" || {
+      echo "issues.sh tasks-to-issues: $nwo has no milestone named \"$milestone\" — create it first (MIP-0063 Decision 6)" >&2
+      exit 1
+    }
+    ms_args=(--milestone "$milestone")
+  fi
+
+  # --state all: the dedup has to see closed task issues too, or a re-run after a task merges
+  # files it a second time. The limit guard is `queue`'s — past it gh truncates in silence, and a
+  # truncated list reads as "not filed yet".
+  local limit=500 issues n_issues
+  issues="$(gh issue list --repo "$nwo" --state all --limit "$limit" --json number,title </dev/null)"
+  n_issues="$(jq 'length' <<<"$issues")"
+  [ "$n_issues" -lt "$limit" ] || {
+    echo "issues.sh: $nwo has at least $limit issues, this script's page limit — raise it before trusting the dedup." >&2
+    exit 1
+  }
+
+  local issues_file plan rc=0
+  issues_file="$(mktemp)"
+  printf '%s\n' "$issues" > "$issues_file"
+  plan="$(python3 "$root/scripts/lib/tasks_issues.py" plan "$file" --repo "$nwo" --issues "$issues_file")" || rc=$?
+  rm -f "$issues_file"
+  [ "$rc" -eq 0 ] || exit 1
+
+  local mip n_rows
+  mip="$(jq -r '.mip' <<<"$plan")"
+  n_rows="$(jq '.rows | length' <<<"$plan")"
+  echo "tasks-to-issues: MIP-$mip, $n_rows rows → $nwo${milestone:+   (milestone: $milestone)}"
+
+  local map='{}' i id title body number url created=0 existing=0 failed=0
+  for ((i = 0; i < n_rows; i++)); do
+    id="$(jq -r ".rows[$i].id" <<<"$plan")"
+    number="$(jq -r ".rows[$i].issue // empty" <<<"$plan")"
+    title="$(jq -r ".rows[$i].title" <<<"$plan")"
+    if [ -n "$number" ]; then
+      printf '  %-10s #%-6s already filed\n' "$mip-T$id" "$number"
+      existing=$((existing + 1))
+      map="$(jq -c --arg k "$id" --argjson v "$number" '.[$k] = $v' <<<"$map")"
+      continue
+    fi
+    body="$(jq -r ".rows[$i].body" <<<"$plan")"
+    if [ "$dry" -eq 1 ]; then
+      printf '  %-10s would create: %s\n' "$mip-T$id" "$title"
+      run gh issue create --repo "$nwo" --title "$title" --body "$body" ${ms_args[@]+"${ms_args[@]}"}
+      created=$((created + 1))
+      continue
+    fi
+    # Not through run(): it sends the child's stdout to /dev/null, and the new issue's URL is the
+    # one piece of output the rest of this command cannot do without.
+    rc=0
+    url="$(gh issue create --repo "$nwo" --title "$title" --body "$body" ${ms_args[@]+"${ms_args[@]}"} </dev/null)" || rc=$?
+    if [ "$rc" -ne 0 ]; then
+      echo "issues.sh tasks-to-issues: creating $mip-T$id failed (exit $rc)" >&2
+      failed=$((failed + 1))
+      continue
+    fi
+    number="$(arg_number "${url##*/}" "the URL gh printed for $mip-T$id")" || exit 1
+    printf '  %-10s #%-6s created\n' "$mip-T$id" "$number"
+    created=$((created + 1))
+    map="$(jq -c --arg k "$id" --argjson v "$number" '.[$k] = $v' <<<"$map")"
+  done
+
+  local -a link_args=()
+  [ "$dry" -eq 0 ] || link_args=(--dry-run)
+  local linked n_linked
+  linked="$(python3 "$root/scripts/lib/tasks_issues.py" link "$file" --repo "$nwo" --map "$map" ${link_args[@]+"${link_args[@]}"})" || exit 1
+  n_linked="$(grep -c . <<<"$linked" || true)"
+  [ -z "$linked" ] || sed 's/^/  link: /' <<<"$linked"
+
+  local deps dep dep_number present wired=0 already=0 pending=0
+  for ((i = 0; i < n_rows; i++)); do
+    id="$(jq -r ".rows[$i].id" <<<"$plan")"
+    deps="$(jq -r ".rows[$i].deps[]?" <<<"$plan")"
+    [ -n "$deps" ] || continue
+    number="$(jq -r --arg k "$id" '.[$k] // empty' <<<"$map")"
+    present=""
+    # No state filter: the 2026-09-27 probe found an edge survives closing both issues and reads
+    # back as closed, so a closed blocker is still an edge and re-adding it would be a duplicate.
+    [ -z "$number" ] || present="$(gh api --paginate "repos/$nwo/issues/$number/dependencies/blocked_by" </dev/null --jq '.[].number')"
+    while read -r dep; do
+      [ -n "$dep" ] || continue
+      dep_number="$(jq -r --arg k "$dep" '.[$k] // empty' <<<"$map")"
+      if [ -z "$number" ] || [ -z "$dep_number" ]; then
+        printf '  edge: %s blocked by %s — pending, one of the two is not filed yet\n' "$mip-T$id" "$mip-T$dep"
+        pending=$((pending + 1))
+      elif grep -qx "$dep_number" <<<"$present"; then
+        printf '  edge: #%s blocked by #%s — already wired\n' "$number" "$dep_number"
+        already=$((already + 1))
+      elif printf '  edge: #%s blocked by #%s\n' "$number" "$dep_number" && cmd_deps_add "$number" --blocked-by "$dep_number"; then
+        wired=$((wired + 1))
+      else
+        failed=$((failed + 1))
+      fi
+    done <<<"$deps"
+  done
+
+  printf '%ssummary: %d created, %d already filed · %d rows linked · %d edges wired, %d already wired, %d pending\n' \
+    "$([ "$dry" -eq 1 ] && printf 'dry-run ' || true)" \
+    "$created" "$existing" "$n_linked" "$wired" "$already" "$pending"
+  [ "$failed" -eq 0 ] || {
+    echo "issues.sh tasks-to-issues: $failed action(s) failed — fix the cause and re-run; this command is idempotent." >&2
+    exit 1
+  }
 }
 
 dry=0
@@ -1189,6 +1340,95 @@ EOF
     "      1 ready · 0 blocked · 0 in triage   (milestone: Water quality on the map)"
 
   echo
+  echo "-- tasks-to-issues projects the depends-on DAG, and a second run is a no-op --"
+  local t2i="$tmp/t2i" t2i_out t2i_file
+  mkdir -p "$t2i/bin"
+  # A stub that keeps state: created issues land in issues.json and posted edges in deps-<n>.json,
+  # so run 2 sees exactly what run 1 left behind. That is the only way to test idempotence — the
+  # property this command is for — without filing anything.
+  cat > "$t2i/bin/gh" <<'STUB'
+#!/usr/bin/env bash
+cat >/dev/null          # a gh that reads stdin; the real one does
+jq_expr=""; path=""; prev=""; title=""; method=""; issue_id=""
+for a in "$@"; do
+  case "$prev" in --jq) jq_expr="$a" ;; --title) title="$a" ;; --method) method="$a" ;; esac
+  case "$a" in repos/*) path="$a" ;; issue_id=*) issue_id="${a#issue_id=}" ;; esac
+  prev="$a"
+done
+case "$*" in
+  *"auth status"*) exit 0 ;;
+  *"repo view"*)   echo "marola-dev/marola"; exit 0 ;;
+  *"issue list"*)  cat "$T2I/issues.json"; exit 0 ;;
+  *"issue create"*)
+    printf 'create %s\n' "$title" >> "$T2I/log"
+    n=$(( $(jq 'length' "$T2I/issues.json") + 700 ))
+    jq --argjson n "$n" --arg t "$title" '. + [{number:$n,title:$t}]' "$T2I/issues.json" > "$T2I/w" && mv "$T2I/w" "$T2I/issues.json"
+    printf 'https://github.com/marola-dev/marola/issues/%s\n' "$n"
+    exit 0 ;;
+esac
+case "$path" in
+  */dependencies/blocked_by)
+    n="${path%/dependencies/blocked_by}"; n="${n##*/}"
+    f="$T2I/deps-$n.json"; [ -f "$f" ] || printf '[]\n' > "$f"
+    if [ "$method" = POST ]; then
+      printf 'edge %s <- %s\n' "$n" "$(( issue_id - 5600000000 ))" >> "$T2I/log"
+      jq --argjson b "$(( issue_id - 5600000000 ))" '. + [{number:$b,state:"closed"}]' "$f" > "$T2I/w" && mv "$T2I/w" "$f"
+      exit 0
+    fi
+    if [ -n "$jq_expr" ]; then jq -r "$jq_expr" "$f"; else cat "$f"; fi
+    exit 0 ;;
+  */milestones*) printf 'Issue tracking standard live\n'; exit 0 ;;
+  repos/*/issues/*) printf '{"number":%s,"id":%d}\n' "${path##*/}" "$(( 5600000000 + ${path##*/} ))"; exit 0 ;;
+esac
+echo "stub: unhandled: $*" >&2; exit 1
+STUB
+  chmod +x "$t2i/bin/gh"
+  printf '[]\n' > "$t2i/issues.json"
+  : > "$t2i/log"
+  t2i_file="$t2i/MIP-0099.tasks.md"
+  # 6 depends on 1, not on 5, and 3 is a second root: the shape MIP-0034 and MIP-0031 have and a
+  # k-depends-on-k-1 reading of the table would destroy.
+  {
+    echo '| # | slug | delivers | tests (must exist before the PR) | depends on |'
+    echo '|---|---|---|---|---|'
+    printf '| 1 | a | d | t | – |\n| 2 | b | d | t | 1 |\n| 3 | c | d | t | – |\n'
+    printf '| 4 | d | d | t | 1, 3 |\n| 5 | e | d | t | 2 |\n| 6 | f | d | t | 1 |\n'
+  } > "$t2i_file"
+
+  dry=0
+  t2i_out="$(PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" cmd_tasks_to_issues "$t2i_file" --milestone "Issue tracking standard live" 2>&1)" || failed=1
+  check "run 1 files every row and wires every edge" "$(tail -1 <<<"$t2i_out")" \
+    "summary: 6 created, 0 already filed · 6 rows linked · 5 edges wired, 0 already wired, 0 pending"
+  check "the edges are the depends-on column's, not the row order's" "$(grep '^edge' "$t2i/log" | tr '\n' ' ')" \
+    "edge 701 <- 700 edge 703 <- 700 edge 703 <- 702 edge 704 <- 701 edge 705 <- 700 "
+  check "every row's # cell is now a link" \
+    "$(grep -c '^| \[[1-6]\](https://github.com/marola-dev/marola/issues/70[0-5]) |' "$t2i_file")" "6"
+
+  : > "$t2i/log"
+  t2i_out="$(PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" cmd_tasks_to_issues "$t2i_file" --milestone "Issue tracking standard live" 2>&1)" || failed=1
+  check "run 2 creates nothing, rewrites nothing and re-posts no edge" "$(tail -1 <<<"$t2i_out")" \
+    "summary: 0 created, 6 already filed · 0 rows linked · 0 edges wired, 5 already wired, 0 pending"
+  check "run 2 made no mutating call at all" "$(cat "$t2i/log")" ""
+  # The stub recorded each edge as closed on the way in: the 2026-09-27 probe found a dependency
+  # survives closing both issues, so a closed blocker is still an edge and must not be re-posted.
+  check "a closed blocker still counts as wired" "$(jq -r '.[0].state' "$t2i/deps-701.json")" "closed"
+
+  printf '[]\n' > "$t2i/issues.json"
+  rm -f "$t2i"/deps-*.json
+  t2i_out="$(PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" dry=1 cmd_tasks_to_issues "$t2i_file" 2>&1)" || failed=1
+  check "--dry-run on an already-linked file creates nothing and leaves the rows alone" \
+    "$(tail -1 <<<"$t2i_out")" \
+    "dry-run summary: 6 created, 0 already filed · 0 rows linked · 0 edges wired, 0 already wired, 5 pending"
+  check "--dry-run made no mutating call" "$(cat "$t2i/log")" ""
+  dry=0
+
+  if (PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" cmd_tasks_to_issues "$t2i_file" --milestone "No such milestone") >/dev/null 2>&1; then
+    echo "FAILED: a milestone that does not exist was accepted; the first create would have aborted part-way" >&2; failed=1
+  else
+    echo "ok: an unknown milestone is refused before anything is created"
+  fi
+
+  echo
   if [ "$failed" -eq 1 ]; then echo "issues.sh self-test: FAILED" >&2; return 1; fi
   echo "issues.sh self-test: ok"
 }
@@ -1228,5 +1468,6 @@ case "${1:-}" in
     ;;
   ready) shift; cmd_ready "$@" ;;
   queue) shift; cmd_queue "$@" ;;
+  tasks-to-issues) shift; cmd_tasks_to_issues "$@" ;;
   ""|*) usage >&2; exit 1 ;;
 esac
