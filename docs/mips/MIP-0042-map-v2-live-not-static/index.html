@@ -1,0 +1,4592 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The ocean intelligence layer for a stretch of coast — guides and design proposals.">
+      
+      
+      
+        <link rel="canonical" href="https://marola.dev/docs/mips/MIP-0042-map-v2-live-not-static/">
+      
+      
+        <link rel="prev" href="../MIP-0041-soft-book-ingestion/">
+      
+      
+        <link rel="next" href="../MIP-0043-awesome-agentic-engineering-list/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept - marola docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mip-0042-maroladevv2-a-map-that-computes-live-with-v1-frozen-and-kept" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="marola docs" class="md-header__button md-logo" aria-label="marola docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            marola docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="marola docs" class="md-nav__button md-logo" aria-label="marola docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    marola docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    docs/ — what each file is, and which ideas in them are MIP material
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AGENT-FRAMEWORKS-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — multi-agent frameworks survey: Python ideas, JVM/Scala reality, Pekko (2026-09-05)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AGENT-SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — agent skills for working on this repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AGENT-STACK-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    agent4s, llm4s and ADK: what each could do for marola (2026-09-23)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AWESOME-AGENTIC-ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Awesome Agentic Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEV-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — the development flow, end to end
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../EFFECTS-MAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — FP safety map: what's pure, what's effectful, what's hidden
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../FABLE_REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — code and documentation review (Claude Fable 5.1, 2026-09-05)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../FUTURE-WORK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — Future work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../GEMINI-CODE-ASSIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Code Assist for PR reviews — repo config, GCP setup, Pulumi/Besom, state, CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ISSUE-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — issue flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola roadmap — 2026-09-06
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../RUN-LOCALLY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — run it locally, no Telegram, no cloud account
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SCALA3-JDK-REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — Scala 3 and JDK feature review (2026-09-05)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SELF-DOCUMENTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-documenting marola: turning the dev loop into shareable content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — skills roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TELEGRAM-SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — Telegram bot setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_20" >
+        
+          
+          <label class="md-nav__link" for="__nav_20" id="__nav_20_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_20_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_20">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Benchmarks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../benchmarks/2026-09-05/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ocean-answer benchmark — 2026-09-05 snapshot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_20_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_20_2" id="__nav_20_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mip 0025
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_20_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_20_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Mip 0025
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../benchmarks/mip-0025/2026-09-07-task5-sft-dpo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025 task 5 — SFT (Layers 1+2) + DPO (Layer 3) on the tiny preset
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_21" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_21" id="__nav_21_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mips
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_21_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_21">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Mips
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Marola Improvement Proposals (MIPs)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0001: Bathing-water quality in the ranking, and a sea-lore paragraph in every reply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0002: The Telegram bot — marola's first real user surface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0003: Replies in under three seconds — caching, concurrent fetches, precomputed boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0004: The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0005-map-and-static-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005: The map — every beach's daily recommendation on a static site the pipeline feeds
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0005.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0006-live-look-user-cameras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0006: "How does it look right now?" — a live look at each beach, fed by users' cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0007-time-series-foundation-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0007: Time-series foundation models for marola's own series — local open models first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008: Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0008.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009: A richer map — a wave marker per beach and, on hover, every aspect at that point
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0010.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0011-claude-code-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0011.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0012: llm4s as marola's Scala-native LLM/agent layer — and the deprecation of the Python DSPy step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0013-opencode-tryout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013: OpenCode as marola's development agent — a tryout, and what replacing Claude Code would take
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0013.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0014-marola-book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0014: A marola book — The Compiler Pushes Back, written in LaTeX, versioned in a repo, built in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0015-interacao-swim-matching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0015: Interação — opt-in "who else is swimming here" matching between marola users
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0016-water-quality-map-markers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0016: Water-quality points on the map — OK / not-OK marks, placed in the sea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0017-agentic-tooling-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0017: Agentic tooling ideas from ai-job-search and September 2026's trending agent repos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0018: Marola self-documentation — weekly post-planner and multi-platform exporter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0019: arXiv/trending-repo survey — sea-forecasting and jellyfish-prediction techniques for marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0020-instagram-bot-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0020: An Instagram account for marola — first post by hand, API publishing, and a gated daily pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0021-beach-accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0021: Beach accessibility — parking, toilets, showers and lifeguard posts from OSM, shown only where the data exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0022-safety-answer-footer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0022: The safety footer — every answer grounded in a safety document ends with lifeguard/193/SAMU 192, appended after the model, never by it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0023: Product expansion — a wait-list, honest promotion, and the easiest way to keep marola's site and backend maintained
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0025-marola-sea-domain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025: marola-sea-1.0 — a small domain-tuned model (QLoRA SFT + tool-call SFT + DPO) served through Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0025.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0029-ocean-layer-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0030-coastal-trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0030: Coastal and lakeside trails on the map — named OSM paths near a beach or a lake
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0031-water-quality-inea-inema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031: Water quality for Rio de Janeiro (INEA) and Bahia (INEMA) — closing the "no data" gap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0031.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0032-model-strategy-benchmark-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0033-release-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0033: Release 0 — the repo goes public, a self-hosted chatbot, the first published model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0034-rss-feeds-and-content-syndication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0034.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034 tasks — the INMET alert arm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0035-map-plugin-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0035: A plugin API for marola's map — third-party layers, Windy-style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0036-marola-advertising-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0036: Marola Advertising Action (MAA) — the Release 0 launch, channel by channel, and how to sustain it after
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0037-map-pwa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0037: A PWA for marola's map — offline-tolerant, installable, no build step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0038-forecast-model-spread/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking one
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0039-deterministic-fact-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0039: The fact guard — a deterministic check that the model's sentence only says what the numbers say
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0040: The reviewer has never been validated — measure the judge, then make it a small jury
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0041-soft-book-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0041: Soft book ingestion — distilling agentic-behavior principles from a book
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-open-meteo-cors-open-and-the-reason-v2-needs-no-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Open-Meteo — CORS-open, and the reason v2 needs no server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-overpass-cors-open-but-its-own-policy-says-do-not-do-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Overpass — CORS-open, but its own policy says do not do this
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-water-quality-imasc-and-mip-0031s-ineainema-no-cors-header-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Water quality (IMA/SC, and MIP-0031's INEA/INEMA) — no CORS header at all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-scalajs-how-the-scorer-reaches-the-browser-without-being-rewritten" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Scala.js — how the scorer reaches the browser without being rewritten
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-cloudflare-workers-researched-and-rejected-as-unnecessary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Cloudflare Workers — researched, and rejected as unnecessary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-the-url-split-one-pages-deploy-two-trees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 The URL split — one Pages deploy, two trees
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-the-skeleton-board-what-the-build-still-computes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 The skeleton board — what the build still computes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-the-live-half-in-the-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 The live half, in the browser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-one-scorer-two-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 One scorer, two targets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-what-v2-owes-mip-0035s-plugin-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 What v2 owes MIP-0035's plugin API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-what-v2-owes-mip-0037s-pwa-and-what-it-owes-v2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 What v2 owes MIP-0037's PWA — and what it owes v2
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checked-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-checked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not checked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0043: docs/AWESOME-AGENTIC-ENGINEERING.md — a curated awesome-list, plus a human-gated candidate digest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0044-site-sections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0044: marola.dev becomes a site, not just a map — news, a markdown dev blog, generated API docs, a feeds page, about/contact, and a restrained support page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0045: Classic NLP and parsing where an LLM call is currently paying for it — a survey of marola's product pipeline and its own dev loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0046: The map without the generated look — a chart-derived icon set replacing every emoji
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0047-desmos-equation-art/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0048-scaling-marola-sea/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0048: Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0049: Scala for the web layer — Tyrian, Laminar, ScalaTags, or better plain-JS discipline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0050-brazilian-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0050: Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0051-wave-model-ensemble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0052-wave-model-compute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0052: Should marola ever run its own wave model, and in what language? — a costed survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0053-learned-local-correction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0053: A learned local correction, not another model — statistical downscaling of the public wave forecasts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0054-portuguese-first-experience/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0054: Portuguese first — marola's whole user-facing experience in pt-BR, with a language choice that sticks and a location-aware default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0055: A vector store behind KnowledgeStore, and a chunker that knows what kind of ocean knowledge it is cutting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056: OODS — an Open Ocean Data Store for Brazilian bathing-water quality, starting with IMA/SC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0056.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056 tasks — OODS, IMA/SC first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0057: GCP as an opt-in cloud backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0058: A credited human artist — Daniela Vicentini's paintings on marola.dev, an "arte terapia" thanks link
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0059-jev-typed-decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0059: Jev (TypeSafe AI) as an opt-in typed-decision backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0060-open-code-review-on-ready/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060: Open Code Review on request, on marola's own runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0060.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0062-ressaca-hazard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per beach
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063: A GitHub-native tracking standard — issues as the unit of work, milestones as deliverables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0063.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064: mkdocs for the docs — a real documentation site at marola.dev/docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0064.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065: CI/CD on GitHub-hosted runners — nothing builds or deploys from a desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0065.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0066-opt-in-dev-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0066: Opt-in dev containers — the flake, in a container, for contributors without Nix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_21_77" >
+        
+          
+          <label class="md-nav__link" for="__nav_21_77" id="__nav_21_77_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP 0009
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_21_77_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_21_77">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIP 0009
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_21_77_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_21_77_1" id="__nav_21_77_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshots
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_21_77_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_21_77_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Screenshots
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 — screenshots of the wave markers and the hover aspects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_22" >
+        
+          
+          <label class="md-nav__link" for="__nav_22" id="__nav_22_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Superpowers
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_22_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_22">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Superpowers
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_22_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_22_1" id="__nav_22_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_22_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_22_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-09-13-nix-tooling-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nix tooling migration — implementation plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_22_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_22_2" id="__nav_22_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_22_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_22_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-09-13-nix-tooling-migration-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nix tooling out of marola, into nix-config labs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-open-meteo-cors-open-and-the-reason-v2-needs-no-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Open-Meteo — CORS-open, and the reason v2 needs no server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-overpass-cors-open-but-its-own-policy-says-do-not-do-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Overpass — CORS-open, but its own policy says do not do this
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-water-quality-imasc-and-mip-0031s-ineainema-no-cors-header-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Water quality (IMA/SC, and MIP-0031's INEA/INEMA) — no CORS header at all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-scalajs-how-the-scorer-reaches-the-browser-without-being-rewritten" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Scala.js — how the scorer reaches the browser without being rewritten
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-cloudflare-workers-researched-and-rejected-as-unnecessary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Cloudflare Workers — researched, and rejected as unnecessary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-the-url-split-one-pages-deploy-two-trees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 The URL split — one Pages deploy, two trees
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-the-skeleton-board-what-the-build-still-computes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 The skeleton board — what the build still computes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-the-live-half-in-the-browser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 The live half, in the browser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-one-scorer-two-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 One scorer, two targets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-what-v2-owes-mip-0035s-plugin-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 What v2 owes MIP-0035's plugin API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-what-v2-owes-mip-0037s-pwa-and-what-it-owes-v2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 What v2 owes MIP-0037's PWA — and what it owes v2
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checked-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-checked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not checked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mip-0042-maroladevv2-a-map-that-computes-live-with-v1-frozen-and-kept">MIP-0042: <code>marola.dev/v2</code> — a map that computes live, with v1 frozen and kept<a class="headerlink" href="#mip-0042-maroladevv2-a-map-that-computes-live-with-v1-frozen-and-kept" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Status</strong></td>
+<td>Draft</td>
+</tr>
+<tr>
+<td><strong>Author</strong></td>
+<td>Claude Opus 5, for M. Hoffmann (request of 2026-09-07: "how to keep existing map in marola.dev/v1 and start to build marola.dev/v2 the new not statically rendered map")</td>
+</tr>
+<tr>
+<td><strong>Created</strong></td>
+<td>2026-09-07</td>
+</tr>
+<tr>
+<td><strong>Phase</strong></td>
+<td>3 (Deploy — the same phase MIP-0005's static site already occupies; still free, still no cloud account, no new hosting). Phase 1 (the Telegram bot) is still not done; per <code>AGENTS.md</code>'s phase-discipline rule that is flagged here explicitly, but it does not gate this work any more than it gated MIP-0005/0009/0030/0037 — the site has run alongside Phase 1 since it existed</td>
+</tr>
+<tr>
+<td><strong>Related</strong></td>
+<td>MIP-0005 (v1 itself — its §5.3/§5.4 build-and-schedule design, and its §9 rejection of a "dynamic site (server + API)", which this MIP reopens on new evidence rather than overturning); MIP-0029 (positioning — a live layer is what "the ocean intelligence layer" claims to be); MIP-0033 (§5.2's Cloudflare-Tunnel-backed chat server — the repo's only precedent for a live origin behind <code>marola.dev</code>; researched here and deliberately <strong>not</strong> needed, §9.3); MIP-0035 (the plugin API's <code>ctx</code>/<code>onBoardUpdate</code> contract, which v2 must preserve — §5.5); MIP-0037 (the PWA — v1-shaped by construction, and v2's own offline story, §5.6)</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>L — a Scala.js cross-build of the scorer (this repo's first JS build target), a second client tree, and a <code>site.yml</code> that publishes both. Re-rated from M once §4.4 established that the scorer cannot be hand-ported to JavaScript without duplicating safety-relevant logic — copy this clause into the index cell, not a bare <code>L</code></td>
+</tr>
+<tr>
+<td><strong>Gain</strong></td>
+<td><code>user value</code> (a score for the hour you are actually standing on the beach in, from the newest forecast run — not a snapshot computed up to 3 h ago); <code>infra/dev-loop</code> (one scorer, two targets: the cross-build is reusable by every later browser-side feature); <code>cost/ops</code> (still exactly $0 per visitor — no server, no Worker, no account, no card on file)</td>
+</tr>
+<tr>
+<td><strong>Effort vs Gain</strong></td>
+<td><code>do next</code> for §5.1 (the v1 freeze — small, reversible, and it unblocks everything else); <code>do when the Scala.js cross-build proves out</code> for §5.3/§5.4 (the live half) — §4.4's <code>java.time</code> shim is the one genuine unknown, and it is cheap to settle in a spike before committing to the rest</td>
+</tr>
+<tr>
+<td><strong>Depends on</strong></td>
+<td>Nothing blocks this. Real coordination, not blocking: MIP-0035 and MIP-0037 both edit <code>site/static/app.js</code>/<code>index.html</code>, and §5.1's freeze changes what "that file" means — so §5.1 should land either clearly before or clearly after them, not interleaved (MIP-0037 §8 already names this exact "two hands in one file" hazard). No paid cloud resource is involved, so <code>AGENTS.md</code>'s cost gate is not triggered; §8 states what would trigger it</td>
+</tr>
+<tr>
+<td><strong>Blocked by</strong></td>
+<td>none</td>
+</tr>
+<tr>
+<td><strong>Risk</strong></td>
+<td>Two clients, maintained forever. Every later map feature (MIP-0030's trails, MIP-0016's water markers, MIP-0035's plugins) has to choose a side or be built twice — and the honest failure mode is not that v2 breaks, it is that v1 quietly rots into a stale, half-featured page nobody removed</td>
+</tr>
+<tr>
+<td><strong>Cost so far</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-summary">1. Summary<a class="headerlink" href="#1-summary" title="Permanent link">&para;</a></h2>
+<p>Freeze today's static map at <code>marola.dev/v1/</code>, same files, same 3-hourly build, permanently
+available, and start a second client at <code>marola.dev/v2/</code> that computes a beach's score <strong>in the
+visitor's browser, at the moment they load the page</strong>, instead of reading a board baked hours
+earlier. The finding that makes this possible without a server is in §4: Open-Meteo answers
+cross-origin requests (<code>access-control-allow-origin: *</code>, verified live today on both the forecast
+and marine endpoints), so the browser can fetch the forecast itself, while Overpass and the
+water-quality bulletins <strong>cannot</strong> move to the browser (§4.2, §4.3), so beach geometry and water
+quality stay precomputed exactly as they are now. v2 is therefore a <em>hybrid</em>: static geography,
+live conditions. Nothing paid, nothing provisioned, one GitHub Pages deploy.</p>
+<h2 id="2-motivation">2. Motivation<a class="headerlink" href="#2-motivation" title="Permanent link">&para;</a></h2>
+<p>v1 is honest about what it is and that is precisely its limit. <code>.github/workflows/site.yml</code> runs
+<code>cron: "15 */3 * * *"</code> (verified live in this repo today), so <code>SiteBuilder</code> computes every area's
+board at most eight times a day; <code>site/static/app.js</code> then only ever <em>reads</em> those files:
+<code>fetchJson('data/areas.json')</code> → <code>data/&lt;area&gt;/latest.json</code> → <code>data/&lt;area&gt;/&lt;day&gt;.json</code>, with the
+page refusing any board whose <code>schema</code> is not <code>1</code>. Three consequences a visitor actually feels:</p>
+<ul>
+<li><strong>The board can be 3 hours old</strong>, and the page says so (<code>generated_at</code> is displayed, and
+  <code>isPast()</code> visibly fades hours already gone), honest, but still stale.</li>
+<li><strong>Only three areas exist</strong>, because each one costs an Overpass query per run: <code>site/areas.json</code>
+  holds <code>floripa</code>, <code>rio</code>, <code>salvador</code> and nothing else. A visitor anywhere else gets no answer.</li>
+<li><strong>"Near me" is a sort, not a computation.</strong> <code>app.js</code>'s Geolocation button reorders the existing
+  beaches by distance; it cannot score the coordinates you are actually standing on.</li>
+</ul>
+<p>MIP-0005 §9 rejected the obvious fix: "Dynamic site (server + API). Needs hosting, auth, rate
+limiting — everything the static board avoids." That reasoning was right and is still right. What
+it did not consider is the option this MIP proposes: dynamic <strong>without</strong> a server.</p>
+<h2 id="3-user-visible-change">3. User-visible change<a class="headerlink" href="#3-user-visible-change" title="Permanent link">&para;</a></h2>
+<p><strong>Today (v1, unchanged, still at <code>/v1/</code> after this MIP):</strong></p>
+<div class="highlight"><pre><span></span><code>marola.dev  →  Florianópolis ▾   today | tomorrow          computed 2026-09-07 09:15 -03
+               [map: 80 wave markers, each at its best hour]
+               Praia do Campeche · 35/100 at 08:00 · 〰️ 1.4 m · 🌬️ breezy 28 km/h
+</code></pre></div>
+<p><strong>v2 (<code>marola.dev/v2/</code>):</strong></p>
+<div class="highlight"><pre><span></span><code>marola.dev/v2  →  Florianópolis ▾   now (13:42) | +1h | +2h | tomorrow      live · fetched just now
+                  [same 80 beaches, scored from the forecast run fetched 4 s ago]
+                  Praia do Campeche · 41/100 now · 〰️ 1.1 m · 🌬️ breezy 24 km/h
+                  💧 4/5 PRÓPRIA — avoid Ponto 73 (25 Aug)   ← still from the 3-hourly build
+                  ⓘ conditions live from Open-Meteo · beaches and water quality precomputed 09:15
+</code></pre></div>
+<p>The footer line is not decoration: it is the honesty requirement (§6). A v2 page mixes two
+freshness classes and must show which is which, the same way v1 shows <code>generated_at</code> today.</p>
+<p>Also new in v2, and the concrete answer to "near me": <code>marola.dev/v2/?lat=-27.69&amp;lon=-48.48</code>
+scores <em>those</em> coordinates against the nearest precomputed beach's geography. What v2 deliberately
+does <strong>not</strong> do is discover new beaches on demand: that needs Overpass in the browser, which §4.2
+rules out on the operator's own stated policy.</p>
+<h2 id="4-data-sources-and-dependencies-reviewed">4. Data sources and dependencies reviewed<a class="headerlink" href="#4-data-sources-and-dependencies-reviewed" title="Permanent link">&para;</a></h2>
+<h3 id="41-open-meteo-cors-open-and-the-reason-v2-needs-no-server">4.1 Open-Meteo — CORS-open, and the reason v2 needs no server<a class="headerlink" href="#41-open-meteo-cors-open-and-the-reason-v2-needs-no-server" title="Permanent link">&para;</a></h3>
+<p><code>curl -I -H "Origin: https://marola.dev"</code>, 2026-09-07, against both endpoints this repo already
+uses (<code>core</code>'s only two forecast URLs): <code>https://api.open-meteo.com/v1/forecast</code> and
+<code>https://marine-api.open-meteo.com/v1/marine</code>. Both returned <code>HTTP/1.1 200</code> with
+<code>access-control-allow-origin: *</code>, <code>access-control-allow-methods: GET, POST, OPTIONS</code> and
+<code>access-control-max-age: 600</code>. A browser on <code>marola.dev</code> can read these directly; no proxy needed.</p>
+<p>Terms (<code>https://open-meteo.com/en/terms</code>, fetched 2026-09-07): free non-commercial use at
+<strong>600 calls/min, 5,000 calls/hour, 10,000 calls/day</strong>, licence <strong>CC-BY 4.0</strong>, no API key mentioned.
+Those limits are quotas against the <em>calling</em> IP, which in v2 is the visitor's, not marola's single
+Actions runner, so browser-side fetching spends the visitor's allowance rather than concentrating
+every visitor onto one address. <strong>Not verified</strong>: that Open-Meteo enforces per-IP specifically; the
+terms page states the numbers without naming the subject. §8 treats this as an assumption.</p>
+<h3 id="42-overpass-cors-open-but-its-own-policy-says-do-not-do-this">4.2 Overpass — CORS-open, but its own policy says do not do this<a class="headerlink" href="#42-overpass-cors-open-but-its-own-policy-says-do-not-do-this" title="Permanent link">&para;</a></h3>
+<p><code>Access-Control-Allow-Origin: *</code> is present (POST with an <code>Origin</code> header, 2026-09-07, real
+elements returned), so CORS is <em>not</em> the blocker. The blocker is the operator's fair-use document
+(<code>dev.overpass-api.de/overpass-doc/en/preface/commons.html</code>, fetched 2026-09-07), which lists among
+its problematic patterns: <em>"Operating end-user applications relying on public instances as backend
+infrastructure"</em>, alongside a ~10,000 requests/day and ~1 GB/day expectation per user. Live
+confirmation of how tight the per-IP budget is: <code>https://overpass-api.de/api/status</code>, 2026-09-07 →
+<code>Rate limit: 2</code>, <code>2 slots available now</code>: two concurrent queries per IP.</p>
+<p><strong>Conclusion: beach discovery stays server-side.</strong> v2 keeps consuming the precomputed beach list
+<code>SiteBuilder</code> already publishes. This is also what site.yml's own header comment has said since
+MIP-0005 ("Overpass fair use: keep areas few and the cron at ≥ 3 h").</p>
+<h3 id="43-water-quality-imasc-and-mip-0031s-ineainema-no-cors-header-at-all">4.3 Water quality (IMA/SC, and MIP-0031's INEA/INEMA) — no CORS header at all<a class="headerlink" href="#43-water-quality-imasc-and-mip-0031s-ineainema-no-cors-header-at-all" title="Permanent link">&para;</a></h3>
+<p><code>curl -D - -H "Origin: https://marola.dev" https://balneabilidade.ima.sc.gov.br/relatorio/mapa</code>,
+2026-09-07: <code>HTTP/1.1 200</code>, <code>Content-Type: text/html; charset=UTF-8</code>, and <strong>no
+<code>Access-Control-Allow-Origin</code> header in the response</strong>. A browser cannot read this cross-origin:
+not a policy question, a hard one. MIP-0031's INEA/INEMA sources are PDF bulletins needing a parser,
+which is worse still for a browser. <strong>Water quality stays precomputed, unconditionally.</strong></p>
+<h3 id="44-scalajs-how-the-scorer-reaches-the-browser-without-being-rewritten">4.4 Scala.js — how the scorer reaches the browser without being rewritten<a class="headerlink" href="#44-scalajs-how-the-scorer-reaches-the-browser-without-being-rewritten" title="Permanent link">&para;</a></h3>
+<p><code>core/src/main/scala/marola/scoring/Swimability.scala</code> is 220 lines and already pure: its only
+imports are <code>java.time.{LocalDate, DateTimeFormatter}</code> and marola's own model/water types: no Kyo,
+no HTTP, no file I/O. It is cross-compilable as-is, with one caveat.</p>
+<ul>
+<li>Scala.js <strong>1.22.0</strong> is current (<code>scala-js.org</code>, and <code>repo1.maven.org</code>'s
+  <code>scalajs-library_2.13/maven-metadata.xml</code> → <code>&lt;latest&gt;1.22.0</code>, both 2026-09-07). Cross-builds use
+  <code>sbt-scalajs</code> 1.22.0 + <code>sbt-scalajs-crossproject</code> 1.3.2 with <code>crossProject(JVMPlatform, JSPlatform)</code>
+  (<code>scala-js.org/doc/project/cross-build.html</code>, fetched 2026-09-07).</li>
+<li><strong>Scala 3 on Scala.js is confirmed by artifact existence, not by a docs claim</strong>:
+  <code>https://repo1.maven.org/maven2/io/github/cquiroz/scala-java-time_sjs1_3/</code> returns <code>200</code>
+  (2026-09-07), a published <code>_sjs1_3</code> (Scala.js 1.x, Scala 3) artifact. That same library is the
+  caveat's fix: Scala.js's <code>javalib</code> does not ship <code>java.time</code>, so <code>scala-java-time</code> supplies it.
+  <strong>Not verified</strong>: which exact version of <code>scala-java-time</code> to pin, and that <code>DateTimeFormatter</code>'s
+  specific patterns <code>Swimability</code> uses are among what it implements. That is §7's spike.</li>
+</ul>
+<h3 id="45-cloudflare-workers-researched-and-rejected-as-unnecessary">4.5 Cloudflare Workers — researched, and rejected as unnecessary<a class="headerlink" href="#45-cloudflare-workers-researched-and-rejected-as-unnecessary" title="Permanent link">&para;</a></h3>
+<p><code>developers.cloudflare.com/workers/platform/limits/</code>, fetched 2026-09-07: Free plan is
+<strong>100,000 requests/day</strong>, <strong>10 ms CPU per HTTP request</strong>, <strong>50 subrequests per request</strong>, <strong>128 MB</strong>
+memory per isolate; <em>"Waiting on network requests (such as <code>fetch()</code> calls, KV reads, or database
+queries) does not count toward CPU time"</em>, and no wall-clock limit for HTTP-triggered Workers on
+free. Those numbers would in fact fit marola's workload: it is I/O-bound, not CPU-bound. The docs
+page <strong>does not state</strong> whether a card is required to create a free Workers account; not verified.</p>
+<p>It is still rejected for v2 (§9.2): once the browser can call Open-Meteo directly, a Worker adds an
+account, a deploy path outside GitHub Actions, and a second thing that can be down, for nothing.
+It is written down here as the <strong>documented fallback</strong> if a future v2 feature needs a CORS-closed
+source live (a water-quality proxy is the obvious candidate), and §8 states the cost gate that
+would then apply.</p>
+<p><strong>The pick:</strong> Open-Meteo in the browser (§4.1); Overpass and water quality precomputed (§4.2/§4.3);
+the scorer cross-compiled with Scala.js (§4.4); no Worker, no tunnel, no paid service (§4.5).</p>
+<h2 id="5-design">5. Design<a class="headerlink" href="#5-design" title="Permanent link">&para;</a></h2>
+<h3 id="51-the-url-split-one-pages-deploy-two-trees">5.1 The URL split — one Pages deploy, two trees<a class="headerlink" href="#51-the-url-split-one-pages-deploy-two-trees" title="Permanent link">&para;</a></h3>
+<p><code>site/dist/</code> gains two client directories and keeps <strong>one</strong> copy of the data:</p>
+<div class="highlight"><pre><span></span><code>site/dist/
+  index.html app.js style.css vendor/   ← v1, at the root, exactly as today (no link breaks)
+  v1/  index.html app.js style.css vendor/   ← the same v1 files, at their permanent URL
+  v2/  index.html app.js style.css vendor/   ← the new client
+  data/ areas.json  &lt;area&gt;/latest.json  &lt;area&gt;/&lt;day&gt;.json   ← shared, written once
+  CNAME smoke/ coverage/
+</code></pre></div>
+<p>Once v2 is declared ready, the root copy is swapped to v2 and <code>/v1/</code> stays, labelled in its own
+footer as the static map. <strong>Concrete choice made:</strong> a path split on the one existing domain.
+Rejected: <code>v2.marola.dev</code> (a new DNS record, and MIP-0005's CNAME-inside-the-artifact mechanism,
+<code>echo "marola.dev" &gt; site/dist/CNAME</code> in site.yml, covers one hostname, not two); rejected: a
+<code>?v=2</code> toggle in one <code>app.js</code> (one file rendering two ways is exactly the "two hands in one file"
+problem MIP-0037 §8 already flags).</p>
+<p>Two mechanical consequences, both real, both found by reading the files:</p>
+<ul>
+<li><strong>Relative data paths break under <code>/v1/</code>.</strong> <code>app.js</code> fetches <code>'data/areas.json'</code>, which under
+  <code>/v1/</code> resolves to <code>/v1/data/areas.json</code>. Fix: derive a base from the script's own URL
+  (<code>new URL('.', document.currentScript.src)</code>) and resolve <code>data/</code> against the <em>site root</em>, so one
+  <code>data/</code> tree serves both clients and <code>just site-serve</code> on a subpath still works. Do not hardcode
+  <code>/data/</code>: that would break the <code>h0ffmann.github.io/marola/</code> project-page URL site.yml still
+  documents as resolving.</li>
+<li><strong>site.yml's publish allowlist rejects them.</strong> Its <code>find . -mindepth 1 \( -path ./data -o -path
+  ./smoke -o -path ./coverage -o -path ./vendor \) -prune -o -type f ! -name index.html ... -print</code>
+  step fails the build on any file outside the list. <code>-path ./v1 -o -path ./v2</code> must be added to
+  the prune set, and the "Required files" step extended to assert <code>v1/index.html</code> and <code>v2/index.html</code>
+  exist: that step is the belt that caught a half-built deploy on 5 Sep 2026 and it should keep
+  catching one.</li>
+</ul>
+<h3 id="52-the-skeleton-board-what-the-build-still-computes">5.2 The skeleton board — what the build still computes<a class="headerlink" href="#52-the-skeleton-board-what-the-build-still-computes" title="Permanent link">&para;</a></h3>
+<p><code>SiteBuilder</code> and <code>Board</code> are unchanged in shape; the board JSON v1 reads is exactly what v2 reads.
+v2 simply uses a <em>subset</em> of it: <code>beaches[].{name,lat,lon}</code>, <code>water</code>, <code>facilities</code>, <code>tides</code>,
+<code>sources</code>, <code>lore</code>, and ignores <code>hours[]</code>/<code>best</code>/<code>sea</code>, which it recomputes. No schema change, so
+<code>site/board.schema.json</code> and its <code>"schema": 1</code> gate stay valid for both clients. That is deliberate:
+a v2 that needed its own schema would force a second build path and double the Overpass cost.</p>
+<h3 id="53-the-live-half-in-the-browser">5.3 The live half, in the browser<a class="headerlink" href="#53-the-live-half-in-the-browser" title="Permanent link">&para;</a></h3>
+<p>On load, <code>site/v2/app.js</code>:
+1. fetches the shared board (as today) for geography, water quality and tides;
+2. issues <strong>one batched Open-Meteo call per area, not per beach</strong>: both endpoints accept
+   comma-separated <code>latitude</code>/<code>longitude</code> lists, so 80 beaches cost 2 requests, not 160. This keeps
+   a page load inside §4.1's 600/min ceiling with room to spare, and is the single most important
+   implementation constraint in this MIP;
+3. scores every beach/hour by calling the cross-compiled <code>Swimability</code>, and renders, reusing v1's
+   marker, tooltip and card code as the starting point rather than a rewrite.</p>
+<h3 id="54-one-scorer-two-targets">5.4 One scorer, two targets<a class="headerlink" href="#54-one-scorer-two-targets" title="Permanent link">&para;</a></h3>
+<p>Extract the pure scorer and the model types it needs into a cross-compiled module; <code>core</code> depends on
+its JVM output, so nothing about the JVM pipeline changes:</p>
+<div class="highlight"><pre><span></span><code><span class="k">lazy</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">scoring</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">crossProject</span><span class="p">(</span><span class="nc">JVMPlatform</span><span class="p">,</span><span class="w"> </span><span class="nc">JSPlatform</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="n">crossType</span><span class="p">(</span><span class="nc">CrossType</span><span class="p">.</span><span class="nc">Pure</span><span class="p">).</span><span class="n">in</span><span class="p">(</span><span class="n">file</span><span class="p">(</span><span class="s">"scoring"</span><span class="p">))</span>
+<span class="w">  </span><span class="p">.</span><span class="n">settings</span><span class="p">(</span><span class="n">libraryDependencies</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="s">"io.github.cquiroz"</span><span class="w"> </span><span class="o">%%%</span><span class="w"> </span><span class="s">"scala-java-time"</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="s">"&lt;pin in §7's spike&gt;"</span><span class="p">)</span>
+
+<span class="c1">// scoring/js — the only new public surface:</span>
+<span class="nd">@JSExportTopLevel</span><span class="p">(</span><span class="s">"marolaScore"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="n">hour</span><span class="p">:</span><span class="w"> </span><span class="nc">HourlyConditions</span><span class="p">,</span><span class="w"> </span><span class="n">water</span><span class="p">:</span><span class="w"> </span><span class="nc">WaterQuality</span><span class="p">):</span><span class="w"> </span><span class="nc">ScoreResult</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Swimability</span><span class="p">.</span><span class="n">score</span><span class="p">(...)</span>
+</code></pre></div>
+<p><strong>This is the load-bearing decision of the whole MIP.</strong> A hand-written JavaScript scorer would be a
+second implementation of safety-relevant logic, free to drift from the Scala one: precisely what
+the <code>mip</code> skill's house rules forbid ("Safety-relevant logic stays deterministic and out of the LLM
+… plain Scala in <code>scoring/</code>, unit-tested"). If §7's spike shows the cross-build is not workable,
+v2 as designed does not happen; §9.4 says what to do instead.</p>
+<h3 id="55-what-v2-owes-mip-0035s-plugin-api">5.5 What v2 owes MIP-0035's plugin API<a class="headerlink" href="#55-what-v2-owes-mip-0035s-plugin-api" title="Permanent link">&para;</a></h3>
+<p>MIP-0035's <code>ctx</code> is <code>{ map, L, board, onBoardUpdate(fn) }</code>: a board <em>object</em> plus an update hook,
+never a file URL. That contract survives v2 untouched: in v1 <code>ctx.board</code> is the fetched JSON, in v2
+it is the same object with <code>hours[]</code>/<code>best</code> filled in client-side, and <code>onBoardUpdate</code> fires on a
+live recompute exactly as it fires on an area/day change. MIP-0035's §4.2 conclusion, "no, this
+does not require moving off GitHub Pages", is independently re-confirmed here for v2 (§4.1–§4.5).
+The one thing v2 must not do is hand plugins a raw fetch URL instead of <code>ctx.board</code>; that would
+couple every plugin to v1's file layout.</p>
+<h3 id="56-what-v2-owes-mip-0037s-pwa-and-what-it-owes-v2">5.6 What v2 owes MIP-0037's PWA — and what it owes v2<a class="headerlink" href="#56-what-v2-owes-mip-0037s-pwa-and-what-it-owes-v2" title="Permanent link">&para;</a></h3>
+<p><strong>MIP-0037 is v1-shaped, and that is fine.</strong> Its service worker is network-first over <code>/data/*.json</code>
+and cache-first over the app shell, a design that presumes the board is a fetched static file, which
+in v2 it only half is. Recommendation: <strong>land MIP-0037 against v1, unchanged and independently</strong>; it
+is a real cheap win today and nothing in this MIP delays it. v2's own offline story is then a
+stronger one than a cache: <strong>when the live fetch fails, v2 falls back to v1's board and says so</strong>,
+the same static file v1 was already going to show. That is a concrete argument for keeping <code>/v1/</code>
+alive permanently rather than deleting it after the switch (§8's rot risk cuts the other way here).</p>
+<h2 id="6-scoring-safety-impact">6. Scoring / safety impact<a class="headerlink" href="#6-scoring-safety-impact" title="Permanent link">&para;</a></h2>
+<p>No threshold changes and no new notes: §5.4 exists precisely so the numbers are computed by the
+same code. The safety-relevant change is <strong>freshness honesty</strong>, and it is a real one: v1's single
+<code>generated_at</code> stamp no longer describes the whole page, because a v2 page carries live conditions
+next to hours-old water quality. Required, not optional: v2 shows the live fetch time and the
+board's <code>generated_at</code> separately (§3's footer), and a failed live fetch that falls back to v1's
+board must say <em>"showing the static board from HH:MM"</em>, never silently render stale numbers under
+a "live" label. An <code>unfit</code> water verdict remains a veto to score 0 in both clients, unchanged.</p>
+<h2 id="7-verification-plan">7. Verification plan<a class="headerlink" href="#7-verification-plan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Spike first, before any other work</strong> (§4.4's unknown): cross-compile <code>Swimability</code> to JS and
+  run this repo's existing golden fixtures through it. <code>PipelineGoldenSpec</code> already pins real
+  scored output; the spike passes when <code>scoringJVM/test</code> and <code>scoringJS/test</code> produce byte-identical
+  scores from the same fixtures. <strong>That shared-fixture test is the whole justification for the
+  cross-build and must be a permanent CI gate, not a one-off check.</strong></li>
+<li><code>SiteBuilderSpec</code> (new assertions): <code>site/dist</code> contains <code>v1/index.html</code>, <code>v2/index.html</code> and
+  exactly one <code>data/</code> tree; no board JSON is duplicated.</li>
+<li><code>scripts/site_check.js</code> (already in <code>just quality</code>): v2 renders markers from a fixture board plus
+  a stubbed Open-Meteo response; and with the stub failing, v2 shows the §6 fallback banner rather
+  than an empty map.</li>
+<li>Live, before merge: load <code>/v2/</code> against a real <code>just site-build</code>, confirm from devtools that a
+  full page load costs <strong>two</strong> Open-Meteo requests per area (§5.3), not one per beach.</li>
+<li>"Done" = <code>/v1/</code> and <code>/v2/</code> both live on <code>marola.dev</code> from one deploy, v1 byte-identical to today,
+  and the JVM/JS score-parity test green in CI.</li>
+</ul>
+<h2 id="8-risks-limitations-and-honest-caveats">8. Risks, limitations, and honest caveats<a class="headerlink" href="#8-risks-limitations-and-honest-caveats" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Two clients is the real cost, and it is permanent.</strong> §5.6 argues <code>/v1/</code> should outlive the
+  switch as v2's fallback, which makes the maintenance burden a feature, but it is still a burden,
+  and every later map MIP now has to say which client it targets.</li>
+<li><strong>v2 shifts load onto visitors' networks and browsers.</strong> A phone on beach signal doing two
+  Open-Meteo calls plus a Scala.js scorer over 80 beaches is measurably slower than reading one
+  pre-baked JSON. This is a genuine regression on the exact device marola is for, and MIP-0037's
+  offline case makes it sharper. Not solvable by design: only measurable (§7) and reversible
+  (<code>/v1/</code> stays).</li>
+<li><strong>Per-IP quota is assumed, not verified</strong> (§4.1). If Open-Meteo's 10,000/day is per <em>application</em>
+  rather than per IP, browser-side fetching does not distribute anything and v2's ceiling is roughly
+  60 area-loads/day, which would kill the design. Settle this before §5.3 is built, not after.</li>
+<li><strong>Third-party terms can change.</strong> v1 depends on Open-Meteo's terms too, but only from one CI
+  runner; v2 depends on them from every visitor's browser, where a policy change or a CORS header
+  removal is instantly and totally visible to users. <code>/v1/</code> staying live is the mitigation.</li>
+<li><strong>Cost gate, stated for the record.</strong> Nothing in this MIP provisions anything: GitHub Pages,
+  Actions, Open-Meteo and Overpass are all free and already in use. If a later change adopts §4.5's
+  Worker fallback, that is an account on a third-party platform whose free-tier card requirement is
+  <strong>not verified</strong>, and <code>AGENTS.md</code>'s cost-and-deployment rule ("propose the change, state the
+  expected cost, wait for a go-ahead") applies in full at that point, generous free tier or not.</li>
+</ul>
+<h2 id="9-alternatives-considered">9. Alternatives considered<a class="headerlink" href="#9-alternatives-considered" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Do nothing: v1 forever.</strong> Genuinely defensible: v1 is free, honest and works. It loses the
+   three things §2 names, and the request explicitly asked for v2. Rejected on the request.</li>
+<li><strong>A Cloudflare Worker computing boards per request</strong> (§4.5). Free-tier numbers fit. Rejected:
+   once the browser can reach Open-Meteo itself, a Worker buys an extra account, an extra deploy
+   path and an extra outage surface for no capability. Kept as the documented fallback for a
+   CORS-closed source.</li>
+<li><strong>A small always-on process behind MIP-0033's Cloudflare Tunnel.</strong> The repo's own precedent, and
+   MIP-0033 §5.2 already accepted narrowly overriding MIP-0005 §9's "no server" for the chatbot.
+   Rejected here for a different reason than cost: MIP-0033 §8 states plainly that the chatbot's
+   uptime <em>is the maintainer's machine's uptime</em>, which is an acceptable trade for an optional chat
+   widget and an unacceptable one for the map itself. Worth noting that v2 as designed is a
+   <em>smaller</em> departure from MIP-0005 §9 than MIP-0033 already is: it adds no origin at all.</li>
+<li><strong>Port <code>Swimability</code> to hand-written JavaScript.</strong> Half the effort of §5.4 and no new build
+   target. Rejected as the one thing this repo's rules directly forbid: two implementations of
+   safety-relevant scoring, free to diverge. If §7's spike fails, the answer is to shrink v2's scope
+   (live <em>conditions display</em> with no client-side score, keeping v1's scores), not to port it.</li>
+<li><strong>Full client-side, Overpass included</strong>: v2 discovers beaches anywhere. Rejected on §4.2's
+   operator policy, in the operator's own words. Revisit only behind marola's own Overpass instance,
+   which is a server, which is alternative 2 or 3 again.</li>
+</ol>
+<h2 id="11-open-questions">11. Open questions<a class="headerlink" href="#11-open-questions" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Is Open-Meteo's 10,000/day per IP or per application?</strong> (§4.1, §8.) The single question that
+  decides whether v2 scales. Needs an answer from Open-Meteo's own docs or a maintainer email
+  before §5.3 is built.</li>
+<li><strong>When does the root swap from v1 to v2?</strong> A product call, not a technical one. This MIP proposes
+  root-stays-v1 until v2 has run for a period the maintainer is happy with; it does not pick the
+  period.</li>
+<li><strong>Which <code>scala-java-time</code> version, and does it cover <code>Swimability</code>'s <code>DateTimeFormatter</code>
+  patterns?</strong> (§4.4.) Settled by §7's spike, not assumed here.</li>
+<li><strong>Does a free Cloudflare Workers account require a card on file?</strong> (§4.5.) Not stated on the
+  limits page. Only matters if the §9.2 fallback is ever taken, but should be answered before it is
+  proposed rather than during.</li>
+<li><strong>Follow-up MIP:</strong> <em>a <code>GET /forecast?lat=&amp;lon=</code> public API.</em> MIP-0035's own Windy survey already
+  named this as "the most directly 'copy this' feature in the whole survey" and pointed it at
+  MIP-0033's tunnel. §4.1's finding changes the answer: the same batched Open-Meteo call v2 makes
+  client-side is most of that endpoint, and §5.4's cross-compiled scorer is the rest, so it could be
+  a Worker (§4.5) rather than the maintainer's machine. Needs the next MIP number; explicitly not
+  folded into this one.</li>
+<li><strong>Follow-up MIP:</strong> <em>deciding what happens to <code>site/areas.json</code> under v2.</em> If live scoring makes
+  areas cheap to <em>display</em> but Overpass still makes them expensive to <em>discover</em> (§4.2), the growth
+  path is a periodic, cached expansion of the precomputed beach set, an ops/scheduling design, not
+  a client one, and out of this MIP's scope.</li>
+</ul>
+<h2 id="appendix">Appendix<a class="headerlink" href="#appendix" title="Permanent link">&para;</a></h2>
+<h3 id="checked-live">Checked live<a class="headerlink" href="#checked-live" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>https://api.open-meteo.com/v1/forecast</code> and <code>https://marine-api.open-meteo.com/v1/marine</code>:
+  <code>curl -I -H "Origin: https://marola.dev"</code>, 2026-09-07: both <code>HTTP/1.1 200</code>, both
+  <code>access-control-allow-origin: *</code>, <code>access-control-allow-methods: GET, POST, OPTIONS</code>,
+  <code>access-control-max-age: 600</code>. (§4.1)</li>
+<li><code>https://open-meteo.com/en/terms</code>: WebFetch, 2026-09-07: "600 calls / min", "5.000 calls /
+  hour", "10.000 calls / day", CC-BY 4.0, no API key mentioned. Does not state whether the quota is
+  per IP. (§4.1, §8)</li>
+<li><code>https://overpass-api.de/api/interpreter</code>: POST with an <code>Origin</code> header, 2026-09-07: <code>HTTP/1.1
+  200</code>, <code>Access-Control-Allow-Origin: *</code>, real <code>elements</code> returned. CORS is open. (§4.2)</li>
+<li><code>https://overpass-api.de/api/status</code>: 2026-09-07: <code>Rate limit: 2</code>, <code>2 slots available now</code>. (§4.2)</li>
+<li><code>https://dev.overpass-api.de/overpass-doc/en/preface/commons.html</code>: WebFetch, 2026-09-07:
+  ~10,000 requests/day and ~1 GB/day per user; per-IP slot assignment; problematic patterns include
+  "Operating end-user applications relying on public instances as backend infrastructure". (§4.2)</li>
+<li><code>https://balneabilidade.ima.sc.gov.br/relatorio/mapa</code> (the endpoint
+  <code>local/.../ImaScWaterQualityClient.scala:37</code> actually uses): <code>curl -D -</code> with an <code>Origin</code> header,
+  2026-09-07: <code>HTTP/1.1 200</code>, <code>Content-Type: text/html</code>, <strong>no <code>Access-Control-Allow-Origin</code> header
+  present</strong>. (§4.3)</li>
+<li><code>https://developers.cloudflare.com/workers/platform/limits/</code>: WebFetch, 2026-09-07: Free plan
+  100,000 requests/day, 10 ms CPU/request, 50 subrequests/request, 128 MB/isolate; "Waiting on
+  network requests … does not count toward CPU time"; no duration limit for HTTP-triggered Workers.
+  Card requirement not addressed on the page. (§4.5)</li>
+<li><code>https://www.scala-js.org/</code> and <code>https://repo1.maven.org/maven2/org/scala-js/scalajs-library_2.13/maven-metadata.xml</code>,
+  2026-09-07: current version 1.22.0 from both. (§4.4)</li>
+<li><code>https://www.scala-js.org/doc/project/cross-build.html</code>: WebFetch, 2026-09-07: <code>sbt-scalajs</code>
+  1.22.0, <code>sbt-scalajs-crossproject</code> 1.3.2, <code>crossProject</code> builder. The page's example pins Scala
+  2.13.14 and says nothing about Scala 3. (§4.4)</li>
+<li><code>https://repo1.maven.org/maven2/io/github/cquiroz/scala-java-time_sjs1_3/</code>: 2026-09-07: <code>200</code>.
+  A published Scala.js-1.x/Scala-3 artifact, which is what actually evidences Scala 3 support here.
+  (§4.4)</li>
+<li>This repo, read directly 2026-09-07: <code>.github/workflows/site.yml</code> (<code>cron: "15 */3 * * *"</code>, the
+  <code>find</code>-based publish allowlist, the per-area "Required files" check, the CNAME-in-artifact step);
+  <code>site/static/app.js</code> (<code>fetchJson('data/areas.json')</code> → <code>latest.json</code> → <code>&lt;day&gt;.json</code>, <code>SCHEMA = 1</code>
+  gate, <code>generated_at</code>/<code>isPast()</code> staleness display, Geolocation used only to sort);
+  <code>site/areas.json</code> (three areas: floripa, rio, salvador); <code>site/board.schema.json</code>;
+  <code>cli/src/main/scala/marola/site/SiteBuilder.scala</code> (201 lines; <code>copyStatic</code> walks <code>site/static</code>
+  into <code>site/dist</code>; <code>writeAreasIndex</code>); <code>core/src/main/scala/marola/scoring/Swimability.scala</code>
+  (220 lines, imports only <code>java.time</code> + marola model/water types).</li>
+<li>Branch state, 2026-09-07: MIP-0029's file is on <code>main</code> (squash-merged; its
+  <code>origin/mips/2026-09-06/7-…</code> branch is not an ancestor of <code>origin/main</code>). MIP-0035 exists only on
+  <code>origin/docs/mip-0035-map-plugin-api</code> with an implementation branch <code>origin/mip-0035/1-plugin-api</code>;
+  MIP-0038–0041 exist only on unmerged branches, which is why this MIP is 0042.</li>
+</ul>
+<h3 id="not-checked">Not checked<a class="headerlink" href="#not-checked" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Whether Open-Meteo's rate limits are enforced per IP, per application, or otherwise (§4.1, §8, §11):
+  the terms page states numbers without a subject; not pursued further.</li>
+<li>Whether a free Cloudflare Workers account requires a payment method (§4.5, §11): the limits page
+  does not address it, and no account was created.</li>
+<li><code>scala-java-time</code>'s actual coverage of the <code>DateTimeFormatter</code> patterns <code>Swimability</code> uses, and
+  which version to pin (§4.4): deferred to §7's spike rather than assumed.</li>
+<li>Any measurement of v2's real client-side cost (§8's phone-on-beach-signal regression): argued
+  from first principles here, not benchmarked; §7 names the live check that would settle it.</li>
+<li>Scala.js's <code>javalib</code> contents were not read from a spec page (<code>scala-js.org/doc/internals/javalib.html</code>
+  returned 404, 2026-09-07); the <code>java.time</code> gap is inferred from the existence and purpose of
+  <code>scala-java-time</code>, not from a Scala.js docs statement.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top", "navigation.tracking", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,4476 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The ocean intelligence layer for a stretch of coast — guides and design proposals.">
+      
+      
+      
+        <link rel="canonical" href="https://marola.dev/docs/mips/MIP-0029-ocean-layer-positioning/">
+      
+      
+        <link rel="prev" href="../MIP-0025.tasks/">
+      
+      
+        <link rel="next" href="../MIP-0030-coastal-trails/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case - marola docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mip-0029-positioning-marola-as-the-ocean-intelligence-layer-best-hour-to-swim-as-its-first-use-case" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="marola docs" class="md-header__button md-logo" aria-label="marola docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            marola docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="marola docs" class="md-nav__button md-logo" aria-label="marola docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    marola docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    docs/ — what each file is, and which ideas in them are MIP material
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AGENT-FRAMEWORKS-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — multi-agent frameworks survey: Python ideas, JVM/Scala reality, Pekko (2026-09-05)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AGENT-SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — agent skills for working on this repo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AGENT-STACK-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    agent4s, llm4s and ADK: what each could do for marola (2026-09-23)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AWESOME-AGENTIC-ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Awesome Agentic Engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEV-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — the development flow, end to end
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../EFFECTS-MAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — FP safety map: what's pure, what's effectful, what's hidden
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../FABLE_REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — code and documentation review (Claude Fable 5.1, 2026-09-05)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../FUTURE-WORK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — Future work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../GEMINI-CODE-ASSIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Code Assist for PR reviews — repo config, GCP setup, Pulumi/Besom, state, CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ISSUE-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — issue flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola roadmap — 2026-09-06
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../RUN-LOCALLY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — run it locally, no Telegram, no cloud account
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SCALA3-JDK-REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — Scala 3 and JDK feature review (2026-09-05)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SELF-DOCUMENTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-documenting marola: turning the dev loop into shareable content
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — skills roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TELEGRAM-SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    marola — Telegram bot setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_20" >
+        
+          
+          <label class="md-nav__link" for="__nav_20" id="__nav_20_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_20_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_20">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Benchmarks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../benchmarks/2026-09-05/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ocean-answer benchmark — 2026-09-05 snapshot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_20_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_20_2" id="__nav_20_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mip 0025
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_20_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_20_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Mip 0025
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../benchmarks/mip-0025/2026-09-07-task5-sft-dpo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025 task 5 — SFT (Layers 1+2) + DPO (Layer 3) on the tiny preset
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_21" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_21" id="__nav_21_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mips
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_21_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_21">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Mips
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Marola Improvement Proposals (MIPs)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0001: Bathing-water quality in the ranking, and a sea-lore paragraph in every reply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0002: The Telegram bot — marola's first real user surface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0003: Replies in under three seconds — caching, concurrent fetches, precomputed boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0004: The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0005-map-and-static-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005: The map — every beach's daily recommendation on a static site the pipeline feeds
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0005.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0006-live-look-user-cameras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0006: "How does it look right now?" — a live look at each beach, fed by users' cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0007-time-series-foundation-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0007: Time-series foundation models for marola's own series — local open models first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008: Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0008.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009: A richer map — a wave marker per beach and, on hover, every aspect at that point
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0010.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0011-claude-code-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0011.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0012: llm4s as marola's Scala-native LLM/agent layer — and the deprecation of the Python DSPy step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0013-opencode-tryout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013: OpenCode as marola's development agent — a tryout, and what replacing Claude Code would take
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0013.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0014-marola-book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0014: A marola book — The Compiler Pushes Back, written in LaTeX, versioned in a repo, built in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0015-interacao-swim-matching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0015: Interação — opt-in "who else is swimming here" matching between marola users
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0016-water-quality-map-markers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0016: Water-quality points on the map — OK / not-OK marks, placed in the sea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0017-agentic-tooling-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0017: Agentic tooling ideas from ai-job-search and September 2026's trending agent repos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0018: Marola self-documentation — weekly post-planner and multi-platform exporter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0019: arXiv/trending-repo survey — sea-forecasting and jellyfish-prediction techniques for marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0020-instagram-bot-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0020: An Instagram account for marola — first post by hand, API publishing, and a gated daily pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0021-beach-accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0021: Beach accessibility — parking, toilets, showers and lifeguard posts from OSM, shown only where the data exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0022-safety-answer-footer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0022: The safety footer — every answer grounded in a safety document ends with lifeguard/193/SAMU 192, appended after the model, never by it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0023: Product expansion — a wait-list, honest promotion, and the easiest way to keep marola's site and backend maintained
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0025-marola-sea-domain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025: marola-sea-1.0 — a small domain-tuned model (QLoRA SFT + tool-call SFT + DPO) served through Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0025.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation-where-the-current-swim-only-positioning-lives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation — where the current, swim-only positioning lives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. User-visible change">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-the-frame" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 The frame
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-on-oia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 On "OIA"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-the-wording-beforeafter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 The wording, before/after
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-mip-by-mip-fit-every-planned-or-drafted-mip-as-part-of-one-ocean-intelligence-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. MIP-by-MIP fit — every planned or drafted MIP as part of one ocean-intelligence project
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design-what-changes-in-code-and-what-doesnt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design — what changes in code, and what doesn't
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0030-coastal-trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0030: Coastal and lakeside trails on the map — named OSM paths near a beach or a lake
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0031-water-quality-inea-inema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031: Water quality for Rio de Janeiro (INEA) and Bahia (INEMA) — closing the "no data" gap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0031.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0032-model-strategy-benchmark-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0033-release-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0033: Release 0 — the repo goes public, a self-hosted chatbot, the first published model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0034-rss-feeds-and-content-syndication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0034.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034 tasks — the INMET alert arm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0035-map-plugin-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0035: A plugin API for marola's map — third-party layers, Windy-style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0036-marola-advertising-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0036: Marola Advertising Action (MAA) — the Release 0 launch, channel by channel, and how to sustain it after
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0037-map-pwa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0037: A PWA for marola's map — offline-tolerant, installable, no build step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0038-forecast-model-spread/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking one
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0039-deterministic-fact-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0039: The fact guard — a deterministic check that the model's sentence only says what the numbers say
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0040: The reviewer has never been validated — measure the judge, then make it a small jury
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0041-soft-book-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0041: Soft book ingestion — distilling agentic-behavior principles from a book
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0042-map-v2-live-not-static/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0043: docs/AWESOME-AGENTIC-ENGINEERING.md — a curated awesome-list, plus a human-gated candidate digest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0044-site-sections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0044: marola.dev becomes a site, not just a map — news, a markdown dev blog, generated API docs, a feeds page, about/contact, and a restrained support page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0045: Classic NLP and parsing where an LLM call is currently paying for it — a survey of marola's product pipeline and its own dev loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0046: The map without the generated look — a chart-derived icon set replacing every emoji
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0047-desmos-equation-art/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0048-scaling-marola-sea/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0048: Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0049: Scala for the web layer — Tyrian, Laminar, ScalaTags, or better plain-JS discipline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0050-brazilian-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0050: Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0051-wave-model-ensemble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0052-wave-model-compute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0052: Should marola ever run its own wave model, and in what language? — a costed survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0053-learned-local-correction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0053: A learned local correction, not another model — statistical downscaling of the public wave forecasts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0054-portuguese-first-experience/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0054: Portuguese first — marola's whole user-facing experience in pt-BR, with a language choice that sticks and a location-aware default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0055: A vector store behind KnowledgeStore, and a chunker that knows what kind of ocean knowledge it is cutting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056: OODS — an Open Ocean Data Store for Brazilian bathing-water quality, starting with IMA/SC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0056.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056 tasks — OODS, IMA/SC first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0057: GCP as an opt-in cloud backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0058: A credited human artist — Daniela Vicentini's paintings on marola.dev, an "arte terapia" thanks link
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0059-jev-typed-decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0059: Jev (TypeSafe AI) as an opt-in typed-decision backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0060-open-code-review-on-ready/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060: Open Code Review on request, on marola's own runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0060.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0062-ressaca-hazard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per beach
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063: A GitHub-native tracking standard — issues as the unit of work, milestones as deliverables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0063.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064: mkdocs for the docs — a real documentation site at marola.dev/docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0064.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065: CI/CD on GitHub-hosted runners — nothing builds or deploys from a desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0065.tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065 tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0066-opt-in-dev-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0066: Opt-in dev containers — the flake, in a container, for contributors without Nix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_21_77" >
+        
+          
+          <label class="md-nav__link" for="__nav_21_77" id="__nav_21_77_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP 0009
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_21_77_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_21_77">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIP 0009
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_21_77_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_21_77_1" id="__nav_21_77_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshots
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_21_77_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_21_77_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Screenshots
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 — screenshots of the wave markers and the hover aspects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_22" >
+        
+          
+          <label class="md-nav__link" for="__nav_22" id="__nav_22_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Superpowers
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_22_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_22">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Superpowers
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_22_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_22_1" id="__nav_22_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_22_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_22_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-09-13-nix-tooling-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nix tooling migration — implementation plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_22_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_22_2" id="__nav_22_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_22_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_22_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-09-13-nix-tooling-migration-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Nix tooling out of marola, into nix-config labs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation-where-the-current-swim-only-positioning-lives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation — where the current, swim-only positioning lives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. User-visible change">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-the-frame" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 The frame
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-on-oia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 On "OIA"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-the-wording-beforeafter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 The wording, before/after
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-mip-by-mip-fit-every-planned-or-drafted-mip-as-part-of-one-ocean-intelligence-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. MIP-by-MIP fit — every planned or drafted MIP as part of one ocean-intelligence project
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design-what-changes-in-code-and-what-doesnt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design — what changes in code, and what doesn't
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mip-0029-positioning-marola-as-the-ocean-intelligence-layer-best-hour-to-swim-as-its-first-use-case">MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case<a class="headerlink" href="#mip-0029-positioning-marola-as-the-ocean-intelligence-layer-best-hour-to-swim-as-its-first-use-case" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Status</strong></td>
+<td>Implemented — merged as PR #179 ("docs: implement MIP-0029 — marola as the ocean intelligence layer"), single-PR-sized per this MIP's own Effort row and the <code>mip-tasks</code> skill's "skip stacking for a single-PR change" rule</td>
+</tr>
+<tr>
+<td><strong>Author</strong></td>
+<td>Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "rebrand marola to be the ocean layer intelligence, the best place to swim is just one of its own cases, consider this decision taking into consideration all planned mips"; refined the same day — "designed to be ocean intelligence layer, but acting like wave intelligence layer, but without being cocky … consider ALL MIP scopes")</td>
+</tr>
+<tr>
+<td><strong>Created</strong></td>
+<td>2026-09-06</td>
+</tr>
+<tr>
+<td><strong>Number note</strong></td>
+<td>0029, not 0023 — 0020/0023/0024/0025 are already claimed by open drafts on remote branches (Instagram pipeline, waitlist-promotion, sea-model), and <code>docs/ROADMAP.md</code> §5 separately <em>proposes</em> 0023–0028 for unbuilt multi-agent work. Those two claims on 0023/0025 disagree and neither is this MIP's business to resolve — flagged here, revisited in §11</td>
+</tr>
+<tr>
+<td><strong>Phase</strong></td>
+<td>0 (docs and strings only; no pipeline, scoring, or infra change) — no earlier-phase prerequisite is missing</td>
+</tr>
+<tr>
+<td><strong>Related</strong></td>
+<td>Every MIP in <code>docs/mips/README.md</code> (0001–0022, surveyed in §4); <code>docs/ROADMAP.md</code> §5/§7's proposed 0023–0028; <code>docs/FUTURE-WORK.md</code> §1 (multi-activity generalization — the structural argument this MIP is a naming consequence of); <code>.claude/skills/site-frontend/SKILL.md</code> (the ≤12-word, no-adjective copy rule this MIP's wording must obey); open drafts <code>docs/mip-0020-instagram-pipeline</code> (handle <code>@marola.swim</code>) and <code>docs/mip-0023-waitlist-promotion</code> (domain strategy §5.1) — both name identity choices this MIP's wording must stay consistent with, flagged in §8/§11</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>S — strings and docs only, no new module, no new dependency, no schema change. Touches ~9 files (§5)</td>
+</tr>
+<tr>
+<td><strong>Gain</strong></td>
+<td><code>user value</code> (a five-second read of the map or the bot that doesn't undersell what the product already does — water quality, tides, sea lore, hazards, not swimming alone); <code>community/outreach</code> (a name that survives adding surf/dive/whale-watching without a second rebrand, relevant to MIP-0018/0020's promotion work)</td>
+</tr>
+<tr>
+<td><strong>Effort vs Gain</strong></td>
+<td>cheap win — no code risk, reversible in one PR, and every planned MIP in §4 already fits the frame without a scope change, so the cost of adopting it now is purely the string-and-doc diff</td>
+</tr>
+<tr>
+<td><strong>Depends on</strong></td>
+<td>Nothing blocks this at Phase 0. It should land before MIP-0018's exporter and MIP-0020's Instagram bio/first post start writing copy about the product (both cite <code>README.md</code>/<code>app.js</code> phrasing as their source text), so those don't have to be re-worded twice</td>
+</tr>
+<tr>
+<td><strong>Risk</strong></td>
+<td>A vaguer name loses the five-second clarity the map has today ("best hour to swim" tells a stranger exactly what to tap); if the tagline doesn't carry a concrete verb, the rebrand trades clarity for scope and nets nothing</td>
+</tr>
+<tr>
+<td><strong>Cost so far</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-summary">1. Summary<a class="headerlink" href="#1-summary" title="Permanent link">&para;</a></h2>
+<p>marola is already, in substance, more than a swim-time answer: MIP-0001 grounds it in bathing-water
+quality and a sourced sea-lore corpus, MIP-0009/0016 put tides, wind, jellyfish and water-quality
+marks on the map, MIP-0021/0022 add accessibility and a safety footer, and <code>FUTURE-WORK.md</code> §1
+already argues the scoring engine should generalize past swimming to surf, dive, sailing, fishing,
+whale watching. <strong>The product name doesn't change — marola stays marola everywhere (the README and
+site <code>&lt;h1&gt;</code>, the repo, the bot, the CLI banner).</strong> What changes is the slogan paired with the name:
+<strong>"marola — the ocean intelligence layer,"</strong> the deterministic, sourced layer that knows the sea
+near you (conditions, water quality, sea life, tides, hazards, lore) and answers questions about
+it, with "what's the best hour tomorrow to swim nearby" named as its first case, not the whole
+product. No scoring, safety text, or architecture changes; only the strings and docs that describe
+the product.</p>
+<h2 id="2-motivation-where-the-current-swim-only-positioning-lives">2. Motivation — where the current, swim-only positioning lives<a class="headerlink" href="#2-motivation-where-the-current-swim-only-positioning-lives" title="Permanent link">&para;</a></h2>
+<p>Every place the "best hour to swim" one-liner is the <em>product description</em> (not a data field, a
+test name, or a historical MIP title — those stay, they describe swimming, correctly, because
+swimming is the use case they built):</p>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>File:line</th>
+<th>Current text</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>README hero</td>
+<td><code>README.md:4</code></td>
+<td>"Local-first ocean intelligence for open-water swimmers: the best hour to swim tomorrow, official bathing-water quality…"</td>
+</tr>
+<tr>
+<td>PHILOSOPHY.md, "Why marola"</td>
+<td><code>PHILOSOPHY.md:23</code></td>
+<td>"The question 'what is the best hour tomorrow to swim nearby?' is small enough to finish and hard enough to be honest about."</td>
+</tr>
+<tr>
+<td>ARCHITECTURE.md §1, MVP hypothesis</td>
+<td><code>docs/ARCHITECTURE.md:23</code></td>
+<td>"<strong>MVP hypothesis:</strong> a Telegram message — 'what's the best hour tomorrow to swim nearby?' — gets back a ranked list…"</td>
+</tr>
+<tr>
+<td>AGENTS.md, "What this repo is"</td>
+<td><code>AGENTS.md:8</code></td>
+<td>"<strong>marola</strong> — a Telegram assistant answering 'what's the best hour tomorrow to swim nearby?'"</td>
+</tr>
+<tr>
+<td>Telegram bot description (BotFather)</td>
+<td><code>docs/TELEGRAM-SETUP.md:22</code></td>
+<td>example command list: <code>`swim - best hour to swim nearby`</code></td>
+</tr>
+<tr>
+<td>Site <code>&lt;title&gt;</code></td>
+<td><code>site/static/index.html:6</code></td>
+<td>"marola — best hour to swim, every beach"</td>
+</tr>
+<tr>
+<td>Site meta description</td>
+<td><code>site/static/index.html:7</code></td>
+<td>"Every beach around the area ranked by swim conditions for today and tomorrow: sea, wind, waves, water quality, tides, jellyfish. Computed once, no tracking."</td>
+</tr>
+<tr>
+<td>Site tagline (under the <code>&lt;h1&gt;</code>)</td>
+<td><code>site/static/index.html:16</code></td>
+<td>"Best hour to swim at every beach: sea, wind, tide, water quality."</td>
+</tr>
+<tr>
+<td>CLI banner (<code>--summarize</code>/default run)</td>
+<td><code>cli/src/main/scala/marola/Main.scala:394</code></td>
+<td><code>Console.printLine("marola :: best hour tomorrow to swim nearby (POC)")</code></td>
+</tr>
+<tr>
+<td>CLI entry-point doc comment</td>
+<td><code>cli/src/main/scala/marola/Main.scala:19</code></td>
+<td>"POC entry point for 'what's the best hour tomorrow to swim nearby?'."</td>
+</tr>
+</tbody>
+</table>
+<p>Notably, <code>README.md:4</code> already says "ocean intelligence": the phrase exists, but is immediately
+narrowed to "for open-water swimmers" in the same sentence, and every other surface above still
+frames the whole product as the swim question, not one case of a broader layer. <code>PHILOSOPHY.md:23</code>
+and <code>AGENTS.md:8</code> are the strongest examples: both use the swim question to justify the <em>entire</em>
+architecture, when the actual justification (live data + a decision that can hurt someone if wrong
++ a sentence a person will read) applies to every use case §4 surveys, not swimming specifically.</p>
+<h2 id="3-user-visible-change">3. User-visible change<a class="headerlink" href="#3-user-visible-change" title="Permanent link">&para;</a></h2>
+<h3 id="31-the-frame">3.1 The frame<a class="headerlink" href="#31-the-frame" title="Permanent link">&para;</a></h3>
+<p><strong>Before:</strong> marola is a swim-time app that also happens to know about water quality and jellyfish.</p>
+<p><strong>After:</strong> the product name doesn't change — it's still marola, everywhere (README/site <code>&lt;h1&gt;</code>,
+repo, bot, CLI). What changes is the slogan that now sits next to the name: <strong>"marola — the ocean
+intelligence layer"</strong> — the sourced, deterministic layer that knows what the sea near you is doing
+(conditions, water quality, sea life, tides, hazards, lore) and answers questions about it. "The
+best hour tomorrow to swim nearby" is named as its first case — the one every current MIP was
+built against — not a ceiling on what the layer can be asked, and not a rename.</p>
+<h3 id="32-on-oia">3.2 On "OIA"<a class="headerlink" href="#32-on-oia" title="Permanent link">&para;</a></h3>
+<p>The maintainer's shorthand needs a fixed expansion or an explicit decision to stay internal.
+Proposed: <strong>do not adopt "OIA" as a public name.</strong> "Ocean Intelligence Agent" overstates what
+marola does today — no autonomous agent exists yet (only one implicit,
+hardcoded two-agent pipeline), and "Assistant" duplicates <code>AGENTS.md:8</code>'s existing
+"Telegram assistant." Keep <strong>"ocean intelligence layer"</strong> as the prose phrase (matches the
+layer/pluggable-integration language <code>ARCHITECTURE.md</code> already uses for
+<code>LlmClient</code>/<code>VisionClient</code>/<code>SightingStore</code>); "OIA" stays an internal planning shorthand only,
+never in README/site/bot copy. An initialism in front of a five-second read works against the
+site-frontend skill's own rule (<code>.claude/skills/site-frontend/SKILL.md:74</code>, "nouns from the
+data," not an acronym).</p>
+<h3 id="33-the-wording-beforeafter">3.3 The wording, before/after<a class="headerlink" href="#33-the-wording-beforeafter" title="Permanent link">&para;</a></h3>
+<p>No marketing adjectives anywhere below ("smart", "AI-powered", "seamless", "revolutionary") — the
+repo's tone, per <code>PHILOSOPHY.md</code> and the site-frontend skill, is the number and its source.</p>
+<p><strong>Name — slogan pair</strong> (the name never changes; this string is the pairing used wherever a title
+line appears): <strong>"marola — the ocean intelligence layer."</strong> Used for the README title line (the
+bold subtitle directly under the <code>&lt;h1&gt;🌊 marola&lt;/h1&gt;</code> wordmark, which stays as-is) and the site's
+<code>&lt;title&gt;</code> tag (the browser-tab text, distinct from the on-page <code>&lt;h1&gt;marola&lt;/h1&gt;</code> wordmark, which
+also stays as-is).</p>
+<p><strong>One-line description</strong> (≤ 12 words, concrete nouns, site-frontend skill rule) — sits <em>under</em> the
+name—slogan pair, e.g. as the on-page tagline:</p>
+<ul>
+<li>Before (<code>site/static/index.html:16</code>): "Best hour to swim at every beach: sea, wind, tide, water quality." (11 words, already compliant, but swim-only)</li>
+<li>After: "The ocean near you: conditions, water quality, sea life, tides, hazards." (11 words, unchanged from the earlier draft of this MIP)</li>
+</ul>
+<p><strong>README title line + hero paragraph</strong> (<code>README.md:1-7</code>):</p>
+<ul>
+<li>Before: <code>&lt;h1&gt;🌊 marola&lt;/h1&gt;</code> then "<strong>When LLMs meet the ocean.</strong> Local-first ocean intelligence for open-water swimmers: the best hour to swim tomorrow, official bathing-water quality per sampling point, tides, jellyfish and whale odds, and a grounded 'ask the ocean' — all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or clearly labelled, never invented."</li>
+<li>After: <code>&lt;h1&gt;🌊 marola&lt;/h1&gt;</code> (unchanged) then "<strong>marola — the ocean intelligence layer.</strong> The ocean near you: conditions, official bathing-water quality per sampling point, tides, jellyfish and whale odds, and a grounded 'ask the ocean' — first case, the best hour tomorrow to swim, all on your own machine with a free model (Scala 3 / Kyo / Ollama), sourced or clearly labelled, never invented."</li>
+</ul>
+<p><strong>Site <code>&lt;title&gt;</code> and on-page tagline</strong> (<code>site/static/index.html:6,16</code>): <code>&lt;title&gt;</code> changes from
+"marola — best hour to swim, every beach" to <strong>"marola — the ocean intelligence layer"</strong> (the
+name—slogan pair, browser tab only). The on-page <code>&lt;h1&gt;marola&lt;/h1&gt;</code> wordmark is unchanged; the
+<code>&lt;p class="tagline"&gt;</code> under it becomes the one-line description above: "The ocean near you:
+conditions, water quality, sea life, tides, hazards." Meta description (<code>index.html:7</code>) drops
+"swim conditions" for "conditions" and keeps the rest verbatim (jellyfish, tides, water quality
+already read as more than swimming), and gains a closing clause naming the first case: "…Computed
+once, no tracking. First case: the best hour tomorrow to swim."</p>
+<p><strong>Bot description</strong> (<code>docs/TELEGRAM-SETUP.md:22</code>'s example, cosmetic, set via BotFather):</p>
+<ul>
+<li>Before: <code>swim - best hour to swim nearby</code></li>
+<li>After: <code>swim - best hour to swim nearby</code> stays as the <em>command</em> description (the command is
+  literally about swimming — no reason to rename it), but the bot's own <code>/setdescription</code> text
+  (not yet written, since Phase 1 isn't built) should read: "marola — the ocean intelligence
+  layer: conditions, water quality, tides, sea life. First case, <code>/swim</code>, the best hour tomorrow."
+  — documented in <code>docs/TELEGRAM-SETUP.md</code> as guidance for whoever registers the description at
+  Phase 1, since the bot isn't live to set it today.</li>
+</ul>
+<p><strong>CLI top banner</strong> (<code>cli/src/main/scala/marola/Main.scala:394</code>) — the name stays first, unchanged:</p>
+<ul>
+<li>Before: <code>"marola :: best hour tomorrow to swim nearby (POC)"</code></li>
+<li>After: <code>"marola :: the ocean intelligence layer (POC) — first case: best hour tomorrow to swim nearby"</code></li>
+</ul>
+<p><strong>PHILOSOPHY.md's "Why marola" opening</strong> (<code>PHILOSOPHY.md:23</code>):</p>
+<ul>
+<li>Before: "The question 'what is the best hour tomorrow to swim nearby?' is small enough to finish
+  and hard enough to be honest about."</li>
+<li>After: "marola — the ocean intelligence layer: the question it answers first, 'what is the best
+  hour tomorrow to swim nearby?', is small enough to finish and hard enough to be honest about —
+  and the same layer (live data, a decision that can hurt someone if wrong, a sentence a person
+  will read) is what any other question about the sea near you needs too."</li>
+</ul>
+<p><strong>AGENTS.md "What this repo is"</strong> (<code>AGENTS.md:8</code>):</p>
+<ul>
+<li>Before: "<strong>marola</strong> — a Telegram assistant answering 'what's the best hour tomorrow to swim
+  nearby?' — real nearby beach discovery…"</li>
+<li>After: "<strong>marola</strong> — the ocean intelligence layer for a stretch of coast, reachable as a
+  Telegram assistant: real nearby beach discovery… Its first case is 'what's the best hour
+  tomorrow to swim nearby?'…" (rest of the paragraph unchanged — it already lists water quality,
+  jellyfish/whale, corpus, local-first, unchanged by this MIP).</li>
+</ul>
+<h2 id="4-mip-by-mip-fit-every-planned-or-drafted-mip-as-part-of-one-ocean-intelligence-project">4. MIP-by-MIP fit — every planned or drafted MIP as part of one ocean-intelligence project<a class="headerlink" href="#4-mip-by-mip-fit-every-planned-or-drafted-mip-as-part-of-one-ocean-intelligence-project" title="Permanent link">&para;</a></h2>
+<p>Read against the new frame, not a swim app with extras bolted on. "Scope/wording change?" is
+almost always <strong>no</strong>: the point of the rebrand is that it costs nothing to adopt, because the
+work these MIPs describe was never swim-specific; it was described in swim terms because that was
+the product's only stated use case.</p>
+<table>
+<thead>
+<tr>
+<th>MIP</th>
+<th>What it adds to the ocean layer</th>
+<th>Use case(s) served</th>
+<th>Scope/wording change?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0001 water quality + sea lore</td>
+<td>Bathing-water quality per point; sourced sea-lore corpus (any topic)</td>
+<td>swim, sea life/lore</td>
+<td>No, already layer-shaped</td>
+</tr>
+<tr>
+<td>0002 Telegram bot, Phase 1</td>
+<td>The addressable surface the layer is reached through</td>
+<td>all</td>
+<td>No, only its description text (§3)</td>
+</tr>
+<tr>
+<td>0003 fast replies / caching</td>
+<td>Answers in under 3s regardless of question</td>
+<td>all</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0004 daily digest / subscriptions</td>
+<td>Push habit; digest content is swim-shaped today</td>
+<td>swim now; any case once parameterized</td>
+<td>Wording: "conditions," not "swim conditions"</td>
+</tr>
+<tr>
+<td>0005 the map, static site</td>
+<td>Visual face of the layer, one marker per beach</td>
+<td>all (renders swim score today)</td>
+<td>Wording only, §3.3's title/tagline/meta</td>
+</tr>
+<tr>
+<td>0006 live look, user cameras</td>
+<td>Ground-truth visual conditions, activity-independent</td>
+<td>swim, dive, surf</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0007 time-series foundation models</td>
+<td>Better forecasts of the same live series</td>
+<td>all</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0008 Docker images</td>
+<td>Ships the layer, any backend</td>
+<td>all</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0009 wave markers + hover aspects</td>
+<td>Wind/whale/jellyfish/temperature per point</td>
+<td>swim, sea life, any activity</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0010 MLflow experiment tracking</td>
+<td>Ledger for runs across whatever the layer is asked</td>
+<td>all</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0011 Claude Code best practices</td>
+<td>Dev-tooling only</td>
+<td>none (infra)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0012 llm4s / DSPy deprecation</td>
+<td>Synthesis step's implementation, not its scope</td>
+<td>all</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0013 OpenCode tryout</td>
+<td>Dev-tooling only</td>
+<td>none (infra)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0014 marola book</td>
+<td>Outreach artifact explaining the project</td>
+<td>outreach</td>
+<td>Wording: lead with the layer, not "swim app"</td>
+</tr>
+<tr>
+<td>0015 Interação swim matching</td>
+<td>Who else is swimming here, deliberately swim-only</td>
+<td>swim only</td>
+<td>No, correctly scoped, no need to generalize</td>
+</tr>
+<tr>
+<td>0016 water-quality map markers</td>
+<td>Water quality placed correctly on the map</td>
+<td>swim, any water-touching activity</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0017 agentic tooling survey</td>
+<td>Dev-tooling ideas</td>
+<td>none (infra)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0018 self-documentation / exporter</td>
+<td>Publishes about the project (LinkedIn/blog/Reddit)</td>
+<td>outreach</td>
+<td>Wording: posts lead with the layer, swim as example</td>
+</tr>
+<tr>
+<td>0019 arXiv ocean-forecasting survey</td>
+<td>Better forecast/jellyfish-prediction techniques</td>
+<td>all (activity-agnostic)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0020 Instagram bot (draft)</td>
+<td>Promotion; bio/captions say "best hour…to swim" today, handle <code>@marola.swim</code></td>
+<td>outreach</td>
+<td>Wording: bio should follow §3.3; handle is that MIP's call, flagged §8</td>
+</tr>
+<tr>
+<td>0021 beach accessibility</td>
+<td>Parking/toilets/showers/lifeguard from OSM</td>
+<td>swim, any beach-based activity</td>
+<td>No</td>
+</tr>
+<tr>
+<td>0022 safety answer footer</td>
+<td>Lifeguard/193/SAMU grounding, activity-agnostic</td>
+<td>all</td>
+<td>No, §6 says this MIP doesn't touch safety text</td>
+</tr>
+<tr>
+<td>0023 waitlist draft, wait-list/promotion/maintenance</td>
+<td>Site copy ("soon, in the bot"), domain strategy</td>
+<td>outreach</td>
+<td>Wording: copy tracks §3.3; domain should read coastal, not swim-only, per §8</td>
+</tr>
+<tr>
+<td>0025 sea-model draft, marola-sea-1.0 fine-tune</td>
+<td>Domain-tuned local model for the whole synthesis step (tool-calls, safety adherence)</td>
+<td>all</td>
+<td>No, "marola-sea" already reads layer-shaped</td>
+</tr>
+<tr>
+<td>ROADMAP §5's planned 0023–0028 (hazard/escalation agent, actor topology, A2A, eval harness)</td>
+<td>Multi-agent build-out: escalation agent on the same live series, addressable roles, shared state, governed identity</td>
+<td>safety (activity-agnostic hazard), all (eval/identity underlie every use case)</td>
+<td>No, architecture work; this frame makes "a third agent with a genuinely different responsibility" legible as a layer capability</td>
+</tr>
+<tr>
+<td><code>FUTURE-WORK.md</code> §1, surf, dive, sail, whale-watch, fish</td>
+<td>The naming consequence this MIP responds to: one <code>ActivityScoring</code> per activity, same data, same layer</td>
+<td>surf, dive, sail, whale-watch, fishing</td>
+<td>Not drafted; a second use case needs an <code>ActivityScoring</code> (§1.2), activity-aware <code>Recommender</code>/<code>BestHour</code>, per-activity card copy, a bot "what are you doing?" turn (<code>ROADMAP.md</code> K1); none built; this MIP only clears the naming precondition</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-design-what-changes-in-code-and-what-doesnt">5. Design — what changes in code, and what doesn't<a class="headerlink" href="#5-design-what-changes-in-code-and-what-doesnt" title="Permanent link">&para;</a></h2>
+<p><strong>Only strings and docs change.</strong> No trait, module, schema, or scoring function is touched. Files
+this MIP's implementation PR would edit:</p>
+<ul>
+<li><code>README.md:3-7</code>: hero paragraph (§3.3)</li>
+<li><code>PHILOSOPHY.md:23</code>: "Why marola" opening sentence (§3.3)</li>
+<li><code>docs/ARCHITECTURE.md:23-24</code>: reframe "MVP hypothesis" as the layer's first use case, keep the
+  Telegram-message example verbatim (it's still accurate)</li>
+<li><code>AGENTS.md:8</code>: "What this repo is" (§3.3); this is also where <code>CLAUDE.md</code>'s <code>@AGENTS.md</code> import
+  means the change propagates automatically to Claude Code's view, no separate <code>CLAUDE.md</code> edit</li>
+<li><code>docs/TELEGRAM-SETUP.md:22</code>: add the proposed <code>/setdescription</code> text as guidance (§3.3); leave
+  the <code>/swim</code> command example as-is</li>
+<li><code>site/static/index.html:6,7,16</code>: title, meta description, tagline (§3.3)</li>
+<li><code>cli/src/main/scala/marola/Main.scala:19,394</code>: doc comment and banner string (§3.3)</li>
+<li><code>docs/mips/README.md</code>: this MIP's index row (this same PR, per the <code>mip</code> skill step 5)</li>
+</ul>
+<p><strong>Docs index update:</strong> <code>docs/index.md</code> (the doc-index file <code>AGENTS.md</code> points to) gets no new row.
+It already indexes <code>docs/mips/</code> as a directory, not per-MIP; nothing there names the swim
+question specifically enough to need a change. <code>docs/ROADMAP.md</code> is left untouched by this MIP
+(it's a snapshot dated 2026-09-06, and editing history there is out of scope) but its own "How this
+file stays true" rule means whoever files the MIP-0029 implementation PR should add one line
+noting the frame is adopted, per that file's own maintenance instruction.</p>
+<h2 id="6-scoring-safety-impact">6. Scoring / safety impact<a class="headerlink" href="#6-scoring-safety-impact" title="Permanent link">&para;</a></h2>
+<p><strong>None, and this MIP explicitly must not touch:</strong></p>
+<ul>
+<li><code>scoring/Swimability.scala</code>'s thresholds or any ranking logic.</li>
+<li>Safety text: the MIP-0022 footer (lifeguard/193/SAMU), the whale/jellyfish heuristic disclaimers
+  in <code>docs/ARCHITECTURE.md</code> §8.</li>
+<li>The local-first promise: "entirely locally with a free Ollama model, no cloud account needed"
+  (<code>AGENTS.md</code>'s clause, unchanged) and every per-integration design in <code>ARCHITECTURE.md</code> §5.</li>
+<li>The "no cookies, no tracking" line, verified live at <code>site/static/app.js:11</code> ("no analytics, no
+  cookies") and <code>site/static/app.js:280</code> ("No cookies, no tracking…soon, in the Telegram bot"),
+  stays verbatim; §3.3 only changes the <em>tagline</em> above it, not this footer sentence.</li>
+<li>MIP-0005's own constraints (plain files, no build step, one accent colour, the score-colour
+  tokens): this MIP changes copy inside <code>index.html</code>, not layout, markers, or the schema
+  <code>site/board.schema.json</code> depends on.</li>
+</ul>
+<h2 id="7-verification-plan">7. Verification plan<a class="headerlink" href="#7-verification-plan" title="Permanent link">&para;</a></h2>
+<p>No test gate applies to a docs/strings-only change (<code>just quality</code> runs scalafmt/scalafix/ruff/
+actionlint/hadolint — none of it checks prose). Verification here is manual, and was already done
+while writing this MIP:</p>
+<ul>
+<li>Every file:line cited in §2 and §5 was read directly (<code>grep -n</code> against the actual file in this
+  worktree, not memory) before being quoted; see the Appendix for the raw commands.</li>
+<li>The proposed one-liner and tagline (§3.3) were word-counted by hand: 11 words each, under the
+  site-frontend skill's ≤12-word rule (<code>.claude/skills/site-frontend/SKILL.md:74</code>).</li>
+<li>No instance of "smart", "AI-powered", "seamless", "revolutionary", "world-class", or an
+  exclamation mark appears in any proposed replacement string above; checked by re-reading §3.3.</li>
+<li>Once implemented: <code>node --check site/static/app.js</code> (unaffected — no JS changes), the
+  site-frontend skill's <code>site_check.js</code> harness re-run to confirm the tagline renders (its DOM
+  assertions target markers/list rendering, not copy content, so this is a smoke check not a gate).</li>
+</ul>
+<h2 id="8-risks-limitations-and-honest-caveats">8. Risks, limitations, and honest caveats<a class="headerlink" href="#8-risks-limitations-and-honest-caveats" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>A vaguer name loses five-second clarity.</strong> "Best hour to swim, every beach" tells a stranger
+  exactly what to tap; "the ocean near you" needs one more glance to land on an action. §3.3 keeps
+  a concrete verb ("swim tomorrow," in the README hero and CLI line) to hedge this, bounded to
+  the site tagline and title, which stay short by design.</li>
+<li><strong>Identity choices in open drafts must agree with this name.</strong> The waitlist draft's §5.1 domain
+  strategy (<code>marola.app.br</code> etc.) doesn't reference "ocean"/"layer": fine, a domain needn't
+  restate the tagline, but its site-copy quote should be re-checked against §3.3 when finalized.
+  The Instagram draft's handle <code>@marola.swim</code> is a stronger conflict: a handle saying "swim" next
+  to a site saying "the ocean near you" is a real cross-surface inconsistency. This MIP doesn't
+  resolve it; flagged for whoever finalizes that MIP, repeated in §11.</li>
+<li><strong>Nothing here needed external verification.</strong> No web search or pricing check was made or
+  needed: every citation in §2/§5 is a local file read.</li>
+</ul>
+<h2 id="9-alternatives-considered">9. Alternatives considered<a class="headerlink" href="#9-alternatives-considered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Keep "swim" as the brand.</strong> Zero cost, maximum clarity, but caps the story as MIP-0009/0016/
+  0021's non-swim work keeps growing past what "swim app" implies.</li>
+<li><strong>"Beach intelligence."</strong> Anchors to a place rather than the sea itself (which matters offshore,
+  for divers and sailors who never touch the beach): narrower than "ocean," not chosen.</li>
+<li><strong>"Sea assistant."</strong> Duplicates <code>AGENTS.md:8</code>'s existing "assistant" noun and undersells the
+  deterministic-layer framing <code>PHILOSOPHY.md</code> argues for; not chosen.</li>
+<li><strong>A separate product name per use case</strong> ("marola-swim," "marola-surf"). Multiplies the branding
+  work <code>FUTURE-WORK.md</code> §1 explicitly designed against (one <code>ActivityScoring</code> object per activity,
+  no other code touched); rejected as the opposite of that design goal.</li>
+<li><strong>Do nothing.</strong> Cheapest, and not wrong today since no second use case is built, but every MIP
+  in §4 already assumes the layer framing works without a rename, so the only real cost of waiting
+  is a second copy pass once MIP-0018/0020 have written more text against the swim-only wording.</li>
+</ul>
+<h2 id="11-open-questions">11. Open questions<a class="headerlink" href="#11-open-questions" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Does the Portuguese wording change?</strong> "Marola" (a small wave) already carries the intended
+  modesty: big scope by design (asks about anything the sea is doing), small and concrete in what
+  it says (one beach, one hour, one number with its source). No Portuguese string in the repo was
+  found that needs a corresponding English-side change (<code>grep -rn "marola" *.md docs/*.md</code> returns
+  only the product name itself, never translated prose). Open question is whether a future
+  Portuguese-language bot reply (<code>docs/ROADMAP.md</code> K10, i18n) should state the wordplay explicitly
+  or leave it implicit, as English copy does today.</li>
+<li><strong>Do the Telegram handle / domain choices follow this rebrand?</strong> <code>@marola.swim</code> (MIP-0020) and
+  the <code>marola.app.br</code> family (MIP-0023 draft §5.1) were proposed before this positioning existed.
+  A human decision is needed on whether to hold those MIPs' identity sections for this MIP to
+  merge first, or let them proceed and reconcile wording only (not the handle/domain itself, which
+  has its own registration-cost and availability constraints unrelated to naming taste).</li>
+<li><strong>Does the map's <code>&lt;h1&gt;</code> stay "marola"?</strong> Resolved by the maintainer, 2026-09-06: yes, the
+  product name stays marola everywhere (README/site <code>&lt;h1&gt;</code>, repo, bot, CLI banner); "the ocean
+  intelligence layer" is a slogan paired with the name (in the site's <code>&lt;title&gt;</code> and the README's
+  title line), not a replacement for the wordmark. §3.3 reflects this; the on-page <code>&lt;h1&gt;</code> and
+  <code>site/static/index.html:14</code>'s wave icon are unchanged, only <code>&lt;title&gt;</code> (browser tab) and the
+  <code>&lt;p class="tagline"&gt;</code> text change.</li>
+<li><strong>Who resolves the 0023/0025 numbering collision noted in the metadata table?</strong> Not this MIP's
+  job, but the collision (ROADMAP's proposed multi-agent numbers vs. the waitlist/sea-model drafts that
+  already claimed them) should be settled before either set of drafts merges, to avoid two MIPs
+  sharing a number.</li>
+</ul>
+<h2 id="appendix">Appendix<a class="headerlink" href="#appendix" title="Permanent link">&para;</a></h2>
+<p>Raw verification commands run against this worktree (<code>docs/mip-0029-ocean-layer-positioning</code>
+branch, based on <code>origin/main</code>) while drafting this MIP:</p>
+<div class="highlight"><pre><span></span><code>grep -n "best hour to swim tomorrow" README.md                 → README.md:4
+grep -n "what is the best hour tomorrow to swim nearby" PHILOSOPHY.md → PHILOSOPHY.md:23
+grep -n "MVP hypothesis" docs/ARCHITECTURE.md                  → docs/ARCHITECTURE.md:23
+grep -n "^\*\*marola\*\*" AGENTS.md                             → AGENTS.md:8
+grep -n "swim - best hour to swim nearby" docs/TELEGRAM-SETUP.md → docs/TELEGRAM-SETUP.md:22
+grep -n "best hour to swim, every beach|tagline|meta name=\"description\"" site/static/index.html
+    → index.html:6 (title), 7 (meta description), 16 (tagline)
+grep -n "best hour tomorrow to swim nearby (POC)|POC entry point" cli/src/main/scala/marola/Main.scala
+    → Main.scala:19 (doc comment), 394 (banner)
+grep -n "Nothing leaves the browser|no cookies|no analytics|soon, in the Telegram" site/static/app.js
+    → app.js:11 ("no analytics, no cookies"), app.js:280 ("No cookies, no tracking...")
+</code></pre></div>
+<p>Remote drafts read for §4/§8 (not merged, fetched via <code>git fetch origin</code> then <code>git show</code>):
+<code>origin/docs/mip-0020-instagram-pipeline:docs/mips/MIP-0020-instagram-bot-account.md</code>,
+<code>origin/docs/mip-0023-waitlist-promotion:docs/mips/MIP-0023-waitlist-promotion-and-maintenance.md</code>,
+<code>origin/docs/mip-0025-marola-sea-model:docs/mips/MIP-0025-marola-sea-domain-model.md</code>.
+<code>docs/ROADMAP.md</code> and <code>docs/mips/README.md</code> read from <code>origin/main</code> for §4's ROADMAP row and the
+full 0001–0022 index.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top", "navigation.tracking", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
