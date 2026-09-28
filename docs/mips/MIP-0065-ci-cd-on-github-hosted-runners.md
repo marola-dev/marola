@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Draft — `Tasks: docs/mips/MIP-0065.tasks.md` |
 | **Author** | Claude (Opus 5), with Bruno |
 | **Created** | 2026-09-28 |
 | **Phase** | 3 — the existing deploys (Pages, GHCR images) move runner; no Phase 1 or Phase 2 prerequisite, no cloud spend. The bot's own deploy (§5.7) is Phase 2 and out of scope |
@@ -85,7 +85,7 @@ setting. Pick: the strictest level, plus §5.2's guard so no `pull_request` job 
 
 Public packages are free, and "container image storage and bandwidth for the Container registry
 is currently free". A package's first publish is **private** by default; one pushed with
-`GITHUB_TOKEN` is linked to the workflow's repository and inherits its permissions. So task 3's
+`GITHUB_TOKEN` is linked to the workflow's repository and inherits its permissions. So task 2's
 first push creates a private `marola-dev/marola` package, and making it public stays a manual step.
 
 ### 4.4 Retention action
@@ -178,26 +178,26 @@ still an error. Self-test cases: `0064-T4` resolves against a stub issue list, a
 raises, `1, 0064-T4` yields both edges. This keeps "edges come from the column and nowhere else"
 true for cross-MIP edges too.
 
-`MIP-0065.tasks.md` (written after acceptance) then has one root, task 1, whose `depends on` cell
-is `0064-T4` (#458). MIP-0064 is a chain, so that one edge blocks the whole stack until MIP-0064's
-last task closes, and readiness rule 5 keeps `just issue-claim` from handing any task out early.
+[`MIP-0065.tasks.md`](./MIP-0065.tasks.md) has one root, task 1, whose `depends on` cell becomes
+`0064-T4` (#458) once the prerequisite lands. MIP-0064 is a chain, so that one edge blocks the
+whole stack until MIP-0064's last task closes, and readiness rule 5 keeps `just issue-claim` from
+handing any task out early.
 
-Task sketch, each a PR in the stack:
+Tasks, each a PR in the stack:
 
-1. **guard-and-doc** — §5.2, `docs/CI-CD.md`, its row in `AGENTS.md`'s doc table and in
-   `docs/index.md` (MIP-0064 renames `docs/README.md`), `FUTURE-WORK.md` §7.2 replaced by a pointer.
-   `docs/CI-CD.md` passes MIP-0064's `--strict` build. Depends on `0064-T4`.
-2. **hosted-runners** — §5.1, §5.3. Includes moving MIP-0064's mkdocs + Kroki step in
-   `api-docs.yml` to the hosted runner and verifying it there, and correcting MIP-0064 §5.4's
-   "the runners are self-hosted with Docker on the host". Depends on 1.
-3. **docker-on** — §5.4. Depends on 2.
-4. **workflow-fixes** — §5.5. Depends on 2 (`scala-steward` is only judged once it runs hosted).
+1. **hosted-runners** — §5.1, §5.2, §5.3; the guard ships with the move, since on its own it would
+   fail `main`. Includes verifying MIP-0064's mkdocs + Kroki step on the hosted runner and correcting
+   MIP-0064 §5.4's "the runners are self-hosted with Docker on the host". Depends on `0064-T4`.
+2. **docker-on** — §5.4. Depends on 1.
+3. **workflow-fixes** — §5.5. Depends on 1.
+4. **ci-cd-doc** — `docs/CI-CD.md`, its rows in `AGENTS.md` and `docs/index.md` (MIP-0064 renames
+   `docs/README.md`), `FUTURE-WORK.md` §7.2 reduced to a pointer; passes MIP-0064's `--strict`
+   build. Depends on 2 and 3.
 
-**Manual steps for the maintainer, between tasks 2 and 3** (settings an agent cannot change):
+**Manual steps for the maintainer, between tasks 1 and 2** (settings an agent cannot change):
 relabel the desktop runner `marola-sea` only; set fork PR approval to "Require approval for all
-external contributors" (§4.2);
-delete the `CI_RUNNER` variable; after task 3's first push, make `marola-dev`'s `marola` package
-public (§4.3).
+external contributors" (§4.2); delete the `CI_RUNNER` variable; after task 2's first push, make
+`marola-dev`'s `marola` package public (§4.3).
 
 ### 5.7 Later, not designed here: the bot's continuous deployment
 
@@ -213,28 +213,28 @@ None. No scoring, no user-facing text beyond the map's "Last live run" timestamp
 ## 7. Verification plan
 
 1. `scripts/workflow_runners.py --self-test`; then the script against the real tree: zero findings
-   after task 2, one per job before it.
-2. Task 2's PR forces every `ci.yml` path filter on once (a throwaway commit touching each filtered
+   after task 1, one per job before it.
+2. Task 1's PR forces every `ci.yml` path filter on once (a throwaway commit touching each filtered
    path, reverted before merge) so no job is green by being skipped.
 3. Tool parity: `quality-other` prints `ruff`, `actionlint`, `hadolint`, `shellcheck` versions;
    they equal `nix develop .#lint --command <tool> --version` locally.
-4. After task 2 merges: `site.yml` and `api-docs` run on `ubuntu-latest`, marola.dev and
+4. After task 1 merges: `site.yml` and `api-docs` run on `ubuntu-latest`, marola.dev and
    marola.dev/docs/ (MIP-0064's sidebar and search) serve, with the desktop runner **offline**.
-5. After task 3: `docker.yml` green on its PR; `gh workflow run docker-smoke.yml` and marola.dev
+5. After task 2: `docker.yml` green on its PR; `gh workflow run docker-smoke.yml` and marola.dev
    shows a new "Last live run"; `docker pull ghcr.io/marola-dev/marola:jvm` works logged out.
-6. After task 4: a closed PR's short-circuit run succeeds while that PR still has a run in
+6. After task 3: a closed PR's short-circuit run succeeds while that PR still has a run in
    flight; `scala-steward` dispatched by hand opens or finds its PRs.
 7. Done = the desktop runner stays off for a week and nothing but `marola-sea-publish` notices.
 
 ## 8. Risks, limitations, and honest caveats
 
 - **Cold caches.** The first hosted sbt run pays full dependency resolution and compile; slower,
-  not broken. The time is recorded in task 2's PR, not hidden.
+  not broken. The time is recorded in task 1's PR, not hidden.
 - **Nix install time** on every `quality-other` run, bounded by §4.5's cache choice.
 - **GPU training stays on one machine.** `marola-sea-publish` still needs the desktop; hosted GPU
   runners are paid and not proposed.
 - **MIP-0064's Kroki stack** runs three containers per docs build on a 4-vCPU hosted runner; if it
-  outgrows `timeout-minutes: 30`, that is found in task 2, not assumed away.
+  outgrows `timeout-minutes: 30`, that is found in task 1, not assumed away.
 - **Fork approval is a setting, not code.** The guard (§5.2) stops a workflow change from routing a
   fork's code to the desktop; it cannot check the repository setting itself.
 
@@ -254,7 +254,7 @@ None. No scoring, no user-facing text beyond the map's "Last live run" timestamp
 ## 11. Open questions
 
 - Is the desktop runner still registered after the transfer to `marola-dev`, and at repo or org
-  level? `gh api …/actions/runners` returned 403 with the session's token. Checked in task 2.
+  level? `gh api …/actions/runners` returned 403 with the session's token. Checked in task 1.
 - **Follow-up MIP:** the bot's continuous deployment (§5.7), next free number, after Phase 1.
 - **Follow-up issue:** `site-health`'s water-data gaps for Florianópolis and Salvador (§5.5).
 
@@ -297,5 +297,5 @@ None. No scoring, no user-facing text beyond the map's "Last live run" timestamp
 
 - The desktop runner's registration after the transfer (403, §11).
 - The repository's current fork-PR approval setting (needs admin scope).
-- magic-nix-cache's real hit rate and 429 behaviour on this repo; measured in task 2.
+- magic-nix-cache's real hit rate and 429 behaviour on this repo; measured in task 1.
 - Why `scala-steward` still fails on `@v2` after the upstream fix; assumed to be the desktop.
