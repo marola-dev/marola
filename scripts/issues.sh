@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # issues — the command surface for MIP-0063's GitHub tracking standard. One subcommand family
-# per task of the stack; so far `labels sync`, `sub add` and `deps add|list`.
+# per task of the stack; so far `labels sync`, `sub add`, `deps add|list` and `ready`/`queue`.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -28,11 +28,23 @@ commands:
   deps list <issue>
       What <issue> is blocked by: number, state and title, one per line.
 
+  ready <issue>
+      Run the five-rule Definition of Ready (MIP-0063 §5.4), naming the rule that failed, then
+      add `agent-ready` on an all-pass and remove it when a previously-ready issue regressed.
+      A `mip` proposal is not claimable work and is refused outright; a `bug` reads rules 1 and 2
+      from bug_report.yml's own two fields.
+
+  queue [--milestone NAME]
+      The unassigned `agent-ready` issues, sorted size then priority, with a count of what is
+      ready, blocked and still in triage. Those counts are derived from the labels and the
+      dependency edges, not read from the board's Status field, which needs `project` scope.
+
 options:
   --dry-run     print the mutating `gh` calls instead of making them (the reads they are
                 computed from still happen, so this needs a login)
-  --self-test   run the pure-function checks (parser, diff, plan, issue-form heading parse);
-                no `gh`, no network, but needs python3
+  --self-test   run the pure-function checks (parser, diff, plan, issue-form heading parse, the
+                five DoR rules) plus the `ready`/`queue` commands against a stubbed `gh`; no
+                network, but needs python3
   --help        this text
 
 Live mode needs `gh` logged in. Inside ai-jail there is no login and none can be acquired
@@ -131,6 +143,65 @@ labels_plan() {
     | @tsv' <<<"$1"
 }
 
+# --- the Definition of Ready (MIP-0063 §5.4) ---
+
+# section_state <body> <heading> -> missing | empty | filled.
+# An optional issue-form field left blank still renders its heading, with `_No response_` under it,
+# so "the heading is there" is not the same question as "the author answered".
+section_state() {
+  awk -v h="### $2" '
+    { sub(/[ \t\r]+$/, "") }
+    $0 == h { found = 1; next }
+    found && /^#+ / { exit }
+    found && $0 != "" && $0 != "_No response_" { filled = 1; exit }
+    END { print (found ? (filled ? "filled" : "empty") : "missing") }
+  ' <<<"$1"
+}
+
+# dor_tier <labels> -> mip | bug | standard. Which tiers the DoR governs, and which headings rules
+# 1 and 2 read for each: MIP-0063 §5.4.
+dor_tier() {
+  if grep -qx 'mip' <<<"$1"; then echo mip
+  elif grep -qx 'bug' <<<"$1"; then echo bug
+  else echo standard
+  fi
+}
+
+# dor_section_rule <n> <name> <body> <heading> -> the rule's line; 0 iff the section carries content.
+dor_section_rule() {
+  case "$(section_state "$3" "$4")" in
+    filled) echo "  ✓ $1. $2 present" ;;
+    empty)  echo "  ✗ $1. $2 — \"### $4\" is empty"; return 1 ;;
+    *)      echo "  ✗ $1. $2 — no \"### $4\" section in the body"; return 1 ;;
+  esac
+}
+
+# dor_rules <body> <labels> <open-blockers> <tier> -> §3's one line per rule; 0 iff all five hold.
+# Pure: the caller does the two reads. <labels> and <open-blockers> are newline-separated.
+dor_rules() {
+  local body="$1" labels="$2" blockers="$3" tier="$4"
+  local h1="Acceptance criteria" h2="Named test" rc=0 missing=""
+  if [ "$tier" = bug ]; then h1="What you expected instead"; h2="Failing test"; fi
+
+  dor_section_rule 1 "acceptance criteria" "$body" "$h1" || rc=1
+  dor_section_rule 2 "named test" "$body" "$h2" || rc=1
+
+  grep -q '^area/' <<<"$labels" || missing="area/*"
+  grep -q '^layer/' <<<"$labels" || missing="${missing:+$missing and }layer/*"
+  if [ -z "$missing" ]; then echo "  ✓ 3. area/* and layer/* labels set"
+  else echo "  ✗ 3. $missing not set"; rc=1
+  fi
+
+  if grep -q '^size/' <<<"$labels"; then echo "  ✓ 4. size/* label set"
+  else echo "  ✗ 4. size/* label missing"; rc=1
+  fi
+
+  if [ -z "$blockers" ]; then echo "  ✓ 5. no open blocked-by dependency"
+  else echo "  ✗ 5. blocked by ${blockers//$'\n'/ } (still open)"; rc=1
+  fi
+  return "$rc"
+}
+
 # --- number -> database id ---
 
 # Both `POST /issues/{n}/sub_issues` (`sub_issue_id`) and `POST /issues/{n}/dependencies/blocked_by`
@@ -202,8 +273,7 @@ resolve_nwo() {
   [ -n "$nwo" ] || nwo="$(cd "$root" && gh repo view --json nameWithOwner -q .nameWithOwner </dev/null)"
 }
 
-# The one place a number becomes an id. Both POSTs below go through it.
-resolve_issue_id() {
+issue_payload() {
   local number="$1" payload err rc=0
   err="$(mktemp)"
   payload="$(gh api "repos/$nwo/issues/$number" </dev/null 2>"$err")" || rc=$?
@@ -218,7 +288,14 @@ resolve_issue_id() {
   fi
   rm -f "$err"
   [ "$rc" -eq 0 ] || return 1
-  issue_id_of "$payload" "$number"
+  printf '%s\n' "$payload"
+}
+
+# The one place a number becomes an id. Both POSTs below go through it.
+resolve_issue_id() {
+  local payload
+  payload="$(issue_payload "$1")" || return 1
+  issue_id_of "$payload" "$1"
 }
 
 cmd_sub_add() {
@@ -269,6 +346,116 @@ cmd_deps_list() {
   # `gh` that reads stdin eats the caller's — task 5 drives these commands from a read loop.
   gh api --paginate "repos/$nwo/issues/$issue/dependencies/blocked_by" </dev/null \
     --jq '.[] | "#\(.number)\t\(.state)\t\(.title)"'
+}
+
+# §5.2: `agent-ready` is a label *and* a board Status value, and nothing but this script writes
+# either. The removal is the half that rots if it is skipped — an issue that regressed keeps the
+# label, and the agent queue quietly fills with work that no longer passes.
+dor_apply_label() {
+  local n="$1" rc="$2" had="$3"
+  if [ "$rc" -eq 0 ]; then
+    [ "$had" -eq 0 ] || { echo "  label \`agent-ready\` already set"; return 0; }
+    run gh issue edit --repo "$nwo" "$n" --add-label agent-ready || return 1
+    echo "  label \`agent-ready\` added"
+  else
+    [ "$had" -eq 1 ] || { echo "  label \`agent-ready\` not added"; return 0; }
+    run gh issue edit --repo "$nwo" "$n" --remove-label agent-ready || return 1
+    echo "  label \`agent-ready\` removed"
+  fi
+}
+
+cmd_ready() {
+  [ $# -eq 1 ] || { echo "issues.sh ready: expects <issue>" >&2; usage >&2; exit 1; }
+  local n
+  n="$(arg_number "$1" "ready")" || exit 1
+  require_gh
+  resolve_nwo
+  local payload body labels tier blockers rules rc=0 had=0
+  payload="$(issue_payload "$n")" || exit 1
+  # For the payload-is-really-#n and not-a-pull-request guards; `ready` has no use for the id.
+  issue_id_of "$payload" "$n" >/dev/null || exit 1
+  body="$(jq -r '.body // ""' <<<"$payload")"
+  labels="$(jq -r '(.labels // [])[].name' <<<"$payload")"
+  grep -qx 'agent-ready' <<<"$labels" && had=1 || true
+  tier="$(dor_tier "$labels")"
+
+  if [ "$tier" = mip ]; then
+    rc=1
+    echo "✗ #$n is not agent-ready — it is a MIP proposal, and the DoR does not apply (MIP-0063 §5.1)"
+  else
+    # --paginate and </dev/null for the same two reasons as `deps list`: 50 edges are allowed and a
+    # dropped blocker reads as no blocker, and a gh that reads stdin eats the caller's.
+    blockers="$(gh api --paginate "repos/$nwo/issues/$n/dependencies/blocked_by" </dev/null \
+      --jq '.[] | select(.state == "open") | "#\(.number)"')"
+    rules="$(dor_rules "$body" "$labels" "$blockers" "$tier")" || rc=$?
+    if [ "$rc" -eq 0 ]; then echo "✓ #$n is agent-ready"; else echo "✗ #$n is not agent-ready"; fi
+    [ "$tier" != bug ] || echo "  bug: rules 1 and 2 read \"### What you expected instead\" and \"### Failing test\" (MIP-0063 §5.4)"
+    printf '%s\n' "$rules"
+  fi
+
+  dor_apply_label "$n" "$rc" "$had" || return 1
+  return "$rc"
+}
+
+cmd_queue() {
+  local milestone=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --milestone)
+        [ $# -ge 2 ] || { echo "issues.sh queue: --milestone needs a name" >&2; exit 1; }
+        milestone="$2"; shift 2 ;;
+      *) echo "issues.sh queue: unknown argument: $1" >&2; usage >&2; exit 1 ;;
+    esac
+  done
+  require_gh
+  resolve_nwo
+
+  local limit=300 list n_open
+  list="$(gh issue list --repo "$nwo" --state open --limit "$limit" \
+    --json number,title,labels,assignees,milestone </dev/null)"
+  n_open="$(jq 'length' <<<"$list")"
+  # Past the limit gh stops silently, and a truncated queue is the one failure mode nobody notices:
+  # the missing issues read as "nothing ready".
+  if [ "$n_open" -ge "$limit" ]; then
+    echo "issues.sh: the repo has at least $limit open issues, this script's page limit — raise it before trusting this queue." >&2
+    exit 1
+  fi
+
+  local pool rows others n open_blockers blocked=0 ready_n others_n
+  pool="$(jq --arg ms "$milestone" '
+    [ .[]
+      | select((.assignees | length) == 0)
+      | select($ms == "" or (.milestone.title // "") == $ms)
+      | { number, title, labels: [.labels[].name] } ]' <<<"$list")"
+
+  rows="$(jq -r '
+    def first_label(p): ([ .labels[] | select(startswith(p)) ] | first) // "";
+    # Ranks, not `index(first_label(…))`: jq evaluates an argument against the filter it is passed
+    # to, so inside index() the input is the array being searched, not the issue.
+    def size_rank: if (.labels | index("size/S")) then 0
+                   elif (.labels | index("size/M")) then 1
+                   elif (.labels | index("size/L")) then 2 else 9 end;
+    [ .[] | select(.labels | index("agent-ready")) ]
+    | sort_by(size_rank, (if (.labels | index("priority/high")) then 0 else 1 end), .number)
+    | .[] | [.number, first_label("size/"), first_label("area/"), first_label("layer/"), .title]
+    | @tsv' <<<"$pool")"
+  [ -z "$rows" ] || awk -F'\t' '{ printf "#%-4s  %-6s  %-18s  %-12s  %s\n", $1, $2, $3, $4, $5 }' <<<"$rows"
+
+  ready_n="$(jq '[ .[] | select(.labels | index("agent-ready")) ] | length' <<<"$pool")"
+  others="$(jq -r '.[] | select(.labels | index("agent-ready") | not) | .number' <<<"$pool")"
+  others_n="$(grep -c . <<<"$others" || true)"
+  while read -r n; do
+    [ -n "$n" ] || continue
+    # Assigned to a variable, not tested inline: a failed read inside `[ -z "$(…)" ]` is invisible
+    # and would count a blocked issue as triage. </dev/null because this loop's stdin is $others.
+    open_blockers="$(gh api --paginate "repos/$nwo/issues/$n/dependencies/blocked_by" </dev/null \
+      --jq '.[] | select(.state == "open") | .number')"
+    [ -z "$open_blockers" ] || blocked=$((blocked + 1))
+  done <<<"$others"
+  # "in triage" is everything else unclaimed, not the board's Triage Status: reading that needs the
+  # `project` scope §4.4 leaves to a human, and `queue` is the call an agent makes from a jail.
+  printf '      %d ready · %d blocked · %d in triage%s\n' \
+    "$ready_n" "$blocked" "$((others_n - blocked))" "${milestone:+   (milestone: $milestone)}"
 }
 
 cmd_labels_sync() {
@@ -766,6 +953,12 @@ PYEOF
   form_labels="$(jq -r '[(.body // [])[].attributes.label] | map(select(. != null)) | join("|")' <<<"$form_doc")"
   check "bug_report.yml field labels" "$form_labels" \
     "What happened|What you expected instead|How to reproduce|Backend|Failing test|Relevant logs or output"
+  check "bug_report.yml's expected field renders as the DoR rule 1 heading for a bug" \
+    "### $(jq -r '(.body // [])[] | select(.id == "expected") | .attributes.label' <<<"$form_doc")" \
+    "### What you expected instead"
+  check "bug_report.yml's failing-test field renders as the DoR rule 2 heading for a bug" \
+    "### $(jq -r '(.body // [])[] | select(.id == "failing-test") | .attributes.label' <<<"$form_doc")" \
+    "### Failing test"
 
   form_doc="$(python3 "$form_parser" "$form_dir/task.yml" 2>/dev/null || echo '{}')"
   form_labels="$(jq -r '[(.body // [])[].attributes.label] | map(select(. != null)) | join("|")' <<<"$form_doc")"
@@ -812,6 +1005,190 @@ PYEOF
   fi
 
   echo
+  echo "-- the Definition of Ready: the five rules of §5.4 --"
+  local dor_body dor_bug_body dor_labels dor_got
+  dor_body="$(printf '### What\n\nx\n\n### Acceptance criteria\n\n- [ ] a\n\n### Named test\n\nFooSpec\n')"
+  dor_labels="$(printf 'area/dev-tooling\nlayer/infra\nsize/M\n')"
+
+  dor_case() {   # dor_case <label> <body> <labels> <blockers> <tier> <want-rc> <want-line>
+    local out rc=0
+    out="$(dor_rules "$2" "$3" "$4" "$5")" || rc=$?
+    check "$1 (exit)" "$rc" "$6"
+    case "$out" in
+      *"$7"*) echo "ok: $1" ;;
+      *) echo "FAILED: $1 — expected \"$7\" in:" >&2; sed 's/^/  /' <<<"$out" >&2; failed=1 ;;
+    esac
+  }
+
+  dor_case "all five hold" "$dor_body" "$dor_labels" "" standard 0 "✓ 5. no open blocked-by dependency"
+  dor_case "no acceptance criteria" "$(printf '### What\n\nx\n\n### Named test\n\nFooSpec\n')" \
+    "$dor_labels" "" standard 1 '✗ 1. acceptance criteria — no "### Acceptance criteria" section in the body'
+  dor_case "no named test" "$(printf '### Acceptance criteria\n\n- [ ] a\n')" \
+    "$dor_labels" "" standard 1 '✗ 2. named test — no "### Named test" section in the body'
+  dor_case "no area/* and no layer/*" "$dor_body" "$(printf 'size/M\n')" "" standard 1 \
+    "✗ 3. area/* and layer/* not set"
+  dor_case "no size/*" "$dor_body" "$(printf 'area/dev-tooling\nlayer/infra\n')" "" standard 1 \
+    "✗ 4. size/* label missing"
+  dor_case "an open blocked-by" "$dor_body" "$dor_labels" "#411" standard 1 \
+    "✗ 5. blocked by #411 (still open)"
+  dor_case "a field left blank is not an answered one" \
+    "$(printf '### Acceptance criteria\n\n- [ ] a\n\n### Named test\n\n_No response_\n')" \
+    "$dor_labels" "" standard 1 '✗ 2. named test — "### Named test" is empty'
+  # GitHub serves issue bodies with CRLF line endings, so an exact heading match has to strip it.
+  dor_case "a CRLF body still matches the headings" \
+    "$(printf '### Acceptance criteria\r\n\r\n- [ ] a\r\n\r\n### Named test\r\n\r\nFooSpec\r\n')" \
+    "$dor_labels" "" standard 0 "✓ 2. named test present"
+
+  echo
+  echo "-- the DoR is tier-aware (§5.4): a bug reads its own fields, a MIP proposal is not work --"
+  check "dor_tier: mip wins, whatever else is set" "$(dor_tier "$(printf 'mip\nbug\n')")" "mip"
+  check "dor_tier: bug" "$(dor_tier "$(printf 'bug\narea/safety\n')")" "bug"
+  check "dor_tier: anything else" "$(dor_tier "$(printf 'enhancement\n')")" "standard"
+  dor_bug_body="$(printf '### What happened\n\nx\n\n### What you expected instead\n\ny\n\n### Failing test\n\nFooSpec\n')"
+  dor_case "a bug with a filled-in Failing test passes" "$dor_bug_body" "$dor_labels" "" bug 0 \
+    "✓ 2. named test present"
+  dor_case "a bug whose Failing test was left blank does not" \
+    "$(printf '### What you expected instead\n\ny\n\n### Failing test\n\n_No response_\n')" \
+    "$dor_labels" "" bug 1 '✗ 2. named test — "### Failing test" is empty'
+  dor_case "the bug headings satisfy no other tier" "$dor_bug_body" "$dor_labels" "" standard 1 \
+    '✗ 1. acceptance criteria — no "### Acceptance criteria" section in the body'
+  # The contract the bug tier rests on, checked by construction rather than by two matching
+  # literals: renaming a field in bug_report.yml has to fail here, not leave dor_rules' h1/h2
+  # pointing at a heading that no longer renders while every literal in this file still agrees.
+  local dor_form
+  dor_form="$(python3 "$form_parser" "$form_dir/bug_report.yml" 2>/dev/null || echo '{}')"
+  dor_case "a bug body built from bug_report.yml's own field labels passes" \
+    "$(jq -r '[(.body // [])[] | select(.id == "expected" or .id == "failing-test")
+              | "### " + .attributes.label, "answered"] | join("\n\n")' <<<"$dor_form")" \
+    "$dor_labels" "" bug 0 "✓ 2. named test present"
+
+  # §3's block: the substring checks above prove the failing rule is named, not that the other
+  # four passed.
+  check "the report is §3's shape, one line per rule" \
+    "$(dor_rules "$dor_body" "$(printf 'area/dev-tooling\nlayer/infra\n')" "" standard || true)" \
+    "  ✓ 1. acceptance criteria present
+  ✓ 2. named test present
+  ✓ 3. area/* and layer/* labels set
+  ✗ 4. size/* label missing
+  ✓ 5. no open blocked-by dependency"
+
+  echo
+  echo "-- ready writes the agent-ready label both ways, and queue partitions what is left --"
+  local dor_dir="$tmp/dor" dor_log="$tmp/dor/edits.log"
+  mkdir -p "$dor_dir/bin"
+  cat > "$dor_dir/bin/gh" <<'STUB'
+#!/usr/bin/env bash
+cat >/dev/null          # a gh that reads stdin; the real one does
+jq_expr=""; path=""; prev=""
+for a in "$@"; do
+  [ "$prev" != "--jq" ] || jq_expr="$a"
+  case "$a" in repos/*) path="$a" ;; esac
+  prev="$a"
+done
+case "$*" in
+  *"auth status"*) exit 0 ;;
+  *"repo view"*)   echo "marola-dev/marola"; exit 0 ;;
+  *"issue edit"*)  printf '%s\n' "$*" >> "$DOR_LOG"; exit 0 ;;
+  *"issue list"*)  cat "$DOR_DIR/list.json"; exit 0 ;;
+esac
+case "$path" in
+  */dependencies/blocked_by) path="${path%/dependencies/blocked_by}"; file="$DOR_DIR/${path##*/}.deps.json" ;;
+  *)                         file="$DOR_DIR/${path##*/}.issue.json" ;;
+esac
+[ -f "$file" ] || { echo "stub: no fixture for $path" >&2; exit 1; }
+if [ -n "$jq_expr" ]; then jq -r "$jq_expr" "$file"; else cat "$file"; fi
+STUB
+  chmod +x "$dor_dir/bin/gh"
+
+  cat > "$dor_dir/901.issue.json" <<'EOF'
+{"number":901,"id":5600000901,
+ "labels":[{"name":"area/map-site"},{"name":"layer/site"},{"name":"size/S"}],
+ "body":"### What\n\nx\n\n### Acceptance criteria\n\n- [ ] a\n\n### Named test\n\nFooSpec\n"}
+EOF
+  for dor_got in 903 904; do sed "s/901/$dor_got/g" "$dor_dir/901.issue.json" > "$dor_dir/$dor_got.issue.json"; done
+  cat > "$dor_dir/902.issue.json" <<'EOF'
+{"number":902,"id":5600000902,
+ "labels":[{"name":"agent-ready"},{"name":"area/dev-tooling"},{"name":"layer/infra"},{"name":"size/S"}],
+ "body":"### What\n\nx\n\n### Acceptance criteria\n\n- [ ] a\n"}
+EOF
+  cat > "$dor_dir/905.issue.json" <<'EOF'
+{"number":905,"id":5600000905,"labels":[{"name":"mip"}],"body":"### Motivation\n\nx\n"}
+EOF
+  cat > "$dor_dir/908.issue.json" <<'EOF'
+{"number":908,"id":5600000908,"labels":[{"name":"mip"},{"name":"agent-ready"}],
+ "body":"### Motivation\n\nx\n"}
+EOF
+  cat > "$dor_dir/906.issue.json" <<'EOF'
+{"number":906,"id":5600000906,
+ "labels":[{"name":"bug"},{"name":"area/safety"},{"name":"layer/core"},{"name":"size/S"}],
+ "body":"### What happened\n\nx\n\n### What you expected instead\n\ny\n\n### Failing test\n\nSafetyFooterSpec\n"}
+EOF
+  cat > "$dor_dir/907.issue.json" <<'EOF'
+{"number":907,"id":5600000907,
+ "labels":[{"name":"agent-ready"},{"name":"area/dev-tooling"},{"name":"layer/infra"},{"name":"size/M"}],
+ "body":"### Acceptance criteria\n\n- [ ] a\n\n### Named test\n\nFooSpec\n"}
+EOF
+  printf '[]\n' > "$dor_dir/901.deps.json"
+  cp "$dor_dir/901.deps.json" "$dor_dir/902.deps.json"
+  cp "$dor_dir/901.deps.json" "$dor_dir/906.deps.json"
+  cp "$dor_dir/901.deps.json" "$dor_dir/907.deps.json"
+  printf '[{"number":899,"state":"open"},{"number":898,"state":"closed"}]\n' > "$dor_dir/903.deps.json"
+  printf '[{"number":898,"state":"closed"}]\n' > "$dor_dir/904.deps.json"
+
+  dor_ready_case() {   # dor_ready_case <label> <issue> <want-rc> <want-line> <want-edit-call>
+    local out rc=0
+    : > "$dor_log"
+    out="$(PATH="$dor_dir/bin:$PATH" DOR_DIR="$dor_dir" DOR_LOG="$dor_log" nwo="" cmd_ready "$2" 2>&1)" || rc=$?
+    check "$1 (exit)" "$rc" "$3"
+    case "$out" in
+      *"$4"*) echo "ok: $1" ;;
+      *) echo "FAILED: $1 — expected \"$4\" in:" >&2; sed 's/^/  /' <<<"$out" >&2; failed=1 ;;
+    esac
+    check "$1 (label call)" "$(cat "$dor_log")" "$5"
+  }
+
+  dor_ready_case "an all-pass issue gains agent-ready" 901 0 "✓ #901 is agent-ready" \
+    "issue edit --repo marola-dev/marola 901 --add-label agent-ready"
+  dor_ready_case "a previously-ready issue that regressed loses it" 902 1 'label `agent-ready` removed' \
+    "issue edit --repo marola-dev/marola 902 --remove-label agent-ready"
+  dor_ready_case "an open blocked-by blocks, and is named" 903 1 "✗ 5. blocked by #899 (still open)" ""
+  dor_ready_case "a blocked-by that is closed does not block" 904 0 "✓ 5. no open blocked-by dependency" \
+    "issue edit --repo marola-dev/marola 904 --add-label agent-ready"
+  dor_ready_case "a MIP proposal is refused, and no dependency read is even made" 905 1 \
+    "it is a MIP proposal, and the DoR does not apply" ""
+  dor_ready_case "a hand-added agent-ready is taken off a MIP proposal too" 908 1 \
+    'label `agent-ready` removed' "issue edit --repo marola-dev/marola 908 --remove-label agent-ready"
+  dor_ready_case "a bug passes on its own two fields" 906 0 "✓ #906 is agent-ready" \
+    "issue edit --repo marola-dev/marola 906 --add-label agent-ready"
+  dor_ready_case "an already-ready issue is not re-labelled" 907 0 'label `agent-ready` already set' ""
+
+  dor_got="$(printf 'row-2\nrow-3\n' | { PATH="$dor_dir/bin:$PATH" DOR_DIR="$dor_dir" DOR_LOG="$dor_log" \
+    nwo="" cmd_ready 901 >/dev/null 2>&1; cat; })"
+  check "ready leaves the caller's stdin untouched" "$dor_got" "row-2
+row-3"
+
+  cat > "$dor_dir/list.json" <<'EOF'
+[{"number":904,"title":"Cache Open-Meteo responses","assignees":[],"milestone":null,
+  "labels":[{"name":"agent-ready"},{"name":"area/conditions"},{"name":"layer/core"},{"name":"size/M"}]},
+ {"number":901,"title":"Add hreflang tags","assignees":[],"milestone":{"title":"Water quality on the map"},
+  "labels":[{"name":"agent-ready"},{"name":"area/map-site"},{"name":"layer/site"},{"name":"size/S"}]},
+ {"number":903,"title":"Waiting on an open one","assignees":[],"milestone":null,
+  "labels":[{"name":"area/dev-tooling"},{"name":"layer/infra"},{"name":"size/S"}]},
+ {"number":902,"title":"Still in triage","assignees":[],"milestone":null,"labels":[{"name":"bug"}]},
+ {"number":907,"title":"Someone is already on it","assignees":[{"login":"x"}],"milestone":null,
+  "labels":[{"name":"agent-ready"},{"name":"area/dev-tooling"},{"name":"layer/infra"},{"name":"size/S"}]}]
+EOF
+  dor_got="$(PATH="$dor_dir/bin:$PATH" DOR_DIR="$dor_dir" DOR_LOG="$dor_log" nwo="" cmd_queue)"
+  check "queue sorts size/S ahead of size/M" "$(head -1 <<<"$dor_got" | awk '{ print $1, $2 }')" "#901 size/S"
+  check "an assigned agent-ready issue is not in the queue" "$(grep -c '^#907' <<<"$dor_got" || true)" "0"
+  check "the footer partitions the unassigned open issues" "$(tail -1 <<<"$dor_got")" \
+    "      2 ready · 1 blocked · 1 in triage"
+  dor_got="$(PATH="$dor_dir/bin:$PATH" DOR_DIR="$dor_dir" DOR_LOG="$dor_log" nwo="" \
+    cmd_queue --milestone "Water quality on the map")"
+  check "--milestone narrows the queue and names itself" "$(tail -1 <<<"$dor_got")" \
+    "      1 ready · 0 blocked · 0 in triage   (milestone: Water quality on the map)"
+
+  echo
   if [ "$failed" -eq 1 ]; then echo "issues.sh self-test: FAILED" >&2; return 1; fi
   echo "issues.sh self-test: ok"
 }
@@ -849,5 +1226,7 @@ case "${1:-}" in
       *) echo "issues.sh deps: unknown subcommand: ${2:-<none>}" >&2; usage >&2; exit 1 ;;
     esac
     ;;
+  ready) shift; cmd_ready "$@" ;;
+  queue) shift; cmd_queue "$@" ;;
   ""|*) usage >&2; exit 1 ;;
 esac

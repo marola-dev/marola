@@ -35,3 +35,9 @@ An issue becomes `agent-ready` only once it passes the five-rule Definition of R
 the MIP — acceptance criteria, a named test, `area/*` + `layer/*`, `size/*`, and no open
 `blocked by` dependency. Task 7 adds the `AGENTS.md` rule that an agent must hold `agent-ready`
 before starting work.
+
+The rules follow the tier, because the forms do. A **MIP proposal** is a design request rather
+than claimable work, so it is never `agent-ready`. A **bug report** is claimed on its own two
+fields: **What you expected instead** stands for the acceptance criteria, and **Failing test** for
+the named test — which means a bug filed without a failing test is not ready for an agent, only
+for a human.

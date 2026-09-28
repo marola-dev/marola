@@ -408,6 +408,17 @@ pr-labels-backfill *args:
 labels-sync *args:
     scripts/issues.sh labels sync {{ args }}
 
+# Run the five-rule Definition of Ready against one issue and add or remove `agent-ready`
+# accordingly, naming the rule that failed (MIP-0063 §5.4). --dry-run checks without labelling.
+issue-ready *args:
+    scripts/issues.sh ready {{ args }}
+
+# The unassigned `agent-ready` queue, sorted size then priority — the read an agent makes before
+# claiming anything (MIP-0063 §5.5). The ready/blocked/in-triage counts are derived from labels and
+# dependency edges, not read from the board's Status.
+issue-queue *args:
+    scripts/issues.sh queue {{ args }}
+
 # scripts/stack.sh passthrough. MIP-0005.
 stack *args:
     scripts/stack.sh {{ args }}

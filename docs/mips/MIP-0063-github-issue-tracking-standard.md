@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — `Tasks: docs/mips/MIP-0063.tasks.md` |
+| **Status** | Partially implemented (tasks 1–4 of 8 — #423 #429 #430 #435) — `Tasks: docs/mips/MIP-0063.tasks.md` |
 | **Author** | Claude (Opus 5), for B. Valério |
 | **Created** | 2026-09-27 |
 | **Phase** | 0 (dev-loop; no user-facing surface) |
@@ -64,6 +64,10 @@ $ just issue-queue
 #433  size/M  area/conditions layer/core   Cache Open-Meteo responses for the 3h board build
       3 ready · 1 blocked · 2 in triage   (milestone: Water quality on the map)
 ```
+
+The footer's three counts partition the unassigned open issues, derived from the labels and the
+dependency edges of §4.2 — not read from the board's `Status`, which needs the `project` scope
+§4.4 leaves to a human.
 
 And the Definition of Ready is enforced, not documented:
 
@@ -196,8 +200,10 @@ Three intake tiers (`AGENTS.md`'s MIP trigger list is unchanged; this names the 
 ### 5.2 Labels, milestones, the board
 
 Four new labels: `agent-ready`, `size/S`, `size/M`, `size/L`. Existing `area/*` (12), `layer/*`
-(8), `kind/*`, `priority/high` and `mip` are untouched. **`layer/azure` is orphaned** — 993b469
-removed Azure — and is deleted here.
+(8), `kind/*` and `priority/high` are untouched. **`layer/azure` is orphaned** — 993b469 removed
+Azure — and is deleted here. **`mip` was named here as existing and is not** (`GET /labels/mip` →
+404, 2026-09-28): `mip_proposal.yml` applies it and §5.4 dispatches on it, so `.github/labels.yml`
+defines it and `just labels-sync` creates it.
 
 Two labels an earlier draft of this design carried are gone: `blocked`, because §4.2's native
 dependencies express it better and without hand-maintenance, and `epic`, because §5.1 makes the
@@ -254,7 +260,8 @@ stops being a paragraph people skim. Five gate issues total; they hold no work, 
 
 ### 5.4 The Definition of Ready
 
-An issue is `agent-ready` when all five hold:
+The DoR governs **claimable** work, and it reads rules 1 and 2 from the headings the issue's own
+form renders (§5.6). An issue is `agent-ready` when all five hold:
 
 1. **Acceptance criteria** present, as testable checkboxes (`### Acceptance criteria`).
 2. **A named test** — file plus test name (`### Named test`). This is MIP §7's discipline pulled
@@ -262,6 +269,26 @@ An issue is `agent-ready` when all five hold:
 3. `area/*` **and** `layer/*` set.
 4. `size/*` set.
 5. **No open `blocked by` dependency**, read from the API (§4.2) — not from a label.
+
+A section counts as present only when it has **content**: GitHub renders an optional form field
+that was left blank as its heading followed by `_No response_`, so "the heading is there" and "the
+author answered" are different questions.
+
+Two of §5.6's four forms carry neither heading, and they are not the same case:
+
+- **`mip` (tier 3) is not claimable.** A MIP proposal is a design request, relabelled once the MIP
+  PR opens (§5.1), so it can never be `agent-ready` and its lack of the two headings is correct.
+  `issues.sh ready` says exactly that in one line rather than reporting rule failures whose
+  obvious remedy — adding acceptance criteria to a proposal — is the wrong thing to do.
+- **`bug` (tier 1) is claimable**, and refusing every bug forever would be a real gap.
+  `bug_report.yml` asks for the same two things under the names that fit a bug, so for a `bug`
+  rule 1 reads `### What you expected instead` (required by the form; a bug's statement of done)
+  and rule 2 reads `### Failing test` (§5.6). A mapping, not a waiver: **Failing test** is an
+  optional field, so a bug filed without one still does not pass, which is what makes `AGENTS.md`'s
+  "reproduce a bug with a failing test before fixing it" checkable at claim time rather than at
+  review time.
+
+`task.yml` and `story.yml` — the two forms that spell both headings — are unaffected.
 
 **`AGENTS.md` gains one hard rule:** an agent may only begin implementation on an issue carrying
 `agent-ready`. Everything else is a human's problem first.
@@ -273,7 +300,7 @@ Six recipes over one `scripts/issues.sh`, each with the repo's usual `--dry-run`
 | Command | Does |
 |---|---|
 | `just tasks-to-issues MIP-NNNN --milestone "<name>"` | creates missing issues titled `0063-T3: …`, dedups on `\b0063-T\d+\b`, rewrites each row's `#` cell into a link to its issue, wires each `blocked by` edge from the `depends on` column (§5.3); idempotent |
-| `just issue-queue` | `agent-ready`, unassigned, sorted size then priority — the read an agent makes |
+| `just issue-queue` | `agent-ready`, unassigned, sorted size then priority — the read an agent makes; the ready/blocked/in-triage counts under it are derived from labels and dependency edges, not from the board's `Status` |
 | `just issue-ready <n>` | runs the five rules, adds/removes `agent-ready`, prints which rule failed |
 | `just issue-claim <n>` | assigns, drops `agent-ready`, sets board Status, prints the `scripts/stack.sh start` line |
 | `just milestone-new "<name>" [--mip MIP-NNNN]` | thin, but keeps deliverables discoverable from `just` |
@@ -286,8 +313,10 @@ replaced by the issues.
 
 ### 5.6 Forms and skills
 
-Four forms, blank issues still disabled, all sharing heading spellings so §5.4's checks are
-one `grep`:
+Four forms, blank issues still disabled. Each field label renders as a literal `### <Label>`
+heading, and §5.4's checks are a `grep` for the spelling **that form** renders — `task.yml` and
+`story.yml` share `### Acceptance criteria` / `### Named test`, a `bug` is read on the two below,
+and a `mip` proposal carries neither because it is not claimable work:
 
 | Form | Tier | Change |
 |---|---|---|
@@ -522,6 +551,14 @@ All on 2026-09-27, from this checkout.
   a database id resolved from the issue number, and the attachment landed on the issue asked for.
   `scripts/issues.sh` resolves numbers to ids in one place and refuses anything under nine digits;
   live ids on this repo are ten (`5606620913` against issue number `428`).
+- **Task 4 run, 2026-09-28** (`issues.sh ready`, `--dry-run`, no labels written). `GET
+  /repos/marola-dev/marola/labels/mip` → **404**; the `mip` label §5.2 called existing does not
+  exist, so §5.4's tier dispatch needed it in the manifest. `ready` against the eight live
+  fixtures: #431–#434 and #417 pass all five; #418 fails rule 5 alone, naming `#417` and **not**
+  `#415`, which is closed — the closed-blocker distinction of the 2026-09-27 probe, now read
+  through the script; #412 fails 1, 2 and 4; #411 fails 1, 2, 3 and 4. `issues.sh queue` over 16
+  open issues → `0 ready · 0 blocked · 10 in triage` (the other six are assigned), one
+  `dependencies/blocked_by` call per unassigned issue, 6s.
 
 ### Not checked
 

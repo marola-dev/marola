@@ -134,6 +134,10 @@
   color: "f9d0c4"
   description: "site/ — the static map"
 
+- name: "mip"
+  color: "d4c5f9"
+  description: "Tier 3 — a MIP proposal; a design request, never agent-ready (MIP-0063 §5.1)"
+
 - name: "priority/high"
   color: "b60205"
   description: "Do before other open work of the same area"

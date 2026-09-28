@@ -52,6 +52,7 @@ jobs:
               - 'scripts/fixtures/**'
               - 'ruff.toml'
               - '.github/ISSUE_TEMPLATE/**'  # issues.sh --self-test parses these forms
+              - '.github/labels.yml'          # and diffs this manifest
             site:
               - 'site/**'            # app.js/CSS/schema/fixtures → scripts/site_check.js (MIP-0009 task 2)
               - 'scripts/site_check.js'
@@ -308,7 +309,7 @@ jobs:
       - name: self-test — ocr-post (Open Code Review JSON → one advisory PR review, MIP-0060)
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/ocr-post.py --self-test
-      - name: self-test — issues.sh (label manifest diff, number→id resolution, issue forms, MIP-0063)
+      - name: self-test — issues.sh (label manifest, number→id resolution, issue forms, the DoR, MIP-0063)
         if: needs.changes.outputs.python == 'true'
         run: scripts/issues.sh --self-test
       - name: site harness — app.js against site/fixtures in a stub DOM (MIP-0009)
