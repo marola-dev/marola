@@ -306,6 +306,8 @@ similar monorepo-split situation comes up again elsewhere.
 
 ### 7.2 CI
 
+Superseded by `docs/mips/MIP-0065-ci-cd-on-github-hosted-runners.md`, which replaces this section with `docs/CI-CD.md`.
+
 `.github/workflows/ci.yml` now runs one job (`build-test`) doing unscoped `sbt scalafmtCheckAll` /
 `sbt compile` / `sbt test` at the repo root: `.aggregate()` cascades these to all three modules
 (`core`/`local`/`cli`) by default, confirmed directly. (An earlier version of this repo,
