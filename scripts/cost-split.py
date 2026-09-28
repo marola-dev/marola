@@ -503,19 +503,35 @@ def estimate_usd(prices, tokens, model=DEFAULT_PRICE_MODEL):
     return tokens * rate
 
 
+def _tokens_str(n):
+    if n >= 100_000:
+        return f"{n / 1e6:.1f}M"
+    if n >= 1_000:
+        return f"{n / 1e3:.0f}k"
+    return f"{n:.0f}"
+
+
 def format_tokens(tokens):
-    if tokens >= 100_000:
-        return f"~{tokens / 1e6:.1f}M tokens est."
-    if tokens >= 1_000:
-        return f"~{tokens / 1e3:.0f}k tokens est."
-    return f"~{tokens:.0f} tokens est."
+    return f"~{_tokens_str(tokens)} tokens est."
 
 
-def format_estimate_trailer(tokens, usd, changed_lines, today):
+def format_estimate_trailer(tokens, usd, changed_lines, today, stats):
+    """`stats` is calibrate()'s return. The point figure alone hides that this repo's own
+    tokens-per-line spread is ~5x (see calibrate()'s docstring) — scale calibrate()'s p25/p75 onto
+    this estimate's own token figure so the band is in the same units as the number next to it,
+    rather than inventing a new one. `stats["n"] == 0` (no calibration history) states that
+    plainly instead of printing a band it doesn't have."""
     usd_part = f"~${usd:.2f} est." if usd is not None else "$n/a est."
+    n = stats.get("n", 0)
+    if n and stats.get("median"):
+        lo = tokens * stats["p25"] / stats["median"]
+        hi = tokens * stats["p75"] / stats["median"]
+        band = f"IQR {_tokens_str(lo)}-{_tokens_str(hi)} tokens from {n} calibrated commits"
+    else:
+        band = "no calibration history — documented default, not a fit"
     return (
         f"Cost: {usd_part} · {format_tokens(tokens)} "
-        f"(diff-size model, {changed_lines} lines, no session log) "
+        f"(diff-size model, {changed_lines} lines, no session log, {band}) "
         f"· scripts/cost-split.py --estimate {today}"
     )
 
@@ -580,14 +596,53 @@ def self_test():
     assert estimate_usd(prices, 1_000_000, model="no-such-model") is None
     assert estimate_usd({}, 1_000_000) is None
 
-    # --- format_estimate_trailer: always carries "est." on both figures, never bare ---
-    trailer = format_estimate_trailer(912_345, 1.20, 210, "2026-09-05")
+    # --- format_estimate_trailer: always carries "est." on both figures, never bare, and now
+    # states its own band (issue #433 task 2: a point figure alone hides calibrate()'s ~5x IQR). ---
+    fitted_stats = {
+        "n": 5,
+        "median": 6000.0,
+        "p25": 3000.0,
+        "p75": 12000.0,
+        "min": 800.0,
+        "max": 40000.0,
+    }
+    trailer = format_estimate_trailer(912_345, 1.20, 210, "2026-09-05", fitted_stats)
     assert trailer.startswith("Cost: ~$1.20 est. ·"), trailer
     assert "tokens est." in trailer, trailer
     assert "210 lines, no session log" in trailer, trailer
     assert trailer.endswith("--estimate 2026-09-05"), trailer
-    no_price = format_estimate_trailer(500, None, 3, "2026-09-05")
+
+    # Parse the band back out of the rendered string — not calibrate()'s own p25/p75 formula — so
+    # this fails if the band stops bracketing the point figure or stops matching stats["n"], not
+    # only if the arithmetic happens to change.
+    def _parse_band(s):
+        m = re.search(r"IQR ([\d.]+)(k|M)?-([\d.]+)(k|M)?\s*tokens from (\d+) calibrated", s)
+        assert m, s
+        scale = {None: 1, "k": 1e3, "M": 1e6}
+        return (
+            float(m.group(1)) * scale[m.group(2)],
+            float(m.group(3)) * scale[m.group(4)],
+            int(m.group(5)),
+        )
+
+    lo, hi, shown_n = _parse_band(trailer)
+    assert lo < hi, (lo, hi)
+    assert lo <= 912_345 <= hi, (lo, 912_345, hi)  # the point figure sits inside its own band
+    assert shown_n == fitted_stats["n"], (shown_n, fitted_stats["n"])
+
+    no_price = format_estimate_trailer(500, None, 3, "2026-09-05", fitted_stats)
     assert no_price.startswith("Cost: $n/a est. ·"), no_price
+
+    # n == 0 (fresh checkout, no calibration history): well-formed, but reads as a documented
+    # default, never a fit — and differently from the fitted case above.
+    fresh = format_estimate_trailer(500, None, 3, "2026-09-05", {"n": 0})
+    assert fresh.startswith("Cost: $n/a est. ·"), fresh
+    assert "tokens est." in fresh, fresh
+    assert "3 lines, no session log" in fresh, fresh
+    assert fresh.endswith("--estimate 2026-09-05"), fresh
+    assert "documented default" in fresh, fresh
+    assert "documented default" not in trailer, trailer
+    assert "IQR" not in fresh, fresh
 
     # --- calibrate() + diff_stats() + estimate_commit(): a synthetic repo, so the fit is a known
     # number instead of depending on this checkout's ever-growing real history ---
@@ -1042,7 +1097,7 @@ def main():
                 f"cost-split --estimate-commit: {a.estimate_commit} has no diff to estimate from"
             )
         tokens, usd, changed = est
-        print(format_estimate_trailer(tokens, usd, changed, dt.date.today().isoformat()))
+        print(format_estimate_trailer(tokens, usd, changed, dt.date.today().isoformat(), stats))
         return
 
     msgs = []
@@ -1117,7 +1172,9 @@ def main():
     if estimated_rows:
         print("\nCost: trailers for commits with no session log (estimated — paste per commit):")
         for r in estimated_rows:
-            trailer = format_estimate_trailer(r["tokens"], r["usd"], r["changed_lines"], today)
+            trailer = format_estimate_trailer(
+                r["tokens"], r["usd"], r["changed_lines"], today, calib_stats
+            )
             print(f"  {r['commit']}: {trailer}")
 
     total = sum(r["usd"] or 0 for r in rows)
