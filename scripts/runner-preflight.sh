@@ -13,7 +13,8 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repo="${MAROLA_REPO:-h0ffmann/marola}"
+repo_default() { printf '%s' "${MAROLA_REPO:-marola-dev/marola}"; }
+repo="$(repo_default)"
 self_test=0
 [ "${1:-}" = "--self-test" ] && self_test=1
 
@@ -152,6 +153,8 @@ self_test() {
   t "a full disk is caught" "$(disk_verdict 3 20)" low
   t "a roomy one is not" "$(disk_verdict 900 20)" ok
   t "the boundary is not low" "$(disk_verdict 20 20)" ok
+  t "MAROLA_REPO honours an override" "$(MAROLA_REPO=other/repo repo_default)" other/repo
+  t "MAROLA_REPO unset falls back to the marola-dev org" "$(unset MAROLA_REPO; repo_default)" marola-dev/marola
   echo "runner-preflight self-test:" "$([ "$f" -eq 0 ] && echo ok || echo "$f FAILED")"
   [ "$f" -eq 0 ]
 }

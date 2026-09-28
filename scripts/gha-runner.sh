@@ -19,6 +19,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 resolve_runner_dir() { printf '%s' "${MAROLA_GHA_RUNNER_DIR:-/home/hoffmann/code/actions-runner}"; }
 runner_dir="$(resolve_runner_dir)"
+repo_default() { printf '%s' "${MAROLA_REPO:-marola-dev/marola}"; }
 log="$repo_root/.tmp/gha-runner.log"
 pidfile="$repo_root/.tmp/gha-runner.pid"
 
@@ -119,7 +120,7 @@ status() {
   for pid in $live; do echo "  runner pid $pid  $(dir_of_pid "$pid")"; done
   for pid in $workers; do echo "  job    pid $pid  $(dir_of_pid "$pid")"; done
   local remote
-  remote="$(gh api "repos/${MAROLA_REPO:-h0ffmann/marola}/actions/runners" \
+  remote="$(gh api "repos/$(repo_default)/actions/runners" \
     --jq '.runners[] | "github: \(.name) \(.status) busy=\(.busy) labels=\([.labels[].name] | join(","))"' 2>/dev/null || true)"
   if [ -n "$remote" ]; then echo "$remote"; else echo "github: could not read the runner list (no token?)"; fi
   # Worth saying out loud: inside ai-jail the process table is a different namespace, so a runner
@@ -152,6 +153,10 @@ self_test() {
     "$(MAROLA_GHA_RUNNER_DIR=/tmp/x resolve_runner_dir)" /tmp/x
   t "and falls back to the registered location" \
     "$(unset MAROLA_GHA_RUNNER_DIR; resolve_runner_dir)" /home/hoffmann/code/actions-runner
+  t "status's repo lookup honours MAROLA_REPO" \
+    "$(MAROLA_REPO=other/repo repo_default)" other/repo
+  t "and falls back to the marola-dev org" \
+    "$(unset MAROLA_REPO; repo_default)" marola-dev/marola
   echo "gha-runner self-test:" "$([ "$f" -eq 0 ] && echo ok || echo "$f FAILED")"
   [ "$f" -eq 0 ]
 }

@@ -2,7 +2,7 @@
 """repo_stats — the README's CI-health, LOC and Python-coverage badges, as shields.io endpoint JSON.
 
     scripts/repo_stats.py write --out-dir stats \
-        --repo h0ffmann/marola --run-id 123 --exclude-job repo-stats
+        --repo marola-dev/marola --run-id 123 --exclude-job repo-stats
     scripts/repo_stats.py write --out-dir stats     # LOC + Python coverage (no --run-id: no CI badge)
     scripts/repo_stats.py write --out-dir stats --no-python-coverage   # skip coverage.py
     scripts/repo_stats.py python-coverage           # just print the measured % (no files written)
@@ -453,14 +453,18 @@ def self_test() -> int:
         write(out, {"ci.json": ci_badge(1, 2)})
         assert json.loads((out / "ci.json").read_text())["message"] == "1/2 green"
 
+    write_args = build_parser().parse_args(["write", "--out-dir", "x"])
+    assert write_args.repo == "marola-dev/marola", write_args.repo
+
     print(
         "repo_stats self-test: ok (step counting, badge shaping, cloc/coverage parsing, "
-        "the coverage argv + exe resolution, SELF_TEST_SCRIPTS vs. justfile, write)"
+        "the coverage argv + exe resolution, SELF_TEST_SCRIPTS vs. justfile, write, "
+        "the --repo default)"
     )
     return 0
 
 
-def main(argv: list[str]) -> int:
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -469,7 +473,9 @@ def main(argv: list[str]) -> int:
     w = sub.add_parser("write", help="write the badge JSONs into --out-dir")
     w.add_argument("--out-dir", required=True, type=Path)
     w.add_argument("--root", default=".", help="repo root the LOC paths are relative to")
-    w.add_argument("--repo", default="h0ffmann/marola", help="owner/name, for the CI-health badge")
+    w.add_argument(
+        "--repo", default="marola-dev/marola", help="owner/name, for the CI-health badge"
+    )
     w.add_argument("--run-id", help="workflow run to report on; omitted = LOC badges only")
     w.add_argument("--exclude-job", help="job name to leave out (the reporting job itself)")
     w.add_argument(
@@ -481,6 +487,11 @@ def main(argv: list[str]) -> int:
         "python-coverage", help="print the measured statement %% of scripts/ and exit"
     )
     c.add_argument("--root", default=".", help="repo root the self-test paths are relative to")
+    return ap
+
+
+def main(argv: list[str]) -> int:
+    ap = build_parser()
     args = ap.parse_args(argv)
     if args.self_test:
         return self_test()

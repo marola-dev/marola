@@ -12,7 +12,8 @@
 # Needs `gh` authenticated: the registration token is short-lived (~1 h) and is fetched per run.
 set -euo pipefail
 
-REPO="${MAROLA_RUNNER_REPO:-h0ffmann/marola}"
+repo_default() { printf '%s' "${MAROLA_RUNNER_REPO:-marola-dev/marola}"; }
+REPO="$(repo_default)"
 ROOT="${MAROLA_RUNNER_ROOT:-$HOME/.marola-runners}"
 LABELS="${MAROLA_RUNNER_LABELS:-marola-sea}"
 PREFIX="${MAROLA_RUNNER_PREFIX:-marola}"
@@ -65,6 +66,11 @@ self_test() {
   ok "$(config_argv marola-1 TOK | grep -A1 -- --labels | tail -1)" "$LABELS" \
      "every runner carries the same labels, so any free one can take any job"
   ok "$(config_argv marola-1 TOK | grep -A1 -- --name | tail -1)" "marola-1" "the name reaches config.sh"
+  ok "$(config_argv marola-1 TOK | grep -A1 -- --url | tail -1)" "https://github.com/$REPO" \
+     "the repo reaches config.sh's --url"
+  ok "$(MAROLA_RUNNER_REPO=other/repo repo_default)" "other/repo" "MAROLA_RUNNER_REPO honours an override"
+  ok "$(unset MAROLA_RUNNER_REPO; repo_default)" "marola-dev/marola" \
+     "MAROLA_RUNNER_REPO unset falls back to the marola-dev org"
   ok "$(config_argv marola-1 TOK | grep -c 'TOK')" "1" "the registration token is passed through"
   ok "$(HOME=/definitely/absent MAROLA_RUNNER_SOURCE=/definitely/absent source_dir || echo none)" "none" \
      "a missing runner install is reported, not guessed at"
