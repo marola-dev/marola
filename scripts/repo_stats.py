@@ -24,7 +24,7 @@ CI health is *step*-level, not job-level: ci.yml has three jobs but ~20 named st
 reports 8/8 rather than a misleading 8/20. `--exclude-job` drops the reporting job itself, whose
 steps are by definition still running while it asks.
 
-LOC is `cloc` (flake.nix ships it; ci.yml apt-installs it on the runner), counted over the four
+LOC is `cloc` (from `nix develop .#lint`, locally and in ci.yml), counted over the four
 Scala modules and the Python trees, code lines only — blanks and comments excluded by cloc, and
 `target/`, `__pycache__/`, virtualenvs and `node_modules/` excluded by path.
 
@@ -77,6 +77,7 @@ SELF_TEST_SCRIPTS = (
     "scripts/mip_graph.py",
     "scripts/lib/tasks_issues.py",
     "scripts/strip_external_scripts.py",
+    "scripts/workflow_runners.py",
     "scripts/analyze_training.py",
     "scripts/site_live_check.py",
 )

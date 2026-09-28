@@ -106,11 +106,11 @@
           '';
         };
 
-        # Only the lint toolchain — what ci.yml uses on the self-hosted runner so CI and
-        # `just quality` resolve the same binaries from the same lock.
+        # Only the lint toolchain — what ci.yml's quality-other puts on PATH so CI and
+        # `just quality` resolve the same binaries from the same lock. labs/lint has no `just`.
         devShells.lint = pkgs.mkShell {
           name = "marola-lint";
-          packages = lint.lib.${system}.tools;
+          packages = lint.lib.${system}.tools ++ [ pkgs.just ];
         };
       });
 }

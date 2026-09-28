@@ -5,9 +5,6 @@ name: site (build the boards, deploy the map)
 
 on:
   schedule:
-    # Every 3 h (UTC), on the desktop runner. A tick while the machine sleeps queues rather than
-    # fails, and the `site` concurrency group keeps at most one queued and one pending run, so the
-    # backlog after a night off is two runs, not eight.
     - cron: "15 */3 * * *"
   # CD: a merge to main that changes the page or the pipeline redeploys right away instead of
   # waiting up to 3 h.
@@ -49,7 +46,7 @@ jobs:
   build:
     # A failed api-docs run has nothing new to publish.
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
-    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -148,7 +145,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     environment:
       name: github-pages

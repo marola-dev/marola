@@ -5,9 +5,7 @@ name: scala-steward (dependency update PRs)
 
 on:
   schedule:
-    # Monday 12:00 UTC = 09:00 America/Sao_Paulo, the same slot dependabot.yml asks for, and for
-    # the same reason: this runs on a desktop now. A scheduled job whose runner is asleep does not
-    # fail, it queues — so the hour has to be one the machine is usually awake for, not 03:00 UTC.
+    # Monday 12:00 UTC, the same slot dependabot.yml asks for.
     - cron: "0 12 * * 1"
   workflow_dispatch: {}
 
@@ -17,9 +15,7 @@ permissions:
 
 jobs:
   scala-steward:
-    # The action is a node24 action, not a container one, so it needs no Docker here — only the
-    # JDK and sbt the two steps below install.
-    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7

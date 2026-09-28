@@ -1,7 +1,6 @@
 # profile activity — a merged PR here pings h0ffmann/h0ffmann, which rebuilds its recent-activity list
 # right away (nix-config's reusable profile-ping.yml). Needs the PROFILE_DISPATCH_TOKEN secret; without
-# it the job only leaves a notice. Runs on marola's own runners like every other job here: the
-# reusable workflow's `runs-on` is resolved in *this* repository, so its `runner` input picks them.
+# it the job only leaves a notice. The reusable workflow's `runs-on` comes from its `runner` input.
 name: profile activity
 
 on:
@@ -16,6 +15,6 @@ jobs:
     if: github.event.pull_request.merged
     uses: h0ffmann/nix-config/.github/workflows/profile-ping.yml@main
     with:
-      runner: ${{ vars.CI_RUNNER || 'self-hosted' }}
+      runner: ubuntu-latest
     secrets:
       token: ${{ secrets.PROFILE_DISPATCH_TOKEN }}

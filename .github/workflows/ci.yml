@@ -18,7 +18,7 @@ concurrency:
 jobs:
   # Decide what actually changed so the expensive job only runs when it can matter.
   changes:
-    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
       scala: ${{ steps.filter.outputs.scala }}
@@ -77,7 +77,7 @@ jobs:
   build-test:
     needs: changes
     if: needs.changes.outputs.scala == 'true'
-    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     # Elevated past the workflow-level `contents: read` only for this job's main-only coverage
     # steps below: pushing coverage/latest.json to the orphan site-data branch, and re-triggering
@@ -187,7 +187,7 @@ jobs:
   repo-stats:
     needs: [changes, build-test, quality-other]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write # push the badge JSONs to the site-data branch
@@ -195,22 +195,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # From nix, not apt: on the self-hosted runner `sudo apt-get` has no tty and hangs
-      # (run 34709971906).
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
       - name: cloc + coverage.py from the lint shell
-        if: runner.environment == 'self-hosted'
         run: |
-          nix develop .#lint --command which cloc coverage | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
-
-      # The CI_RUNNER=ubuntu-latest fallback: GitHub's image promises neither tool, but does have
-      # a passwordless sudo and apt, so install them there the way this job always did.
-      - name: cloc (only if the runner image does not already have it)
-        if: runner.environment == 'github-hosted'
-        run: command -v cloc >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends cloc; }
-
-      - name: coverage.py (only if the runner image does not already have it)
-        if: runner.environment == 'github-hosted'
-        run: command -v coverage >/dev/null || python3 -c 'import coverage' 2>/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends python3-coverage; }
+          nix develop .#lint --command bash -c 'command -v cloc coverage' | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
 
       # The Python-coverage part re-runs every `scripts/**/*.py --self-test` under coverage.py —
       # seconds, no network — and reports statement % over scripts/ only.
@@ -255,7 +244,7 @@ jobs:
   docs-build:
     needs: changes
     if: needs.changes.outputs.docs == 'true'
-    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -265,33 +254,32 @@ jobs:
   quality-other:
     needs: changes
     if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true' || needs.changes.outputs.justfile == 'true'
-    runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}
-    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      # just is already in labs/lint's tools (nix develop .#lint --command which just) — same
-      # PATH-prepend pattern as the shellcheck/pyflakes step below, so no separate setup action.
-      - name: just from the lint shell (self-hosted only — github-hosted has no nix)
-        if: needs.changes.outputs.justfile == 'true' && runner.environment == 'self-hosted'
+      - uses: DeterminateSystems/nix-installer-action@v23
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+      # The same lock as `just quality`, so CI and a laptop cannot disagree about a lint version.
+      - name: lint tools from nix develop .#lint
         run: |
-          nix develop .#lint --command which just | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
+          nix develop .#lint --command bash -c 'command -v ruff actionlint hadolint shellcheck pyflakes just' \
+            | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
+      - name: tool versions
+        run: |
+          ruff --version
+          actionlint -version | head -1
+          hadolint --version
+          shellcheck --version | sed -n 2p
       - name: just --list (justfile parses — no opinion on style, see quality-other's comment)
         if: needs.changes.outputs.justfile == 'true'
         run: just --list >/dev/null
-      # ruff-action appends its `src` (default: the checkout root) to `args`, so this lints every
-      # .py in the repo — the same `ruff check .` as `just quality-other`.
       - name: ruff check (every .py in the repo)
         if: needs.changes.outputs.python == 'true'
-        uses: astral-sh/ruff-action@v3
-        with:
-          version: "0.16.5"   # = labs/lint's ruff as marola locks it (nix develop .#lint --command ruff --version)
-          args: check
+        run: ruff check .
       - name: ruff format --check
         if: needs.changes.outputs.python == 'true'
-        uses: astral-sh/ruff-action@v3
-        with:
-          version: "0.16.5"   # = labs/lint's ruff as marola locks it (nix develop .#lint --command ruff --version)
-          args: format --check
+        run: ruff format --check .
       - name: self-tests — smoke_record (the smoke workflow's parser) and benchmark_gate (marola-local's gate)
         if: needs.changes.outputs.python == 'true'
         run: |
@@ -347,27 +335,18 @@ jobs:
           node --version
           node --check site/static/app.js
           node scripts/site_check.js
-      # Put nix's shellcheck/pyflakes on PATH first, or raven-actions/actionlint installs its own
-      # via tty-less `sudo apt-get`, which hangs on the self-hosted runner (run 34709971906).
-      - name: shellcheck + pyflakes from the lint shell (self-hosted only — the action would apt-get them)
-        if: needs.changes.outputs.workflows == 'true' && runner.environment == 'self-hosted'
+      - name: workflow_runners — only marola-sea-publish.yml may be self-hosted (MIP-0065)
+        if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.python == 'true'
         run: |
-          nix develop .#lint --command which shellcheck pyflakes | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
+          python3 scripts/workflow_runners.py --self-test
+          python3 scripts/workflow_runners.py
       - name: actionlint (workflow files)
         if: needs.changes.outputs.workflows == 'true'
-        uses: raven-actions/actionlint@v2
+        run: actionlint
+      # Dockerfile.local is missing until MIP-0065 task 2 fixes its hadolint failure.
       - name: hadolint (Dockerfiles)
         if: needs.changes.outputs.docker == 'true'
-        uses: hadolint/hadolint-action@v3.5.0
-        with:
-          dockerfile: Dockerfile
-      # A second step, not a second file: the action takes one dockerfile. `just quality-other`
-      # lints both in one command, and this is what keeps that claim true in CI.
-      - name: hadolint (mkdocs image)
-        if: needs.changes.outputs.docker == 'true'
-        uses: hadolint/hadolint-action@v3.5.0
-        with:
-          dockerfile: mkdocs/Dockerfile
+        run: hadolint Dockerfile mkdocs/Dockerfile
 
       # MIP-0010: every compose profile must still render — the mlflow profile included.
       - name: docker compose config (all profiles)

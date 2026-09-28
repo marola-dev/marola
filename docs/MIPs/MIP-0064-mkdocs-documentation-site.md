@@ -233,7 +233,9 @@ and, after the pdoc step and before the strip/push steps:
     rm -rf out/docs && mv mkdocs/generated-docs out/docs
 ```
 
-The runners are self-hosted with Docker on the host (`AGENTS.md`, "Docker itself is the host's").
+The runners were self-hosted with Docker on the host (`AGENTS.md`, "Docker itself is the host's").
+**Superseded by MIP-0065:** every job here, `api-docs.yml` and `docs-build` included, now runs on
+`ubuntu-latest`, whose image ships Docker and Compose; the paragraph below is the self-hosted record.
 **Corrected during task 3:** this section originally said `docker-smoke.yml` already relies on
 that, and it does not — that workflow pins `runs-on: ubuntu-latest` precisely because it needs a
 daemon. Nothing in this repo had ever run a container on the self-hosted runner, so a reachable
