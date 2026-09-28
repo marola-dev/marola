@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft — `Tasks: docs/MIPs/MIP-0065.tasks.md` |
+| **Status** | Partially implemented (task 1 of 4 — #481; docker-on, workflow-fixes, ci-cd-doc to go) — `Tasks: docs/MIPs/MIP-0065.tasks.md` |
 | **Author** | Claude (Opus 5), with Bruno |
 | **Created** | 2026-09-28 |
 | **Phase** | 3 — the existing deploys (Pages, GHCR images) move runner; no Phase 1 or Phase 2 prerequisite, no cloud spend. The bot's own deploy (§5.7) is Phase 2 and out of scope |
