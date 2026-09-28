@@ -23,9 +23,11 @@ One sbt multi-project build (root `build.sbt`), split into three modules at the 
   loads, never a runtime dependency.
 
 `PHILOSOPHY.md` (repo root) holds the reasons behind the rules below: why Scala 3 on the JVM, Nix,
-`just`, ai-jail, MIPs. Docs live under `docs/`. `docs/index.md` indexes them and marks which ideas
-are MIP material; check these before assuming something is undecided or unbuilt (MIP status
-vocabulary and template pointer: `.claude/rules/docs.md`):
+`just`, ai-jail, MIPs. Docs live under `docs/`, grouped into the four audience directories the
+paths below show, and are published as a rendered, searchable site at <https://marola.dev/docs/>
+(MIP-0064). `docs/index.md` is both that site's landing page and the index of what is MIP
+material; check these before assuming something is undecided or unbuilt (MIP status vocabulary and
+template pointer: `.claude/rules/docs.md`):
 
 | Doc | Covers |
 |---|---|
@@ -45,6 +47,15 @@ vocabulary and template pointer: `.claude/rules/docs.md`):
 | `docs/MIPs/` | Marola Improvement Proposals: design a non-trivial change here first, via the `mip` skill (`.claude/skills/mip/SKILL.md`), before building it. `just context-mips` packs what a browser session needs to draft one from voice notes; `just context-mip MIP-NNNN` packs one already-written MIP for an independent, non-Claude reviewer |
 | `docs/4-Research-and-plans/FABLE_REVIEW.md` | Code and documentation review at the initial import: open findings, ranked, with file:line references |
 
+**Writing a doc is a deploy.** A new or moved file under `docs/` needs no `nav:` entry: mkdocs
+builds the sidebar from the file tree, which is why the directories carry `1-`…`4-` prefixes — they
+are the only thing ordering the sections. The build is `--strict`, so a link that does not resolve
+inside `docs/` fails it; that is why `AGENTS.md`, `PHILOSOPHY.md` and `docs/benchmarks/` are
+referenced at GitHub rather than relatively. Preview with `just docs-serve` before pushing. On
+`main`, a push touching `docs/**` or `mkdocs/**` runs `api-docs.yml`, which renders the site, folds
+the scaladoc/pdoc trees in under `api/`, and pushes the result to the `site-data` branch for
+`site.yml` to deploy.
+
 ## Setup & commands
 
 ```bash
@@ -58,6 +69,8 @@ just run              # marola CLI (just run -- --summarize forwards flags)
 just mcp-server       # marola's MCP tool server
 just e2e              # marola's live E2E test (Overpass/Open-Meteo/Ollama) — excluded from `just test`
 just coverage         # sbt-scoverage: statement coverage across core/local/cli (README badge, main only)
+just docs             # build docs/ into mkdocs/generated-docs (needs a Docker or Podman daemon)
+just docs-serve       # preview the docs on http://localhost:8001/docs/
 ```
 
 Always run `just build && just test && just quality` before considering a change done (`quality` =

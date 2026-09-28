@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # deps-stack — stack every open dependency-update PR into one GitHub Stack, the same shape
-# `scripts/stack.sh`/`just uprds` give a MIP's task branches (see docs/3-Working-on-the-repo/DEV-FLOW.md §6/§8).
+# `scripts/stack.sh`/`just uprds` give a MIP's task branches (see docs/3-Working-on-the-repo/DEV-FLOW.md §6/§9).
 #
 #   just deps-stack                    # discover, build the local chain, publish, link
 #   just deps-stack --dry-run          # print every git/gh command; no push, no gh mutation
@@ -388,7 +388,7 @@ publish_chain() {
     {
       echo "Stacked dependency-update PR — originally dependabot PR #$orig_num, rebased here as"
       echo "part of a \`just deps-stack\` chain. dependabot's own branch is untouched; #$orig_num"
-      echo "will be closed with a pointer to this one. Merge bottom-up (docs/3-Working-on-the-repo/DEV-FLOW.md §6/§8)."
+      echo "will be closed with a pointer to this one. Merge bottom-up (docs/3-Working-on-the-repo/DEV-FLOW.md §6/§9)."
     } > "$extra"
     if [ "$dry" -eq 1 ]; then
       echo "===== $branch (base: $base_name, was PR #$orig_num) ====="

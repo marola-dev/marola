@@ -74,7 +74,7 @@ An entry is a row of the same table (`1`) or another MIP's task (`0064-T4`), whi
 be filed: an unfiled one is an error and nothing is created. Idempotent: a second run creates nothing and adds no edge, so re-run it after adding a row.
 Filing issues is human-gated (MIP-0063 §5.6) — show the `--dry-run` output and get a go-ahead
 before the real run. It sets no `area/*`, `layer/*` or `size/*`, so a filed row is not
-`agent-ready` until a human labels it and `just issue-ready <n>` passes; §8 of `docs/3-Working-on-the-repo/DEV-FLOW.md`
+`agent-ready` until a human labels it and `just issue-ready <n>` passes; §9 of `docs/3-Working-on-the-repo/DEV-FLOW.md`
 and `docs/3-Working-on-the-repo/ISSUE-FLOW.md` have the rest.
 
 ## Step 2 — one task, one branch, one PR (execution sessions)

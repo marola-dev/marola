@@ -82,7 +82,7 @@ source, or what a user sees goes through one first.
   `.github/dependabot.yml`: Mondays and Fridays at 09:00 America/Sao_Paulo, as a single PR
   covering all three (a `multi-ecosystem-group`, which is the only grouping that spans update
   entries). `just deps-stack` is still there for the case where several arrive separately
-  (`docs/3-Working-on-the-repo/DEV-FLOW.md` §6/§8). There is no API to trigger a Dependabot run: the
+  (`docs/3-Working-on-the-repo/DEV-FLOW.md` §6/§9). There is no API to trigger a Dependabot run: the
   button is Insights → Dependency graph → Dependabot → Check for updates, and pushing any change
   to `.github/dependabot.yml` forces one.
 
