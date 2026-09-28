@@ -28,6 +28,8 @@ NO_DEPS = {"-", "–", "—"}
 LINKED_CELL_RE = re.compile(r"^\[(?P<id>[^\]]+)\]\((?P<url>[^)]*)\)$")
 TASK_ID_RE = re.compile(r"^[A-Za-z0-9]+$")
 MIP_FILE_RE = re.compile(r"MIP-(?P<mip>\d{4})\.tasks\.md$")
+# A `depends on` token naming another MIP's task (#462), resolved by title like a filed row.
+CROSS_DEP_RE = re.compile(r"^(?P<mip>\d{4})-T(?P<id>[A-Za-z0-9]+)$")
 
 
 class TasksError(Exception):
@@ -78,7 +80,7 @@ def dedup_re(mip: str, task_id: str) -> re.Pattern[str]:
     return re.compile(rf"\b{re.escape(mip)}-T{re.escape(task_id)}\b")
 
 
-def parse_deps(cell: str, known: set[str], where: str) -> list[str]:
+def parse_deps(cell: str, known: set[str], where: str, mip: str = "") -> list[str]:
     # Parenthetical commentary is prose. MIP-0011 task 11's "– (… can be built any time relative
     # to 1-10 …)" depends on nothing, and any digit-scraping read of that cell says 1 and 10.
     cell = re.sub(r"\([^()]*\)", " ", cell)
@@ -91,9 +93,13 @@ def parse_deps(cell: str, known: set[str], where: str) -> list[str]:
         token = words[0].strip("`*_.;:")
         if token in NO_DEPS:
             continue
-        if token not in known:
+        own = CROSS_DEP_RE.match(token)
+        if own and own.group("mip") == mip:
+            token = own.group("id")
+        if token not in known and not CROSS_DEP_RE.match(token):
             raise TasksError(
                 f"{where}: `depends on` names {token!r}, which is not a row of this table"
+                " nor another MIP's `NNNN-TK`"
             )
         if token not in deps:
             deps.append(token)
@@ -163,7 +169,7 @@ def parse_table(path: Path) -> tuple[str, list[str], list[dict]]:
                 "slug": cells[1],
                 "delivers": cells[2],
                 "tests": cells[3],
-                "deps": parse_deps(cells[4], known, f"{path}:{i + 1}"),
+                "deps": parse_deps(cells[4], known, f"{path}:{i + 1}", mip),
             }
         )
     return mip, lines, rows
@@ -182,12 +188,16 @@ def repo_path(path: Path) -> str:
         return f"docs/mips/{path.name}"
 
 
-def body_of(mip: str, path: Path, repo: str, row: dict, total: int) -> str:
+def dep_label(mip: str, dep: str, cross: dict[str, int]) -> str:
+    return f"`{dep}` (#{cross[dep]})" if dep in cross else f"`{mip}-T{dep}`"
+
+
+def body_of(mip: str, path: Path, repo: str, row: dict, total: int, cross: dict[str, int]) -> str:
     # The heading spellings are §5.4's, so a filed row is something `issues.sh ready` can read
     # rather than one that fails rules 1 and 2 on shape alone. What the row cannot supply —
     # area/layer/size — stays a human's, which is what keeps this command clear of §5.6's gate.
     url = f"https://github.com/{repo}/blob/main/{repo_path(path)}"
-    deps = ", ".join(f"`{mip}-T{d}`" for d in row["deps"]) or "nothing"
+    deps = ", ".join(dep_label(mip, d, cross) for d in row["deps"]) or "nothing"
     return "\n".join(
         [
             "### What",
@@ -212,32 +222,51 @@ def body_of(mip: str, path: Path, repo: str, row: dict, total: int) -> str:
     )
 
 
+def find_issue(mip: str, task_id: str, issues: list[dict]) -> int | None:
+    pattern = dedup_re(mip, task_id)
+    hits = sorted({i["number"] for i in issues if pattern.search(i.get("title", ""))})
+    if len(hits) > 1:
+        raise TasksError(
+            f"{mip}-T{task_id} is in the title of {len(hits)} issues ({hits}) — "
+            "one of them is a duplicate filing; close it before re-running"
+        )
+    return hits[0] if hits else None
+
+
 def match_issues(mip: str, rows: list[dict], issues: list[dict]) -> dict[str, int]:
+    found = {row["id"]: find_issue(mip, row["id"], issues) for row in rows}
+    return {k: v for k, v in found.items() if v is not None}
+
+
+def match_cross(rows: list[dict], issues: list[dict]) -> dict[str, int]:
+    """Every other-MIP token -> its issue. Unfiled is an error, not a pending edge: this run
+    cannot file it, so nothing is filed until it exists (the unknown-row rule, #462)."""
     out: dict[str, int] = {}
     for row in rows:
-        pattern = dedup_re(mip, row["id"])
-        hits = sorted({i["number"] for i in issues if pattern.search(i.get("title", ""))})
-        if len(hits) > 1:
-            raise TasksError(
-                f"{mip}-T{row['id']} is in the title of {len(hits)} issues ({hits}) — "
-                "one of them is a duplicate filing; close it before re-running"
-            )
-        if hits:
-            out[row["id"]] = hits[0]
+        for dep in row["deps"]:
+            m = CROSS_DEP_RE.match(dep)
+            if not m or dep in out:
+                continue
+            number = find_issue(m.group("mip"), m.group("id"), issues)
+            if number is None:
+                raise TasksError(f"`depends on` names {dep}, but no issue's title carries it")
+            out[dep] = number
     return out
 
 
 def plan(path: Path, repo: str, issues: list[dict]) -> dict:
     mip, _, rows = parse_table(path)
     filed = match_issues(mip, rows, issues)
+    cross = match_cross(rows, issues)
     return {
         "mip": mip,
         "path": path.as_posix(),
+        "cross": cross,
         "rows": [
             {
                 **row,
                 "title": title_of(mip, row),
-                "body": body_of(mip, path, repo, row, len(rows)),
+                "body": body_of(mip, path, repo, row, len(rows), cross),
                 "issue": filed.get(row["id"]),
             }
             for row in rows
@@ -327,9 +356,17 @@ def self_test() -> int:
         ("G (fixture; soft — schema also read upstream)", ["G"]),
         ("N merged, 1", ["N", "1"]),
         ("1, 1", ["1"]),
+        ("0064-T4", ["0064-T4"]),
+        ("1, `0064-T4`", ["1", "0064-T4"]),
+        ("0065-T1, 1", ["1"]),
     ]:
-        got = parse_deps(cell, known, "fixture")
+        got = parse_deps(cell, known, "fixture", "0065")
         assert got == want, (cell, got, want)
+    try:
+        parse_deps("0065-T99", known, "fixture", "0065")
+        raise AssertionError("this MIP's own long form must name a row of the table")
+    except TasksError:
+        pass
     try:
         parse_deps("whatever comes first", known, "fixture")
         raise AssertionError("an unknown dependency should be an error, not a silent drop")
@@ -416,6 +453,24 @@ def self_test() -> int:
             raise AssertionError("two issues for one task id should be an error")
         except TasksError:
             pass
+
+        # 4b. Cross-MIP tokens (#462): resolved by title, named in the body, never guessed.
+        c = d / "MIP-0065.tasks.md"
+        c.write_text(FIXTURE_HEAD + "| 1 | a | d | t | 0064-T4 |\n| 2 | b | d | t | 1, 0064-T4 |\n")
+        other = [
+            {"number": 458, "title": "0064-T4: kroki"},
+            {"number": 459, "title": "0064-T40: x"},
+        ]
+        pc = plan(c, "marola-dev/marola", other)
+        assert pc["cross"] == {"0064-T4": 458}, pc["cross"]
+        assert [r["deps"] for r in pc["rows"]] == [["0064-T4"], ["1", "0064-T4"]]
+        assert "Depends on `0065-T1`, `0064-T4` (#458)" in pc["rows"][1]["body"]
+        for bad_issues in ([], other + [{"number": 460, "title": "0064-T4: again"}]):
+            try:
+                plan(c, "marola-dev/marola", bad_issues)
+                raise AssertionError(f"cross-MIP token against {bad_issues} should be an error")
+            except TasksError as exc:
+                assert "0064-T4" in str(exc), exc
 
         p = plan(f, "marola-dev/marola", issues)
         assert p["rows"][0]["issue"] == 414 and p["rows"][1]["issue"] is None

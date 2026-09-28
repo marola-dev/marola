@@ -70,7 +70,8 @@ just tasks-to-issues MIP-NNNN --milestone "<deliverable>"
 
 It files one issue per row that has none (`NNNN-Tk: <slug>`), rewrites each row's `#` cell into a
 link to its issue, and draws one native `blocked by` edge per entry of the `depends on` column.
-Idempotent: a second run creates nothing and adds no edge, so re-run it after adding a row.
+An entry is a row of the same table (`1`) or another MIP's task (`0064-T4`), which must already
+be filed: an unfiled one is an error and nothing is created. Idempotent: a second run creates nothing and adds no edge, so re-run it after adding a row.
 Filing issues is human-gated (MIP-0063 §5.6) — show the `--dry-run` output and get a go-ahead
 before the real run. It sets no `area/*`, `layer/*` or `size/*`, so a filed row is not
 `agent-ready` until a human labels it and `just issue-ready <n>` passes; §8 of `docs/DEV-FLOW.md`

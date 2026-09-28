@@ -733,9 +733,9 @@ cmd_tasks_to_issues() {
     [ -z "$number" ] || present="$(gh api --paginate "repos/$nwo/issues/$number/dependencies/blocked_by" </dev/null --jq '.[].number')"
     while read -r dep; do
       [ -n "$dep" ] || continue
-      dep_number="$(jq -r --arg k "$dep" '.[$k] // empty' <<<"$map")"
+      dep_number="$(jq -r --arg k "$dep" --argjson cross "$(jq -c '.cross' <<<"$plan")" '.[$k] // $cross[$k] // empty' <<<"$map")"
       if [ -z "$number" ] || [ -z "$dep_number" ]; then
-        printf '  edge: %s blocked by %s — pending, one of the two is not filed yet\n' "$mip-T$id" "$mip-T$dep"
+        printf '  edge: %s blocked by %s — pending, one of the two is not filed yet\n' "$mip-T$id" "$(case "$dep" in *-T*) echo "$dep" ;; *) echo "$mip-T$dep" ;; esac)"
         pending=$((pending + 1))
       elif grep -qx "$dep_number" <<<"$present"; then
         printf '  edge: #%s blocked by #%s — already wired\n' "$number" "$dep_number"
@@ -2179,6 +2179,32 @@ EOF
   check "a create whose URL will not parse is counted, and the summary still prints" \
     "$(grep -c '^summary: ' <<<"$t2i_out")" "1"
   check "and the run says so rather than exiting 0 half way" "$t2i_rc" "1"
+
+  # #462: a `depends on` naming another MIP's task is an edge to that MIP's issue, found by title.
+  local t2i_x="$t2i/MIP-0065.tasks.md"
+  {
+    echo '| # | slug | delivers | tests (must exist before the PR) | depends on |'
+    echo '|---|---|---|---|---|'
+    printf '| 1 | a | d | t | 0064-T4 |\n| 2 | b | d | t | 1, 0064-T4 |\n'
+  } > "$t2i_x"
+  rm -f "$t2i"/*.deps.json "$t2i"/*.issue.json
+  printf '[{"number":458,"title":"0064-T4: kroki"}]\n' > "$t2i/issues-all.json"
+  : > "$t2i/log"
+  t2i_out="$(PATH="$t2i/bin:$PATH" STUB_DIR="$t2i" STUB_LOG="$t2i/log" nwo="" cmd_tasks_to_issues "$t2i_x" 2>&1)" || failed=1
+  check "a cross-MIP token is wired to the issue whose title carries it" "$(grep '^edge' "$t2i/log" | tr '\n' ' ')" \
+    "edge 701 <- 458 edge 702 <- 701 edge 702 <- 458 "
+  : > "$t2i/log"
+  t2i_out="$(PATH="$t2i/bin:$PATH" STUB_DIR="$t2i" STUB_LOG="$t2i/log" nwo="" cmd_tasks_to_issues "$t2i_x" 2>&1)" || failed=1
+  check "and a re-run adds no issue and no edge" "$(tail -1 <<<"$t2i_out")" \
+    "summary: 0 created, 2 already filed · 0 rows linked · 0 edges wired, 3 already wired, 0 pending"
+  printf '[]\n' > "$t2i/issues-all.json"
+  : > "$t2i/log"
+  sed -i 's/^| \[\([12]\)\]([^)]*) |/| \1 |/' "$t2i_x"
+  if (PATH="$t2i/bin:$PATH" STUB_DIR="$t2i" STUB_LOG="$t2i/log" nwo="" cmd_tasks_to_issues "$t2i_x") >/dev/null 2>&1; then
+    echo "FAILED: a cross-MIP token with no issue was accepted" >&2; failed=1
+  else
+    check "an unfiled cross-MIP token files nothing" "$(cat "$t2i/log")" ""
+  fi
 
   echo "-- the board: scopes, the Status lookup and the sync plan (MIP-0063 §5.2) --"
   check "read:project is not project" "$(has_scope "repo, read:project, workflow" project && echo yes || echo no)" "no"
