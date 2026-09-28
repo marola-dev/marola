@@ -1,13 +1,12 @@
 blank_issues_enabled: false
 contact_links:
   - name: Run it locally
-    url: https://github.com/h0ffmann/marola/blob/main/docs/RUN-LOCALLY.md
+    url: https://github.com/marola-dev/marola/blob/main/docs/RUN-LOCALLY.md
     about: Set up and run the pipeline with Ollama, no Telegram needed.
   - name: Architecture and integrations
-    url: https://github.com/h0ffmann/marola/blob/main/docs/ARCHITECTURE.md
+    url: https://github.com/marola-dev/marola/blob/main/docs/ARCHITECTURE.md
     about: How the pipeline and its pluggable integrations fit together.
   - name: Ask a question
     url: https://github.com/marola-dev/marola/discussions
     about: >-
-      "How do I…" questions — not a bug, task, story, or MIP (MIP-0063 §4.6). Discussions is off
-      today; this link works once a maintainer enables it.
+      "How do I…" questions — not a bug, task, story, or MIP (MIP-0063 §4.6).

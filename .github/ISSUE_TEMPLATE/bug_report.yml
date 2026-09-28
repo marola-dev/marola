@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in marola's pipeline, CLI, or docs is broken or wrong.
+description: Something a user touches is broken — the pipeline, the CLI, the bot, the site. For the repo's own tooling (a script, a hook, CI), use Task instead.
 labels: ["bug"]
 body:
   - type: textarea

@@ -20,7 +20,11 @@ into one milestone.
 Pick the tier, then the matching issue form:
 
 - **Tier 1 — bug, chore, docs.** One issue, no milestone, no spec. Use **Bug report**
-  (`bug_report.yml`) for something broken, or **Task** (`task.yml`) otherwise.
+  (`bug_report.yml`) for something broken in what a user touches — the pipeline, the CLI, the
+  Telegram bot, the site. Use **Task** (`task.yml`) for everything else, *including* something
+  broken in the repo's own tooling: a script, a hook, CI. `bug_report.yml` asks which LLM backend
+  was running and for the `just run` line that triggers it, neither of which a broken shell script
+  has.
 - **Tier 2 — small enhancement** (roughly two tasks or fewer, no new dependency). One issue
   **whose body is the spec**, sub-issues if it splits, no MIP file. Use **Story** (`story.yml`).
 - **Tier 3 — initiative** (a new data source, a scoring change, a new integration, anything
@@ -45,8 +49,15 @@ A heading whose field the author left blank renders as `_No response_` and does 
 The rules follow the tier, because the forms do. A **MIP proposal** is a design request rather
 than claimable work, so it is never `agent-ready`. A **bug report** is claimed on its own two
 fields: **What you expected instead** stands for the acceptance criteria, and **Failing test** for
-the named test — which means a bug filed without a failing test is not ready for an agent, only
-for a human.
+the named test.
+
+**A bug report with no failing test is filed, and is not yet claimable.** The field is optional on
+purpose — someone who cannot write Scala should still be able to report a bug, and losing that
+report costs more than the missing line. So `issue-ready` answering "rule 2: named test" on such an
+issue is the checker working, not a contradiction to fix: rule 2 exists so that what proves the bug
+fixed is decided *before* someone claims it, and nobody has decided it yet. A maintainer owes the
+report a named test — the test that is red today — and the issue becomes `agent-ready` when they
+add it.
 
 ## The commands
 

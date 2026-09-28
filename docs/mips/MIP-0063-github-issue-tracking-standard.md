@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Partially implemented (tasks 1–4 of 8 — #423 #429 #430 #435) — `Tasks: docs/mips/MIP-0063.tasks.md` |
+| **Status** | Partially implemented (tasks 1–7 of 8 — #423 #429 #430 #435 #436 #443 #450) — `Tasks: docs/mips/MIP-0063.tasks.md` |
 | **Author** | Claude (Opus 5), for B. Valério |
 | **Created** | 2026-09-27 |
 | **Phase** | 0 (dev-loop; no user-facing surface) |
@@ -10,7 +10,7 @@
 | **Effort** | M — one script family (`scripts/issues.sh`, `scripts/lib/tasks_issues.py`), four issue forms, a `labels.yml` manifest, one new skill and one extended skill, four doc edits. No Scala, no new module, no CI workflow (§11.1 defers those) |
 | **Gain** | `infra/dev-loop` (the backlog stops being 58 Draft design docs and a prose ROADMAP, and becomes a queue an agent can query in one call); `infra/dev-loop` again on the intake side (a contributor, human or agent, has one standard way to propose work instead of four half-documented ones) |
 | **Effort vs Gain** | `do next` — every later harness layer the maintainer wants (validation gates, graphify, autonomous triage) needs a machine-readable work queue to operate on, and there isn't one today |
-| **Depends on** | No other MIP. Not gated by Phase 1: this is dev-loop work, which `ARCHITECTURE.md` §11 puts outside the phase sequence. Creates no paid resource, so `AGENTS.md`'s cost gate does not apply. Two actions only the maintainer can take: `gh auth refresh -s project` on the host (§4.4) and enabling Discussions (§4.6) |
+| **Depends on** | No other MIP. Not gated by Phase 1: this is dev-loop work, which `ARCHITECTURE.md` §11 puts outside the phase sequence. Creates no paid resource, so `AGENTS.md`'s cost gate does not apply. Two actions only the maintainer could take, both done 2026-09-28: `gh auth refresh -s project` on the host (§4.4) and enabling Discussions (§4.6) |
 | **Blocked by** | none |
 | **Risk** | Taxonomy nobody maintains. Filing ~6 issues per accepted MIP turns a 58-MIP backlog into several hundred issues; if triage lapses, `agent-ready` rots and the queue becomes actively misleading — worse than the prose ROADMAP it replaced, because it looks authoritative |
 | **Cost so far** | — |
@@ -20,7 +20,7 @@
 marola already does spec-driven development: a MIP is the spec, `MIP-NNNN.tasks.md` is the plan,
 a stacked PR is the increment. All three live in files, so the backlog is invisible in GitHub's UI
 and unqueryable by anything that isn't already inside the repo. This MIP puts the *work* into
-GitHub — issues as stories and tasks, milestones as deliverables, one public project board,
+GitHub — issues as stories and tasks, milestones as deliverables, one org project board,
 native dependency edges so "ready" is computed rather than asserted — and defines a five-rule
 **Definition of Ready** that gates what an agent is allowed to pick up. The spec layer does not
 move: MIPs stay files, and `tasks.md` stays the authored plan.
@@ -129,14 +129,16 @@ better than labels, but they are an **organization** feature. Verified empirical
 `/users/{user}/issue-types` endpoint exists. `issue.type` is present in the payload but reads
 `null` and cannot be set here. Labels carry the roles instead. Revisit if marola moves to an org.
 
-### 4.4 Projects v2 and token scopes — **adopted, with a human prerequisite**
+### 4.4 Projects v2 and token scopes — **adopted; the human prerequisite is done**
 
-`gh project list --owner h0ffmann` → `{"projects":[],"totalCount":0}`; the repo has
-`has_projects: true`. Scopes verified against GitHub's OAuth table: **`project`** = *"read/write
-access to user and organization projects"*, **`read:project`** = *"read only access"*. The host
-token carries `read:project` only, so `just board-sync` fails until the maintainer runs
-`gh auth refresh -s project` — a human action by design, since an agent should not widen its own
-token's scope. Projects' **built-in workflows** (auto-add, closed → Done) are configured in the
+Scopes verified against GitHub's OAuth table: **`project`** = *"read/write access to user and
+organization projects"*, **`read:project`** = *"read only access"*. The prerequisite was real and
+has been met: the maintainer ran `gh auth refresh -s project`, the host token now carries
+`project`, and `gh project list --owner marola-dev` returns the org board (`Marola`, number 1).
+Widening the scope stays a human action by design — an agent should not widen its own token — but
+nothing in v1 waits on it any more. The 2026-09-27 reads that recorded the earlier state
+(`--owner h0ffmann` → `totalCount 0`, `read:project` only) are kept in the Appendix as dated
+history. Projects' **built-in workflows** (auto-add, closed → Done) are configured in the
 project UI; this MIP uses them rather than reimplementing them as Actions.
 
 ### 4.5 Issue forms → parseable bodies — **adopted, verified on real data**
@@ -147,10 +149,11 @@ against this repo rather than the docs: issue **#412**'s body begins `### Proble
 Definition of Ready checkable by `grep` rather than by a model, and why §5.6 fixes the heading
 spellings across all four forms.
 
-### 4.6 Discussions — **adopted, off today**
+### 4.6 Discussions — **adopted, and on**
 
-`has_discussions: false`. Enabling it is a repository setting (maintainer action). Narrow purpose:
-keep "how do I…" out of a tracker meant to be a work queue.
+`has_discussions: true` (2026-09-28); it read `false` when this section was written, and the
+maintainer enabled it. Narrow purpose: keep "how do I…" out of a tracker meant to be a work
+queue. `config.yml`'s contact link points at it and no longer caveats it.
 
 ### 4.7 Prior art — `brunogbv/cv` and GitHub spec-kit — **borrowed, not vendored**
 
@@ -199,11 +202,13 @@ Three intake tiers (`AGENTS.md`'s MIP trigger list is unchanged; this names the 
 
 ### 5.2 Labels, milestones, the board
 
-Four new labels: `agent-ready`, `size/S`, `size/M`, `size/L`. Existing `area/*` (12), `layer/*`
-(8), `kind/*` and `priority/high` are untouched. **`layer/azure` is orphaned** — 993b469 removed
-Azure — and is deleted here. **`mip` was named here as existing and is not** (`GET /labels/mip` →
-404, 2026-09-28): `mip_proposal.yml` applies it and §5.4 dispatches on it, so `.github/labels.yml`
-defines it and `just labels-sync` creates it.
+Four new labels at design time: `agent-ready`, `size/S`, `size/M`, `size/L`. Existing `area/*`
+(12), `layer/*` (8), `kind/*` and `priority/high` are untouched. **`layer/azure` is orphaned** —
+993b469 removed Azure — and is deleted here. **`mip` was named here as existing and is not**
+(`GET /labels/mip` → 404, 2026-09-28): `mip_proposal.yml` applies it and §5.4 dispatches on it, so
+`.github/labels.yml` defines it and `just labels-sync` creates it. Two more arrived with the tasks
+rather than with this section: `mip` itself, and `phase/0`–`phase/4` for §5.3's gate issues. The
+manifest defines **45** labels today, and it — not this paragraph — is the list.
 
 Two labels an earlier draft of this design carried are gone: `blocked`, because §4.2's native
 dependencies express it better and without hand-maintenance, and `epic`, because §5.1 makes the
@@ -228,9 +233,13 @@ An earlier draft said *user-level*, written before the repo moved from `h0ffmann
 what this section assumed differs from what is there in four ways, and `issues.sh board setup`
 reconciles the first three:
 
-- It **already exists**, with 21 items and GitHub's six template views (*Current iteration, Next
-  iteration, Prioritized backlog, Roadmap, In review, My items*). So this section's four views are
-  **added** to those six, never in place of them; nothing here deletes or renames a view.
+- It **already exists**. On 2026-09-27 it held 21 items and GitHub's six template views (*Current
+  iteration, Next iteration, Prioritized backlog, Roadmap, In review, My items*), and this
+  section's four views are **added** to those six, never in place of them; nothing here deletes or
+  renames a view. Read again on 2026-09-28, after task 6: **31 items and five views** — the four
+  added here plus *My items*. The other five templates were deleted by hand in the UI;
+  `scripts/issues.sh` has no `deleteProjectV2View` call, so the promise holds and the count above
+  is what the board looked like on one day.
 - Its `Status` already has **Ready, In progress, In review and Done** — only **Triage** and
   **Spec** are missing, and it also carries **Backlog**, which this section does not name.
   `updateProjectV2Field` takes the *complete* option list, so the two are appended to what is
@@ -244,13 +253,16 @@ reconciles the first three:
   section's "Agent queue, sorted size then `priority/high`" is the one part of the view spec the
   API cannot express, and the ordering stays a UI action. So is **Now**'s milestone filter, for a
   different reason: which milestone is "currently being pushed" is not something a script knows.
-- It is **private**; this section says public. Making it public is a UI action.
+- It is **private**; an earlier draft of this section said public. Making it public is a UI
+  action, and it has not been taken: the board is private today.
 
-None of the three mutations above has been *called*. The host token has `read:project`, not
-`project`, so every write fails on scope before it reaches the API and nothing here says whether
-a PAT may perform them — only that the schema offers them. `board setup` is written against them
-and refuses with the `gh auth refresh -s project` line until the scope lands; `--dry-run` prints
-the plan regardless, since the reads it is computed from need only `read:project`.
+When this was written none of the three mutations had been *called*: the host token had
+`read:project`, so every write failed on scope before reaching the API. The maintainer has since
+granted `project` and `board setup` has run — the `Status` options and the four views of this
+section exist on the board (read 2026-09-28), so the mutations are exercised, not merely offered
+by the schema. `board setup` still refuses with the `gh auth refresh -s project` line when the
+scope is absent, and `--dry-run` prints the plan regardless, since the reads it is computed from
+need only `read:project`.
 
 **One piece of state is deliberately duplicated:** `agent-ready` is a label *and* Ready is a Status
 value. The reason is `AGENTS.md`'s jail rule — a session inside ai-jail has no `gh` login of its
@@ -319,7 +331,8 @@ ever expresses merge order.
 **Phase discipline falls out of the same mechanism.** Each of `ARCHITECTURE.md` §11's phases gets
 one tracking issue ("Phase 1 — Telegram bot working"), and every `phase/2` issue is `blocked by`
 it. Closing that one issue unblocks the whole phase at once, visibly and without editing anything
-else. `phase/1..4` stay pure facet labels with no ordering power, and `AGENTS.md`'s hard rule
+else. The five gates were filed by task 6 and the first real edge wired in task 8 — #398 is
+`phase/2`, `blocked by` #447, and `ready` refuses it naming the gate (Appendix, 2026-09-28). `phase/1..4` stay pure facet labels with no ordering power, and `AGENTS.md`'s hard rule
 stops being a paragraph people skim. Five gate issues total; they hold no work, only the edge.
 
 ### 5.4 The Definition of Ready
@@ -436,13 +449,15 @@ In the order that proves the most for the least:
    hand on 2026-09-27. The second run must create zero issues and rewrite zero rows — the strongest
    available fixture, since the data is real and already linked. This is also where §4.1's `sub_issue_id` trap is
    confirmed against the live API or corrected.
-6. **The first real use, on real debt**: file `docs/ROADMAP.md` §2a's five still-open findings
-   (`stop-gate.sh` untracked files, `stop-gate.sh` read-only exit code, `format.sh` offline
-   hard-fail, `mip-reviewer`'s unlisted `git rev-parse`, the §7→§8 pointer sweep) as Tier-1 issues
-   through `triage`, and the `cost-fill` git-version bug found while opening this MIP's own PR.
-   Six real issues exercise the forms, the labels, the DoR check and the board in one pass —
-   better evidence than a synthetic fixture, and it clears a backlog that has been sitting in a
-   markdown table since 2026-09-06.
+6. **The first real use, on real debt**: `docs/ROADMAP.md` §2a's six findings, drafted through
+   `triage` and filed as Tier-1 issues. **Run 2026-09-28, and the premise did not survive it**:
+   five of the six were fixed on 2026-09-07 (#224), the day after they were found, and §2a still
+   called them open three weeks later, because nothing forced the State column to move — the
+   failure §2 describes, found by the thing meant to replace it. One issue was filed, the
+   `cost-fill` git-version bug (**#451**), and it passes `issues.sh ready` unedited. Acceptance
+   therefore rests on five real issues, #431–#434 plus #451, not six; §2a now carries the
+   `file:line` that fixed each finding, and the one open item as a link, so it is no longer a
+   tracker either way.
 7. **The one assumption §5.3 rests on**, proven in the same pass: give one of those six a parent
    and a sibling sub-issue, add a `blocked by` edge between the two siblings, and read it back. If
    GitHub refuses a dependency between sub-issues, §5.3 falls back to the earlier position —
@@ -463,13 +478,15 @@ returning a real list, and `docs/ISSUE-FLOW.md` describing exactly what the scri
 - **The duplicated `agent-ready`/Status pair** (§5.2) is the design's one soft spot. If anything
   other than `issues.sh` writes either, they drift. A CI reconciliation job is the fix, deferred
   to §11.1.
-- **Two manual steps block parts of v1**: `gh auth refresh -s project` and enabling Discussions.
-  Until the first is done, `just board-sync` fails; everything else works on `repo` scope.
+- **Two manual steps blocked parts of v1**: `gh auth refresh -s project` and enabling Discussions.
+  Both were taken on 2026-09-28. The shape of the risk stands for the next such step: everything
+  except the board works on `repo` scope, by design.
 - **Nothing here enforces itself yet.** With CI gates out of v1, a PR can still merge without
   linking an issue, and an issue can be labelled `agent-ready` by hand without passing the check.
   v1 makes the standard *checkable*; it does not make it *unavoidable*.
-- **Public means public.** A project board and an open triage queue expose what is not being done
-  as clearly as what is. That is the point, and it is worth stating before switching it on.
+- **Public means public.** An open triage queue exposes what is not being done as clearly as what
+  is. That is the point, and it is worth stating before switching it on. The issues are public;
+  the board is not, and making it public stays a UI action nobody has taken.
 - **The edges are only as good as the `depends on` column.** §5.3 reads that column rather than
   inferring a chain, so parallelism survives — but a task list that overstates a dependency will
   serialise work that could have run at once, and one that understates it will show an issue as
@@ -519,8 +536,9 @@ What is left genuinely open:
 2. **`docs/ROADMAP.md`'s long-term role — deliberately not resolved here.** The maintainer's
    stated direction (PR #413 review): the roadmap's source of truth should become the project and
    its milestones in the long run, but nothing moves until this standard has been validated in
-   use. Until then ROADMAP stays exactly as written, and the consolidation is a later decision
-   with its own evidence.
+   use. Until then ROADMAP keeps its narrative: Decision 5 of the task list allows §2a's tracker
+   table to go, and task 8 replaced it, which is not the same as moving the roadmap's source of
+   truth. The consolidation is a later decision with its own evidence.
 
 ## Appendix
 
@@ -634,6 +652,49 @@ All on 2026-09-27, from this checkout.
   open issues → `0 ready · 0 blocked · 10 in triage` (the other six are assigned), one
   `dependencies/blocked_by` call per unassigned issue, 6s.
 
+- **Task 8 run, 2026-09-28 — the first real use of the standard.** `docs/ROADMAP.md` §2a's five
+  "open" findings were each re-checked before being written down, and all five were already fixed:
+  `.claude/hooks/stop-gate.sh:23` (`ls-files --others --exclude-standard`), `:30`/`:34`
+  (`|| return 0`, with an unwritable-`/proc` self-test), `.claude/hooks/format.sh:51`/`:77`
+  (`command -v cs` guard), `"Bash(git rev-parse*)"` in `.claude/settings.json:39`, and the §7→§8
+  sweep at `scripts/deps-stack.sh:3`/`:391` and `CONTRIBUTING.md:85`. Only the sixth was real:
+  `git cherry-pick --allow-empty --empty=drop` exits **129** with usage text on git 2.34.1
+  (`--empty` is a cherry-pick option from git 2.45), reproduced in a scratch repo, filed as
+  **#451** and `agent-ready` on the first `issues.sh ready` with no hand-editing. `issues.sh queue`
+  then returned five ready, sorted size then priority. #431–#434, filed by hand through these same
+  forms, still pass all five rules unedited.
+
+- **Board and gates, 2026-09-28, after tasks 6 and 8.** The two bullets this Appendix used to
+  carry under "Not checked" — Projects v2 writes unexercised, the four views specified rather than
+  built — are removed because both are now false.
+
+      gh auth status                      -> token scopes include `project`
+      gh project list --owner marola-dev  -> Marola  open  PVT_kwDOE_GJ6c4Bk4CS   (PVT_ = private)
+      GET repos/marola-dev/marola         -> has_discussions: true, visibility: public
+      projectV2(number:1)                 -> public:false, items 31, views 5:
+        My items (assignee:@me) · Triage (status:"Triage") · Now (BOARD, no filter) ·
+        Agent queue (label:"agent-ready") · Good first issues (label:"good first issue")
+
+  Three of the four views this MIP specifies carry their filter; **Now** is unfiltered, exactly as
+  §5.2 predicted (which milestone is "currently being pushed" is not something a script knows).
+  Five of GitHub's six template views are gone and only *My items* survives; `scripts/issues.sh`
+  has no `deleteProjectV2View` call, so that was a human in the UI.
+
+- **§5.3's phase gate proven, 2026-09-28.** The five gate issues existed (#445 closed, #446–#449
+  open) but `blocking` returned `[]` on every one and no issue outside them carried a `phase/*`
+  label, so "closing that one issue unblocks the phase at once" was scaffolding. #398 (Q&A/ELI5 bot
+  on GCP: Cloud Run, a GCS-hosted index, Besom) is Phase 2 by `ARCHITECTURE.md` §11 — first real
+  cloud spend, MIP-0057's backend — so it was labelled `phase/2` and wired to gate **#447**:
+
+      issues.sh deps add 398 --blocked-by 447
+      issues.sh deps list 398   -> #447  open  Phase 2 — Go live on a cloud backend, deliberately
+      GET /issues/447/dependencies/blocking -> [398]
+      issues.sh ready 398       -> ✗ 5. blocked by #447 (still open)      (1–4 also fail: #398 is
+                                   a MIP brief, not a filled task form)
+
+  The gate is a real edge now, and §5.3 describes something that has happened. One issue labelled,
+  one edge added; nothing else was touched.
+
 ### Not checked
 
 - **The mis-attach half of §4.1's trap was not probed.** That passing an issue *number* as
@@ -642,11 +703,6 @@ All on 2026-09-27, from this checkout.
   unrelated repositories, and the probe would have written a sub-issue link onto a stranger's
   issue. `scripts/issues.sh`'s guard is therefore built on the parameter's documented semantics
   plus the order-of-magnitude gap between the two spaces, not on a reproduction.
-- **Nothing was re-read for the board.** Projects v2 writes are still unexercised (no `project`
-  scope on the host token), so §5.2's four views remain specified rather than built.
-- **Projects v2 write operations have not been exercised**, because the host token lacks `project`
-  scope. The four views in §5.2 are specified, not built; whether all four filters are expressible
-  in the Projects UI as written is unverified.
 - **Projects' built-in workflows** (auto-add, closed → Done) are taken from general knowledge of
   the feature, not re-read from the docs this session.
 - **Whether GitHub renders *every* issue-form field type as a `###` heading** — verified for

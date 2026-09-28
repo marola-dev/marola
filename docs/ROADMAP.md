@@ -33,18 +33,21 @@ K8"), so renumbering would break those pointers.
 
 ### 2a. Bugs found today
 
-Six findings; every one verified by execution or inspection before it was filed. Bodies in
-`.tmp/issues/` (gitignored) in the `bug_report.yml` shape; `gh issue create` commands in the
-operator log. Ordered by consequence.
+Six findings, all fixed: the Critical the same day (#129), the five nits the next (#224). The last
+column is the change that fixed each one; open bugs live in the issue tracker.
 
-| # | Finding | Severity | State |
+| # | Finding | Severity | Fixed by |
 |---|---|---|---|
-| 10 | `.mcp.json`'s `just mcp-server` exits ~2 s after start under sbt in-process run — the registered MCP server was dead on arrival (mip-reviewer) | Critical | **fixed**, `fix/mcp-server-exits` — fork + connectInput + StdoutOutput; handshake returns four tools. Human step left: a fresh session's `/mcp` |
-| 04 | `stop-gate.sh` ignores newly created (untracked) `.scala` files — `git diff HEAD` by design | nit | open, small |
-| 08 | `stop-gate.sh` `mkdir`/`touch` under `set -e` can exit 1 (not 0/2) on a read-only runtime dir | nit | open, small |
-| 05 | `format.sh --self-test` hard-fails without `cs`/network, unlike its `ruff` guard — blocks every push in an air-gapped shell | nit | open, small |
-| 06 | `mip-reviewer` runs `git rev-parse`, not in `permissions.allow` — two prompts per review, the exact metric MIP-0011 §7 watches | nit | open, one-line |
-| 03 | `DEV-FLOW.md` §7→§8 renumbering left `deps-stack.sh:3,:463`, `CONTRIBUTING.md:40`, `MIP-0013:220` pointing at the wrong section | nit | open, sweep |
+| 10 | `.mcp.json`'s `just mcp-server` exits ~2 s after start under sbt in-process run — the registered MCP server was dead on arrival (mip-reviewer) | Critical | `build.sbt:118`,`:122`,`:123` — `fork` + `connectInput` + `StdoutOutput`; the handshake returns four tools. A fresh session's `/mcp` is still the human check |
+| 04 | `stop-gate.sh` ignores newly created (untracked) `.scala` files — `git diff HEAD` by design | nit | `.claude/hooks/stop-gate.sh:23`, `ls-files --others --exclude-standard` |
+| 08 | `stop-gate.sh` `mkdir`/`touch` under `set -e` can exit 1 (not 0/2) on a read-only runtime dir | nit | `.claude/hooks/stop-gate.sh:30`,`:34`, plus a self-test against an unwritable dir |
+| 05 | `format.sh --self-test` hard-fails without `cs`/network, unlike its `ruff` guard — blocks every push in an air-gapped shell | nit | `.claude/hooks/format.sh:51`,`:77` |
+| 06 | `mip-reviewer` runs `git rev-parse`, not in `permissions.allow` — two prompts per review | nit | `.claude/settings.json:39` |
+| 03 | `DEV-FLOW.md` §7→§8 renumbering left stale section pointers | nit | `scripts/deps-stack.sh:3`,`:391`, `CONTRIBUTING.md:85` |
+
+One later finding is still open, filed while building MIP-0063's own tooling: `cost-fill.sh` passes
+`cherry-pick --empty=drop`, which needs git ≥ 2.45, so `just pr` exits 129 on an older git —
+[#451](https://github.com/marola-dev/marola/issues/451).
 
 Two lessons that outlive the fixes: (a) a test that can't distinguish "works" from "died silently"
 isn't a test: `< /dev/null → 0 bytes` passed while the server was dead; the reviewer's piped
@@ -89,7 +92,7 @@ Two things to check before starting, both real today:
 4. **MIP-0016** (M, "do next"): water-quality marks placed in the sea; user value, no new source.
 5. **MIP-0018** (M, cheap win): the post-planner + exporter; MIP-0020 (Instagram, in draft) becomes
    one more export target with a real API, unlike LinkedIn/Substack.
-6. **Nits 03–09** as one or two small PRs once the P0s are in.
+6. **#451** (`just cost-fill` on git < 2.45), the one open item from §2a.
 
 ## 4. Next (Phase 1) — the gate every cloud step waits on
 
