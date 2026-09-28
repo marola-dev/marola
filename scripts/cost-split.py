@@ -152,9 +152,40 @@ def _session_message_files(pdir, session_prefix):
             yield sid, sf
 
 
-def messages(pdir, session_prefix):
-    """(timestamp, session, model, usage) per assistant message, deduplicated by message id."""
+def worktree_branches(root):
+    """{absolute worktree path: branch name}, from `git worktree list --porcelain` run at `root`
+    (always the main checkout, per `repo_root()`) — covers the main checkout itself plus every
+    live `.tmp/wt-*`. Used to resolve a message's `cwd` to the branch it actually ran on."""
+    out = {}
+    path = None
+    for line in sh("git", "worktree", "list", "--porcelain", cwd=root).splitlines():
+        if line.startswith("worktree "):
+            path = line.removeprefix("worktree ")
+        elif line.startswith("branch refs/heads/") and path:
+            out[path] = line.removeprefix("branch refs/heads/")
+            path = None
+    return out
+
+
+def _worktree_branch_for_cwd(cwd, wt_branches):
+    """The branch of the worktree that contains `cwd`, or None. Longest-match: a linked worktree
+    normally lives under the main checkout's own path (`.tmp/wt-*`), so the main checkout's path
+    is itself a prefix of it and the naive first-match would pick the wrong one."""
+    if not cwd:
+        return None
+    best = None
+    for path, branch in wt_branches.items():
+        if cwd == path or cwd.startswith(path + "/"):
+            if best is None or len(path) > len(best[0]):
+                best = (path, branch)
+    return best[1] if best else None
+
+
+def messages(pdir, session_prefix, root):
+    """(timestamp, session, model, usage, branch) per assistant message, deduplicated by message
+    id."""
     seen = {}
+    wt_branches = worktree_branches(root)
     for sid, f in _session_message_files(pdir, session_prefix):
         with open(f, encoding="utf-8") as fh:
             for line in fh:
@@ -171,10 +202,17 @@ def messages(pdir, session_prefix):
                     continue
                 key = m.get("id") or d.get("requestId") or d.get("uuid")
                 ts = dt.datetime.fromisoformat(d["timestamp"].replace("Z", "+00:00"))
-                # `gitBranch` is the checkout's branch when the message was made — a subagent
-                # transcript carries its worktree's branch. It is what lets usage follow the
-                # branch instead of the clock (see the attribution loop in main()).
-                seen[key] = (ts, sid, m.get("model", "?"), m["usage"], d.get("gitBranch") or "")
+                # A subagent transcript's `gitBranch` is its *parent's*, not its own (confirmed
+                # live 2026-09-28, issue #433) — `cwd` says the worktree it actually ran in. A
+                # sidechain `cwd` miss falls back to "" (time-only), not the wrong parent branch.
+                wt_branch = _worktree_branch_for_cwd(d.get("cwd"), wt_branches)
+                if wt_branch is not None:
+                    branch = wt_branch
+                elif d.get("isSidechain"):
+                    branch = ""
+                else:
+                    branch = d.get("gitBranch") or ""
+                seen[key] = (ts, sid, m.get("model", "?"), m["usage"], branch)
     return sorted(seen.values(), key=lambda x: x[0])
 
 
@@ -651,6 +689,85 @@ def self_test():
         )
         assert not (outer / "x.txt").exists(), "inner repo's file leaked into the outer repo"
 
+    # --- messages(): a subagent transcript's own `gitBranch` is the *parent's*, not its own —
+    # `cwd` says which worktree it actually ran in (issue #433, confirmed live 2026-09-28). ---
+    with tempfile.TemporaryDirectory() as wt_tmp:
+        mrepo = Path(wt_tmp) / "main-checkout"
+        mrepo.mkdir()
+        sh("git", "init", "-q", "-b", "main", cwd=mrepo)
+        sh("git", "config", "user.email", "test@example.com", cwd=mrepo)
+        sh("git", "config", "user.name", "Test", cwd=mrepo)
+        (mrepo / "a.txt").write_text("a\n")
+        sh("git", "add", "a.txt", cwd=mrepo)
+        sh("git", "commit", "-q", "-m", "initial", cwd=mrepo)
+
+        worktree_dir = mrepo / ".tmp" / "wt-feature"
+        sh("git", "worktree", "add", "-q", "-b", "feature-x", str(worktree_dir), cwd=mrepo)
+        (worktree_dir / "b.txt").write_text("b\n")
+        sh("git", "add", "b.txt", cwd=worktree_dir)
+        sh("git", "commit", "-q", "-m", "the commit under test", cwd=worktree_dir)
+
+        pdir = Path(wt_tmp) / "project-logs"
+        sid = "ses-parent"
+        (pdir / sid / "subagents").mkdir(parents=True)
+
+        def jsonl_line(**fields):
+            return json.dumps(fields) + "\n"
+
+        usage_small = {"input_tokens": 100, "output_tokens": 20}
+        usage_big = {"input_tokens": 300_000, "output_tokens": 5_000}
+
+        (pdir / f"{sid}.jsonl").write_text(
+            jsonl_line(
+                message={"id": "msg-parent", "usage": usage_small, "model": "claude-sonnet-5"},
+                timestamp="2026-09-28T10:00:00Z",
+                gitBranch="main",
+                cwd="/no/such/worktree",
+            )
+        )
+        sub_a = jsonl_line(
+            message={"id": "msg-sub-a", "usage": usage_big, "model": "claude-sonnet-5"},
+            timestamp="2026-09-28T10:05:00Z",
+            gitBranch="main",
+            cwd=str(worktree_dir),
+            isSidechain=True,
+        )
+        sub_b = jsonl_line(
+            message={"id": "msg-sub-b", "usage": usage_small, "model": "claude-sonnet-5"},
+            timestamp="2026-09-28T10:06:00Z",
+            gitBranch="main",
+            cwd="/no/such/worktree/either",
+            isSidechain=True,
+        )
+        (pdir / sid / "subagents" / "agent-x.jsonl").write_text(sub_a + sub_b)
+
+        got = messages(pdir, None, mrepo)
+        assert len(got) == 3, got
+        parent_branch = got[0][4]
+        sub_a_branch = got[1][4]
+        sub_b_branch = got[2][4]
+
+        # Non-sidechain, cwd matches no known worktree: existing behaviour must not regress.
+        assert parent_branch == "main", parent_branch
+
+        # Sidechain, cwd resolves to the feature-x worktree: use the worktree's branch, not the
+        # inherited (misleading) parent gitBranch.
+        assert sub_a_branch == "feature-x", sub_a_branch
+
+        # Sidechain, cwd matches no known worktree: "" (time-only rule), not the parent's branch —
+        # a wrong branch would be discarded outright, "" is only less precise.
+        assert sub_b_branch == "", sub_b_branch
+
+        # End to end (issue #433): sub_a's usage is large next to "the commit under test"'s tiny
+        # diff. Its resolved branch now equals the branch carrying that commit, so main()'s
+        # attribution loop (`mbranch not in ours`, ~line 890) keeps it as measured usage instead
+        # of discarding it and falling back to a diff-size --estimate.
+        ours = {"feature-x"}
+        assert sub_a_branch in ours, (
+            "subagent's large usage must land on the branch that carries the commit under test, "
+            "or main() discards it and --estimate substitutes a diff-size guess for a measured total"
+        )
+
     # --- messages_opencode(): a synthetic DB built against the real schema (MIP-0013 task 2,
     # confirmed live 2026-09-07 against opencode 1.18.25) — table/column names, tokens.{...} JSON
     # shape, session.directory filtering. No real ~/.local/share/opencode touched. ---
@@ -844,7 +961,7 @@ def main():
     if a.harness in ("claude", "all"):
         pdir = project_dir(root)
         if pdir.is_dir():
-            msgs += messages(pdir, a.session)
+            msgs += messages(pdir, a.session, root)
         elif a.harness == "claude":
             sys.exit(f"no session logs at {pdir}")
     if a.harness in ("opencode", "all"):
