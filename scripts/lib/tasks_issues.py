@@ -74,9 +74,7 @@ def split_cells(line: str) -> list[str]:
 
 
 def dedup_re(mip: str, task_id: str) -> re.Pattern[str]:
-    """The title pattern for one task. `\\b` on both ends is what keeps task 1 out of task 10's
-    issue and `S0063-T1` out of task 1's — the whole reason §4.7's feature-scoped id was borrowed.
-    """
+    """One task's title pattern. `\\b` both ends: it keeps task 1 out of task 10's issue (§4.7)."""
     return re.compile(rf"\b{re.escape(mip)}-T{re.escape(task_id)}\b")
 
 
@@ -176,9 +174,7 @@ def title_of(mip: str, row: dict) -> str:
 
 
 def repo_path(path: Path) -> str:
-    """The tasks file as the repo spells it. `issues.sh` hands over an absolute path, and an
-    absolute path in a blob URL is a 404 nobody notices until they click it.
-    """
+    # issues.sh hands over an absolute path, and one of those in a blob URL is a 404 nobody clicks.
     root = Path(__file__).resolve().parents[2]
     try:
         return path.resolve().relative_to(root).as_posix()

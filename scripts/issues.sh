@@ -266,12 +266,17 @@ arg_number() {
 
 # --- live side ---
 
+# Memoised like resolve_nwo's $nwo: `tasks-to-issues` reaches this once per edge through
+# cmd_deps_add, and `gh auth status` is a network round trip.
+gh_checked=0
 require_gh() {
+  [ "$gh_checked" -eq 0 ] || return 0
   command -v gh >/dev/null || { echo "issues.sh: gh is not installed" >&2; exit 1; }
   gh auth status </dev/null >/dev/null 2>&1 || {
     echo "issues.sh: gh is not logged in. Inside ai-jail there is no login and none can be acquired (AGENTS.md) — run this from the host, or use --dry-run." >&2
     exit 1
   }
+  gh_checked=1
 }
 
 # gh picks its target repo from the current directory, but everything this script acts on comes
@@ -320,26 +325,29 @@ cmd_sub_add() {
   run gh api --method POST "repos/$nwo/issues/$parent/sub_issues" -F "sub_issue_id=$child_id"
 }
 
+# `return`, never `exit`: `tasks-to-issues` calls this once per edge and counts what failed, and an
+# `exit` here would leave the shell from inside that `if` — no summary, half the edges unwired, and
+# the accumulator unreachable. The standalone `deps add` path still exits non-zero, via set -e.
 cmd_deps_add() {
-  [ $# -ge 1 ] || { echo "issues.sh deps add: expects <issue> --blocked-by <n>" >&2; usage >&2; exit 1; }
+  [ $# -ge 1 ] || { echo "issues.sh deps add: expects <issue> --blocked-by <n>" >&2; usage >&2; return 1; }
   local issue blocker="" blocker_id
-  issue="$(arg_number "$1" "deps add")" || exit 1
+  issue="$(arg_number "$1" "deps add")" || return 1
   shift
   while [ $# -gt 0 ]; do
     case "$1" in
       --blocked-by)
-        [ $# -ge 2 ] || { echo "issues.sh deps add: --blocked-by needs an issue number" >&2; exit 1; }
-        [ -z "$blocker" ] || { echo "issues.sh deps add: --blocked-by given twice (#$blocker, then $2) — one edge per call" >&2; exit 1; }
-        blocker="$(arg_number "$2" "deps add --blocked-by")" || exit 1
+        [ $# -ge 2 ] || { echo "issues.sh deps add: --blocked-by needs an issue number" >&2; return 1; }
+        [ -z "$blocker" ] || { echo "issues.sh deps add: --blocked-by given twice (#$blocker, then $2) — one edge per call" >&2; return 1; }
+        blocker="$(arg_number "$2" "deps add --blocked-by")" || return 1
         shift 2 ;;
-      *) echo "issues.sh deps add: unknown argument: $1" >&2; usage >&2; exit 1 ;;
+      *) echo "issues.sh deps add: unknown argument: $1" >&2; usage >&2; return 1 ;;
     esac
   done
-  [ -n "$blocker" ] || { echo "issues.sh deps add: --blocked-by <n> is required" >&2; exit 1; }
-  [ "$issue" != "$blocker" ] || { echo "issues.sh deps add: #$issue cannot block itself" >&2; exit 1; }
+  [ -n "$blocker" ] || { echo "issues.sh deps add: --blocked-by <n> is required" >&2; return 1; }
+  [ "$issue" != "$blocker" ] || { echo "issues.sh deps add: #$issue cannot block itself" >&2; return 1; }
   require_gh
   resolve_nwo
-  blocker_id="$(resolve_issue_id "$blocker")" || exit 1
+  blocker_id="$(resolve_issue_id "$blocker")" || return 1
   run gh api --method POST "repos/$nwo/issues/$issue/dependencies/blocked_by" -F "issue_id=$blocker_id"
 }
 
@@ -620,10 +628,17 @@ cmd_tasks_to_issues() {
   rm -f "$issues_file"
   [ "$rc" -eq 0 ] || exit 1
 
-  local mip n_rows
+  local mip n_rows n_new
   mip="$(jq -r '.mip' <<<"$plan")"
   n_rows="$(jq '.rows | length' <<<"$plan")"
   echo "tasks-to-issues: MIP-$mip, $n_rows rows → $nwo${milestone:+   (milestone: $milestone)}"
+
+  # §5.1 makes the milestone the deliverable an issue belongs to, so filing without one is a real
+  # choice, not a default. Said once, and only when this run would actually create something.
+  n_new="$(jq '[.rows[] | select(.issue == null)] | length' <<<"$plan")"
+  if [ "$dry" -eq 0 ] && [ -z "$milestone" ] && [ "$n_new" -gt 0 ]; then
+    echo "issues.sh tasks-to-issues: no --milestone — the $n_new new issue(s) will belong to no deliverable (MIP-0063 §5.1)." >&2
+  fi
 
   local map='{}' i id title body number url created=0 existing=0 failed=0
   for ((i = 0; i < n_rows; i++)); do
@@ -1356,7 +1371,7 @@ for a in "$@"; do
   prev="$a"
 done
 case "$*" in
-  *"auth status"*) exit 0 ;;
+  *"auth status"*) echo auth >> "$T2I/authlog"; exit 0 ;;
   *"repo view"*)   echo "marola-dev/marola"; exit 0 ;;
   *"issue list"*)  cat "$T2I/issues.json"; exit 0 ;;
   *"issue create"*)
@@ -1378,7 +1393,11 @@ case "$path" in
     if [ -n "$jq_expr" ]; then jq -r "$jq_expr" "$f"; else cat "$f"; fi
     exit 0 ;;
   */milestones*) printf 'Issue tracking standard live\n'; exit 0 ;;
-  repos/*/issues/*) printf '{"number":%s,"id":%d}\n' "${path##*/}" "$(( 5600000000 + ${path##*/} ))"; exit 0 ;;
+  repos/*/issues/*)
+    n="${path##*/}"
+    # $T2I/fail_id names one issue the lookup 404s on, for the resolve-failure case below.
+    [ "$n" != "$(cat "$T2I/fail_id" 2>/dev/null)" ] || { echo "gh: Not Found (HTTP 404)" >&2; exit 1; }
+    printf '{"number":%s,"id":%d}\n' "$n" "$(( 5600000000 + n ))"; exit 0 ;;
 esac
 echo "stub: unhandled: $*" >&2; exit 1
 STUB
@@ -1396,7 +1415,12 @@ STUB
   } > "$t2i_file"
 
   dry=0
+  : > "$t2i/authlog"
+  gh_checked=0
   t2i_out="$(PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" cmd_tasks_to_issues "$t2i_file" --milestone "Issue tracking standard live" 2>&1)" || failed=1
+  # One `gh auth status` for the whole run, not one per edge: cmd_deps_add is re-entered five
+  # times below and require_gh is what it re-enters.
+  check "the login is checked once, not once per edge" "$(grep -c . "$t2i/authlog")" "1"
   check "run 1 files every row and wires every edge" "$(tail -1 <<<"$t2i_out")" \
     "summary: 6 created, 0 already filed · 6 rows linked · 5 edges wired, 0 already wired, 0 pending"
   check "the edges are the depends-on column's, not the row order's" "$(grep '^edge' "$t2i/log" | tr '\n' ' ')" \
@@ -1427,6 +1451,27 @@ STUB
   else
     echo "ok: an unknown milestone is refused before anything is created"
   fi
+
+  # A blocker whose lookup 404s (transferred, deleted, or a PR) reaches cmd_deps_add's
+  # resolve_issue_id. While that said `exit 1`, the first such edge left the shell from inside the
+  # loop's `if`: no summary, the later edges never attempted, and the failure tally unreachable.
+  local t2i_rc=0
+  : > "$t2i/log"
+  echo 700 > "$t2i/fail_id"
+  t2i_out="$(PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" cmd_tasks_to_issues "$t2i_file" 2>&1)" || t2i_rc=$?
+  rm -f "$t2i/fail_id"
+  check "an unresolvable blocker does not abort the loop — the other edges are still attempted" \
+    "$(grep -c '^edge ' "$t2i/log")" "2"
+  check "and the summary is still printed" "$(grep -c '^summary: ' <<<"$t2i_out")" "1"
+  check "and the run exits non-zero, naming how many actions failed" "$t2i_rc" "1"
+  case "$t2i_out" in
+    *"3 action(s) failed"*) echo "ok: every failed edge is counted, not just the first" ;;
+    *) echo "FAILED: the failure tally did not survive the loop:" >&2; sed 's/^/  /' <<<"$t2i_out" >&2; failed=1 ;;
+  esac
+  case "$t2i_out" in
+    *"no --milestone"*) echo "ok: a real run with no --milestone says so" ;;
+    *) echo "FAILED: a real run filed issues into no milestone silently" >&2; failed=1 ;;
+  esac
 
   echo
   if [ "$failed" -eq 1 ]; then echo "issues.sh self-test: FAILED" >&2; return 1; fi

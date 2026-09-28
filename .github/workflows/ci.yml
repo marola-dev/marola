@@ -53,6 +53,7 @@ jobs:
               - 'ruff.toml'
               - '.github/ISSUE_TEMPLATE/**'  # issues.sh --self-test parses these forms
               - '.github/labels.yml'          # and diffs this manifest
+              - 'docs/mips/*.tasks.md'        # tasks_issues.py --self-test parses all of them
             site:
               - 'site/**'            # app.js/CSS/schema/fixtures → scripts/site_check.js (MIP-0009 task 2)
               - 'scripts/site_check.js'
