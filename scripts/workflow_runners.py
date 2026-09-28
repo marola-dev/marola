@@ -2,8 +2,9 @@
 """Only the GPU publish workflow may run on the self-hosted runner. MIP-0065 §5.2.
 
 A public repo's self-hosted runner executes whatever a pull request asks it to, so this fails when
-any `runs-on:` or reusable-workflow `runner:` names `self-hosted` or `vars.CI_RUNNER` outside
-marola-sea-publish.yml, or when that workflow's `on:` gains a pull_request trigger.
+any `runs-on:` or reusable-workflow `runner:` outside marola-sea-publish.yml names `self-hosted`
+or is an expression (a variable or matrix entry can be pointed at the desktop), or when that
+workflow's `on:` gains a trigger a pull request can reach: pull_request(_target) or workflow_call.
 
     scripts/workflow_runners.py [.github/workflows]
     scripts/workflow_runners.py --self-test
@@ -18,10 +19,12 @@ from pathlib import Path
 
 GPU_WORKFLOW = "marola-sea-publish.yml"
 RUNNER_KEY = re.compile(r"^(\s*)(?:-\s+)?(runs-on|runner):\s*(.*)$")
-FORBIDDEN = re.compile(r"self-hosted|CI_RUNNER")
-PR_TRIGGER = re.compile(r"\bpull_request(_target)?\b")
+FORBIDDEN = re.compile(r"self-hosted|\$\{\{")
+PR_TRIGGER = re.compile(r"\b(pull_request(?:_target)?|workflow_call)\b")
 # A key or list item, so an input's `description:` that mentions pull_request is not a trigger.
-PR_TRIGGER_KEY = re.compile(r"^\s+(?:-\s+)?['\"]?pull_request(_target)?['\"]?\s*(:|$)")
+PR_TRIGGER_KEY = re.compile(
+    r"^\s+(?:-\s+)?['\"]?(pull_request(?:_target)?|workflow_call)['\"]?\s*(:|$)"
+)
 
 
 def _strip_comment(value: str) -> str:
@@ -36,9 +39,9 @@ def runner_findings(name: str, text: str) -> list[str]:
         if not m:
             continue
         indent, value = len(m.group(1)), _strip_comment(m.group(3))
-        # The block-list form: `runs-on:` followed by `- self-hosted` lines indented under it.
+        # Block form (a list, or `group:`/`labels:`): every line indented under the key counts.
         j = i + 1
-        while not value and j < len(lines):
+        while not m.group(3).strip() and j < len(lines):
             nxt = lines[j]
             if nxt.strip() and (len(nxt) - len(nxt.lstrip())) <= indent:
                 break
@@ -46,9 +49,8 @@ def runner_findings(name: str, text: str) -> list[str]:
             j += 1
         hit = FORBIDDEN.search(value)
         if hit:
-            out.append(
-                f"{name}:{i + 1} targets {hit.group(0)} — only {GPU_WORKFLOW} may be self-hosted"
-            )
+            what = "an expression" if hit.group(0) == "${{" else hit.group(0)
+            out.append(f"{name}:{i + 1} targets {what} — only {GPU_WORKFLOW} may be self-hosted")
     return out
 
 
@@ -63,7 +65,7 @@ def trigger_findings(name: str, text: str) -> list[str]:
         else:
             hit = in_on and PR_TRIGGER_KEY.match(line)
         if hit:
-            out.append(f"{name}:{i + 1} adds a pull_request trigger to the self-hosted workflow")
+            out.append(f"{name}:{i + 1} adds {hit.group(1)} to the self-hosted workflow")
     return out
 
 
@@ -142,9 +144,25 @@ def self_test() -> int:
         "a CI_RUNNER fallback is caught even when it falls back to a hosted label",
     )
     ok(
-        len(tree(CLEAN_CI.replace("ubuntu-latest", "\n      - self-hosted\n      - linux"))),
+        len(tree(CLEAN_CI.replace("ubuntu-latest", "${{ matrix.os }}"))),
         1,
-        "the block-list form of runs-on is read too",
+        "so is any other expression, a matrix entry included",
+    )
+    ok(
+        len(tree(CLEAN_CI.replace("ubuntu-latest", "\n      - linux\n\n      - self-hosted"))),
+        1,
+        "the block-list form is read to its end, past a blank line",
+    )
+    ok(
+        len(
+            tree(
+                CLEAN_CI.replace(
+                    "ubuntu-latest", "\n      group: desktop\n      labels: self-hosted"
+                )
+            )
+        ),
+        1,
+        "and so is the group/labels form",
     )
     reusable = "jobs:\n  ping:\n    uses: o/r/.github/workflows/p.yml@main\n    with:\n      runner: self-hosted\n"
     ok(len(tree(reusable)), 1, "a reusable workflow's runner: input counts as runs-on")
@@ -169,6 +187,16 @@ def self_test() -> int:
         ),
         1,
         "and so is the inline form, pull_request_target included",
+    )
+    ok(
+        len(
+            tree(
+                CLEAN_CI,
+                GPU.replace("  workflow_dispatch:", "  workflow_call:\n  workflow_dispatch:"),
+            )
+        ),
+        1,
+        "workflow_call on the GPU workflow is caught: a PR workflow could `uses:` it",
     )
 
     if fails:

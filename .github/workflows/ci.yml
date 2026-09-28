@@ -198,8 +198,9 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v23
       - uses: DeterminateSystems/magic-nix-cache-action@v15
       - name: cloc + coverage.py from the lint shell
+        shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command bash -c 'command -v cloc coverage' | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
+          nix develop .#lint --command which cloc coverage | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
 
       # The Python-coverage part re-runs every `scripts/**/*.py --self-test` under coverage.py —
       # seconds, no network — and reports statement % over scripts/ only.
@@ -263,9 +264,11 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v23
       - uses: DeterminateSystems/magic-nix-cache-action@v15
       # The same lock as `just quality`, so CI and a laptop cannot disagree about a lint version.
+      # `which`, not `command -v`: the latter succeeds if any one name resolves. pipefail passes it on.
       - name: lint tools from nix develop .#lint
+        shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command bash -c 'command -v ruff actionlint hadolint shellcheck pyflakes just' \
+          nix develop .#lint --command which ruff actionlint hadolint shellcheck pyflakes just \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       - name: tool versions
         run: |
