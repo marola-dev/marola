@@ -181,13 +181,18 @@ def _worktree_branch_for_cwd(cwd, wt_branches):
     return best[1] if best else None
 
 
-def _under(cwd, root):
-    """True if `cwd` is the main checkout's own directory. Exact match, not a prefix check: every
-    `cwd` this repo's own sessions have ever recorded (main checkout or any linked worktree) is a
-    worktree's root, never a deeper subdirectory — confirmed against this project's real session
-    logs — so a prefix check would wrongly count a *linked* worktree nested under the main
-    checkout's path (`.tmp/wt-*`) as "the main checkout" too."""
-    return cwd == str(root)
+def _under(cwd, root, linked):
+    """True if `cwd` is inside the main checkout's own tree, excluding any worktree's tree —
+    currently linked (`linked`) or since removed from git's registry. The second half matters:
+    `.tmp/wt-*` is routinely removed once a stacked task's worktree is done with (confirmed
+    against this project's real logs — a since-removed worktree's `cwd` is still `.tmp/wt-*`
+    shaped, so excluding only currently-`linked` paths would misclassify it as the main
+    checkout and trust its parent's inherited branch again)."""
+    if not cwd or not (cwd == str(root) or cwd.startswith(str(root) + "/")):
+        return False
+    if any(cwd == p or cwd.startswith(p + "/") for p in linked):
+        return False
+    return not cwd.startswith(str(root) + "/.tmp/wt-")
 
 
 def messages(pdir, session_prefix, root):
@@ -221,7 +226,7 @@ def messages(pdir, session_prefix, root):
                 wt_branch = _worktree_branch_for_cwd(cwd, linked)
                 if wt_branch is not None:
                     branch = wt_branch
-                elif d.get("isSidechain") and not _under(cwd, root):
+                elif d.get("isSidechain") and not _under(cwd, root, linked):
                     branch = ""
                 else:
                     branch = d.get("gitBranch") or ""
@@ -800,11 +805,8 @@ def self_test():
                 cwd="/no/such/worktree",
             )
             + jsonl_line(
-                # Critical (issue #433 review round 2): a non-sidechain message whose `cwd` IS
-                # the main checkout, while `gitBranch` names a branch other than what the main
-                # checkout happens to be parked on right now (still "main" here). `gitBranch` is
-                # correct history for the main checkout and must win over `worktree_branches()`'s
-                # "current branch" entry for it.
+                # cwd IS the main checkout; gitBranch names a branch other than its current one
+                # ("main" here). gitBranch is correct per-message history and must win.
                 message={
                     "id": "msg-main-checkout",
                     "usage": usage_tiny,
@@ -830,34 +832,40 @@ def self_test():
             isSidechain=True,
         )
         sub_c = jsonl_line(
-            # Critical review round 2, "do not take the shortcut": popping the main checkout out
-            # of the worktree map is not enough on its own — it would send a sidechain whose cwd
-            # is the main checkout to "" (over-attributing to the time-only bucket) instead of
-            # keeping its gitBranch. The explicit `not _under(cwd, root)` arm exists for this case.
+            # Same as msg-main-checkout, but sidechain: must also keep gitBranch, not fall to ""
+            # just because it's a sidechain.
             message={"id": "msg-sub-c", "usage": usage_tiny, "model": "claude-sonnet-5"},
             timestamp="2000-01-01T10:07:00Z",
             gitBranch="feature-x",
             cwd=str(mrepo),
             isSidechain=True,
         )
-        (pdir / sid / "subagents" / "agent-x.jsonl").write_text(sub_a + sub_b + sub_c)
+        sub_d = jsonl_line(
+            # cwd is a subdirectory of the main checkout, not its root — real logs have these
+            # (e.g. docs/img/logo). Still the main checkout's own tree, so still gitBranch.
+            message={"id": "msg-sub-d", "usage": usage_tiny, "model": "claude-sonnet-5"},
+            timestamp="2000-01-01T10:08:00Z",
+            gitBranch="feature-x",
+            cwd=str(mrepo / "docs" / "img" / "logo"),
+            isSidechain=True,
+        )
+        (pdir / sid / "subagents" / "agent-x.jsonl").write_text(sub_a + sub_b + sub_c + sub_d)
 
         got = messages(pdir, None, mrepo)
-        assert len(got) == 5, got
+        assert len(got) == 6, got
         parent_branch = got[0][4]
         main_checkout_branch = got[1][4]
         sub_a_branch = got[2][4]
         sub_b_branch = got[3][4]
         sub_c_branch = got[4][4]
+        sub_d_branch = got[5][4]
 
         # Non-sidechain, cwd matches no known worktree: existing behaviour must not regress.
         assert parent_branch == "main", parent_branch
 
         # Non-sidechain, cwd IS the main checkout: keep gitBranch ("feature-x"), not
-        # worktree_branches()'s "current branch" entry for the main checkout ("main") — the
-        # 335M-token regression the round-2 review caught (main-checkout messages have real
-        # per-message history in `gitBranch`; the main checkout's *current* branch says nothing
-        # about what branch it was on when any given message was made).
+        # worktree_branches()'s "current branch" entry for it ("main") — the main checkout's
+        # current branch says nothing about what branch it was on when a given message was made.
         assert main_checkout_branch == "feature-x", main_checkout_branch
 
         # Sidechain, cwd resolves to the feature-x worktree: use the worktree's branch, not the
@@ -872,6 +880,10 @@ def self_test():
         # a parent that was itself running in the main checkout inherits correct history.
         assert sub_c_branch == "feature-x", sub_c_branch
 
+        # Sidechain, cwd is a subdirectory of the main checkout (not its root): still gitBranch,
+        # not "" — real logs have these and a naive exact match would send them to the wrong arm.
+        assert sub_d_branch == "feature-x", sub_d_branch
+
         # End to end (issue #433): run the fixture through `attribute()` itself — the same
         # function main() calls — not a re-implementation of its `ts <= when` pairing or
         # summation. `branches_containing`/`branches_with_equivalent` read the ambient cwd (no
@@ -884,12 +896,12 @@ def self_test():
         finally:
             os.chdir(saved_cwd)
 
-        # sub_a lands on target_sha by branch (feature-x, resolved from cwd); msg-main-checkout
-        # and sub_c land there too, by branch (their own gitBranch, "feature-x" — one non-sidechain,
-        # one sidechain, both cwd'd in the main checkout); sub_b lands there by the time-only rule
-        # (its cwd matched no worktree, so its branch is ""), since cs holds only this one commit.
-        # parent (branch "main", not in {"feature-x"}) is discarded entirely — it must not appear
-        # anywhere, not even "uncommitted".
+        # sub_a lands on target_sha by branch (feature-x, resolved from cwd); msg-main-checkout,
+        # sub_c and sub_d land there too, by branch (their own gitBranch, "feature-x" — cwd'd in
+        # or under the main checkout); sub_b lands there by the time-only rule (its cwd matched no
+        # worktree, so its branch is ""), since cs holds only this one commit. parent (branch
+        # "main", not in {"feature-x"}) is discarded entirely — it must not appear anywhere, not
+        # even "uncommitted".
         bucket = buckets[target_sha]
         actual_total = bucket["in"] + bucket["out"] + bucket["cache_w"] + bucket["cache_r"]
         tiny_total = usage_tiny["input_tokens"] + usage_tiny["output_tokens"]
@@ -898,7 +910,7 @@ def self_test():
             + usage_big["output_tokens"]
             + usage_small["input_tokens"]
             + usage_small["output_tokens"]
-            + 2 * tiny_total  # msg-main-checkout + sub_c, both usage_tiny
+            + 3 * tiny_total  # msg-main-checkout + sub_c + sub_d, all usage_tiny
         )
         # Exact match, no tolerance: every field summed here is an int token count, so there is
         # no rounding for a tolerance to absorb.
