@@ -77,8 +77,8 @@ options:
   --dry-run     print the mutating `gh` calls instead of making them (the reads they are
                 computed from still happen, so this needs a login)
   --self-test   run the pure-function checks (parser, diff, plan, issue-form heading parse, the
-                five DoR rules) plus the `ready`/`queue` commands against a stubbed `gh`; no
-                network, but needs python3
+                five DoR rules) plus `ready`, `queue`, `tasks-to-issues`, `claim` and
+                `board sync|setup|gates` against a stubbed `gh`; no network, but needs python3
   --help        this text
 
 Live mode needs `gh` logged in. Inside ai-jail there is no login and none can be acquired
@@ -398,24 +398,26 @@ dor_apply_label() {
   if [ "$rc" -eq 0 ]; then
     [ "$had" -eq 0 ] || { echo "  label \`agent-ready\` already set"; return 0; }
     run gh issue edit --repo "$nwo" "$n" --add-label agent-ready || return 1
-    echo "  label \`agent-ready\` added"
+    echo "  label \`agent-ready\` added$(dry_tag)"
   else
     [ "$had" -eq 1 ] || { echo "  label \`agent-ready\` not added"; return 0; }
     run gh issue edit --repo "$nwo" "$n" --remove-label agent-ready || return 1
-    echo "  label \`agent-ready\` removed"
+    echo "  label \`agent-ready\` removed$(dry_tag)"
   fi
 }
 
 cmd_ready() {
-  [ $# -eq 1 ] || { echo "issues.sh ready: expects <issue>" >&2; usage >&2; exit 1; }
+  [ $# -eq 1 ] || { echo "issues.sh ready: expects <issue>" >&2; usage >&2; return 1; }
   local n
-  n="$(arg_number "$1" "ready")" || exit 1
+  n="$(arg_number "$1" "ready")" || return 1
   require_gh
   resolve_nwo
   local payload body labels tier blockers rules rc=0 had=0
-  payload="$(issue_payload "$n")" || exit 1
+  payload="$(issue_payload "$n")" || return 1
   # For the payload-is-really-#n and not-a-pull-request guards; `ready` has no use for the id.
-  issue_id_of "$payload" "$n" >/dev/null || exit 1
+  # `return`, never `exit`: cmd_claim calls this inside a guard, and an exit here would leave the
+  # shell from inside it — claim's own diagnostic never printed.
+  issue_id_of "$payload" "$n" >/dev/null || return 1
   body="$(jq -r '.body // ""' <<<"$payload")"
   labels="$(jq -r '(.labels // [])[].name' <<<"$payload")"
   grep -qx 'agent-ready' <<<"$labels" && had=1 || true
@@ -582,14 +584,24 @@ cmd_labels_sync() {
           run gh label edit --repo "$nwo" "$addr" --color "$color" --description "$desc" || rc=$?
         fi ;;
       delete) run gh label delete --repo "$nwo" "$addr" --yes || rc=$? ;;
+      *) rc=1 ;;
     esac
     if [ "$rc" -eq 0 ]; then applied=$((applied + 1)); else failed=$((failed + 1)); fi
   done <<<"$plan"
 
+  echo "labels: $applied of $((applied + failed)) actions applied, $n_orphan orphaned ($n_manifest in the manifest)$(dry_tag)"
   if [ "$failed" -gt 0 ]; then
     echo "issues.sh: $failed of $((applied + failed)) label actions failed, $applied applied — the repo is part-way through the plan. Fix the cause and re-run; sync is idempotent." >&2
     exit 1
   fi
+}
+
+# milestone_number <title> -> that milestone's number, or empty.
+# state=all: a closed milestone still owns its title, so creating over one 422s rather than doing
+# nothing, and both callers have to read a no-op either way.
+milestone_number() {
+  gh api --paginate "repos/$nwo/milestones?state=all&per_page=100" </dev/null \
+    --jq '.[] | "\(.number)\t\(.title)"' | awk -F'\t' -v t="$1" '$2 == t { print $1; exit }'
 }
 
 # --- tasks-to-issues (MIP-0063 §5.5) ---
@@ -626,9 +638,7 @@ cmd_tasks_to_issues() {
     # Decision 6: this command never invents a milestone. Checked before anything is created, not
     # at the first `gh issue create`, which is the difference between "nothing happened" and
     # "three of eight rows are filed and the rest aborted".
-    local ms_titles
-    ms_titles="$(gh api --paginate "repos/$nwo/milestones?state=all" </dev/null --jq '.[].title')"
-    grep -qxF "$milestone" <<<"$ms_titles" || {
+    [ -n "$(milestone_number "$milestone")" ] || {
       echo "issues.sh tasks-to-issues: $nwo has no milestone named \"$milestone\" — create it first (MIP-0063 Decision 6)" >&2
       exit 1
     }
@@ -692,7 +702,12 @@ cmd_tasks_to_issues() {
       failed=$((failed + 1))
       continue
     fi
-    number="$(arg_number "${url##*/}" "the URL gh printed for $mip-T$id")" || exit 1
+    # The issue exists by now, so the diagnostic has to carry the URL itself: arg_number quotes
+    # the last path segment, which in this very case is usually empty.
+    number="$(arg_number "${url##*/}" "the URL gh printed for $mip-T$id")" || {
+      echo "issues.sh: $mip-T$id was created but gh printed an unparseable URL: $url — link it by hand" >&2
+      failed=$((failed + 1)); continue
+    }
     printf '  %-10s #%-6s created\n' "$mip-T$id" "$number"
     created=$((created + 1))
     map="$(jq -c --arg k "$id" --argjson v "$number" '.[$k] = $v' <<<"$map")"
@@ -701,7 +716,8 @@ cmd_tasks_to_issues() {
   local -a link_args=()
   [ "$dry" -eq 0 ] || link_args=(--dry-run)
   local linked n_linked
-  linked="$(python3 "$root/scripts/lib/tasks_issues.py" link "$file" --repo "$nwo" --map "$map" ${link_args[@]+"${link_args[@]}"})" || exit 1
+  linked="$(python3 "$root/scripts/lib/tasks_issues.py" link "$file" --repo "$nwo" --map "$map" ${link_args[@]+"${link_args[@]}"})" \
+    || { linked=""; failed=$((failed + 1)); }
   n_linked="$(grep -c . <<<"$linked" || true)"
   [ -z "$linked" ] || sed 's/^/  link: /' <<<"$linked"
 
@@ -732,9 +748,8 @@ cmd_tasks_to_issues() {
     done <<<"$deps"
   done
 
-  printf '%ssummary: %d created, %d already filed · %d rows linked · %d edges wired, %d already wired, %d pending\n' \
-    "$([ "$dry" -eq 1 ] && printf 'dry-run ' || true)" \
-    "$created" "$existing" "$n_linked" "$wired" "$already" "$pending"
+  printf 'summary: %d created, %d already filed · %d rows linked · %d edges wired, %d already wired, %d pending%s\n' \
+    "$created" "$existing" "$n_linked" "$wired" "$already" "$pending" "$(dry_tag)"
   [ "$failed" -eq 0 ] || {
     echo "issues.sh tasks-to-issues: $failed action(s) failed — fix the cause and re-run; this command is idempotent." >&2
     exit 1
@@ -765,10 +780,8 @@ token_scopes() {
 # board_require_write — §4.4's human prerequisite, stated once.
 board_require_write() {
   local scopes
-  # || true: no header means the grep inside fails, and `pipefail` would take the script out here
-  # with no message at all — the opposite of what the branch below is for. No test covers this
-  # line: every caller of board_require_write guards it, and errexit is suppressed inside a guard,
-  # so the path is unreachable today. One token, kept for the caller that forgets to guard.
+  # || true: no header means the grep inside fails, and `pipefail` would take the script out with
+  # no message at all — the opposite of what the branch below is for.
   scopes="$(token_scopes || true)"
   if [ -z "$scopes" ]; then
     echo "issues.sh: this token sends no X-OAuth-Scopes header (a fine-grained PAT does not) — attempting the board write anyway." >&2
@@ -860,6 +873,11 @@ board_plan() {
     | @tsv'
 }
 
+# board_status_missing <quoted option name(s)> [how many issues it left alone]
+board_status_missing() {
+  echo "issues.sh:${2:+ $2 issue(s) left alone —} the board's Status field has no $1 option — run \`scripts/issues.sh board setup\` first. §5.2's six are Triage / Spec / Ready / In progress / In review / Done; adding one is a \`project\`-scope action in the project UI." >&2
+}
+
 # board_set_status <number> <url> <status> — put one issue on the board and set its Status.
 board_set_status() {
   local number="$1" url="$2" status="$3" owner="${nwo%%/*}" fields items item pair fid oid
@@ -867,10 +885,7 @@ board_set_status() {
   board_resolve || return 1
   fields="$(gh project field-list "$board_number" --owner "$owner" --format json --limit 100 </dev/null)"
   pair="$(board_status_option "$fields" "$status")"
-  [ -n "$pair" ] || {
-    echo "issues.sh: the board's Status field has no \"$status\" option. §5.2's six are Triage / Spec / Ready / In progress / In review / Done; adding one is a \`project\`-scope action in the project UI." >&2
-    return 1
-  }
+  [ -n "$pair" ] || { board_status_missing "\"$status\""; return 1; }
   items="$(board_items "$owner")" || return 1
   item="$(board_item_id "$items" "$nwo" "$number")"
   if [ -z "$item" ]; then
@@ -958,7 +973,7 @@ cmd_claim() {
   # issue claimed *and* still in the agent queue, which is exactly the drift §8 names as this
   # design's soft spot.
   run gh issue edit --repo "$nwo" "$n" --add-assignee "$me" --remove-label agent-ready || exit 1
-  echo "claimed #$n as @$me; \`agent-ready\` dropped"
+  echo "claimed #$n as @$me; \`agent-ready\` dropped$(dry_tag)"
 
   # Best-effort on purpose, and the one place in this file where a failed mutation is not fatal:
   # the assignment and the label are already applied, so exiting nonzero here would tell the
@@ -966,9 +981,13 @@ cmd_claim() {
   board_set_status "$n" "$url" "In progress" \
     || echo "  board Status not set (above) — the assignee and the label are applied; §5.2's other half is still the board's" >&2
 
-  line="$(stack_line "$title")"
-  if [ -n "$line" ]; then printf 'next:\n  %s\n' "$line"
-  else echo "next: #$n is not a MIP task row, so there is no stack line — branch from main as usual"
+  # Not under --dry-run: the branch command is for an issue that is now assigned and out of the
+  # agent queue, and neither happened.
+  if [ "$dry" -eq 0 ]; then
+    line="$(stack_line "$title")"
+    if [ -n "$line" ]; then printf 'next:\n  %s\n' "$line"
+    else echo "next: #$n is not a MIP task row, so there is no stack line — branch from main as usual"
+    fi
   fi
 }
 
@@ -1009,10 +1028,7 @@ cmd_milestone_new() {
 
   require_gh
   resolve_nwo
-  # state=all: a closed milestone still owns its title, so creating over one 422s rather than
-  # doing nothing, and re-running this command has to be a no-op either way.
-  existing="$(gh api --paginate "repos/$nwo/milestones?state=all&per_page=100" </dev/null \
-    --jq '.[] | "\(.number)\t\(.title)"' | awk -F'\t' -v t="$name" '$2 == t { print $1; exit }')"
+  existing="$(milestone_number "$name")"
   [ -z "$existing" ] || { echo "milestone \"$name\" already exists: #$existing"; return 0; }
   run gh api --method POST "repos/$nwo/milestones" -f "title=$name" ${extra[@]+"${extra[@]}"}
 }
@@ -1077,9 +1093,8 @@ cmd_board_sync() {
 
   [ "$dry" -eq 0 ] || [ "$added" -eq 0 ] \
     || echo "  the Status of the $added issue(s) added above is set on the real run, once they have item ids"
-  if [ "$skipped" -gt 0 ]; then
-    echo "issues.sh: $skipped issue(s) left alone — the board's Status field has no $(sort -u <<<"$missing_opts" | grep . | paste -sd', ' -) option. Run \`scripts/issues.sh board setup\` first; §5.2's six are Triage / Spec / Ready / In progress / In review / Done." >&2
-  fi
+  [ "$skipped" -eq 0 ] \
+    || board_status_missing "$(sort -u <<<"$missing_opts" | grep . | sed 's/.*/"&"/' | paste -sd', ' -)" "$skipped"
   echo "board: $added added, $set_n set (no Status), $adopted adopted from $board_autoadd_status, $skipped skipped, $failed failed ($n_open open issues)$(dry_tag)"
   [ "$failed" -eq 0 ] && [ "$skipped" -eq 0 ] || exit 1
 }
@@ -1120,7 +1135,7 @@ status_options_plan() {
     ($wanted | split("\n") | map(select(length > 0) | split(":")
       | {name: .[0], color: .[1], description: (.[2:] | join(":"))})) as $w
     | ($have | map(.name)) as $names
-    | ($have | map({id, name, color, description}))
+    | ($have | map({id, name, color, description} | if .id then . else del(.id) end))
       + ($w | map(select(.name as $n | $names | index($n) | not)) | map({name, color, description}))'
 }
 
@@ -1376,6 +1391,94 @@ run() {
 
 # --- self-test ---
 
+# write_gh_stub <dir> — the `gh` the command tests run against, installed at <dir>/bin, reading
+# <dir>'s fixtures and logging every mutating call to $STUB_LOG. One stub, not one per section:
+# four copies of this core drifted apart, and what a section needs that another does not is a
+# fixture — `stateful` makes writes persist so run 2 sees run 1's work, `fail_id` names an issue
+# whose lookup 404s, and `bad_url` makes a create land but print no issue number.
+write_gh_stub() {
+  mkdir -p "$1/bin"
+  cat > "$1/bin/gh" <<'STUB'
+#!/usr/bin/env bash
+cat >/dev/null          # a gh that reads stdin; `gh api --input -` really does
+jq_expr=""; path=""; prev=""; title=""; arg=""; method=""; issue_id=""; file=""; n=""
+for a in "$@"; do
+  case "$prev" in --jq) jq_expr="$a" ;; --title) title="$a" ;; --method) method="$a" ;; esac
+  case "$a" in repos/*) path="$a" ;; issue_id=*) issue_id="${a#issue_id=}" ;; esac
+  prev="$a"
+done
+log() { [ -z "${STUB_LOG-}" ] || printf '%s\n' "$*" >> "$STUB_LOG"; }
+case "$*" in
+  *"auth status"*) echo auth >> "$STUB_DIR/authlog"; exit 0 ;;
+  *"repo view"*)   echo "marola-dev/marola"; exit 0 ;;
+  *"api -i user"*)
+    # STUB_NOHDR models a fine-grained PAT: GitHub sends no X-OAuth-Scopes header at all.
+    if [ -n "${STUB_NOHDR-}" ]; then printf 'HTTP/2.0 200 OK\r\nServer: github.com\r\n\r\n{}\n'
+    else printf 'HTTP/2.0 200 OK\r\nX-Oauth-Scopes: repo, %s\r\n\r\n{}\n' "${STUB_SCOPES-}"; fi
+    exit 0 ;;
+  *"api user"*) echo "brunogbv"; exit 0 ;;
+  *"issue create"*)
+    log "$*"
+    [ ! -f "$STUB_DIR/bad_url" ] || { echo "https://github.com/marola-dev/marola/issues/"; exit 0; }
+    [ -f "$STUB_DIR/stateful" ] || exit 0
+    n=$(( $(jq 'length' "$STUB_DIR/issues-all.json") + 700 ))
+    jq --argjson n "$n" --arg t "$title" '. + [{number:$n,title:$t}]' "$STUB_DIR/issues-all.json" \
+      > "$STUB_DIR/w" && mv "$STUB_DIR/w" "$STUB_DIR/issues-all.json"
+    printf 'https://github.com/marola-dev/marola/issues/%s\n' "$n"; exit 0 ;;
+  *"label create"*|*"label edit"*|*"label delete"* \
+  |*"issue edit"*|*"issue close"*|*"project item-add"*|*"project item-edit"*) log "$*"; exit 0 ;;
+  *"--input"*)
+    for arg in "$@"; do case "$arg" in /*) file="$arg" ;; esac; done
+    log "graphql-input $(jq -r '[.variables.options[].name] | join(",")' "$file")"; exit 0 ;;
+  *createProjectV2View*)
+    for arg in "$@"; do case "$arg" in n=*) title="${arg#n=}" ;; l=*) method="${arg#l=}" ;; esac; done
+    log "create-view $title $method"; exit 0 ;;
+  *updateProjectV2View*)
+    for arg in "$@"; do case "$arg" in v=*) title="${arg#v=}" ;; f=*) method="${arg#f=}" ;; esac; done
+    log "set-filter $title $method"; exit 0 ;;
+  *"field(name:"*) file="$STUB_DIR/status-field${STUB_AFTER:+-after}.json" ;;
+  *"views(first"*)
+    # STUB_VIEWS pins the fixture; otherwise the re-read after a create has to see the new views,
+    # the way the real API would.
+    if [ -n "${STUB_VIEWS-}" ]; then file="$STUB_DIR/$STUB_VIEWS"
+    elif grep -q '^create-view' "${STUB_LOG:-/dev/null}" 2>/dev/null; then file="$STUB_DIR/views-after.json"
+    else file="$STUB_DIR/views.json"; fi ;;
+  *"project list"*)       file="$STUB_DIR/projects.json" ;;
+  *"project field-list"*) file="$STUB_DIR/${STUB_FIELDS:-fields.json}" ;;
+  *"project item-list"*)  file="$STUB_DIR/${STUB_ITEMS:-items.json}" ;;
+  *"label list"*)         file="$STUB_DIR/labels.json" ;;
+  *"issue list"*)
+    case "$*" in
+      *"--state all"*) file="$STUB_DIR/issues-all.json" ;;
+      *)               file="$STUB_DIR/issues-open.json" ;;
+    esac ;;
+  *)
+    case "$path" in
+      */milestones*) file="$STUB_DIR/milestones.json" ;;
+      */dependencies/blocked_by)
+        n="${path%/dependencies/blocked_by}"; n="${n##*/}"; file="$STUB_DIR/$n.deps.json"
+        [ ! -f "$STUB_DIR/stateful" ] || [ -f "$file" ] || printf '[]\n' > "$file"
+        if [ "$method" = POST ]; then
+          log "edge $n <- $(( issue_id - 5600000000 ))"
+          jq --argjson b "$(( issue_id - 5600000000 ))" '. + [{number:$b,state:"closed"}]' "$file" \
+            > "$STUB_DIR/w" && mv "$STUB_DIR/w" "$file"
+          exit 0
+        fi ;;
+      *)
+        n="${path##*/}"
+        [ "$n" != "$(cat "$STUB_DIR/fail_id" 2>/dev/null)" ] || { echo "gh: Not Found (HTTP 404)" >&2; exit 1; }
+        file="$STUB_DIR/$n.issue.json"
+        [ ! -f "$STUB_DIR/stateful" ] || [ -f "$file" ] \
+          || printf '{"number":%s,"id":%d}\n' "$n" "$(( 5600000000 + n ))" > "$file" ;;
+    esac ;;
+esac
+[ -f "$file" ] || { echo "stub: no fixture for ${path:-$*}" >&2; exit 1; }
+if [ -n "$jq_expr" ]; then jq -r "$jq_expr" "$file"; else cat "$file"; fi
+STUB
+  chmod +x "$1/bin/gh"
+  : > "$1/authlog"
+}
+
 self_test() {
   local failed=0 tmp got
   tmp="$(mktemp -d)"
@@ -1522,6 +1625,25 @@ EOF
   dry=0
 
   echo
+  echo "-- labels sync ends on a summary, like every other subcommand --"
+  local lbl_dir="$tmp/labels" lbl_out
+  write_gh_stub "$lbl_dir"
+  printf '[{"name":"area/conditions","color":"000000","description":"Live sea/weather/tide data"},
+    {"name":"stale","color":"ffffff","description":"gone from the manifest"}]\n' > "$lbl_dir/labels.json"
+  printf -- '- name: "area/conditions"\n  color: "1d76db"\n  description: "Live sea/weather/tide data"\n\n- name: "area/map-site"\n  color: "0e8a16"\n  description: "The static map site"\n' \
+    > "$lbl_dir/m.yml"
+  lbl_out="$(PATH="$lbl_dir/bin:$PATH" STUB_DIR="$lbl_dir" STUB_LOG="$lbl_dir/log" nwo="" \
+    cmd_labels_sync --manifest "$lbl_dir/m.yml" 2>/dev/null)"
+  check "an applied plan says what it applied, not nothing at all" "$(tail -1 <<<"$lbl_out")" \
+    "labels: 2 of 2 actions applied, 1 orphaned (2 in the manifest)"
+  dry=1
+  lbl_out="$(PATH="$lbl_dir/bin:$PATH" STUB_DIR="$lbl_dir" STUB_LOG="$lbl_dir/log" nwo="" \
+    cmd_labels_sync --manifest "$lbl_dir/m.yml" 2>/dev/null)"
+  dry=0
+  check "and --dry-run says it applied nothing" "$(tail -1 <<<"$lbl_out")" \
+    "labels: 2 of 2 actions applied, 1 orphaned (2 in the manifest) (--dry-run: nothing was written)"
+
+  echo
   echo "-- the apply loop feeds the plan on stdin; run() must not pass it on --"
   # A `gh` that reads stdin would otherwise eat the rest of the plan: verified with a draining
   # stub, 1 of 39 edits ran and the script exited 0 reporting success.
@@ -1535,21 +1657,14 @@ plan-line-3"
   # run() protects the mutating calls; the reads (auth status, repo view, GET) are called
   # directly. Task 5 drives `sub add`/`deps add` from a loop over the `depends on` column, so
   # the caller's stdin is the loop's input — one gh child that reads it ends the loop early.
-  mkdir -p "$tmp/bin"
-  cat > "$tmp/bin/gh" <<'STUB'
-#!/usr/bin/env bash
-cat >/dev/null          # a gh that reads stdin; `gh api --input -` really does
-case "$*" in
-  *"repo view"*)              echo "marola-dev/marola" ;;
-  *"dependencies/blocked_by"*) printf '#414\tclosed\tstub\n' ;;
-  *"issues/415")              printf '{"number":415,"id":5601728372}\n' ;;
-esac
-STUB
-  chmod +x "$tmp/bin/gh"
-  got="$(printf 'row-2\nrow-3\n' | { PATH="$tmp/bin:$PATH" nwo="" cmd_deps_list 415 >/dev/null; cat; })"
+  local stdin_dir="$tmp/stdin"
+  write_gh_stub "$stdin_dir"
+  printf '{"number":415,"id":5601728372}\n' > "$stdin_dir/415.issue.json"
+  printf '[{"number":414,"state":"closed","title":"stub"}]\n' > "$stdin_dir/415.deps.json"
+  got="$(printf 'row-2\nrow-3\n' | { PATH="$stdin_dir/bin:$PATH" STUB_DIR="$stdin_dir" nwo="" cmd_deps_list 415 >/dev/null; cat; })"
   check "deps list leaves the caller's stdin untouched (auth status, repo view and the GET)" "$got" "row-2
 row-3"
-  got="$(printf 'row-2\nrow-3\n' | { PATH="$tmp/bin:$PATH" nwo="marola-dev/marola" resolve_issue_id 415 >/dev/null; cat; })"
+  got="$(printf 'row-2\nrow-3\n' | { PATH="$stdin_dir/bin:$PATH" STUB_DIR="$stdin_dir" nwo="marola-dev/marola" resolve_issue_id 415 >/dev/null; cat; })"
   check "resolve_issue_id leaves the caller's stdin untouched" "$got" "row-2
 row-3"
   if ( cmd_deps_add 428 --blocked-by 427 --blocked-by 426 ) >/dev/null 2>&1; then
@@ -1880,30 +1995,7 @@ PYEOF
   echo
   echo "-- ready writes the agent-ready label both ways, and queue partitions what is left --"
   local dor_dir="$tmp/dor" dor_log="$tmp/dor/edits.log"
-  mkdir -p "$dor_dir/bin"
-  cat > "$dor_dir/bin/gh" <<'STUB'
-#!/usr/bin/env bash
-cat >/dev/null          # a gh that reads stdin; the real one does
-jq_expr=""; path=""; prev=""
-for a in "$@"; do
-  [ "$prev" != "--jq" ] || jq_expr="$a"
-  case "$a" in repos/*) path="$a" ;; esac
-  prev="$a"
-done
-case "$*" in
-  *"auth status"*) exit 0 ;;
-  *"repo view"*)   echo "marola-dev/marola"; exit 0 ;;
-  *"issue edit"*)  printf '%s\n' "$*" >> "$DOR_LOG"; exit 0 ;;
-  *"issue list"*)  cat "$DOR_DIR/list.json"; exit 0 ;;
-esac
-case "$path" in
-  */dependencies/blocked_by) path="${path%/dependencies/blocked_by}"; file="$DOR_DIR/${path##*/}.deps.json" ;;
-  *)                         file="$DOR_DIR/${path##*/}.issue.json" ;;
-esac
-[ -f "$file" ] || { echo "stub: no fixture for $path" >&2; exit 1; }
-if [ -n "$jq_expr" ]; then jq -r "$jq_expr" "$file"; else cat "$file"; fi
-STUB
-  chmod +x "$dor_dir/bin/gh"
+  write_gh_stub "$dor_dir"
 
   cat > "$dor_dir/901.issue.json" <<'EOF'
 {"number":901,"id":5600000901,
@@ -1943,7 +2035,7 @@ EOF
   dor_ready_case() {   # dor_ready_case <label> <issue> <want-rc> <want-line> <want-edit-call>
     local out rc=0
     : > "$dor_log"
-    out="$(PATH="$dor_dir/bin:$PATH" DOR_DIR="$dor_dir" DOR_LOG="$dor_log" nwo="" cmd_ready "$2" 2>&1)" || rc=$?
+    out="$(PATH="$dor_dir/bin:$PATH" STUB_DIR="$dor_dir" STUB_LOG="$dor_log" nwo="" cmd_ready "$2" 2>&1)" || rc=$?
     check "$1 (exit)" "$rc" "$3"
     case "$out" in
       *"$4"*) echo "ok: $1" ;;
@@ -1967,12 +2059,12 @@ EOF
     "issue edit --repo marola-dev/marola 906 --add-label agent-ready"
   dor_ready_case "an already-ready issue is not re-labelled" 907 0 'label `agent-ready` already set' ""
 
-  dor_got="$(printf 'row-2\nrow-3\n' | { PATH="$dor_dir/bin:$PATH" DOR_DIR="$dor_dir" DOR_LOG="$dor_log" \
+  dor_got="$(printf 'row-2\nrow-3\n' | { PATH="$dor_dir/bin:$PATH" STUB_DIR="$dor_dir" STUB_LOG="$dor_log" \
     nwo="" cmd_ready 901 >/dev/null 2>&1; cat; })"
   check "ready leaves the caller's stdin untouched" "$dor_got" "row-2
 row-3"
 
-  cat > "$dor_dir/list.json" <<'EOF'
+  cat > "$dor_dir/issues-open.json" <<'EOF'
 [{"number":904,"title":"Cache Open-Meteo responses","assignees":[],"milestone":null,
   "labels":[{"name":"agent-ready"},{"name":"area/conditions"},{"name":"layer/core"},{"name":"size/M"}]},
  {"number":901,"title":"Add hreflang tags","assignees":[],"milestone":{"title":"Water quality on the map"},
@@ -1983,12 +2075,12 @@ row-3"
  {"number":907,"title":"Someone is already on it","assignees":[{"login":"x"}],"milestone":null,
   "labels":[{"name":"agent-ready"},{"name":"area/dev-tooling"},{"name":"layer/infra"},{"name":"size/S"}]}]
 EOF
-  dor_got="$(PATH="$dor_dir/bin:$PATH" DOR_DIR="$dor_dir" DOR_LOG="$dor_log" nwo="" cmd_queue)"
+  dor_got="$(PATH="$dor_dir/bin:$PATH" STUB_DIR="$dor_dir" STUB_LOG="$dor_log" nwo="" cmd_queue)"
   check "queue sorts size/S ahead of size/M" "$(head -1 <<<"$dor_got" | awk '{ print $1, $2 }')" "#901 size/S"
   check "an assigned agent-ready issue is not in the queue" "$(grep -c '^#907' <<<"$dor_got" || true)" "0"
   check "the footer partitions the unassigned open issues" "$(tail -1 <<<"$dor_got")" \
     "      2 ready · 1 blocked · 1 in triage"
-  dor_got="$(PATH="$dor_dir/bin:$PATH" DOR_DIR="$dor_dir" DOR_LOG="$dor_log" nwo="" \
+  dor_got="$(PATH="$dor_dir/bin:$PATH" STUB_DIR="$dor_dir" STUB_LOG="$dor_log" nwo="" \
     cmd_queue --milestone "Water quality on the map")"
   check "--milestone narrows the queue and names itself" "$(tail -1 <<<"$dor_got")" \
     "      1 ready · 0 blocked · 0 in triage   (milestone: Water quality on the map)"
@@ -1996,52 +2088,12 @@ EOF
   echo
   echo "-- tasks-to-issues projects the depends-on DAG, and a second run is a no-op --"
   local t2i="$tmp/t2i" t2i_out t2i_file
-  mkdir -p "$t2i/bin"
-  # A stub that keeps state: created issues land in issues.json and posted edges in deps-<n>.json,
-  # so run 2 sees exactly what run 1 left behind. That is the only way to test idempotence — the
-  # property this command is for — without filing anything.
-  cat > "$t2i/bin/gh" <<'STUB'
-#!/usr/bin/env bash
-cat >/dev/null          # a gh that reads stdin; the real one does
-jq_expr=""; path=""; prev=""; title=""; method=""; issue_id=""
-for a in "$@"; do
-  case "$prev" in --jq) jq_expr="$a" ;; --title) title="$a" ;; --method) method="$a" ;; esac
-  case "$a" in repos/*) path="$a" ;; issue_id=*) issue_id="${a#issue_id=}" ;; esac
-  prev="$a"
-done
-case "$*" in
-  *"auth status"*) echo auth >> "$T2I/authlog"; exit 0 ;;
-  *"repo view"*)   echo "marola-dev/marola"; exit 0 ;;
-  *"issue list"*)  cat "$T2I/issues.json"; exit 0 ;;
-  *"issue create"*)
-    printf 'create %s\n' "$title" >> "$T2I/log"
-    n=$(( $(jq 'length' "$T2I/issues.json") + 700 ))
-    jq --argjson n "$n" --arg t "$title" '. + [{number:$n,title:$t}]' "$T2I/issues.json" > "$T2I/w" && mv "$T2I/w" "$T2I/issues.json"
-    printf 'https://github.com/marola-dev/marola/issues/%s\n' "$n"
-    exit 0 ;;
-esac
-case "$path" in
-  */dependencies/blocked_by)
-    n="${path%/dependencies/blocked_by}"; n="${n##*/}"
-    f="$T2I/deps-$n.json"; [ -f "$f" ] || printf '[]\n' > "$f"
-    if [ "$method" = POST ]; then
-      printf 'edge %s <- %s\n' "$n" "$(( issue_id - 5600000000 ))" >> "$T2I/log"
-      jq --argjson b "$(( issue_id - 5600000000 ))" '. + [{number:$b,state:"closed"}]' "$f" > "$T2I/w" && mv "$T2I/w" "$f"
-      exit 0
-    fi
-    if [ -n "$jq_expr" ]; then jq -r "$jq_expr" "$f"; else cat "$f"; fi
-    exit 0 ;;
-  */milestones*) printf 'Issue tracking standard live\n'; exit 0 ;;
-  repos/*/issues/*)
-    n="${path##*/}"
-    # $T2I/fail_id names one issue the lookup 404s on, for the resolve-failure case below.
-    [ "$n" != "$(cat "$T2I/fail_id" 2>/dev/null)" ] || { echo "gh: Not Found (HTTP 404)" >&2; exit 1; }
-    printf '{"number":%s,"id":%d}\n' "$n" "$(( 5600000000 + n ))"; exit 0 ;;
-esac
-echo "stub: unhandled: $*" >&2; exit 1
-STUB
-  chmod +x "$t2i/bin/gh"
-  printf '[]\n' > "$t2i/issues.json"
+  # `stateful`: run 2 sees exactly what run 1 left behind, which is the only way to test
+  # idempotence — the property this command is for — without filing anything.
+  write_gh_stub "$t2i"
+  : > "$t2i/stateful"
+  printf '[{"number":3,"title":"Issue tracking standard live"}]\n' > "$t2i/milestones.json"
+  printf '[]\n' > "$t2i/issues-all.json"
   : > "$t2i/log"
   t2i_file="$t2i/MIP-0099.tasks.md"
   # 6 depends on 1, not on 5, and 3 is a second root: the shape MIP-0034 and MIP-0031 have and a
@@ -2056,7 +2108,7 @@ STUB
   dry=0
   : > "$t2i/authlog"
   gh_checked=0
-  t2i_out="$(PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" cmd_tasks_to_issues "$t2i_file" --milestone "Issue tracking standard live" 2>&1)" || failed=1
+  t2i_out="$(PATH="$t2i/bin:$PATH" STUB_DIR="$t2i" STUB_LOG="$t2i/log" nwo="" cmd_tasks_to_issues "$t2i_file" --milestone "Issue tracking standard live" 2>&1)" || failed=1
   # One `gh auth status` for the whole run, not one per edge: cmd_deps_add is re-entered five
   # times below and require_gh is what it re-enters.
   check "the login is checked once, not once per edge" "$(grep -c . "$t2i/authlog")" "1"
@@ -2068,24 +2120,24 @@ STUB
     "$(grep -c '^| \[[1-6]\](https://github.com/marola-dev/marola/issues/70[0-5]) |' "$t2i_file")" "6"
 
   : > "$t2i/log"
-  t2i_out="$(PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" cmd_tasks_to_issues "$t2i_file" --milestone "Issue tracking standard live" 2>&1)" || failed=1
+  t2i_out="$(PATH="$t2i/bin:$PATH" STUB_DIR="$t2i" STUB_LOG="$t2i/log" nwo="" cmd_tasks_to_issues "$t2i_file" --milestone "Issue tracking standard live" 2>&1)" || failed=1
   check "run 2 creates nothing, rewrites nothing and re-posts no edge" "$(tail -1 <<<"$t2i_out")" \
     "summary: 0 created, 6 already filed · 0 rows linked · 0 edges wired, 5 already wired, 0 pending"
   check "run 2 made no mutating call at all" "$(cat "$t2i/log")" ""
   # The stub recorded each edge as closed on the way in: the 2026-09-27 probe found a dependency
   # survives closing both issues, so a closed blocker is still an edge and must not be re-posted.
-  check "a closed blocker still counts as wired" "$(jq -r '.[0].state' "$t2i/deps-701.json")" "closed"
+  check "a closed blocker still counts as wired" "$(jq -r '.[0].state' "$t2i/701.deps.json")" "closed"
 
-  printf '[]\n' > "$t2i/issues.json"
-  rm -f "$t2i"/deps-*.json
-  t2i_out="$(PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" dry=1 cmd_tasks_to_issues "$t2i_file" 2>&1)" || failed=1
+  printf '[]\n' > "$t2i/issues-all.json"
+  rm -f "$t2i"/*.deps.json "$t2i"/*.issue.json
+  t2i_out="$(PATH="$t2i/bin:$PATH" STUB_DIR="$t2i" STUB_LOG="$t2i/log" nwo="" dry=1 cmd_tasks_to_issues "$t2i_file" 2>&1)" || failed=1
   check "--dry-run on an already-linked file creates nothing and leaves the rows alone" \
     "$(tail -1 <<<"$t2i_out")" \
-    "dry-run summary: 6 created, 0 already filed · 0 rows linked · 0 edges wired, 0 already wired, 5 pending"
+    "summary: 6 created, 0 already filed · 0 rows linked · 0 edges wired, 0 already wired, 5 pending (--dry-run: nothing was written)"
   check "--dry-run made no mutating call" "$(cat "$t2i/log")" ""
   dry=0
 
-  if (PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" cmd_tasks_to_issues "$t2i_file" --milestone "No such milestone") >/dev/null 2>&1; then
+  if (PATH="$t2i/bin:$PATH" STUB_DIR="$t2i" STUB_LOG="$t2i/log" nwo="" cmd_tasks_to_issues "$t2i_file" --milestone "No such milestone") >/dev/null 2>&1; then
     echo "FAILED: a milestone that does not exist was accepted; the first create would have aborted part-way" >&2; failed=1
   else
     echo "ok: an unknown milestone is refused before anything is created"
@@ -2097,7 +2149,7 @@ STUB
   local t2i_rc=0
   : > "$t2i/log"
   echo 700 > "$t2i/fail_id"
-  t2i_out="$(PATH="$t2i/bin:$PATH" T2I="$t2i" nwo="" cmd_tasks_to_issues "$t2i_file" 2>&1)" || t2i_rc=$?
+  t2i_out="$(PATH="$t2i/bin:$PATH" STUB_DIR="$t2i" STUB_LOG="$t2i/log" nwo="" cmd_tasks_to_issues "$t2i_file" 2>&1)" || t2i_rc=$?
   rm -f "$t2i/fail_id"
   check "an unresolvable blocker does not abort the loop — the other edges are still attempted" \
     "$(grep -c '^edge ' "$t2i/log")" "2"
@@ -2111,6 +2163,22 @@ STUB
     *"no --milestone"*) echo "ok: a real run with no --milestone says so" ;;
     *) echo "FAILED: a real run filed issues into no milestone silently" >&2; failed=1 ;;
   esac
+
+  # The sibling failure: the create lands, the URL will not parse, and the issue now exists with
+  # nothing in the tasks file pointing at it.
+  local t2i_bad="$t2i/MIP-0098.tasks.md"
+  {
+    echo '| # | slug | delivers | tests (must exist before the PR) | depends on |'
+    echo '|---|---|---|---|---|'
+    printf '| 1 | a | d | t | – |\n| 2 | b | d | t | 1 |\n'
+  } > "$t2i_bad"
+  : > "$t2i/log"; : > "$t2i/bad_url"
+  t2i_rc=0
+  t2i_out="$(PATH="$t2i/bin:$PATH" STUB_DIR="$t2i" STUB_LOG="$t2i/log" nwo="" cmd_tasks_to_issues "$t2i_bad" 2>&1)" || t2i_rc=$?
+  rm -f "$t2i/bad_url"
+  check "a create whose URL will not parse is counted, and the summary still prints" \
+    "$(grep -c '^summary: ' <<<"$t2i_out")" "1"
+  check "and the run says so rather than exiting 0 half way" "$t2i_rc" "1"
 
   echo "-- the board: scopes, the Status lookup and the sync plan (MIP-0063 §5.2) --"
   check "read:project is not project" "$(has_scope "repo, read:project, workflow" project && echo yes || echo no)" "no"
@@ -2196,62 +2264,7 @@ STUB
   echo
   echo "-- claim, board sync and the gates against a stubbed gh --"
   local claim_dir="$tmp/claim" claim_log="$tmp/claim/calls.log" claim_got
-  mkdir -p "$claim_dir/bin"
-  cat > "$claim_dir/bin/gh" <<'STUB'
-#!/usr/bin/env bash
-cat >/dev/null          # a gh that reads stdin; the real one does
-jq_expr=""; path=""; prev=""; file=""
-for a in "$@"; do
-  [ "$prev" != "--jq" ] || jq_expr="$a"
-  case "$a" in repos/*) path="$a" ;; esac
-  prev="$a"
-done
-case "$*" in
-  *"auth status"*) exit 0 ;;
-  *"repo view"*)   echo "marola-dev/marola"; exit 0 ;;
-  *"api -i user"*)
-    # CLAIM_NOHDR models a fine-grained PAT: GitHub sends no X-OAuth-Scopes header at all.
-    if [ -n "${CLAIM_NOHDR-}" ]; then printf 'HTTP/2.0 200 OK\r\nServer: github.com\r\n\r\n{}\n'
-    else printf 'HTTP/2.0 200 OK\r\nX-Oauth-Scopes: repo, %s\r\n\r\n{}\n' "${CLAIM_SCOPES-}"; fi
-    exit 0 ;;
-  *"api user"*)    echo "brunogbv"; exit 0 ;;
-  *"--input"*)
-    for a in "$@"; do case "$a" in /*) gi="$a" ;; esac; done
-    printf 'graphql-input %s\n' "$(jq -r '[.variables.options[].name] | join(",")' "$gi")" >> "$CLAIM_LOG"; exit 0 ;;
-  *createProjectV2View*)
-    vn=""; vl=""
-    for a in "$@"; do case "$a" in n=*) vn="${a#n=}" ;; l=*) vl="${a#l=}" ;; esac; done
-    printf 'create-view %s %s\n' "$vn" "$vl" >> "$CLAIM_LOG"; exit 0 ;;
-  *updateProjectV2View*)
-    vv=""; vf=""
-    for a in "$@"; do case "$a" in v=*) vv="${a#v=}" ;; f=*) vf="${a#f=}" ;; esac; done
-    printf 'set-filter %s %s\n' "$vv" "$vf" >> "$CLAIM_LOG"; exit 0 ;;
-  *"field(name:"*)
-    if [ -n "${CLAIM_AFTER-}" ]; then file="$CLAIM_DIR/status-field-after.json"; else file="$CLAIM_DIR/status-field.json"; fi ;;
-  *"views(first"*)
-    # CLAIM_VIEWS pins the fixture; otherwise the re-read after a create has to see the new views,
-    # the way the real API would.
-    if [ -n "${CLAIM_VIEWS-}" ]; then file="$CLAIM_DIR/$CLAIM_VIEWS"
-    elif grep -q '^create-view' "$CLAIM_LOG" 2>/dev/null; then file="$CLAIM_DIR/views-after.json"
-    else file="$CLAIM_DIR/views.json"; fi ;;
-  *"issue edit"*|*"issue create"*|*"issue close"*|*"project item-add"*|*"project item-edit"*)
-                   printf '%s\n' "$*" >> "$CLAIM_LOG"; exit 0 ;;
-  *"project list"*)       file="$CLAIM_DIR/projects.json" ;;
-  *"project field-list"*) file="$CLAIM_DIR/${CLAIM_FIELDS:-fields.json}" ;;
-  *"project item-list"*)  file="$CLAIM_DIR/${CLAIM_ITEMS:-items.json}" ;;
-  *"label list"*)         file="$CLAIM_DIR/labels.json" ;;
-  *"--state all"*)        file="$CLAIM_DIR/issues-all.json" ;;
-  *"issue list"*)         file="$CLAIM_DIR/issues-open.json" ;;
-  *)
-    case "$path" in
-      */dependencies/blocked_by) path="${path%/dependencies/blocked_by}"; file="$CLAIM_DIR/${path##*/}.deps.json" ;;
-      *)                         file="$CLAIM_DIR/${path##*/}.issue.json" ;;
-    esac ;;
-esac
-[ -f "$file" ] || { echo "stub: no fixture for ${path:-$*}" >&2; exit 1; }
-if [ -n "$jq_expr" ]; then jq -r "$jq_expr" "$file"; else cat "$file"; fi
-STUB
-  chmod +x "$claim_dir/bin/gh"
+  write_gh_stub "$claim_dir"
 
   cat > "$claim_dir/910.issue.json" <<'EOF'
 {"number":910,"id":5600000910,"state":"open","html_url":"u910",
@@ -2317,7 +2330,7 @@ EOF
   claim_case() {   # claim_case <label> <issue> <scopes> <want-rc> <want-output> <want-calls>
     local out rc=0
     : > "$claim_log"
-    out="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" CLAIM_SCOPES="$3" \
+    out="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" STUB_SCOPES="$3" \
       nwo="" cmd_claim "$2" 2>&1)" || rc=$?
     check "$1 (exit)" "$rc" "$4"
     case "$out" in
@@ -2351,14 +2364,14 @@ project item-edit --id I-910 --project-id PVT_test --field-id PVTSSF_s --single-
     "cannot write the board" \
     "issue edit --repo marola-dev/marola 910 --add-assignee brunogbv --remove-label agent-ready"
 
-  claim_got="$(printf 'row-2\nrow-3\n' | { PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" \
-    CLAIM_LOG="$claim_log" CLAIM_SCOPES=project nwo="" cmd_claim 910 >/dev/null 2>&1; cat; })"
+  claim_got="$(printf 'row-2\nrow-3\n' | { PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" \
+    STUB_LOG="$claim_log" STUB_SCOPES=project nwo="" cmd_claim 910 >/dev/null 2>&1; cat; })"
   check "claim leaves the caller's stdin untouched" "$claim_got" "row-2
 row-3"
 
   : > "$claim_log"
-  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
-    CLAIM_SCOPES=project nwo="" cmd_board_sync 2>&1)"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
+    STUB_SCOPES=project nwo="" cmd_board_sync 2>&1)"
   check "sync adds, sets and adopts, counting each apart" "$(tail -1 <<<"$claim_got")" \
     "board: 1 added, 1 set (no Status), 2 adopted from Backlog, 0 skipped, 0 failed (5 open issues)"
   check "sync's calls" "$(cat "$claim_log")" \
@@ -2372,8 +2385,8 @@ project item-edit --id I-953 --project-id PVT_test --field-id PVTSSF_s --single-
     "$(grep -E '^  #(910|951)' <<<"$claim_got" | tr -s ' ' | sed 's/^ //' | tr '\n' '|')" \
     "#910 Backlog → Ready|#951 (no Status) → In progress|"
   : > "$claim_log"
-  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
-    CLAIM_ITEMS=items-synced.json CLAIM_SCOPES=project nwo="" cmd_board_sync 2>&1)"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
+    STUB_ITEMS=items-synced.json STUB_SCOPES=project nwo="" cmd_board_sync 2>&1)"
   check "a second run adopts nothing — the cards hold a real Status now" "$(tail -1 <<<"$claim_got")" \
     "board: in sync (5 open issues)"
   check "and writes nothing at all" "$(cat "$claim_log")" ""
@@ -2383,14 +2396,18 @@ project item-edit --id I-953 --project-id PVT_test --field-id PVTSSF_s --single-
   # still a nonzero exit because the work did not happen.
   : > "$claim_log"
   claim_got=""
-  claim_got="$( ( PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
-    CLAIM_FIELDS=fields-sparse.json CLAIM_SCOPES=project nwo="" cmd_board_sync ) 2>&1; echo "rc=$?")"
+  claim_got="$( ( PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
+    STUB_FIELDS=fields-sparse.json STUB_SCOPES=project nwo="" cmd_board_sync ) 2>&1; echo "rc=$?")"
   check "an option the board lacks is skipped, not failed" \
     "$(grep '^board:' <<<"$claim_got")" \
     "board: 1 added, 1 set (no Status), 1 adopted from Backlog, 1 skipped, 0 failed (5 open issues)"
   check "and skipping is a nonzero exit — the sync did not do its job" "$(tail -1 <<<"$claim_got")" "rc=1"
   check "the missing option is named once, not once per issue" \
-    "$(grep -c 'has no Triage option' <<<"$claim_got" || true)" "1"
+    "$(grep -c 'has no "Triage" option' <<<"$claim_got" || true)" "1"
+  # On stderr with the diagnostic, not only in the stdout summary: whoever is watching one is
+  # usually not watching the other.
+  check "and the diagnostic carries how many issues it left alone" \
+    "$(grep -c '1 issue(s) left alone' <<<"$claim_got" || true)" "1"
   case "$claim_got" in
     *"board setup\` first"*) echo "ok: and it names the command that creates it" ;;
     *) echo "FAILED: the skip diagnostic does not point at board setup" >&2; failed=1 ;;
@@ -2399,20 +2416,20 @@ project item-edit --id I-953 --project-id PVT_test --field-id PVTSSF_s --single-
   claim_got=""
   # A subshell, not just `|| …`: cmd_board_sync refuses with `exit`, which would take this
   # self-test down with it rather than being caught.
-  ( PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" CLAIM_SCOPES=read:project \
+  ( PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" STUB_SCOPES=read:project \
     nwo="" cmd_board_sync ) >/dev/null 2>&1 || claim_got=refused
   check "sync fails outright without \`project\` scope, unlike claim" "$claim_got" "refused"
   check "and writes nothing on the way" "$(cat "$claim_log")" ""
   dry=1
-  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
-    CLAIM_SCOPES=read:project nwo="" cmd_board_sync 2>/dev/null | tail -1)"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
+    STUB_SCOPES=read:project nwo="" cmd_board_sync 2>/dev/null | tail -1)"
   dry=0
   check "--dry-run still shows the plan without the scope — the reads only need read:project" \
     "$claim_got" "board: 1 added, 1 set (no Status), 2 adopted from Backlog, 0 skipped, 0 failed (5 open issues) (--dry-run: nothing was written)"
   check "and still writes nothing" "$(cat "$claim_log")" ""
 
   : > "$claim_log"
-  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
     nwo="" cmd_board_gates 2>&1)"
   check "the gate already filed is skipped, the other four are created" "$(tail -1 <<<"$claim_got")" \
     "gates: 4 filed, 1 already there, 0 failed"
@@ -2421,7 +2438,7 @@ project item-edit --id I-953 --project-id PVT_test --field-id PVTSSF_s --single-
     "$(grep -c 'issue close --repo marola-dev/marola 950 --reason completed' "$claim_log" || true)" "1"
   dry=1
   : > "$claim_log"
-  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
     nwo="" cmd_board_gates 2>&1)"
   dry=0
   check "--dry-run files nothing at all" "$(cat "$claim_log")" ""
@@ -2450,8 +2467,10 @@ project item-edit --id I-953 --project-id PVT_test --field-id PVTSSF_s --single-
   check "a description containing a colon survives the parse" \
     "$(jq -r '.[] | select(.name == "Triage") | .description' <<<"$setup_plan")" \
     "Filed, not yet specified or sized (MIP-0063 §5.2)"
+  # Compared whole: `{id}` on an option that has none yields `"id": null`, which a length check
+  # never sees and updateProjectV2Field rejects.
   check "nothing to add leaves the list exactly as it was" \
-    "$(status_options_plan "$setup_plan" "$(board_status_wanted)" | jq 'length')" "7"
+    "$(status_options_plan "$setup_plan" "$(board_status_wanted)" | jq -S .)" "$(jq -S . <<<"$setup_plan")"
 
   setup_views='[{"id":"V1","name":"Current iteration","filter":"iteration:@current"},
     {"id":"V5","name":"In review","filter":"status:\"In review\""},
@@ -2459,8 +2478,13 @@ project item-edit --id I-953 --project-id PVT_test --field-id PVTSSF_s --single-
   check "all four of §5.2's views are missing from GitHub's template set" \
     "$(board_views_plan "$setup_views" "$(board_views_wanted)" | cut -f1,2 | tr '\t' ' ' | tr '\n' '|')" \
     "create Triage|create Now|create Agent queue|create Good first issues|"
-  check "the template's own six are never touched" \
-    "$(board_views_plan "$setup_views" "$(board_views_wanted)" | grep -c -E 'Current iteration|In review|My items' || true)" "0"
+  # By id, and case-insensitively: a name match that is not is a second copy of a view on the
+  # live board. Grepping the plan for the template's *names* can never fail — it iterates $wanted.
+  check "an existing view is matched whatever its case, and the template's ids stay out of the plan" \
+    "$(board_views_plan '[{"id":"V1","name":"Current iteration","filter":"iteration:@current"},
+        {"id":"V9","name":"AGENT QUEUE","filter":null}]' "$(board_views_wanted)" \
+       | cut -f1,2 | tr '\t' ' ' | tr '\n' '|')" \
+    "create Triage|create Now|filter V9|create Good first issues|"
   # A filter a maintainer narrowed by hand is theirs; setup reports the difference and stops there.
   check "a view that already exists with another filter is reported, not overwritten" \
     "$(board_views_plan '[{"id":"V9","name":"Agent queue","filter":"label:\"bug\""}]' \
@@ -2525,8 +2549,8 @@ EOF
         else . end)' "$claim_dir/views-after.json" > "$claim_dir/views-done.json"
 
   : > "$claim_log"
-  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
-    CLAIM_SCOPES=project nwo="" cmd_board_setup 2>&1)"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
+    STUB_SCOPES=project nwo="" cmd_board_setup 2>&1)"
   check "setup sends the whole option list, existing ones first" "$(head -1 "$claim_log")" \
     "graphql-input Backlog,Ready,In progress,In review,Done,Triage,Spec"
   check "setup creates the four views with their layouts" \
@@ -2544,8 +2568,8 @@ EOF
   # created; the three filters are finished. Before I1 this state was classified `differs` and
   # never healed.
   : > "$claim_log"
-  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
-    CLAIM_SCOPES=project CLAIM_AFTER=1 CLAIM_VIEWS=views-after.json nwo="" cmd_board_setup 2>&1)"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
+    STUB_SCOPES=project STUB_AFTER=1 STUB_VIEWS=views-after.json nwo="" cmd_board_setup 2>&1)"
   check "a half-finished create is healed, not created again" "$(grep -c '^create-view' "$claim_log" || true)" "0"
   check "and its filter is applied on the next run" "$(grep '^set-filter' "$claim_log" | tr '\n' '|')" \
     "set-filter V7 status:\"Triage\"|set-filter V9 label:\"agent-ready\"|set-filter V10 label:\"good first issue\"|"
@@ -2555,12 +2579,12 @@ EOF
   esac
 
   : > "$claim_log"
-  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
-    CLAIM_SCOPES=project CLAIM_AFTER=1 CLAIM_VIEWS=views-done.json nwo="" cmd_board_setup 2>&1)"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
+    STUB_SCOPES=project STUB_AFTER=1 STUB_VIEWS=views-done.json nwo="" cmd_board_setup 2>&1)"
   check "a second run changes nothing" "$(cat "$claim_log")" ""
   check "and says so" "$(grep -c -E 'all of §5.2.s options are there|four are all there' <<<"$claim_got" || true)" "2"
   claim_got=""
-  ( PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" CLAIM_SCOPES=read:project \
+  ( PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" STUB_SCOPES=read:project \
     nwo="" cmd_board_setup ) >/dev/null 2>&1 || claim_got=refused
   check "setup refuses without \`project\` scope, like sync" "$claim_got" "refused"
 
@@ -2569,12 +2593,12 @@ EOF
   # They do **not** cover the `|| true` at its call site: errexit is suppressed through every
   # guarded caller, so the whole suite passes with that guard removed. Verified, not assumed.
   local scope_rc=0
-  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_NOHDR=1 token_scopes || true)"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_NOHDR=1 token_scopes || true)"
   check "no scope header yields no scopes" "$claim_got" ""
-  ( PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_NOHDR=1 token_scopes >/dev/null ) || scope_rc=$?
+  ( PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_NOHDR=1 token_scopes >/dev/null ) || scope_rc=$?
   check "and a nonzero status its callers must absorb" "$scope_rc" "1"
-  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
-    CLAIM_NOHDR=1 "$root/scripts/issues.sh" --dry-run board setup 2>&1; echo "rc=$?")"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
+    STUB_NOHDR=1 "$root/scripts/issues.sh" --dry-run board setup 2>&1; echo "rc=$?")"
   check "and such a token is unknown, not refused: setup runs to the end" \
     "$(tail -1 <<<"$claim_got")" "rc=0"
   case "$claim_got" in
