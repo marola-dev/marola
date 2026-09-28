@@ -26,7 +26,7 @@ on:
       image:
         description: "Image to run"
         type: string
-        default: "ghcr.io/h0ffmann/marola:jvm"
+        default: "ghcr.io/marola-dev/marola:jvm"
   schedule:
     - cron: "30 9 * * *" # 06:30 in Brazil, before the morning swim (MIP-0008.tasks.md decision 3)
 
@@ -40,14 +40,10 @@ concurrency:
 
 env:
   MODEL: ${{ inputs.model || 'llama3.2:1b' }}
-  IMAGE: ${{ inputs.image || 'ghcr.io/h0ffmann/marola:jvm' }}
+  IMAGE: ${{ inputs.image || 'ghcr.io/marola-dev/marola:jvm' }}
 
 jobs:
-  # Gated with the builds, though it neither builds nor pushes: it runs `:jvm` from GHCR, and with
-  # docker.yml paused that image stops tracking main. A daily green smoke test against an ageing
-  # image is worse than a visibly skipped one. DOCKER_CI=on re-enables both together.
   smoke:
-    if: vars.DOCKER_CI == 'on'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

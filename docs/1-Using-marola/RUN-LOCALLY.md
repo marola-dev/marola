@@ -332,7 +332,7 @@ before that (MIP-0005 §8).
 
 ## 10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)
 
-**Published tags** (`ghcr.io/h0ffmann/marola:<tag>`; this repo is private, so pulling needs
+**Published tags** (`ghcr.io/marola-dev/marola:<tag>`; this repo is private, so pulling needs
 `docker login ghcr.io` first: a GitHub PAT with `read:packages`, or `gh auth token | docker login
 ghcr.io -u <user> --password-stdin`):
 
@@ -366,7 +366,7 @@ the image; `MAROLA_LOCAL_LLM_MODEL=llama3.2:1b` picks the small model from §2. 
 against an Ollama already running on the host:
 
 ```bash
-docker run --rm --network host ghcr.io/h0ffmann/marola:jvm --summarize --lat -27.6733 --lon -48.47
+docker run --rm --network host ghcr.io/marola-dev/marola:jvm --summarize --lat -27.6733 --lon -48.47
 ```
 
 `:local` is `finetune/README.md`'s "As an image". `just docker-build` builds any target here and
@@ -377,7 +377,7 @@ Alpine, ~70 MB + the 55 MB jar), `native-build` → `native` (below), and `dev`:
 (`docker run -it marola:dev bash`). Lint: `just quality` runs hadolint on it (from the lint lab).
 
 **Native binary (GraalVM).** The same CLI compiled ahead of time: one 69 MB executable, no JVM,
-~75 MB of RSS, on a distroless image (`ghcr.io/h0ffmann/marola:native`, amd64). Everything
+~75 MB of RSS, on a distroless image (`ghcr.io/marola-dev/marola:native`, amd64). Everything
 `just run` does works, `--summarize` and the reviewer included (verified live 2026-09-05 with
 `llama3.2:1b`); the MCP server stays on the JVM image. Locally:
 

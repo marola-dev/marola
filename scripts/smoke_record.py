@@ -3,7 +3,7 @@
 
     scripts/smoke_record.py record --stdout out.txt --exit-code 0 --out-dir site-data/smoke \
         --run-id 123 --run-url https://github.com/…/actions/runs/123 \
-        --model llama3.2:1b --image ghcr.io/h0ffmann/marola:jvm
+        --model llama3.2:1b --image ghcr.io/<owner>/marola:jvm
     scripts/smoke_record.py --self-test        # parses scripts/fixtures/smoke-stdout-*.txt (in `just quality`)
 
 Reads the CLI's own output — the `origin ->` line, the ranked list (`Report.line`), the
@@ -156,7 +156,7 @@ def self_test() -> int:
         "run_url": "https://example.test/runs/1",
         "when": "2026-09-05T17:40:00Z",
         "model": "llama3.2:1b",
-        "image": "ghcr.io/h0ffmann/marola:jvm",
+        "image": "ghcr.io/marola-dev/marola:jvm",
     }
     r = record(good, 0, meta)
     assert r["ok"], r["errors"]

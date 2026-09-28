@@ -97,7 +97,7 @@ that write-up explains is expected (nothing in tasks 2-5's training data targets
 discipline) and not evidence the recipe is broken, not a favorable number picked to declare
 success.
 
-## As an image: `ghcr.io/h0ffmann/marola:local` (MIP-0008)
+## As an image: `ghcr.io/marola-dev/marola:local` (MIP-0008)
 
 The Tier 1 model, versioned like the code. `Dockerfile.local` is Ollama with `marola-llama3.2`
 already created from this directory's `Modelfile`; `.github/workflows/docker-local.yml` builds it
