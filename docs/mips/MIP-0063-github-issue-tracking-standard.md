@@ -216,17 +216,81 @@ Size carries a rule, not a feeling: **S < 100 changed lines, M 100–400, L mean
 one reviewable file rather than state that exists only in a settings UI. `just labels-sync`
 reconciles and reports orphans; it never deletes without `--prune`.
 
-The board is one user-level public project, `marola`, with **one custom field** (`Status`:
-Triage / Spec / Ready / In progress / In review / Done) and four views: **Triage**
-(`Status:Triage`, the public inbox and the one view a maintainer reads daily), **Now** (by Status,
-filtered to the milestone currently being pushed), **Agent queue** (`label:agent-ready`, sorted
-size then `priority/high`) and **Good first issues**.
+The board is one **org-level** project, `Marola`
+([`marola-dev/projects/1`](https://github.com/orgs/marola-dev/projects/1)), with **one custom
+field** (`Status`: Triage / Spec / Ready / In progress / In review / Done) and four views:
+**Triage** (`Status:Triage`, the public inbox and the one view a maintainer reads daily), **Now**
+(by Status, filtered to the milestone currently being pushed), **Agent queue**
+(`label:agent-ready`, sorted size then `priority/high`) and **Good first issues**.
+
+An earlier draft said *user-level*, written before the repo moved from `h0ffmann` to the
+`marola-dev` org. The board was read on 2026-09-28, and the GraphQL schema introspected with it;
+what this section assumed differs from what is there in four ways, and `issues.sh board setup`
+reconciles the first three:
+
+- It **already exists**, with 21 items and GitHub's six template views (*Current iteration, Next
+  iteration, Prioritized backlog, Roadmap, In review, My items*). So this section's four views are
+  **added** to those six, never in place of them; nothing here deletes or renames a view.
+- Its `Status` already has **Ready, In progress, In review and Done** — only **Triage** and
+  **Spec** are missing, and it also carries **Backlog**, which this section does not name.
+  `updateProjectV2Field` takes the *complete* option list, so the two are appended to what is
+  there and `Backlog` stays: dropping it from the list would delete it and the Status of every
+  item holding it.
+- **The view mutations exist and are current**: `createProjectV2View`, `updateProjectV2View` and
+  `deleteProjectV2View`, none deprecated. Two details shape the code. `CreateProjectV2ViewInput`
+  carries only `projectId`, `name`, `layout` and `configuration` — **no `filter`** — so a view is
+  created and then filtered by a second `updateProjectV2View`, which does take one. And **neither
+  input type carries a sort**: `ProjectV2View.sortByFields` is readable but not writable, so this
+  section's "Agent queue, sorted size then `priority/high`" is the one part of the view spec the
+  API cannot express, and the ordering stays a UI action. So is **Now**'s milestone filter, for a
+  different reason: which milestone is "currently being pushed" is not something a script knows.
+- It is **private**; this section says public. Making it public is a UI action.
+
+None of the three mutations above has been *called*. The host token has `read:project`, not
+`project`, so every write fails on scope before it reaches the API and nothing here says whether
+a PAT may perform them — only that the schema offers them. `board setup` is written against them
+and refuses with the `gh auth refresh -s project` line until the scope lands; `--dry-run` prints
+the plan regardless, since the reads it is computed from need only `read:project`.
 
 **One piece of state is deliberately duplicated:** `agent-ready` is a label *and* Ready is a Status
 value. The reason is `AGENTS.md`'s jail rule — a session inside ai-jail has no `gh` login of its
 own and a narrow `GH_TOKEN`; `gh issue list --label agent-ready` is one REST call on `repo` scope,
 while a Project field needs `project` scope and GraphQL. The `just` commands own keeping the two in
 step; nothing else may write either.
+
+**Which command writes which half, and which one wins.** The label is the half every command can
+write; the Status half needs a scope a human grants (§4.4), so until they do, only the label
+moves — and the board must be able to catch up afterwards without undoing anything.
+
+| Command | Label | Status |
+|---|---|---|
+| `issues.sh ready` | adds on an all-pass, removes on a regression | — (it has no board to write, by design: it must work from a jail) |
+| `issues.sh claim` | removes | sets **In progress** |
+| `issues.sh board sync` | — | sets from the issue's own state (assigned → In progress, `agent-ready` → Ready, otherwise Triage) on an item with **no Status**, or with **`Backlog`** and only `Backlog` |
+
+So **the label is authoritative and the board follows it**, once, when an issue first reaches the
+board. After that the Status belongs to whoever moves the card: `sync` never overwrites a Status a
+maintainer set by hand, because deriving *In review* or *Spec* from an issue's state is not
+possible and guessing it back to Triage every run would undo their work. The consequence is that a
+label and a Status can still disagree afterwards — that is the soft spot §8 names and the
+reconciliation job §11.1 defers, and it is now stated rather than implied.
+
+**Why `Backlog` is the one exception**, and it is not an arbitrary one: it is not a state anybody
+chose. The project's built-in auto-add workflow (§4.4) writes it on every issue the moment it
+reaches the board, so on this board it means *nobody has looked at this yet* — the same thing an
+absent Status means. Treating it as unset is what makes an issue's first contact with the board
+mean anything; without it every card the workflow touched would be frozen at `Backlog` forever and
+`sync` would be inert by construction. The exception is **exactly that one literal value**. It is
+not "any Status §5.2 does not name": `Ready`, `In progress`, `In review`, `Done`, `Triage` and
+`Spec` are all somebody's decision and none of them is ever overwritten. And it is a *once*: after
+one sync an adopted card carries a real Status, so the next run adopts nothing.
+
+Two things follow that the command says out loud rather than leaving to be noticed. It **names
+every card it moves** (`#421  Backlog → In progress`), because the first real run moves the whole
+board at once. And it **runs after `board setup`, not before**: until the Status field has the
+options §5.2 names, an issue whose state calls for `Triage` cannot be given one, so `sync` counts
+those as *skipped* rather than failed, says so once instead of once per issue, and exits nonzero
+naming the command to run first.
 
 ### 5.3 Dependencies
 
@@ -305,6 +369,12 @@ Six recipes over one `scripts/issues.sh`, each with the repo's usual `--dry-run`
 | `just issue-claim <n>` | assigns, drops `agent-ready`, sets board Status, prints the `scripts/stack.sh start` line |
 | `just milestone-new "<name>" [--mip MIP-NNNN]` | thin, but keeps deliverables discoverable from `just` |
 | `just board-sync` | adds un-added open issues to the project, sets Status from state |
+
+Two commands have no recipe on purpose, both one-time bootstraps rather than anything in the loop:
+`scripts/issues.sh board setup` brings the project up to §5.2 (the Status options it lacks, the
+four views), and `board gates` files §5.3's five phase gate issues. Filing issues is human-gated
+in this repo (§5.6, Decision 2), and reshaping a shared board is the same kind of act, so both stay
+something a person runs with `--dry-run` first rather than something `just` offers.
 
 Direction of truth: **`mip-tasks` authors `tasks.md`; `tasks-to-issues` projects it into GitHub;
 after that, issues own status and the file owns the plan.** One-way, re-runnable. An agent in

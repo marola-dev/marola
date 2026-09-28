@@ -54,6 +54,8 @@ jobs:
               - '.github/ISSUE_TEMPLATE/**'  # issues.sh --self-test parses these forms
               - '.github/labels.yml'          # and diffs this manifest
               - 'docs/mips/*.tasks.md'        # tasks_issues.py --self-test parses all of them
+              - 'docs/ARCHITECTURE.md'        # §11's phase names are the gate-issue titles
+              - 'docs/mips/MIP-0063.tasks.md' # and its slug column is the branch `claim` prints
             site:
               - 'site/**'            # app.js/CSS/schema/fixtures → scripts/site_check.js (MIP-0009 task 2)
               - 'scripts/site_check.js'

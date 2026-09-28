@@ -425,6 +425,21 @@ issue-queue *args:
 # (MIP-0063 §5.5). Idempotent; the milestone must already exist.
 tasks-to-issues *args:
     scripts/issues.sh tasks-to-issues {{ args }}
+# Claim an `agent-ready` issue: re-check the Definition of Ready, assign it, drop the label, set
+# the board's Status, and print the branch command (MIP-0063 §5.5).
+issue-claim *args:
+    scripts/issues.sh claim {{ args }}
+
+# Create a deliverable milestone; --mip MIP-NNNN links the design it comes from (MIP-0063 §5.1).
+milestone-new *args:
+    scripts/issues.sh milestone new {{ args }}
+
+# Put every open issue on the board and set its Status from the issue's state — on the items with
+# no Status, and on those still carrying the auto-add default `Backlog`; any other value is
+# someone's choice and is left alone (MIP-0063 §5.2). Run `issues.sh board setup` first. Needs
+# `project` scope, which only a human can grant: gh auth refresh -s project (MIP-0063 §4.4).
+board-sync *args:
+    scripts/issues.sh board sync {{ args }}
 
 # scripts/stack.sh passthrough. MIP-0005.
 stack *args:

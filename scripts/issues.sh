@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # issues — the command surface for MIP-0063's GitHub tracking standard. One subcommand family
-# per task of the stack; so far `labels sync`, `sub add`, `deps add|list`, `ready`/`queue` and
-# `tasks-to-issues`.
+# per task of the stack; so far `labels sync`, `sub add`, `deps add|list`, `ready`/`queue`,
+# `tasks-to-issues`, `claim`, `milestone new` and `board setup|sync|gates`.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -47,6 +47,31 @@ commands:
       creates nothing, rewrites nothing and adds no edge. The milestone must already exist.
       `area/*`, `layer/*` and `size/*` are a human's call and are not set here, so a filed row
       is not `agent-ready` until someone labels it.
+
+  claim <issue>
+      Take an `agent-ready` issue: re-run the Definition of Ready, assign it to you, drop the
+      label, set the board's Status to In progress, and print the `scripts/stack.sh start` line.
+      Refuses an issue that is closed, assigned to someone else, or no longer ready.
+
+  milestone new "<name>" [--mip MIP-NNNN]
+      Create a deliverable milestone. Re-running with an existing name changes nothing.
+
+  board sync
+      Add every open issue to the project board, then set its Status from the issue's own state
+      (assigned, `agent-ready`, or neither) on the items carrying no Status and on those still
+      carrying `Backlog`, which is what the auto-add workflow writes rather than a state anyone
+      chose. Any other Status is someone's decision and is never overwritten. Run `board setup`
+      first: an issue whose state calls for a Status option the field lacks is skipped, not set.
+
+  board setup
+      Bring the project itself up to MIP-0063 §5.2: the Status options it is missing and the four
+      views. Idempotent, and it never removes or rewrites an option or a view that is already
+      there. Needs `project` scope.
+
+  board gates
+      File the five phase gate issues of MIP-0063 §5.3, named from ARCHITECTURE.md §11 and
+      labelled `phase/*`. Idempotent; a phase §11 marks done gets a closed gate. A one-time
+      bootstrap — `--dry-run` it and get a human's go-ahead before filing anything.
 
 options:
   --dry-run     print the mutating `gh` calls instead of making them (the reads they are
@@ -716,7 +741,621 @@ cmd_tasks_to_issues() {
   }
 }
 
+# --- the board (MIP-0063 §5.2), claiming (§5.5) and the phase gates (§5.3) ---
+
+# Projects v2 is GraphQL-only — no REST, no `--repo`, no page of the API that `gh api` reaches the
+# way the rest of this file does. Everything that touches it goes through `gh project`, and the
+# lookups that turn a title into a project number and a Status name into an option id live here
+# and nowhere else.
+board_title="Marola"
+board_number=""
+board_id=""
+
+# has_scope <comma-separated> <scope> — split, not substring: `read:project` contains `project`.
+has_scope() {
+  tr ',' '\n' <<<"$1" | tr -d ' \r' | grep -qx "$2"
+}
+
+# token_scopes -> the token's scopes. A fine-grained PAT sends no X-OAuth-Scopes header, so under
+# `pipefail` this exits nonzero with empty output and every caller has to absorb that.
+token_scopes() {
+  gh api -i user </dev/null 2>/dev/null | grep -i '^x-oauth-scopes:' | head -1 | cut -d: -f2- | tr -d ' \r'
+}
+
+# board_require_write — §4.4's human prerequisite, stated once.
+board_require_write() {
+  local scopes
+  # || true: no header means the grep inside fails, and `pipefail` would take the script out here
+  # with no message at all — the opposite of what the branch below is for. No test covers this
+  # line: every caller of board_require_write guards it, and errexit is suppressed inside a guard,
+  # so the path is unreachable today. One token, kept for the caller that forgets to guard.
+  scopes="$(token_scopes || true)"
+  if [ -z "$scopes" ]; then
+    echo "issues.sh: this token sends no X-OAuth-Scopes header (a fine-grained PAT does not) — attempting the board write anyway." >&2
+    return 0
+  fi
+  has_scope "$scopes" project && return 0
+  echo "issues.sh: this token has \`read:project\` but not \`project\`, so it cannot write the board (MIP-0063 §4.4). A human runs: gh auth refresh -s project" >&2
+  # --dry-run writes nothing and the reads need only `read:project`, so the missing scope is not
+  # yet a reason to refuse: seeing the plan is how anyone decides whether to ask for the scope.
+  [ "$dry" -eq 0 ] || return 0
+  return 1
+}
+
+# board_resolve -> $board_number and $board_id for $board_title, under $nwo's owner.
+board_resolve() {
+  [ -z "$board_number" ] || return 0
+  local owner="${nwo%%/*}" projects n
+  projects="$(gh project list --owner "$owner" --format json --limit 100 </dev/null)"
+  n="$(jq --arg t "$board_title" '[ .projects[] | select((.title | ascii_downcase) == ($t | ascii_downcase)) ] | length' <<<"$projects")"
+  # §5.2 names one board. Two projects sharing a title is a human decision this script must not
+  # make for them, and zero means the board is not there to sync against.
+  [ "$n" -eq 1 ] || {
+    echo "issues.sh: expected exactly one project titled \"$board_title\" under $owner, found $n (MIP-0063 §5.2)." >&2
+    return 1
+  }
+  board_number="$(jq -r --arg t "$board_title" '.projects[] | select((.title | ascii_downcase) == ($t | ascii_downcase)) | .number' <<<"$projects")"
+  board_id="$(jq -r --arg t "$board_title" '.projects[] | select((.title | ascii_downcase) == ($t | ascii_downcase)) | .id' <<<"$projects")"
+}
+
+# board_items <owner> -> the project's items as a JSON array.
+board_items() {
+  local limit=500 raw n
+  raw="$(gh project item-list "$board_number" --owner "$1" --format json --limit "$limit" </dev/null)"
+  n="$(jq '.items | length' <<<"$raw")"
+  # Same trap as `queue`'s page limit: an unseen item reads as "not on the board", and the sync
+  # would add a second copy of it.
+  [ "$n" -lt "$limit" ] || {
+    echo "issues.sh: the board holds at least $limit items, this script's page limit — raise it before trusting the sync." >&2
+    return 1
+  }
+  jq '.items' <<<"$raw"
+}
+
+# board_status_option <fields-json> <option-name> -> "<field-id>\t<option-id>", empty when absent.
+# Empty, not the nearest name: an option §5.2 defines but the board lacks must be reported, never
+# silently swapped for one nobody is looking at.
+board_status_option() {
+  jq -r --arg name "$2" '
+    .fields[] | select(.name == "Status" and .type == "ProjectV2SingleSelectField")
+    | .id as $f | .options[] | select(.name == $name) | [$f, .id] | @tsv' <<<"$1"
+}
+
+# board_item_id <items-json> <nwo> <issue-number> -> that issue's project item id, or empty.
+# Pinned to the repository as well as the number: one board can hold several repos, and issue
+# numbers are only unique within one.
+board_item_id() {
+  jq -r --arg nwo "$2" --arg n "$3" '
+    [ .[] | select((.content.repository // "") == $nwo and ((.content.number // -1) | tostring) == $n) | .id ]
+    | first // ""' <<<"$1"
+}
+
+# The Status the project's built-in auto-add workflow writes when it puts an issue on the board
+# (§4.4). It is the one value that means "nobody has looked at this yet" rather than a state
+# someone chose, which is why `board_plan` may overwrite it and may overwrite nothing else.
+board_autoadd_status="Backlog"
+
+# board_plan <items-json> <issues-json> <nwo> -> one TSV action per line:
+#   add   <issue-url> <status> <number>   — not on the board
+#   set   <item-id>   <status> <number>   — on the board with no Status at all
+#   adopt <item-id>   <status> <number>   — on the board carrying only the auto-add default
+# Status follows the issue's state: assigned is In progress, `agent-ready` is Ready, anything else
+# is still Triage. Every other Status is left alone — `sync` is not the `agent-ready`↔Status
+# reconciliation job §8 defers to §11.1, and pulling a card a maintainer dragged to In review back
+# to Triage every run would undo their work. `Backlog` is the exception because nobody dragged it
+# there; the auto-add workflow wrote it, and adopting it once is what lets an issue's first
+# contact with the board mean anything at all.
+board_plan() {
+  jq -rn --argjson items "$1" --argjson issues "$2" --arg nwo "$3" --arg auto "$board_autoadd_status" '
+    def want: if (((.assignees // []) | length) > 0) then "In progress"
+              elif ([(.labels // [])[] | .name] | index("agent-ready")) then "Ready"
+              else "Triage" end;
+    ( [ $items[] | select((.content.repository // "") == $nwo and .content.number != null)
+        | {key: (.content.number | tostring), value: .} ] | from_entries ) as $by
+    | $issues[] | . as $i | ($i | want) as $w | $by[$i.number | tostring] as $it
+    | if $it == null then ["add", $i.url, $w, ($i.number | tostring)]
+      elif (($it.status // "") == "") then ["set", $it.id, $w, ($i.number | tostring)]
+      elif ($it.status == $auto) then ["adopt", $it.id, $w, ($i.number | tostring)]
+      else empty end
+    | @tsv'
+}
+
+# board_set_status <number> <url> <status> — put one issue on the board and set its Status.
+board_set_status() {
+  local number="$1" url="$2" status="$3" owner="${nwo%%/*}" fields items item pair fid oid
+  board_require_write || return 1
+  board_resolve || return 1
+  fields="$(gh project field-list "$board_number" --owner "$owner" --format json --limit 100 </dev/null)"
+  pair="$(board_status_option "$fields" "$status")"
+  [ -n "$pair" ] || {
+    echo "issues.sh: the board's Status field has no \"$status\" option. §5.2's six are Triage / Spec / Ready / In progress / In review / Done; adding one is a \`project\`-scope action in the project UI." >&2
+    return 1
+  }
+  items="$(board_items "$owner")" || return 1
+  item="$(board_item_id "$items" "$nwo" "$number")"
+  if [ -z "$item" ]; then
+    run gh project item-add "$board_number" --owner "$owner" --url "$url" || return 1
+    # An item has no id until it is on the board, so the edit needs a second read. --dry-run
+    # cannot do that read, and says so rather than printing an edit against an invented id.
+    [ "$dry" -eq 0 ] || { echo "  #$number's Status is set on the real run, once it has an item id"; return 0; }
+    items="$(board_items "$owner")" || return 1
+    item="$(board_item_id "$items" "$nwo" "$number")"
+    [ -n "$item" ] || { echo "issues.sh: #$number is still not on the board after adding it" >&2; return 1; }
+  fi
+  fid="${pair%%$'\t'*}"; oid="${pair##*$'\t'}"
+  run gh project item-edit --id "$item" --project-id "$board_id" --field-id "$fid" --single-select-option-id "$oid"
+}
+
+# task_ref <title> -> "<mip-digits> <task-number>" for a `NNNN-Tk: …` title (§5.5's shape), else "".
+task_ref() {
+  sed -n 's/^\([0-9]\{4\}\)-T\([0-9]\{1,\}\):.*/\1 \2/p' <<<"$1"
+}
+
+# tasks_slug <mip-digits> <task-number> -> that row's `slug` cell in docs/mips/MIP-NNNN.tasks.md.
+# The branch is `mip-NNNN/<k>-<slug>` and the slug exists only in that file, so reading it is what
+# makes the printed line something to paste rather than something to go and look up.
+tasks_slug() {
+  local file="$root/docs/mips/MIP-$1.tasks.md"
+  [ -f "$file" ] || return 0
+  awk -F'|' -v k="$2" '
+    /^\|/ {
+      # The `#` cell is a markdown link whose URL also holds digits, so take the first run of
+      # digits in the cell, not every digit in it.
+      num = $2; sub(/^[^0-9]*/, "", num); sub(/[^0-9].*$/, "", num)
+      if (num != "" && num == k) { slug = $3; gsub(/^[ \t]+|[ \t]+$/, "", slug); print slug; exit }
+    }' "$file"
+}
+
+# stack_line <title> -> the `scripts/stack.sh start` line for a MIP task issue, else "".
+stack_line() {
+  local ref mip k slug
+  ref="$(task_ref "$1")"
+  [ -n "$ref" ] || return 0
+  mip="${ref%% *}"; k="${ref##* }"
+  slug="$(tasks_slug "$mip" "$k")"
+  [ -n "$slug" ] || slug="<slug>"
+  printf 'scripts/stack.sh start MIP-%s %s %s\n' "$mip" "$k" "$slug"
+}
+
+cmd_claim() {
+  [ $# -eq 1 ] || { echo "issues.sh claim: expects <issue>" >&2; usage >&2; exit 1; }
+  local n
+  n="$(arg_number "$1" "claim")" || exit 1
+  require_gh
+  resolve_nwo
+
+  local payload state labels assignees me url title line
+  payload="$(issue_payload "$n")" || exit 1
+  # For the payload-is-really-#n and not-a-pull-request guards; `claim` has no use for the id.
+  issue_id_of "$payload" "$n" >/dev/null || exit 1
+  state="$(jq -r '.state // ""' <<<"$payload")"
+  labels="$(jq -r '(.labels // [])[].name' <<<"$payload")"
+  assignees="$(jq -r '(.assignees // [])[].login' <<<"$payload")"
+  url="$(jq -r '.html_url // ""' <<<"$payload")"
+  title="$(jq -r '.title // ""' <<<"$payload")"
+
+  [ "$state" = open ] || { echo "issues.sh claim: #$n is $state, not open" >&2; exit 1; }
+  grep -qx 'agent-ready' <<<"$labels" || {
+    echo "issues.sh claim: #$n is not \`agent-ready\` — run \`just issue-ready $n\` and fix the rule it names (MIP-0063 §5.4)." >&2
+    exit 1
+  }
+  me="$(gh api user </dev/null --jq .login)"
+  if [ -n "$assignees" ] && ! grep -qx "$me" <<<"$assignees"; then
+    echo "issues.sh claim: #$n is already assigned to ${assignees//$'\n'/, } — claiming it would take it off them." >&2
+    exit 1
+  fi
+
+  # The label above is the cheap gate an agent in a jail can read; `ready` is the authority. §8:
+  # an issue can be labelled `agent-ready` by hand without ever passing the check, so claiming
+  # re-runs the five rules rather than trusting the label that stands for them — and `ready`
+  # takes the label back off when they no longer hold.
+  cmd_ready "$n" || {
+    echo "issues.sh claim: #$n no longer passes the Definition of Ready (above) — not claimable." >&2
+    exit 1
+  }
+
+  # One call, not two: an assignment that lands and a label removal that does not would leave the
+  # issue claimed *and* still in the agent queue, which is exactly the drift §8 names as this
+  # design's soft spot.
+  run gh issue edit --repo "$nwo" "$n" --add-assignee "$me" --remove-label agent-ready || exit 1
+  echo "claimed #$n as @$me; \`agent-ready\` dropped"
+
+  # Best-effort on purpose, and the one place in this file where a failed mutation is not fatal:
+  # the assignment and the label are already applied, so exiting nonzero here would tell the
+  # caller nothing happened. `board sync` is the command that fails outright without the scope.
+  board_set_status "$n" "$url" "In progress" \
+    || echo "  board Status not set (above) — the assignee and the label are applied; §5.2's other half is still the board's" >&2
+
+  line="$(stack_line "$title")"
+  if [ -n "$line" ]; then printf 'next:\n  %s\n' "$line"
+  else echo "next: #$n is not a MIP task row, so there is no stack line — branch from main as usual"
+  fi
+}
+
+# mip_reference <MIP-NNNN> -> the milestone description that points at the MIP.
+# A MIP number with no file is refused: a typo would otherwise leave a milestone whose only piece
+# of provenance is a dangling reference.
+mip_reference() {
+  local n="${1#MIP-}" file
+  local -a files=()
+  case "$n" in
+    [0-9][0-9][0-9][0-9]) ;;
+    *) echo "issues.sh milestone new: --mip wants MIP-NNNN, got \"$1\"" >&2; return 1 ;;
+  esac
+  files=( "$root"/docs/mips/MIP-"$n"-*.md )
+  [ -e "${files[0]}" ] || { echo "issues.sh milestone new: no docs/mips/MIP-$n-*.md — is MIP-$n written?" >&2; return 1; }
+  file="$(basename "${files[0]}")"
+  printf 'Design: MIP-%s — docs/mips/%s\n' "$n" "$file"
+}
+
+cmd_milestone_new() {
+  [ $# -ge 1 ] || { echo "issues.sh milestone new: expects \"<name>\" [--mip MIP-NNNN]" >&2; usage >&2; exit 1; }
+  local name="$1" mip="" desc="" existing
+  local -a extra=()
+  shift
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --mip)
+        [ $# -ge 2 ] || { echo "issues.sh milestone new: --mip needs MIP-NNNN" >&2; exit 1; }
+        mip="$2"; shift 2 ;;
+      *) echo "issues.sh milestone new: unknown argument: $1" >&2; usage >&2; exit 1 ;;
+    esac
+  done
+  [ -n "$name" ] || { echo "issues.sh milestone new: the name is empty" >&2; exit 1; }
+  if [ -n "$mip" ]; then
+    desc="$(mip_reference "$mip")" || exit 1
+    extra=(-f "description=$desc")
+  fi
+
+  require_gh
+  resolve_nwo
+  # state=all: a closed milestone still owns its title, so creating over one 422s rather than
+  # doing nothing, and re-running this command has to be a no-op either way.
+  existing="$(gh api --paginate "repos/$nwo/milestones?state=all&per_page=100" </dev/null \
+    --jq '.[] | "\(.number)\t\(.title)"' | awk -F'\t' -v t="$name" '$2 == t { print $1; exit }')"
+  [ -z "$existing" ] || { echo "milestone \"$name\" already exists: #$existing"; return 0; }
+  run gh api --method POST "repos/$nwo/milestones" -f "title=$name" ${extra[@]+"${extra[@]}"}
+}
+
+cmd_board_sync() {
+  [ $# -eq 0 ] || { echo "issues.sh board sync: takes no arguments" >&2; usage >&2; exit 1; }
+  require_gh
+  resolve_nwo
+  board_require_write || exit 1
+  board_resolve || exit 1
+
+  local owner="${nwo%%/*}" limit=300 fields issues items plan n_open
+  issues="$(gh issue list --repo "$nwo" --state open --limit "$limit" --json number,url,assignees,labels </dev/null)"
+  n_open="$(jq 'length' <<<"$issues")"
+  # Same page-limit trap as `queue`: past the limit gh stops silently, and the issues it did not
+  # return read as already on the board.
+  if [ "$n_open" -ge "$limit" ]; then
+    echo "issues.sh: the repo has at least $limit open issues, this script's page limit — raise it before trusting this sync." >&2
+    exit 1
+  fi
+  fields="$(gh project field-list "$board_number" --owner "$owner" --format json --limit 100 </dev/null)"
+  items="$(board_items "$owner")" || exit 1
+  plan="$(board_plan "$items" "$issues" "$nwo")"
+  [ -n "$plan" ] || { echo "board: in sync ($n_open open issues)"; return 0; }
+
+  local action key status number rc=0 added=0 set_n=0 adopted=0 skipped=0 failed=0 pair fid oid missing_opts=""
+  while IFS=$'\t' read -r action key status number; do
+    [ "$action" = add ] || continue
+    rc=0
+    run gh project item-add "$board_number" --owner "$owner" --url "$key" || rc=$?
+    if [ "$rc" -eq 0 ]; then added=$((added + 1)); else failed=$((failed + 1)); fi
+  done <<<"$plan"
+
+  # A freshly added item has no id yet, so the Status pass works off a re-read rather than the
+  # plan that produced the adds.
+  if [ "$added" -gt 0 ] && [ "$dry" -eq 0 ]; then
+    items="$(board_items "$owner")" || exit 1
+    plan="$(board_plan "$items" "$issues" "$nwo")"
+  fi
+
+  while IFS=$'\t' read -r action key status number; do
+    [ "$action" = set ] || [ "$action" = adopt ] || continue
+    pair="$(board_status_option "$fields" "$status")"
+    if [ -z "$pair" ]; then
+      # Collected and reported once at the end, not per issue: on a board that has not had
+      # `board setup` run yet this is every issue in the repo saying the same thing. It is a
+      # missing prerequisite, not a failed write, and it is counted as its own thing.
+      missing_opts="$missing_opts$status"$'\n'
+      skipped=$((skipped + 1)); continue
+    fi
+    fid="${pair%%$'\t'*}"; oid="${pair##*$'\t'}"
+    # Named per card, not just counted: the first real run moves every issue off the auto-add
+    # default at once, and that is a lot of cards to discover after the fact.
+    if [ "$action" = adopt ]; then echo "  #$number  $board_autoadd_status → $status"
+    else echo "  #$number  (no Status) → $status"; fi
+    rc=0
+    run gh project item-edit --id "$key" --project-id "$board_id" --field-id "$fid" --single-select-option-id "$oid" || rc=$?
+    if [ "$rc" -ne 0 ]; then failed=$((failed + 1))
+    elif [ "$action" = adopt ]; then adopted=$((adopted + 1))
+    else set_n=$((set_n + 1)); fi
+  done <<<"$plan"
+
+  [ "$dry" -eq 0 ] || [ "$added" -eq 0 ] \
+    || echo "  the Status of the $added issue(s) added above is set on the real run, once they have item ids"
+  if [ "$skipped" -gt 0 ]; then
+    echo "issues.sh: $skipped issue(s) left alone — the board's Status field has no $(sort -u <<<"$missing_opts" | grep . | paste -sd', ' -) option. Run \`scripts/issues.sh board setup\` first; §5.2's six are Triage / Spec / Ready / In progress / In review / Done." >&2
+  fi
+  echo "board: $added added, $set_n set (no Status), $adopted adopted from $board_autoadd_status, $skipped skipped, $failed failed ($n_open open issues)$(dry_tag)"
+  [ "$failed" -eq 0 ] && [ "$skipped" -eq 0 ] || exit 1
+}
+
+# §5.2's Status values, in its order, `name:COLOR:description`. `Backlog` is not among them and is
+# deliberately not removed: `updateProjectV2Field` takes the **complete** option list, so an option
+# left out of it is deleted — and with it every item's Status. Four of these six already exist on
+# the live board; only Triage and Spec are added.
+board_status_wanted() {
+  cat <<'EOF'
+Triage:GRAY:Filed, not yet specified or sized (MIP-0063 §5.2)
+Spec:PINK:Being specified — the story body or its MIP is still being written
+Ready:BLUE:Passes the Definition of Ready
+In progress:YELLOW:Claimed and being worked on
+In review:PURPLE:A PR is open against it
+Done:ORANGE:Merged or closed
+EOF
+}
+
+# §5.2's four views: name, layout, filter. Two of that section's asks stay UI actions (introspected
+# 2026-09-28): **Agent queue**'s sort, because `sortByFields` is readable but neither view input
+# type carries a sort; and **Now**'s milestone filter, because no script knows which milestone is
+# "currently being pushed" — hence the empty filter below.
+board_views_wanted() {
+  printf '%s\t%s\t%s\n' \
+    "Triage"            TABLE_LAYOUT 'status:"Triage"' \
+    "Now"               BOARD_LAYOUT '' \
+    "Agent queue"       TABLE_LAYOUT 'label:"agent-ready"' \
+    "Good first issues" TABLE_LAYOUT 'label:"good first issue"'
+}
+
+# status_options_plan <existing-options-json> <wanted> -> the complete option list to send.
+# Every existing option is kept, with its id and its current colour and description; the missing
+# ones are appended. Appended, not interleaved, because reordering is cosmetic and rewriting an
+# option that is already there is not.
+status_options_plan() {
+  jq -n --argjson have "$1" --arg wanted "$2" '
+    ($wanted | split("\n") | map(select(length > 0) | split(":")
+      | {name: .[0], color: .[1], description: (.[2:] | join(":"))})) as $w
+    | ($have | map(.name)) as $names
+    | ($have | map({id, name, color, description}))
+      + ($w | map(select(.name as $n | $names | index($n) | not)) | map({name, color, description}))'
+}
+
+# board_views_plan <existing-views-json> <wanted-tsv> -> one TSV action per line. No emitted
+# field is ever empty: `read` with IFS=tab collapses adjacent tabs, so an empty column in the
+# middle silently shifts every later one into the wrong variable.
+#   create  <name> <layout>
+#   filter  <view-id> <filter> <name>   — the view is there, unfiltered
+#   differs <name> <current> <wanted>   — reported, never applied
+# `filter` is what makes the two-phase create self-healing. A view is created unfiltered and
+# filtered by a second mutation (§5.2: `CreateProjectV2ViewInput` has no `filter`), so if that
+# second call fails, or the process dies between them, the view reads back with none — which is
+# this script's own unfinished work, not a maintainer's choice, and the next run finishes it.
+# A *different* filter is a maintainer's and is only reported. A view §5.2 deliberately leaves
+# unfiltered (Now) is never reported at all, whatever a human has since put on it.
+board_views_plan() {
+  jq -rn --argjson have "$1" --arg wanted "$2" '
+    ($have | map({key: (.name | ascii_downcase), value: .}) | from_entries) as $by
+    | $wanted | split("\n") | map(select(length > 0))[] | split("\t") as $w
+    | $by[$w[0] | ascii_downcase] as $v
+    | if $v == null then ["create", $w[0], $w[1]]
+      elif $w[2] == "" then empty
+      elif ($v.filter // "") == "" then ["filter", $v.id, $w[2], $w[0]]
+      elif $v.filter != $w[2] then ["differs", $w[0], $v.filter, $w[2]]
+      else empty end
+    | @tsv'
+}
+
+# board_view_filter <view-id> <filter> — the second half of the two-phase create.
+board_view_filter() {
+  run gh api graphql -f v="$1" -f f="$2" -f query='
+    mutation($v: ID!, $f: String!) { updateProjectV2View(input: {viewId: $v, filter: $f}) { projectV2View { id } } }'
+}
+
+# The two GraphQL reads `gh project` does not cover: field-list gives an option's id and name but
+# not its colour or description, and there is no `gh project view-list` at all. Both are written
+# against an **organization** owner, since §5.2's board moved to marola-dev with the repo; a
+# user-owned project needs `user(login:)` instead, and says so rather than failing inside jq.
+board_graphql_node() {   # <json> <jq-path> <owner> <what> -> the node, or a named error
+  local node
+  node="$(jq -c "$2 // empty" <<<"$1")"
+  [ -n "$node" ] || {
+    echo "issues.sh: could not read the board's $4 under the organization \"$3\" — this script queries organization(login:); a user-owned project needs user(login:) (MIP-0063 §5.2)." >&2
+    return 1
+  }
+  printf '%s\n' "$node"
+}
+
+board_status_field_json() {
+  local raw
+  raw="$(gh api graphql </dev/null -F n="$board_number" -f o="$1" -f query='
+    query($o: String!, $n: Int!) { organization(login: $o) { projectV2(number: $n) {
+      field(name: "Status") { ... on ProjectV2SingleSelectField { id options { id name color description } } } } } }')"
+  board_graphql_node "$raw" '.data.organization.projectV2.field' "$1" "Status field"
+}
+
+board_views_json() {
+  local limit=50 raw nodes n
+  raw="$(gh api graphql </dev/null -F n="$board_number" -F first="$limit" -f o="$1" -f query='
+    query($o: String!, $n: Int!, $first: Int!) { organization(login: $o) { projectV2(number: $n) {
+      views(first: $first) { nodes { id name filter } } } } }')"
+  nodes="$(board_graphql_node "$raw" '.data.organization.projectV2.views.nodes' "$1" "views")" || return 1
+  n="$(jq 'length' <<<"$nodes")"
+  [ "$n" -lt "$limit" ] || {
+    echo "issues.sh: the board has at least $limit views, this script's page limit — raise it before trusting the plan." >&2
+    return 1
+  }
+  printf '%s\n' "$nodes"
+}
+
+cmd_board_setup() {
+  [ $# -eq 0 ] || { echo "issues.sh board setup: takes no arguments" >&2; usage >&2; exit 1; }
+  require_gh
+  resolve_nwo
+  board_require_write || exit 1
+  board_resolve || exit 1
+
+  local owner="${nwo%%/*}" field_json fid have plan_json payload body n_have n_plan rc=0 failed=0
+  field_json="$(board_status_field_json "$owner")" || exit 1
+  fid="$(jq -r '.id // ""' <<<"$field_json")"
+  [ -n "$fid" ] || { echo "issues.sh board setup: the board's Status is not a single-select field (MIP-0063 §5.2)" >&2; exit 1; }
+  have="$(jq '[.options[]? | {id, name, color, description}]' <<<"$field_json")"
+  plan_json="$(status_options_plan "$have" "$(board_status_wanted)")"
+  n_have="$(jq 'length' <<<"$have")"
+  n_plan="$(jq 'length' <<<"$plan_json")"
+  if [ "$n_plan" -eq "$n_have" ]; then
+    echo "Status: all of §5.2's options are there ($n_have on the field)"
+  else
+    echo "Status: adding $(jq -r '.[] | select(has("id") | not) | .name' <<<"$plan_json" | paste -sd, -), keeping the $n_have already there"
+    # --input, not -f: the option list is a JSON array and `gh api -f` would send it as a string.
+    payload="$(jq -n --argjson o "$plan_json" --arg f "$fid" '{
+      query: "mutation($f: ID!, $options: [ProjectV2SingleSelectFieldOptionInput!]) { updateProjectV2Field(input: {fieldId: $f, singleSelectOptions: $options}) { projectV2Field { __typename } } }",
+      variables: {f: $f, options: $o}}')"
+    # Printed, not just pointed at. This mutation replaces the field's whole option list, so what
+    # is *in* the payload is the entire question — and `run` can only echo `--input <path>` for a
+    # temp file that is deleted a line later, which is unreadable exactly when it matters most.
+    jq . <<<"$payload" | sed 's/^/  /'
+    body="$(mktemp)"
+    printf '%s\n' "$payload" > "$body"
+    run gh api graphql --input "$body" || rc=$?
+    rm -f "$body"
+    [ "$rc" -eq 0 ] || failed=$((failed + 1))
+  fi
+
+  local views wanted plan action f2 f3 f4 created=0 filtered=0
+  wanted="$(board_views_wanted)"
+  views="$(board_views_json "$owner")" || exit 1
+  plan="$(board_views_plan "$views" "$wanted")"
+  if [ -z "$plan" ]; then
+    echo "views: §5.2's four are all there"
+  else
+    while IFS=$'\t' read -r action f2 f3 f4; do
+      case "$action" in
+        create)
+          rc=0
+          run gh api graphql -f p="$board_id" -f n="$f2" -f l="$f3" -f query='
+            mutation($p: ID!, $n: String!, $l: ProjectV2ViewLayout!) {
+              createProjectV2View(input: {projectId: $p, name: $n, layout: $l}) { projectV2View { id } } }' || rc=$?
+          if [ "$rc" -eq 0 ]; then created=$((created + 1)); else failed=$((failed + 1)); fi ;;
+        filter)
+          rc=0
+          echo "  view \"$f4\" has no filter — applying §5.2's [$f3]"
+          board_view_filter "$f2" "$f3" || rc=$?
+          if [ "$rc" -eq 0 ]; then filtered=$((filtered + 1)); else failed=$((failed + 1)); fi ;;
+        differs)
+          echo "  view \"$f2\" has the filter [$f3] — left alone; §5.2 wants [$f4]" >&2 ;;
+      esac
+    done <<<"$plan"
+
+    # A view has no id until it exists, so the filters for what was just created come from a
+    # re-read — which re-plans into the same `filter` action that heals a half-finished create
+    # from an earlier run. One path, not two.
+    if [ "$created" -gt 0 ] && [ "$dry" -eq 0 ]; then
+      views="$(board_views_json "$owner")" || exit 1
+      while IFS=$'\t' read -r action f2 f3 f4; do
+        [ "$action" = filter ] || continue
+        rc=0
+        board_view_filter "$f2" "$f3" || rc=$?
+        if [ "$rc" -eq 0 ]; then filtered=$((filtered + 1)); else failed=$((failed + 1)); fi
+      done <<<"$(board_views_plan "$views" "$wanted")"
+    elif [ "$created" -gt 0 ]; then
+      echo "  each new view's filter is a second updateProjectV2View on the real run, once it has an id"
+    fi
+    echo "views: $created created, $filtered filtered$(dry_tag)"
+  fi
+
+  echo "board setup: $failed failed$(dry_tag)"
+  [ "$failed" -eq 0 ] || exit 1
+}
+
+# phase_titles -> one "N<TAB>Phase N — <name><TAB>done|open" per line, read from ARCHITECTURE.md
+# §11 rather than copied here. The gate issues are named after the phases and deduped on that
+# name, so a second copy of the names is a second thing to keep true; the self-test pins the five
+# it must yield, which turns a rename in §11 into a failed build rather than a sixth gate issue.
+phase_titles() {
+  awk '/^## 11\./ { s = 1; next } s && /^## / { exit } s' "$root/docs/ARCHITECTURE.md" \
+    | sed -n 's/^[0-9]\{1,\}\. \*\*Phase \([0-9]\): \(.*\)\.\*\*.*/\1\t\2/p' \
+    | awk -F'\t' '{ done_ = ($2 ~ /\(done/) ? "done" : "open"
+                    name = $2; sub(/ *\([^)]*\)$/, "", name)
+                    printf "%s\tPhase %s — %s\t%s\n", $1, $1, name, done_ }'
+}
+
+cmd_board_gates() {
+  [ $# -eq 0 ] || { echo "issues.sh board gates: takes no arguments" >&2; usage >&2; exit 1; }
+  require_gh
+  resolve_nwo
+
+  local titles n_titles
+  titles="$(phase_titles)"
+  n_titles="$(grep -c . <<<"$titles" || true)"
+  [ "$n_titles" -eq 5 ] || {
+    echo "issues.sh board gates: ARCHITECTURE.md §11 yielded $n_titles phase titles, not 5 — refusing to file gate issues from a section this script no longer parses." >&2
+    exit 1
+  }
+
+  local repo_labels existing gate_limit=300 n_seen
+  repo_labels="$(gh label list --repo "$nwo" --limit 500 --json name </dev/null --jq '.[].name')"
+  # state=all: a gate that was filed and closed must not be filed again.
+  existing="$(gh issue list --repo "$nwo" --state all --limit "$gate_limit" --json title </dev/null --jq '.[].title')"
+  n_seen="$(grep -c . <<<"$existing" || true)"
+  # Past the limit gh stops silently, and an unseen gate reads as "never filed" — so a re-run
+  # files all five again.
+  [ "$n_seen" -lt "$gate_limit" ] || {
+    echo "issues.sh: the repo has at least $gate_limit issues, this script's page limit — raise it before trusting this dedup." >&2
+    exit 1
+  }
+
+  local num title marker body rc=0 created=0 skipped=0 failed=0
+  while IFS=$'\t' read -r num title marker; do
+    [ -n "$title" ] || continue
+    # `gh issue create --label` fails on a label the repo does not have, and .github/labels.yml is
+    # where these are defined (§5.2), so name the command that creates them rather than the error.
+    # --dry-run previews anyway: the point of the preview is to read it *before* applying the
+    # prerequisites, and the real run still refuses.
+    grep -qx "phase/$num" <<<"$repo_labels" || {
+      echo "issues.sh board gates: the repo has no \`phase/$num\` label — run \`just labels-sync\` first; it is in .github/labels.yml." >&2
+      [ "$dry" -eq 1 ] || exit 1
+    }
+    if grep -qxF "$title" <<<"$existing"; then
+      echo "gate already filed: $title"; skipped=$((skipped + 1)); continue
+    fi
+    body="$(printf 'Phase gate for phase %s of `docs/ARCHITECTURE.md` §11. It holds no work: every `phase/%s` issue is `blocked by` it, so closing this one unblocks the phase at once (MIP-0063 §5.3).\n\nWire an issue to it with `scripts/issues.sh deps add <issue> --blocked-by <this issue>`.\n' "$num" "$num")"
+    rc=0
+    run gh issue create --repo "$nwo" --title "$title" --label "phase/$num" --body "$body" || rc=$?
+    if [ "$rc" -eq 0 ]; then created=$((created + 1)); else failed=$((failed + 1)); fi
+  done <<<"$titles"
+
+  # A phase §11 already marks done gets a gate that is closed, not open: an open gate for a phase
+  # that finished before this script existed would block its issues forever. The number comes from
+  # a re-read because `run` swallows the create's output — that is the channel it echoes on.
+  if [ "$dry" -eq 0 ]; then
+    local open_gates n_gate
+    open_gates="$(gh issue list --repo "$nwo" --state open --limit "$gate_limit" --json number,title </dev/null \
+      --jq '.[] | "\(.number)\t\(.title)"')"
+    n_seen="$(grep -c . <<<"$open_gates" || true)"
+    [ "$n_seen" -lt "$gate_limit" ] || {
+      echo "issues.sh: the repo has at least $gate_limit open issues, this script's page limit — the gate to close may be past it." >&2
+      exit 1
+    }
+    while IFS=$'\t' read -r num title marker; do
+      [ "$marker" = done ] || continue
+      n_gate="$(awk -F'\t' -v t="$title" '$2 == t { print $1; exit }' <<<"$open_gates")"
+      [ -n "$n_gate" ] || continue
+      run gh issue close --repo "$nwo" "$n_gate" --reason completed || failed=$((failed + 1))
+    done <<<"$titles"
+  fi
+
+  echo "gates: $created filed, $skipped already there, $failed failed$(dry_tag)"
+  [ "$failed" -eq 0 ] || exit 1
+}
+
 dry=0
+# A summary line counts what *would* happen under --dry-run, and the past tense reads as if it had.
+dry_tag() { [ "$dry" -eq 0 ] || printf ' (--dry-run: nothing was written)'; }
+
 # %q, not "$*": a label description always contains spaces, so an unquoted echo prints a line
 # that looks copy-pasteable and isn't.
 run() {
@@ -1473,6 +2112,476 @@ STUB
     *) echo "FAILED: a real run filed issues into no milestone silently" >&2; failed=1 ;;
   esac
 
+  echo "-- the board: scopes, the Status lookup and the sync plan (MIP-0063 §5.2) --"
+  check "read:project is not project" "$(has_scope "repo, read:project, workflow" project && echo yes || echo no)" "no"
+  check "project is" "$(has_scope "repo, project, workflow" project && echo yes || echo no)" "yes"
+
+  local board_fields board_items_json board_issues_json board_got
+  board_fields='{"fields":[{"id":"PVTF_t","name":"Title","type":"ProjectV2Field"},
+    {"id":"PVTSSF_s","name":"Status","type":"ProjectV2SingleSelectField",
+     "options":[{"id":"o-triage","name":"Triage"},{"id":"o-ready","name":"Ready"},{"id":"o-prog","name":"In progress"}]}]}'
+  check "a Status option resolves to its field id and its own id" \
+    "$(board_status_option "$board_fields" "In progress")" "$(printf 'PVTSSF_s\to-prog')"
+  # The live board still carries GitHub's template options (Backlog, not Triage/Spec). Sync has to
+  # name what is missing rather than fall back to the nearest, which would put issues somewhere
+  # §5.2 never defined and nobody is looking.
+  check "an option §5.2 names but the board does not have resolves to nothing" \
+    "$(board_status_option "$board_fields" "Spec")" ""
+
+  board_items_json='[
+    {"id":"I-910","status":"Backlog","content":{"number":910,"repository":"marola-dev/marola"}},
+    {"id":"I-951","content":{"number":951,"repository":"marola-dev/marola"}},
+    {"id":"I-952","status":"In review","content":{"number":952,"repository":"marola-dev/marola"}},
+    {"id":"I-903","content":{"number":903,"repository":"someone/else"}}]'
+  board_issues_json='[
+    {"number":910,"url":"u910","assignees":[],"labels":[{"name":"agent-ready"}]},
+    {"number":951,"url":"u951","assignees":[{"login":"x"}],"labels":[]},
+    {"number":952,"url":"u952","assignees":[],"labels":[]},
+    {"number":903,"url":"u903","assignees":[],"labels":[{"name":"agent-ready"}]},
+    {"number":950,"url":"u950","assignees":[],"labels":[]}]'
+  board_got="$(board_plan "$board_items_json" "$board_issues_json" "marola-dev/marola")"
+  # The three cases the maintainer decided between. `Backlog` is adoptable because the auto-add
+  # workflow wrote it, not a person; every other value is someone's choice. #952 is the one that
+  # would undo a maintainer's work: unassigned and unlabelled, so a Status derived from its state
+  # would drag it from In review back to Triage.
+  check "the auto-add default is adopted, once, from the issue's state" \
+    "$(grep '^adopt' <<<"$board_got" | cut -f2,3 | tr '\t' ' ')" "I-910 Ready"
+  check "an item with no Status at all is set, and counted apart from an adoption" \
+    "$(grep '^set' <<<"$board_got" | cut -f2,3 | tr '\t' ' ')" "I-951 In progress"
+  check "a Status a human chose is never touched" "$(grep -c 'I-952' <<<"$board_got" || true)" "0"
+  check "an unassigned agent-ready issue is Ready, not In progress" \
+    "$(grep 'u903' <<<"$board_got" | cut -f1,3 | tr '\t' ' ')" "add Ready"
+  check "an issue that is not on the board at all is an add" \
+    "$(grep 'u950' <<<"$board_got" | cut -f1,3 | tr '\t' ' ')" "add Triage"
+  check "board_item_id finds this repo's item" "$(board_item_id "$board_items_json" "marola-dev/marola" 910)" "I-910"
+  # One board can hold several repositories and issue numbers are only unique within one, so a
+  # match on the number alone would edit another repo's card.
+  check "board_item_id will not match another repository's item" \
+    "$(board_item_id "$board_items_json" "marola-dev/marola" 903)" ""
+
+  echo
+  echo "-- the gate names come from ARCHITECTURE.md §11, not from a second copy of them --"
+  check "five phases, with §11's own names" "$(phase_titles | cut -f2 | tr '\n' '|')" \
+    "Phase 0 — POC pipeline + six pluggable integrations|Phase 1 — Telegram bot|Phase 2 — Go live on a cloud backend, deliberately|Phase 3 — Deploy|Phase 4 — Harden & calibrate|"
+  check "§11 marks phase 0 done, so that gate is filed closed" \
+    "$(phase_titles | awk -F'\t' '$3 == "done" { print $1 }')" "0"
+
+  echo
+  echo "-- claim prints a branch command carrying the slug the tasks file actually has --"
+  check "a MIP task title yields its own stack line" \
+    "$(stack_line '0063-T6: claiming an issue, and the board itself')" \
+    "scripts/stack.sh start MIP-0063 6 board-and-claim"
+  # The `#` cell is a markdown link whose URL holds the issue number, so a slug read by taking
+  # every digit in the cell would match row 1 against "1414" and never find it.
+  check "the row is found by its number, not by the digits in its issue link" "$(tasks_slug 0063 1)" "taxonomy"
+  check "an ordinary issue title yields no stack line at all" "$(stack_line 'Cache Open-Meteo responses')" ""
+  check "a MIP with no tasks file still yields a line, with the slug left to fill in" \
+    "$(stack_line '9999-T2: something')" "scripts/stack.sh start MIP-9999 2 <slug>"
+
+  echo
+  echo "-- milestone new: --mip points at a MIP that exists, or not at all --"
+  check "--mip resolves to the MIP's own file" "$(mip_reference MIP-0063)" \
+    "Design: MIP-0063 — docs/mips/MIP-0063-github-issue-tracking-standard.md"
+  if mip_reference MIP-9999 >/dev/null 2>&1; then
+    echo "FAILED: a MIP number with no file was accepted — the milestone's one reference would dangle" >&2; failed=1
+  else
+    echo "ok: --mip with no matching docs/mips/MIP-NNNN-*.md is refused"
+  fi
+  if mip_reference 63 >/dev/null 2>&1; then
+    echo "FAILED: \"63\" was accepted where MIP-NNNN is required" >&2; failed=1
+  else
+    echo "ok: --mip wants the MIP-NNNN spelling"
+  fi
+
+  echo
+  echo "-- claim, board sync and the gates against a stubbed gh --"
+  local claim_dir="$tmp/claim" claim_log="$tmp/claim/calls.log" claim_got
+  mkdir -p "$claim_dir/bin"
+  cat > "$claim_dir/bin/gh" <<'STUB'
+#!/usr/bin/env bash
+cat >/dev/null          # a gh that reads stdin; the real one does
+jq_expr=""; path=""; prev=""; file=""
+for a in "$@"; do
+  [ "$prev" != "--jq" ] || jq_expr="$a"
+  case "$a" in repos/*) path="$a" ;; esac
+  prev="$a"
+done
+case "$*" in
+  *"auth status"*) exit 0 ;;
+  *"repo view"*)   echo "marola-dev/marola"; exit 0 ;;
+  *"api -i user"*)
+    # CLAIM_NOHDR models a fine-grained PAT: GitHub sends no X-OAuth-Scopes header at all.
+    if [ -n "${CLAIM_NOHDR-}" ]; then printf 'HTTP/2.0 200 OK\r\nServer: github.com\r\n\r\n{}\n'
+    else printf 'HTTP/2.0 200 OK\r\nX-Oauth-Scopes: repo, %s\r\n\r\n{}\n' "${CLAIM_SCOPES-}"; fi
+    exit 0 ;;
+  *"api user"*)    echo "brunogbv"; exit 0 ;;
+  *"--input"*)
+    for a in "$@"; do case "$a" in /*) gi="$a" ;; esac; done
+    printf 'graphql-input %s\n' "$(jq -r '[.variables.options[].name] | join(",")' "$gi")" >> "$CLAIM_LOG"; exit 0 ;;
+  *createProjectV2View*)
+    vn=""; vl=""
+    for a in "$@"; do case "$a" in n=*) vn="${a#n=}" ;; l=*) vl="${a#l=}" ;; esac; done
+    printf 'create-view %s %s\n' "$vn" "$vl" >> "$CLAIM_LOG"; exit 0 ;;
+  *updateProjectV2View*)
+    vv=""; vf=""
+    for a in "$@"; do case "$a" in v=*) vv="${a#v=}" ;; f=*) vf="${a#f=}" ;; esac; done
+    printf 'set-filter %s %s\n' "$vv" "$vf" >> "$CLAIM_LOG"; exit 0 ;;
+  *"field(name:"*)
+    if [ -n "${CLAIM_AFTER-}" ]; then file="$CLAIM_DIR/status-field-after.json"; else file="$CLAIM_DIR/status-field.json"; fi ;;
+  *"views(first"*)
+    # CLAIM_VIEWS pins the fixture; otherwise the re-read after a create has to see the new views,
+    # the way the real API would.
+    if [ -n "${CLAIM_VIEWS-}" ]; then file="$CLAIM_DIR/$CLAIM_VIEWS"
+    elif grep -q '^create-view' "$CLAIM_LOG" 2>/dev/null; then file="$CLAIM_DIR/views-after.json"
+    else file="$CLAIM_DIR/views.json"; fi ;;
+  *"issue edit"*|*"issue create"*|*"issue close"*|*"project item-add"*|*"project item-edit"*)
+                   printf '%s\n' "$*" >> "$CLAIM_LOG"; exit 0 ;;
+  *"project list"*)       file="$CLAIM_DIR/projects.json" ;;
+  *"project field-list"*) file="$CLAIM_DIR/${CLAIM_FIELDS:-fields.json}" ;;
+  *"project item-list"*)  file="$CLAIM_DIR/${CLAIM_ITEMS:-items.json}" ;;
+  *"label list"*)         file="$CLAIM_DIR/labels.json" ;;
+  *"--state all"*)        file="$CLAIM_DIR/issues-all.json" ;;
+  *"issue list"*)         file="$CLAIM_DIR/issues-open.json" ;;
+  *)
+    case "$path" in
+      */dependencies/blocked_by) path="${path%/dependencies/blocked_by}"; file="$CLAIM_DIR/${path##*/}.deps.json" ;;
+      *)                         file="$CLAIM_DIR/${path##*/}.issue.json" ;;
+    esac ;;
+esac
+[ -f "$file" ] || { echo "stub: no fixture for ${path:-$*}" >&2; exit 1; }
+if [ -n "$jq_expr" ]; then jq -r "$jq_expr" "$file"; else cat "$file"; fi
+STUB
+  chmod +x "$claim_dir/bin/gh"
+
+  cat > "$claim_dir/910.issue.json" <<'EOF'
+{"number":910,"id":5600000910,"state":"open","html_url":"u910",
+ "title":"0063-T6: claiming an issue, and the board itself","assignees":[],
+ "labels":[{"name":"agent-ready"},{"name":"area/dev-tooling"},{"name":"layer/infra"},{"name":"size/M"}],
+ "body":"### Acceptance criteria\n\n- [ ] a\n\n### Named test\n\nFooSpec\n"}
+EOF
+  cat > "$claim_dir/911.issue.json" <<'EOF'
+{"number":911,"id":5600000911,"state":"open","html_url":"u911","title":"Not ready yet","assignees":[],
+ "labels":[{"name":"area/dev-tooling"},{"name":"layer/infra"},{"name":"size/S"}],
+ "body":"### Acceptance criteria\n\n- [ ] a\n\n### Named test\n\nFooSpec\n"}
+EOF
+  cat > "$claim_dir/912.issue.json" <<'EOF'
+{"number":912,"id":5600000912,"state":"closed","html_url":"u912","title":"Already done","assignees":[],
+ "labels":[{"name":"agent-ready"}],"body":"### Named test\n\nFooSpec\n"}
+EOF
+  cat > "$claim_dir/913.issue.json" <<'EOF'
+{"number":913,"id":5600000913,"state":"open","html_url":"u913","title":"Someone is on it",
+ "assignees":[{"login":"someone-else"}],"labels":[{"name":"agent-ready"}],
+ "body":"### Acceptance criteria\n\n- [ ] a\n\n### Named test\n\nFooSpec\n"}
+EOF
+  cat > "$claim_dir/914.issue.json" <<'EOF'
+{"number":914,"id":5600000914,"state":"open","html_url":"u914","title":"Labelled by hand","assignees":[],
+ "labels":[{"name":"agent-ready"},{"name":"area/dev-tooling"},{"name":"layer/infra"},{"name":"size/S"}],
+ "body":"### Acceptance criteria\n\n- [ ] a\n"}
+EOF
+  printf '[]\n' > "$claim_dir/910.deps.json"
+  cp "$claim_dir/910.deps.json" "$claim_dir/913.deps.json"
+  cp "$claim_dir/910.deps.json" "$claim_dir/914.deps.json"
+  printf '{"projects":[{"number":7,"id":"PVT_test","title":"Marola"}]}\n' > "$claim_dir/projects.json"
+  printf '%s\n' "$board_fields" > "$claim_dir/fields.json"
+  # A board that has not had `board setup` run yet: no Triage option to adopt anything into.
+  jq '.fields |= map(if .name == "Status" then .options |= map(select(.name != "Triage")) else . end)' \
+    "$claim_dir/fields.json" > "$claim_dir/fields-sparse.json"
+  cat > "$claim_dir/items.json" <<'EOF'
+{"items":[{"id":"I-910","status":"Backlog","content":{"number":910,"repository":"marola-dev/marola"}},
+          {"id":"I-951","content":{"number":951,"repository":"marola-dev/marola"}},
+          {"id":"I-952","status":"In review","content":{"number":952,"repository":"marola-dev/marola"}},
+          {"id":"I-953","status":"Backlog","content":{"number":953,"repository":"marola-dev/marola"}}]}
+EOF
+  # After one sync: the adopted and the set card hold a real Status and #950 is on the board.
+  cat > "$claim_dir/items-synced.json" <<'EOF'
+{"items":[{"id":"I-910","status":"Ready","content":{"number":910,"repository":"marola-dev/marola"}},
+          {"id":"I-951","status":"In progress","content":{"number":951,"repository":"marola-dev/marola"}},
+          {"id":"I-952","status":"In review","content":{"number":952,"repository":"marola-dev/marola"}},
+          {"id":"I-953","status":"Triage","content":{"number":953,"repository":"marola-dev/marola"}},
+          {"id":"I-950","status":"Triage","content":{"number":950,"repository":"marola-dev/marola"}}]}
+EOF
+  printf '[{"name":"phase/0"},{"name":"phase/1"},{"name":"phase/2"},{"name":"phase/3"},{"name":"phase/4"}]\n' \
+    > "$claim_dir/labels.json"
+  printf '[{"title":"Phase 3 — Deploy"},{"title":"0063-T6: claiming an issue, and the board itself"}]\n' \
+    > "$claim_dir/issues-all.json"
+  cat > "$claim_dir/issues-open.json" <<'EOF'
+[{"number":910,"url":"u910","title":"0063-T6: claiming an issue, and the board itself",
+  "assignees":[],"labels":[{"name":"agent-ready"}]},
+ {"number":950,"url":"u950","title":"Phase 0 — POC pipeline + six pluggable integrations",
+  "assignees":[],"labels":[]},
+ {"number":951,"url":"u951","title":"Someone is on it","assignees":[{"login":"x"}],"labels":[]},
+ {"number":952,"url":"u952","title":"A maintainer moved this one","assignees":[],"labels":[]},
+ {"number":953,"url":"u953","title":"Still in triage","assignees":[],"labels":[]}]
+EOF
+
+  claim_case() {   # claim_case <label> <issue> <scopes> <want-rc> <want-output> <want-calls>
+    local out rc=0
+    : > "$claim_log"
+    out="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" CLAIM_SCOPES="$3" \
+      nwo="" cmd_claim "$2" 2>&1)" || rc=$?
+    check "$1 (exit)" "$rc" "$4"
+    case "$out" in
+      *"$5"*) echo "ok: $1" ;;
+      *) echo "FAILED: $1 — expected \"$5\" in:" >&2; sed 's/^/  /' <<<"$out" >&2; failed=1 ;;
+    esac
+    check "$1 (calls)" "$(cat "$claim_log")" "$6"
+  }
+
+  claim_case "a ready issue is assigned and loses the label, in one call" 910 project 0 \
+    "claimed #910 as @brunogbv" \
+    "issue edit --repo marola-dev/marola 910 --add-assignee brunogbv --remove-label agent-ready
+project item-edit --id I-910 --project-id PVT_test --field-id PVTSSF_s --single-select-option-id o-prog"
+  claim_case "and the board's Status goes to In progress with it" 910 project 0 \
+    "scripts/stack.sh start MIP-0063 6 board-and-claim" \
+    "issue edit --repo marola-dev/marola 910 --add-assignee brunogbv --remove-label agent-ready
+project item-edit --id I-910 --project-id PVT_test --field-id PVTSSF_s --single-select-option-id o-prog"
+  claim_case "an issue without agent-ready is refused before anything is read or written" 911 project 1 \
+    "is not \`agent-ready\`" ""
+  claim_case "a closed issue is refused" 912 project 1 "is closed, not open" ""
+  claim_case "an issue assigned to someone else is refused, not taken off them" 913 project 1 \
+    "already assigned to someone-else" ""
+  # §8: the label can be added by hand without the rules ever passing. `ready` is the authority,
+  # and it takes the label back off on the way through.
+  claim_case "a hand-added label does not get past the DoR, and is removed" 914 project 1 \
+    "no longer passes the Definition of Ready" \
+    "issue edit --repo marola-dev/marola 914 --remove-label agent-ready"
+  # The scope is a human's `gh auth refresh -s project` (§4.4). Until it lands, the half of §5.2's
+  # duplicated state that an agent can write must still be writable, or nothing is claimable.
+  claim_case "without \`project\` scope the claim still lands, and says the board did not" 910 read:project 0 \
+    "cannot write the board" \
+    "issue edit --repo marola-dev/marola 910 --add-assignee brunogbv --remove-label agent-ready"
+
+  claim_got="$(printf 'row-2\nrow-3\n' | { PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" \
+    CLAIM_LOG="$claim_log" CLAIM_SCOPES=project nwo="" cmd_claim 910 >/dev/null 2>&1; cat; })"
+  check "claim leaves the caller's stdin untouched" "$claim_got" "row-2
+row-3"
+
+  : > "$claim_log"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+    CLAIM_SCOPES=project nwo="" cmd_board_sync 2>&1)"
+  check "sync adds, sets and adopts, counting each apart" "$(tail -1 <<<"$claim_got")" \
+    "board: 1 added, 1 set (no Status), 2 adopted from Backlog, 0 skipped, 0 failed (5 open issues)"
+  check "sync's calls" "$(cat "$claim_log")" \
+    "project item-add 7 --owner marola-dev --url u950
+project item-edit --id I-910 --project-id PVT_test --field-id PVTSSF_s --single-select-option-id o-ready
+project item-edit --id I-951 --project-id PVT_test --field-id PVTSSF_s --single-select-option-id o-prog
+project item-edit --id I-953 --project-id PVT_test --field-id PVTSSF_s --single-select-option-id o-triage"
+  check "the card a human moved is never in the calls" "$(grep -c 'I-952' "$claim_log" || true)" "0"
+  # The first real run moves every card off the auto-add default at once, so it names each one.
+  check "every change is named per issue, not just counted" \
+    "$(grep -E '^  #(910|951)' <<<"$claim_got" | tr -s ' ' | sed 's/^ //' | tr '\n' '|')" \
+    "#910 Backlog → Ready|#951 (no Status) → In progress|"
+  : > "$claim_log"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+    CLAIM_ITEMS=items-synced.json CLAIM_SCOPES=project nwo="" cmd_board_sync 2>&1)"
+  check "a second run adopts nothing — the cards hold a real Status now" "$(tail -1 <<<"$claim_got")" \
+    "board: in sync (5 open issues)"
+  check "and writes nothing at all" "$(cat "$claim_log")" ""
+
+  # Sync before setup: the option an issue's state calls for does not exist yet. That is a missing
+  # prerequisite, not a failed write — counted apart, said once rather than once per issue, and
+  # still a nonzero exit because the work did not happen.
+  : > "$claim_log"
+  claim_got=""
+  claim_got="$( ( PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+    CLAIM_FIELDS=fields-sparse.json CLAIM_SCOPES=project nwo="" cmd_board_sync ) 2>&1; echo "rc=$?")"
+  check "an option the board lacks is skipped, not failed" \
+    "$(grep '^board:' <<<"$claim_got")" \
+    "board: 1 added, 1 set (no Status), 1 adopted from Backlog, 1 skipped, 0 failed (5 open issues)"
+  check "and skipping is a nonzero exit — the sync did not do its job" "$(tail -1 <<<"$claim_got")" "rc=1"
+  check "the missing option is named once, not once per issue" \
+    "$(grep -c 'has no Triage option' <<<"$claim_got" || true)" "1"
+  case "$claim_got" in
+    *"board setup\` first"*) echo "ok: and it names the command that creates it" ;;
+    *) echo "FAILED: the skip diagnostic does not point at board setup" >&2; failed=1 ;;
+  esac
+  : > "$claim_log"
+  claim_got=""
+  # A subshell, not just `|| …`: cmd_board_sync refuses with `exit`, which would take this
+  # self-test down with it rather than being caught.
+  ( PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" CLAIM_SCOPES=read:project \
+    nwo="" cmd_board_sync ) >/dev/null 2>&1 || claim_got=refused
+  check "sync fails outright without \`project\` scope, unlike claim" "$claim_got" "refused"
+  check "and writes nothing on the way" "$(cat "$claim_log")" ""
+  dry=1
+  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+    CLAIM_SCOPES=read:project nwo="" cmd_board_sync 2>/dev/null | tail -1)"
+  dry=0
+  check "--dry-run still shows the plan without the scope — the reads only need read:project" \
+    "$claim_got" "board: 1 added, 1 set (no Status), 2 adopted from Backlog, 0 skipped, 0 failed (5 open issues) (--dry-run: nothing was written)"
+  check "and still writes nothing" "$(cat "$claim_log")" ""
+
+  : > "$claim_log"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+    nwo="" cmd_board_gates 2>&1)"
+  check "the gate already filed is skipped, the other four are created" "$(tail -1 <<<"$claim_got")" \
+    "gates: 4 filed, 1 already there, 0 failed"
+  check "each gate carries its own phase label" "$(grep -c -- '--label phase/' "$claim_log" || true)" "4"
+  check "the phase §11 marks done is closed, not left blocking its own issues" \
+    "$(grep -c 'issue close --repo marola-dev/marola 950 --reason completed' "$claim_log" || true)" "1"
+  dry=1
+  : > "$claim_log"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+    nwo="" cmd_board_gates 2>&1)"
+  dry=0
+  check "--dry-run files nothing at all" "$(cat "$claim_log")" ""
+  check "and still reports what it would file, saying it did not" "$(tail -1 <<<"$claim_got")" \
+    "gates: 4 filed, 1 already there, 0 failed (--dry-run: nothing was written)"
+
+  echo
+  echo "-- board setup: the Status options and the four views of §5.2 --"
+  local setup_have setup_plan setup_views
+  setup_have='[{"id":"o-backlog","name":"Backlog","color":"GREEN","description":"not started"},
+    {"id":"o-ready","name":"Ready","color":"BLUE","description":"ready"},
+    {"id":"o-prog","name":"In progress","color":"YELLOW","description":"wip"},
+    {"id":"o-rev","name":"In review","color":"PURPLE","description":"in review"},
+    {"id":"o-done","name":"Done","color":"ORANGE","description":"done"}]'
+  setup_plan="$(status_options_plan "$setup_have" "$(board_status_wanted)")"
+  # updateProjectV2Field replaces the whole option list, so an option missing from what is sent is
+  # deleted — together with the Status of every item carrying it. `Backlog` is not in §5.2 and 21
+  # items are already on this board.
+  check "every existing option survives the plan, with its own id" \
+    "$(jq -r '[.[] | select(.id != null) | .name] | join(",")' <<<"$setup_plan")" \
+    "Backlog,Ready,In progress,In review,Done"
+  check "only the two §5.2 options the board lacks are added, and with no id" \
+    "$(jq -r '[.[] | select(has("id") | not) | .name] | join(",")' <<<"$setup_plan")" "Triage,Spec"
+  check "an existing option is not added a second time" \
+    "$(jq -r '[.[] | select(.name == "In progress")] | length' <<<"$setup_plan")" "1"
+  check "a description containing a colon survives the parse" \
+    "$(jq -r '.[] | select(.name == "Triage") | .description' <<<"$setup_plan")" \
+    "Filed, not yet specified or sized (MIP-0063 §5.2)"
+  check "nothing to add leaves the list exactly as it was" \
+    "$(status_options_plan "$setup_plan" "$(board_status_wanted)" | jq 'length')" "7"
+
+  setup_views='[{"id":"V1","name":"Current iteration","filter":"iteration:@current"},
+    {"id":"V5","name":"In review","filter":"status:\"In review\""},
+    {"id":"V6","name":"My items","filter":"assignee:@me"}]'
+  check "all four of §5.2's views are missing from GitHub's template set" \
+    "$(board_views_plan "$setup_views" "$(board_views_wanted)" | cut -f1,2 | tr '\t' ' ' | tr '\n' '|')" \
+    "create Triage|create Now|create Agent queue|create Good first issues|"
+  check "the template's own six are never touched" \
+    "$(board_views_plan "$setup_views" "$(board_views_wanted)" | grep -c -E 'Current iteration|In review|My items' || true)" "0"
+  # A filter a maintainer narrowed by hand is theirs; setup reports the difference and stops there.
+  check "a view that already exists with another filter is reported, not overwritten" \
+    "$(board_views_plan '[{"id":"V9","name":"Agent queue","filter":"label:\"bug\""}]' \
+       "$(printf 'Agent queue\tTABLE_LAYOUT\tlabel:"agent-ready"')")" \
+    "$(printf 'differs\tAgent queue\tlabel:"bug"\tlabel:"agent-ready"')"
+  check "a view that already matches yields no line at all" \
+    "$(board_views_plan '[{"id":"V9","name":"Agent queue","filter":"label:\"agent-ready\""}]' \
+       "$(printf 'Agent queue\tTABLE_LAYOUT\tlabel:"agent-ready"')")" ""
+
+  # The half-finished two-phase create: the view exists because `createProjectV2View` landed, the
+  # `updateProjectV2View` that filters it did not. That is this script's own unfinished work, not a
+  # maintainer's choice, so the next run finishes it instead of reporting it forever.
+  check "a view this script created but never filtered is finished, not reported" \
+    "$(board_views_plan '[{"id":"V7","name":"Triage","filter":null}]' \
+       "$(printf 'Triage\tTABLE_LAYOUT\tstatus:"Triage"')")" \
+    "$(printf 'filter\tV7\tstatus:"Triage"\tTriage')"
+  check "an empty-string filter reads the same as a null one" \
+    "$(board_views_plan '[{"id":"V7","name":"Triage","filter":""}]' \
+       "$(printf 'Triage\tTABLE_LAYOUT\tstatus:"Triage"')" | cut -f1)" "filter"
+  # §5.2 leaves Now's milestone filter to a human, so whatever they put on it is right by
+  # definition and must never be reported as a difference.
+  check "the view §5.2 leaves unfiltered is never reported, whatever a human filtered it with" \
+    "$(board_views_plan '[{"id":"V8","name":"Now","filter":"milestone:\"x\""}]' \
+       "$(printf 'Now\tBOARD_LAYOUT\t')")" ""
+  # `read` with IFS=tab collapses adjacent tabs, so an empty column in the middle of a line shifts
+  # every later one — which is how a `differs` for an unfiltered view once printed the *wanted*
+  # filter as the current one and `[]` as the wanted.
+  check "no action line has an empty field for read to swallow" \
+    "$(board_views_plan '[{"id":"V7","name":"Triage","filter":null},{"id":"V9","name":"Agent queue","filter":"label:\"bug\""}]' \
+       "$(board_views_wanted)" | awk -F'\t' '{ for (i = 1; i <= NF; i++) if ($i == "") print "empty field " i " in: " $0 }')" ""
+
+  cat > "$claim_dir/status-field.json" <<'EOF'
+{"data":{"organization":{"projectV2":{"field":{"id":"PVTSSF_s","options":[
+  {"id":"o-backlog","name":"Backlog","color":"GREEN","description":"not started"},
+  {"id":"o-ready","name":"Ready","color":"BLUE","description":"ready"},
+  {"id":"o-prog","name":"In progress","color":"YELLOW","description":"wip"},
+  {"id":"o-rev","name":"In review","color":"PURPLE","description":"in review"},
+  {"id":"o-done","name":"Done","color":"ORANGE","description":"done"}]}}}}}
+EOF
+  jq '.data.organization.projectV2.field.options += [
+    {"id":"o-triage","name":"Triage","color":"GRAY","description":"t"},
+    {"id":"o-spec","name":"Spec","color":"PINK","description":"s"}]' \
+    "$claim_dir/status-field.json" > "$claim_dir/status-field-after.json"
+  cat > "$claim_dir/views.json" <<'EOF'
+{"data":{"organization":{"projectV2":{"views":{"nodes":[
+  {"id":"V1","name":"Current iteration","filter":"iteration:@current"},
+  {"id":"V5","name":"In review","filter":"status:\"In review\""},
+  {"id":"V6","name":"My items","filter":"assignee:@me"}]}}}}}
+EOF
+  # What a re-read right after `createProjectV2View` returns: the view exists, unfiltered. The
+  # filters arrive only with the second mutation, which is the window I1 is about.
+  jq '.data.organization.projectV2.views.nodes += [
+    {"id":"V7","name":"Triage","filter":null},
+    {"id":"V8","name":"Now","filter":null},
+    {"id":"V9","name":"Agent queue","filter":null},
+    {"id":"V10","name":"Good first issues","filter":null}]' \
+    "$claim_dir/views.json" > "$claim_dir/views-after.json"
+  jq '.data.organization.projectV2.views.nodes |= map(
+        if .name == "Triage" then .filter = "status:\"Triage\""
+        elif .name == "Agent queue" then .filter = "label:\"agent-ready\""
+        elif .name == "Good first issues" then .filter = "label:\"good first issue\""
+        else . end)' "$claim_dir/views-after.json" > "$claim_dir/views-done.json"
+
+  : > "$claim_log"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+    CLAIM_SCOPES=project nwo="" cmd_board_setup 2>&1)"
+  check "setup sends the whole option list, existing ones first" "$(head -1 "$claim_log")" \
+    "graphql-input Backlog,Ready,In progress,In review,Done,Triage,Spec"
+  check "setup creates the four views with their layouts" \
+    "$(grep '^create-view' "$claim_log" | tr '\n' '|')" \
+    "create-view Triage TABLE_LAYOUT|create-view Now BOARD_LAYOUT|create-view Agent queue TABLE_LAYOUT|create-view Good first issues TABLE_LAYOUT|"
+  # CreateProjectV2ViewInput has no `filter` field (introspected 2026-09-28), so each filter is a
+  # second mutation against an id that only exists after the create.
+  check "and sets each filter afterwards, skipping the one §5.2 leaves to a human" \
+    "$(grep '^set-filter' "$claim_log" | tr '\n' '|')" \
+    "set-filter V7 status:\"Triage\"|set-filter V9 label:\"agent-ready\"|set-filter V10 label:\"good first issue\"|"
+  check "the whole option payload is printed, not just the path of a temp file that is deleted" \
+    "$(jq -r '.variables.options[-1].name' <<<"$(sed -n '/^  {/,/^  }/p' <<<"$claim_got")")" "Spec"
+  # The half-finished two-phase create, as its own run: the four views are there because
+  # `createProjectV2View` landed, unfiltered because `updateProjectV2View` did not. Nothing is
+  # created; the three filters are finished. Before I1 this state was classified `differs` and
+  # never healed.
+  : > "$claim_log"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+    CLAIM_SCOPES=project CLAIM_AFTER=1 CLAIM_VIEWS=views-after.json nwo="" cmd_board_setup 2>&1)"
+  check "a half-finished create is healed, not created again" "$(grep -c '^create-view' "$claim_log" || true)" "0"
+  check "and its filter is applied on the next run" "$(grep '^set-filter' "$claim_log" | tr '\n' '|')" \
+    "set-filter V7 status:\"Triage\"|set-filter V9 label:\"agent-ready\"|set-filter V10 label:\"good first issue\"|"
+  case "$claim_got" in
+    *'view "Triage" has no filter — applying §5.2'*) echo "ok: and it says which view it is finishing" ;;
+    *) echo "FAILED: healing said nothing about the view it fixed:" >&2; sed 's/^/  /' <<<"$claim_got" >&2; failed=1 ;;
+  esac
+
+  : > "$claim_log"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+    CLAIM_SCOPES=project CLAIM_AFTER=1 CLAIM_VIEWS=views-done.json nwo="" cmd_board_setup 2>&1)"
+  check "a second run changes nothing" "$(cat "$claim_log")" ""
+  check "and says so" "$(grep -c -E 'all of §5.2.s options are there|four are all there' <<<"$claim_got" || true)" "2"
+  claim_got=""
+  ( PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" CLAIM_SCOPES=read:project \
+    nwo="" cmd_board_setup ) >/dev/null 2>&1 || claim_got=refused
+  check "setup refuses without \`project\` scope, like sync" "$claim_got" "refused"
+
+  # A fine-grained PAT sends no X-OAuth-Scopes header, so token_scopes greps for something that is
+  # not there and exits nonzero with empty output. These cover that much and the branch it feeds.
+  # They do **not** cover the `|| true` at its call site: errexit is suppressed through every
+  # guarded caller, so the whole suite passes with that guard removed. Verified, not assumed.
+  local scope_rc=0
+  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_NOHDR=1 token_scopes || true)"
+  check "no scope header yields no scopes" "$claim_got" ""
+  ( PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_NOHDR=1 token_scopes >/dev/null ) || scope_rc=$?
+  check "and a nonzero status its callers must absorb" "$scope_rc" "1"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" CLAIM_DIR="$claim_dir" CLAIM_LOG="$claim_log" \
+    CLAIM_NOHDR=1 "$root/scripts/issues.sh" --dry-run board setup 2>&1; echo "rc=$?")"
+  check "and such a token is unknown, not refused: setup runs to the end" \
+    "$(tail -1 <<<"$claim_got")" "rc=0"
+  case "$claim_got" in
+    *"no X-OAuth-Scopes header"*) echo "ok: and it says why it went ahead anyway" ;;
+    *) echo "FAILED: expected the fine-grained-PAT warning, got:" >&2; sed 's/^/  /' <<<"$claim_got" >&2; failed=1 ;;
+  esac
+
   echo
   if [ "$failed" -eq 1 ]; then echo "issues.sh self-test: FAILED" >&2; return 1; fi
   echo "issues.sh self-test: ok"
@@ -1514,5 +2623,20 @@ case "${1:-}" in
   ready) shift; cmd_ready "$@" ;;
   queue) shift; cmd_queue "$@" ;;
   tasks-to-issues) shift; cmd_tasks_to_issues "$@" ;;
+  claim) shift; cmd_claim "$@" ;;
+  milestone)
+    case "${2:-}" in
+      new) shift 2; cmd_milestone_new "$@" ;;
+      *) echo "issues.sh milestone: unknown subcommand: ${2:-<none>}" >&2; usage >&2; exit 1 ;;
+    esac
+    ;;
+  board)
+    case "${2:-}" in
+      sync) shift 2; cmd_board_sync "$@" ;;
+      setup) shift 2; cmd_board_setup "$@" ;;
+      gates) shift 2; cmd_board_gates "$@" ;;
+      *) echo "issues.sh board: unknown subcommand: ${2:-<none>}" >&2; usage >&2; exit 1 ;;
+    esac
+    ;;
   ""|*) usage >&2; exit 1 ;;
 esac

@@ -138,6 +138,26 @@
   color: "d4c5f9"
   description: "Tier 3 — a MIP proposal; a design request, never agent-ready (MIP-0063 §5.1)"
 
+- name: "phase/0"
+  color: "fef2c0"
+  description: "Phase 0 — POC pipeline + six pluggable integrations (ARCHITECTURE.md §11)"
+
+- name: "phase/1"
+  color: "fef2c0"
+  description: "Phase 1 — Telegram bot (ARCHITECTURE.md §11)"
+
+- name: "phase/2"
+  color: "fef2c0"
+  description: "Phase 2 — go live on a cloud backend (ARCHITECTURE.md §11)"
+
+- name: "phase/3"
+  color: "fef2c0"
+  description: "Phase 3 — deploy (ARCHITECTURE.md §11)"
+
+- name: "phase/4"
+  color: "fef2c0"
+  description: "Phase 4 — harden & calibrate (ARCHITECTURE.md §11)"
+
 - name: "priority/high"
   color: "b60205"
   description: "Do before other open work of the same area"
