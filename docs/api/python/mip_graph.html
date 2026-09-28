@@ -136,14 +136,14 @@
 mip_graph    </h1>
 
                         <div class="docstring"><p>mip_graph — generate a Mermaid dependency graph from every MIP's metadata table and write it
-into docs/mips/README.md between two HTML-comment markers. Reads only a machine-readable
+into docs/MIPs/README.md between two HTML-comment markers. Reads only a machine-readable
 <strong>Blocked by</strong> row (comma-separated MIP numbers, or the literal <code>none</code>) — the human-readable
 <strong>Depends on</strong> field stays prose-only and is never parsed, because it legitimately carries four
 different relations (blocking, blocked-by, co-delivery, negation) in one cell that a regex cannot
 tell apart (verified against all 28 real MIPs in this repo before this script was written; see
-docs/mips/README.md's own history for the specific mis-parses that ruled it out).</p>
+docs/MIPs/README.md's own history for the specific mis-parses that ruled it out).</p>
 
-<pre><code>scripts/mip_graph.py                    # regenerate the graph block in docs/mips/README.md
+<pre><code>scripts/mip_graph.py                    # regenerate the graph block in docs/MIPs/README.md
 scripts/mip_graph.py --check             # exit 1 if the checked-in block is stale or missing
 scripts/mip_graph.py --parallel 30 31    # can these two MIPs be worked in parallel?
 scripts/mip_graph.py --self-test
@@ -159,14 +159,14 @@ an unconnected node. Nothing here invents an edge from prose.</p>
 
                         <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="ch">#!/usr/bin/env python3</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a><span class="sd">&quot;&quot;&quot;mip_graph — generate a Mermaid dependency graph from every MIP&#39;s metadata table and write it</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a><span class="sd">into docs/mips/README.md between two HTML-comment markers. Reads only a machine-readable</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a><span class="sd">into docs/MIPs/README.md between two HTML-comment markers. Reads only a machine-readable</span>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">  4</span></a><span class="sd">**Blocked by** row (comma-separated MIP numbers, or the literal `none`) — the human-readable</span>
 </span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="sd">**Depends on** field stays prose-only and is never parsed, because it legitimately carries four</span>
 </span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a><span class="sd">different relations (blocking, blocked-by, co-delivery, negation) in one cell that a regex cannot</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a><span class="sd">tell apart (verified against all 28 real MIPs in this repo before this script was written; see</span>
-</span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a><span class="sd">docs/mips/README.md&#39;s own history for the specific mis-parses that ruled it out).</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a><span class="sd">docs/MIPs/README.md&#39;s own history for the specific mis-parses that ruled it out).</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a>
-</span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="sd">    scripts/mip_graph.py                    # regenerate the graph block in docs/mips/README.md</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="sd">    scripts/mip_graph.py                    # regenerate the graph block in docs/MIPs/README.md</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="sd">    scripts/mip_graph.py --check             # exit 1 if the checked-in block is stale or missing</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="sd">    scripts/mip_graph.py --parallel 30 31    # can these two MIPs be worked in parallel?</span>
 </span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="sd">    scripts/mip_graph.py --self-test</span>
@@ -181,7 +181,7 @@ an unconnected node. Nothing here invents an edge from prose.</p>
 </span><span id="L-22"><a href="#L-22"><span class="linenos"> 22</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 </span><span id="L-23"><a href="#L-23"><span class="linenos"> 23</span></a>
 </span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a><span class="n">ROOT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span>
-</span><span id="L-25"><a href="#L-25"><span class="linenos"> 25</span></a><span class="n">MIPS_DIR</span> <span class="o">=</span> <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">&quot;docs&quot;</span> <span class="o">/</span> <span class="s2">&quot;mips&quot;</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos"> 25</span></a><span class="n">MIPS_DIR</span> <span class="o">=</span> <span class="n">ROOT</span> <span class="o">/</span> <span class="s2">&quot;docs&quot;</span> <span class="o">/</span> <span class="s2">&quot;MIPs&quot;</span>
 </span><span id="L-26"><a href="#L-26"><span class="linenos"> 26</span></a><span class="n">README</span> <span class="o">=</span> <span class="n">MIPS_DIR</span> <span class="o">/</span> <span class="s2">&quot;README.md&quot;</span>
 </span><span id="L-27"><a href="#L-27"><span class="linenos"> 27</span></a>
 </span><span id="L-28"><a href="#L-28"><span class="linenos"> 28</span></a><span class="n">START_MARK</span> <span class="o">=</span> <span class="s2">&quot;&lt;!-- mip-graph:start --&gt;&quot;</span>
@@ -386,7 +386,7 @@ an unconnected node. Nothing here invents an edge from prose.</p>
 </span><span id="L-227"><a href="#L-227"><span class="linenos">227</span></a>    <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
 </span><span id="L-228"><a href="#L-228"><span class="linenos">228</span></a>        <span class="k">if</span> <span class="n">new_text</span> <span class="o">!=</span> <span class="n">text</span><span class="p">:</span>
 </span><span id="L-229"><a href="#L-229"><span class="linenos">229</span></a>            <span class="nb">print</span><span class="p">(</span>
-</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a>                <span class="s2">&quot;mip_graph --check: docs/mips/README.md&#39;s graph block is stale or missing — &quot;</span>
+</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a>                <span class="s2">&quot;mip_graph --check: docs/MIPs/README.md&#39;s graph block is stale or missing — &quot;</span>
 </span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a>                <span class="s2">&quot;run `just mip-graph` and commit the result&quot;</span>
 </span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a>            <span class="p">)</span>
 </span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a>            <span class="k">return</span> <span class="mi">1</span>
@@ -519,7 +519,7 @@ an unconnected node. Nothing here invents an edge from prose.</p>
                 <section id="ROOT">
                     <div class="attr variable">
             <span class="name">ROOT</span>        =
-<span class="default_value">PosixPath(&#39;/home/hoffmann/.marola-runners/marola-7/_work/marola/marola&#39;)</span>
+<span class="default_value">PosixPath(&#39;/home/hoffmann/.marola-runners/marola-6/_work/marola/marola&#39;)</span>
 
         
     </div>
@@ -531,7 +531,7 @@ an unconnected node. Nothing here invents an edge from prose.</p>
                 <section id="MIPS_DIR">
                     <div class="attr variable">
             <span class="name">MIPS_DIR</span>        =
-<span class="default_value">PosixPath(&#39;/home/hoffmann/.marola-runners/marola-7/_work/marola/marola/docs/mips&#39;)</span>
+<span class="default_value">PosixPath(&#39;/home/hoffmann/.marola-runners/marola-6/_work/marola/marola/docs/MIPs&#39;)</span>
 
         
     </div>
@@ -543,7 +543,7 @@ an unconnected node. Nothing here invents an edge from prose.</p>
                 <section id="README">
                     <div class="attr variable">
             <span class="name">README</span>        =
-<span class="default_value">PosixPath(&#39;/home/hoffmann/.marola-runners/marola-7/_work/marola/marola/docs/mips/README.md&#39;)</span>
+<span class="default_value">PosixPath(&#39;/home/hoffmann/.marola-runners/marola-6/_work/marola/marola/docs/MIPs/README.md&#39;)</span>
 
         
     </div>
@@ -1060,7 +1060,7 @@ an unconnected node. Nothing here invents an edge from prose.</p>
 </span><span id="cmd_generate-228"><a href="#cmd_generate-228"><span class="linenos">228</span></a>    <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
 </span><span id="cmd_generate-229"><a href="#cmd_generate-229"><span class="linenos">229</span></a>        <span class="k">if</span> <span class="n">new_text</span> <span class="o">!=</span> <span class="n">text</span><span class="p">:</span>
 </span><span id="cmd_generate-230"><a href="#cmd_generate-230"><span class="linenos">230</span></a>            <span class="nb">print</span><span class="p">(</span>
-</span><span id="cmd_generate-231"><a href="#cmd_generate-231"><span class="linenos">231</span></a>                <span class="s2">&quot;mip_graph --check: docs/mips/README.md&#39;s graph block is stale or missing — &quot;</span>
+</span><span id="cmd_generate-231"><a href="#cmd_generate-231"><span class="linenos">231</span></a>                <span class="s2">&quot;mip_graph --check: docs/MIPs/README.md&#39;s graph block is stale or missing — &quot;</span>
 </span><span id="cmd_generate-232"><a href="#cmd_generate-232"><span class="linenos">232</span></a>                <span class="s2">&quot;run `just mip-graph` and commit the result&quot;</span>
 </span><span id="cmd_generate-233"><a href="#cmd_generate-233"><span class="linenos">233</span></a>            <span class="p">)</span>
 </span><span id="cmd_generate-234"><a href="#cmd_generate-234"><span class="linenos">234</span></a>            <span class="k">return</span> <span class="mi">1</span>

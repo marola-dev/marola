@@ -1,0 +1,3948 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The ocean intelligence layer for a stretch of coast — guides and design proposals.">
+      
+      
+      
+        <link rel="canonical" href="https://marola.dev/docs/MIPs/MIP-0032-model-strategy-benchmark-matrix/">
+      
+      
+        <link rel="prev" href="../MIP-0031-water-quality-inea-inema/">
+      
+      
+        <link rel="next" href="../MIP-0033-release-0/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns - marola.dev docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/marola.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mip-0032-the-model-strategy-benchmark-matrix-closed-api-vs-open-local-vs-marola-rag-vs-marola-tuned-on-the-same-questions-with-latency-and-cost-as-first-class-columns" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="marola.dev docs" class="md-header__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            marola.dev docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="marola.dev docs" class="md-nav__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    marola.dev docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 Using marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    1 Using marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/RUN-LOCALLY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/TELEGRAM-SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telegram bot setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2 Building marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2 Building marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/EFFECTS-MAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Effects map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/SCALA3-JDK-REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scala 3 and JDK review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3 Working on the repo
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3 Working on the repo
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/AGENT-SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/GEMINI-CODE-ASSIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Code Assist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/ISSUE-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/SELF-DOCUMENTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-documenting marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4 Research and plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4 Research and plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent frameworks survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-STACK-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent stack survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Awesome agentic engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FABLE_REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FUTURE-WORK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Future work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIPs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIPs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0001: Bathing-water quality in the ranking, and a sea-lore paragraph in every reply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0002: The Telegram bot — marola's first real user surface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0003: Replies in under three seconds — caching, concurrent fetches, precomputed boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0004: The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0005-map-and-static-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005: The map — every beach's daily recommendation on a static site the pipeline feeds
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0006-live-look-user-cameras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0006: "How does it look right now?" — a live look at each beach, fed by users' cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0007-time-series-foundation-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0007: Time-series foundation models for marola's own series — local open models first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008: Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009: A richer map — a wave marker per beach and, on hover, every aspect at that point
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0011-claude-code-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0012: llm4s as marola's Scala-native LLM/agent layer — and the deprecation of the Python DSPy step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0013-opencode-tryout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013: OpenCode as marola's development agent — a tryout, and what replacing Claude Code would take
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0014-marola-book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0014: A marola book — The Compiler Pushes Back, written in LaTeX, versioned in a repo, built in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0015-interacao-swim-matching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0015: Interação — opt-in "who else is swimming here" matching between marola users
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0016-water-quality-map-markers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0016: Water-quality points on the map — OK / not-OK marks, placed in the sea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0017-agentic-tooling-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0017: Agentic tooling ideas from ai-job-search and September 2026's trending agent repos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0018: Marola self-documentation — weekly post-planner and multi-platform exporter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0019: arXiv/trending-repo survey — sea-forecasting and jellyfish-prediction techniques for marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0020-instagram-bot-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0020: An Instagram account for marola — first post by hand, API publishing, and a gated daily pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0021-beach-accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0021: Beach accessibility — parking, toilets, showers and lifeguard posts from OSM, shown only where the data exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0022-safety-answer-footer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0022: The safety footer — every answer grounded in a safety document ends with lifeguard/193/SAMU 192, appended after the model, never by it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0023: Product expansion — a wait-list, honest promotion, and the easiest way to keep marola's site and backend maintained
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0025-marola-sea-domain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025: marola-sea-1.0 — a small domain-tuned model (QLoRA SFT + tool-call SFT + DPO) served through Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0029-ocean-layer-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0030-coastal-trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0030: Coastal and lakeside trails on the map — named OSM paths near a beach or a lake
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0031-water-quality-inea-inema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031: Water quality for Rio de Janeiro (INEA) and Bahia (INEMA) — closing the "no data" gap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-anthropic-claude-openai-compatible-endpoint-first-party-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Anthropic (Claude) — OpenAI-compatible endpoint, first-party API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-openai-gpt-first-party-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 OpenAI (GPT) — first-party API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-open-local-models-ollama-free" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Open local models — Ollama, free
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-what-one-closed-model-run-costs-the-estimate-the-gate-prints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 What one closed-model run costs — the estimate the gate prints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-the-matrix-oceanbenchmark-generalised-nothing-renamed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 The matrix — OceanBenchmark generalised, nothing renamed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-one-new-client-beside-localllmclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 One new client, beside LocalLlmClient
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-cost-and-latency-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Cost and latency columns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-report-gate-and-ledger-backward-compatible" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Report, gate and ledger — backward compatible
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-the-paid-gate-three-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 The paid gate — three layers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-repeats-and-noise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Repeats and noise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#57-what-is-deterministic-and-what-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 What is deterministic and what is not
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0033-release-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0033: Release 0 — the repo goes public, a self-hosted chatbot, the first published model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0034-rss-feeds-and-content-syndication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0035-map-plugin-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0035: A plugin API for marola's map — third-party layers, Windy-style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0036-marola-advertising-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0036: Marola Advertising Action (MAA) — the Release 0 launch, channel by channel, and how to sustain it after
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0037-map-pwa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0037: A PWA for marola's map — offline-tolerant, installable, no build step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0038-forecast-model-spread/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking one
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0039-deterministic-fact-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0039: The fact guard — a deterministic check that the model's sentence only says what the numbers say
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0040: The reviewer has never been validated — measure the judge, then make it a small jury
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0041-soft-book-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0041: Soft book ingestion — distilling agentic-behavior principles from a book
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0042-map-v2-live-not-static/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0043: docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md — a curated awesome-list, plus a human-gated candidate digest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0044-site-sections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0044: marola.dev becomes a site, not just a map — news, a markdown dev blog, generated API docs, a feeds page, about/contact, and a restrained support page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0045: Classic NLP and parsing where an LLM call is currently paying for it — a survey of marola's product pipeline and its own dev loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0046: The map without the generated look — a chart-derived icon set replacing every emoji
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0047-desmos-equation-art/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0048-scaling-marola-sea/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0048: Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0049: Scala for the web layer — Tyrian, Laminar, ScalaTags, or better plain-JS discipline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0050-brazilian-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0050: Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0051-wave-model-ensemble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0052-wave-model-compute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0052: Should marola ever run its own wave model, and in what language? — a costed survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0053-learned-local-correction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0053: A learned local correction, not another model — statistical downscaling of the public wave forecasts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0054-portuguese-first-experience/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0054: Portuguese first — marola's whole user-facing experience in pt-BR, with a language choice that sticks and a location-aware default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0055: A vector store behind KnowledgeStore, and a chunker that knows what kind of ocean knowledge it is cutting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056: OODS — an Open Ocean Data Store for Brazilian bathing-water quality, starting with IMA/SC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0057: GCP as an opt-in cloud backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0058: A credited human artist — Daniela Vicentini's paintings on marola.dev, an "arte terapia" thanks link
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0059-jev-typed-decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0059: Jev (TypeSafe AI) as an opt-in typed-decision backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0060-open-code-review-on-ready/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060: Open Code Review on request, on marola's own runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0062-ressaca-hazard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per beach
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063: A GitHub-native tracking standard — issues as the unit of work, milestones as deliverables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064: mkdocs for the docs — a real documentation site at marola.dev/docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065: CI/CD on GitHub-hosted runners — nothing builds or deploys from a desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0066-opt-in-dev-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0066: Opt-in dev containers — the flake, in a container, for contributors without Nix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63" id="__nav_6_63_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP 0009
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_63_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIP 0009
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63_1" id="__nav_6_63_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshots
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_63_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Screenshots
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 — screenshots of the wave markers and the hover aspects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-anthropic-claude-openai-compatible-endpoint-first-party-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Anthropic (Claude) — OpenAI-compatible endpoint, first-party API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-openai-gpt-first-party-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 OpenAI (GPT) — first-party API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-open-local-models-ollama-free" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Open local models — Ollama, free
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-what-one-closed-model-run-costs-the-estimate-the-gate-prints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 What one closed-model run costs — the estimate the gate prints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-the-matrix-oceanbenchmark-generalised-nothing-renamed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 The matrix — OceanBenchmark generalised, nothing renamed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-one-new-client-beside-localllmclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 One new client, beside LocalLlmClient
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-cost-and-latency-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Cost and latency columns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-report-gate-and-ledger-backward-compatible" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Report, gate and ledger — backward compatible
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-the-paid-gate-three-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 The paid gate — three layers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-repeats-and-noise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Repeats and noise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#57-what-is-deterministic-and-what-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 What is deterministic and what is not
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mip-0032-the-model-strategy-benchmark-matrix-closed-api-vs-open-local-vs-marola-rag-vs-marola-tuned-on-the-same-questions-with-latency-and-cost-as-first-class-columns">MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns<a class="headerlink" href="#mip-0032-the-model-strategy-benchmark-matrix-closed-api-vs-open-local-vs-marola-rag-vs-marola-tuned-on-the-same-questions-with-latency-and-cost-as-first-class-columns" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Status</strong></td>
+<td>Draft</td>
+</tr>
+<tr>
+<td><strong>Author</strong></td>
+<td>Claude Fable 5.1, for M. Hoffmann (request of 2026-09-06, from a WhatsApp exchange: "is a RAG agent just an executor over retrieval?" → "marola needs its own head-to-head: GPT-raw vs marola-RAG vs marola-fine-tuned vs from-scratch; closed models (Claude Sonnet, 'Llama') vs open vs marola layer 1 / layer 2")</td>
+</tr>
+<tr>
+<td><strong>Created</strong></td>
+<td>2026-09-06</td>
+</tr>
+<tr>
+<td><strong>Phase</strong></td>
+<td>0 (developer tooling; no swimmer-visible change). The local arms are Phase 0 today. A paid arm is not gated on Phase 1, but it <em>is</em> gated on <code>AGENTS.md</code>'s cost rule (a human go-ahead per run, stated cost) — the same reading MIP-0025 §11 item 5 applies to RunPod</td>
+</tr>
+<tr>
+<td><strong>Related</strong></td>
+<td><code>cli/bench/OceanBenchmark.scala</code> + <code>BenchmarkLedger.scala</code> (the harness this generalises — one <code>LlmClient</code>, three fixed <code>Arms</code>), <code>scripts/benchmark_gate.py</code> + <code>.github/workflows/docker-local.yml</code> (the unattended gate that must stay free), <code>docs/benchmarks/2026-09-05.md</code>, MIP-0010 (the ledger the matrix writes to), MIP-0025 §7 (the tuned model's verification plan — a <em>row</em> of this matrix), MIP-0012 §5 (<code>Evaluate</code> — the summariser side, not this), <code>FUTURE-WORK.md</code> §4.1 (this is its benchmark half; the reviewer half and LLM-as-judge stay open) and §10 (Promptfoo), <code>ARCHITECTURE.md</code> §5a</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>M — one small <code>LlmClient</code> implementation (OpenAI-compatible remote endpoint with a bearer key, ~30 lines beside <code>LocalLlmClient</code>), <code>OceanBenchmark</code> refactored from "three arms on one client" to "three arms × N models", three new report columns, a <code>just benchmark-matrix</code> recipe, an env-var paid gate; <code>benchmark_gate.py</code> and the kept-run format stay backward compatible by construction (§5.4). No new module, no new store</td>
+</tr>
+<tr>
+<td><strong>Gain</strong></td>
+<td>infra/dev-loop (the question "is the local 3B + RAG good enough, or does a frontier model change the answer?" gets a number instead of an opinion; MIP-0025's own verification plan gets its comparison table for free); cost/ops (a per-arm cost and latency column is the evidence behind marola's local-first default)</td>
+</tr>
+<tr>
+<td><strong>Effort vs Gain</strong></td>
+<td><code>do next</code> for the free half (§5.1–§5.4: any Ollama model as a row, latency percentiles, token counts — no spend, reuses everything); <code>do when X lands</code> for the paid arm, where X = the maintainer's explicit go-ahead with a key in hand (§5.5) — cents per run (§4.6), but a spend nonetheless</td>
+</tr>
+<tr>
+<td><strong>Depends on</strong></td>
+<td>MIP-0010 (Implemented — the ledger; the matrix adds params/metrics, changes nothing there). MIP-0025 is <em>not</em> a dependency: the matrix runs without a tuned model and gains a row when one exists. No Phase 1 gate. Paid arms: <code>AGENTS.md</code> cost rule (human go-ahead per run)</td>
+</tr>
+<tr>
+<td><strong>Risk</strong></td>
+<td>The 22-question keyword-coverage metric is too small and too crude to rank frontier models against a 3B model honestly — <code>docs/benchmarks/2026-09-05.md</code> already measured ±0.1 run-to-run noise on the <em>same</em> model. A matrix that prints "Claude 0.91 vs llama3.2 0.84" invites reading noise as a verdict. §5.6 (repeats, ranges) and §8 mitigate; growing the question set (§11) is the real fix, and it is not this MIP's to do alone</td>
+</tr>
+<tr>
+<td><strong>Cost so far</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-summary">1. Summary<a class="headerlink" href="#1-summary" title="Permanent link">&para;</a></h2>
+<p><code>just benchmark</code> today answers one question, "is marola's RAG better than the plain prompt?", for
+one model (<code>llama3.2</code>, local). This MIP turns it into a matrix: the same 22 questions and the same
+three prompting strategies (<code>baseline</code>, <code>rag-strict</code>, <code>rag-general</code>), run against a <strong>list of
+models</strong>: local open models through Ollama (the free default, the only thing the unattended gate
+ever runs), a domain-tuned local model when MIP-0025 produces one, and, opt-in and human-confirmed
+per run, hosted closed models (Claude via Anthropic's OpenAI-compatible endpoint; GPT via OpenAI),
+with <strong>latency percentiles, token counts and estimated cost</strong> as columns next to coverage. The
+output is the head-to-head the maintainer asked for, in marola's own terms: a "closed model, raw"
+arm is <code>(claude-sonnet-5, baseline)</code>; "marola-RAG" is <code>(llama3.2, rag-general)</code>; "marola-tuned" is
+<code>(marola-sea-1.0, rag-general)</code> and <code>(marola-sea-1.0, baseline)</code> side by side; "from scratch" stays
+an explicit non-arm (§9).</p>
+<h2 id="2-motivation">2. Motivation<a class="headerlink" href="#2-motivation" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The harness compares strategies, not models.</strong> <code>OceanBenchmark.run(store, llm, minScore)</code>
+  takes exactly one <code>LlmClient</code>; <code>Arms</code> is a fixed <code>List("baseline", "rag-strict", "rag-general")</code>;
+  <code>verdict</code> hardcodes those three names; <code>Main.runBenchmark</code> refuses to run without a <em>local</em> LLM
+  ("<code>--benchmark</code> needs a configured local LLM", <code>Main.scala:251</code>). The report's summary table has
+  no model column at all: <code>docs/benchmarks/2026-09-05.md</code> says "same local <code>llama3.2</code>" in prose.</li>
+<li><strong>MIP-0025 §7 needs a comparison it cannot make today.</strong> Its plan is "<code>just benchmark</code> against
+  <code>marola-sea-1.0</code> compared to the best kept run and to the plain <code>llama3.2</code>/<code>marola-llama3.2</code>
+  baselines": three separate runs, three Markdown files, compared by eye. With <code>MAROLA_BENCH_MODELS</code>
+  it is one run and one table.</li>
+<li><strong>Latency is a product question, not a footnote.</strong> The maintainer's operational point (a slow RAG
+  hop is a UX problem for a chatbot; a model that already knows the domain answers without it) is
+  measurable: <code>rag-general</code> on <code>llama3.2</code> took 608 ms mean vs 514 ms baseline on 2026-09-05. The
+  retrieval hop cost ~100 ms, ~20%. Whether a tuned model without retrieval closes that gap <em>and</em>
+  keeps coverage is exactly the tuned-vs-RAG row pair. Today only <code>mean ms</code> exists; p95 and tokens
+  do not.</li>
+<li><strong>The local-first default deserves a number, and so does the debate.</strong> <code>ARCHITECTURE.md</code> §5a
+  argues for local Ollama in prose; "RAG is just an executor over retrieval" and
+  "fine-tuning moves knowledge from context into weights" are both claims about <em>where the domain
+  layer lives</em>. One table settles both, with the caveat that the axis is a continuum (prompt →
+  few-shot → RAG → adapter → full SFT → pretraining) and the matrix samples four points on it.</li>
+</ul>
+<h2 id="3-user-visible-change">3. User-visible change<a class="headerlink" href="#3-user-visible-change" title="Permanent link">&para;</a></h2>
+<p>None for the swimmer. For the developer:</p>
+<div class="highlight"><pre><span></span><code>$ just benchmark                       # unchanged: 22 q × 3 arms on MAROLA_LOCAL_LLM_MODEL, free, what CI runs
+
+$ MAROLA_BENCH_MODELS="local:llama3.2,local:marola-llama3.2,local:qwen3:8b" just benchmark-matrix
+marola :: benchmark matrix — 22 questions × 3 arms × 3 models (all local, $0)
+| model | arm | coverage (in-corpus) | coverage (general) | coverage (all) | cited | abstained | p50 ms | p95 ms | tok in/out | est. $ |
+|---|---|---|---|---|---|---|---|---|---|---|
+| llama3.2 | baseline | 0.55 | 0.92 | 0.75 | 0% | 0% | 480 | 910 | 1.5k/2.1k | 0 |
+| llama3.2 | rag-general | 0.92 | 0.78 | 0.84 | 41% | 0% | 590 | 1200 | 36k/4.8k | 0 |
+| qwen3:8b | baseline | … | … | … | … | … | … | … | … | 0 |
+…
+
+$ MAROLA_BENCH_MODELS="local:llama3.2,anthropic:claude-sonnet-5" just benchmark-matrix
+marola :: benchmark matrix — 1 paid arm: anthropic:claude-sonnet-5, est. ≤ 50k in / 10k out tokens ≈ $0.20–0.30 per run
+(paid arm skipped: set MAROLA_ALLOW_PAID_LLM=1 and ANTHROPIC_API_KEY after a human go-ahead)
+# with both set, the paid rows appear in the same table with real `tok in/out` and `est. $`, and
+# the footer reads: measured: 2 paid arms, 51,300 in / 7,400 out tokens, $0.18 at the §4 list prices (2026-09-06)
+</code></pre></div>
+<p>The first table of the report keeps today's exact shape (the local default model, three arms, the
+same seven columns) so <code>benchmark_gate.py</code> and every kept run under <code>docs/benchmarks/</code> remain
+valid; the matrix table follows it.</p>
+<h2 id="4-data-sources-and-dependencies-reviewed">4. Data sources and dependencies reviewed<a class="headerlink" href="#4-data-sources-and-dependencies-reviewed" title="Permanent link">&para;</a></h2>
+<p>Every price and API shape below was fetched on <strong>2026-09-06</strong>; "not checked" is stated where it
+applies. Prices change; the harness prints the <em>price table it was built with</em> and its date, and
+reports measured tokens separately from estimated dollars, so a stale table degrades to a labelled
+estimate rather than a wrong fact.</p>
+<h3 id="41-anthropic-claude-openai-compatible-endpoint-first-party-api">4.1 Anthropic (Claude) — OpenAI-compatible endpoint, first-party API<a class="headerlink" href="#41-anthropic-claude-openai-compatible-endpoint-first-party-api" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Prices</strong> (<code>platform.claude.com/docs/en/about-claude/pricing</code>, fetched 2026-09-06): Claude
+  Sonnet 5 <strong>$2 / MTok in, $10 / MTok out</strong> (the page notes the introductory price became the
+  standard price; the scheduled rise to $3/$15 on 2026-09-01 "will not occur"); Haiku 4.5 $1 / $5;
+  Opus 5 $5 / $25; Sonnet 4.6 and 4.5 $3 / $15. Batch API is 50% off (not usable here — the
+  benchmark measures latency, and batch is asynchronous). Models from Claude 4.7 on use a
+  tokenizer producing "approximately 30% more tokens for the same text"; the estimate in §4.6
+  carries that factor.</li>
+<li><strong>Endpoint shape</strong> (<code>platform.claude.com/docs/en/api/openai-sdk</code>, fetched 2026-09-06): base URL
+  <code>https://api.anthropic.com/v1/</code>, <code>POST chat/completions</code>, <code>Authorization</code> header "fully
+  supported", response <code>choices[0].message.content</code> and <code>usage.prompt_tokens</code>/<code>completion_tokens</code>
+  "fully supported". Anthropic's own framing: the layer "is primarily intended to test and compare
+  model capabilities," i.e. this MIP's use. Limitations that matter here: <code>n</code> must be 1 (fine);
+  <code>seed</code> is ignored (repeatability comes from repeats, §5.6, not seeds); system messages are hoisted
+  and concatenated (marola sends one system message per call, no effect); <code>temperature</code> capped at</li>
+<li><strong>Not checked:</strong> rate limits at a fresh account's tier for ~90 calls in a row.</li>
+<li><strong>Auth is an API key</strong> (<code>ANTHROPIC_API_KEY</code>): <code>AGENTS.md</code>'s no-hardcoded-keys rule applies (env
+  var, <code>.env.example</code> placeholder, masked by ai-jail).</li>
+</ul>
+<h3 id="43-openai-gpt-first-party-api">4.3 OpenAI (GPT) — first-party API<a class="headerlink" href="#43-openai-gpt-first-party-api" title="Permanent link">&para;</a></h3>
+<p>Prices (<code>developers.openai.com/api/docs/pricing</code>, fetched 2026-09-06; <code>openai.com/api/pricing</code>
+returned HTTP 403 to a plain fetch): <code>gpt-5-mini</code> <strong>$0.25 / $2.00</strong>, <code>gpt-5-nano</code> $0.05 / $0.40,
+<code>gpt-5</code> $1.25 / $10, <code>gpt-5.4</code> $2.50 / $15, <code>gpt-5.4-mini</code> $0.75 / $4.50, <code>gpt-5.6-terra</code> $2 / $12,
+<code>gpt-5.6-sol</code> $4 / $20; Batch 50% off. Endpoint: the standard <code>/v1/chat/completions</code> with a bearer
+key, the same shape as §4.1, so one client (§5.2) serves both. <strong>Not checked:</strong> OpenAI's terms on
+publishing benchmark comparisons; a search result claims <code>gpt-5-mini</code> is scheduled for shutdown on
+2026-12-11 (third-party page, not confirmed on OpenAI's site); pin whichever model runs, print it.</p>
+<h3 id="45-open-local-models-ollama-free">4.5 Open local models — Ollama, free<a class="headerlink" href="#45-open-local-models-ollama-free" title="Permanent link">&para;</a></h3>
+<p><code>llama3.2</code> (default <code>3b</code>, 2.0 GB, 128K context; Ollama library page fetched 2026-09-06 — the page
+states no licence; the Llama 3.2 Community License, fetched from <code>meta-llama/llama-models</code> the
+same day, is the governing text: 700M-MAU threshold, "Llama" prefix on derived model names.
+MIP-0025 §5.1 already handles the naming rule for the tuned row. <code>qwen3</code> ships 0.6b–235b tags,
+<code>qwen3:8b</code> = 5.2 GB (library page fetched 2026-09-06), a plausible "bigger open model" row. Ollama's
+<code>/v1/chat/completions</code> supports <code>seed</code>, <code>temperature</code> and <code>usage</code> via <code>stream_options.include_usage</code>
+(<code>docs.ollama.com/api/openai-compatibility</code>, fetched 2026-09-06); whether <code>usage</code> is present on a
+non-streaming reply without that option was <strong>not checked</strong> (§11). <strong>Hardware:</strong> the CI gate runs
+a 3B model on 4 vCPUs in 20–40 min (<code>docker-local.yml</code>'s own comment); an 8B row is 2–3× that;
+local-machine or on-demand only, never added to the unattended gate.</p>
+<h3 id="46-what-one-closed-model-run-costs-the-estimate-the-gate-prints">4.6 What one closed-model run costs — the estimate the gate prints<a class="headerlink" href="#46-what-one-closed-model-run-costs-the-estimate-the-gate-prints" title="Permanent link">&para;</a></h3>
+<p>Per question: <code>baseline</code> = 1 call (~70 tokens in, ≤ ~120 out); <code>rag-strict</code> = 1 grounded call
+(4 passages × ≤ 700 chars ≈ 700 tokens + ~90 of prompt ≈ 800 in, ≤ ~120 out); <code>rag-general</code> = the
+same grounded call plus, on the <code>NO_ANSWER_IN_PASSAGES</code> sentinel (expected on most of the 12
+off-corpus questions), one general call. 22 questions → ~56 calls, <strong>≤ ~50k input, ≤ ~10k output
+tokens</strong> per model per run (the 4.7+ tokenizer factor already applied on the input side). At the
+§4.1/§4.3 list prices: Sonnet 5 ≈ <strong>$0.20</strong>, Haiku 4.5 ≈ $0.10, Opus 5 ≈ $0.50, <code>gpt-5-mini</code> ≈
+$0.03, <code>gpt-5.4</code> ≈ $0.28, <strong>cents per run</strong>. The risk is not one run; it is a loop (<code>--repeats 5</code>
+× five models × a growing question set) or a CI job that nobody meant to make paid. Hence §5.5.</p>
+<p><strong>Pick:</strong> v1 = local Ollama rows (default, free, gated) + one OpenAI-compatible remote client for
+Anthropic and OpenAI (opt-in, key from env, human go-ahead per run).</p>
+<h2 id="5-design">5. Design<a class="headerlink" href="#5-design" title="Permanent link">&para;</a></h2>
+<h3 id="51-the-matrix-oceanbenchmark-generalised-nothing-renamed">5.1 The matrix — <code>OceanBenchmark</code> generalised, nothing renamed<a class="headerlink" href="#51-the-matrix-oceanbenchmark-generalised-nothing-renamed" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// cli/src/main/scala/marola/bench/OceanBenchmark.scala</span>
+<span class="k">enum</span><span class="w"> </span><span class="nc">Provider</span><span class="w"> </span><span class="k">derives</span><span class="w"> </span><span class="nc">CanEqual</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">case</span><span class="w"> </span><span class="nc">Local</span><span class="p">,</span><span class="w"> </span><span class="nc">OpenAiCompat</span><span class="w"> </span><span class="p">}</span><span class="w">                    </span><span class="c1">// §5.2 picks the client</span>
+<span class="k">final</span><span class="w"> </span><span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">ModelSpec</span><span class="p">(</span><span class="n">provider</span><span class="p">:</span><span class="w"> </span><span class="nc">Provider</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="n">paid</span><span class="p">:</span><span class="w"> </span><span class="nc">Boolean</span><span class="p">)</span><span class="w">   </span><span class="c1">// "local:llama3.2"</span>
+<span class="k">final</span><span class="w"> </span><span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">Arm</span><span class="p">(</span><span class="n">model</span><span class="p">:</span><span class="w"> </span><span class="nc">ModelSpec</span><span class="p">,</span><span class="w"> </span><span class="n">strategy</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">)</span><span class="w">                       </span><span class="c1">// strategy ∈ Arms (unchanged)</span>
+<span class="c1">// Result gains tokensIn/tokensOut: Option[Int]; ArmSummary gains p50Ms, p95Ms, tokensIn, tokensOut,</span>
+<span class="c1">// estimatedUsd: Option[Double] and is keyed by Arm instead of a String.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">store</span><span class="p">:</span><span class="w"> </span><span class="nc">KnowledgeStore</span><span class="p">,</span><span class="w"> </span><span class="n">models</span><span class="p">:</span><span class="w"> </span><span class="nc">List</span><span class="p">[(</span><span class="nc">ModelSpec</span><span class="p">,</span><span class="w"> </span><span class="nc">LlmClient</span><span class="p">)],</span><span class="w"> </span><span class="n">minScore</span><span class="p">:</span><span class="w"> </span><span class="nc">Double</span><span class="p">,</span><span class="w"> </span><span class="n">repeats</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">):</span><span class="w"> </span><span class="nc">Report</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="nc">Sync</span>
+</code></pre></div>
+<p><code>Arms</code> stays <code>List("baseline", "rag-strict", "rag-general")</code> and the three strategies stay the
+existing calls (<code>OceanQa.generalMessages</code>, <code>OceanQa.answer</code> strict/general): retrieval is local
+regardless of which model answers, so "Claude + marola-RAG" is a real row, not a special case.
+<code>verdict</code> keeps its three-arm logic <em>per model</em> and adds one cross-model paragraph: best
+<code>coverage_all</code> per strategy, the cheapest model within 0.05 of it, and the fastest p95 within 0.05
+of it, deterministic, no model in the loop. Existing <code>just benchmark</code> = <code>run</code> with
+<code>models = List(local default)</code>, <code>repeats = 1</code>.</p>
+<h3 id="52-one-new-client-beside-localllmclient">5.2 One new client, beside <code>LocalLlmClient</code><a class="headerlink" href="#52-one-new-client-beside-localllmclient" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// core/src/main/scala/marola/llm/OpenAiCompatLlmClient.scala — same 25 lines as LocalLlmClient plus</span>
+<span class="c1">// a bearer header and `usage` capture; no SDK, `Http.postJson`'s existing `headers` parameter.</span>
+<span class="k">final</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">OpenAiCompatLlmClient</span><span class="p">(</span><span class="n">baseUrl</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="n">model</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="n">apiKey</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">)</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nc">LlmClient</span>
+</code></pre></div>
+<p>Prefixes in <code>MAROLA_BENCH_MODELS</code>: <code>local:&lt;model&gt;</code> → <code>LocalLlmClient</code>; <code>anthropic:&lt;model&gt;</code> →
+<code>OpenAiCompatLlmClient("https://api.anthropic.com/v1", m, ANTHROPIC_API_KEY)</code>; <code>openai:&lt;model&gt;</code> →
+the same against <code>https://api.openai.com/v1</code> with <code>OPENAI_API_KEY</code>. <code>AppConfig.benchModels</code> parses
+the list; an unknown prefix or a missing key is an <code>enum</code> error printed per row, never an exception.
+Token counts need the <code>usage</code> object <code>complete</code> discards, so both clients gain <code>completeWithUsage:
+Completion &lt; Sync</code> (the field <code>TracedLlmClient</code> already reads for spans, MIP-0010 task 6).</p>
+<h3 id="53-cost-and-latency-columns">5.3 Cost and latency columns<a class="headerlink" href="#53-cost-and-latency-columns" title="Permanent link">&para;</a></h3>
+<p><code>p50</code>/<code>p95</code> from the per-call <code>ms</code> list (pure, unit-tested). <code>est. $</code> = tokens × a price table in
+<code>cli/src/main/resources/llm_prices.json</code> <code>{model, usdPerMTokIn, usdPerMTokOut, checked: "2026-09-06",
+source}</code>, a curated, dated resource like <code>sea_lore.json</code>, never fetched at runtime; a model absent
+from it prints <code>?</code> and the tokens, not a guess. Local rows print <code>0</code> and, in the footer, the
+wall-clock and hardware line (<code>nproc</code>, model tag) so "free" is not read as "fast".</p>
+<h3 id="54-report-gate-and-ledger-backward-compatible">5.4 Report, gate and ledger — backward compatible<a class="headerlink" href="#54-report-gate-and-ledger-backward-compatible" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Report:</strong> the first summary table is the local default model's three arms in today's seven
+  columns, byte-compatible with <code>benchmark_gate.py</code>'s <code>HEADER</code>/<code>ROW</code> regexes; the matrix table
+  (eleven columns, <code>model</code> first) follows under <code>## Matrix</code>. <code>docs/benchmarks/</code> keeps both.</li>
+<li><strong>Gate:</strong> <code>benchmark_gate.py</code> is unchanged in v1 and keeps reading the first table: it still
+  compares <code>rag-general</code> of the <em>local</em> model with the best kept local run. A <code>--model</code> flag to gate
+  a different row is v2. <code>docker-local.yml</code> never sets <code>MAROLA_BENCH_MODELS</code>; a paid prefix there is
+  a bug, and <code>just quality</code>'s hook self-test (§5.5) asserts the workflow file contains none.</li>
+<li><strong>Ledger (MIP-0010):</strong> experiment <code>marola/benchmark</code> unchanged for <code>just benchmark</code>;
+  <code>just benchmark-matrix</code> logs to <code>marola/benchmark-matrix</code> with params <code>models</code>, <code>repeats</code>,
+  <code>prices_checked</code>, and metrics <code>&lt;model&gt;.&lt;arm&gt;.&lt;column&gt;</code> (<code>BenchmarkLedger.metrics</code> keyed by
+  <code>Arm</code>, 250-char key cap respected). Cost so far of paid arms becomes a metric, so the ledger is
+  also the spend log.</li>
+</ul>
+<h3 id="55-the-paid-gate-three-layers">5.5 The paid gate — three layers<a class="headerlink" href="#55-the-paid-gate-three-layers" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>The CLI refuses by default.</strong> A row with <code>paid = true</code> runs only when
+   <code>MAROLA_ALLOW_PAID_LLM=1</code> <em>and</em> its key env var are set; otherwise it prints the row as
+   <code>skipped (paid, not confirmed)</code> with the §4.6 estimate, and the run continues with the free rows.</li>
+<li><strong>A hook.</strong> <code>.claude/hooks/guard-paid-llm.sh</code> (<code>PreToolUse</code> on <code>Bash</code>):
+   exit 2 on any command text that sets <code>MAROLA_ALLOW_PAID_LLM=1</code> or names a paid prefix in
+   <code>MAROLA_BENCH_MODELS</code>, unless the human exported the variable in <em>their</em> shell (the hook checks
+   the inherited environment). <code>--self-test</code> in <code>just quality</code>.</li>
+<li><strong>Never unattended.</strong> No workflow sets the variable; paid prefixes are grep-asserted absent from
+   <code>.github/workflows/*.yml</code>; a scheduled paid run is out of scope (it would need a GitHub
+   Environment approval, MIP-0020's pattern).</li>
+</ol>
+<p>Before a paid run the CLI prints the estimate and, in a terminal, waits for <code>y</code>; after it, the
+measured tokens and dollars. A PR that ran a paid arm adds the API spend to its <code>Cost:</code> trailer.</p>
+<h3 id="56-repeats-and-noise">5.6 Repeats and noise<a class="headerlink" href="#56-repeats-and-noise" title="Permanent link">&para;</a></h3>
+<p><code>--repeats N</code> (default 1; <code>just benchmark-matrix</code> defaults to 3 for local rows) runs each arm N
+times and reports the mean with the min–max range in the cell (<code>0.84 (0.79–0.88)</code>); the verdict
+calls two arms "tied" when their ranges overlap. <code>seed</code> is passed to Ollama and OpenAI rows and
+documented as ignored by Anthropic (§4.1). This is the one change that makes the cross-model
+comparison honest at 22 questions; it does not replace a bigger question set (§11).</p>
+<h3 id="57-what-is-deterministic-and-what-is-not">5.7 What is deterministic and what is not<a class="headerlink" href="#57-what-is-deterministic-and-what-is-not" title="Permanent link">&para;</a></h3>
+<p>Everything in this MIP that produces a number (coverage, citation, abstention, percentiles,
+cost) is pure Scala, unit-tested. The only model output is the answers being scored. No
+LLM-as-judge (<code>FUTURE-WORK.md</code> §4.1 keeps that; note that a closed model as <em>judge</em> would itself be
+a paid arm and needs the same gate).</p>
+<h2 id="6-scoring-safety-impact">6. Scoring / safety impact<a class="headerlink" href="#6-scoring-safety-impact" title="Permanent link">&para;</a></h2>
+<p>None. <code>Swimability</code> and the recommendation pipeline are untouched; the benchmark's questions are
+the existing 22 (no personal data, no locations; the <em>summariser</em> path that carries a user's
+location is not part of this benchmark and is not sent to any third-party API by it).</p>
+<h2 id="7-verification-plan">7. Verification plan<a class="headerlink" href="#7-verification-plan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>OceanBenchmarkSpec</code> (extend): <code>summarise</code> yields p50/p95 from a known <code>ms</code> list; <code>estimatedUsd</code>
+  from a fixture price table, <code>None</code> for an unlisted model; <code>verdict</code>'s cross-model paragraph on a
+  hand-built two-model summary (ties on overlapping ranges).</li>
+<li><code>BenchModelsSpec</code> (new): <code>"local:llama3.2,anthropic:claude-sonnet-5"</code> parses to two specs with
+  <code>paid</code> correct; unknown prefix → error value; missing key → <code>skipped</code> row, not an exception.</li>
+<li><code>OpenAiCompatLlmClientSpec</code> (new): exact request JSON and <code>Authorization: Bearer</code> header via a
+  scripted <code>Http.Transport</code>; <code>usage</code> extracted; a reply without <code>usage</code> yields <code>None</code> tokens.</li>
+<li><code>BenchmarkLedgerSpec</code> (extend): matrix metric keys <code>&lt;model&gt;.&lt;arm&gt;.&lt;column&gt;</code> under 250 chars.</li>
+<li><code>scripts/benchmark_gate.py --self-test</code> (extend): a report with a matrix table <em>after</em> the first
+  table still gates on the first; the workflow-file paid-prefix assertion.</li>
+<li><code>guard-paid-llm.sh --self-test</code>: blocks <code>MAROLA_ALLOW_PAID_LLM=1 just benchmark-matrix</code> in the
+  command text; passes when the variable is inherited from the shell.</li>
+<li>Live, free: <code>MAROLA_BENCH_MODELS="local:llama3.2,local:marola-llama3.2" just benchmark-matrix</code>
+  produces a two-model table and the first table still passes <code>benchmark_gate.py</code> against
+  <code>docs/benchmarks/</code>. Live, paid, once, after a go-ahead: <code>anthropic:claude-haiku-4-5</code> (the
+  cheapest Claude row, ≈ $0.10): confirm the endpoint, the <code>usage</code> field and the measured-vs-
+  estimated dollars; keep that run under <code>docs/benchmarks/</code> with the spend in its header.</li>
+<li><strong>Done:</strong> <code>docs/benchmarks/</code> holds one matrix run with ≥ 2 local models and repeats = 3; the gate
+  is green and still free; <code>ARCHITECTURE.md</code> §5a cites a row of it.</li>
+</ul>
+<h2 id="8-risks-limitations-and-honest-caveats">8. Risks, limitations, and honest caveats<a class="headerlink" href="#8-risks-limitations-and-honest-caveats" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>22 keyword-coverage questions cannot rank frontier models.</strong> The metric saturates (baseline
+  general coverage was 0.92–1.00 on 2026-09-05 already). Expect closed models to tie at the top on
+  the off-corpus half; the informative cells are in-corpus coverage, citation rate, latency and
+  cost. Say so in the report footer.</li>
+<li><strong>Latency across arms is not apples to apples:</strong> local rows measure a CPU on the maintainer's
+  machine or a 4-vCPU runner; hosted rows measure a network round trip to a data centre. The table
+  prints the hardware line; the comparison the maintainer cares about (retrieval hop vs. no hop)
+  is <em>within</em> a model row, which is fair.</li>
+<li><strong>A strong model may answer well despite a poor retrieval</strong>, masking the embedder's weakness;
+  cited % and the sentinel rate expose this; note it in the verdict.</li>
+<li><strong>Prices drift.</strong> The dated <code>llm_prices.json</code> and the measured-token column keep the estimate
+  labelled; the number is not a bill.</li>
+<li><strong>Terms of use:</strong> Anthropic's compat layer is explicitly for testing and comparison (§4.1); the
+  equivalent for OpenAI and for <em>publishing</em> results was not checked. Kept runs are developer
+  evidence, not marketing, until it is.</li>
+</ul>
+<h2 id="9-alternatives-considered">9. Alternatives considered<a class="headerlink" href="#9-alternatives-considered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>(a) An addendum to MIP-0010.</strong> The ledger records runs; it does not define what a run compares.
+  A model axis, three columns, a new client, a paid gate and a matrix recipe are harness changes
+  MIP-0010's §5 never sketched, and MIP-0010 is Implemented; reopening it for new scope would
+  break the index's status vocabulary. Rejected; the matrix <em>writes to</em> MIP-0010 (§5.4).</li>
+<li><strong>(b) An addendum to MIP-0025.</strong> Its §7 is the verification of one candidate model; it consumes
+  a comparison, it does not own the comparator. Closed-API rows, cost/latency columns and the paid
+  gate have nothing to do with fine-tuning. Rejected; MIP-0025's §7 becomes "one row of MIP-0032".</li>
+<li><strong>Promptfoo</strong> (<code>FUTURE-WORK.md</code> §10): a YAML matrix runner over providers, exactly this shape,
+  but marola's RAG arms are Scala code (<code>OceanQa</code>), not prompts, and it adds a Node toolchain for
+  what is ~150 lines of Scala on an existing harness. Rejected for v1; revisit if the matrix grows
+  beyond marola's own strategies.</li>
+<li><strong>A "from-scratch" arm.</strong> Pretraining is off the table for cost and corpus reasons (the
+  maintainer's own conclusion); the honest stand-in is the smallest untuned open model as a floor
+  row (<code>local:llama3.2:1b</code>), so the tuned row's gain has a lower bound as well as an upper one.</li>
+<li><strong>Do nothing.</strong> MIP-0025 would compare three Markdown files by hand and the local-vs-hosted
+  argument would stay prose. Loses because the free half is a <code>do next</code>-sized change.</li>
+</ul>
+<h2 id="11-open-questions">11. Open questions<a class="headerlink" href="#11-open-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>"marola layer 1 / layer 2" — which layers?</strong> Three readings fit the maintainer's words and
+   the repo, and the matrix accommodates all of them as rows, but the <em>names in the report</em> need a
+   decision: (i) layer 1 = RAG (context), layer 2 = a fine-tuned model (weights), the "changes
+   context vs. changes parameters" spectrum from the chat; (ii) MIP-0025's own Layer 1 (marine-
+   corpus QLoRA) / Layer 2 (MCP tool-call SFT) / Layer 3 (safety DPO), which the maintainer wrote;
+   (iii) <code>finetune/README.md</code>'s Tier 1 (Modelfile persona, <code>marola-llama3.2</code>) / Tier 2 (QLoRA
+   adapter). Not resolved here on purpose.</li>
+<li><strong>"Llama" in the closed-model list.</strong> Transcribed oddly. Llama is an open-weights family
+   (§4.5, a local row); if a <em>hosted</em> Llama was meant, no provider was named and none is verified.</li>
+<li>Not checked: whether Ollama's non-streaming reply carries <code>usage</code> without
+   <code>stream_options.include_usage</code>; Anthropic rate limits at the account's tier for ~60 sequential
+   calls; OpenAI's terms on publishing comparisons.</li>
+<li>Growing the question set past 22 (and past keyword coverage): who writes the next 50, and from
+   where (MIP-0002's real user questions, per <code>docs/benchmarks/2026-09-05.md</code> item 4)?</li>
+<li>Housekeeping: <code>.env.example</code> is an empty file today (0 bytes). The
+   <code>ANTHROPIC_API_KEY</code>/<code>OPENAI_API_KEY</code> placeholders would be its first content. Confirm that is
+   the intended home.</li>
+</ol>
+<h2 id="appendix">Appendix<a class="headerlink" href="#appendix" title="Permanent link">&para;</a></h2>
+<p>Fetched 2026-09-06 (all via WebFetch/WebSearch, none assumed):</p>
+<ul>
+<li><code>https://platform.claude.com/docs/en/about-claude/pricing</code> — model table (Sonnet 5 $2/$10,
+  Haiku 4.5 $1/$5, Opus 5 $5/$25), the Sonnet 5 "introductory price is now standard" note, the
+  Claude 4.7+ "~30% more tokens" note, Batch 50%.</li>
+<li><code>https://platform.claude.com/docs/en/api/openai-sdk</code> (redirect from <code>docs.anthropic.com</code>) —
+  base URL <code>https://api.anthropic.com/v1/</code>, "intended to test and compare model capabilities",
+  <code>Authorization</code> supported, <code>usage.prompt_tokens</code>/<code>completion_tokens</code> supported, <code>seed</code> ignored,
+  <code>n</code> = 1, system messages hoisted.</li>
+<li><code>https://developers.openai.com/api/docs/pricing</code> — <code>gpt-5-mini</code> $0.25/$2, <code>gpt-5-nano</code>
+  $0.05/$0.40, <code>gpt-5</code> $1.25/$10, <code>gpt-5.4</code> $2.50/$15, Batch 50%. <code>https://openai.com/api/pricing/</code>
+  → HTTP 403.</li>
+<li><code>https://ollama.com/library/llama3.2</code> — tags <code>1b</code>, <code>3b</code> (default, 2.0 GB, 128K context), no
+  licence stated on the page. <code>https://ollama.com/library/qwen3</code> — 0.6b–235b, <code>8b</code> = 5.2 GB.</li>
+<li><code>https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/LICENSE</code> — Llama 3.2
+  Community License, 700M-MAU clause, "include 'Llama' at the beginning of any such AI model name".</li>
+<li><code>https://docs.ollama.com/api/openai-compatibility</code> — <code>seed</code>, <code>temperature</code>,
+  <code>stream_options.include_usage</code> listed as supported request fields.</li>
+<li>Repo facts read, not fetched: <code>OceanBenchmark.scala</code> (<code>Arms</code>, one <code>LlmClient</code>, <code>mean ms</code> only),
+  <code>Main.scala:251</code> (local-only guard), <code>benchmark_gate.py</code> (first table, <code>rag-general</code> vs <code>baseline</code>),
+  <code>docker-local.yml</code> (20–40 min on 4 vCPUs, <code>main</code>-only triggers), <code>OceanQa.scala</code> (k = 4,
+  sentinel, two-stage general fallback), <code>Corpus.MaxChunkChars = 700</code>, <code>Http.postJson(headers)</code>,
+  <code>benchmark_questions.json</code> (22 questions, 10 in-corpus), <code>knowledge/</code> (6 documents, ~15 KB).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top", "navigation.tracking", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

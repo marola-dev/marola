@@ -1,0 +1,4440 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The ocean intelligence layer for a stretch of coast — guides and design proposals.">
+      
+      
+      
+        <link rel="canonical" href="https://marola.dev/docs/MIPs/MIP-0034-rss-feeds-and-content-syndication/">
+      
+      
+        <link rel="prev" href="../MIP-0033-release-0/">
+      
+      
+        <link rel="next" href="../MIP-0035-map-plugin-api/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed - marola.dev docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/marola.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mip-0034-rss-in-and-rss-out-operational-alerts-a-curated-reading-queue-and-marolas-own-atom-feed" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="marola.dev docs" class="md-header__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            marola.dev docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="marola.dev docs" class="md-nav__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    marola.dev docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 Using marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    1 Using marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/RUN-LOCALLY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/TELEGRAM-SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telegram bot setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2 Building marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2 Building marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/EFFECTS-MAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Effects map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/SCALA3-JDK-REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scala 3 and JDK review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3 Working on the repo
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3 Working on the repo
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/AGENT-SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/GEMINI-CODE-ASSIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Code Assist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/ISSUE-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/SELF-DOCUMENTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-documenting marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4 Research and plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4 Research and plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent frameworks survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-STACK-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent stack survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Awesome agentic engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FABLE_REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FUTURE-WORK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Future work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIPs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIPs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0001: Bathing-water quality in the ranking, and a sea-lore paragraph in every reply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0002: The Telegram bot — marola's first real user surface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0003: Replies in under three seconds — caching, concurrent fetches, precomputed boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0004: The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0005-map-and-static-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005: The map — every beach's daily recommendation on a static site the pipeline feeds
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0006-live-look-user-cameras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0006: "How does it look right now?" — a live look at each beach, fed by users' cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0007-time-series-foundation-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0007: Time-series foundation models for marola's own series — local open models first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008: Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009: A richer map — a wave marker per beach and, on hover, every aspect at that point
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0011-claude-code-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0012: llm4s as marola's Scala-native LLM/agent layer — and the deprecation of the Python DSPy step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0013-opencode-tryout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013: OpenCode as marola's development agent — a tryout, and what replacing Claude Code would take
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0014-marola-book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0014: A marola book — The Compiler Pushes Back, written in LaTeX, versioned in a repo, built in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0015-interacao-swim-matching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0015: Interação — opt-in "who else is swimming here" matching between marola users
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0016-water-quality-map-markers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0016: Water-quality points on the map — OK / not-OK marks, placed in the sea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0017-agentic-tooling-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0017: Agentic tooling ideas from ai-job-search and September 2026's trending agent repos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0018: Marola self-documentation — weekly post-planner and multi-platform exporter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0019: arXiv/trending-repo survey — sea-forecasting and jellyfish-prediction techniques for marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0020-instagram-bot-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0020: An Instagram account for marola — first post by hand, API publishing, and a gated daily pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0021-beach-accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0021: Beach accessibility — parking, toilets, showers and lifeguard posts from OSM, shown only where the data exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0022-safety-answer-footer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0022: The safety footer — every answer grounded in a safety document ends with lifeguard/193/SAMU 192, appended after the model, never by it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0023: Product expansion — a wait-list, honest promotion, and the easiest way to keep marola's site and backend maintained
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0025-marola-sea-domain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025: marola-sea-1.0 — a small domain-tuned model (QLoRA SFT + tool-call SFT + DPO) served through Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0029-ocean-layer-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0030-coastal-trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0030: Coastal and lakeside trails on the map — named OSM paths near a beach or a lake
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0031-water-quality-inea-inema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031: Water quality for Rio de Janeiro (INEA) and Bahia (INEMA) — closing the "no data" gap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0032-model-strategy-benchmark-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0033-release-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0033: Release 0 — the repo goes public, a self-hosted chatbot, the first published model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-inmet-avisos-rss-picked-52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 INMET avisos RSS — picked (§5.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#41a-inmet-avisosativos-json-enrichment-only-deliberately-not-primary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1a INMET avisos/ativos JSON — enrichment only, deliberately not primary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#41b-backfill-viable-by-bounded-id-walk-no-archive-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1b Backfill — viable by bounded id walk, no archive endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-youtube-channel-atom-fetchable-but-thin-55" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 YouTube channel Atom — fetchable, but thin (§5.5)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-medium-rss-rejected-for-ingestion-link-only-55" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Medium RSS — rejected for ingestion, link-only (§5.5)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-stack-reading-the-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 "stack" — reading the request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-nasa-earth-observatory-rss-accepted-into-the-reading-queue-53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 NASA Earth Observatory RSS — accepted into the reading queue (§5.3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-checked-and-rejected-as-unreachable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 Checked and rejected as unreachable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#47-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.7 Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-corefeeds-one-pure-parser-shared" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 core/feeds — one pure parser (shared)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-inbound-a-operational-alerts-corealerts-never-corpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Inbound A — operational alerts (core/alerts), never corpus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-inbound-b-the-reading-queue-scriptsfeed_digestpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Inbound B — the reading queue (scripts/feed_digest.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-the-knowledgesafety-rule-feed-content-never-lands-there-automatically-or-otherwise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 The knowledge/safety/ rule — feed content never lands there, automatically or otherwise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-media-format-verdicts-what-transform-an-rss-feed-into-marola-content-is-actually-worth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Media-format verdicts (what "transform an RSS feed into marola content" is actually worth)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-outbound-marolas-own-atom-feed-coresitesitefeedscala" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Outbound — marola's own Atom feed (core/site/SiteFeed.scala)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#57-other-outbound-feed-ideas-evaluated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 Other outbound-feed ideas, evaluated
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checked-live-all-2026-09-07-curl-from-this-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live (all 2026-09-07, curl from this machine)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-read-this-repo-at-749ec54-2026-09-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code read (this repo, at 749ec54, 2026-09-07)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checked-live-2026-09-08-second-pass-folded-into-41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live (2026-09-08, second pass — folded into §4.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-checked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not checked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0035-map-plugin-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0035: A plugin API for marola's map — third-party layers, Windy-style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0036-marola-advertising-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0036: Marola Advertising Action (MAA) — the Release 0 launch, channel by channel, and how to sustain it after
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0037-map-pwa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0037: A PWA for marola's map — offline-tolerant, installable, no build step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0038-forecast-model-spread/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking one
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0039-deterministic-fact-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0039: The fact guard — a deterministic check that the model's sentence only says what the numbers say
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0040: The reviewer has never been validated — measure the judge, then make it a small jury
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0041-soft-book-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0041: Soft book ingestion — distilling agentic-behavior principles from a book
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0042-map-v2-live-not-static/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0043: docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md — a curated awesome-list, plus a human-gated candidate digest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0044-site-sections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0044: marola.dev becomes a site, not just a map — news, a markdown dev blog, generated API docs, a feeds page, about/contact, and a restrained support page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0045: Classic NLP and parsing where an LLM call is currently paying for it — a survey of marola's product pipeline and its own dev loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0046: The map without the generated look — a chart-derived icon set replacing every emoji
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0047-desmos-equation-art/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0048-scaling-marola-sea/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0048: Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0049: Scala for the web layer — Tyrian, Laminar, ScalaTags, or better plain-JS discipline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0050-brazilian-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0050: Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0051-wave-model-ensemble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0052-wave-model-compute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0052: Should marola ever run its own wave model, and in what language? — a costed survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0053-learned-local-correction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0053: A learned local correction, not another model — statistical downscaling of the public wave forecasts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0054-portuguese-first-experience/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0054: Portuguese first — marola's whole user-facing experience in pt-BR, with a language choice that sticks and a location-aware default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0055: A vector store behind KnowledgeStore, and a chunker that knows what kind of ocean knowledge it is cutting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056: OODS — an Open Ocean Data Store for Brazilian bathing-water quality, starting with IMA/SC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0057: GCP as an opt-in cloud backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0058: A credited human artist — Daniela Vicentini's paintings on marola.dev, an "arte terapia" thanks link
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0059-jev-typed-decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0059: Jev (TypeSafe AI) as an opt-in typed-decision backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0060-open-code-review-on-ready/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060: Open Code Review on request, on marola's own runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0062-ressaca-hazard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per beach
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063: A GitHub-native tracking standard — issues as the unit of work, milestones as deliverables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064: mkdocs for the docs — a real documentation site at marola.dev/docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065: CI/CD on GitHub-hosted runners — nothing builds or deploys from a desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0066-opt-in-dev-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0066: Opt-in dev containers — the flake, in a container, for contributors without Nix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63" id="__nav_6_63_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP 0009
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_63_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIP 0009
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63_1" id="__nav_6_63_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshots
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_63_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Screenshots
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 — screenshots of the wave markers and the hover aspects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-inmet-avisos-rss-picked-52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 INMET avisos RSS — picked (§5.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#41a-inmet-avisosativos-json-enrichment-only-deliberately-not-primary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1a INMET avisos/ativos JSON — enrichment only, deliberately not primary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#41b-backfill-viable-by-bounded-id-walk-no-archive-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1b Backfill — viable by bounded id walk, no archive endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-youtube-channel-atom-fetchable-but-thin-55" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 YouTube channel Atom — fetchable, but thin (§5.5)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-medium-rss-rejected-for-ingestion-link-only-55" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Medium RSS — rejected for ingestion, link-only (§5.5)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-stack-reading-the-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 "stack" — reading the request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-nasa-earth-observatory-rss-accepted-into-the-reading-queue-53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 NASA Earth Observatory RSS — accepted into the reading queue (§5.3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-checked-and-rejected-as-unreachable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 Checked and rejected as unreachable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#47-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.7 Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-corefeeds-one-pure-parser-shared" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 core/feeds — one pure parser (shared)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-inbound-a-operational-alerts-corealerts-never-corpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Inbound A — operational alerts (core/alerts), never corpus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-inbound-b-the-reading-queue-scriptsfeed_digestpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Inbound B — the reading queue (scripts/feed_digest.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-the-knowledgesafety-rule-feed-content-never-lands-there-automatically-or-otherwise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 The knowledge/safety/ rule — feed content never lands there, automatically or otherwise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-media-format-verdicts-what-transform-an-rss-feed-into-marola-content-is-actually-worth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Media-format verdicts (what "transform an RSS feed into marola content" is actually worth)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-outbound-marolas-own-atom-feed-coresitesitefeedscala" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Outbound — marola's own Atom feed (core/site/SiteFeed.scala)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#57-other-outbound-feed-ideas-evaluated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 Other outbound-feed ideas, evaluated
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checked-live-all-2026-09-07-curl-from-this-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live (all 2026-09-07, curl from this machine)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-read-this-repo-at-749ec54-2026-09-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code read (this repo, at 749ec54, 2026-09-07)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checked-live-2026-09-08-second-pass-folded-into-41" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live (2026-09-08, second pass — folded into §4.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-checked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not checked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mip-0034-rss-in-and-rss-out-operational-alerts-a-curated-reading-queue-and-marolas-own-atom-feed">MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed<a class="headerlink" href="#mip-0034-rss-in-and-rss-out-operational-alerts-a-curated-reading-queue-and-marolas-own-atom-feed" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Status</strong></td>
+<td>Draft</td>
+</tr>
+<tr>
+<td><strong>Author</strong></td>
+<td>Claude Opus 5, for M. Hoffmann (request of 2026-09-07, verbatim: "create a MIP to implement RSS feeds into marola (to knowledge base), and which specific media formats (youtube, medium, stack) we could use to transform RSS feed into a marola direct feed... think in other ideas for RSS feeds, marola could have its own feed in the website")</td>
+</tr>
+<tr>
+<td><strong>Created</strong></td>
+<td>2026-09-07</td>
+</tr>
+<tr>
+<td><strong>Phase</strong></td>
+<td>0 (<code>--ask</code>, the corpus tooling, the static site — all three arms). §5.2's alert banner reaches Phase 1 users for free once MIP-0002's bot exists; nothing here requires Phase 2 or any cloud resource</td>
+</tr>
+<tr>
+<td><strong>Related</strong></td>
+<td>MIP-0001 (the curated-corpus + "no unsourced fact reaches a user" rule this MIP refuses to relax), MIP-0022 (the <code>knowledge/safety/</code> directory convention — respected, not redesigned; merged as #195), MIP-0005 (<code>site/dist</code>, the 3-hourly rebuild the outbound feed rides), MIP-0019 + <code>scripts/arxiv_digest.py</code> (the Atom-parsing and flat-file-cache precedent this MIP copies rather than reinvents), MIP-0018 (Substack/blog exporter — the <em>outbound-to-platforms</em> half; this MIP is the <em>feed</em> half and defers to it), MIP-0031 (the "the agency publishes no machine-readable feed" finding this MIP partially overturns for INMET), MIP-0033 (Release 0 — a public repo is what makes an outbound feed worth having), <code>FUTURE-WORK.md</code> §9.1 (RAG grounding) and §9.2 (proactive hazard detection — deliberately <em>not</em> built here)</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>S/M/L per §5 item — §5.6 outbound Atom is S (one pure serializer + one <code>SiteBuilder</code> write); §5.3 reading queue is S/M (one Python script cloned from <code>arxiv_digest.py</code>); §5.1 + §5.2 inbound alerts are M/L (a new <code>core/feeds</code> parser, a <code>core/alerts</code> client, an area-name mapping table, and a new user-visible surface)</td>
+</tr>
+<tr>
+<td><strong>Gain</strong></td>
+<td>user value (a live INMET coastal-wind/storm warning next to the swim score; a subscribable daily "best hour" feed); infra/dev-loop (a reading queue that feeds <code>corpus-doc</code> instead of ad-hoc browsing)</td>
+</tr>
+<tr>
+<td><strong>Effort vs Gain</strong></td>
+<td><code>cheap win</code> for §5.6 (outbound feed) and §5.3 (reading queue) — both ship alone, neither touches scoring; <code>do next</code> for §5.1/§5.2 (INMET alerts) once someone wants the banner; <code>park</code> for §5.5's transcript pipeline and §5.7c's alert feed; <strong>reject</strong> for auto-ingesting any feed into <code>knowledge/</code> (§9)</td>
+</tr>
+<tr>
+<td><strong>Depends on</strong></td>
+<td>Nothing blocking. MIP-0022 already merged (#195), so <code>knowledge/safety/</code> and <code>CorpusChunk.safety</code> exist — §5.4's rule is written against the real loader, not a proposal. §5.6 assumes MIP-0005's <code>site/dist</code> build, which is Implemented. No Phase 1 gate (the CLI and the site are Phase 0 surfaces), no paid cloud resource, no API key anywhere in this MIP</td>
+</tr>
+<tr>
+<td><strong>Blocked by</strong></td>
+<td>none</td>
+</tr>
+<tr>
+<td><strong>Risk</strong></td>
+<td>Feed rot that looks like health: a subscribed feed keeps returning HTTP 200 long after it stops being maintained (verified — NOAA's own <code>NOAAVisualizations</code> YouTube feed returns 200 with 15 entries whose newest is <strong>2017-02-17</strong>), so an ingestion path that trusts "the fetch worked" silently ages. The second risk is scope: an alert path that starts as a display banner and drifts into changing <code>Swimability.score</code> without a MIP of its own</td>
+</tr>
+<tr>
+<td><strong>Cost so far</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-summary">1. Summary<a class="headerlink" href="#1-summary" title="Permanent link">&para;</a></h2>
+<p>Three separable things, deliberately not one pipeline. <strong>In:</strong> marola subscribes to a small
+allow-list of feeds, split by <em>what kind of thing the item is</em>: perishable operational warnings
+(INMET's live South-America <code>avisos</code> RSS, which covers all three <code>site/areas.json</code> areas and
+carries a real <code>Início</code>/<code>Fim</code> validity window) become a deterministic, expiring alert banner and
+<strong>never</strong> a corpus document; durable explanatory articles become a <em>reading queue</em> that a human
+turns into a <code>knowledge/*.md</code> document through the existing <code>corpus-doc</code> skill, one reviewed PR at
+a time. <strong>Out:</strong> <code>just site-build</code> writes an Atom feed of each area's daily best swimming hour to
+<code>site/dist</code>, for free, on the 3-hourly rebuild that already runs. No feed item ever becomes corpus
+text automatically, and nothing feed-derived ever lands in <code>knowledge/safety/</code>.</p>
+<h2 id="2-motivation">2. Motivation<a class="headerlink" href="#2-motivation" title="Permanent link">&para;</a></h2>
+<p>Two concrete gaps, one opportunity.</p>
+<p><code>knowledge/README.md</code> states the corpus rule plainly: "a wrong sentence here becomes a confidently
+wrong answer", and admits the existing six documents have not yet had their human
+sentence-by-sentence check. Growing that corpus today means a human browsing for sources by hand.
+A reading queue is the cheap half of that problem: finding candidates is automatable, <em>trusting</em>
+them is not.</p>
+<p>Second, marola tells a user the sea is fine at 07:00 tomorrow while INMET has an active
+<code>Aviso de Ventos Costeiros</code> over <code>Metropolitana do Rio de Janeiro</code>, verified live on 2026-09-07,
+85 active warnings, 5 of them coastal-wind. MIP-0031 concluded that Brazilian agencies publish no
+machine-readable feed; that is true of INEA/INEMA's bathing-water bulletins and of the Marinha's
+weather warnings (Cloudflare-blocked, §4.6), but <strong>not</strong> of INMET, which publishes RSS 2.0 marked
+<code>&lt;copyright&gt;public domain&lt;/copyright&gt;</code>. That is a free, keyless, local-first source marola is
+currently ignoring.</p>
+<p>Third: marola's site rebuilds every 3 hours (<code>.github/workflows/site.yml</code>, <code>cron: "15 */3 * * *"</code>)
+and produces a board per area per day. An Atom file is ~40 lines of pure serializer over data that
+already exists, the cheapest subscribable surface marola will ever have, and one that works
+before MIP-0002's bot exists.</p>
+<h2 id="3-user-visible-change">3. User-visible change<a class="headerlink" href="#3-user-visible-change" title="Permanent link">&para;</a></h2>
+<p><strong>Outbound (§5.6)</strong>: a new file, and one <code>&lt;link&gt;</code> in the page head:</p>
+<div class="highlight"><pre><span></span><code><span class="cm">&lt;!-- https://marola.dev/feed.xml (also data/&lt;area&gt;/feed.xml per area) --&gt;</span>
+<span class="nt">&lt;entry&gt;</span>
+<span class="w">  </span><span class="nt">&lt;id&gt;</span>tag:marola.dev,2026:floripa/2026-09-08<span class="nt">&lt;/id&gt;</span>
+<span class="w">  </span><span class="nt">&lt;title&gt;</span>Florianópolis,<span class="w"> </span>Mon<span class="w"> </span>8<span class="w"> </span>Sep<span class="w"> </span>—<span class="w"> </span>best<span class="w"> </span>hour<span class="w"> </span>07:00<span class="w"> </span>at<span class="w"> </span>Praia<span class="w"> </span>da<span class="w"> </span>Joaquina<span class="w"> </span>(82/100)<span class="nt">&lt;/title&gt;</span>
+<span class="w">  </span><span class="nt">&lt;updated&gt;</span>2026-09-07T06:15:00-03:00<span class="nt">&lt;/updated&gt;</span>
+<span class="w">  </span><span class="nt">&lt;published&gt;</span>2026-09-07T06:15:00-03:00<span class="nt">&lt;/published&gt;</span>
+<span class="w">  </span><span class="nt">&lt;link</span><span class="w"> </span><span class="na">href=</span><span class="s">"https://marola.dev/?area=floripa&amp;amp;day=2026-09-08"</span><span class="nt">/&gt;</span>
+<span class="w">  </span><span class="nt">&lt;summary</span><span class="w"> </span><span class="na">type=</span><span class="s">"text"</span><span class="nt">&gt;</span>07:00,<span class="w"> </span>water<span class="w"> </span>21.6<span class="w"> </span>°C,<span class="w"> </span>wind<span class="w"> </span>8<span class="w"> </span>km/h<span class="w"> </span>offshore,<span class="w"> </span>waves<span class="w"> </span>0.9<span class="w"> </span>m.
+<span class="w">    </span>Bathing<span class="w"> </span>water:<span class="w"> </span>própria<span class="w"> </span>(IMA/SC,<span class="w"> </span>collected<span class="w"> </span>2026-09-04).<span class="w"> </span>Whales:<span class="w"> </span>likely<span class="w"> </span>(season).
+<span class="w">    </span>Sources:<span class="w"> </span>OpenStreetMap/Overpass,<span class="w"> </span>Open-Meteo,<span class="w"> </span>IMA/SC.<span class="nt">&lt;/summary&gt;</span>
+<span class="nt">&lt;/entry&gt;</span>
+</code></pre></div>
+<p><strong>Inbound alerts (§5.2)</strong>: one deterministic line above the existing output, present only while
+the warning is inside its own validity window:</p>
+<div class="highlight"><pre><span></span><code>$ just run
+⚠️ INMET, active until 2026-09-07 11:00: Aviso de Ventos Costeiros (Perigo Potencial) —
+   areas: Metropolitana do Rio de Janeiro. https://avisos.inmet.gov.br/55632
+
+Best hour tomorrow: 07:00 at Praia Vermelha — 78/100
+...
+</code></pre></div>
+<p><strong>Inbound reading queue (§5.3)</strong>: developer-facing only, no user surface:</p>
+<div class="highlight"><pre><span></span><code>$ python3 scripts/feed_digest.py
+noaa-nasa-eo      3 new  (2 ocean-relevant)
+medium-tag-ocean  8 new  (0 ocean-relevant — link-only, see §5.5)
+→ 5 candidates in .tmp/feed_cache/index.jsonl; none written to knowledge/ (by design)
+</code></pre></div>
+<h2 id="4-data-sources-and-dependencies-reviewed">4. Data sources and dependencies reviewed<a class="headerlink" href="#4-data-sources-and-dependencies-reviewed" title="Permanent link">&para;</a></h2>
+<p>All fetches below are from <strong>2026-09-07</strong>, from this machine, with <code>curl</code>; raw status/content-type
+lines are in the Appendix.</p>
+<h3 id="41-inmet-avisos-rss-picked-52">4.1 INMET <code>avisos</code> RSS — <strong>picked</strong> (§5.2)<a class="headerlink" href="#41-inmet-avisos-rss-picked-52" title="Permanent link">&para;</a></h3>
+<p><code>https://apiprevmet3.inmet.gov.br/avisos/rss</code>. RSS 2.0, <code>application/rss+xml</code>, 150 KB, <strong>85 live
+<code>&lt;item&gt;</code>s</strong>, <code>&lt;language&gt;pt-BR&lt;/language&gt;</code>, <code>&lt;copyright&gt;public domain&lt;/copyright&gt;</code> plus an inline
+licence comment ("O conteudo deste site, podera ser reproduzido desde que citada a fonte"). Each
+item carries a title (<code>Aviso de Ventos Costeiros. Severidade Grau: Perigo Potencial</code>), a stable
+<code>&lt;guid&gt;</code> (<code>.../avisos/rss/55632</code>), a <code>pubDate</code>, and an HTML <code>&lt;table&gt;</code> in <code>&lt;description&gt;</code> with
+<code>Status</code>, <code>Evento</code>, <code>Severidade</code>, <code>Início</code>, <code>Fim</code>, <code>Descrição</code>, and <code>Área</code>. Event types seen in
+one snapshot: Baixa Umidade 33, Tempestade 29, Chuvas Intensas 11, <strong>Ventos Costeiros 5</strong>,
+Vendaval 4, plus Geada/Declínio de Temperatura/Acumulado de Chuva. Coverage of marola's areas is
+real: <code>Catarinense</code> 62 mentions, <code>Florianópolis</code> 20, <code>Sul Baiano</code> 44, <code>Metropolitana do Rio de
+Janeiro</code> 17, <code>Metropolitana de Salvador</code> 1. <strong>No key, no quota published, free.</strong> The catch:
+<code>Área</code> is a list of <strong>IBGE mesoregion names, not coordinates or a polygon</strong>: matching a warning to
+a beach needs a hand-written mesoregion→<code>areas.json</code> table (§5.2, §11.2). Not verified: any rate
+limit or terms-of-use page beyond the embedded copyright line.</p>
+<p><strong>Revision, 2026-09-08: the mesoregion table is not needed.</strong> A second probing pass (originally
+drafted as a separate MIP before finding this one already owned the source, and folded in here
+rather than given a number of its own) found three things that change §5.2's design:</p>
+<ul>
+<li><strong>Each item's <code>&lt;guid&gt;</code>/<code>&lt;link&gt;</code> resolves to a full OASIS CAP 1.2 document.</strong>
+  <code>GET https://apiprevmet3.inmet.gov.br/avisos/rss/55649</code> → 200, <code>text/xml</code>, 8 973 bytes,
+  <code>urn:oasis:names:tc:emergency:cap:1.2</code>. It carries <code>event</code>, <code>severity</code>, <code>urgency</code>, <code>certainty</code>,
+  <code>onset</code>, <code>expires</code>, <code>description</code>, <code>instruction</code>, <code>web</code>, <code>&lt;area&gt;&lt;areaDesc&gt;</code>, and a
+  <strong><code>&lt;polygon&gt;</code> of 291 <code>lat,lon</code> pairs</strong>. Real geometry. So a beach is matched by point-in-polygon
+  against the alert's own boundary, and <code>AlertAreas.byArea</code> (§5.2) is deleted rather than written:
+  no hand-maintained table, no per-area entry when <code>areas.json</code> grows, and the match is exact
+  instead of "this mesoregion name sounds like that area".</li>
+<li><strong>Severity has two vocabularies.</strong> RSS says <code>Perigo Potencial</code> / <code>Perigo</code> / <code>Grande Perigo</code>
+  (80 / 8 / 1 of 89 live items); CAP says <code>Moderate</code> / <code>Severe</code> / <code>Extreme</code>. Alert 55649 is
+  <code>Perigo Potencial</code> in RSS and <code>Moderate</code> in CAP, the same alert. Show INMET's Portuguese
+  verbatim, order by the CAP enum.</li>
+<li><strong>INMET returns no HTTP response at all to curl's default User-Agent.</strong> TCP connects, the TLS
+  handshake completes (<code>Client hello</code> … both <code>Finished</code>), then nothing until timeout. With a
+  browser UA the same URL is an immediate 200. This is the first thing to check when the client
+  appears to hang, and it will otherwise read as an INMET outage.</li>
+</ul>
+<h3 id="41a-inmet-avisosativos-json-enrichment-only-deliberately-not-primary">4.1a INMET <code>avisos/ativos</code> JSON — enrichment only, deliberately not primary<a class="headerlink" href="#41a-inmet-avisosativos-json-enrichment-only-deliberately-not-primary" title="Permanent link">&para;</a></h3>
+<p><code>GET https://apiprevmet3.inmet.gov.br/avisos/ativos</code> → 200, <code>application/json</code>, 419 178 bytes,
+<code>{"hoje": [...], "futuro": [...]}</code>. Strictly richer than RSS or CAP: <code>poligono</code> is already
+<strong>GeoJSON</strong>, <code>municipios</code> carries <strong>IBGE municipality codes</strong> ("Aracruz - ES (3200607)"), plus
+<code>estados</code>, <code>mesorregioes</code>, <code>microrregioes</code>, <code>geocodes</code>, <code>riscos</code>, <code>instrucoes</code>, and <code>aviso_cor</code>
+(<code>#FFFE00</code>), INMET's own severity colour. It is <strong>not</strong> the primary source: no INMET page
+documenting it was found, so its shape can change without notice, whereas RSS 2.0 and CAP 1.2 are
+published standards. Use it best-effort for municipality names and the official colour; losing it
+must not take the alert path down.</p>
+<h3 id="41b-backfill-viable-by-bounded-id-walk-no-archive-endpoint">4.1b Backfill — viable by bounded id walk, no archive endpoint<a class="headerlink" href="#41b-backfill-viable-by-bounded-id-walk-no-archive-endpoint" title="Permanent link">&para;</a></h3>
+<p><code>/avisos</code> and <code>/avisos/todos</code> both 404. But ids are dense and monotonic in time and old ones stay
+served: <code>/avisos/rss/55000</code> → <code>sent</code> 2026-07-15, <code>50000</code> → 2025-02-28, <code>40000</code> → 2022-08-29, all
+200 with full CAP; <code>/avisos/rss/1000</code> → 500. So history back to at least <strong>2022</strong> is reachable by
+walking ids downward from the newest, a few KB each. Only five ids were sampled; density and the
+exact floor are <strong>not</strong> established (Appendix, "Not checked").</p>
+<h3 id="42-youtube-channel-atom-fetchable-but-thin-55">4.2 YouTube channel Atom — fetchable, but thin (§5.5)<a class="headerlink" href="#42-youtube-channel-atom-fetchable-but-thin-55" title="Permanent link">&para;</a></h3>
+<p><code>https://www.youtube.com/feeds/videos.xml?channel_id=&lt;id&gt;</code> returns 200 Atom, no key. Verified
+against a real id resolved from a channel page (<code>UC-87aDLv5WFJ83fxt21gsEQ</code>, NOAAVisualizations):
+<strong>exactly 15 entries, no paging</strong>, each with <code>yt:videoId</code>, title, link, <code>media:description</code>
+(the video description) and <code>media:community</code> stats. <strong>No transcript, no captions, no article
+text.</strong> The newest entry on that NOAA channel is dated <strong>2017-02-17</strong>, a live-looking feed for a
+dead channel, which is §8's headline risk in one example. Getting usable <em>text</em> out of a video
+needs either YouTube's unofficial <code>timedtext</code> endpoint or <code>yt-dlp</code> + local Whisper; see §5.5 and
+§9 for why that is parked, not designed.</p>
+<h3 id="43-medium-rss-rejected-for-ingestion-link-only-55">4.3 Medium RSS — <strong>rejected for ingestion, link-only</strong> (§5.5)<a class="headerlink" href="#43-medium-rss-rejected-for-ingestion-link-only-55" title="Permanent link">&para;</a></h3>
+<p><code>https://medium.com/feed/tag/ocean</code> → 200, RSS 2.0, 10 items, <code>&lt;description&gt;</code> ~583 chars of
+excerpt HTML, <strong>no <code>&lt;content:encoded&gt;</code></strong>. <code>https://medium.com/feed/@&lt;user&gt;</code> → 200 and <strong>does</strong>
+carry <code>&lt;content:encoded&gt;</code> (full post HTML). Decisive finding: <code>https://medium.com/robots.txt</code>
+names <code>ClaudeBot</code>, <code>GPTBot</code>, <code>Bytespider</code>, <code>Applebot-Extended</code>, <code>meta-externalagent</code>,
+<code>FacebookBot</code>, <code>GoogleOther</code> and <code>Amazonbot</code> under a <code>Disallow: /</code> block. Medium's publishers have
+opted out of AI ingestion at the site level; posts are author-copyright with no blanket licence.
+Feeding that text to marola's LLM as retrieval context is exactly what the block asks us not to do.
+Medium stays in the reading queue as <strong>title + link only</strong>, never as stored body text.</p>
+<h3 id="44-stack-reading-the-request">4.4 "stack" — reading the request<a class="headerlink" href="#44-stack-reading-the-request" title="Permanent link">&para;</a></h3>
+<p>The user wrote "youtube, medium, stack". <strong>The plausible reading is Substack</strong>, because the other
+two are publishing platforms and because MIP-0018 §5 already names Substack as a marola export
+destination. This MIP adopts that reading and says so rather than guessing silently. Substack
+verified: <code>https://&lt;pub&gt;.substack.com/feed</code> → 200, <code>application/xml</code>, RSS 2.0 with <code>content:encoded</code>
+full text (checked against a large public newsletter, 1.2 MB). Same copyright position as Medium
+(author-owned, no blanket licence) → same verdict: link-only inbound; the interesting Substack
+direction is <strong>outbound</strong>, and that is MIP-0018's, not this MIP's.
+<strong>The alternate reading, Stack Overflow / Stack Exchange, was checked and fails anyway</strong>:
+<code>https://stackoverflow.com/feeds/tag/scala</code> returns <strong>HTTP 403</strong> with a Cloudflare "Just a moment…"
+interstitial, both with a default and with a desktop-browser User-Agent. Even if it were
+reachable, the content is CC BY-SA (a share-alike obligation on anything derived from it), and
+is programming Q&amp;A, not ocean knowledge. Rejected on all three grounds.</p>
+<h3 id="45-nasa-earth-observatory-rss-accepted-into-the-reading-queue-53">4.5 NASA Earth Observatory RSS — accepted into the reading queue (§5.3)<a class="headerlink" href="#45-nasa-earth-observatory-rss-accepted-into-the-reading-queue-53" title="Permanent link">&para;</a></h3>
+<p><code>https://earthobservatory.nasa.gov/feeds/earth-observatory.rss</code> → 200, <code>application/rss+xml</code>,
+512 KB, 10 items <strong>with <code>content:encoded</code></strong> (full article text), covering marine heatwaves, algal
+blooms, cyclones. Licence checked at NASA's open-data policy page: "data and information generated
+under NASA sponsorship are available to all users", with citation encouraged: free and open, but
+the page does <strong>not</strong> use the words "public domain", so this MIP does not claim that it does. Still
+a reading-queue source, not an auto-ingest source: relevance to "can I swim at Joaquina" is
+occasional, and §5.4's rule is not licence-dependent.</p>
+<h3 id="46-checked-and-rejected-as-unreachable">4.6 Checked and rejected as unreachable<a class="headerlink" href="#46-checked-and-rejected-as-unreachable" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Marinha do Brasil / CHM</strong> (<code>marinha.mil.br/chm/...</code>, the authoritative Brazilian <em>marine</em>
+  warnings — Avisos de Mau Tempo) → <strong>HTTP 403</strong>, Cloudflare interstitial, on both the warnings
+  page and a speculative <code>/chm/rss</code>. This is the source marola would most want; it is not
+  scriptable from a plain client today. Do not design around it (§11.3).</li>
+<li><strong>NOAA / NWS CAP</strong> (<code>https://api.weather.gov/alerts/active.atom?area=FL</code>) → 200, valid Atom,
+  well-formed CAP. Rejected on geography, not quality: it covers US waters only, and marola's
+  areas are Florianópolis, Rio and Salvador. Naming NOAA marine advisories as an inbound source
+  would have been a plausible-sounding mistake; it is recorded here so nobody re-proposes it.</li>
+<li><strong><code>https://oceanservice.noaa.gov/rss/</code></strong> → <strong>404</strong>. A NOAA ocean-news feed may exist elsewhere;
+  the URL commonly cited for it does not resolve (§11.4).</li>
+</ul>
+<h3 id="47-dependencies">4.7 Dependencies<a class="headerlink" href="#47-dependencies" title="Permanent link">&para;</a></h3>
+<p><strong>None new.</strong> Parsing is <code>java.xml</code>/<code>ElementTree</code> on the JDK and Python already in <code>flake.nix</code>;
+fetching is marola's own <code>core/http</code>. <code>scripts/arxiv_digest.py</code> already parses Atom with
+<code>xml.etree.ElementTree</code> and caches one JSON file per item plus a JSONL index; §5.3 clones that
+shape rather than inventing one. No new library, no key, no cloud service, nothing paid.</p>
+<h2 id="5-design">5. Design<a class="headerlink" href="#5-design" title="Permanent link">&para;</a></h2>
+<p>Six pieces. §5.1 is shared; §5.2, §5.3 and §5.6 are independently shippable (a later <code>mip-tasks</code>
+pass can stack them in any order); §5.4 is a rule, not code; §5.5 is a verdict table.</p>
+<h3 id="51-corefeeds-one-pure-parser-shared">5.1 <code>core/feeds</code> — one pure parser (shared)<a class="headerlink" href="#51-corefeeds-one-pure-parser-shared" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">package</span><span class="w"> </span><span class="nn">marola</span><span class="p">.</span><span class="n">feeds</span>
+
+<span class="k">final</span><span class="w"> </span><span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">FeedItem</span><span class="p">(</span>
+<span class="w">    </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w">               </span><span class="c1">// &lt;guid&gt; or Atom &lt;id&gt;; the dedup key</span>
+<span class="w">    </span><span class="n">title</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span>
+<span class="w">    </span><span class="n">link</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span>
+<span class="w">    </span><span class="n">published</span><span class="p">:</span><span class="w"> </span><span class="nc">Option</span><span class="p">[</span><span class="nc">OffsetDateTime</span><span class="p">],</span>
+<span class="w">    </span><span class="n">summaryHtml</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w">      </span><span class="c1">// &lt;description&gt; / &lt;summary&gt;</span>
+<span class="w">    </span><span class="n">contentHtml</span><span class="p">:</span><span class="w"> </span><span class="nc">Option</span><span class="p">[</span><span class="nc">String</span><span class="p">]</span><span class="w"> </span><span class="c1">// &lt;content:encoded&gt; / Atom &lt;content&gt;, when present</span>
+<span class="p">)</span>
+
+<span class="k">object</span><span class="w"> </span><span class="nc">FeedParser</span><span class="p">:</span>
+<span class="w">  </span><span class="cm">/** RSS 2.0 and Atom 1.0 in one function; malformed items are dropped, never thrown. */</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="n">xml</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">):</span><span class="w"> </span><span class="nc">List</span><span class="p">[</span><span class="nc">FeedItem</span><span class="p">]</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">stripHtml</span><span class="p">(</span><span class="n">html</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">):</span><span class="w"> </span><span class="nc">String</span>
+</code></pre></div>
+<p>Pure and unit-tested against <strong>saved fixtures of the real feeds</strong> under
+<code>core/src/test/resources/feeds/</code> (<code>inmet-avisos.xml</code>, <code>youtube-channel.xml</code>,
+<code>medium-tag.xml</code>, <code>nasa-eo.xml</code>), the same discipline <code>Corpus.chunkDocument</code> follows. Network
+lives in the callers. An unparseable item is dropped and counted, not fatal: one bad item in an
+85-item government feed must not take out the whole banner.</p>
+<h3 id="52-inbound-a-operational-alerts-corealerts-never-corpus">5.2 Inbound A — operational alerts (<code>core/alerts</code>), never corpus<a class="headerlink" href="#52-inbound-a-operational-alerts-corealerts-never-corpus" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">final</span><span class="w"> </span><span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">MarineAlert</span><span class="p">(</span>
+<span class="w">    </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="n">event</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="n">severity</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span>
+<span class="w">    </span><span class="n">startsAt</span><span class="p">:</span><span class="w"> </span><span class="nc">OffsetDateTime</span><span class="p">,</span><span class="w"> </span><span class="n">endsAt</span><span class="p">:</span><span class="w"> </span><span class="nc">OffsetDateTime</span><span class="p">,</span>
+<span class="w">    </span><span class="n">areas</span><span class="p">:</span><span class="w"> </span><span class="nc">List</span><span class="p">[</span><span class="nc">String</span><span class="p">],</span><span class="w"> </span><span class="n">link</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="n">source</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="w"> </span><span class="c1">// "INMET"</span>
+<span class="p">)</span>
+
+<span class="k">trait</span><span class="w"> </span><span class="nc">AlertClient</span><span class="p">:</span><span class="w">                       </span><span class="c1">// mirrors WaterQualityClient's shape</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">alertsFor</span><span class="p">(</span><span class="n">area</span><span class="p">:</span><span class="w"> </span><span class="nc">SiteBuilder</span><span class="p">.</span><span class="nc">Area</span><span class="p">,</span><span class="w"> </span><span class="n">now</span><span class="p">:</span><span class="w"> </span><span class="nc">OffsetDateTime</span><span class="p">):</span><span class="w"> </span><span class="nc">List</span><span class="p">[</span><span class="nc">MarineAlert</span><span class="p">]</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="nc">Sync</span>
+
+<span class="k">object</span><span class="w"> </span><span class="nc">InmetAlertClient</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nc">AlertClient</span><span class="w">   </span><span class="c1">// core/alerts/InmetAlertClient.scala</span>
+
+<span class="c1">// §4.1's revision: geometry comes from the alert's own CAP document, so there is no</span>
+<span class="c1">// mesoregion→area table to hand-maintain. `areaDesc` is kept for display only.</span>
+<span class="k">final</span><span class="w"> </span><span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">AlertArea</span><span class="p">(</span><span class="n">description</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="n">polygon</span><span class="p">:</span><span class="w"> </span><span class="nc">List</span><span class="p">[</span><span class="nc">Coordinates</span><span class="p">])</span>
+<span class="k">object</span><span class="w"> </span><span class="nc">Geo</span><span class="p">:</span>
+<span class="w">  </span><span class="cm">/** Ray-casting point-in-polygon. Pure, ~20 lines, no dependency. Safety-relevant: plain</span>
+<span class="cm">    * Scala, exhaustively unit-tested, never model output. */</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">contains</span><span class="p">(</span><span class="n">polygon</span><span class="p">:</span><span class="w"> </span><span class="nc">List</span><span class="p">[</span><span class="nc">Coordinates</span><span class="p">],</span><span class="w"> </span><span class="n">c</span><span class="p">:</span><span class="w"> </span><span class="nc">Coordinates</span><span class="p">):</span><span class="w"> </span><span class="nc">Boolean</span>
+</code></pre></div>
+<ul>
+<li><strong>Geometry, not names.</strong> The RSS gives the item list; each item's link gives CAP 1.2 with a
+  <code>&lt;polygon&gt;</code>, and a beach is in the alert iff <code>Geo.contains</code> says so. This replaces the
+  hand-written <code>AlertAreas.byArea</code> the first draft needed, removes §11.2's maintenance question,
+  and is what makes the path work for <strong>all of Brazil</strong>: a new entry in <code>areas.json</code> needs no new
+  mapping row. A CAP document with no <code>&lt;polygon&gt;</code> degrades to an alert with an empty area that
+  matches nothing, and its <code>areaDesc</code> is still shown.</li>
+<li>The RSS <code>&lt;description&gt;</code> HTML table is then only a <strong>fallback</strong> for fields CAP does not carry,
+  not the parse path, deterministic either way, no LLM anywhere on this path.</li>
+<li><strong>Expiry is load-bearing.</strong> An alert is shown iff <code>now</code> is within <code>[startsAt, endsAt]</code>. Nothing
+  from this path is ever persisted into the knowledge index, precisely because the index has no
+  concept of expiry: a cached "storm warning" answered three weeks later is the worst failure this
+  MIP could produce.</li>
+<li><strong>Event allow-list</strong>, not everything: <code>Ventos Costeiros</code>, <code>Vendaval</code>, <code>Tempestade</code>, and
+  <code>Chuvas Intensas</code> are sea-relevant; <code>Baixa Umidade</code> and <code>Geada</code> are not and are filtered out
+  (they are 34 of the 85 items in the verified snapshot).</li>
+<li>Rendered by the same deterministic-label rule as MIP-0009's markers: <code>Main</code>'s CLI block, the
+  board JSON (a new optional <code>alerts</code> array, <code>Board.SchemaVersion</code> bumped to 2), and the map panel.</li>
+<li><strong>Not in the LLM summary prompt in v1.</strong> The banner is printed by Scala above the summary. §11.5
+  asks whether the summarizer should also be <em>told</em> about an active warning.</li>
+</ul>
+<h3 id="53-inbound-b-the-reading-queue-scriptsfeed_digestpy">5.3 Inbound B — the reading queue (<code>scripts/feed_digest.py</code>)<a class="headerlink" href="#53-inbound-b-the-reading-queue-scriptsfeed_digestpy" title="Permanent link">&para;</a></h3>
+<p>A near-clone of <code>scripts/arxiv_digest.py</code>, same flat-file cache convention (MIP-0017 §5.1):</p>
+<ul>
+<li>Sources come from a tracked allow-list, <code>knowledge/feeds.json</code>, safe to put there because
+  <code>Corpus.load</code> reads only <code>*.md</code> in <code>knowledge/</code> and <code>knowledge/safety/</code> (verified in the merged
+  #195 loader), so a JSON file next to the corpus is invisible to the index. Each entry:
+  <code>{id, url, kind: "reading", licence, notes, store_body: false}</code>.</li>
+<li>Cache under <code>.tmp/feed_cache/</code> (gitignored): <code>items/&lt;sha1-of-guid&gt;.json</code> + <code>index.jsonl</code>,
+  rewritten from the item files each run so it can't drift, <code>arxiv_digest.py</code>'s exact pattern.</li>
+<li><strong><code>store_body</code> defaults to <code>false</code>.</strong> For Medium/Substack sources it is forced false (§4.3/§4.4)
+  and the cache keeps title, link, date and nothing else.</li>
+<li>Scores candidates by keyword overlap with marola's domain and prints them. <strong>It writes nothing
+  under <code>knowledge/</code>.</strong> The output is a to-do list for a human running the <code>corpus-doc</code> skill,
+  which then writes a normal <code># Title</code> / <code>Source:</code> document citing the <em>original</em> source URL, not
+  the feed, and not the aggregator.</li>
+<li><code>--self-test</code> (offline, fixture-based) is added to <code>just quality-other</code> next to the other
+  script self-tests.</li>
+</ul>
+<h3 id="54-the-knowledgesafety-rule-feed-content-never-lands-there-automatically-or-otherwise">5.4 The <code>knowledge/safety/</code> rule — feed content never lands there, automatically or otherwise<a class="headerlink" href="#54-the-knowledgesafety-rule-feed-content-never-lands-there-automatically-or-otherwise" title="Permanent link">&para;</a></h3>
+<p>MIP-0022 (merged, #195) made a directory into a behavioural trigger: any answer grounded in a
+document under <code>knowledge/safety/</code> gets the 193/192 emergency footer appended by <code>SafetyFooter</code>.
+That means a file placed there <strong>inherits emergency-grade authority</strong> and gets quoted back to
+someone who may be standing on a beach.</p>
+<p><strong>Rule: no automated process writes to <code>knowledge/</code> at all, and <code>knowledge/safety/</code> additionally
+requires the same human-authored <code>corpus-doc</code> PR it requires today.</strong> Recommended: <em>no</em>, feed
+content should never land there automatically. The human review gate is not a nice-to-have here.
+Reasons, in order: (a) a feed item's provenance is the feed, not the fact: a syndicated summary of
+a first-aid guideline is a copy of a copy; (b) feed items are undated in practice (a 2017 video
+looks identical to a 2026 one through the feed, §4.2); (c) MIP-0001's rule that no unsourced fact
+reaches a user is enforced today by a human writing each sentence, and there is no cheaper
+mechanism that keeps it true; (d) the failure is asymmetric: a missed corpus addition costs
+nothing, a wrong sting-treatment sentence with an emergency footer under it costs a person.
+Enforced, not just written: <code>feed_digest.py --self-test</code> asserts the writer path is absent, and a
+<code>quality-other</code> check fails if any file under <code>knowledge/</code> contains an <code>Ingested-from:</code> line
+(the marker a future ingestion attempt would inevitably add).</p>
+<h3 id="55-media-format-verdicts-what-transform-an-rss-feed-into-marola-content-is-actually-worth">5.5 Media-format verdicts (what "transform an RSS feed into marola content" is actually worth)<a class="headerlink" href="#55-media-format-verdicts-what-transform-an-rss-feed-into-marola-content-is-actually-worth" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Fetchable text</th>
+<th>Transform needed</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>YouTube channel/playlist Atom</td>
+<td>title + <code>media:description</code>, 15 items</td>
+<td>transcript needs <code>yt-dlp</code> + local Whisper, or the unofficial <code>timedtext</code> endpoint</td>
+<td><strong>Reading queue only.</strong> The transcript pipeline is real work (audio download, ASR, summarisation, review) for material that is unsourced narration; <strong>parked</strong>, and it would need its own MIP</td>
+</tr>
+<tr>
+<td>Medium tag feed</td>
+<td>excerpt only</td>
+<td>—</td>
+<td><strong>Link-only.</strong> <code>robots.txt</code> disallows AI crawlers (§4.3)</td>
+</tr>
+<tr>
+<td>Medium user feed</td>
+<td>full <code>content:encoded</code></td>
+<td>—</td>
+<td><strong>Link-only</strong>, same reason; being <em>able</em> to read it is not permission</td>
+</tr>
+<tr>
+<td>Substack <code>&lt;pub&gt;/feed</code></td>
+<td>full <code>content:encoded</code></td>
+<td>—</td>
+<td><strong>Link-only inbound</strong>; outbound Substack publishing belongs to MIP-0018</td>
+</tr>
+<tr>
+<td>Stack Overflow / Stack Exchange</td>
+<td>none, 403</td>
+<td>—</td>
+<td><strong>Rejected</strong> (§4.4): blocked, CC BY-SA share-alike, off-domain</td>
+</tr>
+<tr>
+<td>INMET avisos</td>
+<td>structured HTML table</td>
+<td>label parsing (§5.2)</td>
+<td><strong>Picked</strong>, the only one that carries operational value</td>
+</tr>
+<tr>
+<td>NASA Earth Observatory</td>
+<td>full <code>content:encoded</code></td>
+<td>—</td>
+<td><strong>Reading queue</strong>, licence-clean, occasionally on-topic</td>
+</tr>
+</tbody>
+</table>
+<p>The honest summary: of the three media formats named in the request, <strong>none is a good corpus
+source</strong>, and the one worth wiring up (a government warning feed) is not a media format at all.</p>
+<h3 id="56-outbound-marolas-own-atom-feed-coresitesitefeedscala">5.6 Outbound — marola's own Atom feed (<code>core/site/SiteFeed.scala</code>)<a class="headerlink" href="#56-outbound-marolas-own-atom-feed-coresitesitefeedscala" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">object</span><span class="w"> </span><span class="nc">SiteFeed</span><span class="p">:</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nc">Id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"tag:marola.dev,2026"</span>
+<span class="w">  </span><span class="cm">/** Pure: boards in, Atom XML out. No clock, no I/O — same contract as Board.build. */</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">atom</span><span class="p">(</span><span class="n">area</span><span class="p">:</span><span class="w"> </span><span class="nc">SiteBuilder</span><span class="p">.</span><span class="nc">Area</span><span class="p">,</span><span class="w"> </span><span class="n">days</span><span class="p">:</span><span class="w"> </span><span class="nc">List</span><span class="p">[</span><span class="nc">JsonValue</span><span class="p">],</span><span class="w"> </span><span class="n">generatedAt</span><span class="p">:</span><span class="w"> </span><span class="nc">OffsetDateTime</span><span class="p">):</span><span class="w"> </span><span class="nc">String</span>
+</code></pre></div>
+<p><code>SiteBuilder.build</code> writes <code>data/&lt;area&gt;/feed.xml</code> per area and a combined <code>feed.xml</code> at the root;
+<code>site/static/index.html</code> gains <code>&lt;link rel="alternate" type="application/atom+xml"&gt;</code>. One entry per
+<code>(area, day)</code>: title = the day's best hour and beach with its score, summary = the same
+deterministic facts the board already carries plus its <code>sources</code> line, verbatim. <strong>No LLM text in
+the feed</strong>, so nothing unsourced is syndicated (MIP-0001's rule applies to a feed reader exactly as
+it applies to the page).</p>
+<p>The one real design point: the site rebuilds <strong>8×/day</strong>, so a naive builder would emit 8 entries
+per day per area. Entry <code>id</code> is therefore keyed on <code>(area, day)</code> (<code>tag:marola.dev,2026:floripa/
+2026-09-08</code>), so a rebuild <em>updates</em> an entry (new <code>&lt;updated&gt;</code>) instead of appending one, and a
+reader shows one item per day per area. <code>&lt;published&gt;</code> is the first build of that day; retaining
+the last 14 days keeps the file small and diffable.</p>
+<h3 id="57-other-outbound-feed-ideas-evaluated">5.7 Other outbound-feed ideas, evaluated<a class="headerlink" href="#57-other-outbound-feed-ideas-evaluated" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>(a) Corpus changelog feed</strong> (<code>/knowledge.xml</code>): one entry per <code>knowledge/*.md</code> document added
+  or materially changed, generated from <code>git log</code> at site-build time, linking the document and its
+  <code>Source:</code> URL. <strong>Worth doing</strong> (S): it is marola's provenance story made subscribable, it costs
+  one <code>git log</code> call, and it becomes genuinely useful the moment MIP-0033 makes the repo public.</li>
+<li><strong>(b) "Notable conditions only" feed</strong>: an entry only when something crosses a threshold (score
+  ≥ 85, water declared <em>imprópria</em>, an active INMET coastal warning, whale season opening). Highest
+  signal-per-item of anything here, and the closest thing to a push channel that needs no bot. But
+  it is a <strong>proactive/autonomous behaviour</strong>: <code>AGENTS.md</code> requires an explicit
+  human gate before marola volunteers a hazard judgement, and it depends on §5.2 landing.
+  <strong>Park</strong>, with §11.6 as the question to answer first.</li>
+<li><strong>(c) MIP / release feed for build-in-public</strong>: <strong>rejected as redundant</strong>: GitHub already serves
+  <code>&lt;repo&gt;/releases.atom</code> (verified 200, <code>application/atom+xml</code>) and <code>commits/&lt;branch&gt;.atom</code>.
+  MIP-0018's exporter is the right home for narrative posts.</li>
+<li><strong>(d) Podcast-style feed with a TTS reading of the daily summary</strong>: <strong>rejected</strong>: needs TTS (a
+  cost or a heavy local model), audio can't carry MIP-0001's <code>[n]</code> citations, and a spoken safety
+  sentence loses MIP-0022's footer. Novelty over value.</li>
+<li><strong>(e) JSON Feed 1.1 alongside Atom</strong> — ~20 extra lines, no consumer asked for it. <strong>Defer</strong>.</li>
+</ul>
+<h2 id="6-scoring-safety-impact">6. Scoring / safety impact<a class="headerlink" href="#6-scoring-safety-impact" title="Permanent link">&para;</a></h2>
+<p><strong>No change to <code>Swimability.score</code> in any arm of this MIP.</strong> §5.2's alert is a display banner,
+deterministic, computed from the feed's own <code>Início</code>/<code>Fim</code> window and an event allow-list; it
+ranks nothing and suppresses nothing. Making a warning <em>lower a score</em> is a separate decision that
+needs its own MIP (§11.5). The mesoregion granularity (§4.1) is far coarser than a beach, and
+silently down-ranking every beach in "Metropolitana do Rio de Janeiro" on a coastal-wind advisory
+would be a scoring change disguised as a data feed.</p>
+<p>Safety text: unchanged. MIP-0022's footer semantics are untouched; §5.4 exists specifically so
+that nothing this MIP adds can put an unreviewed sentence behind that footer. The corpus is
+byte-identical after any <code>feed_digest.py</code> run.</p>
+<h2 id="7-verification-plan">7. Verification plan<a class="headerlink" href="#7-verification-plan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>FeedParserSpec</code> (pure, fixtures of the four real feeds saved 2026-09-07): RSS 2.0 and Atom both
+  parse; <code>content:encoded</code> is picked up when present and <code>None</code> when absent (the Medium tag-feed
+  fixture proves the <code>None</code> branch); a truncated/malformed item is dropped without throwing; ids
+  are stable across two parses of the same bytes.</li>
+<li><code>InmetAlertSpec</code> (pure): the HTML-table fields parse into <code>MarineAlert</code>; an alert whose <code>Fim</code> is
+  before <code>now</code> is excluded; one whose window contains <code>now</code> is included; <code>Baixa Umidade</code> is
+  filtered by the event allow-list; an area with no mesoregion match yields no alerts.</li>
+<li><code>AlertAreasSpec</code>: every id in <code>site/areas.json</code> has at least one mesoregion mapping, and every
+  mapped name appears in the saved INMET fixture (catches a typo'd mesoregion name at build time).</li>
+<li><code>SiteFeedSpec</code>: output parses as XML; two builds on the same day with different <code>generatedAt</code>
+  produce <strong>the same entry ids</strong> and different <code>&lt;updated&gt;</code> (the 8×/day rule); <code>&amp;</code>/<code>&lt;</code> in a beach
+  name are escaped; at most 14 days of entries.</li>
+<li><code>BoardSpec</code>: <code>site/board.schema.json</code> gains an optional <code>alerts</code> array; the schema check that
+  already exists must pass with and without it.</li>
+<li><code>feed_digest.py --self-test</code> (offline) added to <code>quality-other</code>, plus the <code>knowledge/</code>
+  <code>Ingested-from:</code> guard from §5.4.</li>
+<li><code>CapParserSpec</code> (pure, added 2026-09-08 with §4.1's revision): the checked-in alert 55649
+  document parses into <code>event</code>, both severity vocabularies, <code>onset</code>/<code>expires</code>, its 291-point
+  polygon and its <code>web</code> source URL; a CAP document with no <code>&lt;polygon&gt;</code> yields an empty area rather
+  than throwing, and never matches.</li>
+<li><code>GeoSpec</code> (pure): point-in-polygon inside, outside, on a vertex, on an edge, and a point whose
+  latitude exactly equals a vertex's (the classic ray-casting off-by-one). Plus the test that
+  earns its keep: a Joaquina coordinate is <strong>not</strong> covered by 55649's real Amazonas polygon, and a
+  coordinate inside it is: this is what catches an inverted lat/lon, the likeliest silent bug on
+  this path.</li>
+<li>Live checks, run by hand before merging the implementation: <code>curl -sS -A "$(scripts/…ua)"
+  https://apiprevmet3.inmet.gov.br/avisos/rss | head</code> (<strong>a User-Agent is required, see §4.1</strong>),
+  <code>just site-build floripa &amp;&amp; xmllint --noout site/dist/feed.xml</code>, and the feed pasted into one
+  real reader.</li>
+<li><strong>Done</strong> = the alert banner appears for a real active warning and disappears after its <code>Fim</code>;
+  <code>feed.xml</code> validates and shows one item per area per day across two consecutive rebuilds;
+  <code>git status</code> shows no change under <code>knowledge/</code> after a digest run.</li>
+</ul>
+<h2 id="8-risks-limitations-and-honest-caveats">8. Risks, limitations, and honest caveats<a class="headerlink" href="#8-risks-limitations-and-honest-caveats" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Feed rot that returns 200.</strong> Verified live: a NOAA YouTube feed whose newest entry is from 2017
+  still serves a healthy 200 with 15 entries. Any subscribed source needs a staleness check
+  ("newest item older than N days") reported by <code>feed_digest.py</code>, or the reading queue quietly
+  becomes a museum.</li>
+<li><strong>Mesoregion ≠ beach.</strong> INMET areas are IBGE mesoregions; "Metropolitana do Rio de Janeiro" is
+  the whole metro area. The banner must say <em>what area the warning covers</em>, in INMET's own words,
+  and never imply beach-level precision. This is why §6 keeps it out of the score.</li>
+<li><strong>The best marine source is unreachable.</strong> The Marinha/CHM Avisos de Mau Tempo (403, §4.6) are
+  more authoritative for sea state than INMET's land-oriented warnings. marola will be showing the
+  second-best warning source and should say "INMET" in the banner, not "official marine warning".</li>
+<li><strong>Babysitting cost is real.</strong> Every added feed is a URL that can move, start requiring a UA, or
+  fall behind Cloudflare; two sources checked for this MIP already have. Keep
+  <code>knowledge/feeds.json</code> short; a source that breaks twice gets deleted, not fixed.</li>
+<li><strong>Licence and robots are not the same question as "can I fetch it".</strong> Medium serves full text
+  over <code>/feed/@user</code> while its <code>robots.txt</code> tells AI agents to stay out; this MIP treats the stated
+  wish as binding.</li>
+<li><strong>An outbound feed is not an audience.</strong> Realistically a handful of subscribers. Proposed
+  because it is nearly free and the right shape (open, no account, no tracking), not because it
+  will move numbers.</li>
+</ul>
+<h2 id="9-alternatives-considered">9. Alternatives considered<a class="headerlink" href="#9-alternatives-considered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Do nothing.</strong> Costs nothing and loses nothing today; the corpus grows by hand either way. It
+  loses the INMET warning, which is the one piece here with real user value.</li>
+<li><strong>Auto-ingest feed items into <code>knowledge/</code> with an LLM summarisation + <code>Reviewer</code> pass.</strong> The
+  obvious reading of "RSS feeds into the knowledge base", and <strong>rejected</strong>: MIP-0001's rule is that
+  curated text is written by a human with a source per entry, and <code>Reviewer</code> is a fact-check pass
+  over marola's <em>own</em> generated summary, not a substitute for provenance. It would also put
+  arbitrary third-party prose into a retrieval index the model answers from verbatim, the exact
+  "wrong sentence = confidently wrong answer" hazard <code>knowledge/README.md</code> names.</li>
+<li><strong>Store feed bodies in the index with a freshness decay</strong> instead of a hard corpus/alert split.
+  Much more work: the index has no expiry, <code>FileKnowledgeStore</code> re-embeds on fingerprint change,
+  and a decayed-but-present storm warning is still a retrievable sentence. §5's two-path split is
+  the cheap version of the same goal.</li>
+<li><strong>A hosted aggregator (Feedly/Inoreader API).</strong> An account, a key, a quota and a paid tier, to
+  replace ~80 lines of <code>ElementTree</code>. Rejected against the local-first, keyless default rule.</li>
+<li><strong>Scrape Marinha/CHM with a headless browser</strong> past Cloudflare. Rejected: it is an explicit
+  anti-bot measure, adds a browser dependency, and breaks on their next change. Ask them for a
+  feed instead (§11.3).</li>
+<li><strong>Only do the outbound feed</strong>, skip inbound. Genuinely viable and the cheapest subset, which is
+  why §5.6 is written to ship alone.</li>
+</ul>
+<h2 id="11-open-questions">11. Open questions<a class="headerlink" href="#11-open-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Confirm the "stack" reading.</strong> This MIP assumes <strong>Substack</strong> (§4.4) and checked Stack
+   Overflow anyway (403, CC BY-SA, off-domain, rejected either way). If Stack Exchange was meant
+   as a <em>developer</em> knowledge source for marola's own docs rather than the ocean corpus, that is a
+   different MIP. Proposal: Substack, link-only, outbound handled by MIP-0018.</li>
+<li><strong>Who maintains the mesoregion→area table</strong> (§5.2)? It is hand-written and IBGE names change
+   rarely but not never. Proposal: unit-tested against the saved INMET fixture, refreshed when
+   <code>AlertAreasSpec</code> fails, i.e. it breaks loudly, not silently.</li>
+<li><strong>Ask the Marinha/CHM for a feed.</strong> Worth one email before assuming 403 forever; their Avisos de
+   Mau Tempo are the authoritative marine source (§4.6). Needs a human.</li>
+<li><strong>Find NOAA's actual ocean-news feed URL.</strong> <code>oceanservice.noaa.gov/rss/</code> is a 404 (§4.6). Low
+   priority; NASA EO (§4.5) already covers the reading-queue need.</li>
+<li><strong>Should an active alert reach the LLM summary prompt, or stay a Scala-printed banner?</strong> (§5.2,
+   §6). Proposal: banner only in v1; telling the model about a warning invites it to editorialise
+   about safety, which MIP-0001/0022 exist to prevent.</li>
+<li><strong>Does §5.7b's "notable conditions" feed clear the human gate on proactive behaviour?</strong> It is
+   marola volunteering a hazard judgement to a subscriber with no one in the loop. Needs a human
+   decision before it is designed, not after.</li>
+<li><strong>Follow-up MIP:</strong> the <code>Corpus.load</code> loader reads <code>knowledge/*.md</code> and <code>knowledge/safety/*.md</code>
+   only, one level, no recursion (verified in the #195 loader). Any future corpus organisation
+   into topic subdirectories is a loader change with an index-fingerprint consequence, and it is
+   out of this MIP's scope; it needs the next free MIP number if someone wants it.</li>
+</ol>
+<h2 id="appendix">Appendix<a class="headerlink" href="#appendix" title="Permanent link">&para;</a></h2>
+<h3 id="checked-live-all-2026-09-07-curl-from-this-machine">Checked live (all 2026-09-07, <code>curl</code> from this machine)<a class="headerlink" href="#checked-live-all-2026-09-07-curl-from-this-machine" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>https://apiprevmet3.inmet.gov.br/avisos/rss</code> — <strong>200</strong>, <code>application/rss+xml</code>, 150173 bytes,
+  85 <code>&lt;item&gt;</code>s, <code>&lt;copyright&gt;public domain&lt;/copyright&gt;</code>, <code>&lt;language&gt;pt-BR&lt;/language&gt;</code>. First item:
+  <code>Aviso de Ventos Costeiros. Severidade Grau: Perigo Potencial</code>, <code>Início 2026-09-06 11:20:00.0</code>,
+  <code>Fim 2026-09-07 11:00:00.0</code>, <code>Área</code> listing 12 mesoregions. Area-name counts across the
+  snapshot: Catarinense 62, Sul Baiano 44, Florianópolis 20, Metropolitana do Rio de Janeiro 17,
+  Metropolitana de Salvador 1. Event counts: Baixa Umidade 33, Tempestade 29, Chuvas Intensas 11,
+  Ventos Costeiros 5, Vendaval 4, Geada 1, Declínio de Temperatura 1, Acumulado de Chuva 1.
+  (One earlier attempt returned <code>curl: (56) Recv failure</code>; it succeeded on retry — the endpoint is
+  not perfectly stable.)</li>
+<li><code>https://www.youtube.com/feeds/videos.xml?channel_id=UC-87aDLv5WFJ83fxt21gsEQ</code> — <strong>200</strong>,
+  <code>text/xml</code>, 27611 bytes, Atom, <strong>15</strong> <code>&lt;entry&gt;</code>s, <code>media:description</code> present, no transcript
+  element. Newest <code>&lt;published&gt;</code>: <strong>2017-02-17T18:55:05+00:00</strong>. The channel id was resolved by
+  fetching <code>https://www.youtube.com/@oceanexplorergov</code> and reading <code>"channelId"</code> out of the page
+  (a made-up id returns <strong>404</strong>, confirming the endpoint validates it).</li>
+<li><code>https://medium.com/feed/tag/ocean</code> — <strong>200</strong>, <code>text/xml</code>, 15712 bytes, 10 items; item tags:
+  <code>title, link, guid, category, dc:creator, pubDate, atom:updated, description</code> — <strong>no
+  <code>content:encoded</code></strong>; <code>description</code> ≈ 583 chars.</li>
+<li><code>https://medium.com/feed/@belen.arcev</code> — <strong>200</strong>, <code>text/xml</code>, 84992 bytes, <code>content:encoded</code>
+  present.</li>
+<li><code>https://medium.com/robots.txt</code> — <strong>200</strong>; <code>Disallow: /</code> block applies to <code>Amazonbot</code>,
+  <code>Applebot-Extended</code>, <code>Bytespider</code>, <strong><code>ClaudeBot</code></strong>, <code>FacebookBot</code>, <code>GoogleOther</code>, <strong><code>GPTBot</code></strong>,
+  <code>meta-externalagent</code>.</li>
+<li><code>https://stackoverflow.com/feeds/tag/scala</code> — <strong>403</strong>, Cloudflare "Just a moment…" HTML, with a
+  default UA and again with a Chrome desktop UA.</li>
+<li><code>https://astralcodexten.substack.com/feed</code> — <strong>200</strong>, <code>application/xml</code>, 1197042 bytes, RSS 2.0
+  (used only to confirm the <code>&lt;pub&gt;/feed</code> mechanism and full-text <code>content:encoded</code>; not a marola
+  source).</li>
+<li><code>https://earthobservatory.nasa.gov/feeds/earth-observatory.rss</code> — <strong>200</strong>,
+  <code>application/rss+xml</code>, 524642 bytes, 10 items with <code>content:encoded</code>.</li>
+<li><code>https://www.earthdata.nasa.gov/engage/open-data-services-software-policies</code> — fetched;
+  states NASA-sponsored data "are available to all users", citation encouraged; does <strong>not</strong> say
+  "public domain".</li>
+<li><code>https://oceanservice.noaa.gov/rss/</code> — <strong>404</strong>.</li>
+<li><code>https://api.weather.gov/alerts/active.atom?area=FL</code> — <strong>200</strong>, <code>application/atom+xml</code>, valid
+  CAP/Atom (US-only coverage).</li>
+<li><code>https://www.marinha.mil.br/chm/dados-do-smm-cartas-sinoticas/avisos-de-mau-tempo</code> — <strong>403</strong>,
+  Cloudflare; <code>https://www.marinha.mil.br/chm/rss</code> — <strong>403</strong>, same.</li>
+<li><code>https://github.com/scala/scala3/releases.atom</code> — <strong>200</strong>, <code>application/atom+xml</code> (evidence for
+  §5.7c's "GitHub already gives you this free" rejection).</li>
+</ul>
+<h3 id="code-read-this-repo-at-749ec54-2026-09-07">Code read (this repo, at <code>749ec54</code>, 2026-09-07)<a class="headerlink" href="#code-read-this-repo-at-749ec54-2026-09-07" title="Permanent link">&para;</a></h3>
+<p><code>core/knowledge/Corpus.scala</code> (post-MIP-0022: <code>CorpusChunk(docTitle, source, text, safety)</code>; <code>load</code>
+reads <code>*.md</code> directly under <code>knowledge/</code> <strong>plus</strong> directly under <code>knowledge/safety/</code> via
+<code>Files.list</code> — one level, no recursion), <code>OceanQa.scala</code>, <code>KnowledgeStore.scala</code>,
+<code>core/site/Board.scala</code> (<code>SchemaVersion = 1</code>, pure serializer, <code>Sources</code>),
+<code>cli/site/SiteBuilder.scala</code> (<code>Area</code>, <code>Areas.parse</code>, <code>build</code> → <code>data/&lt;area&gt;/{day}.json</code> +
+<code>latest.json</code> + copied static), <code>site/areas.json</code> (floripa, rio, salvador),
+<code>.github/workflows/site.yml</code> (<code>cron: "15 */3 * * *"</code> — 8 rebuilds/day), <code>scripts/arxiv_digest.py</code>
+(Atom parsing + per-item JSON + <code>index.jsonl</code> + <code>--self-test</code>), <code>justfile</code> <code>quality-other</code>,
+<code>knowledge/README.md</code> (the safety-directory paragraph added by #195).</p>
+<h3 id="checked-live-2026-09-08-second-pass-folded-into-41">Checked live (2026-09-08, second pass — folded into §4.1)<a class="headerlink" href="#checked-live-2026-09-08-second-pass-folded-into-41" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>https://apiprevmet3.inmet.gov.br/avisos/rss</code> — <strong>200</strong>, <code>application/rss+xml</code>, 160 320 bytes,
+  <strong>89</strong> <code>&lt;item&gt;</code>s. Severity split: <code>Perigo Potencial</code> 80, <code>Perigo</code> 8, <code>Grande Perigo</code> 1. Events:
+  Baixa Umidade 34, Tempestade 32, Chuvas Intensas 12, Vendaval 3, Acumulado de Chuva 1, Geada 1,
+  Declínio de Temperatura 1.</li>
+<li>The same URL with <strong>curl's default User-Agent</strong> — no HTTP response at all; TLS handshake
+  completes, then timeout. <code>http://portal.inmet.gov.br/</code> → 302; <code>https://portal.inmet.gov.br/</code> →
+  500 with a browser UA. DNS resolves and <code>example.com</code> → 200 from the same shell, so this is
+  INMET-side, not the sandbox.</li>
+<li><code>https://apiprevmet3.inmet.gov.br/avisos/rss/55649</code> — <strong>200</strong>, <code>text/xml</code>, 8 973 bytes, CAP 1.2.
+  <code>event</code> Chuvas Intensas, <code>severity</code> Moderate, <code>urgency</code> Future, <code>certainty</code> Likely, <code>onset</code>
+  2026-09-11T09:34:00-03:00, <code>expires</code> 2026-09-11T23:59:00-03:00, <code>areaDesc</code> naming five Amazonas
+  mesoregions, <code>&lt;polygon&gt;</code> with <strong>291</strong> <code>lat,lon</code> pairs.</li>
+<li><code>https://apiprevmet3.inmet.gov.br/avisos/ativos</code> — <strong>200</strong>, <code>application/json</code>, 419 178 bytes,
+  keys <code>hoje</code> (3 records) / <code>futuro</code>. Fields include <code>poligono</code> (GeoJSON Polygon), <code>municipios</code>
+  with IBGE codes, <code>estados</code>, <code>mesorregioes</code>, <code>microrregioes</code>, <code>geocodes</code>, <code>severidade</code>,
+  <code>aviso_cor</code> (<code>#FFFE00</code>), <code>riscos</code>, <code>instrucoes</code>, <code>data_inicio</code>/<code>data_fim</code>.</li>
+<li>Backfill probe — <code>/avisos/rss/{55649,55000,50000,40000}</code> all <strong>200</strong>, <code>sent</code> 2026-09-08,
+  2026-07-15, 2025-02-28, 2022-08-29. <code>/avisos/rss/1000</code> → <strong>500</strong>. <code>/avisos</code> → 404,
+  <code>/avisos/todos</code> → 404.</li>
+</ul>
+<h3 id="not-checked">Not checked<a class="headerlink" href="#not-checked" title="Permanent link">&para;</a></h3>
+<ul>
+<li>(2026-09-08) Whether alert ids are globally dense or have large gaps — only five were sampled,
+  and the 500 floor was found by bisection, not documentation. The backfill walker must tolerate
+  both and never assume density.</li>
+<li>(2026-09-08) Whether the CAP <code>identifier</code> (<code>urn:oid:2.49.0.0.76.0.2026.28220.1</code>) is a stabler
+  dedupe key than the numeric id. The numeric id is proposed because both the RSS and the URL use it.</li>
+<li>(2026-09-08) Whether <code>avisos.inmet.gov.br/&lt;id&gt;</code> — the human page shown as <code>Source:</code> — serves old
+  ids the way the API path does. Only the API was probed for history.</li>
+<li>INMET's terms of use beyond the <code>&lt;copyright&gt;</code> element and the inline licence comment in the feed
+  itself; no separate ToS page was fetched, and no rate limit is documented anywhere I looked.</li>
+<li>Whether INMET's <code>avisos</code> feed ever carries a <code>Ressaca</code> (heavy-surf) event type — none appeared in
+  the single snapshot taken; the event allow-list in §5.2 should be revisited against a week of
+  samples, not one.</li>
+<li>Substack's and Medium's terms of service (only Medium's <code>robots.txt</code> was read); the copyright
+  position stated in §4.3/§4.4 is the general default for author-published platforms, not a quoted
+  clause.</li>
+<li>YouTube's <code>timedtext</code> endpoint and <code>yt-dlp</code>'s current behaviour — asserted from general knowledge
+  in §5.5's "parked" verdict, deliberately not tested, since the verdict is "don't build it".</li>
+<li>Any claim about how many people would subscribe to the outbound feed. There is no data; §8 says
+  so rather than inventing a number.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top", "navigation.tracking", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

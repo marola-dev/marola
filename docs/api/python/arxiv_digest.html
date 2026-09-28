@@ -100,9 +100,9 @@ scripts/arxiv_digest.py --self-test      # parser + cache self-check, no network
 
 <p>Queries the real arXiv API (export.arxiv.org/api/query, Atom XML) for oceanography, sea/ocean
 condition forecasting, jellyfish/marine-life prediction, and LLM-for-forecasting papers — the
-research surface behind marola's own heuristics (docs/ARCHITECTURE.md) and a feeder for MIP
+research surface behind marola's own heuristics (docs/2-Building-marola/ARCHITECTURE.md) and a feeder for MIP
 research (see MIP-0019). Caches the same way <code>MadsLorentzen/ai-job-search</code>'s job tracker does
-(surveyed in docs/SELF-DOCUMENTING.md): one flat JSON file per paper, keyed by arXiv id, so a
+(surveyed in docs/3-Working-on-the-repo/SELF-DOCUMENTING.md): one flat JSON file per paper, keyed by arXiv id, so a
 re-run never re-fetches or duplicates an already-seen paper, plus one flat JSONL index a human or
 another script can grep/tail without touching the per-paper files.</p>
 
@@ -131,9 +131,9 @@ another script can grep/tail without touching the per-paper files.</p>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="sd">Queries the real arXiv API (export.arxiv.org/api/query, Atom XML) for oceanography, sea/ocean</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="sd">condition forecasting, jellyfish/marine-life prediction, and LLM-for-forecasting papers — the</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="sd">research surface behind marola&#39;s own heuristics (docs/ARCHITECTURE.md) and a feeder for MIP</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="sd">research surface behind marola&#39;s own heuristics (docs/2-Building-marola/ARCHITECTURE.md) and a feeder for MIP</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="sd">research (see MIP-0019). Caches the same way `MadsLorentzen/ai-job-search`&#39;s job tracker does</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="sd">(surveyed in docs/SELF-DOCUMENTING.md): one flat JSON file per paper, keyed by arXiv id, so a</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="sd">(surveyed in docs/3-Working-on-the-repo/SELF-DOCUMENTING.md): one flat JSON file per paper, keyed by arXiv id, so a</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a><span class="sd">re-run never re-fetches or duplicates an already-seen paper, plus one flat JSONL index a human or</span>
 </span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a><span class="sd">another script can grep/tail without touching the per-paper files.</span>
 </span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a>

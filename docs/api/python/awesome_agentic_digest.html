@@ -87,7 +87,7 @@
                     <h1 class="modulename">
 awesome_agentic_digest    </h1>
 
-                        <div class="docstring"><p>awesome_agentic_digest — cache GitHub repo candidates for docs/AWESOME-AGENTIC-ENGINEERING.md.</p>
+                        <div class="docstring"><p>awesome_agentic_digest — cache GitHub repo candidates for docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md.</p>
 
 <pre><code>scripts/awesome_agentic_digest.py                 # fetch every query, cache new candidates, print a summary
 scripts/awesome_agentic_digest.py --max-results 5  # results per query (default 5)
@@ -97,9 +97,9 @@ scripts/awesome_agentic_digest.py --self-test      # parser + cache self-check, 
 
 <p>Queries the real GitHub Search API (api.github.com/search/repositories) across agentic-engineering
 GitHub topics — verified live against real, non-zero results on 2026-09-07 (see MIP-0043 §4.2) —
-for candidate repos to hand-curate into docs/AWESOME-AGENTIC-ENGINEERING.md.</p>
+for candidate repos to hand-curate into docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md.</p>
 
-<p><strong>This script never writes to docs/AWESOME-AGENTIC-ENGINEERING.md.</strong> It only caches candidates and
+<p><strong>This script never writes to docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md.</strong> It only caches candidates and
 prints a summary. A human reviews the cache (or the printed summary) and hand-writes any genuinely
 good match into the curated doc, in that doc's own <code>- [Title](URL) - Description.</code> entry format.
 This mirrors MIP-0041's book_digest.py: propose candidates, a human decides, nothing gets written
@@ -123,7 +123,7 @@ specifically) — this script runs a small, fixed query set once per invocation,
                         <label class="view-source-button" for="mod-awesome_agentic_digest-view-source"><span>View Source</span></label>
 
                         <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="ch">#!/usr/bin/env python3</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a><span class="sd">&quot;&quot;&quot;awesome_agentic_digest — cache GitHub repo candidates for docs/AWESOME-AGENTIC-ENGINEERING.md.</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a><span class="sd">&quot;&quot;&quot;awesome_agentic_digest — cache GitHub repo candidates for docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md.</span>
 </span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">  4</span></a><span class="sd">    scripts/awesome_agentic_digest.py                 # fetch every query, cache new candidates, print a summary</span>
 </span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="sd">    scripts/awesome_agentic_digest.py --max-results 5  # results per query (default 5)</span>
@@ -132,9 +132,9 @@ specifically) — this script runs a small, fixed query set once per invocation,
 </span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="sd">Queries the real GitHub Search API (api.github.com/search/repositories) across agentic-engineering</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="sd">GitHub topics — verified live against real, non-zero results on 2026-09-07 (see MIP-0043 §4.2) —</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="sd">for candidate repos to hand-curate into docs/AWESOME-AGENTIC-ENGINEERING.md.</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="sd">for candidate repos to hand-curate into docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md.</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a>
-</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="sd">**This script never writes to docs/AWESOME-AGENTIC-ENGINEERING.md.** It only caches candidates and</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="sd">**This script never writes to docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md.** It only caches candidates and</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a><span class="sd">prints a summary. A human reviews the cache (or the printed summary) and hand-writes any genuinely</span>
 </span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a><span class="sd">good match into the curated doc, in that doc&#39;s own `- [Title](URL) - Description.` entry format.</span>
 </span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a><span class="sd">This mirrors MIP-0041&#39;s book_digest.py: propose candidates, a human decides, nothing gets written</span>
@@ -469,10 +469,10 @@ specifically) — this script runs a small, fixed query set once per invocation,
 </span><span id="L-345"><a href="#L-345"><span class="linenos">345</span></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;index: </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;index_path&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span><span id="L-346"><a href="#L-346"><span class="linenos">346</span></a>        <span class="nb">print</span><span class="p">(</span>
 </span><span id="L-347"><a href="#L-347"><span class="linenos">347</span></a>            <span class="s2">&quot;review the candidates above, then hand-curate any of them into &quot;</span>
-</span><span id="L-348"><a href="#L-348"><span class="linenos">348</span></a>            <span class="s2">&quot;docs/AWESOME-AGENTIC-ENGINEERING.md&quot;</span>
+</span><span id="L-348"><a href="#L-348"><span class="linenos">348</span></a>            <span class="s2">&quot;docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md&quot;</span>
 </span><span id="L-349"><a href="#L-349"><span class="linenos">349</span></a>        <span class="p">)</span>
 </span><span id="L-350"><a href="#L-350"><span class="linenos">350</span></a>        <span class="nb">print</span><span class="p">(</span>
-</span><span id="L-351"><a href="#L-351"><span class="linenos">351</span></a>            <span class="s2">&quot;nothing was written to docs/AWESOME-AGENTIC-ENGINEERING.md — &quot;</span>
+</span><span id="L-351"><a href="#L-351"><span class="linenos">351</span></a>            <span class="s2">&quot;nothing was written to docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md — &quot;</span>
 </span><span id="L-352"><a href="#L-352"><span class="linenos">352</span></a>            <span class="s2">&quot;this script only caches candidates&quot;</span>
 </span><span id="L-353"><a href="#L-353"><span class="linenos">353</span></a>        <span class="p">)</span>
 </span><span id="L-354"><a href="#L-354"><span class="linenos">354</span></a>
@@ -966,10 +966,10 @@ skip-and-continue.</p>
 </span><span id="main-346"><a href="#main-346"><span class="linenos">346</span></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;index: </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;index_path&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span><span id="main-347"><a href="#main-347"><span class="linenos">347</span></a>        <span class="nb">print</span><span class="p">(</span>
 </span><span id="main-348"><a href="#main-348"><span class="linenos">348</span></a>            <span class="s2">&quot;review the candidates above, then hand-curate any of them into &quot;</span>
-</span><span id="main-349"><a href="#main-349"><span class="linenos">349</span></a>            <span class="s2">&quot;docs/AWESOME-AGENTIC-ENGINEERING.md&quot;</span>
+</span><span id="main-349"><a href="#main-349"><span class="linenos">349</span></a>            <span class="s2">&quot;docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md&quot;</span>
 </span><span id="main-350"><a href="#main-350"><span class="linenos">350</span></a>        <span class="p">)</span>
 </span><span id="main-351"><a href="#main-351"><span class="linenos">351</span></a>        <span class="nb">print</span><span class="p">(</span>
-</span><span id="main-352"><a href="#main-352"><span class="linenos">352</span></a>            <span class="s2">&quot;nothing was written to docs/AWESOME-AGENTIC-ENGINEERING.md — &quot;</span>
+</span><span id="main-352"><a href="#main-352"><span class="linenos">352</span></a>            <span class="s2">&quot;nothing was written to docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md — &quot;</span>
 </span><span id="main-353"><a href="#main-353"><span class="linenos">353</span></a>            <span class="s2">&quot;this script only caches candidates&quot;</span>
 </span><span id="main-354"><a href="#main-354"><span class="linenos">354</span></a>        <span class="p">)</span>
 </span></pre></div>

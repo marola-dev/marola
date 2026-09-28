@@ -1,0 +1,3739 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The ocean intelligence layer for a stretch of coast — guides and design proposals.">
+      
+      
+      
+        <link rel="canonical" href="https://marola.dev/docs/MIPs/MIP-0011-claude-code-best-practices/">
+      
+      
+        <link rel="prev" href="../MIP-0010-mlflow-experiment-tracking/">
+      
+      
+        <link rel="next" href="../MIP-0012-llm4s-adoption-and-dspy-deprecation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies - marola.dev docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/marola.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mip-0011-claude-code-best-practices-in-this-repository-hooks-as-gates-a-shared-permission-allowlist-path-scoped-rules-subagents-and-skills-the-dev-flow-already-implies" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="marola.dev docs" class="md-header__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            marola.dev docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="marola.dev docs" class="md-nav__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    marola.dev docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 Using marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    1 Using marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/RUN-LOCALLY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/TELEGRAM-SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telegram bot setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2 Building marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2 Building marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/EFFECTS-MAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Effects map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/SCALA3-JDK-REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scala 3 and JDK review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3 Working on the repo
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3 Working on the repo
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/AGENT-SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/GEMINI-CODE-ASSIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Code Assist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/ISSUE-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/SELF-DOCUMENTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-documenting marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4 Research and plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4 Research and plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent frameworks survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-STACK-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent stack survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Awesome agentic engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FABLE_REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FUTURE-WORK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Future work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIPs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIPs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0001: Bathing-water quality in the ranking, and a sea-lore paragraph in every reply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0002: The Telegram bot — marola's first real user surface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0003: Replies in under three seconds — caching, concurrent fetches, precomputed boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0004: The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0005-map-and-static-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005: The map — every beach's daily recommendation on a static site the pipeline feeds
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0006-live-look-user-cameras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0006: "How does it look right now?" — a live look at each beach, fed by users' cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0007-time-series-foundation-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0007: Time-series foundation models for marola's own series — local open models first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008: Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009: A richer map — a wave marker per beach and, on hover, every aspect at that point
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-anthropic-claude-code-documentation-fetched-2026-09-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Anthropic — Claude Code documentation (fetched 2026-09-05)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-community-fetched-2026-09-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Community (fetched 2026-09-05)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-what-is-already-here-read-2026-09-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 What is already here (read 2026-09-05)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0012: llm4s as marola's Scala-native LLM/agent layer — and the deprecation of the Python DSPy step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0013-opencode-tryout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013: OpenCode as marola's development agent — a tryout, and what replacing Claude Code would take
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0014-marola-book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0014: A marola book — The Compiler Pushes Back, written in LaTeX, versioned in a repo, built in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0015-interacao-swim-matching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0015: Interação — opt-in "who else is swimming here" matching between marola users
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0016-water-quality-map-markers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0016: Water-quality points on the map — OK / not-OK marks, placed in the sea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0017-agentic-tooling-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0017: Agentic tooling ideas from ai-job-search and September 2026's trending agent repos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0018: Marola self-documentation — weekly post-planner and multi-platform exporter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0019: arXiv/trending-repo survey — sea-forecasting and jellyfish-prediction techniques for marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0020-instagram-bot-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0020: An Instagram account for marola — first post by hand, API publishing, and a gated daily pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0021-beach-accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0021: Beach accessibility — parking, toilets, showers and lifeguard posts from OSM, shown only where the data exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0022-safety-answer-footer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0022: The safety footer — every answer grounded in a safety document ends with lifeguard/193/SAMU 192, appended after the model, never by it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0023: Product expansion — a wait-list, honest promotion, and the easiest way to keep marola's site and backend maintained
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0025-marola-sea-domain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025: marola-sea-1.0 — a small domain-tuned model (QLoRA SFT + tool-call SFT + DPO) served through Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0029-ocean-layer-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0030-coastal-trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0030: Coastal and lakeside trails on the map — named OSM paths near a beach or a lake
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0031-water-quality-inea-inema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031: Water quality for Rio de Janeiro (INEA) and Bahia (INEMA) — closing the "no data" gap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0032-model-strategy-benchmark-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0033-release-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0033: Release 0 — the repo goes public, a self-hosted chatbot, the first published model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0034-rss-feeds-and-content-syndication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0035-map-plugin-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0035: A plugin API for marola's map — third-party layers, Windy-style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0036-marola-advertising-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0036: Marola Advertising Action (MAA) — the Release 0 launch, channel by channel, and how to sustain it after
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0037-map-pwa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0037: A PWA for marola's map — offline-tolerant, installable, no build step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0038-forecast-model-spread/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking one
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0039-deterministic-fact-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0039: The fact guard — a deterministic check that the model's sentence only says what the numbers say
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0040: The reviewer has never been validated — measure the judge, then make it a small jury
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0041-soft-book-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0041: Soft book ingestion — distilling agentic-behavior principles from a book
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0042-map-v2-live-not-static/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0043: docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md — a curated awesome-list, plus a human-gated candidate digest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0044-site-sections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0044: marola.dev becomes a site, not just a map — news, a markdown dev blog, generated API docs, a feeds page, about/contact, and a restrained support page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0045: Classic NLP and parsing where an LLM call is currently paying for it — a survey of marola's product pipeline and its own dev loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0046: The map without the generated look — a chart-derived icon set replacing every emoji
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0047-desmos-equation-art/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0048-scaling-marola-sea/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0048: Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0049: Scala for the web layer — Tyrian, Laminar, ScalaTags, or better plain-JS discipline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0050-brazilian-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0050: Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0051-wave-model-ensemble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0052-wave-model-compute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0052: Should marola ever run its own wave model, and in what language? — a costed survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0053-learned-local-correction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0053: A learned local correction, not another model — statistical downscaling of the public wave forecasts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0054-portuguese-first-experience/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0054: Portuguese first — marola's whole user-facing experience in pt-BR, with a language choice that sticks and a location-aware default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0055: A vector store behind KnowledgeStore, and a chunker that knows what kind of ocean knowledge it is cutting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056: OODS — an Open Ocean Data Store for Brazilian bathing-water quality, starting with IMA/SC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0057: GCP as an opt-in cloud backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0058: A credited human artist — Daniela Vicentini's paintings on marola.dev, an "arte terapia" thanks link
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0059-jev-typed-decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0059: Jev (TypeSafe AI) as an opt-in typed-decision backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0060-open-code-review-on-ready/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060: Open Code Review on request, on marola's own runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0062-ressaca-hazard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per beach
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063: A GitHub-native tracking standard — issues as the unit of work, milestones as deliverables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064: mkdocs for the docs — a real documentation site at marola.dev/docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065: CI/CD on GitHub-hosted runners — nothing builds or deploys from a desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0066-opt-in-dev-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0066: Opt-in dev containers — the flake, in a container, for contributors without Nix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63" id="__nav_6_63_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP 0009
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_63_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIP 0009
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63_1" id="__nav_6_63_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshots
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_63_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Screenshots
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 — screenshots of the wave markers and the hover aspects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-anthropic-claude-code-documentation-fetched-2026-09-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Anthropic — Claude Code documentation (fetched 2026-09-05)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-community-fetched-2026-09-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Community (fetched 2026-09-05)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-what-is-already-here-read-2026-09-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 What is already here (read 2026-09-05)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mip-0011-claude-code-best-practices-in-this-repository-hooks-as-gates-a-shared-permission-allowlist-path-scoped-rules-subagents-and-skills-the-dev-flow-already-implies">MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies<a class="headerlink" href="#mip-0011-claude-code-best-practices-in-this-repository-hooks-as-gates-a-shared-permission-allowlist-path-scoped-rules-subagents-and-skills-the-dev-flow-already-implies" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Status</strong></td>
+<td>Implemented — all eleven tasks merged (<code>docs/MIPs/MIP-0011.tasks.md</code>); verified with <code>/code-review ultra</code> (ultrareview) against the full stack diff on 2026-09-06, see §7</td>
+</tr>
+<tr>
+<td><strong>Author</strong></td>
+<td>Claude Fable 5.1, for M. Hoffmann (request of 5 Sep 2026: "MIP for implementing Claude Code best practices, by Anthropic and community")</td>
+</tr>
+<tr>
+<td><strong>Created</strong></td>
+<td>2026-09-05</td>
+</tr>
+<tr>
+<td><strong>Tasks</strong></td>
+<td><code>docs/MIPs/MIP-0011.tasks.md</code> — stacked PRs, one per task</td>
+</tr>
+<tr>
+<td><strong>Phase</strong></td>
+<td>0 — developer tooling; nothing a user of marola sees. No earlier-phase prerequisite</td>
+</tr>
+<tr>
+<td><strong>Related</strong></td>
+<td><code>AGENTS.md</code> (the rules this turns from advisory into enforced), <code>docs/3-Working-on-the-repo/DEV-FLOW.md</code>, <code>docs/3-Working-on-the-repo/AGENT-SKILLS.md</code> §3 (skill candidates), <code>docs/4-Research-and-plans/FABLE_REVIEW.md</code> §3 (jail environment notes), <code>PHILOSOPHY.md</code> (why constraints, not prose), <code>.claude/settings.json</code>, <code>.claude/skills/</code>, <code>justfile</code> (<code>jail-claude</code>, <code>jcf</code>, <code>jcs</code>); MIP-0013 (an OpenCode tryout — most of tasks 1-5, 7 and 9 here have a one-config-key equivalent there); <code>docs/en/interactive-mode</code>, <code>docs/en/routines</code> (background/overnight execution, task 11)</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>M — ten small, independent config/hook PRs; each individually small, but ten of them</td>
+</tr>
+<tr>
+<td><strong>Gain</strong></td>
+<td>infra/dev-loop (turns advisory <code>AGENTS.md</code> rules into enforced config); cost/ops (fewer permission prompts, a shorter <code>AGENTS.md</code>)</td>
+</tr>
+<tr>
+<td><strong>Effort vs Gain</strong></td>
+<td>do next — cheap and overdue</td>
+</tr>
+<tr>
+<td><strong>Depends on</strong></td>
+<td>none blocking; Phase 0, developer tooling only; MIP-0013's tryout result may show which tasks are Claude-Code-specific</td>
+</tr>
+<tr>
+<td><strong>Risk</strong></td>
+<td>a shell-text <code>permissions.deny</code> is a guard rail, not a boundary — <code>bash -c "gh pr merge"</code> evades it; ai-jail and the human go-ahead remain the real boundary</td>
+</tr>
+<tr>
+<td><strong>Cost so far</strong></td>
+<td>~$12.86 total across the eleven merged task PRs (<code>Cost:</code> trailers, mostly measured via <code>scripts/cost-split.py</code>; task 6's <code>$3.40</code> is a diff-size estimate, no session log matched) — not counting the design/MIP-writing session bundled into MIP-0010's shared total (commit 3fdcd05), or the follow-on ultrareview verification (see §7 — a free-tier request this time, at $0 to the user; note the real per-review price here once a paid one is spent, so this line stays honest about what future reviews cost)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-summary">1. Summary<a class="headerlink" href="#1-summary" title="Permanent link">&para;</a></h2>
+<p>marola already follows the parts of Anthropic's guidance that are habits: a <code>CLAUDE.md</code> that imports
+<code>AGENTS.md</code>, two in-repo skills, one session per feature, a cost line per PR, the agent in a
+sandbox. What it does not have is the part that is <strong>configuration the harness enforces</strong>: no hooks
+(every rule in <code>AGENTS.md</code> is text the model may or may not weigh), no shared permission allowlist
+(every session re-approves <code>just test</code>), no path-scoped rules (<code>AGENTS.md</code> is 196 lines loaded into
+every session, on the edge of the documented adherence cliff), no subagents (the reviewer
+<code>DEV-FLOW.md</code> §5 describes is run by hand), no <code>.mcp.json</code> (marola's own MCP server is not offered
+to the agent working on marola). This MIP adopts the documented practices in that order, each as one
+small PR, with a measurable "done".</p>
+<h2 id="2-motivation">2. Motivation<a class="headerlink" href="#2-motivation" title="Permanent link">&para;</a></h2>
+<p>Quoted from the docs fetched 2026-09-05 (<code>code.claude.com/docs/en/…</code>):</p>
+<ul>
+<li><em>"Unlike CLAUDE.md instructions which are advisory, hooks are deterministic and guarantee the
+  action happens."</em> (<code>best-practices</code>). <code>AGENTS.md</code>'s cost rule is the highest-stakes rule in the
+  repo and it is advisory.</li>
+<li><em>"target under 200 lines per CLAUDE.md file. Longer files consume more context and reduce
+  adherence."</em> (<code>memory</code>). <code>AGENTS.md</code> is 196 lines and grows with every doc-table row.</li>
+<li><em>"Commit <code>.claude/settings.json</code> so everyone who clones the repository gets the same permissions,
+  hooks, telemetry, and plugins."</em> (<code>settings</code>). Ours holds attribution and one plugin.</li>
+<li><em>"Use <code>disable-model-invocation: true</code> for workflows with side effects"</em> (<code>skills</code>). <code>mip-tasks</code>
+  creates branches and PRs and can be auto-invoked.</li>
+<li>Local evidence: <code>docs/4-Research-and-plans/FABLE_REVIEW.md</code> §3 (<code>gh</code> unauthenticated inside the jail, <code>.env.example</code>
+  reading as empty) is re-discovered per session; auto-memory currently carries it. A
+  <code>SessionStart</code> hook can print it once.</li>
+<li><em>"When a claude.ai usage limit stops Claude mid-task, Claude Code waits in the open session
+  and continues the task on its own after the limit resets... automatic continue is on by
+  default."</em> (<code>interactive-mode</code>, fetched 2026-09-05). This closes what was, until recently, a
+  well-documented gap: <code>anthropics/claude-code</code> issues #35744, #26775, #18980, #36320, #38263,
+  #62788 all requested exactly this, several as late as March 2026, with a small ecosystem of
+  third-party wrappers (<code>claude-auto-retry</code>, <code>claude-auto-resume</code>, <code>claude-delayed-message</code>)
+  built to work around its absence. What it does and doesn't cover matters before relying on it
+  for an unattended overnight run; see the new risks below.</li>
+</ul>
+<h2 id="3-user-visible-change">3. User-visible change<a class="headerlink" href="#3-user-visible-change" title="Permanent link">&para;</a></h2>
+<p>None for marola's users. For whoever runs <code>just jcf</code> / <code>just jcs</code>:</p>
+<div class="highlight"><pre><span></span><code>$ just jcf
+▸ SessionStart: branch mip-0010/1-run-ledger · gh: not logged in (push works, PRs by hand) · 0 uncommitted
+&gt; …edits core/src/main/scala/marola/ledger/RunLedger.scala…
+▸ PostToolUse(Edit *.scala): scalafmt ok
+&gt; (turn ends with .scala changes and no test run)
+▸ Stop: 3 Scala files changed since HEAD and `just test` has not run this session — run it or say why.
+</code></pre></div>
+<p>Permission prompts for <code>just build|test|quality|fmt</code>, <code>sbt …</code>, <code>git status|diff|log</code>, <code>scripts/*.sh</code>
+disappear; anything not on the allowlist still asks.</p>
+<h2 id="4-data-sources-and-dependencies-reviewed">4. Data sources and dependencies reviewed<a class="headerlink" href="#4-data-sources-and-dependencies-reviewed" title="Permanent link">&para;</a></h2>
+<h3 id="41-anthropic-claude-code-documentation-fetched-2026-09-05">4.1 Anthropic — Claude Code documentation (fetched 2026-09-05)<a class="headerlink" href="#41-anthropic-claude-code-documentation-fetched-2026-09-05" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Best practices</strong> (<code>/docs/en/best-practices</code>; <code>anthropic.com/engineering/claude-code-best-practices</code>
+  redirects there): give Claude a check it can run (tests, build, a Stop hook, a <code>/goal</code>, a
+  verification subagent); explore → plan → code → commit, plan mode for multi-file or unfamiliar
+  changes; specific prompts; CLAUDE.md short, "would removing this cause a mistake?", run <code>/doctor</code>
+  to trim; permissions allowlist + sandbox; CLI tools (<code>gh</code>) over API calls; hooks "for actions
+  that must happen every time with zero exceptions"; skills in <code>.claude/skills/</code>; subagents in
+  <code>.claude/agents/</code>; <code>/clear</code> between tasks, <code>/rename</code> sessions; a fresh-context reviewer
+  ("Writer/Reviewer"); an adversarial review subagent told to report gaps that affect correctness
+  only.</li>
+<li><strong>Hooks reference</strong> (<code>/docs/en/hooks</code>): events incl. <code>SessionStart</code>, <code>UserPromptSubmit</code>,
+  <code>PreToolUse</code> (can block), <code>PostToolUse</code> (read-only), <code>Stop</code> (can block; the harness overrides
+  after 8 consecutive blocks), <code>PreCompact</code>, <code>InstructionsLoaded</code>; matchers by tool name or
+  permission-rule syntax (<code>"if": "Bash(git *)"</code>); exit code 2 blocks, JSON output carries
+  <code>permissionDecision</code>/<code>systemMessage</code>; handler types command/http/mcp_tool/prompt/agent;
+  <code>${CLAUDE_PROJECT_DIR}</code> substitution; documented examples: block destructive shell, auto-format
+  after edits, watch <code>.env</code>.</li>
+<li><strong>Memory</strong> (<code>/docs/en/memory</code>): <code>CLAUDE.md</code> load order; <code>@import</code>; <code>.claude/rules/*.md</code> with
+  <code>paths:</code> frontmatter loading only when matching files are read; <code>CLAUDE.local.md</code> gitignored;
+  auto-memory limits (200 lines / 25 KB index); hooks, not CLAUDE.md, for "must happen at a point".</li>
+<li><strong>Settings</strong> (<code>/docs/en/settings</code>): precedence managed → CLI → <code>.claude/settings.local.json</code> →
+  <code>.claude/settings.json</code> → <code>~/.claude/settings.json</code>; <code>permissions.allow/deny/ask</code>, <code>hooks</code>,
+  <code>env</code>, <code>attribution</code>, <code>enabledPlugins</code>, <code>autoMemoryEnabled</code>; the local file is git-ignored by
+  Claude Code when it creates it; add it to <code>.gitignore</code> when created by hand.</li>
+<li><strong>Skills</strong> (<code>/docs/en/skills</code>): frontmatter <code>name</code>, <code>description</code>, <code>disable-model-invocation</code>,
+  <code>allowed-tools</code>, <code>context: fork</code>, <code>paths</code>, <code>arguments</code>; dynamic context via <code>!`cmd`</code>;
+  <code>/skill-doctor</code> for token cost and hit rate; the <code>skill-creator</code> plugin runs evals in
+  <code>evals/evals.json</code>; keep SKILL.md under 500 lines.</li>
+<li><strong>Subagents</strong> (<code>/docs/en/sub-agents</code>): <code>.claude/agents/*.md</code> with <code>name</code>, <code>description</code>,
+  <code>tools</code>, <code>model</code>, <code>permissionMode</code>, <code>memory: project</code>, <code>maxTurns</code>; read-only tool sets for
+  review; fresh context by design.</li>
+</ul>
+<h3 id="42-community-fetched-2026-09-05">4.2 Community (fetched 2026-09-05)<a class="headerlink" href="#42-community-fetched-2026-09-05" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>hesreallyhim/awesome-claude-code</code>: 53.5k stars, pushed 2026-09-05, the index of hooks,
+  skills, statuslines and CLAUDE.md examples; used as a directory, no single claim taken from it.</li>
+<li><code>MuhammadUsmanGM/claude-code-best-practices</code> (wiki, "Last updated May 12, 2026 v1.6"):
+  format-on-write and test-on-stop hooks, pre-commit secret blocking, a <code>PreToolUse</code> hook that
+  validates edits to CLAUDE.md itself, worktrees for parallel tasks, cost budgeting per task type.
+  Its model advice ("Claude 3.5 Sonnet") is stale and ignored.</li>
+<li>Several 2026 blog guides (DEV, SmartScope, mcp.directory; search results, not fetched) converge
+  on the same list: lean CLAUDE.md, plan mode, subagents for noisy research, worktrees, hooks as
+  guardrails, verification loop. Nothing beyond the official docs was adopted from them.</li>
+</ul>
+<h3 id="43-what-is-already-here-read-2026-09-05">4.3 What is already here (read 2026-09-05)<a class="headerlink" href="#43-what-is-already-here-read-2026-09-05" title="Permanent link">&para;</a></h3>
+<p><code>CLAUDE.md</code> = <code>@AGENTS.md</code> + two lines; <code>.claude/settings.json</code> = attribution + <code>superpowers</code>
+plugin; <code>.claude/skills/mip</code>, <code>mip-tasks</code> (no <code>disable-model-invocation</code>); <code>.githooks/pre-commit</code>
+(sbt compile of staged Scala, a git hook, not a Claude hook, keep it); <code>.ai-jail</code>; <code>just
+jail-claude|jcf|jcs</code>; <code>scripts/uprd.sh</code>, <code>stack.sh</code>, <code>cost-split.py</code>; auto-memory notes about <code>gh</code>
+and Docker in sessions. No <code>.claude/hooks/</code>, <code>.claude/rules/</code>, <code>.claude/agents/</code>, <code>.mcp.json</code>,
+<code>CLAUDE.local.md</code>, statusline.</p>
+<h2 id="5-design">5. Design<a class="headerlink" href="#5-design" title="Permanent link">&para;</a></h2>
+<p>Each bullet is one task/PR (<code>mip-tasks</code> order), all under <code>.claude/</code> or the root, each with a
+self-test the <code>quality</code> recipe runs (<code>scripts/hooks/*.sh --self-test</code>, like the Python scripts).</p>
+<ol>
+<li><strong><code>.claude/settings.json</code>, permissions.</strong> <code>allow</code>: <code>Bash(just build*)</code>, <code>Bash(just test*)</code>,
+   <code>Bash(just quality*)</code>, <code>Bash(just fmt*)</code>, <code>Bash(sbt *)</code>, <code>Bash(git status*)</code>, <code>Bash(git diff*)</code>,
+   <code>Bash(git log*)</code>, <code>Bash(scripts/stack.sh status*)</code>, <code>Read</code>, <code>Grep</code>, <code>Glob</code>; <code>deny</code>: <code>Read(.env)</code>,
+   <code>Read(**/*.pem)</code>, <code>Read(**/*.key)</code>. Derive the allow list from real transcripts with the
+   <code>fewer-permission-prompts</code> skill first; personal extras go to <code>settings.local.json</code> (add it to
+   <code>.gitignore</code>).</li>
+<li><strong>Hooks, cost gate.</strong> A <code>PreToolUse</code> hook on <code>Bash</code> that blocked paid-deploy commands until a
+   human go-ahead. It has since been removed, with the integrations it guarded. ai-jail and the
+   human go-ahead remain.</li>
+<li><strong>Hooks, format on write.</strong> <code>PostToolUse</code> on <code>Edit|Write</code> matching <code>*.scala</code> → <code>scalafmt</code> on
+   that file via the native binary (<code>coursier launch scalafmt</code> cached in the flake; <strong>whether the
+   flake already provides a native <code>scalafmt</code> was not checked</strong>, §11). <code>*.py</code> → <code>ruff format</code>
+   when present. A slow hook is worse than none: 30 s timeout, single file only.</li>
+<li><strong>Hooks, test on stop, once.</strong> <code>Stop</code> → <code>.claude/hooks/stop-gate.sh</code>: if <code>git diff --name-only
+   HEAD</code> has <code>.scala</code> files and no marker from a <code>just test</code> run exists for this session, block
+   once with "run <code>just test</code> or say why", write the marker, allow the next stop. Never loop (the
+   harness stops blocking after 8; this stops after 1).</li>
+<li><strong>Hooks, session start.</strong> <code>SessionStart</code> prints branch, <code>gh auth status</code> in one line,
+   uncommitted count, and the two jail caveats from <code>FABLE_REVIEW.md</code> §3. Replaces two auto-memory
+   notes with a fact the harness states.</li>
+<li><strong><code>.claude/rules/</code>.</strong> Move the path-specific halves of <code>AGENTS.md</code> into <code>rules/scala.md</code> (<code>paths:
+   ["**/*.scala", "build.sbt"]</code>: Kyo boundary, strictEquality, enum-over-exceptions,
+   verify-against-the-jar), <code>rules/docs.md</code> (<code>paths: ["docs/**"]</code>: status vocabulary, MIP template
+   pointer). <code>AGENTS.md</code> keeps what every session needs (what the repo is, commands, phase
+   discipline, attribution, cost) and links the rules; target ≤ 150 lines; run <code>/doctor</code> for the
+   trim list. <strong>Decision needed (§11):</strong> <code>AGENTS.md</code> is read by non-Claude agents too; rules are
+   excerpts that link back, never the only copy.</li>
+<li><strong>Subagents.</strong> <code>.claude/agents/mip-reviewer.md</code> (tools <code>Read, Grep, Glob, Bash</code>, <code>model:
+   fable</code>, <code>memory: project</code>): reviews a task branch against its <code>MIP-NNNN.tasks.md</code> row, reports
+   gaps that affect correctness or the stated requirement only, <code>DEV-FLOW.md</code> §5's prompt, made a
+   file. <code>.claude/agents/jar-verifier.md</code> (tools <code>Bash</code>, <code>model: sonnet</code>): <code>javap</code> a pinned Kyo
+   class and report the real signature; <code>AGENTS.md</code>'s rule as a cheap delegate.</li>
+<li><strong>Skills.</strong> <code>disable-model-invocation: true</code> on <code>mip-tasks</code>; the four candidates from
+   <code>AGENT-SKILLS.md</code> §3 (<code>fixture-refresh</code>, <code>benchmark-compare</code>, <code>corpus-doc</code>, <code>water-provider</code>),
+   one PR each, each with <code>evals/evals.json</code> and a <code>skill-creator</code> run before merge.</li>
+<li><strong><code>.mcp.json</code>.</strong> <code>marola</code> → <code>just mcp-server</code> (stdio) so a session working on marola can call
+   <code>find_nearby_beaches</code> / <code>get_swim_recommendation</code>, dogfooding <code>ARCHITECTURE.md</code> §5c.</li>
+<li><strong><code>CLAUDE.md</code> additions</strong> under the import: <code>/clear</code> per feature and <code>/rename</code> to the branch
+    (already in <code>DEV-FLOW.md</code>, restated once); compaction instruction "preserve the list of modified
+    files, the test commands run, and the Cost figure"; a <code>CLAUDE.local.md</code> mention. Optional: a
+    statusline showing context use and branch (<code>statusline</code> skill), personal, not committed.</li>
+<li><strong>Background/overnight MIP execution.</strong> <code>/goal</code> + <code>/loop</code> locally, or a cloud
+    <a href="https://code.claude.com/docs/en/routines">routine</a> for something that survives the laptop
+    sleeping, to run a <code>MIP-NNNN.tasks.md</code> row-by-row unattended, stopping at a stated condition
+    rather than running indefinitely. Same guard rails as a daytime session, not fewer: the
+    branch/PR boundaries tasks 1-2 already set, and the <code>gh pr merge</code> deny rule from the earlier
+    GitHub-hygiene work; an overnight run still never merges itself.</li>
+</ol>
+<p>Not adopted: <code>claude -p</code> in CI (a paid run per PR with no reviewer, revisit with MIP-0010's
+ledger measuring it); <code>/batch</code> fan-out (nothing here is a 2 000-file migration); agent teams
+(experimental).</p>
+<h2 id="6-scoring-safety-impact">6. Scoring / safety impact<a class="headerlink" href="#6-scoring-safety-impact" title="Permanent link">&para;</a></h2>
+<p>None. No product code changes.</p>
+<h2 id="7-verification-plan">7. Verification plan<a class="headerlink" href="#7-verification-plan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>scripts/hooks/*.sh --self-test</code> in <code>just quality</code>: <code>stop-gate.sh</code> blocks once then allows;
+  <code>format.sh</code> leaves an already-formatted file unchanged (byte-equal).</li>
+<li>A session check per PR, recorded in the PR body: <code>/hooks</code> lists the hooks; <code>/context</code> shows
+  <code>rules/scala.md</code> only after a <code>.scala</code> file is read; <code>/skill-doctor</code> before/after the skills PR.</li>
+<li>Measure: permission prompts per session (count from the transcript, before vs after task 1);
+  <code>AGENTS.md</code> line count (196 → ≤ 150); Cost trailers on the next three task PRs vs the previous
+  three (the hooks should not raise them; a Stop hook that loops would).</li>
+<li><strong>Done:</strong> all eleven tasks merged (PRs #102, #108-110, #115-122), <code>FABLE_REVIEW.md</code> §3's jail
+  caveats are printed by the <code>SessionStart</code> hook; <code>gh-not-logged-in-in-sessions.md</code> (the one
+  matching auto-memory note that actually existed (task 5's PR found only one of the "two" this
+  row originally expected) is deleted.</li>
+<li><strong>Ultrareview, 2026-09-06:</strong> <code>/code-review ultra</code> run against the full stack diff
+  (<code>mip-0011/11-overnight-run-guardrail</code> → <code>main</code>, 22 files, +1118/-134) after all eleven tasks
+  merged, at the user's request. A free-tier request this session (<code>Free ultrareview 1 of 3</code>): $0
+  to the user; log the real price here the first time a paid one is spent, so this line doesn't
+  silently imply every future review is free. Findings tracked separately, not folded into this
+  MIP's own scope (a design doc doesn't get rewritten post-hoc for review findings; those become
+  new fix commits/PRs against <code>main</code>, referencing this MIP for context).</li>
+<li><strong>How to refresh the Cost so far figure above</strong>, since all eleven PRs are already merged (the
+  normal <code>just uprds MIP-0011</code> flow only updates <em>open</em> PR bodies, not this row):</li>
+<li><code>git log --oneline main | grep 'mip-0011 task'</code>: the eleven merged commit SHAs.</li>
+<li><code>for c in &lt;shas&gt;; do git show -s --format=%B "$c" | grep '^Cost:'; done</code>: pull each
+     commit's own <code>Cost:</code> trailer (already measured via <code>scripts/cost-split.py</code> at PR time,
+     except task 6, still the one diff-size <code>est.</code>) and sum the dollar figures by hand; there is
+     no single command that re-sums an already-merged, cross-session stack's trailers today
+     (<code>just cost-split MIP-0011</code> is for an <em>open</em>, unmerged stack in one session's own log).</li>
+<li>Edit this row and the matching one in <code>docs/MIPs/README.md</code> together; they must always
+     agree; <code>docs/3-Working-on-the-repo/DEV-FLOW.md</code> has no automation for that agreement, so it's a manual pair-edit.</li>
+<li>If task 6's <code>est.</code> figure is ever superseded by a real measured one (e.g. a later session
+     finds the original log), update this row's total (the merged commit's own <code>Cost:</code> trailer
+     stays as originally written, commit messages are historical, not corrected in place), and
+     note in the doc edit that the figure changed from estimate to measured, so a reader doesn't
+     assume it was always precise.</li>
+</ul>
+<h2 id="8-risks-limitations-and-honest-caveats">8. Risks, limitations, and honest caveats<a class="headerlink" href="#8-risks-limitations-and-honest-caveats" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Hooks run shell on every matching event inside the jail: a slow formatter or an sbt-backed hook
+  would tax every edit; native binaries only, per-file, timeouts set.</li>
+<li>A <code>Stop</code> hook that blocks repeatedly burns tokens and trust; the once-per-session design and the
+  self-test exist for that.</li>
+<li><code>permissions.deny</code> matches command text; <code>bash -c "gh pr merge"</code> or a script can evade it. It is a
+  guard rail, not a boundary; ai-jail and the human go-ahead remain the boundary.</li>
+<li>Auto mode's classifier and the deny list can disagree; deny wins for what it matches, and the
+  rest stays the classifier's call.</li>
+<li>Splitting <code>AGENTS.md</code> risks two copies of one rule drifting; rules link back and CI can grep
+  for the sentinel sentences.</li>
+<li>Docs quoted here are a moving target (the hooks page lists events that did not exist months
+  ago); each task re-fetches the page it relies on and notes the date in its PR.</li>
+<li><strong>Auto-continue is reactive, not a throttle.</strong> It waits out a hit limit and resumes; nothing
+  in the docs describes pacing usage to avoid hitting the wall mid-task. A long unattended run
+  can still burn the 5-hour window in one uncontrolled burst. (The community <code>heavy-usage</code>
+  plugin claims to "stop safely before the wall", <strong>not verified against its source</strong>, treat as
+  an unconfirmed community claim, not confirmed Claude Code behavior, until checked.)</li>
+<li><strong>It needs a session that stays alive.</strong> The doc says it "waits in the <em>open</em> session"; a
+  closed terminal or a sleeping laptop breaks this, the same gap the OS-level community
+  schedulers exist to work around. A <a href="https://code.claude.com/docs/en/routines">routine</a> doesn't
+  depend on the local machine staying awake and is the safer default for a genuine walk-away
+  run; check its own cost model first (§11).</li>
+<li><strong>A 7-day reset is not an overnight wait.</strong> Same mechanism, different practical meaning: a
+  task that exhausts the weekly window stops for up to a week. Check which window
+  (<code>rate_limits.five_hour</code> vs. <code>.seven_day</code>, per the statusline schema) is actually at risk
+  before planning an overnight run around it.</li>
+</ul>
+<h2 id="9-alternatives-considered">9. Alternatives considered<a class="headerlink" href="#9-alternatives-considered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Do nothing</strong>: the prose works most of the time; "most" is the problem for the cost rule.</li>
+<li><strong>Managed settings</strong> (<code>managed-settings.json</code>): organisation-level; this is a personal repo.</li>
+<li><strong>ai-jail alone</strong>: filesystem/process containment, no notion of a paid API call or a test gate.</li>
+<li><strong>One giant <code>settings.json</code> PR</strong>: harder to attribute a regression (a hook slowing sessions) to
+  a change; ten small PRs match <code>DEV-FLOW.md</code>.</li>
+</ul>
+<h2 id="11-open-questions">11. Open questions<a class="headerlink" href="#11-open-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Does <code>flake.nix</code> already provide a native <code>scalafmt</code> (coursier launcher or <code>pkgs.scalafmt</code>)?
+   If not, which is lighter for a per-edit hook?</li>
+<li><code>AGENTS.md</code> vs <code>.claude/rules/</code>: excerpts that link back (proposed) or move the text and leave
+   a pointer for other agents? The former duplicates; the latter drops the rule for non-Claude
+   tools.</li>
+<li><code>Stop</code> hook policy: block once (proposed) or advise only via <code>systemMessage</code>?</li>
+<li>Which allowlist entries, from real transcripts (<code>fewer-permission-prompts</code>) rather than from
+   the list above.</li>
+<li>Statusline: worth committing a project default, or personal only?</li>
+<li>Should <code>.mcp.json</code> also register a local MLflow (MIP-0010) or Overpass helper, or nothing
+   beyond marola's own server?</li>
+<li><strong>Resolved by task 11's spike, see <code>docs/3-Working-on-the-repo/DEV-FLOW.md</code> §7.</strong> Routines vs. local <code>/goal</code>+<code>/loop</code>
+   for overnight MIP runs: local <code>/goal</code>+<code>/loop</code> (via <code>CronCreate</code>) was run for real this session
+   to work through this very MIP's own task stack (real pushed branches, real <code>GH_POST_MORTEM.md</code>
+   entries), and is the chosen default: no extra environment setup, demonstrated working. A cloud
+   routine survives the laptop closing but needs Claude Code on the web/a cloud environment, not
+   confirmed available in every setup; adopt it once that's confirmed, not assumed as a
+   prerequisite.</li>
+<li><strong>Resolved by task 11's spike, see <code>docs/3-Working-on-the-repo/DEV-FLOW.md</code> §7.</strong> <code>heavy-usage</code>'s "stop before the
+   wall" claim, checked against its actual source (<code>~/.claude/plugins/cache/heavy-usage</code>): real,
+   but soft: a <code>UserPromptSubmit</code> prompt injection at a linear-projection threshold (90%
+   five-hour / 95% weekly), not a <code>PreToolUse</code> block, so compliance is advisory; its data source
+   (<code>usage-live.json</code>) is populated only while the interactive statusLine renders and can go
+   stale in a genuinely headless run (the plugin's own comment: "never suppress a wind-down" even
+   on stale data). Treat it as <code>mip-solve-perpetual</code>'s own backup usage-guard layer, never the
+   sole or primary stop condition, consistent with how the skill already used it before this
+   check.</li>
+</ol>
+<h2 id="appendix">Appendix<a class="headerlink" href="#appendix" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>https://code.claude.com/docs/en/best-practices</code> (2026-09-05), the redirect target of
+  <code>https://www.anthropic.com/engineering/claude-code-best-practices</code> (HTTP 308).</li>
+<li><code>https://code.claude.com/docs/en/hooks</code>, <code>/memory</code>, <code>/settings</code>, <code>/skills</code>, <code>/sub-agents</code>
+  (2026-09-05).</li>
+<li><code>https://github.com/hesreallyhim/awesome-claude-code</code>: 53 559 stars, pushed 2026-09-05T18:10Z
+  (GitHub API).</li>
+<li><code>https://github.com/MuhammadUsmanGM/claude-code-best-practices</code>: v1.6, 2026-05-12.</li>
+<li>Repo state read on 2026-09-05: <code>AGENTS.md</code> 196 lines; <code>.claude/settings.json</code> keys
+  <code>attribution</code>, <code>enabledPlugins</code>; skills <code>mip</code>, <code>mip-tasks</code>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top", "navigation.tracking", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

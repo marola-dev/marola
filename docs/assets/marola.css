@@ -1,0 +1,36 @@
+/* c0-traced's palette, applied to Material's theme variables. Material's own `primary`/`accent`
+   keys only take named colours, so the exact inks have to come through CSS. Sampled from
+   docs/img/logo/c0-traced/ on the design/logo-proposals branch:
+     #0b4261  deep navy, the wordmark ink
+     #057b9e  the mark's main ink
+     #1badc5 -> #19ddf0  the crest gradient, which supplies the accent */
+:root {
+  --marola-navy: #0b4261;
+  --marola-ink: #057b9e;
+  --marola-cyan: #1ac5da;
+  --marola-cyan-bright: #19ddf0;
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--marola-ink);
+  --md-primary-fg-color--light: var(--marola-cyan);
+  --md-primary-fg-color--dark: var(--marola-navy);
+  --md-accent-fg-color: var(--marola-cyan);
+  --md-typeset-a-color: var(--marola-ink);
+}
+
+/* On slate the navy is too close to the page background to read as a header, and the ink is too
+   dark for links against it — the brighter end of the crest gradient is what carries there. */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--marola-navy);
+  --md-primary-fg-color--light: var(--marola-cyan);
+  --md-primary-fg-color--dark: #082f45;
+  --md-accent-fg-color: var(--marola-cyan-bright);
+  --md-typeset-a-color: var(--marola-cyan);
+
+  /* Material sets body text to 75% white on slate, which reads grey next to the header title.
+     Pure white, to match it. Only on slate — in light mode this is text on a white page. */
+  --md-typeset-color: #ffffff;
+  --md-default-fg-color: #ffffff;
+  --md-default-fg-color--light: rgba(255, 255, 255, 0.85);
+}

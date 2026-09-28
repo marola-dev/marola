@@ -1,0 +1,3829 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The ocean intelligence layer for a stretch of coast — guides and design proposals.">
+      
+      
+      
+        <link rel="canonical" href="https://marola.dev/docs/1-Using-marola/RUN-LOCALLY/">
+      
+      
+        <link rel="prev" href="../..">
+      
+      
+        <link rel="next" href="../TELEGRAM-SETUP/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Run it locally - marola.dev docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/marola.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#run-it-locally" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="marola.dev docs" class="md-header__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            marola.dev docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Run it locally
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="marola.dev docs" class="md-nav__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    marola.dev docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 Using marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    1 Using marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it locally
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-start-ollama-and-pull-a-small-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Start Ollama and pull a small model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-point-marola-at-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Point marola at it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-run-the-pipeline-the-actual-e2e-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Run the pipeline — the actual E2E check
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Run the pipeline — the actual E2E check">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-pinning-it-permanently-env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Pinning it permanently: .env
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-other-two-cli-paths-same-local-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. The other two CLI paths, same local setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#51-ask-the-ocean-notes-local-rag-and-the-marola-model-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Ask the ocean notes (local RAG) and the marola model variant
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#52-plug-your-local-model-into-the-public-sites-chat-widget-mip-0033" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Plug your local model into the public site's chat widget (MIP-0033)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-regression-checks-without-the-network-and-how-to-re-record-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Regression checks without the network (and how to re-record them)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-writing-mips-from-voice-notes-in-a-browser-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Writing MIPs from voice notes in a browser session
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-the-map-build-the-boards-once-serve-them-as-a-static-site-mip-0005" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. The map — build the boards once, serve them as a static site (MIP-0005)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-docker-only-no-nix-no-sbt-no-ollama-install-mip-0008" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-the-mlflow-ledger-every-benchmark-run-on-record-mip-0010" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. The MLflow ledger — every benchmark run on record (MIP-0010)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-what-this-guide-deliberately-doesnt-cover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. What this guide deliberately doesn't cover
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TELEGRAM-SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telegram bot setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2 Building marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2 Building marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/EFFECTS-MAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Effects map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/SCALA3-JDK-REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scala 3 and JDK review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3 Working on the repo
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3 Working on the repo
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/AGENT-SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/GEMINI-CODE-ASSIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Code Assist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/ISSUE-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/SELF-DOCUMENTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-documenting marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4 Research and plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4 Research and plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent frameworks survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-STACK-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent stack survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Awesome agentic engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FABLE_REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FUTURE-WORK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Future work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIPs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIPs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0001: Bathing-water quality in the ranking, and a sea-lore paragraph in every reply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0002: The Telegram bot — marola's first real user surface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0003: Replies in under three seconds — caching, concurrent fetches, precomputed boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0004: The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0005-map-and-static-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005: The map — every beach's daily recommendation on a static site the pipeline feeds
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0006-live-look-user-cameras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0006: "How does it look right now?" — a live look at each beach, fed by users' cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0007-time-series-foundation-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0007: Time-series foundation models for marola's own series — local open models first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008: Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009: A richer map — a wave marker per beach and, on hover, every aspect at that point
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0011-claude-code-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0012: llm4s as marola's Scala-native LLM/agent layer — and the deprecation of the Python DSPy step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0013-opencode-tryout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013: OpenCode as marola's development agent — a tryout, and what replacing Claude Code would take
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0014-marola-book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0014: A marola book — The Compiler Pushes Back, written in LaTeX, versioned in a repo, built in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0015-interacao-swim-matching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0015: Interação — opt-in "who else is swimming here" matching between marola users
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0016-water-quality-map-markers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0016: Water-quality points on the map — OK / not-OK marks, placed in the sea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0017-agentic-tooling-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0017: Agentic tooling ideas from ai-job-search and September 2026's trending agent repos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0018: Marola self-documentation — weekly post-planner and multi-platform exporter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0019: arXiv/trending-repo survey — sea-forecasting and jellyfish-prediction techniques for marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0020-instagram-bot-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0020: An Instagram account for marola — first post by hand, API publishing, and a gated daily pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0021-beach-accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0021: Beach accessibility — parking, toilets, showers and lifeguard posts from OSM, shown only where the data exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0022-safety-answer-footer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0022: The safety footer — every answer grounded in a safety document ends with lifeguard/193/SAMU 192, appended after the model, never by it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0023: Product expansion — a wait-list, honest promotion, and the easiest way to keep marola's site and backend maintained
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0025-marola-sea-domain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025: marola-sea-1.0 — a small domain-tuned model (QLoRA SFT + tool-call SFT + DPO) served through Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0029-ocean-layer-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0030-coastal-trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0030: Coastal and lakeside trails on the map — named OSM paths near a beach or a lake
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0031-water-quality-inea-inema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031: Water quality for Rio de Janeiro (INEA) and Bahia (INEMA) — closing the "no data" gap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0032-model-strategy-benchmark-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0033-release-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0033: Release 0 — the repo goes public, a self-hosted chatbot, the first published model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0034-rss-feeds-and-content-syndication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0035-map-plugin-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0035: A plugin API for marola's map — third-party layers, Windy-style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0036-marola-advertising-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0036: Marola Advertising Action (MAA) — the Release 0 launch, channel by channel, and how to sustain it after
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0037-map-pwa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0037: A PWA for marola's map — offline-tolerant, installable, no build step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0038-forecast-model-spread/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking one
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0039-deterministic-fact-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0039: The fact guard — a deterministic check that the model's sentence only says what the numbers say
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0040: The reviewer has never been validated — measure the judge, then make it a small jury
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0041-soft-book-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0041: Soft book ingestion — distilling agentic-behavior principles from a book
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0042-map-v2-live-not-static/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0043: docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md — a curated awesome-list, plus a human-gated candidate digest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0044-site-sections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0044: marola.dev becomes a site, not just a map — news, a markdown dev blog, generated API docs, a feeds page, about/contact, and a restrained support page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0045: Classic NLP and parsing where an LLM call is currently paying for it — a survey of marola's product pipeline and its own dev loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0046: The map without the generated look — a chart-derived icon set replacing every emoji
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0047-desmos-equation-art/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0048-scaling-marola-sea/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0048: Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0049: Scala for the web layer — Tyrian, Laminar, ScalaTags, or better plain-JS discipline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0050-brazilian-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0050: Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0051-wave-model-ensemble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0052-wave-model-compute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0052: Should marola ever run its own wave model, and in what language? — a costed survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0053-learned-local-correction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0053: A learned local correction, not another model — statistical downscaling of the public wave forecasts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0054-portuguese-first-experience/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0054: Portuguese first — marola's whole user-facing experience in pt-BR, with a language choice that sticks and a location-aware default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0055: A vector store behind KnowledgeStore, and a chunker that knows what kind of ocean knowledge it is cutting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056: OODS — an Open Ocean Data Store for Brazilian bathing-water quality, starting with IMA/SC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0057: GCP as an opt-in cloud backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0058: A credited human artist — Daniela Vicentini's paintings on marola.dev, an "arte terapia" thanks link
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0059-jev-typed-decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0059: Jev (TypeSafe AI) as an opt-in typed-decision backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0060-open-code-review-on-ready/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060: Open Code Review on request, on marola's own runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0062-ressaca-hazard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per beach
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063: A GitHub-native tracking standard — issues as the unit of work, milestones as deliverables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064: mkdocs for the docs — a real documentation site at marola.dev/docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065: CI/CD on GitHub-hosted runners — nothing builds or deploys from a desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0066-opt-in-dev-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0066: Opt-in dev containers — the flake, in a container, for contributors without Nix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63" id="__nav_6_63_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP 0009
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_63_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIP 0009
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63_1" id="__nav_6_63_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshots
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_63_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Screenshots
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIPs/MIP-0009/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 — screenshots of the wave markers and the hover aspects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-start-ollama-and-pull-a-small-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Start Ollama and pull a small model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-point-marola-at-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Point marola at it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-run-the-pipeline-the-actual-e2e-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Run the pipeline — the actual E2E check
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Run the pipeline — the actual E2E check">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-pinning-it-permanently-env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Pinning it permanently: .env
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-other-two-cli-paths-same-local-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. The other two CLI paths, same local setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#51-ask-the-ocean-notes-local-rag-and-the-marola-model-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Ask the ocean notes (local RAG) and the marola model variant
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#52-plug-your-local-model-into-the-public-sites-chat-widget-mip-0033" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Plug your local model into the public site's chat widget (MIP-0033)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-regression-checks-without-the-network-and-how-to-re-record-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Regression checks without the network (and how to re-record them)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-writing-mips-from-voice-notes-in-a-browser-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Writing MIPs from voice notes in a browser session
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-the-map-build-the-boards-once-serve-them-as-a-static-site-mip-0005" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. The map — build the boards once, serve them as a static site (MIP-0005)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-docker-only-no-nix-no-sbt-no-ollama-install-mip-0008" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-the-mlflow-ledger-every-benchmark-run-on-record-mip-0010" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. The MLflow ledger — every benchmark run on record (MIP-0010)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-what-this-guide-deliberately-doesnt-cover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. What this guide deliberately doesn't cover
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="run-it-locally">Run it locally<a class="headerlink" href="#run-it-locally" title="Permanent link">&para;</a></h1>
+<p>A step-by-step guide to running marola's real pipeline end to end on your own machine: nearby
+beach discovery, live sea conditions, and an LLM-generated summary reviewed by a second LLM pass,
+with a small, fast Ollama model, so you can confirm the whole thing actually works before touching
+Telegram or any cloud. Every command below is real and was run against a live Ollama install
+while building this (see <code>ARCHITECTURE.md</code> §5's "Status" notes). The specific model recommended
+here is deliberately smaller/faster than the one used to build/verify the rest of this repo
+(<code>dolphin-mixtral:8x7b</code>, 26GB), chosen for this guide because it's cheap to download and quick to
+try, not because it was the model marola was verified against everywhere else.</p>
+<h2 id="1-prerequisites">1. Prerequisites<a class="headerlink" href="#1-prerequisites" title="Permanent link">&para;</a></h2>
+<ul>
+<li>This repo cloned, with <code>nix develop</code> (or <code>direnv allow</code>) entered at least once. This puts JDK 25,
+  sbt, <code>just</code>, and <code>ollama</code> itself on <code>PATH</code> (<code>flake.nix</code> was updated to include <code>pkgs.ollama</code> for
+  exactly this guide).</li>
+<li>~2GB free disk for the model below.</li>
+</ul>
+<h2 id="2-start-ollama-and-pull-a-small-model">2. Start Ollama and pull a small model<a class="headerlink" href="#2-start-ollama-and-pull-a-small-model" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># In one terminal, start the Ollama server (stays running in the foreground):</span>
+ollama<span class="w"> </span>serve
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># In another terminal, pull a small, fast model — 1.3GB download, confirmed size:</span>
+ollama<span class="w"> </span>pull<span class="w"> </span>llama3.2:1b
+</code></pre></div>
+<p>Why this model specifically: <code>llama3.2:1b</code> is small enough to download in a couple of minutes on a
+normal connection and fast enough on CPU alone to get a reply in seconds rather than the ~45
+seconds a full-size model can take (confirmed against <code>dolphin-mixtral:8x7b</code>, a 26GB model, while
+building this repo; see <code>ARCHITECTURE.md</code>). It's not the most capable model Ollama can run, but
+"is the whole pipeline wired correctly end to end" doesn't need a capable model, just a working
+one.</p>
+<p>Verify the pull worked and Ollama is actually serving:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>http://localhost:11434/api/tags
+<span class="c1"># {"models":[{"name":"llama3.2:1b", ...}]}</span>
+</code></pre></div>
+<h2 id="3-point-marola-at-it">3. Point marola at it<a class="headerlink" href="#3-point-marola-at-it" title="Permanent link">&para;</a></h2>
+<p><code>llama3.2:1b</code>'s Ollama tag is the <code>:1b</code> variant. marola's own default
+(<code>LocalLlmClient.DefaultModel</code>) is the plain <code>llama3.2</code> tag (Ollama's 3B-parameter default), so
+point at the small one explicitly for this guide:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">MAROLA_LOCAL_LLM_MODEL</span><span class="o">=</span>llama3.2:1b
+<span class="c1"># Everything else can stay at its defaults — MAROLA_LLM_PROVIDER=local is already the default,</span>
+<span class="c1"># and localhost:11434 is already LocalLlmClient's default base URL.</span>
+</code></pre></div>
+<h2 id="4-run-the-pipeline-the-actual-e2e-check">4. Run the pipeline — the actual E2E check<a class="headerlink" href="#4-run-the-pipeline-the-actual-e2e-check" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Step 1: the deterministic pipeline alone — no LLM call yet, just Overpass + Open-Meteo +</span>
+<span class="c1"># the scoring heuristic. This alone confirms network access and the core logic work.</span>
+just<span class="w"> </span>run
+
+<span class="c1"># Step 2: the full pipeline including both LLM passes — the actual "does the whole thing work</span>
+<span class="c1"># end to end" check. This is the one command this whole guide is building up to.</span>
+just<span class="w"> </span>run<span class="w"> </span>--<span class="w"> </span>--summarize
+</code></pre></div>
+<p>Expected shape of the output: this is a real run from Campeche, Florianópolis, with
+<code>MAROLA_ORIGIN_LAT/LON</code> set in <code>.env</code> (see §4.1) and <code>llama3.2</code> as the model. Your beach names and
+numbers will differ: it's live data.</p>
+<div class="highlight"><pre><span></span><code>$ just run -- --summarize
+mkdir -p "$XDG_RUNTIME_DIR" &amp;&amp; sbt "cli/run -- --summarize"
+[info] welcome to sbt 1.10.7 (N/A Java 25.0.4.1)
+...
+[info] running marola.Main -- --summarize
+marola :: best hour tomorrow to swim nearby (POC)
+config -&gt; telegram=unset llm=Local(http://localhost:11434/v1 llama3.2) embed=llama3.2 knowledge=./knowledge -&gt; ./data/knowledge-index.json lore=on ask=General&gt;=0.0 origin=-27.6733,-48.4700 radius=15km water=Auto sightings=Local(./data/sightings.jsonl) vision=Local(llava)
+origin -&gt; lat=-27.6733, lon=-48.4700 (radius 15km, source: MAROLA_ORIGIN_LAT/MAROLA_ORIGIN_LON)
+water quality -&gt; IMA/SC
+ 1. [ 55/100] Praia da Joaquina      (4.6km)  Sun 6 Sep, 10:00  |  water: PRÓPRIA (1/1 pts, 25 Aug)  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
+ 2. [ 55/100] Praia do Rio Tavares   (2.1km)  Sun 6 Sep, 10:00  |  water: no data  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
+ 3. [ 55/100] Praia do Morro das Pedras (5.1km)  Sun 6 Sep, 08:00  |  water: PRÓPRIA (1/1 pts, 25 Aug)  |  18.8°C, 27km/h, 1.4m  |  jellyfish: Low  |  choppy (1.4m waves), breezy (27km/h), cold water (18.8°C)
+ 4. [ 35/100] Praia da Armação       (7.9km)  Sun 6 Sep, 10:00  |  water: 2/6 PRÓPRIA — avoid Ponto 64, Ponto 01, Ponto 05, Ponto 11 (25 Aug)  |  19.0°C, 24km/h, 1.0m  |  jellyfish: Low  |  whales: Moderate  |  choppy (1.0m waves), breezy (24km/h), cold water (19.0°C)
+ 5. [ 35/100] Praia do Gravatá       (7.6km)  Sun 6 Sep, 10:00  |  water: 2/3 PRÓPRIA — avoid Ponto 04 (25 Aug)  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
+ 6. [ 35/100] Praia do Campeche      (2.1km)  Sun 6 Sep, 08:00  |  water: 4/5 PRÓPRIA — avoid Ponto 73 (25 Aug)  |  18.8°C, 28km/h, 1.4m  |  jellyfish: Low  |  choppy (1.4m waves), breezy (28km/h), cold water (18.8°C)
+
+Top pick — Praia da Joaquina, Sun 6 Sep, 10:00-11:00
+  Water quality   PRÓPRIA (1/1 pts, 25 Aug)
+                  Ponto 33 (Em frente à Avenida Prefeito Acácio Garibaldi São Thiago, n°1416, ao lado do Posto de Guarda-Vidas): PRÓPRIA, 25 Aug, latest 10 enterococci/100mL, rain Ausente, water 15°C
+                  Source: IMA/SC
+  Sea             19.0°C, waves 1.3m every 6s from the S, swell 0.8m/6s, current 0.9 km/h
+  Tide            low 05:00 (-0.1m), high 13:00 (+0.7m), low 18:00 (+0.3m) (hourly resolution, ±30 min)
+  Air             14°C, wind 27 km/h from the S, UV 4, 0% chance of rain
+  Jellyfish       Low — few of the warm-calm signals present
+  Whales          Low at this hour; best daylight odds Low at 07:00 — humpback season
+
+Asking Local LLM to summarize the top pick (this may take a while)...
+Draft summary: Mild conditions all around, so Praia da Joaquina looks like a great spot for swimming today.
+Reviewer (score 75/100, verdict: approve): Praia da Joaquina is a great spot for swimming with mild conditions and low jellyfish risk.
+
+🐋 Sea life: Humpback whales (baleia-jubarte) travel up the Brazilian coast from Antarctic feeding grounds to breed in warmer water, passing Santa Catarina between about July and November. Calm mornings with little wind are when a blow or a breach is easiest to spot from shore. [source: https://en.wikipedia.org/wiki/Humpback_whale]
+[success] Total time: 41 s, completed Sep 5, 2026, 9:12:57 AM
+</code></pre></div>
+<p>Things in that output worth knowing: Campeche, Armação and Gravatá lost 20 points because one or
+more of IMA's sampling points on them was IMPRÓPRIA on 25 Aug. The column names the points, the
+detail block (for the top pick) lists every point with its latest count; see <code>ARCHITECTURE.md</code>
+§5g; best hours are daylight hours, and on a flat day ties resolve toward 10:00 (staffed lifeguard
+posts, best light), <code>Swimability.hourPreference</code>; "2.1km" for a beach 200m from the origin is the
+distance to the beach polygon's centroid, not its shoreline (§9); most of the 41s is Overpass's
+relation query, not the LLM; and the closing paragraph is one of the sourced entries in
+<code>core/src/main/resources/sea_lore.json</code>, rotated daily, never touched by the LLM. <code>--brief</code> gives
+the old one-line list; <code>--no-lore</code> drops the paragraph.</p>
+<p>If you see a <code>Draft summary:</code> line followed by a <code>Reviewer (score .../100, ...)</code> line, the full
+pipeline worked: beach discovery → conditions → scoring → summarization → review, all live, all
+local, zero cloud.</p>
+<p>Check the <code>origin -&gt;</code> line too. With no <code>--lat/--lon</code> and no <code>MAROLA_ORIGIN_LAT/LON</code> set, marola
+geolocates your public IP (three providers, majority vote; see <code>ARCHITECTURE.md</code> §3.1) and says so,
+including how many providers agreed and that the radius was widened to 20km. If the city it names is
+wrong (VPN, or an ISP whose block geolocates elsewhere, common in Brazil), pin it:</p>
+<div class="highlight"><pre><span></span><code>just<span class="w"> </span>run<span class="w"> </span>--<span class="w"> </span>--lat<span class="w"> </span>-27.6733<span class="w"> </span>--lon<span class="w"> </span>-48.4700<span class="w"> </span>--summarize<span class="w">     </span><span class="c1"># one-off</span>
+just<span class="w"> </span>run<span class="w"> </span>--<span class="w"> </span>--location-url<span class="w"> </span><span class="s1">'https://www.google.com/maps/@-27.6733,-48.47,15z'</span><span class="w">   </span><span class="c1"># or paste a Google Maps pin</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MAROLA_ORIGIN_LAT</span><span class="o">=</span>-27.6733<span class="w"> </span><span class="nv">MAROLA_ORIGIN_LON</span><span class="o">=</span>-48.4700<span class="w">   </span><span class="c1"># once per shell</span>
+</code></pre></div>
+<p><code>--location-url</code> reads the <code>@lat,lon</code>, <code>q=lat,lon</code> or <code>!3dlat!4dlon</code> part of a Google Maps URL
+(quote it: the URL has <code>!</code> and <code>&amp;</code> in it). A <code>maps.app.goo.gl</code> short link needs expanding first:
+<code>curl -sIL &lt;short link&gt; | grep -i '^location:' | tail -1</code>.</p>
+<h3 id="41-pinning-it-permanently-env">4.1 Pinning it permanently: <code>.env</code><a class="headerlink" href="#41-pinning-it-permanently-env" title="Permanent link">&para;</a></h3>
+<p>Put the two lines in <code>.env</code> at the repo root (gitignored, never committed; <code>.env.example</code> lists
+every variable):</p>
+<div class="highlight"><pre><span></span><code>MAROLA_ORIGIN_LAT=-27.6733
+MAROLA_ORIGIN_LON=-48.4700
+</code></pre></div>
+<p>Both ways into the dev shell load it: <code>flake.nix</code>'s <code>shellHook</code> sources it on <code>nix develop</code> (you'll
+see <code>loaded .../.env</code>), and <code>.envrc</code>'s <code>dotenv_if_exists</code> does the same under direnv (run
+<code>direnv allow</code> once after any <code>.envrc</code> change). Re-enter the shell after editing <code>.env</code>; the
+<code>origin -&gt;</code> line then reports <code>source: MAROLA_ORIGIN_LAT/MAROLA_ORIGIN_LON</code>. Lines must be plain
+<code>KEY=VALUE</code> shell syntax, no spaces around <code>=</code>.</p>
+<h2 id="5-the-other-two-cli-paths-same-local-setup">5. The other two CLI paths, same local setup<a class="headerlink" href="#5-the-other-two-cli-paths-same-local-setup" title="Permanent link">&para;</a></h2>
+<p>These don't need anything beyond what §2-3 already set up:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Record a sighting report (writes to ./data/sightings.jsonl):</span>
+just<span class="w"> </span>run<span class="w"> </span>--<span class="w"> </span>--report-sighting<span class="w"> </span>jellyfish<span class="w"> </span>Arpoador<span class="w"> </span><span class="s2">"spotted near shore"</span>
+
+<span class="c1"># Analyze a photo — needs a MULTIMODAL model, which llama3.2:1b is not (it's text-only).</span>
+<span class="c1"># Pull one first if you want to try this path:</span>
+ollama<span class="w"> </span>pull<span class="w"> </span>llava
+<span class="nb">export</span><span class="w"> </span><span class="nv">MAROLA_LOCAL_VISION_MODEL</span><span class="o">=</span>llava
+just<span class="w"> </span>run<span class="w"> </span>--<span class="w"> </span>--analyze-photo<span class="w"> </span>./some-beach-photo.jpg
+</code></pre></div>
+<h2 id="51-ask-the-ocean-notes-local-rag-and-the-marola-model-variant">5.1 Ask the ocean notes (local RAG) and the marola model variant<a class="headerlink" href="#51-ask-the-ocean-notes-local-rag-and-the-marola-model-variant" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Grounded Q&amp;A over knowledge/*.md — first run embeds the corpus with llama3.2 (seconds on a GPU,</span>
+<span class="c1"># a few minutes on CPU), later runs reuse ./data/knowledge-index.json:</span>
+just<span class="w"> </span>ask<span class="w"> </span><span class="s2">"what should I do if I get caught in a rip current?"</span>
+
+<span class="c1"># Expected shape: an answer with [n] citations, then the passages' sources</span>
+<span class="c1">#   If you are caught in a rip current, stay calm and float to conserve energy [3]. Swim parallel to</span>
+<span class="c1">#   the shoreline ... [3].</span>
+<span class="c1">#   Sources:</span>
+<span class="c1">#     [1] Rip currents — https://www.weather.gov/safety/ripcurrent (score 0.40)</span>
+<span class="c1">#     ...</span>
+
+<span class="c1"># Tier-1 "fine-tune": llama3.2 with marola's persona/decoding baked in (finetune/Modelfile):</span>
+just<span class="w"> </span>finetune-model
+<span class="nv">MAROLA_LOCAL_LLM_MODEL</span><span class="o">=</span>marola-llama3.2<span class="w"> </span>just<span class="w"> </span>run<span class="w"> </span>--<span class="w"> </span>--summarize
+</code></pre></div>
+<p>See <code>finetune/README.md</code> for the QLoRA (Tier 2) recipe, which is written but not run here.</p>
+<p><code>--ask</code> answers from the corpus when a passage scores above <code>MAROLA_ASK_MIN_SCORE</code> (default 0.3)
+and otherwise, by default, from the model's general knowledge with a visible "(unsourced)" label;
+<code>MAROLA_ASK_FALLBACK=strict</code> makes it abstain instead. Which is better, and by how much, is what
+the benchmark measures:</p>
+<div class="highlight"><pre><span></span><code>just<span class="w"> </span>benchmark<span class="w">        </span><span class="c1"># 22 ocean questions × {plain prompt, marola strict, marola general}</span>
+<span class="w">                      </span><span class="c1"># → coverage / citations / abstentions / latency, verdict, data/benchmark-*.md</span>
+</code></pre></div>
+<p>Compare with <code>docs/benchmarks/2026-09-05.md</code>: the kept reference run and what it taught.</p>
+<h2 id="52-plug-your-local-model-into-the-public-sites-chat-widget-mip-0033">5.2 Plug your local model into the public site's chat widget (MIP-0033)<a class="headerlink" href="#52-plug-your-local-model-into-the-public-sites-chat-widget-mip-0033" title="Permanent link">&para;</a></h2>
+<p><code>marola.dev</code> (or wherever <code>site/dist/</code> is served) ships a chat widget that stays hidden until it
+finds a working endpoint, no server dependency by default. To turn it on, run marola's own tiny
+HTTP server and expose it through a <strong>named</strong> Cloudflare Tunnel (a quick/ephemeral tunnel's URL
+changes every restart, which would break the widget's saved config):</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Run marola's chat server (wraps --ask's RAG + the MIP-0022 safety footer over HTTP).</span>
+<span class="c1">#    Needs the same Ollama setup as §2-3; it blocks in the foreground, Ctrl+C to stop.</span>
+just<span class="w"> </span>run<span class="w"> </span>--<span class="w"> </span>--serve-chat<span class="w">            </span><span class="c1"># http://localhost:8787 — GET /health, POST /ask</span>
+<span class="c1"># just run -- --serve-chat 9000     # a different port</span>
+
+<span class="c1"># 2. In another terminal: a one-time cloudflared login, then a NAMED tunnel (free, no account</span>
+<span class="c1">#    beyond a Cloudflare login, no port-forwarding on your router).</span>
+cloudflared<span class="w"> </span>tunnel<span class="w"> </span>login
+cloudflared<span class="w"> </span>tunnel<span class="w"> </span>create<span class="w"> </span>marola-chat
+cloudflared<span class="w"> </span>tunnel<span class="w"> </span>route<span class="w"> </span>dns<span class="w"> </span>marola-chat<span class="w"> </span>chat.&lt;your-domain&gt;<span class="w">   </span><span class="c1"># or use the trycloudflare.com URL</span>
+<span class="w">                                                                </span><span class="c1"># cloudflared prints for a quick test</span>
+cloudflared<span class="w"> </span>tunnel<span class="w"> </span>run<span class="w"> </span>--url<span class="w"> </span>http://localhost:8787<span class="w"> </span>marola-chat
+</code></pre></div>
+<p>Then point the widget at that URL: edit <code>site/static/chatbot-config.js</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">window</span><span class="p">.</span><span class="nx">MAROLA_CHAT_ENDPOINT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"https://chat.&lt;your-domain&gt;"</span><span class="p">;</span><span class="w"> </span><span class="c1">// or the trycloudflare.com URL</span>
+</code></pre></div>
+<p><code>just site-build</code> copies <code>site/static/*</code> (including this file) into <code>site/dist/</code> as-is. Leave
+<code>MAROLA_CHAT_ENDPOINT</code> empty to keep the widget hidden. That's the default, committed state, so a
+fresh clone's site never shows a chat button pointing nowhere. The widget calls <code>/health</code> on page
+load and only reveals its toggle button on a 200; a later failure while chatting shows an honest
+"chatbot offline" message rather than hanging. This narrowly overrides MIP-0005 §9's "no server"
+decision for the site: the maintainer's own machine becomes a real, if intermittent, origin;
+uptime is whatever the maintainer's machine and tunnel happen to be, by design (MIP-0033 §6).</p>
+<h2 id="6-troubleshooting">6. Troubleshooting<a class="headerlink" href="#6-troubleshooting" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>HTTP 404 ... model 'X' not found</code></strong>: the model named in <code>MAROLA_LOCAL_LLM_MODEL</code> (or
+  <code>MAROLA_LOCAL_VISION_MODEL</code>) isn't pulled. Run <code>ollama list</code> to see what you actually have, or
+  <code>ollama pull &lt;name&gt;</code> to get it.</li>
+<li><strong>Connection refused to <code>localhost:11434</code></strong>: <code>ollama serve</code> isn't running, or isn't running in
+  this same environment (e.g. a container that can't reach the host's Ollama). <code>flake.nix</code>'s
+  <code>shellHook</code> checks for this and prints a reminder every time you enter the dev shell.</li>
+<li><strong>It's slow</strong>: CPU-only inference is genuinely slow for bigger models; that's exactly why this
+  guide recommends <code>llama3.2:1b</code> instead of whatever larger model you might already have pulled for
+  other purposes. If it's still too slow, an even smaller model exists (e.g. <code>qwen2.5:0.5b</code>), at
+  the cost of noticeably worse instruction-following. The reviewer pass in particular depends on
+  the model reliably producing well-formed JSON (see <code>llm/Reviewer.scala</code>), which smaller models
+  are more likely to get wrong.</li>
+<li><strong>The reviewer's JSON parsing fails</strong> (<code>MalformedReviewException</code> or similar in the output): a
+  known, if infrequent, failure mode with smaller/quantized models that ignore the "respond with
+  ONLY JSON" instruction (see <code>Reviewer.scala</code>'s <code>extractJsonObject</code>; it already recovers from a
+  JSON block wrapped in prose, but a model that doesn't produce JSON <em>at all</em> isn't recoverable).
+  Confirms <code>llama3.2:1b</code>'s instruction-following limits, not a marola bug. Try a larger model if
+  this happens consistently.</li>
+</ul>
+<h2 id="7-regression-checks-without-the-network-and-how-to-re-record-them">7. Regression checks without the network (and how to re-record them)<a class="headerlink" href="#7-regression-checks-without-the-network-and-how-to-re-record-them" title="Permanent link">&para;</a></h2>
+<p><code>just test</code> runs a full-pipeline regression with <strong>no</strong> network and <strong>no</strong> Ollama:
+<code>cli/src/test/scala/marola/PipelineGoldenSpec.scala</code> replays real responses recorded on 2026-09-05
+(<code>cli/src/test/resources/fixtures/</code>: Overpass for Campeche, Open-Meteo for two beaches, IMA's
+points) through the unchanged production code, and asserts the ranking, the water-quality verdicts,
+the tide turns and the exact number of HTTP calls. <code>SummarizeFlowSpec</code> and <code>RagOfflineSpec</code> do the
+same for the LLM and RAG plumbing with scripted models. This is what CI runs on every push.</p>
+<p>When an upstream format changes, re-record: the fixture diff is the change report:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Overpass (the exact query BeachFinder builds, 15km around Campeche)</span>
+<span class="nv">q</span><span class="o">=</span><span class="s1">'[out:json][timeout:45];(node["natural"="beach"]["name"](around:15000,-27.6733,-48.47);way["natural"="beach"]["name"](around:15000,-27.6733,-48.47);relation["natural"="beach"]["name"](around:15000,-27.6733,-48.47););out center 500;'</span>
+curl<span class="w"> </span>-s<span class="w"> </span>--data-urlencode<span class="w"> </span><span class="s2">"data=</span><span class="nv">$q</span><span class="s2">"</span><span class="w"> </span>https://overpass-api.de/api/interpreter<span class="w"> </span>&gt;<span class="w"> </span>cli/src/test/resources/fixtures/overpass-campeche.json
+<span class="c1"># Open-Meteo (same variables OpenMeteoClient asks for), one weather + one marine per fixture beach</span>
+<span class="c1"># IMA: curl -s -X POST https://balneabilidade.ima.sc.gov.br/relatorio/mapa, trimmed to the points near Campeche</span>
+</code></pre></div>
+<p>Then update the pinned date in <code>PipelineGoldenSpec</code> (<code>fixedToday</code>) to the day the forecasts cover.
+The live equivalents run on demand only: <code>just e2e</code> locally, or the manual <code>marola-e2e.yml</code>
+workflow (its network job needs no Ollama; the LLM job is opt-in and caches the model).</p>
+<h2 id="8-writing-mips-from-voice-notes-in-a-browser-session">8. Writing MIPs from voice notes in a browser session<a class="headerlink" href="#8-writing-mips-from-voice-notes-in-a-browser-session" title="Permanent link">&para;</a></h2>
+<p><code>just context-mips</code> packs the documents a MIP author needs (README, AGENTS.md, ARCHITECTURE,
+FUTURE-WORK, the <code>mip</code> skill, every existing MIP, no code, ~35k tokens) with repomix into
+<code>.tmp/marola-context-mips.md</code> and copies it to the clipboard. In a browser Claude chat: paste, attach
+the WhatsApp voice notes (<code>.ogg</code>) or chat text, and say "convert the audios into MIP proposals".
+The pack's own instruction section (<code>repomix-instruction.md</code>) fixes the template, numbering, the
+transcript appendix and the rule that unverified claims go under "Open questions". Save the
+returned files under <code>docs/MIPs/</code> and let the in-repo agent verify the sources.</p>
+<h2 id="9-the-map-build-the-boards-once-serve-them-as-a-static-site-mip-0005">9. The map — build the boards once, serve them as a static site (MIP-0005)<a class="headerlink" href="#9-the-map-build-the-boards-once-serve-them-as-a-static-site-mip-0005" title="Permanent link">&para;</a></h2>
+<p>Everything above answers one person at a time. <code>just site-build</code> runs the same pipeline once per
+<em>area</em> (<code>site/areas.json</code>: Florianópolis, Rio de Janeiro and Salvador by default) and writes what a static map needs:</p>
+<div class="highlight"><pre><span></span><code>just<span class="w"> </span>site-build<span class="w"> </span>floripa<span class="w">        </span><span class="c1"># ~70 s live: one Overpass query, two Open-Meteo calls per beach, one IMA download</span>
+just<span class="w"> </span>site-serve<span class="w">                </span><span class="c1"># http://localhost:8000 — tap Praia do Campeche, see Ponto 73 flagged</span>
+</code></pre></div>
+<p><code>site/dist/</code> (git-ignored) then holds <code>index.html</code> + <code>app.js</code> + vendored Leaflet from
+<code>site/static/</code>, and under <code>data/</code>: <code>areas.json</code>, and per area <code>&lt;today&gt;.json</code>, <code>&lt;tomorrow&gt;.json</code>
+(the board; <code>site/board.schema.json</code> is the contract, checked by <code>BoardSpec</code>) and <code>latest.json</code>
+pointing at both. The page shows every beach as a wave marker coloured by score: hover it (tap, on a phone: the same row opens first in the card) for the six aspects at that hour: wind band with its emoji and km/h, water temperature, waves, jellyfish, whales, water verdict (MIP-0009), a card with the same
+numbers the CLI prints, a day picker, an hour slider, the generated-at time and every source. No
+cookies, no analytics; "near me" is the browser's own geolocation, on request, never sent anywhere.
+If <code>site/dist/smoke/latest.json</code> exists (the docker smoke test's last run, §10; <code>site.yml</code> copies
+it from the <code>site-data</code> branch; locally <code>git archive origin/site-data smoke | tar -x -C site/dist</code>,
+or <code>python3 scripts/smoke_record.py record …</code> on any <code>--summarize</code> transcript) the footer adds a
+"Last live run" panel: model, image, top pick, the reviewed sentence labelled as model text with
+the reviewer's verdict (hidden on <code>reject</code>), the last ten runs, and a dashed marker at the run's
+origin.</p>
+<p>Keep it fresh locally with a timer, a plain cron line (<code>crontab -e</code>):</p>
+<div class="highlight"><pre><span></span><code>15 */3 * * *  cd /path/to/marola &amp;&amp; nix develop -c just site-build &gt;&gt; .tmp/site-build.log 2&gt;&amp;1
+</code></pre></div>
+<p>or a <code>systemd --user</code> timer with the same command. Only <code>site/dist</code> is ever published, and
+<code>site.yml</code> fails if anything outside its allowlist (the page, <code>vendor/</code>, <code>data/</code>, <code>smoke/</code>) is
+in there. The repository is private, the map is public, and <code>docs/*.md</code> stay on GitHub rather
+than becoming pages (Pages source must be "GitHub Actions", never "Deploy from a branch", which
+would run Jekyll over the whole branch). Publishing: <code>just site-deploy</code> triggers
+<code>.github/workflows/site.yml</code> (build on the runner, deploy to GitHub Pages; the same workflow runs
+every 3 h on its own and on every merge to <code>main</code> that touches <code>site/</code> or the pipeline; the result
+is https://marola.dev/, GitHub Pages' custom domain; see <code>.github/workflows/site.yml</code>'s header
+comment for the CNAME/DNS setup), <code>just site-deploy cloudflare</code> pushes a local <code>site/dist</code> with wrangler.
+Tiles come from OpenStreetMap's public servers, which is fine for a link shared among friends and
+not for a public launch. Switch <code>tiles</code> in <code>site/areas.json</code> to a Protomaps/MapTiler source
+before that (MIP-0005 §8).</p>
+<h2 id="10-docker-only-no-nix-no-sbt-no-ollama-install-mip-0008">10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)<a class="headerlink" href="#10-docker-only-no-nix-no-sbt-no-ollama-install-mip-0008" title="Permanent link">&para;</a></h2>
+<p><strong>Published tags</strong> (<code>ghcr.io/h0ffmann/marola:&lt;tag&gt;</code>; this repo is private, so pulling needs
+<code>docker login ghcr.io</code> first: a GitHub PAT with <code>read:packages</code>, or <code>gh auth token | docker login
+ghcr.io -u &lt;user&gt; --password-stdin</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>What it is</th>
+<th>Built by</th>
+<th>Platforms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jvm</code></td>
+<td>CLI on a Temurin 25 JRE (Alpine) — moving, always the latest <code>main</code></td>
+<td><code>docker.yml</code>, every merge touching the Dockerfile/build/<code>core</code>/<code>cli</code>/etc.</td>
+<td>amd64 + arm64</td>
+</tr>
+<tr>
+<td><code>jvm-&lt;sha&gt;</code></td>
+<td>same, pinned to one commit</td>
+<td>same</td>
+<td>amd64 + arm64</td>
+</tr>
+<tr>
+<td><code>native</code></td>
+<td>the same CLI ahead-of-time compiled (GraalVM native-image), distroless, no JVM — moving</td>
+<td>same workflow</td>
+<td>amd64</td>
+</tr>
+<tr>
+<td><code>native-&lt;sha&gt;</code></td>
+<td>same, pinned</td>
+<td>same</td>
+<td>amd64</td>
+</tr>
+<tr>
+<td><code>local</code></td>
+<td>Ollama with the <code>marola-llama3.2</code> fine-tune baked in — moving, but only advances when <code>just benchmark</code> clears the gate</td>
+<td><code>docker-local.yml</code></td>
+<td>amd64</td>
+</tr>
+<tr>
+<td><code>local-&lt;sha&gt;</code></td>
+<td>one benchmark candidate, kept whether or not it was promoted</td>
+<td>same</td>
+<td>amd64</td>
+</tr>
+<tr>
+<td><code>dev</code> / <code>dev-&lt;sha&gt;</code></td>
+<td>the literal <code>nix develop</code> shell in a container, for reading/hacking without installing Nix</td>
+<td><code>docker.yml</code>, <code>workflow_dispatch</code> only</td>
+<td>amd64</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>-&lt;sha&gt;</code> tags accumulate on every qualifying push (<code>local-&lt;sha&gt;</code> even for rejected candidates,
+which bundle the ~2 GB Ollama model). <code>ghcr-retention.yml</code> prunes them weekly, keeping the last 10
+per target (5 for <code>local</code>) and never touching the moving tags above, which is what everything below
+and <code>docker-compose.yml</code>/<code>docker-smoke.yml</code> actually pull. <code>just gh-billing</code> shows current GHCR/Actions
+usage against the account's plan (this repo gets no public-repo free tier).</p>
+<p>The same pipeline from a machine that has Docker and nothing else. <code>docker-compose.yml</code> runs the
+CLI image with an Ollama sidecar; the model is pulled once into a named volume:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>marola<span class="w"> </span>--brief<span class="w"> </span>--lat<span class="w"> </span>-27.6733<span class="w"> </span>--lon<span class="w"> </span>-48.47<span class="w">                         </span><span class="c1"># no LLM</span>
+docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>ollama<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>marola<span class="w"> </span>--summarize<span class="w"> </span>--lat<span class="w"> </span>-27.6733<span class="w"> </span>--lon<span class="w"> </span>-48.47<span class="w">    </span><span class="c1"># + draft + reviewer (llama3.2, 2 GB pulled once)</span>
+docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span><span class="nb">local</span><span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>marola-local<span class="w"> </span>--summarize<span class="w"> </span>--lat<span class="w"> </span>-27.6733<span class="w"> </span>--lon<span class="w"> </span>-48.47<span class="w">   </span><span class="c1"># the marola-llama3.2 variant, built from finetune/Modelfile</span>
+</code></pre></div>
+<p><code>.env</code> is read if present (origin, provider switches; <code>.env.example</code>) and never copied into
+the image; <code>MAROLA_LOCAL_LLM_MODEL=llama3.2:1b</code> picks the small model from §2. Without compose,
+against an Ollama already running on the host:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>--network<span class="w"> </span>host<span class="w"> </span>ghcr.io/h0ffmann/marola:jvm<span class="w"> </span>--summarize<span class="w"> </span>--lat<span class="w"> </span>-27.6733<span class="w"> </span>--lon<span class="w"> </span>-48.47
+</code></pre></div>
+<p><code>:local</code> is <code>finetune/README.md</code>'s "As an image". <code>just docker-build</code> builds any target here and
+<code>just docker-run -- …</code> runs it with <code>--network host</code>. The
+<code>Dockerfile</code> is one multi-stage file: <code>builder</code> (sbt, Temurin 25) → <code>jvm</code> (Temurin 25 JRE on
+Alpine, ~70 MB + the 55 MB jar), <code>native-build</code> → <code>native</code> (below), and <code>dev</code>: the literal
+<code>nix develop</code> in an image, for reading or hacking on the code without installing Nix
+(<code>docker run -it marola:dev bash</code>). Lint: <code>just quality</code> runs hadolint on it (from the lint lab).</p>
+<p><strong>Native binary (GraalVM).</strong> The same CLI compiled ahead of time: one 69 MB executable, no JVM,
+~75 MB of RSS, on a distroless image (<code>ghcr.io/h0ffmann/marola:native</code>, amd64). Everything
+<code>just run</code> does works, <code>--summarize</code> and the reviewer included (verified live 2026-09-05 with
+<code>llama3.2:1b</code>); the MCP server stays on the JVM image. Locally:</p>
+<div class="highlight"><pre><span></span><code>just<span class="w"> </span>native-image<span class="w">                                            </span><span class="c1"># GraalVM from nixpkgs, sbt cli/nativeImage → cli/target/marola (~1 min)</span>
+just<span class="w"> </span>native-run<span class="w"> </span>--<span class="w"> </span>--summarize<span class="w"> </span>--lat<span class="w"> </span>-27.6733<span class="w"> </span>--lon<span class="w"> </span>-48.47<span class="w">   </span><span class="c1"># the binary, same flags as `just run`</span>
+just<span class="w"> </span>docker-build<span class="w"> </span>native<span class="w">                                     </span><span class="c1"># the distroless image, if you have a daemon</span>
+</code></pre></div>
+<p><strong>The smoke test.</strong> GitHub → Actions → "docker smoke test" → Run workflow (<code>lat</code>/<code>lon</code>, or a
+Google Maps pin in <code>maps_url</code>, <code>model</code>, <code>image</code>) runs <code>--summarize</code> in the published image on a
+runner with a cached <code>llama3.2:1b</code>, also every morning at 09:30 UTC. <code>scripts/smoke_record.py</code>
+turns the transcript into <code>smoke/latest.json</code> + <code>smoke/history.json</code> on the orphan <code>site-data</code>
+branch (never deployed by that workflow: <code>site.yml</code> copies it into the map, so two deploys never
+race), the map's footer shows it as "Last live run" and the job fails when the pipeline, the
+model or the reviewer did not answer. <code>python3 scripts/smoke_record.py --self-test</code> (in <code>just
+quality</code>) parses a recorded transcript, <code>scripts/fixtures/smoke-stdout-2026-09-05.txt</code>.</p>
+<p>The arguments (<code>--initialize-at-build-time</code> for slf4j/logback/Jackson, <code>-march=compatibility</code>)
+and the reachability metadata (the <code>*.json</code> resources, <code>sun.misc.Signal</code> for Kyo's handler) live
+in <code>cli/src/main/resources/META-INF/native-image/</code>, read from the classpath, so the sbt task and
+the Dockerfile's <code>native-image -jar</code> build the same thing.</p>
+<h2 id="11-the-mlflow-ledger-every-benchmark-run-on-record-mip-0010">11. The MLflow ledger — every benchmark run on record (MIP-0010)<a class="headerlink" href="#11-the-mlflow-ledger-every-benchmark-run-on-record-mip-0010" title="Permanent link">&para;</a></h2>
+<p>Optional, developer-only, off unless you ask for it. <code>just benchmark</code> writes a Markdown report under
+<code>data/</code> and that stays the canonical result (<code>scripts/benchmark_gate.py</code> reads it); with a tracking
+URI set, the same run is <em>also</em> logged to a local MLflow server (params, per-arm metrics, the
+report as an artifact) so runs can be compared in a UI instead of by diffing tables. Needs Docker
+(the server is a compose profile, never part of the Nix shell or the runtime image):</p>
+<div class="highlight"><pre><span></span><code>just<span class="w"> </span>mlflow-up<span class="w">                                   </span><span class="c1"># ghcr.io/mlflow/mlflow, SQLite + artifacts under .tmp/mlflow/, http://127.0.0.1:5000</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MAROLA_MLFLOW_TRACKING_URI</span><span class="o">=</span>http://127.0.0.1:5000
+just<span class="w"> </span>benchmark<span class="w">                                   </span><span class="c1"># the usual report under data/ — plus one run in experiment "marola/benchmark"</span>
+just<span class="w"> </span>mlflow-ui<span class="w">                                   </span><span class="c1"># the run: params model/embed_model/min_score/corpus_sha/git_sha, metrics per arm, the .md attached</span>
+just<span class="w"> </span>mlflow-down<span class="w">                                 </span><span class="c1"># stop it; .tmp/mlflow/ keeps the history, `rm -rf .tmp/mlflow` wipes it</span>
+</code></pre></div>
+<p><strong>Traces too.</strong> The same server ingests OpenTelemetry traces: with <code>MAROLA_TRACES=mlflow</code> every
+recommendation is one trace: <code>marola.recommend</code> → <code>bestPerBeachTomorrow</code> + <code>llm.&lt;model&gt;</code> for the
+draft and for the review, each LLM span with <code>gen_ai.request.model</code>, message count and prompt/
+completion sizes (latency is the span itself). Prompt and completion <em>text</em> are attached only if
+you also set <code>MAROLA_TRACE_CONTENT=1</code>: the prompt has your coordinates in it.</p>
+<div class="highlight"><pre><span></span><code><span class="nv">MAROLA_TRACES</span><span class="o">=</span>mlflow<span class="w"> </span><span class="nv">MAROLA_MLFLOW_TRACKING_URI</span><span class="o">=</span>http://127.0.0.1:5000<span class="w"> </span>just<span class="w"> </span>run<span class="w"> </span>--<span class="w"> </span>--summarize
+<span class="c1"># ... unchanged output; then in the UI: experiment "marola/traces", one trace, 4 spans</span>
+</code></pre></div>
+<p>If the server is not up, marola prints <code>(traces disabled: …)</code> and carries on untraced.</p>
+<p><code>MAROLA_MLFLOW_EXPERIMENT</code> (default <code>marola</code>) is the experiment <em>prefix</em>: runs land in
+<code>marola/benchmark</code>, the DSPy compile step's in <code>marola/prompt-compile</code>, traces (§5f of
+<code>ARCHITECTURE.md</code>, <code>MAROLA_TRACES=mlflow</code>) in <code>marola/traces</code>. Unset <code>MAROLA_MLFLOW_TRACKING_URI</code>
+and nothing changes: no network call, <code>RunLedger.Noop</code>, the report is still written. The server is
+bound to <code>127.0.0.1</code> only and has no authentication. Do not expose the port. <code>docker compose run</code>
+of the <code>marola</code> services passes the two variables through from your shell/<code>.env</code> when they are set
+and omits them otherwise (the <code>mlflow</code> profile is independent: <code>--profile mlflow --profile ollama</code>
+starts both, neither depends on the other).</p>
+<h2 id="12-what-this-guide-deliberately-doesnt-cover">12. What this guide deliberately doesn't cover<a class="headerlink" href="#12-what-this-guide-deliberately-doesnt-cover" title="Permanent link">&para;</a></h2>
+<p>Telegram bot setup (there is no bot loop yet; see <code>TELEGRAM-SETUP.md</code> for credential setup ahead
+of that Phase 1 work) and any cloud backend (<code>ARCHITECTURE.md</code> §6, all optional, none needed for
+anything above). This guide is specifically the "prove it works, cheaply, before touching
+anything else" path.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top", "navigation.tracking", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,3974 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The ocean intelligence layer for a stretch of coast — guides and design proposals.">
+      
+      
+      
+        <link rel="canonical" href="https://marola.dev/docs/MIPs/MIP-0051-wave-model-ensemble/">
+      
+      
+        <link rel="prev" href="../MIP-0050-brazilian-llms/">
+      
+      
+        <link rel="next" href="../MIP-0052-wave-model-compute/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid - marola.dev docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/marola.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mip-0051-which-wave-model-is-marola-quoting-a-labelled-multi-model-ensemble-and-the-road-to-our-own-grid" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="marola.dev docs" class="md-header__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            marola.dev docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="marola.dev docs" class="md-nav__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    marola.dev docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 Using marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    1 Using marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/RUN-LOCALLY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/TELEGRAM-SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telegram bot setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2 Building marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2 Building marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/EFFECTS-MAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Effects map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/SCALA3-JDK-REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scala 3 and JDK review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3 Working on the repo
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3 Working on the repo
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/AGENT-SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/GEMINI-CODE-ASSIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Code Assist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/ISSUE-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/SELF-DOCUMENTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-documenting marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4 Research and plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4 Research and plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent frameworks survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-STACK-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent stack survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Awesome agentic engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FABLE_REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FUTURE-WORK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Future work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIPs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIPs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0001: Bathing-water quality in the ranking, and a sea-lore paragraph in every reply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0002: The Telegram bot — marola's first real user surface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0003: Replies in under three seconds — caching, concurrent fetches, precomputed boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0004: The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0005-map-and-static-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005: The map — every beach's daily recommendation on a static site the pipeline feeds
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0006-live-look-user-cameras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0006: "How does it look right now?" — a live look at each beach, fed by users' cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0007-time-series-foundation-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0007: Time-series foundation models for marola's own series — local open models first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008: Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009: A richer map — a wave marker per beach and, on hover, every aspect at that point
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0011-claude-code-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0012: llm4s as marola's Scala-native LLM/agent layer — and the deprecation of the Python DSPy step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0013-opencode-tryout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013: OpenCode as marola's development agent — a tryout, and what replacing Claude Code would take
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0014-marola-book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0014: A marola book — The Compiler Pushes Back, written in LaTeX, versioned in a repo, built in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0015-interacao-swim-matching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0015: Interação — opt-in "who else is swimming here" matching between marola users
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0016-water-quality-map-markers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0016: Water-quality points on the map — OK / not-OK marks, placed in the sea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0017-agentic-tooling-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0017: Agentic tooling ideas from ai-job-search and September 2026's trending agent repos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0018: Marola self-documentation — weekly post-planner and multi-platform exporter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0019: arXiv/trending-repo survey — sea-forecasting and jellyfish-prediction techniques for marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0020-instagram-bot-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0020: An Instagram account for marola — first post by hand, API publishing, and a gated daily pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0021-beach-accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0021: Beach accessibility — parking, toilets, showers and lifeguard posts from OSM, shown only where the data exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0022-safety-answer-footer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0022: The safety footer — every answer grounded in a safety document ends with lifeguard/193/SAMU 192, appended after the model, never by it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0023: Product expansion — a wait-list, honest promotion, and the easiest way to keep marola's site and backend maintained
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0025-marola-sea-domain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025: marola-sea-1.0 — a small domain-tuned model (QLoRA SFT + tool-call SFT + DPO) served through Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0029-ocean-layer-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0030-coastal-trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0030: Coastal and lakeside trails on the map — named OSM paths near a beach or a lake
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0031-water-quality-inea-inema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031: Water quality for Rio de Janeiro (INEA) and Bahia (INEMA) — closing the "no data" gap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0032-model-strategy-benchmark-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0033-release-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0033: Release 0 — the repo goes public, a self-hosted chatbot, the first published model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0034-rss-feeds-and-content-syndication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0035-map-plugin-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0035: A plugin API for marola's map — third-party layers, Windy-style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0036-marola-advertising-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0036: Marola Advertising Action (MAA) — the Release 0 launch, channel by channel, and how to sustain it after
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0037-map-pwa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0037: A PWA for marola's map — offline-tolerant, installable, no build step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0038-forecast-model-spread/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking one
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0039-deterministic-fact-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0039: The fact guard — a deterministic check that the model's sentence only says what the numbers say
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0040: The reviewer has never been validated — measure the judge, then make it a small jury
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0041-soft-book-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0041: Soft book ingestion — distilling agentic-behavior principles from a book
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0042-map-v2-live-not-static/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0043: docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md — a curated awesome-list, plus a human-gated candidate digest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0044-site-sections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0044: marola.dev becomes a site, not just a map — news, a markdown dev blog, generated API docs, a feeds page, about/contact, and a restrained support page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0045: Classic NLP and parsing where an LLM call is currently paying for it — a survey of marola's product pipeline and its own dev loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0046: The map without the generated look — a chart-derived icon set replacing every emoji
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0047-desmos-equation-art/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0048-scaling-marola-sea/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0048: Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0049: Scala for the web layer — Tyrian, Laminar, ScalaTags, or better plain-JS discipline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0050-brazilian-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0050: Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-open-meteo-marine-api-models-parameter-picked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Open-Meteo Marine API, models= parameter: picked
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-pnboia-marinha-do-brasil-chm-picked-for-54-endpoint-not-yet-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 PNBOIA / Marinha do Brasil (CHM): picked for §5.4, endpoint not yet verified
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-running-ww3-ourselves-reviewed-deferred-to-53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Running WW3 ourselves — reviewed, deferred to §5.3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-running-wrf-ourselves-reviewed-and-the-gpu-premise-does-not-hold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Running WRF ourselves — reviewed, and the GPU premise does not hold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-ecmwf-aifs-reviewed-parked-as-a-53-input-option" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 ECMWF AIFS — reviewed, parked as a §5.3 input option
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-ask-for-the-models-by-name-core-do-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Ask for the models by name (core, do next)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-two-rules-that-keep-bad-data-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Two rules that keep bad data out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-our-own-nearshore-grid-designed-not-built-rung-c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Our own nearshore grid — designed, not built (rung C)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-the-buoy-ledger-do-next-gates-53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 The buoy ledger (do next, gates §5.3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checked-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-checked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not checked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0052-wave-model-compute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0052: Should marola ever run its own wave model, and in what language? — a costed survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0053-learned-local-correction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0053: A learned local correction, not another model — statistical downscaling of the public wave forecasts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0054-portuguese-first-experience/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0054: Portuguese first — marola's whole user-facing experience in pt-BR, with a language choice that sticks and a location-aware default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0055: A vector store behind KnowledgeStore, and a chunker that knows what kind of ocean knowledge it is cutting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056: OODS — an Open Ocean Data Store for Brazilian bathing-water quality, starting with IMA/SC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0057: GCP as an opt-in cloud backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0058: A credited human artist — Daniela Vicentini's paintings on marola.dev, an "arte terapia" thanks link
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0059-jev-typed-decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0059: Jev (TypeSafe AI) as an opt-in typed-decision backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0060-open-code-review-on-ready/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060: Open Code Review on request, on marola's own runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0062-ressaca-hazard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per beach
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063: A GitHub-native tracking standard — issues as the unit of work, milestones as deliverables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064: mkdocs for the docs — a real documentation site at marola.dev/docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065: CI/CD on GitHub-hosted runners — nothing builds or deploys from a desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0066-opt-in-dev-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0066: Opt-in dev containers — the flake, in a container, for contributors without Nix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63" id="__nav_6_63_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP 0009
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_63_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIP 0009
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63_1" id="__nav_6_63_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshots
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_63_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Screenshots
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 — screenshots of the wave markers and the hover aspects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-open-meteo-marine-api-models-parameter-picked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Open-Meteo Marine API, models= parameter: picked
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-pnboia-marinha-do-brasil-chm-picked-for-54-endpoint-not-yet-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 PNBOIA / Marinha do Brasil (CHM): picked for §5.4, endpoint not yet verified
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-running-ww3-ourselves-reviewed-deferred-to-53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Running WW3 ourselves — reviewed, deferred to §5.3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-running-wrf-ourselves-reviewed-and-the-gpu-premise-does-not-hold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Running WRF ourselves — reviewed, and the GPU premise does not hold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-ecmwf-aifs-reviewed-parked-as-a-53-input-option" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 ECMWF AIFS — reviewed, parked as a §5.3 input option
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-ask-for-the-models-by-name-core-do-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Ask for the models by name (core, do next)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-two-rules-that-keep-bad-data-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Two rules that keep bad data out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-our-own-nearshore-grid-designed-not-built-rung-c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Our own nearshore grid — designed, not built (rung C)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-the-buoy-ledger-do-next-gates-53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 The buoy ledger (do next, gates §5.3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checked-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-checked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not checked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mip-0051-which-wave-model-is-marola-quoting-a-labelled-multi-model-ensemble-and-the-road-to-our-own-grid">MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid<a class="headerlink" href="#mip-0051-which-wave-model-is-marola-quoting-a-labelled-multi-model-ensemble-and-the-road-to-our-own-grid" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Status</strong></td>
+<td>Draft</td>
+</tr>
+<tr>
+<td><strong>Author</strong></td>
+<td>Claude (Opus 5), for M. Hoffmann (request of 2026-09-09: "create a MIP about adding WW3 and WRF to marola. Is it possible to already plug in the website with public data?")</td>
+</tr>
+<tr>
+<td><strong>Created</strong></td>
+<td>2026-09-10</td>
+</tr>
+<tr>
+<td><strong>Phase</strong></td>
+<td>0/3 — <code>core</code> and the static site only. No paid resource, no new dependency, no extra HTTP call per beach</td>
+</tr>
+<tr>
+<td><strong>Related</strong></td>
+<td>MIP-0001 (added the marine fields this MIP re-sources, and set the "show the agency's classification verbatim, don't let a model blend a category" principle §6 reuses); MIP-0005 (the static site and its "no server" decision, which §5.3's deployment shape preserves); MIP-0038/0039/0040 (the honesty layer — a labelled model and a shown disagreement is exactly its subject matter); MIP-0042 (<code>/v2</code>'s live scorer, which would consume the spread client-side); MIP-0048 (scaling marola-sea — unrelated model, same "measure before you scale" discipline); <strong>MIP-0052</strong> (the sibling: porting a wave model's compute core to a GPU, which only becomes relevant at §5.3's rung C)</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>M for §5.1/§5.2 (one query-string change, one <code>enum</code>, one case class, a median, a site label — no new call, no new dependency); M for §5.4 (a buoy-fetching job and an append-only ledger); L for §5.3 (running our own nearshore grid — designed here, deliberately not built)</td>
+</tr>
+<tr>
+<td><strong>Gain</strong></td>
+<td><code>user value</code> — marola currently shows one model's wave height as fact, and at Jurerê that number ranges from 0.20 m to 1.34 m depending on which model you ask (§2); <code>infra/dev-loop</code> — a buoy-scored ledger turns "is our forecast good?" from an opinion into a weekly number, and it is the gate that decides whether §5.3 is worth months</td>
+</tr>
+<tr>
+<td><strong>Effort vs Gain</strong></td>
+<td><code>do next</code> for §5.1/§5.2 — the disagreement is measured, it crosses live scoring thresholds, and the fix is one query parameter plus a median; <code>do next</code> for §5.4, which costs little and runs itself thereafter; <code>do when §5.4 has a season of data</code> for §5.3 — building a nearshore grid before knowing the public models' error at our beaches is building against an unmeasured bar</td>
+</tr>
+<tr>
+<td><strong>Depends on</strong></td>
+<td>Nothing blocks §5.1/§5.2 — no Phase 1 gate, no paid resource, and the marine call already exists. §5.3 depends on §5.4 producing a season of buoy scores, and on a human decision about running a model on a home machine. MIP-0052 is a sibling, not a prerequisite: it matters only if §5.3 is adopted <em>and</em> the CPU cost of running it proves to be the binding constraint</td>
+</tr>
+<tr>
+<td><strong>Blocked by</strong></td>
+<td>none</td>
+</tr>
+<tr>
+<td><strong>Risk</strong></td>
+<td>The honest outcome of §5.4 may be that MFWAM at 8 km is already good enough at our beaches, and §5.3 is never worth building. That is a <em>successful</em> result of this MIP, but it means the WW3/WRF ambition that prompted it dies on the evidence — this MIP is written to make that outcome cheap to reach and easy to accept</td>
+</tr>
+<tr>
+<td><strong>Cost so far</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-summary">1. Summary<a class="headerlink" href="#1-summary" title="Permanent link">&para;</a></h2>
+<p>marola quotes a wave height for every beach and never says where it came from. It comes from
+Météo-France's MFWAM, verified today by matching values, not by any code that records it, and
+three other wave models are available from the same endpoint, in the same request, for free.
+They disagree enough to move marola's own scoring thresholds. This MIP labels the number, shows
+the disagreement instead of hiding it, scores every model against a real buoy, and uses that score,
+not enthusiasm, to decide whether marola should ever run a wave model of its own.</p>
+<h2 id="2-motivation">2. Motivation<a class="headerlink" href="#2-motivation" title="Permanent link">&para;</a></h2>
+<p><strong>marola is already running WAVEWATCH III, and doesn't know it.</strong> <code>OpenMeteoClient.scala:25</code> calls
+<code>marine-api.open-meteo.com</code>. That endpoint is fed by several wave models, one of which, NCEP
+GFS-Wave, <em>is</em> WAVEWATCH III. marola sends no <code>models=</code> parameter, takes the default, and stores
+the result in <code>HourlyConditions.waveHeightM</code> with no record of its origin. The question that
+prompted this MIP ("is it possible to already plug in the website with public data?") is therefore
+already answered in the affirmative, blindly, and has been since MIP-0001.</p>
+<p><strong>The models disagree, and the disagreement crosses marola's own thresholds.</strong> Measured live on
+2026-09-10 across eight Florianópolis beaches × 48 forecast hours (384 beach-hours), comparing
+<code>meteofrance_wave</code>, <code>ecmwf_wam</code> and <code>dwd_gwam</code>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Disagreement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hours where the three models fall in <strong>different <code>Swimability</code> penalty buckets</strong> (<code>RoughWaveHeightM = 1.5</code> → −40, <code>CalmWaveHeightM = 0.6</code> → −15, else 0)</td>
+<td><strong>110/384 — 29%</strong></td>
+</tr>
+<tr>
+<td>Hours where they disagree on the <strong>whale-calm flag</strong> (<code>WhaleCalmWaveHeightM = 1.0</code>, <code>Swimability.scala:39</code>)</td>
+<td><strong>372/384 — 97%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The single worst case is physical, not random. At <strong>Jurerê</strong>, a sheltered, north-facing bay,
+MFWAM reports <strong>0.20 m</strong> and DWD GWAM reports <strong>1.34 m</strong> for the same hour, a factor of 6.7, and
+the models disagree on the bucket in <strong>48 of 48 hours</strong>. MFWAM runs at 0.08° (~8 km) and partially
+resolves the shelter; GWAM and GFS-Wave run at 0.25° (~25 km) and cannot see the bay at all. Every
+sheltered beach marola covers has this problem, and marola currently reports one side of it as a
+fact.</p>
+<p><strong>One model returns a masked cell as a flat calm.</strong> <code>ncep_gfswave025</code> returns <code>0.0</code>, not <code>null</code>,
+for <code>wave_height</code> <em>and</em> <code>wave_period</code> at Campeche, Joaquina, Barra da Lagoa and Armação, because the
+0.25° cell containing them is masked as land. It returns a genuine 1.48 m at Pântano do Sul. A 0.0 m
+wave height fed to <code>Swimability.waveNote</code> scores as a perfect swim day. marola does not hit this
+today (it is on MFWAM), but any future "let's add more models" change walks straight into it. This
+is the invisible-degradation failure class the repo has spent the month removing, and §5.2 refuses
+it explicitly rather than leaving it to be rediscovered.</p>
+<h2 id="3-user-visible-change">3. User-visible change<a class="headerlink" href="#3-user-visible-change" title="Permanent link">&para;</a></h2>
+<p>Today, the detailed block states a wave height as fact:</p>
+<div class="highlight"><pre><span></span><code>Campeche — tomorrow 09:00
+  waves 1.0 m · period 8.1 s · sea 18.5 °C
+</code></pre></div>
+<p>After §5.1/§5.2, the number is attributed and the disagreement is visible when it is real:</p>
+<div class="highlight"><pre><span></span><code>Campeche — tomorrow 09:00
+  waves 1.3 m · period 8.4 s · sea 18.5 °C
+  wave height: 1.0-1.4 m across 3 models (MFWAM 8 km, ECMWF WAM 9 km, DWD GWAM 25 km) - they disagree
+</code></pre></div>
+<p>At a sheltered beach the disagreement is the headline, and marola says which model to believe and
+why:</p>
+<div class="highlight"><pre><span></span><code>Jurere - tomorrow 09:00
+  waves 0.8 m · period 7.9 s · sea 19.1 °C
+  wave height: 0.2-1.3 m across 3 models - large disagreement. Jurere is a sheltered bay;
+  the 25 km models cannot resolve it. MFWAM (8 km) reports 0.2 m.
+</code></pre></div>
+<p>When the models agree, nothing new is printed; the line appears only above the threshold in §5.2.
+The site's beach panel gains the same one-line treatment; the map marker itself is unchanged.</p>
+<h2 id="4-data-sources-and-dependencies-reviewed">4. Data sources and dependencies reviewed<a class="headerlink" href="#4-data-sources-and-dependencies-reviewed" title="Permanent link">&para;</a></h2>
+<h3 id="41-open-meteo-marine-api-models-parameter-picked">4.1 Open-Meteo Marine API, <code>models=</code> parameter: <strong>picked</strong><a class="headerlink" href="#41-open-meteo-marine-api-models-parameter-picked" title="Permanent link">&para;</a></h3>
+<p>Same endpoint marola already calls, same one request per beach. Verified live 2026-09-10 (see
+Appendix): valid identifiers are <code>meteofrance_wave</code>, <code>ecmwf_wam</code>, <code>ecmwf_wam025</code>,
+<code>ncep_gfswave025</code>, <code>dwd_gwam</code>, <code>gwam</code>, <code>era5_ocean</code>, <code>meteofrance_currents</code>. The identifiers
+<code>gfs_wave</code>, <code>ewam</code>, <code>dwd_ewam</code>, <code>ncep_gfswave016</code>, which appear in Open-Meteo's own blog post and
+in search-result summaries, are <strong>rejected by the API</strong> with
+<code>Cannot initialize MultiDomains from invalid String value</code>. Do not copy model names from the docs
+prose; they were wrong when checked.</p>
+<p>With multiple models requested, response keys are suffixed <code>&lt;variable&gt;_&lt;model&gt;</code>
+(<code>wave_height_meteofrance_wave</code>). Coverage is per-coordinate and must not be assumed:
+<code>ecmwf_wam025</code> returned all-null at Campeche; <code>ncep_gfswave025</code> returned all-zero at four of five
+beaches. Terms unchanged from MIP-0001: free for non-commercial use, no key
+(https://open-meteo.com/en/pricing).</p>
+<p><strong>Picked set: <code>meteofrance_wave</code>, <code>ecmwf_wam</code>, <code>dwd_gwam</code>.</strong> All three returned 48/48 non-null,
+non-zero hours at every beach tested. <code>ncep_gfswave025</code> is <em>excluded by default</em> despite being the
+WAVEWATCH III one, because it is land-masked at most of marola's beaches; §5.2's zero-rule means
+including it later is safe, but it would add nothing at four of five.</p>
+<h3 id="42-pnboia-marinha-do-brasil-chm-picked-for-54-endpoint-not-yet-verified">4.2 PNBOIA / Marinha do Brasil (CHM): <strong>picked for §5.4, endpoint not yet verified</strong><a class="headerlink" href="#42-pnboia-marinha-do-brasil-chm-picked-for-54-endpoint-not-yet-verified" title="Permanent link">&para;</a></h3>
+<p>Brazil's national buoy programme, run by the Marinha do Brasil's Centro de Hidrografia (CHM),
+publishing wave height, period, direction, wind and SST. Buoys have been deployed at nine points;
+four were reported in operation (Itajaí, Santos, Cabo Frio, Fortaleza), with <strong>Itajaí</strong> ~90 km north
+of Florianópolis and in the same swell window. Data is distributed via CHM and the BNDO.</p>
+<p><strong>What was not verified:</strong> the actual download endpoint, its format, its update cadence, its
+licence, and whether the Itajaí buoy is transmitting <em>today</em>. This is the single largest unknown in
+the MIP and is carried as an open question (§11), not as a design assumption. §5.4 is written so
+that a different truth source (a second model as pseudo-truth, or a manual observation log) slots
+into the same ledger if PNBOIA turns out to be unusable.</p>
+<h3 id="43-running-ww3-ourselves-reviewed-deferred-to-53">4.3 Running WW3 ourselves — reviewed, deferred to §5.3<a class="headerlink" href="#43-running-ww3-ourselves-reviewed-deferred-to-53" title="Permanent link">&para;</a></h3>
+<p>WAVEWATCH III is public (NOAA-EMC/WW3). Running a nearshore nest for the SC coast is the only way
+to get wave heights that resolve Jurerê properly. It is months of work and is gated on §5.4.</p>
+<h3 id="44-running-wrf-ourselves-reviewed-and-the-gpu-premise-does-not-hold">4.4 Running WRF ourselves — reviewed, and the GPU premise does not hold<a class="headerlink" href="#44-running-wrf-ourselves-reviewed-and-the-gpu-premise-does-not-hold" title="Permanent link">&para;</a></h3>
+<p>The request paired WRF with high-performance GPU languages. That pairing is not supported by the
+evidence: NCAR's own support forum states GPU work in WRF is "decentralized and difficult to track
+down, and is not officially supported, unlike MPAS which does have official GPU support built in."
+WRF would run on the host's <strong>CPU</strong> cores. If atmospheric downscaling is ever adopted, <strong>MPAS</strong> is
+the model with an official GPU path, and it is the same E3SM lineage as the Omega work MIP-0052
+covers. Deferred entirely; not part of this MIP's design.</p>
+<h3 id="45-ecmwf-aifs-reviewed-parked-as-a-53-input-option">4.5 ECMWF AIFS — reviewed, parked as a §5.3 input option<a class="headerlink" href="#45-ecmwf-aifs-reviewed-parked-as-a-53-input-option" title="Permanent link">&para;</a></h3>
+<p>Open weights under CC BY 4.0 on Hugging Face, operational at ECMWF since 25 February 2025; a 10-day
+global forecast runs in roughly 2.5 minutes on a single A100. It is the one option on this list that
+uses a consumer GPU well. But it is a ~0.25° global model: it would be a cheap <em>driver</em> for a
+nearshore wave nest, not a substitute for kilometre-scale downscaling. Parked; revisit inside §5.3.</p>
+<h2 id="5-design">5. Design<a class="headerlink" href="#5-design" title="Permanent link">&para;</a></h2>
+<h3 id="51-ask-for-the-models-by-name-core-do-next">5.1 Ask for the models by name (<code>core</code>, do next)<a class="headerlink" href="#51-ask-for-the-models-by-name-core-do-next" title="Permanent link">&para;</a></h3>
+<p><code>OpenMeteoClient.forecastFor</code> appends <code>&amp;models=meteofrance_wave,ecmwf_wam,dwd_gwam</code> to the <strong>marine</strong>
+URL only. This remains <strong>one HTTP call per beach</strong>: the call-count discipline from #333 is
+untouched, and Open-Meteo's non-commercial terms are unaffected. The weather URL is unchanged.</p>
+<div class="highlight"><pre><span></span><code><span class="k">enum</span><span class="w"> </span><span class="nc">WaveModel</span><span class="p">(</span><span class="kd">val</span><span class="w"> </span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">label</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">resolutionKm</span><span class="p">:</span><span class="w"> </span><span class="nc">Double</span><span class="p">)</span><span class="w"> </span><span class="k">derives</span><span class="w"> </span><span class="nc">CanEqual</span><span class="p">:</span>
+<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="nc">Mfwam</span><span class="w">    </span><span class="k">extends</span><span class="w"> </span><span class="nc">WaveModel</span><span class="p">(</span><span class="s">"meteofrance_wave"</span><span class="p">,</span><span class="w"> </span><span class="s">"MFWAM"</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">)</span>
+<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="nc">EcmwfWam</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nc">WaveModel</span><span class="p">(</span><span class="s">"ecmwf_wam"</span><span class="p">,</span><span class="w"> </span><span class="s">"ECMWF WAM"</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">)</span>
+<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="nc">DwdGwam</span><span class="w">  </span><span class="k">extends</span><span class="w"> </span><span class="nc">WaveModel</span><span class="p">(</span><span class="s">"dwd_gwam"</span><span class="p">,</span><span class="w"> </span><span class="s">"DWD GWAM"</span><span class="p">,</span><span class="w"> </span><span class="mi">25</span><span class="p">)</span>
+
+<span class="k">final</span><span class="w"> </span><span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">ModelSpread</span><span class="p">(</span><span class="n">perModel</span><span class="p">:</span><span class="w"> </span><span class="nc">Map</span><span class="p">[</span><span class="nc">WaveModel</span><span class="p">,</span><span class="w"> </span><span class="nc">Double</span><span class="p">]):</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">:</span><span class="w"> </span><span class="nc">Vector</span><span class="p">[</span><span class="nc">Double</span><span class="p">]</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">perModel</span><span class="p">.</span><span class="n">values</span><span class="p">.</span><span class="n">toVector</span><span class="p">.</span><span class="n">sorted</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">consensusM</span><span class="p">:</span><span class="w"> </span><span class="nc">Option</span><span class="p">[</span><span class="nc">Double</span><span class="p">]</span><span class="w"> </span><span class="c1">// median of `values`</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">minM</span><span class="p">:</span><span class="w"> </span><span class="nc">Option</span><span class="p">[</span><span class="nc">Double</span><span class="p">]</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">maxM</span><span class="p">:</span><span class="w"> </span><span class="nc">Option</span><span class="p">[</span><span class="nc">Double</span><span class="p">]</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">rangeM</span><span class="p">:</span><span class="w"> </span><span class="nc">Option</span><span class="p">[</span><span class="nc">Double</span><span class="p">]</span><span class="w">     </span><span class="c1">// maxM - minM</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">disagrees</span><span class="p">:</span><span class="w"> </span><span class="nc">Boolean</span><span class="w">         </span><span class="c1">// see 5.2</span>
+</code></pre></div>
+<p><code>HourlyConditions</code> gains one field and changes no existing one:</p>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="n">waveModelSpread</span><span class="p">:</span><span class="w"> </span><span class="nc">Option</span><span class="p">[</span><span class="nc">ModelSpread</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">None</span>
+</code></pre></div>
+<p><code>waveHeightM</code> keeps its type and its meaning and is populated with <code>spread.consensusM</code>, the
+<strong>median</strong> across available models. <code>Swimability</code>, <code>Recommender</code>, <code>Board</code>, the MCP tools and every
+other consumer are untouched by §5.1. Using the median rather than a mean means one model dropping
+out shifts the number as little as possible, and no averaging artefact can produce a value no model
+actually reported.</p>
+<h3 id="52-two-rules-that-keep-bad-data-out">5.2 Two rules that keep bad data out<a class="headerlink" href="#52-two-rules-that-keep-bad-data-out" title="Permanent link">&para;</a></h3>
+<p><strong>The zero rule.</strong> A model reporting <code>wave_height == 0.0</code> <strong>and</strong> <code>wave_period == 0.0</code> at the same
+hour is a masked land cell, not a calm sea. Such a reading is dropped before the median, exactly as
+if the API had returned <code>null</code>. It never reaches <code>Swimability</code>. This gets a named test with the
+measured Campeche fixture.</p>
+<p><strong>The disagreement rule.</strong> <code>ModelSpread.disagrees</code> is true when <code>rangeM &gt;= 0.4</code> m <strong>or</strong> when the
+models straddle any <code>Swimability</code> threshold (0.6, 1.0, 1.5). The second clause is the important one:
+a 0.30 m range from 0.9 m to 1.2 m is small in absolute terms and still flips the whale-calm flag.
+Only when <code>disagrees</code> is true does §3's extra line get printed.</p>
+<p><strong>Site house style is a trap here.</strong> <code>site_check.js</code> enforces lowercase across the page and
+exempts provider names only where <code>app.js</code> explicitly tags them (it already does this for
+"Open-Meteo" and "IMA/SC"). <code>MFWAM</code>, <code>ECMWF WAM</code> and <code>DWD GWAM</code> are acronyms that must be tagged the
+same way or the site will render them as <code>mfwam</code>, and the quality gate will pass while the page
+reads wrong. Add them to the same mechanism, and assert it in <code>site_check.js</code>.</p>
+<p><code>Board.scala:117</code>/<code>:131</code> gain <code>"wave_models"</code> (an object of label → metres) and <code>"wave_spread"</code>
+alongside the existing <code>"wave_m"</code>, so the static site and MIP-0042's <code>/v2</code> scorer both get the
+spread without a schema break for anything reading <code>wave_m</code> today.</p>
+<h3 id="53-our-own-nearshore-grid-designed-not-built-rung-c">5.3 Our own nearshore grid — designed, not built (rung C)<a class="headerlink" href="#53-our-own-nearshore-grid-designed-not-built-rung-c" title="Permanent link">&para;</a></h3>
+<p>Deployment shape, so that adopting it later does not reopen MIP-0005's "no server" decision: the
+always-on machine runs the model on a timer, post-processes to a compact artefact, and <strong>pushes</strong>
+it (to this repo or an object store). <code>marola.dev</code> stays a static site that serves no traffic from
+anyone's house; no inbound network, no tunnel, no Cloudflare dependency, and a missed cycle
+degrades to the §5.1 ensemble rather than to an error page.</p>
+<p>The first rung is a <strong>nearshore WW3 nest driven by public winds</strong>, not WRF: §4.4's evidence removed
+the GPU argument for WRF, and §2's Jurerê case is a <em>wave-resolution</em> problem before it is a
+wind-resolution one. Atmospheric downscaling (MPAS, per §4.4) is a later, separate decision.
+None of this is built by this MIP.</p>
+<h3 id="54-the-buoy-ledger-do-next-gates-53">5.4 The buoy ledger (do next, gates §5.3)<a class="headerlink" href="#54-the-buoy-ledger-do-next-gates-53" title="Permanent link">&para;</a></h3>
+<p>A small job records, once per cycle: each model's forecast at the buoy's coordinates, at each lead
+time, plus the buoy's observation for that hour. Append-only, one row per (model, lead time, hour),
+in the shape <code>docs/benchmarks/</code> already uses for kept runs. After a season it yields RMSE, bias and
+scatter index per model per lead time.</p>
+<p>That table is the gate: §5.3 proceeds only if the best public model's error at our beaches is large
+enough to be worth months of work. It also, immediately and for free, tells §5.1 which model
+deserves to be named first in §3's line.</p>
+<h2 id="6-scoring-safety-impact">6. Scoring / safety impact<a class="headerlink" href="#6-scoring-safety-impact" title="Permanent link">&para;</a></h2>
+<p><code>Swimability.score</code> is <strong>unchanged</strong>. It reads <code>waveHeightM</code>, which is now a median instead of one
+model's value, a different number from the same field, with the same type and the same thresholds
+(<code>CalmWaveHeightM = 0.6</code>, <code>RoughWaveHeightM = 1.5</code>, <code>WhaleCalmWaveHeightM = 1.0</code>).</p>
+<p>Disagreement affects the <strong>confidence text, not the numeric score</strong>. This is deliberate and follows
+MIP-0001 §6/§9: marola shows the agency's <code>PRÓPRIA</code>/<code>IMPRÓPRIA</code> verbatim because the classification
+belongs to CONAMA, not to marola. The same reasoning applies here: a spread is evidence about how
+much to trust the number, and folding it into the score would manufacture a false precision while
+hiding the very uncertainty it represents. The safety footer stays deterministic and stays plain
+Scala.</p>
+<p>One consequence must be stated plainly: because <code>waveHeightM</code> becomes a median, <strong>some hours will
+change score</strong> relative to today: the −15/−40 penalties will land differently at sheltered
+beaches. That is the point (today's number is one arbitrary model), but it is a user-visible change
+in ranking and the implementation PR should show a before/after board for at least one beach.</p>
+<h2 id="7-verification-plan">7. Verification plan<a class="headerlink" href="#7-verification-plan" title="Permanent link">&para;</a></h2>
+<p>Unit tests (<code>core</code>):
+- <code>OpenMeteoClientSpec</code>: parses suffixed multi-model keys; a model absent entirely; a model all-null;
+  a mix where only one model has data.
+- <code>ModelSpreadSpec</code>: median across 1, 2, 3 and 4 values; <code>disagrees</code> false for a tight cluster; true
+  on a 0.4 m range; <strong>true when straddling 1.0 m with a 0.3 m range</strong> (the whale-flag case).
+- <code>ModelSpreadSpec</code>: the zero rule: <code>(0.0, 0.0)</code> dropped; a genuine <code>(0.0, 7.5)</code> <strong>kept</strong>, since a
+  real calm has a period.
+- <code>BoardSpec</code>: <code>wave_m</code> unchanged in shape; <code>wave_models</code>/<code>wave_spread</code> present and omitted cleanly
+  when only one model is available.</p>
+<p>Live (<code>just e2e</code>, excluded from <code>just test</code> per <code>AGENTS.md</code>):
+- One marine call at a Florianópolis coordinate asserting ≥2 named models return non-null,
+  non-zero data. Asserts availability, never specific values.</p>
+<p>Done looks like: <code>just build &amp;&amp; just test &amp;&amp; just quality</code> green; a before/after board diff for
+Jurerê and Campeche in the PR body; the §3 line rendering on the static site.</p>
+<h2 id="8-risks-limitations-and-honest-caveats">8. Risks, limitations, and honest caveats<a class="headerlink" href="#8-risks-limitations-and-honest-caveats" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The buoy is at Itajaí, not at our beaches.</strong> It sits ~90 km north and offshore. It can validate
+  <em>swell</em>, and it cannot say anything about nearshore transformation inside Jurerê bay, which is
+  precisely where §2 shows the models diverge most. §5.4 therefore bounds the public models' <em>open
+  ocean</em> skill, and the case for §5.3 rests on that plus physics, not on a direct measurement of
+  the thing being fixed. Anyone reading the ledger as proof about sheltered beaches is misreading it.</li>
+<li><strong>Three models are not an ensemble in the formal sense.</strong> They share observational inputs and some
+  physics lineage; their spread understates true uncertainty. The site says "they disagree", never
+  "there is a 90% chance the wave is between X and Y".</li>
+<li><strong>A median of three can hide a 2-1 split.</strong> When one model is right and two are wrong together,
+  the median is wrong. This is why §5.4 exists and why the per-model values are kept in the JSON
+  rather than discarded after taking the median.</li>
+<li><strong>Open-Meteo's model list is not stable.</strong> Identifiers already documented incorrectly in the
+  provider's own blog (§4.1) may also be renamed or retired. A model that stops resolving must
+  degrade to the remaining ones, never fail the request; covered by §5.2 and tested in §7.</li>
+<li><strong>Response size grows ~3× for the marine call.</strong> Call count is unchanged; the board build fetches
+  ~80 beaches, so this is bandwidth, not rate limit.</li>
+</ul>
+<h2 id="9-alternatives-considered">9. Alternatives considered<a class="headerlink" href="#9-alternatives-considered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Do nothing.</strong> Rejected on §2's numbers: 29% of hours the model choice moves a scoring bucket and
+  97% the whale flag, with no user-visible indication that a choice was made at all.</li>
+<li><strong>Pick the single best model and hard-code it.</strong> Cheaper, and it is what marola accidentally does
+  today. Rejected because we have no evidence for which is best (that is §5.4's job), and because
+  at Jurerê the honest answer is "the coarse models cannot see this bay", a fact worth showing, not
+  resolving silently.</li>
+<li><strong>Average instead of median.</strong> Rejected: the mean can report a height no model produced, and it is
+  more sensitive to the land-mask zeros that §5.2 exists to catch.</li>
+<li><strong>Fold disagreement into the score.</strong> Rejected per §6 and MIP-0001's precedent.</li>
+<li><strong>Go straight to running WW3/WRF (rung C first).</strong> Rejected as the sequencing: it is months of
+  work against a bar nobody has measured, and §4.4 showed the WRF-on-GPU premise underlying the
+  original request does not hold. §5.4 makes the decision on evidence and costs almost nothing.</li>
+<li><strong>Copernicus Marine (CMEMS) direct.</strong> A richer source than Open-Meteo, and MFWAM's actual origin.
+  Rejected for now: it requires registration and credentials, which breaks the keyless, zero-setup
+  default <code>ARCHITECTURE.md</code> §5 requires. Worth revisiting if Open-Meteo's terms change.</li>
+</ul>
+<h2 id="11-open-questions">11. Open questions<a class="headerlink" href="#11-open-questions" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>PNBOIA's actual endpoint, format, cadence and licence are unverified</strong> (§4.2), as is whether the
+  Itajaí buoy is transmitting today. §5.4 cannot be scheduled until someone fetches it once. This is
+  the first task of the implementation PR, not a design assumption.</li>
+<li><strong>Which model leads the §3 line before the ledger has data?</strong> MFWAM is the highest-resolution and
+  is what marola already (accidentally) reports; proposed as the interim default, revisited by §5.4.</li>
+<li><strong>Is 0.4 m the right disagreement threshold?</strong> Chosen because it is two thirds of the gap between
+  <code>CalmWaveHeightM</code> and <code>RoughWaveHeightM</code>; not tuned against anything. Cheap to change once the
+  site shows it.</li>
+<li><strong>Follow-up MIP:</strong> the same <code>models=</code> treatment applies to the <em>weather</em> call: wind speed and
+  direction drive <code>Swimability</code> too, Open-Meteo exposes ICON/GFS/IFS/GEM there, and no equivalent
+  disagreement measurement has been done. That is a separate proposal and needs its own number.</li>
+<li><strong>Follow-up MIP:</strong> §5.3's deployment shape (a home machine pushing artefacts consumed by a static
+  site) is a repo-wide pattern that would also serve MIP-0048's model training and MIP-0042's <code>/v2</code>.
+  If §5.3 is ever adopted, that pattern deserves designing once, under its own number.</li>
+</ul>
+<h2 id="appendix">Appendix<a class="headerlink" href="#appendix" title="Permanent link">&para;</a></h2>
+<h3 id="checked-live">Checked live<a class="headerlink" href="#checked-live" title="Permanent link">&para;</a></h3>
+<p>All fetched 2026-09-10 unless stated.</p>
+<ul>
+<li><code>https://marine-api.open-meteo.com/v1/marine?...&amp;models=&lt;id&gt;</code> probed for twelve candidate
+  identifiers. <strong>Valid:</strong> <code>meteofrance_wave</code>, <code>ecmwf_wam</code>, <code>ecmwf_wam025</code>, <code>ncep_gfswave025</code>,
+  <code>dwd_gwam</code>, <code>gwam</code>, <code>era5_ocean</code>, <code>meteofrance_currents</code>. <strong>Rejected with
+  <code>Cannot initialize MultiDomains from invalid String value</code>:</strong> <code>gfs_wave</code>, <code>ncep_gfswave016</code>,
+  <code>gfswave025</code>, <code>dwd_ewam</code>, <code>ewam</code>.</li>
+<li>Multi-model request at −27.68/−48.48 (Campeche), <code>hourly=wave_height,wave_period</code>: response keys
+  are <code>&lt;variable&gt;_&lt;model&gt;</code>. Values at hour 0: <code>meteofrance_wave</code> 0.98 m / 8.1 s, <code>ecmwf_wam</code>
+  1.30 m / 8.35 s, <code>dwd_gwam</code> 1.34 m / 8.5 s, <code>ecmwf_wam025</code> <strong>all null (0/24 hours)</strong>,
+  <code>ncep_gfswave025</code> <strong>0.0 for both height and period, all 24 hours</strong>.</li>
+<li><code>ncep_gfswave025</code> at five beaches: <code>0.00</code> at Campeche, Joaquina, Barra da Lagoa, Armação;
+  <code>1.48 m</code> at Pântano do Sul.</li>
+<li>marola's <strong>exact current</strong> marine URL (no <code>models=</code>, 8 hourly variables, <code>forecast_days=2</code>) at
+  Campeche returned 48/48 non-null for every field, <code>wave_height</code> <code>[0.98, 0.96, 0.96, ...]</code>,
+  <strong>identical to the <code>meteofrance_wave</code> column</strong>, which is the evidence for §2's claim that marola
+  is on MFWAM today. No code records this; it is inferred from matching values.</li>
+<li>Eight beaches × 48 hours × 3 models (384 beach-hours), buckets computed against
+  <code>Swimability.scala</code>'s own constants: <strong>110/384 (29%)</strong> bucket disagreements, <strong>372/384 (97%)</strong>
+  whale-flag disagreements. Per-beach: Jurerê 48/48 bucket disagreements (range 0.20–1.34 m at
+  hour 0), Armação and Pântano do Sul 31/48 each, the other five 0/48.</li>
+<li><code>Swimability.scala:27,28,39,75-77</code>: thresholds and penalties quoted in §2/§6 read from the file.</li>
+<li><code>OpenMeteoClient.scala:24,25,33-37</code>: the two base URLs and the marine query string.</li>
+<li><code>Board.scala:117,131</code>: the two <code>wave_m</code> emission sites.</li>
+<li>NCAR WRF &amp; MPAS-A support forum, "GPU support for WRF/MPAS"
+  (https://forum.mmm.ucar.edu/threads/gpu-support-for-wrf-mpas.12381/): WRF GPU support
+  "decentralized... not officially supported, unlike MPAS".</li>
+<li>ECMWF AIFS open weights, CC BY 4.0 (https://huggingface.co/ecmwf/aifs-single-1.0); operational
+  25 February 2025; ~2.5 min for a 10-day forecast on one A100
+  (https://www.ecmwf.int/en/about/media-centre/aifs-blog/2024/first-aifs-model-weights-are-now-open).</li>
+<li>Open-Meteo Marine docs (https://open-meteo.com/en/docs/marine-weather-api): model table with
+  MFWAM 0.08°, ECMWF WAM 9 km, ECMWF WAM 0.25°, NCEP GFS Wave 0.25° and 0.16°, DWD EWAM 0.05°,
+  DWD GWAM 0.25°, ERA5-Ocean 0.5°, and the confirmation that NCEP GFS Wave is a NOAA product.</li>
+</ul>
+<h3 id="not-checked">Not checked<a class="headerlink" href="#not-checked" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>PNBOIA in every respect.</strong> The CHM page was read only as a search-result summary, not fetched.
+  Buoy count, which buoys are live, the download URL, the format and the licence are all unverified
+  (§4.2, §11).</li>
+<li>Whether NCEP GFS-Wave's <code>0.0</code> returns are Open-Meteo's land-mask handling or NOAA's own output;
+  only the symptom was observed. The design (§5.2) is safe either way.</li>
+<li>That MFWAM is <em>why</em> marola's values match it: the match is exact across 48 hours at one
+  coordinate, which is strong but is not the same as Open-Meteo documenting its <code>best_match</code> choice.</li>
+<li>Whether ECMWF's 9 km WAM and the 0.25° variant differ in coverage for reasons other than the grid
+  (<code>ecmwf_wam025</code> was simply null here).</li>
+<li>Open-Meteo's rate limits under a 3-model marine call across ~80 beaches; call <em>count</em> is unchanged,
+  response size is not, and no throttling was observed in this session's ~20 requests.</li>
+<li>WAVEWATCH III's own licence terms and NOAA-EMC/WW3's clone requirements (MIP-0052's subject).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top", "navigation.tracking", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

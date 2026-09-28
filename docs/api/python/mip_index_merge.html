@@ -79,9 +79,9 @@
 mip_index_merge    </h1>
 
                         <div class="docstring"><p>mip_index_merge — auto-resolve the one conflict two MIP draft branches produce between them:
-both append a row to the table in <code>docs/mips/README.md</code> at the same place, so git folds the two
+both append a row to the table in <code>docs/MIPs/README.md</code> at the same place, so git folds the two
 additions into one hunk. The sibling of <code>req_merge.py</code>/<code>uses_merge.py</code>: <code>scripts/mip-stack.sh</code>
-calls this after a cherry-pick fails, on <code>docs/mips/README.md</code> only — any other conflicted file
+calls this after a cherry-pick fails, on <code>docs/MIPs/README.md</code> only — any other conflicted file
 stops for a human before this module runs.</p>
 
 <pre><code>scripts/lib/mip_index_merge.py &lt;conflicted-README&gt; [&lt;more&gt; ...]
@@ -101,9 +101,9 @@ the script prints the human-resolve steps. Identical rows on both sides collapse
 
                         <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="ch">#!/usr/bin/env python3</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a><span class="sd">&quot;&quot;&quot;mip_index_merge — auto-resolve the one conflict two MIP draft branches produce between them:</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a><span class="sd">both append a row to the table in `docs/mips/README.md` at the same place, so git folds the two</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a><span class="sd">both append a row to the table in `docs/MIPs/README.md` at the same place, so git folds the two</span>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">  4</span></a><span class="sd">additions into one hunk. The sibling of `req_merge.py`/`uses_merge.py`: `scripts/mip-stack.sh`</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="sd">calls this after a cherry-pick fails, on `docs/mips/README.md` only — any other conflicted file</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="sd">calls this after a cherry-pick fails, on `docs/MIPs/README.md` only — any other conflicted file</span>
 </span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a><span class="sd">stops for a human before this module runs.</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a><span class="sd">    scripts/lib/mip_index_merge.py &lt;conflicted-README&gt; [&lt;more&gt; ...]</span>

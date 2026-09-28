@@ -1,0 +1,4159 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The ocean intelligence layer for a stretch of coast — guides and design proposals.">
+      
+      
+      
+        <link rel="canonical" href="https://marola.dev/docs/MIPs/MIP-0047-desmos-equation-art/">
+      
+      
+        <link rel="prev" href="../MIP-0046-remove-ai-slop-ui/">
+      
+      
+        <link rel="next" href="../MIP-0048-scaling-marola-sea/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped - marola.dev docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/marola.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mip-0047-equation-drawn-art-desmos-as-the-sketchpad-the-equation-as-the-source-static-svg-as-the-only-thing-shipped" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="marola.dev docs" class="md-header__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            marola.dev docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="marola.dev docs" class="md-nav__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    marola.dev docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 Using marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    1 Using marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/RUN-LOCALLY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/TELEGRAM-SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telegram bot setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2 Building marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2 Building marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/EFFECTS-MAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Effects map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/SCALA3-JDK-REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scala 3 and JDK review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3 Working on the repo
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3 Working on the repo
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/AGENT-SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/GEMINI-CODE-ASSIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Code Assist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/ISSUE-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/SELF-DOCUMENTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-documenting marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4 Research and plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4 Research and plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent frameworks survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-STACK-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent stack survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Awesome agentic engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FABLE_REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FUTURE-WORK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Future work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIPs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIPs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0001: Bathing-water quality in the ranking, and a sea-lore paragraph in every reply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0002: The Telegram bot — marola's first real user surface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0003: Replies in under three seconds — caching, concurrent fetches, precomputed boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0004: The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0005-map-and-static-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005: The map — every beach's daily recommendation on a static site the pipeline feeds
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0006-live-look-user-cameras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0006: "How does it look right now?" — a live look at each beach, fed by users' cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0007-time-series-foundation-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0007: Time-series foundation models for marola's own series — local open models first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008: Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009: A richer map — a wave marker per beach and, on hover, every aspect at that point
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0011-claude-code-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0012: llm4s as marola's Scala-native LLM/agent layer — and the deprecation of the Python DSPy step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0013-opencode-tryout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013: OpenCode as marola's development agent — a tryout, and what replacing Claude Code would take
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0014-marola-book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0014: A marola book — The Compiler Pushes Back, written in LaTeX, versioned in a repo, built in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0015-interacao-swim-matching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0015: Interação — opt-in "who else is swimming here" matching between marola users
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0016-water-quality-map-markers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0016: Water-quality points on the map — OK / not-OK marks, placed in the sea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0017-agentic-tooling-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0017: Agentic tooling ideas from ai-job-search and September 2026's trending agent repos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0018: Marola self-documentation — weekly post-planner and multi-platform exporter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0019: arXiv/trending-repo survey — sea-forecasting and jellyfish-prediction techniques for marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0020-instagram-bot-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0020: An Instagram account for marola — first post by hand, API publishing, and a gated daily pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0021-beach-accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0021: Beach accessibility — parking, toilets, showers and lifeguard posts from OSM, shown only where the data exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0022-safety-answer-footer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0022: The safety footer — every answer grounded in a safety document ends with lifeguard/193/SAMU 192, appended after the model, never by it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0023: Product expansion — a wait-list, honest promotion, and the easiest way to keep marola's site and backend maintained
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0025-marola-sea-domain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025: marola-sea-1.0 — a small domain-tuned model (QLoRA SFT + tool-call SFT + DPO) served through Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0029-ocean-layer-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0030-coastal-trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0030: Coastal and lakeside trails on the map — named OSM paths near a beach or a lake
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0031-water-quality-inea-inema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031: Water quality for Rio de Janeiro (INEA) and Bahia (INEMA) — closing the "no data" gap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0032-model-strategy-benchmark-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0033-release-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0033: Release 0 — the repo goes public, a self-hosted chatbot, the first published model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0034-rss-feeds-and-content-syndication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0035-map-plugin-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0035: A plugin API for marola's map — third-party layers, Windy-style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0036-marola-advertising-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0036: Marola Advertising Action (MAA) — the Release 0 launch, channel by channel, and how to sustain it after
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0037-map-pwa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0037: A PWA for marola's map — offline-tolerant, installable, no build step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0038-forecast-model-spread/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking one
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0039-deterministic-fact-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0039: The fact guard — a deterministic check that the model's sentence only says what the numbers say
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0040: The reviewer has never been validated — measure the judge, then make it a small jury
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0041-soft-book-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0041: Soft book ingestion — distilling agentic-behavior principles from a book
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0042-map-v2-live-not-static/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0043: docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md — a curated awesome-list, plus a human-gated candidate digest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0044-site-sections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0044: marola.dev becomes a site, not just a map — news, a markdown dev blog, generated API docs, a feeds page, about/contact, and a restrained support page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0045: Classic NLP and parsing where an LLM call is currently paying for it — a survey of marola's product pipeline and its own dev loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0046: The map without the generated look — a chart-derived icon set replacing every emoji
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-desmoss-free-graphing-calculator-as-an-authoring-tool-the-pick" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Desmos's free graphing calculator, as an authoring tool — the pick
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-the-desmos-js-api-calculatorjs-and-asyncscreenshot-reviewed-rejected-91" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 The Desmos JS API (calculator.js) and asyncScreenshot — reviewed, rejected (§9.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-existing-public-desmos-sea-graphs-as-prior-art-cited-not-copied" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Existing public Desmos sea graphs, as prior art — cited, not copied
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-the-renderer-python-3-stdlib-already-in-the-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 The renderer: Python 3 stdlib, already in the shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-the-five-motifs-and-the-actual-mathematics-behind-each" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 The five motifs, and the actual mathematics behind each
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-what-comes-back-from-desmos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 What comes back from Desmos
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-what-is-not-supported-stated-before-anyone-assumes-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 What is not supported, stated before anyone assumes it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-the-generator-scriptsequation_artpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 The generator: scripts/equation_art.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-what-this-does-not-touch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 What this does not touch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-placement-v1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Placement, v1
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checked-live-all-2026-09-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live (all 2026-09-07)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checked-in-this-repo-2026-09-07-originmain-at-07882ae" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked in this repo (2026-09-07, origin/main at 07882ae)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-checked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not checked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0048-scaling-marola-sea/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0048: Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0049: Scala for the web layer — Tyrian, Laminar, ScalaTags, or better plain-JS discipline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0050-brazilian-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0050: Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0051-wave-model-ensemble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0052-wave-model-compute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0052: Should marola ever run its own wave model, and in what language? — a costed survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0053-learned-local-correction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0053: A learned local correction, not another model — statistical downscaling of the public wave forecasts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0054-portuguese-first-experience/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0054: Portuguese first — marola's whole user-facing experience in pt-BR, with a language choice that sticks and a location-aware default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0055: A vector store behind KnowledgeStore, and a chunker that knows what kind of ocean knowledge it is cutting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056: OODS — an Open Ocean Data Store for Brazilian bathing-water quality, starting with IMA/SC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0057: GCP as an opt-in cloud backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0058: A credited human artist — Daniela Vicentini's paintings on marola.dev, an "arte terapia" thanks link
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0059-jev-typed-decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0059: Jev (TypeSafe AI) as an opt-in typed-decision backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0060-open-code-review-on-ready/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060: Open Code Review on request, on marola's own runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0062-ressaca-hazard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per beach
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063: A GitHub-native tracking standard — issues as the unit of work, milestones as deliverables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064: mkdocs for the docs — a real documentation site at marola.dev/docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065: CI/CD on GitHub-hosted runners — nothing builds or deploys from a desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0066-opt-in-dev-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0066: Opt-in dev containers — the flake, in a container, for contributors without Nix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63" id="__nav_6_63_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP 0009
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_63_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIP 0009
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_63_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_63_1" id="__nav_6_63_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshots
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_63_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_63_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Screenshots
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 — screenshots of the wave markers and the hover aspects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Data sources and dependencies reviewed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-desmoss-free-graphing-calculator-as-an-authoring-tool-the-pick" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Desmos's free graphing calculator, as an authoring tool — the pick
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-the-desmos-js-api-calculatorjs-and-asyncscreenshot-reviewed-rejected-91" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 The Desmos JS API (calculator.js) and asyncScreenshot — reviewed, rejected (§9.1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-existing-public-desmos-sea-graphs-as-prior-art-cited-not-copied" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Existing public Desmos sea graphs, as prior art — cited, not copied
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-the-renderer-python-3-stdlib-already-in-the-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 The renderer: Python 3 stdlib, already in the shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-the-five-motifs-and-the-actual-mathematics-behind-each" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 The five motifs, and the actual mathematics behind each
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-what-comes-back-from-desmos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 What comes back from Desmos
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-what-is-not-supported-stated-before-anyone-assumes-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 What is not supported, stated before anyone assumes it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-the-generator-scriptsequation_artpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 The generator: scripts/equation_art.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-what-this-does-not-touch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 What this does not touch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-placement-v1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Placement, v1
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checked-live-all-2026-09-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live (all 2026-09-07)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checked-in-this-repo-2026-09-07-originmain-at-07882ae" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked in this repo (2026-09-07, origin/main at 07882ae)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-checked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not checked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mip-0047-equation-drawn-art-desmos-as-the-sketchpad-the-equation-as-the-source-static-svg-as-the-only-thing-shipped">MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped<a class="headerlink" href="#mip-0047-equation-drawn-art-desmos-as-the-sketchpad-the-equation-as-the-source-static-svg-as-the-only-thing-shipped" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Status</strong></td>
+<td>Draft</td>
+</tr>
+<tr>
+<td><strong>Author</strong></td>
+<td>Claude Opus 5, for M. Hoffmann (request of 2026-09-07, verbatim: "create a new MIP with opus to generate desmos images (draw by equation). get some desmos already made drawings related to the sea, create new ones and add this as a stylistic philosophy")</td>
+</tr>
+<tr>
+<td><strong>Created</strong></td>
+<td>2026-09-07</td>
+</tr>
+<tr>
+<td><strong>Phase</strong></td>
+<td>3 — <code>ARCHITECTURE.md</code> §11 puts the static site under Phase 3 ("the first deploy artefact is already here and free: <code>site.yml</code> … publishes the static map"). Nothing from Phase 1 or 2 gates a presentation change. Same honest caveat MIP-0046 records: MIP-0009 and MIP-0037 label this same surface "Phase 1" — a pre-existing docs inconsistency, not resolved here</td>
+</tr>
+<tr>
+<td><strong>Related</strong></td>
+<td>MIP-0046 (the sprite mechanism this reuses verbatim — <code>&lt;symbol&gt;</code> in <code>index.html</code> + <code>&lt;use href="#…"&gt;</code>; this MIP adds symbols to <em>that</em> block and does not invent a second one), MIP-0009 (<code>WAVE_PATH</code>, the marker glyph and the legend key — deliberately <strong>not</strong> replaced here, §5.5), MIP-0044 (its <code>/about/</code>, <code>/news/</code>, <code>/dev/</code> sections are where a large motif has room to be more than an icon; its §4 also found the generated scaladoc pages loading four third-party scripts, which is the same "nothing loads from a third party" claim this MIP's §9.1 refuses to break), MIP-0005 (the site's "plain files, no build step" constraint, which §5.4 keeps), <code>knowledge/waves-tides-glossary.md</code> and <code>knowledge/safety/rip-currents.md</code> (the domain the motifs draw), <code>PHILOSOPHY.md</code> (§11's follow-up)</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>S — one ~200-line stdlib Python script with a <code>--self-test</code> (the shape <code>scripts/*.py</code> already has), one equations file, a generated <code>&lt;symbol&gt;</code> block inside the sprite MIP-0046 introduces, and one <code>site_check.js</code> assertion. No new dependency, no CI workflow, no <code>site.yml</code> change, nothing added to <code>site/dist</code>. The <em>authoring</em> (tuning five drawings in Desmos until they look right) is hours of human eye-work, but it is not build effort and it produces no reviewable artefact except numbers</td>
+</tr>
+<tr>
+<td><strong>Gain</strong></td>
+<td><code>user value</code> — the site gets a visual identity that is about the sea rather than about the framework, at the one moment a first-time visitor decides whether to trust its numbers; <code>infra/dev-loop</code> — an illustration whose source is a formula is reviewable in a diff and reproducible by re-running a script, which no hand-drawn or generated image is</td>
+</tr>
+<tr>
+<td><strong>Effort vs Gain</strong></td>
+<td><code>do when MIP-0046 lands</code> — the mechanism is MIP-0046's sprite block. It is buildable first (this MIP would then introduce the block itself) but that duplicates ~25 lines of CSS and creates a mechanical conflict for whoever lands second, for no gain. MIP-0046 is the smaller, more urgent change; this one waits one merge</td>
+</tr>
+<tr>
+<td><strong>Depends on</strong></td>
+<td>MIP-0046 for the delivery mechanism (<code>&lt;symbol&gt;</code>/<code>&lt;use&gt;</code>, <code>.sprite</code>/<code>.ic</code> CSS) — coordination, not a hard gate: if this landed first it would have to create that block, and MIP-0046 would then extend it. MIP-0044 (Draft) is where the large motifs get room; without it, only the map page exists and §5.6 limits the rollout to two placements. No Phase-1 gate, no cloud resource, no paid tier, no API key — §4.1 verifies the free path and §4.2 verifies exactly where the paid/keyed one starts</td>
+</tr>
+<tr>
+<td><strong>Blocked by</strong></td>
+<td>none</td>
+</tr>
+<tr>
+<td><strong>Risk</strong></td>
+<td>Five equation-drawn illustrations are five chances to ship something that looks like a maths homework screenshot rather than a considered drawing. The mechanism is cheap and verifiable; the <em>taste</em> is not, and nothing in <code>just quality</code> can tell the difference. If the first motif does not survive a look at 1280 px, the honest outcome is to ship one motif, not five</td>
+</tr>
+<tr>
+<td><strong>Cost so far</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-summary">1. Summary<a class="headerlink" href="#1-summary" title="Permanent link">&para;</a></h2>
+<p>marola's visual vocabulary becomes <strong>equation-drawn</strong>: a small set of illustrative motifs, a
+trochoidal swell, a right-whale silhouette, a jellyfish, a two-constituent tide curve, a rip-current
+streamline pair, designed by tuning real equations in Desmos's free graphing calculator, then
+<strong>brought home as the equations, not as the picture</strong>, and rendered by a small in-repo script into
+the same inline SVG <code>&lt;symbol&gt;</code> sprite MIP-0046 introduces. Nothing from Desmos is fetched at runtime
+and no Desmos-exported file is committed; the shipped asset is marola's own rendering of marola's
+own formulae, MIT like the rest of the repo. §11 proposes one paragraph in <code>PHILOSOPHY.md</code>, with a
+real call on what that paragraph may and may not claim.</p>
+<h2 id="2-motivation">2. Motivation<a class="headerlink" href="#2-motivation" title="Permanent link">&para;</a></h2>
+<p>The site has exactly one piece of artwork: the two-stroke wave in <code>index.html</code>'s <code>&lt;h1&gt;</code> and the
+filled <code>WAVE_PATH</code> marker it echoes (<code>app.js:172</code>). Everything else a visitor sees is data,
+chrome, or (until MIP-0046 lands) a system emoji. There is no illustration, and there is no rule
+about what an illustration here may be: a grep of <code>AGENTS.md</code>, <code>PHILOSOPHY.md</code>, <code>docs/*.md</code> and the
+<code>site-frontend</code> skill for <code>AI-generated|generated image|stock photo|illustration</code> returns exactly
+one hit, and it is the skill's own trigger phrase, not a policy (checked 2026-09-07).</p>
+<p>So the first illustration this repo commits also decides the category. Three options were actually
+open: a stock/AI-generated image, a hand-drawn vector, or a drawing that is a formula. The repo
+already has a strong opinion about the analogous question for <em>text</em>: "no unsourced text reaches a
+user", the <code>mip</code> skill's shortest rule, and no opinion at all about pictures. An equation-drawn
+motif is the only one of the three whose review surface is a diff: <code>h_w = 0.42</code> changing to <code>0.31</code>
+is a reviewable line, and a re-run of the generator reproduces the artwork byte-for-byte. That is
+the <em>infra</em> argument, and it is the one that holds; §8 says plainly which stronger argument does not.</p>
+<p>The aesthetic argument is separate and also real: marola is about the sea, and the shapes the sea
+actually makes are the ones its physics writes down. A trochoid is not a decorative wave: it is
+the wave (§5.1.1). Drawing the site's furniture from the same families the pipeline reasons about
+is the visual version of what <code>scoring/</code> already is.</p>
+<h2 id="3-user-visible-change">3. User-visible change<a class="headerlink" href="#3-user-visible-change" title="Permanent link">&para;</a></h2>
+<p>No text, no number, no colour, no threshold changes. What changes is that the page has drawings.</p>
+<p>Today, <code>site/static/index.html</code>, the whole of the site's artwork:</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;&lt;</span><span class="nt">svg</span> <span class="err">…</span><span class="p">&gt;&lt;</span><span class="nt">path</span> <span class="na">d</span><span class="o">=</span><span class="s">"M2 9c2.5 0 2.5-2.5 5-2.5S9.5 9 12 9…"</span><span class="p">/&gt;</span>…<span class="p">&lt;/</span><span class="nt">svg</span><span class="p">&gt;</span>marola<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+</code></pre></div>
+<p>After (the sprite MIP-0046 §5.1 introduces, extended, ids namespaced <code>art-</code> so the two sets never
+collide with its 14 px functional marks):</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">svg</span> <span class="na">class</span><span class="o">=</span><span class="s">"sprite"</span> <span class="na">aria-hidden</span><span class="o">=</span><span class="s">"true"</span><span class="p">&gt;</span>
+  <span class="cm">&lt;!-- MIP-0046's functional marks: i-wind-0 … i-lifeguard --&gt;</span>
+  <span class="cm">&lt;!-- equation-art:start  generated by scripts/equation_art.py — edit site/equations.json --&gt;</span>
+  <span class="p">&lt;</span><span class="nt">symbol</span> <span class="na">id</span><span class="o">=</span><span class="s">"art-swell"</span>  <span class="na">viewBox</span><span class="o">=</span><span class="s">"0 0 240 60"</span><span class="p">&gt;</span>…<span class="p">&lt;/</span><span class="nt">symbol</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">symbol</span> <span class="na">id</span><span class="o">=</span><span class="s">"art-whale"</span>  <span class="na">viewBox</span><span class="o">=</span><span class="s">"0 0 120 80"</span><span class="p">&gt;</span>…<span class="p">&lt;/</span><span class="nt">symbol</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">symbol</span> <span class="na">id</span><span class="o">=</span><span class="s">"art-jelly"</span>  <span class="na">viewBox</span><span class="o">=</span><span class="s">"0 0 80 120"</span><span class="p">&gt;</span>…<span class="p">&lt;/</span><span class="nt">symbol</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">symbol</span> <span class="na">id</span><span class="o">=</span><span class="s">"art-tide"</span>   <span class="na">viewBox</span><span class="o">=</span><span class="s">"0 0 240 60"</span><span class="p">&gt;</span>…<span class="p">&lt;/</span><span class="nt">symbol</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">symbol</span> <span class="na">id</span><span class="o">=</span><span class="s">"art-rip"</span>    <span class="na">viewBox</span><span class="o">=</span><span class="s">"0 0 120 120"</span><span class="p">&gt;</span>…<span class="p">&lt;/</span><span class="nt">symbol</span><span class="p">&gt;</span>
+  <span class="cm">&lt;!-- equation-art:end --&gt;</span>
+<span class="p">&lt;/</span><span class="nt">svg</span><span class="p">&gt;</span>
+</code></pre></div>
+<p>Placements in v1 (two, deliberately few, §5.6): the swell as a full-width rule under the header,
+replacing nothing; the whale, jellyfish or rip as the illustration of the empty/loading state the
+map shows before a board arrives, where there is currently blank panel. Everything else waits for
+MIP-0044's sections to exist.</p>
+<h2 id="4-data-sources-and-dependencies-reviewed">4. Data sources and dependencies reviewed<a class="headerlink" href="#4-data-sources-and-dependencies-reviewed" title="Permanent link">&para;</a></h2>
+<h3 id="41-desmoss-free-graphing-calculator-as-an-authoring-tool-the-pick">4.1 Desmos's free graphing calculator, as an authoring tool — <strong>the pick</strong><a class="headerlink" href="#41-desmoss-free-graphing-calculator-as-an-authoring-tool-the-pick" title="Permanent link">&para;</a></h3>
+<p><code>https://www.desmos.com/calculator</code> is free and needs no account to graph (an account is needed
+only to <em>save</em> a graph; not verified independently, see "Not checked"). Its Export Image dialog
+offers both PNG and SVG: the live app bundle
+(<code>/assets/build/shared_calculator_desktop-bc7c26f4….js</code>, fetched 2026-09-07, 5.2 MB) contains the
+localization strings <code>account-shell-button-download-png = Download PNG</code>,
+<code>account-shell-button-download-svg = Download SVG</code>, <code>account-shell-heading-file-format = File
+Format</code>. So a keyless, free SVG export genuinely exists.</p>
+<p><strong>It is still not what gets committed</strong>, and the reason is licensing, not convenience. Desmos's
+Terms of Service (fetched 2026-09-07, the page is a JS shell, so the text was read out of
+<code>/assets/build/frontpage/terms-967a1656….js</code>) says two things that matter, and they point in
+opposite directions:</p>
+<ul>
+<li><strong>§6 User Submissions and General Materials:</strong> "Desmos does not claim ownership of any materials
+  … lessons, <strong>formulae</strong>, information, data, text or other materials you submit and create … As
+  between Desmos and you, <strong>you own all rights</strong> to your User Submissions and Generated Materials."</li>
+<li><strong>§5 Personal, Non-Commercial Use Only for Desmos Tools:</strong> "you are authorized to distribute that
+  Content generated using the Desmos Tools from your User Submissions and Generated Content <strong>under
+  a Creative Commons 'Attribution-ShareAlike' License (CC-BY-SA-4.0)</strong>, with attribution to include
+  reference to 'Desmos', 'Desmos Studio PBC' or the Desmos logo."</li>
+</ul>
+<p>Read together: <strong>the equations come home under the author's own copyright; the exported picture
+comes home under CC-BY-SA-4.0 with a Desmos attribution.</strong> This repo is MIT (<code>LICENSE</code>, "MIT
+License, Copyright (c) 2026 Matheus Hoffmann"). Committing a Desmos-exported SVG would put a
+share-alike, attribution-bearing asset inside an MIT tree, a real obligation, not a formality, and
+one that would have to be tracked in a NOTICE for the life of the file. Re-rendering the author's
+own equations in-repo avoids it entirely and costs one small script (§5.4). §5 of the same terms
+also restricts the Desmos <em>Tools</em> to "personal, non-commercial use"; marola is a free personal
+project with no paid tier, so authoring there is inside that limit today, worth re-reading if that
+ever changes.</p>
+<h3 id="42-the-desmos-js-api-calculatorjs-and-asyncscreenshot-reviewed-rejected-91">4.2 The Desmos JS API (<code>calculator.js</code>) and <code>asyncScreenshot</code> — reviewed, rejected (§9.1)<a class="headerlink" href="#42-the-desmos-js-api-calculatorjs-and-asyncscreenshot-reviewed-rejected-91" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>It needs a key.</strong> The docs (<code>https://www.desmos.com/api/v1.11/docs/index.html</code>, fetched
+  2026-09-07) give the load URL as
+  <code>https://www.desmos.com/api/v1.11/calculator.js?apiKey=[YOUR_API_KEY_HERE]</code>, "To obtain your own
+  API key, visit desmos.com/my-api". Fetching that script <strong>without</strong> a key returns <strong>HTTP 403</strong>
+  (checked 2026-09-07, 52 bytes of body).</li>
+<li><strong><code>asyncScreenshot</code> really can emit SVG.</strong> Same docs, verbatim: "callback will be called with the
+  either a URI string or SVG string as its argument … the ability to output SVG in addition to PNG
+  images. … <code>opts.format</code> String that determines the format of the generated image. May be either
+  <code>'png'</code> or <code>'svg'</code>. Defaults to <code>'png'</code>." It operates on a <em>live calculator instance in a page</em>,
+  so any programmatic use means a headless browser, a dependency this repo does not have and this
+  MIP does not add.</li>
+<li><strong>The API's own terms are stricter than the calculator's.</strong> <code>https://www.desmos.com/api-terms</code>
+  (same JS-shell trick, fetched 2026-09-07): a free "Trial Tier" whose limit is "solely for (a)
+  personal, non-commercial use or (b) a 90 day trial for internal testing", a paid "Commercial
+  Tier" otherwise, and §5.b forbidding "(ii) use, reproduce, distribute or publicly display any
+  Content other than through the Applications; (iii) remove, alter, or obscure any branding
+  (including copyright and trademark notices) of Desmos Studio".</li>
+</ul>
+<h3 id="43-existing-public-desmos-sea-graphs-as-prior-art-cited-not-copied">4.3 Existing public Desmos sea graphs, as prior art — cited, <strong>not copied</strong><a class="headerlink" href="#43-existing-public-desmos-sea-graphs-as-prior-art-cited-not-copied" title="Permanent link">&para;</a></h3>
+<p>Four were verified by fetching each graph's thumbnail (<code>/calc_thumbs/production/&lt;id&gt;.png</code>) and
+looking at it, and by fetching its saved state
+(<code>https://saved-work.desmos.com/calc-states/production/&lt;id&gt;</code>, an <strong>undocumented</strong> endpoint found by
+request, not from Desmos's docs) and reading the actual LaTeX:</p>
+<table>
+<thead>
+<tr>
+<th>Graph</th>
+<th>What it actually renders</th>
+<th>Why it matters here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://www.desmos.com/calculator/rqvqvf6uy8">Troichoidal Ocean Waves</a></td>
+<td>A trochoid construction: rolling circle, generating point, the traced curve</td>
+<td>Its state contains <code>p_x(t)=\frac{L_w}{2\pi}t-h_w\sin t</code>, <code>p_y(t)=h_w\cos t</code> with wavelength <code>L_w</code> and height <code>h_w</code> as sliders — the exact family §5.1.1 uses, and proof it reads as a sea surface</td>
+</tr>
+<tr>
+<td><a href="https://www.desmos.com/calculator/koa2npwoir">The Ocean</a></td>
+<td>A full scene: layered wave bands, a boat, and a jellyfish — all equations, with an animation parameter <code>v</code></td>
+<td>The best evidence that a <em>scene</em>, not just a curve, is achievable this way</td>
+</tr>
+<tr>
+<td><a href="https://www.desmos.com/calculator/gaeav8oi2q">Whale</a></td>
+<td>A whale under a wavy sea line, a sun, an octopus</td>
+<td>Its state is ~40 domain-restricted conics and sinusoids (<code>9=(x+2)^2+(y+7)^2\{-9.2&lt;y&lt;1\}\{-5.1\le x\le0\}</code>) — an honest look at how much fiddling a recognisable animal costs</td>
+</tr>
+<tr>
+<td><a href="https://www.desmos.com/calculator/a83ylfdj0s">Jellyfish</a></td>
+<td>A bell with oscillating tentacles streaming from it</td>
+<td>Its tentacles are phase-shifted restricted sinusoids (<code>\frac{\sin(3x)}{2}\{-2&lt;x&lt;8.5\}</code>, <code>\|\sin(x+1)\|+1</code>), <strong>not</strong> polar roses — which is why §5.1.3 proposes damped sinusoids</td>
+</tr>
+</tbody>
+</table>
+<p>Two candidates from the same searches were checked and <strong>failed</strong>: <code>Jellyfish Graph</code>
+(<code>2yttmwvhzv</code>) renders only a short line of red dots, and <code>Trig project- whale</code> (<code>omhbfyzodp</code>)
+renders an empty grid. Both are named plausibly and neither draws anything; they are recorded here
+because the failure mode of this section is citing a title.</p>
+<p><strong>Licensing of the above: the finding that decides §9.3.</strong> Desmos's ToS §6 assigns ownership of a
+user's submissions to <em>that user</em>. The CC-BY-SA carve-out in §5 authorizes <strong>you</strong> to distribute
+Content generated from <strong>your</strong> submissions; nothing in the terms grants one user a licence to
+another user's graph, and "public" on Desmos means visible, not licensed. So these five graphs are
+cited as prior art and inspection material only. The one thing taken from them is a <em>fact about
+mathematics</em>, the trochoid parametrization, published by Gerstner in 1802 and in every coastal-
+engineering text, which is not anyone's expression to license.</p>
+<h3 id="44-the-renderer-python-3-stdlib-already-in-the-shell">4.4 The renderer: Python 3 stdlib, already in the shell<a class="headerlink" href="#44-the-renderer-python-3-stdlib-already-in-the-shell" title="Permanent link">&para;</a></h3>
+<p><code>flake.nix</code> provides <code>python3</code>; <code>just quality-other</code> already runs <code>ruff check .</code>, <code>ruff format
+--check .</code> and a <code>--self-test</code> on each of six <code>scripts/*.py</code> (<code>justfile:75-90</code>, read 2026-09-07). A
+sixth-of-a-page sampler that turns <code>x(t), y(t)</code> into an SVG path needs <code>math</code> and <code>json</code> and
+nothing else. No new dependency, no <code>flake.nix</code> change.</p>
+<h2 id="5-design">5. Design<a class="headerlink" href="#5-design" title="Permanent link">&para;</a></h2>
+<h3 id="51-the-five-motifs-and-the-actual-mathematics-behind-each">5.1 The five motifs, and the actual mathematics behind each<a class="headerlink" href="#51-the-five-motifs-and-the-actual-mathematics-behind-each" title="Permanent link">&para;</a></h3>
+<p>Each is a real family a human can build in Desmos in an evening: parameters below are starting
+points to tune, not results.</p>
+<p><strong>5.1.1 <code>art-swell</code>: a trochoidal wave train.</strong> Parametric, one curve:
+<code>x(t) = (L/2π)·t − h·sin t</code>, <code>y(t) = h·cos t</code>, <code>t ∈ [0, 2πn]</code> for <code>n</code> crests. This is the trochoid
+(Gerstner) surface: sharp crests, broad flat troughs, visibly <em>not</em> a sine, which is the whole
+point, because a sine is what a generic wave graphic is. Two or three trains superposed at
+different <code>(L, h)</code> and offset vertically give the layered-swell band; the sea is a spectrum, not one
+wave, so the superposition is the honest drawing. Verified prior art: <code>rqvqvf6uy8</code> (§4.3). Deep
+water relates <code>L</code> to period by <code>L = gT²/2π</code>, and the board already carries <code>sea.period_s</code> and
+<code>wave_m</code> per beach, see §11 for why v1 does <strong>not</strong> make the drawing data-driven.</p>
+<p><strong>5.1.2 <code>art-whale</code>: a southern right whale silhouette</strong> (the species <code>knowledge/whales-santa-
+catarina.md</code> is about). Body: a superellipse <code>|x/a|^n + |y/b|^n = 1</code> with <code>n ≈ 2.6</code>, blunter than
+an ellipse, which is exactly the right whale's shape, and the one parameter that separates it from
+a dolphin. Fluke: two lobes of the rose <code>r(θ) = c·sin 2θ</code> rotated onto the tail root. Head
+callosity: a small circle differenced out of the outline near <code>x = −a</code>. Drawn as one closed
+parametric outline so it fills as a silhouette. Honest: the fluke-as-rose-lobe is a design bet, and
+<code>gaeav8oi2q</code> (§4.3) is evidence that whales cost more expressions than one expects.</p>
+<p><strong>5.1.3 <code>art-jelly</code>: a jellyfish.</strong> Bell: the upper half of a lobe-modulated circle,
+<code>r(θ) = a(1 − ε·cos 4θ)</code>, <code>θ ∈ [0, π]</code>, <code>ε ≈ 0.12</code>, a dome with four soft scallops, not a rose;
+a true rose (<code>r = a sin kθ</code>) makes a flower, which is the mistake this note exists to avoid.
+Tentacles: <code>k</code> damped, phase-shifted sinusoids hanging from the rim,
+<code>y_j(s) = −s</code>, <code>x_j(s) = x_j0 + A·e^(−λs)·sin(ω s + jφ)</code>, <code>s ∈ [0, S]</code>, with <code>A</code> and <code>S</code> varying per
+strand so they do not read as a comb. Evidence: <code>a83ylfdj0s</code> uses restricted phase-shifted
+sinusoids for exactly this and it works.</p>
+<p><strong>5.1.4 <code>art-tide</code>: a real tide curve, not a sine.</strong> <code>h(t) = A_M2·cos(2πt/T_M2 + φ₁) +
+A_S2·cos(2πt/T_S2 + φ₂)</code> over <code>t ∈ [0, 30] h</code>, with <code>T_M2 ≈ 12.42 h</code> (principal lunar semidiurnal)
+and <code>T_S2 = 12.00 h</code> (principal solar semidiurnal). NOAA's own page (fetched 2026-09-07) states M2
+"has 2 peaks every 24-hours and 50 minutes" and S2 "2 peaks every 24-hours", which is where those
+two periods come from. With <code>A_M2 ≈ 2·A_S2</code> the sum gives the unequal successive highs a real tide
+has and a single sinusoid cannot: the drawing is the same harmonic model tide prediction uses, at
+two terms.</p>
+<p><strong>5.1.5 <code>art-rip</code>: a rip current, as streamlines.</strong> Level curves of a stream function for uniform
+onshore flow plus a sink at the rip neck: <code>ψ(x, y) = U·y − (m/2π)·arctan(y/x)</code>; plot two or three
+level sets <code>ψ = c_k</code>. They converge into a narrow seaward jet and spread into the head: the shape
+<code>knowledge/safety/rip-currents.md</code> describes in words. This is the one motif that could later carry
+meaning rather than mood, and the one to draw most carefully, because a decorative safety diagram
+that misleads is worse than none (§8).</p>
+<h3 id="52-what-comes-back-from-desmos">5.2 What comes back from Desmos<a class="headerlink" href="#52-what-comes-back-from-desmos" title="Permanent link">&para;</a></h3>
+<p>Only numbers and formulae, in one checked-in file, <code>site/equations.json</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nt">"art-swell"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"viewBox"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">240</span><span class="p">,</span><span class="w"> </span><span class="mi">60</span><span class="p">],</span><span class="w"> </span><span class="nt">"curves"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"parametric"</span><span class="p">,</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="s2">"(L/(2*pi))*t - h*sin(t)"</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="s2">"h*cos(t)"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"t"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">12.566</span><span class="p">],</span><span class="w"> </span><span class="nt">"samples"</span><span class="p">:</span><span class="w"> </span><span class="mi">240</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"L"</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span><span class="w"> </span><span class="nt">"h"</span><span class="p">:</span><span class="w"> </span><span class="mi">9</span><span class="w"> </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">"stroke"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nt">"fill"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p>The expression strings are evaluated by the generator against a whitelisted <code>math</code>-only namespace:
+no <code>eval</code> of arbitrary Python, which is the one security note this file carries (a <code>site/</code> data file
+is not attacker-controlled here, but a generator that <code>eval</code>s is a bad habit to install).</p>
+<h3 id="53-what-is-not-supported-stated-before-anyone-assumes-it">5.3 What is <em>not</em> supported, stated before anyone assumes it<a class="headerlink" href="#53-what-is-not-supported-stated-before-anyone-assumes-it" title="Permanent link">&para;</a></h3>
+<p>The generator handles <strong>explicit parametric curves</strong> <code>x(t), y(t)</code> and closed outlines built from
+them. It does <strong>not</strong> handle Desmos's implicit/inequality forms (<code>4 ≥ (x−4)² + (y−2)²</code>,
+<code>−y² + 2x ≥ −8 {x &lt; −2}</code>), which is how much of the prior art in §4.3 is actually written, nor
+Desmos's automatic domain restrictions. There is <strong>no lossless equation-to-SVG-path pipeline</strong>:
+any claim of one would be wrong. A drawing sketched with inequalities in Desmos has to be
+re-expressed parametrically by its author before it can come home. That is real authoring friction
+and it is the reason §5.1 chose five motifs that are naturally parametric.</p>
+<h3 id="54-the-generator-scriptsequation_artpy">5.4 The generator: <code>scripts/equation_art.py</code><a class="headerlink" href="#54-the-generator-scriptsequation_artpy" title="Permanent link">&para;</a></h3>
+<p>Stdlib only, ~200 lines, three jobs: sample each curve at <code>samples</code> points; emit a <code>&lt;path d="M…L…"&gt;</code>
+(or <code>Q</code> smoothing) fitted into the <code>viewBox</code> with a stated margin; splice the resulting <code>&lt;symbol&gt;</code>
+block into <code>site/static/index.html</code> between <code>&lt;!-- equation-art:start --&gt;</code> and
+<code>&lt;!-- equation-art:end --&gt;</code>. That splice-between-markers pattern is not new here: <code>just mip-graph</code>
+already regenerates a block inside <code>docs/MIPs/README.md</code> between markers, and <code>quality-other</code> fails
+when it is stale (<code>AGENTS.md</code>, <code>scripts/mip_graph.py</code>). This follows it exactly:</p>
+<ul>
+<li><code>just equation-art</code> regenerates the block.</li>
+<li><code>python3 scripts/equation_art.py --check</code> fails if the committed block does not match what
+  <code>site/equations.json</code> produces, added to <code>quality-other</code> beside the other six self-tests.</li>
+<li><code>python3 scripts/equation_art.py --self-test</code> covers the sampler (a circle's path closes, a known
+  trochoid's crest lands where the closed form says), the <code>--self-test</code> convention <code>quality-other</code>
+  already enforces on every other <code>scripts/*.py</code>.</li>
+</ul>
+<p><strong>No CI change and no build step.</strong> The generated markup is committed inside <code>index.html</code>, which is
+already on <code>site.yml</code>'s publish allowlist (<code>site.yml:162-170</code>: <code>index.html app.js style.css chat.js
+chatbot-config.js CNAME</code> plus <code>vendor/ data/ smoke/ coverage/</code>, <code>exit 1</code> on anything else). Nothing
+new lands in <code>site/dist</code>, so the allowlist is untouched: the same reason MIP-0046 §4.1 picked an
+inline sprite over a separate <code>icons.svg</code>. The generator runs on a human's machine, like
+<code>just mip-graph</code>, and <code>--check</code> is what keeps it honest.</p>
+<h3 id="55-what-this-does-not-touch">5.5 What this does not touch<a class="headerlink" href="#55-what-this-does-not-touch" title="Permanent link">&para;</a></h3>
+<p><code>WAVE_PATH</code> (<code>app.js:172</code>) and the legend key it is asserted equal to (<code>site_check.js:213-216</code>) stay
+exactly as they are. MIP-0009 tuned that shape for legibility at 24 px over map tiles across eighty
+overlapping markers, and MIP-0046 §5.2 already deliberately leaves the markers on inline paths. A
+sampled trochoid is a <em>worse</em> 24 px marker than a hand-tuned filled path, and pretending otherwise
+would trade a working glyph for a principle. MIP-0046's twelve 14 px functional marks are likewise
+out of scope: at that size a hand-drawn stroke beats a sampled curve, and this MIP is about
+illustration, not pictograms. The two sets share one sprite block and one CSS class family, and
+nothing else.</p>
+<h3 id="56-placement-v1">5.6 Placement, v1<a class="headerlink" href="#56-placement-v1" title="Permanent link">&para;</a></h3>
+<p>Two placements only, both on the existing page: the swell band under the header, and one motif in
+the map's empty/loading state. MIP-0044's <code>/about/</code>, <code>/news/</code> and <code>/dev/</code> sections are the natural
+home for the rest, a section header per motif, and that is where the remaining three go once it
+lands. Shipping five illustrations onto a one-page map would be exactly the "decorated" look
+MIP-0046 is removing.</p>
+<h2 id="6-scoring-safety-impact">6. Scoring / safety impact<a class="headerlink" href="#6-scoring-safety-impact" title="Permanent link">&para;</a></h2>
+<p>None. No board field, no threshold, no note text, no <code>Swimability</code> call, no LLM. One caveat that is
+about safety even though the code is not: <code>art-rip</code> (§5.1.5) draws a hazard. It must never sit next
+to a beach's own numbers where it could read as "the rip is here": it is a motif for a knowledge
+or about section, never a map overlay. Stated here so a later PR cannot quietly promote it.</p>
+<h2 id="7-verification-plan">7. Verification plan<a class="headerlink" href="#7-verification-plan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>python3 scripts/equation_art.py --self-test</code> and <code>--check</code>, both wired into <code>quality-other</code>.</li>
+<li><code>node --check site/static/app.js</code>; <code>node scripts/site_check.js</code> green, plus one new assertion:
+  every <code>art-*</code> id referenced by a <code>&lt;use&gt;</code> resolves to a <code>&lt;symbol id&gt;</code> present in <code>index.html</code> (the
+  generalized form of the assertion MIP-0046 §7 adds for <code>i-*</code>).</li>
+<li><code>ruff check .</code> / <code>ruff format --check .</code> on the new script.</li>
+<li><code>just site-build floripa &amp;&amp; just site-serve</code>, then <strong>screenshots at 390 px and 1280 px</strong>: the
+  <code>site-frontend</code> step-6 rule and the only check that can see whether a motif is any good.</li>
+<li>Reproducibility check, which is the whole claim: <code>just equation-art</code> twice from a clean tree
+  produces a byte-identical <code>index.html</code>.</li>
+<li>Done = the harness green, <code>--check</code> clean, two screenshots in the PR, and no Desmos-exported file
+  anywhere in the tree (<code>git ls-files | grep -i desmos</code> empty).</li>
+</ul>
+<h2 id="8-risks-limitations-and-honest-caveats">8. Risks, limitations, and honest caveats<a class="headerlink" href="#8-risks-limitations-and-honest-caveats" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Taste is not a gate.</strong> Everything in §7 verifies that the drawing is <em>reproducible</em>, not that it
+  is <em>good</em>. Five motifs is an ambitious v1; the fallback is to ship <code>art-swell</code> alone and let the
+  rest wait for a second look.</li>
+<li><strong>Nothing here is rendered yet.</strong> Every claim about how these look is <em>written, not run</em>. The
+  mechanism is verified against MDN via MIP-0046 §4.1 and against this repo's own workflow file; no
+  curve has been sampled and no browser opened.</li>
+<li><strong>The philosophy claim has a ceiling, and here it is.</strong> It is true that an equation-drawn asset is
+  deterministic and reproducible, and true that its source is inspectable in a way a raster is not.
+  It is <strong>not</strong> true that this makes it "sourced, never invented" in the sense <code>PHILOSOPHY.md</code> and
+  the <code>mip</code> skill use those words. That rule is about <em>facts shown to a user</em>, a wave height, a
+  water-quality verdict, a line of lore, and an illustration asserts no fact. Stretching Pillar 2
+  ("the deterministic parts kept deterministic", which is about the scoring path) to cover a
+  decorative whale would be the kind of inflation <code>PHILOSOPHY.md</code>'s own "What this is not" section
+  exists to prevent. §11's proposed paragraph therefore claims the narrow thing: <em>the source of a
+  picture can be a formula, and then review is a diff</em>, and not the wide one.</li>
+<li><strong>Authoring is manual and unattributed.</strong> Desmos is a sketchpad, so the record of <em>how</em> a curve
+  was tuned is the parameters in <code>site/equations.json</code> and nothing else; there is no saved graph the
+  repo can point at unless the author chooses to publish one (and publishing it makes it a User
+  Submission under §4.1's terms, which is fine, but it is a choice, not a requirement).</li>
+<li><strong><code>art-rip</code> can mislead</strong>, §6.</li>
+<li><strong>Sampling artefacts.</strong> 240 points on a trochoid is smooth at 240 px and visibly polygonal at
+  1200 px. The <code>samples</code> figure is per-motif and per-placement, and the swell band is the one most
+  likely to be scaled up by MIP-0044.</li>
+<li><strong>One file, two generators.</strong> After MIP-0046, <code>index.html</code> holds a hand-written sprite block; after
+  this, a generated one too, inside the same <code>&lt;svg class="sprite"&gt;</code>. Whoever edits by hand inside
+  the <code>equation-art</code> markers will have it silently overwritten: the <code>--check</code> gate catches it in
+  <code>quality-other</code>, before push, which is why it is a gate rather than a comment.</li>
+</ul>
+<h2 id="9-alternatives-considered">9. Alternatives considered<a class="headerlink" href="#9-alternatives-considered" title="Permanent link">&para;</a></h2>
+<p><strong>9.1 Embed the live Desmos calculator (<code>calculator.js</code>) in the page: rejected, firmly.</strong> It is a
+third-party runtime script on a page whose CSP is <code>default-src 'self'</code> with no <code>script-src</code> opening
+and whose own source comment says "script-src/object-src stay locked to same-origin: this page loads
+no third-party script" (<code>index.html:13-14</code>, read 2026-09-07). It would need an API key in the page
+(§4.2: 403 without one), it would put a personal-non-commercial Trial Tier term on a public site, it
+forbids obscuring Desmos branding, and it would make every visitor download a calculator engine to
+look at a picture, against a vendored Leaflet of 147,552 bytes for the entire map. MIP-0044 §4
+found the generated scaladoc pages already breaking the "no third-party script" claim and treats
+that as a bug to fix; adding a second violation on purpose, in the same session, would be
+incoherent.</p>
+<p><strong>9.2 Vendor Desmos's own SVG export (<code>asyncScreenshot</code>, or the UI's Download SVG): rejected.</strong>
+It works and it is free (§4.1, §4.2), but distributing that output is licensed to the author under
+CC-BY-SA-4.0 with a Desmos attribution, inside an MIT repo. A share-alike asset with a permanent
+NOTICE obligation, to avoid writing 200 lines of Python, is a bad trade. The programmatic path
+additionally needs a headless browser and an API key.</p>
+<p><strong>9.3 Adapt the equations from an existing public graph (e.g. <code>gaeav8oi2q</code>'s whale): rejected.</strong>
+Desmos's ToS §6 gives ownership of a submission to the user who made it, and grants no user-to-user
+licence; public means visible, not reusable. The graphs in §4.3 are cited as prior art and as
+evidence that the technique works. The trochoid parametrization is taken as mathematics, not as
+anyone's artwork.</p>
+<p><strong>9.4 Hand-draw the motifs in a vector editor: the real alternative, rejected on review surface.</strong>
+It is faster and probably prettier. It gives up the property this MIP is actually for: a change is a
+number in a diff, and the artwork is reproducible from the repo. Note this is <em>not</em> a rejection of
+hand-drawing in general: MIP-0046's twelve 14 px marks stay hand-drawn, and §5.5 says why.</p>
+<p><strong>9.5 An AI-generated illustration: rejected.</strong> It is the fastest option and it is the one thing
+this repo's entire culture argues against for text: an artefact nobody can check, whose provenance
+is a prompt, which cannot be reproduced or reviewed. The site-frontend skill exists because a page
+"looks AI-generated" is already treated here as a defect.</p>
+<p><strong>9.6 Do nothing: a serious option.</strong> The page is disciplined and MIP-0046 makes it more so; a site
+with no illustrations is not broken. Rejected because the request is explicit, and because §5.6's
+v1 is two placements, which is close enough to "nearly nothing" that the do-nothing case is mostly
+answered by scope.</p>
+<h2 id="11-open-questions">11. Open questions<a class="headerlink" href="#11-open-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Should the swell be data-driven?</strong> The board carries <code>sea.period_s</code> and <code>wave_m</code> per beach, and
+   deep water gives <code>L = gT²/2π</code>, so the header band <em>could</em> be drawn from today's actual swell.
+   That is a genuinely good idea and a different MIP: it turns an illustration into a data display,
+   which brings the honesty rules with it (what is drawn when there is no data?). v1 is static.
+   Proposal: static now, revisit after MIP-0042's live-map work has an opinion.</li>
+<li><strong>Five motifs or one?</strong> §8's fallback. A human should look at the first one before the other four
+   are drawn.</li>
+<li><strong>Where does <code>art-rip</code> live</strong>: a knowledge/safety page (MIP-0044 §5.5) or nowhere in v1?
+   Proposal: nowhere in v1, per §6.</li>
+<li><strong><code>PHILOSOPHY.md</code>: the call, made.</strong> Yes, this earns a paragraph, and no, it does not go in this
+   change. The connection that is real is the one <code>PHILOSOPHY.md</code> already makes about everything
+   else, <em>the gate is there by construction, not by discipline</em>, applied to pictures: an
+   equation-drawn asset carries its own source, so reviewing it is reading a diff and reproducing it
+   is running a script, whereas a raster (drawn, photographed or generated) can only be looked at
+   and believed. The connection that is <strong>not</strong> real is the Pillar 2 / "sourced, never invented"
+   one, for the reason in §8. Proposed wording, for a separate PR after this MIP is accepted, as a
+   short section after "Why a <code>justfile</code>":</li>
+</ol>
+<blockquote>
+<p><strong>Why the pictures are equations.</strong> The site's drawings are generated from formulae checked
+into the repo, not from a raster someone drew or a model produced. It is the same move as
+everywhere else here: put the artefact somewhere it can be checked. A wave whose source is
+<code>x(t) = (L/2π)t − h sin t</code> is reviewed by reading a diff and reproduced by running a script;
+an image file is reviewed by looking at it and taking someone's word for where it came from.
+This claims nothing about the <em>facts</em> marola shows — a drawing asserts none — only about where
+the artwork's source lives.</p>
+</blockquote>
+<p>It is the author's voice and the author's file, so it needs his go-ahead; a separate PR keeps
+   that decision separable from the mechanism, exactly as the <code>mip</code> skill's step 8 keeps design
+   separable from implementation.
+5. <strong>Reciprocal cross-references.</strong> This MIP's "see also" line landed in <code>MIP-0009</code> on this branch.
+   MIP-0046 is still unmerged on <code>docs/mip-0046-remove-ai-slop-ui</code>, so its pointer back to this MIP
+   has to be added on that branch (or after it merges), noted rather than done, to avoid editing
+   another draft's branch.</p>
+<h2 id="appendix">Appendix<a class="headerlink" href="#appendix" title="Permanent link">&para;</a></h2>
+<h3 id="checked-live-all-2026-09-07">Checked live (all 2026-09-07)<a class="headerlink" href="#checked-live-all-2026-09-07" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>https://www.desmos.com/calculator/rqvqvf6uy8</code> → HTTP 200, <code>&lt;title&gt;</code> "Troichoidal Ocean Waves |
+  Desmos"; body is a JS shell. State via
+  <code>https://saved-work.desmos.com/calc-states/production/rqvqvf6uy8</code> → 200, JSON containing
+  <code>p_x(t)=\frac{L_w}{2\pi}t-h_w\sin t</code>, <code>p_y(t)=h_w\cos t</code>, plus the rolling-circle construction.
+  Thumbnail <code>https://www.desmos.com/calc_thumbs/production/rqvqvf6uy8.png</code> → 200, 20,680 bytes,
+  viewed: a circle with a generating point and a traced curve. Basis for §4.3, §5.1.1.</li>
+<li><code>https://www.desmos.com/calculator/koa2npwoir</code> ("The Ocean") → thumbnail 200, 20,206 bytes,
+  viewed: layered blue wave bands, a boat with a flag, a jellyfish, a green seabed. State 200,
+  expressions include <code>4\ge(x-4)^2+(y-2+v)^2\{y\le2-v\}</code> and an animation parameter <code>v=-0.025</code>.</li>
+<li><code>https://www.desmos.com/calculator/gaeav8oi2q</code> ("Whale") → thumbnail 200, 12,399 bytes, viewed:
+  a whale silhouette below a <code>y=\sin(.5x)</code> sea line, a sun, an octopus. State 200, ~40
+  domain-restricted conics/sinusoids.</li>
+<li><code>https://www.desmos.com/calculator/a83ylfdj0s</code> ("Jellyfish") → thumbnail 200, 18,928 bytes,
+  viewed: a filled bell at left with oscillating strands to the right. State 200, tentacles are
+  <code>\frac{\sin(3x)}{2}\{-2&lt;x&lt;8.5\}</code>, <code>\cos(3x)\{-2&lt;x&lt;8.75\}</code>, <code>\|\sin(x+1)\|+1</code>, etc. Basis for
+  §5.1.3's "damped sinusoids, not polar roses".</li>
+<li><code>https://www.desmos.com/calculator/fhfmlynqtn</code> ("ocean-waves") → 200; thumbnail viewed: a
+  low-amplitude periodic ripple on the axis, <code>y=\exp(\sin(x))</code>-family. Real but trivial; not cited
+  as prior art in §4.3 because it draws a curve, not a scene.</li>
+<li><code>https://www.desmos.com/calculator/2yttmwvhzv</code> ("Jellyfish Graph") → thumbnail 200, 3,731 bytes,
+  viewed: <strong>a short line of red dots, no jellyfish.</strong> Negative result, recorded in §4.3.</li>
+<li><code>https://www.desmos.com/calculator/omhbfyzodp</code> ("Trig project- whale") → thumbnail 200, 12,035
+  bytes, viewed: <strong>an empty grid.</strong> Negative result.</li>
+<li><code>https://www.desmos.com/api/v1.11/docs/index.html</code> → 200, 130,163 bytes. Quotes in §4.2 (the
+  <code>?apiKey=</code> load URL, <code>asyncScreenshot</code>'s SVG output and <code>opts.format</code>) are verbatim from it.</li>
+<li><code>https://www.desmos.com/api/v1.11/calculator.js</code> (no key) → <strong>HTTP 403</strong>, 52-byte body.</li>
+<li><code>https://www.desmos.com/terms</code> → 200 but a JS shell; the terms text lives in
+  <code>/assets/build/frontpage/terms-967a1656797971392b61a5acb62049b98e6ca524.js</code> (200, 760,940 bytes),
+  from which §4.1's §5 and §6 quotes are taken verbatim.</li>
+<li><code>https://www.desmos.com/api-terms</code> → 200, JS shell; text from
+  <code>/assets/build/frontpage/api-terms-325f708586a27e144921977549c8a0b30512f7b6.js</code> (200, 754,732
+  bytes). Trial-Tier and §5.b quotes in §4.2 are verbatim.</li>
+<li><code>https://www.desmos.com/assets/build/shared_calculator_desktop-bc7c26f4a69c5a57ad227a86cf55617a542da234.js</code>
+  → 200, 5,210,660 bytes; contains <code>account-shell-button-download-png = Download PNG</code>,
+  <code>account-shell-button-download-svg = Download SVG</code>, <code>account-shell-heading-file-format = File
+  Format</code>. Basis for §4.1's "the free UI exports SVG".</li>
+<li><code>https://tidesandcurrents.noaa.gov/about_harmonic_constituents.html</code> → 200; M2 "the largest lunar
+  constituent", "2 peaks every 24-hours and 50 minutes"; S2 "the largest solar constituent", "2
+  peaks every 24-hours". Basis for §5.1.4's 12.42 h / 12.00 h.</li>
+<li><code>https://help.desmos.com/hc/en-us/articles/4405901719309</code> (Export Image help article) → <strong>HTTP
+  403</strong>, Cloudflare interstitial ("Enable JavaScript and cookies to continue"). Not readable; the
+  export-format claim in §4.1 rests on the app bundle instead.</li>
+<li><code>https://tidesandcurrents.noaa.gov/harmonic_constituents_defs.html</code> → <strong>HTTP 404</strong>.</li>
+</ul>
+<h3 id="checked-in-this-repo-2026-09-07-originmain-at-07882ae">Checked in this repo (2026-09-07, <code>origin/main</code> at <code>07882ae</code>)<a class="headerlink" href="#checked-in-this-repo-2026-09-07-originmain-at-07882ae" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>LICENSE</code> → "MIT License / Copyright (c) 2026 Matheus Hoffmann". Basis for §4.1's licence clash.</li>
+<li><code>site/static/index.html:13-14</code> → the CSP comment "this page loads no third-party script" and
+  <code>default-src 'self'; img-src 'self' https:; connect-src 'self' https:; object-src 'none'</code>.
+  <code>index.html:21</code> → the <code>&lt;h1&gt;</code> two-path wave. <code>index.html:38</code> → the legend wave key.</li>
+<li><code>site/static/app.js:172</code> → <code>WAVE_PATH = 'M3 10c2.6-7 6.4-7 9 0s6.4 5 9 0v10H3z'</code>; §5.5 leaves it.</li>
+<li><code>.github/workflows/site.yml:162-170</code> → the publish allowlist and its <code>exit 1</code>. Nothing in §5.4
+  adds a file to <code>site/dist</code>.</li>
+<li><code>justfile:75-90</code> → <code>quality-other</code> runs <code>ruff check .</code>, <code>ruff format --check .</code> and six
+  <code>python3 scripts/*.py --self-test</code> invocations. Basis for §4.4 and §5.4.</li>
+<li><code>site/static/vendor/leaflet.js</code> → 147,552 bytes. The comparison in §9.1.</li>
+<li><code>grep -rn 'AI-generated|generated image|stock photo|illustration' AGENTS.md PHILOSOPHY.md docs/*.md
+  .claude/skills/site-frontend/SKILL.md</code> → one hit, the skill's own <code>description:</code> line. Basis for
+  §2's "no policy about pictures exists".</li>
+<li><code>knowledge/</code> → <code>whales-santa-catarina.md</code>, <code>jellyfish-and-man-o-war.md</code>,
+  <code>waves-tides-glossary.md</code>, <code>safety/rip-currents.md</code>. The domain §5.1's motifs draw from.</li>
+<li>MIP-0046 read from the unmerged branch <code>origin/docs/mip-0046-remove-ai-slop-ui</code> (commit
+  <code>2d4114f</code>); MIP-0044 from <code>origin/docs/mip-0044-site-sections</code> (commit <code>40e9e8a</code>).</li>
+</ul>
+<h3 id="not-checked">Not checked<a class="headerlink" href="#not-checked" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>No browser was opened and no curve was sampled.</strong> Every visual claim in §3 and §5.1 is written,
+  not run: including whether a 240-point trochoid path looks smooth, and whether a superellipse
+  with <code>n = 2.6</code> reads as a right whale rather than a blob.</li>
+<li>Whether Desmos's own SVG export is true vector paths or an embedded raster: not verified, no file
+  was produced. §9.2 rejects that path on licence, which does not depend on the answer.</li>
+<li>Whether graphing on desmos.com without an account is possible (as opposed to <em>saving</em>): assumed
+  from the calculator page loading anonymously, not confirmed against a Desmos statement: the help
+  centre is behind Cloudflare (above).</li>
+<li><code>saved-work.desmos.com/calc-states/production/&lt;id&gt;</code> is <strong>undocumented</strong>; it returned the states
+  quoted above today, and may change or disappear without notice. Nothing in §5 depends on it.</li>
+<li>The five graphs' authors were not contacted, and their expressions are not used (§9.3).</li>
+<li>MIP-0046's and MIP-0044's statuses are read from unmerged branches; if either draft changes before
+  merging, this MIP's Depends-on and §5.4 marker placement may need revisiting.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top", "navigation.tracking", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
