@@ -303,6 +303,9 @@ jobs:
       - name: self-test — mip-stack (MIP-draft PR discovery ordering)
         if: needs.changes.outputs.python == 'true'
         run: scripts/mip-stack.sh --self-test
+      - name: "self-test — stack (restack's fork point when the base branch is gone)"
+        if: needs.changes.outputs.python == 'true'
+        run: scripts/stack.sh --self-test
       - name: self-test — mip_index_merge (docs/mips/README.md row conflict auto-resolve)
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/mip_index_merge.py --self-test

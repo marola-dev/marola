@@ -277,7 +277,7 @@ waking up, full stop.
 | Tested row | `Tested: gates, e2e, live, ci-only — <not run, why>` trailer per commit (`just cost-fill` adds `ci-only` if one is missing); `just uprd` sets the ✅/⬜ glyphs, never guesses |
 | GitHub Stack | `just stack-setup` once, then `just stack-link MIP-NNNN`, `just stack-view`, `just stack-sync MIP-NNNN` |
 | Local stack view | `scripts/stack.sh status [MIP-NNNN]`, `just stack status MIP-NNNN` |
-| After a base merged | `scripts/stack.sh restack` (one branch) or `just stack-sync MIP-NNNN` (whole stack) |
+| After a base merged | `scripts/stack.sh restack` (one branch) or `just stack-sync MIP-NNNN` (whole stack) — it refuses, mid-stack, when the deleted base branch's head cannot be recovered from its merged PR; `scripts/stack.sh restack --onto-base <sha>` names it by hand |
 | Merge the whole stack | `just stack-merge <stack#> --squash` (all-or-nothing, bottom-up) |
 | Delete merged branches | `just branches-clean` (local + remote ref, skips current branch/main) |
 | PR for a stray plain branch | `just branches-open` (base=main; stack branches point at `scripts/stack.sh pr`) |

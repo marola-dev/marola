@@ -1,19 +1,30 @@
 #!/usr/bin/env bash
 # stack — stacked-PR mechanics for MIP task branches (see .claude/skills/mip-tasks/SKILL.md).
-# scripts/stack.sh start MIP-0005 1 board-json # branch mip-0005/1-board-json off main
-# scripts/stack.sh start MIP-0005 2 map-page # off the previous task branch (mip-0005/1-*)
-# scripts/stack.sh pr # push + open/update the PR with the right base scripts/stack.sh restack #
-# after a base PR was squash-merged: rebase onto main scripts/stack.sh status # every branch of
-# this MIP with its base and PR scripts/stack.sh branches [MIP-0005] # the MIP's task branches,
-# local or remote, bottom to top scripts/stack.sh link [MIP-0005] # GitHub Stack (gh stack link)
-# from the *open* PRs, bottom to top --dry-run on any subcommand prints what would run.
+# usage: scripts/stack.sh [--dry-run] [--onto-base <sha>] <subcommand> [args]
+#   start MIP-0005 1 board-json   branch mip-0005/1-board-json off origin/main
+#   start MIP-0005 2 map-page     branch off the previous task branch (mip-0005/1-*)
+#   pr                            push + open/update the PR with the right base
+#   restack                       after the base PR was squash-merged: rebase onto main
+#   status [MIP-0005]             every branch of this MIP with its base and PR
+#   branches [MIP-0005]           the MIP's task branches, local or remote, bottom to top
+#   link [MIP-0005]               GitHub Stack (gh stack link) from the *open* PRs, bottom to top
+#   --dry-run                     print the commands instead of running them
+#   --onto-base <sha>             restack's fork point, when it refuses because it found none
+#   --self-test                   run this script's own checks
 set -euo pipefail
-dry=0; args=()
-for a in "$@"; do [ "$a" = "--dry-run" ] && dry=1 || args+=("$a"); done
-set -- "${args[@]}"
+dry=0; onto_base=""; selftest=0; args=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --dry-run) dry=1; shift ;;
+    --onto-base) onto_base="${2:?--onto-base needs a commit}"; shift 2 ;;
+    --self-test) selftest=1; shift ;;
+    *) args+=("$1"); shift ;;
+  esac
+done
+set -- ${args[@]+"${args[@]}"}
 run() { if [ "$dry" -eq 1 ]; then echo "+ $*"; else "$@"; fi; }
 
-cur="$(git branch --show-current)"
+cur="${STACK_SELFTEST_BRANCH:-$(git branch --show-current)}"   # STACK_SELFTEST_BRANCH: self-test hook
 mip_of() { sed -n 's#^\(mip-[0-9]\{4\}\)/.*#\1#p' <<<"$1"; }
 task_of() { sed -n 's#^mip-[0-9]\{4\}/\([0-9]*\)-.*#\1#p' <<<"$1"; }
 branch_for() { git branch --list "$1/$2-*" --format='%(refname:short)' | head -1; }
@@ -26,13 +37,147 @@ mip_arg() {       # the MIP from $1 (MIP-0005 / mip-0005) or from the current br
   [ -n "$m" ] || { echo "not on a mip-NNNN/* branch — pass the MIP: MIP-0005" >&2; exit 1; }
   echo "$m"
 }
-base_for() {   # base branch of a task branch
+base_for() {   # base branch of a task branch, or "" once that branch is gone
   local mip k prev; mip="$(mip_of "$1")"; k="$(task_of "$1")"
   [ -n "$mip" ] || { echo "not a task branch: $1" >&2; exit 1; }
   if [ "$k" -le 1 ]; then echo main; return; fi
-  prev="$(branch_for "$mip" $((k - 1)))"; [ -n "$prev" ] || prev="origin/$(git branch -r --list "origin/$mip/$((k-1))-*" --format='%(refname:short)' | head -1 | sed 's#^origin/##')"
-  echo "${prev#origin/}"
+  prev="$(branch_for "$mip" $((k - 1)))"
+  [ -n "$prev" ] || prev="$(git branch -r --list "origin/$mip/$((k-1))-*" --format='%(refname:short)' | head -1 | sed 's#^origin/##')"
+  printf '%s\n' "$prev"
 }
+
+pr_window=200
+merged_head_sha() {   # head commit of the merged PR for a branch prefix; it outlives the branch GitHub deletes
+  # gh orders by PR number, so .[0] is the newest-*opened* match; PREFIX goes via the env, unquotable otherwise.
+  PREFIX="$1" gh pr list --state merged --limit "$pr_window" --json headRefName,headRefOid \
+    --jq '[.[] | select(.headRefName | startswith(env.PREFIX))] | .[0].headRefOid // empty' 2>/dev/null || true
+}
+
+# Where `rebase --onto` must cut. The trap: a squash-merge rewrites the base's commits (so patch-id
+# skipping cannot tell they are already upstream) and GitHub deletes the base branch, leaving
+# merge-base nothing to answer with. Local `main` is never fetched, so origin/main stands in for it.
+fork_point_for() {
+  local cur="$1" base="$2" mip k
+  if [ "$base" = main ]; then base=origin/main; fi
+  if [ -n "$base" ] && git rev-parse --verify -q "$base^{commit}" >/dev/null; then
+    git merge-base "$cur" "$base"; return
+  fi
+  mip="$(mip_of "$cur")"; k="$(task_of "$cur")"
+  [ -n "$k" ] && [ "$k" -gt 1 ] || { git merge-base "$cur" origin/main; return; }
+  merged_head_sha "$mip/$((k - 1))-"
+}
+
+self_test() {
+  local failed=0 tmp self repo fork unrelated upstream got out rc
+  self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+  tmp="$(mktemp -d)"; trap "rm -rf $(printf %q "$tmp")" EXIT
+  check() { if [ "$2" = "$3" ]; then echo "ok: $1"; else echo "FAILED: $1"; echo "  got:  $2"; echo "  want: $3"; failed=1; fi; }
+  has()   { case "$2" in *"$3"*) echo "ok: $1" ;; *) echo "FAILED: $1 — expected \"$3\" in:"; sed 's/^/  /' <<<"$2"; failed=1 ;; esac; }
+  lacks() { case "$2" in *"$3"*) echo "FAILED: $1 — did not expect \"$3\" in:"; sed 's/^/  /' <<<"$2"; failed=1 ;; *) echo "ok: $1" ;; esac; }
+
+  echo "-- branch parsing --"
+  check "mip from a task branch" "$(mip_of mip-0063/6-board-and-claim)" "mip-0063"
+  check "task number from a task branch" "$(task_of mip-0063/6-board-and-claim)" "6"
+  check "a non-task branch yields nothing" "$(mip_of chore/whatever)" ""
+  check "task 1 bases on main" "$(base_for mip-0063/1-taxonomy)" "main"
+
+  # A throwaway stack: main <- mip-9999/5-prev (merged, branch deleted) <- mip-9999/6-board. The other
+  # branches are traps: 50- collides with the 5 prefix, 8- shares no history, origin/main outruns main.
+  repo="$tmp/repo"
+  { git init -q -b main "$repo"
+    git -C "$repo" config user.email stack@example.invalid
+    git -C "$repo" config user.name  stack-self-test
+    git -C "$repo" commit -q --allow-empty -m "main"
+    git -C "$repo" update-ref refs/remotes/origin/main "$(git -C "$repo" rev-parse HEAD)"
+    git -C "$repo" checkout -q -b mip-9999/50-collision
+    git -C "$repo" commit -q --allow-empty -m "an unrelated branch"
+    unrelated="$(git -C "$repo" rev-parse HEAD)"
+    git -C "$repo" checkout -q -b mip-9999/5-prev main
+    git -C "$repo" commit -q --allow-empty -m "task 5"
+    fork="$(git -C "$repo" rev-parse HEAD)"
+    git -C "$repo" checkout -q -b mip-9999/6-board
+    git -C "$repo" commit -q --allow-empty -m "task 6"
+    git -C "$repo" checkout -q -b mip-9999/1-solo main
+    git -C "$repo" commit -q --allow-empty -m "main moved on, and only origin/main knows"
+    git -C "$repo" update-ref refs/remotes/origin/main "$(git -C "$repo" rev-parse HEAD)"
+    upstream="$(git -C "$repo" rev-parse HEAD)"
+    git -C "$repo" commit -q --allow-empty -m "task 1"
+    git -C "$repo" checkout -q -b mip-9999/9-cur main
+    git -C "$repo" commit -q --allow-empty -m "task 9"
+    git -C "$repo" checkout -q --orphan mip-9999/8-unrelated-base
+    git -C "$repo" commit -q --allow-empty -m "a base sharing no history"
+    git -C "$repo" checkout -q main
+    git -C "$repo" branch -D mip-9999/5-prev mip-9999/50-collision; } >/dev/null 2>&1
+
+  mkdir -p "$tmp/bin"
+  cat > "$tmp/bin/gh" <<GH
+#!/usr/bin/env bash
+# a stand-in for \`gh pr list\`: newest PR first, and one entry collides on a hyphen-less 5 prefix.
+case "\$*" in
+  *"pr list"*)
+    while read -r b sha; do case "\$b" in "\$PREFIX"*) echo "\$sha"; exit 0 ;; esac; done <<'EOF'
+mip-9999/50-collision $unrelated
+mip-9999/5-prev $fork
+EOF
+    exit 0 ;;
+  *) exit 1 ;;
+esac
+GH
+  chmod +x "$tmp/bin/gh"
+  drive_as() { local b="$1"; shift; ( cd "$repo" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_BRANCH="$b" bash "$self" --dry-run restack "$@" 2>&1 ); }
+  drive() { drive_as mip-9999/6-board "$@"; }
+
+  echo
+  echo "-- fork_point_for falls back to the merged PR head --"
+  got="$(PATH="$tmp/bin:$PATH" merged_head_sha "mip-9999/5-")"
+  check "merged_head_sha reads the PR that outlived its branch" "$got" "$fork"
+  got="$(PATH="$tmp/bin:$PATH" fork_point_for mip-9999/6-board "")"
+  check "fork_point_for uses it when the base branch is gone" "$got" "$fork"
+  got="$(cd "$repo" && fork_point_for mip-9999/1-solo main)"
+  check "task 1 cuts at origin/main, never at a stale local main" "$got" "$upstream"
+
+  echo
+  echo "-- restack cuts at the fork point, never at main --"
+  rc=0; out="$(drive)" || rc=$?
+  check "it succeeds once the merged PR names the fork point" "$rc" "0"
+  check "and cuts exactly there" "$(grep -F -- '+ git rebase' <<<"$out" || true)" \
+    "+ git rebase --onto origin/main $fork mip-9999/6-board"
+  has "then force-pushes with a lease" "$out" "+ git push -q --force-with-lease origin mip-9999/6-board"
+
+  { echo '#!/usr/bin/env bash'; echo 'exit 1'; } > "$tmp/bin/gh"   # from here on: no gh, no merged PR to find
+  rc=0; out="$(drive --onto-base "$fork")" || rc=$?
+  check "--onto-base overrides the lookup entirely" "$rc" "0"
+  check "and is used verbatim as the cut" "$(grep -F -- '+ git rebase' <<<"$out" || true)" \
+    "+ git rebase --onto origin/main $fork mip-9999/6-board"
+
+  echo
+  echo "-- restack refuses rather than replaying merged commits --"
+  rc=0; out="$(drive)" || rc=$?
+  check "it exits non-zero instead of rebasing blind" "$rc" "1"
+  has "and names the override that unblocks it" "$out" "--onto-base"
+  has "and says it could not find the fork point" "$out" "cannot tell where"
+  lacks "no bare rebase onto main was planned" "$out" "git rebase origin/main"
+
+  rc=0; out="$(drive --onto-base "$unrelated")" || rc=$?
+  check "an --onto-base off another branch is refused" "$rc" "1"
+  has "and is called out as not being an ancestor" "$out" "is not an ancestor of"
+  lacks "with nothing rebased" "$out" "+ git rebase"
+
+  rc=0; out="$(drive --onto-base 0000000000000000000000000000000000000000)" || rc=$?
+  check "an --onto-base that is not a commit is refused" "$rc" "1"
+  has "as an unfindable fork point, not a misplaced one" "$out" "cannot tell where"
+
+  # A present base that shares no history: merge-base fails silently, which set -e made fatal before the refusal.
+  rc=0; out="$(drive_as mip-9999/9-cur)" || rc=$?
+  check "a base sharing no history is refused" "$rc" "1"
+  has "out loud, rather than dying inside set -e" "$out" "cannot tell where"
+
+  echo
+  if [ "$failed" -eq 1 ]; then echo "stack self-test: FAILED" >&2; return 1; fi
+  echo "stack self-test: ok"
+}
+
+[ "$selftest" -eq 1 ] && { self_test; exit 0; }
 
 case "${1:-}" in
   start)
@@ -57,15 +202,29 @@ case "${1:-}" in
     fi
     ;;
   restack)
-    mip="$(mip_of "$cur")"; k="$(task_of "$cur")"
     old_base="$(base_for "$cur")"
     run git fetch -q origin
-    # If the old base's PR was squash-merged, its commits are in main under a different hash:
-    # rebase only this branch's own commits onto main.
-    fork="$(git merge-base "$cur" "$old_base" 2>/dev/null || true)"
-    if [ -n "$fork" ]; then run git rebase --onto origin/main "$fork" "$cur"; else run git rebase origin/main "$cur"; fi
+    fork="${onto_base:-$(fork_point_for "$cur" "$old_base")}" || true   # a failed lookup must reach the guard, not set -e
+    if [ -z "$fork" ] || ! git rev-parse --verify -q "$fork^{commit}" >/dev/null; then
+      { echo "restack: cannot tell where $cur's own commits begin."
+        echo "  Its base (${old_base:-the previous task branch}) yields no merge-base — GitHub deletes a branch when its PR merges —"
+        echo "  and gh named no merged PR for $(mip_of "$cur")/$(( $(task_of "$cur") - 1 ))-* within the last $pr_window merged ones"
+        echo "  (it may equally be unavailable or logged out here — a jail has no gh login)."
+        echo "  Rebasing onto main without that point would replay the already-merged commits and conflict on each."
+        echo "  Pass the previous task branch's last commit yourself:"
+        echo "    scripts/stack.sh restack --onto-base <sha>"; } >&2
+      exit 1
+    fi
+    if ! git merge-base --is-ancestor "$fork" "$cur" 2>/dev/null; then
+      { echo "restack: ${fork:0:7} is not an ancestor of $cur, so it cannot be where its commits begin."
+        echo "  Cutting there would replay unrelated history onto main and force-push the result."
+        echo "  Pass the previous task branch's last commit instead:"
+        echo "    scripts/stack.sh restack --onto-base <sha>"; } >&2
+      exit 1
+    fi
+    run git rebase --onto origin/main "$fork" "$cur"
     run git push -q --force-with-lease origin "$cur"
-    echo "restacked $cur onto main (old base $old_base)"
+    echo "restacked $cur onto main (cut at ${fork:0:7}${old_base:+, old base $old_base})"
     ;;
   status)
     mip="${2:-$(mip_of "$cur")}"; mip="$(tr 'A-Z' 'a-z' <<<"$mip")"
@@ -87,5 +246,5 @@ case "${1:-}" in
     mapfile -t brs < <(branches_of "$mip")
     stack_link "$dry" "${brs[@]}"
     ;;
-  *) sed -n '2,15p' "$0"; exit 1 ;;
+  *) awk 'NR > 1 { if (!/^#/) exit; print }' "$0"; exit 1 ;;
 esac

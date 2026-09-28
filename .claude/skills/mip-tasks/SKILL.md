@@ -95,6 +95,15 @@ scripts/stack.sh status         # every branch of the MIP: base, PR number, stat
 GitHub retargets the child PR to `main` automatically when the merged base branch is deleted;
 `restack` handles the commits. Repeat up the stack.
 
+The fork point is the merged base's last commit. GitHub deletes that branch on merge, so `restack`
+recovers it from the merged PR via `gh`; without `gh` (inside the jail, say) it **stops and refuses**
+rather than rebasing onto `main` blind, which would replay every already-merged commit as a conflict.
+Unblock it, and the rest of the stack, by naming the commit yourself:
+
+```bash
+scripts/stack.sh restack --onto-base <sha>   # <sha> = the merged base branch's head
+```
+
 ## Step 4 — finish
 
 When the last task merges: flip the MIP to `Implemented` (with the PR numbers), delete the task
