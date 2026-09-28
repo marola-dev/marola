@@ -24,7 +24,7 @@ stop and add it before using this command unattended.
 explicit mode, not a fallback to guess quietly, so state the pick out loud before doing
 anything else, and again in every PR body this run produces (e.g. "auto-picked MIP-0017: S
 effort, 'cheap win', no earlier-phase gap"). Selection, in order:
-1. Read `docs/mips/README.md`'s index. Candidates are every row with `Status` = `Draft` (not
+1. Read `docs/MIPs/README.md`'s index. Candidates are every row with `Status` = `Draft` (not
    `Implemented`/`Rejected`/`Superseded`, and not a MIP already fully merged whose README row is
    simply stale; check `git log --oneline main | grep -i "MIP-NNNN"` if a Draft row looks
    suspicious, per this doc's own "evidence-based status" convention).
@@ -34,14 +34,14 @@ effort, 'cheap win', no earlier-phase gap"). Selection, in order:
 3. Rank the rest by `Effort` (S, then M, then L, then XL) and prefer a `Verdict` of "cheap win"
    over "do next"/"park"/"do when X lands"/"expensive, defer". Tie-break by lowest MIP number
    (oldest waiting first): deterministic, not a coin flip.
-4. If the picked MIP has no `docs/mips/MIP-NNNN.tasks.md` yet, run the `mip-tasks` skill on it
+4. If the picked MIP has no `docs/MIPs/MIP-NNNN.tasks.md` yet, run the `mip-tasks` skill on it
    first, in this same invocation, before starting task 1; the loop below needs that file to
    exist. Note in the first PR's body that the tasks file was generated this run, not pre-existing.
 5. Proceed exactly as below with the picked number substituted for `$ARGUMENTS`.
 
 ## What to do
 
-/goal Every row in each of docs/mips/MIP-$ARGUMENTS.tasks.md (space-separated, in the given
+/goal Every row in each of docs/MIPs/MIP-$ARGUMENTS.tasks.md (space-separated, in the given
 order) has an open PR, or is logged as blocked after failing twice. On stopping, print
 GOAL_COMPLETE: <summary> or GOAL_FAILED: <reason>, grep-able, so a morning check is one command.
 
@@ -123,7 +123,7 @@ against, not a myth to dismiss.
 4. **Budget-gate the Fable escalation explicitly.** This is the fix for the reactive-only
    design: before switching, estimate this task's likely cost at Fable rates (use the measured
    `Cost:` trailers already on this MIP's earlier task commits, e.g. `git log --grep "^Cost:" -F
-   --all -- docs/mips/MIP-$ARGUMENTS.tasks.md`'s sibling branches, or `python3
+   --all -- docs/MIPs/MIP-$ARGUMENTS.tasks.md`'s sibling branches, or `python3
    scripts/cost-split.py --estimate`, as a per-task baseline, then scale by Fable's list price
    vs. the default model's from the `claude-api` skill reference) and check it against the
    **projected remaining headroom** computed in the usage guard below for whichever window is

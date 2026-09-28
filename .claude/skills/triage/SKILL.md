@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # From a raw idea to one issue that is ready to claim
 
-`docs/ISSUE-FLOW.md` is the standard; this skill is the part a person keeps re-doing by hand.
+`docs/3-Working-on-the-repo/ISSUE-FLOW.md` is the standard; this skill is the part a person keeps re-doing by hand.
 The output is a draft body plus the labels it needs — not a filed issue.
 
 ## This skill is human-invoked, and stays that way
@@ -59,7 +59,7 @@ The two that decide whether the issue is claimable:
 cannot write Scala is not turned away. Leaving it blank is allowed and costs the issue its
 readiness, not its welcome: `issue-ready` will name rule 2, and the bug waits for a maintainer to
 decide the test. Say that to the person rather than inventing a test name to make the check pass
-(`docs/ISSUE-FLOW.md`, the Definition of Ready).
+(`docs/3-Working-on-the-repo/ISSUE-FLOW.md`, the Definition of Ready).
 
 Propose the labels too — the form's own label (see the command below), one `area/*`, one
 `layer/*`, one `size/*` (S < 100 changed lines,

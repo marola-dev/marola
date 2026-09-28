@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """mip_graph — generate a Mermaid dependency graph from every MIP's metadata table and write it
-into docs/mips/README.md between two HTML-comment markers. Reads only a machine-readable
+into docs/MIPs/README.md between two HTML-comment markers. Reads only a machine-readable
 **Blocked by** row (comma-separated MIP numbers, or the literal `none`) — the human-readable
 **Depends on** field stays prose-only and is never parsed, because it legitimately carries four
 different relations (blocking, blocked-by, co-delivery, negation) in one cell that a regex cannot
 tell apart (verified against all 28 real MIPs in this repo before this script was written; see
-docs/mips/README.md's own history for the specific mis-parses that ruled it out).
+docs/MIPs/README.md's own history for the specific mis-parses that ruled it out).
 
-    scripts/mip_graph.py                    # regenerate the graph block in docs/mips/README.md
+    scripts/mip_graph.py                    # regenerate the graph block in docs/MIPs/README.md
     scripts/mip_graph.py --check             # exit 1 if the checked-in block is stale or missing
     scripts/mip_graph.py --parallel 30 31    # can these two MIPs be worked in parallel?
     scripts/mip_graph.py --self-test
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-MIPS_DIR = ROOT / "docs" / "mips"
+MIPS_DIR = ROOT / "docs" / "MIPs"
 README = MIPS_DIR / "README.md"
 
 START_MARK = "<!-- mip-graph:start -->"
@@ -227,7 +227,7 @@ def cmd_generate(check):
     if check:
         if new_text != text:
             print(
-                "mip_graph --check: docs/mips/README.md's graph block is stale or missing — "
+                "mip_graph --check: docs/MIPs/README.md's graph block is stale or missing — "
                 "run `just mip-graph` and commit the result"
             )
             return 1

@@ -116,7 +116,7 @@ written.
   domain value (a smart constructor rejecting invalid values, arithmetic defined as an extension so
   it stays in the type) means two values of the same underlying primitive can't be swapped at a call
   site. marola's zero-dependency equivalent is Scala 3 `opaque type`,
-  already specified in `docs/SCALA3-JDK-REVIEW.md` §2.1 (`Km`, `Celsius`, `Score`, landing in
+  already specified in `docs/2-Building-marola/SCALA3-JDK-REVIEW.md` §2.1 (`Km`, `Celsius`, `Score`, landing in
   `core/model/Units.scala`) and still unbuilt: `Coordinates(lat, lon)`
   (`core/src/main/scala/marola/model/Models.scala:5`) takes any two `Double`s, so swapping lat and
   lon compiles. When you touch `Models.scala` or add a numeric field, prefer the opaque alias over a
@@ -156,7 +156,7 @@ written.
   the test to match broken code; assert concrete expected values on behavior, not on
   implementation details, and cover edge cases deterministically rather than relying on one happy
   path. (Unlike Kyo's guide, this repo does track deferred work explicitly, in
-  `docs/FUTURE-WORK.md`; that's a real, load-bearing doc here, not a banned excuse.)
+  `docs/4-Research-and-plans/FUTURE-WORK.md`; that's a real, load-bearing doc here, not a banned excuse.)
 - **Hand-write test doubles as instances of the trait; no mocking library.** A double that's just an
   instance of the trait (a no-op, a switchable stub, a recorder) beats a mocking framework every
   time. marola already has `Recording extends Tracing` and `Inner extends LlmClient`
@@ -183,7 +183,7 @@ written.
   `*Props.scala` files, each with a named generator and one stated invariant: a state machine that
   must reach its terminal state, an arithmetic relationship that must hold across every generated
   input. marola has none, and
-  `docs/SKILLS.md` already names the obvious target: `Swimability.score` never leaves [0,100], and a
+  `docs/4-Research-and-plans/SKILLS.md` already names the obvious target: `Swimability.score` never leaves [0,100], and a
   strictly worse wave height never raises the score. ScalaCheck would be a new dependency; propose
   it, don't slip it in.
 
@@ -192,7 +192,7 @@ written.
 - **Kyo is pre-1.0** (currently `1.0.0-RC5`) with no version-specific published docs; when unsure
   of an API, verify against the actual jar (`javap` on the decompiled class) rather than guessing
   from `getkyo.io`'s latest-version docs, which can silently drift from what's pinned. See
-  `docs/FUTURE-WORK.md` §2-3 and `docs/EFFECTS-MAP.md` for examples of this verification approach.
+  `docs/4-Research-and-plans/FUTURE-WORK.md` §2-3 and `docs/2-Building-marola/EFFECTS-MAP.md` for examples of this verification approach.
 - **JDK 25 is required, not just "17+".** Scala 3.9 itself only needs JDK 17+, but Kyo 1.0.0-RC5
   compiles with `-release 25` and its artifacts won't load on an older JVM. This already broke a
   real build with `UnsupportedClassVersionError` on a JDK-24 runtime. `flake.nix` pins JDK 25. If

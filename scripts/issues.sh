@@ -625,7 +625,7 @@ cmd_tasks_to_issues() {
   done
   [ -n "$arg" ] || { echo "issues.sh tasks-to-issues: expects <MIP-NNNN|path/to/MIP-NNNN.tasks.md>" >&2; usage >&2; exit 1; }
   case "$arg" in
-    MIP-[0-9][0-9][0-9][0-9]) file="$root/docs/mips/$arg.tasks.md" ;;
+    MIP-[0-9][0-9][0-9][0-9]) file="$root/docs/MIPs/$arg.tasks.md" ;;
     *) file="$arg" ;;
   esac
   [ -f "$file" ] || { echo "issues.sh tasks-to-issues: no such task list: $file" >&2; exit 1; }
@@ -906,11 +906,11 @@ task_ref() {
   sed -n 's/^\([0-9]\{4\}\)-T\([0-9]\{1,\}\):.*/\1 \2/p' <<<"$1"
 }
 
-# tasks_slug <mip-digits> <task-number> -> that row's `slug` cell in docs/mips/MIP-NNNN.tasks.md.
+# tasks_slug <mip-digits> <task-number> -> that row's `slug` cell in docs/MIPs/MIP-NNNN.tasks.md.
 # The branch is `mip-NNNN/<k>-<slug>` and the slug exists only in that file, so reading it is what
 # makes the printed line something to paste rather than something to go and look up.
 tasks_slug() {
-  local file="$root/docs/mips/MIP-$1.tasks.md"
+  local file="$root/docs/MIPs/MIP-$1.tasks.md"
   [ -f "$file" ] || return 0
   awk -F'|' -v k="$2" '
     /^\|/ {
@@ -1001,10 +1001,10 @@ mip_reference() {
     [0-9][0-9][0-9][0-9]) ;;
     *) echo "issues.sh milestone new: --mip wants MIP-NNNN, got \"$1\"" >&2; return 1 ;;
   esac
-  files=( "$root"/docs/mips/MIP-"$n"-*.md )
-  [ -e "${files[0]}" ] || { echo "issues.sh milestone new: no docs/mips/MIP-$n-*.md — is MIP-$n written?" >&2; return 1; }
+  files=( "$root"/docs/MIPs/MIP-"$n"-*.md )
+  [ -e "${files[0]}" ] || { echo "issues.sh milestone new: no docs/MIPs/MIP-$n-*.md — is MIP-$n written?" >&2; return 1; }
   file="$(basename "${files[0]}")"
-  printf 'Design: MIP-%s — docs/mips/%s\n' "$n" "$file"
+  printf 'Design: MIP-%s — docs/MIPs/%s\n' "$n" "$file"
 }
 
 cmd_milestone_new() {
@@ -1291,7 +1291,7 @@ cmd_board_setup() {
 # name, so a second copy of the names is a second thing to keep true; the self-test pins the five
 # it must yield, which turns a rename in §11 into a failed build rather than a sixth gate issue.
 phase_titles() {
-  awk '/^## 11\./ { s = 1; next } s && /^## / { exit } s' "$root/docs/ARCHITECTURE.md" \
+  awk '/^## 11\./ { s = 1; next } s && /^## / { exit } s' "$root/docs/2-Building-marola/ARCHITECTURE.md" \
     | sed -n 's/^[0-9]\{1,\}\. \*\*Phase \([0-9]\): \(.*\)\.\*\*.*/\1\t\2/p' \
     | awk -F'\t' '{ done_ = ($2 ~ /\(done/) ? "done" : "open"
                     name = $2; sub(/ *\([^)]*\)$/, "", name)
@@ -1337,7 +1337,7 @@ cmd_board_gates() {
     if grep -qxF "$title" <<<"$existing"; then
       echo "gate already filed: $title"; skipped=$((skipped + 1)); continue
     fi
-    body="$(printf 'Phase gate for phase %s of `docs/ARCHITECTURE.md` §11. It holds no work: every `phase/%s` issue is `blocked by` it, so closing this one unblocks the phase at once (MIP-0063 §5.3).\n\nWire an issue to it with `scripts/issues.sh deps add <issue> --blocked-by <this issue>`.\n' "$num" "$num")"
+    body="$(printf 'Phase gate for phase %s of `docs/2-Building-marola/ARCHITECTURE.md` §11. It holds no work: every `phase/%s` issue is `blocked by` it, so closing this one unblocks the phase at once (MIP-0063 §5.3).\n\nWire an issue to it with `scripts/issues.sh deps add <issue> --blocked-by <this issue>`.\n' "$num" "$num")"
     rc=0
     run gh issue create --repo "$nwo" --title "$title" --label "phase/$num" --body "$body" || rc=$?
     if [ "$rc" -eq 0 ]; then created=$((created + 1)); else failed=$((failed + 1)); fi
@@ -2275,11 +2275,11 @@ EOF
   echo
   echo "-- milestone new: --mip points at a MIP that exists, or not at all --"
   check "--mip resolves to the MIP's own file" "$(mip_reference MIP-0063)" \
-    "Design: MIP-0063 — docs/mips/MIP-0063-github-issue-tracking-standard.md"
+    "Design: MIP-0063 — docs/MIPs/MIP-0063-github-issue-tracking-standard.md"
   if mip_reference MIP-9999 >/dev/null 2>&1; then
     echo "FAILED: a MIP number with no file was accepted — the milestone's one reference would dangle" >&2; failed=1
   else
-    echo "ok: --mip with no matching docs/mips/MIP-NNNN-*.md is refused"
+    echo "ok: --mip with no matching docs/MIPs/MIP-NNNN-*.md is refused"
   fi
   if mip_reference 63 >/dev/null 2>&1; then
     echo "FAILED: \"63\" was accepted where MIP-NNNN is required" >&2; failed=1

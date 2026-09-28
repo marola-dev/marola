@@ -5,8 +5,8 @@ description: Add a new document to marola's knowledge corpus (knowledge/*.md) �
 
 # Adding a `knowledge/` document
 
-`knowledge/*.md` is marola's retrieval corpus (`docs/mips/MIP-0001-water-quality-and-sea-lore.md`,
-`docs/FUTURE-WORK.md` §9.1, `knowledge/README.md`): every fact `--ask`/`ask_ocean_question` can
+`knowledge/*.md` is marola's retrieval corpus (`docs/MIPs/MIP-0001-water-quality-and-sea-lore.md`,
+`docs/4-Research-and-plans/FUTURE-WORK.md` §9.1, `knowledge/README.md`): every fact `--ask`/`ask_ocean_question` can
 cite comes from here, and only from here. A wrong or unsourced sentence in this directory becomes
 a confidently wrong answer, so this skill is stricter than a normal doc edit.
 

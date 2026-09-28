@@ -123,12 +123,12 @@ generate_mip() {
   fi
   # The document as it exists on the branch's tip (a PR that adds the MIP has it there, not on the
   # checked-out main), linked by its blob URL — a relative path does not resolve in a PR body.
-  mip_path="$(git ls-tree -r --name-only "$head_ref" -- docs/mips 2>/dev/null \
-    | { grep -E "^docs/mips/${mip_ref}-[^/]*\.md$" || true; } | head -1)"
+  mip_path="$(git ls-tree -r --name-only "$head_ref" -- docs/MIPs 2>/dev/null \
+    | { grep -E "^docs/MIPs/${mip_ref}-[^/]*\.md$" || true; } | head -1)"
   if [ -n "$mip_path" ]; then
     echo "[$mip_ref]($(repo_web_url)/blob/$branch/$mip_path)"
   else
-    echo "$mip_ref (no docs/mips/${mip_ref}-*.md on this branch)"
+    echo "$mip_ref (no docs/MIPs/${mip_ref}-*.md on this branch)"
   fi
 }
 

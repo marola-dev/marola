@@ -38,7 +38,7 @@ codebase as expected, not as something to guess past.
 3. **Alignment with `AGENTS.md` and `PHILOSOPHY.md`.** Anything that skips the phase-discipline
    rule, the cost-confirmation gate, or the project's stated local-first/cloud-opt-in stance.
 4. **Missing context you'd need but don't have.** This pack deliberately omits the MIP's own
-   "Related" row targets (other MIPs, `docs/ARCHITECTURE.md` sections, etc.); if the MIP leans
+   "Related" row targets (other MIPs, `docs/2-Building-marola/ARCHITECTURE.md` sections, etc.); if the MIP leans
    heavily on something you can't see, say so explicitly rather than reviewing around the gap
    silently. That is itself useful signal back to the author about whether this three-document
    pack was enough for a review, or whether the next one should include more.

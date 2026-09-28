@@ -7,10 +7,10 @@
     "mergeable": "MERGEABLE",
     "files": [
       {
-        "path": "docs/mips/MIP-0025-marola-sea-domain-model.md"
+        "path": "docs/MIPs/MIP-0025-marola-sea-domain-model.md"
       },
       {
-        "path": "docs/mips/README.md"
+        "path": "docs/MIPs/README.md"
       }
     ]
   },
@@ -25,7 +25,7 @@
         "path": "site/static/app.js"
       },
       {
-        "path": "docs/mips/MIP-0009-map-wave-markers-and-hover-aspects.md"
+        "path": "docs/MIPs/MIP-0009-map-wave-markers-and-hover-aspects.md"
       }
     ]
   },
@@ -37,10 +37,10 @@
     "mergeable": "MERGEABLE",
     "files": [
       {
-        "path": "docs/mips/MIP-0020-instagram-bot-account.md"
+        "path": "docs/MIPs/MIP-0020-instagram-bot-account.md"
       },
       {
-        "path": "docs/mips/README.md"
+        "path": "docs/MIPs/README.md"
       }
     ]
   },
@@ -52,10 +52,10 @@
     "mergeable": "MERGEABLE",
     "files": [
       {
-        "path": "docs/mips/MIP-0023-waitlist-promotion-and-maintenance.md"
+        "path": "docs/MIPs/MIP-0023-waitlist-promotion-and-maintenance.md"
       },
       {
-        "path": "docs/mips/README.md"
+        "path": "docs/MIPs/README.md"
       }
     ]
   },
@@ -79,13 +79,13 @@
     "mergeable": "MERGEABLE",
     "files": [
       {
-        "path": "docs/mips/MIP-0020-instagram-bot-account.md"
+        "path": "docs/MIPs/MIP-0020-instagram-bot-account.md"
       },
       {
-        "path": "docs/mips/MIP-0025-marola-sea-domain-model.md"
+        "path": "docs/MIPs/MIP-0025-marola-sea-domain-model.md"
       },
       {
-        "path": "docs/mips/README.md"
+        "path": "docs/MIPs/README.md"
       }
     ]
   }

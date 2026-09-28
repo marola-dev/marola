@@ -1,7 +1,7 @@
 # marola's knowledge corpus
 
 The documents in this directory are what `--ask` and the MCP tool `ask_ocean_question` answer
-from (`docs/mips/MIP-0001-water-quality-and-sea-lore.md`, `docs/FUTURE-WORK.md` §9.1). Each file:
+from (`docs/MIPs/MIP-0001-water-quality-and-sea-lore.md`, `docs/4-Research-and-plans/FUTURE-WORK.md` §9.1). Each file:
 
 - starts with a `# Title` line and a `Source: <url>` line — the URL is what every answer cites;
 - is prose in paragraphs; `marola.knowledge.Corpus` chunks on blank lines;

@@ -32,7 +32,7 @@ day-to-day through an agentic coder (Claude Code, currently), and the constraint
 necessary are the repository's most finished work. `AGENTS.md` is the rulebook, deliberately
 agent-agnostic prose rather than one vendor's config format; MIP-0011 (Implemented,
 ultrareview-verified) turned the rules that must not be optional into things the harness enforces:
-hooks, a shared permission allowlist, path-scoped rules, subagents, skills; `docs/DEV-FLOW.md` is
+hooks, a shared permission allowlist, path-scoped rules, subagents, skills; `docs/3-Working-on-the-repo/DEV-FLOW.md` is
 the loop from idea to merged PR. "Open to other coders" is not a wish either: MIP-0013 (Draft) is a
 bounded OpenCode tryout that states what replacing Claude Code would actually cost, down to the one
 hard dependency (`scripts/cost-split.py` reads Claude Code's own session logs). This file and the
@@ -45,8 +45,8 @@ that grades the first model's sentence and may rewrite it. That is already the "
 non-fuzzy APIs" shape: Open-Meteo, Overpass and the bathing-water agency are read literally; the
 model interprets and phrases them and can never overturn a veto. Not built: anomaly and hazard
 detection over the same series, rough-sea and storm-surge events, heavy rain, the water-related
-emergency nobody subscribes to a beach app for. It is proposed in `docs/FUTURE-WORK.md` §9.2 and
-named in `docs/ROADMAP.md` §5 as the highest-value unbuilt item, with no MIP written yet; its own
+emergency nobody subscribes to a beach app for. It is proposed in `docs/4-Research-and-plans/FUTURE-WORK.md` §9.2 and
+named in `docs/4-Research-and-plans/ROADMAP.md` §5 as the highest-value unbuilt item, with no MIP written yet; its own
 sketch puts a human-confirmation gate on alerting ahead of any code, since it would be the first
 thing marola does unasked. Forecasting proper is parked with an honest verdict attached: MIP-0007
 (Draft, Phase 4) covers time-series foundation models, TimeGPT alongside the open-weight Chronos,
@@ -79,7 +79,7 @@ LLM inside a constrained pipeline is genuinely better than either alone.
 Two jobs, and only two: turn a ranked row of numbers into one or two sentences, and answer ocean
 questions from a sourced corpus with citations. Everything safety-relevant (the score, the water
 veto, the darkness rule, the rough-sea deduction) is plain Scala in `scoring/`, unit-tested,
-outside the prompt (`docs/ARCHITECTURE.md` §5a, §8). A second, independently compiled reviewer
+outside the prompt (`docs/2-Building-marola/ARCHITECTURE.md` §5a, §8). A second, independently compiled reviewer
 pass grades the first model's sentence and can rewrite it. Lore shown to a user is a curated file
 with a source per entry, shown verbatim; the model never gets to invent a fact about the sea.
 The rule in the `mip` skill says it shortest: *no unsourced text reaches a user*.
@@ -96,7 +96,7 @@ reviewer be strict without being verbose:
 - `enum` + exhaustive `match` for every expected failure mode; exceptions only for the genuinely
   unexpected. A new case the model forgot to handle is a warning-as-error, not a runtime surprise.
 - Direct-style Kyo effects (`Sync`, `Abort`, `Async`) only at the I/O boundary, so the decision
-  logic is ordinary functions any test can call without a runtime (`docs/EFFECTS-MAP.md`).
+  logic is ordinary functions any test can call without a runtime (`docs/2-Building-marola/EFFECTS-MAP.md`).
 - The JVM ecosystem underneath: one build tool, one dependency resolver with pinned versions,
   `javap` on the actual jar when the docs and the code disagree (`AGENTS.md`'s "verify against the
   jar" rule exists because Kyo is pre-1.0 and its docs drift), GraalVM native images, a container
@@ -149,12 +149,12 @@ code or spent budget. It is the same idea one layer down: give the mistake a wal
 
 ## Why design docs before code, and a cost line on every PR
 
-A Marola Improvement Proposal (`docs/mips/`) is written before a non-trivial change is built, with
+A Marola Improvement Proposal (`docs/MIPs/`) is written before a non-trivial change is built, with
 every external claim fetched and dated and every unverified one parked in "Open questions". The
 agent is a fast writer of plausible designs; the MIP template forces the plausible to become the
 checked. The `Cost:` trailer on every commit and PR (`AGENTS.md`) exists for the same reason at
 the meta level: an agent's work is cheap to ask for and not free to run, and a repository that
-records what a feature cost in tokens learns what to ask for next. `docs/DEV-FLOW.md` is the loop
+records what a feature cost in tokens learns what to ask for next. `docs/3-Working-on-the-repo/DEV-FLOW.md` is the loop
 end to end: idea → MIP → acceptance → tasks → small stacked PRs, each green on the same gates CI
 runs → review only when asked → merge.
 
@@ -164,7 +164,7 @@ runs → review only when asked → merge.
   checks still have to be written (`scoring/`'s tests, the golden pipeline fixtures, the benchmark
   under `docs/benchmarks/`).
 - Not anti-Python, anti-cloud or anti-anything. Every path has a free local default
-  (`docs/ARCHITECTURE.md` §5), because "runs entirely locally with a free model" is also a
+  (`docs/2-Building-marola/ARCHITECTURE.md` §5), because "runs entirely locally with a free model" is also a
   constraint: it keeps the thing testable by anyone, including the agent, without a bill.
 - Not finished. The honest status vocabulary used everywhere here (*verified live*, *confirmed
   against the jar*, *written, not run*, *not checked*) is the last constraint: the docs are not

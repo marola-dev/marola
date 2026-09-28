@@ -1,33 +1,34 @@
-# docs/ — what each file is, and which ideas in them are MIP material
+# Start here
 
-One row per file at the root of `docs/` (the rules themselves live in `AGENTS.md`; the reasons in
-`PHILOSOPHY.md`). The **Kind** column says how to read a file: *reference* is kept current as the
-truth about the code; *how-to* is a procedure; *review* is a dated finding that is not updated in
-place; *roadmap* is ideas, most not built. The last column names the ideas in that file that are
-big enough for a Marola Improvement Proposal (`mips/`, the `mip` skill) and where each stands.
+One row per guide under `docs/`, which the sidebar groups by who it is for (the rules themselves
+live in `AGENTS.md`; the reasons in `PHILOSOPHY.md`). The **Kind** column says how to read a file:
+*reference* is kept current as the truth about the code; *how-to* is a procedure; *review* is a
+dated finding that is not updated in place; *roadmap* is ideas, most not built. The last column
+names the ideas in that file that are big enough for a Marola Improvement Proposal (`MIPs/`, the
+`mip` skill) and where each stands.
 
 | File | Kind | MIP material inside, and its status |
 |---|---|---|
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | reference | §5c HTTP/SSE MCP transport for a hosted agent (candidate, Phase 2); §8 calibrating the heuristics on reports (→ MIP-0007); §9 known limitations (fixes, not MIPs) |
-| [`FUTURE-WORK.md`](./FUTURE-WORK.md) | roadmap | see the section-by-section list below |
-| [`EFFECTS-MAP.md`](./EFFECTS-MAP.md) | review | §2 `AppConfig.fromEnv` hidden effect, §3 MCP unsafe boundary, §4 resource lifecycle — refactors, direct PRs, no MIP |
-| [`RUN-LOCALLY.md`](./RUN-LOCALLY.md) | how-to | none (it documents what MIPs shipped) |
-| [`TELEGRAM-SETUP.md`](./TELEGRAM-SETUP.md) | how-to | the bot itself is MIP-0002 (Draft) |
-| [`SKILLS.md`](./SKILLS.md) | roadmap | a skills ladder, not features; Stage 6 items (typed `Abort` channels, `Async.foreach`) are refactors |
-| [`SCALA3-JDK-REVIEW.md`](./SCALA3-JDK-REVIEW.md) | review | the adopt list — direct PRs in the order §4 gives, no MIP |
-| [`AGENT-FRAMEWORKS-SURVEY.md`](./AGENT-FRAMEWORKS-SURVEY.md) | review | §1.2 llm4s → **MIP-0012** (opt-in module: agent loop, MCP client/server, guardrails, structured output); §2 Python ideas → Scala shapes and §3 Pekko for the multi-agent core: **candidate MIP** ("marola as actors: escalation, digest and answer agents on Pekko") once MIP-0002/0004 exist to orchestrate |
-| [`AGENT-STACK-SURVEY.md`](./AGENT-STACK-SURVEY.md) | review | agent4s, llm4s and ADK against every MIP (2026-09-23): llm4s stays **MIP-0012**'s in-process layer, ADK only with **MIP-0057**, agent4s read-only; §5 a "ask marola about marola" Q&A agent, v0 on the existing RAG: **candidate MIP** (`ask_project_question` MCP tool) |
-| [`ISSUE-FLOW.md`](./ISSUE-FLOW.md) | reference | the GitHub tracking standard itself is **MIP-0063**; nothing further inside |
-| [`DEV-FLOW.md`](./DEV-FLOW.md) | how-to | none; MIP-0011 turns parts of it into hooks/agents |
-| [`GEMINI-CODE-ASSIST.md`](./GEMINI-CODE-ASSIST.md) | how-to | §4–§6 the GCP side as Besom under `infra/gemini/`, state in GCS, `preview`-on-PR / `up`-on-dispatch on marola's runners — **candidate MIP** (the repo's first IaC; verify §4's connection-label question first); the hosted counterpart of MIP-0060's parked local route |
-| [`ROADMAP.md`](./ROADMAP.md) | plan | the ordering: today's review bugs (P0), open MIPs, the proposed multi-agent MIPs (§5), ten triaged external candidates with a provider-query checklist |
-| [`AGENT-SKILLS.md`](./AGENT-SKILLS.md) | how-to | §3 four skill candidates → MIP-0011 task 8 |
-| [`FABLE_REVIEW.md`](./FABLE_REVIEW.md) | review | §3 jail notes → MIP-0011 task 5 |
-| [`API.md`](./API.md) | reference | none; the way in to the scaladoc/pdoc trees `api-docs.yml` generates (**MIP-0064**) |
-| [`SELF-DOCUMENTING.md`](./SELF-DOCUMENTING.md) | reference | the research behind **MIP-0018** (weekly post-planner + multi-platform exporter) |
-| [`AWESOME-AGENTIC-ENGINEERING.md`](./AWESOME-AGENTIC-ENGINEERING.md) | reference | **MIP-0043** (Draft) — the doc itself and its human-gated `scripts/awesome_agentic_digest.py` update routine; no further MIP material inside |
-| [`benchmarks/`](./benchmarks/) | reference | the runs MIP-0010 would move into a ledger (Markdown stays canonical in v1) |
-| [`mips/`](./mips/README.md) | — | the proposals themselves, with status |
+| [`ARCHITECTURE.md`](./2-Building-marola/ARCHITECTURE.md) | reference | §5c HTTP/SSE MCP transport for a hosted agent (candidate, Phase 2); §8 calibrating the heuristics on reports (→ MIP-0007); §9 known limitations (fixes, not MIPs) |
+| [`FUTURE-WORK.md`](./4-Research-and-plans/FUTURE-WORK.md) | roadmap | see the section-by-section list below |
+| [`EFFECTS-MAP.md`](./2-Building-marola/EFFECTS-MAP.md) | review | §2 `AppConfig.fromEnv` hidden effect, §3 MCP unsafe boundary, §4 resource lifecycle — refactors, direct PRs, no MIP |
+| [`RUN-LOCALLY.md`](./1-Using-marola/RUN-LOCALLY.md) | how-to | none (it documents what MIPs shipped) |
+| [`TELEGRAM-SETUP.md`](./1-Using-marola/TELEGRAM-SETUP.md) | how-to | the bot itself is MIP-0002 (Draft) |
+| [`SKILLS.md`](./4-Research-and-plans/SKILLS.md) | roadmap | a skills ladder, not features; Stage 6 items (typed `Abort` channels, `Async.foreach`) are refactors |
+| [`SCALA3-JDK-REVIEW.md`](./2-Building-marola/SCALA3-JDK-REVIEW.md) | review | the adopt list — direct PRs in the order §4 gives, no MIP |
+| [`AGENT-FRAMEWORKS-SURVEY.md`](./4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY.md) | review | §1.2 llm4s → **MIP-0012** (opt-in module: agent loop, MCP client/server, guardrails, structured output); §2 Python ideas → Scala shapes and §3 Pekko for the multi-agent core: **candidate MIP** ("marola as actors: escalation, digest and answer agents on Pekko") once MIP-0002/0004 exist to orchestrate |
+| [`AGENT-STACK-SURVEY.md`](./4-Research-and-plans/AGENT-STACK-SURVEY.md) | review | agent4s, llm4s and ADK against every MIP (2026-09-23): llm4s stays **MIP-0012**'s in-process layer, ADK only with **MIP-0057**, agent4s read-only; §5 a "ask marola about marola" Q&A agent, v0 on the existing RAG: **candidate MIP** (`ask_project_question` MCP tool) |
+| [`ISSUE-FLOW.md`](./3-Working-on-the-repo/ISSUE-FLOW.md) | reference | the GitHub tracking standard itself is **MIP-0063**; nothing further inside |
+| [`DEV-FLOW.md`](./3-Working-on-the-repo/DEV-FLOW.md) | how-to | none; MIP-0011 turns parts of it into hooks/agents |
+| [`GEMINI-CODE-ASSIST.md`](./3-Working-on-the-repo/GEMINI-CODE-ASSIST.md) | how-to | §4–§6 the GCP side as Besom under `infra/gemini/`, state in GCS, `preview`-on-PR / `up`-on-dispatch on marola's runners — **candidate MIP** (the repo's first IaC; verify §4's connection-label question first); the hosted counterpart of MIP-0060's parked local route |
+| [`ROADMAP.md`](./4-Research-and-plans/ROADMAP.md) | plan | the ordering: today's review bugs (P0), open MIPs, the proposed multi-agent MIPs (§5), ten triaged external candidates with a provider-query checklist |
+| [`AGENT-SKILLS.md`](./3-Working-on-the-repo/AGENT-SKILLS.md) | how-to | §3 four skill candidates → MIP-0011 task 8 |
+| [`FABLE_REVIEW.md`](./4-Research-and-plans/FABLE_REVIEW.md) | review | §3 jail notes → MIP-0011 task 5 |
+| [`API.md`](./2-Building-marola/API.md) | reference | none; the way in to the scaladoc/pdoc trees `api-docs.yml` generates (**MIP-0064**) |
+| [`SELF-DOCUMENTING.md`](./3-Working-on-the-repo/SELF-DOCUMENTING.md) | reference | the research behind **MIP-0018** (weekly post-planner + multi-platform exporter) |
+| [`AWESOME-AGENTIC-ENGINEERING.md`](./4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md) | reference | **MIP-0043** (Draft) — the doc itself and its human-gated `scripts/awesome_agentic_digest.py` update routine; no further MIP material inside |
+| [`benchmarks/`](https://github.com/marola-dev/marola/blob/main/docs/benchmarks/) | reference | the runs MIP-0010 would move into a ledger (Markdown stays canonical in v1) |
+| [`mips/`](./MIPs/README.md) | — | the proposals themselves, with status |
 
 ## `FUTURE-WORK.md`, section by section
 

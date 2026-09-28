@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""awesome_agentic_digest — cache GitHub repo candidates for docs/AWESOME-AGENTIC-ENGINEERING.md.
+"""awesome_agentic_digest — cache GitHub repo candidates for docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md.
 
     scripts/awesome_agentic_digest.py                 # fetch every query, cache new candidates, print a summary
     scripts/awesome_agentic_digest.py --max-results 5  # results per query (default 5)
@@ -8,9 +8,9 @@
 
 Queries the real GitHub Search API (api.github.com/search/repositories) across agentic-engineering
 GitHub topics — verified live against real, non-zero results on 2026-09-07 (see MIP-0043 §4.2) —
-for candidate repos to hand-curate into docs/AWESOME-AGENTIC-ENGINEERING.md.
+for candidate repos to hand-curate into docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md.
 
-**This script never writes to docs/AWESOME-AGENTIC-ENGINEERING.md.** It only caches candidates and
+**This script never writes to docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md.** It only caches candidates and
 prints a summary. A human reviews the cache (or the printed summary) and hand-writes any genuinely
 good match into the curated doc, in that doc's own `- [Title](URL) - Description.` entry format.
 This mirrors MIP-0041's book_digest.py: propose candidates, a human decides, nothing gets written
@@ -345,10 +345,10 @@ def main() -> None:
         print(f"index: {summary['index_path']}")
         print(
             "review the candidates above, then hand-curate any of them into "
-            "docs/AWESOME-AGENTIC-ENGINEERING.md"
+            "docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md"
         )
         print(
-            "nothing was written to docs/AWESOME-AGENTIC-ENGINEERING.md — "
+            "nothing was written to docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md — "
             "this script only caches candidates"
         )
 

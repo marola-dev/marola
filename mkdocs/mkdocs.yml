@@ -1,4 +1,4 @@
-site_name: marola docs
+site_name: marola.dev docs
 site_description: The ocean intelligence layer for a stretch of coast — guides and design proposals.
 # Load-bearing, not cosmetic: with no site_url the privacy plugin force-adds Mermaid.js to every
 # page (its own special case, plugins/privacy/plugin.py — Material normally injects it on demand,
@@ -16,12 +16,37 @@ site_dir: generated-docs
 # just without a landing page, so scripts/mkdocs.sh checks for the file itself. MIP-0064 §4.4.
 strict: true
 
+# Built and reachable by URL, just not listed: the task files are execution bookkeeping for a MIP,
+# linked from the MIP that owns them. 12 of them interleaved with 59 MIPs is noise in a sidebar.
+not_in_nav: |
+  MIPs/*.tasks.md
+
+# Off the site entirely, not merely out of the sidebar. benchmarks/ is a ledger of kept runs and
+# superpowers/ is working notes for a skill — both are repo artefacts rather than documentation,
+# and grouping promoted them into top-level sections beside the four real ones. The two links into
+# benchmarks/ now point at GitHub, the same treatment AGENTS.md and PHILOSOPHY.md get.
+exclude_docs: |
+  benchmarks/
+  superpowers/
+
 # No `nav:`. mkdocs builds one from the file tree, sorted alphanumerically with index files first,
 # which is why MIP-0001…MIP-0064 order correctly (four-digit zero padding) and why adding a MIP
 # needs no edit here. MIP-0064 §4.4, decision 1.
+#
+# It is also why the guide directories carry `1-`…`4-` prefixes: with no nav, that ordering can
+# only come from the filenames, and mkdocs builds each section's label from its directory name —
+# so the digits are visible in the sidebar. That was the accepted trade. `MIPs/` needs no prefix:
+# digits sort before letters, so it lands last on its own.
 
 theme:
   name: material
+  # c0-traced's mark, the maintainer's own traced artwork, used for both. Its README warns the
+  # emblem goes to mush at 16px and points at g2-cut-wave's favicon instead; that was overridden
+  # deliberately — the tab icon is the place to check it. The mark carries an opaque white disc
+  # (its separators are white fills in the source), so it reads as a badge on the coloured header
+  # rather than needing a separate on-dark variant.
+  favicon: assets/favicon.svg
+  logo: assets/logo.svg
   features:
     - navigation.top
     - navigation.tracking
@@ -43,6 +68,9 @@ theme:
       toggle:
         icon: material/weather-sunny
         name: Light mode
+
+extra_css:
+  - assets/marola.css
 
 markdown_extensions:
   - admonition

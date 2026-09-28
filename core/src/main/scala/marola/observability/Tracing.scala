@@ -4,7 +4,7 @@ import kyo.*
 
 /**
  * Optional observability seam for infra-level tracing (HTTP calls, latency, errors) around the
- * pipeline — see `docs/mips/MIP-0010-mlflow-experiment-tracking.md` §5.
+ * pipeline — see `docs/MIPs/MIP-0010-mlflow-experiment-tracking.md` §5.
  */
 trait Tracing:
   /**

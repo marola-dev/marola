@@ -121,7 +121,7 @@ watch:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "~compile"
 
 # ---------------------------------------------------------------------
-# Ollama — marola's default local LLM backend (LocalLlmClient, docs/RUN-LOCALLY.md)
+# Ollama — marola's default local LLM backend (LocalLlmClient, docs/1-Using-marola/RUN-LOCALLY.md)
 # ---------------------------------------------------------------------
 
 # Make sure an Ollama server is reachable, starting one if not.
@@ -165,7 +165,7 @@ e2e:
         'cli/testOnly marola.E2ESpec'
 
 # ---------------------------------------------------------------------
-# Knowledge (local RAG) and fine-tuning — MIP-0001, docs/FUTURE-WORK.md §9.1
+# Knowledge (local RAG) and fine-tuning — MIP-0001, docs/4-Research-and-plans/FUTURE-WORK.md §9.1
 # ---------------------------------------------------------------------
 
 # Ask knowledge/*.md a question — local RAG, Ollama embeds and answers. MIP-0001.
@@ -340,10 +340,10 @@ context-mip mip:
     set -euo pipefail
     num="$(grep -oE '[0-9]{4}' <<<"{{ mip }}" | head -1)"
     if [ -z "$num" ]; then echo "usage: just context-mip MIP-NNNN" >&2; exit 1; fi
-    mip_file="$(ls docs/mips/MIP-"$num"-*.md 2>/dev/null | head -1)"
-    if [ -z "$mip_file" ]; then echo "no docs/mips/MIP-$num-*.md found" >&2; exit 1; fi
+    mip_file="$(ls docs/MIPs/MIP-"$num"-*.md 2>/dev/null | head -1)"
+    if [ -z "$mip_file" ]; then echo "no docs/MIPs/MIP-$num-*.md found" >&2; exit 1; fi
     include="\"README.md\", \"AGENTS.md\", \"PHILOSOPHY.md\", \"$mip_file\""
-    tasks_file="docs/mips/MIP-$num.tasks.md"
+    tasks_file="docs/MIPs/MIP-$num.tasks.md"
     [ -f "$tasks_file" ] && include="$include, \"$tasks_file\""
     mkdir -p .tmp
     out=".tmp/marola-context-mip-MIP-$num.md"
@@ -503,7 +503,7 @@ alias ghas := runner-down
 mip-stack *args:
     scripts/mip-stack.sh {{ args }}
 
-# Regenerate docs/mips/README.md's dependency graph from each MIP's **Blocked by** row.
+# Regenerate docs/MIPs/README.md's dependency graph from each MIP's **Blocked by** row.
 mip-graph *args:
     python3 scripts/mip_graph.py {{ args }}
 

@@ -1,5 +1,5 @@
 # marola-sea-publish — build and publish the marola-sea model to Hugging Face. MIP-0025.
-# Manual dispatch only, on the self-hosted `marola-sea` runner; setup in docs/RUN-LOCALLY.md.
+# Manual dispatch only, on the self-hosted `marola-sea` runner; setup in docs/1-Using-marola/RUN-LOCALLY.md.
 # CUDA torch comes from a venv (labs/cuda's setup-ml-venv, via flake.nix), not nixpkgs.
 name: marola-sea publish
 

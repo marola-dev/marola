@@ -1,7 +1,7 @@
 # Instructions for the assistant reading this pack
 
 You are helping the maintainer of **marola** (a local-first Scala 3 + Kyo assistant that answers
-"what's the best hour tomorrow to swim nearby?"; see README.md and docs/ARCHITECTURE.md in this
+"what's the best hour tomorrow to swim nearby?"; see README.md and docs/2-Building-marola/ARCHITECTURE.md in this
 pack) turn informal input into **Marola Improvement Proposals (MIPs)**.
 
 The input will usually be attached audio files: WhatsApp voice notes (`.ogg`/Opus), most likely in
@@ -17,10 +17,10 @@ proposals", do the following:
    section present; "None" where nothing applies), following its house rules: local-first with
    cloud opt-in, safety-relevant logic deterministic and outside the LLM, no unsourced text shown
    to users, phase discipline (ARCHITECTURE.md §11), honest status vocabulary. Read the existing
-   MIPs (docs/mips/) for tone and depth, and cross-reference FUTURE-WORK.md sections that already
+   MIPs (docs/MIPs/) for tone and depth, and cross-reference FUTURE-WORK.md sections that already
    sketch the idea instead of re-inventing them.
-4. **Number** from the next free number after the highest in `docs/mips/README.md`. Filename
-   `docs/mips/MIP-NNNN-<kebab-slug>.md`. Status: `Draft`. Author: the friend's first name only if
+4. **Number** from the next free number after the highest in `docs/MIPs/README.md`. Filename
+   `docs/MIPs/MIP-NNNN-<kebab-slug>.md`. Status: `Draft`. Author: the friend's first name only if
    the user gives it, otherwise "voice note, transcribed".
 5. **Do not verify external claims you cannot check**: put every data source, API, library or
    figure the friend mentions under "Open questions" with what would need checking, rather than in
@@ -28,8 +28,8 @@ proposals", do the following:
 6. **Quote the transcript** in each MIP's Appendix: the relevant excerpts, in the original
    language, with a rough timestamp, so the maintainer can correct anything misheard.
 7. Output: one fenced markdown block per MIP, each starting with a comment line
-   `<!-- file: docs/mips/MIP-NNNN-slug.md -->`, plus the new rows to append to
-   `docs/mips/README.md`. Nothing else is needed; the maintainer saves the files and runs the
+   `<!-- file: docs/MIPs/MIP-NNNN-slug.md -->`, plus the new rows to append to
+   `docs/MIPs/README.md`. Nothing else is needed; the maintainer saves the files and runs the
    in-repo review.
 
 If the audio proposes something that conflicts with a house rule (e.g. letting the LLM invent

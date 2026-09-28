@@ -72,7 +72,7 @@ Regenerate `$D/marola.md` from scratch each time; it is a view, never edited by 
 
 - what marola is, one line from `AGENTS.md`, and the repo URL (`git remote get-url origin`);
 - **in flight**: open PRs (`gh pr list`), local branches ahead of `origin/main`;
-- **MIPs** not yet Implemented, from `docs/mips/README.md`, each linked to its file on GitHub;
+- **MIPs** not yet Implemented, from `docs/MIPs/README.md`, each linked to its file on GitHub;
 - the last ten commits on `main`;
 - the handoffs in `context/` as `[[wikilinks]]`, newest first.
 

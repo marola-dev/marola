@@ -2,7 +2,7 @@
 
 DSPy is Python-only, so the optimizer runs here once and writes JSON artifacts (instructions +
 few-shot demos) that `marola.llm.CompiledPrompt`/`Reviewer` replay at request time — no Python in
-the runtime path (docs/ARCHITECTURE.md §5a).
+the runtime path (docs/2-Building-marola/ARCHITECTURE.md §5a).
 
 The default model is deliberately non-Llama (SmolLM2, Apache-2.0): the bootstrapped demos feed
 `finetune/build_dataset.py`, and Llama 3.2's Community Licence §1.b.i reaches outputs used to train
@@ -63,7 +63,7 @@ class SummarizeSwimConditions(dspy.Signature):
     summary: str = dspy.OutputField(desc="1-2 sentences, plain language, no bullet points")
 
 
-# Hand-labeled examples double as this module's eval set — see docs/FUTURE-WORK.md §4.1 for the gap
+# Hand-labeled examples double as this module's eval set — see docs/4-Research-and-plans/FUTURE-WORK.md §4.1 for the gap
 # between "doubles as an eval set" and an actual held-out dspy.Evaluate loop. Numbers below are
 # illustrative, not pulled from a real forecast.
 TRAINSET = [
@@ -370,7 +370,7 @@ def main() -> int:
         os.path.dirname(__file__), "..", "core", "src", "main", "resources"
     )
     # The reviewer is a second, fresh pass: a model grading its own answer in the same call
-    # catches its own mistakes less reliably (docs/FUTURE-WORK.md §4.2).
+    # catches its own mistakes less reliably (docs/4-Research-and-plans/FUTURE-WORK.md §4.2).
     for run_name, signature, metric, trainset, filename in (
         (
             "summarize",

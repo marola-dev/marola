@@ -30,7 +30,7 @@ PR_LABEL_TAXONOMY=(
 )
 
 # MIP number -> space-separated area labels, per MIP-0029 §4 (`git show
-# origin/docs/mip-0029-ocean-layer-positioning:docs/mips/MIP-0029-ocean-layer-positioning.md`).
+# origin/docs/mip-0029-ocean-layer-positioning:docs/MIPs/MIP-0029-ocean-layer-positioning.md`).
 # 0023/0025 are contested numbers per that MIP's own header note (0023 also claimed by a
 # ROADMAP.md §5 proposal, 0025 likewise) — mapped here to the open-draft branch's actual topic
 # (waitlist-promotion, sea-model), not the ROADMAP proposal; revisit if that collision resolves
@@ -77,7 +77,7 @@ ensure_pr_labels() {
 
 # pr_label_mip_number <headRefName> <commit-subjects-newline-separated>
 # <changed-paths-newline-separated> Same detection order as scripts/uprd.sh's MIP auto-detect:
-# branch name token, then a commit subject starting with MIP-NNNN, then a docs/mips/MIP-NNNN-*.md
+# branch name token, then a commit subject starting with MIP-NNNN, then a docs/MIPs/MIP-NNNN-*.md
 # file touched.
 pr_label_mip_number() {
   local ref="$1" subjects="$2" paths="$3" n
@@ -90,7 +90,7 @@ pr_label_mip_number() {
     echo "$((10#$n))"
     return
   fi
-  n="$(grep -oE 'docs/mips/MIP-[0-9]{4}' <<<"$paths" | head -1 | grep -oE '[0-9]{4}')"
+  n="$(grep -oE 'docs/MIPs/MIP-[0-9]{4}' <<<"$paths" | head -1 | grep -oE '[0-9]{4}')"
   [ -n "$n" ] && echo "$((10#$n))"
 }
 

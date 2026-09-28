@@ -9,7 +9,7 @@
       "assertions": [
         {"id": "digest_exists", "description": "marola/marola.md is written under the vault root"},
         {"id": "no_duplicate_files", "description": "No tasks.md, practices.md, README.md or adrs/ is created in the vault"},
-        {"id": "mips_linked", "description": "The digest lists open MIPs as links to docs/mips files, not copies of their text"},
+        {"id": "mips_linked", "description": "The digest lists open MIPs as links to docs/MIPs files, not copies of their text"},
         {"id": "in_flight", "description": "The digest has an in-flight section with PRs or branches"}
       ]
     },

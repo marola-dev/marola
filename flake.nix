@@ -47,7 +47,7 @@
           pkgs.uv
 
           # The local LLM/vision backend.
-          # `ollama serve` is started separately (docs/RUN-LOCALLY.md); this only puts it on PATH.
+          # `ollama serve` is started separately (docs/1-Using-marola/RUN-LOCALLY.md); this only puts it on PATH.
           pkgs.ollama
 
           # `just context-mips`: repomix packs docs for a browser session, wl-copy/xclip copy them.
@@ -95,7 +95,7 @@
             fi
             java -version
             curl -s -m 1 http://localhost:11434/api/tags >/dev/null 2>&1 \
-              || echo "ollama not running — start it with 'ollama serve' (see docs/RUN-LOCALLY.md)"
+              || echo "ollama not running — start it with 'ollama serve' (see docs/1-Using-marola/RUN-LOCALLY.md)"
             # ff-only sync of a clean `main`; a no-op otherwise, `timeout` so offline never blocks.
             (cd "$marola_root" && timeout 10s just sync-main) || true
             # A `just worktree` mirror of origin/main looks identical at a prompt; say which this is.

@@ -1,13 +1,13 @@
 ---
 name: mip
-description: Write or revise a Marola Improvement Proposal (MIP) — a numbered design doc under docs/mips/ for any non-trivial feature, integration, or architecture change in marola. Use when the user says "MIP", "improvement proposal", "propose a feature", "write up a design for", or wants a feature planned before it's built. Not the same thing as docs/SKILLS.md (a skills roadmap).
+description: Write or revise a Marola Improvement Proposal (MIP) — a numbered design doc under docs/MIPs/ for any non-trivial feature, integration, or architecture change in marola. Use when the user says "MIP", "improvement proposal", "propose a feature", "write up a design for", or wants a feature planned before it's built. Not the same thing as docs/4-Research-and-plans/SKILLS.md (a skills roadmap).
 ---
 
 # Writing a Marola Improvement Proposal (MIP)
 
 A MIP is how a non-trivial change to marola gets designed *before* it's built: what, why, how it
 fits the repo's existing patterns, what was actually checked, and how we'll know it works. It is
-the same "verify, don't guess" culture as `AGENTS.md` and `docs/FUTURE-WORK.md`, in a fixed shape
+the same "verify, don't guess" culture as `AGENTS.md` and `docs/4-Research-and-plans/FUTURE-WORK.md`, in a fixed shape
 so proposals are comparable and don't rot.
 
 ## When a MIP is warranted
@@ -18,16 +18,16 @@ so proposals are comparable and don't rot.
 - Anything touching autonomous/proactive behaviour.
 
 Not for: bug fixes, doc corrections, refactors with no behaviour change, or one-file tweaks: do
-those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md` if relevant.
+those directly, and note them in `docs/4-Research-and-plans/FABLE_REVIEW.md` or `docs/4-Research-and-plans/FUTURE-WORK.md` if relevant.
 
 ## Steps
 
 1. **Pick the number and slug.** Numbers are sequential, zero-padded to four digits. The next
-   number is one more than the highest in `docs/mips/README.md`. File:
-   `docs/mips/MIP-NNNN-<kebab-slug>.md`.
-2. **Read before writing.** Always: `AGENTS.md`, `docs/ARCHITECTURE.md` §5 (the integration
-   pattern) and §11 (phases), `docs/FUTURE-WORK.md` (is this already sketched? link the section),
-   and the source files the proposal would touch. Read existing MIPs in `docs/mips/` for tone.
+   number is one more than the highest in `docs/MIPs/README.md`. File:
+   `docs/MIPs/MIP-NNNN-<kebab-slug>.md`.
+2. **Read before writing.** Always: `AGENTS.md`, `docs/2-Building-marola/ARCHITECTURE.md` §5 (the integration
+   pattern) and §11 (phases), `docs/4-Research-and-plans/FUTURE-WORK.md` (is this already sketched? link the section),
+   and the source files the proposal would touch. Read existing MIPs in `docs/MIPs/` for tone.
 3. **Verify every external claim.** Before naming a data source, library, or API: fetch its page,
    confirm the format, the update frequency, the licence/terms, and whether a key is needed. Record
    what was checked, when, and what was *not* checked. A source you could not verify goes in
@@ -35,11 +35,11 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
 4. **Write the MIP** using the template below. Every section is required; write "None" rather than
    deleting a heading. The numbering skips §10 on purpose, so §11 stays Open questions in every
    MIP. Keep it under ~250 lines; long research goes in an appendix at the end.
-5. **Add it to the index.** Append a row to `docs/mips/README.md`: number, title, status, date, and
+5. **Add it to the index.** Append a row to `docs/MIPs/README.md`: number, title, status, date, and
    the four triage columns (Effort, Gain, Verdict, Cost so far) copied from the MIP's own metadata
    block; see "Filling the six triage fields" below.
 6. **Link it.** If it supersedes or implements a `FUTURE-WORK.md` section, add a one-line pointer
-   there ("see `docs/mips/MIP-NNNN-...md`").
+   there ("see `docs/MIPs/MIP-NNNN-...md`").
 7. **The implementation PR carries a `Cost` line** (AGENTS.md "Attribution and cost accounting")
    and updates the MIP's status to Implemented with a link to the PR.
 8. **Don't build it in the same change.** A MIP is merged as `Draft` or `Accepted`; implementation
@@ -88,7 +88,7 @@ those directly, and note them in `docs/FABLE_REVIEW.md` or `docs/FUTURE-WORK.md`
 | **Created** | YYYY-MM-DD |
 | **Phase** | 0 / 1 / 2 / 3 / 4 (`ARCHITECTURE.md` §11) |
 | **Related** | `FUTURE-WORK.md` §N, MIP-NNNN |
-| **Effort** | S / M / L / XL — one clause why (what's new: a module? a store? a CI workflow?). If §4's research changed the estimate from what a related MIP guessed, say so: `M, re-rated from S after §4` — copy the same clause into this MIP's `docs/mips/README.md` index cell, don't let the index show a bare letter that hides the correction |
+| **Effort** | S / M / L / XL — one clause why (what's new: a module? a store? a CI workflow?). If §4's research changed the estimate from what a related MIP guessed, say so: `M, re-rated from S after §4` — copy the same clause into this MIP's `docs/MIPs/README.md` index cell, don't let the index show a bare letter that hides the correction |
 | **Gain** | one or more of `user value`, `infra/dev-loop`, `cost/ops`, each with one clause |
 | **Effort vs Gain** | `do next` / `do when X lands` / `cheap win` / `expensive, defer` / `park` — one sentence why |
 | **Depends on** | prose, for humans: other MIPs it needs or that need it, whether Phase 1 or a paid cloud resource gates it (`AGENTS.md`), and any non-blocking coordination (shared files, shared design decisions) — say the relationship in words, this field is never parsed |
@@ -167,12 +167,12 @@ assumed from memory. Say so here rather than letting it read as verified by omis
 
 ## Index file
 
-`docs/mips/README.md` holds one table: `| MIP | Title | Status | Created | Effort | Gain | Verdict |
+`docs/MIPs/README.md` holds one table: `| MIP | Title | Status | Created | Effort | Gain | Verdict |
 Cost so far |` (`Verdict` = the MIP's `Effort vs Gain` field). Keep it sorted by number. Create it
 with the first MIP if it doesn't exist.
 
 **Dependency graph.** `just mip-graph` regenerates a Mermaid graph from every MIP's `Blocked by`
-field into `docs/mips/README.md` (between `<!-- mip-graph:start -->`/`-end -->` markers);
+field into `docs/MIPs/README.md` (between `<!-- mip-graph:start -->`/`-end -->` markers);
 `just quality`'s `quality-other` fails if it's stale, same as any other generated-and-checked-in
 artifact here. `just mip-graph --parallel NNNN MMMM` answers "can these two be worked on at once":
 no path between them in the `Blocked by` graph **and** no overlap in the backticked source paths

@@ -27,13 +27,13 @@ usage: docs-mip-stack.sh [auto]
           left untouched, same judgment as `list` — auto never guesses which branch is canonical.
           Then REPORTS (read-only, never pushes or rebases) every already-pushed, un-merged,
           unambiguous candidate that shares a fork point with another one — parallel drafts off
-          the same main commit, the shape that conflicts in docs/mips/README.md — with the exact
+          the same main commit, the shape that conflicts in docs/MIPs/README.md — with the exact
           `plan` command to chain them in MIP-number order.
 
   list    scan `origin` for un-merged docs/mip-NNNN-*  and mips/*/K-mip-NNNN-* branches, group by
           MIP number, flag any number with more than one candidate branch (pick one yourself —
           this script never guesses), and flag any candidate whose diff against origin/main
-          touches a file outside docs/mips/** or docs/index.md as "stale — rebase onto main
+          touches a file outside docs/MIPs/** or docs/index.md as "stale — rebase onto main
           first" rather than including it in a stack blindly.
 
   plan    given an explicit, ordered list of branches (your own choice — usually list's output
@@ -97,7 +97,7 @@ self_test() {
 }
 
 # --- list ------------------------------------------------------------------------------------- A
-# branch's real content diff against origin/main is only its docs/mips files if `git diff
+# branch's real content diff against origin/main is only its docs/MIPs files if `git diff
 # --name-only origin/main..<branch>` touches nothing outside that allow-list — anything else means
 # the branch forked from an older main and carries unrelated stale content (the exact failure mode
 # found and fixed by hand for MIP-0034/35/36 earlier this session).
@@ -111,7 +111,7 @@ is_stale() {
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     case "$f" in
-      docs/mips/*|docs/index.md) ;;
+      docs/MIPs/*|docs/index.md) ;;
       *) return 0 ;;
     esac
   done < <(git diff --name-only "$fork..origin/$branch" 2>/dev/null)

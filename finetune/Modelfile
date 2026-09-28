@@ -3,7 +3,7 @@
 # Use:    MAROLA_LOCAL_LLM_MODEL=marola-llama3.2 just run -- --summarize
 #
 # This changes no weights. It fixes the two things a small model gets wrong most often in marola's
-# runs (see docs/ARCHITECTURE.md §5a status notes): drifting into facts not given, and mentioning
+# runs (see docs/2-Building-marola/ARCHITECTURE.md §5a status notes): drifting into facts not given, and mentioning
 # whales when the likelihood is Low. The DSPy-compiled prompt still arrives per request as the
 # system message and few-shot demos; Ollama concatenates this SYSTEM with it.
 

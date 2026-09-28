@@ -115,7 +115,7 @@ Each marola PR lands after its lab has merged in nix-config, so `flake.lock` pin
 `devShells.lint` with only those. Remove the eight packages and their comments. `ci.yml`: the
 "cloc + coverage.py from nix" and "shellcheck + pyflakes from nix" steps become
 `nix develop .#lint --command bash -c '... >> $GITHUB_PATH'`; the ruff version comment names
-`labs/lint`. `PHILOSOPHY.md` "Why Nix", `docs/RUN-LOCALLY.md` §10 line about hadolint.
+`labs/lint`. `PHILOSOPHY.md` "Why Nix", `docs/1-Using-marola/RUN-LOCALLY.md` §10 line about hadolint.
 
 **PR agentic.** `flake.nix`: input, drop the `ai-jail` input and the four packages, compose
 `tools` and `env`. `justfile`: `jail-dry-run` → `jail-run --dry-run -- {{cmd}}`; `jail-claude` →
@@ -124,14 +124,14 @@ Each marola PR lands after its lab has merged in nix-config, so `flake.lock` pin
 `gh-auth` → `gh-token --source`; `clip` → `clip`. Delete `scripts/gh-token.sh`, `clip.sh`,
 `clip-relay.sh`; `quality-other` drops the gh-token self-test; `scripts/runner-preflight.sh`
 calls `gh-token` from PATH. Docs: `AGENTS.md` jail paragraph (paths and env names),
-`docs/DEV-FLOW.md` clipboard rows, `.claude/hooks/session-start.sh` jail caveat text.
+`docs/3-Working-on-the-repo/DEV-FLOW.md` clipboard rows, `.claude/hooks/session-start.sh` jail caveat text.
 
 **PR cuda.** `flake.nix`: input, composed on x86_64-linux only. `justfile`: `ml-venv` →
 `REQUIREMENTS=finetune/requirements.txt VENV_ROOT=~/.marola-ml-venv setup-ml-venv {{args}}`;
 `gpu-cache-setup` → `setup-cuda-cache {{args}}`. `marola-sea-publish.yml`: the setup step and
 every `bin/marola-python` → `bin/python-cuda`. Delete both scripts; `quality-other` drops both
 self-tests; `finetune/merge_export.py --self-test` gains the gguf / sentencepiece / protobuf
-assertion against `finetune/requirements.txt`. `docs/RUN-LOCALLY.md` runner setup lines.
+assertion against `finetune/requirements.txt`. `docs/1-Using-marola/RUN-LOCALLY.md` runner setup lines.
 
 ## 5. Order and verification
 

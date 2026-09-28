@@ -36,6 +36,6 @@ enforces.
 - Scala 3 on JDK 25 with Kyo (pre-1.0; the pinned version's API may differ from current docs;
   do not flag a call as "nonexistent" from memory).
 - Commit messages, not code comments, are where reasoning and evidence belong.
-- A change under `docs/mips/` is a design document; review it for internal consistency and
+- A change under `docs/MIPs/` is a design document; review it for internal consistency and
   unsourced external claims (prices, limits, licence terms), not for code.
 </content>

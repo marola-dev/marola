@@ -19,7 +19,7 @@
     {
       "id": 1,
       "prompt": "port this: https://github.com/blader/humanizer — we want it in marola",
-      "expected_output": "Detects an MIT licence, finds no existing marola home for the concept, and vendors it verbatim with LICENSE beside it, adding a docs/AGENT-SKILLS.md row with provenance; or reports that .claude/skills/humanizer already exists and stops.",
+      "expected_output": "Detects an MIT licence, finds no existing marola home for the concept, and vendors it verbatim with LICENSE beside it, adding a docs/3-Working-on-the-repo/AGENT-SKILLS.md row with provenance; or reports that .claude/skills/humanizer already exists and stops.",
       "files": [],
       "assertions": [
         {"id": "detects_existing", "description": "Notices .claude/skills/humanizer is already vendored and does not create a duplicate"},

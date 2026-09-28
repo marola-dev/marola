@@ -12,7 +12,7 @@ a suggestion. Humans should read it too.
 nix develop && just ollama-up && just build && just test && just quality && just run -- --brief
 ```
 
-Full walkthrough: [`docs/RUN-LOCALLY.md`](./docs/RUN-LOCALLY.md). No Telegram token, no cloud
+Full walkthrough: [`docs/1-Using-marola/RUN-LOCALLY.md`](./docs/1-Using-marola/RUN-LOCALLY.md). No Telegram token, no cloud
 account, no API key needed for any of the above.
 
 ## Find something to work on
@@ -56,13 +56,13 @@ Fill in the acceptance criteria and the named test — a bug report asks for the
 under **What you expected instead** and **Failing test**. Those two fields, plus an `area/*`, a
 `layer/*` and a `size/*` label, are what a maintainer's `just issue-ready <n>` checks before the
 issue becomes claimable; without them it stays in triage. The whole standard — the commands, the
-board, the dependency edges — is [`docs/ISSUE-FLOW.md`](./docs/ISSUE-FLOW.md).
+board, the dependency edges — is [`docs/3-Working-on-the-repo/ISSUE-FLOW.md`](./docs/3-Working-on-the-repo/ISSUE-FLOW.md).
 
 ## The dev loop
 
-Idea → **issue** → **MIP** (`docs/mips/`, via the `mip` skill) → acceptance → task list →
+Idea → **issue** → **MIP** (`docs/MIPs/`, via the `mip` skill) → acceptance → task list →
 stacked PRs (one task, one branch, one PR) → review on request → merge/restack → done. The whole
-loop, with the exact commands, is [`docs/DEV-FLOW.md`](./docs/DEV-FLOW.md). Skip the MIP for bug
+loop, with the exact commands, is [`docs/3-Working-on-the-repo/DEV-FLOW.md`](./docs/3-Working-on-the-repo/DEV-FLOW.md). Skip the MIP for bug
 fixes, doc corrections, and behaviour-free refactors; everything else that changes scoring, a data
 source, or what a user sees goes through one first.
 
@@ -82,7 +82,7 @@ source, or what a user sees goes through one first.
   `.github/dependabot.yml`: Mondays and Fridays at 09:00 America/Sao_Paulo, as a single PR
   covering all three (a `multi-ecosystem-group`, which is the only grouping that spans update
   entries). `just deps-stack` is still there for the case where several arrive separately
-  (`docs/DEV-FLOW.md` §6/§8). There is no API to trigger a Dependabot run: the
+  (`docs/3-Working-on-the-repo/DEV-FLOW.md` §6/§8). There is no API to trigger a Dependabot run: the
   button is Insights → Dependency graph → Dependabot → Check for updates, and pushing any change
   to `.github/dependabot.yml` forces one.
 

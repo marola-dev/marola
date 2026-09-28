@@ -38,9 +38,9 @@ agent's own guesses stacked on top ("menos com menos dá menos"), and a whole mo
    - **Claude Code itself** — `claude --continue`/`--resume`, compaction, auto-memory, `/rename`,
      hooks, permissions, plugins, `enabledPlugins`.
    - **marola's own homes** — MIPs (decisions: an ADR here *is* a MIP), `AGENTS.md` and
-     `.claude/rules/` (practices), `docs/mips/MIP-NNNN.tasks.md` and the GitHub project (tasks),
+     `.claude/rules/` (practices), `docs/MIPs/MIP-NNNN.tasks.md` and the GitHub project (tasks),
      `docs/*.md`, the justfile.
-   - **Existing skills** — `.claude/skills/`, `docs/AGENT-SKILLS.md`, installed plugins.
+   - **Existing skills** — `.claude/skills/`, `docs/3-Working-on-the-repo/AGENT-SKILLS.md`, installed plugins.
 
    Every row "point" or "drop" → stop and tell the user no skill is the right port.
 
@@ -68,7 +68,7 @@ agent's own guesses stacked on top ("menos com menos dá menos"), and a whole mo
    what "done" means here. None upstream: an output case per main mode, plus ~6 should-trigger /
    ~6 should-not queries where the negatives are near misses for neighbour skills.
    Output cases in `evals/evals.json`, trigger queries in `evals/trigger-evals.json`, both in
-   skill-creator's formats (`docs/AGENT-SKILLS.md` §2.3).
+   skill-creator's formats (`docs/3-Working-on-the-repo/AGENT-SKILLS.md` §2.3).
 
 7. **Verify, then report what happened.**
    - `python3 "$(find ~/.claude/plugins -path '*skill-creator/scripts/quick_validate.py' | head -1)" .claude/skills/<name>`,
@@ -76,7 +76,7 @@ agent's own guesses stacked on top ("menos com menos dá menos"), and a whole mo
      `disable-model-invocation` warnings are expected; anything else is a real error.
    - One eval case run by a subagent with the skill; the same case without it as a baseline when
      cheap (`writing-skills`). Report what the agent did, not what the skill says it should do.
-   - A row in `docs/AGENT-SKILLS.md` §1 carrying the provenance; `just quality-other`.
+   - A row in `docs/3-Working-on-the-repo/AGENT-SKILLS.md` §1 carrying the provenance; `just quality-other`.
    - Commit per `AGENTS.md`; a PR only when asked (`just pr`).
 
 ## Red flags

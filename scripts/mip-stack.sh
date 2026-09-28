@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # mip-stack — stack every open MIP *draft* PR (the `docs/mip-NNNN-*` branches that add or edit a
-# `docs/mips/MIP-NNNN-*.md`) into one GitHub Stack, the same shape `scripts/deps-stack.sh` gives
+# `docs/MIPs/MIP-NNNN-*.md`) into one GitHub Stack, the same shape `scripts/deps-stack.sh` gives
 # dependabot's bumps and `scripts/stack.sh` gives one MIP's task branches. Different proposals,
 # one chain, merged bottom-up in one CI run — and, more to the point, one chain that *merges*:
-# every draft appends its own row to `docs/mips/README.md` at the same spot, so after the first
+# every draft appends its own row to `docs/MIPs/README.md` at the same spot, so after the first
 # draft lands every other one conflicts on that line. This script resolves that shape by itself.
 #
 #   just mip-stack                    # discover, build the local chain, publish, link
@@ -15,12 +15,12 @@
 #   just mip-stack clean              # delete mips/* chain branches whose stacked PR is MERGED
 #   just mip-stack --self-test        # parse scripts/fixtures/mip-stack-prs.json, assert order
 #
-# A MIP draft PR: head `docs/mip-*` or touching docs/mips/MIP-NNNN-*.md, never a `mip-NNNN/<k>-*`
+# A MIP draft PR: head `docs/mip-*` or touching docs/MIPs/MIP-NNNN-*.md, never a `mip-NNNN/<k>-*`
 # task branch (scripts/stack.sh's job). Ordered by MIP number, PR number as tie-break.
 #
 # Built in .tmp/wt-mip-stack like deps-stack.sh, branch k = mips/<date>/<k>-<slug> off k-1. Only a
 # PR's own commits are picked: no merges, nothing reachable from an earlier draft, no rebased
-# copies (same author date + subject), no empty picks. A docs/mips/README.md conflict resolves via
+# copies (same author date + subject), no empty picks. A docs/MIPs/README.md conflict resolves via
 # scripts/lib/mip_index_merge.py; a file byte-identical to origin/main takes main's; a PR whose MIP
 # files are already on main is skipped as superseded (close it by hand). Anything else stops; the
 # plan in .tmp/mip-stack/plan.json lets --resume continue.
@@ -72,19 +72,19 @@ print_conflict_instructions() {   # $1 = branch left mid-cherry-pick
   echo "  just mip-stack --resume"
 }
 
-# The one conflict class this script resolves: docs/mips/README.md and nothing else conflicted,
+# The one conflict class this script resolves: docs/MIPs/README.md and nothing else conflicted,
 # and mip_index_merge.py reduces every hunk to "both rows, in order".
 auto_resolve_index() {
   local conflicted
   conflicted="$(git -C "$wt_dir" diff --name-only --diff-filter=U)"
-  [ "$conflicted" = "docs/mips/README.md" ] || return 1
+  [ "$conflicted" = "docs/MIPs/README.md" ] || return 1
   local out
-  if ! out="$(python3 "$script_dir/lib/mip_index_merge.py" "$wt_dir/docs/mips/README.md" 2>&1)"; then
+  if ! out="$(python3 "$script_dir/lib/mip_index_merge.py" "$wt_dir/docs/MIPs/README.md" 2>&1)"; then
     [ -z "$out" ] || echo "$out" >&2
     return 1
   fi
   [ -z "$out" ] || echo "$out"
-  git -C "$wt_dir" add docs/mips/README.md
+  git -C "$wt_dir" add docs/MIPs/README.md
 }
 
 # Two conflict shapes resolve by themselves; anything else stops for a human. $1 = the commit
@@ -93,7 +93,7 @@ auto_resolve_conflicts() {
   local c="$1" f other=0 readme=0
   while read -r f; do
     [ -n "$f" ] || continue
-    if [ "$f" = "docs/mips/README.md" ]; then readme=1; continue; fi
+    if [ "$f" = "docs/MIPs/README.md" ]; then readme=1; continue; fi
     if git -C "$wt_dir" cat-file -e "origin/main:$f" 2>/dev/null && git -C "$wt_dir" diff --quiet "$c" origin/main -- "$f" 2>/dev/null; then
       git -C "$wt_dir" checkout -q origin/main -- "$f"
       echo "mip-stack: $f — this commit's version is already on main, keeping main's"
@@ -141,7 +141,7 @@ order_prs() {   # stdin: gh-pr-list-shaped JSON array -> stdout: MIP draft PRs, 
     # carries); a PR whose head has no number is placed by the HIGHEST MIP file it touches — a
     # draft that merged the branch of an earlier draft to stay mergeable carries that file too,
     # and "first file in the list" put three drafts under MIP-0020 on 2026-09-06.
-    def mip_from_files: [(.files // [])[] | .path | capture("^docs/mips/MIP-(?<n>[0-9]{4})-[^/]*\\.md$") | .n] | max // null;
+    def mip_from_files: [(.files // [])[] | .path | capture("^docs/MIPs/MIP-(?<n>[0-9]{4})-[^/]*\\.md$") | .n] | max // null;
     def mip_from_head: (.headRefName | capture("^(?:docs/)?mip-(?<n>[0-9]{4})") | .n) // null;
     def is_task_branch: .headRefName | test("^mip-[0-9]{4}/[0-9]+-");
     def mip: (mip_from_head // mip_from_files);
@@ -294,11 +294,11 @@ build_chain() {
       echo "mip-stack: skipping $head_ref — no commit the chain does not already carry (PR #$(jq -r '.number' <<<"$entry") is superseded; close it by hand)"
       mark_superseded "$k"; k=$((k + 1)); continue
     fi
-    # Already on main by content: every docs/mips/MIP-*.md the PR's own commits touch exists on
+    # Already on main by content: every docs/MIPs/MIP-*.md the PR's own commits touch exists on
     # origin/main with the same blob as on the PR head — the draft was squash-merged under another
     # PR number (today: docs/mip-0021-beach-accessibility, merged as #134, still open as #135).
     local mip_paths landed=1
-    mip_paths="$(while read -r cc; do [ -n "$cc" ] && git -C "$wt_dir" diff-tree --no-commit-id --name-only -r "$cc"; done <<<"$commits" 2>/dev/null | grep -E '^docs/mips/MIP-[0-9]{4}-[^/]*\.md$' | sort -u || true)"
+    mip_paths="$(while read -r cc; do [ -n "$cc" ] && git -C "$wt_dir" diff-tree --no-commit-id --name-only -r "$cc"; done <<<"$commits" 2>/dev/null | grep -E '^docs/MIPs/MIP-[0-9]{4}-[^/]*\.md$' | sort -u || true)"
     if [ -n "$mip_paths" ]; then
       while read -r mp; do
         [ -n "$mp" ] || continue
@@ -369,7 +369,7 @@ publish_chain() {
     title="$(cap_title "$orig_title")"; body="$(mktemp)"; extra="$(mktemp)"
     {
       echo "Stacked MIP draft — originally PR #$orig_num, rebuilt here as part of a \`just mip-stack\`"
-      echo "chain so the drafts merge bottom-up without fighting over their \`docs/mips/README.md\` row."
+      echo "chain so the drafts merge bottom-up without fighting over their \`docs/MIPs/README.md\` row."
       echo "The original branch is untouched; #$orig_num is closed with a pointer to this one."
     } > "$extra"
     if [ "$dry" -eq 1 ]; then

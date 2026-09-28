@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """mip_index_merge — auto-resolve the one conflict two MIP draft branches produce between them:
-both append a row to the table in `docs/mips/README.md` at the same place, so git folds the two
+both append a row to the table in `docs/MIPs/README.md` at the same place, so git folds the two
 additions into one hunk. The sibling of `req_merge.py`/`uses_merge.py`: `scripts/mip-stack.sh`
-calls this after a cherry-pick fails, on `docs/mips/README.md` only — any other conflicted file
+calls this after a cherry-pick fails, on `docs/MIPs/README.md` only — any other conflicted file
 stops for a human before this module runs.
 
     scripts/lib/mip_index_merge.py <conflicted-README> [<more> ...]

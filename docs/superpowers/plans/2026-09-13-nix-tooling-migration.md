@@ -48,7 +48,7 @@
 | `scripts/{gh-token.sh,clip.sh,clip-relay.sh,setup-cuda-cache.sh,setup-ml-venv.sh}` | deleted |
 | `scripts/runner-preflight.sh` | `gh-token` from PATH |
 | `finetune/merge_export.py` | requirements assertion in `--self-test` |
-| `AGENTS.md`, `PHILOSOPHY.md`, `docs/RUN-LOCALLY.md`, `docs/DEV-FLOW.md`, `.claude/hooks/session-start.sh` | names and paths |
+| `AGENTS.md`, `PHILOSOPHY.md`, `docs/1-Using-marola/RUN-LOCALLY.md`, `docs/3-Working-on-the-repo/DEV-FLOW.md`, `.claude/hooks/session-start.sh` | names and paths |
 
 ---
 
@@ -250,7 +250,7 @@ Wait for CI green, merge.
 **Files:**
 - Modify: `flake.nix` (inputs, packages list, new `devShells.lint`), `flake.lock` (generated)
 - Modify: `.github/workflows/ci.yml:196-200` and `:322-327`, `:266,272` (ruff comment)
-- Modify: `PHILOSOPHY.md` "Why Nix" paragraph; `docs/RUN-LOCALLY.md:377`
+- Modify: `PHILOSOPHY.md` "Why Nix" paragraph; `docs/1-Using-marola/RUN-LOCALLY.md:377`
 
 **Interfaces:**
 - Consumes: `lint.lib.${system}.tools` from Task 1.
@@ -311,7 +311,7 @@ Replace the whole file. The package list keeps every marola-specific tool and it
           pkgs.uv
 
           # The local LLM/vision backend.
-          # `ollama serve` is started separately (docs/RUN-LOCALLY.md); this only puts it on PATH.
+          # `ollama serve` is started separately (docs/1-Using-marola/RUN-LOCALLY.md); this only puts it on PATH.
           pkgs.ollama
           pkgs.gh
 
@@ -368,7 +368,7 @@ Replace the whole file. The package list keeps every marola-specific tool and it
             fi
             java -version
             curl -s -m 1 http://localhost:11434/api/tags >/dev/null 2>&1 \
-              || echo "ollama not running — start it with 'ollama serve' (see docs/RUN-LOCALLY.md)"
+              || echo "ollama not running — start it with 'ollama serve' (see docs/1-Using-marola/RUN-LOCALLY.md)"
             # ff-only sync of a clean `main`; a no-op otherwise, `timeout` so offline never blocks.
             (cd "$marola_root" && timeout 10s just sync-main) || true
             # A `just worktree` mirror of origin/main looks identical at a prompt; say which this is.
@@ -425,7 +425,7 @@ Lines 266 and 272: change the comment to `# = labs/lint's ruff (nix develop .#li
 
 - [ ] **Step 5: Docs**
 
-`PHILOSOPHY.md` "Why Nix": replace `` `gh`, hadolint. `` with `` `gh`; the lint toolchain (hadolint, actionlint, shellcheck, ruff, …) comes from `labs/lint` in h0ffmann/nix-config as one flake input. `` `docs/RUN-LOCALLY.md:377`: `(in the flake)` → `(from the lint lab)`.
+`PHILOSOPHY.md` "Why Nix": replace `` `gh`, hadolint. `` with `` `gh`; the lint toolchain (hadolint, actionlint, shellcheck, ruff, …) comes from `labs/lint` in h0ffmann/nix-config as one flake input. `` `docs/1-Using-marola/RUN-LOCALLY.md:377`: `(in the flake)` → `(from the lint lab)`.
 
 - [ ] **Step 6: Gates**
 
@@ -437,7 +437,7 @@ Expected: all green; `quality-other` still finds ruff/actionlint/hadolint on PAT
 - [ ] **Step 7: Commit and PR**
 
 ```bash
-git add flake.nix flake.lock .github/workflows/ci.yml PHILOSOPHY.md docs/RUN-LOCALLY.md
+git add flake.nix flake.lock .github/workflows/ci.yml PHILOSOPHY.md docs/1-Using-marola/RUN-LOCALLY.md
 git commit -F - <<'EOF'
 nix: lint toolchain from labs/lint (h0ffmann/nix-config), devShells.lint for CI
 
@@ -834,7 +834,7 @@ Then in marola, on branch `docs/nix-tooling-migration-spec`, replace the §3.2 s
 - Modify: `flake.nix` (input, drop ai-jail input + 4 packages + BWRAP_BIN literal), `flake.lock`
 - Modify: `justfile` recipes `jail-dry-run`, `gh-auth`, `jail-claude`, `jail-opencode`, `clip`; `quality-other` list
 - Delete: `scripts/gh-token.sh`, `scripts/clip.sh`, `scripts/clip-relay.sh`
-- Modify: `scripts/runner-preflight.sh:64-67`, `AGENTS.md:155-175`, `docs/DEV-FLOW.md:283-284`, `.claude/hooks/session-start.sh:22-23`
+- Modify: `scripts/runner-preflight.sh:64-67`, `AGENTS.md:155-175`, `docs/3-Working-on-the-repo/DEV-FLOW.md:283-284`, `.claude/hooks/session-start.sh:22-23`
 
 **Interfaces:**
 - Consumes: `agentic.lib.${system}.tools`, `.env.BWRAP_BIN`, binaries `jail-run`, `gh-token`, `clip`.
@@ -888,7 +888,7 @@ git rm scripts/gh-token.sh scripts/clip.sh scripts/clip-relay.sh
 
 - [ ] **Step 5: Docs**
 
-`AGENTS.md` jail paragraph: `via scripts/gh-token.sh` → `via labs/agentic's gh-token (h0ffmann/nix-config, a flake input)`; `MAROLA_JAIL_CLIPBOARD=1` → `JAIL_CLIPBOARD=1`; `MAROLA_JAIL_CLIPBOARD_PASTE=1` → `JAIL_CLIPBOARD_PASTE=1`; "see the justfile comment above `jail-claude` for the full diagnosis" → "see labs/agentic's README for the full diagnosis". `docs/DEV-FLOW.md:283-284`: the two env names likewise. `.claude/hooks/session-start.sh:23`: unchanged text is still true; line 22 unchanged.
+`AGENTS.md` jail paragraph: `via scripts/gh-token.sh` → `via labs/agentic's gh-token (h0ffmann/nix-config, a flake input)`; `MAROLA_JAIL_CLIPBOARD=1` → `JAIL_CLIPBOARD=1`; `MAROLA_JAIL_CLIPBOARD_PASTE=1` → `JAIL_CLIPBOARD_PASTE=1`; "see the justfile comment above `jail-claude` for the full diagnosis" → "see labs/agentic's README for the full diagnosis". `docs/3-Working-on-the-repo/DEV-FLOW.md:283-284`: the two env names likewise. `.claude/hooks/session-start.sh:23`: unchanged text is still true; line 22 unchanged.
 
 - [ ] **Step 6: Gates and the jail itself**
 
@@ -902,7 +902,7 @@ Then, on the host (not from inside a jail): `just jco` starts, prints `jail-run:
 - [ ] **Step 7: Commit and PR**
 
 ```bash
-git add flake.nix flake.lock justfile scripts/runner-preflight.sh AGENTS.md docs/DEV-FLOW.md .claude/hooks/session-start.sh
+git add flake.nix flake.lock justfile scripts/runner-preflight.sh AGENTS.md docs/3-Working-on-the-repo/DEV-FLOW.md .claude/hooks/session-start.sh
 git commit -F - <<'EOF'
 nix: agent sandbox from labs/agentic (h0ffmann/nix-config)
 

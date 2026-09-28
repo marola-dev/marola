@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """tasks_issues — the pure half of `issues.sh tasks-to-issues` (MIP-0063 §5.5): read a
-`docs/mips/MIP-NNNN.tasks.md` task table, say which rows already have an issue, and rewrite a
+`docs/MIPs/MIP-NNNN.tasks.md` task table, say which rows already have an issue, and rewrite a
 row's `#` cell into a link once one exists. Every `gh` call stays in `issues.sh`; nothing here
 touches the network.
 
@@ -185,7 +185,7 @@ def repo_path(path: Path) -> str:
     try:
         return path.resolve().relative_to(root).as_posix()
     except ValueError:
-        return f"docs/mips/{path.name}"
+        return f"docs/MIPs/{path.name}"
 
 
 def dep_label(mip: str, dep: str, cross: dict[str, int]) -> str:
@@ -478,7 +478,7 @@ def self_test() -> int:
         for heading in ("### What", "### Acceptance criteria", "### Named test"):
             assert heading in p["rows"][5]["body"], heading
         # A tasks file outside the checkout must not put its absolute path in the blob URL.
-        assert f"blob/main/docs/mips/{f.name}" in p["rows"][5]["body"], p["rows"][5]["body"]
+        assert f"blob/main/docs/MIPs/{f.name}" in p["rows"][5]["body"], p["rows"][5]["body"]
 
         # 5. Shape errors are errors, not skipped rows.
         for name, text in [
@@ -499,7 +499,7 @@ def self_test() -> int:
     # 6. The repo's own twelve task files parse, and the two graphs the MIP names are the ones
     #    that come back. A new task file in a shape this parser cannot read fails here, loudly,
     #    rather than at the first live run.
-    tasks_dir = Path(__file__).resolve().parents[2] / "docs" / "mips"
+    tasks_dir = Path(__file__).resolve().parents[2] / "docs" / "MIPs"
     files = sorted(tasks_dir.glob("MIP-*.tasks.md"))
     assert len(files) >= 12, files
     graphs = {}

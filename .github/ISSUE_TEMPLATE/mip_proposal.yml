@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         A quick sketch before the real thing — the `mip` skill (`.claude/skills/mip/SKILL.md`)
-        turns this into `docs/mips/MIP-NNNN-<slug>.md` using the fields below plus the full
+        turns this into `docs/MIPs/MIP-NNNN-<slug>.md` using the fields below plus the full
         template (sources reviewed, design, scoring/safety impact, verification plan).
 
         Tier 3 (MIP-0063 §5.1) — what happens next: this issue is **relabelled**, not replaced,

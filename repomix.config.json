@@ -16,9 +16,9 @@
   "include": [
     "README.md",
     "AGENTS.md",
-    "docs/ARCHITECTURE.md",
-    "docs/FUTURE-WORK.md",
-    "docs/mips/**",
+    "docs/2-Building-marola/ARCHITECTURE.md",
+    "docs/4-Research-and-plans/FUTURE-WORK.md",
+    "docs/MIPs/**",
     ".claude/skills/mip/SKILL.md"
   ],
   "ignore": { "useGitignore": true, "useDefaultPatterns": true, "customPatterns": [] },
