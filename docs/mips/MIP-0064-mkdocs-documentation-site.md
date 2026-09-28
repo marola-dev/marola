@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted — `Tasks: docs/mips/MIP-0064.tasks.md` |
 | **Author** | Claude (Opus 5), with Bruno |
 | **Created** | 2026-09-28 |
 | **Phase** | 3 — extends `site.yml`'s already-live Pages deploy; no Phase 1 or Phase 2 prerequisite, no cloud spend |
