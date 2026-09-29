@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted — merged as #500; `Tasks: MIP-0068.tasks.md` ([`MIP-0068.tasks.md`](./MIP-0068.tasks.md)) |
 | **Author** | Claude (Opus 5.5), with Bruno |
 | **Created** | 2026-09-29 |
 | **Phase** | 3 — docs only, on the mkdocs/Kroki build MIP-0064 already shipped; no Phase 1 or Phase 2 prerequisite, no cloud spend |
