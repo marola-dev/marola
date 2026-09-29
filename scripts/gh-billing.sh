@@ -210,7 +210,7 @@ print_table() {
       echo "Actions minutes used: ${minutes_used} (plan '$plan' isn't in this script's known table — see github.com/settings/billing for your included allowance)"
     fi
   fi
-  echo "keep GHCR storage down: docs/1-Using-marola/RUN-LOCALLY.md §10 (container images) — ghcr-retention.yml prunes old -<sha> tags weekly."
+  echo "GHCR storage: public packages are free, so nothing prunes old -<sha> tags (MIP-0065 §4.4; docs/1-Using-marola/RUN-LOCALLY.md §10)."
 }
 
 self_test() {

@@ -351,10 +351,9 @@ Community License](https://www.llama.com/llama3_2/license/); the agreement and t
 Policy ship inside the image (`ollama show marola-llama3.2 --license`).
 
 The `-<sha>` tags accumulate on every qualifying push (`local-<sha>` even for rejected candidates,
-which bundle the ~2 GB Ollama model). `ghcr-retention.yml` prunes them weekly, keeping the last 10
-per target (5 for `local`) and never touching the moving tags above, which is what everything below
-and `docker-compose.yml`/`docker-smoke.yml` actually pull. `just gh-billing` shows current GHCR/Actions
-usage against the account's plan (this repo gets no public-repo free tier).
+which bundle the ~2 GB Ollama model) and nothing prunes them: a public package's storage is free
+(MIP-0065 §4.4). Everything below and `docker-compose.yml`/`docker-smoke.yml` pull the moving tags
+above. `just gh-billing` shows current GHCR/Actions usage against the account's plan.
 
 The same pipeline from a machine that has Docker and nothing else. `docker-compose.yml` runs the
 CLI image with an Ollama sidecar; the model is pulled once into a named volume:

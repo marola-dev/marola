@@ -27,6 +27,7 @@ jobs:
               --jq '.workflow_runs[] | select(.event == "pull_request") | "\(.id) \(.name)"' \
             | while read -r id name; do
                 echo "cancel $id ($name, $status)"
-                gh run cancel "$id"
+                # 409 = it finished after the listing; nothing left to cancel, not a failure.
+                gh run cancel --repo "$GITHUB_REPOSITORY" "$id" || echo "  $id already finished"
               done
           done
