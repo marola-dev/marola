@@ -3154,7 +3154,9 @@ no verdict older than the freshness window).</p>
   and four Barra da Tijuca points share a coordinate). The bulletin has 39.</li>
 <li>The other four bulletins parse to 0 rows: Ilha do Governador e Ramos and Paquetá put
   <code>PONTO COLETA</code> between the beach and location columns and use <code>GL0001</code>-style codes; Niterói
-  (<code>GR000</code>) and Cabo Frio (<code>CF0001</code>) differ again.</li>
+  (<code>GR000</code>) and Cabo Frio (<code>CF0001</code>) differ again. <em>Corrected 2026-09-29:</em> with #489's
+  header-row parser Niterói's 24-09-26 bulletin parses all 29 rows, verdicts matching <code>pdftotext</code>;
+  Ilha, Paquetá and Cabo Frio still give 0.</li>
 <li>Niterói's PDF header reads "24 de SETEMBRO de <strong>2025</strong>" on a 2026 bulletin.</li>
 </ul>
 <h2 id="3-user-visible-change">3. User-visible change<a class="headerlink" href="#3-user-visible-change" title="Permanent link">&para;</a></h2>
@@ -3236,6 +3238,11 @@ the "history export" MIP-0056 §5.6 row 2 says it does not know of; see §11.</p
 <li>Niterói's municipal ArcGIS map — MIP-0031 §11, still not fetched (§11 here).</li>
 </ul>
 <h2 id="5-design">5. Design<a class="headerlink" href="#5-design" title="Permanent link">&para;</a></h2>
+<p><strong>Landed in #488</strong> (ahead of this MIP's tasks): discovery over <code>/rio-de-janeiro/</code> and <code>/niteroi/</code>
+inside <code>IneaRjWaterQualityClient</code> (no separate <code>IneaBulletinIndex</code>), filename dates, and a bulletin
+already past 45 days is not downloaded (Sepetiba). Niterói's 29 points went into
+<code>sampling_points_rj.json</code> as per-<em>beach</em> OSM centroids, like Rio's. Still open here: per-point
+geocoding, the Ilha/Paquetá/Cabo Frio layouts, the missing Rio points and the Cabo Frio area.</p>
 <p><strong>Discovery</strong> (<code>local/…/water/IneaBulletinIndex.scala</code>, pure over the page HTML): from a city
 page, every <code>href</code> whose filename matches <code>-(\d{2})-(\d{2})-(\d{2})\.pdf$</code> and is not
 <code>historico</code>/<code>Qualifica*</code>; the zone is the filename before the date and the sample date is
@@ -3343,7 +3350,8 @@ coordinate arithmetic, not surveyed), so Cabo Frio beaches are found by <code>Be
 <ul>
 <li>Whether Ilha e Ramos, Paquetá, Niterói and Cabo Frio parse once the layout is generalised; only
   their extracted geometry was read.</li>
-<li>Whether Sepetiba is discontinued or merely late; only its filename date was read.</li>
+<li>Whether Sepetiba is discontinued or merely late; only its filename date was read. The
+  maintainer reads it as abandoned (2026-09-29); either way #488 skips it by date, not by name.</li>
 <li>INEA's publishing cadence per zone beyond the dates seen on 2026-09-28 (Cabo Frio "roughly
   monthly" is one 54-day gap).</li>
 <li>The distance from the <code>rio</code> area to Cabo Frio (about 120 km is coordinate arithmetic).</li>

@@ -259,6 +259,7 @@ pages = [{"l":"index.html#","e":false,"i":"","n":"marola-core","t":"marola-core"
 {"l":"marola/water/WaterQuality.html#newestSampleDate-0","e":false,"i":"","n":"newestSampleDate","t":"newestSampleDate: Option[LocalDate]","d":"marola.water.WaterQuality","k":"def","x":""},
 {"l":"marola/water/WaterQuality$.html#","e":false,"i":"","n":"WaterQuality","t":"WaterQuality","d":"marola.water","k":"object","x":""},
 {"l":"marola/water/WaterQuality$.html#MaxSampleAgeDays-0","e":false,"i":"","n":"MaxSampleAgeDays","t":"MaxSampleAgeDays: Long","d":"marola.water.WaterQuality","k":"val","x":""},
+{"l":"marola/water/WaterQuality$.html#isFresh-fffffde0","e":false,"i":"","n":"isFresh","t":"isFresh(sampledOn: LocalDate, today: LocalDate): Boolean","d":"marola.water.WaterQuality","k":"def","x":""},
 {"l":"marola/water/WaterQualityClient.html#","e":false,"i":"","n":"WaterQualityClient","t":"WaterQualityClient","d":"marola.water","k":"trait","x":""},
 {"l":"marola/water/WaterQualityClient.html#name-0","e":false,"i":"","n":"name","t":"name: String","d":"marola.water.WaterQualityClient","k":"def","x":""},
 {"l":"marola/water/WaterQualityClient.html#samplingPoints-0","e":false,"i":"","n":"samplingPoints","t":"samplingPoints: List[SamplingPoint] < Sync","d":"marola.water.WaterQualityClient","k":"def","x":""},
