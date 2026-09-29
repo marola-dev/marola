@@ -38,7 +38,9 @@ What the brainstorm found, all verified 2026-09-28 (Appendix):
   and four Barra da Tijuca points share a coordinate). The bulletin has 39.
 - The other four bulletins parse to 0 rows: Ilha do Governador e Ramos and Paquetá put
   `PONTO COLETA` between the beach and location columns and use `GL0001`-style codes; Niterói
-  (`GR000`) and Cabo Frio (`CF0001`) differ again.
+  (`GR000`) and Cabo Frio (`CF0001`) differ again. *Corrected 2026-09-29:* with #489's
+  header-row parser Niterói's 24-09-26 bulletin parses all 29 rows, verdicts matching `pdftotext`;
+  Ilha, Paquetá and Cabo Frio still give 0.
 - Niterói's PDF header reads "24 de SETEMBRO de **2025**" on a 2026 bulletin.
 
 ## 3. User-visible change
@@ -92,6 +94,12 @@ the "history export" MIP-0056 §5.6 row 2 says it does not know of; see §11.
 - Niterói's municipal ArcGIS map — MIP-0031 §11, still not fetched (§11 here).
 
 ## 5. Design
+
+**Landed in #488** (ahead of this MIP's tasks): discovery over `/rio-de-janeiro/` and `/niteroi/`
+inside `IneaRjWaterQualityClient` (no separate `IneaBulletinIndex`), filename dates, and a bulletin
+already past 45 days is not downloaded (Sepetiba). Niterói's 29 points went into
+`sampling_points_rj.json` as per-*beach* OSM centroids, like Rio's. Still open here: per-point
+geocoding, the Ilha/Paquetá/Cabo Frio layouts, the missing Rio points and the Cabo Frio area.
 
 **Discovery** (`local/…/water/IneaBulletinIndex.scala`, pure over the page HTML): from a city
 page, every `href` whose filename matches `-(\d{2})-(\d{2})-(\d{2})\.pdf$` and is not
@@ -210,7 +218,8 @@ All 2026-09-28 unless stated.
 
 - Whether Ilha e Ramos, Paquetá, Niterói and Cabo Frio parse once the layout is generalised; only
   their extracted geometry was read.
-- Whether Sepetiba is discontinued or merely late; only its filename date was read.
+- Whether Sepetiba is discontinued or merely late; only its filename date was read. The
+  maintainer reads it as abandoned (2026-09-29); either way #488 skips it by date, not by name.
 - INEA's publishing cadence per zone beyond the dates seen on 2026-09-28 (Cabo Frio "roughly
   monthly" is one 54-day gap).
 - The distance from the `rio` area to Cabo Frio (about 120 km is coordinate arithmetic).

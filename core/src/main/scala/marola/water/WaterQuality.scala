@@ -62,9 +62,7 @@ final case class WaterQuality(points: List[SamplingPoint], source: String):
 
   /** Off-season IMA samples monthly, hence the 45-day window. */
   def fresh(today: LocalDate): List[(SamplingPoint, WaterSample)] =
-    latestSamples.filter {
-      case (_, s) => ChronoUnit.DAYS.between(s.sampledOn, today) <= WaterQuality.MaxSampleAgeDays
-    }
+    latestSamples.filter { case (_, s) => WaterQuality.isFresh(s.sampledOn, today) }
 
   def improper(today: LocalDate): List[(SamplingPoint, WaterSample)] =
     fresh(today).filter { case (_, s) => s.condition == BathingCondition.Improper }
@@ -74,6 +72,9 @@ final case class WaterQuality(points: List[SamplingPoint], source: String):
 
 object WaterQuality:
   val MaxSampleAgeDays = 45L
+
+  def isFresh(sampledOn: LocalDate, today: LocalDate): Boolean =
+    ChronoUnit.DAYS.between(sampledOn, today) <= MaxSampleAgeDays
 
 /** A regional bathing-water data source. */
 trait WaterQualityClient:
