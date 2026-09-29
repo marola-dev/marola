@@ -73,4 +73,38 @@ class IneaPdfParserSpec extends munit.FunSuite:
     assert(!rows.exists(_.pointCode == "BD010")) // only mentioned in footer prose, not a real row
   }
 
+  // Boletim 38, 21/09/2026: the June table with every column ~55pt further right (#487).
+  private val septemberRows =
+    val stream = getClass.getClassLoader.getResourceAsStream(
+      "inea-boletim-zona-sudoeste-sul-2026-09-21.pdf"
+    )
+    val bytes =
+      try stream.readAllBytes()
+      finally stream.close()
+    IneaPdfParser.parseTable(bytes)
+
+  test("parses every row of the 21 Sep 2026 bulletin, whose columns are shifted right of June's") {
+    assertEquals(septemberRows.size, 39)
+  }
+
+  test("the shifted layout resolves the same beach for every point code as the June layout") {
+    val june = rows.map(r => r.pointCode -> r.beachName).toMap
+    assertEquals(septemberRows.map(r => r.pointCode -> r.beachName).toMap, june)
+  }
+
+  test("a bulletin with no PRAIAS/LOCALIZAÇÃO header row yields no rows, never a guessed name") {
+    import PdfLines.{Chunk, Line}
+    val headerless = List(
+      Line(
+        58f,
+        List(
+          Chunk(194f, 58f, "Barra de Guaratiba"),
+          Chunk(343f, 58f, "Em frente à Escola  BG00"),
+          Chunk(566f, 58f, "Própria")
+        )
+      )
+    )
+    assertEquals(IneaPdfParser.parseLines(headerless), Nil)
+  }
+
 end IneaPdfParserSpec

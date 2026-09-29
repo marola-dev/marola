@@ -2,6 +2,8 @@ package marola.water
 
 import scala.collection.mutable.ArrayBuffer
 
+import marola.log.Log
+
 /**
  * INEA (Rio de Janeiro)'s bathing-water bulletin PDF layout — verified live 2026-09-07 against a
  * real, current bulletin (`https://www.inea.rj.gov.br/wp-content/uploads/2026/06/
@@ -29,10 +31,7 @@ object IneaPdfParser:
   // beach name (verified against the real fixture's footer, MIP-0031 §11).
   private val BeachNameCandidate = "^\\p{Lu}[\\p{L}0-9'’/. -]{0,29}$".r
 
-  // The `PRAIAS` column's own x-range in the verified fixture is 126-161pt; `LOCALIZAÇÃO` starts
-  // no earlier than ~218pt (shared with footer prose, harmless since footer sits below the last
-  // real row).
-  private val BeachColumnMaxX = 200.0f
+  private val log = Log.forName(getClass.getName)
 
   import PdfLines.Line
 
@@ -53,6 +52,7 @@ object IneaPdfParser:
     var currentPrefix: Option[String] = None
     var pendingRows = ArrayBuffer.empty[RowEvent]
     var pendingNames = ArrayBuffer.empty[NameEvent]
+    var nameColumnMaxX: Option[Float] = None
 
     def flush(): Unit =
       if pendingRows.nonEmpty then
@@ -70,7 +70,8 @@ object IneaPdfParser:
       pendingNames = ArrayBuffer.empty
 
     for line <- lines do
-      classify(line) match
+      columnSplit(line).foreach(x => nameColumnMaxX = Some(x))
+      nameColumnMaxX.flatMap(classify(line, _)) match
         case Some(Classified.RowFound(code, location, category, embeddedName, y)) =>
           val prefix = codePrefix(code)
           if !currentPrefix.contains(prefix) then
@@ -83,7 +84,19 @@ object IneaPdfParser:
         case None => ()
 
     flush()
+    if nameColumnMaxX.isEmpty && lines.nonEmpty then
+      log.warn("INEA bulletin: no PRAIAS/LOCALIZAÇÃO header row found — parsed no rows")
     out.result()
+
+  /**
+   * INEA shifts the whole table between bulletins (~55pt between June and September 2026, #487), so
+   * the beach-name column is bounded by the header row, not by a fixed x.
+   */
+  private def columnSplit(line: Line): Option[Float] =
+    for
+      beaches <- line.chunks.find(_.text.trim.startsWith("PRAIAS"))
+      location <- line.chunks.find(_.text.trim.startsWith("LOCALIZA"))
+    yield (beaches.x + location.x) / 2
 
   private def nearestName(names: List[NameEvent], y: Float): String =
     // Ties (equal Y-distance to two candidates) break toward the later one — verified against the
@@ -103,7 +116,7 @@ object IneaPdfParser:
     )
     case NameFound(name: String, y: Float)
 
-  private def classify(line: Line): Option[Classified] =
+  private def classify(line: Line, nameColumnMaxX: Float): Option[Classified] =
     val category = line.chunks.map(_.text.trim).find(CategoryLabels.contains)
     val nonCategory = line.chunks.filterNot(c => CategoryLabels.contains(c.text.trim))
     val codeMatch = nonCategory
@@ -114,7 +127,7 @@ object IneaPdfParser:
     codeMatch match
       case Some((codeChunk, locPrefix, code)) if category.isDefined =>
         val others = nonCategory.filterNot(_ == codeChunk)
-        val (nameChunks, locChunks) = others.partition(_.x < BeachColumnMaxX)
+        val (nameChunks, locChunks) = others.partition(_.x < nameColumnMaxX)
         val location =
           if locPrefix.nonEmpty then locPrefix
           else locChunks.headOption.map(_.text.trim).getOrElse("")
