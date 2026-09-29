@@ -2,7 +2,8 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted 2026-09-28 for both tasks of the task list; §5.6's score-chip option is decided in the acceptance PR, with the contrast table added there |
+| **Tasks** | [`MIP-0046.tasks.md`](./MIP-0046.tasks.md) — two stacked PRs: the sprite and every call site, then the chip and legend fixes |
 | **Author** | Claude Opus 5, for M. Hoffmann (request of 2026-09-07: "remove AI slop appearance from current UI, dont use emoji based formatting, use frontend design skill to build something beautiful still on the static site… be very specific and detailed in all needs to be refactored and relation to the existing mips") |
 | **Created** | 2026-09-07 |
 | **Phase** | 3 — `ARCHITECTURE.md` §11 puts the static map under Phase 3 ("Deploy… the first deploy artefact is already here and free: `site.yml` … publishes the static map"). It is already shipped and running; nothing from Phase 1 or 2 gates a presentation change. Honest caveat: MIP-0009 and MIP-0037 both label this same surface "Phase 1" — a pre-existing inconsistency in the docs, not resolved here |
@@ -119,6 +120,19 @@ distinguishable at 14 px.
 
 ## 5. Design
 
+**State at acceptance (2026-09-28).** The design stands; the line numbers in §5.2 and §5.5 do not.
+Re-running the appendix grep over `site/static/` gives 12 hits: `index.html:35` and
+`app.js:149,177,179,183,185,186,191,193,207,224,379`. The call sites are the same ones by name
+(`WIND_EMOJI`, `aspectsHtml`, `FACILITY_LABEL`/`facilitiesHtml`, `renderFooter`), so task 1 works
+from names, not line numbers. Three things moved around it:
+
+- MIP-0044 §5.7 moves `#sound` into the menu's prefs group, so `i-sound` is drawn there, and the menu
+  button reuses this MIP's `.ic` class for its own 16 px mark. Task 1 lands after MIP-0044 task 1.
+- The score chip now carries a band class instead of an inline `style=` (#486; the page's CSP had
+  been blocking the inline background, so the chip rendered white on white). §5.6's fix builds on
+  those classes.
+- `style.css` is 12,009 bytes, not 11,399.
+
 **Design plan** (the `frontend-design` two-pass, compressed). *Subject*: a hydrographic reading of
 one stretch of coast, for someone on a phone deciding within the hour whether to swim. *Colour*: no
 new tokens: the five score colours are data and untouched, chrome stays `--ink / --muted / --bg /
@@ -199,6 +213,21 @@ flex-wrap: wrap; gap: .15rem .8rem; }`. No new colour, no new radius, no new sha
   colour means and needs its own decision. The in-scope option is to stop using the band colour as
   a *text background*: render the score as `--ink` on `--panel` with the band colour as a 4 px rule
   beside it. Proposed, not decided, §11.
+
+  Measured at acceptance (2026-09-28, same formula), every option for the 13 px chip text:
+
+  | band | white on band | `--ink` on band | `--ink` on `--panel`, band as rule |
+  |---|---|---|---|
+  | `--c70` | 3.39 | 4.28 | 14.47 |
+  | `--c40` | 2.06 | 7.02 | 14.47 |
+  | `--c1` | 3.76 | 3.85 | 14.47 |
+  | `--c0` | 5.19 | 2.79 | 14.47 |
+  | `--cna` | 3.36 | 4.30 | 14.47 |
+
+  No text colour on the band passes 4.5:1 in every band, even choosing the better of white and ink
+  per band (`--c70`, `--c1` and `--cna` still fail). Only the rule option passes everywhere. The
+  rule itself is 2.06:1 against the panel for `--c40`, under WCAG 1.4.11's 3:1 for graphics, but
+  the number carries the score and the colour repeats it, as the map markers already do.
 - **`index.html:36`** puts `aria-hidden="true"` on the entire `.legend`, so the score legend does
   not exist for a screen reader. The colour swatches should keep it; the words `≥70 / 40-69 / …`
   should not.
@@ -267,14 +296,17 @@ beside it differs. The `.wdot` water signal and the five score colours are untou
 
 - **The score chip.** Is §5.6's "band colour as a rule, not a text background" acceptable, or does
   the coloured chip carry meaning worth its 2.06:1? A human call: it borders the "the data colours
-  are data" rule, so it does not get made inside an implementation PR.
+  are data" rule, so it does not get made inside an implementation PR. At acceptance, §5.6's table
+  shows the rule is the only option that passes AA in all five bands, and task 2 implements it
+  unless the maintainer vetoes it in the acceptance PR.
 - **Ordering against MIP-0042.** If the `/v1/` freeze lands first, this work is done twice or not at
   all. Recommend: this MIP first, it is smaller.
 - **The wordmark.** `index.html`'s `<h1>` SVG is deliberately left alone. MIP-0037 §5 plans to render
   it to `icon-192.png`; if it is ever redrawn, those two must move together.
 - **Follow-up (no MIP needed):** `site_check.js:140`'s stub palette has drifted from `style.css`
   (§8). A one-line fix, but it belongs to whoever next touches that file: it is not a design
-  decision and does not need its own number.
+  decision and does not need its own number. At acceptance it is still stale (now `site_check.js:158`),
+  and task 2 takes it.
 
 ## Appendix
 
@@ -303,6 +335,11 @@ beside it differs. The `.wdot` water signal and the five score colours are untou
   from the hexes. The `--c40` result (2.06:1) matches commit `00c330c`'s own recorded figure.
 - `git log --oneline -- site/static/app.js site/static/style.css` → `131fdb9` (PR #233) is the
   water-dot/`waterDotClass` precedent; `00c330c` (PR #37) is the typography pass.
+
+- **At acceptance, 2026-09-28**: the emoji grep above, re-run, gives the 12 hits listed at the top of
+  §5; `README.md:1` still reads `<h1 align="center">🌊 marola</h1>`; the stub palette is at
+  `site_check.js:158`; the §5.6 contrast table was computed from `style.css`'s current token values
+  with the WCAG 2.x formula.
 
 ### Not checked
 - No browser was opened. Every rendering claim (legibility at 14 px, `<use>` inside a Leaflet
