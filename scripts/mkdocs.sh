@@ -167,6 +167,10 @@ self_test() {
   ok "$(grep -c '^ *server_url:' "$cfg")" "1" "mkdocs.yml uses the 1.7.0 snake_case server_url"
   ok "$(grep -c 'http_method: POST' "$cfg")" "1" "http_method is POST, so SVGs are written into the output"
   ok "$(grep -c 'fence_prefix: ""' "$cfg")" "1" 'fence_prefix is empty, so plain mermaid fences render'
+  # MIP-0068 §5.2: each defaults the other way in the 1.7.0 plugin.
+  ok "$(grep -c '^ *fail_fast: true' "$cfg")" "1" "fail_fast is on, so a broken diagram fails the build"
+  ok "$(grep -c '^ *enable_bpmn: false' "$cfg")" "1" "bpmn is off, so its fence stays a code block"
+  ok "$(grep -c '^ *enable_diagramsnet: false' "$cfg")" "1" "diagramsnet stays off"
   ok "$(grep -c '^nav:' "$cfg")" "0" "there is no hand-written nav to drift (decision 1)"
   ok "$(grep -c '^ *- privacy' "$cfg")" "1" "the privacy plugin is on, so Material's webfont is served locally"
   ok "$(serve_path "$cfg")" "/docs/" "the serve banner follows site_url's path, which is where the dev server answers"

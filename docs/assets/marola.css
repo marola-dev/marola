@@ -3,20 +3,13 @@
    docs/img/logo/c0-traced/ on the design/logo-proposals branch:
      #0b4261  deep navy, the wordmark ink
      #057b9e  the mark's main ink
-     #1badc5 -> #19ddf0  the crest gradient, which supplies the accent */
+     #1badc5 -> #19ddf0  the crest gradient, which supplies the accent
+   The site is slate only (MIP-0068 §5.2); mkdocs.yml's kroki `styles` reuse these inks. */
 :root {
   --marola-navy: #0b4261;
   --marola-ink: #057b9e;
   --marola-cyan: #1ac5da;
   --marola-cyan-bright: #19ddf0;
-}
-
-[data-md-color-scheme="default"] {
-  --md-primary-fg-color: var(--marola-ink);
-  --md-primary-fg-color--light: var(--marola-cyan);
-  --md-primary-fg-color--dark: var(--marola-navy);
-  --md-accent-fg-color: var(--marola-cyan);
-  --md-typeset-a-color: var(--marola-ink);
 }
 
 /* On slate the navy is too close to the page background to read as a header, and the ink is too
@@ -28,9 +21,15 @@
   --md-accent-fg-color: var(--marola-cyan-bright);
   --md-typeset-a-color: var(--marola-cyan);
 
-  /* Material sets body text to 75% white on slate, which reads grey next to the header title.
-     Pure white, to match it. Only on slate — in light mode this is text on a white page. */
+  /* Material sets body text to 75% white on slate, which reads grey next to the header title. */
   --md-typeset-color: #ffffff;
   --md-default-fg-color: #ffffff;
   --md-default-fg-color--light: rgba(255, 255, 255, 0.85);
+}
+
+/* The plugin writes a fence's {bg-dark=...} as an inline background, and only dbml, vegalite and
+   excalidraw fences carry one: style injection cannot reach them, so they get a light card. */
+.md-typeset img[alt="Kroki"][style*="background"] {
+  padding: 0.8rem;
+  border-radius: 0.4rem;
 }

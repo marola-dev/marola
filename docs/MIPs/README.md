@@ -88,10 +88,10 @@ as an unfilled placeholder).
 <!-- mip-graph:start -->
 ```mermaid
 flowchart TD
-  classDef draft fill:#fff,stroke:#999,stroke-dasharray:3 3;
-  classDef accepted fill:#eef,stroke:#36c;
-  classDef implemented fill:#efe,stroke:#2a2;
-  classDef rejected fill:#f8f8f8,stroke:#bbb,color:#999;
+  classDef draft fill:#1e2129,stroke:#8fa3b0,stroke-dasharray:3 3;
+  classDef accepted fill:#0b4261,stroke:#1ac5da;
+  classDef implemented fill:#0f4a2e,stroke:#3ecf6e;
+  classDef rejected fill:#2a2d35,stroke:#666,color:#999;
   M0025["MIP-0025"]:::draft
   M0033["MIP-0033"]:::draft
   M0034["MIP-0034"]:::draft

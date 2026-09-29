@@ -66,6 +66,7 @@ Issue → MIP (Draft) → acceptance → task list → stacked PRs → review �
 After, the same page opens with a rendered flowchart, and its stacking section carries:
 
 ```mermaid
+%%{init: {"themeVariables": {"git0": "#1ac5da", "git1": "#3ecf6e", "git2": "#f0a030", "git3": "#c678dd", "commitLabelColor": "#ffffff", "commitLabelBackground": "#082f45"}}}%%
 gitGraph
   commit id: "main"
   branch mip-nnnn/1
@@ -178,7 +179,10 @@ one assertion per key, next to its existing `fence_prefix` check.
 so there is one theme to style for: one `styles` block, one render per diagram, and nothing
 to check twice. `marola.css`'s `[data-md-color-scheme="default"]` block goes with it. For the
 dialects style injection skips (dbml, vegalite, excalidraw), `marola.css` gives the image a light
-card background, so it stays legible. The five existing diagrams are re-rendered by the same
+card background, so it stays legible. As built (task 1): the fence carries `{bg-dark=white}`, which
+the plugin writes as an inline background that `marola.css` pads into a card, since the SVG file
+names cannot tell dialects apart. C4 relationships and Mermaid `gitGraph` need one line of their
+own each; `DIAGRAMS.md` carries both. The five existing diagrams are re-rendered by the same
 change and checked in §7 step 4.
 
 Task 7, and only if §5.3's Excalidraw cases hold up, adds the companion to the compose stack,
@@ -310,8 +314,8 @@ reason, and no ` ```text ` or bare fence left in `docs/` that is a diagram.
 
 ## 11. Open questions
 
-- **The `styles` values**: taken from `marola.css`'s slate tokens in task 1, settled by the
-  screenshot review in §7 step 4.
+- **The `styles` values**: settled in task 1 — `marola.css`'s slate tokens plus a transparent
+  background (`mkdocs/mkdocs.yml`).
 - **Follow-up MIP:** generate each `MIP-NNNN.tasks.md` dependency graph from its `depends on`
   column, the same way `scripts/mip_graph.py` generates the MIP graph, so task DAGs cannot drift.
   Needs the next MIP number.

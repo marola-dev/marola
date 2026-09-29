@@ -114,6 +114,7 @@ licence/key, what was verified (URL + date) and what wasn't. End with the pick a
 Modules and files touched, new traits/case classes, the local default and the opt-in path,
 how it plugs into `Recommender` / `Swimability` / `Main` / the MCP server. Sketch the Scala
 signatures. Say what is deterministic and what (if anything) goes through the LLM.
+A flow, lifecycle, schema or multi-actor exchange gets a diagram (`.claude/rules/docs.md` §Diagrams).
 
 ## 6. Scoring / safety impact
 Exactly how `Swimability.score` and notes change, with the thresholds. "None" if none.

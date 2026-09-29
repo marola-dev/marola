@@ -53,21 +53,11 @@ theme:
     - search.highlight
     - search.suggest
     - content.code.copy
+  # Dark only, so every diagram is styled for one background (MIP-0068 §5.2).
   palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: teal
-      accent: teal
-      toggle:
-        icon: material/weather-night
-        name: Dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: teal
-      accent: teal
-      toggle:
-        icon: material/weather-sunny
-        name: Light mode
+    scheme: slate
+    primary: teal
+    accent: teal
 
 extra_css:
   - assets/marola.css
@@ -107,3 +97,21 @@ plugins:
       # POST writes the SVG next to the page in site_dir. GET would emit an <img> pointing at
       # this container, i.e. a localhost URL on the deployed site, and break `script-src 'self'`.
       http_method: POST
+      # A render error fails the build naming the page, rather than shipping an inline error box.
+      fail_fast: true
+      # No companion runs for these, and with an empty fence_prefix the plugin would claim their
+      # fences anyway. Off, a ```bpmn fence stays a code block. diagramsnet is already off by
+      # default; stated so --self-test can hold it there.
+      enable_bpmn: false
+      enable_diagramsnet: false
+      # marola.css's slate inks. Injected into mermaid, d2, plantuml, c4plantuml, graphviz,
+      # nomnoml, structurizr and blockdiag only; dbml, vegalite and excalidraw fences take
+      # {bg-dark=white} instead, which marola.css turns into a light card.
+      styles:
+        box: { fill: "#0b4261", stroke: "#1ac5da" }
+        actor: { fill: "#0b4261", stroke: "#1ac5da" }
+        text: { color: "#ffffff" }
+        line: { stroke: "#1ac5da", font-color: "#ffffff", label-background: "#082f45" }
+        note: { fill: "#082f45", stroke: "#19ddf0", color: "#ffffff" }
+        package: { fill: "#082f45", stroke: "#057b9e", color: "#ffffff" }
+        background: { fill: "transparent" }

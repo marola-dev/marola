@@ -124,10 +124,11 @@ def render_mermaid(mips):
     connected = {a for a, _ in edges} | {b for _, b in edges}
 
     lines = ["```mermaid", "flowchart TD"]
-    lines.append("  classDef draft fill:#fff,stroke:#999,stroke-dasharray:3 3;")
-    lines.append("  classDef accepted fill:#eef,stroke:#36c;")
-    lines.append("  classDef implemented fill:#efe,stroke:#2a2;")
-    lines.append("  classDef rejected fill:#f8f8f8,stroke:#bbb,color:#999;")
+    # Dark fills: the site is slate only and injects white label text (MIP-0068 §5.2).
+    lines.append("  classDef draft fill:#1e2129,stroke:#8fa3b0,stroke-dasharray:3 3;")
+    lines.append("  classDef accepted fill:#0b4261,stroke:#1ac5da;")
+    lines.append("  classDef implemented fill:#0f4a2e,stroke:#3ecf6e;")
+    lines.append("  classDef rejected fill:#2a2d35,stroke:#666,color:#999;")
     for num in sorted(connected):
         mip = mips[num]
         # Bare "MIP-NNNN" only — the full title is already one line up in the index table, and a
