@@ -34,7 +34,12 @@
     "skill": { "*": "allow", "mip-tasks": "ask" }
   },
   "mcp": {
-    "marola": { "type": "local", "command": ["just", "mcp-server"], "enabled": false }
+    "marola": { "type": "local", "command": ["just", "mcp-server"], "enabled": false },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": { "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}" }
+    }
   },
   "formatter": false
 }
