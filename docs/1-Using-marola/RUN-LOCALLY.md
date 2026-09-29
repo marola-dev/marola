@@ -346,6 +346,10 @@ ghcr.io -u <user> --password-stdin`):
 | `local-<sha>` | one benchmark candidate, kept whether or not it was promoted | same | amd64 |
 | `dev` / `dev-<sha>` | the literal `nix develop` shell in a container, for reading/hacking without installing Nix | `docker.yml`, `workflow_dispatch` only | amd64 |
 
+**Built with Llama.** `:local` redistributes Meta's Llama 3.2 weights under the [Llama 3.2
+Community License](https://www.llama.com/llama3_2/license/); the agreement and the Acceptable Use
+Policy ship inside the image (`ollama show marola-llama3.2 --license`).
+
 The `-<sha>` tags accumulate on every qualifying push (`local-<sha>` even for rejected candidates,
 which bundle the ~2 GB Ollama model). `ghcr-retention.yml` prunes them weekly, keeping the last 10
 per target (5 for `local`) and never touching the moving tags above, which is what everything below

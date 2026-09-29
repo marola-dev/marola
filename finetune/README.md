@@ -99,6 +99,10 @@ success.
 
 ## As an image: `ghcr.io/marola-dev/marola:local` (MIP-0008)
 
+**Built with Llama.** `:local` redistributes Meta's Llama 3.2 weights under the [Llama 3.2
+Community License](https://www.llama.com/llama3_2/license/); the agreement and the Acceptable Use
+Policy ship inside the image (`ollama show marola-llama3.2 --license`).
+
 The Tier 1 model, versioned like the code. `Dockerfile.local` is Ollama with `marola-llama3.2`
 already created from this directory's `Modelfile`; `.github/workflows/docker-local.yml` builds it
 from `main` whenever the Modelfile, the corpus, the prompts or the gate change, pushes it as

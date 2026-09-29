@@ -77,14 +77,17 @@ jobs:
           path: |
             ~/.ollama/models
             ~/.local/bin/ollama
-          key: ollama-${{ runner.os }}-${{ inputs.model }}-v1
+            ~/.local/lib/ollama
+          key: ollama-${{ runner.os }}-${{ inputs.model }}-v2
 
       - name: Install Ollama (cache miss only)
         if: steps.ollama-cache.outputs.cache-hit != 'true'
         run: |
-          mkdir -p ~/.local/bin
-          curl -fsSL https://ollama.com/download/ollama-linux-amd64.tgz | tar -xz -C /tmp
-          cp /tmp/bin/ollama ~/.local/bin/ollama
+          mkdir -p ~/.local
+          # bin/ollama needs its lib/ollama/llama-server sibling, so unpack both under ~/.local.
+          # The GPU backends are ~2 GB of the 2.1 GB and useless on a CPU runner; keep them out of the cache.
+          curl -fsSL https://ollama.com/download/ollama-linux-amd64.tar.zst | tar --zstd -x -C ~/.local
+          rm -rf ~/.local/lib/ollama/cuda_* ~/.local/lib/ollama/vulkan
 
       - name: Start Ollama and ensure the model
         run: |
