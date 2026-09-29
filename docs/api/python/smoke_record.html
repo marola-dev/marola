@@ -95,7 +95,7 @@ smoke_record    </h1>
 
                         <div class="docstring"><p>smoke_record — one <code>marola --summarize</code> run, as the JSON the map shows (MIP-0008 §5.4/§5.5).</p>
 
-<pre><code>scripts/smoke_record.py record --stdout out.txt --exit-code 0 --out-dir site-data/smoke         --run-id 123 --run-url https://github.com/…/actions/runs/123         --model llama3.2:1b --image ghcr.io/h0ffmann/marola:jvm
+<pre><code>scripts/smoke_record.py record --stdout out.txt --exit-code 0 --out-dir site-data/smoke         --run-id 123 --run-url https://github.com/…/actions/runs/123         --model llama3.2:1b --image ghcr.io/&lt;owner&gt;/marola:jvm
 scripts/smoke_record.py --self-test        # parses scripts/fixtures/smoke-stdout-*.txt (in `just quality`)
 </code></pre>
 
@@ -118,7 +118,7 @@ as broken instead of as an old panel. Standard library only.</p>
 </span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">  4</span></a><span class="sd">    scripts/smoke_record.py record --stdout out.txt --exit-code 0 --out-dir site-data/smoke \</span>
 </span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="sd">        --run-id 123 --run-url https://github.com/…/actions/runs/123 \</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a><span class="sd">        --model llama3.2:1b --image ghcr.io/h0ffmann/marola:jvm</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a><span class="sd">        --model llama3.2:1b --image ghcr.io/&lt;owner&gt;/marola:jvm</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a><span class="sd">    scripts/smoke_record.py --self-test        # parses scripts/fixtures/smoke-stdout-*.txt (in `just quality`)</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="sd">Reads the CLI's own output — the `origin -&gt;` line, the ranked list (`Report.line`), the</span>
@@ -271,7 +271,7 @@ as broken instead of as an old panel. Standard library only.</p>
 </span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a>        <span class="s2">"run_url"</span><span class="p">:</span> <span class="s2">"https://example.test/runs/1"</span><span class="p">,</span>
 </span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a>        <span class="s2">"when"</span><span class="p">:</span> <span class="s2">"2026-09-05T17:40:00Z"</span><span class="p">,</span>
 </span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a>        <span class="s2">"model"</span><span class="p">:</span> <span class="s2">"llama3.2:1b"</span><span class="p">,</span>
-</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a>        <span class="s2">"image"</span><span class="p">:</span> <span class="s2">"ghcr.io/h0ffmann/marola:jvm"</span><span class="p">,</span>
+</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a>        <span class="s2">"image"</span><span class="p">:</span> <span class="s2">"ghcr.io/marola-dev/marola:jvm"</span><span class="p">,</span>
 </span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>    <span class="p">}</span>
 </span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a>    <span class="n">r</span> <span class="o">=</span> <span class="n">record</span><span class="p">(</span><span class="n">good</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
 </span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a>    <span class="k">assert</span> <span class="n">r</span><span class="p">[</span><span class="s2">"ok"</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s2">"errors"</span><span class="p">]</span>
@@ -674,7 +674,7 @@ as broken instead of as an old panel. Standard library only.</p>
 </span><span id="self_test-157"><a href="#self_test-157"><span class="linenos">157</span></a>        <span class="s2">"run_url"</span><span class="p">:</span> <span class="s2">"https://example.test/runs/1"</span><span class="p">,</span>
 </span><span id="self_test-158"><a href="#self_test-158"><span class="linenos">158</span></a>        <span class="s2">"when"</span><span class="p">:</span> <span class="s2">"2026-09-05T17:40:00Z"</span><span class="p">,</span>
 </span><span id="self_test-159"><a href="#self_test-159"><span class="linenos">159</span></a>        <span class="s2">"model"</span><span class="p">:</span> <span class="s2">"llama3.2:1b"</span><span class="p">,</span>
-</span><span id="self_test-160"><a href="#self_test-160"><span class="linenos">160</span></a>        <span class="s2">"image"</span><span class="p">:</span> <span class="s2">"ghcr.io/h0ffmann/marola:jvm"</span><span class="p">,</span>
+</span><span id="self_test-160"><a href="#self_test-160"><span class="linenos">160</span></a>        <span class="s2">"image"</span><span class="p">:</span> <span class="s2">"ghcr.io/marola-dev/marola:jvm"</span><span class="p">,</span>
 </span><span id="self_test-161"><a href="#self_test-161"><span class="linenos">161</span></a>    <span class="p">}</span>
 </span><span id="self_test-162"><a href="#self_test-162"><span class="linenos">162</span></a>    <span class="n">r</span> <span class="o">=</span> <span class="n">record</span><span class="p">(</span><span class="n">good</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
 </span><span id="self_test-163"><a href="#self_test-163"><span class="linenos">163</span></a>    <span class="k">assert</span> <span class="n">r</span><span class="p">[</span><span class="s2">"ok"</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s2">"errors"</span><span class="p">]</span>

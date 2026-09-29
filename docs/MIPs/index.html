@@ -3614,7 +3614,7 @@ as an unfilled placeholder).</p>
 <tr>
 <td><a href="MIP-0065-ci-cd-on-github-hosted-runners/">MIP-0065</a></td>
 <td>CI/CD on GitHub-hosted runners: the nine jobs routed to the maintainer's desktop through <code>vars.CI_RUNNER || 'self-hosted'</code> (#340, a private-repo minutes fix) move to <code>ubuntu-latest</code> now that the repo is public; only <code>marola-sea-publish</code> (GPU) stays self-hosted, enforced by a <code>quality-other</code> guard. Lint takes its tools from <code>nix develop .#lint</code>, sbt jobs keep <code>setup-java</code>. The Docker workflows switch back on under <code>ghcr.io/marola-dev</code>, four broken workflows are fixed or removed, and <code>docs/CI-CD.md</code> describes the whole flow. Lands after MIP-0064; the bot's own deploy is left to a Phase 2 MIP</td>
-<td>Partially implemented (task 1 of 4 — #481, <code>MIP-0065.tasks.md</code>)</td>
+<td>Partially implemented (tasks 1–2 of 4 — #481 #482, <code>MIP-0065.tasks.md</code>)</td>
 <td>2026-09-28</td>
 <td>L — nine jobs move runner, one toolchain moves to Nix, three workflows back on, a guard script and a doc; no Scala</td>
 <td>infra/dev-loop; cost/ops</td>

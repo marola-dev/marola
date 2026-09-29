@@ -3631,8 +3631,8 @@ Tiles come from OpenStreetMap's public servers, which is fine for a link shared 
 not for a public launch. Switch <code>tiles</code> in <code>site/areas.json</code> to a Protomaps/MapTiler source
 before that (MIP-0005 §8).</p>
 <h2 id="10-docker-only-no-nix-no-sbt-no-ollama-install-mip-0008">10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)<a class="headerlink" href="#10-docker-only-no-nix-no-sbt-no-ollama-install-mip-0008" title="Permanent link">&para;</a></h2>
-<p><strong>Published tags</strong> (<code>ghcr.io/h0ffmann/marola:&lt;tag&gt;</code>; this repo is private, so pulling needs
-<code>docker login ghcr.io</code> first: a GitHub PAT with <code>read:packages</code>, or <code>gh auth token | docker login
+<p><strong>Published tags</strong> (<code>ghcr.io/marola-dev/marola:&lt;tag&gt;</code>; until the package is made public (MIP-0065 §4.3), pulling
+needs <code>docker login ghcr.io</code> first: a GitHub PAT with <code>read:packages</code>, or <code>gh auth token | docker login
 ghcr.io -u &lt;user&gt; --password-stdin</code>):</p>
 <table>
 <thead>
@@ -3688,6 +3688,9 @@ ghcr.io -u &lt;user&gt; --password-stdin</code>):</p>
 </tr>
 </tbody>
 </table>
+<p><strong>Built with Llama.</strong> <code>:local</code> redistributes Meta's Llama 3.2 weights under the <a href="https://www.llama.com/llama3_2/license/">Llama 3.2
+Community License</a>; the agreement and the Acceptable Use
+Policy ship inside the image (<code>ollama show marola-llama3.2 --license</code>).</p>
 <p>The <code>-&lt;sha&gt;</code> tags accumulate on every qualifying push (<code>local-&lt;sha&gt;</code> even for rejected candidates,
 which bundle the ~2 GB Ollama model). <code>ghcr-retention.yml</code> prunes them weekly, keeping the last 10
 per target (5 for <code>local</code>) and never touching the moving tags above, which is what everything below
@@ -3702,7 +3705,7 @@ docker<span class="w"> </span>compose<span class="w"> </span>--profile<span clas
 <p><code>.env</code> is read if present (origin, provider switches; <code>.env.example</code>) and never copied into
 the image; <code>MAROLA_LOCAL_LLM_MODEL=llama3.2:1b</code> picks the small model from §2. Without compose,
 against an Ollama already running on the host:</p>
-<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>--network<span class="w"> </span>host<span class="w"> </span>ghcr.io/h0ffmann/marola:jvm<span class="w"> </span>--summarize<span class="w"> </span>--lat<span class="w"> </span>-27.6733<span class="w"> </span>--lon<span class="w"> </span>-48.47
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>--network<span class="w"> </span>host<span class="w"> </span>ghcr.io/marola-dev/marola:jvm<span class="w"> </span>--summarize<span class="w"> </span>--lat<span class="w"> </span>-27.6733<span class="w"> </span>--lon<span class="w"> </span>-48.47
 </code></pre></div>
 <p><code>:local</code> is <code>finetune/README.md</code>'s "As an image". <code>just docker-build</code> builds any target here and
 <code>just docker-run -- …</code> runs it with <code>--network host</code>. The
@@ -3711,7 +3714,7 @@ Alpine, ~70 MB + the 55 MB jar), <code>native-build</code> → <code>native</cod
 <code>nix develop</code> in an image, for reading or hacking on the code without installing Nix
 (<code>docker run -it marola:dev bash</code>). Lint: <code>just quality</code> runs hadolint on it (from the lint lab).</p>
 <p><strong>Native binary (GraalVM).</strong> The same CLI compiled ahead of time: one 69 MB executable, no JVM,
-~75 MB of RSS, on a distroless image (<code>ghcr.io/h0ffmann/marola:native</code>, amd64). Everything
+~75 MB of RSS, on a distroless image (<code>ghcr.io/marola-dev/marola:native</code>, amd64). Everything
 <code>just run</code> does works, <code>--summarize</code> and the reviewer included (verified live 2026-09-05 with
 <code>llama3.2:1b</code>); the MCP server stays on the JVM image. Locally:</p>
 <div class="highlight"><pre><span></span><code>just<span class="w"> </span>native-image<span class="w">                                            </span><span class="c1"># GraalVM from nixpkgs, sbt cli/nativeImage → cli/target/marola (~1 min)</span>
