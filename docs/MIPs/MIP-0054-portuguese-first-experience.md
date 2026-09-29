@@ -2,7 +2,8 @@
 
 | | |
 |---|---|
-| **Status** | Draft — **release blocker: Release 0 (MIP-0033) does not ship until this is Implemented** |
+| **Status** | Accepted 2026-09-28 for tasks 1–3 of the task list: the site's half (catalog, language toggle, every string the page builds) and note codes on the board. §5.2–§5.4 and §5.5's location half are listed there as later — **release blocker: Release 0 (MIP-0033) does not ship until this is Implemented** |
+| **Tasks** | [`MIP-0054.tasks.md`](./MIP-0054.tasks.md) — three stacked PRs this round, the third in Scala |
 | **Author** | Claude (Fable 5.1), for M. Hoffmann |
 | **Created** | 2026-09-12 |
 | **Phase** | 0 for the site, CLI, MCP and corpus (every surface that exists); the Telegram reply (Phase 1, MIP-0002, not built) inherits the same catalog. No paid resource |
@@ -10,7 +11,7 @@
 | **Effort** | XL — a message catalog in two runtimes (Scala for CLI/MCP/board, JS for the site), a board-contract change (codes, not English prose), a pt-BR corpus with per-file sources, a pt-BR DSPy recompile of both prompts, a deterministic language guard, a rewrite of `scripts/site_check.js`'s copy assertions, and a language/location precedence in the client. No new dependency |
 | **Gain** | `user value` — the audience is Brazilian and every surface but the safety footer answers in English (§2); `infra/dev-loop` — one catalog file per language instead of strings scattered over `Swimability`, `Report`, `app.js` and the prompts |
 | **Effort vs Gain** | `do next` — a declared release blocker, and §4.3 shows the default model can do it; nothing in it waits on another MIP |
-| **Depends on** | Nothing must merge first. MIP-0050's evaluation arm would give a second pt-BR model number, but `llama3.2` (today's default) is officially Portuguese (§4.3). MIP-0046 and MIP-0042 edit the same site files and `site_check.js`: land this before the `/v1/` freeze or rebase over it. No Phase 1 gate; no cost gate |
+| **Depends on** | For the site's toggle, MIP-0044 §5.7's menu: the header keeps four controls, so `[pt][en]` lives in the menu's prefs group and task 1 waits for `0044-T1`. Otherwise nothing must merge first. MIP-0050's evaluation arm would give a second pt-BR model number, but `llama3.2` (today's default) is officially Portuguese (§4.3). MIP-0046 and MIP-0042 edit the same site files and `site_check.js`: land this before the `/v1/` freeze or rebase over it. No Phase 1 gate; no cost gate |
 | **Blocked by** | none |
 | **Risk** | The UI turns Portuguese and the model keeps answering in English — mixed-language output under a Portuguese header. §5.4's guard makes that show the deterministic line instead of English prose; §7's benchmark arm measures the rate per model before the default is chosen |
 | **Cost so far** | — |
@@ -63,7 +64,7 @@ tooltip:  Praia da Joaquina — 55/100 às 10:00
 ```
 
 `PRÓPRIA`/`IMPRÓPRIA`, beach and provider names keep their case (`style.css:130-131`); what marola
-says is lowercase. **The toggle** `[pt] [en]` is a two-`<button>` segmented control like `#days`
+says is lowercase. **The toggle** `[pt] [en]` (in MIP-0044 §5.7's menu, not the header row drawn above, which would be a sixth control) is a two-`<button>` segmented control like `#days`
 (`index.html:38`), `aria-pressed` on the active one, never `<a href="#">` (`site_check.js:339`).
 Flipping it re-renders in place, stores the choice and sets `?lang=` so a shared link renders as seen.
 
@@ -135,6 +136,17 @@ position. Not verified against MDN this session (Not checked).
 ## 5. Design
 
 ### 5.1 One catalog, two runtimes, codes on the wire
+
+**Amended at acceptance (2026-09-28): the site's catalog is a JS object, not a fetched file.**
+`site/static/ui.js` (the file MIP-0044 §5.7 adds for the menu) holds `I18N = {'pt-BR': {…}, en:
+{…}}` with the flat keys and `{0}` placeholders described below, and `t(key, args)` reads it. The
+paragraph below had `SiteBuilder` copy `core`'s JSON to `site/dist/data/i18n/` for `app.js` to fetch.
+The object ships first because it costs no request before the first render (a fetch means a flash of
+the wrong language), it opens from `file://`, and it needs no Scala, so the site's half is verifiable
+without a JDK. The two runtimes overlap only on the `note.*` keys and the three level enums; until
+task 4 decides who generates whom, `scripts/site_check.js` holds the site's copy to the codes the
+board emits.
+
 `core/src/main/resources/i18n/{pt-BR,en}.json`: flat `key → string`, `{0}` placeholders.
 `marola.i18n.Messages(lang)` renders them in `core`; `Lang { PtBr, En }` moves from `SafetyFooter` to
 `marola.i18n` (footer API unchanged). `SiteBuilder` copies both files to `site/dist/data/i18n/`;
@@ -237,6 +249,9 @@ failure mode: the only model-authored text is now also checked for language.
 - **Recompiled prompts are new prompts.** MIP-0040's "the reviewer was never validated" applies twice.
   **Small models, small margins**: with `smollm2:360m` the fallback line shows often, the design
   working, as the card predicts (§4.3).
+- **Mixed language between tasks 1 and 3.** Once the chrome is Portuguese and before the board
+  carries codes, the "why" notes, the water summary's month and the lore stay English under
+  Portuguese labels. Task 3 closes the notes; the month and the lore wait for the later tasks.
 - **Outside coverage stays honest and unhelpful** (a visitor in Recife sees Salvador and a line saying
   so; the fix is a provider, MIP-0031's shape). **Storage can vanish** (private tabs, blocked cookies):
   the language falls to `navigator.languages`, one tag in Safari; worst case one extra click. **A
@@ -258,7 +273,11 @@ failure mode: the only model-authored text is now also checked for language.
 - **Which model backs the pt-BR default in Release 0?** `llama3.2` by the card; the benchmark decides.
   If it misses a question, does the release ship with the fallback line or wait for 22/22?
 - **A native-speaker pass** on `pt-BR.json` and the corpus, the author is a model, §3's strings are
-  proposals. Who reviews, and does it gate the merge or the release?
+  proposals. Who reviews, and does it gate the merge or the release? Proposed at acceptance: it
+  gates the release, not task 1's merge, since today's page is English only.
+- **Which catalog is canonical for the overlap?** (added at acceptance) The site's JS object and
+  `core`'s JSON both hold `note.*` and the level enums from task 4 on. Options: `SiteBuilder` writes
+  that block of `ui.js` from the Scala catalog, or a check compares the two. Task 4 decides.
 - **Does `notes` (English prose) stay on the wire**, or drop at `schema` 3 once `/v1/` is frozen
   (MIP-0042)?
 - **Telegram's language** (MIP-0002, unbuilt): its user `language_code` as precedence (3), `/lang` as
@@ -288,6 +307,10 @@ All 2026-09-12.
 - ip-api.com docs (https://ip-api.com/docs): "Go pro" lists "unlimited queries, SSL and commercial use", i.e. the free tier is HTTP-only; the CLI calls it over `http://` (`IpGeolocation.scala:62`).
 - ipinfo.io developers (https://ipinfo.io/developers): "JSONP and CORS are supported"; the documented *Lite* response has country fields and no `loc`.
 - This repo: `index.html:2,7,14,34,38-39,46,64,73`; `app.js:87,94,349,397,402-403,538-545`; `site_check.js:69,169,207-211,239,339,347-356`; `style.css:121-133`; `Swimability.scala:76-179`; `Report.scala:42-150`; `OceanQa.scala:21-104`; `SafetyFooter.scala:8-22`; `LocalLlmClient.scala:29`; `train_lora.py:64-89`; `IpGeolocation.scala:28-70`; `Main.scala:26-77`; `board.schema.json:90-133`; `strip_external_scripts.py:1-14`; `areas.json` (`tz` per area); both compiled prompts (English instructions, 3 English demos each); seven English corpus files; `grep -rn 'i18n|locale|pt-BR'` → only `SafetyFooter`, `<html lang="en">` and a `repo_stats.py` flag.
+
+- **At acceptance, 2026-09-28**: the line numbers above are from 2026-09-12 and have moved (`app.js`
+  is now 485 lines); the strings are the same. `index.html`'s header holds five controls and the
+  nav six items (MIP-0044 §5 records both), which is why the toggle goes into the menu.
 
 ### Not checked
 - **No model was run in Portuguese.** §4.3 quotes cards; §7's arm is the measurement.
