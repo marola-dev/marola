@@ -2,14 +2,15 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Partially implemented (§5.6 — #300, #306, since rebuilt as marola.dev/docs by MIP-0064); accepted 2026-09-28 for tasks 1–2 of the task list (the §5.7 menu, the §5.1 page generator). An interim hand-written section nav (#321, #324) and `about.html` (#381) shipped before §5.1's generator existed |
+| **Tasks** | [`MIP-0044.tasks.md`](./MIP-0044.tasks.md) — two stacked PRs this round; §5.2–§5.4 listed there as later, unfiled |
 | **Author** | Claude Opus 5, for M. Hoffmann (request of 2026-09-07, verbatim: "create a MIP for 44 site sections (besides map, map is just a section in the website, explode section for now news rss about dev (markdown blog) contact donate)", read together with the same session's earlier "news, docs, donate, about, rss, contact sections should be added to the site (map in one of the sections) … it could be possible to have a blog style, and read directly posts from MD files, with direct code snippets" / "be careful for not doing too much promotion" and "there is a way to integrate my docs <> wiki <> docs website, would be good to have python docs and scala docs also added in this website, this area may be called dev") |
 | **Created** | 2026-09-07 |
 | **Phase** | 3 — `ARCHITECTURE.md` §11 item 4 puts `.github/workflows/site.yml` in Phase 3 as "the first deploy artefact … already here and free". Everything here rides that same workflow: no server, no cloud account, no per-visitor cost. No Phase 1 or Phase 2 prerequisite; §9 rejects the one idea (a contact form) that would have needed a backend and thus jumped the gate |
 | **Related** | MIP-0005 (the static site and its "no templating engine, no build step" constraint — Implemented; this MIP is the first change to that constraint and argues it explicitly), MIP-0034 (RSS plumbing: §5.6 writes `feed.xml` into `site/dist` and adds one `<link rel="alternate">`, with **no page and no nav** — this MIP's `/feeds/` section is where that plumbing becomes something a human can read), MIP-0018 (self-documentation: its §5.3 exports posts to an *external* blog repo whose technology is its own §11 open question — this MIP supersedes that destination, see §5.3), MIP-0033 §5.1 (repo-public checklist — gates §5.5's `docs/` mirror only), MIP-0008 §5.5 + `ci.yml` (the `site-data` orphan-branch mechanic this MIP reuses for generated API docs), MIP-0022 (the safety footer, which §6 makes the generator append), MIP-0009 (`scripts/site_check.js`, the no-browser page harness this MIP extends), `docs/4-Research-and-plans/ROADMAP.md` §7 (no K-row covers this; checked), `docs/4-Research-and-plans/FUTURE-WORK.md` (no section covers this; checked) |
 | **Effort** | XL — a page generator plus a nav plus a markdown pipeline plus **two** documentation toolchains (JVM `sbt doc`, a new Python `pdoc` in `flake.nix`) plus a new CI workflow, and it edits five load-bearing pieces of existing machinery at once: `site.yml`'s publish allowlist, `scripts/stamp_site_version.sh` (hard-coded to `index.html`), `scripts/site_check.js`, `SiteBuilder.copyStatic`, and `index.html`'s CSP. Also the first third-party JVM dependency the site build has ever had (`org.commonmark`, §4.1) |
 | **Gain** | user value (a visitor can find out what marola is, who runs it, and how to reach them — today the site answers none of those); community/outreach (MIP-0018's weekly post needs a place to land, and MIP-0034's feed needs a page to be discoverable from); infra/dev-loop (generated Scala/Python API docs that stay honest because CI regenerates them, instead of a wiki that rots) |
-| **Effort vs Gain** | Per §5 item, not one call. `do next` for §5.1–§5.2 (the generator, nav, `/about/` with contact, `/support/`) — small, self-contained, no new dependency except the layout code itself. `do next` for §5.3 (news + dev blog) once §5.1 lands. `do when MIP-0034 lands` for §5.4 (`/feeds/`) — it has literally nothing to link until then. `do when MIP-0033 §5.1 lands` for §5.5's `docs/` mirror. `cheap win` for §5.6's Scala API docs (`sbt doc` already works, verified §4.3); `expensive, defer` for §5.6's Python API docs — verified in §4.4 that the honest output is thin |
+| **Effort vs Gain** | Per §5 item, not one call. `do next` for §5.7 (the menu, added at acceptance: the map's header does not fit a phone today). `do next` for §5.1–§5.2 (the generator, nav, `/about/` with contact, `/support/`) — small, self-contained, no new dependency except the layout code itself. `do next` for §5.3 (news + dev blog) once §5.1 lands. `do when MIP-0034 lands` for §5.4 (`/feeds/`) — it has literally nothing to link until then. `do when MIP-0033 §5.1 lands` for §5.5's `docs/` mirror. `cheap win` for §5.6's Scala API docs (`sbt doc` already works, verified §4.3); `expensive, defer` for §5.6's Python API docs — verified in §4.4 that the honest output is thin |
 | **Depends on** | **MIP-0034 must merge before the `/feeds/` section is buildable** — its §5.6 is what writes `feed.xml`; a feeds page with no feed is not a smaller version of this, it is nothing, so the edge is declared below rather than hand-waved. **MIP-0033 §5.1** (the repo-public checklist: full-history secret scan, `SECURITY.md`, `.env.example` re-read) gates §5.5's mirror of `docs/*.md` onto the public site — publishing those files *is* the same disclosure decision that checklist exists for, even though the repo's visibility flag is technically separate; this is prose-only, because §5.1 is a checklist item inside a partially-implemented MIP, not a merge a graph edge can point at. **MIP-0018** is not a blocker in either direction, but this MIP answers its §11 open question ("what is the blog repo, technically?") with "marola.dev itself" and supersedes its §5.3 blog-repo destination — coordinate before either ships. No Phase 1 gate (this is not the Telegram bot), no paid cloud resource, no API key, no server |
 | **Blocked by** | 0034 |
 | **Risk** | The site stops being a thing that can't break. Today `site/dist` is four files plus JSON and the failure mode is "the board is stale"; after this it is a generated multi-page site whose build can fail in ways that publish a *half* site — and `site.yml`'s required-files check only knows about `index.html`. The second, quieter risk: a "donate" page is the one part of this that can make marola look like it wants something, and the request itself warned against that — §5.2 keeps it to one page with no banner, no popup, no third-party widget, and the ledger the repo already publishes as its content |
@@ -194,6 +195,20 @@ problem. What it *is* is 16 MB re-uploaded on all eight scheduled deploys a day 
 only changes when Scala changes, which is why §5.6 puts it on the `site-data` branch instead.
 
 ## 5. Design
+
+**State at acceptance (2026-09-28).** Three weeks of work landed around this draft, and the design
+below is read against it:
+
+- **§5.6 shipped** as `marola.dev/docs` (#300, #306), at `/docs/` rather than `/dev/`, and MIP-0064
+  then rebuilt it as a searchable mkdocs site that also publishes `docs/*.md`. That covers what §5.5
+  wanted, so neither §5.5 nor §5.6 is a task any more.
+- **A section nav exists without §5.1's generator**: six hand-written items (`Docs`, `Alerts soon`,
+  `News soon`, `About`, `Contact soon`, `Donate soon`, #321 and #324), copied by hand into
+  `about.html` (#381). §3's five-item set is not what ships.
+- **The header carries five controls** (area, day, near me, sound, list) against the
+  `site-frontend` skill's four, and the nav wraps to two rows at 390 px: §5.7 is the fix.
+- `site.yml`'s allowlist already names `about.html`; `stamp_site_version.sh` still stamps only
+  `index.html`; `style.css` is 12,009 bytes.
 
 ### 5.1 The nav architecture: separate static pages, generated at build time
 
@@ -390,6 +405,52 @@ between an honest page and one that implies more than exists.
 `flake.nix` gains `pdoc` (a new dev-shell tool; `just quality-other` already fails rather than skips
 when a lint tool is missing, and this follows that rule).
 
+### 5.7 The nav on a phone: a disclosure menu (added at acceptance, 2026-09-28)
+
+§5.1 decided which pages exist and that each carries one nav; it said nothing about a 390 px
+screen. On a 375 × 812 viewport today the nav takes 59 px in two rows, the header 212 px with its
+five controls wrapped onto three rows, and the hour bar 61 px: the map starts at 332 px, so 41% of
+the first screen is chrome (measured in a browser, 2026-09-28). This is the front-end half of §5.1,
+and it ships before the generator because it needs none of it.
+
+**One `nav.sitenav`, two layouts.** Above 640 px it stays an inline row: section links left, a
+prefs group right. At 640 px and below it is a 44 px strip with one `menu` button, and the links
+and prefs open in a panel under it.
+
+```html
+<nav class="sitenav" aria-label="Sections">
+  <button id="menu-toggle" type="button" class="menu-toggle" aria-controls="menu"
+          aria-expanded="false"><svg class="ic" aria-hidden="true">…</svg>menu</button>
+  <div id="menu" class="menu">
+    <ul class="menu-links"><li><a href="/docs/">Docs</a></li> … <li><span aria-disabled="true">News <i>soon</i></span></li> …</ul>
+    <div class="menu-prefs"><!-- #lang (MIP-0054), #sound, #chat-toggle --></div>
+  </div>
+</nav>
+```
+
+- **The header budget.** `.controls` keeps exactly four: area, day, near me, list. `#sound` and
+  `#chat-toggle` move into `menu-prefs` with their ids unchanged, so `app.js` and `chat.js` keep
+  their wiring. MIP-0054's `[pt][en]` control lands there too. The chat toggle stops being a pill
+  floating over the map, which the skill's red-flag list names and which the card covers on a phone.
+- **Behaviour is the WAI-ARIA disclosure pattern, not a modal.** State is `aria-expanded` on the
+  button plus an `open` class on the nav, not the `hidden` attribute: `style.css`'s
+  `[hidden] { display: none !important; }` would beat the desktop rule that always shows the panel.
+  Escape and a click outside close it and return focus to the button. No focus trap.
+- **Items stay in the HTML, never built by JS,** so the page works without JS and task 2's generator
+  can take the markup over as is. Until it does, a harness assertion requires the `menu-links` block
+  of `index.html` and `about.html` to be identical: the duplication is guarded, not hoped away.
+- **The interim six items stay** until the pages behind §3's five exist (tasks 3–4). Switching is a
+  list edit; which items survive is §11's first question.
+- **`site/static/ui.js` holds the menu.** The map-behaviour story that lands first (one open sheet
+  at a time on a phone, Escape, focus return; no MIP) creates the file for its sheet registry, and
+  task 1 adds the menu and loads it from `about.html` too. It is one more same-origin request on the
+  map page, a declared exception to the skill's "zero new requests": `about.html` cannot load
+  `app.js`, whose boot fetches the board and needs Leaflet, and a copy of the menu code in each page
+  is drift the harness cannot see. `site.yml`'s allowlist and required files and
+  `stamp_site_version.sh` gain it in the PR that adds it.
+- **CSS budget.** About 32 lines, 1.2 KB, less the removed pill. Task 1 adds an assertion that
+  `style.css` stays under the skill's 15,000 bytes, so the cap becomes a gate.
+
 ## 6. Scoring / safety impact
 
 `Swimability.score` is untouched: **none**.
@@ -418,6 +479,10 @@ Unit tests to add:
 - `scripts/site_check.js` (extend), for every generated page: parses, has a title, has the
   `<link rel="alternate">`, and **no `src="http`** anywhere. Runs in `just quality-other` already.
 - `scripts/strip_external_scripts.py --self-test`: added to `quality-other`'s list.
+- §5.7, in `scripts/site_check.js`: `.controls` has exactly four children; `#menu-toggle` has
+  `aria-controls="menu"`; opening then pressing Escape closes the menu and returns focus to the
+  button; the `menu-links` blocks of `index.html` and `about.html` are identical; `style.css` is under
+  15,000 bytes. Plus screenshots at 390 px and 1280 px, menu open and closed.
 
 Live checks (commands, to run and record):
 
@@ -497,6 +562,12 @@ missing; the generated API tree contains zero third-party script tags; `just qua
   jail `--exec` fix), which is also exactly what MIP-0018's planner produces.
 - **Should `/dev/docs/` render every `docs/*.md` or a curated subset?** `FABLE_REVIEW.md` is
   internal-facing; publishing all 17 unfiltered is a decision, not a default.
+- **Which interim items survive the switch to §3's set?** (added at acceptance) `Alerts` has no page
+  in any MIP: MIP-0034 §5.2's INMET warnings are a banner on the map, not a section. Proposed: drop
+  `Alerts` when tasks 3–4 land, fold `Contact` into `/about/#contact` and `Donate` into `/support/`
+  as §5.2 already says, and keep `Docs` as a sixth item since `/docs/` is real today.
+- **The chat toggle moves into the menu** (§5.7). That changes MIP-0033 §5.2's floating placement;
+  the maintainer decides in the acceptance PR.
 - **Follow-up MIP:** the site currently has no way to say "this page is stale". Every generated page
   will carry a `generatedAt` stamp, but a *content* freshness policy (when does a news item stop
   being news, what does `/news/` show after six quiet months) is a small design of its own and
@@ -547,6 +618,12 @@ missing; the generated API tree contains zero third-party script tags; `just qua
   `origin/docs/mip-0034-rss-feeds` and `origin/mips/2026-09-07/1-mip-0034-rss-feeds`. A `git diff`
   between them shows **no difference in `docs/MIPs/MIP-0034-rss-feeds-and-content-syndication.md`**;
   the newer `mips/2026-09-07/1-…` is simply rebased onto a later `main`. Treat that one as canonical.
+
+- **At acceptance, 2026-09-28**: `git log --grep` finds #300 and #306 implementing §5.6 and MIP-0064
+  (#459–#475) rebuilding it; #321 and #324 added the six-item nav, #381 `about.html`. `style.css` is
+  12,009 bytes; `index.html`'s `.controls` holds five controls; `stamp_site_version.sh` stamps only
+  `index.html`. On marola.dev at 375 × 812 in the in-app browser, `getBoundingClientRect()` gives the
+  nav 59 px, `.bar` 212 px (`.controls` 124 px), `#hourbar` 61 px, and `#map` a top of 332 px.
 
 ### Not checked
 - Whether a `FUNDING.yml` Sponsor button renders on a **private** repository: GitHub's doc page
