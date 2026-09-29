@@ -1,0 +1,72 @@
+{
+ "schema": 1,
+ "run_id": "36501638698",
+ "run_url": "https://github.com/marola-dev/marola/actions/runs/36501638698",
+ "when": "2026-09-29T00:10:54Z",
+ "model": "llama3.2:1b",
+ "image": "ghcr.io/marola-dev/marola:jvm",
+ "lat": -27.6733,
+ "lon": -48.47,
+ "radius_km": 15,
+ "origin_source": "--lat/--lon flags",
+ "exit_code": 0,
+ "ok": false,
+ "water": "IMA/SC",
+ "ranked": [
+  {
+   "rank": 1,
+   "score": 75,
+   "name": "Praia da Armação",
+   "distance_km": 7.9,
+   "when": "Tue 29 Sep, 07:00"
+  },
+  {
+   "rank": 2,
+   "score": 75,
+   "name": "Praia da Joaquina",
+   "distance_km": 4.6,
+   "when": "Tue 29 Sep, 07:00"
+  },
+  {
+   "rank": 3,
+   "score": 75,
+   "name": "Praia do Rio Tavares",
+   "distance_km": 2.1,
+   "when": "Tue 29 Sep, 07:00"
+  },
+  {
+   "rank": 4,
+   "score": 75,
+   "name": "Praia do Gravatá",
+   "distance_km": 7.6,
+   "when": "Tue 29 Sep, 07:00"
+  },
+  {
+   "rank": 5,
+   "score": 65,
+   "name": "Praia do Morro das Pedras",
+   "distance_km": 5.1,
+   "when": "Tue 29 Sep, 14:00"
+  },
+  {
+   "rank": 6,
+   "score": 65,
+   "name": "Praia do Campeche",
+   "distance_km": 2.1,
+   "when": "Tue 29 Sep, 14:00"
+  }
+ ],
+ "top_pick": {
+  "rank": 1,
+  "score": 75,
+  "name": "Praia da Armação",
+  "distance_km": 7.9,
+  "when": "Tue 29 Sep, 07:00"
+ },
+ "draft": null,
+ "review": null,
+ "errors": [
+  "(LLM call failed, showing numbers above only: Failure(marola.http.Http$HttpError: HTTP 500 for http://localhost:11434/v1/chat/completions: {\"error\":{\"message\":\"error starting llama-server: llama-server binary not found (checked: /home/runner/.local/bin/llama-server, /home/runner/.local/lib/ollama/llama-server, /home/runner/.local/bin/build/lib/ollama/llama-server, /home/runner/.local/bin/dist/linux-amd64/lib/ollama/llama-server, /home/runner/.local/bin/dist/linux_amd64/lib/ollama/llama-server, /home/runner/work/marola/marola/build/lib/ollama/llama-server, /home/runner/work/marola/marola/dist/linux-amd64/lib/ollama/llama-server, /ho))"
+ ],
+ "stdout": "Picked up JAVA_TOOL_OPTIONS: -XX:+UseSerialGC -XX:MaxRAMPercentage=75 -XX:TieredStopAtLevel=1 --sun-misc-unsafe-memory-access=allow\nmarola :: the ocean intelligence layer (POC) — first case: best hour tomorrow to swim nearby\nconfig -> telegram=unset llm=http://localhost:11434/v1 llama3.2:1b embed=llama3.2 knowledge=./knowledge -> ./data/knowledge-index.json lore=on ask=General>=0.0 origin=auto radius=15km water=Auto facilities=Overpass sightings=./data/sightings.jsonl vision=llava mlflow=unset(experiment=marola) traces=Off\norigin -> lat=-27.6733, lon=-48.4700 (radius 15km, source: --lat/--lon flags)\nwater quality -> IMA/SC\n 1. [ 75/100] Praia da Armação       (7.9km)  Tue 29 Sep, 07:00  |  water: no data  |  20.1°C, 12km/h, 0.6m  |  jellyfish: Moderate  |  whales: High  |  choppy (0.6m waves), some jellyfish likelihood  · facilities: no data\n  trails: no data\n 2. [ 75/100] Praia da Joaquina      (4.6km)  Tue 29 Sep, 07:00  |  water: no data  |  20.1°C, 10km/h, 0.7m  |  jellyfish: Moderate  |  whales: High  |  choppy (0.7m waves), some jellyfish likelihood  · facilities: no data\n  trails: no data\n 3. [ 75/100] Praia do Rio Tavares   (2.1km)  Tue 29 Sep, 07:00  |  water: no data  |  20.1°C, 10km/h, 0.7m  |  jellyfish: Moderate  |  whales: High  |  choppy (0.7m waves), some jellyfish likelihood  · lifeguard post: yes\n  trails: no data\n 4. [ 75/100] Praia do Gravatá       (7.6km)  Tue 29 Sep, 07:00  |  water: no data  |  20.1°C, 10km/h, 0.7m  |  jellyfish: Moderate  |  whales: High  |  choppy (0.7m waves), some jellyfish likelihood  · facilities: no data\n  trails nearby: Caminho dos Pescadores (1.1km, no difficulty data)\n 5. [ 65/100] Praia do Morro das Pedras (5.1km)  Tue 29 Sep, 14:00  |  water: no data  |  20.0°C, 23km/h, 0.9m  |  jellyfish: Low  |  whales: Moderate  |  choppy (0.9m waves), breezy (23km/h), 90% chance of rain  · facilities: no data\n  trails: no data\n 6. [ 65/100] Praia do Campeche      (2.1km)  Tue 29 Sep, 14:00  |  water: no data  |  20.0°C, 23km/h, 0.9m  |  jellyfish: Low  |  whales: Moderate  |  choppy (0.9m waves), breezy (23km/h), 90% chance of rain  · parking nearby: 1\n  trails: no data\n\nTop pick — Praia da Armação, Tue 29 Sep, 07:00-08:00\n  Water quality   no data\n                  Source: IMA/SC\n  Sea             20.1°C, waves 0.6m every 6s from the E, swell 0.6m/5s, current 0.5 km/h\n  Tide            high 02:00 (+0.3m), low 09:00 (-0.3m), high 14:00 (+0.1m), low 21:00 (-0.4m) (hourly resolution, ±30 min)\n  Air             20°C, wind 12 km/h from the N, UV 0, 57% chance of rain\n  Jellyfish       Moderate — some warm-calm signals present; worth a look from the sand\n  Whales          High at this hour; best daylight odds High at 06:00 — humpback season\n\nAsking llama3.2:1b to summarize the top pick (this may take a while)...\n(LLM call failed, showing numbers above only: Failure(marola.http.Http$HttpError: HTTP 500 for http://localhost:11434/v1/chat/completions: {\"error\":{\"message\":\"error starting llama-server: llama-server binary not found (checked: /home/runner/.local/bin/llama-server, /home/runner/.local/lib/ollama/llama-server, /home/runner/.local/bin/build/lib/ollama/llama-server, /home/runner/.local/bin/dist/linux-amd64/lib/ollama/llama-server, /home/runner/.local/bin/dist/linux_amd64/lib/ollama/llama-server, /home/runner/work/marola/marola/build/lib/ollama/llama-server, /home/runner/work/marola/marola/dist/linux-amd64/lib/ollama/llama-server, /ho))\n\n🌊 Did you know? Below about 200 metres no sunlight reaches, yet the deep sea is far from dark: most animals living there make their own light. Bioluminescence is the rule rather than the exception in the largest habitat on Earth. [source: https://en.wikipedia.org/wiki/Bioluminescence]\n"
+}
