@@ -10,9 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://marola.dev/docs/MIPs/MIP-0025.tasks/">
+        <link rel="canonical" href="https://marola.dev/docs/3-Working-on-the-repo/CI-CD/">
       
       
+        <link rel="prev" href="../AGENT-SKILLS/">
+      
+      
+        <link rel="next" href="../DEV-FLOW/">
       
       
         
@@ -23,7 +27,7 @@
     
     
       
-        <title>MIP-0025 tasks - marola.dev docs</title>
+        <title>CI/CD - marola.dev docs</title>
       
     
     
@@ -76,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mip-0025-tasks" class="md-skip">
+        <a href="#cicd" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              MIP-0025 tasks
+              CI/CD
             
           </span>
         </div>
@@ -558,18 +562,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -590,7 +596,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -608,7 +614,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../3-Working-on-the-repo/AGENT-SKILLS/" class="md-nav__link">
+      <a href="../AGENT-SKILLS/" class="md-nav__link">
         
   
   
@@ -633,10 +639,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../3-Working-on-the-repo/CI-CD/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -652,6 +685,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-a-change-reaches-maroladev" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How a change reaches marola.dev
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The workflows
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-self-hosted-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The self-hosted rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-maintainers-manual-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The maintainer's manual settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -664,7 +761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
+      <a href="../DEV-FLOW/" class="md-nav__link">
         
   
   
@@ -692,7 +789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../3-Working-on-the-repo/GEMINI-CODE-ASSIST/" class="md-nav__link">
+      <a href="../GEMINI-CODE-ASSIST/" class="md-nav__link">
         
   
   
@@ -720,7 +817,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../3-Working-on-the-repo/ISSUE-FLOW/" class="md-nav__link">
+      <a href="../ISSUE-FLOW/" class="md-nav__link">
         
   
   
@@ -748,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../3-Working-on-the-repo/SELF-DOCUMENTING/" class="md-nav__link">
+      <a href="../SELF-DOCUMENTING/" class="md-nav__link">
         
   
   
@@ -1080,7 +1177,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../MIPs/" class="md-nav__link">
         
   
   
@@ -1108,7 +1205,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
         
   
   
@@ -1136,7 +1233,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
         
   
   
@@ -1164,7 +1261,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
         
   
   
@@ -1192,7 +1289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
         
   
   
@@ -1220,7 +1317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0005-map-and-static-site/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0005-map-and-static-site/" class="md-nav__link">
         
   
   
@@ -1248,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0006-live-look-user-cameras/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0006-live-look-user-cameras/" class="md-nav__link">
         
   
   
@@ -1276,7 +1373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0007-time-series-foundation-models/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0007-time-series-foundation-models/" class="md-nav__link">
         
   
   
@@ -1304,7 +1401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
         
   
   
@@ -1332,7 +1429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
         
   
   
@@ -1360,7 +1457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
         
   
   
@@ -1388,7 +1485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0011-claude-code-best-practices/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0011-claude-code-best-practices/" class="md-nav__link">
         
   
   
@@ -1416,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
         
   
   
@@ -1444,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0013-opencode-tryout/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0013-opencode-tryout/" class="md-nav__link">
         
   
   
@@ -1472,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0014-marola-book/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0014-marola-book/" class="md-nav__link">
         
   
   
@@ -1500,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0015-interacao-swim-matching/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0015-interacao-swim-matching/" class="md-nav__link">
         
   
   
@@ -1528,7 +1625,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0016-water-quality-map-markers/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0016-water-quality-map-markers/" class="md-nav__link">
         
   
   
@@ -1556,7 +1653,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0017-agentic-tooling-survey/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0017-agentic-tooling-survey/" class="md-nav__link">
         
   
   
@@ -1584,7 +1681,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
         
   
   
@@ -1612,7 +1709,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
         
   
   
@@ -1640,7 +1737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0020-instagram-bot-account/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0020-instagram-bot-account/" class="md-nav__link">
         
   
   
@@ -1668,7 +1765,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0021-beach-accessibility/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0021-beach-accessibility/" class="md-nav__link">
         
   
   
@@ -1696,7 +1793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0022-safety-answer-footer/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0022-safety-answer-footer/" class="md-nav__link">
         
   
   
@@ -1724,7 +1821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
         
   
   
@@ -1752,7 +1849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0025-marola-sea-domain-model/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0025-marola-sea-domain-model/" class="md-nav__link">
         
   
   
@@ -1780,7 +1877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0029-ocean-layer-positioning/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0029-ocean-layer-positioning/" class="md-nav__link">
         
   
   
@@ -1808,7 +1905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0030-coastal-trails/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0030-coastal-trails/" class="md-nav__link">
         
   
   
@@ -1836,7 +1933,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0031-water-quality-inea-inema/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0031-water-quality-inea-inema/" class="md-nav__link">
         
   
   
@@ -1864,7 +1961,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0032-model-strategy-benchmark-matrix/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0032-model-strategy-benchmark-matrix/" class="md-nav__link">
         
   
   
@@ -1892,7 +1989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0033-release-0/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0033-release-0/" class="md-nav__link">
         
   
   
@@ -1920,7 +2017,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0034-rss-feeds-and-content-syndication/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0034-rss-feeds-and-content-syndication/" class="md-nav__link">
         
   
   
@@ -1948,7 +2045,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0035-map-plugin-api/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0035-map-plugin-api/" class="md-nav__link">
         
   
   
@@ -1976,7 +2073,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0036-marola-advertising-action/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0036-marola-advertising-action/" class="md-nav__link">
         
   
   
@@ -2004,7 +2101,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0037-map-pwa/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0037-map-pwa/" class="md-nav__link">
         
   
   
@@ -2032,7 +2129,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0038-forecast-model-spread/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0038-forecast-model-spread/" class="md-nav__link">
         
   
   
@@ -2060,7 +2157,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0039-deterministic-fact-guard/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0039-deterministic-fact-guard/" class="md-nav__link">
         
   
   
@@ -2088,7 +2185,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
         
   
   
@@ -2116,7 +2213,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0041-soft-book-ingestion/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0041-soft-book-ingestion/" class="md-nav__link">
         
   
   
@@ -2144,7 +2241,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0042-map-v2-live-not-static/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0042-map-v2-live-not-static/" class="md-nav__link">
         
   
   
@@ -2172,7 +2269,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
         
   
   
@@ -2200,7 +2297,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0044-site-sections/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0044-site-sections/" class="md-nav__link">
         
   
   
@@ -2228,7 +2325,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
         
   
   
@@ -2256,7 +2353,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
         
   
   
@@ -2284,7 +2381,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0047-desmos-equation-art/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0047-desmos-equation-art/" class="md-nav__link">
         
   
   
@@ -2312,7 +2409,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0048-scaling-marola-sea/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0048-scaling-marola-sea/" class="md-nav__link">
         
   
   
@@ -2340,7 +2437,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
         
   
   
@@ -2368,7 +2465,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0050-brazilian-llms/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0050-brazilian-llms/" class="md-nav__link">
         
   
   
@@ -2396,7 +2493,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0051-wave-model-ensemble/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0051-wave-model-ensemble/" class="md-nav__link">
         
   
   
@@ -2424,7 +2521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0052-wave-model-compute/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0052-wave-model-compute/" class="md-nav__link">
         
   
   
@@ -2452,7 +2549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0053-learned-local-correction/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0053-learned-local-correction/" class="md-nav__link">
         
   
   
@@ -2480,7 +2577,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0054-portuguese-first-experience/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0054-portuguese-first-experience/" class="md-nav__link">
         
   
   
@@ -2508,7 +2605,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
         
   
   
@@ -2536,7 +2633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
         
   
   
@@ -2564,7 +2661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
         
   
   
@@ -2592,7 +2689,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
         
   
   
@@ -2620,7 +2717,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0059-jev-typed-decisions/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0059-jev-typed-decisions/" class="md-nav__link">
         
   
   
@@ -2648,7 +2745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0060-open-code-review-on-ready/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0060-open-code-review-on-ready/" class="md-nav__link">
         
   
   
@@ -2676,7 +2773,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0062-ressaca-hazard/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0062-ressaca-hazard/" class="md-nav__link">
         
   
   
@@ -2704,7 +2801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
         
   
   
@@ -2732,7 +2829,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
         
   
   
@@ -2760,7 +2857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
         
   
   
@@ -2788,7 +2885,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0066-opt-in-dev-containers/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0066-opt-in-dev-containers/" class="md-nav__link">
         
   
   
@@ -2816,7 +2913,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0067-inea-multi-city-bathing-water/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0067-inea-multi-city-bathing-water/" class="md-nav__link">
         
   
   
@@ -2938,7 +3035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../MIP-0009/screenshots/" class="md-nav__link">
+      <a href="../../MIPs/MIP-0009/screenshots/" class="md-nav__link">
         
   
   
@@ -3009,10 +3106,43 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#sequencing-notes" class="md-nav__link">
+  <a href="#how-a-change-reaches-maroladev" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sequencing notes
+        How a change reaches marola.dev
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The workflows
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-self-hosted-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The self-hosted rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-maintainers-manual-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The maintainer's manual settings
       
     </span>
   </a>
@@ -3039,90 +3169,163 @@
   
 
 
-<h1 id="mip-0025-tasks">MIP-0025 tasks<a class="headerlink" href="#mip-0025-tasks" title="Permanent link">&para;</a></h1>
-<p>Written by hand, following <code>.claude/skills/mip-tasks/SKILL.md</code>'s Step 1 process. That skill has
-<code>disable-model-invocation: true</code>, so this file was produced without invoking it as a slash command;
-the process it documents was followed manually instead.</p>
-<p><strong>Before task 1: the MIP's own blocking dependency is already partially satisfied, undocumented.</strong>
-MIP-0025's own <code>Depends on</code> row says Tier 2 (QLoRA) needs to complete <em>at least one real run</em> before
-the rest is worth building. As of this session, it has: a real <code>tiny</code>-preset run (SmolLM2-360M,
-CPU, 3 epochs, <code>finetune/README.md</code>'s existing small-model ladder) completed end to end:
-<code>finetune-dataset</code> → <code>finetune-train preset=tiny --no-4bit</code> → <code>convert_lora_to_gguf.py</code> →
-<code>ollama create</code> → verified live via <code>just run -- --summarize</code> producing a real (if rough-quality)
-model reply. Nothing from that run is committed yet (<code>finetune/out/*</code> is gitignored by design, and
-the run wasn't done through this stacked-task process). Task 1 below formalizes that evidence as a
-real, committed artifact before layers 1-3 build on it.</p>
+<h1 id="cicd">CI/CD<a class="headerlink" href="#cicd" title="Permanent link">&para;</a></h1>
+<p>Every gate and every deploy is a GitHub Actions workflow under
+<a href="https://github.com/marola-dev/marola/tree/main/.github/workflows"><code>.github/workflows/</code></a>. All of
+them run on GitHub's standard <code>ubuntu-latest</code> runner except <code>marola-sea-publish</code>, which needs a GPU.
+The design behind this layout is <a href="../../MIPs/MIP-0065-ci-cd-on-github-hosted-runners/">MIP-0065</a>.</p>
+<h2 id="how-a-change-reaches-maroladev">How a change reaches marola.dev<a class="headerlink" href="#how-a-change-reaches-maroladev" title="Permanent link">&para;</a></h2>
+<p><img alt="Kroki" src="kroki-generated-9928159d-e1ab-35b4-b019-c7c535434c6d.svg" /></p>
+<p><code>site-data</code> is an orphan branch that holds only generated output. Several workflows write to it,
+all through <code>scripts/site-data-push.sh</code>, which retries when two pushes race. <code>site.yml</code> copies its
+<code>smoke/</code>, <code>coverage/</code>, <code>stats/</code> and <code>docs/</code> directories into the page on every build. The coverage,
+smoke and docs writers trigger a rebuild right away; <code>repo-stats</code> waits for the 3-hourly schedule.</p>
+<h2 id="the-workflows">The workflows<a class="headerlink" href="#the-workflows" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>#</th>
-<th>slug</th>
-<th>delivers</th>
-<th>tests (must exist before the PR)</th>
-<th>depends on</th>
+<th>Workflow</th>
+<th>Trigger</th>
+<th>Runner</th>
+<th>Gates or deploys</th>
+<th>Secrets and variables</th>
+<th>By hand</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1</td>
-<td>tier2-baseline-evidence</td>
-<td>✅ merged (PR #192): <code>finetune/README.md</code>'s Tier 2 status line updated from "written, not run" to "run, <code>tiny</code> preset verified" with the real command sequence and eval-loss numbers (3.032→2.866→2.799) from this session's run; MIP-0025's own <code>Depends on</code>/<code>Cost so far</code> rows updated to reflect it</td>
-<td>none (docs-only); this is the "doc travels with the task that changes behaviour" exception the mip-tasks skill allows for a status correction</td>
+<td><code>ci.yml</code></td>
+<td>PR; push to <code>main</code></td>
+<td><code>ubuntu-latest</code></td>
+<td>The merge gates, each run only when <code>dorny/paths-filter</code> says its inputs changed: <code>build-test</code> (scalafmt, scalafix, compile, test), <code>quality-other</code> (ruff, actionlint, hadolint, the <code>scripts/*</code> self-tests, <code>workflow_runners.py</code>), <code>docs-build</code> (<code>mkdocs --strict</code>). On <code>main</code> only: the coverage badge and <code>repo-stats</code> go to <code>site-data</code></td>
+<td><code>GITHUB_TOKEN</code></td>
+<td><code>just build &amp;&amp; just test &amp;&amp; just quality</code> locally; re-run from the Actions tab</td>
+</tr>
+<tr>
+<td><code>ci-short-circuit-pr-close.yml</code></td>
+<td>PR closed</td>
+<td><code>ubuntu-latest</code></td>
+<td>Cancels the closed PR's in-flight runs, which the concurrency group can't see</td>
+<td><code>GITHUB_TOKEN</code></td>
 <td>—</td>
 </tr>
 <tr>
-<td>2</td>
-<td>dataset-scale-layer1</td>
-<td><code>finetune/build_dataset.py</code> extended per MIP-0025 §4.3: synthetic Q/A pairs added to the existing knowledge-corpus extraction, reaching thousands of examples instead of dozens (Layer 1, Marine Corpus Domain)</td>
-<td><code>build_dataset.py</code>'s existing self-test extended: dataset size floor assertion, every synthetic example has a real <code>knowledge/*.md</code> source line it was derived from (no invented facts, per the <code>mip</code> skill's own "no unsourced text" rule applied to training data)</td>
-<td>1</td>
+<td><code>pr-body.yml</code></td>
+<td>PR opened, reopened, ready, pushed</td>
+<td><code>ubuntu-latest</code></td>
+<td>Fills the description from the commits (<code>scripts/uprd.sh</code>); skips forks and bot branches</td>
+<td><code>GITHUB_TOKEN</code></td>
+<td><code>just uprd</code></td>
 </tr>
 <tr>
-<td>3</td>
-<td>tool-call-sft-layer2</td>
-<td>A new dataset slice in <code>build_dataset.py</code> teaching the real MCP tool-call shape for <code>SwimConditionsMcpServer.scala</code>'s four tools (<code>find_nearby_beaches</code>, <code>get_swim_recommendation</code>, <code>get_water_quality</code>, <code>ask_ocean_question</code>), Layer 2, genuinely new work, nothing in <code>finetune/</code> does this today</td>
-<td>A fixture-driven test asserting the generated examples cover all four real tool names with syntactically valid call shapes (confirmed against the actual server source, not guessed)</td>
-<td>1</td>
+<td><code>api-docs.yml</code></td>
+<td>push to <code>main</code> touching Scala, <code>scripts/**.py</code>, <code>docs/**</code>, <code>mkdocs/**</code>; dispatch</td>
+<td><code>ubuntu-latest</code></td>
+<td>Builds scaladoc, pdoc and the mkdocs site (Kroki containers) into <code>docs/</code> on <code>site-data</code></td>
+<td><code>GITHUB_TOKEN</code></td>
+<td><code>gh workflow run api-docs.yml</code>; <code>just docs</code> locally</td>
 </tr>
 <tr>
-<td>4</td>
-<td>dpo-preference-data-layer3</td>
-<td>New <code>finetune/build_dpo_dataset.py</code>: preference pairs (chosen/rejected) derived from <code>core/llm/Reviewer.scala</code>'s own historical reject/revise decisions (rejected = the flawed draft, chosen = the reviewer's correction), Layer 3's data half</td>
-<td>A test against a fixture set of <code>Reviewer</code> decisions asserting one preference pair is emitted per reject/revise event, none invented when the fixture has none</td>
-<td>1</td>
+<td><code>site.yml</code></td>
+<td>every 3 h; push to <code>main</code> touching the site or pipeline; after <code>API docs</code>; dispatch</td>
+<td><code>ubuntu-latest</code></td>
+<td>Builds every area's board and <strong>deploys</strong> <code>site/dist</code> plus <code>site-data</code> to Pages (<code>github-pages</code> environment)</td>
+<td><code>GITHUB_TOKEN</code></td>
+<td><code>gh workflow run site.yml [-f area=&lt;id&gt;]</code></td>
 </tr>
 <tr>
-<td>5</td>
-<td>dpo-training-layer3</td>
-<td>New <code>finetune/train_dpo.py</code> (MIP-0025 §5's Layer 3 training half) consuming task 4's dataset; a combined SFT (tasks 2+3) + DPO (task 5) run on the <code>tiny</code> preset at minimum, extending task 1's evidence</td>
-<td><code>just benchmark</code> run against the resulting model, compared to the best kept run and the plain baseline per <code>AGENTS.md</code>'s "re-run and compare before adopting" rule (same gate <code>scripts/benchmark_gate.py</code> already applies to <code>marola-local</code>); "done" = the comparison is recorded in <code>docs/benchmarks/</code>, not just eyeballed</td>
-<td>2, 3, 4</td>
+<td><code>site-health.yml</code></td>
+<td>every 6 h; dispatch</td>
+<td><code>ubuntu-latest</code></td>
+<td>Checks what marola.dev actually serves. Doesn't block deploys: a red run means missing upstream data</td>
+<td>—</td>
+<td><code>gh workflow run site-health.yml [-f base=&lt;url&gt;]</code></td>
 </tr>
 <tr>
-<td>6</td>
-<td>hf-publish</td>
-<td>MIP-0025 §5.1's export chain: <code>peft</code> merge → <code>convert_hf_to_gguf.py</code> → quantize (Q4_K_M + Q8_0) → <code>CHECKSUMS</code> → Hugging Face <code>upload_folder</code> with a model card (base model, training-data description, <code>docs/benchmarks/</code> numbers, the IMPRÓPRIA safety note from §6 verbatim); naming per §5.1(3) (a Llama-based model needs the <code>Llama-</code> name prefix; <code>tiny</code>/<code>small</code> presets use ungated bases with no such constraint — confirm which base task 5 actually used before naming)</td>
-<td><code>ollama run hf.co/&lt;user&gt;/&lt;repo&gt;</code> pulls and runs from a machine that never had the model locally — the real acceptance test from MIP-0025 §7</td>
-<td>5</td>
+<td><code>docker.yml</code></td>
+<td>PR and push to <code>main</code> touching the image inputs; dispatch</td>
+<td><code>ubuntu-latest</code></td>
+<td>PR: builds <code>jvm</code> and runs a start-up check, never pushes. <code>main</code> and dispatch: <strong>push</strong> <code>:jvm</code>, <code>:jvm-&lt;sha&gt;</code> (amd64 + arm64) and <code>:native</code>, <code>:native-&lt;sha&gt;</code> (amd64) to GHCR</td>
+<td><code>GITHUB_TOKEN</code></td>
+<td><code>gh workflow run docker.yml [-f dev=true]</code> (<code>:dev</code> is dispatch-only)</td>
+</tr>
+<tr>
+<td><code>docker-local.yml</code></td>
+<td>push to <code>main</code> touching the model, corpus or benchmark; dispatch</td>
+<td><code>ubuntu-latest</code></td>
+<td>Builds <code>:local-&lt;sha&gt;</code>, runs <code>just benchmark</code> against it, and promotes it to <code>:local</code> only if it's within tolerance of <code>docs/benchmarks/</code></td>
+<td><code>GITHUB_TOKEN</code></td>
+<td><code>gh workflow run docker-local.yml [-f tolerance=0.05]</code></td>
+</tr>
+<tr>
+<td><code>docker-smoke.yml</code></td>
+<td>daily 09:30 UTC; dispatch</td>
+<td><code>ubuntu-latest</code></td>
+<td>Runs the published image's <code>--summarize</code> live, writes <code>smoke/</code> to <code>site-data</code> (the map's "Last live run")</td>
+<td><code>GITHUB_TOKEN</code></td>
+<td><code>gh workflow run docker-smoke.yml [-f lat=… -f lon=…]</code></td>
+</tr>
+<tr>
+<td><code>marola-e2e.yml</code></td>
+<td>dispatch only</td>
+<td><code>ubuntu-latest</code></td>
+<td><code>E2ESpec</code> against live Overpass/Open-Meteo/IMA, optionally with Ollama</td>
+<td>—</td>
+<td><code>gh workflow run marola-e2e.yml [-f with_llm=true]</code>; <code>just e2e</code> locally</td>
+</tr>
+<tr>
+<td><code>scala-steward.yml</code></td>
+<td>Mondays 12:00 UTC; dispatch</td>
+<td><code>ubuntu-latest</code></td>
+<td>Opens dependency-update PRs for the sbt build (dependabot covers Actions and pip)</td>
+<td><code>STEWARD_GH_TOKEN</code>, falling back to <code>GITHUB_TOKEN</code></td>
+<td><code>gh workflow run scala-steward.yml</code></td>
+</tr>
+<tr>
+<td><code>profile-activity.yml</code></td>
+<td>PR merged into <code>main</code></td>
+<td><code>ubuntu-latest</code> (reusable workflow's <code>runner:</code> input)</td>
+<td>Pings <code>h0ffmann/h0ffmann</code> to refresh its activity list; without the token it only leaves a notice</td>
+<td><code>PROFILE_DISPATCH_TOKEN</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>marola-sea-publish.yml</code></td>
+<td>dispatch only</td>
+<td><code>[self-hosted, marola-sea]</code></td>
+<td>Trains marola-sea (SFT + DPO), exports GGUFs, <strong>publishes</strong> to Hugging Face, tags <code>marola-sea-v&lt;N&gt;</code></td>
+<td><code>HF_TOKEN</code></td>
+<td><code>gh workflow run marola-sea-publish.yml -f preset=tiny</code>; <code>just runner-up</code> first</td>
 </tr>
 </tbody>
 </table>
-<h2 id="sequencing-notes">Sequencing notes<a class="headerlink" href="#sequencing-notes" title="Permanent link">&para;</a></h2>
+<p><code>ghcr-retention.yml</code> was deleted: it failed every week on an upstream bug, and it only existed
+because GHCR storage used to be billed while the repo was private (MIP-0065 §4.4).</p>
+<h2 id="the-self-hosted-rule">The self-hosted rule<a class="headerlink" href="#the-self-hosted-rule" title="Permanent link">&para;</a></h2>
+<p>Only <code>marola-sea-publish.yml</code> may run on a self-hosted runner, and it may never gain a
+<code>pull_request</code>, <code>pull_request_target</code> or <code>workflow_call</code> trigger. Everywhere else a <code>runs-on:</code> or
+<code>runner:</code> value must be a literal, never a <code>${{ }}</code> expression that could resolve to the desktop. <code>scripts/workflow_runners.py</code> enforces this in
+<code>quality-other</code>.</p>
+<p>The repo is public, and on a public repo anyone can open a pull request. A <code>pull_request</code> job on
+a self-hosted runner would run a fork's code on the maintainer's machine, which is what GitHub
+warns against in "Self-hosted runners should almost never be used for public repositories". The
+old reason for self-hosting was running out of minutes on a private repo (#340), and it no longer
+applies: standard hosted runners are free for public repos. Larger and GPU runners are always
+billed, so GPU training stays on the desktop, behind a manual dispatch.</p>
+<p><img alt="Kroki" src="kroki-generated-71240bf9-de6c-332e-8290-ca4dcd1c1147.svg" /></p>
+<h2 id="the-maintainers-manual-settings">The maintainer's manual settings<a class="headerlink" href="#the-maintainers-manual-settings" title="Permanent link">&para;</a></h2>
+<p>Repository settings that no workflow or agent can change. MIP-0065 depends on them:</p>
 <ul>
-<li>Tasks 2, 3, and 4 are independent of each other (different dataset slices/scripts) and can be
-  worked in parallel once task 1 lands, no shared file, per the parallelism check
-  <code>scripts/mip_graph.py --parallel</code> would run once these exist as their own MIP-numbered entries
-  (they don't; this is one MIP's task list, not separate MIPs, so that tool doesn't apply here;
-  noted for consistency with this session's other MIP-hardening work, not as a gap in this file).</li>
-<li>Task 5 is the real risk concentration: it's the first task that trains anything beyond the
-  <code>tiny</code> preset's baseline, and MIP-0025's own Risk row (a tuned model hallucinating a specific
-  number with more apparent authority) is squarely here. <code>Reviewer</code> staying in the loop
-  (unchanged by this MIP, per §5's own "what stays deterministic" note) is the existing mitigation,
-  not something task 5 needs to rebuild.</li>
-<li>Task 6 is genuinely optional for a <code>tiny</code>/<code>small</code>-preset run under MIP-0033 (Release 0)'s "if
-  affordable" framing — publishing a rough <code>tiny</code> model is honest labelling (PHILOSOPHY.md's new
-  Pillar 3 already says so), but the maintainer may prefer to wait for a <code>small</code> or <code>base</code> run
-  before spending the naming/model-card effort. Not decided here; flag before starting task 6.</li>
+<li><strong>Fork PR approval:</strong> Settings → Actions → General → "Require approval for all external
+  contributors". The two weaker levels stop asking once a user has had any commit merged.</li>
+<li><strong>The desktop runner</strong> carries the <code>marola-sea</code> label only, so no <code>runs-on: ubuntu-latest</code> job
+  can land on it.</li>
+<li><strong>No <code>CI_RUNNER</code> variable.</strong> The repo has no Actions variables at all (checked 2026-09-29).</li>
+<li><strong>The <code>marola-dev/marola</code> GHCR package is public</strong>, so <code>docker pull ghcr.io/marola-dev/marola:jvm</code>
+  works logged out. A package's first push creates it private; as of 2026-09-29 it still is.</li>
+<li><strong>Secrets:</strong> <code>HF_TOKEN</code> (Hugging Face write, for <code>marola-sea-publish</code>), <code>STEWARD_GH_TOKEN</code> (a
+  fine-grained token that lets scala-steward open PRs; <code>GITHUB_TOKEN</code> is refused by the org's
+  Actions policy, #496), and optionally <code>PROFILE_DISPATCH_TOKEN</code>.</li>
 </ul>
 
 

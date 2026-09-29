@@ -640,6 +640,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../3-Working-on-the-repo/CI-CD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
         
   
@@ -3641,13 +3669,13 @@ as an unfilled placeholder).</p>
 </tr>
 <tr>
 <td><a href="MIP-0065-ci-cd-on-github-hosted-runners/">MIP-0065</a></td>
-<td>CI/CD on GitHub-hosted runners: the nine jobs routed to the maintainer's desktop through <code>vars.CI_RUNNER || 'self-hosted'</code> (#340, a private-repo minutes fix) move to <code>ubuntu-latest</code> now that the repo is public; only <code>marola-sea-publish</code> (GPU) stays self-hosted, enforced by a <code>quality-other</code> guard. Lint takes its tools from <code>nix develop .#lint</code>, sbt jobs keep <code>setup-java</code>. The Docker workflows switch back on under <code>ghcr.io/marola-dev</code>, four broken workflows are fixed or removed, and <code>docs/CI-CD.md</code> describes the whole flow. Lands after MIP-0064; the bot's own deploy is left to a Phase 2 MIP</td>
-<td>Partially implemented (tasks 1–2 of 4 — #481 #482, <code>MIP-0065.tasks.md</code>)</td>
+<td>CI/CD on GitHub-hosted runners: the nine jobs routed to the maintainer's desktop through <code>vars.CI_RUNNER || 'self-hosted'</code> (#340, a private-repo minutes fix) move to <code>ubuntu-latest</code> now that the repo is public; only <code>marola-sea-publish</code> (GPU) stays self-hosted, enforced by a <code>quality-other</code> guard. Lint takes its tools from <code>nix develop .#lint</code>, sbt jobs keep <code>setup-java</code>. The Docker workflows switch back on under <code>ghcr.io/marola-dev</code>, four broken workflows are fixed or removed, and <code>docs/3-Working-on-the-repo/CI-CD.md</code> describes the whole flow. Lands after MIP-0064; the bot's own deploy is left to a Phase 2 MIP</td>
+<td>Implemented — #481 → #482 → #495 → #497 (<code>Tasks: MIP-0065.tasks.md</code>)</td>
 <td>2026-09-28</td>
 <td>L — nine jobs move runner, one toolchain moves to Nix, three workflows back on, a guard script and a doc; no Scala</td>
 <td>infra/dev-loop; cost/ops</td>
 <td>do when MIP-0064 lands — both rewrite <code>api-docs.yml</code> and <code>quality-other</code></td>
-<td>—</td>
+<td>~$29.69</td>
 </tr>
 <tr>
 <td><a href="MIP-0066-opt-in-dev-containers/">MIP-0066</a></td>
@@ -3672,7 +3700,7 @@ as an unfilled placeholder).</p>
 </tbody>
 </table>
 <!-- mip-graph:start -->
-<p><img alt="Kroki" src="kroki-generated-6e5c7455-a8ed-3646-85d7-97b18d27fd22.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-6902daf6-5b1f-3a64-b8b6-77d2beb5765f.svg" /></p>
 <p><em>52 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052, MIP-0054, MIP-0055, MIP-0056, MIP-0057, MIP-0058, MIP-0059, MIP-0060, MIP-0062, MIP-0063, MIP-0066, MIP-0067.</em></p>
 <!-- mip-graph:end -->
 

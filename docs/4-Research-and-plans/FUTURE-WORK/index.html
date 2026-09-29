@@ -640,6 +640,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/CI-CD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
         
   
@@ -3870,19 +3898,7 @@ syntax</strong> from the parent's session: <code>sbt "subBuild/compile"</code>, 
 in it is a separate <code>cd &lt;dir&gt; &amp;&amp; sbt &lt;task&gt;</code> invocation: a real limitation to know about if a
 similar monorepo-split situation comes up again elsewhere.</p>
 <h3 id="72-ci">7.2 CI<a class="headerlink" href="#72-ci" title="Permanent link">&para;</a></h3>
-<p>Superseded by <code>docs/MIPs/MIP-0065-ci-cd-on-github-hosted-runners.md</code>, which replaces this section with <code>docs/CI-CD.md</code>.</p>
-<p><code>.github/workflows/ci.yml</code> now runs one job (<code>build-test</code>) doing unscoped <code>sbt scalafmtCheckAll</code> /
-<code>sbt compile</code> / <code>sbt test</code> at the repo root: <code>.aggregate()</code> cascades these to all three modules
-(<code>core</code>/<code>local</code>/<code>cli</code>) by default, confirmed directly. (An earlier version of this repo,
-back when it also contained nf-organizer, split this into two per-module jobs for clearer CI
-reporting; with only one project in the repo now, that split no longer serves a purpose.)</p>
-<p><strong><code>.github/workflows/marola-e2e.yml</code></strong>: a separate, actually-new workflow: <code>E2ESpec</code>'s two tests, on
-<code>workflow_dispatch</code> only (manual trigger from the Actions tab or <code>gh workflow run</code>), never on
-push/PR. Installs Ollama via its official install script and pulls <code>llama3.2:1b</code> (1.3GB, the same
-model <code>RUN-LOCALLY.md</code> recommends) so the run is genuinely free: no paid API, just CI minutes.
-The YAML was validated (parses correctly, the install script URL resolves to Ollama's real GitHub
-release asset) but <strong>the workflow itself has not been run through an actual GitHub Actions
-execution</strong>: that requires pushing it and triggering it for real, which wasn't done here.</p>
+<p>Superseded by MIP-0065; the workflows are described in <code>docs/3-Working-on-the-repo/CI-CD.md</code>.</p>
 <h3 id="73-splitting-marola-itself-into-multiple-sbt-modules-done">7.3 Splitting marola <em>itself</em> into multiple sbt modules — DONE<a class="headerlink" href="#73-splitting-marola-itself-into-multiple-sbt-modules-done" title="Permanent link">&para;</a></h3>
 <p>Executed. Root <code>build.sbt</code> defines three subprojects, sbt project IDs <code>core</code>, <code>local</code>, <code>cli</code>
 (artifact names <code>marola-core</code>/<code>marola-local</code>/<code>marola-cli</code>), aggregated directly under the root

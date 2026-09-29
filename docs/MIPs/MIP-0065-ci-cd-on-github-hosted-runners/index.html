@@ -640,6 +640,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/CI-CD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
         
   
@@ -3650,7 +3678,7 @@
 <tbody>
 <tr>
 <td><strong>Status</strong></td>
-<td>Partially implemented (tasks 1–2 of 4 — #481 #482; workflow-fixes, ci-cd-doc to go) — <code>Tasks: docs/MIPs/MIP-0065.tasks.md</code></td>
+<td>Implemented — PRs #481 (hosted-runners) → #482 (docker-on) → #495 (workflow-fixes) → #497 (ci-cd-doc); tasks: <a href="../MIP-0065.tasks/"><code>MIP-0065.tasks.md</code></a>. Open: the GHCR package is still private (§4.3), scala-steward's token awaits approval (#496), §7 step 7's week with the desktop off</td>
 </tr>
 <tr>
 <td><strong>Author</strong></td>
@@ -3694,7 +3722,7 @@
 </tr>
 <tr>
 <td><strong>Cost so far</strong></td>
-<td>—</td>
+<td>~$29.69 — drafting #461 + #470 $17.71, tasks #481 $2.79, #482 $2.72, #495 $2.51, ci-cd-doc $3.96 (summed <code>Cost:</code> trailers; #464's prerequisite fix is its own issue)</td>
 </tr>
 </tbody>
 </table>
@@ -3732,7 +3760,7 @@ after:  PR from a fork → waits for approval → runs on ubuntu-latest
         runs-on: self-hosted anywhere but marola-sea-publish.yml → quality-other fails:
           workflow_runners: ci.yml:21 targets self-hosted — only marola-sea-publish.yml may
 </code></pre></div>
-<p><code>docs/CI-CD.md</code> exists: one row per workflow — trigger, runner, what it gates or deploys, the
+<p><code>docs/3-Working-on-the-repo/CI-CD.md</code> exists: one row per workflow — trigger, runner, what it gates or deploys, the
 secrets and variables it reads, how to run it by hand.</p>
 <h2 id="4-data-sources-and-dependencies-reviewed">4. Data sources and dependencies reviewed<a class="headerlink" href="#4-data-sources-and-dependencies-reviewed" title="Permanent link">&para;</a></h2>
 <p>Filled from the Appendix; each claim below traces to a "Checked live" line.</p>
@@ -3847,7 +3875,7 @@ lint shell where it carries them; the marketplace actions stay only for any it d
 <h3 id="55-the-broken-workflows">5.5 The broken workflows<a class="headerlink" href="#55-the-broken-workflows" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>ci-short-circuit-pr-close</code>: <code>gh run cancel --repo "$GITHUB_REPOSITORY" "$id"</code>.</li>
-<li><code>ghcr-retention</code>: deleted (§4.4), with its row in <code>docs/CI-CD.md</code> saying why.</li>
+<li><code>ghcr-retention</code>: deleted (§4.4), with its row in <code>docs/3-Working-on-the-repo/CI-CD.md</code> saying why.</li>
 <li><code>scala-steward</code>: expected to recover on the hosted image; if not, its own issue.</li>
 <li><code>site-health</code>: not broken — it reports IMA/SC with no Campeche sampling point and INEMA/BA
   returning nothing. Out of scope; filed separately as a data issue.</li>
@@ -3870,7 +3898,7 @@ handing any task out early.</p>
    MIP-0064 §5.4's "the runners are self-hosted with Docker on the host". Depends on <code>0064-T4</code>.</li>
 <li><strong>docker-on</strong> — §5.4. Depends on 1.</li>
 <li><strong>workflow-fixes</strong> — §5.5. Depends on 1.</li>
-<li><strong>ci-cd-doc</strong> — <code>docs/CI-CD.md</code>, its rows in <code>AGENTS.md</code> and <code>docs/index.md</code> (MIP-0064 renames
+<li><strong>ci-cd-doc</strong> — <code>docs/3-Working-on-the-repo/CI-CD.md</code>, its rows in <code>AGENTS.md</code> and <code>docs/index.md</code> (MIP-0064 renames
    <code>docs/README.md</code>), <code>FUTURE-WORK.md</code> §7.2 reduced to a pointer; passes MIP-0064's <code>--strict</code>
    build. Depends on 2 and 3.</li>
 </ol>
