@@ -21,8 +21,8 @@ MIP-0064 put a self-hosted Kroki behind the docs site, and five Mermaid diagrams
 (`CI-CD.md` ×2, `ARCHITECTURE.md`, `MIPs/README.md`, the generated MIP graph). Everything else is
 still arrow chains in prose, a handful of box-drawing sketches that render as monospace text, and
 lifecycles described in numbered lists. This MIP sets the rules for which Kroki dialect to use,
-hardens the plugin config so a bad diagram cannot ship, adds the Excalidraw companion for
-sketches and wireframes, and converts the strongest ~40 candidates from an inventory of all 105
+hardens the plugin config so a bad diagram cannot ship, makes the site dark-only with diagrams
+styled for it, adds the Excalidraw companion once a sketch needs it, and converts the strongest ~40 candidates from an inventory of all 105
 pages under `docs/`.
 
 ## 2. Motivation
@@ -46,9 +46,14 @@ found:
   path … 7 forks from 4, 8 needs 6"; `MIP-0065.tasks.md` says the stack order and the real graph
   differ. MIP-0063 itself argues the `depends on` column "is a DAG, not a chain".
 
-Two gaps in the build make adding diagrams at scale unsafe today (§4.2): every Kroki dialect is
-claimed by a plain fence, including three whose companion servers do not run, and nothing checks
-that a diagram is readable on the site's dark palette.
+**The diagrams already there are hard to read.** On the site's dark (slate) palette the existing
+Mermaid diagrams show as boxes with almost invisible arrows (maintainer review, #500). The cause is
+in the generated SVG: Kroki renders Mermaid's default light theme, `.flowchart-link{stroke:#333333}`
+and marker fill `#333333` on `background-color:transparent`, so dark-grey lines sit on a dark page.
+Nothing in the build styles diagrams for the theme they are shown on.
+
+The build also claims every Kroki dialect with a plain fence, including three whose companion
+servers do not run (§4.2), so adding diagrams at scale is unsafe until that is closed.
 
 ## 3. User-visible change
 
@@ -111,21 +116,25 @@ Read from the published wheel:
 - `@from_file:<path>` as a fence body loads the diagram source from a file relative to
   `docs_dir`. This keeps an `.excalidraw` scene (JSON) out of the Markdown and editable in the
   Excalidraw app.
-- `styles_light`/`styles_dark` render each diagram twice and emit Material's
-  `#only-light`/`#only-dark` pair. They need `tag_format: img` (the default, which marola uses).
-  Style injection covers mermaid, plantuml, c4plantuml, graphviz, d2, nomnoml, structurizr and
+- `styles` injects one set of colours (box, text, line, background) into every diagram's
+  source before rendering; `styles_light`/`styles_dark` render each diagram twice and emit
+  Material's `#only-light`/`#only-dark` pair. Both need `tag_format: img` (the default, which
+  marola uses). Style injection covers mermaid, plantuml, c4plantuml, graphviz, d2, nomnoml, structurizr and
   blockdiag. It does not cover dbml, vegalite or excalidraw.
 
 ### 4.3 GitHub's Markdown renderer
 
 GitHub renders four diagram fences: `mermaid`, `geojson`, `topojson` and `stl`. Every other
-Kroki dialect shows as source on github.com and renders only on marola.dev/docs. `docs/benchmarks/`
-and `docs/superpowers/` are in `exclude_docs` (`mkdocs.yml:28`), so the site never renders them
-and a non-Mermaid diagram there renders nowhere.
+Kroki dialect shows as source on github.com. The site, not GitHub, is where the docs are read
+(maintainer review, #500), so this is a tiebreaker between two equally good dialects, not a
+reason to force a picture into Mermaid.
 
-**Pick:** Mermaid for everything it expresses cleanly. D2 or C4-PlantUML for the few
-architecture pictures where Mermaid's layout gets cramped, DBML for schemas, Vega-Lite for charts
-on rendered pages, and Excalidraw for hand-drawn sketches and UI wireframes. BPMN and
+**Scope.** Only pages mkdocs renders. `docs/benchmarks/` and `docs/superpowers/` are in
+`exclude_docs` (`mkdocs.yml:28`) and are out of scope.
+
+**Pick:** the dialect best suited to each picture. In practice that is Mermaid for most flows,
+lifecycles, sequences and ER models; D2 or C4-PlantUML for layered or zoned architecture; DBML
+for schemas; Vega-Lite for charts; Excalidraw for hand-drawn sketches and wireframes. BPMN and
 diagrams.net are disabled: nothing in the inventory needs them.
 
 ## 5. Design
@@ -137,17 +146,17 @@ Written once, into `.claude/rules/docs.md` (auto-loaded for `docs/**`), and illu
 
 | Picture | Fence | Why this one |
 |---|---|---|
-| flow, decision tree, DAG, lifecycle, sequence, ER, class, gantt, git history | `mermaid` | renders on GitHub and the site from one source |
-| layered or zoned architecture, the module map | `d2` or `c4plantuml` | nested containers without Mermaid's subgraph crowding; site only |
-| a schema from DDL | `dbml` | reads like the SQL it mirrors; site only |
-| a chart from a results table | `vegalite` | only on rendered pages, never under `benchmarks/` |
-| a sketch or wireframe | `excalidraw` with `@from_file:assets/diagrams/<name>.excalidraw` | hand-drawn is the honest register for a mock; site only |
+| flow, decision tree, DAG, lifecycle, sequence, ER, class, gantt, git history | `mermaid` | covers most pictures, and also renders on GitHub |
+| layered or zoned architecture, the module map | `d2` or `c4plantuml` | nested containers without Mermaid's subgraph crowding |
+| a schema from DDL | `dbml` | reads like the SQL it mirrors |
+| a chart from a results table | `vegalite` | a real axis and scale, not a table of numbers |
+| a sketch or wireframe | `excalidraw` with `@from_file:assets/diagrams/<name>.excalidraw` | hand-drawn is the honest register for a mock, and the scene opens in the Excalidraw app as a whiteboard and comes back as the same file |
 
 Two more rules come with it. Draw only a picture the prose beside it already states, and keep
 that prose: the diagram is the summary, the text is the source of truth. Keep a diagram under
 about 15 nodes, and split it rather than grow it.
 
-### 5.2 Build hardening (`mkdocs/mkdocs.yml`, `mkdocs/docker-compose.yml`, `scripts/mkdocs.sh`)
+### 5.2 Build hardening (`mkdocs/mkdocs.yml`, `mkdocs/docker-compose.yml`, `scripts/mkdocs.sh`, `docs/assets/marola.css`)
 
 ```yaml
   - kroki:
@@ -157,18 +166,23 @@ about 15 nodes, and split it rather than grow it.
       fail_fast: true
       enable_bpmn: false
       enable_diagramsnet: false   # already the default; stated so the self-test can assert it
-      styles_light: { ... }       # marola.css's navy/ink on white
-      styles_dark: { ... }        # the cyan end on slate
+      styles: { ... }             # marola.css's cyan on slate: lines, text, box strokes
 ```
 
 `fail_fast: true` turns a broken diagram into a failed build naming the page, instead of relying
 on `strict` counting a plugin ERROR log. `enable_bpmn: false` hands a ` ```bpmn ` fence back to
 Markdown as a code block, so it cannot render as an error. `scripts/mkdocs.sh --self-test` gains
-one assertion per key, next to its existing `fence_prefix` check. For the dialects style
-injection skips (dbml, vegalite, excalidraw), `docs/assets/marola.css` gives the image a light
-card background on slate, so it stays legible.
+one assertion per key, next to its existing `fence_prefix` check.
 
-The compose stack gains the Excalidraw companion, pinned and health-checked like `mermaid`:
+**Dark only.** `theme.palette` drops its `default` (light) entry and its toggle and keeps `slate`,
+so there is one theme to style for: one `styles` block, one render per diagram, and nothing
+to check twice. `marola.css`'s `[data-md-color-scheme="default"]` block goes with it. For the
+dialects style injection skips (dbml, vegalite, excalidraw), `marola.css` gives the image a light
+card background, so it stays legible. The five existing diagrams are re-rendered by the same
+change and checked in §7 step 4.
+
+Task 7, and only if §5.3's Excalidraw cases hold up, adds the companion to the compose stack,
+pinned and health-checked like `mermaid`:
 
 ```yaml
   excalidraw:
@@ -203,8 +217,10 @@ Only the inventory's strong candidates. The medium list stays in the Appendix as
   multi-actor flows: MIP-0060 §5.2 (who holds the token), MIP-0042 §5.3 (with the fallback as an
   `alt`), MIP-0006 §5.2, MIP-0015 §5, MIP-0020 §5.5, MIP-0035 §5, MIP-0008 §5.5. Task DAGs for
   MIP-0056, 0063, 0065 and 0025 `.tasks.md`.
-- **Excalidraw:** the MIP-0016 coastline-offset geometry (`:61`, `:113`), the MIP-0042 v1/v2 mocks
-  (`:53`, `:61`), the MIP-0054 toolbar mock (`:55`).
+- **Excalidraw:** only where a sketch is the best picture, never to have the dialect. The
+  cases so far: the MIP-0016 coastline-offset geometry (`:61`, `:113`), the MIP-0042 v1/v2 mocks
+  (`:53`, `:61`), the MIP-0054 toolbar mock (`:55`). If review of task 7 finds none of them better
+  as a sketch than as the ASCII it replaces, task 7 is dropped and the companion never lands.
 
 Editing an Implemented MIP to add a diagram of what it already says does not change its status.
 A diagram that contradicts its MIP is a finding for the MIP author, not a silent fix.
@@ -246,11 +262,13 @@ implement. They are checked against `core/` source in review, and the code stays
 3. **Every dialect renders.** `DIAGRAMS.md` holds one example each of mermaid, d2, c4plantuml,
    dbml and vegalite; task 7 adds excalidraw. With `fail_fast`, `just docs` passing is the render
    check for all of them.
-4. **Both themes.** Screenshot `CI-CD.md`, `DIAGRAMS.md` and `ARCHITECTURE.md` in light and slate
-   with `just docs-serve`, and attach them to the PR. A diagram that is illegible on either one
-   fails the task.
-5. **GitHub.** Every page touched by tasks 2–6 is opened on the PR's rendered-file view. A Mermaid
-   fence that GitHub's renderer rejects (its Mermaid version lags Kroki's) gets simpler syntax.
+4. **Legible on slate.** Screenshot `CI-CD.md`, `DIAGRAMS.md`, `ARCHITECTURE.md` and
+   `MIPs/README.md` with `just docs-serve` and attach them to the PR. Every arrow and label must
+   be readable at normal zoom; one that is not fails the task. Each later task attaches the same
+   for the pages it touched.
+5. **GitHub, best effort.** A Mermaid fence that GitHub's renderer rejects (its Mermaid version
+   lags Kroki's) is noted in the PR. It is not simplified to suit GitHub unless that costs the
+   site nothing.
 6. **Gates.** `just quality` (the pre-push hook) and `ci.yml`'s docs job are green on every task
    PR.
 
@@ -263,13 +281,13 @@ reason, and no ` ```text ` or bare fence left in `docs/` that is a diagram.
   §5.1's rule (the diagram only summarizes text that stays) and review. A diagram is harder to
   diff than a paragraph.
 - **Non-Mermaid dialects are site-only.** Someone reading `ARCHITECTURE.md` on GitHub sees D2
-  source for the module map. That is acceptable for about five pictures and is why Mermaid stays
-  the default.
+  source for the module map. Accepted: the site is the medium.
 - **Excalidraw costs build time.** The companion adds a 612 MB pull to every CI docs build on
   `ubuntu-latest` (free on a public repo, but minutes of wall clock on a cold runner), and a
   scene file is JSON that nobody can review line by line. The PR must carry the rendered image.
-- **Dark mode is only as good as the injected styles.** Dialects outside style injection get a
-  light card rather than a true dark rendering.
+- **Dark only removes a choice.** A reader who prefers light pages loses the toggle. Accepted in
+  review (#500) to get one theme styled properly instead of two styled halfway. Dialects outside
+  style injection get a light card rather than a true dark rendering.
 - **`fail_fast` on a flaky Kroki.** A Kroki that is slow to start now fails the build instead of
   shipping error boxes. That is the right trade, and the compose health checks already wait for
   it.
@@ -278,9 +296,11 @@ reason, and no ` ```text ` or bare fence left in `docs/` that is a diagram.
 
 - **Do nothing.** The ASCII keeps misaligning, and lifecycles stay paragraphs. Rejected: the
   renderer already runs on every docs build.
-- **Mermaid only.** Simplest, and everything renders on GitHub. It loses Excalidraw, which the
-  maintainer asked for, and it makes the module map and MIP-0042's two-zone picture cramped.
-  Kept as the default rather than the only choice.
+- **Mermaid only.** Simplest, and everything renders on GitHub. It optimises for a medium the
+  docs are not mainly read in, and it makes the module map and MIP-0042's two-zone picture
+  cramped.
+- **Keep both themes, render each diagram twice** (`styles_light`/`styles_dark`). Doubles every
+  render and every legibility check, for a light mode nobody asked to keep.
 - **Commit rendered SVGs.** This would render on GitHub for every dialect, but it adds a second
   copy that goes stale and a regenerate step. Kroki exists so the source is the only copy.
 - **kroki.io instead of self-hosted companions.** No 612 MB pull, but doc content would leave the
@@ -290,13 +310,8 @@ reason, and no ` ```text ` or bare fence left in `docs/` that is a diagram.
 
 ## 11. Open questions
 
-- **Excalidraw or not.** It is task 7 and isolated, so dropping it costs nothing else. It needs the
-  maintainer's yes on the 612 MB CI pull.
-- **Dark-mode palette values** for `styles_light`/`styles_dark`: taken from `marola.css`'s tokens
-  in task 1, subject to the screenshot review in §7 step 4.
-- **Benchmark charts.** `docs/benchmarks/` is excluded from the site, so a Vega-Lite chart there
-  renders nowhere. Either un-exclude the folder or leave its tables as they are. This MIP leaves
-  them.
+- **The `styles` values**: taken from `marola.css`'s slate tokens in task 1, settled by the
+  screenshot review in §7 step 4.
 - **Follow-up MIP:** generate each `MIP-NNNN.tasks.md` dependency graph from its `depends on`
   column, the same way `scripts/mip_graph.py` generates the MIP graph, so task DAGs cannot drift.
   Needs the next MIP number.
@@ -304,6 +319,11 @@ reason, and no ` ```text ` or bare fence left in `docs/` that is a diagram.
 ## Appendix
 
 ### Checked live
+
+- `mkdocs/mkdocs.yml:56-69` at `69badea`: two palettes, `default` and `slate`, keyed on
+  `prefers-color-scheme`, each with a toggle icon. So the site does have a light/dark toggle today.
+- A local `scripts/mkdocs.sh` build of `CI-CD.md`, 2026-09-29: the Kroki SVG carries
+  `background-color:transparent`, `.flowchart-link{stroke:#333333}` and marker fill `#333333`.
 
 - `https://docs.kroki.io/kroki/setup/install/`, 2026-09-29: the list of core-image dialects, and
   the companion images for Mermaid, BPMN, Excalidraw and diagrams.net.
@@ -324,7 +344,8 @@ reason, and no ` ```text ` or bare fence left in `docs/` that is a diagram.
 
 - That `strict: true` fails on the plugin's ERROR log with `fail_fast: false`. This is read from
   the source, not run, and §7 step 1 makes it moot.
-- How today's five Mermaid diagrams look on the slate palette. Nobody has screenshotted them.
+- A screenshot of today's diagrams on slate. The illegibility is the maintainer's observation
+  (#500) plus the SVG's own CSS, read from a local `scripts/mkdocs.sh` build of `CI-CD.md`.
 - GitHub's own Mermaid version, and whether it accepts every construct Mermaid 11.16 does.
 - That the Excalidraw companion renders a scene exported by the current Excalidraw app.
 - The inventory's line numbers are as of `69badea`; they drift as pages change.
