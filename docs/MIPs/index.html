@@ -2859,6 +2859,34 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="MIP-0068-diagrams-in-docs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0068: Diagrams in the docs — Mermaid by default, Kroki's other dialects where they earn it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
     
@@ -2868,10 +2896,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_64" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_65" >
         
           
-          <label class="md-nav__link" for="__nav_6_64" id="__nav_6_64_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_65" id="__nav_6_65_label" tabindex="0">
             
   
   
@@ -2889,8 +2917,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_64_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_64">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_65_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_65">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2915,10 +2943,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_64_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_65_1" >
         
           
-          <label class="md-nav__link" for="__nav_6_64_1" id="__nav_6_64_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_65_1" id="__nav_6_65_1_label" tabindex="0">
             
   
   
@@ -2936,8 +2964,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_64_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_64_1">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_65_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_65_1">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3697,11 +3725,21 @@ as an unfilled placeholder).</p>
 <td><code>do next</code> — #487 and #488 already filed and unblock it</td>
 <td>—</td>
 </tr>
+<tr>
+<td><a href="MIP-0068-diagrams-in-docs/">MIP-0068</a></td>
+<td>Diagrams in the docs, for the site as the medium: the dialect best suited to each picture (mostly Mermaid; D2/C4-PlantUML for architecture, DBML for schemas, Vega-Lite for charts, Excalidraw for sketches through a new Kroki companion, only where a sketch earns it). Makes the site dark-only with diagrams styled for slate (today's arrows are near-invisible), hardens <code>mkdocs.yml</code>'s kroki block (<code>fail_fast</code>, BPMN and diagrams.net off), adds <code>DIAGRAMS.md</code> and a rule in <code>.claude/rules/docs.md</code>, and converts ~40 strong candidates from an inventory of all 105 pages</td>
+<td>Draft</td>
+<td>2026-09-29</td>
+<td>M — config hardening plus one companion container, then ~40 diagrams across ~25 pages; no Scala, no new script</td>
+<td>infra/dev-loop; user value</td>
+<td>cheap win — the renderer already runs in CI; only the diagrams are missing</td>
+<td>—</td>
+</tr>
 </tbody>
 </table>
 <!-- mip-graph:start -->
 <p><img alt="Kroki" src="kroki-generated-6902daf6-5b1f-3a64-b8b6-77d2beb5765f.svg" /></p>
-<p><em>52 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052, MIP-0054, MIP-0055, MIP-0056, MIP-0057, MIP-0058, MIP-0059, MIP-0060, MIP-0062, MIP-0063, MIP-0066, MIP-0067.</em></p>
+<p><em>53 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052, MIP-0054, MIP-0055, MIP-0056, MIP-0057, MIP-0058, MIP-0059, MIP-0060, MIP-0062, MIP-0063, MIP-0066, MIP-0067, MIP-0068.</em></p>
 <!-- mip-graph:end -->
 
 
