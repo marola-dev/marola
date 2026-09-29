@@ -146,7 +146,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -q -m "smoke: run ${{ github.run_id }} ($MODEL, $IMAGE)"
-          git push -q origin site-data
+          ../scripts/site-data-push.sh .
 
       # workflow_dispatch is one of the two events GITHUB_TOKEN may trigger from a workflow.
       - name: Rebuild the site so the panel refreshes

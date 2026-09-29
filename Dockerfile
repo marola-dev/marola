@@ -56,16 +56,20 @@ CMD ["--brief"]
 # `sbt cli/nativeImage` uses, so the two builds cannot drift. amd64 only: native-image does not
 # cross-compile (MIP-0008.tasks.md decision 7). ~45 s and ~4 GB RSS on 32 cores; a few minutes on
 # a 4-vCPU runner.
-FROM ghcr.io/graalvm/native-image-community:25 AS native-build
+# Pinned: the floating `:25` moved to 25.0.2, which rejects a JVM launcher flag in `Args`.
+FROM ghcr.io/graalvm/native-image-community:25.0.2 AS native-build
 WORKDIR /build
 COPY --from=builder /marola.jar /build/marola.jar
 RUN native-image -jar /build/marola.jar -o /build/marola
 
 # --- native ----------------------------------------------------------------------------------
-# distroless base: glibc + CA certificates + tzdata, no shell, non-root — everything the binary
-# links against (ldd: libc, libdl, libpthread, librt) and nothing else.
+# distroless base: glibc + CA certificates + tzdata, no shell, non-root. GraalVM 25.0.2 links
+# libz dynamically and distroless has none, so it comes from the same Debian release.
+FROM debian:12.12-slim AS zlib
+
 FROM gcr.io/distroless/base-debian12:nonroot AS native
 WORKDIR /app
+COPY --from=zlib /usr/lib/x86_64-linux-gnu/libz.so.1 /usr/lib/x86_64-linux-gnu/libz.so.1
 COPY --from=native-build /build/marola /app/marola
 COPY --chown=nonroot:nonroot knowledge /app/knowledge
 COPY --chown=nonroot:nonroot site/areas.json site/board.schema.json /app/site/

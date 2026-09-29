@@ -173,7 +173,7 @@ jobs:
             echo "coverage unchanged — nothing to push"
           else
             git -C site-data commit -q -m "coverage: ${{ github.sha }}"
-            git -C site-data push -q origin site-data
+            scripts/site-data-push.sh site-data
           fi
 
       # workflow_dispatch is one of the two events GITHUB_TOKEN may trigger from a workflow.
@@ -231,7 +231,7 @@ jobs:
             echo "stats unchanged — nothing to push"
           else
             git -C site-data commit -q -m "stats: ${{ github.sha }}"
-            git -C site-data push -q origin site-data
+            scripts/site-data-push.sh site-data
           fi
           # No site.yml trigger: the scheduled build picks these up without an Overpass query.
 
@@ -310,6 +310,9 @@ jobs:
         run: |
           scripts/runner-preflight.sh --self-test
           scripts/gha-runner.sh --self-test
+      - name: self-test — site-data-push (the retry every site-data writer pushes through)
+        if: needs.changes.outputs.python == 'true'
+        run: scripts/site-data-push.sh --self-test
       - name: self-test — req_merge (requirements-file conflict auto-resolve)
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/req_merge.py --self-test

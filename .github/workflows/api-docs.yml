@@ -115,5 +115,5 @@ jobs:
             exit 0
           fi
           git -C "$tmp" commit -qm "api docs from ${GITHUB_SHA::12}"
-          git -C "$tmp" push -q origin HEAD:site-data
+          scripts/site-data-push.sh "$tmp"
           echo "pushed docs/ to site-data"
