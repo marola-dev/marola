@@ -213,24 +213,24 @@ flex-wrap: wrap; gap: .15rem .8rem; }`. No new colour, no new radius, no new sha
   colour means and needs its own decision. The in-scope option is to stop using the band colour as
   a *text background*: render the score as `--ink` on `--panel` with the band colour as a 4 px rule
   beside it. Proposed, not decided, §11.
-
-  Measured at acceptance (2026-09-28, same formula), every option for the 13 px chip text:
-
-  | band | white on band | `--ink` on band | `--ink` on `--panel`, band as rule |
-  |---|---|---|---|
-  | `--c70` | 3.39 | 4.28 | 14.47 |
-  | `--c40` | 2.06 | 7.02 | 14.47 |
-  | `--c1` | 3.76 | 3.85 | 14.47 |
-  | `--c0` | 5.19 | 2.79 | 14.47 |
-  | `--cna` | 3.36 | 4.30 | 14.47 |
-
-  No text colour on the band passes 4.5:1 in every band, even choosing the better of white and ink
-  per band (`--c70`, `--c1` and `--cna` still fail). Only the rule option passes everywhere. The
-  rule itself is 2.06:1 against the panel for `--c40`, under WCAG 1.4.11's 3:1 for graphics, but
-  the number carries the score and the colour repeats it, as the map markers already do.
 - **`index.html:36`** puts `aria-hidden="true"` on the entire `.legend`, so the score legend does
   not exist for a screen reader. The colour swatches should keep it; the words `≥70 / 40-69 / …`
   should not.
+
+Measured at acceptance (2026-09-28, same formula), every option for the 13 px chip text:
+
+| band | white on band | `--ink` on band | `--ink` on `--panel`, band as rule |
+|---|---|---|---|
+| `--c70` | 3.39 | 4.28 | 14.47 |
+| `--c40` | 2.06 | 7.02 | 14.47 |
+| `--c1` | 3.76 | 3.85 | 14.47 |
+| `--c0` | 5.19 | 2.79 | 14.47 |
+| `--cna` | 3.36 | 4.30 | 14.47 |
+
+No text colour on the band passes 4.5:1 in every band, even choosing the better of white and ink
+per band (`--c70`, `--c1` and `--cna` still fail). Only the rule option passes everywhere. The
+rule itself is 2.06:1 against the panel for `--c40`, under WCAG 1.4.11's 3:1 for graphics, but
+the number carries the score and the colour repeats it, as the map markers already do.
 
 ### 5.7 Out of `site/static/`, but named in the request
 
