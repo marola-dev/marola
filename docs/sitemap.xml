@@ -277,11 +277,19 @@
          <lastmod>2026-09-29</lastmod>
     </url>
     <url>
+         <loc>https://marola.dev/docs/MIPs/MIP-0044.tasks/</loc>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0045-nlp-and-parsing-over-llm/</loc>
          <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0046-remove-ai-slop-ui/</loc>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://marola.dev/docs/MIPs/MIP-0046.tasks/</loc>
          <lastmod>2026-09-29</lastmod>
     </url>
     <url>
@@ -314,6 +322,10 @@
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0054-portuguese-first-experience/</loc>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://marola.dev/docs/MIPs/MIP-0054.tasks/</loc>
          <lastmod>2026-09-29</lastmod>
     </url>
     <url>

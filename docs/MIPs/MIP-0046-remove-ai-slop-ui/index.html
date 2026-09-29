@@ -3644,7 +3644,11 @@
 <tbody>
 <tr>
 <td><strong>Status</strong></td>
-<td>Draft</td>
+<td>Accepted 2026-09-28 for both tasks of the task list; §5.6's score-chip option is decided in the acceptance PR, with the contrast table added there</td>
+</tr>
+<tr>
+<td><strong>Tasks</strong></td>
+<td><a href="../MIP-0046.tasks/"><code>MIP-0046.tasks.md</code></a> — two stacked PRs: the sprite and every call site, then the chip and legend fixes</td>
 </tr>
 <tr>
 <td><strong>Author</strong></td>
@@ -3770,6 +3774,19 @@ barbs plus a small ring (calm), one barb (breezy), two barbs (strong). The word 
 nothing depends on the reader knowing the convention: the shape only has to make three states
 distinguishable at 14 px.</p>
 <h2 id="5-design">5. Design<a class="headerlink" href="#5-design" title="Permanent link">&para;</a></h2>
+<p><strong>State at acceptance (2026-09-28).</strong> The design stands; the line numbers in §5.2 and §5.5 do not.
+Re-running the appendix grep over <code>site/static/</code> gives 12 hits: <code>index.html:35</code> and
+<code>app.js:149,177,179,183,185,186,191,193,207,224,379</code>. The call sites are the same ones by name
+(<code>WIND_EMOJI</code>, <code>aspectsHtml</code>, <code>FACILITY_LABEL</code>/<code>facilitiesHtml</code>, <code>renderFooter</code>), so task 1 works
+from names, not line numbers. Three things moved around it:</p>
+<ul>
+<li>MIP-0044 §5.7 moves <code>#sound</code> into the menu's prefs group, so <code>i-sound</code> is drawn there, and the menu
+  button reuses this MIP's <code>.ic</code> class for its own 16 px mark. Task 1 lands after MIP-0044 task 1.</li>
+<li>The score chip now carries a band class instead of an inline <code>style=</code> (#486; the page's CSP had
+  been blocking the inline background, so the chip rendered white on white). §5.6's fix builds on
+  those classes.</li>
+<li><code>style.css</code> is 12,009 bytes, not 11,399.</li>
+</ul>
 <p><strong>Design plan</strong> (the <code>frontend-design</code> two-pass, compressed). <em>Subject</em>: a hydrographic reading of
 one stretch of coast, for someone on a phone deciding within the hour whether to swim. <em>Colour</em>: no
 new tokens: the five score colours are data and untouched, chrome stays <code>--ink / --muted / --bg /
@@ -3900,10 +3917,57 @@ flex-wrap: wrap; gap: .15rem .8rem; }</code>. No new colour, no new radius, no n
   colour means and needs its own decision. The in-scope option is to stop using the band colour as
   a <em>text background</em>: render the score as <code>--ink</code> on <code>--panel</code> with the band colour as a 4 px rule
   beside it. Proposed, not decided, §11.</li>
-<li><strong><code>index.html:36</code></strong> puts <code>aria-hidden="true"</code> on the entire <code>.legend</code>, so the score legend does
-  not exist for a screen reader. The colour swatches should keep it; the words <code>≥70 / 40-69 / …</code>
-  should not.</li>
 </ul>
+<p>Measured at acceptance (2026-09-28, same formula), every option for the 13 px chip text:</p>
+<table>
+<thead>
+<tr>
+<th>band</th>
+<th>white on band</th>
+<th><code>--ink</code> on band</th>
+<th><code>--ink</code> on <code>--panel</code>, band as rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--c70</code></td>
+<td>3.39</td>
+<td>4.28</td>
+<td>14.47</td>
+</tr>
+<tr>
+<td><code>--c40</code></td>
+<td>2.06</td>
+<td>7.02</td>
+<td>14.47</td>
+</tr>
+<tr>
+<td><code>--c1</code></td>
+<td>3.76</td>
+<td>3.85</td>
+<td>14.47</td>
+</tr>
+<tr>
+<td><code>--c0</code></td>
+<td>5.19</td>
+<td>2.79</td>
+<td>14.47</td>
+</tr>
+<tr>
+<td><code>--cna</code></td>
+<td>3.36</td>
+<td>4.30</td>
+<td>14.47</td>
+</tr>
+</tbody>
+</table>
+<p>No text colour on the band passes 4.5:1 in every band, even choosing the better of white and ink
+  per band (<code>--c70</code>, <code>--c1</code> and <code>--cna</code> still fail). Only the rule option passes everywhere. The
+  rule itself is 2.06:1 against the panel for <code>--c40</code>, under WCAG 1.4.11's 3:1 for graphics, but
+  the number carries the score and the colour repeats it, as the map markers already do.
+- <strong><code>index.html:36</code></strong> puts <code>aria-hidden="true"</code> on the entire <code>.legend</code>, so the score legend does
+  not exist for a screen reader. The colour swatches should keep it; the words <code>≥70 / 40-69 / …</code>
+  should not.</p>
 <h3 id="57-out-of-sitestatic-but-named-in-the-request">5.7 Out of <code>site/static/</code>, but named in the request<a class="headerlink" href="#57-out-of-sitestatic-but-named-in-the-request" title="Permanent link">&para;</a></h3>
 <p><code>README.md:1</code> is <code>&lt;h1 align="center"&gt;🌊 marola&lt;/h1&gt;</code>. One line, same change, same PR.</p>
 <h2 id="6-scoring-safety-impact">6. Scoring / safety impact<a class="headerlink" href="#6-scoring-safety-impact" title="Permanent link">&para;</a></h2>
@@ -3964,14 +4028,17 @@ beside it differs. The <code>.wdot</code> water signal and the five score colour
 <ul>
 <li><strong>The score chip.</strong> Is §5.6's "band colour as a rule, not a text background" acceptable, or does
   the coloured chip carry meaning worth its 2.06:1? A human call: it borders the "the data colours
-  are data" rule, so it does not get made inside an implementation PR.</li>
+  are data" rule, so it does not get made inside an implementation PR. At acceptance, §5.6's table
+  shows the rule is the only option that passes AA in all five bands, and task 2 implements it
+  unless the maintainer vetoes it in the acceptance PR.</li>
 <li><strong>Ordering against MIP-0042.</strong> If the <code>/v1/</code> freeze lands first, this work is done twice or not at
   all. Recommend: this MIP first, it is smaller.</li>
 <li><strong>The wordmark.</strong> <code>index.html</code>'s <code>&lt;h1&gt;</code> SVG is deliberately left alone. MIP-0037 §5 plans to render
   it to <code>icon-192.png</code>; if it is ever redrawn, those two must move together.</li>
 <li><strong>Follow-up (no MIP needed):</strong> <code>site_check.js:140</code>'s stub palette has drifted from <code>style.css</code>
   (§8). A one-line fix, but it belongs to whoever next touches that file: it is not a design
-  decision and does not need its own number.</li>
+  decision and does not need its own number. At acceptance it is still stale (now <code>site_check.js:158</code>),
+  and task 2 takes it.</li>
 </ul>
 <h2 id="appendix">Appendix<a class="headerlink" href="#appendix" title="Permanent link">&para;</a></h2>
 <h3 id="checked-live">Checked live<a class="headerlink" href="#checked-live" title="Permanent link">&para;</a></h3>
@@ -3999,8 +4066,16 @@ beside it differs. The <code>.wdot</code> water signal and the five score colour
 <li>Contrast ratios in §5.6 computed locally with the WCAG 2.x relative-luminance formula over the
   literal token values in <code>style.css:5-9</code> against <code>#ffffff</code>. Not fetched from anywhere; reproducible
   from the hexes. The <code>--c40</code> result (2.06:1) matches commit <code>00c330c</code>'s own recorded figure.</li>
-<li><code>git log --oneline -- site/static/app.js site/static/style.css</code> → <code>131fdb9</code> (PR #233) is the
-  water-dot/<code>waterDotClass</code> precedent; <code>00c330c</code> (PR #37) is the typography pass.</li>
+<li>
+<p><code>git log --oneline -- site/static/app.js site/static/style.css</code> → <code>131fdb9</code> (PR #233) is the
+  water-dot/<code>waterDotClass</code> precedent; <code>00c330c</code> (PR #37) is the typography pass.</p>
+</li>
+<li>
+<p><strong>At acceptance, 2026-09-28</strong>: the emoji grep above, re-run, gives the 12 hits listed at the top of
+  §5; <code>README.md:1</code> still reads <code>&lt;h1 align="center"&gt;🌊 marola&lt;/h1&gt;</code>; the stub palette is at
+  <code>site_check.js:158</code>; the §5.6 contrast table was computed from <code>style.css</code>'s current token values
+  with the WCAG 2.x formula.</p>
+</li>
 </ul>
 <h3 id="not-checked">Not checked<a class="headerlink" href="#not-checked" title="Permanent link">&para;</a></h3>
 <ul>

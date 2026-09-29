@@ -2431,6 +2431,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#57-the-nav-on-a-phone-a-disclosure-menu-added-at-acceptance-2026-09-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 The nav on a phone: a disclosure menu (added at acceptance, 2026-09-28)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3492,6 +3503,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#57-the-nav-on-a-phone-a-disclosure-menu-added-at-acceptance-2026-09-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 The nav on a phone: a disclosure menu (added at acceptance, 2026-09-28)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3622,7 +3644,11 @@
 <tbody>
 <tr>
 <td><strong>Status</strong></td>
-<td>Draft</td>
+<td>Partially implemented (§5.6 — #300, #306, since rebuilt as marola.dev/docs by MIP-0064); accepted 2026-09-28 for tasks 1–2 of the task list (the §5.7 menu, the §5.1 page generator). An interim hand-written section nav (#321, #324) and <code>about.html</code> (#381) shipped before §5.1's generator existed</td>
+</tr>
+<tr>
+<td><strong>Tasks</strong></td>
+<td><a href="../MIP-0044.tasks/"><code>MIP-0044.tasks.md</code></a> — two stacked PRs this round; §5.2–§5.4 listed there as later, unfiled</td>
 </tr>
 <tr>
 <td><strong>Author</strong></td>
@@ -3650,7 +3676,7 @@
 </tr>
 <tr>
 <td><strong>Effort vs Gain</strong></td>
-<td>Per §5 item, not one call. <code>do next</code> for §5.1–§5.2 (the generator, nav, <code>/about/</code> with contact, <code>/support/</code>) — small, self-contained, no new dependency except the layout code itself. <code>do next</code> for §5.3 (news + dev blog) once §5.1 lands. <code>do when MIP-0034 lands</code> for §5.4 (<code>/feeds/</code>) — it has literally nothing to link until then. <code>do when MIP-0033 §5.1 lands</code> for §5.5's <code>docs/</code> mirror. <code>cheap win</code> for §5.6's Scala API docs (<code>sbt doc</code> already works, verified §4.3); <code>expensive, defer</code> for §5.6's Python API docs — verified in §4.4 that the honest output is thin</td>
+<td>Per §5 item, not one call. <code>do next</code> for §5.7 (the menu, added at acceptance: the map's header does not fit a phone today). <code>do next</code> for §5.1–§5.2 (the generator, nav, <code>/about/</code> with contact, <code>/support/</code>) — small, self-contained, no new dependency except the layout code itself. <code>do next</code> for §5.3 (news + dev blog) once §5.1 lands. <code>do when MIP-0034 lands</code> for §5.4 (<code>/feeds/</code>) — it has literally nothing to link until then. <code>do when MIP-0033 §5.1 lands</code> for §5.5's <code>docs/</code> mirror. <code>cheap win</code> for §5.6's Scala API docs (<code>sbt doc</code> already works, verified §4.3); <code>expensive, defer</code> for §5.6's Python API docs — verified in §4.4 that the honest output is thin</td>
 </tr>
 <tr>
 <td><strong>Depends on</strong></td>
@@ -3879,6 +3905,20 @@ what <code>site.yml</code> is. So 16 MB of API docs is under 2% of the size budg
 problem. What it <em>is</em> is 16 MB re-uploaded on all eight scheduled deploys a day for content that
 only changes when Scala changes, which is why §5.6 puts it on the <code>site-data</code> branch instead.</p>
 <h2 id="5-design">5. Design<a class="headerlink" href="#5-design" title="Permanent link">&para;</a></h2>
+<p><strong>State at acceptance (2026-09-28).</strong> Three weeks of work landed around this draft, and the design
+below is read against it:</p>
+<ul>
+<li><strong>§5.6 shipped</strong> as <code>marola.dev/docs</code> (#300, #306), at <code>/docs/</code> rather than <code>/dev/</code>, and MIP-0064
+  then rebuilt it as a searchable mkdocs site that also publishes <code>docs/*.md</code>. That covers what §5.5
+  wanted, so neither §5.5 nor §5.6 is a task any more.</li>
+<li><strong>A section nav exists without §5.1's generator</strong>: six hand-written items (<code>Docs</code>, <code>Alerts soon</code>,
+  <code>News soon</code>, <code>About</code>, <code>Contact soon</code>, <code>Donate soon</code>, #321 and #324), copied by hand into
+  <code>about.html</code> (#381). §3's five-item set is not what ships.</li>
+<li><strong>The header carries five controls</strong> (area, day, near me, sound, list) against the
+  <code>site-frontend</code> skill's four, and the nav wraps to two rows at 390 px: §5.7 is the fix.</li>
+<li><code>site.yml</code>'s allowlist already names <code>about.html</code>; <code>stamp_site_version.sh</code> still stamps only
+  <code>index.html</code>; <code>style.css</code> is 12,009 bytes.</li>
+</ul>
 <h3 id="51-the-nav-architecture-separate-static-pages-generated-at-build-time">5.1 The nav architecture: separate static pages, generated at build time<a class="headerlink" href="#51-the-nav-architecture-separate-static-pages-generated-at-build-time" title="Permanent link">&para;</a></h3>
 <p><strong>Decision: one real HTML file per section under <code>site/dist/&lt;section&gt;/index.html</code>, emitted by a
 pure Scala function.</strong> Not a client-side router, not a generator toolchain.</p>
@@ -4062,6 +4102,48 @@ stdlib-only, 37% of functions documented, not a library API. That sentence is th
 between an honest page and one that implies more than exists.</p>
 <p><code>flake.nix</code> gains <code>pdoc</code> (a new dev-shell tool; <code>just quality-other</code> already fails rather than skips
 when a lint tool is missing, and this follows that rule).</p>
+<h3 id="57-the-nav-on-a-phone-a-disclosure-menu-added-at-acceptance-2026-09-28">5.7 The nav on a phone: a disclosure menu (added at acceptance, 2026-09-28)<a class="headerlink" href="#57-the-nav-on-a-phone-a-disclosure-menu-added-at-acceptance-2026-09-28" title="Permanent link">&para;</a></h3>
+<p>§5.1 decided which pages exist and that each carries one nav; it said nothing about a 390 px
+screen. On a 375 × 812 viewport today the nav takes 59 px in two rows, the header 212 px with its
+five controls wrapped onto three rows, and the hour bar 61 px: the map starts at 332 px, so 41% of
+the first screen is chrome (measured in a browser, 2026-09-28). This is the front-end half of §5.1,
+and it ships before the generator because it needs none of it.</p>
+<p><strong>One <code>nav.sitenav</code>, two layouts.</strong> Above 640 px it stays an inline row: section links left, a
+prefs group right. At 640 px and below it is a 44 px strip with one <code>menu</code> button, and the links
+and prefs open in a panel under it.</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">nav</span> <span class="na">class</span><span class="o">=</span><span class="s">"sitenav"</span> <span class="na">aria-label</span><span class="o">=</span><span class="s">"Sections"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">button</span> <span class="na">id</span><span class="o">=</span><span class="s">"menu-toggle"</span> <span class="na">type</span><span class="o">=</span><span class="s">"button"</span> <span class="na">class</span><span class="o">=</span><span class="s">"menu-toggle"</span> <span class="na">aria-controls</span><span class="o">=</span><span class="s">"menu"</span>
+          <span class="na">aria-expanded</span><span class="o">=</span><span class="s">"false"</span><span class="p">&gt;&lt;</span><span class="nt">svg</span> <span class="na">class</span><span class="o">=</span><span class="s">"ic"</span> <span class="na">aria-hidden</span><span class="o">=</span><span class="s">"true"</span><span class="p">&gt;</span>…<span class="p">&lt;/</span><span class="nt">svg</span><span class="p">&gt;</span>menu<span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">"menu"</span> <span class="na">class</span><span class="o">=</span><span class="s">"menu"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">ul</span> <span class="na">class</span><span class="o">=</span><span class="s">"menu-links"</span><span class="p">&gt;&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"/docs/"</span><span class="p">&gt;</span>Docs<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span> … <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;&lt;</span><span class="nt">span</span> <span class="na">aria-disabled</span><span class="o">=</span><span class="s">"true"</span><span class="p">&gt;</span>News <span class="p">&lt;</span><span class="nt">i</span><span class="p">&gt;</span>soon<span class="p">&lt;/</span><span class="nt">i</span><span class="p">&gt;&lt;/</span><span class="nt">span</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span> …<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">"menu-prefs"</span><span class="p">&gt;</span><span class="cm">&lt;!-- #lang (MIP-0054), #sound, #chat-toggle --&gt;</span><span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">nav</span><span class="p">&gt;</span>
+</code></pre></div>
+<ul>
+<li><strong>The header budget.</strong> <code>.controls</code> keeps exactly four: area, day, near me, list. <code>#sound</code> and
+  <code>#chat-toggle</code> move into <code>menu-prefs</code> with their ids unchanged, so <code>app.js</code> and <code>chat.js</code> keep
+  their wiring. MIP-0054's <code>[pt][en]</code> control lands there too. The chat toggle stops being a pill
+  floating over the map, which the skill's red-flag list names and which the card covers on a phone.</li>
+<li><strong>Behaviour is the WAI-ARIA disclosure pattern, not a modal.</strong> State is <code>aria-expanded</code> on the
+  button plus an <code>open</code> class on the nav, not the <code>hidden</code> attribute: <code>style.css</code>'s
+  <code>[hidden] { display: none !important; }</code> would beat the desktop rule that always shows the panel.
+  Escape and a click outside close it and return focus to the button. No focus trap.</li>
+<li><strong>Items stay in the HTML, never built by JS,</strong> so the page works without JS and task 2's generator
+  can take the markup over as is. Until it does, a harness assertion requires the <code>menu-links</code> block
+  of <code>index.html</code> and <code>about.html</code> to be identical: the duplication is guarded, not hoped away.</li>
+<li><strong>The interim six items stay</strong> until the pages behind §3's five exist (tasks 3–4). Switching is a
+  list edit; which items survive is §11's first question.</li>
+<li><strong><code>site/static/ui.js</code> holds the menu.</strong> The map-behaviour story that lands first (one open sheet
+  at a time on a phone, Escape, focus return; no MIP) creates the file for its sheet registry, and
+  task 1 adds the menu and loads it from <code>about.html</code> too. It is one more same-origin request on the
+  map page, a declared exception to the skill's "zero new requests": <code>about.html</code> cannot load
+  <code>app.js</code>, whose boot fetches the board and needs Leaflet, and a copy of the menu code in each page
+  is drift the harness cannot see. <code>site.yml</code>'s allowlist and required files and
+  <code>stamp_site_version.sh</code> gain it in the PR that adds it.</li>
+<li><strong>CSS budget.</strong> About 32 lines, 1.2 KB, less the removed pill. Task 1 adds an assertion that
+  <code>style.css</code> stays under the skill's 15,000 bytes, so the cap becomes a gate.</li>
+</ul>
 <h2 id="6-scoring-safety-impact">6. Scoring / safety impact<a class="headerlink" href="#6-scoring-safety-impact" title="Permanent link">&para;</a></h2>
 <p><code>Swimability.score</code> is untouched: <strong>none</strong>.</p>
 <p>One new safety rule, because this is the first time the site will carry prose that is not computed
@@ -4086,6 +4168,10 @@ inline, exactly as <code>knowledge/*.md</code> corpus documents do.</p>
 <li><code>scripts/site_check.js</code> (extend), for every generated page: parses, has a title, has the
   <code>&lt;link rel="alternate"&gt;</code>, and <strong>no <code>src="http</code></strong> anywhere. Runs in <code>just quality-other</code> already.</li>
 <li><code>scripts/strip_external_scripts.py --self-test</code>: added to <code>quality-other</code>'s list.</li>
+<li>§5.7, in <code>scripts/site_check.js</code>: <code>.controls</code> has exactly four children; <code>#menu-toggle</code> has
+  <code>aria-controls="menu"</code>; opening then pressing Escape closes the menu and returns focus to the
+  button; the <code>menu-links</code> blocks of <code>index.html</code> and <code>about.html</code> are identical; <code>style.css</code> is under
+  15,000 bytes. Plus screenshots at 390 px and 1280 px, menu open and closed.</li>
 </ul>
 <p>Live checks (commands, to run and record):</p>
 <div class="highlight"><pre><span></span><code>just<span class="w"> </span>site-build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>just<span class="w"> </span>site-serve<span class="w">      </span><span class="c1"># then curl each URL in §3 for HTTP 200 and a &lt;title&gt;</span>
@@ -4161,6 +4247,12 @@ missing; the generated API tree contains zero third-party script tags; <code>jus
   jail <code>--exec</code> fix), which is also exactly what MIP-0018's planner produces.</li>
 <li><strong>Should <code>/dev/docs/</code> render every <code>docs/*.md</code> or a curated subset?</strong> <code>FABLE_REVIEW.md</code> is
   internal-facing; publishing all 17 unfiltered is a decision, not a default.</li>
+<li><strong>Which interim items survive the switch to §3's set?</strong> (added at acceptance) <code>Alerts</code> has no page
+  in any MIP: MIP-0034 §5.2's INMET warnings are a banner on the map, not a section. Proposed: drop
+  <code>Alerts</code> when tasks 3–4 land, fold <code>Contact</code> into <code>/about/#contact</code> and <code>Donate</code> into <code>/support/</code>
+  as §5.2 already says, and keep <code>Docs</code> as a sixth item since <code>/docs/</code> is real today.</li>
+<li><strong>The chat toggle moves into the menu</strong> (§5.7). That changes MIP-0033 §5.2's floating placement;
+  the maintainer decides in the acceptance PR.</li>
 <li><strong>Follow-up MIP:</strong> the site currently has no way to say "this page is stale". Every generated page
   will carry a <code>generatedAt</code> stamp, but a <em>content</em> freshness policy (when does a news item stop
   being news, what does <code>/news/</code> show after six quiet months) is a small design of its own and
@@ -4207,10 +4299,19 @@ missing; the generated API tree contains zero third-party script tags; <code>jus
   quoted in §2/§5.1; <code>site/static/vendor/leaflet.js</code> is 147,552 bytes; 53 of 54 main <code>.scala</code> files
   carry a scaladoc comment; <code>docs/4-Research-and-plans/ROADMAP.md</code> §7's K1–K10 and <code>docs/4-Research-and-plans/FUTURE-WORK.md</code> contain no
   site-sections item.</li>
-<li><strong>MIP-0034 branch check, 2026-09-07</strong>: two branches carry the same file:
+<li>
+<p><strong>MIP-0034 branch check, 2026-09-07</strong>: two branches carry the same file:
   <code>origin/docs/mip-0034-rss-feeds</code> and <code>origin/mips/2026-09-07/1-mip-0034-rss-feeds</code>. A <code>git diff</code>
   between them shows <strong>no difference in <code>docs/MIPs/MIP-0034-rss-feeds-and-content-syndication.md</code></strong>;
-  the newer <code>mips/2026-09-07/1-…</code> is simply rebased onto a later <code>main</code>. Treat that one as canonical.</li>
+  the newer <code>mips/2026-09-07/1-…</code> is simply rebased onto a later <code>main</code>. Treat that one as canonical.</p>
+</li>
+<li>
+<p><strong>At acceptance, 2026-09-28</strong>: <code>git log --grep</code> finds #300 and #306 implementing §5.6 and MIP-0064
+  (#459–#475) rebuilding it; #321 and #324 added the six-item nav, #381 <code>about.html</code>. <code>style.css</code> is
+  12,009 bytes; <code>index.html</code>'s <code>.controls</code> holds five controls; <code>stamp_site_version.sh</code> stamps only
+  <code>index.html</code>. On marola.dev at 375 × 812 in the in-app browser, <code>getBoundingClientRect()</code> gives the
+  nav 59 px, <code>.bar</code> 212 px (<code>.controls</code> 124 px), <code>#hourbar</code> 61 px, and <code>#map</code> a top of 332 px.</p>
+</li>
 </ul>
 <h3 id="not-checked">Not checked<a class="headerlink" href="#not-checked" title="Permanent link">&para;</a></h3>
 <ul>

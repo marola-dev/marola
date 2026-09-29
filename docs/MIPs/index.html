@@ -3414,11 +3414,11 @@ as an unfilled placeholder).</p>
 <tr>
 <td><a href="MIP-0044-site-sections/">MIP-0044</a></td>
 <td>marola.dev becomes a site, not just a map — news, a markdown dev blog, generated Scala/Python API docs, a feeds page, about/contact, and a restrained support page</td>
-<td>Draft</td>
+<td>Partially implemented (§5.6 — #300, #306, rebuilt by MIP-0064); accepted 2026-09-28 for tasks 1–2 of <a href="MIP-0044.tasks/"><code>MIP-0044.tasks.md</code></a> (the §5.7 menu, the §5.1 generator)</td>
 <td>2026-09-07</td>
 <td>XL — a page generator, a nav, a markdown pipeline, two documentation toolchains and a new CI workflow, editing five load-bearing pieces of the existing site machinery at once</td>
 <td>user value; community/outreach; infra/dev-loop</td>
-<td>do next (§5.1–§5.3); do when MIP-0034 lands (§5.4 feeds page); do when MIP-0033 §5.1 lands (§5.5 docs mirror); cheap win (§5.6 Scaladoc) / expensive, defer (§5.6 Python docs)</td>
+<td>do next (§5.7 menu, §5.1–§5.3); do when MIP-0034 lands (§5.4 feeds page); §5.5 and §5.6 done by #300/#306 and MIP-0064</td>
 <td>—</td>
 </tr>
 <tr>
@@ -3434,7 +3434,7 @@ as an unfilled placeholder).</p>
 <tr>
 <td><a href="MIP-0046-remove-ai-slop-ui/">MIP-0046</a></td>
 <td>The map without the generated look — a chart-derived icon set replacing every emoji on the page</td>
-<td>Draft</td>
+<td>Accepted 2026-09-28 — two tasks in <a href="MIP-0046.tasks/"><code>MIP-0046.tasks.md</code></a>; the §5.6 chip option is decided in the acceptance PR</td>
 <td>2026-09-07</td>
 <td>M — three site files plus <code>scripts/site_check.js</code>, whose emoji assertions are a <code>just quality-other</code> gate and have to move in lockstep; "done" needs a browser at 390/1280 px, not only the stub harness</td>
 <td>user value; infra/dev-loop</td>
@@ -3514,7 +3514,7 @@ as an unfilled placeholder).</p>
 <tr>
 <td><a href="MIP-0054-portuguese-first-experience/">MIP-0054</a></td>
 <td>Portuguese first — marola's whole user-facing experience in pt-BR, with a language choice that sticks and a location-aware default. <strong>Release blocker: Release 0 (MIP-0033) does not ship until this lands</strong></td>
-<td>Draft — release blocker</td>
+<td>Accepted 2026-09-28 for tasks 1–3 of <a href="MIP-0054.tasks/"><code>MIP-0054.tasks.md</code></a> (the site's half, then note codes) — release blocker</td>
 <td>2026-09-12</td>
 <td>XL — a message catalog in two runtimes (Scala for CLI/MCP/board, JS for the site), a board-contract change (codes, not English prose), a pt-BR corpus with per-file sources, a pt-BR DSPy recompile of both prompts, a deterministic language guard, a rewrite of <code>scripts/site_check.js</code>'s copy assertions, and a language/location precedence in the client; no new dependency</td>
 <td>user value (the audience is Brazilian, every surface but the safety footer answers in English); infra/dev-loop (one catalog file per language instead of strings scattered over four places)</td>
