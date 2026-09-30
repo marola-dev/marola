@@ -3508,6 +3508,11 @@ is green; MIP status right; <code>docs/4-Research-and-plans/FABLE_REVIEW.md</cod
   when the merged branch is deleted; the commits still need a rebase:
   <code>scripts/stack.sh restack</code> on the next branch, or <code>just stack-sync MIP-NNNN</code> for the whole
   stack (it adopts the stack from GitHub first; <code>gh stack link</code> keeps no local state).</li>
+<li>A task PR's body carries <code>Closes #N</code> for the issue its <code>MIP-NNNN.tasks.md</code> row links (<code>uprd.sh</code>
+  writes it, #512), so the merge into <code>main</code> closes the issue and the board moves it to Done.
+  Label a PR that delivers only part of its task <code>task-partial</code>: the line becomes <code>Part of #N</code> and
+  the issue stays open. A PR merged into another task branch closes nothing; GitHub honours the
+  keyword only on the default branch.</li>
 <li><code>scripts/stack.sh status</code> / <code>just stack-view</code> until every PR is merged.</li>
 <li>Last merge: superpowers <code>finishing-a-development-branch</code>: full suite green, delete the task
   branches, flip the MIP to <strong>Implemented</strong> with the PR numbers and the summed Cost in its status

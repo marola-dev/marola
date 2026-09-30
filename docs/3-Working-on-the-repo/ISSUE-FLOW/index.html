@@ -3291,6 +3291,12 @@ issue is the checker working, not a contradiction to fix: rule 2 exists so that 
 fixed is decided <em>before</em> someone claims it, and nobody has decided it yet. A maintainer owes the
 report a named test — the test that is red today — and the issue becomes <code>agent-ready</code> when they
 add it.</p>
+<p><strong>A merged task PR closes its issue.</strong> <code>uprd.sh</code> writes <code>Closes #N</code> into the body of a
+<code>mip-NNNN/&lt;k&gt;-*</code> PR, for the issue that row <code>k</code> of <code>MIP-NNNN.tasks.md</code> links. The merge into
+<code>main</code> closes it, and that clears rule 5 for every task blocked by it. A PR labelled <code>task-partial</code>
+gets <code>Part of #N</code> instead, and the issue stays open. Any other PR closes its issue by a
+<code>Closes #N</code> line of its own in a commit body, which <code>uprd.sh</code> copies into the PR body, the only
+place GitHub reads it.</p>
 <h2 id="the-commands">The commands<a class="headerlink" href="#the-commands" title="Permanent link">&para;</a></h2>
 <p><code>scripts/issues.sh</code> is the whole surface, and every subcommand takes <code>--dry-run</code> (the reads it is
 computed from still happen, so a login is needed either way). Seven of them have a <code>just</code> recipe:</p>
