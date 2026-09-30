@@ -76,7 +76,7 @@ fork_point_for() {
 self_test() {
   local failed=0 tmp self repo fork unrelated upstream got out rc
   local pr_origin pr_work cost_fill_stub local_head remote_head
-  local fp_origin fp_work upstream_ref rs_origin rs_work main_tip
+  local fp_origin fp_work upstream_ref rs_origin rs_work main_tip variant t1_head
   self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
   tmp="$(mktemp -d)"; trap "rm -rf $(printf %q "$tmp")" EXIT
   check() { if [ "$2" = "$3" ]; then echo "ok: $1"; else echo "FAILED: $1"; echo "  got:  $2"; echo "  want: $3"; failed=1; fi; }
@@ -267,10 +267,12 @@ GH
     "--dry-run --base $(git -C "$pr_work" rev-parse origin/mip-9999/1-solo)"
 
   echo
-  echo "-- pr on a restacked child rewrites only its own commits (#524) --"
-  # Task 1 squash-merged, its remote branch deleted but the tracking ref left stale (fetch doesn't
-  # prune), task 2 rebased onto main: the parent-derived fork point is now the old main.
-  rs_origin="$tmp/rs-origin.git"; rs_work="$tmp/rs-work"
+  # Task 1 squash-merged and task 2 rebased onto main, so the parent-derived fork point is stale:
+  # "stale" leaves the deleted branch's tracking ref behind (fetch doesn't prune), "pruned" drops it
+  # so fork_point_for asks gh, which answers with task 1's pre-squash head.
+  for variant in stale pruned; do
+  echo "-- pr on a restacked child rewrites only its own commits, $variant parent ref (#524) --"
+  rs_origin="$tmp/rs-$variant-origin.git"; rs_work="$tmp/rs-$variant-work"
   { git init -q --bare "$rs_origin"
     git init -q -b main "$rs_work"
     git -C "$rs_work" config user.email rs@example.invalid
@@ -290,20 +292,29 @@ GH
     GIT_COMMITTER_NAME=GitHub git -C "$rs_work" commit -q -m $'task 1 (#1)\n\nTested: x\nCost: $0\nCo-Authored-By: C <c@x.invalid>'
     git -C "$rs_work" push -q origin main
     git --git-dir="$rs_origin" update-ref -d refs/heads/mip-9999/1-a
-    git -C "$rs_work" rebase -q --onto origin/main mip-9999/1-a mip-9999/2-b
+    t1_head="$(git -C "$rs_work" rev-parse mip-9999/1-a)"
+    if [ "$variant" = pruned ]; then
+      git -C "$rs_work" update-ref -d refs/remotes/origin/mip-9999/1-a
+      git -C "$rs_work" branch -q -D mip-9999/1-a
+    fi
+    git -C "$rs_work" rebase -q --onto origin/main "$t1_head" mip-9999/2-b
     echo c >"$rs_work/c.txt"; git -C "$rs_work" add c.txt
     git -C "$rs_work" commit -q -m $'review fix\n\nTested: x\nCost: est. pending\nCo-Authored-By: C <c@x.invalid>'
   } >/dev/null 2>&1
+  mkdir -p "$tmp/rs-bin"
+  printf '#!/usr/bin/env bash\ncase "$*" in *"pr list"*) echo %s ;; *"pr create"*) echo https://example.invalid/pull/1 ;; *) exit 1 ;; esac\n' \
+    "$t1_head" >"$tmp/rs-bin/gh"; chmod +x "$tmp/rs-bin/gh"
   main_tip="$(git -C "$rs_work" rev-parse origin/main)"
-  out="$(cd "$rs_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$(dirname "$self")/cost-fill.sh" \
+  out="$(cd "$rs_work" && PATH="$tmp/rs-bin:$PATH" STACK_SELFTEST_COST_FILL="$(dirname "$self")/cost-fill.sh" \
     STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" --dry-run pr 2>&1)" || true
   has "--dry-run replays only the child's two commits" "$out" "replaying 2 commit(s)"
-  out="$(cd "$rs_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$(dirname "$self")/cost-fill.sh" \
+  out="$(cd "$rs_work" && PATH="$tmp/rs-bin:$PATH" STACK_SELFTEST_COST_FILL="$(dirname "$self")/cost-fill.sh" \
     STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" pr 2>&1)" || true
   has "and so does the real run" "$out" "across 2 commit(s)"
   check "origin/main stays an ancestor" \
     "$(git -C "$rs_work" merge-base --is-ancestor "$main_tip" mip-9999/2-b && echo yes || echo no)" "yes"
   check "with exactly the child's commits on top" "$(git -C "$rs_work" rev-list --count "$main_tip..mip-9999/2-b")" "2"
+  done
 
   echo
   if [ "$failed" -eq 1 ]; then echo "stack self-test: FAILED" >&2; return 1; fi
@@ -332,6 +343,8 @@ case "${1:-}" in
     # origin/main range would re-amend the parent's commits and see the parent's Closes line.
     cf_ref="$base"; [ -z "$base" ] || [ "$base" = main ] || cf_ref="origin/$base"
     cf_base="$(fork_point_for "$cur" "$cf_ref")" || cf_base=""
+    # fork_point_for may answer with gh's merged head sha, which a squash-merge leaves off HEAD's history.
+    [ -z "$cf_base" ] || cf_base="$(git merge-base HEAD "$cf_base" 2>/dev/null)" || cf_base=""
     # After a squash-merge + restack the parent's ref is stale and points below main; take
     # whichever fork point is nearer HEAD, or cost-fill would replay main's own commits.
     mb="$(git merge-base HEAD origin/main)" || mb=""
