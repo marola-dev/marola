@@ -133,9 +133,8 @@ marola: Marked — you're swimming at Praia da Joaquina around 10:00 today.
   a *person* reach a user" either.
 - Depends on MIP-0002 for identity/messaging; cannot ship before it.
 
-As a sequence, following §6's mutual-consent rule (count only, a handle only after both say yes —
-§3's mock reply shows handles immediately on match, which contradicts §6; not resolved here, see
-§11.6):
+As a sequence, following §6's mutual-consent rule (a count first, a handle only after both say
+yes; §3's mock reply differs, see §11.6):
 
 ```mermaid
 sequenceDiagram

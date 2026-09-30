@@ -45,8 +45,8 @@ Telegram wins on every axis that matters for this use case. **Decision: Telegram
 
 ## 3. What's actually built
 
-A real, runnable pipeline plus independently pluggable integrations: no mocks, no stubs
-pretending to be real:
+A runnable pipeline plus independently pluggable integrations, all real code with no mocks or
+stubs.
 
 Three sbt modules at the repo root: `core`, `local`, `cli` (see `FUTURE-WORK.md` §7.3 for why, and
 the dependency-inversion fix that keeps `core` free of any backend-specific reference):
