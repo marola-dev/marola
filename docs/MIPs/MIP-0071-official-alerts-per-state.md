@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Status** | Draft — `Tasks: docs/MIPs/MIP-0071.tasks.md` |
-| **Author** | Claude Opus 5.5, for M. Hoffmann (#540, plus three requirements given on 2026-09-30: the site reads alerts from RSS or from a store persisted as plain text or SQLite, and never re-fetches history; marola holds every alert for the state of Rio de Janeiro in September 2026; every state gets alerts, independently of the others) |
+| **Author** | Claude, for M. Hoffmann (#540, plus three requirements given on 2026-09-30: the site reads alerts from RSS or from a store persisted as plain text or SQLite, and never re-fetches history; marola holds every alert for the state of Rio de Janeiro in September 2026; every state gets alerts, independently of the others) |
 | **Created** | 2026-09-30 |
 | **Phase** | 0 for the store and the ingest (an offline data pipeline, like MIP-0056); 3 for the page, which rides `site.yml` as MIP-0044's pages do. Phase 1 (MIP-0002's Telegram bot) is still not built. Nothing here needs it, and sending alerts to Telegram is out of scope (§8) |
 | **Related** | #540 (the request); #535 (fetch/render split, which this design follows); MIP-0034 (§4.1 INMET RSS + CAP 1.2, §4.1b id-walk backfill, §5.2 the map banner; this MIP builds its CAP parser and backfill and takes the site's alert data off the site build); MIP-0044 §11 (proposed dropping `Alerts` from the nav; reversed here); MIP-0054 §5.8 and #536 (the catalogs every page string goes through); MIP-0062 §4.3 (the Navy's avisos: 403, no feed); MIP-0008 §5.5 and `scripts/site-data-push.sh` (the `site-data` branch); MIP-0056 (the sibling store for bathing water, and why it could not commit to `main`); MIP-0022 (the emergency line); MIP-0005 (the static site) |
