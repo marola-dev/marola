@@ -270,7 +270,7 @@ if [ "$any" -eq 0 ]; then
 fi
 
 if [ "$dry_run" -eq 1 ]; then
-  echo "cost-fill --dry-run: would rewrite these commits on $branch (author/committer dates preserved):"
+  echo "cost-fill --dry-run: would rewrite $branch, replaying ${#shas[@]} commit(s) from ${fork:0:7} and amending these (dates preserved):"
   for sha in "${shas[@]}"; do
     [ -n "${new_cost[$sha]:-}${new_tested[$sha]:-}${new_closes[$sha]:-}" ] || continue
     echo "  $(git log -1 --format='%h %s' "$sha")"
@@ -324,16 +324,9 @@ trap 'git cherry-pick --abort >/dev/null 2>&1 || true; git checkout -q -f "$bran
 
 for sha in "${shas[@]}"; do
   cdate="$(git log -1 --format=%cI "$sha")"
-  prev_head="$(git rev-parse HEAD)"
-  # --allow-empty preserves a commit that was already empty at authoring time; --empty=drop
-  # instead skips one that becomes empty here because its content is already on this branch's new
-  # base (e.g. the PR this branch was stacked on has since been squash-merged into main under a
-  # different sha) — a stale-base symptom cost-fill should not crash on.
-  GIT_COMMITTER_DATE="$cdate" git cherry-pick --allow-empty --empty=drop "$sha" >/dev/null
-  if [ "$(git rev-parse HEAD)" = "$prev_head" ]; then
-    echo "cost-fill: $sha's diff is already on $branch's base — skipped (rebase this branch onto origin/main)" >&2
-    continue
-  fi
+  # Replaying onto the commits' own fork point, so nothing can turn empty; --allow-empty keeps
+  # one that was authored empty.
+  GIT_COMMITTER_DATE="$cdate" git cherry-pick --allow-empty "$sha" >/dev/null
   tested="${new_tested[$sha]:-}"
   cost="${new_cost[$sha]:-}"
   closes="${new_closes[$sha]:-}"

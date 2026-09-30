@@ -211,10 +211,10 @@ is green; MIP status right; `docs/4-Research-and-plans/FABLE_REVIEW.md` item clo
   carries the same line too (`uprd.sh` copies it there so the link shows on GitHub), but in this
   repo the body-only line did not close anything: #514–#519 carried it and their issues
   #502–#507 stayed open past merge (cause unknown, #524), while #511/#512 closed on a commit-body
-  one. `TASK_PARTIAL=1 just pr`
-  skips the line for a task that only delivers part of its row, before the PR (and its
-  `task-partial` label) exist; the issue stays open. A PR merged into another task branch closes
-  nothing regardless; GitHub honours the keyword only on the default branch.
+  one. `TASK_PARTIAL=1 just pr` skips the line for a task that only delivers part of its row,
+  before the PR (and its `task-partial` label) exist; the issue stays open. A PR merged into
+  another task branch closes nothing regardless; GitHub honours the keyword only on the default
+  branch.
 - `scripts/stack.sh status` / `just stack-view` until every PR is merged.
 - Last merge: superpowers `finishing-a-development-branch`: full suite green, delete the task
   branches, flip the MIP to **Implemented** with the PR numbers and the summed Cost in its status

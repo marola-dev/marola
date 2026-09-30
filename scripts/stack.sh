@@ -76,7 +76,7 @@ fork_point_for() {
 self_test() {
   local failed=0 tmp self repo fork unrelated upstream got out rc
   local pr_origin pr_work cost_fill_stub local_head remote_head
-  local fp_origin fp_work upstream_ref
+  local fp_origin fp_work upstream_ref rs_origin rs_work main_tip
   self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
   tmp="$(mktemp -d)"; trap "rm -rf $(printf %q "$tmp")" EXIT
   check() { if [ "$2" = "$3" ]; then echo "ok: $1"; else echo "FAILED: $1"; echo "  got:  $2"; echo "  want: $3"; failed=1; fi; }
@@ -268,6 +268,45 @@ GH
     "--dry-run --base $(git -C "$pr_work" rev-parse origin/mip-9999/1-solo)"
 
   echo
+  echo "-- pr on a restacked child rewrites only its own commits (#524) --"
+  # Task 1 squash-merged, its remote branch deleted but the tracking ref left stale (fetch doesn't
+  # prune), task 2 rebased onto main: the parent-derived fork point is now the old main.
+  rs_origin="$tmp/rs-origin.git"; rs_work="$tmp/rs-work"
+  { git init -q --bare "$rs_origin"
+    git init -q -b main "$rs_work"
+    git -C "$rs_work" config user.email rs@example.invalid
+    git -C "$rs_work" config user.name rs-self-test
+    git -C "$rs_work" remote add origin "$rs_origin"
+    git -C "$rs_work" commit -q --allow-empty -m $'main\n\nTested: x\nCost: $0\nCo-Authored-By: C <c@x.invalid>'
+    git -C "$rs_work" push -q origin main
+    git -C "$rs_work" checkout -q -b mip-9999/1-a
+    echo a >"$rs_work/a.txt"; git -C "$rs_work" add a.txt
+    git -C "$rs_work" commit -q -m $'task 1\n\nTested: x\nCost: $0\nCo-Authored-By: C <c@x.invalid>'
+    git -C "$rs_work" push -q -u origin mip-9999/1-a
+    git -C "$rs_work" checkout -q -b mip-9999/2-b
+    echo b >"$rs_work/b.txt"; git -C "$rs_work" add b.txt
+    git -C "$rs_work" commit -q -m $'task 2\n\nTested: x\nCost: $0\nCo-Authored-By: C <c@x.invalid>'
+    git -C "$rs_work" checkout -q main
+    git -C "$rs_work" merge -q --squash mip-9999/1-a
+    GIT_COMMITTER_NAME=GitHub git -C "$rs_work" commit -q -m $'task 1 (#1)\n\nTested: x\nCost: $0\nCo-Authored-By: C <c@x.invalid>'
+    git -C "$rs_work" push -q origin main
+    git --git-dir="$rs_origin" update-ref -d refs/heads/mip-9999/1-a
+    git -C "$rs_work" rebase -q --onto origin/main mip-9999/1-a mip-9999/2-b
+    echo c >"$rs_work/c.txt"; git -C "$rs_work" add c.txt
+    git -C "$rs_work" commit -q -m $'review fix\n\nTested: x\nCost: est. pending\nCo-Authored-By: C <c@x.invalid>'
+  } >/dev/null 2>&1
+  main_tip="$(git -C "$rs_work" rev-parse origin/main)"
+  out="$(cd "$rs_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$(dirname "$self")/cost-fill.sh" \
+    STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" --dry-run pr 2>&1)" || true
+  has "--dry-run replays only the child's two commits" "$out" "replaying 2 commit(s)"
+  out="$(cd "$rs_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$(dirname "$self")/cost-fill.sh" \
+    STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" pr 2>&1)" || true
+  has "and so does the real run" "$out" "across 2 commit(s)"
+  check "origin/main stays an ancestor" \
+    "$(git -C "$rs_work" merge-base --is-ancestor "$main_tip" mip-9999/2-b && echo yes || echo no)" "yes"
+  check "with exactly the child's commits on top" "$(git -C "$rs_work" rev-list --count "$main_tip..mip-9999/2-b")" "2"
+
+  echo
   if [ "$failed" -eq 1 ]; then echo "stack self-test: FAILED" >&2; return 1; fi
   echo "stack self-test: ok"
 }
@@ -294,6 +333,10 @@ case "${1:-}" in
     # origin/main range would re-amend the parent's commits and see the parent's Closes line.
     cf_ref="$base"; [ -z "$base" ] || [ "$base" = main ] || cf_ref="origin/$base"
     cf_base="$(fork_point_for "$cur" "$cf_ref")" || cf_base=""
+    # After a squash-merge + restack the parent's ref is stale and points below main; take
+    # whichever fork point is nearer HEAD, or cost-fill would replay main's own commits.
+    mb="$(git merge-base HEAD origin/main)" || mb=""
+    if [ -z "$cf_base" ] || { [ -n "$mb" ] && git merge-base --is-ancestor "$cf_base" "$mb"; }; then cf_base="$mb"; fi
     cf_args=(); [ -z "$cf_base" ] || cf_args=(--base "$cf_base")
     if [ "$dry" -eq 1 ]; then
       echo "+ $cost_fill ${cf_args[*]}"
