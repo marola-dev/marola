@@ -1,8 +1,16 @@
 # Development flow
 
-**Issue** → **MIP** (Draft) → **acceptance** → **task list** → **stacked PRs** (one per task,
-verified, costed) → **review, when asked** → merge bottom-up, restack → **finish**
-(MIP → Implemented).
+```mermaid
+flowchart TD
+  issue([Issue]) --> mip["MIP (Draft)"]
+  mip --> acceptance[acceptance]
+  acceptance --> tasks["task list"]
+  tasks --> prs["stacked PRs<br/>(one per task, verified, costed)"]
+  prs --> review["review, when asked"]
+  review --> merge["merge bottom-up, restack"]
+  merge --> finish["finish<br/>(MIP → Implemented)"]
+```
+
 This page is the one place the whole loop is written down; the pieces live in the `mip` and
 `mip-tasks` skills (`.claude/skills/`), `AGENTS.md` (the hard rules), `docs/3-Working-on-the-repo/AGENT-SKILLS.md`
 (which superpowers skill does what) and the scripts under `scripts/`.
@@ -50,6 +58,21 @@ commit), **Rejected** (keep the file; the reasoning is the value) or **Supersede
 "Implement MIP-NNNN" from the human counts as acceptance; the first task's commit flips the
 status to `Accepted` and links the tasks file.
 
+The status row's own lifecycle:
+
+```mermaid
+stateDiagram-v2
+  state "Superseded by MIP-NNNN" as Superseded
+  [*] --> Draft: opened as its own PR
+  Draft --> Accepted: acceptance decision
+  Draft --> Rejected: acceptance decision
+  Draft --> Superseded: acceptance decision
+  Accepted --> Implemented: last merge
+  Rejected --> [*]
+  Superseded --> [*]
+  Implemented --> [*]
+```
+
 ## 3. The task list
 
 `mip-tasks` step 1 (superpowers `writing-plans` is skipped: the MIP is the plan): read the MIP,
@@ -77,6 +100,22 @@ scripts/stack.sh start MIP-NNNN <k> <slug>        # branch mip-nnnn/k-slug off t
 just build && just test && just quality           # + a live check whenever a data path changed (superpowers verification-before-completion: evidence, then the claim)
 git commit                                         # message ends with Tested: and Cost: trailers (AGENTS.md) — the PR's Tested/Cost sections come from them
 just pr                                            # fills any missing trailer (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch
+```
+
+The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:
+
+```mermaid
+%%{init: {"themeVariables": {"git0": "#1ac5da", "git1": "#3ecf6e", "git2": "#f0a030", "git3": "#c678dd", "commitLabelColor": "#ffffff", "commitLabelBackground": "#082f45"}}}%%
+gitGraph
+  commit id: "main"
+  branch mip-nnnn/1
+  commit id: "task 1"
+  branch mip-nnnn/2
+  commit id: "task 2"
+  checkout main
+  commit id: "squash #1"
+  branch mip-nnnn/2-restacked
+  cherry-pick id: "task 2" tag: "restack (rebase --onto)"
 ```
 
 `just pr --dry-run` prints every step (the trailers `cost-fill` would add, the body `uprd` would

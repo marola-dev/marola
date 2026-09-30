@@ -101,6 +101,24 @@ backend (`AGENTS.md`).
 MIP-0003 (fast replies, M) follows it: a bot that takes ten seconds loses the user. MIP-0004
 (daily digest, L) is the retention story after that.
 
+What the gate does and does not hold up:
+
+```mermaid
+flowchart LR
+  subgraph nogate["No MIP-0002 gate"]
+    direction LR
+    now["§3 Now:<br/>MIP-0009 → 0017 → 0016 → 0018 → #451"]
+    local["§5 local-first:<br/>0021 → 0022 → 0024"]
+    k46["§7: K4, K6 (Phase 0)"]
+  end
+  gate{{"MIP-0002: Telegram bot<br/>(Phase 1)"}}
+  gate -->|ships| mip3["MIP-0003: fast replies"]
+  mip3 --> mip4["MIP-0004: daily digest"]
+  gate -->|ships| newmips["§5, after MIP-0002:<br/>0023, 0026"]
+  gate -->|ships| kgated["§7: K1, K3, K10"]
+  mip3 --> k9["§7: K9 route planning"]
+```
+
 ## 5. Multi-agent — what's missing and which MIP closes it
 
 New MIP numbers proposed here start at 0023 (0020 is the Instagram bot, in draft; 0021 accessibility and 0022 the safety footer were drafted from §7 on 2026-09-06). None is built; each is design-first.

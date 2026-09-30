@@ -15,6 +15,13 @@ Milestones are named descriptively, carry no sequence, and order between them is
 A milestone and a MIP are **n:m** — one deliverable can span several MIPs, one MIP files its tasks
 into one milestone.
 
+```mermaid
+erDiagram
+  MILESTONE }o--o{ MIP : "n:m"
+  MILESTONE ||--o{ ISSUE : "spans"
+  ISSUE ||--o{ SUB_ISSUE : "splits into, only when it genuinely splits"
+```
+
 ## The three tiers
 
 Pick the tier, then the matching issue form:
@@ -64,7 +71,8 @@ add it.
 `main` closes it, and that clears rule 5 for every task blocked by it. A PR labelled `task-partial`
 gets `Part of #N` instead, and the issue stays open. Any other PR closes its issue by a
 `Closes #N` line of its own in a commit body, which `uprd.sh` copies into the PR body, the only
-place GitHub reads it.
+place GitHub reads it. GitHub's built-in board workflow then moves the closed issue's card to
+**Done** (configured in the project UI, MIP-0063 §4.4).
 
 ## The commands
 
@@ -90,6 +98,33 @@ task table, and all three are called directly for a one-off edge.
 
 `tasks-to-issues` sets no `area/*`, `layer/*` or `size/*`: which they are is a human's call, so a
 freshly filed row is not `agent-ready` until someone labels it and `issue-ready` passes.
+
+## Readiness and the board
+
+The `agent-ready` label (Definition of Ready, above) and the board's `Status` field
+(Triage / Spec / Ready / In progress / In review / Done, MIP-0063 §5.2) move together, driven by
+the commands above. The mapping `board-sync` uses on a card's first contact with the board
+(MIP-0063 §5.2): an assigned issue goes to In progress, an issue carrying `agent-ready` goes to
+Ready, otherwise it goes to Triage.
+
+```mermaid
+stateDiagram-v2
+  state "In progress" as InProgress
+  state "In review" as InReview
+  [*] --> Triage: board-sync (otherwise)
+  [*] --> Ready: board-sync (agent-ready)
+  [*] --> InProgress: board-sync (assigned)
+  Triage --> Spec: someone's decision
+  Spec --> Ready: someone's decision
+  Ready --> InProgress: issue-claim
+  InProgress --> InReview: someone's decision
+  InProgress --> Done: merge
+  InReview --> Done: merge
+```
+
+`board-sync` sets a new card's Status once, on first contact with the board, and never overwrites
+it again. From there, a move into Spec or into In review is "someone's decision"; a move into In
+progress is `issue-claim`; and a move into Done is the merge that closes the issue.
 
 ## What no command can do
 
