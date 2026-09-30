@@ -3572,19 +3572,7 @@ specialists:
 <p>ADK's eval (user simulation) tests the routing, and Cloud Run hosts it. Before <code>MIP-0057</code>, v2 has no
 reason to exist.</p>
 <h2 id="6-how-they-compose">6. How they compose<a class="headerlink" href="#6-how-they-compose" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>            ┌───────────── ADK (optional, GCP) ─────────────┐
-            │ router LlmAgent → project agent / ocean agent │
-            └───────────────┬─────────────────┬─────────────┘
-                     A2A    │                 │  MCP tools
-                            ▼                 ▼
-┌──────────── marola JVM (cli) ────────────────────────────────────────┐
-│ llm4s agent (opt-in module)  ──MCP client──►  SwimConditionsMcpServer│
-│        │                                        │                    │
-│        └────── LlmClient / KnowledgeStore (core traits) ◄──┘         │
-│                         │                                            │
-│                  local/: Ollama, file index                          │
-└──────────────────────────────────────────────────────────────────────┘
-</code></pre></div>
+<p><img alt="Kroki" src="kroki-generated-d98d8946-1847-3932-9667-4ec17a918dd3.svg" /></p>
 <ul>
 <li><strong>Inside the JVM,</strong> marola's traits are the contract. llm4s plugs in behind <code>LlmClient</code> (and, for
   RAG, behind <code>KnowledgeStore</code>) exactly as <code>MIP-0012</code> proposes. Nothing above the trait knows which

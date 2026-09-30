@@ -3364,10 +3364,8 @@
 
 
 <h1 id="development-flow">Development flow<a class="headerlink" href="#development-flow" title="Permanent link">&para;</a></h1>
-<p><strong>Issue</strong> → <strong>MIP</strong> (Draft) → <strong>acceptance</strong> → <strong>task list</strong> → <strong>stacked PRs</strong> (one per task,
-verified, costed) → <strong>review, when asked</strong> → merge bottom-up, restack → <strong>finish</strong>
-(MIP → Implemented).
-This page is the one place the whole loop is written down; the pieces live in the <code>mip</code> and
+<p><img alt="Kroki" src="kroki-generated-54e0e89c-097e-3677-b626-792555fe1854.svg" /></p>
+<p>This page is the one place the whole loop is written down; the pieces live in the <code>mip</code> and
 <code>mip-tasks</code> skills (<code>.claude/skills/</code>), <code>AGENTS.md</code> (the hard rules), <code>docs/3-Working-on-the-repo/AGENT-SKILLS.md</code>
 (which superpowers skill does what) and the scripts under <code>scripts/</code>.</p>
 <p>Sessions: one per MIP for planning, one per task for execution (<code>/clear</code>, <code>/rename
@@ -3410,6 +3408,8 @@ of a MIP PR reads, in this order:</p>
 commit), <strong>Rejected</strong> (keep the file; the reasoning is the value) or <strong>Superseded by MIP-NNNN</strong>.
 "Implement MIP-NNNN" from the human counts as acceptance; the first task's commit flips the
 status to <code>Accepted</code> and links the tasks file.</p>
+<p>The status row's own lifecycle:</p>
+<p><img alt="Kroki" src="kroki-generated-45eabda2-a523-3121-b88b-fb8115d1fa0f.svg" /></p>
 <h2 id="3-the-task-list">3. The task list<a class="headerlink" href="#3-the-task-list" title="Permanent link">&para;</a></h2>
 <p><code>mip-tasks</code> step 1 (superpowers <code>writing-plans</code> is skipped: the MIP is the plan): read the MIP,
 <code>AGENTS.md</code> and the code it touches, write <code>docs/MIPs/MIP-NNNN.tasks.md</code>:</p>
@@ -3433,6 +3433,8 @@ just<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&a
 git<span class="w"> </span>commit<span class="w">                                         </span><span class="c1"># message ends with Tested: and Cost: trailers (AGENTS.md) — the PR's Tested/Cost sections come from them</span>
 just<span class="w"> </span>pr<span class="w">                                            </span><span class="c1"># fills any missing trailer (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch</span>
 </code></pre></div>
+<p>The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:</p>
+<p><img alt="Kroki" src="kroki-generated-a90ea0be-9c2a-32ae-887f-e82edc6442be.svg" /></p>
 <p><code>just pr --dry-run</code> prints every step (the trailers <code>cost-fill</code> would add, the body <code>uprd</code> would
 write) without pushing or touching <code>gh</code>. It refuses the same way the real run would (on <code>main</code>, or a
 dirty tree) so the preview matches what actually happens.</p>

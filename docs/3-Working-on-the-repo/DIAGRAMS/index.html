@@ -795,6 +795,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#excalidraw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        excalidraw
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3221,6 +3232,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#excalidraw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        excalidraw
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -3278,8 +3300,8 @@ the rule below is also in <code>.claude/rules/docs.md</code>, which agents load 
 </tr>
 <tr>
 <td>a sketch or wireframe</td>
-<td><code>excalidraw</code></td>
-<td>not enabled yet: MIP-0068 task 7 adds its companion only if a sketch earns it</td>
+<td><code>excalidraw</code> with <code>@from_file:assets/diagrams/&lt;name&gt;.excalidraw</code></td>
+<td>hand-drawn is the honest register for a mock, and the scene opens in the Excalidraw app as a whiteboard and comes back as the same file</td>
 </tr>
 </tbody>
 </table>
@@ -3288,10 +3310,10 @@ the rule below is also in <code>.claude/rules/docs.md</code>, which agents load 
   summary; the text is the source of truth. A diagram that disagrees with its page is a bug in the
   diagram.</li>
 <li><strong>Under about 15 nodes.</strong> Split a diagram rather than grow it.</li>
-<li><strong><code>dbml</code> and <code>vegalite</code> fences take <code>{bg-dark=white}</code>.</strong> Colours are injected into every other
-  dialect in the table above for the slate theme; these two cannot be styled that way, so they are
-  shown on a light card instead. Kroki's other dialects (erd, svgbob, pikchr, …) are uninjected
-  too: stay inside the table.</li>
+<li><strong><code>dbml</code>, <code>vegalite</code> and <code>excalidraw</code> fences take <code>{bg-dark=white}</code>.</strong> Colours are injected into
+  every other dialect in the table above for the slate theme; these three cannot be styled that
+  way, so they are shown on a light card instead. Kroki's other dialects (erd, svgbob, pikchr, …)
+  are uninjected too: stay inside the table.</li>
 <li><strong><code>c4plantuml</code> needs one line after its <code>!include</code></strong>:
   <code>UpdateRelStyle($textColor="#ffffff", $lineColor="#1ac5da")</code>. C4 draws relationships in its own
   grey, which injection does not reach.</li>
@@ -3301,11 +3323,15 @@ the rule below is also in <code>.claude/rules/docs.md</code>, which agents load 
   <code>gantt</code> needs a short <code>axisFormat %d %b</code>, or its dates overlap.</li>
 <li><strong>A broken diagram fails the build</strong>, naming the page (<code>fail_fast</code>). <code>bpmn</code> and <code>diagramsnet</code>
   are off, so those fences stay code blocks.</li>
+<li><strong><code>excalidraw</code> is not a default register.</strong> Reach for it only where a hand-drawn sketch is
+  genuinely clearer than the ASCII or prose it replaces (MIP-0068 §5.3) — most pictures are one of
+  the dialects above. Its companion (<code>kroki-excalidraw</code>, <code>mkdocs/docker-compose.yml</code>) adds a 612 MB
+  pull to the docs build, so it earns its place per scene, not once for the dialect.</li>
 </ul>
 <p>The rest of this page is one working example per dialect. Each one's source is under it.</p>
 <h2 id="mermaid">mermaid<a class="headerlink" href="#mermaid" title="Permanent link">&para;</a></h2>
 <p>The rule above, as a decision tree:</p>
-<p><img alt="Kroki" src="kroki-generated-7075125b-eb9c-33a2-9c2c-15965d6e6042.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-09fe3255-ba48-3e41-8e3f-d2a847004358.svg" /></p>
 <details class="note">
 <summary>Source</summary>
 <div class="highlight"><pre><span></span><code><span class="sb">```mermaid</span>
@@ -3317,6 +3343,7 @@ the rule below is also in <code>.claude/rules/docs.md</code>, which agents load 
 <span class="s">  z -- "people and systems" --&gt; c4[c4plantuml]</span>
 <span class="s">  q -- "tables and keys" --&gt; db[dbml]</span>
 <span class="s">  q -- "numbers on an axis" --&gt; vl[vegalite]</span>
+<span class="s">  q -- "a sketch or wireframe" --&gt; ex[excalidraw]</span>
 <span class="sb">```</span>
 </code></pre></div>
 </details>
@@ -3423,6 +3450,21 @@ back out.</p>
 <span class="s">}</span>
 <span class="sb">```</span>
 </code></pre></div>
+</details>
+<h2 id="excalidraw">excalidraw<a class="headerlink" href="#excalidraw" title="Permanent link">&para;</a></h2>
+<p>The coastline-offset geometry from
+<a href="../../MIPs/MIP-0016-water-quality-map-markers/#3-user-visible-change">MIP-0016 §3</a>: sampling
+points drawn a fixed distance out from the coastline, into the water.</p>
+<p><img alt="Kroki" src="kroki-generated-e2defcd9-bf76-346a-bb74-98fa9fb4fbf2.svg" style="background: white" /></p>
+<details class="note">
+<summary>Source</summary>
+<div class="highlight"><pre><span></span><code><span class="sb">```excalidraw</span><span class="w"> </span>{bg-dark=white}
+<span class="s">@from_file:assets/diagrams/mip-0016-coastline-offset.excalidraw</span>
+<span class="sb">```</span>
+</code></pre></div>
+<p>The scene itself is <code>docs/assets/diagrams/mip-0016-coastline-offset.excalidraw</code>: valid
+Excalidraw JSON, kept out of the Markdown and editable by opening it in the
+<a href="https://excalidraw.com">Excalidraw app</a> (File → Open).</p>
 </details>
 
 

@@ -3653,6 +3653,7 @@ extensions of them:</p>
 base) → <code>ollama create marola-sea-1.0 -f finetune/Modelfile.adapter</code> → <code>MAROLA_LOCAL_LLM_MODEL=
 marola-sea-1.0</code>. No Scala code changes: <code>AppConfig</code>'s <code>LocalLlmClient</code> already takes the model
 name from that env var (<code>ARCHITECTURE.md</code> §5a), same mechanism <code>marola-llama3.2</code> uses today.</p>
+<p><img alt="Kroki" src="kroki-generated-df89c649-b9bd-3eea-9e54-92d7b84c1497.svg" /></p>
 <p><strong>What stays deterministic, unchanged by this MIP</strong>: the ranking (<code>Recommender</code>/<code>Swimability</code>), the
 <code>Reviewer</code> pass (still runs after any model, tuned or not; §7), and the corpus citations
 (<code>knowledge/*.md</code>, shown verbatim per the <code>mip</code> skill's "no unsourced facts" rule). This MIP tunes

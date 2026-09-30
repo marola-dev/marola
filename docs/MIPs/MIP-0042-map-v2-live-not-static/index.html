@@ -3761,17 +3761,9 @@ limiting — everything the static board avoids." That reasoning was right and i
 it did not consider is the option this MIP proposes: dynamic <strong>without</strong> a server.</p>
 <h2 id="3-user-visible-change">3. User-visible change<a class="headerlink" href="#3-user-visible-change" title="Permanent link">&para;</a></h2>
 <p><strong>Today (v1, unchanged, still at <code>/v1/</code> after this MIP):</strong></p>
-<div class="highlight"><pre><span></span><code>marola.dev  →  Florianópolis ▾   today | tomorrow          computed 2026-09-07 09:15 -03
-               [map: 80 wave markers, each at its best hour]
-               Praia do Campeche · 35/100 at 08:00 · 〰️ 1.4 m · 🌬️ breezy 28 km/h
-</code></pre></div>
+<p><img alt="Kroki" src="kroki-generated-d0577a71-1954-3851-a2c5-0f3c9f406496.svg" style="background: white" /></p>
 <p><strong>v2 (<code>marola.dev/v2/</code>):</strong></p>
-<div class="highlight"><pre><span></span><code>marola.dev/v2  →  Florianópolis ▾   now (13:42) | +1h | +2h | tomorrow      live · fetched just now
-                  [same 80 beaches, scored from the forecast run fetched 4 s ago]
-                  Praia do Campeche · 41/100 now · 〰️ 1.1 m · 🌬️ breezy 24 km/h
-                  💧 4/5 PRÓPRIA — avoid Ponto 73 (25 Aug)   ← still from the 3-hourly build
-                  ⓘ conditions live from Open-Meteo · beaches and water quality precomputed 09:15
-</code></pre></div>
+<p><img alt="Kroki" src="kroki-generated-3611598c-3730-367c-8a3c-16ed323b690a.svg" style="background: white" /></p>
 <p>The footer line is not decoration: it is the honesty requirement (§6). A v2 page mixes two
 freshness classes and must show which is which, the same way v1 shows <code>generated_at</code> today.</p>
 <p>Also new in v2, and the concrete answer to "near me": <code>marola.dev/v2/?lat=-27.69&amp;lon=-48.48</code>
@@ -3884,6 +3876,10 @@ a v2 that needed its own schema would force a second build path and double the O
    implementation constraint in this MIP;
 3. scores every beach/hour by calling the cross-compiled <code>Swimability</code>, and renders, reusing v1's
    marker, tooltip and card code as the starting point rather than a rewrite.</p>
+<p>If the live Open-Meteo fetch fails, v2 does not render an empty map: it falls back to the board it
+already fetched in step 1 — the same static board v1 shows — and says so, never silently under a
+"live" label (§5.6, §6):</p>
+<p><img alt="Kroki" src="kroki-generated-2857650c-dc58-34fe-91a4-725c0300e333.svg" /></p>
 <h3 id="54-one-scorer-two-targets">5.4 One scorer, two targets<a class="headerlink" href="#54-one-scorer-two-targets" title="Permanent link">&para;</a></h3>
 <p>Extract the pure scorer and the model types it needs into a cross-compiled module; <code>core</code> depends on
 its JVM output, so nothing about the JVM pipeline changes:</p>

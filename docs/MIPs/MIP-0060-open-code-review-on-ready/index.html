@@ -3740,7 +3740,9 @@ runs (<code>DEV-FLOW.md</code> §5 stays "only when asked"). A dispatch run has 
 context, so <code>pr-body.yml</code>'s same-repo/author guard cannot be copied verbatim: a first step must
 resolve the PR with <code>gh pr view</code> and refuse a fork or a bot author (<strong>not checked</strong>: the exact fields
 to test). Never <code>pull_request_target</code>.</p>
-<p>Steps: checkout (<code>fetch-depth: 0</code>) → compute merge-base → <strong>review</strong> → <strong>post</strong>.</p>
+<p>Steps: checkout (<code>fetch-depth: 0</code>) → compute merge-base → <strong>review</strong> → <strong>post</strong>. Only the
+<strong>review</strong> step runs without a GitHub token (§5.1's jail mode):</p>
+<p><img alt="Kroki" src="kroki-generated-e00e4430-880c-3137-87f7-233d52a3d3bd.svg" /></p>
 <ul>
 <li><strong>Review:</strong> <code>nix develop .#ci-ocr --command jail-run ocr review --from $MB --to $HEAD --format json
   --output $RUNNER_TEMP/ocr.json --effort low --max-tokens-budget $BUDGET</code>, env <code>OCR_LLM_URL</code>,

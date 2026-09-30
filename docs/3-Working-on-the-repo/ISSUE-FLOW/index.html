@@ -830,6 +830,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#readiness-and-the-board" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Readiness and the board
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-no-command-can-do" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3189,6 +3200,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#readiness-and-the-board" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Readiness and the board
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#what-no-command-can-do" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3252,6 +3274,7 @@ short version; the design and its verification are <code>docs/MIPs/MIP-0063-gith
 <p>Milestones are named descriptively, carry no sequence, and order between them is a board decision.
 A milestone and a MIP are <strong>n:m</strong> — one deliverable can span several MIPs, one MIP files its tasks
 into one milestone.</p>
+<p><img alt="Kroki" src="kroki-generated-a2b1175d-7c97-3405-97c3-39a602caa690.svg" /></p>
 <h2 id="the-three-tiers">The three tiers<a class="headerlink" href="#the-three-tiers" title="Permanent link">&para;</a></h2>
 <p>Pick the tier, then the matching issue form:</p>
 <ul>
@@ -3296,7 +3319,8 @@ add it.</p>
 <code>main</code> closes it, and that clears rule 5 for every task blocked by it. A PR labelled <code>task-partial</code>
 gets <code>Part of #N</code> instead, and the issue stays open. Any other PR closes its issue by a
 <code>Closes #N</code> line of its own in a commit body, which <code>uprd.sh</code> copies into the PR body, the only
-place GitHub reads it.</p>
+place GitHub reads it. GitHub's built-in board workflow then moves the closed issue's card to
+<strong>Done</strong> (configured in the project UI, MIP-0063 §4.4).</p>
 <h2 id="the-commands">The commands<a class="headerlink" href="#the-commands" title="Permanent link">&para;</a></h2>
 <p><code>scripts/issues.sh</code> is the whole surface, and every subcommand takes <code>--dry-run</code> (the reads it is
 computed from still happen, so a login is needed either way). Seven of them have a <code>just</code> recipe:</p>
@@ -3346,6 +3370,16 @@ make easy. <code>sub add &lt;parent&gt; &lt;child&gt;</code>, <code>deps add &lt
 task table, and all three are called directly for a one-off edge.</p>
 <p><code>tasks-to-issues</code> sets no <code>area/*</code>, <code>layer/*</code> or <code>size/*</code>: which they are is a human's call, so a
 freshly filed row is not <code>agent-ready</code> until someone labels it and <code>issue-ready</code> passes.</p>
+<h2 id="readiness-and-the-board">Readiness and the board<a class="headerlink" href="#readiness-and-the-board" title="Permanent link">&para;</a></h2>
+<p>The <code>agent-ready</code> label (Definition of Ready, above) and the board's <code>Status</code> field
+(Triage / Spec / Ready / In progress / In review / Done, MIP-0063 §5.2) move together, driven by
+the commands above. The mapping <code>board-sync</code> uses on a card's first contact with the board
+(MIP-0063 §5.2): an assigned issue goes to In progress, an issue carrying <code>agent-ready</code> goes to
+Ready, otherwise it goes to Triage.</p>
+<p><img alt="Kroki" src="kroki-generated-cb83d28a-8699-3226-864a-7fa8c604f246.svg" /></p>
+<p><code>board-sync</code> sets a new card's Status once, on first contact with the board, and never overwrites
+it again. From there, a move into Spec or into In review is "someone's decision"; a move into In
+progress is <code>issue-claim</code>; and a move into Done is the merge that closes the issue.</p>
 <h2 id="what-no-command-can-do">What no command can do<a class="headerlink" href="#what-no-command-can-do" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Filing an issue is human-gated</strong> (MIP §5.6, Decision 2). The <code>triage</code> skill drafts one and
