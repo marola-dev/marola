@@ -146,15 +146,14 @@ body { text-transform: lowercase; }
 .gh-star svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; }
 .sitenav .gh:hover .gh-star { color: var(--accent); border-color: var(--accent); }
 .gh:hover .gh-star svg { fill: currentColor; }
-/* the language toggle pairs with the repo pill: same height, same outline (MIP-0054 §5.8) */
-.sitenav .lang { margin-left: auto; margin-right: -.6rem; display: inline-flex; align-self: center; }
-.lang button { font-size: 13px; line-height: 1.6; min-height: 0; padding: 0 .55rem;
-  border-radius: 0; margin-left: -1px; color: var(--muted); background: var(--panel); }
-.lang button:first-child { border-radius: 999px 0 0 999px; margin-left: 0; padding-left: .65rem; }
-.lang button:last-child { border-radius: 0 999px 999px 0; padding-right: .65rem; }
-.lang button[aria-pressed="true"] { position: relative; color: var(--accent); background: var(--panel);
-  border-color: var(--accent); font-weight: 600; }
-.lang button:hover { color: var(--accent); }
+/* the language toggle pairs with the repo pill (MIP-0054 §5.8); the pressed segment reuses the day picker's fill */
+.sitenav .lang { margin-left: auto; margin-right: -.6rem; display: inline-flex; align-items: center; gap: 1px;
+  align-self: center; border: 1px solid var(--line); border-radius: 999px; padding: 1px 2px 1px .5rem; }
+.lang-icon { width: 14px; height: 14px; margin-right: .25rem; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.2; }
+.lang button { font-size: 12px; font-weight: 600; letter-spacing: .03em; line-height: 1.55; min-height: 0;
+  padding: 0 .5rem; border: 0; border-radius: 999px; color: var(--muted); background: none; text-transform: none; }
+.lang button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.lang button:hover:not([aria-pressed="true"]) { color: var(--accent); }
 .sitenav i { font-style: normal; font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
   color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 .35rem; margin-left: .25rem; }
 /* pt-BR's longer labels plus the toggle must still fit two rows at 390 px */
@@ -162,7 +161,9 @@ body { text-transform: lowercase; }
   .sitenav { gap: .35rem .6rem; }
   .sitenav .gh .gh-name, .sitenav .gh .gh-star { display: none; }
   .sitenav .gh { padding: .15rem .5rem; }
-  .sitenav .lang { margin-right: -.2rem; }
+  .sitenav .lang { margin-right: -.2rem; padding-left: 2px; }
+  .lang-icon { display: none; }
+  .lang button { padding: 0 .4rem; letter-spacing: 0; }
   .sitenav i { border: 0; padding: 0; margin-left: .15rem; text-transform: none; letter-spacing: 0; }
 }
 
