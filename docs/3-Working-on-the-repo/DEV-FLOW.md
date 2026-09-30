@@ -204,11 +204,15 @@ is green; MIP status right; `docs/4-Research-and-plans/FABLE_REVIEW.md` item clo
   when the merged branch is deleted; the commits still need a rebase:
   `scripts/stack.sh restack` on the next branch, or `just stack-sync MIP-NNNN` for the whole
   stack (it adopts the stack from GitHub first; `gh stack link` keeps no local state).
-- A task PR's body carries `Closes #N` for the issue its `MIP-NNNN.tasks.md` row links (`uprd.sh`
-  writes it, #512), so the merge into `main` closes the issue and the board moves it to Done.
-  Label a PR that delivers only part of its task `task-partial`: the line becomes `Part of #N` and
-  the issue stays open. A PR merged into another task branch closes nothing; GitHub honours the
-  keyword only on the default branch.
+- A task branch's own commit carries `Closes #N` for the issue its `MIP-NNNN.tasks.md` row links
+  (`scripts/cost-fill.sh`, run by `just pr`, writes it above the trailers), so the squash-merge
+  commit on `main` closes the issue and the board moves it to Done. The PR body carries the same
+  line too (`uprd.sh` copies it there so the link shows on GitHub), but the body alone never
+  closes anything — #524, after #513 through #519 stayed open past merge on a body-only line,
+  while #511/#512 closed cleanly on a commit-body one. `TASK_PARTIAL=1 just pr` skips the line for
+  a task that only delivers part of its row, before the PR (and its `task-partial` label) exist;
+  the issue stays open. A PR merged into another task branch closes nothing regardless; GitHub
+  honours the keyword only on the default branch.
 - `scripts/stack.sh status` / `just stack-view` until every PR is merged.
 - Last merge: superpowers `finishing-a-development-branch`: full suite green, delete the task
   branches, flip the MIP to **Implemented** with the PR numbers and the summed Cost in its status

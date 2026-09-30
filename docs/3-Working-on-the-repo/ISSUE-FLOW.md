@@ -66,13 +66,18 @@ fixed is decided *before* someone claims it, and nobody has decided it yet. A ma
 report a named test — the test that is red today — and the issue becomes `agent-ready` when they
 add it.
 
-**A merged task PR closes its issue.** `uprd.sh` writes `Closes #N` into the body of a
-`mip-NNNN/<k>-*` PR, for the issue that row `k` of `MIP-NNNN.tasks.md` links. The merge into
-`main` closes it, and that clears rule 5 for every task blocked by it. A PR labelled `task-partial`
-gets `Part of #N` instead, and the issue stays open. Any other PR closes its issue by a
-`Closes #N` line of its own in a commit body, which `uprd.sh` copies into the PR body, the only
-place GitHub reads it. GitHub's built-in board workflow then moves the closed issue's card to
-**Done** (configured in the project UI, MIP-0063 §4.4).
+**A merged task PR closes its issue.** GitHub only honours a closing keyword written into the
+squash-merge commit that lands on `main`, never the PR body alone (#524 — #511/#512 closed their
+issues by a commit-body `Closes #N`; the PR-body-only line #513 through #519 carried never did,
+and those issues had to be closed by hand). `scripts/cost-fill.sh` (run by `just pr`) writes
+`Closes #N` into the branch's own commit body, above the `Tested:`/`Cost:`/`Co-Authored-By:`
+trailers, for the issue that row `k` of `MIP-NNNN.tasks.md` links; the merge into `main` then
+closes it, and that clears rule 5 for every task blocked by it. `uprd.sh` still copies the same
+line into the PR body so the link is visible on GitHub, but that copy closes nothing by itself.
+Set `TASK_PARTIAL=1` before `just pr` for a task that only delivers part of its row — cost-fill
+then writes no `Closes #N` at all, since the `task-partial` label a PR would otherwise carry
+doesn't exist yet at first push; the issue stays open. GitHub's built-in board workflow then moves
+a closed issue's card to **Done** (configured in the project UI, MIP-0063 §4.4).
 
 ## The commands
 

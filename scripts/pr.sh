@@ -2,10 +2,13 @@
 # pr — the one-command agent path from a finished commit to a filled, pushed PR (AGENTS.md
 # "Attribution and cost accounting" — "write the commit, run `just pr`, nothing else"): 1. refuse
 # on main or with a dirty working tree (tracked changes; untracked files are ignored) — commit
-# first 2. fill any missing Cost:/Tested: trailer (scripts/cost-fill.sh, itself idempotent) 3.
+# first 2. run scripts/cost-fill.sh unconditionally (it is itself idempotent and decides on its
+# own whether a commit needs a trailer upgraded or a task branch's Closes #N line added — a
+# pre-check here that only asked "is Cost:/Tested: present at all" would never re-fire for the
+# common case of a commit already carrying a bare `Cost: est. pending` placeholder, #524) 3.
 # push — a mip-NNNN/k-* task branch goes through `scripts/stack.sh pr` (it already knows the right
 # base: the previous task's branch); anything else is a plain `git push`, with
-# `--force-with-lease` when cost-fill just rewrote history.
+# `--force-with-lease` when cost-fill just rewrote history (detected by comparing HEAD).
 set -euo pipefail
 
 dry_run=0
@@ -27,50 +30,35 @@ if [ "${#shas[@]}" -eq 0 ]; then
   exit 1
 fi
 
-needs_fill=0
-for sha in "${shas[@]}"; do
-  body="$(git log -1 --format=%B "$sha")"
-  if ! { grep -q '^Cost:' <<<"$body" && grep -q '^Tested:' <<<"$body"; }; then
-    needs_fill=1
-  fi
-done
-
 is_mip_task=0
 [[ "$branch" =~ ^mip-[0-9]{4}/ ]] && is_mip_task=1
 
 if [ "$dry_run" -eq 1 ]; then
   echo "pr --dry-run on $branch (mip task: $([ "$is_mip_task" -eq 1 ] && echo yes || echo no)):"
   echo
-  if [ "$needs_fill" -eq 1 ]; then
-    echo "+ just cost-fill"
-    "$script_dir/cost-fill.sh" --dry-run
-  else
-    echo "(every commit already carries Cost: and Tested: — cost-fill would be a no-op)"
-  fi
+  echo "+ just cost-fill"
+  "$script_dir/cost-fill.sh" --dry-run
   echo
   if [ "$is_mip_task" -eq 1 ]; then
     echo "+ scripts/stack.sh pr   # mip task branch — base = the previous task's branch, PR body via uprd.sh"
     scripts/stack.sh pr --dry-run
   else
-    if [ "$needs_fill" -eq 1 ]; then
-      echo "+ git push --force-with-lease -u origin $branch   # cost-fill rewrote history"
-    else
-      echo "+ git push -u origin $branch"
-    fi
+    echo "+ git push -u origin $branch   # --force-with-lease instead, if cost-fill rewrote history above"
     echo "+ just uprd"
     "$script_dir/uprd.sh" --dry-run
   fi
   exit 0
 fi
 
-if [ "$needs_fill" -eq 1 ]; then
-  "$script_dir/cost-fill.sh"
-fi
+before_head="$(git rev-parse HEAD)"
+"$script_dir/cost-fill.sh"
+rewrote=1
+[ "$before_head" != "$(git rev-parse HEAD)" ] || rewrote=0
 
 if [ "$is_mip_task" -eq 1 ]; then
   scripts/stack.sh pr
 else
-  if [ "$needs_fill" -eq 1 ]; then
+  if [ "$rewrote" -eq 1 ]; then
     git push --force-with-lease -u origin "$branch"
   else
     git push -u origin "$branch"
