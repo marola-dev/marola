@@ -165,6 +165,15 @@ class BoardSpec extends munit.FunSuite:
     assert(SchemaCheck.validate(schema, broken).exists(_.contains("beaches")))
   }
 
+  /**
+   * The fixture shipped to ml (`build-resources-tarball.sh`, MIP-0070 §5.4): nothing else in the
+   * app test suite reads it, so a schema drift here would only surface downstream.
+   */
+  test("board: the ml-facing fixture (site/board.json) conforms to board.schema.json") {
+    val fixture = JsonValue.parse(BoardSpec.resource("site/board.json"))
+    assertEquals(SchemaCheck.validate(BoardSpec.schema, fixture), Nil)
+  }
+
   test("board: every hour carries wind_level, consistent with its wind_kmh (MIP-0009 task 1)") {
     val b = board(tomorrow)
     val hours = b("beaches").arr.flatMap(_("hours").arr)
@@ -329,6 +338,13 @@ object BoardSpec:
     val stream = getClass.getClassLoader.getResourceAsStream("board.schema.json")
     if stream == null then throw new IllegalStateException("board.schema.json not on the classpath")
     try JsonValue.parse(scala.io.Source.fromInputStream(stream, "UTF-8").mkString)
+    finally stream.close()
+
+  /** A test resource, read as text (`cli/src/test/resources/<name>`). */
+  def resource(name: String): String =
+    val stream = getClass.getClassLoader.getResourceAsStream(name)
+    if stream == null then throw new IllegalArgumentException(s"missing test resource $name")
+    try scala.io.Source.fromInputStream(stream, "UTF-8").mkString
     finally stream.close()
 
 /**

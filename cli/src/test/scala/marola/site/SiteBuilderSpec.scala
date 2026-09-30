@@ -12,8 +12,7 @@ import marola.water.ImaScWaterQualityClient
 
 /**
  * MIP-0005 §7 "static site smoke": a build from fixtures, no network, writes today's and tomorrow's
- * boards, `latest.json` and the areas index. Board data only (MIP-0070 §5.4): the static page is a
- * separate copy the caller (`site.yml`, `just site-build`) makes, not `SiteBuilder.build`.
+ * boards, `latest.json` and the areas index (`SiteBuilder`: board data only, MIP-0070 §5.4).
  */
 class SiteBuilderSpec extends munit.FunSuite:
 
@@ -182,12 +181,8 @@ class SiteBuilderSpec extends munit.FunSuite:
     assert(Files.isDirectory(out.resolve("data")))
   }
 
-  test(
-    "Areas.load reads the given path, not a site/areas.json found by walking up from the cwd"
-  ) {
-    // A checked-in copy (`cli/src/test/resources/site/areas.json`) written to an arbitrary path,
-    // unrelated to any repo layout — proving the loader only ever reads the path it is given
-    // (MIP-0070 §5.4: the site passes its own file, the app never walks the tree looking for one).
+  test("Areas.load reads exactly the path it's given") {
+    // cli/src/test/resources/site/areas.json written to a path unrelated to any repo layout.
     val fixture = tmpDir("marola-site-areas-fixture").resolve("wherever.json")
     Files.writeString(fixture, resource("site/areas.json"))
 

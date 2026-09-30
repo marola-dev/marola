@@ -33,10 +33,8 @@ RUN addgroup -S -g 10001 marola && adduser -S -u 10001 -G marola marola \
  && mkdir -p /app/data && chown -R marola:marola /app
 WORKDIR /app
 COPY --from=builder /marola.jar /app/marola.jar
-# What the CLI reads from the working directory: the RAG corpus (`--ask`). `board.schema.json`
-# ships inside the jar (`cli/src/main/resources/`); `--site` writes board data only, from an
-# `--areas` file the caller passes in — this image carries neither `site/areas.json` nor
-# `site/static` (MIP-0070 §5.4: the site never builds Scala, so it never reads this image's tree).
+# RAG corpus lives here for `--ask`. `board.schema.json` ships inside the jar; `--site` writes
+# board data only (SiteBuilder, MIP-0070 §5.4) from an `--areas` file the caller passes in.
 COPY --chown=marola:marola knowledge /app/knowledge
 USER 10001:10001
 VOLUME ["/app/data"]

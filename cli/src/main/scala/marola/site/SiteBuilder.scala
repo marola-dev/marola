@@ -84,10 +84,7 @@ object SiteBuilder:
       water = water.map(c => if gotData then c.name else s"${c.name} (no data returned)")
     )
 
-  /**
-   * Builds every area into `out` and returns the files written — board data only (MIP-0070 §5.4):
-   * the static page is a separate copy the caller (`site.yml`, `just site-build`) makes itself.
-   */
+  /** Builds every area into `out` and returns the files written. */
   def build(
       areas: List[Area],
       out: Path,

@@ -181,6 +181,31 @@ async function runPage(board) {
   return { els, L, errors };
 }
 
+// --- site/areas.json, the file Main's `--site` reads live: nothing else in the app test suite
+// validates it, and Areas.parse (cli/src/main/scala/marola/site/SiteBuilder.scala) silently drops
+// a malformed entry instead of failing, so a bad edit here would only surface at runtime
+// (SITE_AREAS_JSON overrides the path, for a deliberately-broken copy in a one-off check).
+// -------------------------------------------------------------------------------------------.
+const AREAS_PATH = process.env.SITE_AREAS_JSON || path.join(ROOT, 'site/areas.json');
+const ZONES = Intl.supportedValuesOf('timeZone');
+function validAreaEntry(e) {
+  return !!e && typeof e === 'object'
+    && typeof e.id === 'string' && /^[a-z0-9-]+$/.test(e.id)
+    && typeof e.name === 'string'
+    && typeof e.lat === 'number' && typeof e.lon === 'number'
+    && typeof e.radius_km === 'number' && typeof e.beach_limit === 'number'
+    && typeof e.tz === 'string' && ZONES.includes(e.tz)
+    && typeof e.tiles === 'string';
+}
+const areasRaw = JSON.parse(fs.readFileSync(AREAS_PATH, 'utf8'));
+const validAreas = areasRaw.filter(validAreaEntry);
+ok(areasRaw.length > 0, AREAS_PATH + ' lists at least one area');
+ok(validAreas.length === areasRaw.length,
+  AREAS_PATH + ': every entry has the fields Areas.parse requires',
+  validAreas.length + '/' + areasRaw.length + ' valid — Areas.parse would silently drop the rest');
+const areaIds = validAreas.map(a => a.id);
+ok(new Set(areaIds).size === areaIds.length, AREAS_PATH + ': area ids are unique');
+
 (async () => {
   console.log('site_check:');
   // 1. the fixture is a valid board, and the checker bites.

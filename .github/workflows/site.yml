@@ -66,8 +66,7 @@ jobs:
       - uses: sbt/setup-sbt@v1
 
       # `--site` with no id builds every area; the water-quality provider is picked per area
-      # origin (IMA/SC inside Santa Catarina, "no data" elsewhere). Board data only (MIP-0070
-      # §5.4): `--areas` is passed explicitly, and the static page is copied in below.
+      # origin (IMA/SC inside Santa Catarina, "no data" elsewhere).
       - name: Build the boards (one Overpass query per area, no LLM)
         env:
           AREA: ${{ inputs.area }}
@@ -79,7 +78,7 @@ jobs:
           done
           exit 1
 
-      # MIP-0070 §5.4: the CLI writes board data only — the page itself is our own copy.
+      # SiteBuilder writes board data only (MIP-0070 §5.4).
       - name: Copy the static page into dist
         run: cp -r site/static/. site/dist/
 
