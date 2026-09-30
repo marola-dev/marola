@@ -280,6 +280,21 @@ moves — and the board must be able to catch up afterwards without undoing anyt
 | `issues.sh claim` | removes | sets **In progress** |
 | `issues.sh board sync` | — | sets from the issue's own state (assigned → In progress, `agent-ready` → Ready, otherwise Triage) on an item with **no Status**, or with **`Backlog`** and only `Backlog` |
 
+```mermaid
+stateDiagram-v2
+  state "In progress" as InProgress
+  state "In review" as InReview
+  [*] --> Backlog: auto-add workflow
+  Backlog --> Triage: board sync, no signal
+  Backlog --> Ready: board sync, agent-ready label
+  Backlog --> InProgress: board sync, assigned
+  Triage --> Spec: maintainer, manual
+  Spec --> Ready: maintainer, manual
+  Ready --> InProgress: claim
+  InProgress --> InReview: maintainer, manual
+  InReview --> Done: issue closed (built-in workflow)
+```
+
 So **the label is authoritative and the board follows it**, once, when an issue first reaches the
 board. After that the Status belongs to whoever moves the card: `sync` never overwrites a Status a
 maintainer set by hand, because deriving *In review* or *Spec* from an issue's state is not
@@ -397,6 +412,12 @@ Direction of truth: **`mip-tasks` authors `tasks.md`; `tasks-to-issues` projects
 after that, issues own status and the file owns the plan.** One-way, re-runnable. An agent in
 ai-jail with no token can still read the whole plan from disk — which is why the file is not
 replaced by the issues.
+
+```mermaid
+flowchart LR
+  mt["mip-tasks skill"] -- authors --> tasks["tasks.md<br/>(owns the plan)"]
+  tasks -- "tasks-to-issues<br/>(projects, re-runnable)" --> issues["GitHub issues<br/>(own status)"]
+```
 
 ### 5.6 Forms and skills
 

@@ -49,11 +49,15 @@ State on 2026-09-28 (`gh run list` per workflow):
 For a visitor: marola.dev's "Last live run" updates daily again, and the site and docs redeploy
 whether or not anyone's machine is on. For a contributor:
 
-```
-before: PR from a fork → CI job queued on [self-hosted] → runs on the maintainer's desktop
-after:  PR from a fork → waits for approval → runs on ubuntu-latest
-        runs-on: self-hosted anywhere but marola-sea-publish.yml → quality-other fails:
-          workflow_runners: ci.yml:21 targets self-hosted — only marola-sea-publish.yml may
+```mermaid
+flowchart LR
+  subgraph before["before"]
+    b1["PR from a fork"] --> b2["CI job queued on [self-hosted]"] --> b3["runs on the maintainer's desktop"]
+  end
+  subgraph after["after"]
+    a1["PR from a fork"] --> a2["waits for approval"] --> a3["runs on ubuntu-latest"]
+    a4["runs-on: self-hosted<br/>anywhere but marola-sea-publish.yml"] --> a5["quality-other fails:<br/>workflow_runners: ci.yml:21 targets self-hosted —<br/>only marola-sea-publish.yml may"]
+  end
 ```
 
 `docs/3-Working-on-the-repo/CI-CD.md` exists: one row per workflow — trigger, runner, what it gates or deploys, the

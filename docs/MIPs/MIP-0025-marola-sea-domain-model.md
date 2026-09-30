@@ -140,6 +140,17 @@ base) → `ollama create marola-sea-1.0 -f finetune/Modelfile.adapter` → `MARO
 marola-sea-1.0`. No Scala code changes: `AppConfig`'s `LocalLlmClient` already takes the model
 name from that env var (`ARCHITECTURE.md` §5a), same mechanism `marola-llama3.2` uses today.
 
+```mermaid
+flowchart TD
+  l1["Layer 1: Marine Corpus QLoRA"] --> merge["Merge"]
+  l2["Layer 2: MCP Tool-Call SFT"] --> merge
+  l3["Layer 3: Safety DPO"] --> merge
+  merge --> gguf["GGUF Q4_K_M"]
+  gguf --> modelfile["Modelfile.adapter"]
+  modelfile --> create["ollama create marola-sea-1.0"]
+  create --> env["MAROLA_LOCAL_LLM_MODEL=<br/>marola-sea-1.0"]
+```
+
 **What stays deterministic, unchanged by this MIP**: the ranking (`Recommender`/`Swimability`), the
 `Reviewer` pass (still runs after any model, tuned or not; §7), and the corpus citations
 (`knowledge/*.md`, shown verbatim per the `mip` skill's "no unsourced facts" rule). This MIP tunes
