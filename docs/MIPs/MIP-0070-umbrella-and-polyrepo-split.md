@@ -181,8 +181,10 @@ sequenceDiagram
 - **The devkit finds the umbrella.** Today `uprd.sh`, `lib/mip_ref.sh`, `lib/pr_labels.sh` and
   `issues.sh` read `docs/MIPs/` from the PR's own branch, which a code repo no longer has. They now
   resolve MIPs and `.tasks.md` from `../` inside an umbrella checkout, or otherwise via
-  `gh api repos/marola-dev/marola/contents/docs/MIPs`. Every generated issue reference is fully
+  `gh api repos/$MAROLA_UMBRELLA/contents/docs/MIPs`. Every generated issue reference is fully
   qualified (`Closes marola-dev/marola#N`), because a bare `#N` would close nothing in a code repo.
+  The umbrella's `owner/repo` is one devkit setting (`MAROLA_UMBRELLA`, default
+  `marola-dev/marola`), never a literal in scripts, so a later org move (§11) is a one-line bump.
   A `.tasks.md` row names its target repo, `stack.sh` stacks within that repo, and `cost-split`
   attributes usage by commit across repos.
 - **Plugin mechanics**: the skills stop hardcoding `scripts/stack.sh`-style paths, since the flake
@@ -270,6 +272,10 @@ restates and `agents-check` enforces.
   every `#N` reference would have to move or keep pointing at a code repo.
 - **Require the umbrella for shared tooling** (`../devkit/scripts`). A single-repo clone couldn't
   run `just pr`, and CI would check the devkit out on every run.
+- **A finer ML split now** (`marola-llm`, `marola-nlp`, `marola-ml`, raised in discussion #522).
+  Today `dspy/` and `finetune/` are two small offline tools with one consumer. Split once one grows
+  its own cadence or contributors. Because the contracts are pinned artifacts, a later split only
+  changes the producer's name in `corpus.version`-style pins, not the consumers' code.
 - **Vendor devkit files into each repo with a sync bot.** This is the copy-and-drift model
   `FUTURE-WORK.md` §7 already hit, and local overrides get overwritten.
 - **The umbrella owns `marola.dev` and pulls in the site's `dist/`.** URLs would be unchanged, but
@@ -284,6 +290,11 @@ restates and `agents-check` enforces.
   single-repo?
 - `stats/`: should the umbrella's `repo_stats.py` roll every repo into one panel or show a panel per
   repo?
+- **Follow-up MIP:** moving the umbrella (and possibly the org) to IBRAMAR/IBAMAR once the split is
+  done (discussion #522). GitHub redirects issues, PRs, web links and git remotes after a transfer,
+  but not Pages, and GitHub App installations are per org. So the move re-points
+  `docs.marola.dev`, reinstalls the cross-repo credential and bumps `MAROLA_UMBRELLA`. Do it after
+  step 5, never mid-migration.
 - **Follow-up MIP:** umbrella-level orchestration (`just up` over each repo's compose file) and
   cross-repo flow tests (board → rendered map). Out of scope here; it needs the next MIP number.
 
@@ -327,6 +338,10 @@ restates and `agents-check` enforces.
   - `uprd.sh` reads `docs/MIPs/` via `git ls-tree` on the PR's head.
   - `finetune/build_dataset.py` reads `core/src/main/resources` and `knowledge/` by relative path.
   - `profile-activity.yml` calls a cross-repo reusable workflow.
+
+- https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository
+  (2026-09-30): issues, PRs, wiki, secrets, webhooks and deploy keys transfer; web links and git
+  remotes redirect; "we don't redirect GitHub Pages associated with the repository".
 
 ### Not checked
 
