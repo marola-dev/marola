@@ -22,7 +22,8 @@ Self-test:  python build_dataset.py --self-test   (or `just quality-other`)
 `--resources DIR` / `--knowledge DIR` override where 1-3 and 4-5 above are read from — the app ->
 ml contract (MIP-0070 §5.4): once marola-ml is a separate repo, `--resources` points at the
 unpacked resources tarball ci.yml publishes, not `../core`. `--knowledge` defaults to
-$MAROLA_KNOWLEDGE_DIR, else `knowledge` (same default as AppConfig.scala's).
+$MAROLA_KNOWLEDGE_DIR if set, else this repo's own `knowledge/` (anchored like `--resources`, not
+the cwd — this file is documented to run from `finetune/`).
 """
 
 from __future__ import annotations
@@ -41,7 +42,8 @@ OUT = Path(__file__).resolve().parent / "data"
 
 
 def default_knowledge_dir() -> Path:
-    return Path(os.environ.get("MAROLA_KNOWLEDGE_DIR", "knowledge"))
+    env = os.environ.get("MAROLA_KNOWLEDGE_DIR")
+    return Path(env) if env is not None else REPO / "knowledge"
 
 
 SYSTEM = (
@@ -430,7 +432,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--knowledge",
         type=Path,
         default=default_knowledge_dir(),
-        help="knowledge/*.md corpus dir (default: $MAROLA_KNOWLEDGE_DIR, else ./knowledge)",
+        help="knowledge/*.md corpus dir (default: $MAROLA_KNOWLEDGE_DIR if set, else this "
+        "repo's knowledge/, anchored like --resources)",
     )
     ap.add_argument("--self-test", action="store_true")
     return ap.parse_args(argv)
