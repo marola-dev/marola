@@ -6,7 +6,7 @@
 | **Author** | Claude (Opus 5.5), with Bruno, from a brainstorm on 2026-09-30 |
 | **Created** | 2026-09-30 |
 | **Phase** | Repo structure, orthogonal to `ARCHITECTURE.md` §11: no Phase 1 prerequisite, no runtime behaviour change, no paid resource |
-| **Related** | `FUTURE-WORK.md` §7 (the earlier split *out of* a shared monorepo), MIP-0056 (OODS: its code and data land in different repos here), MIP-0063 (issue tracking, which becomes per repo on the org Project), MIP-0064 (the docs site this re-homes), MIP-0065 (the workflows this redistributes), reference: [goflink/dispatching-team](https://github.com/goflink/dispatching-team) |
+| **Related** | `FUTURE-WORK.md` §7 (the earlier split *out of* a shared monorepo), MIP-0056 (OODS: its code and data land in different repos here), MIP-0063 (issue tracking, which becomes per repo on the org Project), MIP-0064 (the docs site this re-homes), MIP-0065 (the workflows this redistributes) |
 | **Effort** | XL — five new repos; a tooling repo published three ways (flake, plugin marketplace, reusable workflows) with its scripts taught to find the umbrella; a cross-repo docs aggregator; a Pages/DNS move; one app change (`--site` stops reading the site's files from the image); history-preserving extraction of every directory |
 | **Gain** | `infra/dev-loop` — each repo builds and gates only its own stack (the site stops compiling Scala, ml stops pulling a JDK); parallel work stops colliding in one tree; `cost/ops` — CI minutes scale with what changed, not with the monorepo |
 | **Effort vs Gain** | `do when X lands` — after the in-flight stacks (MIP-0056, MIP-0061, MIP-0063/64/65/68) merge; any PR open against a moved directory has to be recreated otherwise |
@@ -53,12 +53,12 @@ just build && just test                 cd marola-app && just build && just test
 
 ## 4. Data sources and dependencies reviewed
 
-- **The reference umbrella, goflink/dispatching-team** (read 2026-09-30; detail in the Appendix).
-  Its AGENTS.md calls itself "the **team layer** of a two-layer harness", with "repo-level
-  specifics (build/test/CI, service invariants)" in each submodule and "No build at umbrella level".
-  It aggregates every repo's `README.md` + `docs/` into one mkdocs site, deployed from the latest
-  `main` of each submodule on non-PR events, and keeps pointers fresh with a daily cron plus
-  `repository_dispatch`, feeding one rolling PR. This MIP adopts all four.
+- **The umbrella pattern.** A workspace repo holds the team layer: process, principles, specs and
+  flow docs, with no build of its own. Each submodule's AGENTS.md holds the repo layer: build, test,
+  CI and invariants. The umbrella aggregates every repo's `README.md` + `docs/` into one mkdocs site,
+  deployed from each submodule's latest `main` on non-PR events and from pinned commits on PRs. It
+  keeps pointers fresh with a daily cron plus `repository_dispatch`, feeding one rolling PR. This
+  MIP adopts all four.
 - **Nix flake inputs**: already how this repo consumes `lint`, `agentic` and `cuda` from
   `h0ffmann/nix-config` (`flake.nix`), pinned by `flake.lock`.
 - **Claude Code plugin marketplace**: a repo with `.claude-plugin/marketplace.json`. Git-based
@@ -351,12 +351,6 @@ restates and `agents-check` enforces.
 
 ### Checked live
 
-- `gh api repos/goflink/dispatching-team/...` (2026-09-30): `AGENTS.md` ("team layer of a
-  two-layer harness", scope rules, "Don't bump umbrella submodule pointers until all underlying PRs
-  are merged"), `.gitmodules`, `docs/centralized-docs/repo-guide.md` (the README → `index.md`
-  mapping and link rules), `deploy-docs.yml` (`git submodule update --remote` except on
-  `pull_request`), `sync-submodule-pointers.yml` (a daily cron plus `repository_dispatch:
-  submodule-updated`, feeding one rolling PR).
 - https://code.claude.com/docs/en/plugin-marketplaces (2026-09-30): `.claude-plugin/marketplace.json`;
   `github`/`git-subdir`/`url` sources; `ref`/`sha` pinning; skills run as `/<plugin>:<skill>`.
 - https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event (2026-09-30):
