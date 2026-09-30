@@ -355,6 +355,13 @@ def main() -> int:
         action="store_true",
         help="run the offline self-test (no LLM call, no MLflow server) and exit",
     )
+    ap.add_argument(
+        "--out",
+        default=os.path.join(os.path.dirname(__file__), "..", "core", "src", "main", "resources"),
+        help="dir to write recommendation_prompt.json / review_prompt.json into (default: "
+        "core/src/main/resources, so a local run behaves as before) — MIP-0070 §5.4 stops DSPy "
+        "writing across the tree; a bot PR commits the compiled files into the app repo instead",
+    )
     args = ap.parse_args()
     if args.self_test:
         return self_test()
@@ -366,9 +373,7 @@ def main() -> int:
     lm_kwargs = {"api_base": api_base} if api_base else {}
     dspy.configure(lm=dspy.LM(model, **lm_kwargs))
 
-    resources_dir = os.path.join(
-        os.path.dirname(__file__), "..", "core", "src", "main", "resources"
-    )
+    os.makedirs(args.out, exist_ok=True)
     # The reviewer is a second, fresh pass: a model grading its own answer in the same call
     # catches its own mistakes less reliably (docs/4-Research-and-plans/FUTURE-WORK.md §4.2).
     for run_name, signature, metric, trainset, filename in (
@@ -389,7 +394,7 @@ def main() -> int:
     ):
         optimizer = dspy.teleprompt.BootstrapFewShot(metric=metric, max_bootstrapped_demos=3)
         compiled = optimizer.compile(student=dspy.Predict(signature), trainset=trainset)
-        path = os.path.join(resources_dir, filename)
+        path = os.path.join(args.out, filename)
         compiled.save(path)
         print(f"Compiled {run_name} artifact written to {os.path.abspath(path)}")
         _log_prompt_compile_run(

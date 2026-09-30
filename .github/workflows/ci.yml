@@ -188,6 +188,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (≤ 3 h) will pick the coverage number up"
 
+  # app -> ml contract (MIP-0070 §5.4): finetune/build_dataset.py and the benchmark gate read this
+  # unpacked tarball instead of ../core once marola-ml is a separate repo.
+  resources-tarball:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: scripts/build-resources-tarball.sh .tmp/ml-resources.tar.gz
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ml-resources
+          path: .tmp/ml-resources.tar.gz
+
   # README badges: this run's green steps, plus the Scala and Python line counts.
   repo-stats:
     needs: [changes, build-test, quality-other]
@@ -318,6 +332,9 @@ jobs:
       - name: self-test — site-data-push (the retry every site-data writer pushes through)
         if: needs.changes.outputs.python == 'true'
         run: scripts/site-data-push.sh --self-test
+      - name: self-test — build-resources-tarball (app → ml resources tarball, MIP-0070 §5.4)
+        if: needs.changes.outputs.python == 'true'
+        run: scripts/build-resources-tarball.sh --self-test
       - name: self-test — req_merge (requirements-file conflict auto-resolve)
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/req_merge.py --self-test

@@ -80,6 +80,7 @@ quality-other:
     scripts/runner-preflight.sh --self-test
     scripts/gha-runner.sh --self-test
     scripts/site-data-push.sh --self-test
+    scripts/build-resources-tarball.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
     scripts/mip-stack.sh --self-test
