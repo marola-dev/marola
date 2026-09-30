@@ -187,7 +187,9 @@ against its own base**, bottom of the stack first, because that is the diff a re
    only (`.gemini/config.yaml` turns off review-on-open; `.gemini/styleguide.md` carries the
    `AGENTS.md` subset a diff reviewer can check). Cheapest hosted pass; source goes to Google, so
    it is installed by the human, never by an agent. `GEMINI-CODE-ASSIST.md` has the setup, by
-   hand or as Besom. Skips `.github/workflows/**` by design.
+   hand or as Besom. Skips `.github/workflows/**` by design. (Proposed change:
+   `docs/MIPs/MIP-0072-gemini-review-on-request.md`: requesting a review from `marola-dev/gemini`
+   posts the command for you. No Gemini review has appeared on marola yet.)
 
 Author side: superpowers `receiving-code-review`: verify each finding before implementing it,
 push back with reasoning when it is wrong, then fix → commit (`Cost:` trailer) → push → `just
