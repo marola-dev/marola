@@ -66,13 +66,21 @@ fixed is decided *before* someone claims it, and nobody has decided it yet. A ma
 report a named test — the test that is red today — and the issue becomes `agent-ready` when they
 add it.
 
-**A merged task PR closes its issue.** `uprd.sh` writes `Closes #N` into the body of a
-`mip-NNNN/<k>-*` PR, for the issue that row `k` of `MIP-NNNN.tasks.md` links. The merge into
-`main` closes it, and that clears rule 5 for every task blocked by it. A PR labelled `task-partial`
-gets `Part of #N` instead, and the issue stays open. Any other PR closes its issue by a
-`Closes #N` line of its own in a commit body, which `uprd.sh` copies into the PR body, the only
-place GitHub reads it. GitHub's built-in board workflow then moves the closed issue's card to
-**Done** (configured in the project UI, MIP-0063 §4.4).
+**A merged task PR closes its issue.** The closing keyword that works here is the one in the
+squash-merge commit that lands on `main`. In this repo a PR-body-only line did not close anything:
+#514–#519 carried one and their issues #502–#507 stayed open past merge and were closed by hand,
+while #511/#512 closed on a commit-body `Closes #N` (cause unknown, #524). `scripts/cost-fill.sh`,
+run by `scripts/stack.sh pr` (itself run by `just pr`, or directly per
+`.claude/skills/mip-tasks/SKILL.md`'s step 2), writes `Closes #N` into the branch's own commit body,
+above the `Tested:`/`Cost:`/`Co-Authored-By:` trailers, for the issue that row `k` of
+`MIP-NNNN.tasks.md` links; the merge into `main` then closes it, and that clears rule 5 for every
+task blocked by it. `uprd.sh` still copies the same line into the PR body so the link is visible on
+GitHub, but that copy closes nothing by itself. Set `TASK_PARTIAL=1` before `just pr` for a task
+that only delivers part of its row — cost-fill then writes no `Closes #N` at all, since the
+`task-partial` label a PR would otherwise carry doesn't exist yet at first push; the issue stays
+open. Once a `Closes #N` line is written, a later `task-partial` label does not stop the close:
+amend the commit to remove the line. GitHub's built-in board workflow then moves a closed issue's
+card to **Done** (configured in the project UI, MIP-0063 §4.4).
 
 ## The commands
 
