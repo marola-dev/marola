@@ -33,6 +33,7 @@ import json
 import os
 import random
 import re
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -363,10 +364,33 @@ def _self_test(knowledge: Path) -> None:
             f"{fact[:80]!r}"
         )
 
-    # A resources dir with no core/ sibling at all: proves --resources isn't secretly hardcoded
-    # to REPO/core/src/main/resources (MIP-0070 §5.4, task 3's own acceptance check).
+    # The real app -> ml contract artifact (scripts/build-resources-tarball.sh), unpacked into a
+    # dir with no core/ sibling at all: proves --resources isn't secretly hardcoded to
+    # REPO/core/src/main/resources, and exercises the real sea_lore.json branch of
+    # _ask_tool_examples (MIP-0070 §5.4, task 3's own acceptance check).
     with tempfile.TemporaryDirectory() as tmp:
-        tool_rows = from_tool_calls(knowledge, Path(tmp) / "sea_lore.json")
+        tmp_path = Path(tmp)
+        tar_path = tmp_path / "resources.tar.gz"
+        subprocess.run(
+            [str(REPO / "scripts" / "build-resources-tarball.sh"), str(tar_path)],
+            cwd=REPO,
+            check=True,
+            capture_output=True,
+        )
+        unpacked = tmp_path / "unpacked"
+        unpacked.mkdir()
+        subprocess.run(["tar", "-xzf", str(tar_path), "-C", str(unpacked)], check=True)
+        sea_lore_path = unpacked / "sea_lore.json"
+        assert sea_lore_path.exists(), (
+            "build-resources-tarball.sh's output isn't flat at its root — "
+            "build_dataset.py --resources can't read it (MIP-0070 §5.4)"
+        )
+        no_lore_count = len(from_tool_calls(knowledge, tmp_path / "does-not-exist.json"))
+        tool_rows = from_tool_calls(knowledge, sea_lore_path)
+    assert len(tool_rows) > no_lore_count, (
+        f"the real sea_lore.json added no tool-call examples: {no_lore_count} without it, "
+        f"{len(tool_rows)} with it"
+    )
     assert tool_rows, "no tool-call examples generated"
     seen_tools: set[str] = set()
     for row in tool_rows:
@@ -390,8 +414,9 @@ def _self_test(knowledge: Path) -> None:
     print(
         f"self-test OK: {len(rows)} knowledge-derived examples "
         f"(floor {KNOWLEDGE_EXAMPLE_FLOOR}), every fact verified verbatim against its cited "
-        f"source; {len(tool_rows)} tool-call examples covering all {len(TOOL_SCHEMAS)} real "
-        f"MCP tools with syntactically valid call shapes"
+        f"source; {len(tool_rows)} tool-call examples ({no_lore_count} without sea_lore.json, "
+        f"{len(tool_rows)} with it) covering all {len(TOOL_SCHEMAS)} real MCP tools with "
+        f"syntactically valid call shapes"
     )
 
 

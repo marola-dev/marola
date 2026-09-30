@@ -16,14 +16,24 @@ FILES=(
 )
 
 build() {
-  local out="$1" root
+  local out="$1" root staging
   root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  local file
+  staging="$(mktemp -d)"
+  local file names=()
   for file in "${FILES[@]}"; do
-    [ -f "$root/$file" ] || { echo "build-resources-tarball: missing $file" >&2; return 1; }
+    if [ ! -f "$root/$file" ]; then
+      echo "build-resources-tarball: missing $file" >&2
+      rm -rf "$staging"
+      return 1
+    fi
+    cp "$root/$file" "$staging/$(basename "$file")"
+    names+=("$(basename "$file")")
   done
   mkdir -p "$(dirname "$out")"
-  tar -czf "$out" -C "$root" "${FILES[@]}"
+  # Flat at the tarball root: build_dataset.py --resources <unpacked dir> reads files directly
+  # from that dir, not from a copy of this repo's own source tree (MIP-0070 §5.4).
+  tar -czf "$out" -C "$staging" "${names[@]}"
+  rm -rf "$staging"
   echo "wrote $out:"
   tar -tzf "$out"
 }
@@ -35,8 +45,8 @@ self_test() {
   build "$t/resources.tar.gz" >"$t/log" || { cat "$t/log"; echo "FAIL: build"; return 1; }
   local got want
   got="$(tar -tzf "$t/resources.tar.gz" | sort)"
-  want="$(printf '%s\n' "${FILES[@]}" | sort)"
-  [ "$got" = "$want" ] || { echo "FAIL: tarball contents"; echo "got:  $got"; echo "want: $want"; f=1; }
+  want="$(printf '%s\n' "${FILES[@]}" | xargs -n1 basename | sort)"
+  [ "$got" = "$want" ] || { echo "FAIL: tarball contents not flat"; echo "got:  $got"; echo "want: $want"; f=1; }
   echo "build-resources-tarball self-test:" "$([ "$f" -eq 0 ] && echo ok || echo FAILED)"
   [ "$f" -eq 0 ]
 }
