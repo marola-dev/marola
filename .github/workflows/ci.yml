@@ -51,6 +51,8 @@ jobs:
               - '**/*.py'           # ruff lints the whole repo, so any .py anywhere counts
               - 'scripts/*.sh'      # gh-billing.sh's self-test lives in the same quality-other job
               - 'scripts/fixtures/**'
+              - 'AGENTS.md'          # agents-check.sh verifies the org invariants block (MIP-0070 §5.6)
+              - 'agents/**'
               - 'ruff.toml'
               - '.github/ISSUE_TEMPLATE/**'  # issues.sh --self-test parses these forms
               - '.github/labels.yml'          # and diffs this manifest
@@ -359,6 +361,12 @@ jobs:
       - name: "self-test — tasks_issues (MIP task table → issues: dedup, row link, the depends-on DAG)"
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/tasks_issues.py --self-test
+      - name: self-test — agents-check (org invariants block drift, MIP-0070 §5.6)
+        if: needs.changes.outputs.python == 'true'
+        run: scripts/agents-check.sh --self-test
+      - name: agents-check (AGENTS.md's invariants block matches agents/invariants.md)
+        if: needs.changes.outputs.python == 'true'
+        run: scripts/agents-check.sh
       - name: site harness — app.js against site/fixtures in a stub DOM (MIP-0009)
         if: needs.changes.outputs.site == 'true'
         run: |
