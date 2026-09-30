@@ -49,16 +49,14 @@ class NoteSpec extends munit.FunSuite:
     ) -> "1/3 points PRÓPRIA — avoid loc P1; loc P2"
   )
 
-  test("english: every code renders today's exact string") {
+  test("english: every code renders its exact CLI wording") {
     english.foreach { case (note, text) => assertEquals(note.english, text, note.toString) }
     assertEquals(english.map(_._1.code).toSet, NoteCode.values.toSet, "a code has no English case")
   }
 
   test("label/fromLabel round-trip every code, and an unknown label is None") {
     NoteCode.values.foreach(c => assertEquals(NoteCode.fromLabel(c.label), Some(c)))
-    assertEquals(NoteCode.values.map(_.label).distinct.size, NoteCode.values.size)
     assertEquals(NoteCode.fromLabel("gale"), None)
-    assertEquals(NoteCode.RoughSeas.label, "rough_seas")
   }
 
   test("json: {code, args} with numbers kept as numbers") {

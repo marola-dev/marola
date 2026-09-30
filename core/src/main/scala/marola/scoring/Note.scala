@@ -36,7 +36,7 @@ final case class Note(code: NoteCode, args: Map[String, JsonValue] = Map.empty) 
   def json: JsonValue =
     JsonValue.obj("code" -> JsonValue.str(code.label), "args" -> JsonValue.JObject(args))
 
-  /** The wording `Report` and the board's `notes` carried before codes, byte for byte. */
+  /** What `Report` prints and the board's `notes` carry; NoteSpec pins every case. */
   def english: String =
     def num(k: String) = args.get(k).flatMap(_.num).getOrElse(Double.NaN)
     def str(k: String) = args.get(k).flatMap(_.str).getOrElse("")
@@ -68,5 +68,5 @@ final case class Note(code: NoteCode, args: Map[String, JsonValue] = Map.empty) 
         s"${num("proper").toLong}/${num("total").toLong} points PRÓPRIA — avoid ${avoid.mkString("; ")}"
 
 object Note:
-  // Locale-default like before codes, so the CLI's month abbreviation is unchanged.
+  // Default JVM locale, as the CLI prints it; the page formats sampled_on per language.
   private[scoring] val sampleDateFormat = DateTimeFormatter.ofPattern("d MMM")
