@@ -244,9 +244,10 @@ finetune-publish repo gguf base *args:
 # The map — MIP-0005: precomputed boards on a static site (site/)
 # ---------------------------------------------------------------------
 
-# Build the static map's data into site/dist. MIP-0005.
+# Build the static map's data into site/dist (MIP-0005; SiteBuilder: board data only, MIP-0070 §5.4).
 site-build area="":
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --site {{ area }}"
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --site {{ area }} --areas site/areas.json"
+    mkdir -p site/dist && cp -r site/static/. site/dist/
     scripts/stamp_site_version.sh site/dist
 
 # Serve site/dist at http://localhost:8000 (python3 is in the flake).

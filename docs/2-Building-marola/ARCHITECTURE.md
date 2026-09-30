@@ -68,7 +68,8 @@ core/src/main/scala/marola/
   conditions/Tides.scala         §5g — tide turns from Open-Meteo's hourly sea level (pure)
   lore/SeaLore.scala             §5g — curated, sourced "did you know?" paragraph (verbatim)
   site/Board.scala               MIP-0005 — the per-area, per-day board JSON the static map
-                                  renders (pure serializer; contract: site/board.schema.json)
+                                  renders (pure serializer; contract:
+                                  cli/src/main/resources/board.schema.json)
   knowledge/                     §5h — Embedder + KnowledgeStore (traits), Corpus chunker,
                                   FileKnowledgeStore (JSON vector index), OceanQa (grounded Q&A)
   sightings/                     §5d — SightingStore (trait) + Sighting model
@@ -92,7 +93,8 @@ cli/src/main/scala/marola/       depends on core + local — the one place that 
   Main.scala                     CLI entry point (KyoApp) — see §3.1 for its flags
   Report.scala                   pure text rendering: ranked list, detailed block, lore, answers
   site/SiteBuilder.scala         MIP-0005 — `--site`: boards for every area of site/areas.json
-                                  into site/dist/ (+ a copy of site/static/, the Leaflet page)
+                                  into site/dist/ (data only — MIP-0070 §5.4; the caller copies
+                                  site/static/, the Leaflet page, itself)
   AppConfig.scala                env config + a llmClient/sightingStore/visionClient/tracing
                                   factory method per pluggable integration
   agent/SwimConditionsMcpServer.scala   §5c — exposes BeachFinder/Recommender as MCP tools
