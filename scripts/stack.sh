@@ -187,6 +187,50 @@ GH
   lacks "and drops only uprd's dry-run banner" "$out" "uprd dry run"
 
   echo
+  echo "-- pr force-pushes when cost-fill rewrites an already-pushed commit (#524) --"
+  # A stub stands in for cost-fill.sh (STACK_SELFTEST_COST_FILL): it deterministically amends
+  # HEAD, so this proves the push survives a rewrite without needing the real cost-fill.sh's
+  # git >= 2.45 cherry-pick flags (this host's git may be older).
+  pr_origin="$tmp/pr-origin.git"; pr_work="$tmp/pr-work"
+  { git init -q --bare "$pr_origin"
+    git init -q -b main "$pr_work"
+    git -C "$pr_work" config user.email pr@example.invalid
+    git -C "$pr_work" config user.name pr-self-test
+    git -C "$pr_work" remote add origin "$pr_origin"
+    git -C "$pr_work" commit -q --allow-empty -m main
+    git -C "$pr_work" push -q origin main
+    git -C "$pr_work" checkout -q -b mip-9999/1-solo
+    git -C "$pr_work" commit -q --allow-empty -m "task 1"
+    git -C "$pr_work" push -q -u origin mip-9999/1-solo; } >/dev/null 2>&1
+  cost_fill_stub="$tmp/cost-fill-stub"
+  cat >"$cost_fill_stub" <<'SH'
+#!/usr/bin/env bash
+set -e
+[ "${1:-}" = "--dry-run" ] && { echo "cost-fill --dry-run: would rewrite these commits on stub:"; exit 0; }
+git commit -q --amend --allow-empty -m "$(git log -1 --format=%B)
+
+stub-cost-fill-rewrote-this"
+SH
+  chmod +x "$cost_fill_stub"
+  cat >"$tmp/bin/gh" <<'GH'
+#!/usr/bin/env bash
+case "$*" in
+  *"pr view"*) exit 1 ;;
+  *"pr create"*) echo "https://example.invalid/pull/1" ;;
+  *) exit 1 ;;
+esac
+GH
+  chmod +x "$tmp/bin/gh"
+  rc=0
+  out="$(cd "$pr_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$cost_fill_stub" \
+    STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" pr 2>&1)" || rc=$?
+  check "the push exits 0 despite the already-pushed commit being rewritten" "$rc" "0"
+  local_head="$(git -C "$pr_work" rev-parse mip-9999/1-solo)"
+  remote_head="$(git --git-dir="$pr_origin" rev-parse mip-9999/1-solo)"
+  check "origin ends up with the rewritten commit (force-with-lease, not a rejected push)" \
+    "$remote_head" "$local_head"
+
+  echo
   if [ "$failed" -eq 1 ]; then echo "stack self-test: FAILED" >&2; return 1; fi
   echo "stack self-test: ok"
 }
@@ -204,7 +248,30 @@ case "${1:-}" in
     ;;
   pr)
     base="$(base_for "$cur")"
-    run git push -q -u origin "$cur"
+    # cost-fill.sh runs here, not in scripts/pr.sh (#524): this is the documented primary path
+    # for a mip task branch (.claude/skills/mip-tasks/SKILL.md), and it decides on its own
+    # whether anything needs a trailer upgrade or a Closes #N line. A rewritten HEAD needs
+    # --force-with-lease, same as restack below, since the branch may already be pushed.
+    cost_fill="${STACK_SELFTEST_COST_FILL:-scripts/cost-fill.sh}"
+    if [ "$dry" -eq 1 ]; then
+      echo "+ $cost_fill"
+      cf_out="$("$cost_fill" --dry-run)"
+      echo "$cf_out"
+      if grep -q '^cost-fill --dry-run: would rewrite' <<<"$cf_out"; then
+        push=(git push -q --force-with-lease origin "$cur")
+      else
+        push=(git push -q -u origin "$cur")
+      fi
+    else
+      before_head="$(git rev-parse HEAD)"
+      "$cost_fill"
+      if [ "$before_head" != "$(git rev-parse HEAD)" ]; then
+        push=(git push -q --force-with-lease origin "$cur")
+      else
+        push=(git push -q -u origin "$cur")
+      fi
+    fi
+    run "${push[@]}"
     if gh pr view "$cur" --json number -q .number >/dev/null 2>&1; then
       run gh pr edit "$cur" --base "$base"
       run scripts/uprd.sh

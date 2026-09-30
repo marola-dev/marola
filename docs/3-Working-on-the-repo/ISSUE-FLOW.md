@@ -69,7 +69,8 @@ add it.
 **A merged task PR closes its issue.** GitHub only honours a closing keyword written into the
 squash-merge commit that lands on `main`, never the PR body alone (#524 — #511/#512 closed their
 issues by a commit-body `Closes #N`; the PR-body-only line #513 through #519 carried never did,
-and those issues had to be closed by hand). `scripts/cost-fill.sh` (run by `just pr`) writes
+and those issues had to be closed by hand). `scripts/cost-fill.sh`, run by `scripts/stack.sh pr`
+(itself run by `just pr`, or directly per `.claude/skills/mip-tasks/SKILL.md`'s step 2), writes
 `Closes #N` into the branch's own commit body, above the `Tested:`/`Cost:`/`Co-Authored-By:`
 trailers, for the issue that row `k` of `MIP-NNNN.tasks.md` links; the merge into `main` then
 closes it, and that clears rule 5 for every task blocked by it. `uprd.sh` still copies the same

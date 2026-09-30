@@ -411,6 +411,7 @@ cost-fill *args:
     scripts/cost-fill.sh {{ args }}
 
 # The whole agent PR workflow in one command: trailers, push, PR body. AGENTS.md.
+# TASK_PARTIAL=1 just pr — skip a mip task branch's Closes #N line (task-partial, #524).
 pr *args:
     scripts/pr.sh {{ args }}
 

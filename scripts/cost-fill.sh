@@ -57,6 +57,9 @@ self_test() {
   out="$(cd "$repo" && bash "$self" 2>&1)"
   full="$(git -C "$repo" log -1 --format=%B mip-9999/2-ascii)"
   has "cost-fill reports one Closes line added" "$out" "1 Closes line(s)"
+  has "and a per-commit line names the issue and the opt-out" "$out" \
+    "cost-fill: added Closes #502 to"
+  has "mentioning TASK_PARTIAL, so it can't close by surprise" "$out" "(TASK_PARTIAL=1 to skip)"
   check "the commit body gains Closes #502" "$(grep -cx 'Closes #502' <<<"$full")" "1"
   trailers_out="$(git -C "$repo" log -1 --format='%(trailers:only,unfold)' mip-9999/2-ascii)"
   check "the three trailers still parse, in order" "$(cut -d: -f1 <<<"$trailers_out" | paste -sd, -)" \
@@ -283,6 +286,7 @@ for sha in "${shas[@]}"; do
     old_msg="$(git log -1 --format=%B)"
     new_msg="$(insert_trailers "$old_msg" "$tested" "$cost" "$closes")"
     GIT_COMMITTER_DATE="$cdate" git commit -q --amend -m "$new_msg"
+    [ -z "$closes" ] || echo "cost-fill: added $closes to $(git rev-parse --short HEAD) (TASK_PARTIAL=1 to skip)"
   fi
 done
 git branch -f "$branch" "$tmp_branch"
