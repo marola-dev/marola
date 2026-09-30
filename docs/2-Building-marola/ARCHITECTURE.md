@@ -103,6 +103,22 @@ dspy/
                                       optional Langfuse tracing
 ```
 
+The tree above lists what's in each module; the dependency direction it can't show — traits live in
+`core`, `local` implements them, `cli` is the one place that wires both together:
+
+```d2
+direction: right
+core: "core/\npure pipeline, traits"
+local: "local/\nOllama + file-based impls"
+cli: "cli/\nMain, AppConfig, MCP server"
+dspy: "dspy/\noffline DSPy compile"
+
+local -> core: "implements the traits\n(LlmClient, VisionClient,\nSightingStore, ...)"
+cli -> core: "depends on"
+cli -> local: "depends on,\nwires via AppConfig"
+dspy -> core: "recommendation_prompt.json\n(compiled artifact, in resources)"
+```
+
 ### 3.1 `Main`'s CLI surface
 
 ```
@@ -152,7 +168,23 @@ it used on the `origin ->` line:
    the search radius is widened to at least 20km (never narrowed below `MAROLA_BEACH_SEARCH_RADIUS_KM`
    if that's larger). Verified live from Florianópolis: all three providers agreed, the medoid
    landed in the centro, and the island's beaches came back.
-4. The built-in Arpoador default, only if no provider answered at all (offline).
+5. The built-in Arpoador default, only if no provider answered at all (offline).
+
+```mermaid
+flowchart TD
+  A["--lat/--lon flags"] -->|"both given"| Origin(["origin resolved"])
+  A -->|"missing (skip)"| B
+  A -->|"only one<br/>(warn, skip)"| B
+  B["--location-url<br/>(Google Maps pin)"] -->|"parseable"| Origin
+  B -->|"absent (skip)"| C
+  B -->|"unreadable<br/>(warn, skip)"| C
+  C["origin env vars"] -->|"both set"| Origin
+  C -->|"missing (skip)"| D
+  C -->|"only one<br/>(warn, skip)"| D
+  D["IP geolocation<br/>(3 providers, medoid vote)"] -->|"any provider answered"| Origin
+  D -->|"all offline"| E["Arpoador default"]
+  E --> Origin
+```
 
 No cloud account, no Telegram token are needed for any of the above. Every integration is
 free/local, see §5's table.
@@ -263,6 +295,44 @@ discussion, MIP-0057).
 | 5g | Bathing-water quality (MIP-0001) | IMA/SC feed, auto-selected when the origin is in Santa Catarina; `none` elsewhere | `MAROLA_WATER_QUALITY_PROVIDER=auto\|ima-sc\|none` |
 | 5h | Ocean knowledge Q&A — local RAG (MIP-0001, `FUTURE-WORK.md` §9.1) | `knowledge/*.md` embedded by Ollama (`llama3.2` itself by default), JSON index under `data/` | `MAROLA_LOCAL_EMBED_MODEL`, `MAROLA_KNOWLEDGE_DIR` |
 
+```mermaid
+classDiagram
+  direction LR
+  class `5 Pluggable integrations`
+  class `5a Query synthesis` {
+    Ollama-compatible chat completion
+  }
+  class `5b Beach distance` {
+    Haversine
+  }
+  class `5c Agentic tool access` {
+    MCP server over stdio
+  }
+  class `5d Sighting reports` {
+    JSON-lines file
+  }
+  class `5e Photo analysis` {
+    Multimodal Ollama (llava)
+  }
+  class `5f Observability` {
+    Off, or OTLP to local MLflow
+  }
+  class `5g Bathing-water quality` {
+    IMA/SC feed, auto-selected in SC
+  }
+  class `5h Ocean knowledge` {
+    Local RAG over knowledge markdown
+  }
+  `5 Pluggable integrations` --> `5a Query synthesis`
+  `5 Pluggable integrations` --> `5b Beach distance`
+  `5 Pluggable integrations` --> `5c Agentic tool access`
+  `5 Pluggable integrations` --> `5d Sighting reports`
+  `5 Pluggable integrations` --> `5e Photo analysis`
+  `5 Pluggable integrations` --> `5f Observability`
+  `5 Pluggable integrations` --> `5g Bathing-water quality`
+  `5 Pluggable integrations` --> `5h Ocean knowledge`
+```
+
 ### 5a. Query synthesis — `llm/`
 
 The ranked list in §3 is already useful without an LLM in the loop. Every number comes straight
@@ -304,6 +374,21 @@ three separate output fields, which is what let this reuse `CompiledPrompt`'s ex
 replay mechanics unchanged, instead of needing a second, structurally different prompt-building
 path. `Main --summarize` now always runs both passes and prints the reviewer's verdict, not just
 the raw draft.
+
+```mermaid
+sequenceDiagram
+  participant Main
+  participant LLM as LlmClient (Ollama)
+  participant Reviewer
+
+  Main->>Main: load recommendation_prompt.json
+  Main->>LLM: complete(draft prompt + facts)
+  LLM-->>Main: draft summary
+  Main->>Reviewer: review(client, review_prompt.json, facts, draft)
+  Reviewer->>LLM: complete(review prompt + facts + draft)
+  LLM-->>Reviewer: review_json {score, verdict, final_summary}
+  Reviewer-->>Main: score, verdict, final_summary
+```
 
 **Status: genuinely run end to end, not just written.**
 - The DSPy compile step was actually run against a real local Ollama model
@@ -359,6 +444,23 @@ way:
    into the assembled jar's stdin and got back correct, real responses: `tools/list` returned both
    tool schemas; `tools/call find_nearby_beaches` and `tools/call get_swim_recommendation` both
    returned real live Overpass/Open-Meteo data.
+
+```mermaid
+sequenceDiagram
+  participant Client as MCP client (stdio)
+  participant Server as SwimConditionsMcpServer
+
+  Client->>Server: initialize
+  Server-->>Client: capabilities
+  Client->>Server: notifications/initialized
+  Client->>Server: tools/list
+  Server-->>Client: find_nearby_beaches, get_swim_recommendation
+  Client->>Server: tools/call find_nearby_beaches
+  Server-->>Client: live Overpass beaches
+  Client->>Server: tools/call get_swim_recommendation
+  Server-->>Client: live Open-Meteo + scoring
+```
+
 2. **Bug found:** the first assembly run threw `ServiceConfigurationError: No
    JsonSchemaValidatorSupplier available`. `build.sbt`'s merge strategy blanket-discarded all of
    `META-INF`, which silently dropped the MCP SDK's `META-INF/services/*` ServiceLoader
@@ -445,6 +547,21 @@ refuses inland-water points (LAGOA/CANAL/RIO...), because Lagoa da Conceição's
   points to OSM beaches by normalised name (word-prefix aware), then by distance ≤ 2.5km for
   unmatched sea points only. `Swimability.waterVerdict` applies MIP-0001 §6: all-IMPRÓPRIA veto,
   mixed −20 naming the spots, PRÓPRIA nothing, stale (> 45 days) nothing-but-say-so.
+
+```mermaid
+flowchart TD
+  W{"water: Option[WaterQuality]"}
+  W -->|"None"| NoData["no data<br/>(delta 0, no veto)"]
+  W -->|"Some(w)"| Fresh{"fresh = w.fresh(today)<br/>(samples ≤45 days old)"}
+  Fresh -->|"empty"| Newest{"newestSampleDate"}
+  Newest -->|"None"| NoData
+  Newest -->|"Some(d)"| Stale["stale (d)<br/>delta 0, no veto"]
+  Fresh -->|"nonEmpty"| Split{"improper vs proper<br/>among fresh points<br/>(Unknown is neither)"}
+  Split -->|"IMPRÓPRIA present,<br/>no PRÓPRIA<br/>(rest may be Unknown)"| Veto["veto: score 0<br/>worst point's enterococci named"]
+  Split -->|"IMPRÓPRIA present,<br/>PRÓPRIA also present"| Mixed["delta −20<br/>spots to avoid named"]
+  Split -->|"no IMPRÓPRIA<br/>(rest PRÓPRIA and/or Unknown)"| Proper["delta 0, no note<br/>(summary text says PRÓPRIA<br/>even if all Unknown)"]
+```
+
 - `Tides.extrema` reads high/low water off Open-Meteo's hourly `sea_level_height_msl`;
   `OpenMeteoClient` now also fetches `wave_period`, `wave_direction`, `swell_wave_height`,
   `swell_wave_period` for the detailed block.
@@ -476,6 +593,20 @@ scaffold.**
   when no passage clears `MAROLA_ASK_MIN_SCORE` the model answers from its own knowledge with a
   visible "(unsourced)" label rather than refusing. The corpus covers swim safety, users ask
   about the whole ocean. Surfaces: `just ask "..."` / `--ask`, MCP `ask_ocean_question`.
+
+```mermaid
+flowchart TD
+  Q["question"] --> S["store.search(question, k)"]
+  S --> F{"filter: score ≥ minScore"}
+  F -->|"nonempty"| G["ask LLM: answer ONLY from<br/>numbered passages, cite [n]"]
+  G --> N{"saysNoAnswer(reply)?"}
+  N -->|"no"| Cited["grounded reply,<br/>[n] citations"]
+  N -->|"yes"| FB{"fallback"}
+  F -->|"empty"| FB
+  FB -->|"strict"| Abstain["abstain<br/>(NoPassagesReply)"]
+  FB -->|"general (default)"| Unsourced["ask LLM without grounding,<br/>prefix '(unsourced)' label"]
+```
+
 - **Benchmark.** `just benchmark` (`cli/bench/OceanBenchmark`) runs 22 ocean questions (science,
   history, animals, nature, safety; ten inside the corpus, twelve deliberately outside) through
   three arms on the same local model: the plain prompt, marola strict, marola general. Scores are
