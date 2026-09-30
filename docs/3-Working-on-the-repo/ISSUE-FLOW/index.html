@@ -3386,7 +3386,7 @@ computed from still happen, so a login is needed either way). Seven of them have
 </tr>
 <tr>
 <td><code>just board-sync</code></td>
-<td>puts every open issue on the board and sets its Status from the issue's own state — but only on a card carrying no Status, or <code>Backlog</code>, which is what the auto-add workflow writes rather than a state anyone chose. Any other Status is someone's decision and is left alone</td>
+<td>puts every open issue on the board and sets its Status from the issue's own state — but only on a card carrying no Status, or <code>Backlog</code>, which is what the auto-add workflow writes rather than a state anyone chose. Any other Status is someone's decision and is left alone. Also moves a <strong>closed</strong> issue's card to <strong>Done</strong> whenever it isn't already: the fallback for GitHub's built-in "Item closed" workflow, which fired for one issue and missed the next eight on 2026-09-30 (MIP-0063 §4.4)</td>
 </tr>
 </tbody>
 </table>
@@ -3404,10 +3404,13 @@ freshly filed row is not <code>agent-ready</code> until someone labels it and <c
 the commands above. The mapping <code>board-sync</code> uses on a card's first contact with the board
 (MIP-0063 §5.2): an assigned issue goes to In progress, an issue carrying <code>agent-ready</code> goes to
 Ready, otherwise it goes to Triage.</p>
-<p><img alt="Kroki" src="kroki-generated-a9fa31d7-ee46-3fef-85d5-412ddd537c95.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-1aad2e83-c41e-3807-9120-3b8794ac35fe.svg" /></p>
 <p><code>board-sync</code> sets a new card's Status once, on first contact with the board, and never overwrites
-it again. From there, a move into Spec or into In review is "someone's decision"; a move into In
-progress is <code>issue-claim</code>; and a move into Done is the merge that closes the issue.</p>
+it again — except Done, which it sets whenever an issue is closed and its card isn't there already.
+From there, a move into Spec or into In review is "someone's decision"; a move into In progress is
+<code>issue-claim</code>; and a move into Done is GitHub's built-in "Item closed" workflow first, with
+<code>board-sync</code> as the fallback when that workflow doesn't fire — observed missing 8 of 9 closes on
+2026-09-30 (MIP-0063 §4.4).</p>
 <h2 id="what-no-command-can-do">What no command can do<a class="headerlink" href="#what-no-command-can-do" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Filing an issue is human-gated</strong> (MIP §5.6, Decision 2). The <code>triage</code> skill drafts one and
