@@ -60,8 +60,10 @@ commands:
       Add every open issue to the project board, then set its Status from the issue's own state
       (assigned, `agent-ready`, or neither) on the items carrying no Status and on those still
       carrying `Backlog`, which is what the auto-add workflow writes rather than a state anyone
-      chose. Any other Status is someone's decision and is never overwritten. Run `board setup`
-      first: an issue whose state calls for a Status option the field lacks is skipped, not set.
+      chose. Any other Status is someone's decision and is never overwritten — except Done: a
+      closed issue's card is moved to Done whenever it isn't already, the fallback for the
+      project's built-in "Item closed" workflow (MIP-0063 §4.4). Run `board setup` first: an
+      issue whose state calls for a Status option the field lacks is skipped, not set.
 
   board setup
       Bring the project itself up to MIP-0063 §5.2: the Status options it is missing and the four
@@ -811,10 +813,14 @@ board_resolve() {
   board_id="$(jq -r --arg t "$board_title" '.projects[] | select((.title | ascii_downcase) == ($t | ascii_downcase)) | .id' <<<"$projects")"
 }
 
-# board_items <owner> -> the project's items as a JSON array.
+# board_items <owner> [query] -> the project's items as a JSON array. `query` is GitHub's Projects
+# filter syntax (e.g. "is:closed") — a second server-side query, not a local filter: item-list's
+# content carries only type/body/title/number/repository/url, never a state field to filter on.
 board_items() {
-  local limit=500 raw n
-  raw="$(gh project item-list "$board_number" --owner "$1" --format json --limit "$limit" </dev/null)"
+  local limit=500 raw n query="${2-}"
+  local -a extra=()
+  [ -z "$query" ] || extra=(--query "$query")
+  raw="$(gh project item-list "$board_number" --owner "$1" --format json --limit "$limit" "${extra[@]}" </dev/null)"
   n="$(jq '.items | length' <<<"$raw")"
   # Same trap as `queue`'s page limit: an unseen item reads as "not on the board", and the sync
   # would add a second copy of it.
@@ -858,8 +864,16 @@ board_autoadd_status="Backlog"
 # to Triage every run would undo their work. `Backlog` is the exception because nobody dragged it
 # there; the auto-add workflow wrote it, and adopting it once is what lets an issue's first
 # contact with the board mean anything at all.
+# `$1`/`$2` go through temp files, not `--argjson`: a real board's item-list JSON exceeds
+# MAX_ARG_STRLEN (128 KiB) and `--argjson` fails there with "Argument list too long".
 board_plan() {
-  jq -rn --argjson items "$1" --argjson issues "$2" --arg nwo "$3" --arg auto "$board_autoadd_status" '
+  local items_file issues_file rc=0
+  items_file="$(mktemp)"; issues_file="$(mktemp)"
+  printf '%s' "$1" > "$items_file"
+  printf '%s' "$2" > "$issues_file"
+  jq -rn --slurpfile items_raw "$items_file" --slurpfile issues_raw "$issues_file" \
+    --arg nwo "$3" --arg auto "$board_autoadd_status" '
+    ($items_raw[0]) as $items | ($issues_raw[0]) as $issues |
     def want: if (((.assignees // []) | length) > 0) then "In progress"
               elif ([(.labels // [])[] | .name] | index("agent-ready")) then "Ready"
               else "Triage" end;
@@ -870,7 +884,29 @@ board_plan() {
       elif (($it.status // "") == "") then ["set", $it.id, $w, ($i.number | tostring)]
       elif ($it.status == $auto) then ["adopt", $it.id, $w, ($i.number | tostring)]
       else empty end
-    | @tsv'
+    | @tsv' || rc=$?
+  rm -f "$items_file" "$issues_file"
+  return "$rc"
+}
+
+# board_closed_plan <closed-items-json> <open-issues-json> <nwo> -> one TSV action per line,
+# item-id/status/number, per closed issue not already Done (MIP-0063 §4.4's fallback). An absent
+# Status prints as the literal "(no Status)": `read`'s IFS=tab collapse would otherwise shift
+# $number into $status.
+board_closed_plan() {
+  local items_file issues_file rc=0
+  items_file="$(mktemp)"; issues_file="$(mktemp)"
+  printf '%s' "$1" > "$items_file"
+  printf '%s' "$2" > "$issues_file"
+  jq -rn --slurpfile items_raw "$items_file" --slurpfile issues_raw "$issues_file" --arg nwo "$3" '
+    ($items_raw[0]) as $items | ($issues_raw[0]) as $issues |
+    ([$issues[].number]) as $open |
+    $items[] | select(.content.type == "Issue" and (.content.repository // "") == $nwo and .content.number != null)
+    | select((.status // "") != "Done")
+    | select(.content.number as $n | ($open | index($n)) == null)
+    | [.id, (.status // "(no Status)"), (.content.number | tostring)] | @tsv' || rc=$?
+  rm -f "$items_file" "$issues_file"
+  return "$rc"
 }
 
 # board_status_missing <quoted option name(s)> [how many issues it left alone]
@@ -1040,7 +1076,7 @@ cmd_board_sync() {
   board_require_write || exit 1
   board_resolve || exit 1
 
-  local owner="${nwo%%/*}" limit=300 fields issues items plan n_open
+  local owner="${nwo%%/*}" limit=300 fields issues items plan closed_items closed_plan n_open
   issues="$(gh issue list --repo "$nwo" --state open --limit "$limit" --json number,url,assignees,labels </dev/null)"
   n_open="$(jq 'length' <<<"$issues")"
   # Same page-limit trap as `queue`: past the limit gh stops silently, and the issues it did not
@@ -1052,9 +1088,13 @@ cmd_board_sync() {
   fields="$(gh project field-list "$board_number" --owner "$owner" --format json --limit 100 </dev/null)"
   items="$(board_items "$owner")" || exit 1
   plan="$(board_plan "$items" "$issues" "$nwo")"
-  [ -n "$plan" ] || { echo "board: in sync ($n_open open issues)"; return 0; }
+  closed_items="$(board_items "$owner" "is:closed")" || exit 1
+  closed_plan="$(board_closed_plan "$closed_items" "$issues" "$nwo")"
+  if [ -z "$plan" ] && [ -z "$closed_plan" ]; then
+    echo "board: in sync ($n_open open issues)"; return 0
+  fi
 
-  local action key status number rc=0 added=0 set_n=0 adopted=0 skipped=0 failed=0 pair fid oid missing_opts=""
+  local action key status number rc=0 added=0 set_n=0 adopted=0 closed=0 skipped=0 failed=0 pair fid oid missing_opts=""
   while IFS=$'\t' read -r action key status number; do
     [ "$action" = add ] || continue
     rc=0
@@ -1091,11 +1131,31 @@ cmd_board_sync() {
     else set_n=$((set_n + 1)); fi
   done <<<"$plan"
 
+  if [ -n "$closed_plan" ]; then
+    pair="$(board_status_option "$fields" "Done")"
+    if [ -z "$pair" ]; then
+      missing_opts="$missing_opts""Done"$'\n'
+      while IFS=$'\t' read -r key status number; do
+        [ -n "$key" ] || continue
+        skipped=$((skipped + 1))
+      done <<<"$closed_plan"
+    else
+      fid="${pair%%$'\t'*}"; oid="${pair##*$'\t'}"
+      while IFS=$'\t' read -r key status number; do
+        [ -n "$key" ] || continue
+        echo "  #$number  $status → Done"
+        rc=0
+        run gh project item-edit --id "$key" --project-id "$board_id" --field-id "$fid" --single-select-option-id "$oid" || rc=$?
+        if [ "$rc" -ne 0 ]; then failed=$((failed + 1)); else closed=$((closed + 1)); fi
+      done <<<"$closed_plan"
+    fi
+  fi
+
   [ "$dry" -eq 0 ] || [ "$added" -eq 0 ] \
     || echo "  the Status of the $added issue(s) added above is set on the real run, once they have item ids"
   [ "$skipped" -eq 0 ] \
     || board_status_missing "$(sort -u <<<"$missing_opts" | grep . | sed 's/.*/"&"/' | paste -sd', ' -)" "$skipped"
-  echo "board: $added added, $set_n set (no Status), $adopted adopted from $board_autoadd_status, $skipped skipped, $failed failed ($n_open open issues)$(dry_tag)"
+  echo "board: $added added, $set_n set (no Status), $adopted adopted from $board_autoadd_status, $closed closed to Done, $skipped skipped, $failed failed ($n_open open issues)$(dry_tag)"
   [ "$failed" -eq 0 ] && [ "$skipped" -eq 0 ] || exit 1
 }
 
@@ -1445,6 +1505,8 @@ case "$*" in
     else file="$STUB_DIR/views.json"; fi ;;
   *"project list"*)       file="$STUB_DIR/projects.json" ;;
   *"project field-list"*) file="$STUB_DIR/${STUB_FIELDS:-fields.json}" ;;
+  *"project item-list"*"--query"*)
+                          file="$STUB_DIR/${STUB_CLOSED_ITEMS:-closed-items.json}" ;;
   *"project item-list"*)  file="$STUB_DIR/${STUB_ITEMS:-items.json}" ;;
   *"label list"*)         file="$STUB_DIR/labels.json" ;;
   *"issue list"*)
@@ -2210,10 +2272,11 @@ EOF
   check "read:project is not project" "$(has_scope "repo, read:project, workflow" project && echo yes || echo no)" "no"
   check "project is" "$(has_scope "repo, project, workflow" project && echo yes || echo no)" "yes"
 
-  local board_fields board_items_json board_issues_json board_got
+  local board_fields board_items_json board_issues_json board_got board_got_plan board_closed_items_json
   board_fields='{"fields":[{"id":"PVTF_t","name":"Title","type":"ProjectV2Field"},
     {"id":"PVTSSF_s","name":"Status","type":"ProjectV2SingleSelectField",
-     "options":[{"id":"o-triage","name":"Triage"},{"id":"o-ready","name":"Ready"},{"id":"o-prog","name":"In progress"}]}]}'
+     "options":[{"id":"o-triage","name":"Triage"},{"id":"o-ready","name":"Ready"},{"id":"o-prog","name":"In progress"},
+                {"id":"o-done","name":"Done"}]}]}'
   check "a Status option resolves to its field id and its own id" \
     "$(board_status_option "$board_fields" "In progress")" "$(printf 'PVTSSF_s\to-prog')"
   # The live board still carries GitHub's template options (Backlog, not Triage/Spec). Sync has to
@@ -2234,6 +2297,7 @@ EOF
     {"number":903,"url":"u903","assignees":[],"labels":[{"name":"agent-ready"}]},
     {"number":950,"url":"u950","assignees":[],"labels":[]}]'
   board_got="$(board_plan "$board_items_json" "$board_issues_json" "marola-dev/marola")"
+  board_got_plan="$board_got"
   # The three cases the maintainer decided between. `Backlog` is adoptable because the auto-add
   # workflow wrote it, not a person; every other value is someone's choice. #952 is the one that
   # would undo a maintainer's work: unassigned and unlabelled, so a Status derived from its state
@@ -2252,6 +2316,43 @@ EOF
   # match on the number alone would edit another repo's card.
   check "board_item_id will not match another repository's item" \
     "$(board_item_id "$board_items_json" "marola-dev/marola" 903)" ""
+
+  board_closed_items_json='[
+    {"id":"I-960","status":"In progress","content":{"type":"Issue","number":960,"repository":"marola-dev/marola"}},
+    {"id":"I-961","status":"Done","content":{"type":"Issue","number":961,"repository":"marola-dev/marola"}},
+    {"id":"I-962","content":{"type":"Issue","number":962,"repository":"marola-dev/marola"}},
+    {"id":"I-963","content":{"type":"PullRequest","number":963,"repository":"marola-dev/marola"}},
+    {"id":"I-964","status":"In review","content":{"type":"Issue","number":964,"repository":"someone/else"}},
+    {"id":"I-910c","status":"In progress","content":{"type":"Issue","number":910,"repository":"marola-dev/marola"}}]'
+  board_got="$(board_closed_plan "$board_closed_items_json" "$board_issues_json" "marola-dev/marola")"
+  check "a closed issue not already Done is planned, carrying its old Status" \
+    "$(grep 'I-960' <<<"$board_got" | cut -f1,2,3)" "$(printf 'I-960\tIn progress\t960')"
+  check "a closed issue with no Status at all is planned too" \
+    "$(grep 'I-962' <<<"$board_got" | cut -f1,2,3)" "$(printf 'I-962\t(no Status)\t962')"
+  check "a closed issue already Done is left alone" "$(grep -c 'I-961' <<<"$board_got" || true)" "0"
+  check "a closed pull request's card is not touched — only issues" \
+    "$(grep -c 'I-963' <<<"$board_got" || true)" "0"
+  check "another repository's closed issue is not touched" \
+    "$(grep -c 'I-964' <<<"$board_got" || true)" "0"
+  # #910 is open in $board_issues_json too — is:closed's answer alone is never trusted.
+  check "an item is:closed also returned that is still in the open-issues list is never touched" \
+    "$(grep -c 'I-910c' <<<"$board_got" || true)" "0"
+
+  echo "-- board_plan and board_closed_plan survive a payload bigger than MAX_ARG_STRLEN --"
+  # Regression test for the confirmed-live --argjson/argv bug. Padding goes through --rawfile, not
+  # --arg, or building the fixture here would hit the same bug.
+  local pad_file big_items_json big_closed_json
+  pad_file="$(mktemp)"
+  head -c 140000 /dev/zero | tr '\0' x > "$pad_file"
+  [ "$(wc -c <"$pad_file")" -gt 131072 ] || { echo "FAILED: the generated padding is not even over 128 KiB" >&2; failed=1; }
+  big_items_json="$(jq -c --rawfile pad "$pad_file" '.[0] += {padding: $pad}' <<<"$board_items_json")"
+  [ "${#big_items_json}" -gt 131072 ] || { echo "FAILED: the padded items fixture is not over 128 KiB" >&2; failed=1; }
+  check "board_plan over a >128 KiB items payload still returns the same plan" \
+    "$(board_plan "$big_items_json" "$board_issues_json" "marola-dev/marola")" "$board_got_plan"
+  big_closed_json="$(jq -c --rawfile pad "$pad_file" '.[0] += {padding: $pad}' <<<"$board_closed_items_json")"
+  check "board_closed_plan over a >128 KiB items payload still returns the same plan" \
+    "$(board_closed_plan "$big_closed_json" "$board_issues_json" "marola-dev/marola")" "$board_got"
+  rm -f "$pad_file"
 
   echo
   echo "-- the gate names come from ARCHITECTURE.md §11, not from a second copy of them --"
@@ -2339,6 +2440,14 @@ EOF
           {"id":"I-953","status":"Triage","content":{"number":953,"repository":"marola-dev/marola"}},
           {"id":"I-950","status":"Triage","content":{"number":950,"repository":"marola-dev/marola"}}]}
 EOF
+  # The default: nothing closed, so a plain sync's closed-issue pass has nothing to do.
+  printf '{"items":[]}\n' > "$claim_dir/closed-items.json"
+  cat > "$claim_dir/closed-items-two.json" <<'EOF'
+{"items":[{"id":"I-960","status":"In progress","content":{"type":"Issue","number":960,"repository":"marola-dev/marola"}},
+          {"id":"I-961","status":"Done","content":{"type":"Issue","number":961,"repository":"marola-dev/marola"}},
+          {"id":"I-962","content":{"type":"Issue","number":962,"repository":"marola-dev/marola"}},
+          {"id":"I-910dup","status":"Ready","content":{"type":"Issue","number":910,"repository":"marola-dev/marola"}}]}
+EOF
   printf '[{"name":"phase/0"},{"name":"phase/1"},{"name":"phase/2"},{"name":"phase/3"},{"name":"phase/4"}]\n' \
     > "$claim_dir/labels.json"
   printf '[{"title":"Phase 3 — Deploy"},{"title":"0063-T6: claiming an issue, and the board itself"}]\n' \
@@ -2399,7 +2508,7 @@ row-3"
   claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
     STUB_SCOPES=project nwo="" cmd_board_sync 2>&1)"
   check "sync adds, sets and adopts, counting each apart" "$(tail -1 <<<"$claim_got")" \
-    "board: 1 added, 1 set (no Status), 2 adopted from Backlog, 0 skipped, 0 failed (5 open issues)"
+    "board: 1 added, 1 set (no Status), 2 adopted from Backlog, 0 closed to Done, 0 skipped, 0 failed (5 open issues)"
   check "sync's calls" "$(cat "$claim_log")" \
     "project item-add 7 --owner marola-dev --url u950
 project item-edit --id I-910 --project-id PVT_test --field-id PVTSSF_s --single-select-option-id o-ready
@@ -2417,6 +2526,35 @@ project item-edit --id I-953 --project-id PVT_test --field-id PVTSSF_s --single-
     "board: in sync (5 open issues)"
   check "and writes nothing at all" "$(cat "$claim_log")" ""
 
+  echo
+  echo "-- board sync also moves a closed issue's card to Done — the fallback for the built-in" \
+       "\"Item closed\" workflow, which missed 8 issues on 2026-09-30 (MIP-0063 §4.4/§5.2) --"
+  : > "$claim_log"
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
+    STUB_ITEMS=items-synced.json STUB_CLOSED_ITEMS=closed-items-two.json STUB_SCOPES=project nwo="" cmd_board_sync 2>&1)"
+  check "board sync moves a closed issue's card to Done" "$(tail -1 <<<"$claim_got")" \
+    "board: 0 added, 0 set (no Status), 0 adopted from Backlog, 2 closed to Done, 0 skipped, 0 failed (5 open issues)"
+  check "it says so per issue, including one that carried no Status at all" \
+    "$(grep -E '^  #(960|962)' <<<"$claim_got" | tr -s ' ' | sed 's/^ //' | tr '\n' '|')" \
+    "#960 In progress → Done|#962 (no Status) → Done|"
+  check "sync's calls carry the Done option id, for both and only those two" \
+    "$(cat "$claim_log")" \
+    "project item-edit --id I-960 --project-id PVT_test --field-id PVTSSF_s --single-select-option-id o-done
+project item-edit --id I-962 --project-id PVT_test --field-id PVTSSF_s --single-select-option-id o-done"
+  check "a closed card already Done is left alone" "$(grep -c 'I-961' "$claim_log" || true)" "0"
+  check "an open issue's chosen Status is left alone" "$(grep -c 'I-952' "$claim_log" || true)" "0"
+  # #910 is open but also appears in this run's is:closed result — still never written.
+  check "an item is:closed answered with that is still open is never written, even under its own id" \
+    "$(grep -c 'I-910dup' "$claim_log" || true)" "0"
+  : > "$claim_log"
+  dry=1
+  claim_got="$(PATH="$claim_dir/bin:$PATH" STUB_DIR="$claim_dir" STUB_LOG="$claim_log" \
+    STUB_ITEMS=items-synced.json STUB_CLOSED_ITEMS=closed-items-two.json STUB_SCOPES=project nwo="" cmd_board_sync 2>&1)"
+  dry=0
+  check "--dry-run edits nothing" "$(cat "$claim_log")" ""
+  check "and still reports the two it would move, saying it did not" "$(tail -1 <<<"$claim_got")" \
+    "board: 0 added, 0 set (no Status), 0 adopted from Backlog, 2 closed to Done, 0 skipped, 0 failed (5 open issues) (--dry-run: nothing was written)"
+
   # Sync before setup: the option an issue's state calls for does not exist yet. That is a missing
   # prerequisite, not a failed write — counted apart, said once rather than once per issue, and
   # still a nonzero exit because the work did not happen.
@@ -2426,7 +2564,7 @@ project item-edit --id I-953 --project-id PVT_test --field-id PVTSSF_s --single-
     STUB_FIELDS=fields-sparse.json STUB_SCOPES=project nwo="" cmd_board_sync ) 2>&1; echo "rc=$?")"
   check "an option the board lacks is skipped, not failed" \
     "$(grep '^board:' <<<"$claim_got")" \
-    "board: 1 added, 1 set (no Status), 1 adopted from Backlog, 1 skipped, 0 failed (5 open issues)"
+    "board: 1 added, 1 set (no Status), 1 adopted from Backlog, 0 closed to Done, 1 skipped, 0 failed (5 open issues)"
   check "and skipping is a nonzero exit — the sync did not do its job" "$(tail -1 <<<"$claim_got")" "rc=1"
   check "the missing option is named once, not once per issue" \
     "$(grep -c 'has no "Triage" option' <<<"$claim_got" || true)" "1"
@@ -2451,7 +2589,7 @@ project item-edit --id I-953 --project-id PVT_test --field-id PVTSSF_s --single-
     STUB_SCOPES=read:project nwo="" cmd_board_sync 2>/dev/null | tail -1)"
   dry=0
   check "--dry-run still shows the plan without the scope — the reads only need read:project" \
-    "$claim_got" "board: 1 added, 1 set (no Status), 2 adopted from Backlog, 0 skipped, 0 failed (5 open issues) (--dry-run: nothing was written)"
+    "$claim_got" "board: 1 added, 1 set (no Status), 2 adopted from Backlog, 0 closed to Done, 0 skipped, 0 failed (5 open issues) (--dry-run: nothing was written)"
   check "and still writes nothing" "$(cat "$claim_log")" ""
 
   : > "$claim_log"
