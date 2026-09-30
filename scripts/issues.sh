@@ -1350,6 +1350,12 @@ cmd_claim() {
   fi
 }
 
+# mip_reference_of <mip-digits> <path> -> the milestone description line. Pure — the self-test
+# feeds it a fixture path instead of resolving a real docs/MIPs/MIP-NNNN-*.md.
+mip_reference_of() {
+  printf 'Design: MIP-%s — %s\n' "$1" "$2"
+}
+
 # mip_reference <MIP-NNNN> -> the milestone description that points at the MIP.
 # A MIP number with no file is refused: a typo would otherwise leave a milestone whose only piece
 # of provenance is a dangling reference.
@@ -1363,7 +1369,7 @@ mip_reference() {
     echo "issues.sh milestone new: no docs/MIPs/MIP-$n-*.md found locally or via \$MAROLA_UMBRELLA — is MIP-$n written?" >&2
     return 1
   }
-  printf 'Design: MIP-%s — %s\n' "$n" "$path"
+  mip_reference_of "$n" "$path"
 }
 
 cmd_milestone_new() {
@@ -1910,6 +1916,10 @@ case "$*" in
   *)
     case "$path" in
       */milestones*) file="$STUB_DIR/milestones.json" ;;
+      */contents/docs/MIPs)
+        file="$STUB_DIR/mip-list.json" ;;
+      */contents/docs/MIPs/*)
+        file="$STUB_DIR/mip-content/${path#*contents/docs/MIPs/}" ;;
       */sub_issues)
         n="${path%/sub_issues}"; n="${n##*/}"; file="$STUB_DIR/$n.subs.json"
         [ ! -f "$STUB_DIR/stateful" ] || [ -f "$file" ] || printf '[]\n' > "$file"
@@ -2905,9 +2915,22 @@ EOF
 
   echo
   echo "-- milestone new: --mip points at a MIP that exists, or not at all --"
-  check "--mip resolves to the MIP's own file" "$(mip_reference MIP-0063)" \
+  # mip_reference_of is pure — a fixture path, not a live resolve_mip_path against real docs/MIPs.
+  check "--mip resolves to the MIP's own file" \
+    "$(mip_reference_of 0063 "docs/MIPs/MIP-0063-github-issue-tracking-standard.md")" \
     "Design: MIP-0063 — docs/MIPs/MIP-0063-github-issue-tracking-standard.md"
-  if mip_reference MIP-9999 >/dev/null 2>&1; then
+  # mip_reference itself still resolves for real (local docs/MIPs, then ../, then gh api) — MIP-9999
+  # never exists locally or in ../ here either way, but the gh-api tier would otherwise be a live
+  # network call; a `gh` that always fails keeps this refusal hermetic without touching resolve_mip_path.
+  local mipref_dir="$tmp/mipref"
+  mkdir -p "$mipref_dir/bin"
+  cat > "$mipref_dir/bin/gh" <<'SH'
+#!/bin/sh
+cat >/dev/null
+exit 1
+SH
+  chmod +x "$mipref_dir/bin/gh"
+  if PATH="$mipref_dir/bin:$PATH" mip_reference MIP-9999 >/dev/null 2>&1; then
     echo "FAILED: a MIP number with no file was accepted — the milestone's one reference would dangle" >&2; failed=1
   else
     echo "ok: --mip with no matching docs/MIPs/MIP-NNNN-*.md is refused"
@@ -2922,6 +2945,15 @@ EOF
   echo "-- claim, board sync and the gates against a stubbed gh --"
   local claim_dir="$tmp/claim" claim_log="$tmp/claim/calls.log" claim_got
   write_gh_stub "$claim_dir"
+
+  # `claim` on #910 prints a stack_line, which resolves MIP-0063's tasks table for real
+  # (resolve_mip_file): locally in this checkout, but via these two gh-api fixtures once this
+  # script has no docs/MIPs of its own (the extracted marola-devkit) — same row, same slug, so the
+  # assertion below holds in both.
+  printf '[{"name":"MIP-0063.tasks.md"}]\n' > "$claim_dir/mip-list.json"
+  mkdir -p "$claim_dir/mip-content"
+  printf '| # | slug | delivers | tests | depends on |\n|---|---|---|---|---|\n| [6](https://github.com/marola-dev/marola/issues/910) | board-and-claim | d | t | – |\n' \
+    > "$claim_dir/mip-content/MIP-0063.tasks.md"
 
   cat > "$claim_dir/910.issue.json" <<'EOF'
 {"number":910,"id":5600000910,"state":"open","html_url":"u910",
@@ -2978,6 +3010,21 @@ EOF
           {"id":"I-962","content":{"type":"Issue","number":962,"repository":"marola-dev/marola"}},
           {"id":"I-910dup","status":"Ready","content":{"type":"Issue","number":910,"repository":"marola-dev/marola"}}]}
 EOF
+  # cmd_board_gates reads phase_titles() for real; shadowed here with the same fixture shape used
+  # above, so its self-test doesn't depend on a live docs/PHASES.md either (this script moves to
+  # marola-devkit, which carries none). Redefines the function for the rest of the process — safe,
+  # since nothing later calls the bare phase_titles (the earlier fixture test above calls
+  # phase_titles_of directly).
+  phase_titles() {
+    phase_titles_of "$(cat <<'EOF'
+1. **Phase 0: POC pipeline + six pluggable integrations (done, this change).** Beach discovery.
+2. **Phase 1: Telegram bot.** Long-polling loop.
+3. **Phase 2: Go live on a cloud backend, deliberately.** Opt into a cloud backend.
+4. **Phase 3: Deploy.** A hosted webhook.
+5. **Phase 4: Harden & calibrate.** Caching, per-user rate limiting.
+EOF
+)"
+  }
   printf '[{"name":"phase/0"},{"name":"phase/1"},{"name":"phase/2"},{"name":"phase/3"},{"name":"phase/4"}]\n' \
     > "$claim_dir/labels.json"
   printf '[{"title":"Phase 3 — Deploy"},{"title":"0063-T6: claiming an issue, and the board itself"}]\n' \
