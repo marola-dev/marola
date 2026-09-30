@@ -3082,10 +3082,11 @@
 <p>Ordered delivery of <a href="../MIP-0054-portuguese-first-experience/">MIP-0054</a> as stacked PRs
 (<code>.claude/skills/mip-tasks/SKILL.md</code>, <code>scripts/stack.sh</code>). Branch <code>mip-0054/&lt;k&gt;-&lt;slug&gt;</code>, each based
 on the previous; merge bottom-up, <code>scripts/stack.sh restack</code> after each squash-merge.</p>
-<p><strong>This round is the site's half and the codes that close it.</strong> Tasks 1 and 2 are the page; task 3
-is the Scala change that lets the page translate the scoring notes. The summary, the corpus and the
-guard are listed under "Later" and stay unfiled. <strong>File MIP-0044's and MIP-0046's tasks first</strong>:
-tasks 1 and 2 depend on them, and <code>just tasks-to-issues</code> refuses an unfiled cross-MIP edge.</p>
+<p><strong>This round is the site's half and the codes that close it</strong>, re-planned on 2026-09-30 for §5.8
+(#412): per-locale JSON catalogs, the gates, and the toggle next to the GitHub link. Tasks 1 and 2 are
+the page, and task 3 is the Scala change that lets the page translate the scoring notes. Nothing
+waits on another MIP any more: the toggle no longer lives in MIP-0044's menu, and MIP-0046 task 1
+rebases over <code>t()</code> rather than landing first (decision 6).</p>
 <table>
 <thead>
 <tr>
@@ -3098,30 +3099,37 @@ tasks 1 and 2 depend on them, and <code>just tasks-to-issues</code> refuses an u
 </thead>
 <tbody>
 <tr>
-<td>1</td>
+<td><a href="https://github.com/marola-dev/marola/issues/536">1</a></td>
 <td>i18n-chrome</td>
-<td>§5.1's site half as amended at acceptance, and §5.5's language half. In <code>site/static/ui.js</code>: <code>I18N = {'pt-BR': {…}, en: {…}}</code> with every static string of <code>index.html</code>, <code>about.html</code> and <code>chat.js</code> (nav, controls, hour label, legend, day labels, status, footer blurb, chat, noscript); <code>t(key, args)</code> falling back to English, then the key; the §5.5 resolver (<code>?lang=</code>, then <code>localStorage['marola.lang']</code> inside try/catch, then <code>navigator.languages</code>, then <code>pt-BR</code>); <code>applyLang()</code> over <code>data-i18n</code>, <code>data-i18n-title</code>, <code>data-i18n-aria-label</code> and <code>data-i18n-placeholder</code>, plus <code>document.title</code> and <code>&lt;html lang&gt;</code>; <code>#lang</code>, two <code>&lt;button aria-pressed&gt;</code> in MIP-0044's <code>menu-prefs</code>, writing the store and <code>?lang=</code> through <code>setParam</code>, which moves from <code>app.js</code> into <code>ui.js</code>. Both HTML files' source text becomes pt-BR, and <code>about.html</code>'s article carries both languages as two <code>article[lang]</code> blocks shown by <code>:lang()</code> CSS</td>
-<td><code>scripts/site_check.js</code>: <code>&lt;html lang="pt-BR"&gt;</code> in both files; a default run (empty search, <code>navigator: {}</code>, a <code>localStorage</code> that throws) resolves <code>pt-BR</code>; <code>?lang=en</code> resolves <code>en</code>; a stored <code>en</code> with <code>?lang=pt-BR</code> resolves <code>pt-BR</code>; <code>navigator.languages = ['en-US']</code> resolves <code>en</code>; <code>#lang</code> is two <code>&lt;button&gt;</code>s with <code>aria-pressed</code> and no <code>href="#"</code>, and a click flips them and writes both the store and the URL; the two catalogs have identical keys and no empty value; every <code>data-i18n*</code> key in both HTML files exists; values are lowercase except an allowlist (°C, UV, km/h, PRÓPRIA, IMPRÓPRIA, GitHub, Open-Meteo, IMA/SC). Screenshots at 390 px and 1280 px in both languages</td>
-<td>0044-T1</td>
+<td>§5.8 and §5.5's language half. <code>site/i18n/pt-BR.json</code>, <code>site/i18n/en.json</code> (ICU subset: <code>{arg}</code>, <code>plural</code>, <code>select</code>) and <code>site/i18n/context.json</code> (one note per key) with every static string of <code>index.html</code>, <code>about.html</code> and <code>chat.js</code>: nav, controls, hour label, legend, day labels, status, footer blurb, chat, noscript. <code>scripts/i18n_bundle.py</code> writes <code>site/static/i18n.js</code> and generates the <code>x-pseudo</code> locale; <code>--check</code> runs gates 1-3 and fails on a stale bundle; <code>--self-test</code>; both wired into <code>just quality-other</code> and CI. <code>site/static/ui.js</code>: the pure <code>resolveLang({param, stored, languages, supported})</code>, <code>t(key, args)</code> with the ICU subset over <code>Intl.PluralRules</code>/<code>Intl.NumberFormat</code> (falling back to <code>pt-BR</code>, then the key), <code>applyLang()</code> over <code>data-i18n</code>, <code>data-i18n-title</code>, <code>data-i18n-aria-label</code> and <code>data-i18n-placeholder</code>, plus <code>document.title</code> and <code>&lt;html lang&gt;</code>, and <code>setParam</code>, which moves from <code>app.js</code>. <code>#lang</code>: two <code>&lt;button aria-pressed&gt;</code> (<code>pt</code>, <code>en</code>, each with its own <code>lang</code> and an endonym <code>aria-label</code>) in <code>.sitenav</code>, immediately left of <code>a.gh</code>, on both pages, writing <code>localStorage['marola.lang']</code> (try/catch) and <code>?lang=</code>. Both HTML files' source text becomes pt-BR with <code>&lt;html lang="pt-BR"&gt;</code>; <code>about.html</code>'s article carries both languages as <code>article[lang]</code> blocks shown by <code>:lang()</code>. <code>site.yml</code>'s publish allowlist gains <code>ui.js</code> and <code>i18n.js</code></td>
+<td><code>scripts/i18n_bundle.py --self-test</code>: a missing key, an empty value, an argument missing in one locale, an unparsable message, a key with no context note and a stale bundle each fail <code>--check</code>. <code>scripts/site_check.js</code>: <code>&lt;html lang="pt-BR"&gt;</code> in both files; <code>resolveLang</code> returns <code>pt-BR</code> for no input, <code>en</code> for <code>?lang=en</code>, <code>pt-BR</code> for a stored <code>en</code> plus <code>?lang=pt-BR</code>, <code>en</code> for <code>languages ['en-US']</code>, <code>pt-BR</code> for <code>['fr-FR']</code>, and <code>x-pseudo</code> only from the param; a <code>localStorage</code> that throws still resolves; <code>#lang</code> is two <code>&lt;button&gt;</code>s with <code>aria-pressed</code>, placed before <code>a.gh</code> inside <code>.sitenav</code> on both pages, and a click flips them and writes the store and the URL; every <code>data-i18n*</code> key exists; <code>t</code> pluralises <code>{n, plural, one {# praia} other {# praias}}</code> for 1 and 2 and formats <code>1.3</code> as <code>1,3</code> in pt-BR; values are lowercase except an allowlist (°C, UV, km/h, PRÓPRIA, IMPRÓPRIA, GitHub, Open-Meteo, IMA/SC, OpenStreetMap). Screenshots at 390 px and 1280 px in both languages, nav included</td>
+<td>–</td>
 </tr>
 <tr>
-<td>2</td>
+<td><a href="https://github.com/marola-dev/marola/issues/537">2</a></td>
 <td>i18n-app</td>
-<td>Every string <code>app.js</code> builds goes through <code>t()</code>: tooltip and card cells, the list, the hour label, status and <code>fail()</code>, the footer, the near-me notices. <code>renderDays</code> is split out of <code>selectArea</code>, so a language flip relabels the days without a fetch, and an <code>onLang</code> hook re-renders in place. <code>wind_level</code>, <code>jellyfish</code> and <code>whales</code> values render through <code>lvl.*</code> and <code>wind.*</code> keys, unknown values passed through. <code>noteText()</code> renders <code>t('note.' + code, args)</code> when the board carries <code>note_codes</code> and the English <code>notes</code> string otherwise, with the sixteen <code>note.*</code> keys task 3 will emit, in both languages</td>
-<td><code>scripts/site_check.js</code>, per language: the default run shows <code>hour-label</code> = "melhor hora por praia", a tooltip with "água-viva" and "ondas … a cada", and <code>1/1 PRÓPRIA (25 Aug)</code> untouched (the board's own month, until later); a <code>?lang=en</code> run shows today's English needles; a synthetic board with <code>note_codes</code> renders <code>note.choppy</code> in both languages; the real fixture, without codes, shows <code>notes</code> verbatim; the marker-path and band-class assertions unchanged. Screenshots of the tooltip and the card in both languages</td>
-<td>1, 0046-T1</td>
+<td>Every string <code>app.js</code> and <code>chat.js</code> build goes through <code>t()</code>: tooltip and card cells, the list, the hour label, status and <code>fail()</code>, the footer, the near-me notices, the chat panel. <code>renderDays</code> is split out of <code>selectArea</code>, so a language flip relabels the days without a fetch, and an <code>onLang</code> hook re-renders in place. <code>wind_level</code>, <code>jellyfish</code> and <code>whales</code> values render through <code>lvl.*</code> and <code>wind.*</code> keys, with unknown values passed through. Numbers and distances go through <code>Intl.NumberFormat</code>. <code>noteText()</code> renders <code>t('note.' + code, args)</code> when the board carries <code>note_codes</code> and the English <code>notes</code> string otherwise, with the <code>note.*</code> keys task 3 emits, in both languages. Gate 4: the <code>x-pseudo</code> run</td>
+<td><code>scripts/site_check.js</code>, per language: the default run shows <code>hour-label</code> "melhor hora por praia", a tooltip with "água-viva", and <code>1/1 PRÓPRIA (25 Aug)</code> untouched (the board's own month, until <code>messages-report</code>); a <code>?lang=en</code> run shows today's English needles; a synthetic board with <code>note_codes</code> renders a <code>note.*</code> key in both languages; the real fixture, without codes, shows <code>notes</code> verbatim; an <code>x-pseudo</code> run of both pages finds no visible text outside <code>t()</code> beyond an allowlist of data values (beach names, provider names, verdict tokens, numbers); the marker-path and band-class assertions are unchanged. Screenshots of the tooltip and the card in both languages</td>
+<td>1</td>
 </tr>
 <tr>
-<td>3</td>
+<td><a href="https://github.com/marola-dev/marola/issues/538">3</a></td>
 <td>note-codes</td>
-<td>§5.1's board half, <strong>Scala, verified only in CI</strong> (no JDK on the machine this was planned on). <code>Swimability</code> returns <code>Note(code: NoteCode, args)</code> instead of <code>String</code>; <code>Board</code> writes <code>hours[].note_codes</code> and <code>best.note_codes</code> next to <code>notes</code>, which stay; <code>board.schema.json</code>'s <code>schema</code> enum becomes <code>[1, 2]</code>; <code>Report</code>'s English wording is unchanged; <code>site/fixtures/board.json</code> gains codes</td>
-<td><code>SwimabilitySpec</code> asserts on <code>NoteCode</code>s, not English strings. <code>BoardSpec</code>: <code>note_codes</code> present, <code>schema</code> 2, and a schema-1 fixture still validates. <code>scripts/site_check.js</code>: the fixture validates against the schema, and task 2's hook renders its real codes in both languages. <code>just quality</code> green in CI</td>
+<td>§5.1's board half, in Scala. <code>Swimability</code> returns <code>Note(code: NoteCode, args)</code> instead of <code>String</code>; <code>Board</code> writes <code>hours[].note_codes</code> and <code>best.note_codes</code> next to <code>notes</code>, which stay; <code>board.schema.json</code>'s <code>schema</code> enum becomes <code>[1, 2]</code>; <code>Report</code>'s English wording is unchanged; <code>site/fixtures/board.json</code> gains codes, and every emitted code has a <code>note.*</code> key in both catalogs</td>
+<td><code>SwimabilitySpec</code> and <code>WaterVerdictSpec</code> assert on <code>NoteCode</code>s, not English strings. <code>BoardSpec</code>: <code>note_codes</code> present, <code>schema</code> 2, and a schema-1 fixture still validates. <code>scripts/site_check.js</code>: the fixture validates against the schema, and task 2's hook renders its real codes in both languages. <code>sbt test</code>, <code>scalafmtCheckAll</code> and <code>scalafixAll --check</code> green</td>
 <td>2</td>
 </tr>
 </tbody>
 </table>
 <h2 id="later-not-filed">Later (not filed)<a class="headerlink" href="#later-not-filed" title="Permanent link">&para;</a></h2>
 <ul>
+<li><strong>ja-locale</strong>: <code>site/i18n/ja.json</code>, the <code>:lang(ja)</code> CSS of §5.8 (no case transform,
+  <code>word-break: auto-phrase</code> with fallback, local Japanese font names), the verdict gloss keys, and
+  the third toggle button, added only after a native-speaker review (§11). Depends on 2.</li>
+<li><strong>locale-paths</strong>: <code>/pt-br/</code>, <code>/en/</code>, <code>/ja/</code> trees with <code>hreflang</code> alternates, and <code>/</code> redirecting
+  by the same <code>resolveLang</code> (§5.8 portability). Depends on 2.</li>
+<li><strong>beach-names-i18n</strong>: the board carries OSM's <code>name:en</code>/<code>name:ja</code> when present, and the page picks
+  by locale. A board-contract change after 3.</li>
 <li><strong>messages-report</strong>: <code>marola.i18n.Messages</code>, <code>Report</code> in pt-BR, <code>--lang</code> and <code>MAROLA_LANG</code>, and
   <code>water.summary</code>'s month per language (§5.1, §3's CLI block). Decides which catalog is canonical for
   the <code>note.*</code> overlap (§11). Depends on 3.</li>
@@ -3134,7 +3142,7 @@ tasks 1 and 2 depend on them, and <code>just tasks-to-issues</code> refuses an u
 </ul>
 <h2 id="decisions">Decisions<a class="headerlink" href="#decisions" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>The site's catalog is a JS object in <code>ui.js</code></strong>, not <code>data/i18n/*.json</code> fetched at load. No
+<li><strong>(Superseded by decision 6.)</strong> <strong>The site's catalog is a JS object in <code>ui.js</code></strong>, not <code>data/i18n/*.json</code> fetched at load. No
    request before the first render, no flash of the wrong language, works from <code>file://</code>, and no
    Scala in the site's half. Recorded in §5.1.</li>
 <li><strong><code>pt-BR</code> is the last fallback</strong>, as §5.5 says. In practice <code>navigator.languages</code> decides for
@@ -3145,6 +3153,11 @@ tasks 1 and 2 depend on them, and <code>just tasks-to-issues</code> refuses an u
    included; this round does not make the release shippable on its own.</li>
 <li><strong>A native-speaker pass gates the release, not task 1's merge</strong> (§11), since the page is English
    only today.</li>
+<li><strong>Re-planned 2026-09-30 (#412).</strong> The catalog moved from a JS object in <code>ui.js</code> to per-locale
+   JSON with a generated <code>i18n.js</code> (§5.8), the gates joined tasks 1 and 2, and the toggle moved next
+   to the GitHub link by the maintainer's decision. That drops <code>0044-T1</code> and <code>0046-T1</code> as
+   dependencies. MIP-0046 task 1 now rebases over the <code>t()</code> calls instead of landing first, which
+   reverses MIP-0046.tasks.md's decision 1 for this pair.</li>
 </ol>
 
 

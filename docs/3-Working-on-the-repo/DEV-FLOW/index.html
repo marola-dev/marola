@@ -3364,7 +3364,7 @@
 
 
 <h1 id="development-flow">Development flow<a class="headerlink" href="#development-flow" title="Permanent link">&para;</a></h1>
-<p><img alt="Kroki" src="kroki-generated-3678e98b-fe6b-3b2a-bd3a-e65a24b22613.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-022e4eb2-1392-3715-a9a9-aa2af4b2a027.svg" /></p>
 <p>This page is the one place the whole loop is written down; the pieces live in the <code>mip</code> and
 <code>mip-tasks</code> skills (<code>.claude/skills/</code>), <code>AGENTS.md</code> (the hard rules), <code>docs/3-Working-on-the-repo/AGENT-SKILLS.md</code>
 (which superpowers skill does what) and the scripts under <code>scripts/</code>.</p>
@@ -3434,7 +3434,7 @@ git<span class="w"> </span>commit<span class="w">                               
 just<span class="w"> </span>pr<span class="w">                                            </span><span class="c1"># fills any missing trailer (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch</span>
 </code></pre></div>
 <p>The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:</p>
-<p><img alt="Kroki" src="kroki-generated-cc60358a-4e88-36b3-90f0-5ef02f9fd73d.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-e26575a7-cc2d-3165-a7c0-d177bf7ac03a.svg" /></p>
 <p><code>just pr --dry-run</code> prints every step (the trailers <code>cost-fill</code> would add, the body <code>uprd</code> would
 write) without pushing or touching <code>gh</code>. It refuses the same way the real run would (on <code>main</code>, or a
 dirty tree) so the preview matches what actually happens.</p>

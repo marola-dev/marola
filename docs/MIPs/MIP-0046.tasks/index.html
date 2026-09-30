@@ -3104,6 +3104,8 @@ cross-MIP dependency that is not filed yet.</p>
 <ol>
 <li><strong>Order.</strong> After MIP-0044 task 1, which moves <code>#sound</code> into the menu, and before MIP-0054 task 2,
    which wraps these same strings in <code>t()</code>: the other order means rewriting every call site twice.
+   <strong>Reversed 2026-09-30</strong> (MIP-0054.tasks.md decision 6): MIP-0054 tasks 1-2 land first, and this
+   task rebases over their <code>t()</code> calls.
    Before MIP-0042's <code>/v1/</code> freeze, as §11 already recommends.</li>
 <li><strong>The wind barb has a fallback.</strong> If the 390 px screenshot cannot tell calm from breezy, task 1
    ships the band word without a wind mark (§8) and says so in the PR. That is an accepted outcome.</li>
