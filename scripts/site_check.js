@@ -9,7 +9,10 @@ const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const APP = fs.readFileSync(path.join(ROOT, 'site/static/app.js'), 'utf8');
-const SCHEMA = JSON.parse(fs.readFileSync(path.join(ROOT, 'site/board.schema.json'), 'utf8'));
+// MIP-0070 §5.4: the schema moved to cli/src/main/resources/ (the producer owns it, ships in the image).
+const SCHEMA = JSON.parse(
+  fs.readFileSync(path.join(ROOT, 'cli/src/main/resources/board.schema.json'), 'utf8')
+);
 const BOARD = JSON.parse(fs.readFileSync(path.join(ROOT, 'site/fixtures/board.json'), 'utf8'));
 const INDEX = fs.readFileSync(path.join(ROOT, 'site/static/index.html'), 'utf8');
 
@@ -182,7 +185,7 @@ async function runPage(board) {
   console.log('site_check:');
   // 1. the fixture is a valid board, and the checker bites.
   const errs = validate(SCHEMA, BOARD);
-  ok(errs.length === 0, 'site/fixtures/board.json conforms to site/board.schema.json', errs.slice(0, 3).join('; '));
+  ok(errs.length === 0, 'site/fixtures/board.json conforms to cli/src/main/resources/board.schema.json', errs.slice(0, 3).join('; '));
   const broken = JSON.parse(JSON.stringify(BOARD)); delete broken.beaches;
   ok(validate(SCHEMA, broken).some(e => e.includes('beaches')), 'the checker reports a missing required field');
   const badEnum = JSON.parse(JSON.stringify(BOARD)); badEnum.beaches[0].hours[0].wind_level = 'gale';

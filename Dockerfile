@@ -33,11 +33,11 @@ RUN addgroup -S -g 10001 marola && adduser -S -u 10001 -G marola marola \
  && mkdir -p /app/data && chown -R marola:marola /app
 WORKDIR /app
 COPY --from=builder /marola.jar /app/marola.jar
-# What the CLI reads from the working directory: the RAG corpus (`--ask`), the site's areas and
-# page (`--site`). Runtime output (`data/`: knowledge index, sightings, benchmarks) is a volume.
+# What the CLI reads from the working directory: the RAG corpus (`--ask`). `board.schema.json`
+# ships inside the jar (`cli/src/main/resources/`); `--site` writes board data only, from an
+# `--areas` file the caller passes in — this image carries neither `site/areas.json` nor
+# `site/static` (MIP-0070 §5.4: the site never builds Scala, so it never reads this image's tree).
 COPY --chown=marola:marola knowledge /app/knowledge
-COPY --chown=marola:marola site/areas.json site/board.schema.json /app/site/
-COPY --chown=marola:marola site/static /app/site/static
 USER 10001:10001
 VOLUME ["/app/data"]
 # One CLI run at a time, short-lived: the serial GC and a small heap beat the defaults here.
@@ -72,8 +72,6 @@ WORKDIR /app
 COPY --from=zlib /usr/lib/x86_64-linux-gnu/libz.so.1 /usr/lib/x86_64-linux-gnu/libz.so.1
 COPY --from=native-build /build/marola /app/marola
 COPY --chown=nonroot:nonroot knowledge /app/knowledge
-COPY --chown=nonroot:nonroot site/areas.json site/board.schema.json /app/site/
-COPY --chown=nonroot:nonroot site/static /app/site/static
 VOLUME ["/app/data"]
 ENTRYPOINT ["/app/marola"]
 CMD ["--brief"]

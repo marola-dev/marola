@@ -68,7 +68,8 @@ core/src/main/scala/marola/
   conditions/Tides.scala         §5g — tide turns from Open-Meteo's hourly sea level (pure)
   lore/SeaLore.scala             §5g — curated, sourced "did you know?" paragraph (verbatim)
   site/Board.scala               MIP-0005 — the per-area, per-day board JSON the static map
-                                  renders (pure serializer; contract: site/board.schema.json)
+                                  renders (pure serializer; contract:
+                                  cli/src/main/resources/board.schema.json)
   knowledge/                     §5h — Embedder + KnowledgeStore (traits), Corpus chunker,
                                   FileKnowledgeStore (JSON vector index), OceanQa (grounded Q&A)
   sightings/                     §5d — SightingStore (trait) + Sighting model

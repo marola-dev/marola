@@ -187,9 +187,10 @@ object Main extends KyoApp:
     yield ()
 
   /**
-   * `--site [area-id]` (MIP-0005): build the static map's data for one area of `site/areas.json`,
-   * or every area when no id is given, into `site/dist/` (`--site-out <dir>` to change it, `--areas
-   * <file>` for another areas file).
+   * `--site [area-id]` (MIP-0005): build the static map's board data for one area of
+   * `site/areas.json`, or every area when no id is given, into `site/dist/` (`--site-out <dir>` to
+   * change it, `--areas <file>` for another areas file). Data only (MIP-0070 §5.4): the static page
+   * itself is a separate copy the caller makes (`site.yml`, `just site-build`).
    */
   private def buildSite(args: Array[String], config: AppConfig): Unit < Async =
     val areasPath = argValue(args, "--areas")
@@ -214,7 +215,6 @@ object Main extends KyoApp:
             SiteBuilder.build(
               areas,
               out,
-              SiteBuilder.DefaultStatic,
               water = config.waterQualityClient,
               now = java.time.OffsetDateTime.now(),
               accessibility = Some(config.accessibilityClient)

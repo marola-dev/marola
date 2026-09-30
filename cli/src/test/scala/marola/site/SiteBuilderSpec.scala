@@ -12,7 +12,8 @@ import marola.water.ImaScWaterQualityClient
 
 /**
  * MIP-0005 §7 "static site smoke": a build from fixtures, no network, writes today's and tomorrow's
- * boards, `latest.json`, the areas index, and copies the static page over.
+ * boards, `latest.json` and the areas index. Board data only (MIP-0070 §5.4): the static page is a
+ * separate copy the caller (`site.yml`, `just site-build`) makes, not `SiteBuilder.build`.
  */
 class SiteBuilderSpec extends munit.FunSuite:
 
@@ -51,6 +52,12 @@ class SiteBuilderSpec extends munit.FunSuite:
 
   private def tmpDir(prefix: String): Path = Files.createTempDirectory(prefix)
 
+  private def resource(name: String): String =
+    val s = getClass.getClassLoader.getResourceAsStream(name)
+    if s == null then throw new IllegalArgumentException(s"missing fixture $name")
+    try scala.io.Source.fromInputStream(s, "UTF-8").mkString
+    finally s.close()
+
   /**
    * An agency that is reachable and has nothing to say — IMA/SC's shape while its production host
    * served a self-signed certificate, and INEA/RJ's once its hardcoded bulletin aged out.
@@ -59,24 +66,19 @@ class SiteBuilderSpec extends munit.FunSuite:
     def name: String = "IMA/SC"
     def samplingPoints: List[marola.water.SamplingPoint] < Sync = Nil
 
-  private def buildWith(
-      out: Path,
-      static: Path,
-      client: marola.water.WaterQualityClient
-  ): List[Path] =
+  private def buildWith(out: Path, client: marola.water.WaterQualityClient): List[Path] =
     Http.withTransport(Fixtures.campeche()) {
       Sync.Unsafe.evalOrThrow(
-        SiteBuilder.build(List(floripa), out, static, water = _ => Some(client), now = now)
+        SiteBuilder.build(List(floripa), out, water = _ => Some(client), now = now)
       )
     }
 
-  private def build(out: Path, static: Path): List[Path] =
+  private def build(out: Path): List[Path] =
     Http.withTransport(Fixtures.campeche()) {
       Sync.Unsafe.evalOrThrow(
         SiteBuilder.build(
           List(floripa),
           out,
-          static,
           water = _ => Some(ImaScWaterQualityClient()),
           now = now
         )
@@ -85,12 +87,8 @@ class SiteBuilderSpec extends munit.FunSuite:
 
   test("a provider that returns nothing is named as such, never claimed as a working source") {
     val out = tmpDir("marola-site-out")
-    val static = tmpDir("marola-site-static")
-    Files.writeString(static.resolve("index.html"), "<html>marola</html>")
-    Files.createDirectories(static.resolve("vendor"))
-    Files.writeString(static.resolve("vendor").resolve("leaflet.js"), "// leaflet")
 
-    val _ = buildWith(out, static, SilentProvider)
+    val _ = buildWith(out, SilentProvider)
     val board = JsonValue.parse(
       Files.readString(out.resolve("data").resolve("floripa").resolve("2026-09-06.json"))
     )
@@ -104,14 +102,10 @@ class SiteBuilderSpec extends munit.FunSuite:
     )
   }
 
-  test("build writes both days, latest.json and the areas index, and copies site/static") {
+  test("build writes both days, latest.json and the areas index") {
     val out = tmpDir("marola-site-out")
-    val static = tmpDir("marola-site-static")
-    Files.writeString(static.resolve("index.html"), "<html>marola</html>")
-    Files.createDirectories(static.resolve("vendor"))
-    Files.writeString(static.resolve("vendor").resolve("leaflet.js"), "// leaflet")
 
-    val written = build(out, static)
+    val written = build(out)
 
     val data = out.resolve("data").resolve("floripa")
     List("2026-09-05.json", "2026-09-06.json", "latest.json").foreach(f =>
@@ -138,17 +132,13 @@ class SiteBuilderSpec extends munit.FunSuite:
     assertEquals(entry("name").str, Some("Florianópolis"))
     assertEquals(entry("tiles").str, Some(floripa.tiles))
     assertEquals(entry("latest").str, Some("data/floripa/latest.json"))
-
-    assertEquals(Files.readString(out.resolve("index.html")), "<html>marola</html>")
-    assert(Files.exists(out.resolve("vendor").resolve("leaflet.js")))
   }
 
   test("build with no water provider still writes a board that says 'no data'") {
     val out = tmpDir("marola-site-nowater")
-    val static = tmpDir("marola-site-static-empty")
     val written = Http.withTransport(Fixtures.campeche()) {
       Sync.Unsafe.evalOrThrow(
-        SiteBuilder.build(List(floripa), out, static, water = _ => None, now = now)
+        SiteBuilder.build(List(floripa), out, water = _ => None, now = now)
       )
     }
     assert(written.nonEmpty)
@@ -159,14 +149,13 @@ class SiteBuilderSpec extends munit.FunSuite:
 
   test("build with two areas keeps each its own directory, zone and water-provider selection") {
     val out = tmpDir("marola-site-multi")
-    val static = tmpDir("marola-site-static-multi")
     // The same per-origin selection `AppConfig.waterQualityClient`'s Auto mode makes in
     // production: Santa Catarina (floripa) gets IMA/SC, everywhere else (salvador) gets none.
     val water = (origin: marola.model.Coordinates) =>
       if ImaScWaterQualityClient.coversOrigin(origin) then Some(ImaScWaterQualityClient()) else None
     val written = Http.withTransport(Fixtures.campeche()) {
       Sync.Unsafe.evalOrThrow(
-        SiteBuilder.build(List(floripa, salvador), out, static, water = water, now = now)
+        SiteBuilder.build(List(floripa, salvador), out, water = water, now = now)
       )
     }
     assert(written.nonEmpty)
@@ -184,21 +173,25 @@ class SiteBuilderSpec extends munit.FunSuite:
     assertEquals(areas("areas").arr.flatMap(_("id").str), Vector("floripa", "salvador"))
   }
 
-  test("the real site/static (index.html, app.js, style.css, vendored Leaflet) lands in dist") {
-    val out = tmpDir("marola-site-real-static")
-    val written = build(out, SiteBuilderSpec.repoFile("site/static"))
-    List("index.html", "app.js", "style.css", "vendor/leaflet.js", "vendor/leaflet.css").foreach(
-      f => assert(Files.exists(out.resolve(f)), s"missing $f in ${written.mkString(", ")}")
-    )
-    val html = Files.readString(out.resolve("index.html"))
-    assert(html.contains("vendor/leaflet.js") && html.contains("app.js"), html)
-    // the page reads what the builder writes: the same relative paths.
-    val js = Files.readString(out.resolve("app.js"))
-    assert(js.contains("data/areas.json") && js.contains("latest.json"), "app.js data paths")
+  test("--site writes data only: no index.html or other static file in the output") {
+    val out = tmpDir("marola-site-data-only")
+    val written = build(out)
+    assert(written.nonEmpty)
+    assert(!Files.exists(out.resolve("index.html")))
+    assert(!Files.exists(out.resolve("vendor")))
+    assert(Files.isDirectory(out.resolve("data")))
   }
 
-  test("site/areas.json parses: slug ids, a zone, tiles, and Florianópolis first") {
-    val areas = SiteBuilder.Areas.load(SiteBuilderSpec.repoFile("site/areas.json"))
+  test(
+    "Areas.load reads the given path, not a site/areas.json found by walking up from the cwd"
+  ) {
+    // A checked-in copy (`cli/src/test/resources/site/areas.json`) written to an arbitrary path,
+    // unrelated to any repo layout — proving the loader only ever reads the path it is given
+    // (MIP-0070 §5.4: the site passes its own file, the app never walks the tree looking for one).
+    val fixture = tmpDir("marola-site-areas-fixture").resolve("wherever.json")
+    Files.writeString(fixture, resource("site/areas.json"))
+
+    val areas = SiteBuilder.Areas.load(fixture)
     assert(areas.nonEmpty)
     areas.foreach { a =>
       assert(a.id.matches("[a-z0-9-]+"), a.id)
@@ -221,12 +214,3 @@ class SiteBuilderSpec extends munit.FunSuite:
   }
 
 end SiteBuilderSpec
-
-object SiteBuilderSpec:
-  def repoFile(relative: String): Path =
-    Iterator
-      .iterate(java.nio.file.Paths.get("").toAbsolutePath)(_.getParent)
-      .takeWhile(_ != null)
-      .map(_.resolve(relative))
-      .find(Files.exists(_))
-      .getOrElse(throw new IllegalStateException(s"$relative not found above the cwd"))

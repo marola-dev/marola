@@ -15,8 +15,6 @@ on:
       - "local/**"
       - "cli/**"
       - "knowledge/**"
-      - "site/static/**"
-      - "site/areas.json"
       - ".github/workflows/docker.yml"
   push:
     branches: [main]
@@ -30,8 +28,6 @@ on:
       - "local/**"
       - "cli/**"
       - "knowledge/**"
-      - "site/static/**"
-      - "site/areas.json"
       - ".github/workflows/docker.yml"
   workflow_dispatch:
     inputs:

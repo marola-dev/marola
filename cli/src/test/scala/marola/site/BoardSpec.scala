@@ -1,6 +1,5 @@
 package marola.site
 
-import java.nio.file.{Files, Path, Paths}
 import java.time.{LocalDate, OffsetDateTime, ZoneOffset}
 
 import kyo.*
@@ -154,10 +153,10 @@ class BoardSpec extends munit.FunSuite:
     assert(b("lore")("source").str.exists(_.startsWith("http")))
   }
 
-  test("board: round-trips through JsonValue and conforms to site/board.schema.json") {
+  test("board: round-trips through JsonValue and conforms to board.schema.json") {
     val b = board(tomorrow)
     assertEquals(JsonValue.parse(b.render), b)
-    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    val schema = BoardSpec.schema
     assertEquals(SchemaCheck.validate(schema, b), Nil)
     // the validator must actually bite: drop a required field and it reports it.
     val broken = b match
@@ -182,7 +181,7 @@ class BoardSpec extends munit.FunSuite:
   test(
     "board: schema accepts a board with wind_level and one without it (optional, schema stays 1)"
   ) {
-    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    val schema = BoardSpec.schema
     val b = board(tomorrow)
     assertEquals(SchemaCheck.validate(schema, b), Nil)
     def strip(v: JsonValue): JsonValue = v match
@@ -249,13 +248,13 @@ class BoardSpec extends munit.FunSuite:
     val rioTavares = beach(b, "Praia do Rio Tavares")("facilities")
     assertEquals(rioTavares, JsonValue.obj())
     assertEquals(
-      SchemaCheck.validate(JsonValue.parse(Files.readString(BoardSpec.schemaPath)), b),
+      SchemaCheck.validate(BoardSpec.schema, b),
       Nil
     )
   }
 
   test("board: schema accepts a board with and without the optional facilities field") {
-    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    val schema = BoardSpec.schema
     val b = Board.build(
       "floripa",
       tomorrow,
@@ -279,7 +278,7 @@ class BoardSpec extends munit.FunSuite:
   test("board: trails is empty by default, and schema still accepts an empty array (MIP-0030)") {
     val b = board(tomorrow)
     assertEquals(b("trails").arr, Vector.empty)
-    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    val schema = BoardSpec.schema
     assertEquals(SchemaCheck.validate(schema, b), Nil)
   }
 
@@ -305,7 +304,7 @@ class BoardSpec extends munit.FunSuite:
       sources,
       trails = List(trail)
     )
-    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    val schema = BoardSpec.schema
     assertEquals(SchemaCheck.validate(schema, b), Nil)
     val t = b("trails").arr.head
     assertEquals(t("name").str, Some("Trilha da Lagoinha do Leste"))
@@ -325,14 +324,12 @@ class BoardSpec extends munit.FunSuite:
 end BoardSpec
 
 object BoardSpec:
-  /** `site/board.schema.json` at the repo root, wherever sbt was launched from. */
-  def schemaPath: Path =
-    Iterator
-      .iterate(Paths.get("").toAbsolutePath)(_.getParent)
-      .takeWhile(_ != null)
-      .map(_.resolve("site/board.schema.json"))
-      .find(Files.exists(_))
-      .getOrElse(throw new IllegalStateException("site/board.schema.json not found above the cwd"))
+  /** `board.schema.json`, shipped in the image (`cli/src/main/resources/`, MIP-0070 §5.4). */
+  def schema: JsonValue =
+    val stream = getClass.getClassLoader.getResourceAsStream("board.schema.json")
+    if stream == null then throw new IllegalStateException("board.schema.json not on the classpath")
+    try JsonValue.parse(scala.io.Source.fromInputStream(stream, "UTF-8").mkString)
+    finally stream.close()
 
 /**
  * The subset of JSON Schema the board contract uses: `type` (single or list), `required`,

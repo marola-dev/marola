@@ -9,8 +9,8 @@
 !local
 !cli
 !knowledge
+# jvm/native no longer copy these (MIP-0070 §5.4); kept only for the `dev` target below
 !site/areas.json
-!site/board.schema.json
 !site/static
 # the `dev` target copies the working tree into the dev shell
 !flake.nix

@@ -59,8 +59,9 @@ jobs:
               - 'docs/MIPs/MIP-0063.tasks.md' # and its slug column is the branch `claim` prints
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
             site:
-              - 'site/**'            # app.js/CSS/schema/fixtures → scripts/site_check.js (MIP-0009 task 2)
+              - 'site/**'            # app.js/CSS/fixtures → scripts/site_check.js (MIP-0009 task 2)
               - 'scripts/site_check.js'
+              - 'cli/src/main/resources/board.schema.json'  # moved out of site/ (MIP-0070 §5.4)
             workflows:
               - '.github/workflows/**'
             docker:
