@@ -337,11 +337,18 @@ jobs:
       - name: "self-test — tasks_issues (MIP task table → issues: dedup, row link, the depends-on DAG)"
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/tasks_issues.py --self-test
+      - name: i18n — catalog gates and a fresh site/static/i18n.js (MIP-0054 §5.8)
+        if: needs.changes.outputs.site == 'true' || needs.changes.outputs.python == 'true'
+        run: |
+          python3 scripts/i18n_bundle.py --self-test
+          python3 scripts/i18n_bundle.py --check
       - name: site harness — app.js against site/fixtures in a stub DOM (MIP-0009)
         if: needs.changes.outputs.site == 'true'
         run: |
           node --version
           node --check site/static/app.js
+          node --check site/static/ui.js
+          node --check site/static/i18n.js
           node scripts/site_check.js
       - name: workflow_runners — only marola-sea-publish.yml may be self-hosted (MIP-0065)
         if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.python == 'true'

@@ -95,6 +95,8 @@ quality-other:
     python3 scripts/workflow_runners.py --self-test
     python3 scripts/workflow_runners.py
     python3 scripts/mip_graph.py --check
+    python3 scripts/i18n_bundle.py --self-test
+    python3 scripts/i18n_bundle.py --check
     python3 finetune/train_lora.py --self-test
     python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test

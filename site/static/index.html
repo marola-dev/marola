@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>marola — the ocean intelligence layer</title>
-  <meta name="description" content="Every beach around the area ranked by conditions for today and tomorrow: sea, wind, waves, water quality, tides, jellyfish. Computed once, no tracking. First case: the best hour tomorrow to swim.">
+  <title data-i18n="title.map">marola — a camada de inteligência do oceano</title>
+  <meta name="description" content="Todas as praias da área ordenadas pelas condições de hoje e de amanhã: mar, vento, ondas, qualidade da água, marés, águas-vivas. Calculado uma vez, sem rastreamento. Primeiro caso: a melhor hora amanhã para nadar.">
   <meta name="theme-color" content="#ffffff">
   <!-- img-src https: is the map tiles (site/areas.json); connect-src https: is the chat tunnel
        URL in chatbot-config.js. Scripts stay same-origin (MIP-0033 §5.2). -->
@@ -14,68 +14,74 @@
 </head>
 <body>
   <!-- Outside #footer, which renderFooter() overwrites. Sections with no page are <span>, not <a href="#">. -->
-  <nav class="sitenav" aria-label="Sections">
-    <a href="/docs/">Docs</a>
-    <span aria-disabled="true">Alerts <i>soon</i></span>
-    <span aria-disabled="true">News <i>soon</i></span>
-    <a href="about.html">About</a>
-    <span aria-disabled="true">Contact <i>soon</i></span>
-    <span aria-disabled="true">Donate <i>soon</i></span>
-    <a class="gh" href="https://github.com/marola-dev/marola" aria-label="marola-dev/marola on GitHub, star the repository" title="marola on GitHub — star it if it helps you">
+  <nav class="sitenav" aria-label="seções" data-i18n-aria-label="nav.label">
+    <a href="/docs/" data-i18n="nav.docs">docs</a>
+    <span aria-disabled="true"><span data-i18n="nav.alerts">alertas</span> <i data-i18n="nav.soon">em breve</i></span>
+    <span aria-disabled="true"><span data-i18n="nav.news">notícias</span> <i data-i18n="nav.soon">em breve</i></span>
+    <a href="about.html" data-i18n="nav.about">sobre</a>
+    <span aria-disabled="true"><span data-i18n="nav.contact">contato</span> <i data-i18n="nav.soon">em breve</i></span>
+    <span aria-disabled="true"><span data-i18n="nav.donate">apoie</span> <i data-i18n="nav.soon">em breve</i></span>
+    <div id="lang" class="lang" role="group" aria-label="idioma" data-i18n-aria-label="lang.label">
+      <button type="button" data-lang="pt-BR" lang="pt-BR" aria-label="português (Brasil)" aria-pressed="true">pt</button>
+      <button type="button" data-lang="en" lang="en" aria-label="English" aria-pressed="false">en</button>
+    </div>
+    <a class="gh" href="https://github.com/marola-dev/marola" aria-label="marola-dev/marola no GitHub, dê uma estrela ao repositório" data-i18n-aria-label="gh.label" title="marola no GitHub — dê uma estrela se ele te ajudar" data-i18n-title="gh.title">
       <svg class="gh-mark" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.06-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       <span class="gh-name"><span class="gh-owner">marola-dev/</span>marola</span>
-      <span class="gh-star"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg>star</span>
+      <span class="gh-star"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg><span data-i18n="gh.star">estrela</span></span>
     </a>
   </nav>
 
   <header class="bar">
     <div class="brand">
       <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 9c2.5 0 2.5-2.5 5-2.5S9.5 9 12 9s2.5-2.5 5-2.5S19.5 9 22 9"/><path d="M2 16c2.5 0 2.5-2.5 5-2.5s2.5 2.5 5 2.5 2.5-2.5 5-2.5 2.5 2.5 5 2.5"/></svg>marola</h1>
-      <p class="tagline">The ocean near you: conditions, water quality, sea life, tides, hazards.</p>
+      <p class="tagline" data-i18n="header.tagline">o mar perto de você: condições, qualidade da água, vida marinha, marés, perigos.</p>
     </div>
     <div class="controls">
-      <select id="area" aria-label="Area"></select>
-      <div id="days" class="segmented" role="group" aria-label="Day"></div>
-      <button id="near" type="button" title="Sort the list by distance from you (stays in your browser)">near me</button>
-      <button id="sound" type="button" aria-pressed="false" title="Toggle ambient wave sound — synthesized in your browser, nothing downloaded or played automatically">🌊 sound</button>
-      <button id="toggle-list" type="button" aria-controls="list" aria-expanded="false">list</button>
+      <select id="area" aria-label="área" data-i18n-aria-label="controls.area"></select>
+      <div id="days" class="segmented" role="group" aria-label="dia" data-i18n-aria-label="controls.day"></div>
+      <button id="near" type="button" title="ordena a lista pela distância até você (a localização fica no seu navegador)" data-i18n-title="controls.near_title" data-i18n="controls.near">perto de mim</button>
+      <button id="sound" type="button" aria-pressed="false" title="liga ou desliga o som ambiente de ondas — sintetizado no seu navegador, nada é baixado nem toca sozinho" data-i18n-title="controls.sound_title" data-i18n="controls.sound">🌊 som</button>
+      <button id="toggle-list" type="button" aria-controls="list" aria-expanded="false" data-i18n="controls.list">lista</button>
     </div>
   </header>
 
   <div id="hourbar" class="hourbar" hidden>
-    <label for="hour"><span id="hour-label">best hour per beach</span></label>
-    <input id="hour" type="range" min="-1" max="-1" value="-1" step="1" aria-label="Hour of the day">
+    <label for="hour"><span id="hour-label">melhor hora por praia</span></label>
+    <input id="hour" type="range" min="-1" max="-1" value="-1" step="1" aria-label="hora do dia" data-i18n-aria-label="hour.slider">
     <span class="legend" aria-hidden="true">
-      <b>score</b> <span><i class="c70"></i>≥70</span> <span><i class="c40"></i>40–69</span> <span><i class="c1"></i>1–39</span> <span><i class="c0"></i>unfit</span> <span><i class="cna"></i>no data</span>
-      <span class="wave-key"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10c2.6-7 6.4-7 9 0s6.4 5 9 0v10H3z" fill="currentColor"/></svg>hover a wave</span>
+      <b data-i18n="legend.score">pontuação</b> <span><i class="c70"></i>≥70</span> <span><i class="c40"></i>40–69</span> <span><i class="c1"></i>1–39</span> <span><i class="c0"></i><span data-i18n="legend.unfit">imprópria</span></span> <span><i class="cna"></i><span data-i18n="legend.no_data">sem dados</span></span>
+      <span class="wave-key"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10c2.6-7 6.4-7 9 0s6.4 5 9 0v10H3z" fill="currentColor"/></svg><span data-i18n="legend.wave_key">passe o mouse numa onda</span></span>
     </span>
   </div>
 
   <main class="main">
-    <div id="map" role="application" aria-label="Map of beaches"></div>
+    <div id="map" role="application" aria-label="mapa das praias" data-i18n-aria-label="map.label"></div>
     <aside id="list" class="list" hidden></aside>
     <section id="card" class="card" hidden aria-live="polite"></section>
   </main>
 
   <footer id="footer" class="footer">
-    <p id="status">loading…</p>
+    <p id="status" data-i18n="status.loading">carregando…</p>
   </footer>
 
-  <button id="chat-toggle" type="button" class="chat-toggle" hidden aria-controls="chat-panel" aria-expanded="false">ask the ocean</button>
+  <button id="chat-toggle" type="button" class="chat-toggle" hidden aria-controls="chat-panel" aria-expanded="false" data-i18n="chat.open">pergunte ao mar</button>
   <section id="chat-panel" class="chat-panel" hidden aria-live="polite">
     <header>
-      <h2>ask the ocean</h2>
-      <button id="chat-close" type="button" aria-label="close">×</button>
+      <h2 data-i18n="chat.title">pergunte ao mar</h2>
+      <button id="chat-close" type="button" aria-label="fechar" data-i18n-aria-label="chat.close">×</button>
     </header>
     <div id="chat-log" class="chat-log"></div>
-    <p id="chat-offline" class="chat-offline" hidden>chatbot offline — try again later, or ask via the CLI/MCP tool.</p>
+    <p id="chat-offline" class="chat-offline" hidden data-i18n="chat.offline">chatbot fora do ar — tente de novo mais tarde, ou pergunte pela linha de comando ou pela ferramenta mcp.</p>
     <form id="chat-form">
-      <input id="chat-input" type="text" placeholder="e.g. what do I do in a rip current?" autocomplete="off">
-      <button type="submit">ask</button>
+      <input id="chat-input" type="text" placeholder="ex.: o que eu faço numa corrente de retorno?" data-i18n-placeholder="chat.placeholder" autocomplete="off">
+      <button type="submit" data-i18n="chat.send">perguntar</button>
     </form>
   </section>
 
-  <noscript><p class="nojs">This page needs JavaScript to read the board JSON. The data itself is at <a href="data/">data/</a>.</p></noscript>
+  <noscript><p class="nojs"><span data-i18n="noscript">esta página precisa de javascript para ler os dados do quadro. os dados em si estão em</span> <a href="data/">data/</a>.</p></noscript>
+  <script src="i18n.js"></script>
+  <script src="ui.js"></script>
   <script src="vendor/leaflet.js"></script>
   <script src="app.js"></script>
   <script src="chatbot-config.js"></script>

@@ -133,7 +133,7 @@ body { text-transform: lowercase; }
 .sitenav a:hover { text-decoration: underline; }
 .sitenav span { color: var(--muted); cursor: default; }
 /* the repo pill, #498: static on purpose, no live star count (that would be a request to api.github.com) */
-.sitenav .gh { margin-left: auto; display: inline-flex; align-items: center; gap: .4rem; align-self: center;
+.sitenav .gh { display: inline-flex; align-items: center; gap: .4rem; align-self: center;
   color: var(--ink); font-weight: 600; line-height: 1.6;
   border: 1px solid var(--line); border-radius: 999px; padding: 0 0 0 .55rem; }
 .sitenav .gh:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); }
@@ -146,9 +146,25 @@ body { text-transform: lowercase; }
 .gh-star svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; }
 .sitenav .gh:hover .gh-star { color: var(--accent); border-color: var(--accent); }
 .gh:hover .gh-star svg { fill: currentColor; }
-@media (max-width: 420px) { .sitenav .gh .gh-name { display: none; } }
+/* the language toggle pairs with the repo pill: same height, same outline (MIP-0054 §5.8) */
+.sitenav .lang { margin-left: auto; margin-right: -.6rem; display: inline-flex; align-self: center; }
+.lang button { font-size: 13px; line-height: 1.6; min-height: 0; padding: 0 .55rem;
+  border-radius: 0; margin-left: -1px; color: var(--muted); background: var(--panel); }
+.lang button:first-child { border-radius: 999px 0 0 999px; margin-left: 0; padding-left: .65rem; }
+.lang button:last-child { border-radius: 0 999px 999px 0; padding-right: .65rem; }
+.lang button[aria-pressed="true"] { position: relative; color: var(--accent); background: var(--panel);
+  border-color: var(--accent); font-weight: 600; }
+.lang button:hover { color: var(--accent); }
 .sitenav i { font-style: normal; font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
   color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 .35rem; margin-left: .25rem; }
+/* pt-BR's longer labels plus the toggle must still fit two rows at 390 px */
+@media (max-width: 420px) {
+  .sitenav { gap: .35rem .6rem; }
+  .sitenav .gh .gh-name, .sitenav .gh .gh-star { display: none; }
+  .sitenav .gh { padding: .15rem .5rem; }
+  .sitenav .lang { margin-right: -.2rem; }
+  .sitenav i { border: 0; padding: 0; margin-left: .15rem; text-transform: none; letter-spacing: 0; }
+}
 
 .nojs { padding: 1rem; max-width: 65ch; }
 
@@ -157,6 +173,7 @@ body { text-transform: lowercase; }
 .about-body h2 { font-size: 20px; font-weight: 600; margin: 1.6rem 0 .4rem; }
 .about-body h2:first-child { margin-top: 0; }
 .about-body p { margin: 0 0 .8rem; color: var(--ink); }
+html:not(:lang(en)) .about-body:lang(en), html:lang(en) .about-body:lang(pt) { display: none; }
 
 .leaflet-container { font: inherit; }
 .leaflet-container .leaflet-control-zoom a { color: var(--ink); }
@@ -226,5 +243,6 @@ body { text-transform: lowercase; }
   .list { top: auto; left: .5rem; right: .5rem; bottom: .5rem; width: auto; max-height: 55%; }
   .card { left: .5rem; right: .5rem; width: auto; max-height: 60%; }
   .card dl { grid-template-columns: 5.5rem 1fr; }
+  .legend { flex-wrap: wrap; row-gap: .15rem; }
   .legend .wave-key { display: none; } /* no hover on touch, and it clips at 390 px */
 }
