@@ -18,6 +18,8 @@ const UI = fs.readFileSync(path.join(ROOT, 'site/static/ui.js'), 'utf8');
 const CATALOGS = Object.fromEntries(['pt-BR', 'en'].map(l => [l, JSON.parse(fs.readFileSync(path.join(ROOT, 'site/i18n', l + '.json'), 'utf8'))]));
 
 let fails = 0;
+// app.js glues each number to its unit with a no-break space; the needles below are written as read.
+const plain = s => String(s).replace(/\u00a0/g, ' ');
 function ok(cond, label, detail) {
   if (cond) console.log('  ok   ' + label);
   else { console.log('  FAIL ' + label + (detail ? ' — ' + detail : '')); fails++; }
@@ -151,37 +153,45 @@ function makeAudioContext() {
 
 // --- run the page once against a board
 // -----------------------------------------------------------.
-async function runPage(board) {
+// opts: search ('?lang=en'), languages (navigator.languages), store ({'marola.lang': 'en'}),
+// storeThrows, geolocation (a navigator.geolocation stub), noBoard (latest.json names a missing file).
+async function runPage(board, opts) {
+  opts = opts || {};
   const els = {}; IDS.forEach(id => { els[id] = new El(id); });
   const files = {
     'data/areas.json': { areas: [{ id: 'fixture', name: 'Fixture Bay', lat: -27.6, lon: -48.5, tiles: 'https://tiles.example/{z}/{x}/{y}.png', tiles_attribution: 'test' }] },
     'data/fixture/latest.json': { days: [{ day: board.day, file: board.day + '.json' }] }
   };
-  files['data/fixture/' + board.day + '.json'] = board;
+  if (!opts.noBoard) files['data/fixture/' + board.day + '.json'] = board;
   const L = makeLeaflet();
   const colours = { '--c70': '#2a9d4b', '--c40': '#e0a800', '--c1': '#e07a00', '--c0': '#c0392b', '--cna': '#999999' };
-  const errors = [];
+  const errors = [], alerts = [], fetched = [];
+  const search = opts.search || '';
   const sandbox = {
     console: { error: (...a) => errors.push(a.map(String).join(' ')), log() {} },
     document: { getElementById: id => els[id] || null, querySelectorAll: () => [], documentElement: {} },
     getComputedStyle: () => ({ getPropertyValue: n => colours[n] || '' }),
-    fetch: p => Promise.resolve(p in files
+    fetch: p => { fetched.push(p); return Promise.resolve(p in files
       ? { ok: true, status: 200, json: () => Promise.resolve(JSON.parse(JSON.stringify(files[p]))) }
-      : { ok: false, status: 404, json: () => Promise.reject(new Error('404')) }),
-    location: { href: 'https://example.test/', search: '' },
+      : { ok: false, status: 404, json: () => Promise.reject(new Error('404')) }); },
+    location: { href: 'https://example.test/' + search, search },
     history: { replaceState() {} },
-    navigator: {}, alert() {},
+    navigator: Object.assign({ languages: opts.languages || [] }, opts.geolocation ? { geolocation: opts.geolocation } : {}),
+    alert: m => alerts.push(String(m)),
     AudioContext: function () { return makeAudioContext(); },
     URL, URLSearchParams, Promise, Math, String, Array, Object, Number, Error, parseInt, setTimeout, JSON,
     L
   };
+  if (opts.storeThrows) Object.defineProperty(sandbox, 'localStorage', { get() { throw new Error('SecurityError'); } });
+  else if (opts.store) sandbox.localStorage = { getItem: k => (k in opts.store ? opts.store[k] : null), setItem: (k, v) => { opts.store[k] = String(v); } };
   sandbox.window = sandbox;
   vm.createContext(sandbox);
   vm.runInContext(I18N_JS, sandbox, { filename: 'site/static/i18n.js' });
   vm.runInContext(UI, sandbox, { filename: 'site/static/ui.js' });
   vm.runInContext(APP, sandbox, { filename: 'site/static/app.js' });
-  for (let i = 0; i < 200 && !els.list.innerHTML; i++) await new Promise(r => setImmediate(r));
-  return { els, L, errors };
+  // fail() logs through console.error, so an error ends the wait as a rendered list does.
+  for (let i = 0; i < 200 && !els.list.innerHTML && !errors.length; i++) await new Promise(r => setImmediate(r));
+  return { els, L, errors, alerts, fetched, api: sandbox.marolaI18n };
 }
 
 // --- ui.js against a page's real markup: every start tag becomes an element with its attributes.
@@ -248,8 +258,9 @@ function runUi(html, opts) {
   const badEnum = JSON.parse(JSON.stringify(BOARD)); badEnum.beaches[0].hours[0].wind_level = 'gale';
   ok(validate(SCHEMA, badEnum).some(e => e.includes('not in enum')), 'the checker rejects an unknown wind_level');
 
-  // 2. the page renders the fixture: one marker per beach, tooltips, list, card.
-  const { els, L, errors } = await runPage(BOARD);
+  // 2. the page renders the fixture: one marker per beach, tooltips, list, card. Under ?lang=en these are
+  // the English needles from before MIP-0054; section 5 holds the same page to pt-BR.
+  const { els, L, errors } = await runPage(BOARD, { search: '?lang=en' });
   ok(errors.length === 0, 'app.js logged no errors while loading', errors.join(' | '));
   const isWave = l => l.kind === 'marker' && l.opts && l.opts.icon && l.opts.icon.divIcon && /\bwave\b/.test(l.opts.icon.options.className);
   const markers = L.created.filter(l => l.added && isWave(l));
@@ -257,16 +268,18 @@ function runUi(html, opts) {
   ok(L.created.filter(l => l.added && l.kind === 'circleMarker').length === 0, 'no circleMarker is left for beaches');
   const joaq = markers.find(m => String(m.tooltip).includes('Praia da Joaquina'));
   ok(!!joaq, 'a wave carries a tooltip naming Praia da Joaquina');
-  const tip = joaq ? String(joaq.tooltip) : '';
+  const tip = joaq ? plain(joaq.tooltip) : '';
   ok(/55\/100 at 10:00/.test(tip), 'Joaquina\'s tooltip head shows score/100 and the hour', tip);
   ok(joaq && joaq.tooltipOpts && joaq.tooltipOpts.sticky === true && joaq.tooltipOpts.className === 'aspects', 'the tooltip is sticky with the aspects class');
   // MIP-0009 §3: six aspects, the fixture's own numbers, every emoji followed by its word — the
   // water cell now carries a colour dot instead of an emoji (2026-09-07: a dot scans by colour at
   // a glance the way the score markers already do; a repeated 💧 doesn't distinguish
   // PRÓPRIA/IMPRÓPRIA/no-data).
-  [['🌬️ breezy, 27 km/h S', 'wind band + km/h + direction'], ['🌡️ water 19.0 °C', 'water temperature'],
-   ['〰️ waves 1.3 m every 6 s', 'waves + period'], ['🪼 jellyfish Low', 'jellyfish'],
-   ['🐋 whales Low (best 07:00)', "whales with the day's best hour"],
+  // Levels are lowercase in the catalog (the page lowercases them anyway); the compass point keeps
+  // its case in an <abbr class="dir">, where "NO" (noroeste) cannot be read as the word "no".
+  [['🌬️ breezy, 27 km/h <abbr class="dir">S</abbr>', 'wind band + km/h + direction'], ['🌡️ water 19.0 °C', 'water temperature'],
+   ['〰️ waves 1.3 m every 6 s', 'waves + period'], ['🪼 jellyfish low', 'jellyfish'],
+   ['🐋 whales low (best 07:00)', "whales with the day's best hour"],
    ['<i class="wdot c70"></i> 1/1 PRÓPRIA (25 Aug)', 'water verdict, a colour dot not an emoji'],
    ['🅿️ parking 3 · 🚻 toilets 1', 'facilities, only the counts the board actually has']]
     .forEach(([needle, label]) => ok(tip.includes(needle), 'tooltip cell: ' + label + ' → "' + needle + '"', tip));
@@ -332,7 +345,7 @@ function runUi(html, opts) {
       'score chip carries a band class and no inline style (card headline)', els.card.innerHTML.slice(0, 300));
     // task 4: the card's first block is the very same aspect row the tooltip shows (touch
     // parity).
-    const card = els.card.innerHTML;
+    const card = plain(els.card.innerHTML);
     const rowAt = card.indexOf('<div class="aspects">' + tip + '</div>');
     ok(rowAt >= 0 && rowAt < card.indexOf('<dl>') && rowAt > card.indexOf('</h2>'),
       'the card starts (after the h2) with the tooltip\'s exact aspect row, before the details', card.slice(0, 300));
@@ -364,10 +377,10 @@ function runUi(html, opts) {
   // 3. an older board without wind_level (task 1 made it optional) renders: number, no band word.
   const stripped = JSON.parse(JSON.stringify(BOARD));
   stripped.beaches.forEach(b => b.hours.forEach(h => { delete h.wind_level; }));
-  const r2 = await runPage(stripped);
+  const r2 = await runPage(stripped, { search: '?lang=en' });
   const markers2 = r2.L.created.filter(l => l.added && isWave(l));
   ok(r2.errors.length === 0 && markers2.length === BOARD.beaches.length, 'a board without wind_level still renders every beach as a wave');
-  const tip2 = String((markers2.find(m => String(m.tooltip).includes('Praia da Joaquina')) || {}).tooltip || '');
+  const tip2 = plain((markers2.find(m => String(m.tooltip).includes('Praia da Joaquina')) || {}).tooltip || '');
   ok(!/breezy|calm|strong/.test(tip2) && tip2.includes('🌬️ wind 27 km/h') && (tip2.match(/<span/g) || []).length === 7,
     'without wind_level the wind cell keeps the number and drops the band word; seven cells remain (Joaquina has facilities data)', tip2);
 
@@ -386,7 +399,7 @@ function runUi(html, opts) {
       geometry: [[-27.40, -48.42], [-27.401, -48.415]],
       near_beach: null, near_lake: { name: 'Lagoa do Peri', distance_km: 0.2 } }
   ];
-  const r3 = await runPage(trailed);
+  const r3 = await runPage(trailed, { search: '?lang=en' });
   const trails3 = r3.L.created.filter(l => l.added && isPolyline(l));
   ok(r3.errors.length === 0, 'app.js logged no errors with a trails array present', r3.errors.join(' | '));
   ok(trails3.length === trailed.trails.length, 'exactly one polyline per trail (' + trails3.length + ')');
@@ -502,13 +515,217 @@ function runUi(html, opts) {
   ok(probe.t('footer.generated', { when: 'w', area: 'a', day: 'd', n: 2, sources: 's' }).includes('· 2 praias ·'),
     'the real catalog pluralises footer.generated');
   // Lowercase house style in the catalogs; these are names marola did not choose.
-  const CASE_OK = ['°C', 'UV', 'km/h', 'PRÓPRIA', 'IMPRÓPRIA', 'GitHub', 'Open-Meteo', 'IMA/SC', 'OpenStreetMap'];
+  const CASE_OK = ['°C', 'UV', 'km/h', 'mL', 'PRÓPRIA', 'IMPRÓPRIA', 'GitHub', 'Open-Meteo', 'IMA/SC', 'OpenStreetMap'];
   for (const [lang, cat] of Object.entries(CATALOGS)) {
-    const shouty = Object.entries(cat).filter(([, v]) => {
+    const shouty = Object.entries(cat).filter(([k, v]) => {
+      if (/^dir\./.test(k)) return !/^[A-Z]{1,2}$/.test(v); // compass abbreviations, shown uppercase
       const rest = CASE_OK.reduce((acc, w) => acc.split(w).join(''), v);
       return rest !== rest.toLowerCase();
     }).map(([k]) => k);
     ok(shouty.length === 0, lang + '.json: every value is lowercase outside the allowlist', shouty.join(', '));
+  }
+
+  // --- MIP-0054 task 2: every string app.js builds goes through t() ----------------------------------
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const waveOf = (r, name) => r.L.created.find(l => l.added && isWave(l) && String(l.tooltip).includes(name));
+  const tipOf = (r, name) => plain((waveOf(r, name) || {}).tooltip || '');
+  const openCard = (r, name) => { const m = waveOf(r, name); if (m) m.handlers.click({}); return plain(r.els.card.innerHTML); };
+  const slide = (r, i) => { r.els.hour.value = String(i); r.els.hour.listeners.input[0](); };
+  const deny = { getCurrentPosition(_ok, no) { no({ code: 1 }); } };
+
+  // 5. the default run: no ?lang=, no browser languages, a localStorage that throws → pt-BR.
+  const pt = await runPage(BOARD, { storeThrows: true, geolocation: deny });
+  ok(pt.errors.length === 0 && pt.api.lang() === 'pt-BR', 'default run (no ?lang=, no languages, localStorage throws) resolves pt-BR', pt.errors.join(' | '));
+  ok(pt.els['hour-label'].textContent === 'melhor hora por praia', 'pt-BR: hour-label reads "melhor hora por praia"', pt.els['hour-label'].textContent);
+  const ptTip = tipOf(pt, 'Praia da Joaquina');
+  [['55/100 às 10:00', 'head'], ['🌬️ brisa, 27 km/h <abbr class="dir">S</abbr>', 'wind band, km/h, direction'],
+   ['🌡️ água 19,0 °C', 'water temperature with a decimal comma'], ['〰️ ondas 1,3 m a cada 6 s', 'waves + period'],
+   ['🪼 água-viva: baixa', 'jellyfish through lvl.*'], ['🐋 baleias: baixa (melhor às 07:00)', 'whales through lvl.*'],
+   ['<i class="wdot c70"></i> 1/1 PRÓPRIA (25 Aug)', "the board's own water summary, untouched until messages-report"],
+   ['🅿️ estacionamento 3 · 🚻 banheiros 1', 'facilities']]
+    .forEach(([needle, label]) => ok(ptTip.includes(needle), 'pt-BR tooltip: ' + label + ' → "' + needle + '"', ptTip));
+  ok((ptTip.match(/<span/g) || []).length === 7, 'pt-BR tooltip: the same seven cells', ptTip);
+  ok(String(waveOf(pt, 'Praia da Joaquina').tooltip).includes('27\u00a0km/h') && String(waveOf(pt, 'Praia da Joaquina').tooltip).includes('6\u00a0s'),
+    'a number and its unit are joined by a no-break space, so a wrapping cell never strands the unit');
+  ok(/<button type="button" data-day="2026-09-06"[^>]*>hoje <small>09-06<\/small><\/button>/.test(pt.els.days.innerHTML),
+    'pt-BR: the first day button reads "hoje"', pt.els.days.innerHTML);
+  ok(pt.els.footer.innerHTML.includes('<p id="status">gerado em 2026-09-06 06:00 para Fixture Bay, 2026-09-06 · 2 praias · dados: <span class="src">'),
+    'pt-BR: the footer status line', pt.els.footer.innerHTML);
+  ok(/<span class="score c40">55<\/span>Praia da Joaquina <span class="dist">10:00<\/span>/.test(pt.els.list.innerHTML) &&
+    /<span class="score c0">0<\/span>/.test(pt.els.list.innerHTML), 'pt-BR: list rows and band classes as before', pt.els.list.innerHTML);
+  const ptWave = waveOf(pt, 'Praia da Joaquina');
+  ok(ptWave && ptWave.opts.icon.options.html.includes('<path d="' + keyPath + '" fill="#e0a800"'), 'pt-BR: the same wave path, the same 40-69 fill');
+  const ptCard = openCard(pt, 'Praia da Joaquina');
+  [['<button class="close" type="button" aria-label="fechar">', 'close button name'],
+   ['<span class="score c40">55/100</span> melhor às <b>10:00</b></p>', 'headline'],
+   ['<dt>por quê</dt><dd><ul><li>breezy (27km/h)</li><li>cold water (19.0°C)</li></ul></dd>', 'a board without note_codes shows its notes verbatim'],
+   ['<small>fonte: <span class="src">IMA/SC</span></small>', 'water source, the provider keeping its case'],
+   ['<dd><span class="water">1/1 PRÓPRIA (25 Aug)</span>', 'water summary in a case-exempt span'],
+   ['<span class="water proper">Ponto 33 (Joaquina): PRÓPRIA</span>, 2026-08-25, 12 enterococos/100 mL', 'sampling point, case-exempt, with its count'],
+   ['<dt>mar</dt><dd>19,0°C, ondas 1,3 m a cada 6 s, ondulação 1,0 m, corrente 1,2 km/h <small>(às 10:00)</small></dd>', 'sea row'],
+   ['<dt>maré</dt><dd>alta 06:40 (+0,9 m), baixa 12:50 (-0,7 m) <small>(de hora em hora, ±30 min)</small></dd>', 'tides, signed'],
+   ['<dt>ar</dt><dd>22°C, vento 27 km/h, UV 5, 10% de chuva</dd>', 'air row'],
+   ['<dt>água-viva</dt><dd>baixa</dd>', 'jellyfish row'],
+   ['<dt>baleias</dt><dd>baixa, melhor chance de dia às 07:00 — temporada das jubartes</dd>', 'whales row'],
+   ['>-27.6296, -48.4487</a>', 'coordinates keep the dot']]
+    .forEach(([needle, label]) => ok(ptCard.includes(needle), 'pt-BR card: ' + label, ptCard));
+  pt.els.near.listeners.click[0]({});
+  ok(pt.alerts[0] === 'localização não permitida — a lista continua ordenada por pontuação.', 'pt-BR: a denied location says so (MIP-0054 §3)', pt.alerts.join(' | '));
+
+  const pinned = await runPage(BOARD, { search: '?lang=pt-BR', store: { 'marola.lang': 'en' }, languages: ['en-US'] });
+  ok(pinned.els['hour-label'].textContent === 'melhor hora por praia', 'a stored en plus ?lang=pt-BR renders Portuguese');
+  const browserEn = await runPage(BOARD, { languages: ['en-US'], store: {} });
+  ok(browserEn.els['hour-label'].textContent === 'best hour per beach' && browserEn.els.days.innerHTML.includes('>today <small>'),
+    'navigator.languages en-US with nothing stored renders English');
+
+  // 6. a flip re-renders what app.js built, in place, from state: no fetch.
+  const flip = await runPage(BOARD, {});
+  openCard(flip, 'Praia da Joaquina');
+  slide(flip, 0);
+  const fetchedBefore = flip.fetched.length;
+  flip.api.setLang('en');
+  ok(flip.fetched.length === fetchedBefore, 'a language flip fetches nothing', flip.fetched.slice(fetchedBefore).join(', '));
+  ok(flip.els['hour-label'].textContent === 'at 07:00', 'flip to en: the hour label follows, at the picked hour', flip.els['hour-label'].textContent);
+  ok(/class="on"[^>]*>today <small>/.test(flip.els.days.innerHTML), 'flip to en: renderDays relabels the day buttons, the picked one still on', flip.els.days.innerHTML);
+  ok(flip.els.list.innerHTML.includes('Praia Brava <span class="dist">dark</span>'), 'flip to en: the list', flip.els.list.innerHTML);
+  ok(flip.els.card.innerHTML.includes('<dt>why</dt>') && flip.els.card.innerHTML.includes('at <b>07:00</b> (best 10:00, 55)'), 'flip to en: the open card', flip.els.card.innerHTML.slice(0, 400));
+  ok(tipOf(flip, 'Praia da Joaquina').includes('🪼 jellyfish low'), "flip to en: the markers' tooltips");
+  ok(flip.els.footer.innerHTML.includes('· 2 beaches · data:'), 'flip to en: the footer');
+  flip.api.setLang('pt-BR');
+  ok(flip.els['hour-label'].textContent === 'às 07:00' && flip.els.list.innerHTML.includes('Praia Brava <span class="dist">escuro</span>') &&
+    flip.els.card.innerHTML.includes('<dt>por quê</dt>'), 'flip back to pt-BR: label, list and card');
+  ok(flip.L.created.filter(l => l.added && l.kind === 'circleMarker' && String(l.tooltip).includes('Ponto 33')).length === 1,
+    'two flips leave one water-point marker, not three');
+
+  // 7. note codes (task 3's table): rendered per language when present, `notes` verbatim otherwise.
+  const NOTE_CODES = ['rough_seas', 'choppy', 'no_wave_data', 'strong_wind', 'breezy', 'no_wind_data', 'cold_water', 'warm_water',
+    'no_sea_temp_data', 'rain_likely', 'dark', 'jellyfish_elevated', 'jellyfish_some', 'water_stale', 'water_unfit', 'water_mixed'];
+  for (const lang of Object.keys(CATALOGS)) {
+    const missing = NOTE_CODES.filter(c => !(('note.' + c) in CATALOGS[lang]));
+    ok(missing.length === 0, lang + '.json: a note.* key for each of the 16 codes the board emits', missing.join(', '));
+  }
+  const unfitArgs = { source: 'IMA/SC', sampled_on: '2026-08-25', point: 'Ponto 12', location: 'Brava' };
+  const CASES = [
+    ['rough_seas', { wave_m: 2.26 }, 'rough seas (2.3m waves)', 'mar agitado (ondas de 2,3 m)'],
+    ['choppy', { wave_m: 1.25 }, 'choppy (1.3m waves)', 'mar picado (ondas de 1,3 m)'],
+    ['no_wave_data', {}, 'no wave data', 'sem dados de ondas'],
+    ['strong_wind', { wind_kmh: 33.4 }, 'strong wind (33km/h)', 'vento forte (33 km/h)'],
+    ['breezy', { wind_kmh: 22.5 }, 'breezy (23km/h)', 'brisa (23 km/h)'],
+    ['no_wind_data', {}, 'no wind data', 'sem dados de vento'],
+    ['cold_water', { sea_temp_c: 18.96 }, 'cold water (19.0°C)', 'água fria (19,0 °C)'],
+    ['warm_water', { sea_temp_c: 28.04 }, 'warm water (28.0°C)', 'água quente (28,0 °C)'],
+    ['no_sea_temp_data', {}, 'no sea temperature data', 'sem dados de temperatura da água'],
+    ['rain_likely', { rain_pct: 64.6 }, '65% chance of rain', '65% de chance de chuva'],
+    ['dark', {}, 'dark', 'escuro'],
+    ['jellyfish_elevated', {}, 'elevated jellyfish likelihood', 'chance alta de água-viva'],
+    ['jellyfish_some', {}, 'some jellyfish likelihood', 'alguma chance de água-viva'],
+    ['water_stale', { sampled_on: '2026-08-05' }, 'water quality data stale (Aug 5)', 'dados de balneabilidade desatualizados (5 de ago.)'],
+    ['water_unfit', Object.assign({ enterococci_per_100ml: 800 }, unfitArgs),
+      'water unfit for bathing — IMA/SC Aug 25, Ponto 12 (Brava), 800 enterococci/100mL',
+      'água imprópria para banho — IMA/SC 25 de ago., Ponto 12 (Brava), 800 enterococos/100 mL'],
+    ['water_unfit', unfitArgs, 'water unfit for bathing — IMA/SC Aug 25, Ponto 12 (Brava), count n/a',
+      'água imprópria para banho — IMA/SC 25 de ago., Ponto 12 (Brava), contagem n/d'],
+    ['water_mixed', { proper: 1, total: 3, avoid: ['Ponto 7 (Canto)', 'Ponto 9 (Centro)'] },
+      '1/3 points PRÓPRIA — avoid Ponto 7 (Canto); Ponto 9 (Centro)', '1/3 pontos PRÓPRIA — evite Ponto 7 (Canto); Ponto 9 (Centro)'],
+    ['a_code_from_a_newer_board', {}, 'its english note', 'its english note']
+  ];
+  const coded = clone(BOARD);
+  coded.schema = 2;
+  coded.beaches[0].best.note_codes = CASES.map(([code, args]) => ({ code, args }));
+  coded.beaches[0].best.notes = CASES.map(([code], i) => i === CASES.length - 1 ? 'its english note' : 'fallback ' + code);
+  coded.beaches.forEach(b => b.hours.forEach(h => { h.note_codes = h.notes.map(() => ({ code: 'dark', args: {} })); }));
+  coded.beaches[1].best.note_codes = [{ code: 'water_unfit', args: Object.assign({ enterococci_per_100ml: 800 }, unfitArgs) }];
+  const whyItems = html => ((/<dt>(?:why|por quê)<\/dt><dd><ul>(.*?)<\/ul><\/dd>/.exec(html) || [])[1] || '').split('</li>').filter(Boolean).map(x => x.replace('<li>', ''));
+  for (const [lang, col] of [['en', 2], ['pt-BR', 3]]) {
+    const r = await runPage(coded, { search: '?lang=' + lang });
+    ok(r.errors.length === 0 && r.L.created.filter(l => l.added && isWave(l)).length === coded.beaches.length,
+      lang + ': a schema-2 board with note_codes loads', r.errors.join(' | '));
+    const got = whyItems(openCard(r, 'Praia da Joaquina'));
+    CASES.forEach((c, i) => ok(got[i] === c[col], lang + ': note.' + c[0] + ' → "' + c[col] + '"', got[i]));
+    ok(!got.some(x => x.startsWith('fallback')), lang + ': with note_codes present the notes strings are not shown');
+    slide(r, 0);
+    ok(whyItems(r.els.card.innerHTML)[0] === (lang === 'en' ? 'dark' : 'escuro'), lang + ": an hour's own note_codes render at that hour");
+  }
+
+  const future = clone(BOARD); future.schema = 3;
+  const r7 = await runPage(future, { search: '?lang=en' });
+  ok(r7.els.status.textContent === 'could not load the board: board schema 3, this page understands 1, 2' &&
+    r7.L.created.filter(l => l.added && isWave(l)).length === 0, 'a schema-3 board is refused, in words', r7.els.status.textContent);
+  const r8 = await runPage(BOARD, { noBoard: true });
+  ok(r8.els.status.textContent === 'não foi possível carregar o quadro: 404 data/fixture/2026-09-06.json — rodou `just site-build` antes?',
+    'pt-BR: a missing board file says so, with the build hint', r8.els.status.textContent);
+
+  // 8. gate 4 (§5.8): under ?lang=x-pseudo every message is accented and bracketed, so a plain
+  // a/e/i/o/u/y/c/n left on the page is text that skipped t(), unless it is one of these data values.
+  function leaks(text, data, tokens) {
+    let s = text.replace(/&(amp|lt|gt|quot|#39);/g, (_, e) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[e])).replace(/[⟦⟧·]/g, ' ');
+    [...data].sort((a, b) => b.length - a.length).forEach(d => { s = s.split(d).join(' '); });
+    return s.split(/[\s()[\]{}:,;.!?…"'—–\-/×+±=<>|&]+/)
+      .filter(tok => /[aeiouycnAEIOUYCN]/.test(tok) && tok.replace(/^\d+/, '') !== '°C' && !(tokens || []).includes(tok));
+  }
+  const visible = html => {
+    const attrs = [];
+    html.replace(/\s(?:aria-label|title|placeholder)="([^"]*)"/g, (_, v) => { attrs.push(v); });
+    return html.replace(/<[^>]*>/g, ' ') + ' ' + attrs.join(' ');
+  };
+  const pz = clone(coded);
+  pz.generated_at = '2026-09-06T11:00:00-03:00'; // 07:00 is past, so the past badges render
+  pz.lore = { kind: 'creature', text: 'Humpback whales sing in winter.', source: 'https://example.test/lore', lang: 'en' };
+  pz.trails = clone(trailed.trails);
+  pz.beaches[0].best.note_codes.pop(); pz.beaches[0].best.notes.pop();
+  pz.beaches[0].facilities = { parking: 3, toilets: 1, shower: 2, lifeguard: 1 };
+  pz.beaches[0].water.points.push({ point: 'Ponto 34', location: 'Joaquina Norte', lat: -27.62, lon: -48.44, condition: 'unknown',
+    sampled_on: '2026-08-25', enterococci_per_100ml: null, rain: null });
+  pz.beaches[1].whales.season = false;
+  const nulls = { temp_c: null, wave_m: null, period_s: null, wave_dir_deg: null, swell_m: null, swell_period_s: null, current_kmh: null,
+    wind_kmh: null, wind_dir_deg: null, air_temp_c: null, uv: null, rain_pct: null };
+  pz.beaches.push({ name: 'Praia do Campeche', lat: -27.68, lon: -48.48, best: { hour: '11:00', score: 72, notes: [], note_codes: [] },
+    hours: [{ h: '11:00', score: 72, notes: [], note_codes: [], sea_temp_c: null, wave_m: null, wind_kmh: null, jellyfish: 'High', whales: 'Moderate' }],
+    water: { summary: 'no data', unfit: false, note: null, source: null, points: [] }, tides: [], sea: nulls,
+    jellyfish: 'High', whales: { now: 'Moderate', peak: null, season: false } });
+  const ptDate = iso => new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(iso + 'T00:00:00Z'));
+  const DATA = ['Fixture Bay', 'PRÓPRIA', 'IMPRÓPRIA', 'Ponto 7 (Canto)', 'Ponto 9 (Centro)', pz.lore.text, 'data/fixture/2026-09-06.json']
+    .concat(Object.values(pz.sources), pz.trails.map(x => x.name), ['2026-08-05', '2026-08-25'].map(ptDate))
+    .concat(...pz.beaches.map(b => [b.name, b.water.source].concat(b.water.summary === 'no data' ? [] : [b.water.summary],
+      ...b.water.points.map(q => [q.point, q.location])))).filter(Boolean);
+  const here = { getCurrentPosition(yes) { yes({ coords: { latitude: -27.6, longitude: -48.5 } }); } };
+  const px = await runPage(pz, { search: '?lang=x-pseudo', geolocation: here });
+  ok(px.errors.length === 0 && px.api.lang() === 'x-pseudo' && px.els['hour-label'].textContent.startsWith('⟦'),
+    'x-pseudo: the page runs under the pseudo-locale', px.errors.join(' | ') + ' ' + px.els['hour-label'].textContent);
+  const seen = [];
+  const grab = where => {
+    [['hour label', px.els['hour-label'].textContent], ['days', px.els.days.innerHTML], ['list', px.els.list.innerHTML], ['footer', px.els.footer.innerHTML]]
+      .concat(px.L.created.filter(l => l.added && l.tooltip).map(l => ['tooltip', String(l.tooltip)]))
+      .forEach(([what, html]) => seen.push([where + ', ' + what, html]));
+    pz.beaches.forEach(b => seen.push([where + ', card of ' + b.name, openCard(px, b.name)]));
+    px.L.created.filter(l => l.added && l.kind === 'circleMarker' && l.tooltip).forEach(l => seen.push([where + ', water point', String(l.tooltip)]));
+  };
+  grab('best hours');
+  slide(px, 0); grab('07:00');
+  px.els.near.listeners.click[0]({}); grab('near me');
+  const noGeo = await runPage(BOARD, { search: '?lang=x-pseudo' }); noGeo.els.near.listeners.click[0]({});
+  const denied = await runPage(BOARD, { search: '?lang=x-pseudo', geolocation: deny }); denied.els.near.listeners.click[0]({});
+  const refused = await runPage(future, { search: '?lang=x-pseudo' });
+  const missingBoard = await runPage(BOARD, { search: '?lang=x-pseudo', noBoard: true });
+  seen.push(['alerts', noGeo.alerts.concat(denied.alerts).join(' ')], ['schema status', refused.els.status.textContent],
+    ['404 status', missingBoard.els.status.textContent]);
+  ok(noGeo.alerts.length === 1 && denied.alerts.length === 1 && seen.every(([, h]) => h.length > 0), 'x-pseudo: every surface above rendered something');
+  const appLeaks = seen.map(([where, html]) => [where, leaks(visible(html), DATA)]).filter(([, l]) => l.length);
+  ok(appLeaks.length === 0, 'x-pseudo: everything app.js builds (' + seen.length + ' surfaces) came through t()',
+    appLeaks.slice(0, 4).map(([w, l]) => w + ': ' + l.join(' ')).join(' | '));
+
+  for (const [page, html] of Object.entries(PAGES)) {
+    const run = runUi(html, { search: '?lang=x-pseudo' });
+    const i18nNodes = run.document.nodes.filter(n => 'data-i18n' in n.attrs);
+    let k = 0;
+    const body = html.replace(/(<([a-z][a-z0-9]*)\b[^>]*\sdata-i18n="[^"]*"[^>]*>)([^<]*)(<\/\2>)/g, (_, open, _t, _i, close) => open + i18nNodes[k++].textContent + close);
+    ok(k === i18nNodes.length, page + ': every data-i18n element is a leaf, so applyLang replaces all of its text');
+    const text = body.replace(/<!--[\s\S]*?-->|<script[\s\S]*?<\/script>|<noscript>[\s\S]*?<\/noscript>|<svg[\s\S]*?<\/svg>/g, ' ')
+      .replace(/<article class="about-body" lang="[^"]*">[\s\S]*?<\/article>/g, ' ') // hand-translated per language (task 1)
+      .replace(/<[^>]*>/g, ' ');
+    const attrs = run.document.nodes.flatMap(n => ['title', 'aria-label', 'placeholder'].filter(a => a in n.attrs).map(a => n.attrs[a]));
+    const found = leaks(text + ' ' + attrs.join(' '), ['marola-dev/', 'marola', 'português (Brasil)', 'English', 'PT-BR'], ['EN']);
+    ok(run.api.lang() === 'x-pseudo' && found.length === 0, page + ': x-pseudo finds no visible text outside t()', found.join(' '));
   }
 
   if (fails === 0) { console.log('site_check: ok'); process.exit(0); }

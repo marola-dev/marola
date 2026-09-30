@@ -123,7 +123,7 @@ button[aria-pressed="true"], .segmented button.on { background: var(--accent); c
  * beach names as bare text nodes. */
 body { text-transform: lowercase; }
 .src, .water, .unfit, .leaflet-control-attribution,
-.list li, .card h2, .leaflet-tooltip .head { text-transform: none; }
+.list li, .card h2, .leaflet-tooltip .head, .dir { text-transform: none; }
 .bar h1 { text-transform: lowercase; }
 
 /* Wraps rather than scrolls, so all six stay reachable at 390px. */
@@ -186,11 +186,13 @@ html:not(:lang(en)) .about-body:lang(en), html:lang(en) .about-body:lang(pt) { d
 .wave svg { display: block; }
 /* fading the whole element left a past wave almost invisible over the sea tiles */
 .wave.past path { fill-opacity: .45; stroke-dasharray: 2 1.5; }
-.leaflet-tooltip.aspects { padding: .45rem .65rem; font-size: 13px; line-height: 1.35; max-width: 21rem; white-space: normal; }
+.leaflet-tooltip.aspects { padding: .45rem .65rem; font-size: 13px; line-height: 1.35; width: max-content; max-width: 21rem; white-space: normal; }
 .aspects .head { font-weight: 600; margin-bottom: .3rem; }
-.aspects .grid { display: grid; grid-template-columns: 1fr 1fr; gap: .15rem .8rem; }
-.aspects .grid span { white-space: nowrap; }
-.aspects .grid .wide { grid-column: 1 / -1; white-space: normal; }
+/* auto tracks take each column's one-line width first and wrap only what does not fit (nowrap here
+ * clipped the right column once the cells were Portuguese); the tooltip sits in a zero-width pane,
+ * hence width: max-content above */
+.aspects .grid { display: grid; grid-template-columns: auto auto; gap: .15rem .8rem; }
+.aspects .grid .wide { grid-column: 1 / -1; }
 .aspects .unfit { color: var(--c0); font-weight: 600; }
 .wdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: .25em; vertical-align: 1px; }
 .aspects .facilities { color: var(--muted); }
@@ -200,7 +202,6 @@ html:not(:lang(en)) .about-body:lang(en), html:lang(en) .about-body:lang(pt) { d
 .card .aspects { margin: .1rem 0 .6rem; font-size: 13px; }
 .card .aspects .head { display: none; }
 .card .aspects .grid { gap: .1rem .6rem; }
-.card .aspects .grid span { white-space: normal; }
 
 @media (prefers-reduced-motion: no-preference) {
   select, button, .list li { transition: background-color .15s, border-color .15s, color .15s; }
