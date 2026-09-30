@@ -546,11 +546,10 @@ refuses inland-water points (LAGOA/CANAL/RIO...), because Lagoa da Conceição's
   with coordinates and the last five samples, parsed tolerantly. `WaterQualityMatcher` assigns
   points to OSM beaches by normalised name (word-prefix aware), then by distance ≤ 2.5km for
   unmatched sea points only. `Swimability.waterVerdict` applies MIP-0001 §6: all-IMPRÓPRIA veto,
-  mixed −20 naming the spots, PRÓPRIA nothing, stale (> 45 days) nothing-but-say-so. An
-  Unknown point (IMA's CONDICAO missing or unrecognised) neither helps nor hurts the score: with
-  no IMPRÓPRIA, the summary counts only the PRÓPRIA points and names the unknowns
-  (`PRÓPRIA (2/3 pts, 1 unknown, …)`), or reads `no verdict (3 pts unknown, …)` when none is
-  PRÓPRIA.
+  mixed −20 naming the spots, PRÓPRIA nothing, stale (> 45 days) nothing-but-say-so. Unknown
+  points (IMA's CONDICAO missing or unrecognised) leave the score alone. With no IMPRÓPRIA, the
+  summary counts only the PRÓPRIA points and names the unknowns (`PRÓPRIA (2/3 pts, 1 unknown, …)`),
+  or reads `no verdict (3 pts unknown, …)` when none is PRÓPRIA.
 
 ```mermaid
 flowchart TD

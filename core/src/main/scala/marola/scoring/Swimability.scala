@@ -132,8 +132,8 @@ object Swimability:
    * MIP-0001 §6, verbatim: every fresh matched point IMPRÓPRIA → veto (score 0); some IMPRÓPRIA →
    * −20 and name the spots to avoid; no IMPRÓPRIA → nothing; no match / provider `none` → nothing
    * (absence of data is not evidence of pollution); every sample older than 45 days → treated as no
-   * data, but say so. Unknown points (IMA's CONDICAO missing) neither help nor hurt the score: the
-   * summary counts only PRÓPRIA points and names the unknowns, or reads "no verdict" when all are.
+   * data, but say so. Unknown points (IMA's CONDICAO missing) leave the score alone; the summary
+   * counts only PRÓPRIA points and names the unknowns, or reads "no verdict" when all are Unknown.
    */
   def waterVerdict(water: Option[WaterQuality], today: LocalDate): WaterVerdict =
     water match
