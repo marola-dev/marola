@@ -1,4 +1,4 @@
-/** marola page chrome: language resolution, t() and the pt/en toggle — MIP-0054 §5.5, §5.8. */
+/** marola page chrome: language resolution, t() and the pt/en toggle (MIP-0054 §5.5, §5.8). */
 (function () {
   'use strict';
 
@@ -18,12 +18,10 @@
 
   /** §5.5: ?lang=, then the stored choice, then navigator.languages, then pt-BR. No globals. */
   function resolveLang(o) {
-    o = o || {};
-    var supported = o.supported || [SOURCE];
     if (o.param === PSEUDO) return PSEUDO;
-    var hit = match(o.param, supported) || match(o.stored, supported);
-    for (var i = 0; !hit && o.languages && i < o.languages.length; i++) hit = match(o.languages[i], supported);
-    return hit || SOURCE;
+    var tags = [o.param, o.stored].concat(o.languages || []);
+    for (var i = 0; i < tags.length; i++) { var hit = match(tags[i], o.supported); if (hit) return hit; }
+    return SOURCE;
   }
 
   // --- the ICU subset: {arg}, {n, plural, ...} with #, {x, select, ...} ------------------------.
@@ -106,13 +104,12 @@
   function has(key) { return lookup(key, current) !== undefined || lookup(key, SOURCE) !== undefined; }
 
   // A key missing from every catalog leaves the source text as it is rather than showing the key.
-  function applyLang(root) {
-    root = root || document;
-    Array.prototype.forEach.call(root.querySelectorAll('[data-i18n]'), function (el) {
+  function applyLang() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function (el) {
       var k = el.getAttribute('data-i18n'); if (has(k)) el.textContent = t(k);
     });
     ATTRS.forEach(function (attr) {
-      Array.prototype.forEach.call(root.querySelectorAll('[data-i18n-' + attr + ']'), function (el) {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-' + attr + ']'), function (el) {
         var k = el.getAttribute('data-i18n-' + attr); if (has(k)) el.setAttribute(attr, t(k));
       });
     });
@@ -130,9 +127,9 @@
   function writeStored(lang) { try { window.localStorage.setItem(STORE_KEY, lang); } catch (e) { /* private mode */ } }
 
   function setLang(lang) {
-    if (lang !== PSEUDO && SUPPORTED.indexOf(lang) < 0) return;
+    if (SUPPORTED.indexOf(lang) < 0) return;
     current = lang;
-    if (lang !== PSEUDO) writeStored(lang);
+    writeStored(lang);
     setParam('lang', lang);
     applyLang();
     listeners.forEach(function (fn) { fn(lang); });
@@ -157,9 +154,7 @@
     lang: function () { return current; },
     setLang: setLang,
     onLang: function (fn) { listeners.push(fn); },
-    applyLang: applyLang,
     resolveLang: resolveLang,
-    setParam: setParam,
-    supported: SUPPORTED.slice()
+    setParam: setParam
   };
 })();

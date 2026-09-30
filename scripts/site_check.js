@@ -15,8 +15,7 @@ const INDEX = fs.readFileSync(path.join(ROOT, 'site/static/index.html'), 'utf8')
 const ABOUT = fs.readFileSync(path.join(ROOT, 'site/static/about.html'), 'utf8');
 const I18N_JS = fs.readFileSync(path.join(ROOT, 'site/static/i18n.js'), 'utf8');
 const UI = fs.readFileSync(path.join(ROOT, 'site/static/ui.js'), 'utf8');
-const CATALOGS = { 'pt-BR': 'pt-BR.json', en: 'en.json' };
-for (const k of Object.keys(CATALOGS)) CATALOGS[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'site/i18n', CATALOGS[k]), 'utf8'));
+const CATALOGS = Object.fromEntries(['pt-BR', 'en'].map(l => [l, JSON.parse(fs.readFileSync(path.join(ROOT, 'site/i18n', l + '.json'), 'utf8'))]));
 
 let fails = 0;
 function ok(cond, label, detail) {
@@ -185,8 +184,7 @@ async function runPage(board) {
   return { els, L, errors };
 }
 
-// --- ui.js against a page's real markup: every start tag becomes an element with its attributes
-// -------------------------------------------------------------------------------------------.
+// --- ui.js against a page's real markup: every start tag becomes an element with its attributes.
 function pageDom(html) {
   const nodes = [];
   const tagRe = /<([a-z][a-z0-9]*)\b([^>]*)>/g;
@@ -447,9 +445,7 @@ function runUi(html, opts) {
       page + ': #lang is two <button type="button">s with aria-pressed', toggle);
     ok(/lang="pt-BR" aria-label="português \(Brasil\)"/.test(buttons[0] || '') && /lang="en" aria-label="English"/.test(buttons[1] || ''),
       page + ': each button carries its own lang and an endonym aria-label', buttons.join(' '));
-    ok(toggle && pageNav.indexOf('<div id="lang"') < pageNav.indexOf('<a class="gh"') &&
-      !/<(a|span) /.test(pageNav.slice(pageNav.indexOf('</div>', pageNav.indexOf('<div id="lang"')) + 6, pageNav.indexOf('<a class="gh"'))),
-      page + ': #lang sits inside .sitenav, immediately before a.gh');
+    ok(/<div id="lang"[\s\S]*?<\/div>\s*<a class="gh"/.test(pageNav), page + ': #lang sits inside .sitenav, immediately before a.gh');
     const order = ['i18n.js', 'ui.js'].map(f => html.indexOf('<script src="' + f + '"'));
     const others = (html.match(/<script src="([^"]+)"/g) || []).filter(t => !/"(i18n|ui)\.js"/.test(t)).map(t => html.indexOf(t));
     ok(order[0] > 0 && order[0] < order[1] && others.every(i => i > order[1]),
@@ -489,7 +485,7 @@ function runUi(html, opts) {
   ok(rl({ stored: 'en', languages: ['pt-BR'] }) === 'en', 'resolveLang: a stored choice beats the browser languages');
   ok(rl({ languages: ['en-US'] }) === 'en', "resolveLang: languages ['en-US'] → en");
   ok(rl({ languages: ['fr-FR'] }) === 'pt-BR', "resolveLang: languages ['fr-FR'] → pt-BR");
-  ok(rl({ languages: ['fr-FR', 'pt-PT'] }) === 'pt-BR' && rl({ languages: ['fr', 'en-GB'] }) === 'en', 'resolveLang: the first shipped primary subtag wins');
+  ok(rl({ languages: ['fr', 'pt-PT', 'en'] }) === 'pt-BR' && rl({ languages: ['fr', 'en-GB'] }) === 'en', 'resolveLang: the first shipped primary subtag wins');
   ok(rl({ param: 'x-pseudo' }) === 'x-pseudo', 'resolveLang: x-pseudo from the param');
   ok(rl({ stored: 'x-pseudo', languages: ['x-pseudo'] }) === 'pt-BR', 'resolveLang: x-pseudo never from the store or the browser');
   ok(rl({ param: 'de' }) === 'pt-BR', 'resolveLang: an unshipped ?lang= falls through');
