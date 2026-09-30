@@ -80,6 +80,7 @@ SELF_TEST_SCRIPTS = (
     "scripts/workflow_runners.py",
     "scripts/analyze_training.py",
     "scripts/site_live_check.py",
+    "scripts/i18n_bundle.py",
 )
 # Measured tree. `dspy/`/`finetune/` are excluded on purpose — see the module docstring.
 COVERAGE_SOURCE = "scripts"
