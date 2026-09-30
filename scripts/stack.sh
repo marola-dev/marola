@@ -191,8 +191,7 @@ GH
   echo
   echo "-- pr force-pushes when cost-fill rewrites an already-pushed commit (#524) --"
   # A stub stands in for cost-fill.sh (STACK_SELFTEST_COST_FILL): it deterministically amends
-  # HEAD, so this proves the push survives a rewrite without needing the real cost-fill.sh's
-  # git >= 2.45 cherry-pick flags (this host's git may be older).
+  # HEAD, so this proves the push decision alone, independent of cost-fill.sh's own rewrite.
   pr_origin="$tmp/pr-origin.git"; pr_work="$tmp/pr-work"
   { git init -q --bare "$pr_origin"
     git init -q -b main "$pr_work"
