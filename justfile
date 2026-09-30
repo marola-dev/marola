@@ -69,6 +69,7 @@ quality-other:
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
+    scripts/corpus-fetch.sh --self-test
     scripts/setup-runners.sh --self-test
     scripts/marola-sea-pull.sh --self-test
     scripts/temps.sh --self-test
@@ -172,6 +173,10 @@ e2e:
 # ---------------------------------------------------------------------
 # Knowledge (local RAG) and fine-tuning — MIP-0001, docs/4-Research-and-plans/FUTURE-WORK.md §9.1
 # ---------------------------------------------------------------------
+
+# Resolve corpus.version's pin into .tmp/knowledge (MIP-0070 §5.4).
+corpus-fetch:
+    scripts/corpus-fetch.sh
 
 # Ask knowledge/*.md a question — local RAG, Ollama embeds and answers. MIP-0001.
 ask question:
