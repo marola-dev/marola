@@ -18,19 +18,31 @@ Output: finetune/data/train.jsonl and eval.jsonl in the chat format most trainer
 
 Run:  python build_dataset.py            (or `just finetune-dataset`)
 Self-test:  python build_dataset.py --self-test   (or `just quality-other`)
+
+`--resources DIR` / `--knowledge DIR` override where 1-3 and 4-5 above are read from — the app ->
+ml contract (MIP-0070 §5.4): once marola-ml is a separate repo, `--resources` points at the
+unpacked resources tarball ci.yml publishes, not `../core`. `--knowledge` defaults to
+$MAROLA_KNOWLEDGE_DIR, else `knowledge` (same default as AppConfig.scala's).
 """
 
 from __future__ import annotations
 
+import argparse
 import json
+import os
 import random
 import re
+import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 RESOURCES = REPO / "core" / "src" / "main" / "resources"
-KNOWLEDGE = REPO / "knowledge"
 OUT = Path(__file__).resolve().parent / "data"
+
+
+def default_knowledge_dir() -> Path:
+    return Path(os.environ.get("MAROLA_KNOWLEDGE_DIR", "knowledge"))
+
 
 SYSTEM = (
     "You are marola, a swim-conditions assistant for open-water swimmers in Brazil. Answer in one "
@@ -330,14 +342,14 @@ def from_tool_calls(knowledge_dir: Path, sea_lore_path: Path) -> list[dict]:
     return rows
 
 
-def _self_test() -> None:
-    rows = from_knowledge(KNOWLEDGE)
+def _self_test(knowledge: Path) -> None:
+    rows = from_knowledge(knowledge)
     assert len(rows) >= KNOWLEDGE_EXAMPLE_FLOOR, (
         f"knowledge-derived example count {len(rows)} below floor {KNOWLEDGE_EXAMPLE_FLOOR} "
         "— MIP-0025 task 2 requires thousands, not dozens"
     )
-    sources = _load_knowledge_sources(KNOWLEDGE)
-    assert sources, "no knowledge sources found under " + str(KNOWLEDGE)
+    sources = _load_knowledge_sources(knowledge)
+    assert sources, "no knowledge sources found under " + str(knowledge)
     for row in rows:
         answer = row["messages"][2]["content"]
         assert "\n\nSource: " in answer, f"synthetic example missing a Source line: {answer!r}"
@@ -349,7 +361,10 @@ def _self_test() -> None:
             f"{fact[:80]!r}"
         )
 
-    tool_rows = from_tool_calls(KNOWLEDGE, RESOURCES / "sea_lore.json")
+    # A resources dir with no core/ sibling at all: proves --resources isn't secretly hardcoded
+    # to REPO/core/src/main/resources (MIP-0070 §5.4, task 3's own acceptance check).
+    with tempfile.TemporaryDirectory() as tmp:
+        tool_rows = from_tool_calls(knowledge, Path(tmp) / "sea_lore.json")
     assert tool_rows, "no tool-call examples generated"
     seen_tools: set[str] = set()
     for row in tool_rows:
@@ -378,15 +393,15 @@ def _self_test() -> None:
     )
 
 
-def main() -> None:
+def main(resources: Path, knowledge: Path) -> None:
     rows: list[dict] = []
-    rows += from_compiled_prompt(RESOURCES / "recommendation_prompt.json", "summary")
+    rows += from_compiled_prompt(resources / "recommendation_prompt.json", "summary")
     rows += from_compiled_prompt(
-        RESOURCES / "review_prompt.json", "review_json", extra_inputs=("summary",)
+        resources / "review_prompt.json", "review_json", extra_inputs=("summary",)
     )
-    rows += from_sea_lore(RESOURCES / "sea_lore.json")
-    rows += from_knowledge(KNOWLEDGE)
-    rows += from_tool_calls(KNOWLEDGE, RESOURCES / "sea_lore.json")
+    rows += from_sea_lore(resources / "sea_lore.json")
+    rows += from_knowledge(knowledge)
+    rows += from_tool_calls(knowledge, resources / "sea_lore.json")
 
     random.Random(42).shuffle(rows)
     n_eval = max(2, len(rows) // 10)
@@ -400,10 +415,30 @@ def main() -> None:
     print(f"wrote {len(train_rows)} train + {len(eval_rows)} eval examples to {OUT}")
 
 
-if __name__ == "__main__":
-    import sys
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--resources",
+        type=Path,
+        default=RESOURCES,
+        help="dir with recommendation_prompt.json / review_prompt.json / sea_lore.json "
+        "(default: core/src/main/resources)",
+    )
+    ap.add_argument(
+        "--knowledge",
+        type=Path,
+        default=default_knowledge_dir(),
+        help="knowledge/*.md corpus dir (default: $MAROLA_KNOWLEDGE_DIR, else ./knowledge)",
+    )
+    ap.add_argument("--self-test", action="store_true")
+    return ap.parse_args(argv)
 
-    if "--self-test" in sys.argv:
-        _self_test()
+
+if __name__ == "__main__":
+    args = parse_args()
+    if args.self_test:
+        _self_test(args.knowledge)
     else:
-        main()
+        main(args.resources, args.knowledge)
