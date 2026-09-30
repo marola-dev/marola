@@ -85,6 +85,7 @@ quality-other:
     scripts/docs-mip-stack.sh --self-test
     scripts/stack.sh --self-test
     scripts/uprd.sh --self-test
+    scripts/cost-fill.sh --self-test
     python3 scripts/lib/mip_index_merge.py --self-test
     python3 scripts/ocr-post.py --self-test
     python3 scripts/mip_graph.py --self-test
@@ -410,6 +411,7 @@ cost-fill *args:
     scripts/cost-fill.sh {{ args }}
 
 # The whole agent PR workflow in one command: trailers, push, PR body. AGENTS.md.
+# TASK_PARTIAL=1 just pr — skip a mip task branch's Closes #N line (task-partial, #524).
 pr *args:
     scripts/pr.sh {{ args }}
 
