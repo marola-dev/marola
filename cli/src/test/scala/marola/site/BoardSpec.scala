@@ -10,6 +10,7 @@ import marola.http.Http
 import marola.json.JsonValue
 import marola.lore.SeaLore
 import marola.model.{Beach, BestHour, Coordinates}
+import marola.scoring.{Note, NoteCode}
 import marola.trails.Trail
 import marola.water.ImaScWaterQualityClient
 import marola.{Fixtures, Recommender, Report}
@@ -78,7 +79,7 @@ class BoardSpec extends munit.FunSuite:
 
   test("board: header fields, one entry per beach, ranked by best score") {
     val b = board(tomorrow)
-    assertEquals(b("schema").num, Some(1.0))
+    assertEquals(b("schema").num, Some(2.0))
     assertEquals(b("area").str, Some("floripa"))
     assertEquals(b("day").str, Some("2026-09-06"))
     assertEquals(b("today").str, Some("2026-09-05"))
@@ -132,7 +133,8 @@ class BoardSpec extends munit.FunSuite:
     )
     assertEquals(campeche("sea")("temp_c").num, best.hour.seaTempC)
     assertEquals(campeche("sea")("wave_m").num, best.hour.waveHeightM)
-    assertEquals(campeche("best")("notes").arr.flatMap(_.str).toList, best.notes)
+    assertEquals(campeche("best")("notes").arr.flatMap(_.str).toList, best.notes.map(_.english))
+    assertEquals(campeche("best")("note_codes").arr.toList, best.notes.map(_.json))
     assertEquals(campeche("jellyfish").str, Some(best.jellyfishRisk.toString))
     assertEquals(campeche("whales")("now").str, Some(best.whaleSightingLikelihood.toString))
     // Rio Tavares has no IMA point: the water object still exists and says so.
@@ -180,7 +182,7 @@ class BoardSpec extends munit.FunSuite:
   }
 
   test(
-    "board: schema accepts a board with wind_level and one without it (optional, schema stays 1)"
+    "board: schema accepts a board with wind_level and one without it (optional)"
   ) {
     val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
     val b = board(tomorrow)
@@ -199,6 +201,45 @@ class BoardSpec extends munit.FunSuite:
         "\"wind_level\":\\s*\"(calm|breezy|strong)\"",
         "\"wind_level\":\"gale\""
       )
+    assert(SchemaCheck.validate(schema, JsonValue.parse(bad)).exists(_.contains("not in enum")))
+  }
+
+  /** Every best/hour stop of `b`, after checking its `note_codes` word exactly to its `notes`. */
+  private def assertCodesAreNotes(b: JsonValue): Vector[JsonValue] =
+    val stops = beaches(b).flatMap(beach => beach("best") +: beach("hours").arr)
+    stops.foreach { s =>
+      val notes = s("note_codes").arr.toList.map { c =>
+        val code = c("code").str.flatMap(NoteCode.fromLabel).getOrElse(fail(c.render))
+        c("args") match
+          case JsonValue.JObject(args) => Note(code, args)
+          case other                   => fail(other.render)
+      }
+      assertEquals(notes.map(_.english), s("notes").arr.flatMap(_.str).toList, s.render)
+    }
+    stops
+
+  test("board: every hour and best carry note_codes whose English is exactly notes (MIP-0054)") {
+    val b = board(tomorrow)
+    val stops = assertCodesAreNotes(b)
+    // the fixture must exercise real codes, the water mix among them, or this proves nothing.
+    val seen = stops.flatMap(_("note_codes").arr.flatMap(_("code").str)).toSet
+    assert(seen.contains("water_mixed") && seen.size >= 3, seen.toString)
+  }
+
+  test("board: a schema-1 board (no note_codes) still validates, and a bad code is rejected") {
+    val schema = JsonValue.parse(Files.readString(BoardSpec.schemaPath))
+    val v1 = JsonValue.parse(Files.readString(BoardSpec.sitePath("fixtures/board-schema1.json")))
+    assertEquals(v1("schema").num, Some(1.0))
+    assertEquals(SchemaCheck.validate(schema, v1), Nil)
+    val v2 = JsonValue.parse(Files.readString(BoardSpec.sitePath("fixtures/board.json")))
+    assertEquals(v2("schema").num, Some(2.0))
+    assertEquals(SchemaCheck.validate(schema, v2), Nil)
+    assert(assertCodesAreNotes(v2).exists(_("note_codes").arr.nonEmpty))
+    assertEquals(
+      schema("$defs")("note_codes")("items")("properties")("code")("enum").arr.flatMap(_.str).toSet,
+      NoteCode.values.map(_.label).toSet
+    )
+    val bad = board(tomorrow).render.replaceFirst("\"code\":\"[a-z_]+\"", "\"code\":\"gale\"")
     assert(SchemaCheck.validate(schema, JsonValue.parse(bad)).exists(_.contains("not in enum")))
   }
 
@@ -325,14 +366,16 @@ class BoardSpec extends munit.FunSuite:
 end BoardSpec
 
 object BoardSpec:
-  /** `site/board.schema.json` at the repo root, wherever sbt was launched from. */
-  def schemaPath: Path =
+  /** `site/<rel>` at the repo root, wherever sbt was launched from. */
+  def sitePath(rel: String): Path =
     Iterator
       .iterate(Paths.get("").toAbsolutePath)(_.getParent)
       .takeWhile(_ != null)
-      .map(_.resolve("site/board.schema.json"))
+      .map(_.resolve(s"site/$rel"))
       .find(Files.exists(_))
-      .getOrElse(throw new IllegalStateException("site/board.schema.json not found above the cwd"))
+      .getOrElse(throw new IllegalStateException(s"site/$rel not found above the cwd"))
+
+  def schemaPath: Path = sitePath("board.schema.json")
 
 /**
  * The subset of JSON Schema the board contract uses: `type` (single or list), `required`,
