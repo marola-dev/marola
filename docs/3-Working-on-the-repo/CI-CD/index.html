@@ -3231,7 +3231,7 @@
 them run on GitHub's standard <code>ubuntu-latest</code> runner except <code>marola-sea-publish</code>, which needs a GPU.
 The design behind this layout is <a href="../../MIPs/MIP-0065-ci-cd-on-github-hosted-runners/">MIP-0065</a>.</p>
 <h2 id="how-a-change-reaches-maroladev">How a change reaches marola.dev<a class="headerlink" href="#how-a-change-reaches-maroladev" title="Permanent link">&para;</a></h2>
-<p><img alt="Kroki" src="kroki-generated-e569dd57-bdd1-3517-92cf-95af7a9ca512.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-880125a4-bf6d-3bf6-b7fb-f6208e5c6bdf.svg" /></p>
 <p><code>site-data</code> is an orphan branch that holds only generated output. Several workflows write to it,
 all through <code>scripts/site-data-push.sh</code>, which retries when two pushes race. <code>site.yml</code> copies its
 <code>smoke/</code>, <code>coverage/</code>, <code>stats/</code> and <code>docs/</code> directories into the page on every build. The coverage,
@@ -3368,7 +3368,7 @@ warns against in "Self-hosted runners should almost never be used for public rep
 old reason for self-hosting was running out of minutes on a private repo (#340), and it no longer
 applies: standard hosted runners are free for public repos. Larger and GPU runners are always
 billed, so GPU training stays on the desktop, behind a manual dispatch.</p>
-<p><img alt="Kroki" src="kroki-generated-6b5599d3-8162-36e5-8d0d-872321feb379.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-254e18be-04ec-35d7-920b-fa2d4aeba8f6.svg" /></p>
 <h2 id="the-maintainers-manual-settings">The maintainer's manual settings<a class="headerlink" href="#the-maintainers-manual-settings" title="Permanent link">&para;</a></h2>
 <p>Repository settings that no workflow or agent can change. MIP-0065 depends on them:</p>
 <ul>

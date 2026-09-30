@@ -3392,7 +3392,7 @@
 
 
 <h1 id="development-flow">Development flow<a class="headerlink" href="#development-flow" title="Permanent link">&para;</a></h1>
-<p><img alt="Kroki" src="kroki-generated-f4ff8172-978b-33a6-b2f8-fefbe00bf9ce.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-c9ecd28a-088d-3739-a908-ff562dd6ec2d.svg" /></p>
 <p>This page is the one place the whole loop is written down; the pieces live in the <code>mip</code> and
 <code>mip-tasks</code> skills (<code>.claude/skills/</code>), <code>AGENTS.md</code> (the hard rules), <code>docs/3-Working-on-the-repo/AGENT-SKILLS.md</code>
 (which superpowers skill does what) and the scripts under <code>scripts/</code>.</p>
@@ -3459,10 +3459,10 @@ re-runnable — after it, the issues own status and the file owns the plan.</p>
 <span class="c1"># red → green → refactor  (superpowers test-driven-development; systematic-debugging when green won't come)</span>
 just<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>just<span class="w"> </span><span class="nb">test</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>just<span class="w"> </span>quality<span class="w">           </span><span class="c1"># + a live check whenever a data path changed (superpowers verification-before-completion: evidence, then the claim)</span>
 git<span class="w"> </span>commit<span class="w">                                         </span><span class="c1"># message ends with Tested: and Cost: trailers (AGENTS.md) — the PR's Tested/Cost sections come from them</span>
-just<span class="w"> </span>pr<span class="w">                                            </span><span class="c1"># fills any missing trailer (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch</span>
+just<span class="w"> </span>pr<span class="w">                                            </span><span class="c1"># fills any missing trailer and a task's Closes line (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch</span>
 </code></pre></div>
 <p>The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:</p>
-<p><img alt="Kroki" src="kroki-generated-aa11646b-8237-3dda-9385-4c1a2ecce898.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-b90829bb-1904-36f6-b205-a05ee75c7e9c.svg" /></p>
 <p><code>just pr --dry-run</code> prints every step (the trailers <code>cost-fill</code> would add, the body <code>uprd</code> would
 write) without pushing or touching <code>gh</code>. It refuses the same way the real run would (on <code>main</code>, or a
 dirty tree) so the preview matches what actually happens.</p>
@@ -3538,11 +3538,17 @@ is green; MIP status right; <code>docs/4-Research-and-plans/FABLE_REVIEW.md</cod
   when the merged branch is deleted; the commits still need a rebase:
   <code>scripts/stack.sh restack</code> on the next branch, or <code>just stack-sync MIP-NNNN</code> for the whole
   stack (it adopts the stack from GitHub first; <code>gh stack link</code> keeps no local state).</li>
-<li>A task PR's body carries <code>Closes #N</code> for the issue its <code>MIP-NNNN.tasks.md</code> row links (<code>uprd.sh</code>
-  writes it, #512), so the merge into <code>main</code> closes the issue and the board moves it to Done.
-  Label a PR that delivers only part of its task <code>task-partial</code>: the line becomes <code>Part of #N</code> and
-  the issue stays open. A PR merged into another task branch closes nothing; GitHub honours the
-  keyword only on the default branch.</li>
+<li>A task branch's own commit carries <code>Closes #N</code> for the issue its <code>MIP-NNNN.tasks.md</code> row links
+  (<code>scripts/cost-fill.sh</code>, run by <code>scripts/stack.sh pr</code> — itself run by <code>just pr</code>, or directly per
+  step 2 of <code>.claude/skills/mip-tasks/SKILL.md</code> — writes it above the trailers), so the
+  squash-merge commit on <code>main</code> closes the issue and the board moves it to Done. The PR body
+  carries the same line too (<code>uprd.sh</code> copies it there so the link shows on GitHub), but in this
+  repo the body-only line did not close anything: #514–#519 carried it and their issues
+  #502–#507 stayed open past merge (cause unknown, #524), while #511/#512 closed on a commit-body
+  one. <code>TASK_PARTIAL=1 just pr</code> skips the line for a task that only delivers part of its row,
+  before the PR (and its <code>task-partial</code> label) exist; the issue stays open. A PR merged into
+  another task branch closes nothing regardless; GitHub honours the keyword only on the default
+  branch.</li>
 <li><code>scripts/stack.sh status</code> / <code>just stack-view</code> until every PR is merged.</li>
 <li>Last merge: superpowers <code>finishing-a-development-branch</code>: full suite green, delete the task
   branches, flip the MIP to <strong>Implemented</strong> with the PR numbers and the summed Cost in its status

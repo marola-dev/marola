@@ -3501,9 +3501,10 @@ column is the change that fixed each one; open bugs live in the issue tracker.</
 </tr>
 </tbody>
 </table>
-<p>One later finding is still open, filed while building MIP-0063's own tooling: <code>cost-fill.sh</code> passes
-<code>cherry-pick --empty=drop</code>, which needs git ≥ 2.45, so <code>just pr</code> exits 129 on an older git —
-<a href="https://github.com/marola-dev/marola/issues/451">#451</a>.</p>
+<p>One later finding is still open, filed while building MIP-0063's own tooling: <code>cherry-pick
+--empty=drop</code> needs git ≥ 2.45 and exits 129 on an older git —
+<a href="https://github.com/marola-dev/marola/issues/451">#451</a>. <code>cost-fill.sh</code> (so <code>just pr</code>) no longer
+passes it since #524; <code>scripts/mip-stack.sh</code> still does.</p>
 <p>Two lessons that outlive the fixes: (a) a test that can't distinguish "works" from "died silently"
 isn't a test: <code>&lt; /dev/null → 0 bytes</code> passed while the server was dead; the reviewer's piped
 handshake is now the reference check for anything stdio; (b) safety gates get adversarial
@@ -3542,7 +3543,7 @@ short of that is tooling, not a publish.</p>
 <li><strong>MIP-0016</strong> (M, "do next"): water-quality marks placed in the sea; user value, no new source.</li>
 <li><strong>MIP-0018</strong> (M, cheap win): the post-planner + exporter; MIP-0020 (Instagram, in draft) becomes
    one more export target with a real API, unlike LinkedIn/Substack.</li>
-<li><strong>#451</strong> (<code>just cost-fill</code> on git &lt; 2.45), the one open item from §2a.</li>
+<li><strong>#451</strong> (<code>scripts/mip-stack.sh</code>'s <code>--empty=drop</code> on git &lt; 2.45), the one open item from §2a.</li>
 </ol>
 <h2 id="4-next-phase-1-the-gate-every-cloud-step-waits-on">4. Next (Phase 1) — the gate every cloud step waits on<a class="headerlink" href="#4-next-phase-1-the-gate-every-cloud-step-waits-on" title="Permanent link">&para;</a></h2>
 <p><strong>MIP-0002, the Telegram bot</strong> (L, "do next"). Until it ships, nothing may be provisioned on a cloud
