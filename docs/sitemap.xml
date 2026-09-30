@@ -2,410 +2,418 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://marola.dev/docs/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/1-Using-marola/RUN-LOCALLY/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/1-Using-marola/TELEGRAM-SETUP/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/2-Building-marola/API/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/2-Building-marola/ARCHITECTURE/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/2-Building-marola/EFFECTS-MAP/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/2-Building-marola/SCALA3-JDK-REVIEW/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/3-Working-on-the-repo/AGENT-SKILLS/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/3-Working-on-the-repo/CI-CD/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/3-Working-on-the-repo/DEV-FLOW/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
+    </url>
+    <url>
+         <loc>https://marola.dev/docs/3-Working-on-the-repo/DIAGRAMS/</loc>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/3-Working-on-the-repo/GEMINI-CODE-ASSIST/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/3-Working-on-the-repo/ISSUE-FLOW/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/3-Working-on-the-repo/SELF-DOCUMENTING/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/4-Research-and-plans/AGENT-STACK-SURVEY/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/4-Research-and-plans/FABLE_REVIEW/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/4-Research-and-plans/FUTURE-WORK/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/4-Research-and-plans/ROADMAP/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/4-Research-and-plans/SKILLS/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0001-water-quality-and-sea-lore/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0002-telegram-bot-phase-1/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0003-fast-replies-caching-and-fan-out/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0004-daily-digest-subscriptions-and-reach/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0005-map-and-static-site/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0005.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0006-live-look-user-cameras/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0007-time-series-foundation-models/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0008-docker-images-and-smoke-test/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0008.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0009-map-wave-markers-and-hover-aspects/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0009.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0010-mlflow-experiment-tracking/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0010.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0011-claude-code-best-practices/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0011.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0012-llm4s-adoption-and-dspy-deprecation/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0013-opencode-tryout/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0013.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0014-marola-book/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0015-interacao-swim-matching/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0016-water-quality-map-markers/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0017-agentic-tooling-survey/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0018-self-documentation-and-media-exporter/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0019-arxiv-ocean-forecasting-survey/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0020-instagram-bot-account/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0021-beach-accessibility/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0022-safety-answer-footer/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0023-waitlist-promotion-and-maintenance/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0025-marola-sea-domain-model/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0025.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0029-ocean-layer-positioning/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0030-coastal-trails/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0031-water-quality-inea-inema/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0031.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0032-model-strategy-benchmark-matrix/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0033-release-0/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0034-rss-feeds-and-content-syndication/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0034.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0035-map-plugin-api/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0036-marola-advertising-action/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0037-map-pwa/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0038-forecast-model-spread/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0039-deterministic-fact-guard/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0040-validating-the-reviewer-judge/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0041-soft-book-ingestion/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0042-map-v2-live-not-static/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0043-awesome-agentic-engineering-list/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0044-site-sections/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0044.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0045-nlp-and-parsing-over-llm/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0046-remove-ai-slop-ui/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0046.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0047-desmos-equation-art/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0048-scaling-marola-sea/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0049-scala-for-the-web-layer/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0050-brazilian-llms/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0051-wave-model-ensemble/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0052-wave-model-compute/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0053-learned-local-correction/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0054-portuguese-first-experience/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0054.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0055-vector-store-and-ocean-knowledge-chunking/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0056-oods-open-ocean-data-store/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0056.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0057-gcp-as-opt-in-cloud-backend/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0058-daniela-vicentini-artwork/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0059-jev-typed-decisions/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0060-open-code-review-on-ready/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0060.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0062-ressaca-hazard/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0063-github-issue-tracking-standard/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0063.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0064-mkdocs-documentation-site/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0064.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0065-ci-cd-on-github-hosted-runners/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0065.tasks/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0066-opt-in-dev-containers/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0067-inea-multi-city-bathing-water/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0068-diagrams-in-docs/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
+    </url>
+    <url>
+         <loc>https://marola.dev/docs/MIPs/MIP-0068.tasks/</loc>
+         <lastmod>2026-09-30</lastmod>
     </url>
     <url>
          <loc>https://marola.dev/docs/MIPs/MIP-0009/screenshots/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-09-30</lastmod>
     </url>
 </urlset>
