@@ -13,16 +13,16 @@ the rule below is also in `.claude/rules/docs.md`, which agents load for `docs/*
 | layered or zoned architecture, the module map | `d2` or `c4plantuml` | nested containers without Mermaid's subgraph crowding |
 | a schema from DDL | `dbml` | reads like the SQL it mirrors |
 | a chart from a results table | `vegalite` | a real axis and scale, not a table of numbers |
-| a sketch or wireframe | `excalidraw` | not enabled yet: MIP-0068 task 7 adds its companion only if a sketch earns it |
+| a sketch or wireframe | `excalidraw` with `@from_file:assets/diagrams/<name>.excalidraw` | hand-drawn is the honest register for a mock, and the scene opens in the Excalidraw app as a whiteboard and comes back as the same file |
 
 - **Draw only what the prose beside it already says, and keep the prose.** The diagram is the
   summary; the text is the source of truth. A diagram that disagrees with its page is a bug in the
   diagram.
 - **Under about 15 nodes.** Split a diagram rather than grow it.
-- **`dbml` and `vegalite` fences take `{bg-dark=white}`.** Colours are injected into every other
-  dialect in the table above for the slate theme; these two cannot be styled that way, so they are
-  shown on a light card instead. Kroki's other dialects (erd, svgbob, pikchr, …) are uninjected
-  too: stay inside the table.
+- **`dbml`, `vegalite` and `excalidraw` fences take `{bg-dark=white}`.** Colours are injected into
+  every other dialect in the table above for the slate theme; these three cannot be styled that
+  way, so they are shown on a light card instead. Kroki's other dialects (erd, svgbob, pikchr, …)
+  are uninjected too: stay inside the table.
 - **`c4plantuml` needs one line after its `!include`**:
   `UpdateRelStyle($textColor="#ffffff", $lineColor="#1ac5da")`. C4 draws relationships in its own
   grey, which injection does not reach.
@@ -32,6 +32,10 @@ the rule below is also in `.claude/rules/docs.md`, which agents load for `docs/*
   `gantt` needs a short `axisFormat %d %b`, or its dates overlap.
 - **A broken diagram fails the build**, naming the page (`fail_fast`). `bpmn` and `diagramsnet`
   are off, so those fences stay code blocks.
+- **`excalidraw` is not a default register.** Reach for it only where a hand-drawn sketch is
+  genuinely clearer than the ASCII or prose it replaces (MIP-0068 §5.3) — most pictures are one of
+  the dialects above. Its companion (`kroki-excalidraw`, `mkdocs/docker-compose.yml`) adds a 612 MB
+  pull to the docs build, so it earns its place per scene, not once for the dialect.
 
 The rest of this page is one working example per dialect. Each one's source is under it.
 
@@ -48,6 +52,7 @@ flowchart TD
   z -- "people and systems" --> c4[c4plantuml]
   q -- "tables and keys" --> db[dbml]
   q -- "numbers on an axis" --> vl[vegalite]
+  q -- "a sketch or wireframe" --> ex[excalidraw]
 ```
 
 ??? note "Source"
@@ -62,6 +67,7 @@ flowchart TD
       z -- "people and systems" --> c4[c4plantuml]
       q -- "tables and keys" --> db[dbml]
       q -- "numbers on an axis" --> vl[vegalite]
+      q -- "a sketch or wireframe" --> ex[excalidraw]
     ```
     ````
 
@@ -252,3 +258,25 @@ Coverage per arm in run 2 of the
     }
     ```
     ````
+
+## excalidraw
+
+The coastline-offset geometry from
+[MIP-0016 §3](../MIPs/MIP-0016-water-quality-map-markers.md#3-user-visible-change): sampling
+points drawn a fixed distance out from the coastline, into the water.
+
+```excalidraw {bg-dark=white}
+@from_file:assets/diagrams/mip-0016-coastline-offset.excalidraw
+```
+
+??? note "Source"
+
+    ````markdown
+    ```excalidraw {bg-dark=white}
+    @from_file:assets/diagrams/mip-0016-coastline-offset.excalidraw
+    ```
+    ````
+
+    The scene itself is `docs/assets/diagrams/mip-0016-coastline-offset.excalidraw`: valid
+    Excalidraw JSON, kept out of the Markdown and editable by opening it in the
+    [Excalidraw app](https://excalidraw.com) (File → Open).

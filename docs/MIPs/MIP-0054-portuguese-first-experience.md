@@ -52,15 +52,8 @@ What a visitor meets today, from the real files:
 
 **Site, default (no stored choice):** `<html lang="pt-BR">`, and
 
-```
-marola   o mar perto de você: condições, balneabilidade, vida marinha, marés, perigos.
-[Florianópolis ▾] [hoje] [amanhã]  [perto de mim] [🌊 som] [lista]          [pt] [en]
-melhor hora por praia ──────●────
-pontuação ● ≥70 ● 40–69 ● 1–39 ● imprópria ● sem dados       〰 passe o mouse numa onda
-tooltip:  Praia da Joaquina — 55/100 às 10:00
-          🌬️ brisa, 27 km/h S · 🌡️ água 19,0 °C · 〰️ ondas 1,3 m a cada 6 s
-          🪼 água-viva baixa · 🐋 baleias baixa (melhor 07:00)
-          ● 1/1 PRÓPRIA (25 ago) · 🅿️ estacionamento 3 · 🚻 banheiros 1
+```excalidraw {bg-dark=white}
+@from_file:assets/diagrams/mip-0054-toolbar-mock.excalidraw
 ```
 
 `PRÓPRIA`/`IMPRÓPRIA`, beach and provider names keep their case (`style.css:130-131`); what marola

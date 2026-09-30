@@ -14,8 +14,11 @@ services:
     image: yuzutech/kroki:0.32.1
     environment:
       - KROKI_MERMAID_HOST=mermaid
+      - KROKI_EXCALIDRAW_HOST=excalidraw
     depends_on:
       mermaid:
+        condition: service_healthy
+      excalidraw:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
@@ -30,6 +33,15 @@ services:
     image: yuzutech/kroki-mermaid:0.32.1
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "8002"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 30s
+
+  excalidraw:
+    image: yuzutech/kroki-excalidraw:0.32.1
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8004"]
       interval: 2s
       timeout: 2s
       retries: 30
