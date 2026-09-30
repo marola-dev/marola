@@ -64,15 +64,23 @@ fan-out inside one request (`SCALA3-JDK-REVIEW.md` §3).
 
 Sketch (a natural MIP-0005):
 
-```
-bot/
-  ChatActor(chatId)        last location, bounded message window, language; TTL 24h
-  RoleActor(summarizer)    pure step fn over a DSPy-compiled prompt
-  RoleActor(reviewer)      pure step fn; can rewrite
-  RoleActor(escalation)    trend/anomaly over the forecast series; gated by a human
-  TaskBoard                event-sourced task list; sequences handoffs; enforces budgets
-  DigestScheduler          timers → boards (MIP-0003) → ChatActor.send
-  MCP server               unchanged — Claude Desktop and the bot share the same tools
+```mermaid
+flowchart LR
+  subgraph bot["bot/"]
+    Chat["ChatActor(chatId)<br/>last location, bounded window, language; TTL 24h"]
+    Sum["RoleActor(summarizer)<br/>pure step fn over a DSPy-compiled prompt"]
+    Rev["RoleActor(reviewer)<br/>pure step fn; can rewrite"]
+    Esc["RoleActor(escalation)<br/>trend/anomaly over forecast; gated by a human"]
+    Board["TaskBoard<br/>event-sourced task list; enforces budgets"]
+    Digest["DigestScheduler"]
+    Mcp["MCP server (unchanged)<br/>shared with Claude Desktop"]
+  end
+  Boards["boards (MIP-0003)"]
+  Board -- "handoff" --- Sum
+  Board -- "handoff" --- Rev
+  Board -- "handoff" --- Esc
+  Digest -->|timers| Boards
+  Boards -->|ChatActor.send| Chat
 ```
 
 Pekko Typed's `Behavior` API keeps actors pure and testable with `BehaviorTestKit`, which fits

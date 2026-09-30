@@ -352,6 +352,17 @@ async function runPage(board) {
   ok(/el\.footer\.innerHTML\s*=/.test(APP),
     'renderFooter still replaces #footer wholesale — the reason for the assertion above');
 
+  // --- the repo link on every page (#498) ------------------------------------------------------
+  const REPO_URL = 'https://github.com/marola-dev/marola';
+  for (const page of ['index.html', 'about.html']) {
+    const html = fs.readFileSync(path.join(ROOT, 'site/static', page), 'utf8');
+    const pageNav = (/<nav class="sitenav"[\s\S]*?<\/nav>/.exec(html) || [''])[0];
+    ok(pageNav.includes('<a class="gh" href="' + REPO_URL + '"'), page + ': the section nav links the GitHub repo');
+    ok(/<a class="gh"[^>]*aria-label="[^"]+"/.test(pageNav), page + ': the repo link keeps a name when the phone layout hides its text');
+    ok(!html.includes('h0ffmann/marola'), page + ': no pre-rename repo URL');
+  }
+  ok(APP.includes("var REPO = '" + REPO_URL + "'"), "app.js's footer link names the current repo");
+
   // --- lowercase house style, and what it must not touch ---------------------------------------
   const CSS = fs.readFileSync(path.join(ROOT, 'site/static/style.css'), 'utf8');
   ok(/body\s*\{\s*text-transform:\s*lowercase/.test(CSS), 'the site is lowercase as a house style');

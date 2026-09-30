@@ -129,6 +129,26 @@ After the board loads and the Leaflet map exists (`state.map` today, promoted to
    the same event MIP-0030's trail layer and MIP-0009's markers already redraw on internally; this
    MIP just exposes that one hook, doesn't invent a new update mechanism.
 
+```mermaid
+sequenceDiagram
+  participant App as app.js
+  participant Pre as plugin (?plugin=, registered before board)
+  participant Manifest as plugins.json
+  participant Late as plugin (fetched after board)
+
+  Note over App: board loads, ctx = {map, L, board, onBoardUpdate}
+  App->>Pre: init(ctx)
+  App->>Manifest: fetch plugins.json
+  Manifest-->>App: entries
+  App->>Late: inject script src
+  Late->>App: registerPlugin(plugin)
+  App-->>Late: init(ctx)
+  loop every area/day change
+    App->>Pre: onBoardUpdate(ctx)
+    App->>Late: onBoardUpdate(ctx)
+  end
+```
+
 **`site/static/plugins.json`** (new, committed, empty array by default):
 
 ```json

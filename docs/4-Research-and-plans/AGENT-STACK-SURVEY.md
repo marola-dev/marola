@@ -114,19 +114,23 @@ reason to exist.
 
 ## 6. How they compose
 
-```text
-            ┌───────────── ADK (optional, GCP) ─────────────┐
-            │ router LlmAgent → project agent / ocean agent │
-            └───────────────┬─────────────────┬─────────────┘
-                     A2A    │                 │  MCP tools
-                            ▼                 ▼
-┌──────────── marola JVM (cli) ────────────────────────────────────────┐
-│ llm4s agent (opt-in module)  ──MCP client──►  SwimConditionsMcpServer│
-│        │                                        │                    │
-│        └────── LlmClient / KnowledgeStore (core traits) ◄──┘         │
-│                         │                                            │
-│                  local/: Ollama, file index                          │
-└──────────────────────────────────────────────────────────────────────┘
+```d2
+direction: right
+adk: "ADK (optional, GCP)" {
+  router: "router LlmAgent -> project agent / ocean agent"
+}
+jvm: "marola JVM (cli)" {
+  llm4s: "llm4s agent (opt-in module)"
+  mcp: "SwimConditionsMcpServer"
+  traits: "LlmClient / KnowledgeStore (core traits)"
+  local: "local/: Ollama, file index"
+  llm4s -> mcp: "MCP client"
+  llm4s -> traits
+  mcp -> traits
+  traits -> local
+}
+adk.router -> jvm.llm4s: "A2A"
+adk.router -> jvm.mcp: "MCP tools"
 ```
 
 - **Inside the JVM,** marola's traits are the contract. llm4s plugs in behind `LlmClient` (and, for

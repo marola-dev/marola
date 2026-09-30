@@ -148,6 +148,26 @@ completion). `site.yml` gains one step: check out `site-data` and copy `smoke/` 
 marker at the run's location; the history file feeds a small "last 10 runs" list. The next
 scheduled site build (≤ 3 h) also picks it up, so the panel refreshes even if the trigger fails.
 
+```mermaid
+sequenceDiagram
+  participant Smoke as smoke workflow
+  participant SiteData as site-data (orphan branch)
+  participant SiteYml as site.yml
+  participant Pages as site/dist
+  participant Browser as app.js
+
+  Smoke->>SiteData: commit smoke JSON
+  alt trigger succeeds
+    Smoke->>SiteYml: workflow_dispatch or workflow_run
+  else trigger fails
+    Note over SiteYml: next scheduled build (<=3h) picks it up anyway
+  end
+  SiteYml->>SiteData: checkout site-data
+  SiteYml->>Pages: copy smoke/ in
+  Browser->>Pages: fetch smoke/latest.json
+  Pages-->>Browser: panel + marker + history
+```
+
 ### 5.6 CLI additions
 
 `--location-url <google-maps-url>` as a third way to give the origin (after `--lat/--lon`,

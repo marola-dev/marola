@@ -50,20 +50,14 @@ it did not consider is the option this MIP proposes: dynamic **without** a serve
 
 **Today (v1, unchanged, still at `/v1/` after this MIP):**
 
-```
-marola.dev  →  Florianópolis ▾   today | tomorrow          computed 2026-09-07 09:15 -03
-               [map: 80 wave markers, each at its best hour]
-               Praia do Campeche · 35/100 at 08:00 · 〰️ 1.4 m · 🌬️ breezy 28 km/h
+```excalidraw {bg-dark=white}
+@from_file:assets/diagrams/mip-0042-v1-mock.excalidraw
 ```
 
 **v2 (`marola.dev/v2/`):**
 
-```
-marola.dev/v2  →  Florianópolis ▾   now (13:42) | +1h | +2h | tomorrow      live · fetched just now
-                  [same 80 beaches, scored from the forecast run fetched 4 s ago]
-                  Praia do Campeche · 41/100 now · 〰️ 1.1 m · 🌬️ breezy 24 km/h
-                  💧 4/5 PRÓPRIA — avoid Ponto 73 (25 Aug)   ← still from the 3-hourly build
-                  ⓘ conditions live from Open-Meteo · beaches and water quality precomputed 09:15
+```excalidraw {bg-dark=white}
+@from_file:assets/diagrams/mip-0042-v2-mock.excalidraw
 ```
 
 The footer line is not decoration: it is the honesty requirement (§6). A v2 page mixes two
@@ -203,6 +197,30 @@ On load, `site/v2/app.js`:
    implementation constraint in this MIP;
 3. scores every beach/hour by calling the cross-compiled `Swimability`, and renders, reusing v1's
    marker, tooltip and card code as the starting point rather than a rewrite.
+
+If the live Open-Meteo fetch fails, v2 does not render an empty map: it falls back to the board it
+already fetched in step 1 — the same static board v1 shows — and says so, never silently under a
+"live" label (§5.6, §6):
+
+```mermaid
+sequenceDiagram
+  participant Browser as site/v2/app.js
+  participant Data as data/area/latest.json
+  participant Meteo as Open-Meteo
+
+  Browser->>Data: fetch shared board
+  Data-->>Browser: geography, water quality, tides
+  Browser->>Meteo: batched hourly request (one call per area)
+  alt live fetch succeeds
+    Meteo-->>Browser: hourly conditions
+    Browser->>Browser: score beach/hour (Swimability, cross-compiled)
+    Browser->>Browser: render live markers, tooltips, cards
+  else live fetch fails
+    Meteo--xBrowser: error or timeout
+    Browser->>Browser: render v1's board instead
+    Browser->>Browser: "showing the static board from HH:MM"
+  end
+```
 
 ### 5.4 One scorer, two targets
 

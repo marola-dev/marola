@@ -265,6 +265,26 @@ v2's `ig_publish.py`, unchanged, behind a human approval.
   is weaker than typing `yes` (a click) but is on *that day's* image and caption, not a blanket
   "automate this forever"; the day someone wants to remove it, that is a new decision, not a flag.
 
+```mermaid
+sequenceDiagram
+  participant Render as render job
+  participant SiteData as site-data
+  actor Human
+  participant Publish as publish job
+  participant IG
+
+  Note over Render: cron trigger, fetch board, build caption + stat card
+  Render->>SiteData: push PNG
+  Render->>Publish: needs: render
+  Publish->>Human: pause for Approve
+  alt approved before timer expires
+    Human-->>Publish: Approve
+    Publish->>IG: publish
+  else nobody approves
+    Note over Publish: wait timer expires, nothing posted
+  end
+```
+
 ## 6. Scoring / safety impact
 
 None to `Swimability.score` or `Recommender`. v3 adds one rule on top of the template: **a

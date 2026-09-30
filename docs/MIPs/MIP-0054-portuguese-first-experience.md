@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted 2026-09-28 for tasks 1–3 of the task list: the site's half (catalog, language toggle, every string the page builds) and note codes on the board. §5.2–§5.4 and §5.5's location half are listed there as later — **release blocker: Release 0 (MIP-0033) does not ship until this is Implemented** |
+| **Status** | Accepted 2026-09-28 for tasks 1–3 of the task list: the site's half (catalog, language toggle, every string the page builds) and note codes on the board. **Amended 2026-09-30 (#412, §5.8):** three locales by design (`pt-BR` default, `en`, `ja`), per-locale ICU JSON catalogs, CI gates, hosting-portable rules, and the toggle moved next to the GitHub link. §5.2–§5.4 and §5.5's location half are listed there as later — **release blocker: Release 0 (MIP-0033) does not ship until this is Implemented** |
 | **Tasks** | [`MIP-0054.tasks.md`](./MIP-0054.tasks.md) — three stacked PRs this round, the third in Scala |
 | **Author** | Claude (Fable 5.1), for M. Hoffmann |
 | **Created** | 2026-09-12 |
@@ -11,7 +11,7 @@
 | **Effort** | XL — a message catalog in two runtimes (Scala for CLI/MCP/board, JS for the site), a board-contract change (codes, not English prose), a pt-BR corpus with per-file sources, a pt-BR DSPy recompile of both prompts, a deterministic language guard, a rewrite of `scripts/site_check.js`'s copy assertions, and a language/location precedence in the client. No new dependency |
 | **Gain** | `user value` — the audience is Brazilian and every surface but the safety footer answers in English (§2); `infra/dev-loop` — one catalog file per language instead of strings scattered over `Swimability`, `Report`, `app.js` and the prompts |
 | **Effort vs Gain** | `do next` — a declared release blocker, and §4.3 shows the default model can do it; nothing in it waits on another MIP |
-| **Depends on** | For the site's toggle, MIP-0044 §5.7's menu: the header keeps four controls, so `[pt][en]` lives in the menu's prefs group and task 1 waits for `0044-T1`. Otherwise nothing must merge first. MIP-0050's evaluation arm would give a second pt-BR model number, but `llama3.2` (today's default) is officially Portuguese (§4.3). MIP-0046 and MIP-0042 edit the same site files and `site_check.js`: land this before the `/v1/` freeze or rebase over it. No Phase 1 gate; no cost gate |
+| **Depends on** | Nothing must merge first (amended 2026-09-30: the toggle sits in the section nav next to the GitHub link, §5.8, so it no longer waits for MIP-0044 §5.7's menu). MIP-0050's evaluation arm would give a second pt-BR model number, but `llama3.2` (today's default) is officially Portuguese (§4.3). MIP-0046 and MIP-0042 edit the same site files and `site_check.js`: land this before the `/v1/` freeze or rebase over it. No Phase 1 gate; no cost gate |
 | **Blocked by** | none |
 | **Risk** | The UI turns Portuguese and the model keeps answering in English — mixed-language output under a Portuguese header. §5.4's guard makes that show the deterministic line instead of English prose; §7's benchmark arm measures the rate per model before the default is chosen |
 | **Cost so far** | — |
@@ -52,19 +52,12 @@ What a visitor meets today, from the real files:
 
 **Site, default (no stored choice):** `<html lang="pt-BR">`, and
 
-```
-marola   o mar perto de você: condições, balneabilidade, vida marinha, marés, perigos.
-[Florianópolis ▾] [hoje] [amanhã]  [perto de mim] [🌊 som] [lista]          [pt] [en]
-melhor hora por praia ──────●────
-pontuação ● ≥70 ● 40–69 ● 1–39 ● imprópria ● sem dados       〰 passe o mouse numa onda
-tooltip:  Praia da Joaquina — 55/100 às 10:00
-          🌬️ brisa, 27 km/h S · 🌡️ água 19,0 °C · 〰️ ondas 1,3 m a cada 6 s
-          🪼 água-viva baixa · 🐋 baleias baixa (melhor 07:00)
-          ● 1/1 PRÓPRIA (25 ago) · 🅿️ estacionamento 3 · 🚻 banheiros 1
+```excalidraw {bg-dark=white}
+@from_file:assets/diagrams/mip-0054-toolbar-mock.excalidraw
 ```
 
 `PRÓPRIA`/`IMPRÓPRIA`, beach and provider names keep their case (`style.css:130-131`); what marola
-says is lowercase. **The toggle** `[pt] [en]` (in MIP-0044 §5.7's menu, not the header row drawn above, which would be a sixth control) is a two-`<button>` segmented control like `#days`
+says is lowercase. **The toggle** `[pt] [en]` (in the section nav, immediately left of the GitHub link, on every page: §5.8, amended 2026-09-30; not the header row drawn above, which would be a sixth control) is a two-`<button>` segmented control like `#days`
 (`index.html:38`), `aria-pressed` on the active one, never `<a href="#">` (`site_check.js:339`).
 Flipping it re-renders in place, stores the choice and sets `?lang=` so a shared link renders as seen.
 
@@ -183,8 +176,8 @@ appears under a Portuguese header. Same shape as MIP-0022's footer and MIP-0039'
 
 ### 5.5 Precedence — language, then location
 **Language**, first hit wins: (1) `?lang=`: a shared link renders as shared; (2)
-`localStorage['marola.lang']`: the toggle writes it and (1); (3) `navigator.languages`, any `pt*` →
-`pt-BR`, else `en`; (4) `pt-BR`. The toggle beats inference because it writes (1) and (2). **Location
+`localStorage['marola.lang']`: the toggle writes it and (1); (3) `navigator.languages`, the first entry whose primary subtag is a shipped locale
+(`pt*` → `pt-BR`, `en*` → `en`; §5.8); (4) `pt-BR`. The toggle beats inference because it writes (1) and (2). **Location
 never selects language**: a denied prompt, a missing API, a thrown `localStorage` all still land on
 (3)/(4). CLI: `--lang`, `MAROLA_LANG`, `Locale.getDefault`, `pt-BR`.
 **Location** picks an *area*, never a language: (1) `?area=` (exists, `app.js:87,94`); (2) stored
@@ -196,6 +189,70 @@ shows the denied line; `2`/`3` show "não foi possível obter a localização" a
 (`ARCHITECTURE.md` §5g: IMA/SC in SC, `none` elsewhere; INEA/INEMA partial, MIP-0031). With no
 provider covering the origin, `--summarize` and the card carry `water_not_covered`; the score takes
 the same "no data" path as today. No beach is added that the pipeline cannot back.
+
+### 5.8 Three locales, standard formats, portable hosting (amended 2026-09-30, #412)
+
+#412 asked for a design that takes a third language with different plural rules, no letter case and
+different line breaking, and that survives leaving GitHub Pages. This section supersedes §5.1's
+site paragraph ("the site's catalog is a JS object") where they differ; everything else in §5.1
+stands.
+
+- **Locales are BCP-47 tags:** `pt-BR` (default), `en`, `ja`. This round ships `pt-BR` and `en`;
+  `ja` is designed here and delivered by one later task (below). Adding a language is one catalog
+  file, a translation pass and one toggle button, never a code change.
+- **The resolver is one pure function**, `resolveLang({param, stored, languages, supported})` in
+  `site/static/ui.js`, implementing §5.5's precedence against the list of shipped locales. It takes
+  no globals, so a server can run the same rule on `Accept-Language` later.
+- **Catalogs are per-locale JSON with ICU MessageFormat values:** `site/i18n/pt-BR.json`,
+  `site/i18n/en.json`, flat `key → message`. Messages use a subset of ICU syntax: `{name}`
+  arguments, `{n, plural, one {…} other {…}}` and `{x, select, …}`. `site/i18n/context.json` holds
+  one translator note per key. The JSON files are the source of truth for every runtime.
+- **The page still makes no request for its strings.** `scripts/i18n_bundle.py` writes
+  `site/static/i18n.js` (`window.MAROLA_I18N = {…}`) from the JSON. The output is committed, and
+  `--check` fails CI when it is stale, the same pattern as `mip_graph.py --check`. §5.1's reasons for
+  a JS object (no fetch before the first paint, `file://`, no Scala) all still hold. What changes is
+  that a server or the Scala side can read the same plain JSON.
+- **Formatting uses the platform's CLDR data, not a library.** In JS, plurals go through
+  `Intl.PluralRules`, numbers through `Intl.NumberFormat` (`1,3 m` in pt-BR) and dates through
+  `Intl.DateTimeFormat`. The ICU subset above is parsed by about 40 lines in `ui.js`. formatjs,
+  messageformat and i18next were rejected: third-party code in a page that loads only its own four
+  files, for a subset this small. The Scala side (the later `messages-report` task) reads the same
+  JSON; whether it needs ICU4J for plurals or gets by on the JDK is that task's decision, and it
+  reopens §4's "no new dependency" only if ICU4J wins.
+- **The toggle** (maintainer decision, 2026-09-30) is a segmented control of `<button
+  aria-pressed>` in `.sitenav`, immediately left of the GitHub link, on every page. Each button
+  names its language in that language (`lang` and `aria-label`: "português (Brasil)", "English"),
+  so a visitor who cannot read the current language can still find their own. It is not in
+  `.controls` (the header's four-control rule is untouched) and not in MIP-0044 §5.7's menu.
+- **The HTML source text is pt-BR**, and `<html lang="pt-BR">` is set in the source, so the first
+  paint for the default language needs no JS and never flashes English.
+- **CI gates**, in `scripts/i18n_bundle.py --check` and `scripts/site_check.js`:
+  1. every locale has exactly `pt-BR.json`'s keys, and no empty value;
+  2. every key's arguments are the same set in every locale, and every message parses;
+  3. every key has a context note;
+  4. a pseudo-locale, `x-pseudo`, generated rather than translated (accented, about 30% longer,
+     bracketed), is reachable by `?lang=x-pseudo` but not from the toggle. `site_check.js` renders
+     both pages under it and fails on any visible text that did not come through `t()`.
+- **Hosting portability.** This round keeps one page per URL with `?lang=`, which a static host
+  serves as-is. Locale-prefixed paths (`/pt-br/`, `/en/`, `/ja/`) with `<link rel="alternate"
+  hreflang>` are a later task, `locale-paths`, needed before SEO or a server matters. With the pure
+  resolver and plain JSON catalogs, a move to a server changes where negotiation happens, and
+  nothing about catalogs or the board contract.
+- **Japanese, when `ja` ships:**
+  - `:lang(ja)` sets `text-transform: none`, because the lowercase house style is a no-op for
+    kana and kanji but would still mangle Latin words inside Japanese copy.
+  - It sets `word-break: auto-phrase` with `normal` as the fallback where it is unsupported. BudouX
+    is rejected for now as third-party script.
+  - The font stack adds local Japanese system fonts (Hiragino Sans, Yu Gothic, Noto Sans JP) by
+    name only, with no download.
+  - The agency verdict stays verbatim (`PRÓPRIA`/`IMPRÓPRIA`, MIP-0001 §6/§9) with a
+    `water.verdict_gloss.*` gloss beside it.
+  - Beach names use OSM's `name:ja` when present, which needs the board to carry per-locale names:
+    a board-contract task of its own.
+  - The model summary shows §5.4's deterministic line until a `ja` benchmark row exists.
+  - A native-speaker review gates adding the `ja` toggle button.
+- **Translation workflow:** plain PRs against `site/i18n/*.json` with the context notes. A TMS
+  (Weblate, Tolgee) is not worth running at three locales; revisit past five.
 
 ### 5.6 Privacy, exactly
 Collected: a position, after a click and a browser prompt, held in `state.here` for the page's life,
@@ -275,9 +332,10 @@ failure mode: the only model-authored text is now also checked for language.
 - **A native-speaker pass** on `pt-BR.json` and the corpus, the author is a model, §3's strings are
   proposals. Who reviews, and does it gate the merge or the release? Proposed at acceptance: it
   gates the release, not task 1's merge, since today's page is English only.
-- **Which catalog is canonical for the overlap?** (added at acceptance) The site's JS object and
-  `core`'s JSON both hold `note.*` and the level enums from task 4 on. Options: `SiteBuilder` writes
-  that block of `ui.js` from the Scala catalog, or a check compares the two. Task 4 decides.
+- ~~**Which catalog is canonical for the overlap?**~~ Resolved 2026-09-30 (§5.8): `site/i18n/*.json` is
+  the only catalog; `core` reads the same files when `messages-report` lands.
+- **Who reviews `ja`?** (added 2026-09-30) A native speaker must review `ja.json` before the toggle
+  shows it (§5.8). Not yet named.
 - **Does `notes` (English prose) stay on the wire**, or drop at `schema` 3 once `/v1/` is frozen
   (MIP-0042)?
 - **Telegram's language** (MIP-0002, unbuilt): its user `language_code` as precedence (3), `/lang` as

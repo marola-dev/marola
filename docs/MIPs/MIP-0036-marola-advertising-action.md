@@ -189,6 +189,32 @@ in Stage 0 is another MIP's work; MAA does not start until it is done.
 | **3. Earned, staggered** | T+1 … T+7 | +1 Instagram (MIP-0020 v1) · +2 **one** Reddit post · +4 a **second, differently written** Reddit post elsewhere · +6 Substack launch issue **only if** §5.9's cadence commitment is real | human |
 | **4. After week one** | T+8 → | **Hand off to MIP-0018.** No new mechanism (§5.10) | MIP-0018 |
 
+No launch date is fixed; the chart below anchors T+0 to an illustrative date only, to
+show the ordering and spacing of the table above:
+
+```mermaid
+gantt
+  title MIP-0036 launch sequence (T-relative; anchor date is illustrative)
+  dateFormat YYYY-MM-DD
+  axisFormat %d %b
+  section 0 Prerequisites, before T-7
+  Repo public, HF model, RELEASES.md   :prereq, 2026-09-24, 7d
+  section 1 Assets, no posting, T-7..T-1
+  Accounts, demo, content/launch/*     :assets, 2026-10-01, 7d
+  section 2 Launch day, owned, T+0
+  Medium article                       :milestone, medium, 2026-10-08, 0d
+  YouTube video                        :milestone, youtube, 2026-10-08, 0d
+  Personal LinkedIn post               :milestone, li_personal, 2026-10-08, 0d
+  marola LinkedIn Page post            :milestone, li_page, 2026-10-08, 0d
+  section 3 Earned, staggered, T+1..T+7
+  Instagram, MIP-0020 v1               :instagram, 2026-10-09, 1d
+  Reddit post 1                        :reddit1, 2026-10-10, 1d
+  Reddit post 2, different text        :reddit2, 2026-10-12, 1d
+  Substack launch issue, conditional   :substack, 2026-10-14, 1d
+  section 4 After week one, T+8
+  Hand off to MIP-0018                 :milestone, handoff, 2026-10-16, 0d
+```
+
 Why this order and not "everything on Monday":
 
 - **The Medium article goes first because it is the only piece with substance to link to.** Every

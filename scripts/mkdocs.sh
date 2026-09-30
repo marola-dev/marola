@@ -178,6 +178,53 @@ self_test() {
   ok "$(grep -c '^strict: true' "$cfg")" "1" "the build is strict, so a broken internal link fails it"
   ok "$([ -f "$repo_root/docs/index.md" ] && echo yes || echo no)" "yes" "docs/index.md exists — strict does not check for it, and without it the site has no landing page"
 
+  # #511: mkdocs/hooks/mermaid_font.py runs before the kroki plugin (event_priority) and pins
+  # every top-level ```mermaid fence to a font Kroki actually has, so it never measures label
+  # width in a fallback the plugin's own styles injection cannot reach (_inject_mermaid ignores
+  # text.font-family). Exercised with plain python3, outside the container the hook normally
+  # runs in — the hook module guards its `mkdocs.plugins` import for exactly this reason.
+  ok "$(grep -c '^ *hooks:' "$cfg")" "1" "mkdocs.yml registers the hooks: key"
+  ok "$(grep -c 'hooks/mermaid_font.py' "$cfg")" "1" "...pointing at the font-pin hook"
+  tmp="$(mktemp -d)"
+  cat >"$tmp/sample.md" <<'SAMPLE'
+# Sample
+
+```mermaid
+flowchart TD
+  a --> b
+```
+
+````markdown
+```mermaid
+flowchart TD
+  a --> b
+```
+````
+
+```mermaid
+%%{init: {"themeVariables": {"git0": "#1ac5da"}}}%%
+gitGraph
+  commit
+```
+SAMPLE
+  out="$(python3 -c "
+import sys
+sys.path.insert(0, '$repo_root/mkdocs/hooks')
+import mermaid_font
+print(mermaid_font.pin_mermaid_font(open('$tmp/sample.md').read()), end='')
+")"
+  ok "$(printf '%s' "$out" | grep -c fontFamily)" "2" \
+     "a mermaid fence is given the pinned font (once per real fence, not the nested Source example)"
+  ok "$(printf '%s' "$out" | grep -c '^```$')" "3" \
+     "...and every fence's own closing delimiter survives the rewrite, not just its opening"
+  ok "$(printf '%s' "$out" | sed -n '/^```mermaid$/{n;p;}' | grep -c 'Open Sans')" "2" \
+     "the init line lands first, ahead of the diagram source"
+  ok "$(printf '%s' "$out" | grep -c '````markdown')" "1" \
+     "...but a mermaid fence nested inside a longer fence is left alone"
+  ok "$(printf '%s' "$out" | grep -c 'git0')" "1" \
+     "...and an existing fence-level init (gitGraph colours) still merges fine (MIP-0068 task 1, #510)"
+  rm -rf "$tmp"
+
   # --help slices the header by line number, which silently starts printing code when the header
   # grows or shrinks. It shrank once already, when task 2 deleted the not-strict-yet caveat.
   ok "$(bash "${BASH_SOURCE[0]}" --help | grep -c '^set -euo')" "0" "--help prints the header only, not the code under it"

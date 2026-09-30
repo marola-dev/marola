@@ -58,11 +58,8 @@ After, at the area zoom (11): beaches as today, plus a legend line
 `✓ water OK · ✕ water not OK · ? unclassified · hollow = sample older than 45 days (IMA/SC)`.
 Zooming to a beach (≥ 13) the sampling points appear a little off the shore:
 
-```
-        ~~~~~~~~~ sea ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-           (✓)         (✓)   (✕)          (✓)        (✓)
-  ───────────────────────── coastline ─────────────────────
-   Ponto 89     Ponto 75  Ponto 73     Ponto 35    Ponto 90
+```excalidraw {bg-dark=white}
+@from_file:assets/diagrams/mip-0016-coastline-offset.excalidraw
 ```
 
 Hover / tap on `(✕)`:

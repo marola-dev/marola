@@ -29,13 +29,18 @@ prose or box-drawing in a bare fence (MIP-0068; examples in
 | layered or zoned architecture, the module map | `d2`, or `c4plantuml` with `UpdateRelStyle($textColor="#ffffff", $lineColor="#1ac5da")` after its `!include` |
 | a schema from DDL | `dbml {bg-dark=white}` |
 | a chart from a results table | `vegalite {bg-dark=white}` |
+| a sketch or wireframe | `excalidraw {bg-dark=white}` with `@from_file:assets/diagrams/<name>.excalidraw` |
 
 Draw only what the prose beside it already says, and keep the prose: the text is the source of
 truth. Keep a diagram under about 15 nodes; split it rather than grow it. Plain ` ```mermaid `,
 never ` ```kroki-mermaid ` (`fence_prefix: ""`). `bpmn` and `diagramsnet` are off (their fences stay
-code blocks); `excalidraw` has no companion until MIP-0068 task 7, so its fence fails `just docs`,
-as does any render error. Other Kroki dialects are not colour-injected: stay inside the table. A `gitGraph` needs the
+code blocks). Other Kroki dialects are not colour-injected: stay inside the table. A `gitGraph` needs the
 `%%{init}%%` line from `DIAGRAMS.md` (black branches otherwise); a `gantt`, `axisFormat %d %b`.
+Reach for `excalidraw` only when a sketch is genuinely clearer than the ASCII/prose it would
+replace (MIP-0068 §5.3) — it is not a default register, and the scene lives out of the Markdown as
+a `.excalidraw` file, editable in the Excalidraw app.
+Every `mermaid` fence's font is pinned automatically (`mkdocs/hooks/mermaid_font.py`, #511) —
+nothing for an author to add.
 
 ## Everything else under `docs/`
 

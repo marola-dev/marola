@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — merged as #500; `Tasks: MIP-0068.tasks.md` ([`MIP-0068.tasks.md`](./MIP-0068.tasks.md)) |
+| **Status** | Implemented — PRs #510 (task 1), #514–#519 (tasks 2–7, unstacked, all off task 1), #520 (#511, the Mermaid font pin found in task 1's review); merged 2026-09-30. Tasks: [`MIP-0068.tasks.md`](./MIP-0068.tasks.md). All seven §5.3 groups drawn; task 7's three sketches kept |
 | **Author** | Claude (Opus 5.5), with Bruno |
 | **Created** | 2026-09-29 |
 | **Phase** | 3 — docs only, on the mkdocs/Kroki build MIP-0064 already shipped; no Phase 1 or Phase 2 prerequisite, no cloud spend |
@@ -13,7 +13,7 @@
 | **Depends on** | MIP-0064 (implemented), whose `mkdocs/` stack and `scripts/mkdocs.sh --self-test` this edits. No Phase 1 gate, no paid resource |
 | **Blocked by** | none |
 | **Risk** | Diagrams drift from the prose beside them. A picture of the RAG abstain rule that is wrong reads as more authoritative than the paragraph it replaced |
-| **Cost so far** | — |
+| **Cost so far** | ~$46.39 excluding task 7 — design #500 $15.44, #510 $4.90, #514 $3.60, #515 $2.69, #516 $2.63, #517 $6.61, #518 $4.74, #520 $5.78 (summed `Cost:` trailers, mostly `est.`: seven parallel subagents in one session make the time split meaningless). #519's trailer reads ~$138.85 est., an artefact of the diff-size model counting ~4,300 lines of `.excalidraw` scene JSON; its real share is in the same range as the others |
 
 ## 1. Summary
 

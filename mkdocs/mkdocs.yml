@@ -72,6 +72,11 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
 
+# A hooks: entry runs as a plugin. @event_priority puts it ahead of the kroki plugin below, so
+# every ```mermaid fence already carries a pinned font-family before Kroki measures it — #511.
+hooks:
+  - hooks/mermaid_font.py
+
 plugins:
   - search
   # Downloads Material's webfont (and any other external asset) at build time and rewrites the

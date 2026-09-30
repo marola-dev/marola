@@ -199,6 +199,18 @@ final case class Plan(sources: Set[String], states: Set[String], cities: Set[Str
 enum Mode derives CanEqual: case Incremental, Backfill
 ```
 
+```mermaid
+flowchart TD
+  plan[Plan] --> partitions[adapter.partitions]
+  partitions --> check{in manifest,<br/>immutable?}
+  check -- yes --> skip[skip, no request]
+  check -- no --> fetch[adapter.fetch]
+  fetch --> raw[(raw file)]
+  fetch --> manifest[(manifest)]
+  raw --> rows[adapter.rows]
+  rows --> sample[List of SampleRow]
+```
+
 Rules the planner (`Ingest.plan`, pure, tested) enforces, the same for every adapter:
 
 - **A partition is the unit of work and of idempotency.** For IMA's CSV channel it is (beach,
@@ -263,6 +275,68 @@ CREATE VIEW br_bathing_water AS
                              ORDER BY CASE channel WHEN 'csv' THEN 0 WHEN 'pdf' THEN 1 ELSE 2 END) = 1;
 CREATE VIEW latest_per_point AS …;          -- what CachedWaterQualityClient's export (§5.5) is built from
 CREATE VIEW point_stats AS …;              -- per point: n, share impropria, share impropria given rain ≠ Ausente
+```
+
+Both tables share the primary key `(source_id, point_key[, …])`; `views.sql` above joins them on
+`(source_id, point_key)`, which is why they are shown apart rather than one joined diagram (a
+single canvas wide enough for both, at full column count, does not stay legible). Each table is
+also split top-to-bottom across two panels, same reason: `point`'s 14 columns and `sample`'s 17
+do not fit one legible panel at this row height. Column order matches the DDL above. `point`'s
+two-column key is marked `pk` on panel 1, where both its columns live; `sample`'s five-column key
+(`source_id, point_key, sampled_on, sampled_at, channel`) spans both panels and is not
+re-expressible as a `dbml` index split across two separate fences, so it is left unmarked here —
+the `sql` block above stays the one place it is stated in full.
+
+```dbml {bg-dark=white}
+Table "point (1 of 2)" {
+  source_id     varchar [not null, note: "'ima-sc'"]
+  point_key     varchar [not null, note: "source-native stable id: IMA's UUID CODIGO"]
+  country       varchar [not null, default: "BR"]
+  state         varchar [not null, note: "'SC'"]
+  municipality  varchar [not null]
+  ibge_code     varchar [note: "MUNICIPIO_COD_IBGE when the source has it"]
+  beach_name    varchar [not null]
+  indexes { (source_id, point_key) [pk] }
+}
+```
+
+```dbml {bg-dark=white}
+Table "point (2 of 2)" {
+  point_name    varchar [not null, note: "'Ponto 35'"]
+  location_desc varchar
+  lat double
+  lon double
+  geo_source    varchar [not null, note: "'feed' | 'curated' (MIP-0031's tables) | 'none'"]
+  first_seen date
+  last_seen date
+}
+```
+
+```dbml {bg-dark=white}
+Table "sample (1 of 2)" {
+  source_id VARCHAR [not null]
+  point_key VARCHAR [not null]
+  sampled_on DATE [not null]
+  sampled_at TIME
+  condition  varchar [not null, note: "'propria' | 'impropria' | 'unknown' (BathingCondition.label)"]
+  indicator  varchar [not null, note: "'e_coli' | 'enterococci' | 'unknown'"]
+  indicator_value integer
+  indicator_qualifier varchar [not null, default: "exact", note: "'exact' | 'below' | 'above'"]
+  rain varchar
+}
+```
+
+```dbml {bg-dark=white}
+Table "sample (2 of 2)" {
+  wind varchar
+  tide varchar
+  water_temp_c double
+  air_temp_c double
+  channel    varchar [not null, note: "'csv' | 'pdf' | 'json'"]
+  bulletin_date date
+  raw_path varchar [not null]
+  ingested_at timestamp [not null]
+}
 ```
 
 Two rules the schema encodes on purpose: censored counts (`<20`, `<10`) keep their number and a

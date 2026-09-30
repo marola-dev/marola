@@ -8,7 +8,7 @@
     'Open-Meteo': 'https://open-meteo.com/',
     'IMA/SC': 'https://balneabilidade.ima.sc.gov.br/'
   };
-  var REPO = 'https://github.com/h0ffmann/marola';
+  var REPO = 'https://github.com/marola-dev/marola';
 
   var $ = function (id) { return document.getElementById(id); };
   var el = {
