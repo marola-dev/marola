@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft — for discussion |
+| **Status** | Accepted — discussed in [#522](https://github.com/marola-dev/marola/discussions/522); PR #521 |
 | **Author** | Claude (Opus 5.5), with Bruno, from a brainstorm on 2026-09-30 |
 | **Created** | 2026-09-30 |
 | **Phase** | Repo structure, orthogonal to `ARCHITECTURE.md` §11: no Phase 1 prerequisite, no runtime behaviour change, no paid resource |
@@ -19,8 +19,8 @@
 
 `marola-dev/marola` becomes an **umbrella**: the team layer (ways of working, MIPs, the
 aggregated docs site) with every code repo as a git submodule. Code moves out, with history, into
-single-purpose repos split where the stack or the release cadence changes: `marola-backend` (Scala),
-`marola-frontend` (the map), `marola-corpus` (knowledge), `marola-ml` (Python), `marola-oods` (data),
+single-purpose repos split where the stack or the release cadence changes: `marola-app` (Scala),
+`marola-site` (the map), `marola-corpus` (knowledge), `marola-ml` (Python), `marola-oods` (data),
 plus `marola-devkit` for the shared harness. Every place where one directory reads another's path
 today becomes a versioned artifact that the producer publishes and the consumer pins.
 
@@ -47,8 +47,8 @@ For a contributor:
 ```text
 # before                                # after
 git clone marola-dev/marola             git clone --recurse-submodules marola-dev/marola   # the workspace
-just build && just test                 cd marola-backend && just build && just test          # one repo's gates
-                                        git clone marola-dev/marola-frontend                   # or one repo, standalone
+just build && just test                 cd marola-app && just build && just test          # one repo's gates
+                                        git clone marola-dev/marola-site                   # or one repo, standalone
 ```
 
 ## 4. Data sources and dependencies reviewed
@@ -96,8 +96,8 @@ Each repo's responsibility is below. The file-by-file assignment is in the Appen
 |---|---|
 | `marola` (umbrella) | Team layer; hosts `docs.marola.dev` |
 | `marola-devkit` | Shared harness, consumed by pinned version |
-| `marola-backend` | The Scala product: pipeline, adapters, CLI, MCP, benchmark runner, the OODS ingest code, the image |
-| `marola-frontend` | The map at `marola.dev`: static page, `areas.json`, `site-data` panels, live checks |
+| `marola-app` | The Scala product: pipeline, adapters, CLI, MCP, benchmark runner, the OODS ingest code, the image |
+| `marola-site` | The map at `marola.dev`: static page, `areas.json`, `site-data` panels, live checks |
 | `marola-corpus` | Sourced ocean knowledge |
 | `marola-ml` | Offline Python: DSPy compile, fine-tune, marola-sea, and the model benchmark gate with its kept runs |
 | `marola-oods` | The water-quality dataset only (§5.3) |
@@ -108,33 +108,33 @@ On its stack tip, `oods` is an sbt module with `.dependsOn(local)`, reusing MIP-
 This MIP doesn't publish the Scala modules as libraries (a decision: publishing `core`/`local`
 turns every cross-module change into two PRs and a version bump). So the OODS code, including
 `sources.json` (configuration the tests read), `oods-ingest.yml` and `oods_raw_sync.py`, stays with
-`marola-backend`. What moves out is `data/oods/`. The ingest workflow checks out `marola-oods` and
+`marola-app`. What moves out is `data/oods/`. The ingest workflow checks out `marola-oods` and
 commits there, and `oods-check` runs in `marola-oods` CI against the pinned app image.
 
 ### 5.4 Contracts: pinned artifacts instead of paths
 
 ```mermaid
 flowchart LR
-  devkit[marola-devkit] -. flake / plugin / workflows .-> backend & frontend & corpus & ml
-  corpus[marola-corpus] -- tagged tarball --> backend[marola-backend]
+  devkit[marola-devkit] -. flake / plugin / workflows .-> app & site & corpus & ml
+  corpus[marola-corpus] -- tagged tarball --> app[marola-app]
   corpus -- tagged tarball --> ml[marola-ml]
-  ml -- compiled prompt, bump PR --> backend
-  backend -- image + resources tarball --> ml
-  backend -- image, data-only boards --> frontend[marola-frontend]
-  backend -- coverage, smoke --> frontend
-  backend -- ingest commits --> oods[marola-oods]
-  oods -- export tag --> backend
+  ml -- compiled prompt, bump PR --> app
+  app -- image + resources tarball --> ml
+  app -- image, data-only boards --> site[marola-site]
+  app -- coverage, smoke --> site
+  app -- ingest commits --> oods[marola-oods]
+  oods -- export tag --> app
 ```
 
 | Producer → consumer | Artifact | Pinned by |
 |---|---|---|
-| backend → frontend | `ghcr.io/marola-dev/marola:<tag>`. `--site` writes **board data only**, from an `--areas` file the site passes in. The image stops copying `site/static` and `site/areas.json`. The image ships `board.schema.json`, and the site validates against it | Image tag in `site.yml`. The site never builds Scala |
-| frontend → backend | `areas.json`, `site/fixtures/board.json` | App tests use checked-in fixture copies. The live file is always passed in at run time |
-| backend → frontend `site-data` | `coverage/`, `smoke/` (app CI and `docker-smoke.yml` push them with the cross-repo credential, then dispatch `site.yml`); `stats/` (the umbrella runs `repo_stats.py` over every submodule) | Branch content; the site renders whatever is there |
-| corpus → backend, ml | A release tarball of `knowledge/*.md` | `corpus.version` in each consumer. `just corpus-fetch` unpacks it into `.tmp/knowledge` for `sbt test`, `just ask` and the image build. Inside the umbrella, `MAROLA_KNOWLEDGE_DIR=../marola-corpus` |
-| backend → ml | The image (the benchmark runner, `--benchmark`) and a **resources tarball** per tag: `core/src/main/resources/*.json` + `benchmark_questions.json` + the board fixture | Tag. `finetune/build_dataset.py` and the gate read the unpacked tarball, not `../core` |
-| ml → backend | Compiled-prompt JSON, which a bot PR commits into app resources (DSPy stops writing across the tree). Model name/tag on HF/Ollama | The file in app; the model is config |
-| oods → backend | The export MIP-0056 §5.5 plans | Tag plus its env var |
+| app → site | `ghcr.io/marola-dev/marola:<tag>`. `--site` writes **board data only**, from an `--areas` file the site passes in. The image stops copying `site/static` and `site/areas.json`. The image ships `board.schema.json`, and the site validates against it | Image tag in `site.yml`. The site never builds Scala |
+| site → app | `areas.json`, `site/fixtures/board.json` | App tests use checked-in fixture copies. The live file is always passed in at run time |
+| app → site `site-data` | `coverage/`, `smoke/` (app CI and `docker-smoke.yml` push them with the cross-repo credential, then dispatch `site.yml`); `stats/` (the umbrella runs `repo_stats.py` over every submodule) | Branch content; the site renders whatever is there |
+| corpus → app, ml | A release tarball of `knowledge/*.md` | `corpus.version` in each consumer. `just corpus-fetch` unpacks it into `.tmp/knowledge` for `sbt test`, `just ask` and the image build. Inside the umbrella, `MAROLA_KNOWLEDGE_DIR=../marola-corpus` |
+| app → ml | The image (the benchmark runner, `--benchmark`) and a **resources tarball** per tag: `core/src/main/resources/*.json` + `benchmark_questions.json` + the board fixture | Tag. `finetune/build_dataset.py` and the gate read the unpacked tarball, not `../core` |
+| ml → app | Compiled-prompt JSON, which a bot PR commits into app resources (DSPy stops writing across the tree). Model name/tag on HF/Ollama | The file in app; the model is config |
+| oods → app | The export MIP-0056 §5.5 plans | Tag plus its env var |
 | every repo → umbrella | `README.md` + `docs/`; Scaladoc/pdoc as a release asset | Pulled by the aggregator (§5.5) |
 
 Rule: no repo reads another repo's tree, in CI or in tests, and no consumer's CI builds its
@@ -191,7 +191,7 @@ sequenceDiagram
   puts `stack`, `uprd`, `issues` and `cost-split` on `PATH`. Plugin hooks use
   `${CLAUDE_PLUGIN_ROOT}`. Hooks that only make sense for one stack get parameterised or stay in
   their repo: `stop-gate.sh` is Scala-only today, and `.githooks/pre-commit` runs sbt, so both call
-  the repo's own `just quality` instead. `pre-push`'s `MIP:`-trailer check stays in `marola-frontend`.
+  the repo's own `just quality` instead. `pre-push`'s `MIP:`-trailer check stays in `marola-site`.
   `ci.yml` splits into per-repo workflows calling reusable `scala-ci`, `python-ci` and `static-ci`.
 
 ### 5.7 Issues: per repo, coordinated on the org Project
@@ -230,12 +230,12 @@ until the map has left it, and no repo with docs can be extracted until the aggr
    everything is still one tree.
 2. **`marola-devkit`**: extract it, teach it to resolve the umbrella (§5.6), then switch *this* repo
    to the flake input, the plugin and the reusable workflows.
-3. **`marola-frontend` plus the docs host swap, in one step**: the site repo takes Pages, `marola.dev`
+3. **`marola-site` plus the docs host swap, in one step**: the site repo takes Pages, `marola.dev`
    and `site-data` (`coverage`/`smoke`/`stats` only). This repo's Pages moves to `docs.marola.dev`
-   with the aggregator in place, and the site ships the `/docs/*` redirect. `marola-frontend` is the
+   with the aggregator in place, and the site ships the `/docs/*` redirect. `marola-site` is the
    first submodule.
 4. **`marola-corpus`, `marola-ml`**: they become submodules and are aggregated from their first day.
-5. **`marola-backend` + `marola-oods`**: the remaining code leaves. The umbrella keeps only the team
+5. **`marola-app` + `marola-oods`**: the remaining code leaves. The umbrella keeps only the team
    layer, and pointer sync switches on.
 
 Every extraction uses `git filter-repo --path … --replace-message` (bare `#N` →
@@ -265,7 +265,7 @@ restates and `agents-check` enforces.
   runs through the reusable workflow.
 - **Before step 2**: add a sub-issue from a second repo to an umbrella issue by hand. This proves
   cross-repo sub-issues before the tooling depends on them.
-- **Step 3**: `marola-frontend`'s CI log has no `sbt`, and the boards come from a pinned image.
+- **Step 3**: `marola-site`'s CI log has no `sbt`, and the boards come from a pinned image.
   `curl -I marola.dev/docs/1-Using-marola/RUN-LOCALLY/` redirects to `docs.marola.dev`.
 - **Each extraction**: `git log --follow` on a moved file shows its pre-split history. The repo's
   gates pass from a fresh clone in `nix develop` with no umbrella, and a push to its `docs/`
@@ -319,9 +319,9 @@ restates and `agents-check` enforces.
 
 ## 11. Open questions
 
-- **Decided in #522**: a fine-grained PAT; the names `marola-backend` and `marola-frontend`
-  (`marola-core` was considered, but it would clash with the sbt module `core/` inside it); issues
-  per repo on the org Project.
+- **Decided in #522**: a fine-grained PAT; the names `marola-app` and `marola-site`, as proposed
+  (`marola-backend`/`marola-frontend` were weighed and dropped by the team); issues per repo on the
+  org Project.
 - The PAT's owner (a person or a machine user) and its expiry.
 - `stats/`: should the umbrella's `repo_stats.py` roll every repo into one panel or show a panel per
   repo?
