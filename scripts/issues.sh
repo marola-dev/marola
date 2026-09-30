@@ -8,6 +8,9 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 manifest_default="$root/.github/labels.yml"
 nwo=""
 
+# shellcheck source=scripts/lib/mip_ref.sh
+source "$root/scripts/lib/mip_ref.sh"
+
 usage() {
   cat <<'EOF'
 usage: issues.sh [--dry-run] <command> [args]
@@ -630,6 +633,17 @@ cmd_tasks_to_issues() {
     MIP-[0-9][0-9][0-9][0-9]) file="$root/docs/MIPs/$arg.tasks.md" ;;
     *) file="$arg" ;;
   esac
+  # A code repo carries no docs/MIPs of its own post-split (§5.6) — fall back to the umbrella and
+  # spool its content to a real path, since tasks_issues.py takes a file, not stdin.
+  local resolved_tmp=""
+  if [ ! -f "$file" ] && [[ "$arg" =~ ^MIP-[0-9]{4}$ ]]; then
+    resolved_tmp="$(mktemp)"
+    if (cd "$root" && resolve_mip_file "$arg" tasks) >"$resolved_tmp" 2>/dev/null && [ -s "$resolved_tmp" ]; then
+      file="$resolved_tmp"
+    else
+      rm -f "$resolved_tmp"; resolved_tmp=""
+    fi
+  fi
   [ -f "$file" ] || { echo "issues.sh tasks-to-issues: no such task list: $file" >&2; exit 1; }
 
   require_gh
@@ -663,6 +677,7 @@ cmd_tasks_to_issues() {
   printf '%s\n' "$issues" > "$issues_file"
   plan="$(python3 "$root/scripts/lib/tasks_issues.py" plan "$file" --repo "$nwo" --issues "$issues_file")" || rc=$?
   rm -f "$issues_file"
+  [ -z "$resolved_tmp" ] || rm -f "$resolved_tmp"
   [ "$rc" -eq 0 ] || exit 1
 
   local mip n_rows n_new
@@ -946,15 +961,16 @@ task_ref() {
 # The branch is `mip-NNNN/<k>-<slug>` and the slug exists only in that file, so reading it is what
 # makes the printed line something to paste rather than something to go and look up.
 tasks_slug() {
-  local file="$root/docs/MIPs/MIP-$1.tasks.md"
-  [ -f "$file" ] || return 0
+  local content
+  content="$(cd "$root" && resolve_mip_file "MIP-$1" tasks)" || return 0
+  [ -n "$content" ] || return 0
   awk -F'|' -v k="$2" '
     /^\|/ {
       # The `#` cell is a markdown link whose URL also holds digits, so take the first run of
       # digits in the cell, not every digit in it.
       num = $2; sub(/^[^0-9]*/, "", num); sub(/[^0-9].*$/, "", num)
       if (num != "" && num == k) { slug = $3; gsub(/^[ \t]+|[ \t]+$/, "", slug); print slug; exit }
-    }' "$file"
+    }' <<<"$content"
 }
 
 # stack_line <title> -> the `scripts/stack.sh start` line for a MIP task issue, else "".
@@ -1031,16 +1047,16 @@ cmd_claim() {
 # A MIP number with no file is refused: a typo would otherwise leave a milestone whose only piece
 # of provenance is a dangling reference.
 mip_reference() {
-  local n="${1#MIP-}" file
-  local -a files=()
+  local n="${1#MIP-}" source path
   case "$n" in
     [0-9][0-9][0-9][0-9]) ;;
     *) echo "issues.sh milestone new: --mip wants MIP-NNNN, got \"$1\"" >&2; return 1 ;;
   esac
-  files=( "$root"/docs/MIPs/MIP-"$n"-*.md )
-  [ -e "${files[0]}" ] || { echo "issues.sh milestone new: no docs/MIPs/MIP-$n-*.md — is MIP-$n written?" >&2; return 1; }
-  file="$(basename "${files[0]}")"
-  printf 'Design: MIP-%s — docs/MIPs/%s\n' "$n" "$file"
+  IFS=$'\t' read -r source path < <(cd "$root" && resolve_mip_path "MIP-$n" doc) || {
+    echo "issues.sh milestone new: no docs/MIPs/MIP-$n-*.md found locally or via \$MAROLA_UMBRELLA — is MIP-$n written?" >&2
+    return 1
+  }
+  printf 'Design: MIP-%s — %s\n' "$n" "$path"
 }
 
 cmd_milestone_new() {
