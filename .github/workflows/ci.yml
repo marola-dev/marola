@@ -80,6 +80,10 @@ jobs:
     if: needs.changes.outputs.scala == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # RagOfflineSpec reads this directly now (MIP-0070 §5.4) instead of walking up to find
+    # knowledge/, so the pin is explicit rather than relying on sbt's cwd being the repo root.
+    env:
+      MAROLA_KNOWLEDGE_DIR: knowledge
     # Elevated past the workflow-level `contents: read` only for this job's main-only coverage
     # steps below: pushing coverage/latest.json to the orphan site-data branch, and re-triggering
     # site.yml so the badge refreshes right away.

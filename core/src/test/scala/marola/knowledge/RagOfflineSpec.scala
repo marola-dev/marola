@@ -32,22 +32,17 @@ class RagOfflineSpec extends munit.FunSuite:
         }
       }
 
-  private val repoRoot: Path =
-    Iterator
-      .iterate(Paths.get("").toAbsolutePath)(_.getParent)
-      .takeWhile(_ != null)
-      .find(p => Files.isDirectory(p.resolve("knowledge")))
-      .getOrElse(fail("could not find the knowledge/ directory above the working dir"))
+  // MIP-0070 §5.4: no directory walk — MAROLA_KNOWLEDGE_DIR is the one thing that says where the
+  // corpus is, so a wrong or empty pin fails these tests loudly instead of silently finding the
+  // real knowledge/ some levels up.
+  private val knowledgeDir: Path =
+    Paths.get(sys.env.getOrElse("MAROLA_KNOWLEDGE_DIR", "knowledge"))
 
   private def store(embedder: Embedder, tmp: Path) =
-    FileKnowledgeStore(
-      repoRoot.resolve("knowledge").toString,
-      tmp.resolve("index.json").toString,
-      embedder
-    )
+    FileKnowledgeStore(knowledgeDir.toString, tmp.resolve("index.json").toString, embedder)
 
   test("every corpus document chunks with a title and a source URL") {
-    val chunks = Sync.Unsafe.evalOrThrow(Corpus.load(repoRoot.resolve("knowledge")))
+    val chunks = Sync.Unsafe.evalOrThrow(Corpus.load(knowledgeDir))
     assert(chunks.size >= 15, s"only ${chunks.size} chunks")
     val sourced = chunks.filter(_.source.nonEmpty)
     assert(sourced.forall(_.source.startsWith("http")))
