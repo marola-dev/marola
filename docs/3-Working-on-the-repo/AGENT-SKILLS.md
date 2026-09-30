@@ -56,36 +56,39 @@ pinned to a version). Opt out on one machine with the same key set to `false` in
 Superpowers activates from context, so mostly you just work; but here is the explicit sequence
 for a MIP, with which skill does what and which session it runs in:
 
-```
-Session A (plan, Fable):
-  /brainstorming            → refine the raw idea until §1-§3 of a MIP have answers
-  /mip                      → write docs/MIPs/MIP-NNNN-*.md (sources verified, open questions listed)
-  (superpowers: writing-plans is skipped: the MIP is the plan)
-  mip-tasks, step 1         → docs/MIPs/MIP-NNNN.tasks.md: ordered tasks, each with its test
-  /clear
-
-Session B..N (execute, one per task, Sonnet is usually enough):
-  /rename mip-nnnn/k-slug
-  scripts/stack.sh start MIP-NNNN k slug
-  superpowers: executing-plans     → the task row is the plan; checkpoints = first failing test, before push
-  superpowers: test-driven-development → red (the named test) → green → refactor
-  superpowers: systematic-debugging    → when green won't come: reproduce as a golden/scripted test first
-  superpowers: verification-before-completion → just build && just test && just quality, live check if data changed
-  commit with a Cost: trailer
-  scripts/stack.sh pr              → stacked PR on the previous task (base = mip-nnnn/(k-1)-*)
-  superpowers: requesting-code-review → self-checklist before asking for review
-  /clear
-
-Review session (only when the human asks, e.g. "review the stack", "claude review #21"):
-  per PR, bottom-up, against its own base:
-  superpowers: requesting-code-review → reviewer subagent with BASE_SHA = origin/<base>, HEAD_SHA = origin/<branch>,
-                                        PLAN = the task row + MIP §6/§7; fix Critical/Important, note Minor
-  or /code-review <PR#> [--comment], or /code-review ultra <PR#> for the riskiest PR (user-triggered, billed)
-  superpowers: receiving-code-review  → verify each finding before acting; fix → commit (Cost:) → push → just uprds
-
-After each merge (bottom of the stack first):
-  scripts/stack.sh restack         → next branch rebased onto main; scripts/stack.sh status (or just stack-sync / stack-view)
-  superpowers: finishing-a-development-branch → delete the merged branch, flip the MIP when the last task lands
+```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 15, "rankSpacing": 25}}}%%
+flowchart LR
+  subgraph sessionA["Session A (plan, Fable)"]
+    direction TB
+    a1["/brainstorming<br/>(until §1-§3<br/>have answers)"]
+    a2["/mip: write<br/>MIP-NNNN-*.md<br/>(writing-plans skipped)"]
+    a3["mip-tasks step 1:<br/>MIP-NNNN.tasks.md"]
+    a4["/clear"]
+    a1 --> a2 --> a3 --> a4
+  end
+  subgraph sessionBN["Session B..N (execute, one per task, Sonnet)"]
+    direction TB
+    b1["/rename +<br/>stack.sh start"]
+    b2["executing-plans<br/>(task row = plan)"]
+    b3["TDD -><br/>debugging -><br/>verification"]
+    b4["commit (Cost:) -><br/>stack.sh pr"]
+    b5["requesting-code-review<br/>(self-checklist) -> /clear"]
+    b1 --> b2 --> b3 --> b4 --> b5
+  end
+  subgraph reviewSession["Review (on request)"]
+    direction TB
+    r1["requesting-code-review:<br/>reviewer subagent,<br/>bottom-up"]
+    r2["receiving-code-review:<br/>verify -> fix -><br/>commit -> push -> uprds"]
+    r1 --> r2
+  end
+  subgraph afterMerge["After each merge"]
+    direction TB
+    m1["stack.sh restack"]
+    m2["finishing-a-<br/>development-branch"]
+    m1 --> m2
+  end
+  sessionA --> sessionBN --> reviewSession --> afterMerge
 ```
 
 The whole loop (including how a MIP gets *accepted* and what GitHub shows for a stack) is
