@@ -1,6 +1,6 @@
 # Future work
 
-Companion to [`ARCHITECTURE.md`](../2-Building-marola/ARCHITECTURE.md) (the pipeline, the six pluggable integrations),
+Companion to [`ARCHITECTURE.md`](../2-Building-marola/ARCHITECTURE.md) (the pipeline, the pluggable integrations),
 [`EFFECTS-MAP.md`](../2-Building-marola/EFFECTS-MAP.md) (what's pure vs. effectful vs. hidden), and
 [`RUN-LOCALLY.md`](../1-Using-marola/RUN-LOCALLY.md)/[`TELEGRAM-SETUP.md`](../1-Using-marola/TELEGRAM-SETUP.md) (how to run any of
 it): design sketches and reviewed-but-not-adopted ideas for where marola goes next. Most of this
