@@ -151,6 +151,12 @@ function makeAudioContext() {
   };
 }
 
+// A localStorage over store, or one whose every access throws (private mode, blocked site data).
+function stubStorage(sandbox, store, throws) {
+  if (throws) Object.defineProperty(sandbox, 'localStorage', { get() { throw new Error('SecurityError'); } });
+  else sandbox.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
+}
+
 // --- run the page once against a board
 // -----------------------------------------------------------.
 // opts: search ('?lang=en'), languages (navigator.languages), store ({'marola.lang': 'en'}),
@@ -182,8 +188,7 @@ async function runPage(board, opts) {
     URL, URLSearchParams, Promise, Math, String, Array, Object, Number, Error, parseInt, setTimeout, JSON,
     L
   };
-  if (opts.storeThrows) Object.defineProperty(sandbox, 'localStorage', { get() { throw new Error('SecurityError'); } });
-  else if (opts.store) sandbox.localStorage = { getItem: k => (k in opts.store ? opts.store[k] : null), setItem: (k, v) => { opts.store[k] = String(v); } };
+  stubStorage(sandbox, opts.store || {}, opts.storeThrows);
   sandbox.window = sandbox;
   vm.createContext(sandbox);
   vm.runInContext(I18N_JS, sandbox, { filename: 'site/static/i18n.js' });
@@ -236,8 +241,7 @@ function runUi(html, opts) {
     navigator: { languages: opts.languages || [] },
     URL, URLSearchParams
   };
-  if (opts.storeThrows) Object.defineProperty(sandbox, 'localStorage', { get() { throw new Error('SecurityError'); } });
-  else sandbox.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
+  stubStorage(sandbox, store, opts.storeThrows);
   sandbox.window = sandbox;
   vm.createContext(sandbox);
   if (opts.catalog) sandbox.MAROLA_I18N = opts.catalog;
@@ -526,7 +530,6 @@ function runUi(html, opts) {
   }
 
   // --- MIP-0054 task 2: every string app.js builds goes through t() ----------------------------------
-  const clone = o => JSON.parse(JSON.stringify(o));
   const waveOf = (r, name) => r.L.created.find(l => l.added && isWave(l) && String(l.tooltip).includes(name));
   const tipOf = (r, name) => plain((waveOf(r, name) || {}).tooltip || '');
   const openCard = (r, name) => { const m = waveOf(r, name); if (m) m.handlers.click({}); return plain(r.els.card.innerHTML); };
@@ -545,7 +548,8 @@ function runUi(html, opts) {
    ['🅿️ estacionamento 3 · 🚻 banheiros 1', 'facilities']]
     .forEach(([needle, label]) => ok(ptTip.includes(needle), 'pt-BR tooltip: ' + label + ' → "' + needle + '"', ptTip));
   ok((ptTip.match(/<span/g) || []).length === 7, 'pt-BR tooltip: the same seven cells', ptTip);
-  ok(String(waveOf(pt, 'Praia da Joaquina').tooltip).includes('27\u00a0km/h') && String(waveOf(pt, 'Praia da Joaquina').tooltip).includes('6\u00a0s'),
+  const ptWave = waveOf(pt, 'Praia da Joaquina');
+  ok(/27\u00a0km\/h/.test(ptWave.tooltip) && /6\u00a0s/.test(ptWave.tooltip),
     'a number and its unit are joined by a no-break space, so a wrapping cell never strands the unit');
   ok(/<button type="button" data-day="2026-09-06"[^>]*>hoje <small>09-06<\/small><\/button>/.test(pt.els.days.innerHTML),
     'pt-BR: the first day button reads "hoje"', pt.els.days.innerHTML);
@@ -553,7 +557,6 @@ function runUi(html, opts) {
     'pt-BR: the footer status line', pt.els.footer.innerHTML);
   ok(/<span class="score c40">55<\/span>Praia da Joaquina <span class="dist">10:00<\/span>/.test(pt.els.list.innerHTML) &&
     /<span class="score c0">0<\/span>/.test(pt.els.list.innerHTML), 'pt-BR: list rows and band classes as before', pt.els.list.innerHTML);
-  const ptWave = waveOf(pt, 'Praia da Joaquina');
   ok(ptWave && ptWave.opts.icon.options.html.includes('<path d="' + keyPath + '" fill="#e0a800"'), 'pt-BR: the same wave path, the same 40-69 fill');
   const ptCard = openCard(pt, 'Praia da Joaquina');
   [['<button class="close" type="button" aria-label="fechar">', 'close button name'],
@@ -598,12 +601,6 @@ function runUi(html, opts) {
     'two flips leave one water-point marker, not three');
 
   // 7. note codes (task 3's table): rendered per language when present, `notes` verbatim otherwise.
-  const NOTE_CODES = ['rough_seas', 'choppy', 'no_wave_data', 'strong_wind', 'breezy', 'no_wind_data', 'cold_water', 'warm_water',
-    'no_sea_temp_data', 'rain_likely', 'dark', 'jellyfish_elevated', 'jellyfish_some', 'water_stale', 'water_unfit', 'water_mixed'];
-  for (const lang of Object.keys(CATALOGS)) {
-    const missing = NOTE_CODES.filter(c => !(('note.' + c) in CATALOGS[lang]));
-    ok(missing.length === 0, lang + '.json: a note.* key for each of the 16 codes the board emits', missing.join(', '));
-  }
   const unfitArgs = { source: 'IMA/SC', sampled_on: '2026-08-25', point: 'Ponto 12', location: 'Brava' };
   const CASES = [
     ['rough_seas', { wave_m: 2.26 }, 'rough seas (2.3m waves)', 'mar agitado (ondas de 2,3 m)'],
@@ -629,7 +626,7 @@ function runUi(html, opts) {
       '1/3 points PRÓPRIA — avoid Ponto 7 (Canto); Ponto 9 (Centro)', '1/3 pontos PRÓPRIA — evite Ponto 7 (Canto); Ponto 9 (Centro)'],
     ['a_code_from_a_newer_board', {}, 'its english note', 'its english note']
   ];
-  const coded = clone(BOARD);
+  const coded = structuredClone(BOARD);
   coded.schema = 2;
   coded.beaches[0].best.note_codes = CASES.map(([code, args]) => ({ code, args }));
   coded.beaches[0].best.notes = CASES.map(([code], i) => i === CASES.length - 1 ? 'its english note' : 'fallback ' + code);
@@ -642,12 +639,11 @@ function runUi(html, opts) {
       lang + ': a schema-2 board with note_codes loads', r.errors.join(' | '));
     const got = whyItems(openCard(r, 'Praia da Joaquina'));
     CASES.forEach((c, i) => ok(got[i] === c[col], lang + ': note.' + c[0] + ' → "' + c[col] + '"', got[i]));
-    ok(!got.some(x => x.startsWith('fallback')), lang + ': with note_codes present the notes strings are not shown');
     slide(r, 0);
     ok(whyItems(r.els.card.innerHTML)[0] === (lang === 'en' ? 'dark' : 'escuro'), lang + ": an hour's own note_codes render at that hour");
   }
 
-  const future = clone(BOARD); future.schema = 3;
+  const future = structuredClone(BOARD); future.schema = 3;
   const r7 = await runPage(future, { search: '?lang=en' });
   ok(r7.els.status.textContent === 'could not load the board: board schema 3, this page understands 1, 2' &&
     r7.L.created.filter(l => l.added && isWave(l)).length === 0, 'a schema-3 board is refused, in words', r7.els.status.textContent);
@@ -668,10 +664,10 @@ function runUi(html, opts) {
     html.replace(/\s(?:aria-label|title|placeholder)="([^"]*)"/g, (_, v) => { attrs.push(v); });
     return html.replace(/<[^>]*>/g, ' ') + ' ' + attrs.join(' ');
   };
-  const pz = clone(coded);
+  const pz = structuredClone(coded);
   pz.generated_at = '2026-09-06T11:00:00-03:00'; // 07:00 is past, so the past badges render
   pz.lore = { kind: 'creature', text: 'Humpback whales sing in winter.', source: 'https://example.test/lore', lang: 'en' };
-  pz.trails = clone(trailed.trails);
+  pz.trails = structuredClone(trailed.trails);
   pz.beaches[0].best.note_codes.pop(); pz.beaches[0].best.notes.pop();
   pz.beaches[0].facilities = { parking: 3, toilets: 1, shower: 2, lifeguard: 1 };
   pz.beaches[0].water.points.push({ point: 'Ponto 34', location: 'Joaquina Norte', lat: -27.62, lon: -48.44, condition: 'unknown',

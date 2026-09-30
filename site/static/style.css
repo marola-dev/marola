@@ -188,9 +188,8 @@ html:not(:lang(en)) .about-body:lang(en), html:lang(en) .about-body:lang(pt) { d
 .wave.past path { fill-opacity: .45; stroke-dasharray: 2 1.5; }
 .leaflet-tooltip.aspects { padding: .45rem .65rem; font-size: 13px; line-height: 1.35; width: max-content; max-width: 21rem; white-space: normal; }
 .aspects .head { font-weight: 600; margin-bottom: .3rem; }
-/* auto tracks take each column's one-line width first and wrap only what does not fit (nowrap here
- * clipped the right column once the cells were Portuguese); the tooltip sits in a zero-width pane,
- * hence width: max-content above */
+/* auto columns wrap only what does not fit (nowrap clips the right column in pt-BR); width: max-content
+ * above because the tooltip sits in a zero-width pane */
 .aspects .grid { display: grid; grid-template-columns: auto auto; gap: .15rem .8rem; }
 .aspects .grid .wide { grid-column: 1 / -1; }
 .aspects .unfit { color: var(--c0); font-weight: 600; }
