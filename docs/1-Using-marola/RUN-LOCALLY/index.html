@@ -3717,7 +3717,7 @@ just<span class="w"> </span>site-serve<span class="w">                </span><sp
 </code></pre></div>
 <p><code>site/dist/</code> (git-ignored) then holds <code>index.html</code> + <code>app.js</code> + vendored Leaflet from
 <code>site/static/</code>, and under <code>data/</code>: <code>areas.json</code>, and per area <code>&lt;today&gt;.json</code>, <code>&lt;tomorrow&gt;.json</code>
-(the board; <code>site/board.schema.json</code> is the contract, checked by <code>BoardSpec</code>) and <code>latest.json</code>
+(the board; <code>cli/src/main/resources/board.schema.json</code> is the contract, checked by <code>BoardSpec</code>) and <code>latest.json</code>
 pointing at both. The page shows every beach as a wave marker coloured by score: hover it (tap, on a phone: the same row opens first in the card) for the six aspects at that hour: wind band with its emoji and km/h, water temperature, waves, jellyfish, whales, water verdict (MIP-0009), a card with the same
 numbers the CLI prints, a day picker, an hour slider, the generated-at time and every source. No
 cookies, no analytics; "near me" is the browser's own geolocation, on request, never sent anywhere.

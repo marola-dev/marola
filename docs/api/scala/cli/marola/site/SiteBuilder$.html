@@ -12,7 +12,7 @@
 </div>
 <div class="cover">
  <div class="doc">
-  <p>MIP-0005 §5.3: <code>just site-build</code> — run the pipeline once per <em>area</em> (not per user) and write the boards the static map reads: <code>data/&lt;area&gt;/.json</code> for today and tomorrow, <code>latest.json</code> pointing at both, <code>data/areas.json</code> listing every area for the page's area switch, and a copy of <code>site/static/</code> (the page itself).</p>
+  <p>MIP-0005 §5.3: <code>just site-build</code> — run the pipeline once per <em>area</em> (not per user) and write the boards the static map reads: <code>data/&lt;area&gt;/.json</code> for today and tomorrow, <code>latest.json</code> pointing at both, and <code>data/areas.json</code> listing every area for the page's area switch. Board data only (MIP-0070 §5.4): the caller copies <code>site/static/</code> (the page itself) separately.</p>
  </div>
  <section id="attributes">
   <h2 class="h500">Attributes</h2>
@@ -201,12 +201,12 @@ node3 -> node2;
          <button class="icon-button show-content expand"></button>
          <h4 class="groupHeader h200">Concrete methods</h4>
         </div>
-        <div class="documentableElement" id="build-718">
+        <div class="documentableElement" id="build-c9">
          <div class="documentableElement-expander">
           <button class="icon-button ar show-content"></button>
           <div class="header monospace mono-medium">
            <div class="signature">
-            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="SiteBuilder$.html#build-718" t="n" class="documentableName ">build</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">areas</span>: <span data-unresolved-link="" t="t">List</span>[<a href="SiteBuilder$$Area.html" t="t">Area</a>], <span t="k"></span><span data-unresolved-link="" t="n">out</span>: <span data-unresolved-link="" t="t">Path</span>, <span t="k"></span><span data-unresolved-link="" t="n">static</span>: <span data-unresolved-link="" t="t">Path</span>, <span t="k"></span><span data-unresolved-link="" t="n">water</span>: <span data-unresolved-link="" t="t">Coordinates</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">WaterQualityClient</span>], <span t="k"></span><span data-unresolved-link="" t="n">now</span>: <span data-unresolved-link="" t="t">OffsetDateTime</span>, <span t="k"></span><span data-unresolved-link="" t="n">accessibility</span>: <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">AccessibilityClient</span>] = ...): <span data-unresolved-link="" t="t">List</span>[<span data-unresolved-link="" t="t">Path</span>] <span data-unresolved-link="" t="t">&lt;</span> <span data-unresolved-link="" t="t">Sync</span>
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="SiteBuilder$.html#build-c9" t="n" class="documentableName ">build</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">areas</span>: <span data-unresolved-link="" t="t">List</span>[<a href="SiteBuilder$$Area.html" t="t">Area</a>], <span t="k"></span><span data-unresolved-link="" t="n">out</span>: <span data-unresolved-link="" t="t">Path</span>, <span t="k"></span><span data-unresolved-link="" t="n">water</span>: <span data-unresolved-link="" t="t">Coordinates</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">WaterQualityClient</span>], <span t="k"></span><span data-unresolved-link="" t="n">now</span>: <span data-unresolved-link="" t="t">OffsetDateTime</span>, <span t="k"></span><span data-unresolved-link="" t="n">accessibility</span>: <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">AccessibilityClient</span>] = ...): <span data-unresolved-link="" t="t">List</span>[<span data-unresolved-link="" t="t">Path</span>] <span data-unresolved-link="" t="t">&lt;</span> <span data-unresolved-link="" t="t">Sync</span>
            </div>
           </div>
          </div>
@@ -242,15 +242,6 @@ node3 -> node2;
           <div class="header monospace mono-medium">
            <div class="signature">
             <span class="modifiers"></span><span class="kind"><span t="k">val </span></span><a href="SiteBuilder$.html#DefaultOut-0" t="n" class="documentableName ">DefaultOut</a>: <span data-unresolved-link="" t="t">Path</span>
-           </div>
-          </div>
-         </div>
-        </div>
-        <div class="documentableElement" id="DefaultStatic-0">
-         <div class="documentableElement-expander">
-          <div class="header monospace mono-medium">
-           <div class="signature">
-            <span class="modifiers"></span><span class="kind"><span t="k">val </span></span><a href="SiteBuilder$.html#DefaultStatic-0" t="n" class="documentableName ">DefaultStatic</a>: <span data-unresolved-link="" t="t">Path</span>
            </div>
           </div>
          </div>
