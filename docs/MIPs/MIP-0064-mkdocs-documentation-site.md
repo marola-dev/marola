@@ -22,7 +22,7 @@ file: no rendering, no search, no diagrams. This replaces that page with an
 [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) site covering the 18 guides under
 `docs/` and all 59 MIPs, with Mermaid diagrams rendered server-side by a self-hosted
 [Kroki](https://kroki.io) and the generated scaladoc/pdoc trees folded into the same output. The
-setup is ported from `goflink/vrp-solver`, which runs exactly this stack in production.
+setup is ported from an existing project that runs exactly this stack in production.
 
 ## 2. Motivation
 
@@ -81,9 +81,9 @@ Port 8001, not 8000: `just site-serve` already owns 8000 (`justfile:248`).
 
 ## 4. Data sources and dependencies reviewed
 
-### 4.1 The reference: `goflink/vrp-solver`
+### 4.1 The reference setup
 
-Read 2026-09-28 via `gh api`. It carries `mkdocs/{Dockerfile,mkdocs.yml,docker-compose.yml,
+Read 2026-09-28. It carries `mkdocs/{Dockerfile,mkdocs.yml,docker-compose.yml,
 docker-compose.build.yml,docker-compose.serve.yml}` and `scripts/mkdocs.sh`. The Dockerfile is
 `python:3.13-slim` plus four pinned pips (`mkdocs==1.6.1`, `mkdocs-material==9.5.42`,
 `mkdocs-kroki-plugin==0.9.0`, `mkdocs-render-swagger-plugin==0.1.2`). `mkdocs.sh` detects podman or
@@ -104,13 +104,13 @@ Verified on PyPI, 2026-09-28:
 
 | Package | Latest | Licence | Notes |
 |---|---|---|---|
-| `mkdocs` | 1.6.1 (2024-08-30) | not stated in the API response | same version vrp-solver pins |
-| `mkdocs-material` | 9.7.7 (2026-07-17) | MIT | vrp-solver is on 9.5.42, ~2 years behind |
-| `mkdocs-kroki-plugin` | 1.7.0 (2026-09-10) | MIT | vrp-solver is on 0.9.0 |
+| `mkdocs` | 1.6.1 (2024-08-30) | not stated in the API response | same version the reference pins |
+| `mkdocs-material` | 9.7.7 (2026-07-17) | MIT | the reference is on 9.5.42, ~2 years behind |
+| `mkdocs-kroki-plugin` | 1.7.0 (2026-09-10) | MIT | the reference is on 0.9.0 |
 
-We pin the current versions, not vrp-solver's. **This matters for the config keys:** the plugin's
+We pin the current versions, not the reference's. **This matters for the config keys:** the plugin's
 README (read 2026-09-28) documents `server_url` / `http_method` / `fence_prefix` in snake_case,
-whereas vrp-solver's `mkdocs.yml` uses `ServerURL` / `HttpMethod` — the 0.9.0 spelling. Copying
+whereas the reference's `mkdocs.yml` uses `ServerURL` / `HttpMethod` — the 0.9.0 spelling. Copying
 that file verbatim onto 1.7.0 would fail.
 
 Two plugin settings are load-bearing, both from that README:
@@ -128,7 +128,7 @@ Two plugin settings are load-bearing, both from that README:
 
 ### 4.3 Kroki
 
-`yuzutech/kroki` on Docker Hub, checked 2026-09-28: latest tag `0.32.1` (vrp-solver pins 0.25.0).
+`yuzutech/kroki` on Docker Hub, checked 2026-09-28: latest tag `0.32.1` (the reference pins 0.25.0).
 Kroki is MIT-licensed and the images are published by the project itself. Mermaid support requires
 the separate `yuzutech/kroki-mermaid` companion container, which is why the compose file has it.
 We pin `0.32.1` and run only `kroki` + `kroki-mermaid`.
@@ -163,7 +163,7 @@ mkdocs/
   docker-compose.yml          kroki + kroki-mermaid, healthchecked
   docker-compose.build.yml    one-shot `mkdocs build --strict`
   docker-compose.serve.yml    `mkdocs serve --dev-addr=0.0.0.0:8000`, published on the host as 8001
-scripts/mkdocs.sh             ported from vrp-solver; `--serve` flag
+scripts/mkdocs.sh             ported from the reference; `--serve` flag
 ```
 
 `mkdocs/docs/` and `mkdocs/generated-docs/` are build products and are gitignored.
@@ -177,7 +177,7 @@ cp -R ../docs/ docs          # 18 guides + docs/MIPs/ (59 MIPs) + docs/img, docs
 One departure from the reference:
 
 **`docs/README.md` is renamed to `docs/index.md`, and the repo root `README.md` is not copied in
-at all.** The reference does `cp ../README.md docs/index.md` because vrp-solver has no docs-level
+at all.** The reference does `cp ../README.md docs/index.md` because it has no docs-level
 index; marola does, and it is the better landing page — it is a map of what every doc is *for*,
 whereas the root README is an install-and-badges page written for someone standing in the repo.
 Copying both would put two files at `docs/index.md`, one silently overwriting the other. mkdocs
@@ -301,7 +301,7 @@ None. No file under `core/scoring/` is touched and no user-facing recommendation
   diagram, and sends every reader to GitHub — the docs are the main artefact of a project whose
   README is mostly about how it is built.
 - **Nix-native mkdocs + public `kroki.io`.** No Docker, a three-line CI step, `just docs` in the dev
-  shell. Rejected by the maintainer in favour of matching vrp-solver: the container stack is already
+  shell. Rejected by the maintainer in favour of matching the reference: the container stack is already
   proven there, and it keeps diagram rendering off a third-party service.
 - **mkdocs-material's built-in Mermaid** (`pymdownx.superfences`, no Kroki at all). Simplest
   possible diagrams, zero containers — but it renders client-side via `mermaid.js`, which means a
@@ -317,7 +317,7 @@ None. No file under `core/scoring/` is touched and no user-facing recommendation
 
 - **Which docs deserve a section, and named how?** Filesystem order gives `docs/*.md` flat at the
   top and `mips/` as one bucket. Grouping the guides (`concepts/`, `development/`, `reference/`,
-  as vrp-solver does) means moving files in the repo and updating every inbound link. Worth doing,
+  as the reference does) means moving files in the repo and updating every inbound link. Worth doing,
   but as its own change after the site exists and the ordering is visible.
 - **`AGENTS.md`, `PHILOSOPHY.md`, `CONTRIBUTING.md`** are scoped out and link-rewritten to GitHub.
   They are arguably the most-read documents in the repo. Revisit once the site is live.
@@ -334,8 +334,8 @@ None. No file under `core/scoring/` is touched and no user-facing recommendation
 - `gh repo view h0ffmann/marola --json visibility` (2026-09-28) → `PUBLIC` (that name still
   resolves; the repo is now `marola-dev/marola`, also `PUBLIC`, per `gh repo view` on the remote). This is what retires
   `build_docs_index.py`'s disclosure caveat.
-- `gh api repos/goflink/vrp-solver/git/trees/HEAD?recursive=1` (2026-09-28) → the `mkdocs/` layout
-  and `scripts/mkdocs.sh` listed in §4.1; file contents read via `repos/.../contents/`.
+- The reference setup's tree (2026-09-28) → the `mkdocs/` layout and `scripts/mkdocs.sh` listed in
+  §4.1, with file contents read directly.
 - `pypi.org/pypi/{mkdocs,mkdocs-material,mkdocs-kroki-plugin}/json` (2026-09-28) → 1.6.1 /
   9.7.7 (MIT) / 1.7.0 (MIT), release dates as in §4.2.
 - `hub.docker.com/v2/repositories/yuzutech/kroki/tags` (2026-09-28) → `latest, 0.32.1, 0.32.0,
@@ -353,7 +353,7 @@ None. No file under `core/scoring/` is touched and no user-facing recommendation
 ### Not checked
 
 - That Kroki 0.32.1's mermaid companion renders marola's two diagrams — §7 item 3 exists to check
-  it, and 0.32.1 is seven minor versions past the one vrp-solver runs in production.
+  it, and 0.32.1 is seven minor versions past the one the reference runs in production.
 - That `mkdocs-material` 9.7.7 and `mkdocs-kroki-plugin` 1.7.0 are mutually compatible on
   `mkdocs` 1.6.1. Each declares support for mkdocs 1.6; the combination was not built here.
 - `mkdocs`' licence: PyPI's JSON returns no `license` field for it, so §4.2 says so rather than
