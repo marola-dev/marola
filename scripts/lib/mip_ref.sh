@@ -68,7 +68,7 @@ resolve_mip_path() {
   [ -n "$path" ] && { printf '%s\t%s\n' "$MAROLA_UMBRELLA" "$path"; return 0; }
 
   [ "$kind" = tasks ] && pat="^${mip}\.tasks\.md\$" || pat="^${mip}-[^/]+\.md\$"
-  name="$(gh api "repos/$MAROLA_UMBRELLA/contents/docs/MIPs" --jq '.[].name' 2>/dev/null \
+  name="$(gh api "repos/$MAROLA_UMBRELLA/contents/docs/MIPs" --jq '.[].name' </dev/null 2>/dev/null \
     | { grep -E "$pat" || true; } | head -1)"
   [ -n "$name" ] && { printf '%s\tdocs/MIPs/%s\n' "$MAROLA_UMBRELLA" "$name"; return 0; }
 
@@ -86,6 +86,6 @@ resolve_mip_file() {
   elif [ -f "../$path" ]; then
     cat "../$path"
   else
-    gh api "repos/$MAROLA_UMBRELLA/contents/$path" -H 'Accept: application/vnd.github.raw' 2>/dev/null
+    gh api "repos/$MAROLA_UMBRELLA/contents/$path" -H 'Accept: application/vnd.github.raw' </dev/null 2>/dev/null
   fi
 }
