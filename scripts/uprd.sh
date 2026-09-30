@@ -17,9 +17,78 @@ source "$script_dir/lib/uprd_title.sh"
 # shellcheck source=scripts/lib/mip_ref.sh.
 source "$script_dir/lib/mip_ref.sh"
 
+# shellcheck source=scripts/lib/task_issue.sh.
+source "$script_dir/lib/task_issue.sh"
+
+self_test() {
+  local failed=0 tmp repo tasks out
+  check() { if [ "$2" = "$3" ]; then echo "ok: $1"; else echo "FAILED: $1"; echo "  got:  $2"; echo "  want: $3"; failed=1; fi; }
+  tasks='| # | slug | delivers | tests | depends on |
+|---|---|---|---|---|
+| [1](https://github.com/marola-dev/marola/issues/501) | build-hardening | x | y | – |
+| [2](https://github.com/marola-dev/marola/issues/502) | ascii | x | y | 1 |
+| [10](https://github.com/marola-dev/marola/issues/599) | tenth | x | y | 1 |
+| 3 | unlinked | x | y | 1 |'
+
+  echo "-- task_issue_line --"
+  check "a task branch closes its row's issue" "$(task_issue_line mip-0068/1-build-hardening "$tasks" "" marola-dev/marola)" "Closes #501"
+  check "row 1 is not row 10" "$(task_issue_line mip-0068/10-tenth "$tasks" "" marola-dev/marola)" "Closes #599"
+  check "a task-partial PR says Part of, not Closes" \
+    "$(task_issue_line mip-0068/2-ascii "$tasks" $'area/dev-tooling\ntask-partial' marola-dev/marola)" "Part of #502"
+  check "another label does not stop the close" "$(task_issue_line mip-0068/2-ascii "$tasks" "task-partial-ish" marola-dev/marola)" "Closes #502"
+  check "a row with no issue link gets no line" "$(task_issue_line mip-0068/3-unlinked "$tasks" "" marola-dev/marola)" ""
+  check "a task with no row gets no line" "$(task_issue_line mip-0068/7-missing "$tasks" "" marola-dev/marola)" ""
+  check "a row linking another repo's issue gets no line" \
+    "$(task_issue_line mip-0068/1-build-hardening "${tasks//marola-dev\/marola/someone\/else}" "" marola-dev/marola)" ""
+  check "a non-task branch gets no line" "$(task_issue_line fix/uprd-closes "$tasks" "" marola-dev/marola)" ""
+
+  # End to end: --dry-run on a throwaway repo, gh stubbed to answer as an open PR carrying $LABELS.
+  tmp="$(mktemp -d)"; repo="$tmp/repo"
+  mkdir -p "$tmp/bin"
+  cat >"$tmp/bin/gh" <<'SH'
+#!/bin/sh
+case "$*" in
+  *labels*) [ -z "$LABELS_FAIL" ] || exit 1; printf '%s\n' "$LABELS" ;;
+  *"pr view"*) printf '7\thttps://example.invalid/pull/7\tmain\n' ;;
+  *) exit 1 ;;
+esac
+SH
+  chmod +x "$tmp/bin/gh"
+  { git init -q -b main "$repo"
+    git -C "$repo" config user.email uprd@example.invalid
+    git -C "$repo" config user.name uprd-self-test
+    git -C "$repo" commit -q --allow-empty -m main
+    git -C "$repo" remote add origin https://github.com/marola-dev/marola.git
+    git -C "$repo" update-ref refs/remotes/origin/main "$(git -C "$repo" rev-parse HEAD)"
+    git -C "$repo" checkout -q -b mip-9999/2-ascii
+    mkdir -p "$repo/docs/MIPs"; printf '%s\n' "$tasks" >"$repo/docs/MIPs/MIP-9999.tasks.md"
+    git -C "$repo" add docs && git -C "$repo" commit -q -m "MIP-9999 task 2: ascii"; } >/dev/null 2>&1
+  out="$(cd "$repo" && PATH="$tmp/bin:$PATH" LABELS="" bash "$script_dir/uprd.sh" --dry-run 2>/dev/null)"
+  check "the generated body closes the head's own tasks-row issue" "$(grep -cx 'Closes #502' <<<"$out")" "1"
+  out="$(cd "$repo" && PATH="$tmp/bin:$PATH" LABELS="task-partial" bash "$script_dir/uprd.sh" --dry-run 2>/dev/null)"
+  check "and says Part of once the PR is labelled task-partial" "$(grep -cx 'Part of #502' <<<"$out")" "1"
+  check "with no closing keyword left in it" "$(grep -ciE '(close[sd]?|fix(e[sd])?|resolve[sd]?) #502' <<<"$out")" "0"
+  out="$(cd "$repo" && PATH="$tmp/bin:$PATH" LABELS_FAIL=1 bash "$script_dir/uprd.sh" --dry-run 2>/dev/null)"
+  check "a failed label read writes no issue line, never Closes" "$(grep -cE '^(Closes|Part of) #' <<<"$out")" "0"
+  check "and the rest of the body is still written" "$(grep -c '^\*\*What changed\*\*' <<<"$out")" "1"
+  { git -C "$repo" checkout -q -b fix/other main
+    git -C "$repo" commit -q --allow-empty -m $'fix: other\n\nBody.\n\nCloses #77'
+    git -C "$repo" commit -q --allow-empty -m $'fix: more\n\nMentions closes #78 mid-sentence.\nFixes #77'; } >/dev/null 2>&1
+  out="$(cd "$repo" && PATH="$tmp/bin:$PATH" LABELS="" bash "$script_dir/uprd.sh" --dry-run 2>/dev/null)"
+  check "a commit's own Closes line reaches the body of a non-task PR" "$(grep -cx 'Closes #77' <<<"$out")" "1"
+  check "and so does Fixes, once each" "$(grep -cx 'Fixes #77' <<<"$out")" "1"
+  check "but a keyword inside prose is not lifted" "$(grep -c '#78' <<<"$out")" "0"
+  rm -rf "$tmp"
+
+  echo
+  if [ "$failed" -eq 1 ]; then echo "uprd self-test: FAILED" >&2; return 1; fi
+  echo "uprd self-test: ok"
+}
+
 dry_run=0; body_file=""; pr_arg=""
 for arg in "$@"; do
   case "$arg" in
+    --self-test) self_test; exit $? ;;
     --dry-run) dry_run=1 ;;
     -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
     [0-9]*|\#[0-9]*) pr_arg="${arg#\#}" ;;
@@ -132,6 +201,26 @@ generate_mip() {
   fi
 }
 
+generate_task_issue_line() {
+  # Read from the head, not main: task 1's PR is the one that adds the tasks file.
+  local mip tasks labels=""
+  mip="$(sed -nE 's#^mip-([0-9]{4})/.*#MIP-\1#p' <<<"$branch")"
+  [ -n "$mip" ] || return 0
+  tasks="$(git show "$head_ref:docs/MIPs/$mip.tasks.md" 2>/dev/null)" || return 0
+  # Unknown labels mean no line: treating a failed read as "no labels" would close a task-partial issue.
+  if [ -n "$pr_number" ]; then
+    labels="$(gh pr view "$pr_number" --json labels --jq '.labels[].name' 2>/dev/null)" || return 0
+  fi
+  task_issue_line "$branch" "$tasks" "$labels" "$(repo_web_url | sed 's#^https://github\.com/##')"
+}
+
+generate_issue_line() {
+  # Plus a commit body's own whole-line keyword, which GitHub reads from the PR body, not the commits.
+  { generate_task_issue_line
+    git log --reverse --format=%b "$range" 2>/dev/null | grep -E '^(Closes|Fixes|Resolves) #[0-9]+$' || true
+  } | awk '!seen[$0]++'
+}
+
 repo_web_url() {   # git@github.com:o/r.git | https://github.com/o/r(.git) → https://github.com/o/r
   git remote get-url origin 2>/dev/null \
     | sed -E 's#^git@([^:]+):#https://\1/#; s#^ssh://git@#https://#; s#\.git$##'
@@ -203,6 +292,8 @@ generate_body() {
   echo "<!-- uprd: generated from the branch's commits — delete this line to stop pr-body.yml from regenerating it -->"
   echo "**Summary** — $(generate_summary)"
   echo
+  local issue_line; issue_line="$(generate_issue_line)"
+  [ -z "$issue_line" ] || { echo "$issue_line"; echo; }
   echo "| | |"
   echo "|---|---|"
   echo "| **MIP** | $(generate_mip) |"

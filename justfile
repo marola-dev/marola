@@ -84,6 +84,7 @@ quality-other:
     scripts/mip-stack.sh --self-test
     scripts/docs-mip-stack.sh --self-test
     scripts/stack.sh --self-test
+    scripts/uprd.sh --self-test
     python3 scripts/lib/mip_index_merge.py --self-test
     python3 scripts/ocr-post.py --self-test
     python3 scripts/mip_graph.py --self-test

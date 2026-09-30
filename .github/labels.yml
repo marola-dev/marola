@@ -182,6 +182,10 @@
   color: "c5def5"
   description: "Under ~100 changed lines"
 
+- name: "task-partial"
+  color: "fbca04"
+  description: "A MIP task PR that delivers only part of its task: its body says Part of #N, not Closes (#512)"
+
 - name: "wontfix"
   color: "ffffff"
   description: "This will not be worked on"

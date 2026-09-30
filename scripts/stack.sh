@@ -46,6 +46,12 @@ base_for() {   # base branch of a task branch, or "" once that branch is gone
   printf '%s\n' "$prev"
 }
 
+# `sed 1d` drops uprd's dry-run banner, and nothing else: the body's `Closes #N` (#512) must survive.
+new_pr_body() {   # <base>
+  echo "Stacked on \`$1\` — part of ${cur%%/*}. Merge order: base first."; echo
+  "${STACK_SELFTEST_UPRD:-scripts/uprd.sh}" --dry-run 2>/dev/null | sed '1d'
+}
+
 pr_window=200
 merged_head_sha() {   # head commit of the merged PR for a branch prefix; it outlives the branch GitHub deletes
   # gh orders by PR number, so .[0] is the newest-*opened* match; PREFIX goes via the env, unquotable otherwise.
@@ -173,6 +179,14 @@ GH
   has "out loud, rather than dying inside set -e" "$out" "cannot tell where"
 
   echo
+  echo "-- new_pr_body --"
+  printf '#!/bin/sh\necho "----- uprd dry run: banner"\necho "<!-- uprd: marker -->"\necho "Closes #512"\n' >"$tmp/uprd"
+  chmod +x "$tmp/uprd"
+  out="$(STACK_SELFTEST_UPRD="$tmp/uprd" new_pr_body main)"
+  has "a new PR's body keeps uprd's Closes line after the Stacked-on prefix" "$out" "Closes #512"
+  lacks "and drops only uprd's dry-run banner" "$out" "uprd dry run"
+
+  echo
   if [ "$failed" -eq 1 ]; then echo "stack self-test: FAILED" >&2; return 1; fi
   echo "stack self-test: ok"
 }
@@ -197,7 +211,7 @@ case "${1:-}" in
     else
       title="$(git log --reverse --format=%s "origin/$base..HEAD" 2>/dev/null | head -1)"
       [ -n "$title" ] || title="$(git log -1 --format=%s)"
-      body="$(mktemp)"; { echo "Stacked on \`$base\` — part of ${cur%%/*}. Merge order: base first."; echo; scripts/uprd.sh --dry-run 2>/dev/null | sed '1d'; } > "$body"
+      body="$(mktemp)"; new_pr_body "$base" > "$body"
       run gh pr create --base "$base" --head "$cur" --title "$title" --body-file "$body"
     fi
     ;;

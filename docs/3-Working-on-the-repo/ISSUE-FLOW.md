@@ -59,6 +59,13 @@ fixed is decided *before* someone claims it, and nobody has decided it yet. A ma
 report a named test — the test that is red today — and the issue becomes `agent-ready` when they
 add it.
 
+**A merged task PR closes its issue.** `uprd.sh` writes `Closes #N` into the body of a
+`mip-NNNN/<k>-*` PR, for the issue that row `k` of `MIP-NNNN.tasks.md` links. The merge into
+`main` closes it, and that clears rule 5 for every task blocked by it. A PR labelled `task-partial`
+gets `Part of #N` instead, and the issue stays open. Any other PR closes its issue by a
+`Closes #N` line of its own in a commit body, which `uprd.sh` copies into the PR body, the only
+place GitHub reads it.
+
 ## The commands
 
 `scripts/issues.sh` is the whole surface, and every subcommand takes `--dry-run` (the reads it is

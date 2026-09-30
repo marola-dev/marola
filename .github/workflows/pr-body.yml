@@ -5,7 +5,14 @@ name: PR body
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review, synchronize]
+    # labeled/unlabeled only for task-partial, which flips Closes #N to Part of #N (#512).
+    types: [opened, reopened, ready_for_review, synchronize, labeled, unlabeled]
+
+# Every run reads live labels and commits, so a newer run supersedes an older one; without this a
+# synchronize run could write Closes after a task-partial labeled run wrote Part of.
+concurrency:
+  group: pr-body-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -18,6 +25,8 @@ jobs:
       && !contains(fromJSON('["dependabot[bot]", "github-actions[bot]"]'), github.actor)
       && !startsWith(github.event.pull_request.head.ref, 'dependabot/')
       && !startsWith(github.event.pull_request.head.ref, 'update/')
+      && (!contains(fromJSON('["labeled", "unlabeled"]'), github.event.action) || github.event.label.name == 'task-partial')
+      && github.event.pull_request.state == 'open'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
