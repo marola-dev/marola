@@ -86,6 +86,47 @@ class WaterVerdictSpec extends munit.FunSuite:
     assert(v.summary.startsWith("PRÓPRIA (1/1 pts, 25 Aug)"), v.summary)
   }
 
+  test("an all-Unknown fresh sample reads no verdict, not PRÓPRIA") {
+    val wq = WaterQuality(
+      List("Ponto 1", "Ponto 2", "Ponto 3").map(
+        point(_, BathingCondition.Unknown, today.minusDays(11))
+      ),
+      "IMA/SC"
+    )
+    val v = Swimability.waterVerdict(Some(wq), today)
+    assertEquals((v.delta, v.veto, v.note), (0, false, None))
+    assertEquals(v.summary, "no verdict (3 pts unknown, 25 Aug)")
+  }
+
+  test("a PRÓPRIA + Unknown sample counts only the PRÓPRIA points and names the unknowns") {
+    val wq = WaterQuality(
+      List(
+        point("Ponto 1", BathingCondition.Proper, today.minusDays(11)),
+        point("Ponto 2", BathingCondition.Proper, today.minusDays(11)),
+        point("Ponto 3", BathingCondition.Unknown, today.minusDays(11))
+      ),
+      "IMA/SC"
+    )
+    val v = Swimability.waterVerdict(Some(wq), today)
+    assertEquals(v.summary, "PRÓPRIA (2/3 pts, 1 unknown, 25 Aug)")
+  }
+
+  test("Unknown points leave the delta at 0") {
+    val (base, baseNotes) = Swimability.score(goodHour)
+    for conds <- List(
+        List(BathingCondition.Unknown),
+        List(BathingCondition.Proper, BathingCondition.Unknown)
+      )
+    do
+      val wq = WaterQuality(
+        conds.zipWithIndex.map((c, i) => point(s"Ponto $i", c, today.minusDays(11))),
+        "IMA/SC"
+      )
+      val v = Swimability.waterVerdict(Some(wq), today)
+      assertEquals((v.delta, v.veto), (0, false))
+      assertEquals(Swimability.score(goodHour, v), (base, baseNotes))
+  }
+
   test("stale (> 45 days): treated as no data, but says so — an old IMPRÓPRIA does not veto") {
     val wq = WaterQuality(
       List(point("Ponto 1", BathingCondition.Improper, today.minusDays(46), 900)),

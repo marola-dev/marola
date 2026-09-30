@@ -546,7 +546,11 @@ refuses inland-water points (LAGOA/CANAL/RIO...), because Lagoa da Conceição's
   with coordinates and the last five samples, parsed tolerantly. `WaterQualityMatcher` assigns
   points to OSM beaches by normalised name (word-prefix aware), then by distance ≤ 2.5km for
   unmatched sea points only. `Swimability.waterVerdict` applies MIP-0001 §6: all-IMPRÓPRIA veto,
-  mixed −20 naming the spots, PRÓPRIA nothing, stale (> 45 days) nothing-but-say-so.
+  mixed −20 naming the spots, PRÓPRIA nothing, stale (> 45 days) nothing-but-say-so. An
+  Unknown point (IMA's CONDICAO missing or unrecognised) neither helps nor hurts the score: with
+  no IMPRÓPRIA, the summary counts only the PRÓPRIA points and names the unknowns
+  (`PRÓPRIA (2/3 pts, 1 unknown, …)`), or reads `no verdict (3 pts unknown, …)` when none is
+  PRÓPRIA.
 
 ```mermaid
 flowchart TD
@@ -559,7 +563,7 @@ flowchart TD
   Fresh -->|"nonEmpty"| Split{"improper vs proper<br/>among fresh points<br/>(Unknown is neither)"}
   Split -->|"IMPRÓPRIA present,<br/>no PRÓPRIA<br/>(rest may be Unknown)"| Veto["veto: score 0<br/>worst point's enterococci named"]
   Split -->|"IMPRÓPRIA present,<br/>PRÓPRIA also present"| Mixed["delta −20<br/>spots to avoid named"]
-  Split -->|"no IMPRÓPRIA<br/>(rest PRÓPRIA and/or Unknown)"| Proper["delta 0, no note<br/>(summary text says PRÓPRIA<br/>even if all Unknown)"]
+  Split -->|"no IMPRÓPRIA<br/>(rest PRÓPRIA and/or Unknown)"| Proper["delta 0, no note<br/>summary counts PRÓPRIA, names unknowns;<br/>all Unknown → no verdict"]
 ```
 
 - `Tides.extrema` reads high/low water off Open-Meteo's hourly `sea_level_height_msl`;
