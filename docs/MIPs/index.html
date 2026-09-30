@@ -2887,6 +2887,34 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="MIP-0070-umbrella-and-polyrepo-split/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0070: Split marola into single-purpose repos under an umbrella
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
     
@@ -2896,10 +2924,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_65" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_66" >
         
           
-          <label class="md-nav__link" for="__nav_6_65" id="__nav_6_65_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_66" id="__nav_6_66_label" tabindex="0">
             
   
   
@@ -2917,8 +2945,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_65_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_65">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_66_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_66">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2943,10 +2971,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_65_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_66_1" >
         
           
-          <label class="md-nav__link" for="__nav_6_65_1" id="__nav_6_65_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_66_1" id="__nav_6_66_1_label" tabindex="0">
             
   
   
@@ -2964,8 +2992,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_65_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_65_1">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_66_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_66_1">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3687,7 +3715,7 @@ as an unfilled placeholder).</p>
 </tr>
 <tr>
 <td><a href="MIP-0064-mkdocs-documentation-site/">MIP-0064</a></td>
-<td>mkdocs-material + self-hosted Kroki as the documentation site at marola.dev/docs, ported from <code>goflink/vrp-solver</code>: <code>mkdocs/</code> (Dockerfile + compose) and <code>scripts/mkdocs.sh</code>, the 18 guides and all 59 MIPs rendered and full-text searchable, nav built from the file tree (no <code>nav:</code> key), Mermaid rendered server-side to SVG so the site keeps <code>script-src 'self'</code>, and the scaladoc/pdoc trees folded into the same <code>/docs</code> output. Replaces <code>scripts/build_docs_index.py</code>'s link-to-GitHub index; extends <code>api-docs.yml</code>, leaves <code>site.yml</code> untouched</td>
+<td>mkdocs-material + self-hosted Kroki as the documentation site at marola.dev/docs, ported from an existing production setup: <code>mkdocs/</code> (Dockerfile + compose) and <code>scripts/mkdocs.sh</code>, the 18 guides and all 59 MIPs rendered and full-text searchable, nav built from the file tree (no <code>nav:</code> key), Mermaid rendered server-side to SVG so the site keeps <code>script-src 'self'</code>, and the scaladoc/pdoc trees folded into the same <code>/docs</code> output. Replaces <code>scripts/build_docs_index.py</code>'s link-to-GitHub index; extends <code>api-docs.yml</code>, leaves <code>site.yml</code> untouched</td>
 <td>Implemented — #459 → #463 → #465 → #473 → #475 (<code>Tasks: MIP-0064.tasks.md</code>)</td>
 <td>2026-09-28</td>
 <td>L — a container-based build and a rewired CI workflow; no Scala</td>
@@ -3735,11 +3763,21 @@ as an unfilled placeholder).</p>
 <td>cheap win — the renderer already runs in CI; only the diagrams are missing</td>
 <td>—</td>
 </tr>
+<tr>
+<td><a href="MIP-0070-umbrella-and-polyrepo-split/">MIP-0070</a></td>
+<td>Split marola into single-purpose repos under an umbrella: <code>marola-dev/marola</code> becomes the team layer (ways of working, MIPs, the aggregated docs site on <code>docs.marola.dev</code>) with every repo as a submodule; code moves out with history into <code>marola-app</code>, <code>marola-site</code>, <code>marola-corpus</code>, <code>marola-ml</code>, <code>marola-oods</code> (data only), plus <code>marola-devkit</code> shipped as a flake, a plugin marketplace and reusable workflows. Path couplings become pinned artifacts; each repo keeps its own AGENTS.md, docs and issues (coordinated on the org Project), with org invariants restated and checked</td>
+<td>Accepted</td>
+<td>2026-09-30</td>
+<td>XL — five new repos, a tooling repo published three ways and taught to find the umbrella, a cross-repo docs aggregator, a Pages/DNS move, one app change (data-only <code>--site</code>), history-preserving extraction</td>
+<td>infra/dev-loop; cost/ops</td>
+<td>do when X lands — after the in-flight MIP-0056/0061/0063–0068 stacks merge</td>
+<td>—</td>
+</tr>
 </tbody>
 </table>
 <!-- mip-graph:start -->
 <p><img alt="Kroki" src="kroki-generated-cd231756-93c9-325d-a74a-85d8f19a7345.svg" /></p>
-<p><em>53 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052, MIP-0054, MIP-0055, MIP-0056, MIP-0057, MIP-0058, MIP-0059, MIP-0060, MIP-0062, MIP-0063, MIP-0066, MIP-0067, MIP-0068.</em></p>
+<p><em>54 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052, MIP-0054, MIP-0055, MIP-0056, MIP-0057, MIP-0058, MIP-0059, MIP-0060, MIP-0062, MIP-0063, MIP-0066, MIP-0067, MIP-0068, MIP-0070.</em></p>
 <!-- mip-graph:end -->
 
 

@@ -1,0 +1,4216 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The ocean intelligence layer for a stretch of coast — guides and design proposals.">
+      
+      
+      
+        <link rel="canonical" href="https://marola.dev/docs/MIPs/MIP-0070-umbrella-and-polyrepo-split/">
+      
+      
+        <link rel="prev" href="../MIP-0068-diagrams-in-docs/">
+      
+      
+        <link rel="next" href="../MIP-0009/screenshots/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>MIP-0070: Split marola into single-purpose repos under an umbrella - marola.dev docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="../../assets/external/fonts.googleapis.com/css.49ea35f2.css">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/marola.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mip-0070-split-marola-into-single-purpose-repos-under-an-umbrella" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="marola.dev docs" class="md-header__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            marola.dev docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MIP-0070: Split marola into single-purpose repos under an umbrella
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="marola.dev docs" class="md-nav__button md-logo" aria-label="marola.dev docs" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    marola.dev docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/marola-dev/marola" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start here
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1 Using marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    1 Using marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/RUN-LOCALLY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run it locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../1-Using-marola/TELEGRAM-SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telegram bot setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2 Building marola
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    2 Building marola
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/API/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/EFFECTS-MAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Effects map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../2-Building-marola/SCALA3-JDK-REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scala 3 and JDK review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3 Working on the repo
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    3 Working on the repo
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/AGENT-SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/CI-CD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/DEV-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development flow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/DIAGRAMS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diagrams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/GEMINI-CODE-ASSIST/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Code Assist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/ISSUE-FLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issue tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../3-Working-on-the-repo/SELF-DOCUMENTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-documenting marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4 Research and plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    4 Research and plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-agent frameworks survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AGENT-STACK-SURVEY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent stack survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Awesome agentic engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FABLE_REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Import code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/FUTURE-WORK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Future work
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../4-Research-and-plans/SKILLS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skills roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIPs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIPs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0001-water-quality-and-sea-lore/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0001: Bathing-water quality in the ranking, and a sea-lore paragraph in every reply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0002-telegram-bot-phase-1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0002: The Telegram bot — marola's first real user surface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0003-fast-replies-caching-and-fan-out/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0003: Replies in under three seconds — caching, concurrent fetches, precomputed boards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0004-daily-digest-subscriptions-and-reach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0004: The reason to come back — daily digest, subscriptions, and reach beyond Santa Catarina
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0005-map-and-static-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0005: The map — every beach's daily recommendation on a static site the pipeline feeds
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0006-live-look-user-cameras/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0006: "How does it look right now?" — a live look at each beach, fed by users' cameras
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0007-time-series-foundation-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0007: Time-series foundation models for marola's own series — local open models first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0008-docker-images-and-smoke-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0008: Docker images — lightweight JVM, native (GraalVM), marola-ollama, a fine-tuned variant — built in CI, with a smoke test the map shows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009-map-wave-markers-and-hover-aspects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009: A richer map — a wave marker per beach and, on hover, every aspect at that point
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0010-mlflow-experiment-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0010: MLflow as marola's experiment ledger — benchmark runs, prompt compiles and LLM traces, local server first
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0011-claude-code-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0011: Claude Code best practices in this repository — hooks as gates, a shared permission allowlist, path-scoped rules, subagents and skills the dev flow already implies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0012-llm4s-adoption-and-dspy-deprecation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0012: llm4s as marola's Scala-native LLM/agent layer — and the deprecation of the Python DSPy step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0013-opencode-tryout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0013: OpenCode as marola's development agent — a tryout, and what replacing Claude Code would take
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0014-marola-book/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0014: A marola book — The Compiler Pushes Back, written in LaTeX, versioned in a repo, built in CI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0015-interacao-swim-matching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0015: Interação — opt-in "who else is swimming here" matching between marola users
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0016-water-quality-map-markers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0016: Water-quality points on the map — OK / not-OK marks, placed in the sea
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0017-agentic-tooling-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0017: Agentic tooling ideas from ai-job-search and September 2026's trending agent repos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0018-self-documentation-and-media-exporter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0018: Marola self-documentation — weekly post-planner and multi-platform exporter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0019-arxiv-ocean-forecasting-survey/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0019: arXiv/trending-repo survey — sea-forecasting and jellyfish-prediction techniques for marola
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0020-instagram-bot-account/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0020: An Instagram account for marola — first post by hand, API publishing, and a gated daily pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0021-beach-accessibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0021: Beach accessibility — parking, toilets, showers and lifeguard posts from OSM, shown only where the data exists
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0022-safety-answer-footer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0022: The safety footer — every answer grounded in a safety document ends with lifeguard/193/SAMU 192, appended after the model, never by it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0023-waitlist-promotion-and-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0023: Product expansion — a wait-list, honest promotion, and the easiest way to keep marola's site and backend maintained
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0025-marola-sea-domain-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0025: marola-sea-1.0 — a small domain-tuned model (QLoRA SFT + tool-call SFT + DPO) served through Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0029-ocean-layer-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0029: Positioning — marola as the ocean intelligence layer; "best hour to swim" as its first use case
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0030-coastal-trails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0030: Coastal and lakeside trails on the map — named OSM paths near a beach or a lake
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0031-water-quality-inea-inema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0031: Water quality for Rio de Janeiro (INEA) and Bahia (INEMA) — closing the "no data" gap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0032-model-strategy-benchmark-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0032: The model × strategy benchmark matrix — closed API vs. open local vs. marola-RAG vs. marola-tuned, on the same questions, with latency and cost as first-class columns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0033-release-0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0033: Release 0 — the repo goes public, a self-hosted chatbot, the first published model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0034-rss-feeds-and-content-syndication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0034: RSS in and RSS out — operational alerts, a curated reading queue, and marola's own Atom feed
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0035-map-plugin-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0035: A plugin API for marola's map — third-party layers, Windy-style
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0036-marola-advertising-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0036: Marola Advertising Action (MAA) — the Release 0 launch, channel by channel, and how to sustain it after
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0037-map-pwa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0037: A PWA for marola's map — offline-tolerant, installable, no build step
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0038-forecast-model-spread/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking one
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0039-deterministic-fact-guard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0039: The fact guard — a deterministic check that the model's sentence only says what the numbers say
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0040-validating-the-reviewer-judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0040: The reviewer has never been validated — measure the judge, then make it a small jury
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0041-soft-book-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0041: Soft book ingestion — distilling agentic-behavior principles from a book
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0042-map-v2-live-not-static/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0042: marola.dev/v2 — a map that computes live, with v1 frozen and kept
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0043-awesome-agentic-engineering-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0043: docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md — a curated awesome-list, plus a human-gated candidate digest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0044-site-sections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0044: marola.dev becomes a site, not just a map — news, a markdown dev blog, generated API docs, a feeds page, about/contact, and a restrained support page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0045-nlp-and-parsing-over-llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0045: Classic NLP and parsing where an LLM call is currently paying for it — a survey of marola's product pipeline and its own dev loop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0046-remove-ai-slop-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0046: The map without the generated look — a chart-derived icon set replacing every emoji
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0047-desmos-equation-art/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0047: Equation-drawn art — Desmos as the sketchpad, the equation as the source, static SVG as the only thing shipped
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0048-scaling-marola-sea/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0048: Scaling marola-sea — which model, which checkpoint, which hardware, and the data ceiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0049-scala-for-the-web-layer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0049: Scala for the web layer — Tyrian, Laminar, ScalaTags, or better plain-JS discipline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0050-brazilian-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0050: Manacá-1B and the Brazilian-Portuguese models — a base to fine-tune, not a model to drop in
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0051-wave-model-ensemble/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the road to our own grid
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0052-wave-model-compute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0052: Should marola ever run its own wave model, and in what language? — a costed survey
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0053-learned-local-correction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0053: A learned local correction, not another model — statistical downscaling of the public wave forecasts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0054-portuguese-first-experience/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0054: Portuguese first — marola's whole user-facing experience in pt-BR, with a language choice that sticks and a location-aware default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0055-vector-store-and-ocean-knowledge-chunking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0055: A vector store behind KnowledgeStore, and a chunker that knows what kind of ocean knowledge it is cutting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0056-oods-open-ocean-data-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0056: OODS — an Open Ocean Data Store for Brazilian bathing-water quality, starting with IMA/SC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0057-gcp-as-opt-in-cloud-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0057: GCP as an opt-in cloud backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0058-daniela-vicentini-artwork/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0058: A credited human artist — Daniela Vicentini's paintings on marola.dev, an "arte terapia" thanks link
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0059-jev-typed-decisions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0059: Jev (TypeSafe AI) as an opt-in typed-decision backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0060-open-code-review-on-ready/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0060: Open Code Review on request, on marola's own runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0062-ressaca-hazard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per beach
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0063-github-issue-tracking-standard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0063: A GitHub-native tracking standard — issues as the unit of work, milestones as deliverables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0064-mkdocs-documentation-site/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0064: mkdocs for the docs — a real documentation site at marola.dev/docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0065-ci-cd-on-github-hosted-runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0065: CI/CD on GitHub-hosted runners — nothing builds or deploys from a desktop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0066-opt-in-dev-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0066: Opt-in dev containers — the flake, in a container, for contributors without Nix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0067-inea-multi-city-bathing-water/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0067: INEA bathing water beyond one PDF — discovery, per-zone layouts, Niterói and Cabo Frio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0068-diagrams-in-docs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0068: Diagrams in the docs — Mermaid by default, Kroki's other dialects where they earn it
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0070: Split marola into single-purpose repos under an umbrella
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0070: Split marola into single-purpose repos under an umbrella
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-three-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Three layers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-repo-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Repo map
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-why-oods-is-split-into-code-and-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Why OODS is split into code and data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-contracts-pinned-artifacts-instead-of-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Contracts: pinned artifacts instead of paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-docs-per-repo-aggregated-and-hosted-by-the-umbrella" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Docs: per repo, aggregated and hosted by the umbrella
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-agentsmd-and-the-devkit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 AGENTS.md and the devkit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#57-issues-per-repo-coordinated-on-the-org-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 Issues: per repo, coordinated on the org Project
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#58-migration-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.8 Migration order
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-assignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File assignment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checked-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-checked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not checked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_66" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_66" id="__nav_6_66_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP 0009
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_66_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_66">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    MIP 0009
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_66_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_66_1" id="__nav_6_66_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Screenshots
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_66_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_66_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Screenshots
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIP-0009/screenshots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIP-0009 — screenshots of the wave markers and the hover aspects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Motivation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-user-visible-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. User-visible change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-data-sources-and-dependencies-reviewed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Data sources and dependencies reviewed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-three-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Three layers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-repo-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Repo map
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-why-oods-is-split-into-code-and-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Why OODS is split into code and data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-contracts-pinned-artifacts-instead-of-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Contracts: pinned artifacts instead of paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-docs-per-repo-aggregated-and-hosted-by-the-umbrella" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Docs: per repo, aggregated and hosted by the umbrella
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-agentsmd-and-the-devkit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 AGENTS.md and the devkit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#57-issues-per-repo-coordinated-on-the-org-project" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 Issues: per repo, coordinated on the org Project
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#58-migration-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.8 Migration order
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-scoring-safety-impact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Scoring / safety impact
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risks-limitations-and-honest-caveats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risks, limitations, and honest caveats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Open questions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-assignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File assignment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checked-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked live
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-checked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not checked
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mip-0070-split-marola-into-single-purpose-repos-under-an-umbrella">MIP-0070: Split marola into single-purpose repos under an umbrella<a class="headerlink" href="#mip-0070-split-marola-into-single-purpose-repos-under-an-umbrella" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Status</strong></td>
+<td>Accepted — discussed in <a href="https://github.com/marola-dev/marola/discussions/522">#522</a>; PR #521</td>
+</tr>
+<tr>
+<td><strong>Author</strong></td>
+<td>Claude (Opus 5.5), with Bruno, from a brainstorm on 2026-09-30</td>
+</tr>
+<tr>
+<td><strong>Created</strong></td>
+<td>2026-09-30</td>
+</tr>
+<tr>
+<td><strong>Phase</strong></td>
+<td>Repo structure, orthogonal to <code>ARCHITECTURE.md</code> §11: no Phase 1 prerequisite, no runtime behaviour change, no paid resource</td>
+</tr>
+<tr>
+<td><strong>Related</strong></td>
+<td><code>FUTURE-WORK.md</code> §7 (the earlier split <em>out of</em> a shared monorepo), MIP-0056 (OODS: its code and data land in different repos here), MIP-0063 (issue tracking, which becomes per repo on the org Project), MIP-0064 (the docs site this re-homes), MIP-0065 (the workflows this redistributes)</td>
+</tr>
+<tr>
+<td><strong>Effort</strong></td>
+<td>XL — five new repos; a tooling repo published three ways (flake, plugin marketplace, reusable workflows) with its scripts taught to find the umbrella; a cross-repo docs aggregator; a Pages/DNS move; one app change (<code>--site</code> stops reading the site's files from the image); history-preserving extraction of every directory</td>
+</tr>
+<tr>
+<td><strong>Gain</strong></td>
+<td><code>infra/dev-loop</code> — each repo builds and gates only its own stack (the site stops compiling Scala, ml stops pulling a JDK); parallel work stops colliding in one tree; <code>cost/ops</code> — CI minutes scale with what changed, not with the monorepo</td>
+</tr>
+<tr>
+<td><strong>Effort vs Gain</strong></td>
+<td><code>do when X lands</code> — after the in-flight stacks (MIP-0056, MIP-0061, MIP-0063/64/65/68) merge; any PR open against a moved directory has to be recreated otherwise</td>
+</tr>
+<tr>
+<td><strong>Depends on</strong></td>
+<td>Coordination, not a merge edge: the MIP-0056 OODS stack (#372–#380) and MIP-0061 (#394/#395) should land first so their history moves with the code. Human-only configuration: one fine-grained PAT (the cross-repo credential) for dispatch events, <code>site-data</code> pushes and pointer-sync PRs, and one DNS <code>CNAME</code> for <code>docs.marola.dev</code>. No Phase 1 gate, no paid resource</td>
+</tr>
+<tr>
+<td><strong>Blocked by</strong></td>
+<td>none</td>
+</tr>
+<tr>
+<td><strong>Risk</strong></td>
+<td>Cross-repo contracts turn out denser than §5.4 shows: every missed coupling becomes a broken build in a repo that can no longer see its producer</td>
+</tr>
+<tr>
+<td><strong>Cost so far</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-summary">1. Summary<a class="headerlink" href="#1-summary" title="Permanent link">&para;</a></h2>
+<p><code>marola-dev/marola</code> becomes an <strong>umbrella</strong>: the team layer (ways of working, MIPs, the
+aggregated docs site) with every code repo as a git submodule. Code moves out, with history, into
+single-purpose repos split where the stack or the release cadence changes: <code>marola-app</code> (Scala),
+<code>marola-site</code> (the map), <code>marola-corpus</code> (knowledge), <code>marola-ml</code> (Python), <code>marola-oods</code> (data),
+plus <code>marola-devkit</code> for the shared harness. Every place where one directory reads another's path
+today becomes a versioned artifact that the producer publishes and the consumer pins.</p>
+<h2 id="2-motivation">2. Motivation<a class="headerlink" href="#2-motivation" title="Permanent link">&para;</a></h2>
+<p>One tree forces one build and one set of gates on everything. <code>site.yml</code> runs <code>sbt</code> to build the
+boards, so a CSS change to the map waits on a Scala compile. <code>docker-local.yml</code> fires on
+<code>knowledge/**</code>, <code>finetune/Modelfile</code> and <code>core/src/main/resources/**</code> at once, and <code>ci.yml</code> path-
+filters six directories to avoid running everything. Parallel sessions each need their own worktree
+(30+ under <code>.tmp/wt-*</code> at the time of writing) to stay out of each other's way. OODS adds a data
+tree with daily bot commits to the same history as the code (MIP-0056 §Risk).</p>
+<p>The monorepo's real advantage is that an agent sees everything at once. The umbrella keeps that:
+check it out with submodules and the whole workspace is one directory again, with the team rules at
+the root and each repo's own rules inside it.</p>
+<h2 id="3-user-visible-change">3. User-visible change<a class="headerlink" href="#3-user-visible-change" title="Permanent link">&para;</a></h2>
+<p>For a marola user: none. The map stays at <code>https://marola.dev</code>; the docs move to
+<code>https://docs.marola.dev</code>, and <code>marola.dev/docs/*</code> redirects there.</p>
+<p>For a contributor:</p>
+<div class="highlight"><pre><span></span><code># before                                # after
+git clone marola-dev/marola             git clone --recurse-submodules marola-dev/marola   # the workspace
+just build &amp;&amp; just test                 cd marola-app &amp;&amp; just build &amp;&amp; just test          # one repo's gates
+                                        git clone marola-dev/marola-site                   # or one repo, standalone
+</code></pre></div>
+<h2 id="4-data-sources-and-dependencies-reviewed">4. Data sources and dependencies reviewed<a class="headerlink" href="#4-data-sources-and-dependencies-reviewed" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The umbrella pattern.</strong> A workspace repo holds the team layer: process, principles, specs and
+  flow docs, with no build of its own. Each submodule's AGENTS.md holds the repo layer: build, test,
+  CI and invariants. The umbrella aggregates every repo's <code>README.md</code> + <code>docs/</code> into one mkdocs site,
+  deployed from each submodule's latest <code>main</code> on non-PR events and from pinned commits on PRs. It
+  keeps pointers fresh with a daily cron plus <code>repository_dispatch</code>, feeding one rolling PR. This
+  MIP adopts all four.</li>
+<li><strong>Nix flake inputs</strong>: already how this repo consumes <code>lint</code>, <code>agentic</code> and <code>cuda</code> from
+  <code>h0ffmann/nix-config</code> (<code>flake.nix</code>), pinned by <code>flake.lock</code>.</li>
+<li><strong>Claude Code plugin marketplace</strong>: a repo with <code>.claude-plugin/marketplace.json</code>. Git-based
+  sources can be pinned to a <code>ref</code>/<code>sha</code>, and projects enable plugins in <code>.claude/settings.json</code>
+  <code>enabledPlugins</code>, as this repo already does for <code>superpowers</code>. Plugin skills are namespaced
+  (<code>/&lt;plugin&gt;:&lt;skill&gt;</code>).</li>
+<li><strong>Cross-repo reusable workflows</strong>: already in use here, since <code>profile-activity.yml</code> calls
+  <code>h0ffmann/nix-config/.github/workflows/profile-ping.yml@main</code>.</li>
+<li><strong><code>repository_dispatch</code></strong> needs a credential with write access to the <em>target</em> repo. That's the
+  reason for the human-provisioned credential.</li>
+<li><strong><code>git filter-repo</code></strong>: <code>--path</code> selects a union of paths, and <code>--replace-message</code> supports
+  <code>regex:</code>, so a bare <code>#123</code> can be rewritten to <code>marola-dev/marola#123</code>.</li>
+<li><strong>GitHub Pages</strong>: a subdomain is a DNS <code>CNAME</code>. The map and the docs get separate hosts, which
+  avoids depending on the one-domain-per-site rule (partly checked).</li>
+</ul>
+<h2 id="5-design">5. Design<a class="headerlink" href="#5-design" title="Permanent link">&para;</a></h2>
+<h3 id="51-three-layers">5.1 Three layers<a class="headerlink" href="#51-three-layers" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Holds</th>
+<th>Can a repo override it?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Umbrella</strong> (<code>marola</code>)</td>
+<td>Workspace AGENTS.md, ways of working, MIPs and <code>.tasks.md</code>, MIP and cross-repo parent issues, the phase list, the aggregated docs, submodule pointers</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Devkit</strong> (<code>marola-devkit</code>)</td>
+<td>The shared harness, versioned: dev-flow scripts, hooks, generic skills and agents, reusable workflows, base flake and <code>just</code> module, the invariants block</td>
+<td>Yes: a repo opts into each piece, and its AGENTS.md says what it leaves out or changes</td>
+</tr>
+<tr>
+<td><strong>Repo</strong></td>
+<td>Its own AGENTS.md, <code>docs/</code>, build/test/gates, repo-only skills and rules</td>
+<td>It owns them outright</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Org invariants are the exception to "the repo wins":</strong> cost and deployment safety, the
+<code>agent-ready</code> gate, the three commit trailers, no secrets in code, phase discipline. A repo may make
+these stricter, never looser.</p>
+<h3 id="52-repo-map">5.2 Repo map<a class="headerlink" href="#52-repo-map" title="Permanent link">&para;</a></h3>
+<p>Each repo's responsibility is below. The file-by-file assignment is in the Appendix.</p>
+<table>
+<thead>
+<tr>
+<th>Repo</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>marola</code> (umbrella)</td>
+<td>Team layer; hosts <code>docs.marola.dev</code></td>
+</tr>
+<tr>
+<td><code>marola-devkit</code></td>
+<td>Shared harness, consumed by pinned version</td>
+</tr>
+<tr>
+<td><code>marola-app</code></td>
+<td>The Scala product: pipeline, adapters, CLI, MCP, benchmark runner, the OODS ingest code, the image</td>
+</tr>
+<tr>
+<td><code>marola-site</code></td>
+<td>The map at <code>marola.dev</code>: static page, <code>areas.json</code>, <code>site-data</code> panels, live checks</td>
+</tr>
+<tr>
+<td><code>marola-corpus</code></td>
+<td>Sourced ocean knowledge</td>
+</tr>
+<tr>
+<td><code>marola-ml</code></td>
+<td>Offline Python: DSPy compile, fine-tune, marola-sea, and the model benchmark gate with its kept runs</td>
+</tr>
+<tr>
+<td><code>marola-oods</code></td>
+<td>The water-quality dataset only (§5.3)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="53-why-oods-is-split-into-code-and-data">5.3 Why OODS is split into code and data<a class="headerlink" href="#53-why-oods-is-split-into-code-and-data" title="Permanent link">&para;</a></h3>
+<p>On its stack tip, <code>oods</code> is an sbt module with <code>.dependsOn(local)</code>, reusing MIP-0031's parsers.
+This MIP doesn't publish the Scala modules as libraries (a decision: publishing <code>core</code>/<code>local</code>
+turns every cross-module change into two PRs and a version bump). So the OODS code, including
+<code>sources.json</code> (configuration the tests read), <code>oods-ingest.yml</code> and <code>oods_raw_sync.py</code>, stays with
+<code>marola-app</code>. What moves out is <code>data/oods/</code>. The ingest workflow checks out <code>marola-oods</code> and
+commits there, and <code>oods-check</code> runs in <code>marola-oods</code> CI against the pinned app image.</p>
+<h3 id="54-contracts-pinned-artifacts-instead-of-paths">5.4 Contracts: pinned artifacts instead of paths<a class="headerlink" href="#54-contracts-pinned-artifacts-instead-of-paths" title="Permanent link">&para;</a></h3>
+<p><img alt="Kroki" src="kroki-generated-68558485-5dbe-30d8-b05e-2d7cbbc7f6a8.svg" /></p>
+<table>
+<thead>
+<tr>
+<th>Producer → consumer</th>
+<th>Artifact</th>
+<th>Pinned by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>app → site</td>
+<td><code>ghcr.io/marola-dev/marola:&lt;tag&gt;</code>. <code>--site</code> writes <strong>board data only</strong>, from an <code>--areas</code> file the site passes in. The image stops copying <code>site/static</code> and <code>site/areas.json</code>. The image ships <code>board.schema.json</code>, and the site validates against it</td>
+<td>Image tag in <code>site.yml</code>. The site never builds Scala</td>
+</tr>
+<tr>
+<td>site → app</td>
+<td><code>areas.json</code>, <code>site/fixtures/board.json</code></td>
+<td>App tests use checked-in fixture copies. The live file is always passed in at run time</td>
+</tr>
+<tr>
+<td>app → site <code>site-data</code></td>
+<td><code>coverage/</code>, <code>smoke/</code> (app CI and <code>docker-smoke.yml</code> push them with the cross-repo credential, then dispatch <code>site.yml</code>); <code>stats/</code> (the umbrella runs <code>repo_stats.py</code> over every submodule)</td>
+<td>Branch content; the site renders whatever is there</td>
+</tr>
+<tr>
+<td>corpus → app, ml</td>
+<td>A release tarball of <code>knowledge/*.md</code></td>
+<td><code>corpus.version</code> in each consumer. <code>just corpus-fetch</code> unpacks it into <code>.tmp/knowledge</code> for <code>sbt test</code>, <code>just ask</code> and the image build. Inside the umbrella, <code>MAROLA_KNOWLEDGE_DIR=../marola-corpus</code></td>
+</tr>
+<tr>
+<td>app → ml</td>
+<td>The image (the benchmark runner, <code>--benchmark</code>) and a <strong>resources tarball</strong> per tag: <code>core/src/main/resources/*.json</code> + <code>benchmark_questions.json</code> + the board fixture</td>
+<td>Tag. <code>finetune/build_dataset.py</code> and the gate read the unpacked tarball, not <code>../core</code></td>
+</tr>
+<tr>
+<td>ml → app</td>
+<td>Compiled-prompt JSON, which a bot PR commits into app resources (DSPy stops writing across the tree). Model name/tag on HF/Ollama</td>
+<td>The file in app; the model is config</td>
+</tr>
+<tr>
+<td>oods → app</td>
+<td>The export MIP-0056 §5.5 plans</td>
+<td>Tag plus its env var</td>
+</tr>
+<tr>
+<td>every repo → umbrella</td>
+<td><code>README.md</code> + <code>docs/</code>; Scaladoc/pdoc as a release asset</td>
+<td>Pulled by the aggregator (§5.5)</td>
+</tr>
+</tbody>
+</table>
+<p>Rule: no repo reads another repo's tree, in CI or in tests, and no consumer's CI builds its
+producer from source.</p>
+<h3 id="55-docs-per-repo-aggregated-and-hosted-by-the-umbrella">5.5 Docs: per repo, aggregated and hosted by the umbrella<a class="headerlink" href="#55-docs-per-repo-aggregated-and-hosted-by-the-umbrella" title="Permanent link">&para;</a></h3>
+<p><img alt="Kroki" src="kroki-generated-5594c9b6-1c51-30db-8d68-8994090d058e.svg" /></p>
+<ul>
+<li><strong>Each repo</strong> has <code>README.md</code> + <code>docs/</code>, a small <code>mkdocs.yml</code> and <code>just docs-serve</code> (the
+  devkit's <code>mkdocs.sh</code>), and builds <code>--strict</code> standalone. Links: relative inside <code>docs/</code>, GitHub
+  URLs for code, absolute <code>docs.marola.dev</code> URLs for another repo's pages. <code>notify-umbrella.yml</code> is
+  a reusable devkit workflow, about three lines per repo.</li>
+<li><strong>API docs</strong>: <code>api-docs.yml</code> splits in two. App CI builds Scaladoc, and ml CI builds pdoc for
+  <code>finetune/</code>. Each publishes a release asset, which the umbrella fetches. The umbrella never builds
+  Scala or Python.</li>
+<li><strong>The umbrella</strong> has its own <code>docs/</code>, plus <code>mkdocs/repos.yml</code> mapping each submodule to a mount
+  point (default <code>repos/&lt;name&gt;/</code>; the app's <code>1-Using-marola</code> mounts top-level). It triggers on
+  dispatch, on pushes to its own <code>docs/</code>, on a daily cron and manually. Non-PR builds use
+  <code>--remote</code>; PR builds use pinned commits. Docs and map deploy independently.</li>
+</ul>
+<h3 id="56-agentsmd-and-the-devkit">5.6 AGENTS.md and the devkit<a class="headerlink" href="#56-agentsmd-and-the-devkit" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Umbrella AGENTS.md</strong> is a workspace file, not a service file. It holds the repo inventory
+  (responsibility, stack, contracts in and out); the scope rules (single-repo: read that repo's
+  AGENTS.md first; cross-repo: plan the contract, same branch name, one PR per repo linked, producer
+  merges first, pointers bump last); the invariants in full; the MIP, issue and phase flow; and
+  submodule mechanics. The phase list (<code>ARCHITECTURE.md</code> §11 today, which <code>issues.sh</code> parses) moves
+  to the umbrella as <code>docs/PHASES.md</code>, because phases are an org rule.</li>
+<li><strong>Each repo's AGENTS.md</strong> covers what the repo is, what it produces and consumes, its commands,
+  style and testing, and what it overrides. It also carries the <strong>invariants block</strong>, one line per
+  rule. The devkit ships that block at a version, and <code>just agents-check</code> compares the repo's copy
+  with the one in its <em>pinned devkit</em>, never with the umbrella's tree.</li>
+<li><strong>The devkit finds the umbrella.</strong> Today <code>uprd.sh</code>, <code>lib/mip_ref.sh</code>, <code>lib/pr_labels.sh</code> and
+  <code>issues.sh</code> read <code>docs/MIPs/</code> from the PR's own branch, which a code repo no longer has. They now
+  resolve MIPs and <code>.tasks.md</code> from <code>../</code> inside an umbrella checkout, or otherwise via
+  <code>gh api repos/$MAROLA_UMBRELLA/contents/docs/MIPs</code>. A task PR closes its own repo's issue
+  (<code>Closes #N</code>); a reference to an issue elsewhere (a parent, a MIP) is always fully qualified.
+  The umbrella's <code>owner/repo</code> is one devkit setting (<code>MAROLA_UMBRELLA</code>, default
+  <code>marola-dev/marola</code>), never a literal in scripts, so a later org move (§11) is a one-line bump.
+  A <code>.tasks.md</code> row names its target repo, <code>stack.sh</code> stacks within that repo, and <code>cost-split</code>
+  attributes usage by commit across repos.</li>
+<li><strong>Plugin mechanics</strong>: the skills stop hardcoding <code>scripts/stack.sh</code>-style paths, since the flake
+  puts <code>stack</code>, <code>uprd</code>, <code>issues</code> and <code>cost-split</code> on <code>PATH</code>. Plugin hooks use
+  <code>${CLAUDE_PLUGIN_ROOT}</code>. Hooks that only make sense for one stack get parameterised or stay in
+  their repo: <code>stop-gate.sh</code> is Scala-only today, and <code>.githooks/pre-commit</code> runs sbt, so both call
+  the repo's own <code>just quality</code> instead. <code>pre-push</code>'s <code>MIP:</code>-trailer check stays in <code>marola-site</code>.
+  <code>ci.yml</code> splits into per-repo workflows calling reusable <code>scala-ci</code>, <code>python-ci</code> and <code>static-ci</code>.</li>
+</ul>
+<h3 id="57-issues-per-repo-coordinated-on-the-org-project">5.7 Issues: per repo, coordinated on the org Project<a class="headerlink" href="#57-issues-per-repo-coordinated-on-the-org-project" title="Permanent link">&para;</a></h3>
+<p>Decided in discussion #522. Each repo has its own issues. The org Project (<code>marola-dev</code> Project 1,
+"Marola", which already exists) is where cross-repo work is coordinated, and <code>agent-ready</code> stays
+the hard gate, now in every repo.</p>
+<ul>
+<li><strong>One issue per PR.</strong> When a change can't fit one PR, which is the case for any cross-repo
+  change, a parent issue gets one sub-issue per PR, each in the repo that PR lands in. The parent
+  lives where the decision lives: the umbrella for a MIP or anything cross-cutting, the producer's
+  repo for a contract change.</li>
+<li><strong>MIP tasks</strong>: <code>tasks-to-issues</code> files a MIP's parent issue in the umbrella and each task row as a
+  sub-issue in that row's target repo, all added to the Project.</li>
+<li><strong>Milestones are per repo on GitHub</strong>, so MIP-0063's milestone-as-deliverable can't span repos.
+  A cross-repo deliverable becomes a parent issue plus a <code>Deliverable</code> field on the Project. A
+  single-repo deliverable may keep a native milestone.</li>
+<li><strong>Labels and issue forms</strong> (<code>labels.yml</code>, <code>ISSUE_TEMPLATE/</code>, the Definition of Ready) ship from
+  the devkit, and a reusable workflow syncs them into each repo, so <code>agent-ready</code> means the same
+  thing everywhere.</li>
+<li><strong>Tooling</strong>: <code>issue-queue</code>/<code>issue-claim</code> read the Project, or <code>org:marola-dev label:agent-ready</code>,
+  instead of one repo.</li>
+<li><strong>Migration</strong>: on each extraction, the open issues for that area move with
+  <code>gh issue transfer</code> after its labels are synced. The old URLs redirect.</li>
+</ul>
+<h3 id="58-migration-order">5.8 Migration order<a class="headerlink" href="#58-migration-order" title="Permanent link">&para;</a></h3>
+<p>GitHub Pages is the constraint that sets the order: today this repo's Pages serves <code>marola.dev</code>,
+docs included, and one repo has only one Pages site. The umbrella can't serve <code>docs.marola.dev</code>
+until the map has left it, and no repo with docs can be extracted until the aggregator exists.</p>
+<ol>
+<li><strong>Freeze</strong>: land or park the open stacks. A PR open against a moved directory is recreated in
+   its new repo.</li>
+<li><strong>Prep in the monorepo</strong>: <code>--site</code> becomes data-only with <code>--areas</code>; the resources tarball and
+   corpus fetch exist; <code>finetune</code>/<code>dspy</code> stop reading <code>../core</code>. Every contract in §5.4 works while
+   everything is still one tree.</li>
+<li><strong><code>marola-devkit</code></strong>: extract it, teach it to resolve the umbrella (§5.6), then switch <em>this</em> repo
+   to the flake input, the plugin and the reusable workflows.</li>
+<li><strong><code>marola-site</code> plus the docs host swap, in one step</strong>: the site repo takes Pages, <code>marola.dev</code>
+   and <code>site-data</code> (<code>coverage</code>/<code>smoke</code>/<code>stats</code> only). This repo's Pages moves to <code>docs.marola.dev</code>
+   with the aggregator in place, and the site ships the <code>/docs/*</code> redirect. <code>marola-site</code> is the
+   first submodule.</li>
+<li><strong><code>marola-corpus</code>, <code>marola-ml</code></strong>: they become submodules and are aggregated from their first day.</li>
+<li><strong><code>marola-app</code> + <code>marola-oods</code></strong>: the remaining code leaves. The umbrella keeps only the team
+   layer, and pointer sync switches on.</li>
+</ol>
+<p>Every extraction uses <code>git filter-repo --path … --replace-message</code> (bare <code>#N</code> →
+<code>marola-dev/marola#N</code>). Open issues move with their area (§5.7). Secrets move with their workflow (<code>HF_TOKEN</code> →
+ml, <code>STEWARD_GH_TOKEN</code> → app).</p>
+<h2 id="6-scoring-safety-impact">6. Scoring / safety impact<a class="headerlink" href="#6-scoring-safety-impact" title="Permanent link">&para;</a></h2>
+<p>None. No Scala in <code>scoring/</code> changes. The safety rules become org invariants that every repo
+restates and <code>agents-check</code> enforces.</p>
+<h2 id="7-verification-plan">7. Verification plan<a class="headerlink" href="#7-verification-plan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Self-tests</strong> (the same <code>--self-test</code> convention as <code>scripts/*.py</code>):</li>
+<li><code>agents-check --self-test</code>: an edited invariants block fails, an unchanged one passes.</li>
+<li><code>mip-resolve --self-test</code>: finds MIP-0070 from a clone of a code repo with no umbrella (the
+    <code>gh api</code> path) and from inside the umbrella (<code>../</code>).</li>
+<li><code>uprd --self-test</code> gains cases for a same-repo <code>Closes #N</code> and a fully qualified parent reference.</li>
+<li><code>tasks-to-issues --self-test</code> files a two-repo MIP as an umbrella parent with one sub-issue in
+    each target repo.</li>
+<li><strong>Step 1 (still one repo)</strong>: <code>site.yml</code> builds the boards from <code>cli/run -- --site --areas
+  site/areas.json</code> with no <code>site/static</code> in the image. <code>RagOfflineSpec</code> passes with
+  <code>MAROLA_KNOWLEDGE_DIR=.tmp/knowledge</code> from <code>just corpus-fetch</code>. <code>build_dataset.py</code> runs from the
+  unpacked resources tarball.</li>
+<li><strong>Step 2</strong>: in this repo, <code>just pr</code> on a throwaway branch fills the trailers and writes the MIP
+  link through the flake-provided scripts, <code>/marola-devkit:mip</code> loads from the plugin, and <code>ci.yml</code>
+  runs through the reusable workflow.</li>
+<li><strong>Before step 2</strong>: add a sub-issue from a second repo to an umbrella issue by hand. This proves
+  cross-repo sub-issues before the tooling depends on them.</li>
+<li><strong>Step 3</strong>: <code>marola-site</code>'s CI log has no <code>sbt</code>, and the boards come from a pinned image.
+  <code>curl -I marola.dev/docs/1-Using-marola/RUN-LOCALLY/</code> redirects to <code>docs.marola.dev</code>.</li>
+<li><strong>Each extraction</strong>: <code>git log --follow</code> on a moved file shows its pre-split history. The repo's
+  gates pass from a fresh clone in <code>nix develop</code> with no umbrella, and a push to its <code>docs/</code>
+  redeploys <code>docs.marola.dev</code> within one run without a site deploy.</li>
+<li><strong>Done</strong> means the umbrella holds no code directories, every repo passes its gates standalone,
+  and a fresh <code>--recurse-submodules</code> clone lets an agent reach every repo's AGENTS.md from the root.</li>
+</ul>
+<h2 id="8-risks-limitations-and-honest-caveats">8. Risks, limitations, and honest caveats<a class="headerlink" href="#8-risks-limitations-and-honest-caveats" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Cross-repo changes cost more.</strong> A board-schema change is now two PRs and an image tag bump.
+  The Scala modules stay together precisely to avoid paying that on every core change.</li>
+<li><strong>The contracts table is only as good as the grep behind it.</strong> Step 1 exists to flush out missed
+  couplings while a missed one still just fails a monorepo build.</li>
+<li><strong>Submodules are awkward</strong>: detached HEAD, pointer noise, a forgotten <code>--recurse-submodules</code>.
+  The umbrella AGENTS.md states the mechanics, and only the rolling sync PR bumps pointers.</li>
+<li><strong>The invariants block is a copy.</strong> <code>agents-check</code> stops it drifting, but it can't make an agent
+  that ignores AGENTS.md read it.</li>
+<li><strong>Old links</strong>: GitHub links into moved paths (<code>marola-dev/marola/blob/main/core/...</code>) break.
+  The redirect covers the docs site only.</li>
+<li><strong>One fine-grained PAT</strong> carries dispatch, <code>site-data</code> pushes and pointer sync. It is tied to the
+  user who created it, can be subject to org approval, and is scoped to one owner. So it breaks if
+  that user leaves, and an org move means issuing a new one. Whatever expiry it is given goes on the
+  maintainer's calendar. The daily cron still rebuilds the docs if dispatch fails.</li>
+<li><strong>Issues spread across seven repos</strong> are harder to see at a glance. The Project is the one view,
+  and an issue not added to it is invisible to the queue.</li>
+</ul>
+<h2 id="9-alternatives-considered">9. Alternatives considered<a class="headerlink" href="#9-alternatives-considered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Do nothing.</strong> It keeps the one-tree agent context, which the umbrella now provides, and keeps
+  every cost in §2.</li>
+<li><strong>Full modularity</strong> (<code>core</code>/<code>local</code> as published libraries with semver). This is the most SRP-pure
+  option, but every cross-module change would take two PRs and a release. It was rejected in the
+  brainstorm and can be revisited per module later.</li>
+<li><strong>Keep <code>marola-dev/marola</code> as the Scala app, with a new umbrella repo.</strong> Issues, MIP history and
+  every <code>#N</code> reference would have to move or keep pointing at a code repo.</li>
+<li><strong>Require the umbrella for shared tooling</strong> (<code>../devkit/scripts</code>). A single-repo clone couldn't
+  run <code>just pr</code>, and CI would check the devkit out on every run.</li>
+<li><strong>A finer ML split now</strong> (<code>marola-llm</code>, <code>marola-nlp</code>, <code>marola-ml</code>, raised in discussion #522).
+  Today <code>dspy/</code> and <code>finetune/</code> are two small offline tools with one consumer. Split once one grows
+  its own cadence or contributors. Because the contracts are pinned artifacts, a later split only
+  changes the producer's name in <code>corpus.version</code>-style pins, not the consumers' code.</li>
+<li><strong>A GitHub App instead of a PAT.</strong> It is scoped per repo and has no personal owner, but it's more
+  setup (app registration, installation, a token-minting step in every workflow). The PAT was chosen
+  in discussion #522 as the simpler option. Revisit if the user-tied token becomes a problem.</li>
+<li><strong>Issues all stay in the umbrella.</strong> Existing links wouldn't move, but <code>Closes</code> would always
+  cross repos, and a repo's own backlog would be invisible from the repo.</li>
+<li><strong>Vendor devkit files into each repo with a sync bot.</strong> This is the copy-and-drift model
+  <code>FUTURE-WORK.md</code> §7 already hit, and local overrides get overwritten.</li>
+<li><strong>The umbrella owns <code>marola.dev</code> and pulls in the site's <code>dist/</code>.</strong> URLs would be unchanged, but
+  every map deploy would go through the docs pipeline.</li>
+</ul>
+<h2 id="11-open-questions">11. Open questions<a class="headerlink" href="#11-open-questions" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Decided in #522</strong>: a fine-grained PAT; the names <code>marola-app</code> and <code>marola-site</code>, as proposed
+  (<code>marola-backend</code>/<code>marola-frontend</code> were weighed and dropped by the team); issues per repo on the
+  org Project.</li>
+<li>The PAT's owner (a person or a machine user) and its expiry.</li>
+<li><code>stats/</code>: should the umbrella's <code>repo_stats.py</code> roll every repo into one panel or show a panel per
+  repo?</li>
+<li><strong>Follow-up MIP:</strong> moving the umbrella (and possibly the org) to IBRAMAR/IBAMAR once the split is
+  done (discussion #522). GitHub redirects issues, PRs, web links and git remotes after a transfer,
+  but not Pages, and GitHub App installations are per org. So the move re-points
+  <code>docs.marola.dev</code>, reinstalls the cross-repo credential and bumps <code>MAROLA_UMBRELLA</code>. Do it after
+  step 5, never mid-migration.</li>
+<li><strong>Follow-up MIP:</strong> umbrella-level orchestration (<code>just up</code> over each repo's compose file) and
+  cross-repo flow tests (board → rendered map). Out of scope here; it needs the next MIP number.</li>
+</ul>
+<h2 id="appendix">Appendix<a class="headerlink" href="#appendix" title="Permanent link">&para;</a></h2>
+<h3 id="file-assignment">File assignment<a class="headerlink" href="#file-assignment" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Destination</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>umbrella</td>
+<td><code>AGENTS.md</code>/<code>CLAUDE.md</code> (rewritten as workspace files), <code>README.md</code>/<code>README.pt-BR.md</code> (workspace landing), <code>PHILOSOPHY.md</code>, CONTRIBUTING/CODE_OF_CONDUCT/SECURITY/LICENSE, <code>TODO_FL.md</code>, <code>docs/3-*</code>, <code>docs/4-*</code>, <code>docs/MIPs/</code>, <code>docs/index.md</code>, <code>mkdocs/</code>, <code>.github/CODEOWNERS</code>, <code>profile-activity.yml</code>, the aggregator and pointer-sync workflows (new), <code>.claude/rules/docs.md</code>, <code>repomix*</code> (re-pointed at submodules), <code>scripts/{repo_stats,arxiv_digest,awesome_agentic_digest,mip_graph,gh-billing}.*</code></td>
+</tr>
+<tr>
+<td>devkit</td>
+<td><code>scripts/{stack,uprd,uprds,pr,cost-fill,branches,issues,pr-label,backfill-pr-labels,mip-stack,docs-mip-stack,deps-stack,deps-merge,mkdocs}.sh</code>, <code>scripts/{cost-split,pr_label_nlp}.py</code>, <code>scripts/lib/</code>, the matching <code>scripts/fixtures/*</code>, <code>.githooks/</code>, <code>.claude/hooks/</code>, <code>.claude/statusline.sh</code>, <code>.claude/settings.json</code>'s shared parts (attribution, hooks, base permissions), skills <code>mip</code>, <code>mip-tasks</code>, <code>mip-solve-perpetual</code>, <code>triage</code>, <code>humanizer</code>, <code>ponytail*</code>, <code>sharingan</code>, <code>skill-copy</code>, <code>obsidian-vault</code>, <code>voice-note-ingest</code>, <code>voice-to-feature</code>, agents <code>mip-reviewer</code>, <code>mip-claims-auditor</code>, <code>.github/{PULL_REQUEST_TEMPLATE.md,actionlint.yaml,labels.yml,ISSUE_TEMPLATE/}</code> (synced into every repo), <code>ci-short-circuit-pr-close.yml</code>, <code>pr-body.yml</code>, <code>.ai-jail</code>, base <code>flake.nix</code>/<code>justfile</code> modules, <code>.shellcheckrc</code>, <code>ruff.toml</code>, the runner scripts (<code>gha-runner</code>, <code>setup-runners</code>, <code>runner-preflight</code>, <code>workflow_runners.py</code>, <code>temps</code>)</td>
+</tr>
+<tr>
+<td>app</td>
+<td><code>core/ local/ cli/ project/ build.sbt</code>, the OODS module + <code>sources.json</code> + <code>oods-ingest.yml</code> + <code>oods_raw_sync.py</code>, <code>Dockerfile</code>, <code>docker-compose.yml</code>, <code>.dockerignore</code>, <code>.env.example</code>, <code>.envrc</code>, <code>.scalafmt.conf</code>, <code>.scalafix.conf</code>, <code>.mcp.json</code>, <code>opencode.json</code>, <code>.gemini/</code>, <code>ci.yml</code> (its Scala part), <code>docker.yml</code>, <code>docker-smoke.yml</code>, <code>marola-e2e.yml</code>, <code>scala-steward.yml</code>, <code>dependabot.yml</code> (each repo gets its own), <code>api-docs.yml</code> (Scaladoc part), <code>.claude/rules/scala.md</code>, agent <code>jar-verifier</code>, <code>docs/1-*</code>, <code>docs/2-*</code>, <code>scripts/{smoke_record.py,ocr-post.py}</code></td>
+</tr>
+<tr>
+<td>site</td>
+<td><code>site/</code>, <code>site.yml</code>, <code>site-health.yml</code>, the <code>site-data</code> branch, <code>scripts/{site_check.js,site_live_check.py,stamp_site_version.sh,site-data-push.sh,strip_external_scripts.py}</code>, skill <code>site-frontend</code>, the <code>pre-push</code> <code>MIP:</code>-trailer rule</td>
+</tr>
+<tr>
+<td>corpus</td>
+<td><code>knowledge/</code>, skills <code>corpus-doc</code>, <code>eli5</code></td>
+</tr>
+<tr>
+<td>ml</td>
+<td><code>dspy/</code>, <code>finetune/</code>, <code>Dockerfile.local</code>, <code>docker-local.yml</code>, <code>marola-sea-publish.yml</code>, the pdoc part of <code>api-docs.yml</code>, <code>scripts/{analyze_training.py,marola-sea-pull.sh,benchmark_gate.py}</code>, <code>docs/benchmarks/</code>, the <code>cuda</code> flake input</td>
+</tr>
+<tr>
+<td>oods</td>
+<td><code>data/oods/</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>data/</code> other than <code>data/oods/</code> is runtime output, and gitignored.</p>
+<h3 id="checked-live">Checked live<a class="headerlink" href="#checked-live" title="Permanent link">&para;</a></h3>
+<ul>
+<li>https://code.claude.com/docs/en/plugin-marketplaces (2026-09-30): <code>.claude-plugin/marketplace.json</code>;
+  <code>github</code>/<code>git-subdir</code>/<code>url</code> sources; <code>ref</code>/<code>sha</code> pinning; skills run as <code>/&lt;plugin&gt;:&lt;skill&gt;</code>.</li>
+<li>https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event (2026-09-30):
+  classic PATs need <code>repo</code> scope.</li>
+<li>git-filter-repo <code>Documentation/git-filter-repo.txt</code> (2026-09-30): <code>--path</code>, <code>--path-rename</code>,
+  <code>--replace-message</code> with <code>literal:</code>/<code>glob:</code>/<code>regex:</code>.</li>
+<li>https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages
+  (2026-09-30): subdomains use a <code>CNAME</code> record.</li>
+<li>This repo (2026-09-30):</li>
+<li><code>origin/mip-0056/11-raw-offload</code> has <code>lazy val oods … .dependsOn(local)</code>; 78 files, +12,807
+    lines by <code>git diff --stat main...</code> (three-dot, from the merge base).</li>
+<li><code>Dockerfile</code> copies <code>knowledge</code>, <code>site/areas.json</code>, <code>site/board.schema.json</code> and <code>site/static</code>
+    into both runtime images.</li>
+<li><code>uprd.sh</code> reads <code>docs/MIPs/</code> via <code>git ls-tree</code> on the PR's head.</li>
+<li><code>finetune/build_dataset.py</code> reads <code>core/src/main/resources</code> and <code>knowledge/</code> by relative path.</li>
+<li>
+<p><code>profile-activity.yml</code> calls a cross-repo reusable workflow.</p>
+</li>
+<li>
+<p>https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository
+  (2026-09-30): issues, PRs, wiki, secrets, webhooks and deploy keys transfer; web links and git
+  remotes redirect; "we don't redirect GitHub Pages associated with the repository".</p>
+</li>
+<li>
+<p>https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+  (2026-09-30): fine-grained PATs are "tied to the user who generated them", limited to selected
+  repositories of one owner, can require org-owner approval, and infinite lifetimes "may be blocked
+  by a maximum lifetime policy".</p>
+</li>
+<li>https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/adding-sub-issues
+  (2026-09-30): up to 100 sub-issues per parent and eight levels; the UI lets you pick "a different
+  repository".</li>
+<li><code>gh api graphql</code> (2026-09-30): <code>marola-dev</code> has one Project v2, number 1, "Marola", public.</li>
+</ul>
+<h3 id="not-checked">Not checked<a class="headerlink" href="#not-checked" title="Permanent link">&para;</a></h3>
+<ul>
+<li>That GitHub Pages refuses the same custom domain on two repos: the page states only the
+  user/org-site inheritance rule. Separate hosts avoid the question.</li>
+<li>Reusable-workflow limits (nesting depth, <code>secrets: inherit</code> across owners): from memory.</li>
+<li>Cross-repo sub-issues through the API and <code>gh</code> (the UI allows them; §7 tests it before step 2).</li>
+<li>Which labels and milestones <code>gh issue transfer</code> keeps (assumed: labels whose names exist in the
+  target), which is why labels are synced first.</li>
+<li>The exact fine-grained PAT permission <code>repository_dispatch</code> needs (assumed <code>Contents: write</code>).</li>
+<li>Whether a repo's <code>GITHUB_TOKEN</code> can dispatch to a sibling repo: assumed not, so we budget a credential.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.top", "navigation.tracking", "search.highlight", "search.suggest", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
