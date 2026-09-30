@@ -85,8 +85,8 @@ commands:
       `project` scope.
 
   board gates
-      File the five phase gate issues of MIP-0063 §5.3, named from ARCHITECTURE.md §11 and
-      labelled `phase/*`. Idempotent; a phase §11 marks done gets a closed gate. A one-time
+      File the five phase gate issues of MIP-0063 §5.3, named from docs/PHASES.md and
+      labelled `phase/*`. Idempotent; a phase PHASES.md marks done gets a closed gate. A one-time
       bootstrap — `--dry-run` it and get a human's go-ahead before filing anything.
 
 options:
@@ -1680,10 +1680,10 @@ cmd_board_setup() {
   [ "$failed" -eq 0 ] || exit 1
 }
 
-# phase_titles_of <§11 section text, "## 11." heading through the next "## "> -> one
-# "N<TAB>Phase N — <name><TAB>done|open" per line. Pure, so the self-test feeds it a fixture
-# instead of the real ARCHITECTURE.md, which won't exist once this script moves to marola-devkit —
-# the phase list itself moves too (ARCHITECTURE.md §11 -> docs/PHASES.md, a separate change).
+# phase_titles_of <PHASES.md section text, "# Development phases" heading through the next "# ">
+# -> one "N<TAB>Phase N — <name><TAB>done|open" per line. Pure, so the self-test feeds it a
+# fixture instead of the real docs/PHASES.md, which won't exist once this script moves to
+# marola-devkit.
 phase_titles_of() {
   sed -n 's/^[0-9]\{1,\}\. \*\*Phase \([0-9]\): \(.*\)\.\*\*.*/\1\t\2/p' <<<"$1" \
     | awk -F'\t' '{ done_ = ($2 ~ /\(done/) ? "done" : "open"
@@ -1691,13 +1691,14 @@ phase_titles_of() {
                     printf "%s\tPhase %s — %s\t%s\n", $1, $1, name, done_ }'
 }
 
-# phase_titles -> phase_titles_of, read from ARCHITECTURE.md §11 rather than copied here. The gate
+# phase_titles -> phase_titles_of, read from docs/PHASES.md rather than copied here (MIP-0070
+# §5.6: phases are an org rule, so the umbrella keeps this file after the app leaves). The gate
 # issues are named after the phases and deduped on that name, so a second copy of the names is a
 # second thing to keep true; the self-test pins the five it must yield, which turns a rename in
-# §11 into a failed build rather than a sixth gate issue.
+# PHASES.md into a failed build rather than a sixth gate issue.
 phase_titles() {
   local section
-  section="$(awk '/^## 11\./ { s = 1; next } s && /^## / { exit } s' "$root/docs/2-Building-marola/ARCHITECTURE.md")"
+  section="$(awk '/^# Development phases/ { s = 1; next } s && /^# / { exit } s' "$root/docs/PHASES.md")"
   phase_titles_of "$section"
 }
 
@@ -1710,7 +1711,7 @@ cmd_board_gates() {
   titles="$(phase_titles)"
   n_titles="$(grep -c . <<<"$titles" || true)"
   [ "$n_titles" -eq 5 ] || {
-    echo "issues.sh board gates: ARCHITECTURE.md §11 yielded $n_titles phase titles, not 5 — refusing to file gate issues from a section this script no longer parses." >&2
+    echo "issues.sh board gates: docs/PHASES.md yielded $n_titles phase titles, not 5 — refusing to file gate issues from a file this script no longer parses." >&2
     exit 1
   }
 
@@ -1740,15 +1741,15 @@ cmd_board_gates() {
     if grep -qxF "$title" <<<"$existing"; then
       echo "gate already filed: $title"; skipped=$((skipped + 1)); continue
     fi
-    body="$(printf 'Phase gate for phase %s of `docs/2-Building-marola/ARCHITECTURE.md` §11. It holds no work: every `phase/%s` issue is `blocked by` it, so closing this one unblocks the phase at once (MIP-0063 §5.3).\n\nWire an issue to it with `scripts/issues.sh deps add <issue> --blocked-by <this issue>`.\n' "$num" "$num")"
+    body="$(printf 'Phase gate for phase %s of `docs/PHASES.md`. It holds no work: every `phase/%s` issue is `blocked by` it, so closing this one unblocks the phase at once (MIP-0063 §5.3).\n\nWire an issue to it with `scripts/issues.sh deps add <issue> --blocked-by <this issue>`.\n' "$num" "$num")"
     rc=0
     run gh issue create --repo "$nwo" --title "$title" --label "phase/$num" --body "$body" || rc=$?
     if [ "$rc" -eq 0 ]; then created=$((created + 1)); else failed=$((failed + 1)); fi
   done <<<"$titles"
 
-  # A phase §11 already marks done gets a gate that is closed, not open: an open gate for a phase
-  # that finished before this script existed would block its issues forever. The number comes from
-  # a re-read because `run` swallows the create's output — that is the channel it echoes on.
+  # A phase PHASES.md already marks done gets a gate that is closed, not open: an open gate for a
+  # phase that finished before this script existed would block its issues forever. The number comes
+  # from a re-read because `run` swallows the create's output — that is the channel it echoes on.
   if [ "$dry" -eq 0 ]; then
     local open_gates n_gate
     open_gates="$(gh issue list --repo "$nwo" --state open --limit "$gate_limit" --json number,title </dev/null \
@@ -2860,9 +2861,10 @@ EOF
   rm -f "$pad_file"
 
   echo
-  echo "-- the gate names come from a §11-shaped fixture, not a live read of ARCHITECTURE.md --"
+  echo "-- the gate names come from a PHASES.md-shaped fixture, not a live read of docs/PHASES.md --"
   # phase_titles_of is pure; a fixture here means this test (and the parser it exercises) survives
-  # ARCHITECTURE.md's §11 moving to docs/PHASES.md unchanged — a separate change.
+  # wherever the phase list itself lives — this script moves to marola-devkit, which carries no
+  # docs/PHASES.md of its own (MIP-0070 §5.6).
   local phases_fixture
   phases_fixture="$(cat <<'EOF'
 1. **Phase 0: POC pipeline + six pluggable integrations (done, this change).** Beach discovery.
@@ -2872,9 +2874,9 @@ EOF
 5. **Phase 4: Harden & calibrate.** Caching, per-user rate limiting.
 EOF
 )"
-  check "five phases, with §11's own names" "$(phase_titles_of "$phases_fixture" | cut -f2 | tr '\n' '|')" \
+  check "five phases, with PHASES.md's own names" "$(phase_titles_of "$phases_fixture" | cut -f2 | tr '\n' '|')" \
     "Phase 0 — POC pipeline + six pluggable integrations|Phase 1 — Telegram bot|Phase 2 — Go live on a cloud backend, deliberately|Phase 3 — Deploy|Phase 4 — Harden & calibrate|"
-  check "§11 marks phase 0 done, so that gate is filed closed" \
+  check "PHASES.md marks phase 0 done, so that gate is filed closed" \
     "$(phase_titles_of "$phases_fixture" | awk -F'\t' '$3 == "done" { print $1 }')" "0"
 
   echo
@@ -3126,7 +3128,7 @@ project item-edit --id I-962 --project-id PVT_test --field-id PVTSSF_s --single-
   check "the gate already filed is skipped, the other four are created" "$(tail -1 <<<"$claim_got")" \
     "gates: 4 filed, 1 already there, 0 failed"
   check "each gate carries its own phase label" "$(grep -c -- '--label phase/' "$claim_log" || true)" "4"
-  check "the phase §11 marks done is closed, not left blocking its own issues" \
+  check "the phase PHASES.md marks done is closed, not left blocking its own issues" \
     "$(grep -c 'issue close --repo marola-dev/marola 950 --reason completed' "$claim_log" || true)" "1"
   dry=1
   : > "$claim_log"

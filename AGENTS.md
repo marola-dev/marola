@@ -97,7 +97,7 @@ JDK/Kyo-versioning detail and the jar-verification approach for Kyo's pre-1.0 AP
 
 ## Phase discipline (hard rule)
 
-Work **one phase at a time**, per `docs/2-Building-marola/ARCHITECTURE.md` §11: do not start Phase 2 (going live on
+Work **one phase at a time**, per `docs/PHASES.md`: do not start Phase 2 (going live on
 a cloud backend, GCP per MIP-0057) before Phase 1 (Telegram bot actually working) is done. This
 exists to prevent an expensive mistake, so don't skip it because a later phase looks more interesting. If asked to jump ahead,
 implement the requested feature but flag which earlier-phase prerequisite is still missing.

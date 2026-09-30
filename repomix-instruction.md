@@ -16,7 +16,7 @@ proposals", do the following:
 3. **Write each MIP in English** using the exact template in `.claude/skills/mip/SKILL.md` (every
    section present; "None" where nothing applies), following its house rules: local-first with
    cloud opt-in, safety-relevant logic deterministic and outside the LLM, no unsourced text shown
-   to users, phase discipline (ARCHITECTURE.md §11), honest status vocabulary. Read the existing
+   to users, phase discipline (docs/PHASES.md), honest status vocabulary. Read the existing
    MIPs (docs/MIPs/) for tone and depth, and cross-reference FUTURE-WORK.md sections that already
    sketch the idea instead of re-inventing them.
 4. **Number** from the next free number after the highest in `docs/MIPs/README.md`. Filename

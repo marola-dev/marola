@@ -57,7 +57,7 @@ jobs:
               - '.github/ISSUE_TEMPLATE/**'  # issues.sh --self-test parses these forms
               - '.github/labels.yml'          # and diffs this manifest
               - 'docs/MIPs/*.tasks.md'        # tasks_issues.py --self-test parses all of them
-              - 'docs/2-Building-marola/ARCHITECTURE.md'        # §11's phase names are the gate-issue titles
+              - 'docs/PHASES.md'             # its phase names are the gate-issue titles (issues.sh)
               - 'docs/MIPs/MIP-0063.tasks.md' # and its slug column is the branch `claim` prints
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
             site:
