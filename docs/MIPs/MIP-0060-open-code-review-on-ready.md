@@ -131,7 +131,29 @@ context, so `pr-body.yml`'s same-repo/author guard cannot be copied verbatim: a 
 resolve the PR with `gh pr view` and refuse a fork or a bot author (**not checked**: the exact fields
 to test). Never `pull_request_target`.
 
-Steps: checkout (`fetch-depth: 0`) → compute merge-base → **review** → **post**.
+Steps: checkout (`fetch-depth: 0`) → compute merge-base → **review** → **post**. Only the
+**review** step runs without a GitHub token (§5.1's jail mode):
+
+```mermaid
+sequenceDiagram
+  actor Human
+  participant Runner as ocr-review.yml
+  participant GH as GitHub API
+  box rgb(28,46,64) no GH token, read-only mount
+    participant Jail as jail-run ocr review
+  end
+  participant Post as scripts/ocr-post.py
+
+  Human->>Runner: workflow_dispatch(pr)
+  Runner->>GH: gh pr view (resolve PR)
+  GH-->>Runner: head, author, repo
+  Runner->>Runner: refuse fork or bot author
+  Runner->>Runner: checkout, compute merge-base
+  Runner->>Jail: review --from MB --to HEAD --output ocr.json
+  Jail-->>Runner: ocr.json (comment text only)
+  Runner->>Post: ocr.json
+  Post->>GH: one COMMENT review, upsert sticky summary
+```
 
 - **Review:** `nix develop .#ci-ocr --command jail-run ocr review --from $MB --to $HEAD --format json
   --output $RUNNER_TEMP/ocr.json --effort low --max-tokens-budget $BUDGET`, env `OCR_LLM_URL`,

@@ -204,6 +204,30 @@ On load, `site/v2/app.js`:
 3. scores every beach/hour by calling the cross-compiled `Swimability`, and renders, reusing v1's
    marker, tooltip and card code as the starting point rather than a rewrite.
 
+If the live Open-Meteo fetch fails, v2 does not render an empty map: it falls back to the board it
+already fetched in step 1 — the same static board v1 shows — and says so, never silently under a
+"live" label (§5.6, §6):
+
+```mermaid
+sequenceDiagram
+  participant Browser as site/v2/app.js
+  participant Data as data/area/latest.json
+  participant Meteo as Open-Meteo
+
+  Browser->>Data: fetch shared board
+  Data-->>Browser: geography, water quality, tides
+  Browser->>Meteo: batched hourly request (one call per area)
+  alt live fetch succeeds
+    Meteo-->>Browser: hourly conditions
+    Browser->>Browser: score beach/hour (Swimability, cross-compiled)
+    Browser->>Browser: render live markers, tooltips, cards
+  else live fetch fails
+    Meteo--xBrowser: error or timeout
+    Browser->>Browser: render v1's board instead
+    Browser->>Browser: "showing the static board from HH:MM"
+  end
+```
+
 ### 5.4 One scorer, two targets
 
 Extract the pure scorer and the model types it needs into a cross-compiled module; `core` depends on

@@ -93,6 +93,28 @@ bot photo → `LookIntake`: rate limit (3 photos/chat/hour) → size cap (5 MB) 
 `manOWarVisible || jellyfishVisible || (foam && waterColour == Brown)` also `SightingStore.record`.
 Map (MIP-0005): the board build includes `looks[]` per beach still within `expiresAt`.
 
+```mermaid
+sequenceDiagram
+  actor User
+  participant Intake as LookIntake
+  participant Vision as VisionClient
+  participant Store as LookStore
+  participant Sighting as SightingStore
+
+  User->>Intake: sends photo
+  Intake->>Intake: rate limit (3 photos/chat/hour)
+  Intake->>Intake: size cap (5 MB)
+  Intake->>Intake: face check (§5.4)
+  Intake->>Vision: observe(imageBytes)
+  Vision-->>Intake: Observation
+  Intake->>Store: store Look (expiresAt = takenAt + 6h)
+  Intake-->>User: reply
+  alt manOWarVisible or jellyfishVisible or (foam and waterColour == Brown)
+    Intake->>Sighting: record
+  end
+  Note over Store: board build (MIP-0005) later reads looks[] still within expiresAt
+```
+
 ### 5.3 Where it lives
 
 `core/looks/` (model, trait `LookStore`, `LookIntake` pure validation), `local/looks/`
