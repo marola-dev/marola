@@ -30,6 +30,12 @@ the rule below is also in `.claude/rules/docs.md`, which agents load for `docs/*
   otherwise draws black branches:
   `%%{init: {"themeVariables": {"git0": "#1ac5da", "git1": "#3ecf6e", "git2": "#f0a030", "git3": "#c678dd", "commitLabelColor": "#ffffff", "commitLabelBackground": "#082f45"}}}%%`.
   `gantt` needs a short `axisFormat %d %b`, or its dates overlap.
+- **Every `mermaid` fence's font is pinned for you.** `mkdocs/hooks/mermaid_font.py` runs ahead
+  of the kroki plugin and prepends `%%{init: {"fontFamily": "\"Open Sans\", ..."}}%%` to each one,
+  so Kroki always measures label width in a font it actually has (`kroki-mermaid:0.32.1` ships
+  only Fira Sans, Open Sans and Noto CJK) instead of silently falling back to something narrower
+  than what a reader's browser draws — the cause of a clipped last glyph (#511). Nothing to add
+  to a fence for this.
 - **A broken diagram fails the build**, naming the page (`fail_fast`). `bpmn` and `diagramsnet`
   are off, so those fences stay code blocks.
 - **`excalidraw` is not a default register.** Reach for it only where a hand-drawn sketch is

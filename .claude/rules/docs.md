@@ -39,6 +39,8 @@ code blocks). Other Kroki dialects are not colour-injected: stay inside the tabl
 Reach for `excalidraw` only when a sketch is genuinely clearer than the ASCII/prose it would
 replace (MIP-0068 §5.3) — it is not a default register, and the scene lives out of the Markdown as
 a `.excalidraw` file, editable in the Excalidraw app.
+Every `mermaid` fence's font is pinned automatically (`mkdocs/hooks/mermaid_font.py`, #511) —
+nothing for an author to add.
 
 ## Everything else under `docs/`
 
