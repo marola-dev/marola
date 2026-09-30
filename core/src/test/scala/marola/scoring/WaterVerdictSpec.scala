@@ -108,8 +108,21 @@ class WaterVerdictSpec extends munit.FunSuite:
       "IMA/SC"
     )
     val v = Swimability.waterVerdict(Some(wq), today)
-    assertEquals((v.delta, v.veto, v.note), (0, false, None))
     assertEquals(v.summary, "PRÓPRIA (2/3 pts, 1 unknown, 25 Aug)")
+  }
+
+  test("Unknown points leave the delta at 0") {
+    for conds <- List(
+        List(BathingCondition.Unknown),
+        List(BathingCondition.Proper, BathingCondition.Unknown)
+      )
+    do
+      val wq = WaterQuality(
+        conds.zipWithIndex.map((c, i) => point(s"Ponto $i", c, today.minusDays(11))),
+        "IMA/SC"
+      )
+      val v = Swimability.waterVerdict(Some(wq), today)
+      assertEquals((v.delta, v.veto, v.note), (0, false, None))
   }
 
   test("stale (> 45 days): treated as no data, but says so — an old IMPRÓPRIA does not veto") {
