@@ -99,7 +99,7 @@ scripts/stack.sh start MIP-NNNN <k> <slug>        # branch mip-nnnn/k-slug off t
 # red → green → refactor  (superpowers test-driven-development; systematic-debugging when green won't come)
 just build && just test && just quality           # + a live check whenever a data path changed (superpowers verification-before-completion: evidence, then the claim)
 git commit                                         # message ends with Tested: and Cost: trailers (AGENTS.md) — the PR's Tested/Cost sections come from them
-just pr                                            # fills any missing trailer (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch
+just pr                                            # fills any missing trailer and a task's Closes line (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch
 ```
 
 The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:
@@ -206,11 +206,17 @@ is green; MIP status right; `docs/4-Research-and-plans/FABLE_REVIEW.md` item clo
   when the merged branch is deleted; the commits still need a rebase:
   `scripts/stack.sh restack` on the next branch, or `just stack-sync MIP-NNNN` for the whole
   stack (it adopts the stack from GitHub first; `gh stack link` keeps no local state).
-- A task PR's body carries `Closes #N` for the issue its `MIP-NNNN.tasks.md` row links (`uprd.sh`
-  writes it, #512), so the merge into `main` closes the issue and the board moves it to Done.
-  Label a PR that delivers only part of its task `task-partial`: the line becomes `Part of #N` and
-  the issue stays open. A PR merged into another task branch closes nothing; GitHub honours the
-  keyword only on the default branch.
+- A task branch's own commit carries `Closes #N` for the issue its `MIP-NNNN.tasks.md` row links
+  (`scripts/cost-fill.sh`, run by `scripts/stack.sh pr` — itself run by `just pr`, or directly per
+  step 2 of `.claude/skills/mip-tasks/SKILL.md` — writes it above the trailers), so the
+  squash-merge commit on `main` closes the issue and the board moves it to Done. The PR body
+  carries the same line too (`uprd.sh` copies it there so the link shows on GitHub), but in this
+  repo the body-only line did not close anything: #514–#519 carried it and their issues
+  #502–#507 stayed open past merge (cause unknown, #524), while #511/#512 closed on a commit-body
+  one. `TASK_PARTIAL=1 just pr` skips the line for a task that only delivers part of its row,
+  before the PR (and its `task-partial` label) exist; the issue stays open. A PR merged into
+  another task branch closes nothing regardless; GitHub honours the keyword only on the default
+  branch.
 - `scripts/stack.sh status` / `just stack-view` until every PR is merged.
 - Last merge: superpowers `finishing-a-development-branch`: full suite green, delete the task
   branches, flip the MIP to **Implemented** with the PR numbers and the summed Cost in its status

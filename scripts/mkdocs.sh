@@ -10,7 +10,6 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-image="marola/mkdocs"
 
 # Compose names its project after the directory it runs in, which is `mkdocs` in every checkout of
 # this repo. With fixed container_names on top of that, two builds on one host were the same stack:
@@ -19,6 +18,12 @@ image="marola/mkdocs"
 # checkout path makes the project unique; cksum keeps it short and shell-safe.
 project_name() {
   printf 'marola-mkdocs-%s' "$(printf '%s' "$1" | cksum | cut -d" " -f1)"
+}
+
+# The docs are baked into the image (stage_docs below), so a shared `marola/mkdocs` tag has the
+# same cross-checkout collision as the project name above (#526).
+image_tag() {
+  printf 'marola/mkdocs:%s' "$(printf '%s' "$1" | cksum | cut -d" " -f1)"
 }
 
 # Ported from the reference (MIP-0064 §4.1), including the part that matters: a runtime counts only
@@ -64,13 +69,16 @@ stage_docs() {
 }
 
 run() {
-  local mode="$1" rt files compose
+  local mode="$1" rt files compose image
   rt="$(pick_runtime)" || {
     echo "mkdocs: no reachable docker or podman daemon — a container runtime is this build's prerequisite" >&2
     exit 1
   }
   read -r -a files <<<"$(compose_files "$mode")"
   local project; project="$(project_name "$repo_root")"
+  image="$(image_tag "$repo_root")"
+  # Read by mkdocs/docker-compose.yml's `image:` line for every compose call below, not just build.
+  export MKDOCS_IMAGE="$image"
   compose=("$rt" compose -p "$project")
   export PODMAN_COMPOSE_WARNING_LOGS=false
 
@@ -145,6 +153,13 @@ self_test() {
   ok "$([ "$(project_name /a/b/c)" = "$(project_name /a/b/d)" ] && echo same || echo different)" "different" \
      "two checkouts get different projects, so their stacks cannot collide"
   ok "$(project_name /a/b/c | grep -cE '^marola-mkdocs-[0-9]+$')" "1" "and it is a shell-safe compose project name"
+
+  ok "$(image_tag /a/b/c)" "$(image_tag /a/b/c)" "the image tag is stable for one checkout"
+  ok "$([ "$(image_tag /a/b/c)" = "$(image_tag /a/b/d)" ] && echo same || echo different)" "different" \
+     "two checkouts get different image tags, so a build in one cannot retag the other's image"
+  ok "$(image_tag /a/b/c | grep -cE '^marola/mkdocs:[0-9]+$')" "1" "and it is a well-formed image tag"
+  ok "$(grep -c 'image: \${MKDOCS_IMAGE:-marola/mkdocs}' "$repo_root/mkdocs/docker-compose.yml")" "1" \
+     "compose receives the per-checkout image via MKDOCS_IMAGE, defaulting to the shared tag"
 
   ok "$(compose_files build)" "-f docker-compose.yml -f docker-compose.build.yml" "build mode layers the build override"
   ok "$(compose_files serve)" "-f docker-compose.yml -f docker-compose.serve.yml" "serve mode layers the serve override"

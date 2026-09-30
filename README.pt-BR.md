@@ -113,6 +113,11 @@ o [Open-Meteo](https://open-meteo.com/) (as previsões do mar e do tempo), o
 [Kyo](https://getkyo.io/). Os dados de balneabilidade vêm dos boletins do INEA (Rio de Janeiro), do
 INEMA (Bahia) e do IMA/SC (Santa Catarina).
 
+## Contato
+
+Para qualquer pedido sobre o marola, escreva para [admin@marola.dev](mailto:admin@marola.dev).
+Vulnerabilidades vão pelo canal privado descrito no [`SECURITY.md`](./SECURITY.md).
+
 ## Licença
 
 [MIT](./LICENSE), © 2026 colaboradores do marola.
