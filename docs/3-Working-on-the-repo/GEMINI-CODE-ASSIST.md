@@ -5,9 +5,9 @@ hand in the Google Cloud console, or as a Besom (Pulumi for Scala) program with 
 Everything dated here was checked on 2026-09-21; vendor pages move, so re-check before relying on
 a number.
 
-**Out of date as of 2026-09-30; [MIP-0072](../MIPs/MIP-0072-gemini-review-on-request.md) extends
-and corrects this page.** The repo is public, under `marola-dev`; Google shut the consumer app down
-on 2026-07-17, so only the enterprise install in §3 remains; §4's `githubApp` should be
+**This page is out of date as of 2026-09-30.** [MIP-0072](../MIPs/MIP-0072-gemini-review-on-request.md)
+extends and corrects it. The repo is public, under `marola-dev`. Google shut the consumer app down
+on 2026-07-17, so only the enterprise install in §3 remains, and §4's `githubApp` should be
 `GEMINI_CODE_ASSIST`. MIP-0072 also designs a review started by requesting `marola-dev/gemini`.
 
 Why this tool: `h0ffmann/marola` is a **private** repo, so every "free for open source" tier
