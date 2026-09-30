@@ -208,6 +208,7 @@ GH
   cat >"$cost_fill_stub" <<'SH'
 #!/usr/bin/env bash
 set -e
+echo "$*" >>"${STUB_ARGS_LOG:-/dev/null}"
 [ "${1:-}" = "--dry-run" ] && { echo "cost-fill --dry-run: would rewrite these commits on stub:"; exit 0; }
 git commit -q --amend --allow-empty -m "$(git log -1 --format=%B)
 
@@ -257,6 +258,16 @@ GH
   check "to origin's copy of the branch" "$upstream_ref" "origin/mip-9999/1-fresh"
 
   echo
+  echo "-- pr hands cost-fill the task's own base, not origin/main (#524) --"
+  { git -C "$pr_work" checkout -q -b mip-9999/2-next mip-9999/1-solo
+    git -C "$pr_work" commit -q --allow-empty -m "task 2"
+    git -C "$pr_work" fetch -q origin; } >/dev/null 2>&1
+  out="$(cd "$pr_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$cost_fill_stub" \
+    STUB_ARGS_LOG="$tmp/stub-args" STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" --dry-run pr 2>&1)" || true
+  check "task 2's fork point is task 1's pushed tip" "$(cat "$tmp/stub-args" 2>/dev/null)" \
+    "--dry-run --base $(git -C "$pr_work" rev-parse origin/mip-9999/1-solo)"
+
+  echo
   if [ "$failed" -eq 1 ]; then echo "stack self-test: FAILED" >&2; return 1; fi
   echo "stack self-test: ok"
 }
@@ -279,9 +290,14 @@ case "${1:-}" in
     # whether anything needs a trailer upgrade or a Closes #N line. A rewritten HEAD needs
     # --force-with-lease, same as restack below, since the branch may already be pushed.
     cost_fill="${STACK_SELFTEST_COST_FILL:-scripts/cost-fill.sh}"
+    # The parent's pushed tip, since that is what the PR diffs against; without it cost-fill's
+    # origin/main range would re-amend the parent's commits and see the parent's Closes line.
+    cf_ref="$base"; [ -z "$base" ] || [ "$base" = main ] || cf_ref="origin/$base"
+    cf_base="$(fork_point_for "$cur" "$cf_ref")" || cf_base=""
+    cf_args=(); [ -z "$cf_base" ] || cf_args=(--base "$cf_base")
     if [ "$dry" -eq 1 ]; then
-      echo "+ $cost_fill"
-      cf_out="$("$cost_fill" --dry-run)"
+      echo "+ $cost_fill ${cf_args[*]}"
+      cf_out="$("$cost_fill" --dry-run "${cf_args[@]}")"
       echo "$cf_out"
       if grep -q '^cost-fill --dry-run: would rewrite' <<<"$cf_out"; then
         push=(git push -q -u --force-with-lease origin "$cur")
@@ -290,7 +306,7 @@ case "${1:-}" in
       fi
     else
       before_head="$(git rev-parse HEAD)"
-      "$cost_fill"
+      "$cost_fill" "${cf_args[@]}"
       if [ "$before_head" != "$(git rev-parse HEAD)" ]; then
         push=(git push -q -u --force-with-lease origin "$cur")
       else

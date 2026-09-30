@@ -99,7 +99,7 @@ scripts/stack.sh start MIP-NNNN <k> <slug>        # branch mip-nnnn/k-slug off t
 # red → green → refactor  (superpowers test-driven-development; systematic-debugging when green won't come)
 just build && just test && just quality           # + a live check whenever a data path changed (superpowers verification-before-completion: evidence, then the claim)
 git commit                                         # message ends with Tested: and Cost: trailers (AGENTS.md) — the PR's Tested/Cost sections come from them
-just pr                                            # fills any missing trailer (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch
+just pr                                            # fills any missing trailer and a task's Closes line (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch
 ```
 
 The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:
@@ -208,9 +208,10 @@ is green; MIP status right; `docs/4-Research-and-plans/FABLE_REVIEW.md` item clo
   (`scripts/cost-fill.sh`, run by `scripts/stack.sh pr` — itself run by `just pr`, or directly per
   step 2 of `.claude/skills/mip-tasks/SKILL.md` — writes it above the trailers), so the
   squash-merge commit on `main` closes the issue and the board moves it to Done. The PR body
-  carries the same line too (`uprd.sh` copies it there so the link shows on GitHub), but the body
-  alone never closes anything — #524, after #513 through #519 stayed open past merge on a
-  body-only line, while #511/#512 closed cleanly on a commit-body one. `TASK_PARTIAL=1 just pr`
+  carries the same line too (`uprd.sh` copies it there so the link shows on GitHub), but in this
+  repo the body-only line did not close anything: #514–#519 carried it and their issues
+  #502–#507 stayed open past merge (cause unknown, #524), while #511/#512 closed on a commit-body
+  one. `TASK_PARTIAL=1 just pr`
   skips the line for a task that only delivers part of its row, before the PR (and its
   `task-partial` label) exist; the issue stays open. A PR merged into another task branch closes
   nothing regardless; GitHub honours the keyword only on the default branch.
