@@ -75,6 +75,8 @@ fork_point_for() {
 
 self_test() {
   local failed=0 tmp self repo fork unrelated upstream got out rc
+  local pr_origin pr_work cost_fill_stub local_head remote_head
+  local fp_origin fp_work upstream_ref
   self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
   tmp="$(mktemp -d)"; trap "rm -rf $(printf %q "$tmp")" EXIT
   check() { if [ "$2" = "$3" ]; then echo "ok: $1"; else echo "FAILED: $1"; echo "  got:  $2"; echo "  want: $3"; failed=1; fi; }
@@ -231,6 +233,30 @@ GH
     "$remote_head" "$local_head"
 
   echo
+  echo "-- pr still sets upstream on a brand-new branch's first push (#524) --"
+  # The common case: a task branch's very first scripts/stack.sh pr, never pushed before, where
+  # cost-fill almost always rewrites something (a bare Cost:/Tested: placeholder, at least). The
+  # force-with-lease branch must keep -u too, or the branch ends up with no upstream configured.
+  fp_origin="$tmp/fp-origin.git"; fp_work="$tmp/fp-work"
+  { git init -q --bare "$fp_origin"
+    git init -q -b main "$fp_work"
+    git -C "$fp_work" config user.email fp@example.invalid
+    git -C "$fp_work" config user.name fp-self-test
+    git -C "$fp_work" remote add origin "$fp_origin"
+    git -C "$fp_work" commit -q --allow-empty -m main
+    git -C "$fp_work" push -q origin main
+    git -C "$fp_work" checkout -q -b mip-9999/1-fresh
+    git -C "$fp_work" commit -q --allow-empty -m "task 1"; } >/dev/null 2>&1
+  rc=0
+  out="$(cd "$fp_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$cost_fill_stub" \
+    STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" pr 2>&1)" || rc=$?
+  check "the first-ever push still exits 0" "$rc" "0"
+  rc=0
+  upstream_ref="$(git -C "$fp_work" rev-parse --abbrev-ref mip-9999/1-fresh@\{upstream\} 2>&1)" || rc=$?
+  check "and @{upstream} ends up set despite the force-with-lease branch" "$rc" "0"
+  check "to origin's copy of the branch" "$upstream_ref" "origin/mip-9999/1-fresh"
+
+  echo
   if [ "$failed" -eq 1 ]; then echo "stack self-test: FAILED" >&2; return 1; fi
   echo "stack self-test: ok"
 }
@@ -258,7 +284,7 @@ case "${1:-}" in
       cf_out="$("$cost_fill" --dry-run)"
       echo "$cf_out"
       if grep -q '^cost-fill --dry-run: would rewrite' <<<"$cf_out"; then
-        push=(git push -q --force-with-lease origin "$cur")
+        push=(git push -q -u --force-with-lease origin "$cur")
       else
         push=(git push -q -u origin "$cur")
       fi
@@ -266,7 +292,7 @@ case "${1:-}" in
       before_head="$(git rev-parse HEAD)"
       "$cost_fill"
       if [ "$before_head" != "$(git rev-parse HEAD)" ]; then
-        push=(git push -q --force-with-lease origin "$cur")
+        push=(git push -q -u --force-with-lease origin "$cur")
       else
         push=(git push -q -u origin "$cur")
       fi
