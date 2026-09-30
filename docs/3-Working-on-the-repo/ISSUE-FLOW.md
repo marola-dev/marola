@@ -87,7 +87,7 @@ computed from still happen, so a login is needed either way). Seven of them have
 | `just tasks-to-issues MIP-NNNN [--milestone NAME]` | files a MIP's task table: one issue per row that has none, titled `NNNN-Tk: <slug>`, each row's `#` cell rewritten into a link, one native `blocked by` edge per `depends on` entry. Idempotent; the milestone must already exist |
 | `just milestone-new "<name>" [--mip MIP-NNNN]` | creates a deliverable milestone; re-running with the same name changes nothing |
 | `just labels-sync [--prune] [--force]` | reconciles the repo against `.github/labels.yml`, the versioned manifest; orphans are reported, and only deleted with `--prune` |
-| `just board-sync` | puts every open issue on the board and sets its Status from the issue's own state — but only on a card carrying no Status, or `Backlog`, which is what the auto-add workflow writes rather than a state anyone chose. Any other Status is someone's decision and is left alone |
+| `just board-sync` | puts every open issue on the board and sets its Status from the issue's own state — but only on a card carrying no Status, or `Backlog`, which is what the auto-add workflow writes rather than a state anyone chose. Any other Status is someone's decision and is left alone. Also moves a **closed** issue's card to **Done** whenever it isn't already: the fallback for GitHub's built-in "Item closed" workflow, which fired for one issue and missed the next eight on 2026-09-30 (MIP-0063 §4.4) |
 
 The rest are run through the script. `scripts/issues.sh board setup` (the Status options and the
 views §5.2 names; needs `project` scope) and `board gates` (the five phase gate issues) are
@@ -118,13 +118,16 @@ stateDiagram-v2
   Spec --> Ready: someone's decision
   Ready --> InProgress: issue-claim
   InProgress --> InReview: someone's decision
-  InProgress --> Done: merge
-  InReview --> Done: merge
+  InProgress --> Done: issue closed (built-in workflow, or board-sync as fallback)
+  InReview --> Done: issue closed (built-in workflow, or board-sync as fallback)
 ```
 
 `board-sync` sets a new card's Status once, on first contact with the board, and never overwrites
-it again. From there, a move into Spec or into In review is "someone's decision"; a move into In
-progress is `issue-claim`; and a move into Done is the merge that closes the issue.
+it again — except Done, which it sets whenever an issue is closed and its card isn't there already.
+From there, a move into Spec or into In review is "someone's decision"; a move into In progress is
+`issue-claim`; and a move into Done is GitHub's built-in "Item closed" workflow first, with
+`board-sync` as the fallback when that workflow doesn't fire — observed missing 8 of 9 closes on
+2026-09-30 (MIP-0063 §4.4).
 
 ## What no command can do
 
