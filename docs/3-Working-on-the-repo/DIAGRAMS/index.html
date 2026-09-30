@@ -3321,6 +3321,12 @@ the rule below is also in <code>.claude/rules/docs.md</code>, which agents load 
   otherwise draws black branches:
   <code>%%{init: {"themeVariables": {"git0": "#1ac5da", "git1": "#3ecf6e", "git2": "#f0a030", "git3": "#c678dd", "commitLabelColor": "#ffffff", "commitLabelBackground": "#082f45"}}}%%</code>.
   <code>gantt</code> needs a short <code>axisFormat %d %b</code>, or its dates overlap.</li>
+<li><strong>Every <code>mermaid</code> fence's font is pinned for you.</strong> <code>mkdocs/hooks/mermaid_font.py</code> runs ahead
+  of the kroki plugin and prepends <code>%%{init: {"fontFamily": "\"Open Sans\", ..."}}%%</code> to each one,
+  so Kroki always measures label width in a font it actually has (<code>kroki-mermaid:0.32.1</code> ships
+  only Fira Sans, Open Sans and Noto CJK) instead of silently falling back to something narrower
+  than what a reader's browser draws — the cause of a clipped last glyph (#511). Nothing to add
+  to a fence for this.</li>
 <li><strong>A broken diagram fails the build</strong>, naming the page (<code>fail_fast</code>). <code>bpmn</code> and <code>diagramsnet</code>
   are off, so those fences stay code blocks.</li>
 <li><strong><code>excalidraw</code> is not a default register.</strong> Reach for it only where a hand-drawn sketch is
@@ -3331,7 +3337,7 @@ the rule below is also in <code>.claude/rules/docs.md</code>, which agents load 
 <p>The rest of this page is one working example per dialect. Each one's source is under it.</p>
 <h2 id="mermaid">mermaid<a class="headerlink" href="#mermaid" title="Permanent link">&para;</a></h2>
 <p>The rule above, as a decision tree:</p>
-<p><img alt="Kroki" src="kroki-generated-09fe3255-ba48-3e41-8e3f-d2a847004358.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-ef3b4d2d-82be-359c-a93e-f9f08b87ccdd.svg" /></p>
 <details class="note">
 <summary>Source</summary>
 <div class="highlight"><pre><span></span><code><span class="sb">```mermaid</span>

@@ -3416,7 +3416,7 @@ agent watching conditions. Those are actors: they have state, outlive a request,
 and backpressure. The current request-scoped pipeline does not need it; Kyo <code>Async</code> covers
 fan-out inside one request (<code>SCALA3-JDK-REVIEW.md</code> §3).</p>
 <p>Sketch (a natural MIP-0005):</p>
-<p><img alt="Kroki" src="kroki-generated-fe363f98-a3dd-3bcc-ac89-65ffcc987f6e.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-726bcfa4-0e36-375d-87a8-5d84fd7b955b.svg" /></p>
 <p>Pekko Typed's <code>Behavior</code> API keeps actors pure and testable with <code>BehaviorTestKit</code>, which fits
 this repo's "logic outside the effect boundary" rule; Kyo effects run inside message handlers via
 the same <code>AllowUnsafe</code> boundary the MCP server already uses. Actors give <strong>concurrency and

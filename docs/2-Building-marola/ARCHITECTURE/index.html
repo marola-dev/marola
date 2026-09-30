@@ -3766,7 +3766,7 @@ it used on the <code>origin -&gt;</code> line:</p>
    landed in the centro, and the island's beaches came back.</li>
 <li>The built-in Arpoador default, only if no provider answered at all (offline).</li>
 </ol>
-<p><img alt="Kroki" src="kroki-generated-f6e68ecd-9deb-3da5-88b6-51a281be1338.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-f850600e-356d-31b6-9786-366fec67eac6.svg" /></p>
 <p>No cloud account, no Telegram token are needed for any of the above. Every integration is
 free/local, see §5's table.</p>
 <h2 id="3b-two-different-uses-of-ai-today-a-third-planned-deliberately-not-one">3b. Two different uses of AI today, a third planned — deliberately not one<a class="headerlink" href="#3b-two-different-uses-of-ai-today-a-third-planned-deliberately-not-one" title="Permanent link">&para;</a></h2>
@@ -3819,7 +3819,7 @@ noisy. Only the accumulation is worth doing now. That honesty is the point of li
 third <em>use</em>: when it arrives it will be a third thing that can be wrong in a third way, and it
 should not be quietly folded into either of the two that exist.</p>
 <h2 id="4-target-architecture-telegram-bot-once-built">4. Target architecture (Telegram bot, once built)<a class="headerlink" href="#4-target-architecture-telegram-bot-once-built" title="Permanent link">&para;</a></h2>
-<p><img alt="Kroki" src="kroki-generated-5d6cdc11-0698-3413-bcdf-9094ac698d31.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-c1a8a1ee-f1ec-3351-afe0-634d45f3a27b.svg" /></p>
 <p><code>SwimConditionsMcpServer</code> (§5c) exposes <code>BeachFinder</code>/<code>Recommender</code> as MCP tools for any MCP client
 (Claude Desktop, for example) to call directly, as an alternative
 entry point to the hardcoded pipeline above. Not shown in the diagram since it's a parallel access
@@ -3893,7 +3893,7 @@ discussion, MIP-0057).</p>
 </tr>
 </tbody>
 </table>
-<p><img alt="Kroki" src="kroki-generated-cebe9976-4b5b-30a0-ac6f-4bbfbb5b92ce.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-137d42a0-ebc5-300c-844d-33949c66ca1f.svg" /></p>
 <h3 id="5a-query-synthesis-llm">5a. Query synthesis — <code>llm/</code><a class="headerlink" href="#5a-query-synthesis-llm" title="Permanent link">&para;</a></h3>
 <p>The ranked list in §3 is already useful without an LLM in the loop. Every number comes straight
 from real data and a deterministic heuristic. The LLM's job is narrower: turn the winning row into
@@ -3930,7 +3930,7 @@ three separate output fields, which is what let this reuse <code>CompiledPrompt<
 replay mechanics unchanged, instead of needing a second, structurally different prompt-building
 path. <code>Main --summarize</code> now always runs both passes and prints the reviewer's verdict, not just
 the raw draft.</p>
-<p><img alt="Kroki" src="kroki-generated-8779b378-5aec-3762-8c04-b3756e74b5e6.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-95875b90-c62e-3398-9533-d26281cce00f.svg" /></p>
 <p><strong>Status: genuinely run end to end, not just written.</strong>
 - The DSPy compile step was actually run against a real local Ollama model
   (<code>ollama_chat/dolphin-mixtral:8x7b</code>, <code>MAROLA_DSPY_API_BASE=http://localhost:11434</code>), producing a
@@ -3979,7 +3979,7 @@ way:
    into the assembled jar's stdin and got back correct, real responses: <code>tools/list</code> returned both
    tool schemas; <code>tools/call find_nearby_beaches</code> and <code>tools/call get_swim_recommendation</code> both
    returned real live Overpass/Open-Meteo data.</p>
-<p><img alt="Kroki" src="kroki-generated-ffd951cf-1bf9-3d8a-bc41-f859863e180f.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-a5c36dc1-aa1e-342a-adf4-a8b58e911447.svg" /></p>
 <ol>
 <li><strong>Bug found:</strong> the first assembly run threw <code>ServiceConfigurationError: No
    JsonSchemaValidatorSupplier available</code>. <code>build.sbt</code>'s merge strategy blanket-discarded all of
@@ -4057,7 +4057,7 @@ refuses inland-water points (LAGOA/CANAL/RIO...), because Lagoa da Conceição's
   unmatched sea points only. <code>Swimability.waterVerdict</code> applies MIP-0001 §6: all-IMPRÓPRIA veto,
   mixed −20 naming the spots, PRÓPRIA nothing, stale (&gt; 45 days) nothing-but-say-so.</li>
 </ul>
-<p><img alt="Kroki" src="kroki-generated-4ad01491-1059-3893-a539-fd2b9492aac1.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-4e33e86b-a7bc-3987-8bf0-30001f518561.svg" /></p>
 <ul>
 <li><code>Tides.extrema</code> reads high/low water off Open-Meteo's hourly <code>sea_level_height_msl</code>;
   <code>OpenMeteoClient</code> now also fetches <code>wave_period</code>, <code>wave_direction</code>, <code>swell_wave_height</code>,
@@ -4089,7 +4089,7 @@ scaffold.</strong></p>
   visible "(unsourced)" label rather than refusing. The corpus covers swim safety, users ask
   about the whole ocean. Surfaces: <code>just ask "..."</code> / <code>--ask</code>, MCP <code>ask_ocean_question</code>.</li>
 </ul>
-<p><img alt="Kroki" src="kroki-generated-b9916ed1-5a76-355f-9462-118aa4913459.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-6c080379-cbef-3d75-af89-ca1e93c7abca.svg" /></p>
 <ul>
 <li><strong>Benchmark.</strong> <code>just benchmark</code> (<code>cli/bench/OceanBenchmark</code>) runs 22 ocean questions (science,
   history, animals, nature, safety; ten inside the corpus, twelve deliberately outside) through

@@ -3916,7 +3916,7 @@ HTTP helpers already are; Python only where its libraries are the only ones, her
 <span class="w">                      </span><span class="n">mode</span><span class="p">:</span><span class="w"> </span><span class="nc">Mode</span><span class="p">,</span><span class="w"> </span><span class="n">fromYear</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">,</span><span class="w"> </span><span class="n">toYear</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">,</span><span class="w"> </span><span class="n">dryRun</span><span class="p">:</span><span class="w"> </span><span class="nc">Boolean</span><span class="p">,</span><span class="w"> </span><span class="n">concurrency</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">)</span>
 <span class="k">enum</span><span class="w"> </span><span class="nc">Mode</span><span class="w"> </span><span class="k">derives</span><span class="w"> </span><span class="nc">CanEqual</span><span class="p">:</span><span class="w"> </span><span class="k">case</span><span class="w"> </span><span class="nc">Incremental</span><span class="p">,</span><span class="w"> </span><span class="nc">Backfill</span>
 </code></pre></div>
-<p><img alt="Kroki" src="kroki-generated-a41a0748-0d7f-3d6c-984c-c4f29ae0d081.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-de702da0-13ef-3a08-b8b6-26975a737da2.svg" /></p>
 <p>Rules the planner (<code>Ingest.plan</code>, pure, tested) enforces, the same for every adapter:</p>
 <ul>
 <li><strong>A partition is the unit of work and of idempotency.</strong> For IMA's CSV channel it is (beach,
