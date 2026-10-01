@@ -49,7 +49,7 @@ commands:
       File a MIP's task table as issues (MIP-0070 §5.7): a parent issue in the umbrella titled
       `MIP-NNNN: <title>`, and one sub-issue per row, filed in the repo its `delivers` cell names
       (`**<repo>**`, optionally ` (new)`) — or the umbrella when that repo does not exist yet
-      (`gh repo view`, read-only) or has none. Each row's `#` cell is rewritten into a link, and
+      (`gh api repos/<owner>/<name>`, read-only) or has none. Each row's `#` cell is rewritten into a link, and
       one native `blocked by` edge is wired per entry of the `depends on` column, same-repo or
       cross (a cross-repo attempt is reported as skipped, never as a failure, since GitHub's docs
       do not confirm it either way). Every issue — parent and rows — goes onto Project 1;
@@ -769,7 +769,7 @@ cmd_tasks_to_issues() {
   [ -f "$file" ] || { echo "issues.sh tasks-to-issues: no such task list: $file" >&2; exit 1; }
 
   # Which repos this table's rows name (bare, umbrella excluded), then a read-only existence check
-  # per name — §5.7: exists iff `gh repo view` succeeds, otherwise that row falls back.
+  # per name — §5.7: exists iff `gh api repos/<owner>/<name>` succeeds, a 404 means that row falls back.
   local repo_names name rc=0
   repo_names="$(python3 "$root/scripts/lib/tasks_issues.py" repos "$file")" || rc=$?
   [ "$rc" -eq 0 ] || t2i_fail "reading the table's repo column failed"
@@ -785,7 +785,8 @@ cmd_tasks_to_issues() {
     rv_rc=0
     # </dev/null: this loop's stdin is $repo_names, and a `gh` with no explicit redirection reads
     # whatever fd 0 is — it would otherwise eat the rest of the here-string on its first call.
-    gh repo view "$umbrella_owner/$name" </dev/null >/dev/null 2>"$rv_err" || rv_rc=$?
+    # REST, not `gh repo view`: that one reports a missing repo as a GraphQL error, never a 404.
+    gh api "repos/$umbrella_owner/$name" </dev/null >/dev/null 2>"$rv_err" || rv_rc=$?
     if [ "$rv_rc" -eq 0 ]; then
       existing_json="$(jq -c --arg n "$name" '. + [$n]' <<<"$existing_json")"
     elif ! grep -q 'HTTP 404' "$rv_err"; then
@@ -1875,25 +1876,29 @@ remember_repo() {
   [ -f "$f" ] || echo '{}' > "$f"
   jq --argjson n "$1" --arg r "$2" '.[$n | tostring] = $r' "$f" > "$STUB_DIR/w" && mv "$STUB_DIR/w" "$f"
 }
+# §5.7's existence probe: exactly `api repos/<owner>/<name>`, nothing after it. STUB_DRAIN_REPO_VIEW
+# models a `gh` that reads all of its stdin, so a probe missing `</dev/null` starves the loop.
+if [ "$#" -eq 2 ] && [ "$1" = api ] && [[ "$2" =~ ^repos/[^/]+/[^/]+$ ]]; then
+  probe_target="${2#repos/}"
+  [ -z "${STUB_DRAIN_REPO_VIEW-}" ] || cat >/dev/null
+  printf '%s\n' "$probe_target" >> "$STUB_DIR/repo-view-log"
+  grep -qxF "$probe_target" "${STUB_DIR}/repo-view-fail" 2>/dev/null && {
+    echo "gh: Internal Server Error (HTTP 500)" >&2; exit 1
+  }
+  grep -qxF "$probe_target" "$STUB_DIR/existing-repos" 2>/dev/null && { echo '{}'; exit 0; }
+  echo "gh: Not Found (HTTP 404)" >&2; exit 1
+fi
 case "$*" in
   *"auth status"*) echo auth >> "$STUB_DIR/authlog"; exit 0 ;;
   *"repo view"*)
-    # A bare `repo view --json nameWithOwner` (no owner/name argument) is resolve_nwo asking "what
-    # repo is this"; one naming an owner/repo is §5.7's read-only existence probe.
+    # A bare `repo view --json nameWithOwner` is resolve_nwo asking "what repo is this". The
+    # existence probe is `gh api repos/<owner>/<name>`, handled above.
     view_target=""
     for a in "$@"; do case "$a" in */*) view_target="$a" ;; esac; done
     if [ -z "$view_target" ]; then echo "marola-dev/marola"; exit 0; fi
-    # STUB_DRAIN_REPO_VIEW models a `gh` that reads all of its stdin: review round 1 #1's
-    # existence-check loop shares fd 0 with its own `while read` here-string, so a call missing
-    # `</dev/null` would starve every repo after the first. Harmless against a real `</dev/null`
-    # (reads from /dev/null instead). Every call is logged regardless, so a test can count probes.
-    [ -z "${STUB_DRAIN_REPO_VIEW-}" ] || cat >/dev/null
-    printf '%s\n' "$view_target" >> "$STUB_DIR/repo-view-log"
-    grep -qxF "$view_target" "${STUB_DIR}/repo-view-fail" 2>/dev/null && {
-      echo "gh: Internal Server Error (HTTP 500)" >&2; exit 1
-    }
     grep -qxF "$view_target" "$STUB_DIR/existing-repos" 2>/dev/null && exit 0
-    echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
+    # What the real `gh repo view` prints for a missing repo: a GraphQL error, never "HTTP 404".
+    echo "GraphQL: Could not resolve to a Repository with the name '$view_target'. (repository)" >&2; exit 1 ;;
   *"api -i user"*)
     # STUB_NOHDR models a fine-grained PAT: GitHub sends no X-OAuth-Scopes header at all.
     if [ -n "${STUB_NOHDR-}" ]; then printf 'HTTP/2.0 200 OK\r\nServer: github.com\r\n\r\n{}\n'
@@ -2890,7 +2895,7 @@ EOF
     "$(grep -c '0097-T2.*already filed (marola-dev/marola)$' <<<"$t2r_out")" "1"
 
   echo
-  echo "-- tasks-to-issues: three target repos, every one probed despite sharing stdin with gh (§5.7, review round 1 #1) --"
+  echo "-- tasks-to-issues: three target repos, every one probed despite sharing stdin with gh (§5.7) --"
   local t2p="$tmp/t2p" t2p_out t2p_file
   write_gh_stub "$t2p"
   : > "$t2p/stateful"
