@@ -2,6 +2,7 @@ package marola.scoring
 
 import java.time.LocalDateTime
 
+import marola.json.JsonValue
 import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood, WindLevel}
 
 class SwimabilitySpec extends munit.FunSuite:
@@ -55,7 +56,13 @@ class SwimabilitySpec extends munit.FunSuite:
   test("rough seas drag the score down and are named in the notes") {
     val (score, notes) = Swimability.score(hour(waveHeightM = Some(2.0)))
     assert(score <= 60, s"expected a low score for rough seas, got $score")
-    assert(notes.exists(_.contains("rough seas")), notes.toString)
+    assertEquals(
+      notes,
+      List(
+        Note(NoteCode.RoughSeas, Map("wave_m" -> JsonValue.num(2.0))),
+        Note(NoteCode.JellyfishSome)
+      )
+    )
   }
 
   test("strong wind is penalized more than a light breeze") {
@@ -80,15 +87,14 @@ class SwimabilitySpec extends munit.FunSuite:
   }
 
   test("windLevel and windDelta's note agree — one threshold, two consumers (MIP-0009 §6)") {
-    def noteFor(kmh: Option[Double]): Option[String] =
-      Swimability
-        .score(hour(windSpeedKmh = kmh))
-        ._2
-        .find(n => n.contains("wind") || n.contains("breezy"))
+    val windCodes = Set(NoteCode.Breezy, NoteCode.StrongWind, NoteCode.NoWindData)
+    def noteFor(kmh: Option[Double]): Option[Note] =
+      Swimability.score(hour(windSpeedKmh = kmh))._2.find(n => windCodes.contains(n.code))
+    def kmh(v: Double) = Map("wind_kmh" -> JsonValue.num(v))
     assertEquals(noteFor(Some(8.0)), None) // Calm: no wind note at all
-    assert(noteFor(Some(20.0)).exists(_.startsWith("breezy")), noteFor(Some(20.0)).toString)
-    assert(noteFor(Some(40.0)).exists(_.startsWith("strong wind")), noteFor(Some(40.0)).toString)
-    assertEquals(noteFor(None), Some("no wind data")) // None is "no data", never a band
+    assertEquals(noteFor(Some(20.0)), Some(Note(NoteCode.Breezy, kmh(20.0))))
+    assertEquals(noteFor(Some(40.0)), Some(Note(NoteCode.StrongWind, kmh(40.0))))
+    assertEquals(noteFor(None), Some(Note(NoteCode.NoWindData))) // "no data", never a band
   }
 
   test("cold water is penalized more than warm water") {
@@ -117,9 +123,10 @@ class SwimabilitySpec extends munit.FunSuite:
     val (score, notes) =
       Swimability.score(hour(seaTempC = None, waveHeightM = None, windSpeedKmh = None))
     assert(score < 100, s"expected some penalty for missing data, got $score")
-    assert(notes.exists(_.contains("no wave data")))
-    assert(notes.exists(_.contains("no wind data")))
-    assert(notes.exists(_.contains("no sea temperature data")))
+    assertEquals(
+      notes.map(_.code),
+      List(NoteCode.NoWaveData, NoteCode.NoWindData, NoteCode.NoSeaTempData)
+    )
   }
 
   test(
@@ -196,9 +203,38 @@ class SwimabilitySpec extends munit.FunSuite:
     val (day, dayNotes) = Swimability.score(hour(isDaylight = Some(true)))
     val (night, nightNotes) = Swimability.score(hour(isDaylight = Some(false)))
     assert(night <= day - 50, s"day=$day night=$night")
-    assert(nightNotes.contains("dark") && !dayNotes.contains("dark"))
+    assert(nightNotes.contains(Note(NoteCode.Dark)) && !dayNotes.contains(Note(NoteCode.Dark)))
     // unknown daylight is not penalised (Open-Meteo omitted is_day).
     assertEquals(Swimability.score(hour(isDaylight = None))._1, day)
+  }
+
+  test("each remaining penalty carries its code and the number behind it") {
+    def codes(h: HourlyConditions) = Swimability.score(h)._2
+    assertEquals(
+      codes(hour(waveHeightM = Some(0.84), currentVelocityKmh = Some(4.0))),
+      List(Note(NoteCode.Choppy, Map("wave_m" -> JsonValue.num(0.84))))
+    )
+    assertEquals(
+      codes(hour(seaTempC = Some(15.3), currentVelocityKmh = Some(4.0))),
+      List(
+        Note(NoteCode.ColdWater, Map("sea_temp_c" -> JsonValue.num(15.3))),
+        Note(NoteCode.JellyfishSome)
+      )
+    )
+    assertEquals(
+      codes(hour(seaTempC = Some(28.46), currentVelocityKmh = Some(4.0))),
+      List(
+        Note(NoteCode.WarmWater, Map("sea_temp_c" -> JsonValue.num(28.46))),
+        Note(NoteCode.JellyfishElevated)
+      )
+    )
+    assertEquals(
+      codes(hour(precipitationProbabilityPct = Some(75.0), currentVelocityKmh = Some(4.0))),
+      List(
+        Note(NoteCode.RainLikely, Map("rain_pct" -> JsonValue.num(75.0))),
+        Note(NoteCode.JellyfishSome)
+      )
+    )
   }
 
   test("hourPreference favours mid-morning: 10:00 beats 07:00 beats 00:00") {

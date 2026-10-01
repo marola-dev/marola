@@ -58,7 +58,7 @@ object SwimConditionsMcpServer:
       "wave_height_m" -> best.hour.waveHeightM.map(JsonValue.num).getOrElse(JsonValue.JNull),
       "jellyfish_risk" -> JsonValue.str(best.jellyfishRisk.toString),
       "whale_sighting_likelihood" -> JsonValue.str(best.whaleSightingLikelihood.toString),
-      "notes" -> JsonValue.arr(best.notes.map(JsonValue.str)*),
+      "notes" -> JsonValue.arr(best.notes.map(n => JsonValue.str(n.english))*),
       "water_quality" -> best.waterQuality.map(waterQualityToJson).getOrElse(JsonValue.JNull),
       "water_quality_summary" -> JsonValue.str(marola.Report.waterSummary(best)),
       "tides" -> JsonValue.arr(

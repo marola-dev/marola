@@ -2,6 +2,7 @@ package marola.scoring
 
 import java.time.{LocalDate, LocalDateTime}
 
+import marola.json.JsonValue
 import marola.model.{Coordinates, HourlyConditions}
 import marola.water.{BathingCondition, SamplingPoint, WaterQuality, WaterSample}
 
@@ -52,9 +53,20 @@ class WaterVerdictSpec extends munit.FunSuite:
     )
     val v = Swimability.waterVerdict(Some(wq), today)
     assert(v.veto)
-    assert(
-      v.note.exists(n => n.contains("unfit") && n.contains("Ponto 1") && n.contains("749")),
-      v.note.toString
+    assertEquals(
+      v.note,
+      Some(
+        Note(
+          NoteCode.WaterUnfit,
+          Map(
+            "source" -> JsonValue.str("IMA/SC"),
+            "sampled_on" -> JsonValue.str("2026-09-02"),
+            "point" -> JsonValue.str("Ponto 1"),
+            "location" -> JsonValue.str("loc Ponto 1"),
+            "enterococci_per_100ml" -> JsonValue.num(749)
+          )
+        )
+      )
     )
     assertEquals(Swimability.score(goodHour, v)._1, 0)
     assert(v.summary.startsWith("IMPRÓPRIA"))
@@ -72,7 +84,19 @@ class WaterVerdictSpec extends munit.FunSuite:
     val v = Swimability.waterVerdict(Some(wq), today)
     assert(!v.veto)
     assertEquals(v.delta, -20)
-    assert(v.note.exists(_.contains("avoid loc Ponto 73")), v.note.toString)
+    assertEquals(
+      v.note,
+      Some(
+        Note(
+          NoteCode.WaterMixed,
+          Map(
+            "proper" -> JsonValue.num(2),
+            "total" -> JsonValue.num(3),
+            "avoid" -> JsonValue.arr(JsonValue.str("loc Ponto 73"))
+          )
+        )
+      )
+    )
     assert(v.summary.startsWith("2/3 PRÓPRIA"), v.summary)
     val (base, _) = Swimability.score(goodHour)
     assertEquals(Swimability.score(goodHour, v)._1, base - 20)
@@ -93,7 +117,10 @@ class WaterVerdictSpec extends munit.FunSuite:
     )
     val v = Swimability.waterVerdict(Some(wq), today)
     assertEquals((v.delta, v.veto), (0, false))
-    assert(v.note.exists(_.contains("stale")), v.note.toString)
+    assertEquals(
+      v.note,
+      Some(Note(NoteCode.WaterStale, Map("sampled_on" -> JsonValue.str("2026-07-21"))))
+    )
     assert(v.summary.startsWith("stale"))
     // exactly 45 days is still fresh.
     val edge = WaterQuality(

@@ -56,7 +56,8 @@ object Report:
     val dist = f"${best.beach.distanceKm}%.1fkm away"
     val temp = best.hour.seaTempC.map(t => f"$t%.1f°C sea").getOrElse("sea temp n/a")
     val wind = best.hour.windSpeedKmh.map(w => f"$w%.0fkm/h wind").getOrElse("wind n/a")
-    val notes = if best.notes.isEmpty then "good conditions" else best.notes.mkString(", ")
+    val notes =
+      if best.notes.isEmpty then "good conditions" else best.notes.map(_.english).mkString(", ")
     val whale =
       if best.whaleSightingLikelihood == WhaleSightingLikelihood.Low then ""
       else s"  |  whale sighting: ${best.whaleSightingLikelihood}"
@@ -75,7 +76,7 @@ object Report:
     // (`--brief`, the detail block and MCP still see it via `best.notes`).
     val verdict = Swimability.waterVerdict(best.waterQuality, todayFor(best))
     val inline = best.notes.filterNot(n => verdict.note.contains(n))
-    val notes = if inline.isEmpty then "" else s"  |  ${inline.mkString(", ")}"
+    val notes = if inline.isEmpty then "" else s"  |  ${inline.map(_.english).mkString(", ")}"
     f"${rank}%2d. [${best.score}%3d/100] ${best.beach.name}%-22s (${best.beach.distanceKm}%.1fkm)  $when  |  water: ${verdict.summary}  |  $temp, $wind, $waves  |  jellyfish: ${best.jellyfishRisk}$whale$notes${facilitiesSuffix(best)}"
 
   def detail(best: BestHour): String =
