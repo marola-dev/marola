@@ -39,6 +39,10 @@ self_test() {
   mkdir -p "$tmp/bin" "$tmp/bare-code-repo"
   cat >"$tmp/bin/gh" <<'SH'
 #!/bin/sh
+# A real `gh api` reads stdin even when nothing asked it to (issues.sh's write_gh_stub carries the
+# same line, verified live against the real binary) — drained here so the stub reproduces that,
+# not just its answers.
+cat >/dev/null
 case "$*" in
   *"repos/marola-dev/marola/contents/docs/MIPs --jq"*)
     printf '%s\n' MIP-0068.tasks.md MIP-0070-umbrella-and-polyrepo-split.md MIP-0070.tasks.md ;;
@@ -54,6 +58,18 @@ SH
     "$(cd "$tmp/bare-code-repo" && PATH="$tmp/bin:$PATH" bash "$script_dir/mip-resolve.sh" MIP-0070)" "gh api doc body"
   check "and the tasks file the same way" \
     "$(cd "$tmp/bare-code-repo" && PATH="$tmp/bin:$PATH" bash "$script_dir/mip-resolve.sh" MIP-0070 tasks)" "gh api tasks body"
+
+  echo
+  echo "-- the gh api fallback must not consume the caller's stdin --"
+  # A gh call with no explicit redirection reads whatever fd 0 happens to be — here, a `while read`
+  # loop's own input. Before mip_ref.sh's `gh api` calls added `</dev/null`, the resolver's first
+  # call inside the loop ate the loop's remaining lines: 1 line processed, not 2.
+  local wr_lines=0
+  while IFS= read -r _wr_line; do
+    wr_lines=$((wr_lines + 1))
+    (cd "$tmp/bare-code-repo" && PATH="$tmp/bin:$PATH" bash "$script_dir/mip-resolve.sh" MIP-0070 >/dev/null)
+  done < <(printf 'a\nb\n')
+  check "both lines of a while-read loop survive a gh api call inside it" "$wr_lines" "2"
 
   echo
   echo "-- MAROLA_UMBRELLA is a devkit setting, not a literal --"
