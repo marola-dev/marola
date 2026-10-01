@@ -3,9 +3,7 @@
 # generated site, from a release asset its own CI publishes. The umbrella never builds Scala or
 # Python here (MIP-0070 §5.5): no `sbt doc`, no pdoc. The asset name is a cross-repo contract —
 # api-docs.tar.gz, attached to GitHub's "latest" release — unpacked under <mount>/api/, a sibling
-# of the mounted README/docs: the same after-the-mkdocs-build placement api-docs.yml already uses
-# for the monorepo's own scaladoc/pdoc trees. No repo publishes this asset yet (marola-app will,
-# task 15); a missing release or asset is not an error, just a skip.
+# of the mounted README/docs. A missing release or asset is not an error, just a skip.
 #
 #   scripts/fetch-api-docs.sh SITE_DIR [REPOS_FILE]   # default mkdocs/repos.yml
 #   scripts/fetch-api-docs.sh --self-test              # stubs gh; no network
@@ -92,6 +90,14 @@ SH
   ok "$([ -f "$t/site/repos/has-asset/api/index.html" ] && echo yes || echo no)" "yes" "the default-mount submodule's asset lands under repos/<name>/api/"
   ok "$([ -d "$t/site/elsewhere/api" ] && echo yes || echo no)" "no" "the skipped submodule's custom mount gets nothing"
   ok "$(printf '%s' "$out" | grep -c 'marola-dev/has-asset ->')" "1" "...and the fetched one is logged"
+  rm -rf "$t"
+
+  echo
+  echo "-- mount ./ lands the asset at the site root's api/ (this repo's own, until task 15) --"
+  t="$(mktemp -d)"
+  printf -- '- name: has-asset\n  mount: ./\n' >"$t/manifest.yml"
+  PATH="$stub:$PATH" fetch_all "$t/site" "$t/manifest.yml" >/dev/null 2>&1
+  ok "$([ -f "$t/site/api/index.html" ] && echo yes || echo no)" "yes" "the asset is unpacked under <site>/api/"
   rm -rf "$t"
   rm -rf "$stub"
 

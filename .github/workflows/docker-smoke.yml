@@ -31,8 +31,7 @@ on:
     - cron: "30 9 * * *" # 06:30 in Brazil, before the morning swim (MIP-0008.tasks.md decision 3)
 
 permissions:
-  contents: write # push to the site-data branch
-  actions: write # gh workflow run site.yml
+  contents: read
   packages: read # the image is private until the maintainer flips it (MIP-0065 §4.3)
 
 concurrency:
@@ -108,19 +107,13 @@ jobs:
           docker run --rm --network host -e MAROLA_LOCAL_LLM_MODEL="$MODEL" "$IMAGE" "$@" 2>&1 | tee smoke-stdout.txt || code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
 
-      # The orphan branch, as a worktree of this checkout (so the checkout's token pushes it);
-      # created empty on the first run.
-      - name: Check out the site-data branch
-        run: |
-          if git ls-remote --exit-code --heads origin site-data >/dev/null; then
-            git fetch --depth=1 origin site-data
-            git worktree add site-data FETCH_HEAD
-            git -C site-data checkout -q -B site-data
-          else
-            git worktree add --detach site-data
-            git -C site-data checkout -q --orphan site-data
-            git -C site-data rm -rfq .
-          fi
+      - name: Check out marola-site's site-data branch
+        uses: actions/checkout@v7
+        with:
+          repository: marola-dev/marola-site
+          ref: site-data
+          path: site-data
+          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
 
       - name: Record the run (smoke/latest.json, history.json, runs/<id>.json)
         run: |
@@ -148,11 +141,10 @@ jobs:
           git commit -q -m "smoke: run ${{ github.run_id }} ($MODEL, $IMAGE)"
           ../scripts/site-data-push.sh .
 
-      # workflow_dispatch is one of the two events GITHUB_TOKEN may trigger from a workflow.
-      - name: Rebuild the site so the panel refreshes
+      - name: Rebuild the map so the panel refreshes
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (≤ 3 h) will pick the run up"
+          GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+        run: gh api repos/marola-dev/marola-site/dispatches -f event_type=site-data-updated || echo "could not dispatch to marola-site — its next scheduled build (≤ 3 h) will pick the run up"
 
       - name: Fail the job if the run was not ok
         run: |

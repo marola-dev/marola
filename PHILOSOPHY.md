@@ -131,7 +131,7 @@ image and the laptop run the same shell.
 ## Why a `justfile`
 
 Recipes are the agent's vocabulary. `just build`, `just test`, `just quality`, `just benchmark`,
-`just e2e`, `just site-build`, `just uprd`, `just cost-split`: each is a short, discoverable
+`just e2e`, `just docs`, `just uprd`, `just cost-split`: each is a short, discoverable
 name for a command that would otherwise be reconstructed from memory, slightly differently each
 time. `just --list` is documentation that cannot go stale, and a recipe is where the environment
 quirks live once (the `XDG_RUNTIME_DIR` override sbt needs inside the sandbox is at the top of the

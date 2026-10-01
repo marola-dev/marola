@@ -4,7 +4,7 @@ site_description: The ocean intelligence layer for a stretch of coast — guides
 # page (its own special case, plugins/privacy/plugin.py — Material normally injects it on demand,
 # and it cannot tell on demand without a canonical URL). Kroki already renders the diagrams to SVG
 # server-side, so that is 3.5 MB of dead JavaScript on all 97 pages, republished every docs change.
-site_url: https://marola.dev/docs/
+site_url: https://docs.marola.dev/
 repo_url: https://github.com/marola-dev/marola
 edit_uri: edit/main/docs/
 

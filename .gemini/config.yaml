@@ -18,4 +18,3 @@ ignore_patterns:
   - "**/src/test/resources/fixtures/**"
   - "**/reachability-metadata.json"
   - "flake.lock"
-  - "site/static/vendor/**"

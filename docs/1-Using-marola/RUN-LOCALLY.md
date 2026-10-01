@@ -200,7 +200,7 @@ Compare with `docs/benchmarks/2026-09-05.md`: the kept reference run and what it
 
 ## 5.2 Plug your local model into the public site's chat widget (MIP-0033)
 
-`marola.dev` (or wherever `site/dist/` is served) ships a chat widget that stays hidden until it
+`marola.dev` ([marola-site](https://github.com/marola-dev/marola-site)) ships a chat widget that stays hidden until it
 finds a working endpoint, no server dependency by default. To turn it on, run marola's own tiny
 HTTP server and expose it through a **named** Cloudflare Tunnel (a quick/ephemeral tunnel's URL
 changes every restart, which would break the widget's saved config):
@@ -220,13 +220,13 @@ cloudflared tunnel route dns marola-chat chat.<your-domain>   # or use the trycl
 cloudflared tunnel run --url http://localhost:8787 marola-chat
 ```
 
-Then point the widget at that URL: edit `site/static/chatbot-config.js`:
+Then point the widget at that URL: edit marola-site's `site/static/chatbot-config.js`:
 
 ```js
 window.MAROLA_CHAT_ENDPOINT = "https://chat.<your-domain>"; // or the trycloudflare.com URL
 ```
 
-`just site-build` copies `site/static/*` (including this file) into `site/dist/` as-is. Leave
+marola-site's `just site-build` copies `site/static/*` (including this file) into `site/dist/` as-is. Leave
 `MAROLA_CHAT_ENDPOINT` empty to keep the widget hidden. That's the default, committed state, so a
 fresh clone's site never shows a chat button pointing nowhere. The widget calls `/health` on page
 load and only reveals its toggle button on a 200; a later failure while chatting shows an honest
@@ -290,45 +290,20 @@ returned files under `docs/MIPs/` and let the in-repo agent verify the sources.
 
 ## 9. The map — build the boards once, serve them as a static site (MIP-0005)
 
-Everything above answers one person at a time. `just site-build` runs the same pipeline once per
-*area* (`site/areas.json`: Florianópolis, Rio de Janeiro and Salvador by default) and writes what a static map needs:
+Everything above answers one person at a time. `--site` runs the same pipeline once per *area* of
+an areas file and writes the board data a static map needs:
 
 ```bash
-just site-build floripa        # ~70 s live: one Overpass query, two Open-Meteo calls per beach, one IMA download
-just site-serve                # http://localhost:8000 — tap Praia do Campeche, see Ponto 73 flagged
+just run -- --site floripa --areas cli/src/test/resources/site/areas.json   # ~70 s live
 ```
 
-`site/dist/` (git-ignored) then holds `index.html` + `app.js` + vendored Leaflet from
-`site/static/`, and under `data/`: `areas.json`, and per area `<today>.json`, `<tomorrow>.json`
-(the board; `cli/src/main/resources/board.schema.json` is the contract, checked by `BoardSpec`) and `latest.json`
-pointing at both. The page shows every beach as a wave marker coloured by score: hover it (tap, on a phone: the same row opens first in the card) for the six aspects at that hour: wind band with its emoji and km/h, water temperature, waves, jellyfish, whales, water verdict (MIP-0009), a card with the same
-numbers the CLI prints, a day picker, an hour slider, the generated-at time and every source. No
-cookies, no analytics; "near me" is the browser's own geolocation, on request, never sent anywhere.
-If `site/dist/smoke/latest.json` exists (the docker smoke test's last run, §10; `site.yml` copies
-it from the `site-data` branch; locally `git archive origin/site-data smoke | tar -x -C site/dist`,
-or `python3 scripts/smoke_record.py record …` on any `--summarize` transcript) the footer adds a
-"Last live run" panel: model, image, top pick, the reviewed sentence labelled as model text with
-the reviewer's verdict (hidden on `reject`), the last ten runs, and a dashed marker at the run's
-origin.
-
-Keep it fresh locally with a timer, a plain cron line (`crontab -e`):
-
-```
-15 */3 * * *  cd /path/to/marola && nix develop -c just site-build >> .tmp/site-build.log 2>&1
-```
-
-or a `systemd --user` timer with the same command. Only `site/dist` is ever published, and
-`site.yml` fails if anything outside its allowlist (the page, `vendor/`, `data/`, `smoke/`) is
-in there. The repository is private, the map is public, and `docs/*.md` stay on GitHub rather
-than becoming pages (Pages source must be "GitHub Actions", never "Deploy from a branch", which
-would run Jekyll over the whole branch). Publishing: `just site-deploy` triggers
-`.github/workflows/site.yml` (build on the runner, deploy to GitHub Pages; the same workflow runs
-every 3 h on its own and on every merge to `main` that touches `site/` or the pipeline; the result
-is https://marola.dev/, GitHub Pages' custom domain; see `.github/workflows/site.yml`'s header
-comment for the CNAME/DNS setup), `just site-deploy cloudflare` pushes a local `site/dist` with wrangler.
-Tiles come from OpenStreetMap's public servers, which is fine for a link shared among friends and
-not for a public launch. Switch `tiles` in `site/areas.json` to a Protomaps/MapTiler source
-before that (MIP-0005 §8).
+`site/dist/data/` (git-ignored) then holds `areas.json` and per area `<today>.json`,
+`<tomorrow>.json` (the board; `cli/src/main/resources/board.schema.json` is the contract, checked
+by `BoardSpec`) and `latest.json` pointing at both. The page that renders them, the real areas
+file, the 3-hourly build and the deploy to https://marola.dev/ live in
+[marola-site](https://github.com/marola-dev/marola-site) (MIP-0070), which runs this app's
+published image with `--site --areas site/areas.json`; its `just site-build floripa && just
+site-serve` is the local preview.
 
 ## 10. Docker only — no Nix, no sbt, no Ollama install (MIP-0008)
 
@@ -393,9 +368,8 @@ just docker-build native                                     # the distroless im
 **The smoke test.** GitHub → Actions → "docker smoke test" → Run workflow (`lat`/`lon`, or a
 Google Maps pin in `maps_url`, `model`, `image`) runs `--summarize` in the published image on a
 runner with a cached `llama3.2:1b`, also every morning at 09:30 UTC. `scripts/smoke_record.py`
-turns the transcript into `smoke/latest.json` + `smoke/history.json` on the orphan `site-data`
-branch (never deployed by that workflow: `site.yml` copies it into the map, so two deploys never
-race), the map's footer shows it as "Last live run" and the job fails when the pipeline, the
+turns the transcript into `smoke/latest.json` + `smoke/history.json` on marola-site's `site-data`
+branch (never deployed by that workflow: marola-site's `site.yml` copies it into the map), the map's footer shows it as "Last live run" and the job fails when the pipeline, the
 model or the reviewer did not answer. `python3 scripts/smoke_record.py --self-test` (in `just
 quality`) parses a recorded transcript, `scripts/fixtures/smoke-stdout-2026-09-05.txt`.
 

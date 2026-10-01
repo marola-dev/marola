@@ -1,13 +1,10 @@
-# docs — the umbrella's aggregated documentation site: this repo's own docs/ plus every
-# submodule's README.md + docs/, and each submodule's pre-built API docs when it publishes one
-# (MIP-0070 §5.5). Builds and uploads the site as a Pages artifact only — no deploy job yet (ruling
-# T10-7): task 12 adds it once this repo serves docs.marola.dev instead of the map at marola.dev,
-# where api-docs.yml + site.yml are still the live publish path until then.
+# docs — the umbrella's aggregated documentation site at docs.marola.dev: this repo's own docs/
+# plus every submodule's README.md + docs/, and each submodule's pre-built API docs when it
+# publishes one (MIP-0070 §5.5). The map at marola.dev is marola-site's, deployed separately.
 name: docs
 
 on:
-  # The code-repo side of this (notify-umbrella.yml, a devkit workflow) ships with the first
-  # submodule, task 15.
+  # Sent by each submodule's notify-umbrella.yml (a devkit workflow).
   repository_dispatch:
     types: [submodule-docs-updated]
   push:
@@ -24,7 +21,7 @@ permissions:
 
 concurrency:
   group: docs
-  cancel-in-progress: true
+  cancel-in-progress: false # never kill a Pages deploy mid-way
 
 jobs:
   build:
@@ -37,8 +34,7 @@ jobs:
 
       # §5.5: non-PR builds track each submodule's latest main; a PR build stays on the pinned
       # commit the gitlink already carries, so it doesn't fail on something merged after it opened.
-      # This workflow carries no `pull_request` trigger today (no submodule exists to preview), so
-      # the condition always holds — kept explicit for when one is added.
+      # No `pull_request` trigger here (ci.yml's docs-build is the PR build), so this always runs.
       - name: Track every submodule's latest main
         if: github.event_name != 'pull_request'
         run: git submodule update --init --remote
@@ -60,9 +56,34 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: scripts/fetch-api-docs.sh mkdocs/generated-docs
 
+      # This repo is still the app until MIP-0070 task 15: its api-docs.yml release lands at /api/,
+      # where docs/2-Building-marola/API.md links.
+      - name: Fold in this repo's own API docs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf -- '- name: %s\n  mount: ./\n' "${GITHUB_REPOSITORY#*/}" > .tmp/self-repos.yml
+          scripts/fetch-api-docs.sh mkdocs/generated-docs .tmp/self-repos.yml
+
+      - name: The published tree keeps script-src 'self'
+        run: python3 scripts/strip_external_scripts.py --check mkdocs/generated-docs
+
       - uses: actions/upload-pages-artifact@v5
         with:
           path: mkdocs/generated-docs
 
-  # deploy: task 12 adds this job (pages: write, id-token: write, actions/deploy-pages@v5) once
-  # this repo serves docs.marola.dev — see MIP-0070 §5.5 and §11.
+  # The custom domain is a repo setting: an Actions-deployed Pages site ignores a CNAME file.
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

@@ -95,7 +95,6 @@ quality-other:
     scripts/corpus-fetch.sh --self-test
     scripts/marola-sea-pull.sh --self-test
     python3 scripts/analyze_training.py --self-test
-    python3 scripts/site_live_check.py --self-test
     scripts/site-data-push.sh --self-test
     scripts/build-resources-tarball.sh --self-test
     python3 scripts/ocr-post.py --self-test
@@ -112,8 +111,6 @@ quality-other:
     python3 finetune/build_dpo_dataset.py --self-test
     python3 finetune/preflight.py --self-test
     python3 finetune/merge_export.py --self-test
-    node --check site/static/app.js
-    node scripts/site_check.js
     actionlint
     hadolint Dockerfile Dockerfile.local mkdocs/Dockerfile
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
@@ -150,24 +147,6 @@ prepush:
     #!/usr/bin/env bash
     set -euo pipefail
     base="$(git rev-parse -q --verify '@{push}' 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || true)"
-    # site/static/** belongs to a design: each commit touching it names one, or says why not.
-    bad=()
-    if [ -n "$base" ]; then
-        exclude=()
-        git rev-parse -q --verify origin/main >/dev/null && exclude=(--not origin/main)
-        while read -r sha; do
-            [ -n "$sha" ] || continue
-            grep -qE '^site/static/' <<<"$(git diff --name-only "$sha^" "$sha" 2>/dev/null)" || continue
-            grep -qE '^MIP: (MIP-[0-9]{4}|none — .+)$' <<<"$(git log -1 --format=%B "$sha")" || bad+=("$sha")
-        done < <(git rev-list "$base..HEAD" ${exclude[@]+"${exclude[@]}"})
-    fi
-    if [ "${#bad[@]}" -gt 0 ]; then
-        echo "prepush: commit(s) touching site/static/** with no 'MIP:' trailer:" >&2
-        for sha in "${bad[@]}"; do echo "  $(git log -1 --format='%h %s' "$sha")" >&2; done
-        echo "Add 'MIP: MIP-NNNN' (the design it's for) or 'MIP: none — <reason>' (a bug fix/typo/" >&2
-        echo "refactor with no behaviour change — /marola-devkit:mip's 'Not for' list) to each commit's trailers." >&2
-        exit 1
-    fi
     echo "prepush: running 'just quality-other'..."
     just quality-other
     if [ -z "$base" ] || grep -qE '\.(scala|sbt)$|^project/|^\.scalafmt\.conf$|^\.scalafix\.conf$' <<<"$(git diff --name-only "$base" HEAD)"; then
@@ -308,33 +287,6 @@ finetune-publish repo gguf base *args:
     python3 finetune/publish_hf.py --repo {{ repo }} --gguf {{ gguf }} --base-model {{ base }} {{ args }}
 
 # ---------------------------------------------------------------------
-# The map — MIP-0005: precomputed boards on a static site (site/)
-# ---------------------------------------------------------------------
-
-# Build the static map's data into site/dist (MIP-0005; SiteBuilder: board data only, MIP-0070 §5.4).
-site-build area="":
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --site {{ area }} --areas site/areas.json"
-    mkdir -p site/dist && cp -r site/static/. site/dist/
-    scripts/stamp_site_version.sh site/dist
-
-# Serve site/dist at http://localhost:8000 (python3 is in the flake).
-site-serve port="8000":
-    python3 -m http.server -d site/dist {{ port }}
-
-# Deploy the map to GitHub Pages.
-site-deploy target="github":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    case "{{ target }}" in
-        github)
-            gh workflow run site.yml && echo "queued site.yml — watch it: gh run list --workflow site.yml" ;;
-        cloudflare)
-            [ -f site/dist/index.html ] || { echo "site/dist is empty — run: just site-build" >&2; exit 1; }
-            npx --yes wrangler pages deploy site/dist --project-name "${MAROLA_SITE_PROJECT:-marola}" ;;
-        *) echo "unknown target '{{ target }}' — github | cloudflare" >&2; exit 1 ;;
-    esac
-
-# ---------------------------------------------------------------------
 # The docs site — MIP-0064: mkdocs-material + a self-hosted Kroki (mkdocs/)
 # ---------------------------------------------------------------------
 
@@ -343,8 +295,8 @@ site-deploy target="github":
 docs:
     scripts/mkdocs.sh
 
-# Serve the docs on http://localhost:8001/docs/ (8000 is `just site-serve`'s; the /docs/ path is
-# site_url's). The docs are baked into the image, so a doc edit needs a restart — no live reload.
+# Serve the docs on http://localhost:8001/. The docs are baked into the image, so a doc edit needs
+# a restart — no live reload.
 docs-serve:
     scripts/mkdocs.sh --serve
 
@@ -608,10 +560,6 @@ worktree dir=".tmp/wt-main":
 # Drop worktree registrations whose directories are gone. Never deletes a live worktree.
 worktree-prune:
     git worktree prune -v
-
-# Check what marola.dev actually serves (or --base http://localhost:8000).
-site-live-check *args:
-    python3 scripts/site_live_check.py {{ args }}
 
 # Claude Code in the jail — labs/agentic's jail-run (h0ffmann/nix-config). MAROLA_JAIL_CLIPBOARD*
 # still work for one release; the lab's names are JAIL_CLIPBOARD / JAIL_CLIPBOARD_PASTE.

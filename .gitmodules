@@ -1,0 +1,3 @@
+[submodule "marola-site"]
+	path = marola-site
+	url = https://github.com/marola-dev/marola-site.git

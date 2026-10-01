@@ -321,7 +321,7 @@ waking up, full stop.
 
 ## 8. The docs site
 
-Everything under `docs/` is published at <https://marola.dev/docs/>, rendered and full-text
+Everything under `docs/` is published at <https://docs.marola.dev/>, rendered and full-text
 searchable, by mkdocs-material with a self-hosted Kroki rendering the Mermaid fences to SVG
 (MIP-0064). The prose ships the same way the code does, so it carries the same gates.
 
@@ -342,18 +342,19 @@ the index of what inside each doc is MIP material. `docs/benchmarks/` and `docs/
 `exclude_docs`'d — repo artefacts, not documentation — and are linked at GitHub when referenced.
 
 **Preview, and the gate.** `just docs-serve` serves the real build on
-<http://localhost:8001/docs/>; the docs are baked into the image, so a doc edit needs a restart,
+<http://localhost:8001/>; the docs are baked into the image, so a doc edit needs a restart,
 not a reload. `just docs` is the build alone, and it is `--strict`: one unresolved internal link
 anywhere in `docs/` turns it red. Links that leave `docs/` — `AGENTS.md`, `PHILOSOPHY.md`,
 `docs/benchmarks/` — are absolute GitHub URLs for exactly that reason. Both need a Docker or
 Podman daemon (MIP-0064 decision 4); neither is part of `just quality`, so a docs change is
 previewed by hand.
 
-**How it ships.** A push to `main` touching `docs/**` or `mkdocs/**` runs `api-docs.yml`: scaladoc
-and pdoc, then `scripts/mkdocs.sh`, then the API trees folded into the site under `api/`, then
-`strip_external_scripts.py --check` over the merged tree, then the whole thing pushed to the
-`site-data` branch. `site.yml` deploys from there. A docs-only edit therefore pays for the whole
-job, scaladoc included, and appears on marola.dev after the next site deploy rather than on merge.
+**How it ships.** A push to `main` touching `docs/**` or `mkdocs/**` runs `docs.yml`: this repo's
+`docs/` plus each submodule's `README.md` + `docs/` (`scripts/prepare-docs.sh`, MIP-0070 §5.5),
+`scripts/mkdocs.sh`, then the API docs unpacked under `api/` from release assets, then a Pages
+deploy to docs.marola.dev on merge. No sbt runs: `api-docs.yml` builds the API docs separately,
+when Scala or the scripts change. A push to a submodule's `docs/` redeploys the same way, through
+its `submodule-docs-updated` dispatch.
 
 ## 9. Command reference
 
@@ -372,8 +373,8 @@ job, scaladoc included, and appears on marola.dev after the next site deploy rat
 | Gates | `just build && just test && just quality` (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part) |
 | Before every push | the pre-push hook runs `just prepush`: `just quality-other`, plus `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
 | Statement coverage (aggregated core/local/cli) | `just coverage`; published to the README badge by ci.yml on pushes to `main` |
-| Live checks | `just run -- --brief`, `just e2e`; once MIP-0005 lands, `just site-build floripa && just site-serve` |
-| The docs site | `just docs` (strict build into `mkdocs/generated-docs`), `just docs-serve` (preview on `localhost:8001/docs/`) — both need a Docker or Podman daemon |
+| Live checks | `just run -- --brief`, `just e2e`; the map is marola-site's `just site-build floripa && just site-serve` |
+| The docs site | `just docs` (strict build into `mkdocs/generated-docs`), `just docs-serve` (preview on `localhost:8001`) — both need a Docker or Podman daemon |
 | One PR, start to finish | `just pr` (`--dry-run` prints every step and the body, no push, no `gh`) — fills missing trailers, pushes, opens/updates the PR |
 | Fill missing trailers only | `just cost-fill` (`--dry-run` to preview) — adds a measured or `est.` `Cost:` and a `ci-only` `Tested:` to any commit missing one, dates preserved |
 | Diff-size Cost estimate | `cost-split --estimate [--verbose]` (whole branch), `--estimate-commit <sha>` (one commit) — used automatically by `cost-fill`/`uprd` when nothing was logged |

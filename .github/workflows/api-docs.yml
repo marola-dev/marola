@@ -1,7 +1,6 @@
-# api-docs — generate Scala/Python API docs and push them to the `site-data` branch. MIP-0044 §5.6.
-# Not on the site's 3-hourly schedule: ~20 MB is uploaded when an input changes, not eight times a
-# day. Since MIP-0064 the prose is an input too, so a doc edit runs the whole job — scaladoc,
-# pdoc and the Kroki/mkdocs containers — not just the cheap half.
+# api-docs — build Scaladoc and pdoc and publish them as api-docs.tar.gz on the rolling `api-docs`
+# release, which docs.yml unpacks under docs.marola.dev/api/ (MIP-0070 §5.5). Scaladoc moves to
+# marola-app (task 15) and pdoc to marola-ml (task 14) with their code.
 name: API docs
 
 on:
@@ -13,16 +12,15 @@ on:
       - 'project/**'
       - 'scripts/**.py'
       - 'finetune/build_dataset.py'
-      - 'docs/**'          # the prose is published from here now, so a docs-only edit republishes
-      - 'mkdocs/**'        # and so does a change to the build that renders it
   workflow_dispatch:
 
 permissions:
-  contents: write   # push the generated tree to the site-data branch
+  contents: write   # create/update the release
+  actions: write    # gh workflow run docs.yml
 
 concurrency:
   group: api-docs
-  cancel-in-progress: true
+  cancel-in-progress: false # never kill a release upload mid-way
 
 jobs:
   build:
@@ -43,77 +41,39 @@ jobs:
           set -euo pipefail
           sbt core/doc local/doc cli/doc
           for m in core local cli; do
-            mkdir -p out/docs/api/scala/"$m"
-            cp -r "$m"/target/scala-*/api/. out/docs/api/scala/"$m"/
+            mkdir -p out/api/scala/"$m"
+            cp -r "$m"/target/scala-*/api/. out/api/scala/"$m"/
           done
 
       - name: pdoc for the scripts
         run: |
           set -euo pipefail
-          # Stdlib-only CLI scripts, not a library — the index page says so, per MIP-0044 §5.6.
-          # All of finetune/, not just build_dataset.py: every script there keeps torch/peft/trl
-          # behind lazy imports, so pdoc can import them without the ML stack installed (verified
-          # — all six render). That discipline exists for --dry-run/--self-test; documenting them
-          # is a second thing it buys.
-          # pipx, not pip: the hosted image's system Python refuses `pip install` (PEP 668).
-          pipx run pdoc -o out/docs/api/python scripts/*.py finetune/*.py || \
+          # Every finetune/ script keeps torch/peft/trl behind lazy imports, so pdoc imports them
+          # without the ML stack. pipx, not pip: the hosted image's Python refuses `pip install`.
+          pipx run pdoc -o out/api/python scripts/*.py finetune/*.py || \
             echo "pdoc produced nothing for some inputs — continuing with what it did produce"
 
       - name: strip third-party scripts so the docs keep script-src 'self'
         run: |
           set -euo pipefail
-          python3 scripts/strip_external_scripts.py out/docs/api/scala out/docs/api/python
+          python3 scripts/strip_external_scripts.py out/api/scala out/api/python
+          python3 scripts/strip_external_scripts.py --check out/api
 
-      # MIP-0064: this replaces build_docs_index.py, which published a page of links to GitHub
-      # because docs/*.md could not be mirrored. The repo is public, so it can be.
-      - name: mkdocs (material + kroki), with the API trees folded in
+      - name: publish api-docs.tar.gz on the api-docs release
         env:
-          CONTAINER_RUNTIME: docker
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          scripts/mkdocs.sh
-          # Loudly, not silently: `cp -r src dest/api` creates dest/api when it is free and nests
-          # into dest/api/api when it is not. It is free only because the page is API.md and the
-          # output is case-sensitive — rename it to api.md, or build on a case-insensitive disk,
-          # and /docs/api/ would serve the prose page with every link in it broken.
-          [ ! -e mkdocs/generated-docs/api ] || {
-            echo "mkdocs output already has an api/ directory — the API trees would nest inside it" >&2
-            exit 1
-          }
-          cp -r out/docs/api mkdocs/generated-docs/api
-          rm -rf out/docs && mv mkdocs/generated-docs out/docs
-
-      # After the merge, not before: the check has to see the tree that actually ships, which is
-      # now mkdocs' output plus api/. --check reuses the stripper's own regex; the previous guard
-      # grepped for `src="http`, which matched pdoc's rendering of the stripper's own docstring.
-      - name: the published tree keeps script-src 'self'
-        run: |
-          set -euo pipefail
-          python3 scripts/strip_external_scripts.py --check out/docs
-          find out/docs -maxdepth 3 -name index.html | sort
-
-      - name: push to the site-data branch
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          tmp="$(mktemp -d)"
-          if git fetch --depth=1 origin site-data 2>/dev/null; then
-            git worktree add -f "$tmp" FETCH_HEAD --detach
+          tar -czf api-docs.tar.gz -C out/api .
+          notes="Scaladoc + pdoc from ${GITHUB_SHA::12}, unpacked by docs.yml under docs.marola.dev/api/."
+          if gh release view api-docs >/dev/null 2>&1; then
+            gh release upload api-docs api-docs.tar.gz --clobber
+            gh release edit api-docs --notes "$notes" --latest
           else
-            git worktree add -f --detach "$tmp"
-            git -C "$tmp" checkout --orphan site-data
-            git -C "$tmp" rm -rq --cached . 2>/dev/null || true
+            gh release create api-docs api-docs.tar.gz --target "$GITHUB_SHA" --title "API docs" --notes "$notes" --latest
           fi
-          # The tree is docs/, not api/ — site.yml copies `docs` out of site-data. Removing and
-          # staging `api` here left the copy unstaged and `add` with nothing to match.
-          rm -rf "${tmp:?}/docs"
-          cp -r out/docs "$tmp/docs"
-          git -C "$tmp" add -A docs
-          if git -C "$tmp" diff --cached --quiet; then
-            echo "api docs unchanged — nothing to push"
-            exit 0
-          fi
-          git -C "$tmp" commit -qm "api docs from ${GITHUB_SHA::12}"
-          scripts/site-data-push.sh "$tmp"
-          echo "pushed docs/ to site-data"
+
+      - name: redeploy docs.marola.dev with the new API docs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run docs.yml || echo "could not trigger docs.yml — its daily build will pick the API docs up"

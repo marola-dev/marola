@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# site-data-push — push the one commit a workflow just made on its `site-data` worktree, retrying
-# when another workflow pushed first.
+# site-data-push — push the one commit a workflow just made on its checkout of marola-site's
+# `site-data` branch, retrying when another workflow pushed first.
 #
-#   scripts/site-data-push.sh <worktree-dir>
+#   scripts/site-data-push.sh <checkout-dir>
 #   scripts/site-data-push.sh --self-test
 #
-# ci.yml (coverage, stats), api-docs.yml and docker-smoke.yml each write their own directory, so a
+# ci.yml (coverage, stats) and docker-smoke.yml each write their own directory, so a
 # rejected push never conflicts in content, only in ref. The checkouts are --depth=1, which is why
 # this replays only HEAD (`--onto FETCH_HEAD HEAD~1`): a plain rebase would also try to replay the
 # shallow root, i.e. the whole old tree.

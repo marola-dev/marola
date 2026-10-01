@@ -25,7 +25,6 @@ jobs:
       python: ${{ steps.filter.outputs.python }}
       workflows: ${{ steps.filter.outputs.workflows }}
       docker: ${{ steps.filter.outputs.docker }}
-      site: ${{ steps.filter.outputs.site }}
       justfile: ${{ steps.filter.outputs.justfile }}
       docs: ${{ steps.filter.outputs.docs }}
       nix: ${{ steps.filter.outputs.nix }}
@@ -57,10 +56,6 @@ jobs:
               - 'docs/MIPs/*.tasks.md'        # mip_graph.py --check regenerates the graph from all of them
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
               - '.github/workflows/ci.yml'  # the self-test list below
-            site:
-              - 'site/**'            # app.js/CSS/fixtures → scripts/site_check.js (MIP-0009 task 2)
-              - 'scripts/site_check.js'
-              - 'cli/src/main/resources/board.schema.json'  # moved out of site/ (MIP-0070 §5.4)
             workflows:
               - '.github/workflows/**'
             docker:
@@ -79,6 +74,8 @@ jobs:
             docs:
               - 'docs/**'
               - 'mkdocs/**'
+              - '.gitmodules'
+              - 'marola-site'
 
   build-test:
     needs: changes
@@ -93,11 +90,8 @@ jobs:
     if: needs.changes.outputs.scala == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Pushing coverage/latest.json to the orphan site-data branch, and re-triggering site.yml so the
-    # badge refreshes right away.
     permissions:
-      contents: write
-      actions: write
+      contents: read
     steps:
       - uses: actions/checkout@v7
 
@@ -138,18 +132,15 @@ jobs:
           PY
           echo && cat coverage.json
 
-      # site.yml copies this orphan branch's smoke/ and coverage/ into site/dist (GITHUB_TOKEN only).
-      - name: Publish the coverage JSON to the site-data branch
+      # marola-site's site.yml copies coverage/, smoke/ and stats/ from its site-data into the map.
+      - uses: actions/checkout@v7
+        with:
+          repository: marola-dev/marola-site
+          ref: site-data
+          path: site-data
+          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+      - name: Publish the coverage JSON to marola-site's site-data branch
         run: |
-          if git ls-remote --exit-code --heads origin site-data >/dev/null; then
-            git fetch --depth=1 origin site-data
-            git worktree add site-data FETCH_HEAD
-            git -C site-data checkout -q -B site-data
-          else
-            git worktree add --detach site-data
-            git -C site-data checkout -q --orphan site-data
-            git -C site-data rm -rfq .
-          fi
           mkdir -p site-data/coverage
           cp coverage.json site-data/coverage/latest.json
           git -C site-data config user.name "github-actions[bot]"
@@ -162,11 +153,10 @@ jobs:
             scripts/site-data-push.sh site-data
           fi
 
-      # workflow_dispatch is one of the two events GITHUB_TOKEN may trigger from a workflow.
-      - name: Rebuild the site so the coverage badge refreshes
+      - name: Rebuild the map so the coverage badge refreshes
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (≤ 3 h) will pick the coverage number up"
+          GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+        run: gh api repos/marola-dev/marola-site/dispatches -f event_type=site-data-updated || echo "could not dispatch to marola-site — its next scheduled build (≤ 3 h) will pick the coverage number up"
 
   # app -> ml contract (MIP-0070 §5.4): finetune/build_dataset.py and the benchmark gate read this
   # unpacked tarball instead of ../core once marola-ml is a separate repo.
@@ -189,7 +179,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write # push the badge JSONs to the site-data branch
+      contents: read
       actions: read # read this run's own jobs/steps (the default token is contents-only)
     steps:
       - uses: actions/checkout@v7
@@ -210,17 +200,14 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: python3 scripts/repo_stats.py write --out-dir stats --repo "$REPO" --run-id "$RUN_ID" --exclude-job repo-stats
 
-      - name: Publish the stats JSONs to the site-data branch
+      - uses: actions/checkout@v7
+        with:
+          repository: marola-dev/marola-site
+          ref: site-data
+          path: site-data
+          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+      - name: Publish the stats JSONs to marola-site's site-data branch
         run: |
-          if git ls-remote --exit-code --heads origin site-data >/dev/null; then
-            git fetch --depth=1 origin site-data
-            git worktree add site-data FETCH_HEAD
-            git -C site-data checkout -q -B site-data
-          else
-            git worktree add --detach site-data
-            git -C site-data checkout -q --orphan site-data
-            git -C site-data rm -rfq .
-          fi
           mkdir -p site-data/stats
           cp stats/*.json site-data/stats/
           git -C site-data config user.name "github-actions[bot]"
@@ -232,12 +219,10 @@ jobs:
             git -C site-data commit -q -m "stats: ${{ github.sha }}"
             scripts/site-data-push.sh site-data
           fi
-          # No site.yml trigger: the scheduled build picks these up without an Overpass query.
+          # No dispatch: marola-site's scheduled build picks these up without an Overpass query.
 
-  # The docs build is strict, and since MIP-0064 task 3 it is also the step api-docs.yml publishes
-  # through. Without this gate a broken internal link merges green, then fails on main and takes
-  # the whole publish with it — scaladoc and pdoc included, since site.yml only deploys when that
-  # workflow succeeded. Runs the same script `just docs` does, so there is one build to keep green.
+  # docs.yml's build on the PR's pinned submodule commits (MIP-0070 §5.5): without this gate a
+  # broken internal link merges green and then fails the docs.marola.dev deploy on main.
   docs-build:
     needs: changes
     if: needs.changes.outputs.docs == 'true'
@@ -245,9 +230,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - run: scripts/prepare-docs.sh
       - name: mkdocs --strict, in the Kroki container stack
         env:
           CONTAINER_RUNTIME: docker
+          DOCS_SRC: .tmp/docs-aggregated
         run: scripts/mkdocs.sh
 
   # Free, fast, and independent of the JVM build — the same gates as `just quality-other`, split
@@ -272,18 +261,15 @@ jobs:
 
   static-ci:
     needs: changes
-    if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
+    if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
     uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.2.2
     with:
       actionlint-version: "1.7.12"
       hadolint-version: "2.14.0"
       # Dockerfile.local is missing until MIP-0065 task 2 fixes its hadolint failure.
       hadolint-files: Dockerfile mkdocs/Dockerfile
-      # The site harness runs app.js against site/fixtures in a stub DOM (MIP-0009); every compose
-      # profile must still render (MIP-0010), and both mkdocs overrides (MIP-0064).
+      # Every compose profile must still render (MIP-0010), and both mkdocs overrides (MIP-0064).
       extra-commands: |
-        node --check site/static/app.js
-        node scripts/site_check.js
         docker compose --profile mlflow --profile ollama --profile local config --quiet
         docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet
         docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet

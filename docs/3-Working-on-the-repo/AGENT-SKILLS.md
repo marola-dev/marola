@@ -11,9 +11,10 @@ are Claude Code only. See
 
 ## 1. In-repo skills (`.claude/skills/`)
 
+The map's `site-frontend` skill moved to [marola-site](https://github.com/marola-dev/marola-site) with the page.
+
 | Skill | Use when | Notes |
 |---|---|---|
-| `site-frontend` | Any change to what a visitor sees on the static map (`site/static/`), or a request to make it "modern", "appealing", a better first impression | The product layer for the page: look at the built page first (its `site_check.js` stub-DOM harness runs `app.js` against `site/dist`), one type scale, the data colours untouched, a red-flags list for the generated look. Written with `writing-skills`: a baseline agent produced a gradient header, frosted pills, Tailwind hex codes and 250 unrendered CSS lines; the recipe targets exactly that |
 | `eli5` | Someone needs a topic explained from zero — a rip current, swell period, upwelling, the swimability score, the Kyo effect boundary — or `/eli5 <topic>` | The teaching layer, read-only: grounds the explanation in `knowledge/*.md` (for sea topics, the same corpus `--ask` answers from) or `docs/2-Building-marola/ARCHITECTURE.md`/`docs/MIPs/` (for internals), one picture before the prose, pt-BR or English to match the question. Writes nothing but an optional page under `.tmp/eli5/`; a fact that belongs in the corpus goes through `corpus-doc` instead. Adapted from the community `eli5` skill (Thariq Shihipar, MIT) |
 
 ## 1.1 marola-devkit plugin skills
@@ -59,7 +60,7 @@ pinned to a version). Opt out on one machine with the same key set to `false` in
 | **using-git-worktrees** | Yes, for parallel work | One worktree per MIP implementation; pairs with "one feature, one session". The ai-jail sandbox maps the repo directory, so worktrees must live *inside* it or be mapped. |
 | **finishing-a-development-branch** | Yes | Squash-merge is the repo's habit; rebuild follow-ups on `origin/main` via cherry-pick rather than stacking (memory: single PR per deliverable). |
 | **dispatching-parallel-agents** / **subagent-driven-development** | Selectively | Subagents are where Fable's cost is saved: research, doc review, fixture recording on Sonnet/Haiku. Not for the core scoring/safety code, which the human and the main session should read. |
-| **writing-skills** | Used | `site-frontend` was the second in-repo skill (a baseline run without it, then with it); candidates for more below. |
+| **writing-skills** | Used | `site-frontend` (now in marola-site) was the second in-repo skill (a baseline run without it, then with it); candidates for more below. |
 | **using-superpowers** | Read once | Framework intro. |
 
 ## 2.1 Using superpowers here — one MIP, start to finish
@@ -115,7 +116,7 @@ tooling might have shaped it:
 | Plugin | Source | What it's for |
 |---|---|---|
 | `code-review@claude-plugins-official` | Anthropic's official marketplace | `/code-review [PR#] [--comment]` / `/code-review ultra` — five-parallel-agent PR review, used on request per `docs/3-Working-on-the-repo/DEV-FLOW.md` §5. Its confidence scorer only credits repo rules it can read (`.claude/rules/*.md`, `AGENTS.md`), so review-relevant conventions stay written there, not only in prose to the agent. |
-| `frontend-design@claude-plugins-official` | Anthropic's official marketplace | Design-review passes for `site/static/` changes — the `site-frontend` in-repo skill (§1 above) is the primary tool for this repo's actual look-and-feel rules; this plugin is a secondary opinion. |
+| `frontend-design@claude-plugins-official` | Anthropic's official marketplace | Design-review passes for marola-site's `site/static/` changes — that repo's `site-frontend` skill is the primary tool for its look-and-feel rules; this plugin is a secondary opinion. |
 | `heavy-usage@heavy-usage` (`heavyc-dev/heavy-usage`) | Third-party marketplace | Usage-window tracking (`/heavy-usage:usage`) feeding `/marola-devkit:mip-solve-perpetual`'s wind-down math — see `docs/3-Working-on-the-repo/DEV-FLOW.md`'s "verified against its actual source" section for exactly what it can and can't do (soft signal only, no hard `PreToolUse` block). |
 | `portal@portal` (`spotify/portal-ai-plugins`) | Third-party marketplace, added 2026-09-07 | Spotify Portal (Backstage software-catalog) workflows — setup/search/service-briefing/diagnostics against the maintainer's own Portal instance via the Portal CLI. **Not used for marola's own code or workflow** — marola isn't cataloged in Backstage — this is general dev tooling the maintainer runs day to day, unrelated to this repo's own process. |
 
