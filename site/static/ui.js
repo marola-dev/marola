@@ -152,6 +152,7 @@
   window.marolaI18n = {
     t: t,
     lang: function () { return current; },
+    locale: function () { return intlLang(current); },
     setLang: setLang,
     onLang: function (fn) { listeners.push(fn); },
     resolveLang: resolveLang,

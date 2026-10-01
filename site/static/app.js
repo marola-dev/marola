@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  var SCHEMA = 1;
+  var SCHEMAS = [1, 2]; // 2 adds note_codes (MIP-0054 task 3); anything else is a board newer than this page
   var SOURCE_LINKS = {
     'OpenStreetMap/Overpass': 'https://www.openstreetmap.org/copyright',
     'Open-Meteo': 'https://open-meteo.com/',
@@ -28,11 +28,29 @@
   };
 
   // --- helpers -------------------------------------------------------------------------------.
+  var I = window.marolaI18n, t = I.t;
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  /** t() for text with plain-text args, escaped whole; markup args go through bare t() pre-escaped. */
+  function tx(key, args) { return esc(t(key, args)); }
+  var formats = {};
+  function num(n, digits) {
+    var k = I.locale() + digits;
+    if (!formats[k]) formats[k] = new Intl.NumberFormat(I.locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    return formats[k].format(n);
+  }
+  // A no-break space keeps "6 s" together when a tooltip cell wraps.
   function fmt(n, unit, digits) {
-    if (n === null || n === undefined) return 'n/a';
-    return n.toFixed(digits === undefined ? 1 : digits) + (unit || '');
+    if (n === null || n === undefined) return t('common.na');
+    return num(n, digits === undefined ? 1 : digits) + (unit || '').replace(' ', '\u00a0');
+  }
+  function shortDate(iso) {
+    return new Intl.DateTimeFormat(I.locale(), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(iso + 'T00:00:00Z'));
+  }
+  /** A wire enum through the catalog (wind.*, lvl.*, dir.*); a value with no key passes through. */
+  function word(prefix, v) {
+    var key = prefix + String(v).toLowerCase(), out = t(key);
+    return out === key ? String(v) : out;
   }
   function colour(score, unfit) {
     if (score === null || score === undefined) return getCss('--cna');
@@ -64,11 +82,12 @@
     return 2 * R * Math.asin(Math.sqrt(h));
   }
   function param(name) { return new URLSearchParams(location.search).get(name); }
-  var setParam = window.marolaI18n.setParam;
+  var setParam = I.setParam;
 
   /** The hour entry a beach shows for the current slider position (its best when hourIndex < 0). */
   function shown(beach) {
-    if (state.hourIndex < 0) return { h: beach.best.hour, score: beach.best.score, notes: beach.best.notes, best: true };
+    var b = beach.best;
+    if (state.hourIndex < 0) return { h: b.hour, score: b.score, notes: b.notes, note_codes: b.note_codes, best: true };
     var h = state.hours[state.hourIndex];
     for (var i = 0; i < beach.hours.length; i++) if (beach.hours[i].h === h) return beach.hours[i];
     return null; // dark at that hour for this beach
@@ -85,7 +104,7 @@
   function loadAreas() {
     return fetchJson('data/areas.json').then(function (j) {
       state.areas = j.areas || [];
-      if (!state.areas.length) throw new Error('no areas in data/areas.json');
+      if (!state.areas.length) throw new Error(t('fail.no_areas'));
       el.area.innerHTML = state.areas.map(function (a) {
         return '<option value="' + esc(a.id) + '">' + esc(a.name) + '</option>';
       }).join('');
@@ -99,25 +118,31 @@
   function selectArea(area) {
     state.area = area; setParam('area', area.id);
     ensureMap(area);
-    status('loading ' + area.name + '…');
+    status(t('status.loading_named', { name: area.name }));
     return fetchJson('data/' + area.id + '/latest.json').then(function (latest) {
       state.latest = latest;
-      el.days.innerHTML = latest.days.map(function (d, i) {
-        var label = i === 0 ? 'today' : i === 1 ? 'tomorrow' : d.day;
-        return '<button type="button" data-day="' + esc(d.day) + '" data-file="' + esc(d.file) + '">' + label + ' <small>' + esc(d.day.slice(5)) + '</small></button>';
-      }).join('');
+      renderDays();
       var wanted = param('day');
       var pick = latest.days.filter(function (d) { return d.day === wanted; })[0] || latest.days[latest.days.length - 1];
       return selectDay(pick);
     });
   }
 
+  // Its own function so a language flip relabels the buttons without refetching latest.json.
+  function renderDays() {
+    el.days.innerHTML = state.latest.days.map(function (d, i) {
+      var label = i === 0 ? tx('day.today') : i === 1 ? tx('day.tomorrow') : esc(d.day);
+      return '<button type="button"' + (d.day === state.day ? ' class="on"' : '') + ' data-day="' + esc(d.day) + '" data-file="' + esc(d.file) + '">' +
+        label + ' <small>' + esc(d.day.slice(5)) + '</small></button>';
+    }).join('');
+  }
+
   function selectDay(d) {
-    setParam('day', d.day);
+    state.day = d.day; setParam('day', d.day);
     Array.prototype.forEach.call(el.days.children, function (b) { b.classList.toggle('on', b.dataset.day === d.day); });
-    status('loading ' + d.day + '…');
+    status(t('status.loading_named', { name: d.day }));
     return fetchJson('data/' + state.area.id + '/' + d.file).then(function (board) {
-      if (board.schema !== SCHEMA) throw new Error('board schema ' + board.schema + ', this page understands ' + SCHEMA);
+      if (SCHEMAS.indexOf(board.schema) < 0) throw new Error(t('fail.schema', { got: String(board.schema), want: SCHEMAS.join(', ') }));
       state.board = board;
       state.hours = [];
       board.beaches.forEach(function (b) { b.hours.forEach(function (h) { if (state.hours.indexOf(h.h) < 0) state.hours.push(h.h); }); });
@@ -145,8 +170,8 @@
 
   // --- wave markers + hover aspects (MIP-0009) ----------------------------------------------.
   var WIND_EMOJI = { calm: '🍃', breezy: '🌬️', strong: '💨' };
-  var COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-  function compass(deg) { return deg === null || deg === undefined ? '' : COMPASS[Math.round(deg / 45) % 8]; }
+  var COMPASS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+  function compass(deg) { return word('dir.', COMPASS[Math.round(deg / 45) % 8]); }
 
   var WAVE_PATH = 'M3 10c2.6-7 6.4-7 9 0s6.4 5 9 0v10H3z';
   function waveIcon(fill, selected, past) {
@@ -166,29 +191,38 @@
     return null;
   }
 
+  // 'no data' is the one summary the board writes in words rather than the agency's verdict.
+  function noWaterData(beach) { return beach.water.summary === 'no data'; }
+  function waterSummary(beach) { return noWaterData(beach) ? t('water.no_data') : beach.water.summary; }
   function waterDotClass(beach) {
     if (beach.water.unfit) return 'wdot c0';
-    if (beach.water.summary === 'no data') return 'wdot cna';
+    if (noWaterData(beach)) return 'wdot cna';
     return 'wdot c70';
+  }
+
+  function wavesText(waveM, periodS) {
+    return t('cell.waves', { m: fmt(waveM, ' m'), every: periodS === null || periodS === undefined ? 'no' : 'yes', s: fmt(periodS, ' s', 0) });
   }
 
   /** Every emoji is followed by its word: older fonts lack 🪼. */
   function aspectsHtml(beach, s) {
-    var head = '<div class="head">🌊 ' + esc(beach.name) + (s ? ' · ' + s.score + '/100 at ' + esc(s.h) : ' · dark at this hour') + '</div>';
+    var head = '<div class="head">🌊 ' + esc(beach.name) + ' · ' + (s ? tx('tip.at', { score: s.score, h: s.h }) : tx('tip.dark')) + '</div>';
     var e = hourEntry(beach, s);
     if (!e) return head;
     var level = e.wind_level || null; // an older board has no band: number only, no word
-    var wind = (level ? WIND_EMOJI[level] + ' ' + level + ', ' : '🌬️ wind ') + fmt(e.wind_kmh, ' km/h', 0) +
-      (s.best && beach.sea.wind_dir_deg !== null ? ' ' + compass(beach.sea.wind_dir_deg) : '');
-    var waves = '〰️ waves ' + fmt(e.wave_m, ' m') + (s.best && beach.sea.period_s !== null ? ' every ' + fmt(beach.sea.period_s, ' s', 0) : '');
-    var whales = '🐋 whales ' + esc(e.whales) + (beach.whales.peak && beach.whales.peak !== e.h ? ' (best ' + esc(beach.whales.peak) + ')' : '');
-    var water = '<span class="wide ' + (beach.water.unfit ? 'unfit' : 'water') + '"><i class="' + waterDotClass(beach) + '"></i> ' + esc(beach.water.summary) + '</span>';
+    var kmh = fmt(e.wind_kmh, ' km/h', 0);
+    var wind = (level ? (WIND_EMOJI[level] || '🌬️') + ' ' + esc(word('wind.', level)) + ', ' + esc(kmh) : '🌬️ ' + tx('cell.wind', { v: kmh })) +
+      (s.best && beach.sea.wind_dir_deg !== null ? ' <abbr class="dir">' + esc(compass(beach.sea.wind_dir_deg)) + '</abbr>' : '');
+    var waves = '〰️ ' + esc(wavesText(e.wave_m, s.best ? beach.sea.period_s : null));
+    var peak = beach.whales.peak && beach.whales.peak !== e.h;
+    var whales = '🐋 ' + tx('cell.whales', { level: word('lvl.', e.whales), best: peak ? 'yes' : 'no', peak: beach.whales.peak || '' });
+    var water = '<span class="wide ' + (beach.water.unfit ? 'unfit' : 'water') + '"><i class="' + waterDotClass(beach) + '"></i> ' + esc(waterSummary(beach)) + '</span>';
     var facilities = facilitiesHtml(beach.facilities);
     return head + '<div class="grid">' +
       '<span>' + wind + '</span>' +
-      '<span>🌡️ water ' + fmt(e.sea_temp_c, ' °C') + '</span>' +
+      '<span>🌡️ ' + tx('cell.water', { v: fmt(e.sea_temp_c, ' °C') }) + '</span>' +
       '<span>' + waves + '</span>' +
-      '<span>🪼 jellyfish ' + esc(e.jellyfish) + '</span>' +
+      '<span>🪼 ' + tx('cell.jellyfish', { level: word('lvl.', e.jellyfish) }) + '</span>' +
       '<span>' + whales + '</span>' +
       water +
       (facilities ? '<span class="wide facilities">' + facilities + '</span>' : '') +
@@ -219,13 +253,13 @@
     });
   }
 
-  var FACILITY_LABEL = { parking: '🅿️ parking', toilets: '🚻 toilets', shower: '🚿 shower', lifeguard: '🛟 lifeguard' };
+  var FACILITY_EMOJI = { parking: '🅿️', toilets: '🚻', shower: '🚿', lifeguard: '🛟' };
 
   function facilitiesHtml(f) {
     if (!f) return '';
     var parts = ['parking', 'toilets', 'shower', 'lifeguard']
       .filter(function (k) { return f[k] !== undefined && f[k] !== null; })
-      .map(function (k) { return FACILITY_LABEL[k] + ' ' + f[k]; });
+      .map(function (k) { return FACILITY_EMOJI[k] + ' ' + tx('fac.' + k, { n: f[k] }); });
     return parts.join(' · ');
   }
 
@@ -257,9 +291,9 @@
   }
 
   function renderHourLabel() {
-    if (state.hourIndex < 0) { el.hourLabel.textContent = 'best hour per beach'; return; }
+    if (state.hourIndex < 0) { el.hourLabel.textContent = t('hour.best'); return; }
     var h = state.hours[state.hourIndex];
-    el.hourLabel.textContent = 'at ' + h + (isPast(h) ? ' (already past)' : '');
+    el.hourLabel.textContent = t('hour.at', { h: h, past: isPast(h) ? 'yes' : 'no' });
   }
 
   // --- list ----------------------------------------------------------------------------------.
@@ -278,11 +312,11 @@
     var items = ranked().map(function (b) {
       var s = shown(b);
       var score = s ? s.score : '–';
-      var water = b.water.unfit ? '<span class="water unfit">' + esc(b.water.summary) + '</span>'
-        : (b.water.points.length ? '<span class="water">' + esc(b.water.summary) + '</span>' : '');
-      var dist = state.here ? ' <span class="dist">' + b._km.toFixed(1) + ' km</span>' : '';
+      var water = b.water.unfit ? '<span class="water unfit">' + esc(waterSummary(b)) + '</span>'
+        : (b.water.points.length ? '<span class="water">' + esc(waterSummary(b)) + '</span>' : '');
+      var dist = state.here ? ' <span class="dist">' + num(b._km, 1) + ' km</span>' : '';
       return '<li data-name="' + esc(b.name) + '"><span class="score ' + band(s ? s.score : null, b.water.unfit) + '">' + score + '</span>' +
-        esc(b.name) + (s ? ' <span class="dist">' + esc(s.h) + '</span>' : ' <span class="dist">dark</span>') + dist + water + '</li>';
+        esc(b.name) + ' <span class="dist">' + (s ? esc(s.h) : tx('list.dark')) + '</span>' + dist + water + '</li>';
     });
     el.list.innerHTML = '<ol>' + items.join('') + '</ol>';
   }
@@ -305,7 +339,7 @@
     return state.board.beaches.filter(function (b) { return b.name === name; })[0] || null;
   }
 
-  function condLabel(c) { return c === 'proper' ? 'PRÓPRIA' : c === 'improper' ? 'IMPRÓPRIA' : 'unclassified'; }
+  function condLabel(c) { return c === 'proper' ? 'PRÓPRIA' : c === 'improper' ? 'IMPRÓPRIA' : t('water.unclassified'); }
 
   function renderWaterPoints(beach) {
     state.waterPointMarkers.forEach(function (m) { state.map.removeLayer(m); });
@@ -315,9 +349,31 @@
       var color = p.condition === 'improper' ? getCss('--c0') : p.condition === 'proper' ? getCss('--c70') : getCss('--cna');
       var m = L.circleMarker([p.lat, p.lon], { radius: 6, color: '#fff', weight: 2, fillColor: color, fillOpacity: 1 })
         .addTo(state.map)
-        .bindTooltip(esc(p.point) + ' (' + esc(p.location) + '): ' + condLabel(p.condition) + ', ' + esc(p.sampled_on), { direction: 'top', offset: [0, -6] });
+        .bindTooltip(esc(p.point) + ' (' + esc(p.location) + '): ' + esc(condLabel(p.condition)) + ', ' + esc(p.sampled_on), { direction: 'top', offset: [0, -6] });
       state.waterPointMarkers.push(m);
     });
+  }
+
+  // task 3's note codes carry raw numbers; round them as the English notes did.
+  var NOTE_ARGS = {
+    wave_m: function (v) { return num(v, 1); },
+    sea_temp_c: function (v) { return num(v, 1); },
+    wind_kmh: function (v) { return num(v, 0); },
+    rain_pct: function (v) { return num(v, 0); },
+    sampled_on: shortDate,
+    avoid: function (v) { return v.join('; '); }
+  };
+  /** note.<code> in the current language; a code this page has no key for keeps the board's English. */
+  function noteText(code, english) {
+    var a = code.args || {}, args = {};
+    Object.keys(a).forEach(function (k) { args[k] = NOTE_ARGS[k] ? NOTE_ARGS[k](a[k]) : a[k]; });
+    if (args.enterococci_per_100ml === undefined || args.enterococci_per_100ml === null) args.enterococci_per_100ml = 'na';
+    var key = 'note.' + code.code, out = t(key, args);
+    return out === key ? (english || code.code) : out;
+  }
+  function notesOf(s) {
+    if (!s.note_codes || !s.note_codes.length) return s.notes;
+    return s.note_codes.map(function (c, i) { return noteText(c, s.notes[i]); });
   }
 
   function renderCard() {
@@ -326,41 +382,48 @@
     var s = shown(b);
     var head = s
       ? '<p class="headline"><span class="score ' + band(s.score, b.water.unfit) + '">' + s.score + '/100</span> ' +
-        (s.best ? 'best at <b>' + esc(s.h) + '</b>' : 'at <b>' + esc(s.h) + '</b> (best ' + esc(b.best.hour) + ', ' + b.best.score + ')') +
-        (isPast(s.h) ? ' <span class="past">already past</span>' : '') + '</p>'
-      : '<p class="headline past">dark at this hour</p>';
-    var notes = s && s.notes.length ? '<ul>' + s.notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>' : 'good conditions';
+        (s.best ? t('card.best_at', { h: '<b>' + esc(s.h) + '</b>' })
+          : t('card.at_best', { h: '<b>' + esc(s.h) + '</b>', best: esc(b.best.hour), score: b.best.score })) +
+        (isPast(s.h) ? ' <span class="past">' + tx('card.past') + '</span>' : '') + '</p>'
+      : '<p class="headline past">' + tx('tip.dark') + '</p>';
+    var notes = s ? notesOf(s) : [];
+    var why = notes.length ? '<ul>' + notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>' : tx('card.good');
     var points = b.water.points.map(function (p) {
-      var cls = p.condition === 'improper' ? 'improper' : p.condition === 'proper' ? 'proper' : '';
-      var count = p.enterococci_per_100ml === null ? '' : ', ' + p.enterococci_per_100ml + ' enterococci/100mL';
-      return '<li><span class="' + cls + '">' + esc(p.point) + ' (' + esc(p.location) + '): ' + condLabel(p.condition) + '</span>, ' + esc(p.sampled_on) + count + '</li>';
+      var cls = p.condition === 'improper' ? 'water improper' : p.condition === 'proper' ? 'water proper' : 'water';
+      var count = p.enterococci_per_100ml === null ? '' : ', ' + tx('card.enterococci', { n: p.enterococci_per_100ml });
+      return '<li><span class="' + cls + '">' + esc(p.point) + ' (' + esc(p.location) + '): ' + esc(condLabel(p.condition)) + '</span>, ' + esc(p.sampled_on) + count + '</li>';
     });
-    var water = '<span class="' + (b.water.unfit ? 'unfit' : '') + '">' + esc(b.water.summary) + '</span>' +
+    var water = '<span class="' + (b.water.unfit ? 'unfit' : 'water') + '">' + esc(waterSummary(b)) + '</span>' +
       (points.length ? '<ul>' + points.join('') + '</ul>' : '') +
-      (b.water.source ? '<small>Source: ' + esc(b.water.source) + '</small>' : '');
-    var tides = b.tides.length ? b.tides.map(function (t) {
-      return (t.high ? 'high ' : 'low ') + esc(t.time) + ' (' + (t.m >= 0 ? '+' : '') + t.m.toFixed(1) + ' m)';
-    }).join(', ') + ' <small>(hourly, ±30 min)</small>' : 'no sea-level data';
+      (b.water.source ? '<small>' + t('card.source', { source: '<span class="src">' + esc(b.water.source) + '</span>' }) + '</small>' : '');
+    var signed = new Intl.NumberFormat(I.locale(), { signDisplay: 'exceptZero', minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    var tides = b.tides.length ? b.tides.map(function (td) {
+      return tx(td.high ? 'tide.high' : 'tide.low', { time: td.time, m: signed.format(td.m) });
+    }).join(', ') + ' <small>' + tx('tide.hourly') + '</small>' : tx('tide.none');
     var sea = b.sea;
-    var seaText = fmt(sea.temp_c, '°C') + ', waves ' + fmt(sea.wave_m, ' m') + (sea.period_s !== null ? ' every ' + fmt(sea.period_s, ' s', 0) : '') +
-      (sea.swell_m !== null ? ', swell ' + fmt(sea.swell_m, ' m') : '') + (sea.current_kmh !== null ? ', current ' + fmt(sea.current_kmh, ' km/h') : '');
-    var air = fmt(sea.air_temp_c, '°C', 0) + ', wind ' + fmt(sea.wind_kmh, ' km/h', 0) + (sea.uv !== null ? ', UV ' + fmt(sea.uv, '', 0) : '') +
-      (sea.rain_pct !== null ? ', ' + fmt(sea.rain_pct, '% rain', 0) : '');
-    var whales = b.whales.now + (b.whales.peak ? ', best daylight odds at ' + esc(b.whales.peak) : '') + (b.whales.season ? ' — humpback season' : ' — outside July-November');
+    var seaText = [fmt(sea.temp_c, '°C'), wavesText(sea.wave_m, sea.period_s)]
+      .concat(sea.swell_m !== null ? [t('card.swell', { v: fmt(sea.swell_m, ' m') })] : [])
+      .concat(sea.current_kmh !== null ? [t('card.current', { v: fmt(sea.current_kmh, ' km/h') })] : []).join(', ');
+    var air = [fmt(sea.air_temp_c, '°C', 0), t('cell.wind', { v: fmt(sea.wind_kmh, ' km/h', 0) })]
+      .concat(sea.uv !== null ? [t('card.uv', { v: fmt(sea.uv, '', 0) })] : [])
+      .concat(sea.rain_pct !== null ? [t('card.rain', { pct: num(sea.rain_pct, 0) })] : []).join(', ');
+    var whales = t('card.whales_now', { level: word('lvl.', b.whales.now), best: b.whales.peak ? 'yes' : 'no',
+      peak: b.whales.peak || '', season: b.whales.season ? 'yes' : 'no' });
     el.card.innerHTML =
-      '<button class="close" type="button" aria-label="Close">×</button>' +
+      '<button class="close" type="button" aria-label="' + tx('card.close') + '">×</button>' +
       '<h2>' + esc(b.name) + '</h2>' +
       // Touch has no hover: the tooltip's aspect row, first (MIP-0009 §3).
       '<div class="aspects">' + aspectsHtml(b, s) + '</div>' + head +
       '<dl>' +
-      '<dt>Why</dt><dd>' + notes + '</dd>' +
-      '<dt>Water quality</dt><dd>' + water + '</dd>' +
-      '<dt>Sea</dt><dd>' + seaText + ' <small>(at ' + esc(b.best.hour) + ')</small></dd>' +
-      '<dt>Tide</dt><dd>' + tides + '</dd>' +
-      '<dt>Air</dt><dd>' + air + '</dd>' +
-      '<dt>Jellyfish</dt><dd>' + esc(b.jellyfish) + '</dd>' +
-      '<dt>Whales</dt><dd>' + esc(whales) + '</dd>' +
-      '<dt>Where</dt><dd><a href="https://www.openstreetmap.org/?mlat=' + b.lat + '&mlon=' + b.lon + '#map=15/' + b.lat + '/' + b.lon + '" target="_blank" rel="noopener">' + b.lat.toFixed(4) + ', ' + b.lon.toFixed(4) + '</a></dd>' +
+      '<dt>' + tx('card.why') + '</dt><dd>' + why + '</dd>' +
+      '<dt>' + tx('card.water') + '</dt><dd>' + water + '</dd>' +
+      '<dt>' + tx('card.sea') + '</dt><dd>' + esc(seaText) + ' <small>' + tx('card.at', { h: b.best.hour }) + '</small></dd>' +
+      '<dt>' + tx('card.tide') + '</dt><dd>' + tides + '</dd>' +
+      '<dt>' + tx('card.air') + '</dt><dd>' + esc(air) + '</dd>' +
+      '<dt>' + tx('card.jellyfish') + '</dt><dd>' + esc(word('lvl.', b.jellyfish)) + '</dd>' +
+      '<dt>' + tx('card.whales') + '</dt><dd>' + esc(whales) + '</dd>' +
+      // Coordinates keep the dot in every language: a decimal comma would collide with the separator.
+      '<dt>' + tx('card.where') + '</dt><dd><a href="https://www.openstreetmap.org/?mlat=' + b.lat + '&mlon=' + b.lon + '#map=15/' + b.lat + '/' + b.lon + '" target="_blank" rel="noopener">' + b.lat.toFixed(4) + ', ' + b.lon.toFixed(4) + '</a></dd>' +
       '</dl>';
     el.card.hidden = false;
     el.card.querySelector('.close').addEventListener('click', closeCard);
@@ -374,14 +437,12 @@
       var label = href ? '<a href="' + href + '" target="_blank" rel="noopener">' + esc(s) + '</a>' : esc(s);
       return '<span class="src">' + label + '</span>';
     }).join(' · ');
-    var lore = b.lore ? '<p class="lore">' + (b.lore.kind === 'creature' ? '🐋 Sea life: ' : '🌊 Did you know? ') + esc(b.lore.text) +
-      ' <a href="' + esc(b.lore.source) + '" target="_blank" rel="noopener">[source]</a></p>' : '';
+    var lore = b.lore ? '<p class="lore">' + (b.lore.kind === 'creature' ? '🐋 ' + tx('lore.creature') : '🌊 ' + tx('lore.fact')) + ' ' + esc(b.lore.text) +
+      ' <a href="' + esc(b.lore.source) + '" target="_blank" rel="noopener">[' + tx('lore.source') + ']</a></p>' : '';
     el.footer.innerHTML =
-      '<p id="status">Generated ' + esc(b.generated_at.replace('T', ' ').slice(0, 16)) + ' for ' + esc(state.area.name) + ', ' + esc(b.day) +
-      ' · ' + b.beaches.length + ' beaches · data: ' + srcs + '</p>' + lore +
-      '<p>Scores are a heuristic (0-100) from Open-Meteo\'s forecast and the agency\'s bathing-water classification; unfit water is red and says why. ' +
-      'No cookies, no tracking. The same pipeline answers one beach at a time on the command line and, soon, in the Telegram bot — ' +
-      '<a href="' + REPO + '" target="_blank" rel="noopener">marola on GitHub</a>.</p>';
+      '<p id="status">' + t('footer.generated', { when: esc(b.generated_at.replace('T', ' ').slice(0, 16)), area: esc(state.area.name),
+        day: esc(b.day), n: b.beaches.length, sources: srcs }) + '</p>' + lore +
+      '<p>' + tx('footer.blurb') + ' <a href="' + REPO + '" target="_blank" rel="noopener">' + tx('footer.github') + '</a>.</p>';
     el.status = document.getElementById('status');
   }
 
@@ -442,14 +503,15 @@
   });
   el.near.addEventListener('click', function () {
     if (state.here) { state.here = null; el.near.setAttribute('aria-pressed', 'false'); render(); return; }
-    if (!navigator.geolocation) { alert('No geolocation in this browser.'); return; }
+    if (!navigator.geolocation) { alert(t('near.unsupported')); return; }
     navigator.geolocation.getCurrentPosition(function (pos) {
       state.here = { lat: pos.coords.latitude, lon: pos.coords.longitude };
       el.near.setAttribute('aria-pressed', 'true');
       el.list.hidden = false; el.toggleList.setAttribute('aria-expanded', 'true');
-      L.circleMarker([state.here.lat, state.here.lon], { radius: 6, color: '#0b6e99', fillColor: '#0b6e99', fillOpacity: 1 }).addTo(state.map).bindTooltip('you');
+      state.hereMarker = L.circleMarker([state.here.lat, state.here.lon], { radius: 6, color: '#0b6e99', fillColor: '#0b6e99', fillOpacity: 1 })
+        .addTo(state.map).bindTooltip(tx('near.you'));
       render();
-    }, function () { alert('Location not granted — the list stays ranked by score.'); });
+    }, function () { alert(t('near.denied')); });
   });
   el.sound.addEventListener('click', function () {
     try {
@@ -473,11 +535,20 @@
   });
 
   function fail(err) {
+    var msg = (err && err.message) || String(err);
     // fetchJson's error is "<status> <path>"; only a missing board JSON means "not built yet".
-    var hint = /^404 data\/.*\.json$/.test((err && err.message) || '') ? ' — run `just site-build` first?' : '';
-    status('could not load the board: ' + err.message + hint);
+    status(t('fail.load', { error: msg, hint: /^404 data\/.*\.json$/.test(msg) ? 'yes' : 'no' }));
     console.error(err);
   }
+
+  // ui.js has already rewritten the static text; this redraws what app.js built, from state, no fetch.
+  I.onLang(function () {
+    if (state.latest) renderDays();
+    if (!state.board) return;
+    render();
+    renderWaterPoints(beachByName(state.selected));
+    if (state.hereMarker) state.hereMarker.bindTooltip(tx('near.you'));
+  });
 
   loadAreas().catch(fail);
 })();
