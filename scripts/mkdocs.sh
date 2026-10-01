@@ -127,7 +127,7 @@ run() {
     rm -rf docs generated-docs
     "$rt" cp "$cid:/mkdocs/generated-docs/" .
     # strict mode does not cover this: a site with no index.md builds green and simply has no
-    # landing page, which reaches marola.dev/docs/ as a 404. Checked here instead.
+    # landing page, which reaches docs.marola.dev as a 404. Checked here instead.
     [ -f generated-docs/index.html ] || {
       echo "mkdocs: built no generated-docs/index.html — docs/index.md is missing or was renamed" >&2
       exit 1
@@ -194,7 +194,8 @@ self_test() {
   ok "$(grep -c '^ *enable_diagramsnet: false' "$cfg")" "1" "diagramsnet stays off"
   ok "$(grep -c '^nav:' "$cfg")" "0" "there is no hand-written nav to drift (decision 1)"
   ok "$(grep -c '^ *- privacy' "$cfg")" "1" "the privacy plugin is on, so Material's webfont is served locally"
-  ok "$(serve_path "$cfg")" "/docs/" "the serve banner follows site_url's path, which is where the dev server answers"
+  ok "$(serve_path "$cfg")" "/" "docs.marola.dev serves at its root (MIP-0070 §5.5)"
+  ok "$(printf 'site_url: https://example.com/docs/\n' >"$tmpcfg"; serve_path "$tmpcfg")" "/docs/" "the serve banner follows site_url's path, which is where the dev server answers"
   ok "$(printf 'site_url: https://example.com\n' >"$tmpcfg"; serve_path "$tmpcfg")" "/" "a site_url with no path serves at the root"
   ok "$(grep -c '^strict: true' "$cfg")" "1" "the build is strict, so a broken internal link fails it"
   ok "$([ -f "$repo_root/docs/index.md" ] && echo yes || echo no)" "yes" "docs/index.md exists — strict does not check for it, and without it the site has no landing page"

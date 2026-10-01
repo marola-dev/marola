@@ -93,6 +93,14 @@ SH
   ok "$([ -d "$t/site/elsewhere/api" ] && echo yes || echo no)" "no" "the skipped submodule's custom mount gets nothing"
   ok "$(printf '%s' "$out" | grep -c 'marola-dev/has-asset ->')" "1" "...and the fetched one is logged"
   rm -rf "$t"
+
+  echo
+  echo "-- mount ./ lands the asset at the site root's api/ (this repo's own, until task 15) --"
+  t="$(mktemp -d)"
+  printf -- '- name: has-asset\n  mount: ./\n' >"$t/manifest.yml"
+  PATH="$stub:$PATH" fetch_all "$t/site" "$t/manifest.yml" >/dev/null 2>&1
+  ok "$([ -f "$t/site/api/index.html" ] && echo yes || echo no)" "yes" "the asset is unpacked under <site>/api/"
+  rm -rf "$t"
   rm -rf "$stub"
 
   echo

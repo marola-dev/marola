@@ -343,8 +343,8 @@ site-deploy target="github":
 docs:
     scripts/mkdocs.sh
 
-# Serve the docs on http://localhost:8001/docs/ (8000 is `just site-serve`'s; the /docs/ path is
-# site_url's). The docs are baked into the image, so a doc edit needs a restart — no live reload.
+# Serve the docs on http://localhost:8001/. The docs are baked into the image, so a doc edit needs
+# a restart — no live reload.
 docs-serve:
     scripts/mkdocs.sh --serve
 

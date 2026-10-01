@@ -79,6 +79,8 @@ jobs:
             docs:
               - 'docs/**'
               - 'mkdocs/**'
+              - '.gitmodules'
+              - 'marola-site'
 
   build-test:
     needs: changes
@@ -234,10 +236,8 @@ jobs:
           fi
           # No site.yml trigger: the scheduled build picks these up without an Overpass query.
 
-  # The docs build is strict, and since MIP-0064 task 3 it is also the step api-docs.yml publishes
-  # through. Without this gate a broken internal link merges green, then fails on main and takes
-  # the whole publish with it — scaladoc and pdoc included, since site.yml only deploys when that
-  # workflow succeeded. Runs the same script `just docs` does, so there is one build to keep green.
+  # docs.yml's build on the PR's pinned submodule commits (MIP-0070 §5.5): without this gate a
+  # broken internal link merges green and then fails the docs.marola.dev deploy on main.
   docs-build:
     needs: changes
     if: needs.changes.outputs.docs == 'true'
@@ -245,9 +245,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - run: scripts/prepare-docs.sh
       - name: mkdocs --strict, in the Kroki container stack
         env:
           CONTAINER_RUNTIME: docker
+          DOCS_SRC: .tmp/docs-aggregated
         run: scripts/mkdocs.sh
 
   # Free, fast, and independent of the JVM build — the same gates as `just quality-other`, split
