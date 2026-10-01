@@ -64,9 +64,7 @@
     return 2 * R * Math.asin(Math.sqrt(h));
   }
   function param(name) { return new URLSearchParams(location.search).get(name); }
-  function setParam(name, value) {
-    var u = new URL(location.href); u.searchParams.set(name, value); history.replaceState(null, '', u);
-  }
+  var setParam = window.marolaI18n.setParam;
 
   /** The hour entry a beach shows for the current slider position (its best when hourIndex < 0). */
   function shown(beach) {

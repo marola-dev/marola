@@ -15,6 +15,10 @@ const SCHEMA = JSON.parse(
 );
 const BOARD = JSON.parse(fs.readFileSync(path.join(ROOT, 'site/fixtures/board.json'), 'utf8'));
 const INDEX = fs.readFileSync(path.join(ROOT, 'site/static/index.html'), 'utf8');
+const ABOUT = fs.readFileSync(path.join(ROOT, 'site/static/about.html'), 'utf8');
+const I18N_JS = fs.readFileSync(path.join(ROOT, 'site/static/i18n.js'), 'utf8');
+const UI = fs.readFileSync(path.join(ROOT, 'site/static/ui.js'), 'utf8');
+const CATALOGS = Object.fromEntries(['pt-BR', 'en'].map(l => [l, JSON.parse(fs.readFileSync(path.join(ROOT, 'site/i18n', l + '.json'), 'utf8'))]));
 
 let fails = 0;
 function ok(cond, label, detail) {
@@ -162,7 +166,7 @@ async function runPage(board) {
   const errors = [];
   const sandbox = {
     console: { error: (...a) => errors.push(a.map(String).join(' ')), log() {} },
-    document: { getElementById: id => els[id] || null, documentElement: {} },
+    document: { getElementById: id => els[id] || null, querySelectorAll: () => [], documentElement: {} },
     getComputedStyle: () => ({ getPropertyValue: n => colours[n] || '' }),
     fetch: p => Promise.resolve(p in files
       ? { ok: true, status: 200, json: () => Promise.resolve(JSON.parse(JSON.stringify(files[p]))) }
@@ -176,11 +180,66 @@ async function runPage(board) {
   };
   sandbox.window = sandbox;
   vm.createContext(sandbox);
+  vm.runInContext(I18N_JS, sandbox, { filename: 'site/static/i18n.js' });
+  vm.runInContext(UI, sandbox, { filename: 'site/static/ui.js' });
   vm.runInContext(APP, sandbox, { filename: 'site/static/app.js' });
   for (let i = 0; i < 200 && !els.list.innerHTML; i++) await new Promise(r => setImmediate(r));
   return { els, L, errors };
 }
 
+// --- ui.js against a page's real markup: every start tag becomes an element with its attributes.
+function pageDom(html) {
+  const nodes = [];
+  const tagRe = /<([a-z][a-z0-9]*)\b([^>]*)>/g;
+  let m;
+  while ((m = tagRe.exec(html))) {
+    const attrs = {};
+    m[2].replace(/([\w:-]+)="([^"]*)"/g, (_, k, v) => { attrs[k] = v; });
+    const node = {
+      tag: m[1], attrs, textContent: null, listeners: {},
+      getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; },
+      setAttribute(k, v) { this.attrs[k] = String(v); },
+      addEventListener(type, fn) { (this.listeners[type] = this.listeners[type] || []).push(fn); },
+      closest(sel) { return sel === 'button[data-lang]' && 'data-lang' in this.attrs ? this : null; }
+    };
+    nodes.push(node);
+  }
+  const documentElement = { lang: (/<html lang="([^"]*)"/.exec(html) || [])[1] };
+  return {
+    nodes, documentElement,
+    getElementById: id => nodes.find(n => n.attrs.id === id) || null,
+    querySelectorAll(sel) {
+      if (sel === '#lang button[data-lang]') return nodes.filter(n => 'data-lang' in n.attrs);
+      const attr = (/^\[([\w-]+)\]$/.exec(sel) || [])[1];
+      if (!attr) throw new Error('pageDom: unsupported selector ' + sel);
+      return nodes.filter(n => attr in n.attrs);
+    }
+  };
+}
+
+function runUi(html, opts) {
+  opts = opts || {};
+  const document = pageDom(html);
+  const store = opts.store || {};
+  const urls = [];
+  const sandbox = {
+    document,
+    location: { href: 'https://example.test/' + (opts.search || ''), search: opts.search || '' },
+    history: { replaceState(_s, _t, u) { urls.push(String(u)); } },
+    navigator: { languages: opts.languages || [] },
+    URL, URLSearchParams
+  };
+  if (opts.storeThrows) Object.defineProperty(sandbox, 'localStorage', { get() { throw new Error('SecurityError'); } });
+  else sandbox.localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
+  sandbox.window = sandbox;
+  vm.createContext(sandbox);
+  if (opts.catalog) sandbox.MAROLA_I18N = opts.catalog;
+  else vm.runInContext(I18N_JS, sandbox, { filename: 'site/static/i18n.js' });
+  vm.runInContext(UI, sandbox, { filename: 'site/static/ui.js' });
+  const langBtn = code => document.nodes.find(n => n.attrs['data-lang'] === code);
+  const click = code => document.getElementById('lang').listeners.click.forEach(fn => fn({ target: langBtn(code) }));
+  return { api: sandbox.marolaI18n, document, store, urls, langBtn, click };
+}
 // --- site/areas.json, the file Main's `--site` reads live: nothing else in the app test suite
 // validates it, and Areas.parse (cli/src/main/scala/marola/site/SiteBuilder.scala) silently drops
 // a malformed entry instead of failing, so a bad edit here would only surface at runtime
@@ -368,8 +427,8 @@ ok(new Set(areaIds).size === areaIds.length, AREAS_PATH + ': area ids are unique
   // --- section nav ---------------------------------------------------------------------------
   const nav = (/<nav class="sitenav"[\s\S]*?<\/nav>/.exec(INDEX) || [''])[0];
   ok(nav.length > 0, 'the page has a section nav — /docs/ is reachable without typing the URL');
-  ok(/<a href="\/docs\/">Docs<\/a>/.test(nav), 'Docs is a real link to the published docs');
-  ok(/<a href="about\.html">About<\/a>/.test(nav), 'About is a real link to the about page');
+  ok(/<a href="\/docs\/" data-i18n="nav\.docs">docs<\/a>/.test(nav), 'Docs is a real link to the published docs');
+  ok(/<a href="about\.html" data-i18n="nav\.about">sobre<\/a>/.test(nav), 'About is a real link to the about page');
   ok((nav.match(/<span aria-disabled="true">/g) || []).length === 4,
     'the four sections with no page yet are spans, not links');
   ok(!/<a[^>]+href="#"/.test(nav), 'no href="#" — a link that goes nowhere is worse than "soon"');
@@ -401,6 +460,83 @@ ok(new Set(areaIds).size === areaIds.length, AREAS_PATH + ': area ids are unique
   ok(/\.bar h1\s*\{\s*text-transform:\s*lowercase/.test(CSS),
     "marola's own name stays lowercase, even inside an exempted container");
   ok(/class="src"/.test(APP), 'app.js tags provider names so Open-Meteo and IMA/SC survive the style');
+
+  // --- MIP-0054 task 1: the language toggle, resolveLang, t() and the catalogs -------------------
+  const PAGES = { 'index.html': INDEX, 'about.html': ABOUT };
+  for (const [page, html] of Object.entries(PAGES)) {
+    ok(/<html lang="pt-BR">/.test(html), page + ': <html lang="pt-BR"> in the source, so the first paint is Portuguese');
+    const pageNav = (/<nav class="sitenav"[\s\S]*?<\/nav>/.exec(html) || [''])[0];
+    const toggle = (/<div id="lang"[\s\S]*?<\/div>/.exec(pageNav) || [''])[0];
+    const buttons = toggle.match(/<button [^>]*>/g) || [];
+    ok(buttons.length === 2 && buttons.every(b => /type="button"/.test(b) && /aria-pressed="(true|false)"/.test(b)),
+      page + ': #lang is two <button type="button">s with aria-pressed', toggle);
+    ok(/lang="pt-BR" aria-label="português \(Brasil\)"/.test(buttons[0] || '') && /lang="en" aria-label="English"/.test(buttons[1] || ''),
+      page + ': each button carries its own lang and an endonym aria-label', buttons.join(' '));
+    ok(/<div id="lang"[\s\S]*?<\/div>\s*<a class="gh"/.test(pageNav), page + ': #lang sits inside .sitenav, immediately before a.gh');
+    const order = ['i18n.js', 'ui.js'].map(f => html.indexOf('<script src="' + f + '"'));
+    const others = (html.match(/<script src="([^"]+)"/g) || []).filter(t => !/"(i18n|ui)\.js"/.test(t)).map(t => html.indexOf(t));
+    ok(order[0] > 0 && order[0] < order[1] && others.every(i => i > order[1]),
+      page + ': i18n.js, then ui.js, load before every other script');
+    const keys = [];
+    html.replace(/data-i18n(?:-[a-z-]+)?="([^"]+)"/g, (_, k) => { keys.push(k); });
+    const missing = keys.filter(k => !(k in CATALOGS['pt-BR']) || !(k in CATALOGS.en));
+    ok(keys.length > 5 && missing.length === 0, page + ': every data-i18n* key (' + keys.length + ') exists in pt-BR and en', missing.join(', '));
+    const runs = runUi(html);
+    ok(runs.api.lang() === 'pt-BR' && runs.document.documentElement.lang === 'pt-BR', page + ': no input renders pt-BR');
+    const en = runUi(html, { search: '?lang=en' });
+    const title = en.document.nodes.find(n => n.tag === 'title');
+    ok(en.document.documentElement.lang === 'en' && title.textContent === CATALOGS.en[title.attrs['data-i18n']],
+      page + ': ?lang=en sets <html lang> and the document title from the en catalog', title.textContent);
+    ok(en.langBtn('en').attrs['aria-pressed'] === 'true' && en.langBtn('pt-BR').attrs['aria-pressed'] === 'false',
+      page + ': the en button starts pressed under ?lang=en');
+    const gh = en.document.nodes.find(n => n.attrs.class === 'gh');
+    ok(gh.attrs['aria-label'] === CATALOGS.en['gh.label'] && gh.attrs.title === CATALOGS.en['gh.title'],
+      page + ': applyLang rewrites aria-label and title attributes');
+    const r = runUi(html);
+    r.click('en');
+    ok(r.langBtn('en').attrs['aria-pressed'] === 'true' && r.langBtn('pt-BR').attrs['aria-pressed'] === 'false' &&
+      r.store['marola.lang'] === 'en' && /[?&]lang=en\b/.test(r.urls[r.urls.length - 1] || '') && r.api.lang() === 'en',
+      page + ': clicking en flips aria-pressed, stores marola.lang and writes ?lang=en', JSON.stringify({ store: r.store, urls: r.urls }));
+    let heard = null; r.api.onLang(l => { heard = l; }); r.click('pt-BR');
+    ok(heard === 'pt-BR' && r.document.documentElement.lang === 'pt-BR', page + ': clicking back fires onLang and restores <html lang>');
+    let threw = null, t2 = null;
+    try { t2 = runUi(html, { storeThrows: true, languages: ['en-US'] }); t2.click('pt-BR'); } catch (e) { threw = e; }
+    ok(!threw && t2 && t2.api.lang() === 'pt-BR', page + ': a localStorage that throws still resolves (en-US) and still toggles', threw && threw.message);
+  }
+  const probe = runUi(INDEX).api;
+  const S = ['pt-BR', 'en'];
+  const rl = o => probe.resolveLang(Object.assign({ supported: S }, o));
+  ok(rl({}) === 'pt-BR', 'resolveLang: no input → pt-BR');
+  ok(rl({ param: 'en' }) === 'en', 'resolveLang: ?lang=en → en');
+  ok(rl({ param: 'pt-BR', stored: 'en', languages: ['en-US'] }) === 'pt-BR', 'resolveLang: ?lang=pt-BR beats a stored en');
+  ok(rl({ stored: 'en', languages: ['pt-BR'] }) === 'en', 'resolveLang: a stored choice beats the browser languages');
+  ok(rl({ languages: ['en-US'] }) === 'en', "resolveLang: languages ['en-US'] → en");
+  ok(rl({ languages: ['fr-FR'] }) === 'pt-BR', "resolveLang: languages ['fr-FR'] → pt-BR");
+  ok(rl({ languages: ['fr', 'pt-PT', 'en'] }) === 'pt-BR' && rl({ languages: ['fr', 'en-GB'] }) === 'en', 'resolveLang: the first shipped primary subtag wins');
+  ok(rl({ param: 'x-pseudo' }) === 'x-pseudo', 'resolveLang: x-pseudo from the param');
+  ok(rl({ stored: 'x-pseudo', languages: ['x-pseudo'] }) === 'pt-BR', 'resolveLang: x-pseudo never from the store or the browser');
+  ok(rl({ param: 'de' }) === 'pt-BR', 'resolveLang: an unshipped ?lang= falls through');
+  const syn = runUi(ABOUT, { catalog: {
+    'pt-BR': { n: '{n, plural, one {# praia} other {# praias}}', x: 'ondas {x} m', only: 'só pt', s: '{w, select, yes {sim} other {não}}' },
+    en: { n: '{n, plural, one {# beach} other {# beaches}}', x: 'waves {x} m', s: '{w, select, yes {yes} other {no}}' }
+  } }).api;
+  ok(syn.t('n', { n: 1 }) === '1 praia' && syn.t('n', { n: 2 }) === '2 praias', 't pluralises {n, plural, one {# praia} other {# praias}} for 1 and 2', syn.t('n', { n: 1 }) + ' / ' + syn.t('n', { n: 2 }));
+  ok(syn.t('x', { x: 1.3 }) === 'ondas 1,3 m', 't formats 1.3 as 1,3 in pt-BR', syn.t('x', { x: 1.3 }));
+  ok(syn.t('s', { w: 'yes' }) === 'sim' && syn.t('s', { w: 'maybe' }) === 'não', 't selects, falling to other');
+  syn.setLang('en');
+  ok(syn.t('n', { n: 1 }) === '1 beach' && syn.t('x', { x: 1.3 }) === 'waves 1.3 m', 't in en: plural and 1.3');
+  ok(syn.t('only') === 'só pt' && syn.t('nope') === 'nope', 't falls back to pt-BR, then to the key');
+  ok(probe.t('footer.generated', { when: 'w', area: 'a', day: 'd', n: 2, sources: 's' }).includes('· 2 praias ·'),
+    'the real catalog pluralises footer.generated');
+  // Lowercase house style in the catalogs; these are names marola did not choose.
+  const CASE_OK = ['°C', 'UV', 'km/h', 'PRÓPRIA', 'IMPRÓPRIA', 'GitHub', 'Open-Meteo', 'IMA/SC', 'OpenStreetMap'];
+  for (const [lang, cat] of Object.entries(CATALOGS)) {
+    const shouty = Object.entries(cat).filter(([, v]) => {
+      const rest = CASE_OK.reduce((acc, w) => acc.split(w).join(''), v);
+      return rest !== rest.toLowerCase();
+    }).map(([k]) => k);
+    ok(shouty.length === 0, lang + '.json: every value is lowercase outside the allowlist', shouty.join(', '));
+  }
 
   if (fails === 0) { console.log('site_check: ok'); process.exit(0); }
   console.error('site_check: ' + fails + ' failure(s)'); process.exit(1);

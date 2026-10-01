@@ -267,6 +267,7 @@ jobs:
         scripts/site-data-push.sh --self-test
         scripts/build-resources-tarball.sh --self-test
         python3 scripts/ocr-post.py --self-test
+        python3 scripts/i18n_bundle.py --self-test
         scripts/prepare-docs.sh --self-test
         scripts/fetch-api-docs.sh --self-test
 
@@ -283,6 +284,9 @@ jobs:
       # profile must still render (MIP-0010), and both mkdocs overrides (MIP-0064).
       extra-commands: |
         node --check site/static/app.js
+        node --check site/static/ui.js
+        node --check site/static/i18n.js
+        python3 scripts/i18n_bundle.py --check
         node scripts/site_check.js
         docker compose --profile mlflow --profile ollama --profile local config --quiet
         docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet

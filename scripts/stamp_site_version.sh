@@ -9,9 +9,12 @@ index="$dist/index.html"
 
 version="$(git rev-parse --short HEAD 2>/dev/null || date -u +%Y%m%d%H%M%S)"
 
-sed -i -E \
-  -e "s#(href=\"style\.css)\"#\\1?v=${version}\"#" \
-  -e "s#(src=\"app\.js)\"#\\1?v=${version}\"#" \
-  "$index"
-
-echo "stamped $index with ?v=$version"
+# about.html loads the same catalog (i18n.js), so it is stamped too.
+for page in "$index" "$dist/about.html"; do
+  [ -f "$page" ] || continue
+  sed -i -E \
+    -e "s#(href=\"style\.css)\"#\\1?v=${version}\"#" \
+    -e "s#(src=\"(app|ui|i18n)\.js)\"#\\1?v=${version}\"#" \
+    "$page"
+  echo "stamped $page with ?v=$version"
+done
