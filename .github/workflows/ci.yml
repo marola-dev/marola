@@ -267,6 +267,8 @@ jobs:
         scripts/site-data-push.sh --self-test
         scripts/build-resources-tarball.sh --self-test
         python3 scripts/ocr-post.py --self-test
+        scripts/prepare-docs.sh --self-test
+        scripts/fetch-api-docs.sh --self-test
 
   static-ci:
     needs: changes
