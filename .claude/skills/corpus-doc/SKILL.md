@@ -21,7 +21,7 @@ marketing/persona copy (the corpus is factual reference only, per `knowledge/REA
 1. **Pick one real, checkable source**: a government/scientific agency page (NOAA, IMA/SC-style),
    a well-established reference (Wikipedia is acceptable per this repo's existing corpus, but
    prefer a primary source when one exists). Fetch it and read it before writing a word; never
-   paraphrase from memory. This mirrors the `mip` skill's "verify every external claim" rule.
+   paraphrase from memory. This mirrors the `/marola-devkit:mip` skill's "verify every external claim" rule.
 2. **Write the file** as `knowledge/<kebab-topic>.md`:
    - Line 1: `# <Title>`.
    - Line 2: `Source: <the exact URL you fetched>`.

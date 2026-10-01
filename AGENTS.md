@@ -54,10 +54,10 @@ template pointer: `.claude/rules/docs.md`):
 | `docs/4-Research-and-plans/AGENT-STACK-SURVEY.md` | agent4s / llm4s / ADK mapped to the MIPs, how they compose, the project Q&A agent |
 | `docs/3-Working-on-the-repo/DEV-FLOW.md` | The loop end to end: idea → MIP → acceptance → tasks → stacked PRs (verified, costed) → review on request → merge/restack → Implemented; command reference |
 | `docs/3-Working-on-the-repo/CI-CD.md` | Every workflow: trigger, runner, what it gates or deploys, secrets, how to run it by hand; the self-hosted rule and the maintainer's manual settings (MIP-0065) |
-| `docs/3-Working-on-the-repo/ISSUE-FLOW.md` | The GitHub tracking standard in use: the object model, the three intake tiers, the Definition of Ready, and every `issues.sh`/`just` command (MIP-0063) |
-| `docs/3-Working-on-the-repo/AGENT-SKILLS.md` | Which agent skills to use in this repo: `mip` (plan), `mip-tasks` (tasks → stacked PRs, `scripts/stack.sh`), superpowers walkthrough, candidates to write |
+| `docs/3-Working-on-the-repo/ISSUE-FLOW.md` | The GitHub tracking standard in use: the object model, the three intake tiers, the Definition of Ready, and every `issues`/`just` command (MIP-0063) |
+| `docs/3-Working-on-the-repo/AGENT-SKILLS.md` | Which agent skills to use in this repo: `/marola-devkit:mip` (plan), `/marola-devkit:mip-tasks` (tasks → stacked PRs, `stack`), superpowers walkthrough, candidates to write |
 | `docs/benchmarks/` | Kept `just benchmark` runs: re-run and compare before changing prompt/corpus/embedder/model |
-| `docs/MIPs/` | Marola Improvement Proposals: design a non-trivial change here first, via the `mip` skill (`.claude/skills/mip/SKILL.md`), before building it. `just context-mips` packs what a browser session needs to draft one from voice notes; `just context-mip MIP-NNNN` packs one already-written MIP for an independent, non-Claude reviewer |
+| `docs/MIPs/` | Marola Improvement Proposals: design a non-trivial change here first, via the `/marola-devkit:mip` skill, before building it. `just context-mips` packs what a browser session needs to draft one from voice notes; `just context-mip MIP-NNNN` packs one already-written MIP for an independent, non-Claude reviewer |
 | `docs/4-Research-and-plans/FABLE_REVIEW.md` | Code and documentation review at the initial import: open findings, ranked, with file:line references |
 
 **Writing a doc is a deploy.** A new or moved file under `docs/` needs no `nav:` entry: mkdocs
@@ -89,8 +89,15 @@ just docs-serve       # preview the docs on http://localhost:8001/docs/
 Always run `just build && just test && just quality` before considering a change done (`quality` =
 `quality-scala`, scalafmt + scalafix, plus `quality-other`, ruff + actionlint + hadolint +
 `scripts/*.py` self-tests: the same gates as `ci.yml`; a missing lint tool fails rather than
-skips, so use `nix develop`). `.githooks/pre-push` runs `quality-other` before every push and
-`quality-scala` too when Scala changed. `git push --no-verify` bypasses it, CI does not.
+skips, so use `nix develop`). The pre-push hook runs `just prepush`: `quality-other` before every
+push, `quality-scala` too when Scala changed. `git push --no-verify` bypasses it, CI does not.
+The dev-flow harness is [marola-devkit](https://github.com/marola-dev/marola-devkit), a flake
+input pinned to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `cost-split`,
+`cost-fill`, `agents-check`, …), their recipes (`import? '.devkit/devkit.just'`), the git hooks
+(`.devkit/.githooks`, running this repo's `just precommit`/`just prepush`), the reusable CI
+workflows, and the `marola-devkit` Claude Code plugin (`/marola-devkit:mip` and the other generic
+skills, the MIP agents, the format/stop/session hooks). Bump the flake input and every
+`@v…`/`devkit-ref` in `.github/workflows/` together. marola keeps its own `.claude/statusline.sh`.
 **JDK 25 is required, not just "17+".** Kyo's artifacts won't load on an older JVM. See
 `.claude/rules/scala.md` (loaded automatically while editing `.scala`/`build.sbt`) for the full
 JDK/Kyo-versioning detail and the jar-verification approach for Kyo's pre-1.0 API surface.
@@ -109,7 +116,7 @@ only statement that a human has decided what done means and what proves it; `jus
 adds it when the five-rule Definition of Ready passes (`docs/3-Working-on-the-repo/ISSUE-FLOW.md`). Read the queue with
 `just issue-queue`, take one with `just issue-claim <n>` — it re-checks the rules and prints the
 branch command. An idea with no issue is not work yet, and **filing is a human's act**: the
-`triage` skill drafts, a person files (MIP-0063 §5.6).
+`/marola-devkit:triage` skill drafts, a person files (MIP-0063 §5.6).
 
 ## Cost & deployment safety (hard rule)
 
@@ -127,9 +134,9 @@ it does not replace this rule.
   attribution text by hand.
 - **The whole PR workflow is one command.** Write the commit (a body plus `Tested:`/`Cost:`
   trailers), then `just pr`: it fills any missing trailer (`just cost-fill`), pushes, and writes
-  the PR from `.github/PULL_REQUEST_TEMPLATE.md` (`just uprd`, or `scripts/stack.sh pr` on a
+  the PR from `.github/PULL_REQUEST_TEMPLATE.md` (`just uprd`, or `stack pr` on a
   `mip-NNNN/k-*` branch). `Cost:` prefers `just cost-split`'s measured figure over
-  `scripts/cost-split.py --estimate`'s diff-size fallback, labelled `est.`.
+  `cost-split --estimate`'s diff-size fallback, labelled `est.`.
 - **One feature, one session.** Start a feature with `/clear` and `/rename` it to the branch name
   so `/usage`'s session block and ccusage's per-session rows map to one PR. Re-runs of
   `just benchmark`/`just e2e` driven by the agent count toward the feature; note them. When one
