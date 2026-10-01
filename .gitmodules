@@ -4,3 +4,6 @@
 [submodule "marola-corpus"]
 	path = marola-corpus
 	url = https://github.com/marola-dev/marola-corpus.git
+[submodule "marola-ml"]
+	path = marola-ml
+	url = https://github.com/marola-dev/marola-ml.git
