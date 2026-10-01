@@ -95,11 +95,8 @@ jobs:
     if: needs.changes.outputs.scala == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Pushing coverage/latest.json to the orphan site-data branch, and re-triggering site.yml so the
-    # badge refreshes right away.
     permissions:
-      contents: write
-      actions: write
+      contents: read
     steps:
       - uses: actions/checkout@v7
 
@@ -140,18 +137,15 @@ jobs:
           PY
           echo && cat coverage.json
 
-      # site.yml copies this orphan branch's smoke/ and coverage/ into site/dist (GITHUB_TOKEN only).
-      - name: Publish the coverage JSON to the site-data branch
+      # marola-site's site.yml copies coverage/, smoke/ and stats/ from its site-data into the map.
+      - uses: actions/checkout@v7
+        with:
+          repository: marola-dev/marola-site
+          ref: site-data
+          path: site-data
+          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+      - name: Publish the coverage JSON to marola-site's site-data branch
         run: |
-          if git ls-remote --exit-code --heads origin site-data >/dev/null; then
-            git fetch --depth=1 origin site-data
-            git worktree add site-data FETCH_HEAD
-            git -C site-data checkout -q -B site-data
-          else
-            git worktree add --detach site-data
-            git -C site-data checkout -q --orphan site-data
-            git -C site-data rm -rfq .
-          fi
           mkdir -p site-data/coverage
           cp coverage.json site-data/coverage/latest.json
           git -C site-data config user.name "github-actions[bot]"
@@ -164,11 +158,10 @@ jobs:
             scripts/site-data-push.sh site-data
           fi
 
-      # workflow_dispatch is one of the two events GITHUB_TOKEN may trigger from a workflow.
-      - name: Rebuild the site so the coverage badge refreshes
+      - name: Rebuild the map so the coverage badge refreshes
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (≤ 3 h) will pick the coverage number up"
+          GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+        run: gh api repos/marola-dev/marola-site/dispatches -f event_type=site-data-updated || echo "could not dispatch to marola-site — its next scheduled build (≤ 3 h) will pick the coverage number up"
 
   # app -> ml contract (MIP-0070 §5.4): finetune/build_dataset.py and the benchmark gate read this
   # unpacked tarball instead of ../core once marola-ml is a separate repo.
@@ -191,7 +184,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write # push the badge JSONs to the site-data branch
+      contents: read
       actions: read # read this run's own jobs/steps (the default token is contents-only)
     steps:
       - uses: actions/checkout@v7
@@ -212,17 +205,14 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: python3 scripts/repo_stats.py write --out-dir stats --repo "$REPO" --run-id "$RUN_ID" --exclude-job repo-stats
 
-      - name: Publish the stats JSONs to the site-data branch
+      - uses: actions/checkout@v7
+        with:
+          repository: marola-dev/marola-site
+          ref: site-data
+          path: site-data
+          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+      - name: Publish the stats JSONs to marola-site's site-data branch
         run: |
-          if git ls-remote --exit-code --heads origin site-data >/dev/null; then
-            git fetch --depth=1 origin site-data
-            git worktree add site-data FETCH_HEAD
-            git -C site-data checkout -q -B site-data
-          else
-            git worktree add --detach site-data
-            git -C site-data checkout -q --orphan site-data
-            git -C site-data rm -rfq .
-          fi
           mkdir -p site-data/stats
           cp stats/*.json site-data/stats/
           git -C site-data config user.name "github-actions[bot]"
@@ -234,7 +224,7 @@ jobs:
             git -C site-data commit -q -m "stats: ${{ github.sha }}"
             scripts/site-data-push.sh site-data
           fi
-          # No site.yml trigger: the scheduled build picks these up without an Overpass query.
+          # No dispatch: marola-site's scheduled build picks these up without an Overpass query.
 
   # docs.yml's build on the PR's pinned submodule commits (MIP-0070 §5.5): without this gate a
   # broken internal link merges green and then fails the docs.marola.dev deploy on main.
