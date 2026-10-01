@@ -35,8 +35,9 @@ One sbt multi-project build (root `build.sbt`), split into three modules at the 
   `marola-ml/` submodule): the DSPy prompt compile, whose two JSON artifacts reach
   `core/src/main/resources/` as a PR from its `compile-prompt.yml`, never a runtime dependency; the
   marola-sea fine-tune; and the benchmark gate with its kept runs (`docs/benchmarks/`). It runs this
-  repo's image, pinned by tag and digest, and reads the resources tarball `ci.yml` builds
-  (`scripts/build-resources-tarball.sh`).
+  repo's image, pinned by tag and digest, and reads the resources tarball
+  (`scripts/build-resources-tarball.sh`) from a release asset: `ml-resources-v0.1.0.tar.gz` on
+  this repo's v0.1.0 release, made by hand until marola-app's releases carry it (task 15).
 - The knowledge corpus (`--ask`'s sourced notes) and its `corpus-doc`/`eli5` skills live in
   [marola-corpus](https://github.com/marola-dev/marola-corpus) (the `marola-corpus/` submodule).
   `corpus.version` pins its release; `just corpus-fetch` unpacks it into `.tmp/knowledge`, which

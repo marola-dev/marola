@@ -7,6 +7,8 @@
 #
 #   scripts/fetch-api-docs.sh SITE_DIR [REPOS_FILE]   # default mkdocs/repos.yml
 #   scripts/fetch-api-docs.sh --self-test              # stubs gh; no network
+#
+# API_DOCS_TAG=<tag> downloads that release instead of the latest one.
 set -euo pipefail
 
 ASSET_NAME="api-docs.tar.gz"
@@ -19,7 +21,8 @@ source "$script_dir/lib/repos_manifest.sh"
 fetch_one() {
   local repo="$1" dest="$2" tmp
   tmp="$(mktemp -d)"
-  if gh release download --repo "$repo" --pattern "$ASSET_NAME" --dir "$tmp" >/dev/null 2>&1; then
+  # shellcheck disable=SC2086  # an unset API_DOCS_TAG must vanish: no tag means the latest release
+  if gh release download ${API_DOCS_TAG:-} --repo "$repo" --pattern "$ASSET_NAME" --dir "$tmp" >/dev/null 2>&1; then
     mkdir -p "$dest"
     tar -xzf "$tmp/$ASSET_NAME" -C "$dest"
     echo "fetch-api-docs: $repo -> $dest"
@@ -45,14 +48,17 @@ self_test() {
   local stub; stub="$(mktemp -d)"
   cat >"$stub/gh" <<'SH'
 #!/bin/sh
-repo=""; dir=""
+repo=""; dir=""; tag=""
+shift 2   # release download
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) repo="$2"; shift 2 ;;
     --dir) dir="$2"; shift 2 ;;
-    *) shift ;;
+    --pattern) shift 2 ;;
+    *) tag="$1"; shift ;;
   esac
 done
+echo "${tag:-latest}" >>"${GH_TAGS:-/dev/null}"
 case "$repo" in
   */has-asset)
     mkdir -p "$dir/payload"
@@ -90,6 +96,14 @@ SH
   ok "$([ -f "$t/site/repos/has-asset/api/index.html" ] && echo yes || echo no)" "yes" "the default-mount submodule's asset lands under repos/<name>/api/"
   ok "$([ -d "$t/site/elsewhere/api" ] && echo yes || echo no)" "no" "the skipped submodule's custom mount gets nothing"
   ok "$(printf '%s' "$out" | grep -c 'marola-dev/has-asset ->')" "1" "...and the fetched one is logged"
+  rm -rf "$t"
+
+  echo
+  echo "-- API_DOCS_TAG asks for that release, not \"latest\" --"
+  t="$(mktemp -d)"
+  PATH="$stub:$PATH" GH_TAGS="$t/tags" API_DOCS_TAG=api-docs fetch_one "marola-dev/has-asset" "$t/a" >/dev/null 2>&1
+  PATH="$stub:$PATH" GH_TAGS="$t/tags" fetch_one "marola-dev/has-asset" "$t/b" >/dev/null 2>&1
+  ok "$(tr '\n' ' ' <"$t/tags")" "api-docs latest " "the tag is passed when set, and omitted otherwise"
   rm -rf "$t"
 
   echo

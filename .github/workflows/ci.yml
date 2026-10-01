@@ -162,8 +162,9 @@ jobs:
           GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
         run: gh api repos/marola-dev/marola-site/dispatches -f event_type=site-data-updated || echo "could not dispatch to marola-site — its next scheduled build (≤ 3 h) will pick the coverage number up"
 
-  # app -> ml contract (MIP-0070 §5.4). marola-ml's resources-fetch.sh reads it from a release
-  # asset, ml-resources-<tag>.tar.gz, which nothing publishes yet (MIP-0070 task 15's app release).
+  # app -> ml contract (MIP-0070 §5.4). marola-ml's resources-fetch.sh reads it as a release asset:
+  # v0.1.0's ml-resources-v0.1.0.tar.gz is a stopgap made by hand from 9c4483c with this script
+  # (--latest=false); task 15 moves the source to marola-app's releases.
   resources-tarball:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
