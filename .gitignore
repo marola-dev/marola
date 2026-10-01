@@ -17,7 +17,7 @@ result-*
 # Logs
 *.log
 
-# sbt boot server socket dir (see justfile's XDG_RUNTIME_DIR override)
+# Scratch: worktrees, docs builds, repomix packs
 /.tmp/*
 !/.tmp/.gitkeep
 

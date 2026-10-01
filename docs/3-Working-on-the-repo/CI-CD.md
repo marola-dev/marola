@@ -14,71 +14,66 @@ called at the same tag as the flake input; bump them together.
 ```mermaid
 flowchart LR
   pr([pull request]) --> ci[ci.yml]
-  pr --> dk[docker.yml]
   pr --> body[pr-body.yml]
   main([push to main]) --> ci
-  main --> api[api-docs.yml]
-  main --> dk
   main --> docs[docs.yml]
   cron([schedule]) --> docs
-  cron --> smoke[docker-smoke.yml]
   sub([submodule-docs-updated]) --> docs
-  dk -- ":jvm :native" --> ghcr[(GHCR<br/>ghcr.io/marola-dev/marola)]
-  ghcr --> smoke
-  api -- "api-docs.tar.gz" --> rel[(api-docs release)]
-  rel --> docs
+  app[marola-app workflows] -- ":jvm :native" --> ghcr[(GHCR<br/>ghcr.io/marola-dev/marola-app)]
+  app -- "api-docs.tar.gz on v* releases" --> docs
   docs --> dpages[GitHub Pages<br/>docs.marola.dev]
-  ci -- "coverage/ stats/" --> sd[(marola-site<br/>site-data branch)]
-  smoke -- "smoke/" --> sd
-  ci -. site-data-updated .-> site[marola-site site.yml]
-  smoke -. site-data-updated .-> site
+  ci -- "stats/" --> sd[(marola-site<br/>site-data branch)]
+  app -- "coverage/ smoke/" --> sd
+  app -. site-data-updated .-> site[marola-site site.yml]
   sd --> site
   site --> pages[GitHub Pages<br/>marola.dev]
 ```
 
 The map at marola.dev is [marola-site](https://github.com/marola-dev/marola-site)'s (MIP-0070
-§5.8 step 3). Its `site-data` branch holds only generated output, and this repo's writers push to
-it with `MAROLA_CROSS_REPO_PAT` through `scripts/site-data-push.sh`, which retries when two pushes
-race. Its `site.yml` copies `smoke/`, `coverage/` and `stats/` into the page on every build. The
+§5.8 step 3). Its `site-data` branch holds only generated output: marola-app's coverage and smoke
+writers and this repo's `repo-stats` push to it with `MAROLA_CROSS_REPO_PAT` through
+`scripts/site-data-push.sh`, which retries when two pushes race. Its `site.yml` copies `smoke/`, `coverage/` and `stats/` into the page on every build. The
 coverage and smoke writers dispatch `site-data-updated` to rebuild it right away; `repo-stats`
 waits for its 3-hourly schedule. marola-site is also this repo's first submodule, and its
 `README.md` + `docs/` are published under `docs.marola.dev/repos/marola-site/`.
 
 The corpus is [marola-corpus](https://github.com/marola-dev/marola-corpus)'s (task 13): its
-`release.yml` attaches `marola-corpus-<tag>.tar.gz` to each `v*` tag, and `corpus.version` here
-pins one. `scripts/corpus-fetch.sh` unpacks it into `.tmp/knowledge` before anything reads it:
-`build-test` and `coverage` through sbt's `corpusFetch` task (scala-ci runs only sbt), `docker.yml`
-before the image build (the image's `/app/knowledge`). A
-bump of `corpus.version` is what changes the image's corpus. marola-corpus is this repo's second
-submodule, published under `docs.marola.dev/repos/marola-corpus/`.
+`release.yml` attaches `marola-corpus-<tag>.tar.gz` to each `v*` tag, and each consumer pins one in
+its own `corpus.version`. marola-corpus is this repo's second submodule, published under
+`docs.marola.dev/repos/marola-corpus/`.
 
 The offline Python is [marola-ml](https://github.com/marola-dev/marola-ml)'s (task 14): `dspy/`,
 `finetune/`, the benchmark gate and its kept runs, and the workflows that went with them,
 `docker-local.yml` (now pushing `ghcr.io/marola-dev/marola-ml:local`) and `marola-sea-publish.yml`
-(with `HF_TOKEN`). It never builds this repo: its benchmark runs this repo's image, pinned by tag and
-digest in its `marola-image`, and its gate reads the question set from the resources tarball
-`resources-tarball` builds, as a release asset. Its `compile-prompt.yml` sends the compiled prompts
-here as a pull request, opened with `MAROLA_CROSS_REPO_PAT`. Its pdoc is `api-docs.tar.gz` on its
+(with `HF_TOKEN`). It never builds the app: its benchmark runs the app image, pinned by tag and
+digest in its `marola-image`, and its gate reads the question set from the resources tarball on a
+marola-app release. Its `compile-prompt.yml` sends the compiled prompts to marola-app as a pull
+request, opened with `MAROLA_CROSS_REPO_PAT`. Its pdoc is `api-docs.tar.gz` on its
 own releases, published under `docs.marola.dev/repos/marola-ml/api/` with its `README.md` + `docs/`.
+
+The app is [marola-app](https://github.com/marola-dev/marola-app)'s (task 15), with the workflows
+that build, test and publish it: its `ci.yml` (scala-ci, coverage to `site-data`), `docker.yml`
+(the `ghcr.io/marola-dev/marola-app` image), `docker-smoke.yml`, `marola-e2e.yml`,
+`scala-steward.yml`, and `release.yml`, which attaches Scaladoc (`api-docs.tar.gz`) and the ml
+resources tarball to each `v*` tag. Nothing here builds Scala. marola-app is this repo's fourth
+submodule and mounts at the site's root, so its `1-Using-marola/` and `2-Building-marola/` keep
+their URLs, and its Scaladoc lands at `/api/`.
 
 ## The workflows
 
 | Workflow | Trigger | Runner | Gates or deploys | Secrets and variables | By hand |
 |---|---|---|---|---|---|
-| `ci.yml` | PR; push to `main` | `ubuntu-latest` | The merge gates, each run only when `dorny/paths-filter` says its inputs changed: `build-test` (devkit `scala-ci`: `corpusFetch`, scalafmt, scalafix, compile, test), `python-ci` (devkit: ruff and marola's `scripts/*` self-tests), `static-ci` (devkit: actionlint, hadolint, `docker compose config`), `agents-check` (devkit: the AGENTS.md invariants block), `quality-other` (nix: `flake.lock` is current, `just --list`, `workflow-runners`), `docs-build` (`docs.yml`'s aggregated `mkdocs --strict`, on the PR's pinned submodule commits). On `main` only: `coverage` publishes the badge and `repo-stats` the stats to marola-site's `site-data`, and `resources-tarball` uploads the `ml-resources` artifact (the app -> ml contract, MIP-0070 §5.4; marola-ml expects it as a release asset, which task 15's app release publishes) | `GITHUB_TOKEN`, `MAROLA_CROSS_REPO_PAT` | `just build && just test && just quality` locally; re-run from the Actions tab |
+| `ci.yml` | PR; push to `main` | `ubuntu-latest` | The merge gates, each run only when `dorny/paths-filter` says its inputs changed: `python-ci` (devkit: ruff and marola's `scripts/*` self-tests), `static-ci` (devkit: actionlint, hadolint and `docker compose config` on the mkdocs stack), `agents-check` (devkit: the AGENTS.md invariants block), `quality-other` (nix: `flake.lock` is current, `just --list`, `workflow-runners`), `docs-build` (`docs.yml`'s aggregated `mkdocs --strict`, on the PR's pinned submodule commits). On `main` only: `repo-stats` publishes the stats, Scala lines counted in the marola-app submodule, to marola-site's `site-data` | `GITHUB_TOKEN`, `MAROLA_CROSS_REPO_PAT` | `just quality` locally; re-run from the Actions tab |
 | `ci-short-circuit.yml` | PR closed | `ubuntu-latest` | Devkit `ci-short-circuit`: cancels the closed PR's in-flight runs, which the concurrency group can't see | `GITHUB_TOKEN` | — |
 | `pr-body.yml` | PR opened, reopened, ready, pushed | `ubuntu-latest` | Devkit `pr-body`: fills the description from the commits (`uprd`); skips forks and bot branches | `GITHUB_TOKEN` | `just uprd` |
 | `labels.yml` | dispatch only | `ubuntu-latest` | Devkit `labels-sync`: applies the devkit's label manifest to this repo | `GITHUB_TOKEN` | `gh workflow run labels.yml`; `just labels-sync` locally |
-| `api-docs.yml` | push to `main` touching Scala; dispatch | `ubuntu-latest` | Builds scaladoc and **publishes** it as `api-docs.tar.gz` on the rolling `api-docs` release, then runs `docs.yml` | `GITHUB_TOKEN` | `gh workflow run api-docs.yml` |
-| `docs.yml` | `repository_dispatch: submodule-docs-updated`; push to `main` touching `docs/**`/`mkdocs/**`; daily; dispatch | `ubuntu-latest` | The umbrella aggregator (MIP-0070 §5.5): builds a gitignored aggregated tree (`scripts/prepare-docs.sh` — this repo's own `docs/` plus each submodule's `README.md` + `docs/`, submodules at their latest `main`), runs `mkdocs --strict` on it, folds in each submodule's API docs and this repo's own at `/api/` (`scripts/fetch-api-docs.sh`, release assets — no `sbt doc` here), and on `main` **deploys** to Pages at `docs.marola.dev` (`github-pages` environment) | `GITHUB_TOKEN` | `gh workflow run docs.yml`; `just docs` locally |
-| `docker.yml` | PR and push to `main` touching the image inputs; dispatch | `ubuntu-latest` | PR: builds `jvm` and runs a start-up check, never pushes. `main` and dispatch: **push** `:jvm`, `:jvm-<sha>` (amd64 + arm64) and `:native`, `:native-<sha>` (amd64) to GHCR | `GITHUB_TOKEN` | `gh workflow run docker.yml [-f dev=true]` (`:dev` is dispatch-only) |
-| `docker-smoke.yml` | daily 09:30 UTC; dispatch | `ubuntu-latest` | Runs the published image's `--summarize` live, writes `smoke/` to marola-site's `site-data` (the map's "Last live run") | `GITHUB_TOKEN`, `MAROLA_CROSS_REPO_PAT` | `gh workflow run docker-smoke.yml [-f lat=… -f lon=…]` |
-| `marola-e2e.yml` | dispatch only | `ubuntu-latest` | `E2ESpec` against live Overpass/Open-Meteo/IMA, optionally with Ollama | — | `gh workflow run marola-e2e.yml [-f with_llm=true]`; `just e2e` locally |
-| `scala-steward.yml` | Mondays 12:00 UTC; dispatch | `ubuntu-latest` | Opens dependency-update PRs for the sbt build (dependabot covers Actions) | `STEWARD_GH_TOKEN`, falling back to `GITHUB_TOKEN` | `gh workflow run scala-steward.yml` |
+| `docs.yml` | `repository_dispatch: submodule-docs-updated`; push to `main` touching `docs/**`/`mkdocs/**`; daily; dispatch | `ubuntu-latest` | The umbrella aggregator (MIP-0070 §5.5): builds a gitignored aggregated tree (`scripts/prepare-docs.sh` — this repo's own `docs/` plus each submodule's `README.md` + `docs/`, submodules at their latest `main`), runs `mkdocs --strict` on it, folds in each submodule's API docs, marola-app's at `/api/` (`scripts/fetch-api-docs.sh`, the latest release's `api-docs.tar.gz` — no `sbt doc` here), and on `main` **deploys** to Pages at `docs.marola.dev` (`github-pages` environment) | `GITHUB_TOKEN` | `gh workflow run docs.yml`; `just docs` locally |
 | `profile-activity.yml` | PR merged into `main` | `ubuntu-latest` (reusable workflow's `runner:` input) | Pings `h0ffmann/h0ffmann` to refresh its activity list; without the token it only leaves a notice | `PROFILE_DISPATCH_TOKEN` | — |
 
 `site.yml` and `site-health.yml` moved to marola-site with the map (MIP-0070 task 11),
-`docker-local.yml` and `marola-sea-publish.yml` to marola-ml (task 14).
+`docker-local.yml` and `marola-sea-publish.yml` to marola-ml (task 14), and `api-docs.yml`,
+`docker.yml`, `docker-smoke.yml`, `marola-e2e.yml` and `scala-steward.yml` to marola-app with the
+code (task 15).
 `ghcr-retention.yml` was deleted: it failed every week on an upstream bug, and it only existed
 because GHCR storage used to be billed while the repo was private (MIP-0065 §4.4).
 
@@ -114,11 +109,14 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
 - **The desktop runner** carries the `marola-sea` label only, so no `runs-on: ubuntu-latest` job
   can land on it. It serves marola-ml's `marola-sea-publish.yml`.
 - **No `CI_RUNNER` variable.** The repo has no Actions variables at all (checked 2026-09-29).
-- **The `marola-dev/marola` GHCR package is public**, so `docker pull ghcr.io/marola-dev/marola:jvm`
-  works logged out. A package's first push creates it private; as of 2026-09-29 it still is.
-- **Secrets:** `HF_TOKEN` moved to marola-ml with `marola-sea-publish`. Here: `STEWARD_GH_TOKEN` (a
+- **The app image is marola-app's package**, `ghcr.io/marola-dev/marola-app` (the old
+  `ghcr.io/marola-dev/marola` stops receiving pushes). A package's first push creates it private:
+  either make it public, so `docker pull ghcr.io/marola-dev/marola-app:jvm` works logged out, or
+  grant marola-site and marola-ml read access under its "Manage Actions access".
+- **Secrets:** `HF_TOKEN` moved to marola-ml with `marola-sea-publish`, and `STEWARD_GH_TOKEN` (a
   fine-grained token that lets scala-steward open PRs; `GITHUB_TOKEN` is refused by the org's
-  Actions policy, #496), and optionally `PROFILE_DISPATCH_TOKEN`. `MAROLA_CROSS_REPO_PAT` is an
+  Actions policy, #496) to marola-app with its workflow. Here: optionally
+  `PROFILE_DISPATCH_TOKEN`. `MAROLA_CROSS_REPO_PAT` is an
   org secret: a fine-grained token that needs Contents read and write on **both** marola and
   marola-site (and on each new repo as it is created). marola uses it to push to marola-site's
   `site-data` and to dispatch `site-data-updated`; marola-site uses it to dispatch

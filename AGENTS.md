@@ -23,26 +23,21 @@ jellyfish/whale heuristic, an LLM-generated summary reviewed by a second LLM pas
 is "what's the best hour tomorrow to swim nearby?", all runnable **entirely locally
 with a free Ollama model, no cloud account needed**. GCP (MIP-0057) is the opt-in cloud path.
 
-One sbt multi-project build (root `build.sbt`), split into three modules at the repo root:
+This repo is the umbrella (MIP-0070) and keeps no app code. The Scala app (the sbt build of
+`core/`, `local/` and `cli/`, the image, the MCP server, the user and build docs) is
+[marola-app](https://github.com/marola-dev/marola-app), the `marola-app/` submodule: read its
+`AGENTS.md` before working there, and run its gates in its checkout.
 
-- `core/`: pure pipeline logic, shared HTTP/JSON helpers, the traits (`LlmClient`, `VisionClient`,
-  `SightingStore`) `local/` implements.
-- `local/`: Ollama-backed implementations (LLM, vision) and the local-file sighting store.
-- `cli/`: `Main`, `AppConfig` (reads settings from env vars), the MCP tool server. Depends on
-  both above; use `sbt cli/run`/`cli/runMain ...`, not `sbt run` at the root (a pure aggregate
-  with no source of its own).
 - The offline Python lives in [marola-ml](https://github.com/marola-dev/marola-ml) (the
-  `marola-ml/` submodule): the DSPy prompt compile, whose two JSON artifacts reach
+  `marola-ml/` submodule): the DSPy prompt compile, whose two JSON artifacts reach marola-app's
   `core/src/main/resources/` as a PR from its `compile-prompt.yml`, never a runtime dependency; the
-  marola-sea fine-tune; and the benchmark gate with its kept runs (`docs/benchmarks/`). It runs this
-  repo's image, pinned by tag and digest, and reads the resources tarball
-  (`scripts/build-resources-tarball.sh`) from a release asset: `ml-resources-v0.1.0.tar.gz` on
-  this repo's v0.1.0 release, made by hand until marola-app's releases carry it (task 15).
+  marola-sea fine-tune; and the benchmark gate with its kept runs (`docs/benchmarks/`). It runs the
+  app image, pinned by tag and digest, and reads the resources tarball from a marola-app release
+  asset (`ml-resources-<tag>.tar.gz`).
 - The knowledge corpus (`--ask`'s sourced notes) and its `corpus-doc`/`eli5` skills live in
   [marola-corpus](https://github.com/marola-dev/marola-corpus) (the `marola-corpus/` submodule).
-  `corpus.version` pins its release; `just corpus-fetch` unpacks it into `.tmp/knowledge`, which
-  `just test`/`ask`/`run` and the image read. `MAROLA_KNOWLEDGE_DIR=marola-corpus/knowledge` uses
-  the submodule's checkout instead, to try an unreleased document.
+  marola-app's `corpus.version` pins its release; `MAROLA_KNOWLEDGE_DIR=../marola-corpus/knowledge`
+  there uses the submodule's checkout instead, to try an unreleased document.
 
 `PHILOSOPHY.md` (repo root) holds the reasons behind the rules below: why Scala 3 on the JVM, Nix,
 `just`, ai-jail, MIPs. Docs live under `docs/`, grouped into the four audience directories the
@@ -53,13 +48,13 @@ template pointer: `.claude/rules/docs.md`):
 
 | Doc | Covers |
 |---|---|
-| `docs/2-Building-marola/ARCHITECTURE.md` | The pipeline, its integrations, what's verified live vs. written-not-run |
+| `marola-app/docs/2-Building-marola/ARCHITECTURE.md` | The pipeline, its integrations, what's verified live vs. written-not-run |
 | `docs/4-Research-and-plans/FUTURE-WORK.md` | Design sketches, reviewed-but-not-adopted libraries, harness ideas |
-| `docs/2-Building-marola/EFFECTS-MAP.md` | A Scala/FP-purity review: what's pure, what's effectful, what's hidden |
-| `docs/1-Using-marola/RUN-LOCALLY.md` | Run it now, with Ollama, no Telegram or cloud account |
-| `docs/1-Using-marola/TELEGRAM-SETUP.md` | Registering the bot and its local-dev credential path |
+| `marola-app/docs/2-Building-marola/EFFECTS-MAP.md` | A Scala/FP-purity review: what's pure, what's effectful, what's hidden |
+| `marola-app/docs/1-Using-marola/RUN-LOCALLY.md` | Run it now, with Ollama, no Telegram or cloud account |
+| `marola-app/docs/1-Using-marola/TELEGRAM-SETUP.md` | Registering the bot and its local-dev credential path |
 | `docs/4-Research-and-plans/SKILLS.md` | A skills roadmap: what to practice, in order, using marola as the vehicle |
-| `docs/2-Building-marola/SCALA3-JDK-REVIEW.md` | Scala 3 / JDK 21-25 features reviewed against this code: adopt list and order |
+| `marola-app/docs/2-Building-marola/SCALA3-JDK-REVIEW.md` | Scala 3 / JDK 21-25 features reviewed against this code: adopt list and order |
 | `docs/4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY.md` | Multi-agent frameworks survey: Python ideas → Scala shapes, Pekko fit, reading list |
 | `docs/4-Research-and-plans/AGENT-STACK-SURVEY.md` | agent4s / llm4s / ADK mapped to the MIPs, how they compose, the project Q&A agent |
 | `docs/3-Working-on-the-repo/DEV-FLOW.md` | The loop end to end: idea → MIP → acceptance → tasks → stacked PRs (verified, costed) → review on request → merge/restack → Implemented; command reference |
@@ -76,33 +71,31 @@ are the only thing ordering the sections. The build is `--strict`, so a link tha
 inside `docs/` fails it; that is why `AGENTS.md` and `PHILOSOPHY.md` are referenced at GitHub
 rather than relatively. Preview with `just docs-serve` before pushing. On
 `main`, a push touching `docs/**` or `mkdocs/**` runs `docs.yml`, which renders this repo's docs
-plus every submodule's (`mkdocs/repos.yml`: `marola-site`, `marola-corpus`, `marola-ml`), folds the API docs in
+plus every submodule's (`mkdocs/repos.yml`: `marola-site`, `marola-corpus`, `marola-ml`, and
+`marola-app` at the root, so its `1-Using-marola/` and `2-Building-marola/` keep their URLs), folds
+the API docs in
 under `api/` from release assets, and deploys docs.marola.dev. The map at marola.dev is
 [marola-site](https://github.com/marola-dev/marola-site)'s.
 
 ## Setup & commands
 
 ```bash
-nix develop          # reproducible dev shell (JDK 25, sbt, scala-cli, coursier,
-                      # just, python3, ruff, gh, hadolint, actionlint — see flake.nix; Docker itself is the host's)
+git clone --recurse-submodules https://github.com/marola-dev/marola   # the workspace
+nix develop          # reproducible dev shell (just, python3, ruff, gh, hadolint, actionlint — see
+                      # flake.nix; Docker itself is the host's)
 just                  # list all available recipes
-just build            # sbt compile
-just test             # sbt test
-just fmt              # scalafmtAll
-just run              # marola CLI (just run -- --summarize forwards flags)
-just mcp-server       # marola's MCP tool server
-just e2e              # marola's live E2E test (Overpass/Open-Meteo/Ollama) — excluded from `just test`
-just coverage         # sbt-scoverage: statement coverage across core/local/cli (README badge, main only)
-just docs             # build docs/ into mkdocs/generated-docs (needs a Docker or Podman daemon)
+just quality          # this repo's gates
+just docs             # the aggregated docs (docs/ + every submodule's) into mkdocs/generated-docs
 just docs-serve       # preview the docs on http://localhost:8001/
+cd marola-app && just build && just test && just quality   # the app's gates, in its own shell
 ```
 
-Always run `just build && just test && just quality` before considering a change done (`quality` =
-`quality-scala`, scalafmt + scalafix, plus `quality-other`, ruff + actionlint + hadolint +
-`scripts/*.py` self-tests: the gates `ci.yml` runs, at the lint versions `flake.lock` pins, which
-ci.yml passes to the devkit workflows by hand; CI runs a subset of the self-tests. A missing lint
-tool fails rather than skips, so use `nix develop`). The pre-push hook runs `just prepush`: `quality-other` before every
-push, `quality-scala` too when Scala changed. `git push --no-verify` bypasses it, CI does not.
+Always run the gates of the repo you changed before considering a change done: here `just quality`
+(`quality-other`: ruff + actionlint + hadolint + the `scripts/*` self-tests, the gates `ci.yml`
+runs, at the lint versions `flake.lock` pins, which ci.yml passes to the devkit workflows by hand;
+CI runs a subset of the self-tests. A missing lint tool fails rather than skips, so use
+`nix develop`); in marola-app, `just build && just test && just quality`. The pre-push hook runs
+`just prepush`. `git push --no-verify` bypasses it, CI does not.
 The dev-flow harness is [marola-devkit](https://github.com/marola-dev/marola-devkit), a flake
 input pinned to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `cost-split`,
 `cost-fill`, `agents-check`, …), their recipes (`import? '.devkit/devkit.just'`), the git hooks
@@ -118,9 +111,8 @@ or the devkit's recipes are missing there. Gates never link or configure anythin
 Code plugins: the generic skills are plain `SKILL.md` files under `.devkit/plugins/marola-devkit/skills/`
 (or [on GitHub](https://github.com/marola-dev/marola-devkit/tree/v0.2.2/plugins/marola-devkit/skills)),
 readable directly.
-**JDK 25 is required, not just "17+".** Kyo's artifacts won't load on an older JVM. See
-`.claude/rules/scala.md` (loaded automatically while editing `.scala`/`build.sbt`) for the full
-JDK/Kyo-versioning detail and the jar-verification approach for Kyo's pre-1.0 API surface.
+The app's JDK 25 requirement (Kyo), its Scala rules (`.claude/rules/scala.md`) and the
+`jar-verifier` agent live in marola-app with the code.
 
 ## Phase discipline (hard rule)
 
@@ -171,8 +163,8 @@ it does not replace this rule.
 
 ## Code style
 
-Scala style, the Kyo effect boundary, and testing discipline are in `.claude/rules/scala.md`,
-auto-loaded while editing `.scala`/`build.sbt`. Short version for every language: prefer `enum` +
+Scala style, the Kyo effect boundary, and testing discipline are in marola-app's
+`.claude/rules/scala.md`, auto-loaded while editing `.scala`/`build.sbt` there. Short version for every language: prefer `enum` +
 exhaustive matching over exceptions for expected failure modes, and reproduce a bug with a failing
 test before fixing it.
 

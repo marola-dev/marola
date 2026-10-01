@@ -224,8 +224,8 @@ is green; MIP status right; `docs/4-Research-and-plans/FABLE_REVIEW.md` item clo
 
 ### Dependency PRs
 
-dependabot (`.github/dependabot.yml`) and scala-steward (`.github/workflows/scala-steward.yml`)
-each open their own one-off PR per bump. Left alone, ten open bumps cost ten separate CI runs to
+dependabot (`.github/dependabot.yml`) and, in marola-app, scala-steward
+(`.github/workflows/scala-steward.yml`) each open their own one-off PR per bump. Left alone, ten open bumps cost ten separate CI runs to
 land. `just deps-stack` chains the open **dependabot** PRs (`--include-steward` adds
 scala-steward's, once its author identity on this repo is confirmed; see
 `deps-stack`'s header) into one `deps/<date>/k-slug` stack, github-actions PRs first
@@ -353,8 +353,8 @@ previewed by hand.
 **How it ships.** A push to `main` touching `docs/**` or `mkdocs/**` runs `docs.yml`: this repo's
 `docs/` plus each submodule's `README.md` + `docs/` (`scripts/prepare-docs.sh`, MIP-0070 §5.5),
 `scripts/mkdocs.sh`, then the API docs unpacked under `api/` from release assets, then a Pages
-deploy to docs.marola.dev on merge. No sbt runs: `api-docs.yml` builds the API docs separately,
-when Scala or the scripts change. A push to a submodule's `docs/` redeploys the same way, through
+deploy to docs.marola.dev on merge. No sbt runs: marola-app's `release.yml` attaches its Scaladoc to
+each `v*` tag, and the docs build fetches the latest one. A push to a submodule's `docs/` redeploys the same way, through
 its `submodule-docs-updated` dispatch.
 
 ## 9. Command reference
@@ -371,10 +371,10 @@ its `submodule-docs-updated` dispatch.
 | One dependency or sub-issue edge by hand | `issues deps add <n> --blocked-by <m>`, `deps list <n>`, `sub add <parent> <child>` — no recipe either; `tasks-to-issues` calls `deps add` for a whole table's worth |
 | Pack docs for a browser MIP session | `just context-mips` |
 | New task branch | `stack start MIP-NNNN k slug` |
-| Gates | `just build && just test && just quality` (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part) |
-| Before every push | the pre-push hook runs `just prepush`: `just quality-other`, plus `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
-| Statement coverage (aggregated core/local/cli) | `just coverage`; published to the README badge by ci.yml on pushes to `main` |
-| Live checks | `just run -- --brief`, `just e2e`; the map is marola-site's `just site-build floripa && just site-serve` |
+| Gates | `just build && just test && just quality` in marola-app (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part); `just quality` here |
+| Before every push | the pre-push hook runs the repo's `just prepush`: here `just quality-other`; in marola-app also `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
+| Statement coverage (aggregated core/local/cli) | `just coverage` in marola-app; published to the README badge by its ci.yml on pushes to `main` |
+| Live checks | `just run -- --brief`, `just e2e` in marola-app; the map is marola-site's `just site-build floripa && just site-serve` |
 | The docs site | `just docs` (strict build into `mkdocs/generated-docs`), `just docs-serve` (preview on `localhost:8001`) — both need a Docker or Podman daemon |
 | One PR, start to finish | `just pr` (`--dry-run` prints every step and the body, no push, no `gh`) — fills missing trailers, pushes, opens/updates the PR |
 | Fill missing trailers only | `just cost-fill` (`--dry-run` to preview) — adds a measured or `est.` `Cost:` and a `ci-only` `Tested:` to any commit missing one, dates preserved |
