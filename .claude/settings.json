@@ -8,7 +8,8 @@
     "marola-devkit": {
       "source": {
         "source": "github",
-        "repo": "marola-dev/marola-devkit"
+        "repo": "marola-dev/marola-devkit",
+        "ref": "v0.2.1"
       }
     }
   },
@@ -19,7 +20,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash \"$(git rev-parse --show-toplevel)/.claude/statusline.sh\""
+    "command": "bash \"$(git rev-parse --show-toplevel)/.devkit/.claude/statusline.sh\""
   },
   "permissions": {
     "allow": [

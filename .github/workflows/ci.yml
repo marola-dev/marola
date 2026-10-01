@@ -83,7 +83,7 @@ jobs:
   build-test:
     needs: changes
     if: needs.changes.outputs.scala == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/scala-ci.yml@v0.2.0
+    uses: marola-dev/marola-devkit/.github/workflows/scala-ci.yml@v0.2.1
 
   # scala-ci leaves coverage out on purpose (marola-app-specific): `sbt-scoverage`
   # (project/plugins.sbt) re-instruments core/local/cli after the gate above passed, and
@@ -256,7 +256,7 @@ jobs:
   python-ci:
     needs: changes
     if: needs.changes.outputs.python == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.2.0
+    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.2.1
     with:
       ruff-version: "0.16.5"
       self-test-commands: |
@@ -271,7 +271,7 @@ jobs:
   static-ci:
     needs: changes
     if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.2.0
+    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.2.1
     with:
       actionlint-version: "1.7.12"
       hadolint-version: "2.14.0"
@@ -289,9 +289,9 @@ jobs:
   agents-check:
     needs: changes
     if: needs.changes.outputs.agents == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.2.0
+    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.2.1
     with:
-      devkit-ref: v0.2.0
+      devkit-ref: v0.2.1
 
   # What needs this repo's own flake: the lock is current, the justfile parses, and only
   # marola-sea-publish.yml may be self-hosted (MIP-0065; the devkit's workflow-runners).

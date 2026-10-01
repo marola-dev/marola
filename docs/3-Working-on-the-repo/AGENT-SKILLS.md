@@ -21,7 +21,7 @@ are Claude Code only. See
 The generic skills, and the `mip-reviewer`/`mip-claims-auditor` agents (as
 `marola-devkit:mip-reviewer`, …), come from the `marola-devkit` plugin, declared in
 `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`) the same way superpowers is
-(§2). Their source is [marola-devkit's `plugins/marola-devkit/`](https://github.com/marola-dev/marola-devkit/tree/v0.2.0/plugins/marola-devkit).
+(§2). Their source is [marola-devkit's `plugins/marola-devkit/`](https://github.com/marola-dev/marola-devkit/tree/v0.2.1/plugins/marola-devkit).
 
 | Skill | Use when | Notes |
 |---|---|---|
