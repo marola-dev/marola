@@ -370,8 +370,8 @@ ok(new Set(areaIds).size === areaIds.length, AREAS_PATH + ': area ids are unique
   ok(nav.length > 0, 'the page has a section nav — /docs/ is reachable without typing the URL');
   ok(/<a href="\/docs\/">Docs<\/a>/.test(nav), 'Docs is a real link to the published docs');
   ok(/<a href="about\.html">About<\/a>/.test(nav), 'About is a real link to the about page');
-  ok((nav.match(/<span aria-disabled="true">/g) || []).length === 4,
-    'the four sections with no page yet are spans, not links');
+  ok((nav.match(/<span aria-disabled="true">/g) || []).length === 3,
+    'the three sections with no page yet are spans, not links');
   ok(!/<a[^>]+href="#"/.test(nav), 'no href="#" — a link that goes nowhere is worse than "soon"');
   ok(INDEX.indexOf('<nav class="sitenav"') < INDEX.indexOf('<header class="bar"'),
     'the nav is the first thing on the page, above the header');
@@ -379,6 +379,28 @@ ok(new Set(areaIds).size === areaIds.length, AREAS_PATH + ': area ids are unique
     'and outside #footer, which renderFooter() overwrites on every board load');
   ok(/el\.footer\.innerHTML\s*=/.test(APP),
     'renderFooter still replaces #footer wholesale — the reason for the assertion above');
+
+  // --- donations page and FUNDING.yml (#531) ---------------------------------------------------
+  ok(fs.existsSync(path.join(ROOT, '.github/FUNDING.yml')), '.github/FUNDING.yml exists for the Sponsor button');
+  for (const page of ['index.html', 'about.html']) {
+    const html = fs.readFileSync(path.join(ROOT, 'site/static', page), 'utf8');
+    const pageNav = (/<nav class="sitenav"[\s\S]*?<\/nav>/.exec(html) || [''])[0];
+    ok(/<a href="support\.html"[^>]*>Donate<\/a>/.test(pageNav), page + ': Donate is a real link');
+  }
+  const supportPath = path.join(ROOT, 'site/static/support.html');
+  const supportExists = fs.existsSync(supportPath);
+  ok(supportExists, 'site/static/support.html exists');
+  if (supportExists) {
+    const supportHtml = fs.readFileSync(supportPath, 'utf8');
+    ok(!/<script/i.test(supportHtml), 'the support page loads no third-party script');
+    const addrMatches = supportHtml.match(/0x[a-fA-F0-9]{40}/g) || [];
+    ok(addrMatches.length === 1 && /href="https:\/\/[^"]*0x[a-fA-F0-9]{40}/.test(supportHtml),
+      'the on-chain address appears once and links to an explorer');
+  } else {
+    ok(false, 'the support page loads no third-party script');
+    ok(false, 'the on-chain address appears once and links to an explorer');
+  }
+
 
   // --- the repo link on every page (#498) ------------------------------------------------------
   const REPO_URL = 'https://github.com/marola-dev/marola';

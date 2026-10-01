@@ -157,6 +157,7 @@ body { text-transform: lowercase; }
 .about-body h2 { font-size: 20px; font-weight: 600; margin: 1.6rem 0 .4rem; }
 .about-body h2:first-child { margin-top: 0; }
 .about-body p { margin: 0 0 .8rem; color: var(--ink); }
+html:not(:lang(en)) article.about-body:lang(en), html:lang(en) article.about-body:lang(pt) { display: none; }
 
 .leaflet-container { font: inherit; }
 .leaflet-container .leaflet-control-zoom a { color: var(--ink); }
