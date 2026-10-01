@@ -20,7 +20,7 @@ MIP-0070 §5.7: a row's `delivers` cell may start with `**<repo>**` (optionally 
 the repo its PR lands in; a row with no prefix means the umbrella (every pre-MIP-0070 row). Once a
 row is *found* — filed by an earlier run — where it actually lives always wins over a fresh
 `resolved_repo` guess: a repo created after a row was already filed as a fallback must not be
-"moved" by treating the newer target as authoritative (§5.7 idempotency, #562 B6).
+"moved" by treating the newer target as authoritative (§5.7 idempotency, #562).
 """
 
 import argparse
@@ -211,7 +211,7 @@ def repo_path(path: Path) -> str:
 
 def resolved_repo(row: dict, umbrella: str, existing: set[str]) -> str:
     """What a *fresh* filing of this row would target: `owner/<repo>` when its prefix names a repo
-    confirmed to exist (§5.7 B1), else the umbrella. `plan` only uses this for a row with no issue
+    confirmed to exist (§5.7), else the umbrella. `plan` only uses this for a row with no issue
     yet — an already-filed row keeps wherever it actually is (see `plan`'s docstring)."""
     name = row["repo"]
     if name is None:
@@ -299,8 +299,8 @@ def find_issue_multi(
     mip: str, task_id: str, issues_by_repo: dict[str, list[dict]]
 ) -> tuple[str | None, int | None]:
     """The same dedup as `find_issue`, over every repo this run knows about — a row already filed
-    in the umbrella must still be found there even once its own repo exists (#562 B6: a target
-    repo appearing later must never look like a reason to move an already-filed row)."""
+    in the umbrella must still be found there even once its own repo exists (#562: a target repo
+    appearing later must never look like a reason to move an already-filed row)."""
     hits = [
         (repo, n)
         for repo, issues in issues_by_repo.items()
@@ -314,11 +314,16 @@ def find_issue_multi(
     return hits[0] if hits else (None, None)
 
 
-def find_issue_by_title(title: str, issues: list[dict]) -> int | None:
-    hits = sorted({i["number"] for i in issues if i.get("title") == title})
+def find_parent_issue(mip: str, issues: list[dict]) -> int | None:
+    """The MIP's own parent issue, by title *prefix* (`MIP-NNNN:` or bare `MIP-NNNN`) rather than
+    an exact match on `parent_title`'s current output — so a run whose H1 lookup degrades to ""
+    once (`parent_title` then returns the bare form) still finds a parent already filed with the
+    full `MIP-NNNN: <title>` form, instead of filing a second one under the bare title (#562)."""
+    pattern = re.compile(rf"^MIP-{re.escape(mip)}(:|$)")
+    hits = sorted({i["number"] for i in issues if pattern.match(i.get("title", ""))})
     if len(hits) > 1:
         raise TasksError(
-            f"{title!r} is the title of {len(hits)} issues ({hits}) — "
+            f"MIP-{mip}'s parent is the title of {len(hits)} issues ({hits}) — "
             "one of them is a duplicate filing; close it before re-running"
         )
     return hits[0] if hits else None
@@ -350,20 +355,25 @@ def plan(
     """One MIP's task table projected onto §5.7's shape: a parent issue in the umbrella, and one
     sub-issue per row in the repo it actually belongs to. A row's `repo` in the result is where its
     issue *is* — found first, `resolved_repo`'s fresh guess only when nothing was found — and
-    `fallback` says whether that differs from what its own `delivers` prefix names (B1: reported,
-    never silently treated as the row's real target).
+    `fallback` says whether that differs from what its own `delivers` prefix names — reported,
+    never silently treated as the row's real target.
     """
     mip, _, rows = parse_table(path)
+    owner = umbrella.split("/", 1)[0]
     out_rows = []
     for row in rows:
         target = resolved_repo(row, umbrella, existing)
         found_repo, found_number = find_issue_multi(mip, row["id"], issues_by_repo)
         repo = found_repo if found_number is not None else target
+        # Compared against what the row's own prefix names, not against the umbrella: a `**marola**`
+        # row whose prefix *is* the umbrella's own bare name is never a fallback, even though its
+        # resolved repo equals the umbrella too (the only way it ever could).
+        named = f"{owner}/{row['repo']}" if row["repo"] is not None else None
         out_rows.append(
             {
                 **row,
                 "repo": repo,
-                "fallback": row["repo"] is not None and repo == umbrella,
+                "fallback": named is not None and repo != named,
                 "issue": found_number,
             }
         )
@@ -381,7 +391,7 @@ def plan(
         "parent": {
             "title": ptitle,
             "body": parent_body(path, umbrella, mip, out_rows),
-            "issue": find_issue_by_title(ptitle, issues_by_repo.get(umbrella, [])),
+            "issue": find_parent_issue(mip, issues_by_repo.get(umbrella, [])),
             "repo": umbrella,
         },
         "rows": out_rows,
@@ -593,8 +603,8 @@ def self_test() -> int:
             raise AssertionError("two issues for one task id should be an error")
         except TasksError:
             pass
-        # Found in the umbrella even though the table has since gained a repo prefix for it (#562
-        # B6): existence appearing later must never look like grounds to move an already-filed row.
+        # Found in the umbrella even though the table has since gained a repo prefix for it (#562):
+        # existence appearing later must never look like grounds to move an already-filed row.
         assert find_issue_multi("0034", "1", {"marola-dev/marola": issues, "marola-dev/x": []}) == (
             "marola-dev/marola",
             414,
@@ -649,8 +659,41 @@ def self_test() -> int:
             assert f"0034-T{row['id']}:" in p["parent"]["body"]
         # No mip-title given: the parent still gets a usable, if generic, title.
         assert plan(f, "marola-dev/marola", issues_by_repo, set())["parent"]["title"] == "MIP-0034"
+        # #562: a run whose H1 lookup degrades to "" (bare "MIP-0034" title) must still find a
+        # parent already filed under the full "MIP-0034: <title>" form — an exact-title dedup would
+        # miss it and file a second parent, whose sub-issue POSTs then 422 against the first one.
+        filed_parent = [{"number": 700, "title": "MIP-0034: GitHub tracking standard"}]
+        p_degraded = plan(f, "marola-dev/marola", {"marola-dev/marola": filed_parent}, set())
+        assert p_degraded["parent"]["title"] == "MIP-0034"
+        assert p_degraded["parent"]["issue"] == 700, "the bare title must still find the full one"
+        # And the reverse holds too: a full title is found even when the *previous* filing used the
+        # bare one (a MIP with no H1 at all, ever).
+        filed_bare = [{"number": 701, "title": "MIP-0034"}]
+        p_full = plan(
+            f,
+            "marola-dev/marola",
+            {"marola-dev/marola": filed_bare},
+            set(),
+            "GitHub tracking standard",
+        )
+        assert p_full["parent"]["issue"] == 701
+        try:
+            plan(
+                f,
+                "marola-dev/marola",
+                {
+                    "marola-dev/marola": [
+                        {"number": 700, "title": "MIP-0034: one"},
+                        {"number": 701, "title": "MIP-0034: two"},
+                    ]
+                },
+                set(),
+            )
+            raise AssertionError("two issues both titled MIP-0034... should be an error")
+        except TasksError as exc:
+            assert "MIP-0034" in str(exc), exc
 
-        # 4c. §5.7 B1: the repo prefix, resolution against what `gh repo view` confirmed, and the
+        # 4c. §5.7: the repo prefix, resolution against what `gh repo view` confirmed, and the
         #     fallback flag that reports rather than silently redirecting.
         assert repo_of("**marola-devkit** (new) — filter-repo of …") == "marola-devkit"
         assert repo_of("**marola** — §5.4 app → site") == "marola"
@@ -680,8 +723,17 @@ def self_test() -> int:
         # could have gone.
         assert plan(f, umbrella, issues_by_repo, set())["rows"][0]["fallback"] is False
 
+        # A `**marola**` row — its prefix names the umbrella's own bare name — resolves to the
+        # umbrella (the only place it could), and that is not a fallback: comparing against the
+        # umbrella string alone would flag it, since its resolved repo equals the umbrella too.
+        u = d / "MIP-0098.tasks.md"
+        u.write_text(FIXTURE_HEAD.replace("0034", "0098") + "| 1 | a | **marola** — x | t | – |\n")
+        pu = plan(u, umbrella, {umbrella: []}, set())
+        assert pu["rows"][0]["repo"] == umbrella
+        assert pu["rows"][0]["fallback"] is False, "a **marola** row is never a fallback"
+
         # Re-run once row 2's own row is already filed (in the umbrella, as a fallback) and its
-        # repo now exists: it is found where it is, not moved (#562 B6).
+        # repo now exists: it is found where it is, not moved (#562).
         already = {
             umbrella: [{"number": 900, "title": "0097-T2: y"}],
             "marola-dev/marola-devkit": [],
@@ -727,8 +779,7 @@ def self_test() -> int:
         assert repos_referenced(m63) == []
 
         # MIP-0070's own shape: every row names a repo, one of them `(new)`, and a row in a repo
-        # that does not exist yet depending on one in a repo that does (the case B3's cross-repo
-        # edge has to wire).
+        # that does not exist yet depending on one in a repo that does (§5.7's cross-repo edge case).
         m70 = d / "MIP-0070.tasks.md"
         m70.write_text(
             FIXTURE_HEAD.replace("0034", "0070")

@@ -18,8 +18,9 @@
    fat jar, `native` = the GraalVM binary on distroless, `dev` = the Nix dev shell) and
    `docker-compose.yml` (marola + an Ollama sidecar): MIP-0008, `RUN-LOCALLY.md` §10.
 5. **Phase 4: Harden & calibrate.** Caching, per-user rate limiting, feeding accumulated
-   `SightingStore` reports back into the jellyfish/whale heuristics (§8).
+   `SightingStore` reports back into the jellyfish/whale heuristics (`ARCHITECTURE.md` §8).
 
 Do not skip Phase 1 to get to Phase 2 early; see `AGENTS.md`'s phase-discipline rule: a Telegram
-bot that can't yet share a real location or photo has nothing meaningful to feed §5's integrations
-in production, even though every one of them is independently testable today via `Main`'s CLI flags.
+bot that can't yet share a real location or photo has nothing meaningful to feed `ARCHITECTURE.md`
+§5's integrations in production, even though every one of them is independently testable today via
+`Main`'s CLI flags.

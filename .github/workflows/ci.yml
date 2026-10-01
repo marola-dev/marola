@@ -56,9 +56,7 @@ jobs:
               - 'ruff.toml'
               - '.github/ISSUE_TEMPLATE/**'  # issues.sh --self-test parses these forms
               - '.github/labels.yml'          # and diffs this manifest
-              - 'docs/MIPs/*.tasks.md'        # tasks_issues.py --self-test parses all of them
-              - 'docs/PHASES.md'             # its phase names are the gate-issue titles (issues.sh)
-              - 'docs/MIPs/MIP-0063.tasks.md' # and its slug column is the branch `claim` prints
+              - 'docs/MIPs/*.tasks.md'        # mip_graph.py --check regenerates the graph from all of them
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
             site:
               - 'site/**'            # app.js/CSS/fixtures → scripts/site_check.js (MIP-0009 task 2)

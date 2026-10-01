@@ -98,7 +98,7 @@ computed from still happen, so a login is needed either way). Seven of them have
 | `just board-sync` | puts every open issue on the board and sets its Status from the issue's own state — but only on a card carrying no Status, or `Backlog`, which is what the auto-add workflow writes rather than a state anyone chose. Any other Status is someone's decision and is left alone. Also moves a **closed** issue's card to **Done** whenever it isn't already: the fallback for GitHub's built-in "Item closed" workflow, which fired for one issue and missed the next eight on 2026-09-30 (MIP-0063 §4.4) |
 
 The rest are run through the script. `scripts/issues.sh board setup` (the Status options, the
-views §5.2 names, and the `Deliverable` text field MIP-0070 §5.7 B4 adds; needs `project` scope)
+views §5.2 names, and the `Deliverable` text field MIP-0070 §5.7 adds; needs `project` scope)
 and `board gates` (the five phase gate issues) are one-time bootstraps, and reshaping a shared
 board or filing issues is not something `just` should make easy. `sub add <parent> <child>`,
 `deps add <issue> --blocked-by <n>` and `deps list <issue>` are the native edges themselves:

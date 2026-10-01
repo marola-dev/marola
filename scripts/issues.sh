@@ -80,7 +80,7 @@ commands:
 
   board setup
       Bring the project itself up to MIP-0063 §5.2: the Status options it is missing and the four
-      views, plus a `Deliverable` text field (MIP-0070 §5.7 B4) if the board has none. Idempotent,
+      views, plus a `Deliverable` text field (MIP-0070 §5.7) if the board has none. Idempotent,
       and it never removes or rewrites an option, view or field that is already there. Needs
       `project` scope.
 
@@ -356,13 +356,13 @@ resolve_issue_id() {
 }
 
 # ref_display <repo> <number> -> "#N" when <repo> is this run's own $nwo, else "<repo>#N" — the
-# org-wide commands (§5.7 B5) print a bare number for "here" and a qualified one for anywhere else.
+# org-wide commands (§5.7) print a bare number for "here" and a qualified one for anywhere else.
 ref_display() {
   [ "$1" = "$nwo" ] && printf '#%s\n' "$2" || printf '%s#%s\n' "$1" "$2"
 }
 
 # parse_issue_ref <arg> -> "<repo>\t<number>". A bare number means $nwo (unchanged single-repo
-# behaviour); "owner/repo#N" names another repo on the org (§5.7 B5's `issue-claim` shape).
+# behaviour); "owner/repo#N" names another repo on the org (§5.7's `issue-claim` shape).
 parse_issue_ref() {
   local arg="$1" repo number
   case "$arg" in
@@ -411,12 +411,13 @@ cmd_sub_add() {
 
 # dep_link <repo> <issue> <blocker-repo> <blocker> — the id-resolution + POST `deps add` and
 # `tasks-to-issues`'s native edges share. Unlike sub-issues, GitHub's "Add a blocked-by dependency"
-# docs give only `issue_id` (an integer) with no cross-repository note either way — so a cross-repo
-# call here is attempted, not confirmed; issues.sh reports a failed cross-repo attempt as skipped
-# rather than as this command's usual hard failure (MIP-0070 §5.7 B3).
+# docs give only `issue_id` (an integer) with no cross-repository note either way, so a cross-repo
+# call here is attempted, not confirmed. Exit 2 means the blocker's id could not even be resolved —
+# a real failure whichever repo it's in; exit 1 means the POST itself was rejected once the id was
+# known, which a cross-repo caller reads as "this shape isn't supported" rather than a hard failure.
 dep_link() {
   local repo="$1" issue="$2" blocker_repo="$3" blocker="$4" blocker_id
-  blocker_id="$(resolve_issue_id "$blocker" "$blocker_repo")" || return 1
+  blocker_id="$(resolve_issue_id "$blocker" "$blocker_repo")" || return 2
   run gh api --method POST "repos/$repo/issues/$issue/dependencies/blocked_by" -F "issue_id=$blocker_id"
 }
 
@@ -475,7 +476,7 @@ dor_apply_label() {
   fi
 }
 
-# <issue> is a bare number (this repo, unchanged) or `owner/repo#N` (MIP-0070 §5.7 B5) — the same
+# <issue> is a bare number (this repo, unchanged) or `owner/repo#N` (MIP-0070 §5.7) — the same
 # shape `claim` takes, since claim re-runs this rule set on whatever it was asked to claim.
 cmd_ready() {
   [ $# -eq 1 ] || { echo "issues.sh ready: expects <issue>" >&2; usage >&2; return 1; }
@@ -513,7 +514,7 @@ cmd_ready() {
   return "$rc"
 }
 
-# issue-queue reads the org, not one repo (MIP-0070 §5.7 B5): `gh issue list --repo` has no
+# issue-queue reads the org, not one repo (MIP-0070 §5.7): `gh issue list --repo` has no
 # org-wide form, so this is `gh search issues --owner <org>`, the closest supported equivalent of
 # `org:marola-dev is:issue is:open` (search excludes pull requests by default, matching `is:issue`).
 cmd_queue() {
@@ -534,7 +535,7 @@ cmd_queue() {
   # shellcheck disable=SC2054 # one --json value, comma-separated per gh's own syntax, not a
   # second array element.
   local -a search_args=(--owner "$org" --state open --limit "$limit"
-    --json number,title,labels,assignees,repository,url)
+    --json number,title,labels,assignees,repository)
   # `gh search issues --json` has no milestone field to filter client-side the way a single repo's
   # `gh issue list` answer does, so this pushes the filter into the query instead (still one call).
   [ -z "$milestone" ] || search_args+=(--milestone "$milestone")
@@ -554,7 +555,7 @@ cmd_queue() {
       | { number, title, labels: [.labels[].name], repo: .repository.nameWithOwner } ]' <<<"$list")"
 
   # `ref`: a bare `#N` for this run's own repo, `owner/repo#N` for anywhere else — unchanged output
-  # for a repo that has not split yet, since every issue's repo equals $nwo (§5.7 B5).
+  # for a repo that has not split yet, since every issue's repo equals $nwo (§5.7).
   rows="$(jq -r --arg nwo "$nwo" '
     def first_label(p): ([ .labels[] | select(startswith(p)) ] | first) // "";
     # Ranks, not `index(first_label(…))`: jq evaluates an argument against the filter it is passed
@@ -562,12 +563,18 @@ cmd_queue() {
     def size_rank: if (.labels | index("size/S")) then 0
                    elif (.labels | index("size/M")) then 1
                    elif (.labels | index("size/L")) then 2 else 9 end;
-    def ref: if .repo == $nwo then "#" + (.number | tostring) else .repo + "#" + (.number | tostring) end;
+    def ref: if .repo == $nwo then (.number | tostring) else .repo + "#" + (.number | tostring) end;
     [ .[] | select(.labels | index("agent-ready")) ]
     | sort_by(size_rank, (if (.labels | index("priority/high")) then 0 else 1 end), .number)
     | .[] | [ref, first_label("size/"), first_label("area/"), first_label("layer/"), .title]
     | @tsv' <<<"$pool")"
-  [ -z "$rows" ] || awk -F'\t' '{ printf "%-6s  %-6s  %-18s  %-12s  %s\n", $1, $2, $3, $4, $5 }' <<<"$rows"
+  # An own-repo ref is a bare number here (no "#" yet) so this can restore the exact pre-org-wide
+  # format for it (`#%-4s`); a foreign one already carries `owner/repo#`, so it gets its own,
+  # wider column instead of a literal "#" jammed in front of it.
+  [ -z "$rows" ] || awk -F'\t' '{
+    if ($1 ~ /#/) printf "%-24s  %-6s  %-18s  %-12s  %s\n", $1, $2, $3, $4, $5
+    else printf "#%-4s  %-6s  %-18s  %-12s  %s\n", $1, $2, $3, $4, $5
+  }' <<<"$rows"
 
   ready_n="$(jq '[ .[] | select(.labels | index("agent-ready")) ] | length' <<<"$pool")"
   others="$(jq -r '.[] | select(.labels | index("agent-ready") | not) | "\(.repo)\t\(.number)"' <<<"$pool")"
@@ -729,6 +736,7 @@ cmd_tasks_to_issues() {
   esac
 
   require_gh
+  resolve_nwo   # ref_display's "here or elsewhere" needs a real $nwo, not this function's own $umbrella
   local umbrella="$MAROLA_UMBRELLA" umbrella_owner="${MAROLA_UMBRELLA%%/*}"
 
   local -a ms_args=()
@@ -761,19 +769,34 @@ cmd_tasks_to_issues() {
   [ -f "$file" ] || { echo "issues.sh tasks-to-issues: no such task list: $file" >&2; exit 1; }
 
   # Which repos this table's rows name (bare, umbrella excluded), then a read-only existence check
-  # per name — §5.7 B1: exists iff `gh repo view` succeeds, otherwise that row falls back.
+  # per name — §5.7: exists iff `gh repo view` succeeds, otherwise that row falls back.
   local repo_names name rc=0
   repo_names="$(python3 "$root/scripts/lib/tasks_issues.py" repos "$file")" || rc=$?
   [ "$rc" -eq 0 ] || t2i_fail "reading the table's repo column failed"
 
-  local existing_json='[]'
+  local existing_json='[]' rv_err rv_rc
   while read -r name; do
     [ -n "$name" ] || continue
-    # The umbrella's own bare name always "exists" — no need to ask GitHub about the repo this is
-    # running from (or resolving MIP-NNNN.tasks.md through).
-    if [ "$name" = "${umbrella#*/}" ] || gh repo view "$umbrella_owner/$name" >/dev/null 2>&1; then
+    # The umbrella's own bare name always resolves to the umbrella either way (owner + its own bare
+    # name reconstructs the umbrella string) — no need to ask GitHub, and no existing_json entry:
+    # the "+N repo(s)" count below is the repos *beyond* the umbrella.
+    [ "$name" != "${umbrella#*/}" ] || continue
+    rv_err="$(mktemp)"
+    rv_rc=0
+    # </dev/null: this loop's stdin is $repo_names, and a `gh` with no explicit redirection reads
+    # whatever fd 0 is — it would otherwise eat the rest of the here-string on its first call.
+    gh repo view "$umbrella_owner/$name" </dev/null >/dev/null 2>"$rv_err" || rv_rc=$?
+    if [ "$rv_rc" -eq 0 ]; then
       existing_json="$(jq -c --arg n "$name" '. + [$n]' <<<"$existing_json")"
+    elif ! grep -q 'HTTP 404' "$rv_err"; then
+      # Only a 404 means "does not exist yet" (§5.7's fallback case); anything else (401, a rate
+      # limit, a DNS failure) is not that, and treating it as one would silently, permanently file
+      # every later row in the umbrella instead of retrying once the real cause is fixed.
+      sed 's/^/  /' "$rv_err" >&2
+      rm -f "$rv_err"
+      t2i_fail "checking whether $umbrella_owner/$name exists failed (not a 404 — see above)"
     fi
+    rm -f "$rv_err"
   done <<<"$repo_names"
 
   # Every involved repo's issues (state=all: a closed task issue must still dedup) — the umbrella
@@ -789,11 +812,15 @@ cmd_tasks_to_issues() {
     issues_by_repo="$(jq -c --arg r "$repo_nwo" --argjson v "$issues" '.[$r] = $v' <<<"$issues_by_repo")"
   done
 
-  # The parent's title wants the MIP's own H1, not the tasks file's — best-effort: a MIP-NNNN with
-  # no resolvable doc still gets a parent, titled from its number alone.
-  local mip_doc mip_title
-  mip_doc="$(cd "$root" && resolve_mip_file "$(basename "$file" .tasks.md)" doc 2>/dev/null)" || mip_doc=""
-  mip_title="$(sed -n 's/^# *//p' <<<"$mip_doc" | head -1)"
+  # The parent's title wants the MIP's own H1, not the tasks file's — and a stable one: the parent
+  # is found by title prefix, so a run that silently fell back to a bare "MIP-NNNN" title here would
+  # risk filing a second parent later, once the doc resolves again. Refused instead. The H1 itself
+  # already starts with "MIP-NNNN: " — stripped here so `parent_title` doesn't double it up.
+  local mip_from_file mip_doc mip_title
+  mip_from_file="$(basename "$file" .tasks.md)"
+  mip_doc="$(cd "$root" && resolve_mip_file "$mip_from_file" doc 2>/dev/null)" || mip_doc=""
+  mip_title="$(sed -n 's/^# *//p' <<<"$mip_doc" | head -1 | sed -E 's/^MIP-[0-9]{4}: *//')"
+  [ -n "$mip_title" ] || t2i_fail "could not resolve $mip_from_file's own H1 (needed for a stable parent-issue title) — is its MIP doc reachable?"
 
   local issues_file plan
   issues_file="$(mktemp)"
@@ -816,7 +843,7 @@ cmd_tasks_to_issues() {
   local n_new
   n_new="$(jq '([.rows[] | select(.issue == null)] | length) + (if .parent.issue == null then 1 else 0 end)' <<<"$plan")"
   if [ "$dry" -eq 0 ] && [ -z "$milestone" ] && [ -z "$deliverable" ] && [ "$n_new" -gt 0 ]; then
-    echo "issues.sh tasks-to-issues: no --milestone or --deliverable — the $n_new new issue(s) will belong to no deliverable (MIP-0063 §5.1, MIP-0070 §5.7 B4)." >&2
+    echo "issues.sh tasks-to-issues: no --milestone or --deliverable — the $n_new new issue(s) will belong to no deliverable (MIP-0063 §5.1, MIP-0070 §5.7)." >&2
   fi
 
   local map='{}' i id title body number url row_repo created=0 existing_n=0 failed=0
@@ -830,10 +857,10 @@ cmd_tasks_to_issues() {
     parent_body_s="$(jq -r '.parent.body' <<<"$plan")"
     if [ "$dry" -eq 1 ]; then
       printf '  parent      would create: %s\n' "$parent_title_s"
-      run gh issue create --repo "$parent_repo" --title "$parent_title_s" --body "$parent_body_s"
+      run gh issue create --repo "$parent_repo" --title "$parent_title_s" --body "$parent_body_s" ${ms_args[@]+"${ms_args[@]}"}
     else
       rc=0
-      url="$(gh issue create --repo "$parent_repo" --title "$parent_title_s" --body "$parent_body_s" </dev/null)" || rc=$?
+      url="$(gh issue create --repo "$parent_repo" --title "$parent_title_s" --body "$parent_body_s" ${ms_args[@]+"${ms_args[@]}"} </dev/null)" || rc=$?
       if [ "$rc" -ne 0 ]; then
         echo "issues.sh tasks-to-issues: creating the MIP-$mip parent issue failed (exit $rc)" >&2
         failed=$((failed + 1))
@@ -859,16 +886,21 @@ cmd_tasks_to_issues() {
       continue
     fi
     body="$(jq -r ".rows[$i].body" <<<"$plan")"
+    # §5.7: milestones are per repo, so a row landing outside the umbrella carries none from this
+    # run — passing $ms_args there would ask the target repo for a milestone it was never told to
+    # have (Decision 6 only ever checked the umbrella's own).
+    local -a row_ms_args=()
+    [ "$row_repo" != "$umbrella" ] || row_ms_args=(${ms_args[@]+"${ms_args[@]}"})
     if [ "$dry" -eq 1 ]; then
       printf '  %-10s would create in %s: %s\n' "$mip-T$id" "$row_repo" "$title"
-      run gh issue create --repo "$row_repo" --title "$title" --body "$body" ${ms_args[@]+"${ms_args[@]}"}
+      run gh issue create --repo "$row_repo" --title "$title" --body "$body" ${row_ms_args[@]+"${row_ms_args[@]}"}
       created=$((created + 1))
       continue
     fi
     # Not through run(): it sends the child's stdout to /dev/null, and the new issue's URL is the
     # one piece of output the rest of this command cannot do without.
     rc=0
-    url="$(gh issue create --repo "$row_repo" --title "$title" --body "$body" ${ms_args[@]+"${ms_args[@]}"} </dev/null)" || rc=$?
+    url="$(gh issue create --repo "$row_repo" --title "$title" --body "$body" ${row_ms_args[@]+"${row_ms_args[@]}"} </dev/null)" || rc=$?
     if [ "$rc" -ne 0 ]; then
       echo "issues.sh tasks-to-issues: creating $mip-T$id failed (exit $rc)" >&2
       failed=$((failed + 1))
@@ -893,7 +925,7 @@ cmd_tasks_to_issues() {
   n_linked="$(grep -c . <<<"$linked" || true)"
   [ -z "$linked" ] || sed 's/^/  link: /' <<<"$linked"
 
-  # Every row becomes the parent's sub-issue (§5.7 B2) — only once the parent itself is filed.
+  # Every row becomes the parent's sub-issue (§5.7) — only once the parent itself is filed.
   local sub_wired=0 sub_already=0 sub_pending=0 sub_present=""
   if [ -n "$parent_number" ]; then
     sub_present="$(sub_issues_of "$parent_repo" "$parent_number")"
@@ -917,7 +949,7 @@ cmd_tasks_to_issues() {
     sub_pending=$n_rows
   fi
 
-  local deps dep dep_repo dep_number present wired=0 already=0 pending=0 skipped_cross=0
+  local deps dep dep_repo dep_number present wired=0 already=0 pending=0 skipped_cross=0 link_rc
   for ((i = 0; i < n_rows; i++)); do
     id="$(jq -r ".rows[$i].id" <<<"$plan")"
     deps="$(jq -r ".rows[$i].deps[]?" <<<"$plan")"
@@ -927,7 +959,10 @@ cmd_tasks_to_issues() {
     present=""
     # No state filter: the 2026-09-27 probe found an edge survives closing both issues and reads
     # back as closed, so a closed blocker is still an edge and re-adding it would be a duplicate.
-    [ -z "$number" ] || present="$(gh api --paginate "repos/$row_repo/issues/$number/dependencies/blocked_by" </dev/null --jq '.[].number')"
+    # repo+number, not the number alone: two repos can share a number, and a match on the number
+    # alone would read a genuinely-unwired blocker as already wired.
+    [ -z "$number" ] || present="$(gh api --paginate "repos/$row_repo/issues/$number/dependencies/blocked_by" </dev/null \
+      --jq '.[] | "\(.repository.full_name)\t\(.number)"')"
     while read -r dep; do
       [ -n "$dep" ] || continue
       case "$dep" in
@@ -941,7 +976,7 @@ cmd_tasks_to_issues() {
       if [ -z "$number" ] || [ -z "$dep_number" ]; then
         printf '  edge: %s blocked by %s — pending, one of the two is not filed yet\n' "$mip-T$id" "$(case "$dep" in *-T*) echo "$dep" ;; *) echo "$mip-T$dep" ;; esac)"
         pending=$((pending + 1))
-      elif grep -qx "$dep_number" <<<"$present"; then
+      elif grep -qxF "$(printf '%s\t%s' "$dep_repo" "$dep_number")" <<<"$present"; then
         printf '  edge: %s blocked by %s — already wired\n' "$(ref_display "$row_repo" "$number")" "$(ref_display "$dep_repo" "$dep_number")"
         already=$((already + 1))
       elif [ "$row_repo" = "$dep_repo" ]; then
@@ -951,22 +986,30 @@ cmd_tasks_to_issues() {
         else
           failed=$((failed + 1))
         fi
-      # Cross-repo: attempted with the same API (issue_id, same as sub-issues), never guessed.
-      # GitHub's REST docs for this endpoint show only `issue_id`, with no cross-repository note
-      # either way (unlike sub-issues' explicit same-owner allowance) — a failure here is reported
-      # as skipped, not as this command's usual hard failure (§5.7 B3).
-      elif printf '  edge: %s blocked by %s (cross-repo)\n' "$(ref_display "$row_repo" "$number")" "$(ref_display "$dep_repo" "$dep_number")" \
-        && dep_link "$row_repo" "$number" "$dep_repo" "$dep_number"; then
-        wired=$((wired + 1))
       else
-        echo "  edge: cross-repo blocked-by not confirmed by GitHub's docs — skipped, wire it by hand once confirmed" >&2
-        skipped_cross=$((skipped_cross + 1))
+        # Cross-repo: attempted with the same API (issue_id, same as sub-issues), never guessed.
+        # GitHub's REST docs for this endpoint show only `issue_id`, with no cross-repository note
+        # either way (unlike sub-issues' explicit same-owner allowance). dep_link's exit 2 means the
+        # blocker's id itself couldn't be resolved — a real failure regardless of repo; exit 1 means
+        # GitHub rejected the POST once the id was known, which is the "not confirmed" case §5.7
+        # reports as skipped rather than failed.
+        printf '  edge: %s blocked by %s (cross-repo)\n' "$(ref_display "$row_repo" "$number")" "$(ref_display "$dep_repo" "$dep_number")"
+        link_rc=0
+        dep_link "$row_repo" "$number" "$dep_repo" "$dep_number" || link_rc=$?
+        if [ "$link_rc" -eq 0 ]; then
+          wired=$((wired + 1))
+        elif [ "$link_rc" -eq 2 ]; then
+          failed=$((failed + 1))
+        else
+          echo "  edge: cross-repo blocked-by not confirmed by GitHub's docs — skipped, wire it by hand once confirmed" >&2
+          skipped_cross=$((skipped_cross + 1))
+        fi
       fi
     done <<<"$deps"
   done
 
   # §5.7: every issue this run knows about — the parent and every row — goes onto Project 1.
-  # --deliverable additionally sets its Deliverable field; without it, a plain add (§5.7 B4).
+  # --deliverable additionally sets its Deliverable field; without it, a plain add (§5.7).
   # Reads/writes $board_ok/$board_failed/$deliverable from the enclosing scope, the same way
   # dor_apply_label reads $dry — one place for the if/else so a failure is never a `&&`/`||`
   # short-circuit ambiguity (`A && B || C` is not if/then/else: C also runs if B itself fails).
@@ -1173,11 +1216,8 @@ board_status_missing() {
 
 # board_set_status <repo> <number> <url> <status> — put one issue on the board and set its Status.
 board_set_status() {
-  # `owner` in a separate statement: bash evaluates every RHS in one `local` line against the
-  # scope *before* that line's own declarations take effect, so `local repo=$1 owner=${repo%%/*}`
-  # reads whatever `repo` meant in the caller, not the $1 just bound (a live bug here until found
-  # by MIP-0070 §5.7's own tests: it silently read a dynamically-scoped `repo` from self-test's
-  # own "-- diff --" section two thousand lines away).
+  # `owner` in its own statement: one `local` line evaluates every RHS against the pre-existing
+  # scope, so `local repo=$1 owner=${repo%%/*}` would read the caller's `repo`, not this `$1`.
   local repo="$1" number="$2" url="$3" status="$4" fields items item pair fid oid owner
   owner="${repo%%/*}"
   board_require_write || return 1
@@ -1201,7 +1241,7 @@ board_set_status() {
 }
 
 # board_add_only <repo> <number> <url> — put an issue on the board with no Status/field change,
-# idempotently. MIP-0070 §5.7 B4's default: every issue `tasks-to-issues` files goes onto Project 1,
+# idempotently. MIP-0070 §5.7's default: every issue `tasks-to-issues` files goes onto Project 1,
 # whether or not `--deliverable` names a value for it.
 board_add_only() {
   # See board_set_status's comment: `owner` must be its own statement, after `repo` is bound.
@@ -1839,10 +1879,19 @@ case "$*" in
   *"auth status"*) echo auth >> "$STUB_DIR/authlog"; exit 0 ;;
   *"repo view"*)
     # A bare `repo view --json nameWithOwner` (no owner/name argument) is resolve_nwo asking "what
-    # repo is this"; one naming an owner/repo is §5.7 B1's read-only existence probe.
+    # repo is this"; one naming an owner/repo is §5.7's read-only existence probe.
     view_target=""
     for a in "$@"; do case "$a" in */*) view_target="$a" ;; esac; done
     if [ -z "$view_target" ]; then echo "marola-dev/marola"; exit 0; fi
+    # STUB_DRAIN_REPO_VIEW models a `gh` that reads all of its stdin: review round 1 #1's
+    # existence-check loop shares fd 0 with its own `while read` here-string, so a call missing
+    # `</dev/null` would starve every repo after the first. Harmless against a real `</dev/null`
+    # (reads from /dev/null instead). Every call is logged regardless, so a test can count probes.
+    [ -z "${STUB_DRAIN_REPO_VIEW-}" ] || cat >/dev/null
+    printf '%s\n' "$view_target" >> "$STUB_DIR/repo-view-log"
+    grep -qxF "$view_target" "${STUB_DIR}/repo-view-fail" 2>/dev/null && {
+      echo "gh: Internal Server Error (HTTP 500)" >&2; exit 1
+    }
     grep -qxF "$view_target" "$STUB_DIR/existing-repos" 2>/dev/null && exit 0
     echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
   *"api -i user"*)
@@ -1852,7 +1901,7 @@ case "$*" in
     exit 0 ;;
   *"api user"*) echo "brunogbv"; exit 0 ;;
   *"search issues"*)
-    file="$STUB_DIR/${STUB_SEARCH:-search-issues.json}"
+    file="$STUB_DIR/search-issues.json"
     # The real API has no milestone JSON field to filter on client-side, so the fixture carries one
     # anyway (a stub is not bound by the real response schema) and this filters server-side, the
     # way cmd_queue's own --milestone now works.
@@ -1866,7 +1915,7 @@ case "$*" in
     [ -f "$STUB_DIR/stateful" ] || exit 0
     target="$STUB_DIR/issues-all.$(printf '%s' "${create_repo:-marola-dev/marola}" | tr '/' '_').json"
     [ -f "$target" ] || target="$STUB_DIR/issues-all.json"
-    n=$(( $(jq 'length' "$target") + ${STUB_CREATE_BASE:-700} ))
+    n=$(( $(jq 'length' "$target") + 700 ))
     jq --argjson n "$n" --arg t "$title" '. + [{number:$n,title:$t}]' "$target" \
       > "$STUB_DIR/w" && mv "$STUB_DIR/w" "$target"
     remember_repo "$n" "${create_repo:-marola-dev/marola}"
@@ -1937,13 +1986,14 @@ case "$*" in
           blocked_repo="${path#repos/}"; blocked_repo="${blocked_repo%%/issues/*}"
           child=$(( issue_id - 5600000000 ))
           blocker_repo="$(repo_of "$child")"
-          # STUB_CROSS_UNSUPPORTED models §5.7 B3's documented uncertainty: a cross-repo attempt
+          # STUB_CROSS_UNSUPPORTED models §5.7's documented uncertainty: a cross-repo attempt
           # 4xxs, a same-repo one always succeeds — issues.sh must treat only the former as skipped.
           if [ -n "${STUB_CROSS_UNSUPPORTED-}" ] && [ "$blocked_repo" != "$blocker_repo" ]; then
             echo "gh: Unprocessable Entity (HTTP 422)" >&2; exit 1
           fi
           log "edge $n <- $child"
-          jq --argjson b "$child" '. + [{number:$b,state:"closed"}]' "$file" \
+          jq --argjson b "$child" --arg r "$blocker_repo" \
+            '. + [{number:$b,state:"closed",repository:{full_name:$r}}]' "$file" \
             > "$STUB_DIR/w" && mv "$STUB_DIR/w" "$file"
           exit 0
         fi ;;
@@ -2547,7 +2597,7 @@ EOF
   check "ready leaves the caller's stdin untouched" "$dor_got" "row-2
 row-3"
 
-  # MIP-0070 §5.7 B5: the pool is now org-wide (`gh search issues --owner`), so the fixture is
+  # MIP-0070 §5.7: the pool is now org-wide (`gh search issues --owner`), so the fixture is
   # named for that call and every row carries its own repository — #950 is in a different repo,
   # to prove the queue prints it qualified while every same-repo row stays exactly as it was.
   cat > "$dor_dir/search-issues.json" <<'EOF'
@@ -2572,6 +2622,9 @@ EOF
   printf '[]\n' > "$dor_dir/950.deps.json"
   dor_got="$(PATH="$dor_dir/bin:$PATH" STUB_DIR="$dor_dir" STUB_LOG="$dor_log" nwo="" cmd_queue)"
   check "queue sorts size/S ahead of size/M" "$(head -1 <<<"$dor_got" | awk '{ print $1, $2 }')" "#901 size/S"
+  # B5 (MIP-0070 §5.7): an own-repo row's line is byte-identical to the pre-org-wide format.
+  check "an own-repo row's line is byte-for-byte what it always was" "$(head -1 <<<"$dor_got")" \
+    "#901   size/S  area/map-site       layer/site    Add hreflang tags"
   check "an assigned agent-ready issue is not in the queue" "$(grep -c '^#907' <<<"$dor_got" || true)" "0"
   check "an issue in another repo is printed as owner/repo#N" \
     "$(grep -c '^marola-dev/marola-site#950' <<<"$dor_got" || true)" "1"
@@ -2588,9 +2641,17 @@ EOF
   # `stateful`: run 2 sees exactly what run 1 left behind, which is the only way to test
   # idempotence — the property this command is for — without filing anything. Every row here has
   # no `**repo**` prefix, so every issue — parent and rows alike — lands in the umbrella; the
-  # two-repo shape (§5.7 B1/B2/B3/B6) gets its own scenario below.
+  # two-repo shape (§5.7) gets its own scenario below.
   write_gh_stub "$t2i"
   : > "$t2i/stateful"
+  # The parent's title wants the MIP's own H1 — resolved via mip_ref.sh's gh-api tier here, since
+  # none of MIP-0099/0098/0065 (used across this section) is a real MIP doc.
+  printf '[{"name":"MIP-0099-demo.md"},{"name":"MIP-0098-demo.md"},{"name":"MIP-0065-demo.md"}]\n' \
+    > "$t2i/mip-list.json"
+  mkdir -p "$t2i/mip-content"
+  printf '# MIP-0099: A demo MIP\n' > "$t2i/mip-content/MIP-0099-demo.md"
+  printf '# MIP-0098: A demo MIP\n' > "$t2i/mip-content/MIP-0098-demo.md"
+  printf '# MIP-0065: A demo MIP\n' > "$t2i/mip-content/MIP-0065-demo.md"
   printf '[{"number":3,"title":"Issue tracking standard live"}]\n' > "$t2i/milestones.json"
   printf '[]\n' > "$t2i/issues-all.json"
   printf '{"projects":[{"number":7,"id":"PVT_t2i","title":"Marola"}]}\n' > "$t2i/projects.json"
@@ -2728,10 +2789,53 @@ EOF
   fi
 
   echo
-  echo "-- tasks-to-issues: two repos — one exists, one is a fallback, and a re-run stays put (§5.7 B1/B2/B3/B6) --"
+  echo "-- tasks-to-issues MIP-NNNN: a code repo with no local docs/MIPs resolves it remotely (§5.6, #562) --"
+  local t2u="$tmp/t2u" t2u_out
+  write_gh_stub "$t2u"
+  : > "$t2u/stateful"
+  printf '[{"name":"MIP-0094.tasks.md"},{"name":"MIP-0094-demo.md"}]\n' > "$t2u/mip-list.json"
+  mkdir -p "$t2u/mip-content"
+  printf '# MIP-0094: A demo MIP\n' > "$t2u/mip-content/MIP-0094-demo.md"
+  {
+    echo '| # | slug | delivers | tests | depends on |'
+    echo '|---|---|---|---|---|'
+    printf '| 1 | a-thing | d | t | – |\n'
+  } > "$t2u/mip-content/MIP-0094.tasks.md"
+  printf '[]\n' > "$t2u/issues-all.json"
+  printf '{"projects":[{"number":7,"id":"PVT_t2u","title":"Marola"}]}\n' > "$t2u/projects.json"
+  printf '{"fields":[{"id":"PVTF_t","name":"Title","type":"ProjectV2Field"}]}\n' > "$t2u/fields.json"
+  printf '{"items":[]}\n' > "$t2u/items.json"
+  : > "$t2u/log"
+  # Captures the remote-fallback temp dir's path (issues.sh's own `mktemp -d`) without changing
+  # anything else `mktemp` is used for in this run, so the test can assert it is gone afterwards —
+  # the #562 carry-over: this temp dir used to leak on an early exit, with no self-test to catch it.
+  # Written to a file, not a variable: `cmd_tasks_to_issues` runs inside `t2u_out`'s command
+  # substitution, a forked subshell, so a plain variable assignment here would vanish with it.
+  local t2u_capture_file="$t2u/captured_dir" t2u_captured=""
+  mktemp() {
+    if [ "${1:-}" = "-d" ]; then
+      command mktemp -d | tee "$t2u_capture_file"
+    else
+      command mktemp "$@"
+    fi
+  }
+  t2u_out="$(PATH="$t2u/bin:$PATH" STUB_DIR="$t2u" STUB_LOG="$t2u/log" STUB_SCOPES=project nwo="" \
+    MAROLA_UMBRELLA=marola-dev/marola cmd_tasks_to_issues MIP-0094 2>&1)" || failed=1
+  unset -f mktemp
+  [ ! -f "$t2u_capture_file" ] || t2u_captured="$(cat "$t2u_capture_file")"
+  check "a bare MIP-NNNN with no local tasks file resolves it from the umbrella" \
+    "$(grep -c '^  0094-T1 ' <<<"$t2u_out")" "1"
+  check "the remote-fallback temp dir is created" "$([ -n "$t2u_captured" ] && echo yes || echo no)" "yes"
+  check "and cleaned up once the run finishes" "$([ -d "$t2u_captured" ] && echo still-there || echo gone)" "gone"
+
+  echo
+  echo "-- tasks-to-issues: two repos — one exists, one is a fallback, and a re-run stays put (§5.7) --"
   local t2r="$tmp/t2r" t2r_out t2r_file
   write_gh_stub "$t2r"
   : > "$t2r/stateful"
+  printf '[{"name":"MIP-0097-demo.md"}]\n' > "$t2r/mip-list.json"
+  mkdir -p "$t2r/mip-content"
+  printf '# MIP-0097: A demo MIP\n' > "$t2r/mip-content/MIP-0097-demo.md"
   printf 'marola-dev/marola-site\n' > "$t2r/existing-repos"
   printf '[]\n' > "$t2r/issues-all.json"
   printf '[]\n' > "$t2r/issues-all.marola-dev_marola-site.json"
@@ -2756,10 +2860,10 @@ EOF
   check "row 2's repo does not exist yet, so it falls back to the umbrella, and the run says so" \
     "$(grep -c 'fallback: 0097-T2 -> marola-dev/marola (its own repo is not there yet)' <<<"$t2r_out")" "1"
   check "the parent is filed in the umbrella regardless" \
-    "$(grep -c 'parent.*created: MIP-0097$' <<<"$t2r_out")" "1"
+    "$(grep -c 'parent.*created: MIP-0097: A demo MIP$' <<<"$t2r_out")" "1"
   check "both rows became the parent's sub-issue, across repos" "$(grep -c '^sub ' "$t2r/log")" "2"
   # Row 1 (marola-site) and row 2 (umbrella, its fallback) are in different repos — the same
-  # `dependencies/blocked_by` API is tried anyway (§5.7 B3), and the stub lets it succeed here.
+  # `dependencies/blocked_by` API is tried anyway (§5.7), and the stub lets it succeed here.
   check "a cross-repo depends-on edge is attempted with the same API as a same-repo one" \
     "$(grep -c '^edge ' "$t2r/log")" "1"
   check "--deliverable sets the Deliverable field on the parent and every row" \
@@ -2777,12 +2881,157 @@ EOF
   check "re-run made no create/edge/sub-issue calls" \
     "$(grep -cE '^(edge|sub) ' "$t2r/log")" "0"
   # The row that fell back stays in the umbrella even though its own repo could exist by the time
-  # of a re-run — B6: an existing filing is never treated as something to move.
+  # of a re-run — §5.7: an existing filing is never treated as something to move.
   echo 'marola-dev/marola-devkit' >> "$t2r/existing-repos"
+  printf '[]\n' > "$t2r/issues-all.marola-dev_marola-devkit.json"
   t2r_out="$(PATH="$t2r/bin:$PATH" STUB_DIR="$t2r" STUB_LOG="$t2r/log" STUB_SCOPES=project nwo="" \
     MAROLA_UMBRELLA=marola-dev/marola cmd_tasks_to_issues "$t2r_file" 2>&1)" || failed=1
   check "row 2 is not moved once marola-devkit exists — it is still found in the umbrella" \
     "$(grep -c '0097-T2.*already filed (marola-dev/marola)$' <<<"$t2r_out")" "1"
+
+  echo
+  echo "-- tasks-to-issues: three target repos, every one probed despite sharing stdin with gh (§5.7, review round 1 #1) --"
+  local t2p="$tmp/t2p" t2p_out t2p_file
+  write_gh_stub "$t2p"
+  : > "$t2p/stateful"
+  printf '[{"name":"MIP-0093-demo.md"}]\n' > "$t2p/mip-list.json"
+  mkdir -p "$t2p/mip-content"
+  printf '# MIP-0093: A demo MIP\n' > "$t2p/mip-content/MIP-0093-demo.md"
+  printf 'marola-dev/marola-a\nmarola-dev/marola-c\n' > "$t2p/existing-repos"
+  printf '[]\n' > "$t2p/issues-all.json"
+  printf '[]\n' > "$t2p/issues-all.marola-dev_marola-a.json"
+  printf '[]\n' > "$t2p/issues-all.marola-dev_marola-c.json"
+  printf '{"projects":[{"number":7,"id":"PVT_t2p","title":"Marola"}]}\n' > "$t2p/projects.json"
+  printf '{"fields":[{"id":"PVTF_t","name":"Title","type":"ProjectV2Field"}]}\n' > "$t2p/fields.json"
+  printf '{"items":[]}\n' > "$t2p/items.json"
+  t2p_file="$t2p/MIP-0093.tasks.md"
+  {
+    echo '| # | slug | delivers | tests | depends on |'
+    echo '|---|---|---|---|---|'
+    printf '| 1 | a-thing | **marola-a** — x | t | – |\n'
+    printf '| 2 | b-thing | **marola-b** (new) — y | t | – |\n'
+    printf '| 3 | c-thing | **marola-c** — z | t | – |\n'
+  } > "$t2p_file"
+  : > "$t2p/log"; rm -f "$t2p/repo-view-log"
+  t2p_out="$(PATH="$t2p/bin:$PATH" STUB_DIR="$t2p" STUB_LOG="$t2p/log" STUB_SCOPES=project nwo="" \
+    STUB_DRAIN_REPO_VIEW=1 MAROLA_UMBRELLA=marola-dev/marola cmd_tasks_to_issues "$t2p_file" 2>&1)" || failed=1
+  check "every one of the three target repos is probed, not just the first" \
+    "$(sort -u "$t2p/repo-view-log" 2>/dev/null | wc -l | tr -d ' ')" "3"
+  check "the one that doesn't exist still falls back" \
+    "$(grep -c '^  0093-T2.*created in marola-dev/marola$' <<<"$t2p_out")" "1"
+  check "the two that exist file in their own repo, not the umbrella" \
+    "$(grep -cE '^  009[13]-T[13].*created in marola-dev/marola-[ac]$' <<<"$t2p_out")" "2"
+
+  echo
+  echo "-- tasks-to-issues: a non-404 repo-view failure aborts the run, not a silent fallback (§5.7, review round 1 #2) --"
+  local t2p2="$tmp/t2p2" t2p2_out t2p2_file t2p2_rc=0
+  write_gh_stub "$t2p2"
+  : > "$t2p2/stateful"
+  printf '[{"name":"MIP-0092-demo.md"}]\n' > "$t2p2/mip-list.json"
+  mkdir -p "$t2p2/mip-content"
+  printf '# MIP-0092: A demo MIP\n' > "$t2p2/mip-content/MIP-0092-demo.md"
+  printf 'marola-dev/marola-ok\n' > "$t2p2/existing-repos"
+  printf 'marola-dev/marola-broken\n' > "$t2p2/repo-view-fail"
+  printf '[]\n' > "$t2p2/issues-all.json"
+  printf '{"projects":[{"number":7,"id":"PVT_t2p2","title":"Marola"}]}\n' > "$t2p2/projects.json"
+  printf '{"fields":[{"id":"PVTF_t","name":"Title","type":"ProjectV2Field"}]}\n' > "$t2p2/fields.json"
+  printf '{"items":[]}\n' > "$t2p2/items.json"
+  t2p2_file="$t2p2/MIP-0092.tasks.md"
+  {
+    echo '| # | slug | delivers | tests | depends on |'
+    echo '|---|---|---|---|---|'
+    printf '| 1 | ok-thing | **marola-ok** — x | t | – |\n'
+    printf '| 2 | broken-thing | **marola-broken** — y | t | – |\n'
+  } > "$t2p2_file"
+  : > "$t2p2/log"
+  t2p2_out="$(PATH="$t2p2/bin:$PATH" STUB_DIR="$t2p2" STUB_LOG="$t2p2/log" STUB_SCOPES=project nwo="" \
+    MAROLA_UMBRELLA=marola-dev/marola cmd_tasks_to_issues "$t2p2_file" 2>&1)" || t2p2_rc=$?
+  check "a non-404 failure aborts the run" "$t2p2_rc" "1"
+  check "and says so, instead of silently treating it as missing" \
+    "$(grep -c 'not a 404' <<<"$t2p2_out")" "1"
+  check "nothing was created before the abort" "$(grep -c '^  009[12]-T[12] ' <<<"$t2p2_out")" "0"
+
+  echo
+  echo "-- tasks-to-issues: a cross-repo depends-on edge, GitHub's docs unconfirmed (§5.7) --"
+  local t2x="$tmp/t2x" t2x_out t2x_file t2x_rc
+  write_gh_stub "$t2x"
+  : > "$t2x/stateful"
+  printf '[{"name":"MIP-0096-demo.md"}]\n' > "$t2x/mip-list.json"
+  mkdir -p "$t2x/mip-content"
+  printf '# MIP-0096: A demo MIP\n' > "$t2x/mip-content/MIP-0096-demo.md"
+  printf 'marola-dev/marola-b\n' > "$t2x/existing-repos"
+  printf '[]\n' > "$t2x/issues-all.json"
+  printf '[]\n' > "$t2x/issues-all.marola-dev_marola-b.json"
+  printf '{"projects":[{"number":7,"id":"PVT_t2x","title":"Marola"}]}\n' > "$t2x/projects.json"
+  printf '{"fields":[{"id":"PVTF_t","name":"Title","type":"ProjectV2Field"}]}\n' > "$t2x/fields.json"
+  printf '{"items":[]}\n' > "$t2x/items.json"
+  t2x_file="$t2x/MIP-0096.tasks.md"
+  {
+    echo '| # | slug | delivers | tests | depends on |'
+    echo '|---|---|---|---|---|'
+    printf '| 1 | a-thing | **marola-b** — x | t | – |\n'
+    printf '| 2 | b-thing | d | t | 1 |\n'
+  } > "$t2x_file"
+  : > "$t2x/log"
+  t2x_rc=0
+  t2x_out="$(PATH="$t2x/bin:$PATH" STUB_DIR="$t2x" STUB_LOG="$t2x/log" STUB_SCOPES=project \
+    STUB_CROSS_UNSUPPORTED=1 nwo="" MAROLA_UMBRELLA=marola-dev/marola cmd_tasks_to_issues "$t2x_file" 2>&1)" || t2x_rc=$?
+  check "the run still succeeds when a cross-repo edge is unsupported" "$t2x_rc" "0"
+  check "the cross-repo edge is reported skipped, not wired or failed" "$(tail -1 <<<"$t2x_out")" \
+    "summary: parent #700 · 2 created, 0 already filed (0 fallback) · 2 rows linked · 2 sub-issues wired, 0 already, 0 pending · 0 edges wired, 0 already wired, 0 pending, 1 skipped (cross-repo) · board 3 ok, 0 failed"
+  case "$t2x_out" in
+    *"cross-repo blocked-by not confirmed"*) echo "ok: and it says why" ;;
+    *) echo "FAILED: no skip message printed for the unsupported cross-repo attempt" >&2; failed=1 ;;
+  esac
+
+  # A blocker whose id can't even be resolved is a real failure, cross-repo or not — unlike a POST
+  # GitHub rejects once the id is known, nothing here says this shape might just be unsupported.
+  printf '[]\n' > "$t2x/issues-all.json"
+  printf '[]\n' > "$t2x/issues-all.marola-dev_marola-b.json"
+  rm -f "$t2x"/*.deps.json "$t2x"/*.issue.json "$t2x"/*.subs.json "$t2x/repo-of.json"
+  printf '{"items":[]}\n' > "$t2x/items.json"
+  : > "$t2x/log"
+  echo 701 > "$t2x/fail_id"
+  t2x_rc=0
+  t2x_out="$(PATH="$t2x/bin:$PATH" STUB_DIR="$t2x" STUB_LOG="$t2x/log" STUB_SCOPES=project nwo="" \
+    MAROLA_UMBRELLA=marola-dev/marola cmd_tasks_to_issues "$t2x_file" 2>&1)" || t2x_rc=$?
+  rm -f "$t2x/fail_id"
+  check "an unresolvable cross-repo blocker is a real failure" "$t2x_rc" "1"
+  check "and it is not counted as skipped" \
+    "$(grep -o '[0-9]* skipped (cross-repo)' <<<"$t2x_out")" "0 skipped (cross-repo)"
+
+  echo
+  echo "-- tasks-to-issues: \"already wired\" matches the blocker's repo too, not the number alone (§5.7) --"
+  local t2y="$tmp/t2y" t2y_out
+  write_gh_stub "$t2y"
+  : > "$t2y/stateful"
+  printf '[{"name":"MIP-0095-demo.md"}]\n' > "$t2y/mip-list.json"
+  mkdir -p "$t2y/mip-content"
+  printf '# MIP-0095: A demo MIP\n' > "$t2y/mip-content/MIP-0095-demo.md"
+  printf 'marola-dev/marola-c\n' > "$t2y/existing-repos"
+  # Row 1 (marola-c, #500) is already filed; row 2 (the umbrella, #500 too — same number, a
+  # different repo) is already filed as well. Row 1's own blocked-by list already names a #500,
+  # but in a *third* repo — a number-only match would misread that as "row 2 is already wired".
+  printf '[{"number":500,"title":"0095-T2: b-thing"}]\n' > "$t2y/issues-all.json"
+  printf '[{"number":500,"title":"0095-T1: a-thing"}]\n' > "$t2y/issues-all.marola-dev_marola-c.json"
+  printf '[{"number":500,"state":"closed","repository":{"full_name":"marola-dev/marola-other"}}]\n' \
+    > "$t2y/500.deps.json"
+  printf '{"projects":[{"number":7,"id":"PVT_t2y","title":"Marola"}]}\n' > "$t2y/projects.json"
+  printf '{"fields":[{"id":"PVTF_t","name":"Title","type":"ProjectV2Field"}]}\n' > "$t2y/fields.json"
+  printf '{"items":[]}\n' > "$t2y/items.json"
+  local t2y_file="$t2y/MIP-0095.tasks.md"
+  {
+    echo '| # | slug | delivers | tests | depends on |'
+    echo '|---|---|---|---|---|'
+    printf '| 1 | a-thing | **marola-c** — x | t | 2 |\n'
+    printf '| 2 | b-thing | d | t | – |\n'
+  } > "$t2y_file"
+  : > "$t2y/log"
+  t2y_out="$(PATH="$t2y/bin:$PATH" STUB_DIR="$t2y" STUB_LOG="$t2y/log" STUB_SCOPES=project nwo="" \
+    MAROLA_UMBRELLA=marola-dev/marola cmd_tasks_to_issues "$t2y_file" 2>&1)" || failed=1
+  check "row 2's #500 is not mistaken for the different repo's #500 already in row 1's list" \
+    "$(grep -c -- '— already wired' <<<"$t2y_out")" "0"
+  check "it is wired fresh instead" "$(grep -c '^edge 500 <- 500' "$t2y/log")" "1"
 
   echo "-- the board: scopes, the Status lookup and the sync plan (MIP-0063 §5.2) --"
   check "read:project is not project" "$(has_scope "repo, read:project, workflow" project && echo yes || echo no)" "no"
@@ -2888,6 +3137,14 @@ EOF
     "Phase 0 — POC pipeline + six pluggable integrations|Phase 1 — Telegram bot|Phase 2 — Go live on a cloud backend, deliberately|Phase 3 — Deploy|Phase 4 — Harden & calibrate|"
   check "PHASES.md marks phase 0 done, so that gate is filed closed" \
     "$(phase_titles_of "$phases_fixture" | awk -F'\t' '$3 == "done" { print $1 }')" "0"
+  # Row 6's own named test ("issues.sh --self-test parses PHASES.md"): the real file, when this
+  # checkout has one — guarded, not required, since this script moves to marola-devkit, which
+  # carries none.
+  if [ -f "$root/docs/PHASES.md" ]; then
+    check "the real docs/PHASES.md parses into five phase titles" "$(phase_titles | wc -l | tr -d ' ')" "5"
+  else
+    echo "ok: no docs/PHASES.md here (marola-devkit) — skipped"
+  fi
 
   echo
   echo "-- claim prints a branch command carrying the slug the tasks file actually has --"
@@ -3010,21 +3267,10 @@ EOF
           {"id":"I-962","content":{"type":"Issue","number":962,"repository":"marola-dev/marola"}},
           {"id":"I-910dup","status":"Ready","content":{"type":"Issue","number":910,"repository":"marola-dev/marola"}}]}
 EOF
-  # cmd_board_gates reads phase_titles() for real; shadowed here with the same fixture shape used
-  # above, so its self-test doesn't depend on a live docs/PHASES.md either (this script moves to
-  # marola-devkit, which carries none). Redefines the function for the rest of the process — safe,
-  # since nothing later calls the bare phase_titles (the earlier fixture test above calls
-  # phase_titles_of directly).
-  phase_titles() {
-    phase_titles_of "$(cat <<'EOF'
-1. **Phase 0: POC pipeline + six pluggable integrations (done, this change).** Beach discovery.
-2. **Phase 1: Telegram bot.** Long-polling loop.
-3. **Phase 2: Go live on a cloud backend, deliberately.** Opt into a cloud backend.
-4. **Phase 3: Deploy.** A hosted webhook.
-5. **Phase 4: Harden & calibrate.** Caching, per-user rate limiting.
-EOF
-)"
-  }
+  # cmd_board_gates reads phase_titles() for real; shadowed with $phases_fixture (declared above)
+  # so its self-test doesn't depend on a live docs/PHASES.md either. Redefines the function for the
+  # rest of the process — safe, since nothing later calls the bare phase_titles.
+  phase_titles() { phase_titles_of "$phases_fixture"; }
   printf '[{"name":"phase/0"},{"name":"phase/1"},{"name":"phase/2"},{"name":"phase/3"},{"name":"phase/4"}]\n' \
     > "$claim_dir/labels.json"
   printf '[{"title":"Phase 3 — Deploy"},{"title":"0063-T6: claiming an issue, and the board itself"}]\n' \
@@ -3304,7 +3550,7 @@ EOF
     "set-filter V7 status:\"Triage\"|set-filter V9 label:\"agent-ready\"|set-filter V10 label:\"good first issue\"|"
   check "the whole option payload is printed, not just the path of a temp file that is deleted" \
     "$(jq -r '.variables.options[-1].name' <<<"$(sed -n '/^  {/,/^  }/p' <<<"$claim_got")")" "Spec"
-  # §5.7 B4: the board's `Deliverable` field, created the same idempotent way as the Status options.
+  # §5.7: the board's `Deliverable` field, created the same idempotent way as the Status options.
   check "the board has no Deliverable field yet, so setup creates one" \
     "$(grep -c '^project field-create' "$claim_log" || true)" "1"
   check "with the right name and data type" "$(grep '^project field-create' "$claim_log")" \
