@@ -346,6 +346,22 @@ def from_tool_calls(knowledge_dir: Path, sea_lore_path: Path) -> list[dict]:
 
 
 def _self_test(knowledge: Path) -> None:
+    # A missing or empty corpus must stop main() before it writes a dataset without Layer 1.
+    global OUT
+    real_out = OUT
+    with tempfile.TemporaryDirectory() as tmp:
+        OUT = Path(tmp) / "out"
+        (Path(tmp) / "empty").mkdir()
+        for bad in (Path(tmp) / "missing", Path(tmp) / "empty"):
+            try:
+                main(RESOURCES, bad)
+            except SystemExit as e:
+                assert e.code not in (None, 0), f"main() exited 0 on corpus {bad}"
+            else:
+                raise AssertionError(f"main() built a dataset from corpus {bad}")
+        assert not OUT.exists(), "main() wrote a dataset before checking the corpus"
+    OUT = real_out
+
     rows = from_knowledge(knowledge)
     assert len(rows) >= KNOWLEDGE_EXAMPLE_FLOOR, (
         f"knowledge-derived example count {len(rows)} below floor {KNOWLEDGE_EXAMPLE_FLOOR} "
@@ -421,6 +437,12 @@ def _self_test(knowledge: Path) -> None:
 
 
 def main(resources: Path, knowledge: Path) -> None:
+    # from_knowledge() yields nothing for a missing dir: fail rather than train without Layer 1.
+    if not knowledge.is_dir() or not any(knowledge.rglob("*.md")):
+        raise SystemExit(
+            f"build_dataset: no knowledge/*.md under {knowledge} — run `just corpus-fetch`, "
+            "or point --knowledge / MAROLA_KNOWLEDGE_DIR at a corpus checkout"
+        )
     rows: list[dict] = []
     rows += from_compiled_prompt(resources / "recommendation_prompt.json", "summary")
     rows += from_compiled_prompt(

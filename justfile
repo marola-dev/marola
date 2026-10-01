@@ -80,7 +80,7 @@ quality-scala:
 
 # The JVM-free gates: ruff, the script self-tests, actionlint, hadolint. A missing tool fails, never skips.
 # The devkit's own scripts are self-tested in its CI; here only marola's run.
-quality-other:
+quality-other: corpus-fetch
     #!/usr/bin/env bash
     set -euo pipefail
     [ -e .devkit/devkit.just ] || echo "quality-other: no .devkit here — the devkit's recipes (pr, stack, issue-*) are missing; run 'nix develop', or 'just devkit-link'" >&2
@@ -112,7 +112,7 @@ quality-other:
     python3 scripts/mip_graph.py --check
     agents-check
     python3 finetune/train_lora.py --self-test
-    python3 finetune/build_dataset.py --self-test
+    MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test
     python3 finetune/preflight.py --self-test
     python3 finetune/merge_export.py --self-test
