@@ -3,9 +3,7 @@
 # generated site, from a release asset its own CI publishes. The umbrella never builds Scala or
 # Python here (MIP-0070 §5.5): no `sbt doc`, no pdoc. The asset name is a cross-repo contract —
 # api-docs.tar.gz, attached to GitHub's "latest" release — unpacked under <mount>/api/, a sibling
-# of the mounted README/docs: the same after-the-mkdocs-build placement api-docs.yml already uses
-# for the monorepo's own scaladoc/pdoc trees. No repo publishes this asset yet (marola-app will,
-# task 15); a missing release or asset is not an error, just a skip.
+# of the mounted README/docs. A missing release or asset is not an error, just a skip.
 #
 #   scripts/fetch-api-docs.sh SITE_DIR [REPOS_FILE]   # default mkdocs/repos.yml
 #   scripts/fetch-api-docs.sh --self-test              # stubs gh; no network

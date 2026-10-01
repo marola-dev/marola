@@ -92,7 +92,7 @@ cli/src/main/scala/marola/       depends on core + local — the one place that 
                                   backends together
   Main.scala                     CLI entry point (KyoApp) — see §3.1 for its flags
   Report.scala                   pure text rendering: ranked list, detailed block, lore, answers
-  site/SiteBuilder.scala         MIP-0005 — `--site`: boards for every area of site/areas.json
+  site/SiteBuilder.scala         MIP-0005 — `--site`: boards for every area of an `--areas` file
                                   into site/dist/ (data only — MIP-0070 §5.4; the caller copies
                                   site/static/, the Leaflet page, itself)
   AppConfig.scala                env config + a llmClient/sightingStore/visionClient/tracing
@@ -652,7 +652,7 @@ is fully testable end-to-end before spending anything.
 | [Ollama](https://ollama.com) | Local LLM (§5a) and multimodal vision (§5e) backends | Free, runs entirely on your own hardware |
 | [ipinfo.io](https://ipinfo.io), [ipwho.is](https://ipwho.is), [ip-api.com](https://ip-api.com) | CLI origin fallback via public-IP geolocation (§3.1), majority vote across the three | Free, no key; ip-api.com's free tier is HTTP-only and non-commercial; each has a modest per-minute/day rate limit, fine for a CLI |
 
-| [OpenStreetMap tile servers](https://operations.osmfoundation.org/policies/tiles/) | Base map behind the static site's markers (MIP-0005; `tiles` in `site/areas.json`) | No key; the usage policy forbids heavy or commercial use — acceptable for a link among friends, not for a public launch. Switch to self-hosted Protomaps PMTiles or a MapTiler/Stadia free tier before going public |
+| [OpenStreetMap tile servers](https://operations.osmfoundation.org/policies/tiles/) | Base map behind the static site's markers (MIP-0005; `tiles` in the `--areas` file, marola-site's `site/areas.json`) | No key; the usage policy forbids heavy or commercial use — acceptable for a link among friends, not for a public launch. Switch to self-hosted Protomaps PMTiles or a MapTiler/Stadia free tier before going public |
 
 No jellyfish- or whale-specific API exists (checked); see §8.
 

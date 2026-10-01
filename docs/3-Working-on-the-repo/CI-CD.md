@@ -103,8 +103,10 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
 - **Secrets:** `HF_TOKEN` (Hugging Face write, for `marola-sea-publish`), `STEWARD_GH_TOKEN` (a
   fine-grained token that lets scala-steward open PRs; `GITHUB_TOKEN` is refused by the org's
   Actions policy, #496), and optionally `PROFILE_DISPATCH_TOKEN`. `MAROLA_CROSS_REPO_PAT` is an
-  org secret: a fine-grained token with Contents read/write on marola-site, for its `site-data`
-  pushes and the `site-data-updated` dispatch.
+  org secret: a fine-grained token that needs Contents read and write on **both** marola and
+  marola-site (and on each new repo as it is created). marola uses it to push to marola-site's
+  `site-data` and to dispatch `site-data-updated`; marola-site uses it to dispatch
+  `submodule-docs-updated` back to marola.
 - **Pages:** source "GitHub Actions", custom domain `docs.marola.dev` (a DNS `CNAME` to
   `marola-dev.github.io`). An Actions-deployed site ignores a `CNAME` file, so the domain lives
   only in this setting.

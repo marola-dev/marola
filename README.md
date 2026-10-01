@@ -58,7 +58,7 @@ just run -- --brief --lat -27.6733 --lon -48.4700                  # fastest pat
 just ollama-up                                                     # starts `ollama serve`, pulls llama3.2 if missing
 just run -- --summarize --lat -27.6733 --lon -48.4700              # ranked list + top-pick block + LLM summary + review
 just ask "what should I do if I get caught in a rip current?"      # grounded answer with sources
-just site-build floripa && just site-serve                         # the map, locally, at :8000
+just run -- --site floripa --areas cli/src/test/resources/site/areas.json   # the map's board data (the page: marola-site)
 ```
 
 No cloud account, no API key needed for any of the above. Full walkthrough with

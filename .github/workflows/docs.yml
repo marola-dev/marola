@@ -4,8 +4,7 @@
 name: docs
 
 on:
-  # The code-repo side of this (notify-umbrella.yml, a devkit workflow) ships with the first
-  # submodule, task 15.
+  # Sent by each submodule's notify-umbrella.yml (a devkit workflow).
   repository_dispatch:
     types: [submodule-docs-updated]
   push:
@@ -22,7 +21,7 @@ permissions:
 
 concurrency:
   group: docs
-  cancel-in-progress: true
+  cancel-in-progress: false # never kill a Pages deploy mid-way
 
 jobs:
   build:
@@ -35,8 +34,7 @@ jobs:
 
       # §5.5: non-PR builds track each submodule's latest main; a PR build stays on the pinned
       # commit the gitlink already carries, so it doesn't fail on something merged after it opened.
-      # This workflow carries no `pull_request` trigger today (no submodule exists to preview), so
-      # the condition always holds — kept explicit for when one is added.
+      # No `pull_request` trigger here (ci.yml's docs-build is the PR build), so this always runs.
       - name: Track every submodule's latest main
         if: github.event_name != 'pull_request'
         run: git submodule update --init --remote
@@ -66,6 +64,9 @@ jobs:
         run: |
           printf -- '- name: %s\n  mount: ./\n' "${GITHUB_REPOSITORY#*/}" > .tmp/self-repos.yml
           scripts/fetch-api-docs.sh mkdocs/generated-docs .tmp/self-repos.yml
+
+      - name: The published tree keeps script-src 'self'
+        run: python3 scripts/strip_external_scripts.py --check mkdocs/generated-docs
 
       - uses: actions/upload-pages-artifact@v5
         with:

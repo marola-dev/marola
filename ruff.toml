@@ -5,7 +5,7 @@ line-length = 100
 # checkouts: Claude Code's agent worktrees live under .claude/worktrees/ and stack worktrees under
 # .tmp/wt-*, each a full copy of the repo at some other commit — ruff walks a nested .git checkout
 # even when .gitignore excludes it, and the hook once reported a fixed file's old copy from there.
-extend-exclude = [".claude/worktrees", ".tmp"]
+extend-exclude = [".claude/worktrees", ".tmp", "marola-site"]  # a submodule, linted in its own repo
 [lint]
 select = ["E", "F", "W", "I", "UP", "B"]
 ignore = ["E501"]  # long doc/comment lines are deliberate in this repo
