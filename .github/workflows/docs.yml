@@ -1,0 +1,68 @@
+# docs — the umbrella's aggregated documentation site: this repo's own docs/ plus every
+# submodule's README.md + docs/, and each submodule's pre-built API docs when it publishes one
+# (MIP-0070 §5.5). Builds and uploads the site as a Pages artifact only — no deploy job yet (ruling
+# T10-7): task 12 adds it once this repo serves docs.marola.dev instead of the map at marola.dev,
+# where api-docs.yml + site.yml are still the live publish path until then.
+name: docs
+
+on:
+  # The code-repo side of this (notify-umbrella.yml, a devkit workflow) ships with the first
+  # submodule, task 15.
+  repository_dispatch:
+    types: [submodule-docs-updated]
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs/**'
+  schedule:
+    - cron: "20 5 * * *" # once a day, off the hour other workflows use (CI-CD.md)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      # §5.5: non-PR builds track each submodule's latest main; a PR build stays on the pinned
+      # commit the gitlink already carries, so it doesn't fail on something merged after it opened.
+      # This workflow carries no `pull_request` trigger today (no submodule exists to preview), so
+      # the condition always holds — kept explicit for when one is added.
+      - name: Track every submodule's latest main
+        if: github.event_name != 'pull_request'
+        run: git submodule update --init --remote
+
+      # Builds .tmp/docs-aggregated: this repo's own docs/ plus every submodule's README.md +
+      # docs/, under its manifest mount. The tracked docs/ tree itself is never written to
+      # (ruling T10-8) — scripts/mkdocs.sh stages and builds from this directory instead.
+      - name: Build the aggregated docs tree
+        run: scripts/prepare-docs.sh
+
+      - name: mkdocs (material + kroki), from the aggregated tree
+        env:
+          CONTAINER_RUNTIME: docker
+          DOCS_SRC: .tmp/docs-aggregated
+        run: scripts/mkdocs.sh
+
+      - name: Fold in each submodule's pre-built API docs, from a release asset (no sbt here)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/fetch-api-docs.sh mkdocs/generated-docs
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: mkdocs/generated-docs
+
+  # deploy: task 12 adds this job (pages: write, id-token: write, actions/deploy-pages@v5) once
+  # this repo serves docs.marola.dev — see MIP-0070 §5.5 and §11.

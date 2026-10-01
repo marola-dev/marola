@@ -1,0 +1,10 @@
+# repos.yml — submodule -> docs mount point (MIP-0070 §5.5). scripts/prepare-docs.sh reads this
+# before scripts/mkdocs.sh builds: a submodule's README.md becomes <mount>/index.md and its
+# docs/** is copied under <mount>/**. mount defaults to repos/<name>/ when omitted; the app's
+# 1-Using-marola is expected to mount top-level instead, decided when that submodule lands.
+#
+# Empty today — no submodule exists yet (task 10 is built ahead of task 15, the first one).
+# Shape, once populated:
+#
+# - name: marola-app
+#   mount: repos/marola-app/
