@@ -380,6 +380,8 @@ ok(new Set(areaIds).size === areaIds.length, AREAS_PATH + ': area ids are unique
     const rowAt = card.indexOf('<div class="aspects">' + tip + '</div>');
     ok(rowAt >= 0 && rowAt < card.indexOf('<dl>') && rowAt > card.indexOf('</h2>'),
       'the card starts (after the h2) with the tooltip\'s exact aspect row, before the details', card.slice(0, 300));
+    ok(card.includes('<dt>why</dt><dd><ul><li>breezy (27km/h)</li><li>cold water (19.0°C)</li></ul></dd>'),
+      "the fixture's note_codes render in en exactly as the English notes did (task 3)", card);
     const sel = L.created.filter(l => l.added && isWave(l)).find(m => String(m.tooltip).includes('Praia da Joaquina'));
     ok(sel && /\bselected\b/.test(sel.opts.icon.options.className) && sel.opts.icon.options.iconSize[0] === 32 && sel.opts.zIndexOffset === 1000,
       'after selection the wave is re-drawn larger (32 px), marked selected, on top', sel && JSON.stringify(sel.opts.icon.options.iconSize));
@@ -588,7 +590,7 @@ ok(new Set(areaIds).size === areaIds.length, AREAS_PATH + ': area ids are unique
   const ptCard = openCard(pt, 'Praia da Joaquina');
   [['<button class="close" type="button" aria-label="fechar">', 'close button name'],
    ['<span class="score c40">55/100</span> melhor às <b>10:00</b></p>', 'headline'],
-   ['<dt>por quê</dt><dd><ul><li>breezy (27km/h)</li><li>cold water (19.0°C)</li></ul></dd>', 'a board without note_codes shows its notes verbatim'],
+   ['<dt>por quê</dt><dd><ul><li>brisa (27 km/h)</li><li>água fria (19,0 °C)</li></ul></dd>', "the fixture's note_codes render in pt-BR (task 3)"],
    ['<small>fonte: <span class="src">IMA/SC</span></small>', 'water source, the provider keeping its case'],
    ['<dd><span class="water">1/1 PRÓPRIA (25 Aug)</span>', 'water summary in a case-exempt span'],
    ['<span class="water proper">Ponto 33 (Joaquina): PRÓPRIA</span>, 2026-08-25, 12 enterococos/100 mL', 'sampling point, case-exempt, with its count'],
@@ -599,6 +601,9 @@ ok(new Set(areaIds).size === areaIds.length, AREAS_PATH + ': area ids are unique
    ['<dt>baleias</dt><dd>baixa, melhor chance de dia às 07:00 — temporada das jubartes</dd>', 'whales row'],
    ['>-27.6296, -48.4487</a>', 'coordinates keep the dot']]
     .forEach(([needle, label]) => ok(ptCard.includes(needle), 'pt-BR card: ' + label, ptCard));
+  const schema1 = JSON.parse(fs.readFileSync(path.join(ROOT, 'site/fixtures/board-schema1.json'), 'utf8'));
+  const oldCard = openCard(await runPage(schema1), 'Praia da Joaquina');
+  ok(oldCard.includes('<li>breezy (27km/h)</li><li>cold water (19.0°C)</li>'), 'a schema-1 board without note_codes shows its notes verbatim', oldCard);
   pt.els.near.listeners.click[0]({});
   ok(pt.alerts[0] === 'localização não permitida — a lista continua ordenada por pontuação.', 'pt-BR: a denied location says so (MIP-0054 §3)', pt.alerts.join(' | '));
 

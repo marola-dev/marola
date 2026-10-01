@@ -1,5 +1,5 @@
 {
-  "schema": 1,
+  "schema": 2,
   "area": "fixture",
   "day": "2026-09-06",
   "today": "2026-09-06",
@@ -11,11 +11,11 @@
       "name": "Praia da Joaquina",
       "lat": -27.6296,
       "lon": -48.4487,
-      "best": { "hour": "10:00", "score": 55, "notes": ["breezy (27km/h)", "cold water (19.0°C)"] },
+      "best": { "hour": "10:00", "score": 55, "notes": ["breezy (27km/h)", "cold water (19.0°C)"], "note_codes": [{"code": "breezy", "args": {"wind_kmh": 27}}, {"code": "cold_water", "args": {"sea_temp_c": 19.0}}] },
       "hours": [
-        { "h": "07:00", "score": 48, "notes": ["cold water (19.2°C)"], "sea_temp_c": 19.2, "wave_m": 1.1, "wind_kmh": 12.0, "wind_level": "calm", "jellyfish": "Low", "whales": "Moderate" },
-        { "h": "10:00", "score": 55, "notes": ["breezy (27km/h)", "cold water (19.0°C)"], "sea_temp_c": 19.0, "wave_m": 1.3, "wind_kmh": 27.0, "wind_level": "breezy", "jellyfish": "Low", "whales": "Low" },
-        { "h": "13:00", "score": 30, "notes": ["strong wind (33km/h)", "cold water (19.4°C)"], "sea_temp_c": 19.4, "wave_m": 1.4, "wind_kmh": 33.0, "wind_level": "strong", "jellyfish": "Low", "whales": "Low" }
+        { "h": "07:00", "score": 48, "notes": ["cold water (19.2°C)"], "note_codes": [{"code": "cold_water", "args": {"sea_temp_c": 19.2}}], "sea_temp_c": 19.2, "wave_m": 1.1, "wind_kmh": 12.0, "wind_level": "calm", "jellyfish": "Low", "whales": "Moderate" },
+        { "h": "10:00", "score": 55, "notes": ["breezy (27km/h)", "cold water (19.0°C)"], "note_codes": [{"code": "breezy", "args": {"wind_kmh": 27}}, {"code": "cold_water", "args": {"sea_temp_c": 19.0}}], "sea_temp_c": 19.0, "wave_m": 1.3, "wind_kmh": 27.0, "wind_level": "breezy", "jellyfish": "Low", "whales": "Low" },
+        { "h": "13:00", "score": 30, "notes": ["strong wind (33km/h)", "cold water (19.4°C)"], "note_codes": [{"code": "strong_wind", "args": {"wind_kmh": 33}}, {"code": "cold_water", "args": {"sea_temp_c": 19.4}}], "sea_temp_c": 19.4, "wave_m": 1.4, "wind_kmh": 33.0, "wind_level": "strong", "jellyfish": "Low", "whales": "Low" }
       ],
       "facilities": { "parking": 3, "toilets": 1 },
       "water": {
@@ -36,15 +36,15 @@
       "name": "Praia Brava",
       "lat": -27.4021,
       "lon": -48.4157,
-      "best": { "hour": "09:00", "score": 0, "notes": ["water unfit (IMPRÓPRIA)"] },
+      "best": { "hour": "09:00", "score": 0, "notes": ["some jellyfish likelihood", "water unfit for bathing — IMA/SC 25 Aug, Ponto 12 (Brava), 800 enterococci/100mL"], "note_codes": [{"code": "jellyfish_some", "args": {}}, {"code": "water_unfit", "args": {"source": "IMA/SC", "sampled_on": "2026-08-25", "point": "Ponto 12", "location": "Brava", "enterococci_per_100ml": 800}}] },
       "hours": [
-        { "h": "09:00", "score": 0, "notes": ["water unfit (IMPRÓPRIA)"], "sea_temp_c": 20.1, "wave_m": 0.5, "wind_kmh": 9.0, "wind_level": "calm", "jellyfish": "Moderate", "whales": "High" },
-        { "h": "12:00", "score": 0, "notes": ["water unfit (IMPRÓPRIA)"], "sea_temp_c": null, "wave_m": 0.6, "wind_kmh": 18.0, "jellyfish": "Moderate", "whales": "High" }
+        { "h": "09:00", "score": 0, "notes": ["some jellyfish likelihood", "water unfit for bathing — IMA/SC 25 Aug, Ponto 12 (Brava), 800 enterococci/100mL"], "note_codes": [{"code": "jellyfish_some", "args": {}}, {"code": "water_unfit", "args": {"source": "IMA/SC", "sampled_on": "2026-08-25", "point": "Ponto 12", "location": "Brava", "enterococci_per_100ml": 800}}], "sea_temp_c": 20.1, "wave_m": 0.5, "wind_kmh": 9.0, "wind_level": "calm", "jellyfish": "Moderate", "whales": "High" },
+        { "h": "12:00", "score": 0, "notes": ["choppy (0.6m waves)", "breezy (18km/h)", "no sea temperature data", "some jellyfish likelihood", "water unfit for bathing — IMA/SC 25 Aug, Ponto 12 (Brava), 800 enterococci/100mL"], "note_codes": [{"code": "choppy", "args": {"wave_m": 0.6}}, {"code": "breezy", "args": {"wind_kmh": 18}}, {"code": "no_sea_temp_data", "args": {}}, {"code": "jellyfish_some", "args": {}}, {"code": "water_unfit", "args": {"source": "IMA/SC", "sampled_on": "2026-08-25", "point": "Ponto 12", "location": "Brava", "enterococci_per_100ml": 800}}], "sea_temp_c": null, "wave_m": 0.6, "wind_kmh": 18.0, "jellyfish": "Moderate", "whales": "High" }
       ],
       "water": {
         "summary": "0/1 IMPRÓPRIA (25 Aug)",
         "unfit": true,
-        "note": "avoid — every fresh point unfit",
+        "note": "water unfit for bathing — IMA/SC 25 Aug, Ponto 12 (Brava), 800 enterococci/100mL",
         "source": "IMA/SC",
         "points": [
           { "point": "Ponto 12", "location": "Brava", "lat": -27.4030, "lon": -48.4150, "condition": "improper", "sampled_on": "2026-08-25", "enterococci_per_100ml": 800, "rain": "rain in the last 24h" }

@@ -1,8 +1,8 @@
 package marola.scoring
 
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
+import marola.json.JsonValue
 import marola.model.{HourlyConditions, JellyfishRisk, WhaleSightingLikelihood, WindLevel}
 import marola.water.{BathingCondition, WaterQuality}
 
@@ -11,7 +11,7 @@ import marola.water.{BathingCondition, WaterQuality}
  * deduction, `veto` forces the score to 0 regardless, `note` (if any) joins the notes list, and
  * `summary` is the always-present short text for the ranked list's water column.
  */
-final case class WaterVerdict(delta: Int, veto: Boolean, note: Option[String], summary: String)
+final case class WaterVerdict(delta: Int, veto: Boolean, note: Option[Note], summary: String)
 
 object WaterVerdict:
   val NoData: WaterVerdict = WaterVerdict(0, veto = false, None, "no data")
@@ -70,12 +70,14 @@ object Swimability:
         case 1 => WhaleSightingLikelihood.Moderate
         case _ => WhaleSightingLikelihood.Low
 
-  private def waveDelta(hour: HourlyConditions): (Int, Option[String]) =
+  private def waveDelta(hour: HourlyConditions): (Int, Option[Note]) =
     hour.waveHeightM match
-      case Some(h) if h >= RoughWaveHeightM => (-40, Some(f"rough seas ($h%.1fm waves)"))
-      case Some(h) if h >= CalmWaveHeightM  => (-15, Some(f"choppy ($h%.1fm waves)"))
-      case Some(_)                          => (0, None)
-      case None                             => (-5, Some("no wave data"))
+      case Some(h) if h >= RoughWaveHeightM =>
+        (-40, Some(Note(NoteCode.RoughSeas, Map("wave_m" -> JsonValue.num(h)))))
+      case Some(h) if h >= CalmWaveHeightM =>
+        (-15, Some(Note(NoteCode.Choppy, Map("wave_m" -> JsonValue.num(h)))))
+      case Some(_) => (0, None)
+      case None    => (-5, Some(Note(NoteCode.NoWaveData)))
 
   /** The one place the wind thresholds turn into a band. */
   def windLevel(kmh: Option[Double]): Option[WindLevel] =
@@ -85,24 +87,29 @@ object Swimability:
       case _                       => WindLevel.Calm
     }
 
-  private def windDelta(hour: HourlyConditions): (Int, Option[String]) =
+  private def windDelta(hour: HourlyConditions): (Int, Option[Note]) =
     (windLevel(hour.windSpeedKmh), hour.windSpeedKmh) match
-      case (Some(WindLevel.Strong), Some(w)) => (-25, Some(f"strong wind (${w}%.0fkm/h)"))
-      case (Some(WindLevel.Breezy), Some(w)) => (-10, Some(f"breezy (${w}%.0fkm/h)"))
-      case (Some(WindLevel.Calm), _)         => (0, None)
-      case _                                 => (-5, Some("no wind data"))
+      case (Some(WindLevel.Strong), Some(w)) =>
+        (-25, Some(Note(NoteCode.StrongWind, Map("wind_kmh" -> JsonValue.num(w)))))
+      case (Some(WindLevel.Breezy), Some(w)) =>
+        (-10, Some(Note(NoteCode.Breezy, Map("wind_kmh" -> JsonValue.num(w)))))
+      case (Some(WindLevel.Calm), _) => (0, None)
+      case _                         => (-5, Some(Note(NoteCode.NoWindData)))
 
-  private def seaTempDelta(hour: HourlyConditions): (Int, Option[String]) =
+  private def seaTempDelta(hour: HourlyConditions): (Int, Option[Note]) =
     hour.seaTempC match
-      case Some(t) if t < ComfortableSeaTempMinC => (-20, Some(f"cold water (${t}%.1f°C)"))
-      case Some(t) if t > ComfortableSeaTempMaxC => (-5, Some(f"warm water (${t}%.1f°C)"))
-      case Some(_)                               => (0, None)
-      case None                                  => (-5, Some("no sea temperature data"))
+      case Some(t) if t < ComfortableSeaTempMinC =>
+        (-20, Some(Note(NoteCode.ColdWater, Map("sea_temp_c" -> JsonValue.num(t)))))
+      case Some(t) if t > ComfortableSeaTempMaxC =>
+        (-5, Some(Note(NoteCode.WarmWater, Map("sea_temp_c" -> JsonValue.num(t)))))
+      case Some(_) => (0, None)
+      case None    => (-5, Some(Note(NoteCode.NoSeaTempData)))
 
-  private def precipitationDelta(hour: HourlyConditions): (Int, Option[String]) =
+  private def precipitationDelta(hour: HourlyConditions): (Int, Option[Note]) =
     hour.precipitationProbabilityPct match
-      case Some(p) if p >= HeavyRainChancePct => (-10, Some(f"${p}%.0f%% chance of rain"))
-      case _                                  => (0, None)
+      case Some(p) if p >= HeavyRainChancePct =>
+        (-10, Some(Note(NoteCode.RainLikely, Map("rain_pct" -> JsonValue.num(p)))))
+      case _ => (0, None)
 
   /**
    * Night is not a swim slot: no lifeguards, no visibility, no way to check the shoreline for
@@ -110,23 +117,22 @@ object Swimability:
    */
   private val DarkPenalty = -60
 
-  private def daylightDelta(hour: HourlyConditions): (Int, Option[String]) =
+  private def daylightDelta(hour: HourlyConditions): (Int, Option[Note]) =
     hour.isDaylight match
-      case Some(false) => (DarkPenalty, Some("dark"))
+      case Some(false) => (DarkPenalty, Some(Note(NoteCode.Dark)))
       case _           => (0, None)
 
   /** Tie-breaker among equally scored hours: distance from 10:00. */
   def hourPreference(hour: HourlyConditions): Int =
     math.abs(hour.time.getHour - 10)
 
-  private def jellyfishDelta(hour: HourlyConditions): (Int, Option[String]) =
+  private def jellyfishDelta(hour: HourlyConditions): (Int, Option[Note]) =
     jellyfishRisk(hour) match
-      case JellyfishRisk.High     => (-25, Some("elevated jellyfish likelihood"))
-      case JellyfishRisk.Moderate => (-10, Some("some jellyfish likelihood"))
+      case JellyfishRisk.High     => (-25, Some(Note(NoteCode.JellyfishElevated)))
+      case JellyfishRisk.Moderate => (-10, Some(Note(NoteCode.JellyfishSome)))
       case JellyfishRisk.Low      => (0, None)
 
   private val MixedWaterPenalty = -20
-  private val sampleDateFormat = DateTimeFormatter.ofPattern("d MMM")
 
   /**
    * MIP-0001 §6, verbatim: every fresh matched point IMPRÓPRIA → veto (score 0); some IMPRÓPRIA →
@@ -142,36 +148,55 @@ object Swimability:
         if fresh.isEmpty then
           w.newestSampleDate match
             case Some(d) =>
-              val when = d.format(sampleDateFormat)
+              val when = d.format(Note.sampleDateFormat)
               WaterVerdict(
                 0,
                 veto = false,
-                Some(s"water quality data stale ($when)"),
+                Some(Note(NoteCode.WaterStale, Map("sampled_on" -> JsonValue.str(d.toString)))),
                 s"stale ($when)"
               )
             case None => WaterVerdict.NoData
         else
           val improper = fresh.filter { case (_, s) => s.condition == BathingCondition.Improper }
           val proper = fresh.filter { case (_, s) => s.condition == BathingCondition.Proper }
-          val when = fresh.map(_._2.sampledOn).maxBy(_.toEpochDay).format(sampleDateFormat)
+          val newest = fresh.map(_._2.sampledOn).maxBy(_.toEpochDay)
+          val when = newest.format(Note.sampleDateFormat)
           if improper.nonEmpty && proper.isEmpty then
             val (point, sample) = improper.maxBy(_._2.enterococciPer100ml.getOrElse(0))
-            val count =
-              sample.enterococciPer100ml.map(n => s"$n enterococci/100mL").getOrElse("count n/a")
             WaterVerdict(
               0,
               veto = true,
               Some(
-                s"water unfit for bathing — ${w.source} $when, ${point.pointName} (${point.location}), $count"
+                Note(
+                  NoteCode.WaterUnfit,
+                  Map(
+                    "source" -> JsonValue.str(w.source),
+                    "sampled_on" -> JsonValue.str(newest.toString),
+                    "point" -> JsonValue.str(point.pointName),
+                    "location" -> JsonValue.str(point.location)
+                  ) ++ sample.enterococciPer100ml.map(n =>
+                    "enterococci_per_100ml" -> JsonValue.num(n.toDouble)
+                  )
+                )
               ),
               s"IMPRÓPRIA (${improper.size}/${fresh.size} pts, $when)"
             )
           else if improper.nonEmpty then
-            val avoid = improper.map { case (p, _) => p.location }.mkString("; ")
             WaterVerdict(
               MixedWaterPenalty,
               veto = false,
-              Some(s"${proper.size}/${fresh.size} points PRÓPRIA — avoid $avoid"),
+              Some(
+                Note(
+                  NoteCode.WaterMixed,
+                  Map(
+                    "proper" -> JsonValue.num(proper.size.toDouble),
+                    "total" -> JsonValue.num(fresh.size.toDouble),
+                    "avoid" -> JsonValue.arr(improper.map {
+                      case (p, _) => JsonValue.str(p.location)
+                    }*)
+                  )
+                )
+              ),
               s"${proper.size}/${fresh.size} PRÓPRIA — avoid ${improper.map(_._1.pointName).mkString(", ")} ($when)"
             )
           else
@@ -184,7 +209,7 @@ object Swimability:
   def score(
       hour: HourlyConditions,
       water: WaterVerdict = WaterVerdict.NoData
-  ): (Int, List[String]) =
+  ): (Int, List[Note]) =
     val deltas = List(
       waveDelta(hour),
       windDelta(hour),
