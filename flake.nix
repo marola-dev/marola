@@ -93,9 +93,17 @@
           shellHook = devkit.shellHook + ''
             echo "marola dev shell"
             marola_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-            # The main checkout's .devkit too, and an absolute core.hooksPath into it: every worktree
-            # shares that setting.
-            (cd "$marola_root" && just devkit-link >/dev/null) || echo "marola: could not link .devkit — hooks and the devkit's recipes are off (just devkit-link)"
+            # hooks-path:start — core.hooksPath is shared by every worktree, so it is absolute and
+            # points at the main checkout's link; left alone until that link exists.
+            if marola_common="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
+              marola_main="$(dirname "$marola_common")"
+              if [ -e "$marola_main/.devkit/.githooks/pre-push" ]; then
+                git config core.hooksPath "$marola_main/.devkit/.githooks"
+              else
+                echo "marola: $marola_main has no .devkit yet — core.hooksPath left as is ('nix develop' there, then 'just install-hooks')"
+              fi
+            fi
+            # hooks-path:end
             # Load the gitignored .env like direnv's `dotenv_if_exists` in .envrc does; plain
             # KEY=VALUE lines only.
             if [ -f "$marola_root/.env" ]; then

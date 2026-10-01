@@ -99,9 +99,10 @@ input pinned to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`
 workflows, and the `marola-devkit` Claude Code plugin (`/marola-devkit:mip` and the other generic
 skills, the MIP agents, the format/stop/session hooks). Bump the flake input and every
 `@v…`/`devkit-ref` in `.github/workflows/` together (dependabot is told to leave it alone). marola
-keeps its own `.claude/statusline.sh`. The shellHook links `.devkit` and points `core.hooksPath` at
-the main checkout's link; a worktree made outside `nix develop` and `just worktree` needs
-`just devkit-link` once, or the devkit's recipes are missing there. OpenCode does not load Claude
+keeps its own `.claude/statusline.sh`. The shellHook links this worktree's `.devkit` and, once the
+main checkout has one, points `core.hooksPath` at it (absolute; `just install-hooks` does the same
+by hand). A worktree made outside `nix develop` and `just worktree` needs `just devkit-link` once,
+or the devkit's recipes are missing there. Gates never link or configure anything. OpenCode does not load Claude
 Code plugins: the generic skills are plain `SKILL.md` files under `.devkit/plugins/marola-devkit/skills/`
 (or [on GitHub](https://github.com/marola-dev/marola-devkit/tree/v0.2.0/plugins/marola-devkit/skills)),
 readable directly.

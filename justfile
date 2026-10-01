@@ -12,26 +12,27 @@ default:
     @[ -e .devkit/devkit.just ] || echo "no .devkit in this checkout: the devkit's recipes (pr, stack, issue-*, …) are missing — run 'just devkit-link'" >&2
     @just --list
 
-# Link .devkit into this checkout and the main one, from whichever has it, and point the hooks at
-# it. The nix shellHook runs this; a worktree made outside it needs it once. Fails loudly when
-# neither checkout has a .devkit (that takes one `nix develop`).
+# Link this worktree's .devkit to the main checkout's, for a worktree made outside `nix develop`
+# and `just worktree`. Touches nothing but this worktree's link.
 devkit-link:
     #!/usr/bin/env bash
     set -euo pipefail
     here="$(git rev-parse --show-toplevel)"
     main="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
-    src=""
-    for d in "$here" "$main"; do
-        if [ -e "$d/.devkit/devkit.just" ]; then src="$(readlink -f "$d/.devkit")"; break; fi
-    done
-    [ -n "$src" ] || { echo "devkit-link: no .devkit in $here or $main — run 'nix develop' (its shellHook links it)" >&2; exit 1; }
-    for d in "$here" "$main"; do
-        [ -e "$d/.devkit/devkit.just" ] || { ln -sfn "$src" "$d/.devkit"; echo "devkit-link: linked $d/.devkit"; }
-    done
-    # Absolute: core.hooksPath is shared by every worktree, and a relative one resolves per worktree.
-    git config core.hooksPath "$main/.devkit/.githooks"
+    if [ -e "$here/.devkit/devkit.just" ]; then echo "devkit-link: $here/.devkit is already there"; exit 0; fi
+    [ -e "$main/.devkit/devkit.just" ] || { echo "devkit-link: $main has no .devkit to link to — run 'nix develop' there, or here" >&2; exit 1; }
+    ln -sfn "$(readlink -f "$main/.devkit")" "$here/.devkit"
+    echo "devkit-link: linked $here/.devkit"
 
-alias install-hooks := devkit-link
+# This worktree's .devkit, then the hooks: an absolute core.hooksPath, because every worktree shares
+# the setting and a relative one resolves per worktree. Points at the main checkout's link.
+install-hooks: devkit-link
+    #!/usr/bin/env bash
+    set -euo pipefail
+    main="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+    [ -e "$main/.devkit/.githooks/pre-push" ] || { echo "install-hooks: $main has no .devkit — run 'nix develop' there first" >&2; exit 1; }
+    git config core.hooksPath "$main/.devkit/.githooks"
+    echo "install-hooks: core.hooksPath = $main/.devkit/.githooks"
 
 # ---------------------------------------------------------------------
 # Git
@@ -74,9 +75,10 @@ quality-scala:
 
 # The JVM-free gates: ruff, the script self-tests, actionlint, hadolint. A missing tool fails, never skips.
 # The devkit's own scripts are self-tested in its CI; here only marola's run.
-quality-other: devkit-link
+quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
+    [ -e .devkit/devkit.just ] || echo "quality-other: no .devkit here — the devkit's recipes (pr, stack, issue-*) are missing; run 'nix develop', or 'just devkit-link'" >&2
     for tool in ruff actionlint hadolint agents-check workflow-runners; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
     # Not `just --fmt --check`: its --unstable style differed between this machine and the CI
     # runner on the same file and version. --list only checks that the file parses.
@@ -142,7 +144,7 @@ precommit:
 
 # Run by the devkit's pre-push hook, which does not pass the pushed refs on: this checks what HEAD
 # has that its push target (else origin/main) lacks, so a push of another branch is checked as HEAD.
-prepush: devkit-link
+prepush:
     #!/usr/bin/env bash
     set -euo pipefail
     base="$(git rev-parse -q --verify '@{push}' 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || true)"
