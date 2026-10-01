@@ -48,10 +48,7 @@
           pkgs.coursier
           pkgs.just
 
-          # scikit-learn must be inside THIS python3 (withPackages), not a sibling package: a
-          # sibling sits in its own store path and is never on `python3`'s import path.
-          # scripts/pr_label_nlp.py imports sklearn directly.
-          (pkgs.python3.withPackages (ps: with ps; [ pip scikit-learn ]))
+          (pkgs.python3.withPackages (ps: with ps; [ pip ]))
           # `uvx` runs GitHub's spec-kit ephemerally (`just specify`); spec-kit is PyPI-only.
           pkgs.uv
 

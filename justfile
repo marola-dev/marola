@@ -383,6 +383,9 @@ mlflow-down:
 # code) into .tmp/marola-context-mips.md and copy it to the clipboard.
 context-mips:
     mkdir -p .tmp && "$(just _repomix)" -c repomix.config.json
+    # The MIP template is marola-devkit's mip skill, under .devkit, which repomix skips as gitignored.
+    printf '\n# The MIP skill (marola-devkit: plugins/marola-devkit/skills/mip/SKILL.md)\n\n' >> .tmp/marola-context-mips.md
+    cat .devkit/plugins/marola-devkit/skills/mip/SKILL.md >> .tmp/marola-context-mips.md
     @just _clip .tmp/marola-context-mips.md
 
 # Pack one MIP for a reviewer outside this project's coding agent (another model, or a human).

@@ -19,8 +19,7 @@
     "docs/2-Building-marola/ARCHITECTURE.md",
     "docs/PHASES.md",
     "docs/4-Research-and-plans/FUTURE-WORK.md",
-    "docs/MIPs/**",
-    ".claude/skills/mip/SKILL.md"
+    "docs/MIPs/**"
   ],
   "ignore": { "useGitignore": true, "useDefaultPatterns": true, "customPatterns": [] },
   "security": { "enableSecurityCheck": true }
