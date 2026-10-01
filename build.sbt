@@ -126,9 +126,17 @@ lazy val cli = (project in file("cli"))
     Compile / run / baseDirectory := (ThisBuild / baseDirectory).value
   )
 
+// An sbt task so CI's sbt-only gate (the devkit's scala-ci) can fetch before `test`.
+lazy val corpusFetch =
+  taskKey[Unit]("scripts/corpus-fetch.sh: corpus.version's release into .tmp/knowledge")
+
 lazy val root = (project in file("."))
   .aggregate(core, local, cli)
   .settings(
     name := "marola",
-    publish / skip := true
+    publish / skip := true,
+    corpusFetch := {
+      val rc = scala.sys.process.Process(Seq("scripts/corpus-fetch.sh"), baseDirectory.value).!
+      if (rc != 0) sys.error(s"scripts/corpus-fetch.sh exited $rc")
+    }
   )

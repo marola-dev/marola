@@ -72,12 +72,13 @@ numbers will differ: it's live data.
 
 ```
 $ just run -- --summarize
-mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --summarize"
+scripts/corpus-fetch.sh
+mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR=".tmp/knowledge" sbt "cli/run -- --summarize"
 [info] welcome to sbt 1.10.7 (N/A Java 25.0.4.1)
 ...
 [info] running marola.Main -- --summarize
 marola :: best hour tomorrow to swim nearby (POC)
-config -> telegram=unset llm=Local(http://localhost:11434/v1 llama3.2) embed=llama3.2 knowledge=./knowledge -> ./data/knowledge-index.json lore=on ask=General>=0.0 origin=-27.6733,-48.4700 radius=15km water=Auto sightings=Local(./data/sightings.jsonl) vision=Local(llava)
+config -> telegram=unset llm=Local(http://localhost:11434/v1 llama3.2) embed=llama3.2 knowledge=.tmp/knowledge -> ./data/knowledge-index.json lore=on ask=General>=0.0 origin=-27.6733,-48.4700 radius=15km water=Auto sightings=Local(./data/sightings.jsonl) vision=Local(llava)
 origin -> lat=-27.6733, lon=-48.4700 (radius 15km, source: MAROLA_ORIGIN_LAT/MAROLA_ORIGIN_LON)
 water quality -> IMA/SC
  1. [ 55/100] Praia da Joaquina      (4.6km)  Sun 6 Sep, 10:00  |  water: PRÓPRIA (1/1 pts, 25 Aug)  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
@@ -104,6 +105,11 @@ Reviewer (score 75/100, verdict: approve): Praia da Joaquina is a great spot for
 🐋 Sea life: Humpback whales (baleia-jubarte) travel up the Brazilian coast from Antarctic feeding grounds to breed in warmer water, passing Santa Catarina between about July and November. Calm mornings with little wind are when a blow or a breach is easiest to spot from shore. [source: https://en.wikipedia.org/wiki/Humpback_whale]
 [success] Total time: 41 s, completed Sep 5, 2026, 9:12:57 AM
 ```
+
+`just run` fetches the pinned corpus first and points the app at it. A bare `sbt "cli/run ..."`
+does neither: the app then reads `./knowledge`, which no longer exists here, and `--ask` answers
+everything "(unsourced)". Run `just corpus-fetch` and set `MAROLA_KNOWLEDGE_DIR=.tmp/knowledge`
+for a direct sbt run.
 
 Things in that output worth knowing: Campeche, Armação and Gravatá lost 20 points because one or
 more of IMA's sampling points on them was IMPRÓPRIA on 25 Aug. The column names the points, the
@@ -168,8 +174,9 @@ just run -- --analyze-photo ./some-beach-photo.jpg
 ## 5.1 Ask the ocean notes (local RAG) and the marola model variant
 
 ```bash
-# Grounded Q&A over knowledge/*.md — first run embeds the corpus with llama3.2 (seconds on a GPU,
-# a few minutes on CPU), later runs reuse ./data/knowledge-index.json:
+# Grounded Q&A over the marola-corpus release in corpus.version, which `just ask` first unpacks into
+# .tmp/knowledge (once per pin). The first run embeds it with llama3.2 (seconds on a GPU, a few
+# minutes on CPU); later runs reuse ./data/knowledge-index.json:
 just ask "what should I do if I get caught in a rip current?"
 
 # Expected shape: an answer with [n] citations, then the passages' sources

@@ -131,8 +131,8 @@ just run -- --summarize                            # + LLM natural-language summ
 just run -- --report-sighting <jellyfish|whale|pollution> <beach> [note]   # §5d
 just run -- --analyze-photo <path>                  # §5e
 just run -- --brief                                 # the pre-MIP-0001 one-line list, no block/lore
-just run -- --ask "<question>"                      # §5h — grounded Q&A over knowledge/ (just ask ...)
-just run -- --reindex                               # §5h — re-embed knowledge/ (just knowledge-index)
+just run -- --ask "<question>"                      # §5h — grounded Q&A over the corpus (just ask ...)
+just run -- --reindex                               # §5h — re-embed the corpus (just knowledge-index)
 just run -- --site [area]                           # MIP-0005 — the map's boards into site/dist (add --areas <file>)
 ```
 
@@ -579,14 +579,17 @@ turns print from the sea-level series. Unit tests: matcher, verdict rows, tides,
 on a real-feed fixture (44 tests total). Known limits: §9 (centroid distance, Overpass slowness)
 plus MIP-0001 §8 (undocumented endpoint, off-season staleness).
 
-### 5h. Ocean knowledge — local RAG, and local fine-tuning — `knowledge/`, `finetune/`
+### 5h. Ocean knowledge — local RAG, and local fine-tuning — marola-corpus, `finetune/`
 
 `FUTURE-WORK.md` §9.1's first cut, local-only by request: **RAG first, fine-tuning as a labelled
 scaffold.**
 
-- **RAG.** `knowledge/*.md` (six documents: rip currents, jellyfish/man o' war and sting first aid,
-  bathing-water quality, whales off Santa Catarina, waves/tides/upwelling glossary, sea foam and
-  water colour, each with a `Source:` URL; see `knowledge/README.md` for their honest status) is
+- **RAG.** [marola-corpus](https://github.com/marola-dev/marola-corpus)'s `knowledge/*.md` (six
+  documents: rip currents, jellyfish/man o' war and sting first aid, bathing-water quality, whales
+  off Santa Catarina, waves/tides/upwelling glossary, sea foam and water colour, each with a
+  `Source:` URL; its `knowledge/README.md` gives their honest status), at the release
+  `corpus.version` pins, which `scripts/corpus-fetch.sh` unpacks into `.tmp/knowledge` and the
+  image ships as `/app/knowledge` (MIP-0070 §5.4), is
   chunked by `Corpus`, embedded by `OllamaEmbedder` (`/api/embed`, `llama3.2` itself by default;
   no extra model to pull; `nomic-embed-text` is a one-env-var upgrade), stored as a JSON vector
   index under `data/` by `FileKnowledgeStore`, and searched by cosine. `OceanQa` has the local LLM

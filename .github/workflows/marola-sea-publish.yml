@@ -106,6 +106,8 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=marola-sea-$version" >> "$GITHUB_OUTPUT"
 
+      # build_dataset.py's Layer 1 and ask_ocean_question examples come from the pinned corpus.
+      - run: scripts/corpus-fetch.sh
       - name: build the dataset (stdlib only, deterministic)
         run: |
           set -euo pipefail

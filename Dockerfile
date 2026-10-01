@@ -2,6 +2,7 @@
 # marola — MIP-0008 §5.1: one Dockerfile, several targets. `docker build --target <target> .`
 #
 #   builder  sbt cli/assembly on Temurin 25 → /marola.jar (never shipped)
+#   corpus   checks the fetched .tmp/knowledge has documents → /knowledge (never shipped)
 #   jvm      Temurin 25 JRE (alpine) + the jar — `docker run --rm ghcr.io/marola-dev/marola:jvm --brief --lat … --lon …`
 #   dev      the literal `nix develop`, for people without Nix: `docker run -it … marola:dev` drops you in the dev shell
 #   native-build  GraalVM native-image over the same jar (never shipped)
@@ -25,6 +26,15 @@ COPY cli cli
 RUN sbt --batch cli/assembly \
  && cp cli/target/scala-3.9.0/marola-cli-assembly-*.jar /marola.jar
 
+# --- corpus ----------------------------------------------------------------------------------
+# The RAG corpus for `--ask`: the marola-corpus release pinned in corpus.version, which
+# scripts/corpus-fetch.sh unpacks before the build. Checked here because a missing or empty
+# corpus would otherwise build green and answer every question "(unsourced)".
+FROM --platform=$BUILDPLATFORM eclipse-temurin:25-jre-alpine AS corpus
+COPY .tmp/knowledge /knowledge
+RUN [ -n "$(find /knowledge -name '*.md')" ] \
+ || { echo "no knowledge/*.md in .tmp/knowledge: run scripts/corpus-fetch.sh first" >&2; exit 1; }
+
 # --- jvm -------------------------------------------------------------------------------------
 FROM eclipse-temurin:25-jre-alpine AS jvm
 # Fixed numeric ids: `USER marola` by name is hadolint DL3066 (a host that bind-mounts /app/data
@@ -33,9 +43,9 @@ RUN addgroup -S -g 10001 marola && adduser -S -u 10001 -G marola marola \
  && mkdir -p /app/data && chown -R marola:marola /app
 WORKDIR /app
 COPY --from=builder /marola.jar /app/marola.jar
-# RAG corpus lives here for `--ask`. `board.schema.json` ships inside the jar; `--site` writes
-# board data only (SiteBuilder, MIP-0070 §5.4) from an `--areas` file the caller passes in.
-COPY --chown=marola:marola knowledge /app/knowledge
+# `board.schema.json` ships inside the jar; `--site` writes board data only (SiteBuilder,
+# MIP-0070 §5.4) from an `--areas` file the caller passes in.
+COPY --from=corpus --chown=marola:marola /knowledge /app/knowledge
 USER 10001:10001
 VOLUME ["/app/data"]
 # One CLI run at a time, short-lived: the serial GC and a small heap beat the defaults here.
@@ -69,7 +79,7 @@ FROM gcr.io/distroless/base-debian12:nonroot AS native
 WORKDIR /app
 COPY --from=zlib /usr/lib/x86_64-linux-gnu/libz.so.1 /usr/lib/x86_64-linux-gnu/libz.so.1
 COPY --from=native-build /build/marola /app/marola
-COPY --chown=nonroot:nonroot knowledge /app/knowledge
+COPY --from=corpus --chown=nonroot:nonroot /knowledge /app/knowledge
 VOLUME ["/app/data"]
 ENTRYPOINT ["/app/marola"]
 CMD ["--brief"]

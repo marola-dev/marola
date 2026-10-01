@@ -4,3 +4,4 @@
 # 1-Using-marola is expected to mount top-level instead, decided when that submodule lands.
 
 - name: marola-site
+- name: marola-corpus

@@ -113,7 +113,7 @@ it's built, so you can see exactly what is done and what is still a plan: [`docs
   valuable data.
 - **Tell us what you see in the water**, like jellyfish or whales, or a beach that's missing.
 - **Share local knowledge**: sea safety, marine life, local conditions. Every fact marola explains
-  comes from a sourced note in [`knowledge/`](./knowledge/).
+  comes from a sourced note in [marola-corpus](https://github.com/marola-dev/marola-corpus).
 - **Open an issue**, in English or Portuguese: [github.com/marola-dev/marola/issues](https://github.com/marola-dev/marola/issues).
 
 ---

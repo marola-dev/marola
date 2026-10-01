@@ -14,7 +14,8 @@ on:
       - "core/**"
       - "local/**"
       - "cli/**"
-      - "knowledge/**"
+      - "corpus.version"
+      - "scripts/corpus-fetch.sh"
       - ".github/workflows/docker.yml"
   push:
     branches: [main]
@@ -27,7 +28,8 @@ on:
       - "core/**"
       - "local/**"
       - "cli/**"
-      - "knowledge/**"
+      - "corpus.version"
+      - "scripts/corpus-fetch.sh"
       - ".github/workflows/docker.yml"
   workflow_dispatch:
     inputs:
@@ -67,6 +69,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
+      # The image ships the corpus release pinned in corpus.version as /app/knowledge.
+      - run: scripts/corpus-fetch.sh
       - uses: docker/setup-qemu-action@v4
         if: env.PUSH == 'true'
       - uses: docker/setup-buildx-action@v4
@@ -114,6 +118,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
+      # The image ships the corpus release pinned in corpus.version as /app/knowledge.
+      - run: scripts/corpus-fetch.sh
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:

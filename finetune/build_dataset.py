@@ -22,8 +22,8 @@ Self-test:  python build_dataset.py --self-test   (or `just quality-other`)
 `--resources DIR` / `--knowledge DIR` override where 1-3 and 4-5 above are read from — the app ->
 ml contract (MIP-0070 §5.4): once marola-ml is a separate repo, `--resources` points at the
 unpacked resources tarball ci.yml publishes, not `../core`. `--knowledge` defaults to
-$MAROLA_KNOWLEDGE_DIR if set, else this repo's own `knowledge/` (anchored like `--resources`, not
-the cwd — this file is documented to run from `finetune/`).
+$MAROLA_KNOWLEDGE_DIR if set, else this repo's `.tmp/knowledge` from `just corpus-fetch` (anchored
+like `--resources`, not the cwd — this file is documented to run from `finetune/`).
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ OUT = Path(__file__).resolve().parent / "data"
 
 def default_knowledge_dir() -> Path:
     env = os.environ.get("MAROLA_KNOWLEDGE_DIR")
-    return Path(env) if env is not None else REPO / "knowledge"
+    return Path(env) if env is not None else REPO / ".tmp" / "knowledge"
 
 
 SYSTEM = (
@@ -346,6 +346,22 @@ def from_tool_calls(knowledge_dir: Path, sea_lore_path: Path) -> list[dict]:
 
 
 def _self_test(knowledge: Path) -> None:
+    # A missing or empty corpus must stop main() before it writes a dataset without Layer 1.
+    global OUT
+    real_out = OUT
+    with tempfile.TemporaryDirectory() as tmp:
+        OUT = Path(tmp) / "out"
+        (Path(tmp) / "empty").mkdir()
+        for bad in (Path(tmp) / "missing", Path(tmp) / "empty"):
+            try:
+                main(RESOURCES, bad)
+            except SystemExit as e:
+                assert e.code not in (None, 0), f"main() exited 0 on corpus {bad}"
+            else:
+                raise AssertionError(f"main() built a dataset from corpus {bad}")
+        assert not OUT.exists(), "main() wrote a dataset before checking the corpus"
+    OUT = real_out
+
     rows = from_knowledge(knowledge)
     assert len(rows) >= KNOWLEDGE_EXAMPLE_FLOOR, (
         f"knowledge-derived example count {len(rows)} below floor {KNOWLEDGE_EXAMPLE_FLOOR} "
@@ -421,6 +437,12 @@ def _self_test(knowledge: Path) -> None:
 
 
 def main(resources: Path, knowledge: Path) -> None:
+    # from_knowledge() yields nothing for a missing dir: fail rather than train without Layer 1.
+    if not knowledge.is_dir() or not any(knowledge.rglob("*.md")):
+        raise SystemExit(
+            f"build_dataset: no knowledge/*.md under {knowledge} — run `just corpus-fetch`, "
+            "or point --knowledge / MAROLA_KNOWLEDGE_DIR at a corpus checkout"
+        )
     rows: list[dict] = []
     rows += from_compiled_prompt(resources / "recommendation_prompt.json", "summary")
     rows += from_compiled_prompt(
@@ -458,7 +480,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=default_knowledge_dir(),
         help="knowledge/*.md corpus dir (default: $MAROLA_KNOWLEDGE_DIR if set, else this "
-        "repo's knowledge/, anchored like --resources)",
+        "repo's .tmp/knowledge, anchored like --resources)",
     )
     ap.add_argument("--self-test", action="store_true")
     return ap.parse_args(argv)

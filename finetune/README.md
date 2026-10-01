@@ -146,7 +146,7 @@ Loop: `just finetune-dataset` → `just finetune-train preset=tiny` → convert 
 shows the format/tone you want is it worth paying for `small` or `base`. Tier 1 has the same knob:
 `just finetune-model base=llama3.2:1b` builds the persona variant on the 1B model.
 
-The same ladder applies to the RAG embedder (`knowledge/README.md`): `all-minilm` (45MB) re-indexes
+The same ladder applies to the RAG embedder (marola-corpus's `knowledge/README.md`): `all-minilm` (45MB) re-indexes
 the corpus in seconds, `nomic-embed-text` (274MB) is the quality option, `llama3.2` itself needs no
 extra download.
 

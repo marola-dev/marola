@@ -7,7 +7,8 @@
 #   docker compose --profile ollama run --rm marola --ask "what if I'm caught in a rip current?"
 #   docker compose --profile mlflow up -d mlflow                                                # MIP-0010: the experiment ledger, http://127.0.0.1:5000
 #
-# The image is ghcr.io/marola-dev/marola:jvm; `docker compose build` rebuilds it from this checkout.
+# The image is ghcr.io/marola-dev/marola:jvm; `just corpus-fetch && docker compose build` rebuilds it
+# from this checkout.
 # `.env` (gitignored, see .env.example) is read if present — MAROLA_ORIGIN_LAT/LON, provider
 # switches — and never baked into the image. Ollama's models live in the `ollama-models` volume,
 # marola's runtime files (knowledge index, sightings, benchmarks) in `marola-data`.
