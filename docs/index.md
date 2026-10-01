@@ -5,7 +5,7 @@ live in `AGENTS.md`; the reasons in `PHILOSOPHY.md`). The **Kind** column says h
 *reference* is kept current as the truth about the code; *how-to* is a procedure; *review* is a
 dated finding that is not updated in place; *roadmap* is ideas, most not built. The last column
 names the ideas in that file that are big enough for a Marola Improvement Proposal (`MIPs/`, the
-`mip` skill) and where each stands.
+`/marola-devkit:mip` skill) and where each stands.
 
 | File | Kind | MIP material inside, and its status |
 |---|---|---|
@@ -53,7 +53,7 @@ names the ideas in that file that are big enough for a Marola Improvement Propos
 
 ## How a candidate becomes a MIP
 
-Say "MIP for <idea>" in a session: the `mip` skill takes the next number from `mips/README.md`,
+Say "MIP for <idea>" in a session: the `/marola-devkit:mip` skill takes the next number from `mips/README.md`,
 fetches and dates every external claim, and opens the proposal as a Draft PR. Nothing in the
 tables above is a commitment; a *candidate* is an idea whose design would need the template's
 rigour before it is built, as opposed to a refactor or a fix that can go straight to a branch.

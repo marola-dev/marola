@@ -73,3 +73,6 @@ __pycache__/
 # mkdocs/generated-docs. Both are throwaway; the site is published from CI, not from here.
 /mkdocs/docs/
 /mkdocs/generated-docs/
+
+# marola-devkit's pinned tree, linked by the flake's shellHook (MIP-0070)
+/.devkit

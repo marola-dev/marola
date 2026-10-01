@@ -281,7 +281,7 @@ workflow (its network job needs no Ollama; the LLM job is opt-in and caches the 
 ## 8. Writing MIPs from voice notes in a browser session
 
 `just context-mips` packs the documents a MIP author needs (README, AGENTS.md, ARCHITECTURE,
-FUTURE-WORK, the `mip` skill, every existing MIP, no code, ~35k tokens) with repomix into
+FUTURE-WORK, the `/marola-devkit:mip` skill, every existing MIP, no code, ~35k tokens) with repomix into
 `.tmp/marola-context-mips.md` and copies it to the clipboard. In a browser Claude chat: paste, attach
 the WhatsApp voice notes (`.ogg`) or chat text, and say "convert the audios into MIP proposals".
 The pack's own instruction section (`repomix-instruction.md`) fixes the template, numbering, the

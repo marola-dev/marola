@@ -28,6 +28,8 @@ jobs:
       site: ${{ steps.filter.outputs.site }}
       justfile: ${{ steps.filter.outputs.justfile }}
       docs: ${{ steps.filter.outputs.docs }}
+      nix: ${{ steps.filter.outputs.nix }}
+      agents: ${{ steps.filter.outputs.agents }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -49,16 +51,12 @@ jobs:
               - 'finetune/**'
               - 'scripts/*.py'
               - '**/*.py'           # ruff lints the whole repo, so any .py anywhere counts
-              - 'scripts/*.sh'      # gh-billing.sh's self-test lives in the same quality-other job
+              - 'scripts/*.sh'      # gh-billing.sh's self-test lives in the same python-ci job
               - 'scripts/fixtures/**'
-              - 'AGENTS.md'          # agents-check.sh verifies the org invariants block (MIP-0070 §5.6)
-              - 'agents/**'
               - 'ruff.toml'
-              - '.github/ISSUE_TEMPLATE/**'  # issues.sh --self-test parses these forms
-              - '.github/labels.yml'          # and diffs this manifest
               - 'docs/MIPs/*.tasks.md'        # mip_graph.py --check regenerates the graph from all of them
-              - 'docs/PHASES.md'    # issues.sh --self-test parses it for real when this checkout has one
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
+              - '.github/workflows/ci.yml'  # the self-test list below
             site:
               - 'site/**'            # app.js/CSS/fixtures → scripts/site_check.js (MIP-0009 task 2)
               - 'scripts/site_check.js'
@@ -72,6 +70,12 @@ jobs:
               - 'mkdocs/**'          # its Dockerfile and compose stack are linted below too
             justfile:
               - 'justfile'
+            nix:
+              - 'flake.nix'
+              - 'flake.lock'
+            agents:
+              - 'AGENTS.md'
+              - '.github/workflows/ci.yml'  # its devkit-ref pins the invariants block compared against
             docs:
               - 'docs/**'
               - 'mkdocs/**'
@@ -79,15 +83,18 @@ jobs:
   build-test:
     needs: changes
     if: needs.changes.outputs.scala == 'true'
+    uses: marola-dev/marola-devkit/.github/workflows/scala-ci.yml@v0.2.2
+
+  # scala-ci leaves coverage out on purpose (marola-app-specific): `sbt-scoverage`
+  # (project/plugins.sbt) re-instruments core/local/cli after the gate above passed, and
+  # coverageAggregate sums one statement-coverage number across all three for the README badge.
+  coverage:
+    needs: [changes, build-test]
+    if: needs.changes.outputs.scala == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # RagOfflineSpec reads this directly now (MIP-0070 §5.4) instead of walking up to find
-    # knowledge/, so the pin is explicit rather than relying on sbt's cwd being the repo root.
-    env:
-      MAROLA_KNOWLEDGE_DIR: knowledge
-    # Elevated past the workflow-level `contents: read` only for this job's main-only coverage
-    # steps below: pushing coverage/latest.json to the orphan site-data branch, and re-triggering
-    # site.yml so the badge refreshes right away.
+    # Pushing coverage/latest.json to the orphan site-data branch, and re-triggering site.yml so the
+    # badge refreshes right away.
     permissions:
       contents: write
       actions: write
@@ -100,7 +107,6 @@ jobs:
           distribution: temurin
           java-version: "25"
 
-      # Dependencies: keyed on the build definition only, so source edits keep the hit.
       - name: Cache sbt / coursier
         uses: actions/cache@v6
         with:
@@ -112,33 +118,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sbt-
 
-      # Compiled classes + zinc's incremental-compile analysis.
-      - name: Cache compiled classes (zinc incremental)
-        uses: actions/cache@v6
-        with:
-          path: |
-            core/target
-            local/target
-            cli/target
-            project/target
-            project/project/target
-          key: ${{ runner.os }}-target-jdk25-${{ hashFiles('**/build.sbt', 'project/**') }}-${{ hashFiles('**/*.scala', '**/src/**/resources/**') }}
-          restore-keys: |
-            ${{ runner.os }}-target-jdk25-${{ hashFiles('**/build.sbt', 'project/**') }}-
-            ${{ runner.os }}-target-jdk25-
-
       - name: Set up sbt
         uses: sbt/setup-sbt@v1
 
-      # One sbt session for all three so the JVM/zinc warm-up is paid once, not three times.
-      - name: Format check, scalafix, compile, test
-        run: sbt scalafmtCheckAll "scalafixAll --check" compile test
-
-      # Main only, and only after the checks above pass: `sbt-scoverage` (project/plugins.sbt)
-      # re-instruments core/local/cli, reruns the suite, and coverageAggregate sums one
-      # statement-coverage number across all three for the README badge.
-      - name: Coverage (main only) — instrumented build, statement %, shields.io endpoint JSON
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Coverage — instrumented build, statement %, shields.io endpoint JSON
         run: |
           sbt clean coverage test coverageReport coverageAggregate
           xml="$(find target -maxdepth 3 -path '*/scoverage-report/scoverage.xml')"
@@ -154,12 +137,9 @@ jobs:
           )
           PY
           echo && cat coverage.json
-          # `sbt clean` above wiped the target/ dirs the "Cache compiled classes" step keys on.
-          sbt coverageOff compile test
 
       # site.yml copies this orphan branch's smoke/ and coverage/ into site/dist (GITHUB_TOKEN only).
       - name: Publish the coverage JSON to the site-data branch
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           if git ls-remote --exit-code --heads origin site-data >/dev/null; then
             git fetch --depth=1 origin site-data
@@ -184,7 +164,6 @@ jobs:
 
       # workflow_dispatch is one of the two events GITHUB_TOKEN may trigger from a workflow.
       - name: Rebuild the site so the coverage badge refreshes
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (≤ 3 h) will pick the coverage number up"
@@ -205,7 +184,7 @@ jobs:
 
   # README badges: this run's green steps, plus the Scala and Python line counts.
   repo-stats:
-    needs: [changes, build-test, quality-other]
+    needs: [changes, build-test, coverage, python-ci, static-ci, agents-check, quality-other]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -255,9 +234,6 @@ jobs:
           fi
           # No site.yml trigger: the scheduled build picks these up without an Overpass query.
 
-  # Free, fast, and independent of the JVM build: Python lint/format for dspy/ and finetune/, a
-  # linter for these workflow files themselves, and hadolint for the Dockerfiles — the same gates
-  # as `just quality`.
   # The docs build is strict, and since MIP-0064 task 3 it is also the step api-docs.yml publishes
   # through. Without this gate a broken internal link merges green, then fails on main and takes
   # the whole publish with it — scaladoc and pdoc included, since site.yml only deploys when that
@@ -274,133 +250,88 @@ jobs:
           CONTAINER_RUNTIME: docker
         run: scripts/mkdocs.sh
 
+  # Free, fast, and independent of the JVM build — the same gates as `just quality-other`, split
+  # across the devkit's reusable workflows plus the nix-only checks below. The tool versions are
+  # what flake.lock's nixpkgs builds for labs/lint (0968519): move them with `nix flake update`.
+  python-ci:
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.2.2
+    with:
+      ruff-version: "0.16.5"
+      self-test-commands: |
+        python3 scripts/smoke_record.py --self-test
+        python3 scripts/benchmark_gate.py --self-test
+        python3 scripts/repo_stats.py --self-test
+        scripts/gh-billing.sh --self-test
+        scripts/site-data-push.sh --self-test
+        scripts/build-resources-tarball.sh --self-test
+        python3 scripts/ocr-post.py --self-test
+        python3 scripts/i18n_bundle.py --self-test
+
+  static-ci:
+    needs: changes
+    if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
+    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.2.2
+    with:
+      actionlint-version: "1.7.12"
+      hadolint-version: "2.14.0"
+      # Dockerfile.local is missing until MIP-0065 task 2 fixes its hadolint failure.
+      hadolint-files: Dockerfile mkdocs/Dockerfile
+      # The site harness runs app.js against site/fixtures in a stub DOM (MIP-0009); every compose
+      # profile must still render (MIP-0010), and both mkdocs overrides (MIP-0064).
+      extra-commands: |
+        node --check site/static/app.js
+        node --check site/static/ui.js
+        node --check site/static/i18n.js
+        python3 scripts/i18n_bundle.py --check
+        node scripts/site_check.js
+        docker compose --profile mlflow --profile ollama --profile local config --quiet
+        docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet
+        docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet
+
+  agents-check:
+    needs: changes
+    if: needs.changes.outputs.agents == 'true'
+    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.2.2
+    with:
+      devkit-ref: v0.2.2
+
+  # What needs this repo's own flake: the lock is current, the justfile parses, and only
+  # marola-sea-publish.yml may be self-hosted (MIP-0065; the devkit's workflow-runners).
   quality-other:
     needs: changes
-    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true' || needs.changes.outputs.justfile == 'true'
+    if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v23
       - uses: DeterminateSystems/magic-nix-cache-action@v15
-      # The same lock as `just quality`, so CI and a laptop cannot disagree about a lint version.
+      - name: nix flake lock (adds a new input's pin, changes nothing else)
+        id: lock
+        run: nix flake lock
+      - name: upload the regenerated flake.lock
+        if: steps.lock.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: flake-lock
+          path: flake.lock
+          if-no-files-found: error
+      - name: flake.lock is committed as nix flake lock leaves it
+        run: |
+          git diff --exit-code -- flake.lock || {
+            echo "::error file=flake.lock::stale — commit the flake-lock artifact of this run (or run 'nix flake lock')"
+            exit 1
+          }
       # `which`, not `command -v`: the latter succeeds if any one name resolves. pipefail passes it on.
-      - name: lint tools from nix develop .#lint
+      - name: lint shell tools from nix develop .#lint
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which ruff actionlint hadolint shellcheck pyflakes just \
+          nix develop .#lint --command which just workflow-runners \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
-      - name: tool versions
-        run: |
-          ruff --version
-          actionlint -version | head -1
-          hadolint --version
-          shellcheck --version | sed -n 2p
-      - name: just --list (justfile parses — no opinion on style, see quality-other's comment)
-        if: needs.changes.outputs.justfile == 'true'
+      # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
+      - name: just --list (the justfile parses)
         run: just --list >/dev/null
-      - name: ruff check (every .py in the repo)
-        if: needs.changes.outputs.python == 'true'
-        run: ruff check .
-      - name: ruff format --check
-        if: needs.changes.outputs.python == 'true'
-        run: ruff format --check .
-      - name: self-tests — smoke_record (the smoke workflow's parser) and benchmark_gate (marola-local's gate)
-        if: needs.changes.outputs.python == 'true'
-        run: |
-          python3 scripts/smoke_record.py --self-test
-          python3 scripts/benchmark_gate.py --self-test
-      - name: "self-test — cost-split (Cost: trailer parser + diff-size estimator)"
-        if: needs.changes.outputs.python == 'true'
-        run: python3 scripts/cost-split.py --self-test
-      - name: self-test — repo_stats (CI-health step counting + LOC badge shaping)
-        if: needs.changes.outputs.python == 'true'
-        run: python3 scripts/repo_stats.py --self-test
-      - name: self-test — gh-billing (GitHub billing-usage response shaping)
-        if: needs.changes.outputs.python == 'true'
-        run: scripts/gh-billing.sh --self-test
-      - name: self-test — deps-stack (dependency-PR discovery ordering)
-        if: needs.changes.outputs.python == 'true'
-        run: scripts/deps-stack.sh --self-test
-      - name: self-test — deps-merge (which dependency PRs are green enough to merge)
-        if: needs.changes.outputs.python == 'true'
-        run: scripts/deps-merge.sh --self-test
-      - name: self-test — runner-preflight / gha-runner (the self-hosted runner's own checks)
-        if: needs.changes.outputs.python == 'true'
-        run: |
-          scripts/runner-preflight.sh --self-test
-          scripts/gha-runner.sh --self-test
-      - name: self-test — site-data-push (the retry every site-data writer pushes through)
-        if: needs.changes.outputs.python == 'true'
-        run: scripts/site-data-push.sh --self-test
-      - name: self-test — build-resources-tarball (app → ml resources tarball, MIP-0070 §5.4)
-        if: needs.changes.outputs.python == 'true'
-        run: scripts/build-resources-tarball.sh --self-test
-      - name: self-test — req_merge (requirements-file conflict auto-resolve)
-        if: needs.changes.outputs.python == 'true'
-        run: python3 scripts/lib/req_merge.py --self-test
-      - name: self-test — uses_merge (workflow `uses:` bump conflict auto-resolve)
-        if: needs.changes.outputs.python == 'true'
-        run: python3 scripts/lib/uses_merge.py --self-test
-      - name: self-test — mip-stack (MIP-draft PR discovery ordering)
-        if: needs.changes.outputs.python == 'true'
-        run: scripts/mip-stack.sh --self-test
-      - name: "self-test — stack (restack's fork point when the base branch is gone)"
-        if: needs.changes.outputs.python == 'true'
-        run: scripts/stack.sh --self-test
-      - name: self-test — mip_index_merge (docs/MIPs/README.md row conflict auto-resolve)
-        if: needs.changes.outputs.python == 'true'
-        run: python3 scripts/lib/mip_index_merge.py --self-test
-      - name: self-test — ocr-post (Open Code Review JSON → one advisory PR review, MIP-0060)
-        if: needs.changes.outputs.python == 'true'
-        run: python3 scripts/ocr-post.py --self-test
-      - name: self-test — issues.sh (label manifest, number→id resolution, issue forms, the DoR, MIP-0063)
-        if: needs.changes.outputs.python == 'true'
-        run: scripts/issues.sh --self-test
-      - name: "self-test — tasks_issues (MIP task table → issues: dedup, row link, the depends-on DAG)"
-        if: needs.changes.outputs.python == 'true'
-        run: python3 scripts/lib/tasks_issues.py --self-test
-      - name: i18n — catalog gates and a fresh site/static/i18n.js (MIP-0054 §5.8)
-        if: needs.changes.outputs.site == 'true' || needs.changes.outputs.python == 'true'
-        run: |
-          python3 scripts/i18n_bundle.py --self-test
-          python3 scripts/i18n_bundle.py --check
-      - name: self-test — agents-check (org invariants block drift, MIP-0070 §5.6)
-        if: needs.changes.outputs.python == 'true'
-        run: scripts/agents-check.sh --self-test
-      - name: agents-check (AGENTS.md's invariants block matches agents/invariants.md)
-        if: needs.changes.outputs.python == 'true'
-        run: scripts/agents-check.sh
-      - name: site harness — app.js against site/fixtures in a stub DOM (MIP-0009)
-        if: needs.changes.outputs.site == 'true'
-        run: |
-          node --version
-          node --check site/static/app.js
-          node --check site/static/ui.js
-          node --check site/static/i18n.js
-          node scripts/site_check.js
-      - name: workflow_runners — only marola-sea-publish.yml may be self-hosted (MIP-0065)
-        if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.python == 'true'
-        run: |
-          python3 scripts/workflow_runners.py --self-test
-          python3 scripts/workflow_runners.py
-      - name: actionlint (workflow files)
-        if: needs.changes.outputs.workflows == 'true'
-        run: actionlint
-      # Dockerfile.local is missing until MIP-0065 task 2 fixes its hadolint failure.
-      - name: hadolint (Dockerfiles)
-        if: needs.changes.outputs.docker == 'true'
-        run: hadolint Dockerfile mkdocs/Dockerfile
-
-      # MIP-0010: every compose profile must still render — the mlflow profile included.
-      - name: docker compose config (all profiles)
-        if: needs.changes.outputs.docker == 'true'
-        run: docker compose --profile mlflow --profile ollama --profile local config --quiet
-
-      # MIP-0064: the docs stack renders too, both overrides — a schema error in the serve one
-      # would otherwise surface for the first time on someone's `just docs-serve`.
-      - name: docker compose config (mkdocs stack)
-        if: needs.changes.outputs.docker == 'true'
-        run: |
-          docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet
-          docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet
+      - name: workflow-runners — only marola-sea-publish.yml may be self-hosted (MIP-0065)
+        run: workflow-runners

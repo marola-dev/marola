@@ -35,7 +35,7 @@ ultrareview-verified) turned the rules that must not be optional into things the
 hooks, a shared permission allowlist, path-scoped rules, subagents, skills; `docs/3-Working-on-the-repo/DEV-FLOW.md` is
 the loop from idea to merged PR. "Open to other coders" is not a wish either: MIP-0013 (Draft) is a
 bounded OpenCode tryout that states what replacing Claude Code would actually cost, down to the one
-hard dependency (`scripts/cost-split.py` reads Claude Code's own session logs). This file and the
+hard dependency (marola-devkit's `cost-split` reads Claude Code's own session logs). This file and the
 MIP discipline around it are the pillar's output, not a description of it.
 
 **Pillar 2: models reasoning over open water, with the deterministic parts kept deterministic.**
@@ -82,7 +82,7 @@ veto, the darkness rule, the rough-sea deduction) is plain Scala in `scoring/`, 
 outside the prompt (`docs/2-Building-marola/ARCHITECTURE.md` §5a, §8). A second, independently compiled reviewer
 pass grades the first model's sentence and can rewrite it. Lore shown to a user is a curated file
 with a source per entry, shown verbatim; the model never gets to invent a fact about the sea.
-The rule in the `mip` skill says it shortest: *no unsourced text reaches a user*.
+The rule in the `/marola-devkit:mip` skill says it shortest: *no unsourced text reaches a user*.
 
 ## Why Scala 3 on the JVM
 

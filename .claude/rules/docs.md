@@ -6,7 +6,7 @@ paths: ["docs/**"]
 
 ## MIPs (`docs/MIPs/`)
 
-Design a non-trivial change here first, via the `mip` skill (`.claude/skills/mip/SKILL.md`),
+Design a non-trivial change here first, via the `/marola-devkit:mip` skill (the marola-devkit plugin),
 before building it; see that skill for when a MIP is warranted, what to verify before writing
 one, and the required template sections.
 

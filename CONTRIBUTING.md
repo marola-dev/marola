@@ -34,7 +34,7 @@ above always works.
 
 Then branch. Names are `<type>/<slug>` — `fix/queue-sort-order`, `docs/issue-flow`, `feat/…`,
 `chore/…`, `ci/…` — unless the issue came from a MIP's task list, in which case `issue-claim`
-prints the `scripts/stack.sh start` line to use instead. Write the failing test first, then open
+prints the `stack start` line to use instead. Write the failing test first, then open
 the PR:
 
 ```bash
@@ -60,13 +60,13 @@ board, the dependency edges — is [`docs/3-Working-on-the-repo/ISSUE-FLOW.md`](
 
 ## The dev loop
 
-Idea → **issue** → **MIP** (`docs/MIPs/`, via the `mip` skill) → acceptance → task list →
+Idea → **issue** → **MIP** (`docs/MIPs/`, via the `/marola-devkit:mip` skill) → acceptance → task list →
 stacked PRs (one task, one branch, one PR) → review on request → merge/restack → done. The whole
 loop, with the exact commands, is [`docs/3-Working-on-the-repo/DEV-FLOW.md`](./docs/3-Working-on-the-repo/DEV-FLOW.md). Skip the MIP for bug
 fixes, doc corrections, and behaviour-free refactors; everything else that changes scoring, a data
 source, or what a user sees goes through one first.
 
-- **Small PRs, one topic.** `scripts/stack.sh` and `just uprds` exist so a MIP ships as several
+- **Small PRs, one topic.** `stack` (marola-devkit) and `just uprds` exist so a MIP ships as several
   reviewable PRs instead of one large one.
 - **Every commit ends with three trailers and nothing else:** `Tested: gates, e2e — <not run,
   why>`, `Cost: ~$… · … tokens · …` (from `just cost-split`) and
