@@ -14,7 +14,7 @@ category as `docs/3-Working-on-the-repo/DEV-FLOW.md` and `AGENTS.md`'s "Attribut
 This repo's existing conventions are unusually close to storytelling material already, without
 anything new being built:
 
-- **MIP `Motivation`/`Alternatives considered`/`Risks` sections** (`.claude/skills/mip/SKILL.md`'s
+- **MIP `Motivation`/`Alternatives considered`/`Risks` sections** (`/marola-devkit:mip`'s
   template) are structurally a post's "why before what": a MIP's Motivation section is close to a
   post's opening paragraph, and its Alternatives-considered section is the "here's what I rejected
   and why" beat a plain changelog never has.

@@ -4,6 +4,9 @@ Every gate and every deploy is a GitHub Actions workflow under
 [`.github/workflows/`](https://github.com/marola-dev/marola/tree/main/.github/workflows). All of
 them run on GitHub's standard `ubuntu-latest` runner except `marola-sea-publish`, which needs a GPU.
 The design behind this layout is [MIP-0065](../MIPs/MIP-0065-ci-cd-on-github-hosted-runners.md).
+The generic jobs are [marola-devkit](https://github.com/marola-dev/marola-devkit)'s reusable
+workflows ([inputs](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/docs/workflows.md)),
+called at the same tag as the flake input; bump them together.
 
 ## How a change reaches marola.dev
 
@@ -41,9 +44,10 @@ smoke and docs writers trigger a rebuild right away; `repo-stats` waits for the 
 
 | Workflow | Trigger | Runner | Gates or deploys | Secrets and variables | By hand |
 |---|---|---|---|---|---|
-| `ci.yml` | PR; push to `main` | `ubuntu-latest` | The merge gates, each run only when `dorny/paths-filter` says its inputs changed: `build-test` (scalafmt, scalafix, compile, test), `quality-other` (ruff, actionlint, hadolint, the `scripts/*` self-tests, `workflow_runners.py`), `docs-build` (`mkdocs --strict`). On `main` only: the coverage badge and `repo-stats` go to `site-data`, and `resources-tarball` uploads the `ml-resources` artifact (the app -> ml contract, MIP-0070 §5.4) for `finetune/build_dataset.py --resources` | `GITHUB_TOKEN` | `just build && just test && just quality` locally; re-run from the Actions tab |
-| `ci-short-circuit-pr-close.yml` | PR closed | `ubuntu-latest` | Cancels the closed PR's in-flight runs, which the concurrency group can't see | `GITHUB_TOKEN` | — |
-| `pr-body.yml` | PR opened, reopened, ready, pushed | `ubuntu-latest` | Fills the description from the commits (`scripts/uprd.sh`); skips forks and bot branches | `GITHUB_TOKEN` | `just uprd` |
+| `ci.yml` | PR; push to `main` | `ubuntu-latest` | The merge gates, each run only when `dorny/paths-filter` says its inputs changed: `build-test` (devkit `scala-ci`: scalafmt, scalafix, compile, test), `python-ci` (devkit: ruff and marola's `scripts/*` self-tests), `static-ci` (devkit: actionlint, hadolint, the site harness, `docker compose config`), `agents-check` (devkit: the AGENTS.md invariants block), `quality-other` (nix: `flake.lock` is current, `just --list`, `workflow-runners`), `docs-build` (`mkdocs --strict`). On `main` only: `coverage` publishes the badge and `repo-stats` the stats to `site-data`, and `resources-tarball` uploads the `ml-resources` artifact (the app -> ml contract, MIP-0070 §5.4) for `finetune/build_dataset.py --resources` | `GITHUB_TOKEN` | `just build && just test && just quality` locally; re-run from the Actions tab |
+| `ci-short-circuit.yml` | PR closed | `ubuntu-latest` | Devkit `ci-short-circuit`: cancels the closed PR's in-flight runs, which the concurrency group can't see | `GITHUB_TOKEN` | — |
+| `pr-body.yml` | PR opened, reopened, ready, pushed | `ubuntu-latest` | Devkit `pr-body`: fills the description from the commits (`uprd`); skips forks and bot branches | `GITHUB_TOKEN` | `just uprd` |
+| `labels.yml` | dispatch only | `ubuntu-latest` | Devkit `labels-sync`: applies the devkit's label manifest to this repo | `GITHUB_TOKEN` | `gh workflow run labels.yml`; `just labels-sync` locally |
 | `api-docs.yml` | push to `main` touching Scala, `scripts/**.py`, `docs/**`, `mkdocs/**`; dispatch | `ubuntu-latest` | Builds scaladoc, pdoc and the mkdocs site (Kroki containers) into `docs/` on `site-data` | `GITHUB_TOKEN` | `gh workflow run api-docs.yml`; `just docs` locally |
 | `site.yml` | every 3 h; push to `main` touching the site or pipeline; after `API docs`; dispatch | `ubuntu-latest` | Builds every area's board and **deploys** `site/dist` plus `site-data` to Pages (`github-pages` environment) | `GITHUB_TOKEN` | `gh workflow run site.yml [-f area=<id>]` |
 | `site-health.yml` | every 6 h; dispatch | `ubuntu-latest` | Checks what marola.dev actually serves. Doesn't block deploys: a red run means missing upstream data | — | `gh workflow run site-health.yml [-f base=<url>]` |
@@ -62,7 +66,7 @@ because GHCR storage used to be billed while the repo was private (MIP-0065 §4.
 
 Only `marola-sea-publish.yml` may run on a self-hosted runner, and it may never gain a
 `pull_request`, `pull_request_target` or `workflow_call` trigger. Everywhere else a `runs-on:` or
-`runner:` value must be a literal, never a `${{ }}` expression that could resolve to the desktop. `scripts/workflow_runners.py` enforces this in
+`runner:` value must be a literal, never a `${{ }}` expression that could resolve to the desktop. `workflow-runners` enforces this in
 `quality-other`.
 
 The repo is public, and on a public repo anyone can open a pull request. A `pull_request` job on
@@ -77,7 +81,7 @@ flowchart LR
   any["any workflow"] --> hosted["ubuntu-latest<br/>(free, public repo)"]
   gpu["marola-sea-publish.yml<br/>workflow_dispatch only"] --> desk["[self-hosted, marola-sea]<br/>the maintainer's GPU desktop"]
   fork(["fork PR"]) -. "approval, then" .-> hosted
-  fork -. "blocked by workflow_runners.py" .-x desk
+  fork -. "blocked by workflow-runners" .-x desk
 ```
 
 ## The maintainer's manual settings

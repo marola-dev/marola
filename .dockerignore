@@ -24,7 +24,6 @@
 !AGENTS.md
 !CLAUDE.md
 !LICENSE
-!.githooks
 !.scalafmt.conf
 !.scalafix.conf
 !ruff.toml
