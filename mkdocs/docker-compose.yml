@@ -48,7 +48,9 @@ services:
       start_period: 30s
 
   mkdocs:
-    image: marola/mkdocs
+    # scripts/mkdocs.sh sets MKDOCS_IMAGE to a per-checkout tag (#526), for the same reason the
+    # project name above is per checkout. The default here only matters for a bare `compose config`.
+    image: ${MKDOCS_IMAGE:-marola/mkdocs}
     build:
       context: .
       dockerfile: Dockerfile

@@ -21,7 +21,7 @@ source "$script_dir/lib/mip_ref.sh"
 source "$script_dir/lib/task_issue.sh"
 
 self_test() {
-  local failed=0 tmp repo tasks out
+  local failed=0 tmp repo tasks out urepo umbrella_tasks
   check() { if [ "$2" = "$3" ]; then echo "ok: $1"; else echo "FAILED: $1"; echo "  got:  $2"; echo "  want: $3"; failed=1; fi; }
   tasks='| # | slug | delivers | tests | depends on |
 |---|---|---|---|---|
@@ -38,8 +38,9 @@ self_test() {
   check "another label does not stop the close" "$(task_issue_line mip-0068/2-ascii "$tasks" "task-partial-ish" marola-dev/marola)" "Closes #502"
   check "a row with no issue link gets no line" "$(task_issue_line mip-0068/3-unlinked "$tasks" "" marola-dev/marola)" ""
   check "a task with no row gets no line" "$(task_issue_line mip-0068/7-missing "$tasks" "" marola-dev/marola)" ""
-  check "a row linking another repo's issue gets no line" \
-    "$(task_issue_line mip-0068/1-build-hardening "${tasks//marola-dev\/marola/someone\/else}" "" marola-dev/marola)" ""
+  check "a row linking another repo's issue is fully qualified, not silently dropped" \
+    "$(task_issue_line mip-0068/1-build-hardening "${tasks//marola-dev\/marola/someone\/else}" "" marola-dev/marola)" \
+    "Closes someone/else#501"
   check "a non-task branch gets no line" "$(task_issue_line fix/uprd-closes "$tasks" "" marola-dev/marola)" ""
 
   # End to end: --dry-run on a throwaway repo, gh stubbed to answer as an open PR carrying $LABELS.
@@ -78,6 +79,37 @@ SH
   check "a commit's own Closes line reaches the body of a non-task PR" "$(grep -cx 'Closes #77' <<<"$out")" "1"
   check "and so does Fixes, once each" "$(grep -cx 'Fixes #77' <<<"$out")" "1"
   check "but a keyword inside prose is not lifted" "$(grep -c '#78' <<<"$out")" "0"
+
+  # MIP-0070 §5.6: once a code repo carries no docs/MIPs of its own, its .tasks.md and MIP doc
+  # resolve one level up, as an umbrella checkout would have it (scripts/lib/mip_ref.sh).
+  echo
+  echo "-- umbrella resolution (the .tasks.md lives in ../, not this repo) --"
+  umbrella_tasks='| # | slug | delivers | tests | depends on |
+|---|---|---|---|---|
+| [2](https://github.com/othercorp/marola-app/issues/502) | ascii | x | y | 1 |
+| [3](https://github.com/marola-dev/marola/issues/9) | umbrella-side | x | y | 2 |'
+  urepo="$tmp/marola-app"
+  mkdir -p "$tmp/docs/MIPs"
+  printf '%s\n' "$umbrella_tasks" >"$tmp/docs/MIPs/MIP-9999.tasks.md"
+  printf 'umbrella doc\n' >"$tmp/docs/MIPs/MIP-9999-umbrella-test.md"
+  { git init -q -b main "$urepo"
+    git -C "$urepo" config user.email uprd@example.invalid
+    git -C "$urepo" config user.name uprd-self-test
+    git -C "$urepo" commit -q --allow-empty -m main
+    git -C "$urepo" remote add origin https://github.com/othercorp/marola-app.git
+    git -C "$urepo" update-ref refs/remotes/origin/main "$(git -C "$urepo" rev-parse HEAD)"
+    git -C "$urepo" checkout -q -b mip-9999/2-ascii
+    git -C "$urepo" commit -q --allow-empty -m "MIP-9999 task 2: ascii"
+    git -C "$urepo" checkout -q -b mip-9999/3-umbrella-side main
+    git -C "$urepo" commit -q --allow-empty -m "MIP-9999 task 3: umbrella-side"; } >/dev/null 2>&1
+  out="$(cd "$urepo" && git checkout -q mip-9999/2-ascii && PATH="$tmp/bin:$PATH" LABELS="" bash "$script_dir/uprd.sh" --dry-run 2>/dev/null)"
+  check "same-repo issue stays unqualified even when the tasks file came from the umbrella" \
+    "$(grep -cx 'Closes #502' <<<"$out")" "1"
+  check "and the MIP cell links the umbrella, not this repo" \
+    "$(grep -c 'https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-9999-umbrella-test.md' <<<"$out")" "1"
+  out="$(cd "$urepo" && git checkout -q mip-9999/3-umbrella-side && PATH="$tmp/bin:$PATH" LABELS="" bash "$script_dir/uprd.sh" --dry-run 2>/dev/null)"
+  check "a different repo's issue is fully qualified" "$(grep -cx 'Closes marola-dev/marola#9' <<<"$out")" "1"
+
   rm -rf "$tmp"
 
   echo
@@ -185,28 +217,32 @@ PY
 generate_mip() {
   # Same detection already used for the PR title (scripts/lib/mip_ref.sh) — one source of truth,
   # so the title and this table cell can never disagree on which MIP a branch is scoped to.
-  local mip_ref="$title_mip_ref" mip_path
+  local mip_ref="$title_mip_ref" mip_source mip_path
   if [ -z "$mip_ref" ]; then
     echo "none — not MIP-scoped"
     return
   fi
-  # The document as it exists on the branch's tip (a PR that adds the MIP has it there, not on the
-  # checked-out main), linked by its blob URL — a relative path does not resolve in a PR body.
-  mip_path="$(git ls-tree -r --name-only "$head_ref" -- docs/MIPs 2>/dev/null \
-    | { grep -E "^docs/MIPs/${mip_ref}-[^/]*\.md$" || true; } | head -1)"
-  if [ -n "$mip_path" ]; then
-    echo "[$mip_ref]($(repo_web_url)/blob/$branch/$mip_path)"
+  # resolve_mip_path (MIP-0070 §5.6): the doc as it exists on the branch's tip when local (a PR
+  # that adds the MIP has it there, not on the checked-out main), else the umbrella's own copy —
+  # linked by blob URL either way, since a relative path does not resolve in a PR body.
+  if IFS=$'\t' read -r mip_source mip_path < <(resolve_mip_path "$mip_ref" doc "$head_ref"); then
+    if [ "$mip_source" = local ]; then
+      echo "[$mip_ref]($(repo_web_url)/blob/$branch/$mip_path)"
+    else
+      echo "[$mip_ref](https://github.com/$mip_source/blob/main/$mip_path)"
+    fi
   else
-    echo "$mip_ref (no docs/MIPs/${mip_ref}-*.md on this branch)"
+    echo "$mip_ref (no docs/MIPs/${mip_ref}-*.md found locally or via \$MAROLA_UMBRELLA)"
   fi
 }
 
 generate_task_issue_line() {
-  # Read from the head, not main: task 1's PR is the one that adds the tasks file.
+  # resolve_mip_path/_file (MIP-0070 §5.6): local first (task 1's own PR adds the tasks file, so
+  # read from the head, not main), else an umbrella checkout or $MAROLA_UMBRELLA's GitHub API.
   local mip tasks labels=""
   mip="$(sed -nE 's#^mip-([0-9]{4})/.*#MIP-\1#p' <<<"$branch")"
   [ -n "$mip" ] || return 0
-  tasks="$(git show "$head_ref:docs/MIPs/$mip.tasks.md" 2>/dev/null)" || return 0
+  tasks="$(resolve_mip_file "$mip" tasks "$head_ref")" || return 0
   # Unknown labels mean no line: treating a failed read as "no labels" would close a task-partial issue.
   if [ -n "$pr_number" ]; then
     labels="$(gh pr view "$pr_number" --json labels --jq '.labels[].name' 2>/dev/null)" || return 0

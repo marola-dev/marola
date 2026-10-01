@@ -223,6 +223,11 @@ Also relied on daily: Scala 3, MUnit, sbt, Nix, just, DSPy, Hugging Face (`trans
 [ai-jail](https://github.com/akitaonrails/ai-jail). The map's water quality comes from bulletins
 published by INEA (Rio de Janeiro), INEMA (Bahia) and IMA/SC (Santa Catarina).
 
+## Contact
+
+For any request about marola, write to [admin@marola.dev](mailto:admin@marola.dev).
+Vulnerabilities go through the private channel in [`SECURITY.md`](./SECURITY.md).
+
 ## License
 
 [MIT](./LICENSE), © 2026 marola contributors.

@@ -10,6 +10,7 @@ names the ideas in that file that are big enough for a Marola Improvement Propos
 | File | Kind | MIP material inside, and its status |
 |---|---|---|
 | [`ARCHITECTURE.md`](./2-Building-marola/ARCHITECTURE.md) | reference | §5c HTTP/SSE MCP transport for a hosted agent (candidate, Phase 2); §8 calibrating the heuristics on reports (→ MIP-0007); §9 known limitations (fixes, not MIPs) |
+| [`PHASES.md`](./PHASES.md) | reference | none; each phase names its own MIP inline (MIP-0057, MIP-0008) |
 | [`FUTURE-WORK.md`](./4-Research-and-plans/FUTURE-WORK.md) | roadmap | see the section-by-section list below |
 | [`EFFECTS-MAP.md`](./2-Building-marola/EFFECTS-MAP.md) | review | §2 `AppConfig.fromEnv` hidden effect, §3 MCP unsafe boundary, §4 resource lifecycle — refactors, direct PRs, no MIP |
 | [`RUN-LOCALLY.md`](./1-Using-marola/RUN-LOCALLY.md) | how-to | none (it documents what MIPs shipped) |
