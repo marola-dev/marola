@@ -133,9 +133,8 @@ marola: Marked — you're swimming at Praia da Joaquina around 10:00 today.
   a *person* reach a user" either.
 - Depends on MIP-0002 for identity/messaging; cannot ship before it.
 
-As a sequence, following §6's mutual-consent rule (count only, a handle only after both say yes —
-§3's mock reply shows handles immediately on match, which contradicts §6; not resolved here, see
-the MIP author):
+As a sequence, following §6's mutual-consent rule (a count first, a handle only after both say
+yes; §3's mock reply differs, see §11.6):
 
 ```mermaid
 sequenceDiagram
@@ -170,7 +169,7 @@ scoring change:
 - **No public exposure.** The map never shows who is going anywhere; this is entirely inside the
   bot's private reply to the matched people.
 - **Consent is mutual before a handle is shared**: matching tells each person *a count*, not
-  *who*, until both say yes (mirrored in the mock reply above).
+  *who*, until both say yes. §3's mock reply contradicts this; see §11.6.
 - **A hard kill switch** (`/stop_intents`) and normal Telegram block/report remain the actual
   backstop: this is a guard rail, not a boundary, the same honest framing MIP-0011 uses for
   `permissions.deny`.
@@ -228,6 +227,10 @@ scoring change:
    this stay a `FUTURE-WORK.md` sketch until the collaborator (the "user qualificado" who volunteered) gives
    concrete demand, rather than becoming a numbered MIP yet? Proposal: keep it Draft, not Accepted,
    until then.
+6. **Does a match reveal handles at once, or only a count?** §3's mock reply shows the other
+   swimmers' handles as soon as there is a match; §6 reveals only a count until both people say
+   yes. The source audio (question 1) decides which one the collaborator meant. Until then §5's
+   diagram follows §6, the safer reading.
 
 **Editorial note (added when renumbering to MIP-0015):** the source draft cross-referenced this
 section from three places above. Two check out: the Status row's "see §11.1" correctly points at

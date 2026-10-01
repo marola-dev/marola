@@ -1,6 +1,6 @@
 # Architecture
 
-**Status:** POC pipeline plus six pluggable integrations, all with local implementations,
+**Status:** POC pipeline plus pluggable integrations, all with local implementations,
 implemented and compiling; most exercised live (see the per-feature "Verified" notes in §3). No
 cloud resources provisioned, no Telegram bot registered yet.
 
@@ -45,8 +45,8 @@ Telegram wins on every axis that matters for this use case. **Decision: Telegram
 
 ## 3. What's actually built
 
-A real, runnable pipeline plus six independently pluggable integrations: no mocks, no stubs
-pretending to be real:
+A runnable pipeline plus independently pluggable integrations, all real code with no mocks or
+stubs.
 
 Three sbt modules at the repo root: `core`, `local`, `cli` (see `FUTURE-WORK.md` §7.3 for why, and
 the dependency-inversion fix that keeps `core` free of any backend-specific reference):
@@ -279,7 +279,7 @@ span when configured; cross-cutting, not shown as a pipeline stage.
 Cross-cutting: rate limiting (per Telegram user ID) and a cost-governor check before any paid call,
 built early, not bolted on.
 
-## 5. The six pluggable integrations
+## 5. The pluggable integrations
 
 Every one of these follows the same shape: a trait in `core`, a local (free) implementation, and an
 `AppConfig` factory method (`llmClient`, `sightingStore`, `visionClient`, `tracing`) that wires it
