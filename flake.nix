@@ -18,7 +18,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # The shared dev-flow harness (MIP-0070 §5.1): stack, uprd, issues, cost-split, … on PATH, the
-    # git hooks and the just module under .devkit. Keep the tag equal to ci.yml's `@v…` pins.
+    # git hooks and the just module under .devkit. Bumped by hand, together with every `@v…` and
+    # `devkit-ref:` in .github/workflows/ (dependabot ignores marola-devkit for that reason).
     marola-devkit = {
       url = "github:marola-dev/marola-devkit/v0.2.0";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -91,10 +92,12 @@
 
           shellHook = devkit.shellHook + ''
             echo "marola dev shell"
-            git config core.hooksPath .devkit/.githooks 2>/dev/null || true
+            marola_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+            # The main checkout's .devkit too, and an absolute core.hooksPath into it: every worktree
+            # shares that setting.
+            (cd "$marola_root" && just devkit-link >/dev/null) || echo "marola: could not link .devkit — hooks and the devkit's recipes are off (just devkit-link)"
             # Load the gitignored .env like direnv's `dotenv_if_exists` in .envrc does; plain
             # KEY=VALUE lines only.
-            marola_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
             if [ -f "$marola_root/.env" ]; then
               set -a; . "$marola_root/.env"; set +a
               echo "loaded $marola_root/.env"

@@ -88,8 +88,9 @@ just docs-serve       # preview the docs on http://localhost:8001/docs/
 
 Always run `just build && just test && just quality` before considering a change done (`quality` =
 `quality-scala`, scalafmt + scalafix, plus `quality-other`, ruff + actionlint + hadolint +
-`scripts/*.py` self-tests: the same gates as `ci.yml`; a missing lint tool fails rather than
-skips, so use `nix develop`). The pre-push hook runs `just prepush`: `quality-other` before every
+`scripts/*.py` self-tests: the gates `ci.yml` runs, at the lint versions `flake.lock` pins, which
+ci.yml passes to the devkit workflows by hand; CI runs a subset of the self-tests. A missing lint
+tool fails rather than skips, so use `nix develop`). The pre-push hook runs `just prepush`: `quality-other` before every
 push, `quality-scala` too when Scala changed. `git push --no-verify` bypasses it, CI does not.
 The dev-flow harness is [marola-devkit](https://github.com/marola-dev/marola-devkit), a flake
 input pinned to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `cost-split`,
@@ -97,7 +98,13 @@ input pinned to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`
 (`.devkit/.githooks`, running this repo's `just precommit`/`just prepush`), the reusable CI
 workflows, and the `marola-devkit` Claude Code plugin (`/marola-devkit:mip` and the other generic
 skills, the MIP agents, the format/stop/session hooks). Bump the flake input and every
-`@v…`/`devkit-ref` in `.github/workflows/` together. marola keeps its own `.claude/statusline.sh`.
+`@v…`/`devkit-ref` in `.github/workflows/` together (dependabot is told to leave it alone). marola
+keeps its own `.claude/statusline.sh`. The shellHook links `.devkit` and points `core.hooksPath` at
+the main checkout's link; a worktree made outside `nix develop` and `just worktree` needs
+`just devkit-link` once, or the devkit's recipes are missing there. OpenCode does not load Claude
+Code plugins: the generic skills are plain `SKILL.md` files under `.devkit/plugins/marola-devkit/skills/`
+(or [on GitHub](https://github.com/marola-dev/marola-devkit/tree/v0.2.0/plugins/marola-devkit/skills)),
+readable directly.
 **JDK 25 is required, not just "17+".** Kyo's artifacts won't load on an older JVM. See
 `.claude/rules/scala.md` (loaded automatically while editing `.scala`/`build.sbt`) for the full
 JDK/Kyo-versioning detail and the jar-verification approach for Kyo's pre-1.0 API surface.

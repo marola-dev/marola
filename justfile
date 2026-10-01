@@ -9,11 +9,29 @@ export XDG_RUNTIME_DIR := justfile_directory() + "/.tmp/sbt-runtime"
 import? '.devkit/devkit.just'
 
 default:
+    @[ -e .devkit/devkit.just ] || echo "no .devkit in this checkout: the devkit's recipes (pr, stack, issue-*, …) are missing — run 'just devkit-link'" >&2
     @just --list
 
-# One-time, only needed if you're not using `nix develop` (its shellHook does this automatically).
-install-hooks:
-    git config core.hooksPath .devkit/.githooks
+# Link .devkit into this checkout and the main one, from whichever has it, and point the hooks at
+# it. The nix shellHook runs this; a worktree made outside it needs it once. Fails loudly when
+# neither checkout has a .devkit (that takes one `nix develop`).
+devkit-link:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    here="$(git rev-parse --show-toplevel)"
+    main="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+    src=""
+    for d in "$here" "$main"; do
+        if [ -e "$d/.devkit/devkit.just" ]; then src="$(readlink -f "$d/.devkit")"; break; fi
+    done
+    [ -n "$src" ] || { echo "devkit-link: no .devkit in $here or $main — run 'nix develop' (its shellHook links it)" >&2; exit 1; }
+    for d in "$here" "$main"; do
+        [ -e "$d/.devkit/devkit.just" ] || { ln -sfn "$src" "$d/.devkit"; echo "devkit-link: linked $d/.devkit"; }
+    done
+    # Absolute: core.hooksPath is shared by every worktree, and a relative one resolves per worktree.
+    git config core.hooksPath "$main/.devkit/.githooks"
+
+alias install-hooks := devkit-link
 
 # ---------------------------------------------------------------------
 # Git
@@ -56,7 +74,7 @@ quality-scala:
 
 # The JVM-free gates: ruff, the script self-tests, actionlint, hadolint. A missing tool fails, never skips.
 # The devkit's own scripts are self-tested in its CI; here only marola's run.
-quality-other:
+quality-other: devkit-link
     #!/usr/bin/env bash
     set -euo pipefail
     for tool in ruff actionlint hadolint agents-check workflow-runners; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
@@ -124,7 +142,7 @@ precommit:
 
 # Run by the devkit's pre-push hook, which does not pass the pushed refs on: this checks what HEAD
 # has that its push target (else origin/main) lacks, so a push of another branch is checked as HEAD.
-prepush:
+prepush: devkit-link
     #!/usr/bin/env bash
     set -euo pipefail
     base="$(git rev-parse -q --verify '@{push}' 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || true)"
@@ -580,6 +598,7 @@ worktree dir=".tmp/wt-main":
         git -C "$root" worktree add --detach "$wt" "$target"
         echo "worktree: created $wt at origin/main"
     fi
+    if [ -e "$root/.devkit/devkit.just" ]; then ln -sfn "$(readlink -f "$root/.devkit")" "$wt/.devkit"; fi
     echo "  cd {{ dir }} && nix develop"
 
 # Drop worktree registrations whose directories are gone. Never deletes a live worktree.
