@@ -154,7 +154,7 @@ Proposed, with hooks, rules, subagents and a permission allowlist, as
 - **`fixture-refresh`**: re-record the golden fixtures (`docs/1-Using-marola/RUN-LOCALLY.md` §7) and bump the
   pinned date in `PipelineGoldenSpec`; the most repeated manual procedure here.
 - **`benchmark-compare`**: run `just benchmark` twice at temperature 0, diff against
-  `docs/benchmarks/`, and write the comparison paragraph a PR needs when it touches prompts, corpus
+  marola-ml's `docs/benchmarks/`, and write the comparison paragraph a PR needs when it touches prompts, corpus
   or embedder.
 - **`corpus-doc`**: written, and now in marola-corpus: a `knowledge/*.md` document with a title,
   one `Source:` URL and paragraphs, then one `just ask` that should cite it.

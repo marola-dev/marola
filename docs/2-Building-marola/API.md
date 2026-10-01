@@ -19,8 +19,9 @@ so linking it lands the reader on a stub.
 
 ## Python
 
-- [`scripts/` and `finetune/`](/api/python/) — pdoc over the repo's stdlib-only CLI scripts.
-  These are commands, not a library: each one's module docstring is its usage.
+- [marola-ml's `finetune/` and `scripts/`](/repos/marola-ml/api/) — pdoc, from `api-docs.tar.gz`
+  on marola-ml's latest release. These are commands, not a library: each one's module docstring is
+  its usage.
 
 !!! note "These links resolve on the published site, not in a local build"
     `just docs` builds only this site. The API trees come from a separate CI job and are merged

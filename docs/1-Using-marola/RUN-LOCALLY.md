@@ -186,12 +186,13 @@ just ask "what should I do if I get caught in a rip current?"
 #     [1] Rip currents — https://www.weather.gov/safety/ripcurrent (score 0.40)
 #     ...
 
-# Tier-1 "fine-tune": llama3.2 with marola's persona/decoding baked in (finetune/Modelfile):
-just finetune-model
+# Tier-1 "fine-tune": llama3.2 with marola's persona/decoding baked in (marola-ml's
+# finetune/Modelfile; run `just finetune-model` in a marola-ml checkout), then:
 MAROLA_LOCAL_LLM_MODEL=marola-llama3.2 just run -- --summarize
 ```
 
-See `finetune/README.md` for the QLoRA (Tier 2) recipe, which is written but not run here.
+See marola-ml's [`finetune/README.md`](https://github.com/marola-dev/marola-ml/blob/main/finetune/README.md) for the QLoRA (Tier 2)
+recipe.
 
 `--ask` answers from the corpus when a passage scores above `MAROLA_ASK_MIN_SCORE` (default 0.3)
 and otherwise, by default, from the model's general knowledge with a visible "(unsourced)" label;
@@ -203,7 +204,8 @@ just benchmark        # 22 ocean questions × {plain prompt, marola strict, maro
                       # → coverage / citations / abstentions / latency, verdict, data/benchmark-*.md
 ```
 
-Compare with `docs/benchmarks/2026-09-05.md`: the kept reference run and what it taught.
+Compare with marola-ml's [`docs/benchmarks/2026-09-05.md`](https://github.com/marola-dev/marola-ml/blob/main/docs/benchmarks/2026-09-05.md):
+the kept reference run and what it taught.
 
 ## 5.2 Plug your local model into the public site's chat widget (MIP-0033)
 
@@ -324,9 +326,11 @@ ghcr.io -u <user> --password-stdin`):
 | `jvm-<sha>` | same, pinned to one commit | same | amd64 + arm64 |
 | `native` | the same CLI ahead-of-time compiled (GraalVM native-image), distroless, no JVM — moving | same workflow | amd64 |
 | `native-<sha>` | same, pinned | same | amd64 |
-| `local` | Ollama with the `marola-llama3.2` fine-tune baked in — moving, but only advances when `just benchmark` clears the gate | `docker-local.yml` | amd64 |
-| `local-<sha>` | one benchmark candidate, kept whether or not it was promoted | same | amd64 |
 | `dev` / `dev-<sha>` | the literal `nix develop` shell in a container, for reading/hacking without installing Nix | `docker.yml`, `workflow_dispatch` only | amd64 |
+
+`ghcr.io/marola-dev/marola-ml:local` is Ollama with the `marola-llama3.2` fine-tune baked in. It
+only advances when the benchmark clears marola-ml's gate (its `docker-local.yml`); `local-<sha>`
+tags keep each candidate, promoted or not.
 
 **Built with Llama.** `:local` redistributes Meta's Llama 3.2 weights under the [Llama 3.2
 Community License](https://www.llama.com/llama3_2/license/); the agreement and the Acceptable Use
@@ -343,7 +347,7 @@ CLI image with an Ollama sidecar; the model is pulled once into a named volume:
 ```bash
 docker compose run --rm marola --brief --lat -27.6733 --lon -48.47                         # no LLM
 docker compose --profile ollama run --rm marola --summarize --lat -27.6733 --lon -48.47    # + draft + reviewer (llama3.2, 2 GB pulled once)
-docker compose --profile local run --rm marola-local --summarize --lat -27.6733 --lon -48.47   # the marola-llama3.2 variant, built from finetune/Modelfile
+docker compose --profile local run --rm marola-local --summarize --lat -27.6733 --lon -48.47   # the marola-llama3.2 variant, marola-ml's :local image
 ```
 
 `.env` is read if present (origin, provider switches; `.env.example`) and never copied into
@@ -354,7 +358,7 @@ against an Ollama already running on the host:
 docker run --rm --network host ghcr.io/marola-dev/marola:jvm --summarize --lat -27.6733 --lon -48.47
 ```
 
-`:local` is `finetune/README.md`'s "As an image". `just docker-build` builds any target here and
+`:local` is marola-ml's `finetune/README.md` "As an image". `just docker-build` builds any target here and
 `just docker-run -- …` runs it with `--network host`. The
 `Dockerfile` is one multi-stage file: `builder` (sbt, Temurin 25) → `jvm` (Temurin 25 JRE on
 Alpine, ~70 MB + the 55 MB jar), `native-build` → `native` (below), and `dev`: the literal
@@ -388,7 +392,7 @@ the Dockerfile's `native-image -jar` build the same thing.
 ## 11. The MLflow ledger — every benchmark run on record (MIP-0010)
 
 Optional, developer-only, off unless you ask for it. `just benchmark` writes a Markdown report under
-`data/` and that stays the canonical result (`scripts/benchmark_gate.py` reads it); with a tracking
+`data/` and that stays the canonical result (marola-ml's `scripts/benchmark_gate.py` reads it); with a tracking
 URI set, the same run is *also* logged to a local MLflow server (params, per-arm metrics, the
 report as an artifact) so runs can be compared in a UI instead of by diffing tables. Needs Docker
 (the server is a compose profile, never part of the Nix shell or the runtime image):

@@ -338,14 +338,15 @@ adding a doc needs no edit to `mkdocs/mkdocs.yml`.
 | `docs/MIPs/` | the proposals; no prefix — digits sort before letters, so it lands last on its own |
 
 Add its row to `docs/index.md` in the same change: that file is the site's landing page as well as
-the index of what inside each doc is MIP material. `docs/benchmarks/` and `docs/superpowers/` are
-`exclude_docs`'d — repo artefacts, not documentation — and are linked at GitHub when referenced.
+the index of what inside each doc is MIP material. `superpowers/` and `benchmarks/` (marola-ml's
+kept runs, at any depth) are `exclude_docs`'d — repo artefacts, not documentation — and are linked
+at GitHub when referenced.
 
 **Preview, and the gate.** `just docs-serve` serves the real build on
 <http://localhost:8001/>; the docs are baked into the image, so a doc edit needs a restart,
 not a reload. `just docs` is the build alone, and it is `--strict`: one unresolved internal link
 anywhere in `docs/` turns it red. Links that leave `docs/` — `AGENTS.md`, `PHILOSOPHY.md`,
-`docs/benchmarks/` — are absolute GitHub URLs for exactly that reason. Both need a Docker or
+another repo's files — are absolute GitHub URLs for exactly that reason. Both need a Docker or
 Podman daemon (MIP-0064 decision 4); neither is part of `just quality`, so a docs change is
 previewed by hand.
 

@@ -31,8 +31,12 @@ One sbt multi-project build (root `build.sbt`), split into three modules at the 
 - `cli/`: `Main`, `AppConfig` (reads settings from env vars), the MCP tool server. Depends on
   both above; use `sbt cli/run`/`cli/runMain ...`, not `sbt run` at the root (a pure aggregate
   with no source of its own).
-- `dspy/`: offline Python DSPy prompt-compile step; produces a JSON artifact the Scala side
-  loads, never a runtime dependency.
+- The offline Python lives in [marola-ml](https://github.com/marola-dev/marola-ml) (the
+  `marola-ml/` submodule): the DSPy prompt compile, whose two JSON artifacts reach
+  `core/src/main/resources/` as a PR from its `compile-prompt.yml`, never a runtime dependency; the
+  marola-sea fine-tune; and the benchmark gate with its kept runs (`docs/benchmarks/`). It runs this
+  repo's image, pinned by tag and digest, and reads the resources tarball `ci.yml` builds
+  (`scripts/build-resources-tarball.sh`).
 - The knowledge corpus (`--ask`'s sourced notes) and its `corpus-doc`/`eli5` skills live in
   [marola-corpus](https://github.com/marola-dev/marola-corpus) (the `marola-corpus/` submodule).
   `corpus.version` pins its release; `just corpus-fetch` unpacks it into `.tmp/knowledge`, which
@@ -61,17 +65,17 @@ template pointer: `.claude/rules/docs.md`):
 | `docs/3-Working-on-the-repo/CI-CD.md` | Every workflow: trigger, runner, what it gates or deploys, secrets, how to run it by hand; the self-hosted rule and the maintainer's manual settings (MIP-0065) |
 | `docs/3-Working-on-the-repo/ISSUE-FLOW.md` | The GitHub tracking standard in use: the object model, the three intake tiers, the Definition of Ready, and every `issues`/`just` command (MIP-0063) |
 | `docs/3-Working-on-the-repo/AGENT-SKILLS.md` | Which agent skills to use in this repo: `/marola-devkit:mip` (plan), `/marola-devkit:mip-tasks` (tasks → stacked PRs, `stack`), superpowers walkthrough, candidates to write |
-| `docs/benchmarks/` | Kept `just benchmark` runs: re-run and compare before changing prompt/corpus/embedder/model |
+| [marola-ml's `docs/benchmarks/`](https://github.com/marola-dev/marola-ml/tree/main/docs/benchmarks) | Kept `just benchmark` runs: re-run and compare before changing prompt/corpus/embedder/model |
 | `docs/MIPs/` | Marola Improvement Proposals: design a non-trivial change here first, via the `/marola-devkit:mip` skill, before building it. `just context-mips` packs what a browser session needs to draft one from voice notes; `just context-mip MIP-NNNN` packs one already-written MIP for an independent, non-Claude reviewer |
 | `docs/4-Research-and-plans/FABLE_REVIEW.md` | Code and documentation review at the initial import: open findings, ranked, with file:line references |
 
 **Writing a doc is a deploy.** A new or moved file under `docs/` needs no `nav:` entry: mkdocs
 builds the sidebar from the file tree, which is why the directories carry `1-`…`4-` prefixes — they
 are the only thing ordering the sections. The build is `--strict`, so a link that does not resolve
-inside `docs/` fails it; that is why `AGENTS.md`, `PHILOSOPHY.md` and `docs/benchmarks/` are
-referenced at GitHub rather than relatively. Preview with `just docs-serve` before pushing. On
+inside `docs/` fails it; that is why `AGENTS.md` and `PHILOSOPHY.md` are referenced at GitHub
+rather than relatively. Preview with `just docs-serve` before pushing. On
 `main`, a push touching `docs/**` or `mkdocs/**` runs `docs.yml`, which renders this repo's docs
-plus every submodule's (`mkdocs/repos.yml`: `marola-site`, `marola-corpus`), folds the API docs in
+plus every submodule's (`mkdocs/repos.yml`: `marola-site`, `marola-corpus`, `marola-ml`), folds the API docs in
 under `api/` from release assets, and deploys docs.marola.dev. The map at marola.dev is
 [marola-site](https://github.com/marola-dev/marola-site)'s.
 
