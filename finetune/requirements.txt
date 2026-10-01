@@ -3,7 +3,7 @@
 torch>=2.14.0
 transformers>=5.17.0
 peft>=0.21.0
-trl>=1.13.0
+trl>=1.14.0
 datasets>=5.0.1
 accelerate>=1.15.0
 # CUDA only — omit on CPU and pass --no-4bit to train_lora.py

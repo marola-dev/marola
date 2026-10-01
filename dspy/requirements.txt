@@ -1,7 +1,7 @@
 # Pin loosely — DSPy and Langfuse both move fast. Re-check against
 # https://pypi.org/project/dspy/ and https://pypi.org/project/langfuse/
 # before trusting this long-term (same caveat build.sbt gives for Kyo).
-dspy>=3.3.1,<4
+dspy>=3.4.0,<4
 
 # Optional tracing (see compile_recommendation_prompt.py's
 # _init_langfuse_tracing) — both installed unconditionally since the
