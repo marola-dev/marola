@@ -84,7 +84,7 @@ jobs:
     if: needs.changes.outputs.scala == 'true'
     uses: marola-dev/marola-devkit/.github/workflows/scala-ci.yml@v0.2.2
     with:
-      # corpusFetch (build.sbt) puts the release in corpus.version where RagOfflineSpec reads it.
+      # corpusFetch (build.sbt) unpacks corpus.version's release into .tmp/knowledge for RagOfflineSpec.
       sbt-tasks: 'corpusFetch scalafmtCheckAll "scalafixAll --check" compile test'
 
   # scala-ci leaves coverage out on purpose (marola-app-specific): `sbt-scoverage`

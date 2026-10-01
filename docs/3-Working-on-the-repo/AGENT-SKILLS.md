@@ -14,8 +14,10 @@ are Claude Code only. See
 The map's `site-frontend` skill moved to [marola-site](https://github.com/marola-dev/marola-site)
 with the page, and `eli5` and `corpus-doc` to
 [marola-corpus](https://github.com/marola-dev/marola-corpus) with the corpus (MIP-0070 task 13),
-so this repo has no `.claude/skills/` of its own. Inside the umbrella, start the session in
-`marola-corpus/` to have them.
+so this repo has no `.claude/skills/` of its own. To use them, start the session in
+`marola-corpus/`; their steps that run marola (`just ask`, `just knowledge-index`) run from this
+checkout's root with `MAROLA_KNOWLEDGE_DIR=marola-corpus/knowledge`, as marola-corpus's
+AGENTS.md says.
 
 ## 1.1 marola-devkit plugin skills
 
