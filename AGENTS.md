@@ -3,6 +3,18 @@
 Instructions for any AI coding agent working in this repository (Claude Code or otherwise). Read
 this before writing, modifying, or deploying anything. Humans should read it too.
 
+<!-- invariants:start -->
+## Org invariants
+
+Non-negotiable in every marola repo; a repo may make these stricter, never looser (MIP-0070 §5.1).
+
+- **Cost and deployment safety**: never provision or deploy a paid cloud resource without explicit human confirmation first ([AGENTS.md](AGENTS.md#cost--deployment-safety-hard-rule)).
+- **No secrets in code**: never hardcode a key/connection string/secret; `.env.example` holds placeholders only ([AGENTS.md](AGENTS.md#cost--deployment-safety-hard-rule)).
+- **The agent-ready gate**: an agent may only begin implementation on an issue carrying `agent-ready` ([AGENTS.md](AGENTS.md#issue-tracking-hard-rule)).
+- **The three commit trailers**: commits carry three trailers and nothing else — `Tested:`, `Cost:`, and `Co-Authored-By: Claude <noreply@anthropic.com>` ([AGENTS.md](AGENTS.md#attribution-and-cost-accounting-hard-rule)).
+- **Phase discipline**: work one phase at a time; never start a later phase before the current one is done ([AGENTS.md](AGENTS.md#phase-discipline-hard-rule)).
+<!-- invariants:end -->
+
 ## What this repo is
 
 **marola** is the ocean intelligence layer for a stretch of coast, reachable as a Telegram
@@ -85,7 +97,7 @@ JDK/Kyo-versioning detail and the jar-verification approach for Kyo's pre-1.0 AP
 
 ## Phase discipline (hard rule)
 
-Work **one phase at a time**, per `docs/2-Building-marola/ARCHITECTURE.md` §11: do not start Phase 2 (going live on
+Work **one phase at a time**, per `docs/PHASES.md`: do not start Phase 2 (going live on
 a cloud backend, GCP per MIP-0057) before Phase 1 (Telegram bot actually working) is done. This
 exists to prevent an expensive mistake, so don't skip it because a later phase looks more interesting. If asked to jump ahead,
 implement the requested feature but flag which earlier-phase prerequisite is still missing.

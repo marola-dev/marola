@@ -9,7 +9,10 @@ const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const APP = fs.readFileSync(path.join(ROOT, 'site/static/app.js'), 'utf8');
-const SCHEMA = JSON.parse(fs.readFileSync(path.join(ROOT, 'site/board.schema.json'), 'utf8'));
+// MIP-0070 §5.4: the schema moved to cli/src/main/resources/ (the producer owns it, ships in the image).
+const SCHEMA = JSON.parse(
+  fs.readFileSync(path.join(ROOT, 'cli/src/main/resources/board.schema.json'), 'utf8')
+);
 const BOARD = JSON.parse(fs.readFileSync(path.join(ROOT, 'site/fixtures/board.json'), 'utf8'));
 const INDEX = fs.readFileSync(path.join(ROOT, 'site/static/index.html'), 'utf8');
 const ABOUT = fs.readFileSync(path.join(ROOT, 'site/static/about.html'), 'utf8');
@@ -251,12 +254,36 @@ function runUi(html, opts) {
   const click = code => document.getElementById('lang').listeners.click.forEach(fn => fn({ target: langBtn(code) }));
   return { api: sandbox.marolaI18n, document, store, urls, langBtn, click };
 }
+// --- site/areas.json, the file Main's `--site` reads live: nothing else in the app test suite
+// validates it, and Areas.parse (cli/src/main/scala/marola/site/SiteBuilder.scala) silently drops
+// a malformed entry instead of failing, so a bad edit here would only surface at runtime
+// (SITE_AREAS_JSON overrides the path, for a deliberately-broken copy in a one-off check).
+// -------------------------------------------------------------------------------------------.
+const AREAS_PATH = process.env.SITE_AREAS_JSON || path.join(ROOT, 'site/areas.json');
+const ZONES = Intl.supportedValuesOf('timeZone');
+function validAreaEntry(e) {
+  return !!e && typeof e === 'object'
+    && typeof e.id === 'string' && /^[a-z0-9-]+$/.test(e.id)
+    && typeof e.name === 'string'
+    && typeof e.lat === 'number' && typeof e.lon === 'number'
+    && typeof e.radius_km === 'number' && typeof e.beach_limit === 'number'
+    && typeof e.tz === 'string' && ZONES.includes(e.tz)
+    && typeof e.tiles === 'string';
+}
+const areasRaw = JSON.parse(fs.readFileSync(AREAS_PATH, 'utf8'));
+const validAreas = areasRaw.filter(validAreaEntry);
+ok(areasRaw.length > 0, AREAS_PATH + ' lists at least one area');
+ok(validAreas.length === areasRaw.length,
+  AREAS_PATH + ': every entry has the fields Areas.parse requires',
+  validAreas.length + '/' + areasRaw.length + ' valid — Areas.parse would silently drop the rest');
+const areaIds = validAreas.map(a => a.id);
+ok(new Set(areaIds).size === areaIds.length, AREAS_PATH + ': area ids are unique');
 
 (async () => {
   console.log('site_check:');
   // 1. the fixture is a valid board, and the checker bites.
   const errs = validate(SCHEMA, BOARD);
-  ok(errs.length === 0, 'site/fixtures/board.json conforms to site/board.schema.json', errs.slice(0, 3).join('; '));
+  ok(errs.length === 0, 'site/fixtures/board.json conforms to cli/src/main/resources/board.schema.json', errs.slice(0, 3).join('; '));
   const broken = JSON.parse(JSON.stringify(BOARD)); delete broken.beaches;
   ok(validate(SCHEMA, broken).some(e => e.includes('beaches')), 'the checker reports a missing required field');
   const badEnum = JSON.parse(JSON.stringify(BOARD)); badEnum.beaches[0].hours[0].wind_level = 'gale';

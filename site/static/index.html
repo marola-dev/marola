@@ -9,6 +9,8 @@
   <!-- img-src https: is the map tiles (site/areas.json); connect-src https: is the chat tunnel
        URL in chatbot-config.js. Scripts stay same-origin (MIP-0033 §5.2). -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https:; connect-src 'self' https:; object-src 'none'">
+  <!-- impact.com's site-ownership check reads this tag verbatim, non-standard `value` attribute included. -->
+  <meta name='impact-site-verification' value='01172e56-c6f9-4720-ac79-04d3a5b40fef'>
   <link rel="stylesheet" href="vendor/leaflet.css">
   <link rel="stylesheet" href="style.css">
 </head>

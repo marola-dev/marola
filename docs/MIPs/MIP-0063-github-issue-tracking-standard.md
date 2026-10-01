@@ -138,8 +138,13 @@ has been met: the maintainer ran `gh auth refresh -s project`, the host token no
 Widening the scope stays a human action by design — an agent should not widen its own token — but
 nothing in v1 waits on it any more. The 2026-09-27 reads that recorded the earlier state
 (`--owner h0ffmann` → `totalCount 0`, `read:project` only) are kept in the Appendix as dated
-history. Projects' **built-in workflows** (auto-add, closed → Done) are configured in the
-project UI; this MIP uses them rather than reimplementing them as Actions.
+history. Projects' **built-in workflows** (auto-add, closed → Done) are configured in the project
+UI and are the **first** mechanism, not reimplemented as Actions — but "Item closed" is now known
+to be unreliable, not merely unverified: it moved #501 to Done two seconds after it closed
+(2026-09-30 05:46), then did not fire for the next eight closes (#502–#507 via `gh issue close`,
+#511/#512 by merge). `scripts/issues.sh board sync` is the **fallback**: it also moves a closed
+issue's card to Done whenever it isn't already, because the built-in workflow cannot be trusted to
+run every time (§5.2).
 
 ### 4.5 Issue forms → parseable bodies — **adopted, verified on real data**
 
@@ -278,7 +283,7 @@ moves — and the board must be able to catch up afterwards without undoing anyt
 |---|---|---|
 | `issues.sh ready` | adds on an all-pass, removes on a regression | — (it has no board to write, by design: it must work from a jail) |
 | `issues.sh claim` | removes | sets **In progress** |
-| `issues.sh board sync` | — | sets from the issue's own state (assigned → In progress, `agent-ready` → Ready, otherwise Triage) on an item with **no Status**, or with **`Backlog`** and only `Backlog` |
+| `issues.sh board sync` | — | sets from the issue's own state (assigned → In progress, `agent-ready` → Ready, otherwise Triage) on an item with **no Status**, or with **`Backlog`** and only `Backlog`. Also moves a **closed** issue's card to **Done** whenever it isn't already — the fallback for the built-in "Item closed" workflow (§4.4) |
 
 ```mermaid
 stateDiagram-v2
@@ -292,7 +297,8 @@ stateDiagram-v2
   Spec --> Ready: maintainer, manual
   Ready --> InProgress: claim
   InProgress --> InReview: maintainer, manual
-  InReview --> Done: issue closed (built-in workflow)
+  InProgress --> Done: issue closed (built-in workflow, or board sync as fallback)
+  InReview --> Done: issue closed (built-in workflow, or board sync as fallback)
 ```
 
 So **the label is authoritative and the board follows it**, once, when an issue first reaches the
@@ -308,9 +314,17 @@ reaches the board, so on this board it means *nobody has looked at this yet* —
 absent Status means. Treating it as unset is what makes an issue's first contact with the board
 mean anything; without it every card the workflow touched would be frozen at `Backlog` forever and
 `sync` would be inert by construction. The exception is **exactly that one literal value**. It is
-not "any Status §5.2 does not name": `Ready`, `In progress`, `In review`, `Done`, `Triage` and
-`Spec` are all somebody's decision and none of them is ever overwritten. And it is a *once*: after
-one sync an adopted card carries a real Status, so the next run adopts nothing.
+not "any Status §5.2 does not name": `Ready`, `In progress`, `In review`, `Triage` and `Spec` are
+all somebody's decision and none of them is ever overwritten. And it is a *once*: after one sync an
+adopted card carries a real Status, so the next run adopts nothing.
+
+**`Done` is the other exception, and it runs the opposite direction.** `Backlog` is adopted because
+nobody chose it; `Done` is overwritten because a closed issue's own state outranks whatever the
+board says — the same direction of truth (the issue, not the board) as above, applied continuously
+to this one field rather than once at first contact. The built-in
+"Item closed" workflow is supposed to make this unnecessary, but 2026-09-30 showed it firing for
+one issue (#501) and missing the next eight, so `sync` checks every closed issue's card on every
+run, not only a card's first contact with the board.
 
 Two things follow that the command says out loud rather than leaving to be noticed. It **names
 every card it moves** (`#421  Backlog → In progress`), because the first real run moves the whole
@@ -396,7 +410,7 @@ Seven recipes over one `scripts/issues.sh`, each with the repo's usual `--dry-ru
 | `just issue-ready <n>` | runs the five rules, adds/removes `agent-ready`, prints which rule failed |
 | `just issue-claim <n>` | assigns, drops `agent-ready`, sets board Status, prints the `scripts/stack.sh start` line |
 | `just milestone-new "<name>" [--mip MIP-NNNN]` | thin, but keeps deliverables discoverable from `just` |
-| `just board-sync` | adds un-added open issues to the project, sets Status from state |
+| `just board-sync` | adds un-added open issues to the project, sets Status from state; moves a closed issue's card to Done (§4.4 fallback) |
 | `just labels-sync [--prune]` | reconciles the repo against `.github/labels.yml`, the manifest; orphans are reported, never deleted without `--prune` |
 
 Five subcommands have no recipe, for two different reasons. **`board setup`** (the Status options
@@ -716,6 +730,15 @@ All on 2026-09-27, from this checkout.
   The gate is a real edge now, and §5.3 describes something that has happened. One issue labelled,
   one edge added; nothing else was touched.
 
+- **The built-in "Item closed" workflow observed live, 2026-09-30 — unreliable, not absent.**
+  `github-project-automation` moved #501 to Done two seconds after it closed (05:46), then did not
+  fire for #502–#507 (closed via `gh issue close`) or #511/#512 (closed by their merge commits); all
+  eight sat in **In progress** until moved to Done by hand. A live re-read on 2026-09-30
+  (`gh project item-list 1 --owner marola-dev --query "is:closed"`) confirms the `--query` filter
+  itself works against the real API — 37 closed items returned, every one already carrying a
+  Status (all `Done`, the by-hand fix having already landed) — which is what `scripts/issues.sh
+  board sync`'s fallback now relies on (§4.4, §5.2).
+
 ### Not checked
 
 - **The mis-attach half of §4.1's trap was not probed.** That passing an issue *number* as
@@ -724,8 +747,10 @@ All on 2026-09-27, from this checkout.
   unrelated repositories, and the probe would have written a sub-issue link onto a stranger's
   issue. `scripts/issues.sh`'s guard is therefore built on the parameter's documented semantics
   plus the order-of-magnitude gap between the two spaces, not on a reproduction.
-- **Projects' built-in workflows** (auto-add, closed → Done) are taken from general knowledge of
-  the feature, not re-read from the docs this session.
+- **Whether "Item closed" fires reliably for every close path** (a UI close, `gh issue close`, a
+  closing keyword landing on merge, close-as-not-planned — beyond the nine closes of 2026-09-30) is
+  still not known — nine observations said "sometimes", not "when". `board sync`'s fallback is
+  written for that uncertainty, not to resolve it.
 - **Whether GitHub renders *every* issue-form field type as a `###` heading** — verified for
   `textarea` on #412 only. `dropdown` and `checkboxes` rendering is assumed, not confirmed.
 - **`brunogbv/cv`'s `.specify/extensions.yml` hook mechanism** is described in the skill text that

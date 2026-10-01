@@ -45,9 +45,10 @@ column is the change that fixed each one; open bugs live in the issue tracker.
 | 06 | `mip-reviewer` runs `git rev-parse`, not in `permissions.allow` — two prompts per review | nit | `.claude/settings.json:39` |
 | 03 | `DEV-FLOW.md` §7→§8 renumbering left stale section pointers | nit | `scripts/deps-stack.sh:3`,`:391`, `CONTRIBUTING.md:85` |
 
-One later finding is still open, filed while building MIP-0063's own tooling: `cost-fill.sh` passes
-`cherry-pick --empty=drop`, which needs git ≥ 2.45, so `just pr` exits 129 on an older git —
-[#451](https://github.com/marola-dev/marola/issues/451).
+One later finding is still open, filed while building MIP-0063's own tooling: `cherry-pick
+--empty=drop` needs git ≥ 2.45 and exits 129 on an older git —
+[#451](https://github.com/marola-dev/marola/issues/451). `cost-fill.sh` (so `just pr`) no longer
+passes it since #524; `scripts/mip-stack.sh` still does.
 
 Two lessons that outlive the fixes: (a) a test that can't distinguish "works" from "died silently"
 isn't a test: `< /dev/null → 0 bytes` passed while the server was dead; the reviewer's piped
@@ -92,7 +93,7 @@ Two things to check before starting, both real today:
 4. **MIP-0016** (M, "do next"): water-quality marks placed in the sea; user value, no new source.
 5. **MIP-0018** (M, cheap win): the post-planner + exporter; MIP-0020 (Instagram, in draft) becomes
    one more export target with a real API, unlike LinkedIn/Substack.
-6. **#451** (`just cost-fill` on git < 2.45), the one open item from §2a.
+6. **#451** (`scripts/mip-stack.sh`'s `--empty=drop` on git < 2.45), the one open item from §2a.
 
 ## 4. Next (Phase 1) — the gate every cloud step waits on
 

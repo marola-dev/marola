@@ -39,7 +39,7 @@ a human.** Say this to the room, don't just build it quietly.
    repo owner's, per that skill's default.
 
 2. **Draft the MIP.** Use the `mip` skill's template and process in full: number, slug, the
-   required reading (`AGENTS.md`, `ARCHITECTURE.md` §5/§11, `FUTURE-WORK.md`), verify every
+   required reading (`AGENTS.md`, `ARCHITECTURE.md` §5, `docs/PHASES.md`, `FUTURE-WORK.md`), verify every
    external claim before naming it. Status starts `Draft`. If the voice note doesn't describe a
    real feature (it's a status update, a question, small talk), say so and stop here: this
    pipeline is for feature ideas, not everything that gets recorded.
