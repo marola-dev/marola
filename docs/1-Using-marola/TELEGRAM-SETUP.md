@@ -2,7 +2,7 @@
 
 **Status check first:** this guide gets your Telegram credentials and config ready and lets you
 verify them today. The actual message-handling loop (receiving a location share, replying with
-conditions) is **Phase 1** in `ARCHITECTURE.md` §11 and is **not built yet**. Everything else in
+conditions) is **Phase 1** in `docs/PHASES.md` and is **not built yet**. Everything else in
 this repo (the recommendation pipeline, `LlmClient`, `SightingStore`, `VisionClient`) is already
 built and works standalone via `Main`'s CLI flags (see `ARCHITECTURE.md` §3.1), waiting for this
 bot loop to call into it. Nothing below is faked to look more finished than it is.
@@ -70,7 +70,7 @@ just run -- --analyze-photo ./some-beach-photo.jpg        # what a future photo 
 
 Once the loop exists, long polling (§2) is enough. A **webhook** (Telegram pushes messages to a URL
 you register, instead of the bot asking) only becomes relevant once the service is actually deployed
-behind a stable HTTPS endpoint, i.e. Phase 3 in `ARCHITECTURE.md` §11, not required for local dev.
+behind a stable HTTPS endpoint, i.e. Phase 3 in `docs/PHASES.md`, not required for local dev.
 Once that's real, registering one looks like:
 
 ```bash

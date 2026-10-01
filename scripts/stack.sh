@@ -75,6 +75,8 @@ fork_point_for() {
 
 self_test() {
   local failed=0 tmp self repo fork unrelated upstream got out rc
+  local pr_origin pr_work cost_fill_stub local_head remote_head
+  local fp_origin fp_work upstream_ref rs_origin rs_work main_tip variant t1_head
   self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
   tmp="$(mktemp -d)"; trap "rm -rf $(printf %q "$tmp")" EXIT
   check() { if [ "$2" = "$3" ]; then echo "ok: $1"; else echo "FAILED: $1"; echo "  got:  $2"; echo "  want: $3"; failed=1; fi; }
@@ -117,7 +119,7 @@ self_test() {
 
   mkdir -p "$tmp/bin"
   cat > "$tmp/bin/gh" <<GH
-#!/usr/bin/env bash
+#!$BASH
 # a stand-in for \`gh pr list\`: newest PR first, and one entry collides on a hyphen-less 5 prefix.
 case "\$*" in
   *"pr list"*)
@@ -150,7 +152,7 @@ GH
     "+ git rebase --onto origin/main $fork mip-9999/6-board"
   has "then force-pushes with a lease" "$out" "+ git push -q --force-with-lease origin mip-9999/6-board"
 
-  { echo '#!/usr/bin/env bash'; echo 'exit 1'; } > "$tmp/bin/gh"   # from here on: no gh, no merged PR to find
+  { echo "#!$BASH"; echo 'exit 1'; } > "$tmp/bin/gh"   # from here on: no gh, no merged PR to find
   rc=0; out="$(drive --onto-base "$fork")" || rc=$?
   check "--onto-base overrides the lookup entirely" "$rc" "0"
   check "and is used verbatim as the cut" "$(grep -F -- '+ git rebase' <<<"$out" || true)" \
@@ -187,6 +189,134 @@ GH
   lacks "and drops only uprd's dry-run banner" "$out" "uprd dry run"
 
   echo
+  echo "-- pr force-pushes when cost-fill rewrites an already-pushed commit (#524) --"
+  # A stub stands in for cost-fill.sh (STACK_SELFTEST_COST_FILL): it deterministically amends
+  # HEAD, so this proves the push decision alone, independent of cost-fill.sh's own rewrite.
+  pr_origin="$tmp/pr-origin.git"; pr_work="$tmp/pr-work"
+  { git init -q --bare "$pr_origin"
+    git init -q -b main "$pr_work"
+    git -C "$pr_work" config user.email pr@example.invalid
+    git -C "$pr_work" config user.name pr-self-test
+    git -C "$pr_work" remote add origin "$pr_origin"
+    git -C "$pr_work" commit -q --allow-empty -m main
+    git -C "$pr_work" push -q origin main
+    git -C "$pr_work" checkout -q -b mip-9999/1-solo
+    git -C "$pr_work" commit -q --allow-empty -m "task 1"
+    git -C "$pr_work" push -q -u origin mip-9999/1-solo; } >/dev/null 2>&1
+  cost_fill_stub="$tmp/cost-fill-stub"
+  { echo "#!$BASH"; cat <<'SH'
+set -e
+echo "$*" >>"${STUB_ARGS_LOG:-/dev/null}"
+[ "${1:-}" = "--dry-run" ] && { echo "cost-fill --dry-run: would rewrite these commits on stub:"; exit 0; }
+git commit -q --amend --allow-empty -m "$(git log -1 --format=%B)
+
+stub-cost-fill-rewrote-this"
+SH
+  } >"$cost_fill_stub"
+  chmod +x "$cost_fill_stub"
+  { echo "#!$BASH"; cat <<'GH'
+case "$*" in
+  *"pr view"*) exit 1 ;;
+  *"pr create"*) echo "https://example.invalid/pull/1" ;;
+  *) exit 1 ;;
+esac
+GH
+  } >"$tmp/bin/gh"
+  chmod +x "$tmp/bin/gh"
+  rc=0
+  out="$(cd "$pr_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$cost_fill_stub" \
+    STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" pr 2>&1)" || rc=$?
+  check "the push exits 0 despite the already-pushed commit being rewritten" "$rc" "0"
+  local_head="$(git -C "$pr_work" rev-parse mip-9999/1-solo)"
+  remote_head="$(git --git-dir="$pr_origin" rev-parse mip-9999/1-solo)"
+  check "origin ends up with the rewritten commit (force-with-lease, not a rejected push)" \
+    "$remote_head" "$local_head"
+
+  echo
+  echo "-- pr still sets upstream on a brand-new branch's first push (#524) --"
+  # The common case: a task branch's very first scripts/stack.sh pr, never pushed before, where
+  # cost-fill almost always rewrites something (a bare Cost:/Tested: placeholder, at least). The
+  # force-with-lease branch must keep -u too, or the branch ends up with no upstream configured.
+  fp_origin="$tmp/fp-origin.git"; fp_work="$tmp/fp-work"
+  { git init -q --bare "$fp_origin"
+    git init -q -b main "$fp_work"
+    git -C "$fp_work" config user.email fp@example.invalid
+    git -C "$fp_work" config user.name fp-self-test
+    git -C "$fp_work" remote add origin "$fp_origin"
+    git -C "$fp_work" commit -q --allow-empty -m main
+    git -C "$fp_work" push -q origin main
+    git -C "$fp_work" checkout -q -b mip-9999/1-fresh
+    git -C "$fp_work" commit -q --allow-empty -m "task 1"; } >/dev/null 2>&1
+  rc=0
+  out="$(cd "$fp_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$cost_fill_stub" \
+    STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" pr 2>&1)" || rc=$?
+  check "the first-ever push still exits 0" "$rc" "0"
+  rc=0
+  upstream_ref="$(git -C "$fp_work" rev-parse --abbrev-ref mip-9999/1-fresh@\{upstream\} 2>&1)" || rc=$?
+  check "and @{upstream} ends up set despite the force-with-lease branch" "$rc" "0"
+  check "to origin's copy of the branch" "$upstream_ref" "origin/mip-9999/1-fresh"
+
+  echo
+  echo "-- pr hands cost-fill the task's own base, not origin/main (#524) --"
+  { git -C "$pr_work" checkout -q -b mip-9999/2-next mip-9999/1-solo
+    git -C "$pr_work" commit -q --allow-empty -m "task 2"
+    git -C "$pr_work" fetch -q origin; } >/dev/null 2>&1
+  out="$(cd "$pr_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$cost_fill_stub" \
+    STUB_ARGS_LOG="$tmp/stub-args" STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" --dry-run pr 2>&1)" || true
+  check "task 2's fork point is task 1's pushed tip" "$(cat "$tmp/stub-args" 2>/dev/null)" \
+    "--dry-run --base $(git -C "$pr_work" rev-parse origin/mip-9999/1-solo)"
+
+  echo
+  # Task 1 squash-merged and task 2 rebased onto main, so the parent-derived fork point is stale:
+  # "stale" leaves the deleted branch's tracking ref behind (fetch doesn't prune), "pruned" drops it
+  # so fork_point_for asks gh, which answers with task 1's pre-squash head.
+  for variant in stale pruned; do
+  echo "-- pr on a restacked child rewrites only its own commits, $variant parent ref (#524) --"
+  rs_origin="$tmp/rs-$variant-origin.git"; rs_work="$tmp/rs-$variant-work"
+  { git init -q --bare "$rs_origin"
+    git init -q -b main "$rs_work"
+    git -C "$rs_work" config user.email rs@example.invalid
+    git -C "$rs_work" config user.name rs-self-test
+    git -C "$rs_work" remote add origin "$rs_origin"
+    git -C "$rs_work" commit -q --allow-empty -m $'main\n\nTested: x\nCost: $0\nCo-Authored-By: C <c@x.invalid>'
+    git -C "$rs_work" push -q origin main
+    git -C "$rs_work" checkout -q -b mip-9999/1-a
+    echo a >"$rs_work/a.txt"; git -C "$rs_work" add a.txt
+    git -C "$rs_work" commit -q -m $'task 1\n\nTested: x\nCost: $0\nCo-Authored-By: C <c@x.invalid>'
+    git -C "$rs_work" push -q -u origin mip-9999/1-a
+    git -C "$rs_work" checkout -q -b mip-9999/2-b
+    echo b >"$rs_work/b.txt"; git -C "$rs_work" add b.txt
+    git -C "$rs_work" commit -q -m $'task 2\n\nTested: x\nCost: $0\nCo-Authored-By: C <c@x.invalid>'
+    git -C "$rs_work" checkout -q main
+    git -C "$rs_work" merge -q --squash mip-9999/1-a
+    GIT_COMMITTER_NAME=GitHub git -C "$rs_work" commit -q -m $'task 1 (#1)\n\nTested: x\nCost: $0\nCo-Authored-By: C <c@x.invalid>'
+    git -C "$rs_work" push -q origin main
+    git --git-dir="$rs_origin" update-ref -d refs/heads/mip-9999/1-a
+    t1_head="$(git -C "$rs_work" rev-parse mip-9999/1-a)"
+    if [ "$variant" = pruned ]; then
+      git -C "$rs_work" update-ref -d refs/remotes/origin/mip-9999/1-a
+      git -C "$rs_work" branch -q -D mip-9999/1-a
+    fi
+    git -C "$rs_work" rebase -q --onto origin/main "$t1_head" mip-9999/2-b
+    echo c >"$rs_work/c.txt"; git -C "$rs_work" add c.txt
+    git -C "$rs_work" commit -q -m $'review fix\n\nTested: x\nCost: est. pending\nCo-Authored-By: C <c@x.invalid>'
+  } >/dev/null 2>&1
+  mkdir -p "$tmp/rs-bin"
+  printf '#!%s\ncase "$*" in *"pr list"*) echo %s ;; *"pr create"*) echo https://example.invalid/pull/1 ;; *) exit 1 ;; esac\n' \
+    "$BASH" "$t1_head" >"$tmp/rs-bin/gh"; chmod +x "$tmp/rs-bin/gh"
+  main_tip="$(git -C "$rs_work" rev-parse origin/main)"
+  out="$(cd "$rs_work" && PATH="$tmp/rs-bin:$PATH" STACK_SELFTEST_COST_FILL="$(dirname "$self")/cost-fill.sh" \
+    STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" --dry-run pr 2>&1)" || true
+  has "--dry-run replays only the child's two commits" "$out" "replaying 2 commit(s)"
+  out="$(cd "$rs_work" && PATH="$tmp/rs-bin:$PATH" STACK_SELFTEST_COST_FILL="$(dirname "$self")/cost-fill.sh" \
+    STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" pr 2>&1)" || true
+  has "and so does the real run" "$out" "across 2 commit(s)"
+  check "origin/main stays an ancestor" \
+    "$(git -C "$rs_work" merge-base --is-ancestor "$main_tip" mip-9999/2-b && echo yes || echo no)" "yes"
+  check "with exactly the child's commits on top" "$(git -C "$rs_work" rev-list --count "$main_tip..mip-9999/2-b")" "2"
+  done
+
+  echo
   if [ "$failed" -eq 1 ]; then echo "stack self-test: FAILED" >&2; return 1; fi
   echo "stack self-test: ok"
 }
@@ -204,7 +334,41 @@ case "${1:-}" in
     ;;
   pr)
     base="$(base_for "$cur")"
-    run git push -q -u origin "$cur"
+    # cost-fill.sh runs here, not in scripts/pr.sh (#524): this is the documented primary path
+    # for a mip task branch (.claude/skills/mip-tasks/SKILL.md), and it decides on its own
+    # whether anything needs a trailer upgrade or a Closes #N line. A rewritten HEAD needs
+    # --force-with-lease, same as restack below, since the branch may already be pushed.
+    cost_fill="${STACK_SELFTEST_COST_FILL:-scripts/cost-fill.sh}"
+    # The parent's pushed tip, since that is what the PR diffs against; without it cost-fill's
+    # origin/main range would re-amend the parent's commits and see the parent's Closes line.
+    cf_ref="$base"; [ -z "$base" ] || [ "$base" = main ] || cf_ref="origin/$base"
+    cf_base="$(fork_point_for "$cur" "$cf_ref")" || cf_base=""
+    # fork_point_for may answer with gh's merged head sha, which a squash-merge leaves off HEAD's history.
+    [ -z "$cf_base" ] || cf_base="$(git merge-base HEAD "$cf_base" 2>/dev/null)" || cf_base=""
+    # After a squash-merge + restack the parent's ref is stale and points below main; take
+    # whichever fork point is nearer HEAD, or cost-fill would replay main's own commits.
+    mb="$(git merge-base HEAD origin/main)" || mb=""
+    if [ -z "$cf_base" ] || { [ -n "$mb" ] && git merge-base --is-ancestor "$cf_base" "$mb"; }; then cf_base="$mb"; fi
+    cf_args=(); [ -z "$cf_base" ] || cf_args=(--base "$cf_base")
+    if [ "$dry" -eq 1 ]; then
+      echo "+ $cost_fill ${cf_args[*]}"
+      cf_out="$("$cost_fill" --dry-run "${cf_args[@]}")"
+      echo "$cf_out"
+      if grep -q '^cost-fill --dry-run: would rewrite' <<<"$cf_out"; then
+        push=(git push -q -u --force-with-lease origin "$cur")
+      else
+        push=(git push -q -u origin "$cur")
+      fi
+    else
+      before_head="$(git rev-parse HEAD)"
+      "$cost_fill" "${cf_args[@]}"
+      if [ "$before_head" != "$(git rev-parse HEAD)" ]; then
+        push=(git push -q -u --force-with-lease origin "$cur")
+      else
+        push=(git push -q -u origin "$cur")
+      fi
+    fi
+    run "${push[@]}"
     if gh pr view "$cur" --json number -q .number >/dev/null 2>&1; then
       run gh pr edit "$cur" --base "$base"
       run scripts/uprd.sh

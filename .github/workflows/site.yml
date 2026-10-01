@@ -72,11 +72,15 @@ jobs:
           AREA: ${{ inputs.area }}
         run: |
           for attempt in 1 2; do
-            if sbt "cli/run -- --site $AREA"; then exit 0; fi
+            if sbt "cli/run -- --site $AREA --areas site/areas.json"; then exit 0; fi
             echo "site build attempt $attempt failed"
             [ "$attempt" -eq 2 ] || sleep 60
           done
           exit 1
+
+      # SiteBuilder writes board data only (MIP-0070 §5.4).
+      - name: Copy the static page into dist
+        run: cp -r site/static/. site/dist/
 
       # fix/site-smoke-panel-null: stamp index.html's app.js/style.css tags with `?v=<sha>` so
       # Pages' CDN (each file cached independently, `cache-control: max-age=600` per file,

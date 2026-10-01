@@ -269,6 +269,9 @@ file up next, well before the larger `kyo-http`/`kyo-schema` migration (§2).
 
 ## 7. Splitting marola out of the earlier monorepo — superseded, see below
 
+The opposite direction, splitting this repo into single-purpose repos under an umbrella, is
+MIP-0070 (`docs/MIPs/MIP-0070-umbrella-and-polyrepo-split.md`).
+
 ### 7.1 Status: superseded by a simpler outcome
 
 This section originally described preparing marola to be `git subtree split` out of a shared

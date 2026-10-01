@@ -11,10 +11,15 @@ decision, never more, never fabricated when there isn't one.
 
 Run:  python build_dpo_dataset.py             (or `just finetune-dpo-dataset`)
 Self-test:  python build_dpo_dataset.py --self-test   (or `just quality-other`)
+
+`--resources DIR` overrides where review_prompt.json is read from — the same app -> ml contract
+as build_dataset.py's own flag (MIP-0070 §5.4): once marola-ml is a separate repo, it points at
+the unpacked resources tarball ci.yml publishes, not `../core`.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -64,8 +69,8 @@ def preference_pairs(records: list[dict]) -> list[dict]:
     return pairs
 
 
-def main() -> None:
-    records = review_records(RESOURCES / "review_prompt.json")
+def main(resources: Path = RESOURCES) -> None:
+    records = review_records(resources / "review_prompt.json")
     pairs = preference_pairs(records)
     OUT.mkdir(parents=True, exist_ok=True)
     with (OUT / "dpo_pairs.jsonl").open("w", encoding="utf-8") as f:
@@ -102,7 +107,7 @@ _FIXTURE_RECORDS = [
 ]
 
 
-def _self_test() -> None:
+def _self_test(resources: Path = RESOURCES) -> None:
     # Fixture with reject/revise events: exactly one pair per non-approve event, nothing invented.
     pairs = preference_pairs(_FIXTURE_RECORDS)
     assert len(pairs) == 2, f"expected 2 pairs (one revise + one reject), got {len(pairs)}"
@@ -118,7 +123,7 @@ def _self_test() -> None:
 
     # Real source check: review_prompt.json's own demos really do have reject/revise decisions,
     # and every generated pair's text matches one of them verbatim — no rewording, no invention.
-    real_records = review_records(RESOURCES / "review_prompt.json")
+    real_records = review_records(resources / "review_prompt.json")
     real_pairs = preference_pairs(real_records)
     assert real_pairs, "no real reject/revise decisions found in review_prompt.json's demos"
     real_texts = {
@@ -135,8 +140,23 @@ def _self_test() -> None:
     )
 
 
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--resources",
+        type=Path,
+        default=RESOURCES,
+        help="dir with review_prompt.json (default: core/src/main/resources)",
+    )
+    ap.add_argument("--self-test", action="store_true")
+    return ap.parse_args(argv)
+
+
 if __name__ == "__main__":
-    if "--self-test" in sys.argv:
-        _self_test()
+    args = parse_args()
+    if args.self_test:
+        _self_test(args.resources)
     else:
-        main()
+        main(args.resources)
