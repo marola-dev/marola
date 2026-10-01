@@ -236,7 +236,7 @@ TOOL_SCHEMAS: dict[str, dict[str, tuple[str, ...]]] = {
     "ask_ocean_question": {"required": ("question",), "optional": ()},
 }
 
-# site/fixtures/board.json's beaches.
+# cli/src/test/resources/site/board.json's beaches.
 LOCATIONS: tuple[tuple[float, float], ...] = ((-27.6296, -48.4487), (-27.4021, -48.4157))
 RADII: tuple[float | None, ...] = (None, 10.0, 20.0)
 

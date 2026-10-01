@@ -9,8 +9,9 @@
     scripts/repo_stats.py --self-test               # shaping + counting rules (just quality-other)
 
 Four files, the same shields.io "endpoint" shape ci.yml already writes for the Scala coverage
-(`{"schemaVersion": 1, "label": ..., "message": ..., "color": ...}`), published to the orphan
-`site-data` branch and copied into the site by site.yml, where the README reads them live:
+(`{"schemaVersion": 1, "label": ..., "message": ..., "color": ...}`), published to
+marola-site's `site-data` branch and copied into the map by its site.yml, where the README reads
+them live:
 
     ci.json               "ci steps"        19/20 green
     scala-loc.json        "scala"           6,865 LOC
@@ -72,7 +73,6 @@ SELF_TEST_SCRIPTS = (
     "scripts/mip_graph.py",
     "scripts/strip_external_scripts.py",
     "scripts/analyze_training.py",
-    "scripts/site_live_check.py",
 )
 # Measured tree. `dspy/`/`finetune/` are excluded on purpose — see the module docstring.
 COVERAGE_SOURCE = "scripts"

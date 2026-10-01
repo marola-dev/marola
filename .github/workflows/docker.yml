@@ -103,7 +103,7 @@ jobs:
             echo "::error::/app/site should not exist in the jvm image" >&2
             exit 1
           fi
-          docker run --rm -v "$PWD/site/areas.json:/app/areas.json:ro" "$IMAGE:jvm" \
+          docker run --rm -v "$PWD/cli/src/test/resources/site/areas.json:/app/areas.json:ro" "$IMAGE:jvm" \
             --site nope --areas /app/areas.json | tee /tmp/out.txt
           grep -q "known: floripa, rio" /tmp/out.txt
 
@@ -145,7 +145,7 @@ jobs:
         run: |
           # distroless/base-debian12 has no shell or ls to re-run the jvm job's /app/site proof;
           # this only re-proves --site resolves an --areas file mounted in from outside the image.
-          docker run --rm -v "$PWD/site/areas.json:/app/areas.json:ro" "$IMAGE:native" \
+          docker run --rm -v "$PWD/cli/src/test/resources/site/areas.json:/app/areas.json:ro" "$IMAGE:native" \
             --site nope --areas /app/areas.json | tee /tmp/out.txt
           grep -q "known: floripa, rio" /tmp/out.txt
 

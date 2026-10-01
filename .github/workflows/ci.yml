@@ -25,7 +25,6 @@ jobs:
       python: ${{ steps.filter.outputs.python }}
       workflows: ${{ steps.filter.outputs.workflows }}
       docker: ${{ steps.filter.outputs.docker }}
-      site: ${{ steps.filter.outputs.site }}
       justfile: ${{ steps.filter.outputs.justfile }}
       docs: ${{ steps.filter.outputs.docs }}
       nix: ${{ steps.filter.outputs.nix }}
@@ -57,10 +56,6 @@ jobs:
               - 'docs/MIPs/*.tasks.md'        # mip_graph.py --check regenerates the graph from all of them
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
               - '.github/workflows/ci.yml'  # the self-test list below
-            site:
-              - 'site/**'            # app.js/CSS/fixtures → scripts/site_check.js (MIP-0009 task 2)
-              - 'scripts/site_check.js'
-              - 'cli/src/main/resources/board.schema.json'  # moved out of site/ (MIP-0070 §5.4)
             workflows:
               - '.github/workflows/**'
             docker:
@@ -266,18 +261,15 @@ jobs:
 
   static-ci:
     needs: changes
-    if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
+    if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
     uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.2.2
     with:
       actionlint-version: "1.7.12"
       hadolint-version: "2.14.0"
       # Dockerfile.local is missing until MIP-0065 task 2 fixes its hadolint failure.
       hadolint-files: Dockerfile mkdocs/Dockerfile
-      # The site harness runs app.js against site/fixtures in a stub DOM (MIP-0009); every compose
-      # profile must still render (MIP-0010), and both mkdocs overrides (MIP-0064).
+      # Every compose profile must still render (MIP-0010), and both mkdocs overrides (MIP-0064).
       extra-commands: |
-        node --check site/static/app.js
-        node scripts/site_check.js
         docker compose --profile mlflow --profile ollama --profile local config --quiet
         docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet
         docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet

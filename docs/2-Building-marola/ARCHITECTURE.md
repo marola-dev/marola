@@ -133,7 +133,7 @@ just run -- --analyze-photo <path>                  # §5e
 just run -- --brief                                 # the pre-MIP-0001 one-line list, no block/lore
 just run -- --ask "<question>"                      # §5h — grounded Q&A over knowledge/ (just ask ...)
 just run -- --reindex                               # §5h — re-embed knowledge/ (just knowledge-index)
-just run -- --site [area]                           # MIP-0005 — the map's boards into site/dist (just site-build)
+just run -- --site [area]                           # MIP-0005 — the map's boards into site/dist (add --areas <file>)
 ```
 
 Since MIP-0001 the default output is the ranked list with a **water-quality column**, a

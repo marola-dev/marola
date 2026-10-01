@@ -2,8 +2,8 @@
 
 <p align="center">
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-<a href="https://github.com/marola-dev/marola/actions/workflows/site.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
-<!-- Aggregated statement coverage: ci.yml measures it (sbt-scoverage) on pushes to main and writes this shields.io endpoint JSON to Pages via the site-data branch. -->
+<a href="https://github.com/marola-dev/marola-site/actions/workflows/site.yml"><img src="https://github.com/marola-dev/marola-site/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
+<!-- Aggregated statement coverage: ci.yml measures it (sbt-scoverage) on pushes to main and writes this shields.io endpoint JSON to marola-site's site-data branch, which its Pages serves. -->
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fcoverage%2Flatest.json" alt="Scala statement coverage (sbt-scoverage)" /></a>
 <!-- The Python half, measured the only way marola tests Python: statement coverage of scripts/**/*.py while each script's own --self-test runs (there is no pytest suite). scripts/repo_stats.py, same repo-stats job and site-data branch as the badges below. -->
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fpython-coverage.json" alt="Python statement coverage under the scripts' own --self-tests" /></a>
@@ -127,7 +127,7 @@ VirtusLab and Akka (formerly Lightbend). marola uses Scala 3 with [Kyo](https://
 JVM, and a free local model through [Ollama](https://ollama.com/). The score and its safety veto
 are deterministic Scala; the model only interprets and phrases, and never overturns a veto. The reasoning behind that split:
 [`PHILOSOPHY.md`](./PHILOSOPHY.md). The map is rebuilt every 3 hours and on every relevant merge
-to `main` ([`site.yml`](./.github/workflows/site.yml), [MIP-0005](./docs/MIPs/MIP-0005-map-and-static-site.md)).
+to `main` of [marola-site](https://github.com/marola-dev/marola-site) ([MIP-0005](./docs/MIPs/MIP-0005-map-and-static-site.md)).
 
 ```console
 $ just run -- --brief --lat -27.6733 --lon -48.4700   # real run, 7 Sep 2026; header lines and the last 2 of 6 beaches trimmed

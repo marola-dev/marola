@@ -48,9 +48,8 @@ result-*
 repomix-output.*
 repomix-output/
 
-# MIP-0005: `just site-build` output (boards + a copy of site/static/) — derived, deployed, not committed
-/site/dist/*
-!/site/dist/.gitkeep
+# MIP-0005: `--site`'s default output — derived; the map itself is marola-site's
+/site/
 
 # Claude Code agent worktrees (Agent tool, isolation: worktree) — ephemeral nested checkouts
 .claude/worktrees/
