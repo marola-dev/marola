@@ -5,7 +5,7 @@ Every gate and every deploy is a GitHub Actions workflow under
 them run on GitHub's standard `ubuntu-latest` runner except `marola-sea-publish`, which needs a GPU.
 The design behind this layout is [MIP-0065](../MIPs/MIP-0065-ci-cd-on-github-hosted-runners.md).
 The generic jobs are [marola-devkit](https://github.com/marola-dev/marola-devkit)'s reusable
-workflows ([inputs](https://github.com/marola-dev/marola-devkit/blob/v0.2.1/docs/workflows.md)),
+workflows ([inputs](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/docs/workflows.md)),
 called at the same tag as the flake input; bump them together.
 
 ## How a change reaches marola.dev
