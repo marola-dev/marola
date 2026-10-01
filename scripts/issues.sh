@@ -836,7 +836,9 @@ cmd_tasks_to_issues() {
   n_rows="$(jq '.rows | length' <<<"$plan")"
   n_fallback="$(jq '[.rows[] | select(.fallback)] | length' <<<"$plan")"
   echo "tasks-to-issues: MIP-$mip, $n_rows rows → $umbrella + $(jq 'length' <<<"$existing_json") repo(s)${milestone:+   (milestone: $milestone)}${deliverable:+   (deliverable: $deliverable)}"
-  jq -r --arg mip "$mip" '.rows[] | select(.fallback) | "  fallback: \($mip)-T\(.id) -> \(.repo) (its own repo is not there yet)"' <<<"$plan"
+  jq -r --arg mip "$mip" --arg owner "${umbrella%%/*}" '.rows[] | select(.fallback) |
+    if .prefiled then "  prefiled: \($mip)-T\(.id) -> \(.repo) (filed before \($owner)/\(.repo_name) existed; left where it is)"
+    else "  fallback: \($mip)-T\(.id) -> \(.repo) (its own repo is not there yet)" end' <<<"$plan"
 
   # §5.1/§5.7 makes the milestone or Deliverable the thing an issue belongs to, so filing with
   # neither is a real choice, not a default. Said once, and only when this run would actually
@@ -2893,6 +2895,8 @@ EOF
     MAROLA_UMBRELLA=marola-dev/marola cmd_tasks_to_issues "$t2r_file" 2>&1)" || failed=1
   check "row 2 is not moved once marola-devkit exists — it is still found in the umbrella" \
     "$(grep -c '0097-T2.*already filed (marola-dev/marola)$' <<<"$t2r_out")" "1"
+  check "and it is reported as filed before its repo existed, not as missing its repo" \
+    "$(grep -c 'prefiled: 0097-T2 -> marola-dev/marola (filed before marola-dev/marola-devkit existed; left where it is)' <<<"$t2r_out")$(grep -c 'fallback: 0097-T2' <<<"$t2r_out")" "10"
 
   echo
   echo "-- tasks-to-issues: three target repos, every one probed despite sharing stdin with gh (§5.7) --"
