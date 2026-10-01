@@ -34,21 +34,23 @@ K8"), so renumbering would break those pointers.
 ### 2a. Bugs found today
 
 Six findings, all fixed: the Critical the same day (#129), the five nits the next (#224). The last
-column is the change that fixed each one; open bugs live in the issue tracker.
+column is the change that fixed each one; open bugs live in the issue tracker. The hooks and
+scripts it cites have since moved to marola-devkit (MIP-0070), so they link to the last tree that
+had them here.
 
 | # | Finding | Severity | Fixed by |
 |---|---|---|---|
 | 10 | `.mcp.json`'s `just mcp-server` exits ~2 s after start under sbt in-process run — the registered MCP server was dead on arrival (mip-reviewer) | Critical | `build.sbt:118`,`:122`,`:123` — `fork` + `connectInput` + `StdoutOutput`; the handshake returns four tools. A fresh session's `/mcp` is still the human check |
-| 04 | `stop-gate.sh` ignores newly created (untracked) `.scala` files — `git diff HEAD` by design | nit | `.claude/hooks/stop-gate.sh:23`, `ls-files --others --exclude-standard` |
-| 08 | `stop-gate.sh` `mkdir`/`touch` under `set -e` can exit 1 (not 0/2) on a read-only runtime dir | nit | `.claude/hooks/stop-gate.sh:30`,`:34`, plus a self-test against an unwritable dir |
-| 05 | `format.sh --self-test` hard-fails without `cs`/network, unlike its `ruff` guard — blocks every push in an air-gapped shell | nit | `.claude/hooks/format.sh:51`,`:77` |
+| 04 | `stop-gate.sh` ignores newly created (untracked) `.scala` files — `git diff HEAD` by design | nit | [`.claude/hooks/stop-gate.sh:23`](https://github.com/marola-dev/marola/blob/7ba0458/.claude/hooks/stop-gate.sh#L23), `ls-files --others --exclude-standard` |
+| 08 | `stop-gate.sh` `mkdir`/`touch` under `set -e` can exit 1 (not 0/2) on a read-only runtime dir | nit | [`.claude/hooks/stop-gate.sh:30`,`:34`](https://github.com/marola-dev/marola/blob/7ba0458/.claude/hooks/stop-gate.sh#L30-L34), plus a self-test against an unwritable dir |
+| 05 | `format.sh --self-test` hard-fails without `cs`/network, unlike its `ruff` guard — blocks every push in an air-gapped shell | nit | [`.claude/hooks/format.sh:51`,`:77`](https://github.com/marola-dev/marola/blob/7ba0458/.claude/hooks/format.sh#L51-L77) |
 | 06 | `mip-reviewer` runs `git rev-parse`, not in `permissions.allow` — two prompts per review | nit | `.claude/settings.json:39` |
-| 03 | `DEV-FLOW.md` §7→§8 renumbering left stale section pointers | nit | `scripts/deps-stack.sh:3`,`:391`, `CONTRIBUTING.md:85` |
+| 03 | `DEV-FLOW.md` §7→§8 renumbering left stale section pointers | nit | [`scripts/deps-stack.sh:3`,`:391`](https://github.com/marola-dev/marola/blob/7ba0458/scripts/deps-stack.sh#L3), `CONTRIBUTING.md:85` |
 
 One later finding is still open, filed while building MIP-0063's own tooling: `cherry-pick
 --empty=drop` needs git ≥ 2.45 and exits 129 on an older git —
-[#451](https://github.com/marola-dev/marola/issues/451). `cost-fill.sh` (so `just pr`) no longer
-passes it since #524; `scripts/mip-stack.sh` still does.
+[#451](https://github.com/marola-dev/marola/issues/451). `cost-fill` (so `just pr`) no longer
+passes it since #524; marola-devkit's `mip-stack` still does.
 
 Two lessons that outlive the fixes: (a) a test that can't distinguish "works" from "died silently"
 isn't a test: `< /dev/null → 0 bytes` passed while the server was dead; the reviewer's piped
@@ -86,14 +88,14 @@ Two things to check before starting, both real today:
 
 1. **Merge the open PRs** in `GH_POST_MORTEM.md`'s order: the two P0 fixes, `docs/mip-0011-mark-verified`
    (flips MIP-0011 to Implemented with its real ~$12.86), the auto-pick step-4 fix.
-2. **MIP-0009** (S, cheap win): task list merged; run `/mip-solve-perpetual 0009`. Four PRs; task 2
+2. **MIP-0009** (S, cheap win): task list merged; run `/marola-devkit:mip-solve-perpetual 0009`. Four PRs; task 2
    builds the Node harness the MIP wrongly assumed existed.
 3. **MIP-0017 §5.1/§5.2** (S): the flat-file run tracker for overnight runs and the "reviewer gets
    the diff inline" rule. §5.3 (skill-frontmatter audit) has no urgency.
 4. **MIP-0016** (M, "do next"): water-quality marks placed in the sea; user value, no new source.
 5. **MIP-0018** (M, cheap win): the post-planner + exporter; MIP-0020 (Instagram, in draft) becomes
    one more export target with a real API, unlike LinkedIn/Substack.
-6. **#451** (`scripts/mip-stack.sh`'s `--empty=drop` on git < 2.45), the one open item from §2a.
+6. **#451** (marola-devkit's `mip-stack`: `--empty=drop` on git < 2.45), the one open item from §2a.
 
 ## 4. Next (Phase 1) — the gate every cloud step waits on
 
@@ -149,7 +151,7 @@ MCP registration. Still missing, per `docs/4-Research-and-plans/AGENT-FRAMEWORKS
 ## 7. Candidate MIPs — external consolidation (Kimi, 2026-09-06), triaged
 
 Ten ideas handed in by the maintainer from a Kimi session, kept verbatim in intent, triaged here
-against what already exists. **No numbers claimed**: per the `mip` skill a number is taken when
+against what already exists. **No numbers claimed**: per the `/marola-devkit:mip` skill a number is taken when
 the file is written (0020 is the Instagram bot, in draft; 0023, 0024 and 0026 are §5's proposals; 0021/0022 are K4/K6, now drafted),
 so these are candidates until someone drafts one. "Verdict" uses the index's vocabulary.
 
@@ -172,7 +174,7 @@ rather than becoming separate docs; K1, K9 after Phase 1; K5 parked.
 
 ### Provider-query checklist — verify before any of these becomes a MIP
 
-The `mip` skill's step 3: fetch the page, confirm format, update frequency, licence/terms, key
+The `/marola-devkit:mip` skill's step 3: fetch the page, confirm format, update frequency, licence/terms, key
 needed; record what was *not* checked. One line per external claim the candidates above make.
 Tick with the date and the URL you actually read.
 

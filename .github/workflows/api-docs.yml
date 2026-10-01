@@ -56,7 +56,7 @@ jobs:
           # — all six render). That discipline exists for --dry-run/--self-test; documenting them
           # is a second thing it buys.
           # pipx, not pip: the hosted image's system Python refuses `pip install` (PEP 668).
-          pipx run pdoc -o out/docs/api/python scripts/*.py scripts/lib/*.py finetune/*.py || \
+          pipx run pdoc -o out/docs/api/python scripts/*.py finetune/*.py || \
             echo "pdoc produced nothing for some inputs — continuing with what it did produce"
 
       - name: strip third-party scripts so the docs keep script-src 'self'

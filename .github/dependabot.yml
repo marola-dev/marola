@@ -23,6 +23,10 @@ updates:
     directory: "/"
     patterns: ["*"]
     multi-ecosystem-group: "marola-deps"
+    # Bumped by hand: the tag also lives in `devkit-ref:` inputs and flake.nix, which dependabot
+    # would leave behind, and deps-merge auto-merges a green PR.
+    ignore:
+      - dependency-name: "marola-dev/marola-devkit*"
 
   - package-ecosystem: "pip"
     directory: "/dspy"

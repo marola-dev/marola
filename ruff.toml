@@ -1,4 +1,4 @@
-# Free Python lint/format for every .py in the repo (`just quality-other`, ci.yml, .githooks/pre-push).
+# Free Python lint/format for every .py in the repo (`just quality-other`, ci.yml, `just prepush`).
 target-version = "py312"
 line-length = 100
 # `ruff check .` (just quality-other, ci.yml, the pre-push hook) must not descend into nested

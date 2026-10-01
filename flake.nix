@@ -17,9 +17,18 @@
       url = "github:h0ffmann/nix-config/labs/cuda?dir=labs/cuda";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # The shared dev-flow harness (MIP-0070 §5.1): stack, uprd, issues, cost-split, … on PATH, the
+    # git hooks and the just module under .devkit. Bumped by hand, together with every `@v…` and
+    # `devkit-ref:` in .github/workflows/ (dependabot ignores marola-devkit for that reason).
+    marola-devkit = {
+      url = "github:marola-dev/marola-devkit/v0.2.2";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.lint.follows = "lint";
+      inputs.agentic.follows = "agentic";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, lint, agentic, cuda }:
+  outputs = { self, nixpkgs, flake-utils, lint, agentic, cuda, marola-devkit }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -29,6 +38,7 @@
         # wrappers. If the argument name changes, `cat $(readlink -f $(command -v sbt))` shows
         # what the wrapper actually hardcodes.
         sbtOnJdk25 = pkgs.sbt.override { jre = jdk; };
+        devkit = marola-devkit.lib.${system};
 
         # marola's own tools. Lint, the agent sandbox and the CUDA host scripts come from
         # labs/lint, labs/agentic and labs/cuda (x86_64-linux only), appended below.
@@ -39,10 +49,7 @@
           pkgs.coursier
           pkgs.just
 
-          # scikit-learn must be inside THIS python3 (withPackages), not a sibling package: a
-          # sibling sits in its own store path and is never on `python3`'s import path.
-          # scripts/pr_label_nlp.py imports sklearn directly.
-          (pkgs.python3.withPackages (ps: with ps; [ pip scikit-learn ]))
+          (pkgs.python3.withPackages (ps: with ps; [ pip ]))
           # `uvx` runs GitHub's spec-kit ephemerally (`just specify`); spec-kit is PyPI-only.
           pkgs.uv
 
@@ -77,18 +84,28 @@
       {
         devShells.default = pkgs.mkShell {
           name = "marola";
-          packages = projectTools ++ lint.lib.${system}.tools ++ agentic.lib.${system}.tools
+          packages = projectTools ++ lint.lib.${system}.tools ++ devkit.tools ++ agentic.lib.${system}.tools
             ++ pkgs.lib.optionals (system == "x86_64-linux") cuda.lib.${system}.tools;
 
           JAVA_HOME = "${jdk}";
           inherit (agentic.lib.${system}.env) BWRAP_BIN;
 
-          shellHook = ''
+          shellHook = devkit.shellHook + ''
             echo "marola dev shell"
-            git config core.hooksPath .githooks 2>/dev/null || true
+            marola_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+            # hooks-path:start — core.hooksPath is shared by every worktree, so it is absolute and
+            # points at the main checkout's link; left alone until that link exists.
+            if marola_common="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
+              marola_main="$(dirname "$marola_common")"
+              if [ -e "$marola_main/.devkit/.githooks/pre-push" ]; then
+                git config core.hooksPath "$marola_main/.devkit/.githooks"
+              else
+                echo "marola: $marola_main has no .devkit yet — core.hooksPath left as is ('nix develop' there, then 'just install-hooks')"
+              fi
+            fi
+            # hooks-path:end
             # Load the gitignored .env like direnv's `dotenv_if_exists` in .envrc does; plain
             # KEY=VALUE lines only.
-            marola_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
             if [ -f "$marola_root/.env" ]; then
               set -a; . "$marola_root/.env"; set +a
               echo "loaded $marola_root/.env"
@@ -106,11 +123,11 @@
           '';
         };
 
-        # Only the lint toolchain — what ci.yml's quality-other puts on PATH so CI and
-        # `just quality` resolve the same binaries from the same lock. labs/lint has no `just`.
+        # The lint toolchain plus the devkit's tools (workflow-runners, agents-check): what ci.yml's
+        # quality-other runs, from the same lock as `just quality`. labs/lint has no `just`.
         devShells.lint = pkgs.mkShell {
           name = "marola-lint";
-          packages = lint.lib.${system}.tools ++ [ pkgs.just ];
+          packages = lint.lib.${system}.tools ++ devkit.tools ++ [ pkgs.just ];
         };
       });
 }

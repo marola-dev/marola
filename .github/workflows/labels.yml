@@ -1,0 +1,17 @@
+# Apply the devkit's label manifest (.github/labels.yml at the pinned tag) to this repo, so
+# `agent-ready` means the same thing in every marola repo (MIP-0070 §5.7). Manual: `just labels-sync`
+# does the same from a laptop.
+name: labels sync
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    uses: marola-dev/marola-devkit/.github/workflows/labels-sync.yml@v0.2.2
+    with:
+      devkit-ref: v0.2.2
