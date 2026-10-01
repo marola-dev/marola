@@ -119,7 +119,7 @@ self_test() {
 
   mkdir -p "$tmp/bin"
   cat > "$tmp/bin/gh" <<GH
-#!/usr/bin/env bash
+#!$BASH
 # a stand-in for \`gh pr list\`: newest PR first, and one entry collides on a hyphen-less 5 prefix.
 case "\$*" in
   *"pr list"*)
@@ -152,7 +152,7 @@ GH
     "+ git rebase --onto origin/main $fork mip-9999/6-board"
   has "then force-pushes with a lease" "$out" "+ git push -q --force-with-lease origin mip-9999/6-board"
 
-  { echo '#!/usr/bin/env bash'; echo 'exit 1'; } > "$tmp/bin/gh"   # from here on: no gh, no merged PR to find
+  { echo "#!$BASH"; echo 'exit 1'; } > "$tmp/bin/gh"   # from here on: no gh, no merged PR to find
   rc=0; out="$(drive --onto-base "$fork")" || rc=$?
   check "--onto-base overrides the lookup entirely" "$rc" "0"
   check "and is used verbatim as the cut" "$(grep -F -- '+ git rebase' <<<"$out" || true)" \
@@ -204,8 +204,7 @@ GH
     git -C "$pr_work" commit -q --allow-empty -m "task 1"
     git -C "$pr_work" push -q -u origin mip-9999/1-solo; } >/dev/null 2>&1
   cost_fill_stub="$tmp/cost-fill-stub"
-  cat >"$cost_fill_stub" <<'SH'
-#!/usr/bin/env bash
+  { echo "#!$BASH"; cat <<'SH'
 set -e
 echo "$*" >>"${STUB_ARGS_LOG:-/dev/null}"
 [ "${1:-}" = "--dry-run" ] && { echo "cost-fill --dry-run: would rewrite these commits on stub:"; exit 0; }
@@ -213,15 +212,16 @@ git commit -q --amend --allow-empty -m "$(git log -1 --format=%B)
 
 stub-cost-fill-rewrote-this"
 SH
+  } >"$cost_fill_stub"
   chmod +x "$cost_fill_stub"
-  cat >"$tmp/bin/gh" <<'GH'
-#!/usr/bin/env bash
+  { echo "#!$BASH"; cat <<'GH'
 case "$*" in
   *"pr view"*) exit 1 ;;
   *"pr create"*) echo "https://example.invalid/pull/1" ;;
   *) exit 1 ;;
 esac
 GH
+  } >"$tmp/bin/gh"
   chmod +x "$tmp/bin/gh"
   rc=0
   out="$(cd "$pr_work" && PATH="$tmp/bin:$PATH" STACK_SELFTEST_COST_FILL="$cost_fill_stub" \
@@ -302,8 +302,8 @@ GH
     git -C "$rs_work" commit -q -m $'review fix\n\nTested: x\nCost: est. pending\nCo-Authored-By: C <c@x.invalid>'
   } >/dev/null 2>&1
   mkdir -p "$tmp/rs-bin"
-  printf '#!/usr/bin/env bash\ncase "$*" in *"pr list"*) echo %s ;; *"pr create"*) echo https://example.invalid/pull/1 ;; *) exit 1 ;; esac\n' \
-    "$t1_head" >"$tmp/rs-bin/gh"; chmod +x "$tmp/rs-bin/gh"
+  printf '#!%s\ncase "$*" in *"pr list"*) echo %s ;; *"pr create"*) echo https://example.invalid/pull/1 ;; *) exit 1 ;; esac\n' \
+    "$BASH" "$t1_head" >"$tmp/rs-bin/gh"; chmod +x "$tmp/rs-bin/gh"
   main_tip="$(git -C "$rs_work" rev-parse origin/main)"
   out="$(cd "$rs_work" && PATH="$tmp/rs-bin:$PATH" STACK_SELFTEST_COST_FILL="$(dirname "$self")/cost-fill.sh" \
     STACK_SELFTEST_UPRD="$tmp/uprd" bash "$self" --dry-run pr 2>&1)" || true

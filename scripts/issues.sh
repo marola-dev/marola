@@ -1848,8 +1848,7 @@ run() {
 # whose lookup 404s, and `bad_url` makes a create land but print no issue number.
 write_gh_stub() {
   mkdir -p "$1/bin"
-  cat > "$1/bin/gh" <<'STUB'
-#!/usr/bin/env bash
+  { echo "#!$BASH"; cat <<'STUB'
 cat >/dev/null          # a gh that reads stdin; `gh api --input -` really does
 jq_expr=""; path=""; prev=""; title=""; arg=""; method=""; issue_id=""; file=""; n=""
 create_repo=""; milestone_arg=""; item_url=""
@@ -2008,6 +2007,7 @@ esac
 [ -f "$file" ] || { echo "stub: no fixture for ${path:-$*}" >&2; exit 1; }
 if [ -n "$jq_expr" ]; then jq -r "$jq_expr" "$file"; else cat "$file"; fi
 STUB
+  } > "$1/bin/gh"
   chmod +x "$1/bin/gh"
   : > "$1/authlog"
 }
