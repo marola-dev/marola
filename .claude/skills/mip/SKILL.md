@@ -26,7 +26,7 @@ those directly, and note them in `docs/4-Research-and-plans/FABLE_REVIEW.md` or 
    number is one more than the highest in `docs/MIPs/README.md`. File:
    `docs/MIPs/MIP-NNNN-<kebab-slug>.md`.
 2. **Read before writing.** Always: `AGENTS.md`, `docs/2-Building-marola/ARCHITECTURE.md` §5 (the integration
-   pattern) and §11 (phases), `docs/4-Research-and-plans/FUTURE-WORK.md` (is this already sketched? link the section),
+   pattern), `docs/PHASES.md` (phases), `docs/4-Research-and-plans/FUTURE-WORK.md` (is this already sketched? link the section),
    and the source files the proposal would touch. Read existing MIPs in `docs/MIPs/` for tone.
 3. **Verify every external claim.** Before naming a data source, library, or API: fetch its page,
    confirm the format, the update frequency, the licence/terms, and whether a key is needed. Record
@@ -71,7 +71,7 @@ those directly, and note them in `docs/4-Research-and-plans/FABLE_REVIEW.md` or 
 - **No unsourced facts reach a user.** If the proposal shows text to users that isn't computed from
   live data (lore, tips, explanations), the text must be curated with a source per entry, shown
   verbatim or fact-checked by `Reviewer`; an LLM does not get to invent it.
-- **Phase discipline.** State which phase (`ARCHITECTURE.md` §11) the work lands in and what
+- **Phase discipline.** State which phase (`docs/PHASES.md`) the work lands in and what
   earlier-phase prerequisite, if any, is still missing.
 - **Honest status vocabulary**, same as the rest of the docs: "verified live", "confirmed against
   the real page/jar", "written, not run", "not checked".
@@ -86,7 +86,7 @@ those directly, and note them in `docs/4-Research-and-plans/FABLE_REVIEW.md` or 
 | **Status** | Draft / Accepted / Implemented / Rejected / Superseded by MIP-NNNN |
 | **Author** | <name or agent> |
 | **Created** | YYYY-MM-DD |
-| **Phase** | 0 / 1 / 2 / 3 / 4 (`ARCHITECTURE.md` §11) |
+| **Phase** | 0 / 1 / 2 / 3 / 4 (`docs/PHASES.md`) |
 | **Related** | `FUTURE-WORK.md` §N, MIP-NNNN |
 | **Effort** | S / M / L / XL — one clause why (what's new: a module? a store? a CI workflow?). If §4's research changed the estimate from what a related MIP guessed, say so: `M, re-rated from S after §4` — copy the same clause into this MIP's `docs/MIPs/README.md` index cell, don't let the index show a bare letter that hides the correction |
 | **Gain** | one or more of `user value`, `infra/dev-loop`, `cost/ops`, each with one clause |

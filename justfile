@@ -69,6 +69,7 @@ quality-other:
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
+    scripts/corpus-fetch.sh --self-test
     scripts/setup-runners.sh --self-test
     scripts/marola-sea-pull.sh --self-test
     scripts/temps.sh --self-test
@@ -79,11 +80,13 @@ quality-other:
     scripts/runner-preflight.sh --self-test
     scripts/gha-runner.sh --self-test
     scripts/site-data-push.sh --self-test
+    scripts/build-resources-tarball.sh --self-test
     python3 scripts/lib/req_merge.py --self-test
     python3 scripts/lib/uses_merge.py --self-test
     scripts/mip-stack.sh --self-test
     scripts/docs-mip-stack.sh --self-test
     scripts/stack.sh --self-test
+    scripts/mip-resolve.sh --self-test
     scripts/uprd.sh --self-test
     scripts/cost-fill.sh --self-test
     python3 scripts/lib/mip_index_merge.py --self-test
@@ -96,6 +99,8 @@ quality-other:
     python3 scripts/workflow_runners.py --self-test
     python3 scripts/workflow_runners.py
     python3 scripts/mip_graph.py --check
+    scripts/agents-check.sh --self-test
+    scripts/agents-check.sh
     python3 finetune/train_lora.py --self-test
     python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test
@@ -173,6 +178,10 @@ e2e:
 # Knowledge (local RAG) and fine-tuning — MIP-0001, docs/4-Research-and-plans/FUTURE-WORK.md §9.1
 # ---------------------------------------------------------------------
 
+# Resolve corpus.version's pin into .tmp/knowledge (MIP-0070 §5.4).
+corpus-fetch:
+    scripts/corpus-fetch.sh
+
 # Ask knowledge/*.md a question — local RAG, Ollama embeds and answers. MIP-0001.
 ask question:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --ask \"{{ question }}\""
@@ -244,9 +253,10 @@ finetune-publish repo gguf base *args:
 # The map — MIP-0005: precomputed boards on a static site (site/)
 # ---------------------------------------------------------------------
 
-# Build the static map's data into site/dist. MIP-0005.
+# Build the static map's data into site/dist (MIP-0005; SiteBuilder: board data only, MIP-0070 §5.4).
 site-build area="":
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --site {{ area }}"
+    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --site {{ area }} --areas site/areas.json"
+    mkdir -p site/dist && cp -r site/static/. site/dist/
     scripts/stamp_site_version.sh site/dist
 
 # Serve site/dist at http://localhost:8000 (python3 is in the flake).

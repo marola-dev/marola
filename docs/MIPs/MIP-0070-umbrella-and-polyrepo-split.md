@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — discussed in [#522](https://github.com/marola-dev/marola/discussions/522); PR #521 |
+| **Status** | Accepted — discussed in [#522](https://github.com/marola-dev/marola/discussions/522); merged as #521; `Tasks: docs/MIPs/MIP-0070.tasks.md` ([`MIP-0070.tasks.md`](./MIP-0070.tasks.md)) |
 | **Author** | Claude (Opus 5.5), with Bruno, from a brainstorm on 2026-09-30 |
 | **Created** | 2026-09-30 |
 | **Phase** | Repo structure, orthogonal to `ARCHITECTURE.md` §11: no Phase 1 prerequisite, no runtime behaviour change, no paid resource |

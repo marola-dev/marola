@@ -140,23 +140,23 @@
 
 - name: "phase/0"
   color: "fef2c0"
-  description: "Phase 0 — POC pipeline + six pluggable integrations (ARCHITECTURE.md §11)"
+  description: "Phase 0 — POC pipeline + six pluggable integrations (docs/PHASES.md)"
 
 - name: "phase/1"
   color: "fef2c0"
-  description: "Phase 1 — Telegram bot (ARCHITECTURE.md §11)"
+  description: "Phase 1 — Telegram bot (docs/PHASES.md)"
 
 - name: "phase/2"
   color: "fef2c0"
-  description: "Phase 2 — go live on a cloud backend (ARCHITECTURE.md §11)"
+  description: "Phase 2 — go live on a cloud backend (docs/PHASES.md)"
 
 - name: "phase/3"
   color: "fef2c0"
-  description: "Phase 3 — deploy (ARCHITECTURE.md §11)"
+  description: "Phase 3 — deploy (docs/PHASES.md)"
 
 - name: "phase/4"
   color: "fef2c0"
-  description: "Phase 4 — harden & calibrate (ARCHITECTURE.md §11)"
+  description: "Phase 4 — harden & calibrate (docs/PHASES.md)"
 
 - name: "priority/high"
   color: "b60205"
