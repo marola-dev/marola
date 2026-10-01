@@ -6,8 +6,9 @@
 # from scratch every run, so a submodule dropped from the manifest leaves nothing behind.
 #
 # Reads mkdocs/repos.yml (scripts/lib/repos_manifest.sh): submodule name -> mount point, default
-# repos/<name>/. A submodule listed in the manifest but not checked out at the repo root is a hard
-# error — docs.yml's `git submodule update` step is what keeps that from happening in CI.
+# repos/<name>/, or ./ for the site root (mount_at_root). A submodule listed in the manifest but
+# not checked out at the repo root is a hard error — docs.yml's `git submodule update` step is
+# what keeps that from happening in CI.
 #
 # README links of the form `docs/X.md` or `./docs/X.md` become `X.md`: the README is mounted as
 # <mount>/index.md, a sibling of the copied docs/** tree, not a parent of it. An absolute URL
@@ -29,6 +30,7 @@ mount_submodule() {
     echo "prepare-docs: $name is in mkdocs/repos.yml but not checked out at $src — run \`git submodule update --init\` first" >&2
     return 1
   fi
+  [ "$mount" != "./" ] || { mount_at_root "$src" "$name" "$build_dir"; return; }
   rm -rf "$dest"
   mkdir -p "$dest"
   if [ -f "$src/README.md" ]; then
@@ -36,6 +38,27 @@ mount_submodule() {
   fi
   [ -d "$src/docs" ] && cp -R "$src/docs/." "$dest/"
   return 0
+}
+
+# mount ./ (marola-app, so its pages keep their URLs, MIP-0070 §5.5): the root already holds the
+# umbrella's pages and index.md, so the README is left out, docs/index.md becomes <name>.md, and a
+# path both trees have fails instead of one silently replacing the other.
+mount_at_root() {
+  local src="$1" name="$2" build_dir="$3" rel dest clash=0
+  [ -d "$src/docs" ] || return 0
+  while IFS= read -r -d '' rel; do
+    rel="${rel#./}"
+    dest="$build_dir/$rel"
+    [ "$rel" != index.md ] || dest="$build_dir/$name.md"
+    if [ -e "$dest" ]; then
+      echo "prepare-docs: $name/docs/$rel collides with ${dest#"$build_dir"/} in the umbrella's docs" >&2
+      clash=1
+      continue
+    fi
+    mkdir -p "$(dirname "$dest")"
+    cp "$src/docs/$rel" "$dest"
+  done < <(cd "$src/docs" && find . -type f -print0)
+  [ "$clash" -eq 0 ]
 }
 
 # check_links <build_dir> <mount>... -> every relative markdown link under each mount resolves to
@@ -157,6 +180,34 @@ EOF
   prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" || { echo "FAIL: second prepare"; fails=$((fails + 1)); }
   ok "$([ -f "$t/build/repos/fake-one/index.md" ] && echo yes || echo no)" "yes" "the still-listed mount survives the re-run"
   ok "$([ -e "$t/build/repos/fake-two" ] && echo yes || echo no)" "no" "the dropped mount does not — the build dir is rebuilt from scratch"
+  rm -rf "$t"
+
+  echo
+  echo "-- mount ./ puts a submodule's docs/ beside the umbrella's own pages --"
+  t="$(mktemp -d)"
+  mkdir -p "$t/root/fake-app/docs/1-Using" "$t/docs-src/existing"
+  echo "# fake-app readme" >"$t/root/fake-app/README.md"
+  echo "# fake-app docs index, see [run](1-Using/RUN.md)" >"$t/root/fake-app/docs/index.md"
+  echo "# run, back to [the umbrella](../existing/page.md)" >"$t/root/fake-app/docs/1-Using/RUN.md"
+  echo "# umbrella index, see [run](1-Using/RUN.md)" >"$t/docs-src/index.md"
+  echo "today's doc" >"$t/docs-src/existing/page.md"
+  printf -- '- name: fake-app\n  mount: ./\n' >"$t/manifest.yml"
+  rc=0
+  out="$(prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
+  ok "$rc" "0" "a root mount builds, its links into the umbrella's pages and back resolving"
+  ok "$([ -f "$t/build/existing/page.md" ] && echo yes || echo no)" "yes" "the umbrella's own pages survive the mount"
+  ok "$(cat "$t/build/index.md" 2>/dev/null)" "# umbrella index, see [run](1-Using/RUN.md)" "the site's index.md stays the umbrella's"
+  ok "$([ -f "$t/build/1-Using/RUN.md" ] && echo yes || echo no)" "yes" "docs/1-Using/RUN.md lands at the site root's 1-Using/"
+  ok "$(head -c 24 "$t/build/fake-app.md" 2>/dev/null)" "# fake-app docs index, s" "the submodule's docs/index.md becomes <name>.md"
+  ok "$(grep -rl 'fake-app readme' "$t/build" 2>/dev/null | wc -l | tr -d ' ')" "0" "its README is not mounted (the root has an index already)"
+  echo "# a second umbrella page" >"$t/root/fake-app/docs/1-Using/clash.md"
+  mkdir -p "$t/docs-src/1-Using"
+  echo "# umbrella's" >"$t/docs-src/1-Using/clash.md"
+  rc=0
+  out="$(prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
+  ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "a page both trees have fails the run"
+  ok "$(printf '%s' "$out" | grep -c 'fake-app/docs/1-Using/clash.md collides')" "1" "...naming the colliding path"
+  ok "$(cat "$t/build/1-Using/clash.md" 2>/dev/null)" "# umbrella's" "...and the umbrella's page is not overwritten"
   rm -rf "$t"
 
   echo
