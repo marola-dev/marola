@@ -4,12 +4,16 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 # (sbt.internal.BootServerSocket).
 export XDG_RUNTIME_DIR := justfile_directory() + "/.tmp/sbt-runtime"
 
+# marola-devkit's shared recipes (uprd, pr, stack, issue-*, cost-*, runner-*, …), from the tree the
+# flake's shellHook links at .devkit. Optional so the file still parses outside `nix develop`.
+import? '.devkit/devkit.just'
+
 default:
     @just --list
 
 # One-time, only needed if you're not using `nix develop` (its shellHook does this automatically).
 install-hooks:
-    git config core.hooksPath .githooks
+    git config core.hooksPath .devkit/.githooks
 
 # ---------------------------------------------------------------------
 # Git
@@ -51,10 +55,11 @@ quality-scala:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll "scalafixAll --check"
 
 # The JVM-free gates: ruff, the script self-tests, actionlint, hadolint. A missing tool fails, never skips.
+# The devkit's own scripts are self-tested in its CI; here only marola's run.
 quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
-    for tool in ruff actionlint hadolint; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
+    for tool in ruff actionlint hadolint agents-check workflow-runners; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
     # Not `just --fmt --check`: its --unstable style differed between this machine and the CI
     # runner on the same file and version. --list only checks that the file parses.
     just --list >/dev/null
@@ -63,52 +68,28 @@ quality-other:
     ruff format --check .
     python3 scripts/smoke_record.py --self-test
     python3 scripts/benchmark_gate.py --self-test
-    python3 scripts/cost-split.py --self-test
     python3 scripts/repo_stats.py --self-test
-    python3 scripts/pr_label_nlp.py --self-test
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
     scripts/corpus-fetch.sh --self-test
-    scripts/setup-runners.sh --self-test
     scripts/marola-sea-pull.sh --self-test
-    scripts/temps.sh --self-test
     python3 scripts/analyze_training.py --self-test
     python3 scripts/site_live_check.py --self-test
-    scripts/deps-stack.sh --self-test
-    scripts/deps-merge.sh --self-test
-    scripts/runner-preflight.sh --self-test
-    scripts/gha-runner.sh --self-test
     scripts/site-data-push.sh --self-test
     scripts/build-resources-tarball.sh --self-test
-    python3 scripts/lib/req_merge.py --self-test
-    python3 scripts/lib/uses_merge.py --self-test
-    scripts/mip-stack.sh --self-test
-    scripts/docs-mip-stack.sh --self-test
-    scripts/stack.sh --self-test
-    scripts/mip-resolve.sh --self-test
-    scripts/uprd.sh --self-test
-    scripts/cost-fill.sh --self-test
-    python3 scripts/lib/mip_index_merge.py --self-test
     python3 scripts/ocr-post.py --self-test
     python3 scripts/mip_graph.py --self-test
-    scripts/issues.sh --self-test
     scripts/mkdocs.sh --self-test
-    python3 scripts/lib/tasks_issues.py --self-test
     python3 scripts/strip_external_scripts.py --self-test
-    python3 scripts/workflow_runners.py --self-test
-    python3 scripts/workflow_runners.py
+    workflow-runners
     python3 scripts/mip_graph.py --check
-    scripts/agents-check.sh --self-test
-    scripts/agents-check.sh
+    agents-check
     python3 finetune/train_lora.py --self-test
     python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test
     python3 finetune/preflight.py --self-test
     python3 finetune/merge_export.py --self-test
-    .claude/hooks/format.sh --self-test
-    .claude/hooks/stop-gate.sh --self-test
-    .claude/hooks/session-start.sh --self-test
     node --check site/static/app.js
     node scripts/site_check.js
     actionlint
@@ -118,6 +99,61 @@ quality-other:
 quality-fix:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
     ruff check --fix . && ruff format .
+
+# Run by the devkit's pre-commit hook (.devkit/.githooks): staged Scala must compile, staged
+# workflows must pass actionlint. The lint gates are prepush's.
+precommit:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    staged="$(git diff --cached --name-only --diff-filter=ACM)"
+    if grep -qE '\.scala$' <<<"$staged"; then
+        echo "precommit: staged Scala changes, running sbt Test/compile..."
+        mkdir -p "$XDG_RUNTIME_DIR"
+        sbt Test/compile
+    else
+        echo "precommit: no staged .scala files, skipping sbt compile."
+    fi
+    if ! grep -qE '^\.github/workflows/.*\.ya?ml$' <<<"$staged"; then
+        echo "precommit: no staged workflow files, skipping actionlint."
+    elif command -v actionlint >/dev/null; then
+        echo "precommit: staged workflow changes, running actionlint..."
+        actionlint
+    else
+        echo "precommit: staged workflow changes but actionlint not installed — skipping (use 'nix develop')."
+    fi
+
+# Run by the devkit's pre-push hook, which does not pass the pushed refs on: this checks what HEAD
+# has that its push target (else origin/main) lacks, so a push of another branch is checked as HEAD.
+prepush:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    base="$(git rev-parse -q --verify '@{push}' 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || true)"
+    # site/static/** belongs to a design: each commit touching it names one, or says why not.
+    bad=()
+    if [ -n "$base" ]; then
+        exclude=()
+        git rev-parse -q --verify origin/main >/dev/null && exclude=(--not origin/main)
+        while read -r sha; do
+            [ -n "$sha" ] || continue
+            grep -qE '^site/static/' <<<"$(git diff --name-only "$sha^" "$sha" 2>/dev/null)" || continue
+            grep -qE '^MIP: (MIP-[0-9]{4}|none — .+)$' <<<"$(git log -1 --format=%B "$sha")" || bad+=("$sha")
+        done < <(git rev-list "$base..HEAD" ${exclude[@]+"${exclude[@]}"})
+    fi
+    if [ "${#bad[@]}" -gt 0 ]; then
+        echo "prepush: commit(s) touching site/static/** with no 'MIP:' trailer:" >&2
+        for sha in "${bad[@]}"; do echo "  $(git log -1 --format='%h %s' "$sha")" >&2; done
+        echo "Add 'MIP: MIP-NNNN' (the design it's for) or 'MIP: none — <reason>' (a bug fix/typo/" >&2
+        echo "refactor with no behaviour change — /marola-devkit:mip's 'Not for' list) to each commit's trailers." >&2
+        exit 1
+    fi
+    echo "prepush: running 'just quality-other'..."
+    just quality-other
+    if [ -z "$base" ] || grep -qE '\.(scala|sbt)$|^project/|^\.scalafmt\.conf$|^\.scalafix\.conf$' <<<"$(git diff --name-only "$base" HEAD)"; then
+        echo "prepush: Scala/sbt changes in the pushed commits, running 'just quality-scala'..."
+        just quality-scala
+    else
+        echo "prepush: no Scala/sbt changes in the pushed commits, skipping quality-scala."
+    fi
 
 # Run marola's CLI (build.sbt's `cli` project).
 run *args:
@@ -408,140 +444,26 @@ _clip file:
         echo "no clipboard tool/display found — open the file instead: {{ file }} ($size bytes)"
     fi
 
-# Write or refresh a PR body from the branch's commits — pr-body.yml runs the same generator.
-uprd *args:
-    scripts/uprd.sh {{ args }}
+# Short forms of the devkit's runner-up / runner-status / runner-down: run, ask, stop. Recipes, not
+# aliases: an alias to an `import?`ed recipe breaks the whole file when .devkit is absent.
+ghar *args:
+    gha-runner up {{ args }}
 
-# Same for a whole MIP stack. MIP-0005.
-uprds *args:
-    scripts/uprds.sh {{ args }}
+gha:
+    gha-runner status
 
-# Add a missing Cost:/Tested: trailer to a commit, measured from the session logs.
-cost-fill *args:
-    scripts/cost-fill.sh {{ args }}
-
-# The whole agent PR workflow in one command: trailers, push, PR body. AGENTS.md.
-# TASK_PARTIAL=1 just pr — skip a mip task branch's Closes #N line (task-partial, #524).
-pr *args:
-    scripts/pr.sh {{ args }}
-
-# Apply the deterministic label taxonomy (scripts/lib/pr_labels.sh) to one PR — the current
-# branch's, or `just pr-label 168`.
-pr-label *args:
-    scripts/pr-label.sh {{ args }}
-
-# Backfill labels onto every merged/closed PR that has none yet (never touches an open PR, and
-# never a PR that already has a label — re-running is a no-op scan).
-pr-labels-backfill *args:
-    scripts/backfill-pr-labels.sh {{ args }}
-
-# Reconcile GitHub's labels against .github/labels.yml, the versioned taxonomy (MIP-0063 §5.2).
-# Orphans are reported, never deleted, unless --prune is passed.
-labels-sync *args:
-    scripts/issues.sh labels sync {{ args }}
-
-# Run the five-rule Definition of Ready against one issue and add or remove `agent-ready`
-# accordingly, naming the rule that failed (MIP-0063 §5.4). --dry-run checks without labelling.
-issue-ready *args:
-    scripts/issues.sh ready {{ args }}
-
-# The unassigned `agent-ready` queue, sorted size then priority — the read an agent makes before
-# claiming anything (MIP-0063 §5.5). The ready/blocked/in-triage counts are derived from labels and
-# dependency edges, not read from the board's Status.
-issue-queue *args:
-    scripts/issues.sh queue {{ args }}
-
-# Project a MIP's task table into GitHub: an issue per row that has none, each row's `#` cell
-# linked to it, and one native `blocked by` edge per entry of the `depends on` column
-# (MIP-0063 §5.5). Idempotent; the milestone must already exist.
-tasks-to-issues *args:
-    scripts/issues.sh tasks-to-issues {{ args }}
-# Claim an `agent-ready` issue: re-check the Definition of Ready, assign it, drop the label, set
-# the board's Status, and print the branch command (MIP-0063 §5.5).
-issue-claim *args:
-    scripts/issues.sh claim {{ args }}
-
-# Create a deliverable milestone; --mip MIP-NNNN links the design it comes from (MIP-0063 §5.1).
-milestone-new *args:
-    scripts/issues.sh milestone new {{ args }}
-
-# Put every open issue on the board and set its Status from the issue's state — on the items with
-# no Status, and on those still carrying the auto-add default `Backlog`; any other value is
-# someone's choice and is left alone (MIP-0063 §5.2). Run `issues.sh board setup` first. Needs
-# `project` scope, which only a human can grant: gh auth refresh -s project (MIP-0063 §4.4).
-board-sync *args:
-    scripts/issues.sh board sync {{ args }}
-
-# scripts/stack.sh passthrough. MIP-0005.
-stack *args:
-    scripts/stack.sh {{ args }}
-
-# scripts/docs-mip-stack.sh passthrough — chain several independent, un-merged docs/mip-NNNN-*
-# design-doc branches into one base-linked stack for a single review pass.
-docs-mip-stack *args:
-    scripts/docs-mip-stack.sh {{ args }}
-
-# Stack every open dependency-update PR.
-deps-stack *args:
-    scripts/deps-stack.sh {{ args }}
-
-# Merge every open dependency-update PR whose checks are green (--dry-run to see what it would do).
-deps-merge *args:
-    scripts/deps-merge.sh {{ args }}
-
-# Can this machine run the workflows? (tooling, scala-steward's PR permission, runner labels, disk)
-runner-preflight:
-    scripts/runner-preflight.sh
-
-# Start the self-hosted Actions runner in the background, preflight first. MAROLA_GHA_RUNNER_DIR
-# picks the registration directory (default /home/hoffmann/code/actions-runner).
-runner-up *args:
-    scripts/gha-runner.sh up {{ args }}
-
-# Stop every runner on that directory. Refuses while a job runs; --force stops it anyway.
-runner-down *args:
-    scripts/gha-runner.sh down {{ args }}
-
-# Local process + what GitHub thinks of the runner + the tail of its log.
-runner-status:
-    scripts/gha-runner.sh status
-
-# Follow the background runner's log.
-runner-logs:
-    scripts/gha-runner.sh logs
-
-# The short forms, for the three you type: run, ask, stop.
-alias ghar := runner-up
-alias gha := runner-status
-alias ghas := runner-down
-
-# Stack every open MIP draft PR.
-mip-stack *args:
-    scripts/mip-stack.sh {{ args }}
+ghas *args:
+    gha-runner down {{ args }}
 
 # Regenerate docs/MIPs/README.md's dependency graph from each MIP's **Blocked by** row.
 mip-graph *args:
     python3 scripts/mip_graph.py {{ args }}
-
-# Delete every local branch whose PR gh confirms MERGED (local branch + remote ref, if still
-# there) — never the current branch or main.
-branches-clean *args:
-    scripts/branches.sh clean {{ args }}
-
-# Open a base=main PR for every local *plain* branch (not a mip-NNNN/k-slug stack branch) that's
-# ahead of origin/main and has no PR yet.
-branches-open *args:
-    scripts/branches.sh open {{ args }}
 
 # GitHub's native Stacks (the "Preview stack" box on a PR) via the official `gh stack` extension.
 stack-setup:
     gh auth status >/dev/null 2>&1 || { echo "gh is not logged in — run: gh auth login" >&2; exit 1; }
     gh extension list | grep -q 'github/gh-stack' || gh extension install github/gh-stack
     gh skill install github/gh-stack || echo "gh skill install failed (older gh?) — the extension works without the skill"
-
-# Link a MIP's open PRs into one GitHub Stack, bottom to top. MIP-0005.
-stack-link mip="":
-    scripts/stack.sh link {{ mip }}
 
 # The stack as GitHub sees it (PR numbers, states, bases) — MIP-0005.
 stack-view *args:
@@ -551,7 +473,7 @@ stack-view *args:
 stack-sync mip="":
     #!/usr/bin/env bash
     set -euo pipefail
-    bottom="$(scripts/stack.sh branches {{ mip }} | head -1)"
+    bottom="$(stack branches {{ mip }} | head -1)"
     gh stack checkout "$bottom"
     gh stack sync
 
@@ -563,10 +485,6 @@ stack-merge *args:
 # ---------------------------------------------------------------------
 # Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"
 # ---------------------------------------------------------------------
-
-# Split a session's real token usage across the commits it produced.
-cost-split *args:
-    python3 scripts/cost-split.py {{ args }}
 
 # What Claude Code sessions consumed, from the local session logs (~/.claude/projects), priced
 # at list rates — the quota proxy to paste into a PR's "Cost" line.
@@ -604,11 +522,6 @@ gh-auth *args:
         gh auth login
         gh-token --source >/dev/null && echo "gh-auth: done — now run: just jco"
     fi
-
-# CPU/GPU temperature with a verdict — for watching a long marola-sea training run.
-# --watch to follow, --json for a log. GPU readings need the host (no /dev/nvidia* in the jail).
-temps *args:
-    scripts/temps.sh {{ args }}
 
 # Analyse a finished training run (HF trainer_state.json) and say what the next should change.
 # Defaults to the local checkpoints; for a CI run, `just training-logs <run-id>` first.
@@ -669,10 +582,6 @@ worktree dir=".tmp/wt-main":
 # Drop worktree registrations whose directories are gone. Never deletes a live worktree.
 worktree-prune:
     git worktree prune -v
-
-# Register N (default 3) self-hosted Actions runners so CI jobs run in parallel. --status lists them.
-runners *args:
-    scripts/setup-runners.sh {{ args }}
 
 # Check what marola.dev actually serves (or --base http://localhost:8000).
 site-live-check *args:

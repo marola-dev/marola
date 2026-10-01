@@ -4,9 +4,18 @@
     "pr": "",
     "sessionUrl": false
   },
+  "extraKnownMarketplaces": {
+    "marola-devkit": {
+      "source": {
+        "source": "github",
+        "repo": "marola-dev/marola-devkit"
+      }
+    }
+  },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true
+    "skill-creator@claude-plugins-official": true,
+    "marola-devkit@marola-devkit": true
   },
   "statusLine": {
     "type": "command",
@@ -24,9 +33,9 @@
       "Bash(gh stack:*)",
       "Bash(just uprd:*)",
       "Bash(just uprds:*)",
-      "Bash(scripts/uprd.sh:*)",
-      "Bash(scripts/uprds.sh:*)",
-      "Bash(scripts/stack.sh:*)",
+      "Bash(uprd:*)",
+      "Bash(uprds:*)",
+      "Bash(stack:*)",
       "Bash(just build*)",
       "Bash(just test*)",
       "Bash(just quality*)",
@@ -41,7 +50,7 @@
       "Bash(jar tf*)",
       "Bash(unzip -l*)",
       "Bash(command -v *)",
-      "Bash(python3 scripts/cost-split.py *)"
+      "Bash(cost-split *)"
     ],
     "deny": [
       "Read(.env)",
@@ -52,42 +61,6 @@
       "Bash(gh stack merge*)",
       "Bash(gh stack unstack*)",
       "Bash(gh stack delete*)"
-    ]
-  },
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/format.sh\"",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-gate.sh\"",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\"",
-            "timeout": 10
-          }
-        ]
-      }
     ]
   }
 }

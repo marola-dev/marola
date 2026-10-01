@@ -1,6 +1,6 @@
-# pr-body — fill a pull request's description from its commits the moment it exists, so a PR
-# opened from the GitHub UI (or `gh pr create` without `just uprd`) never sits on the raw template
-# with its `<!-- fill -->` placeholders.
+# Fill a pull request's description from its commits the moment it exists, so a PR opened from the
+# GitHub UI (or `gh pr create` without `just uprd`) never sits on the raw template's `<!-- fill -->`
+# placeholders. The generator is the devkit's uprd at the pinned tag.
 name: PR body
 
 on:
@@ -8,91 +8,12 @@ on:
     # labeled/unlabeled only for task-partial, which flips Closes #N to Part of #N (#512).
     types: [opened, reopened, ready_for_review, synchronize, labeled, unlabeled]
 
-# Every run reads live labels and commits, so a newer run supersedes an older one; without this a
-# synchronize run could write Closes after a task-partial labeled run wrote Part of.
-concurrency:
-  group: pr-body-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
   fill:
-    if: >-
-      github.event.pull_request.head.repo.full_name == github.repository
-      && !contains(fromJSON('["dependabot[bot]", "github-actions[bot]"]'), github.actor)
-      && !startsWith(github.event.pull_request.head.ref, 'dependabot/')
-      && !startsWith(github.event.pull_request.head.ref, 'update/')
-      && (!contains(fromJSON('["labeled", "unlabeled"]'), github.event.action) || github.event.label.name == 'task-partial')
-      && github.event.pull_request.state == 'open'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0   # uprd reads the whole branch range and both branches' tips
-      - name: fill the description from the commits (scripts/uprd.sh)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR: ${{ github.event.pull_request.number }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
-        run: |
-          set -euo pipefail
-          body="$(gh pr view "$PR" --json body -q .body)"
-          # A body that is byte-identical to the branch's own commit message was not written as a
-          # PR description at all — it is what `gh pr create --fill` (or `--body-file <(git log -1
-          # --format=%B)`) leaves behind.
-          trim() { sed -e 's/[[:space:]]*$//' | sed -e :a -e '/^\n*$/{$d;N;};/\n$/ba'; }
-          body_trimmed="$(trim <<<"$body")"
-          derived=0
-          if [ -n "$body_trimmed" ]; then
-            while IFS= read -r sha; do
-              [ -n "$sha" ] || continue
-              if [ "$body_trimmed" = "$(git log -1 --format=%B "$sha" | trim)" ]; then derived=1; break; fi
-            done < <(git rev-list "origin/$BASE_REF..origin/$HEAD_REF")
-            if [ "$derived" -eq 0 ] && [ "$body_trimmed" = "$(git log --reverse --format=%B "origin/$BASE_REF..origin/$HEAD_REF" | trim)" ]; then
-              derived=1
-            fi
-          fi
-          if [ "$derived" -eq 1 ]; then
-            echo "PR #$PR's body is verbatim its commit message — treating as unfilled, regenerating"
-          elif [ -n "$body" ] && ! grep -q '<!-- fill' <<<"$body" && ! grep -q '^<!-- uprd:' <<<"$body"; then
-            echo "PR #$PR has a hand-written body — leaving it alone"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"   # uprd never commits; git only needs an identity for `fetch` warnings to stay quiet
-          scripts/uprd.sh "$PR"
-      - name: title from the first commit, when GitHub's default was kept
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR: ${{ github.event.pull_request.number }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
-        run: |
-          set -euo pipefail
-          # shellcheck source=scripts/lib/uprd_title.sh.
-          source scripts/lib/uprd_title.sh
-          # shellcheck source=scripts/lib/mip_ref.sh.
-          source scripts/lib/mip_ref.sh
-          mip_ref="$(detect_mip_ref "$HEAD_REF" "origin/$BASE_REF..origin/$HEAD_REF")"
-          current="$(gh pr view "$PR" --json title -q .title)"
-          norm() { tr '[:upper:]' '[:lower:]' <<<"$1" | sed -E 's/[^a-z0-9]+/ /g; s/^ //; s/ $//'; }
-          # `|| true`: under pipefail, a `git log` output large enough for `head` to close the
-          # pipe early kills git with SIGPIPE (141), which pipefail reports as the pipeline's
-          # status even though `head` succeeded — set -e then kills the step.
-          first="$(git log --reverse --format=%s "origin/$BASE_REF..origin/$HEAD_REF" | head -1 || true)"
-          [ -n "$first" ] || { echo "no commits past the base — nothing to title"; exit 0; }
-          # GitHub's own "still default" title takes one of two shapes depending on how many
-          # commits the branch has when the PR is first opened: the branch name (multi-commit), or
-          # the sole commit's full, uncapped subject line verbatim (single-commit — every branch
-          # this repo's agents push, one task = one commit).
-          if [ "$(norm "$current")" != "$(norm "$HEAD_REF")" ] && [ "$current" != "$first" ]; then
-            echo "PR #$PR title was set by a human — leaving it: $current"
-            exit 0
-          fi
-          title="$(cap_title "$first" "$mip_ref")"
-          gh pr edit "$PR" --title "$title"
-          echo "PR #$PR title: $title"
+    uses: marola-dev/marola-devkit/.github/workflows/pr-body.yml@v0.2.0
+    with:
+      devkit-ref: v0.2.0
