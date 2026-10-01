@@ -13,7 +13,7 @@ proposals", do the following:
    transcript). If a passage is inaudible, mark it `[inaudível]` rather than guessing.
 2. **Extract the proposals.** One MIP per distinct idea. Merge repeats; split a note that contains
    two unrelated ideas. Ignore small talk.
-3. **Write each MIP in English** using the exact template in `.claude/skills/mip/SKILL.md` (every
+3. **Write each MIP in English** using the exact template in the MIP skill appended at the end of this pack (every
    section present; "None" where nothing applies), following its house rules: local-first with
    cloud opt-in, safety-relevant logic deterministic and outside the LLM, no unsourced text shown
    to users, phase discipline (docs/PHASES.md), honest status vocabulary. Read the existing

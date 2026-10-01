@@ -22,7 +22,7 @@
       "git status*": "allow",
       "git diff*": "allow",
       "git log*": "allow",
-      "scripts/stack.sh status*": "allow"
+      "stack status*": "allow"
     },
     "read": {
       "*": "allow",
