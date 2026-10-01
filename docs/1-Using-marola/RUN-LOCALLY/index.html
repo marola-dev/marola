@@ -3730,7 +3730,7 @@ The live equivalents run on demand only: <code>just e2e</code> locally, or the m
 workflow (its network job needs no Ollama; the LLM job is opt-in and caches the model).</p>
 <h2 id="8-writing-mips-from-voice-notes-in-a-browser-session">8. Writing MIPs from voice notes in a browser session<a class="headerlink" href="#8-writing-mips-from-voice-notes-in-a-browser-session" title="Permanent link">&para;</a></h2>
 <p><code>just context-mips</code> packs the documents a MIP author needs (README, AGENTS.md, ARCHITECTURE,
-FUTURE-WORK, the <code>mip</code> skill, every existing MIP, no code, ~35k tokens) with repomix into
+FUTURE-WORK, the <code>/marola-devkit:mip</code> skill, every existing MIP, no code, ~35k tokens) with repomix into
 <code>.tmp/marola-context-mips.md</code> and copies it to the clipboard. In a browser Claude chat: paste, attach
 the WhatsApp voice notes (<code>.ogg</code>) or chat text, and say "convert the audios into MIP proposals".
 The pack's own instruction section (<code>repomix-instruction.md</code>) fixes the template, numbering, the

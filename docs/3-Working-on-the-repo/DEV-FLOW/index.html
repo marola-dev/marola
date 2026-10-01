@@ -3419,10 +3419,11 @@
 
 
 <h1 id="development-flow">Development flow<a class="headerlink" href="#development-flow" title="Permanent link">&para;</a></h1>
-<p><img alt="Kroki" src="kroki-generated-c938972a-9154-3142-a5d6-9b66a92eb9bb.svg" /></p>
-<p>This page is the one place the whole loop is written down; the pieces live in the <code>mip</code> and
-<code>mip-tasks</code> skills (<code>.claude/skills/</code>), <code>AGENTS.md</code> (the hard rules), <code>docs/3-Working-on-the-repo/AGENT-SKILLS.md</code>
-(which superpowers skill does what) and the scripts under <code>scripts/</code>.</p>
+<p><img alt="Kroki" src="kroki-generated-cf83cac0-0d61-3127-9de4-8aeac71a3365.svg" /></p>
+<p>This page is the one place the whole loop is written down; the pieces live in the <code>/marola-devkit:mip</code> and
+<code>/marola-devkit:mip-tasks</code> skills, <code>AGENTS.md</code> (the hard rules), <code>docs/3-Working-on-the-repo/AGENT-SKILLS.md</code>
+(which superpowers skill does what) and the tools of <a href="https://github.com/marola-dev/marola-devkit">marola-devkit</a>
+(<code>stack</code>, <code>uprd</code>, <code>issues</code>, <code>cost-split</code>, …, on <code>PATH</code> inside <code>nix develop</code>).</p>
 <p>Sessions: one per MIP for planning, one per task for execution (<code>/clear</code>, <code>/rename
 mip-nnnn/k-slug</code>), one per review. That is what makes <code>/usage</code> and <code>just claude-cost</code> map to PRs.</p>
 <h2 id="1-from-an-idea-to-an-issue-then-a-mip-draft">1. From an idea to an issue, then a MIP (Draft)<a class="headerlink" href="#1-from-an-idea-to-an-issue-then-a-mip-draft" title="Permanent link">&para;</a></h2>
@@ -3431,7 +3432,7 @@ mip-nnnn/k-slug</code>), one per review. That is what makes <code>/usage</code> 
    follows: tier 1 (bug, chore, docs) and tier 2 (small enhancement, the issue body <em>is</em> the spec)
    stop here and go straight to §4; only tier 3 (a new data source, a scoring change, a new
    integration, anything paid) continues into a MIP, as a <strong>MIP proposal</strong> issue that is
-   relabelled rather than replaced when the MIP PR opens. Filing is a human's act: the <code>triage</code>
+   relabelled rather than replaced when the MIP PR opens. Filing is a human's act: the <code>/marola-devkit:triage</code>
    skill drafts the body and runs the readiness check, a person presses the button
    (<code>docs/3-Working-on-the-repo/ISSUE-FLOW.md</code>, MIP-0063 §5.6). An agent picks work up from <code>just issue-queue</code> and takes
    it with <code>just issue-claim &lt;n&gt;</code>; it may not start on an issue without <code>agent-ready</code>.</li>
@@ -3439,7 +3440,7 @@ mip-nnnn/k-slug</code>), one per review. That is what makes <code>/usage</code> 
    Socratic questions until MIP §1-§3 (summary, motivation, user-visible change) have answers.
    Voice notes and chat pastes go through <code>just context-mips</code> + a browser session first
    (<code>RUN-LOCALLY.md</code> §8).</li>
-<li><strong>Write the MIP</strong>: the <code>mip</code> skill: next number from <code>docs/MIPs/README.md</code>, the template,
+<li><strong>Write the MIP</strong>: the <code>/marola-devkit:mip</code> skill: next number from <code>docs/MIPs/README.md</code>, the template,
    every external claim fetched and dated, what was <em>not</em> checked said so, open questions listed.
    Add the index row. Link it from <code>FUTURE-WORK.md</code> if it closes something.</li>
 <li><strong>Open it as its own PR</strong>, status <strong>Draft</strong>. A MIP is never built in the same change (<code>mip</code>
@@ -3482,19 +3483,19 @@ re-runnable — after it, the issues own status and the file owns the plan.</p>
 <h2 id="4-stacked-prs-one-task-one-branch-one-pr">4. Stacked PRs — one task, one branch, one PR<a class="headerlink" href="#4-stacked-prs-one-task-one-branch-one-pr" title="Permanent link">&para;</a></h2>
 <p>Per task, in its own session (superpowers <code>executing-plans</code>: the task row is the plan; checkpoints
 = first failing test, before push):</p>
-<div class="highlight"><pre><span></span><code>scripts/stack.sh<span class="w"> </span>start<span class="w"> </span>MIP-NNNN<span class="w"> </span>&lt;k&gt;<span class="w"> </span>&lt;slug&gt;<span class="w">        </span><span class="c1"># branch mip-nnnn/k-slug off task k-1's branch (main for k = 1)</span>
+<div class="highlight"><pre><span></span><code>stack<span class="w"> </span>start<span class="w"> </span>MIP-NNNN<span class="w"> </span>&lt;k&gt;<span class="w"> </span>&lt;slug&gt;<span class="w">        </span><span class="c1"># branch mip-nnnn/k-slug off task k-1's branch (main for k = 1)</span>
 <span class="c1"># red → green → refactor  (superpowers test-driven-development; systematic-debugging when green won't come)</span>
 just<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>just<span class="w"> </span><span class="nb">test</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>just<span class="w"> </span>quality<span class="w">           </span><span class="c1"># + a live check whenever a data path changed (superpowers verification-before-completion: evidence, then the claim)</span>
 git<span class="w"> </span>commit<span class="w">                                         </span><span class="c1"># message ends with Tested: and Cost: trailers (AGENTS.md) — the PR's Tested/Cost sections come from them</span>
-just<span class="w"> </span>pr<span class="w">                                            </span><span class="c1"># fills any missing trailer and a task's Closes line (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch</span>
+just<span class="w"> </span>pr<span class="w">                                            </span><span class="c1"># fills any missing trailer and a task's Closes line (just cost-fill), pushes, opens/updates the PR — stack pr's base logic on a mip-NNNN/k-* branch</span>
 </code></pre></div>
 <p>The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:</p>
-<p><img alt="Kroki" src="kroki-generated-0996eaf4-9997-3ba4-8b00-f721798807c0.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-b7aa556c-98c9-3c2f-ae66-8135cee387e3.svg" /></p>
 <p><code>just pr --dry-run</code> prints every step (the trailers <code>cost-fill</code> would add, the body <code>uprd</code> would
 write) without pushing or touching <code>gh</code>. It refuses the same way the real run would (on <code>main</code>, or a
 dirty tree) so the preview matches what actually happens.</p>
-<p>Every push (<code>scripts/stack.sh pr</code>, <code>just uprds</code>, a plain <code>git push</code>) goes through
-<code>.githooks/pre-push</code>, which runs <code>just quality-other</code> (ruff on every <code>.py</code>, the script self-tests,
+<p>Every push (<code>stack pr</code>, <code>just uprds</code>, a plain <code>git push</code>) goes through
+the devkit's pre-push hook, which runs this repo's <code>just prepush</code>: <code>just quality-other</code> (ruff on every <code>.py</code>, the script self-tests,
 actionlint, hadolint) and, when a pushed commit touches Scala, <code>just quality-scala</code> (scalafmt +
 scalafix). Code is linted before the last push, not found red in CI after the merge; <code>git push
 --no-verify</code> skips the hook, CI does not.</p>
@@ -3509,13 +3510,13 @@ feature, <code>gh stack</code>) adds the ordered list at the top of each PR; <co
 at the end of each body, with the summed Cost, for readers without the feature.</p>
 <p>A PR opened any other way (the GitHub UI's "Compare &amp; pull request", a bare <code>gh pr create</code>) gets
 the same body without anyone running <code>just uprd</code>: <code>.github/workflows/pr-body.yml</code> runs
-<code>scripts/uprd.sh &lt;PR#&gt;</code> when the PR is opened, reopened, marked ready, or gets new commits, as long
+<code>uprd &lt;PR#&gt;</code> when the PR is opened, reopened, marked ready, or gets new commits, as long
 as the body is empty, still the raw template, or carries uprd's own first-line marker (a
 hand-written body is left alone; delete the marker line to stop regeneration). It also replaces a
 title that is still the branch name with the first commit's subject. Forks and bot PRs are skipped.</p>
 <p>The generated body follows <code>.github/PULL_REQUEST_TEMPLATE.md</code>'s shape: bold labels, a compact
 MIP/Tested/Cost table, no <code>#</code> headings, one screen for a typical two-commit PR; the PR title is
-the first commit's subject on the branch, capped at 70 characters (<code>scripts/lib/uprd_title.sh</code>) so
+the first commit's subject on the branch, capped at 70 characters (the devkit's <a href="https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/uprd_title.sh"><code>scripts/lib/uprd_title.sh</code></a>) so
 it stays skimmable. <code>just uprd</code>/<code>just uprds</code> print a warning when a title had to be cut, worth a
 manual retitle if the cut reads awkwardly.</p>
 <p>Cost: a measured figure is always preferred over an estimate. One session per task → <code>/usage</code> or
@@ -3524,7 +3525,7 @@ log by commit time (subagent transcripts included: <code>&lt;session&gt;/subagen
 trailer per branch; amend with <code>GIT_COMMITTER_DATE</code> preserved so the split stays stable, re-stack,
 force-push with lease, <code>just uprds</code>. Nothing logged at all for a commit (a subagent whose worktree
 session never re-attached, a commit from another machine) → <code>just cost-fill</code> (or plain <code>just pr</code>)
-adds <code>scripts/cost-split.py --estimate</code>'s diff-size estimate instead, always labelled <code>est.</code> so it
+adds <code>cost-split --estimate</code>'s diff-size estimate instead, always labelled <code>est.</code> so it
 reads differently from a measured number at a glance.</p>
 <h2 id="5-final-review-only-when-asked">5. Final review — only when asked<a class="headerlink" href="#5-final-review-only-when-asked" title="Permanent link">&para;</a></h2>
 <p>Nothing reviews a PR automatically. (Proposed change: <code>docs/MIPs/MIP-0060-open-code-review-on-ready.md</code>:
@@ -3563,20 +3564,20 @@ is green; MIP status right; <code>docs/4-Research-and-plans/FABLE_REVIEW.md</cod
   all-or-nothing operation (<code>gh stack merge</code>), no restack in between.</li>
 <li>One at a time: <strong>bottom-up</strong>, squash (the repo's habit). GitHub retargets the next PR to <code>main</code>
   when the merged branch is deleted; the commits still need a rebase:
-  <code>scripts/stack.sh restack</code> on the next branch, or <code>just stack-sync MIP-NNNN</code> for the whole
+  <code>stack restack</code> on the next branch, or <code>just stack-sync MIP-NNNN</code> for the whole
   stack (it adopts the stack from GitHub first; <code>gh stack link</code> keeps no local state).</li>
 <li>A task branch's own commit carries <code>Closes #N</code> for the issue its <code>MIP-NNNN.tasks.md</code> row links
-  (<code>scripts/cost-fill.sh</code>, run by <code>scripts/stack.sh pr</code> — itself run by <code>just pr</code>, or directly per
-  step 2 of <code>.claude/skills/mip-tasks/SKILL.md</code> — writes it above the trailers), so the
+  (<code>cost-fill</code>, run by <code>stack pr</code> — itself run by <code>just pr</code>, or directly per
+  step 2 of <code>/marola-devkit:mip-tasks</code> — writes it above the trailers), so the
   squash-merge commit on <code>main</code> closes the issue and the board moves it to Done. The PR body
-  carries the same line too (<code>uprd.sh</code> copies it there so the link shows on GitHub), but in this
+  carries the same line too (<code>uprd</code> copies it there so the link shows on GitHub), but in this
   repo the body-only line did not close anything: #514–#519 carried it and their issues
   #502–#507 stayed open past merge (cause unknown, #524), while #511/#512 closed on a commit-body
   one. <code>TASK_PARTIAL=1 just pr</code> skips the line for a task that only delivers part of its row,
   before the PR (and its <code>task-partial</code> label) exist; the issue stays open. A PR merged into
   another task branch closes nothing regardless; GitHub honours the keyword only on the default
   branch.</li>
-<li><code>scripts/stack.sh status</code> / <code>just stack-view</code> until every PR is merged.</li>
+<li><code>stack status</code> / <code>just stack-view</code> until every PR is merged.</li>
 <li>Last merge: superpowers <code>finishing-a-development-branch</code>: full suite green, delete the task
   branches, flip the MIP to <strong>Implemented</strong> with the PR numbers and the summed Cost in its status
   row, update <code>docs/MIPs/README.md</code>. A follow-up after a merge is a new branch off <code>main</code>, never a
@@ -3587,7 +3588,7 @@ is green; MIP status right; <code>docs/4-Research-and-plans/FABLE_REVIEW.md</cod
 each open their own one-off PR per bump. Left alone, ten open bumps cost ten separate CI runs to
 land. <code>just deps-stack</code> chains the open <strong>dependabot</strong> PRs (<code>--include-steward</code> adds
 scala-steward's, once its author identity on this repo is confirmed; see
-<code>scripts/deps-stack.sh</code>'s header) into one <code>deps/&lt;date&gt;/k-slug</code> stack, github-actions PRs first
+<code>deps-stack</code>'s header) into one <code>deps/&lt;date&gt;/k-slug</code> stack, github-actions PRs first
 then pip, same shape as a MIP's task branches: run it weekly, or right before a release, rather
 than merging bumps one at a time. A PR's head branch can't be moved after it's opened, so the
 default (and only implemented) path opens one <em>new</em> PR per chain branch, stacked on the previous,
@@ -3598,8 +3599,8 @@ checkout: a run of <code>just deps-stack</code> (<code>status</code>, <code>clea
 included) never switches your branch or touches your index. Two dependency bumps landing on
 adjacent lines of the same file (the only conflict shape dependabot produces) resolve
 themselves: <code>*requirements*.txt</code> keeps the higher lower bound per package
-(<code>scripts/lib/req_merge.py</code>), a workflow's <code>uses: owner/action@vN</code> steps keep the higher version
-per action (<code>scripts/lib/uses_merge.py</code>, the <code>actions/checkout@v7</code>-next-to-<code>hadolint-action@v3.5.0</code>
+(the devkit's <a href="https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/req_merge.py"><code>scripts/lib/req_merge.py</code></a>), a workflow's <code>uses: owner/action@vN</code> steps keep the higher version
+per action (<a href="https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/uses_merge.py"><code>scripts/lib/uses_merge.py</code></a>, the <code>actions/checkout@v7</code>-next-to-<code>hadolint-action@v3.5.0</code>
 case); anything else still stops the script
 with the branch left mid-cherry-pick in that worktree and prints the exact <code>cd .tmp/wt-deps-stack
 &amp;&amp; git status</code> / resolve / <code>git cherry-pick --continue</code> / <code>just deps-stack --resume</code> steps. Once
@@ -3611,23 +3612,23 @@ clean</code> deletes the chain branches (and the worktree) once every stacked PR
 days, and they fight over one line: every draft appends its row to <code>docs/MIPs/README.md</code> at the
 same place, so the moment one merges the rest conflict there. <code>just mip-stack</code> chains the open
 draft PRs (any PR whose head is <code>docs/mip-*</code> or that adds a <code>docs/MIPs/MIP-NNNN-*.md</code>; task
-branches <code>mip-NNNN/k-*</code> are left to <code>scripts/stack.sh</code>) into one <code>mips/&lt;date&gt;/k-slug</code> stack
+branches <code>mip-NNNN/k-*</code> are left to <code>stack</code>) into one <code>mips/&lt;date&gt;/k-slug</code> stack
 ordered by MIP number, the exact shape <code>just deps-stack</code> gives dependabot: built in its own
 worktree (<code>.tmp/wt-mip-stack</code>), one new PR per chain branch stacked on the previous, the original
 PR closed with a pointer, <code>gh stack link</code> at the end, <code>just mip-stack status</code> / <code>clean</code> /
 <code>--resume</code> / <code>--skip</code> / <code>--dry-run</code> as for deps. The index-row conflict resolves itself
-(<code>scripts/lib/mip_index_merge.py</code>: both sides' rows, one per MIP, in number order; the same row
+(the devkit's <a href="https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/mip_index_merge.py"><code>scripts/lib/mip_index_merge.py</code></a>: both sides' rows, one per MIP, in number order; the same row
 edited differently on both sides is a real edit and stops for a human). A draft that merged
 another draft's branch to stay mergeable is fine: merge commits are skipped and commits the
 chain already carries are dropped by patch-id. Then <code>just stack-merge &lt;stack#&gt; --squash</code> lands
 the lot bottom-up.</p>
 <h2 id="7-overnightunattended-runs">7. Overnight/unattended runs<a class="headerlink" href="#7-overnightunattended-runs" title="Permanent link">&para;</a></h2>
-<p><code>.claude/skills/mip-solve-perpetual/SKILL.md</code> works through a <code>MIP-NNNN.tasks.md</code> file one task at
+<p><code>/marola-devkit:mip-solve-perpetual</code> works through a <code>MIP-NNNN.tasks.md</code> file one task at
 a time, unattended, via a <code>/goal</code> + <code>/loop</code>. Two mechanics can drive the recurring re-invocation.
 Pick one per run, don't build both (MIP-0011 §11's OQ7 spike, resolved below):</p>
 <ul>
 <li><strong>Local <code>/goal</code> + <code>/loop</code></strong> (the one actually run, end to end, while writing this MIP's own
-  task stack): the human types <code>/mip-solve-perpetual NNNN</code> once and that single turn works through
+  task stack): the human types <code>/marola-devkit:mip-solve-perpetual NNNN</code> once and that single turn works through
   the whole task file, checkpointing per task. <strong>Chosen as the default</strong>: no extra setup, and
   demonstrated for real (eleven MIP-0011 tasks, real pushed branches, real <code>GH_POST_MORTEM.md</code>
   entries when <code>gh</code> had no session auth). <strong>What it cannot do, verified 2026-09-06 05:01:</strong> start
@@ -3755,15 +3756,15 @@ job, scaladoc included, and appears on marola.dev after the next site deploy rat
 </tr>
 <tr>
 <td>Labels back in sync with the manifest</td>
-<td><code>just labels-sync</code> (<code>.github/labels.yml</code>; <code>--prune</code> to delete orphans)</td>
+<td><code>just labels-sync</code> (the devkit's <a href="https://github.com/marola-dev/marola-devkit/blob/v0.2.2/.github/labels.yml"><code>.github/labels.yml</code></a>; <code>--prune</code> to delete orphans)</td>
 </tr>
 <tr>
 <td>The board</td>
-<td><code>just board-sync</code>; the one-time bootstraps have no recipe: <code>scripts/issues.sh board setup</code>, <code>scripts/issues.sh board gates</code></td>
+<td><code>just board-sync</code>; the one-time bootstraps have no recipe: <code>issues board setup</code>, <code>issues board gates</code></td>
 </tr>
 <tr>
 <td>One dependency or sub-issue edge by hand</td>
-<td><code>scripts/issues.sh deps add &lt;n&gt; --blocked-by &lt;m&gt;</code>, <code>deps list &lt;n&gt;</code>, <code>sub add &lt;parent&gt; &lt;child&gt;</code> — no recipe either; <code>tasks-to-issues</code> calls <code>deps add</code> for a whole table's worth</td>
+<td><code>issues deps add &lt;n&gt; --blocked-by &lt;m&gt;</code>, <code>deps list &lt;n&gt;</code>, <code>sub add &lt;parent&gt; &lt;child&gt;</code> — no recipe either; <code>tasks-to-issues</code> calls <code>deps add</code> for a whole table's worth</td>
 </tr>
 <tr>
 <td>Pack docs for a browser MIP session</td>
@@ -3771,7 +3772,7 @@ job, scaladoc included, and appears on marola.dev after the next site deploy rat
 </tr>
 <tr>
 <td>New task branch</td>
-<td><code>scripts/stack.sh start MIP-NNNN k slug</code></td>
+<td><code>stack start MIP-NNNN k slug</code></td>
 </tr>
 <tr>
 <td>Gates</td>
@@ -3779,7 +3780,7 @@ job, scaladoc included, and appears on marola.dev after the next site deploy rat
 </tr>
 <tr>
 <td>Before every push</td>
-<td><code>.githooks/pre-push</code> runs <code>just quality-other</code>, plus <code>just quality-scala</code> when Scala changed — automatic, <code>--no-verify</code> to bypass</td>
+<td>the pre-push hook runs <code>just prepush</code>: <code>just quality-other</code>, plus <code>just quality-scala</code> when Scala changed — automatic, <code>--no-verify</code> to bypass</td>
 </tr>
 <tr>
 <td>Statement coverage (aggregated core/local/cli)</td>
@@ -3803,11 +3804,11 @@ job, scaladoc included, and appears on marola.dev after the next site deploy rat
 </tr>
 <tr>
 <td>Diff-size Cost estimate</td>
-<td><code>scripts/cost-split.py --estimate [--verbose]</code> (whole branch), <code>--estimate-commit &lt;sha&gt;</code> (one commit) — used automatically by <code>cost-fill</code>/<code>uprd</code> when nothing was logged</td>
+<td><code>cost-split --estimate [--verbose]</code> (whole branch), <code>--estimate-commit &lt;sha&gt;</code> (one commit) — used automatically by <code>cost-fill</code>/<code>uprd</code> when nothing was logged</td>
 </tr>
 <tr>
 <td>One PR (lower-level)</td>
-<td><code>scripts/stack.sh pr</code> (<code>--dry-run</code> prints the gh commands) — what <code>just pr</code> calls for a <code>mip-NNNN/k-*</code> branch</td>
+<td><code>stack pr</code> (<code>--dry-run</code> prints the gh commands) — what <code>just pr</code> calls for a <code>mip-NNNN/k-*</code> branch</td>
 </tr>
 <tr>
 <td>gh inside the jail</td>
@@ -3835,11 +3836,11 @@ job, scaladoc included, and appears on marola.dev after the next site deploy rat
 </tr>
 <tr>
 <td>Local stack view</td>
-<td><code>scripts/stack.sh status [MIP-NNNN]</code>, <code>just stack status MIP-NNNN</code></td>
+<td><code>stack status [MIP-NNNN]</code>, <code>just stack status MIP-NNNN</code></td>
 </tr>
 <tr>
 <td>After a base merged</td>
-<td><code>scripts/stack.sh restack</code> (one branch) or <code>just stack-sync MIP-NNNN</code> (whole stack) — it refuses, mid-stack, when the deleted base branch's head cannot be recovered from its merged PR; <code>scripts/stack.sh restack --onto-base &lt;sha&gt;</code> names it by hand</td>
+<td><code>stack restack</code> (one branch) or <code>just stack-sync MIP-NNNN</code> (whole stack) — it refuses, mid-stack, when the deleted base branch's head cannot be recovered from its merged PR; <code>stack restack --onto-base &lt;sha&gt;</code> names it by hand</td>
 </tr>
 <tr>
 <td>Merge the whole stack</td>
@@ -3851,7 +3852,7 @@ job, scaladoc included, and appears on marola.dev after the next site deploy rat
 </tr>
 <tr>
 <td>PR for a stray plain branch</td>
-<td><code>just branches-open</code> (base=main; stack branches point at <code>scripts/stack.sh pr</code>)</td>
+<td><code>just branches-open</code> (base=main; stack branches point at <code>stack pr</code>)</td>
 </tr>
 <tr>
 <td>Stack the open dependency PRs</td>
@@ -3871,7 +3872,7 @@ job, scaladoc included, and appears on marola.dev after the next site deploy rat
 </tr>
 <tr>
 <td>Status line</td>
-<td><code>.claude/statusline.sh</code>, shared via <code>.claude/settings.json</code></td>
+<td>the devkit's <code>.devkit/.claude/statusline.sh</code>, wired in <code>.claude/settings.json</code></td>
 </tr>
 <tr>
 <td>Push text to the clipboard (write-only)</td>

@@ -3479,7 +3479,9 @@ alone on purpose: <code>MIP-0037</code>'s index row and others cite this file by
 K8"), so renumbering would break those pointers.</p>
 <h3 id="2a-bugs-found-today">2a. Bugs found today<a class="headerlink" href="#2a-bugs-found-today" title="Permanent link">&para;</a></h3>
 <p>Six findings, all fixed: the Critical the same day (#129), the five nits the next (#224). The last
-column is the change that fixed each one; open bugs live in the issue tracker.</p>
+column is the change that fixed each one; open bugs live in the issue tracker. The hooks and
+scripts it cites have since moved to marola-devkit (MIP-0070), so they link to the last tree that
+had them here.</p>
 <table>
 <thead>
 <tr>
@@ -3500,19 +3502,19 @@ column is the change that fixed each one; open bugs live in the issue tracker.</
 <td>04</td>
 <td><code>stop-gate.sh</code> ignores newly created (untracked) <code>.scala</code> files — <code>git diff HEAD</code> by design</td>
 <td>nit</td>
-<td><code>.claude/hooks/stop-gate.sh:23</code>, <code>ls-files --others --exclude-standard</code></td>
+<td><a href="https://github.com/marola-dev/marola/blob/7ba0458/.claude/hooks/stop-gate.sh#L23"><code>.claude/hooks/stop-gate.sh:23</code></a>, <code>ls-files --others --exclude-standard</code></td>
 </tr>
 <tr>
 <td>08</td>
 <td><code>stop-gate.sh</code> <code>mkdir</code>/<code>touch</code> under <code>set -e</code> can exit 1 (not 0/2) on a read-only runtime dir</td>
 <td>nit</td>
-<td><code>.claude/hooks/stop-gate.sh:30</code>,<code>:34</code>, plus a self-test against an unwritable dir</td>
+<td><a href="https://github.com/marola-dev/marola/blob/7ba0458/.claude/hooks/stop-gate.sh#L30-L34"><code>.claude/hooks/stop-gate.sh:30</code>,<code>:34</code></a>, plus a self-test against an unwritable dir</td>
 </tr>
 <tr>
 <td>05</td>
 <td><code>format.sh --self-test</code> hard-fails without <code>cs</code>/network, unlike its <code>ruff</code> guard — blocks every push in an air-gapped shell</td>
 <td>nit</td>
-<td><code>.claude/hooks/format.sh:51</code>,<code>:77</code></td>
+<td><a href="https://github.com/marola-dev/marola/blob/7ba0458/.claude/hooks/format.sh#L51-L77"><code>.claude/hooks/format.sh:51</code>,<code>:77</code></a></td>
 </tr>
 <tr>
 <td>06</td>
@@ -3524,14 +3526,14 @@ column is the change that fixed each one; open bugs live in the issue tracker.</
 <td>03</td>
 <td><code>DEV-FLOW.md</code> §7→§8 renumbering left stale section pointers</td>
 <td>nit</td>
-<td><code>scripts/deps-stack.sh:3</code>,<code>:391</code>, <code>CONTRIBUTING.md:85</code></td>
+<td><a href="https://github.com/marola-dev/marola/blob/7ba0458/scripts/deps-stack.sh#L3"><code>scripts/deps-stack.sh:3</code>,<code>:391</code></a>, <code>CONTRIBUTING.md:85</code></td>
 </tr>
 </tbody>
 </table>
 <p>One later finding is still open, filed while building MIP-0063's own tooling: <code>cherry-pick
 --empty=drop</code> needs git ≥ 2.45 and exits 129 on an older git —
-<a href="https://github.com/marola-dev/marola/issues/451">#451</a>. <code>cost-fill.sh</code> (so <code>just pr</code>) no longer
-passes it since #524; <code>scripts/mip-stack.sh</code> still does.</p>
+<a href="https://github.com/marola-dev/marola/issues/451">#451</a>. <code>cost-fill</code> (so <code>just pr</code>) no longer
+passes it since #524; marola-devkit's <code>mip-stack</code> still does.</p>
 <p>Two lessons that outlive the fixes: (a) a test that can't distinguish "works" from "died silently"
 isn't a test: <code>&lt; /dev/null → 0 bytes</code> passed while the server was dead; the reviewer's piped
 handshake is now the reference check for anything stdio; (b) safety gates get adversarial
@@ -3563,14 +3565,14 @@ short of that is tooling, not a publish.</p>
 <ol>
 <li><strong>Merge the open PRs</strong> in <code>GH_POST_MORTEM.md</code>'s order: the two P0 fixes, <code>docs/mip-0011-mark-verified</code>
    (flips MIP-0011 to Implemented with its real ~$12.86), the auto-pick step-4 fix.</li>
-<li><strong>MIP-0009</strong> (S, cheap win): task list merged; run <code>/mip-solve-perpetual 0009</code>. Four PRs; task 2
+<li><strong>MIP-0009</strong> (S, cheap win): task list merged; run <code>/marola-devkit:mip-solve-perpetual 0009</code>. Four PRs; task 2
    builds the Node harness the MIP wrongly assumed existed.</li>
 <li><strong>MIP-0017 §5.1/§5.2</strong> (S): the flat-file run tracker for overnight runs and the "reviewer gets
    the diff inline" rule. §5.3 (skill-frontmatter audit) has no urgency.</li>
 <li><strong>MIP-0016</strong> (M, "do next"): water-quality marks placed in the sea; user value, no new source.</li>
 <li><strong>MIP-0018</strong> (M, cheap win): the post-planner + exporter; MIP-0020 (Instagram, in draft) becomes
    one more export target with a real API, unlike LinkedIn/Substack.</li>
-<li><strong>#451</strong> (<code>scripts/mip-stack.sh</code>'s <code>--empty=drop</code> on git &lt; 2.45), the one open item from §2a.</li>
+<li><strong>#451</strong> (marola-devkit's <code>mip-stack</code>: <code>--empty=drop</code> on git &lt; 2.45), the one open item from §2a.</li>
 </ol>
 <h2 id="4-next-phase-1-the-gate-every-cloud-step-waits-on">4. Next (Phase 1) — the gate every cloud step waits on<a class="headerlink" href="#4-next-phase-1-the-gate-every-cloud-step-waits-on" title="Permanent link">&para;</a></h2>
 <p><strong>MIP-0002, the Telegram bot</strong> (L, "do next"). Until it ships, nothing may be provisioned on a cloud
@@ -3623,7 +3625,7 @@ MCP registration. Still missing, per <code>docs/4-Research-and-plans/AGENT-FRAME
 </ul>
 <h2 id="7-candidate-mips-external-consolidation-kimi-2026-09-06-triaged">7. Candidate MIPs — external consolidation (Kimi, 2026-09-06), triaged<a class="headerlink" href="#7-candidate-mips-external-consolidation-kimi-2026-09-06-triaged" title="Permanent link">&para;</a></h2>
 <p>Ten ideas handed in by the maintainer from a Kimi session, kept verbatim in intent, triaged here
-against what already exists. <strong>No numbers claimed</strong>: per the <code>mip</code> skill a number is taken when
+against what already exists. <strong>No numbers claimed</strong>: per the <code>/marola-devkit:mip</code> skill a number is taken when
 the file is written (0020 is the Instagram bot, in draft; 0023, 0024 and 0026 are §5's proposals; 0021/0022 are K4/K6, now drafted),
 so these are candidates until someone drafts one. "Verdict" uses the index's vocabulary.</p>
 <table>
@@ -3713,7 +3715,7 @@ so these are candidates until someone drafts one. "Verdict" uses the index's voc
 exists); K3, K8, K10 ride with MIP-0002/0009; K2 and K7 are absorbed into MIP-0023 and MIP-0026
 rather than becoming separate docs; K1, K9 after Phase 1; K5 parked.</p>
 <h3 id="provider-query-checklist-verify-before-any-of-these-becomes-a-mip">Provider-query checklist — verify before any of these becomes a MIP<a class="headerlink" href="#provider-query-checklist-verify-before-any-of-these-becomes-a-mip" title="Permanent link">&para;</a></h3>
-<p>The <code>mip</code> skill's step 3: fetch the page, confirm format, update frequency, licence/terms, key
+<p>The <code>/marola-devkit:mip</code> skill's step 3: fetch the page, confirm format, update frequency, licence/terms, key
 needed; record what was <em>not</em> checked. One line per external claim the candidates above make.
 Tick with the date and the URL you actually read.</p>
 <ul>

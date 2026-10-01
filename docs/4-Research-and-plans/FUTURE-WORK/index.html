@@ -3956,7 +3956,7 @@ MIP-0070 (<code>docs/MIPs/MIP-0070-umbrella-and-polyrepo-split.md</code>).</p>
 <p>This section originally described preparing marola to be <code>git subtree split</code> out of a shared
 monorepo that also contained an unrelated project (nf-organizer, a nota-fiscal/expense
 organizer). That plan involved marola/ carrying self-contained copies of every infra file a
-standalone repo would need (<code>.ai-jail</code>, <code>.gitignore</code>, <code>.githooks/pre-commit</code>, <code>.scalafmt.conf</code>,
+standalone repo would need (<code>.ai-jail</code>, <code>.gitignore</code>, a pre-commit hook, <code>.scalafmt.conf</code>,
 <code>flake.nix</code>, <code>justfile</code>, <code>project/</code>, and a <code>build.sbt.standalone</code>: a complete, working
 single-project build kept under a non-<code>build.sbt</code> name specifically because sbt auto-merges a
 per-subproject <code>build.sbt</code> into the enclosing multi-project build's settings, confirmed the hard

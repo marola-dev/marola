@@ -3306,12 +3306,12 @@ add it.</p>
 <p><strong>A merged task PR closes its issue.</strong> The closing keyword that works here is the one in the
 squash-merge commit that lands on <code>main</code>. In this repo a PR-body-only line did not close anything:</p>
 <h1 id="514519-carried-one-and-their-issues-502507-stayed-open-past-merge-and-were-closed-by-hand">514–#519 carried one and their issues #502–#507 stayed open past merge and were closed by hand,<a class="headerlink" href="#514519-carried-one-and-their-issues-502507-stayed-open-past-merge-and-were-closed-by-hand" title="Permanent link">&para;</a></h1>
-<p>while #511/#512 closed on a commit-body <code>Closes #N</code> (cause unknown, #524). <code>scripts/cost-fill.sh</code>,
-run by <code>scripts/stack.sh pr</code> (itself run by <code>just pr</code>, or directly per
-<code>.claude/skills/mip-tasks/SKILL.md</code>'s step 2), writes <code>Closes #N</code> into the branch's own commit body,
+<p>while #511/#512 closed on a commit-body <code>Closes #N</code> (cause unknown, #524). <code>cost-fill</code>,
+run by <code>stack pr</code> (itself run by <code>just pr</code>, or directly per
+<code>/marola-devkit:mip-tasks</code>'s step 2), writes <code>Closes #N</code> into the branch's own commit body,
 above the <code>Tested:</code>/<code>Cost:</code>/<code>Co-Authored-By:</code> trailers, for the issue that row <code>k</code> of
 <code>MIP-NNNN.tasks.md</code> links; the merge into <code>main</code> then closes it, and that clears rule 5 for every
-task blocked by it. <code>uprd.sh</code> still copies the same line into the PR body so the link is visible on
+task blocked by it. <code>uprd</code> still copies the same line into the PR body so the link is visible on
 GitHub, but that copy closes nothing by itself. Set <code>TASK_PARTIAL=1</code> before <code>just pr</code> for a task
 that only delivers part of its row — cost-fill then writes no <code>Closes #N</code> at all, since the
 <code>task-partial</code> label a PR would otherwise carry doesn't exist yet at first push; the issue stays
@@ -3319,7 +3319,7 @@ open. Once a <code>Closes #N</code> line is written, a later <code>task-partial<
 amend the commit to remove the line. GitHub's built-in board workflow then moves a closed issue's
 card to <strong>Done</strong> (configured in the project UI, MIP-0063 §4.4).</p>
 <h2 id="the-commands">The commands<a class="headerlink" href="#the-commands" title="Permanent link">&para;</a></h2>
-<p><code>scripts/issues.sh</code> is the whole surface, and every subcommand takes <code>--dry-run</code> (the reads it is
+<p><code>issues</code> is the whole surface, and every subcommand takes <code>--dry-run</code> (the reads it is
 computed from still happen, so a login is needed either way). Seven of them have a <code>just</code> recipe:</p>
 <table>
 <thead>
@@ -3339,7 +3339,7 @@ computed from still happen, so a login is needed either way). Seven of them have
 </tr>
 <tr>
 <td><code>just issue-claim &lt;n\|owner/repo#n&gt;</code></td>
-<td>re-runs the rules, assigns the issue to you, drops the label, sets the board Status to In progress, prints the <code>scripts/stack.sh start</code> line. Accepts a bare number for this repo or <code>owner/repo#N</code> for anywhere else on the org (MIP-0070 §5.7)</td>
+<td>re-runs the rules, assigns the issue to you, drops the label, sets the board Status to In progress, prints the <code>stack start</code> line. Accepts a bare number for this repo or <code>owner/repo#N</code> for anywhere else on the org (MIP-0070 §5.7)</td>
 </tr>
 <tr>
 <td><code>just tasks-to-issues MIP-NNNN [--milestone NAME] [--deliverable NAME]</code></td>
@@ -3351,7 +3351,7 @@ computed from still happen, so a login is needed either way). Seven of them have
 </tr>
 <tr>
 <td><code>just labels-sync [--prune] [--force]</code></td>
-<td>reconciles the repo against <code>.github/labels.yml</code>, the versioned manifest; orphans are reported, and only deleted with <code>--prune</code></td>
+<td>reconciles the repo against the devkit's <a href="https://github.com/marola-dev/marola-devkit/blob/v0.2.2/.github/labels.yml"><code>.github/labels.yml</code></a>, the versioned manifest; orphans are reported, and only deleted with <code>--prune</code></td>
 </tr>
 <tr>
 <td><code>just board-sync</code></td>
@@ -3359,7 +3359,7 @@ computed from still happen, so a login is needed either way). Seven of them have
 </tr>
 </tbody>
 </table>
-<p>The rest are run through the script. <code>scripts/issues.sh board setup</code> (the Status options, the
+<p>The rest are run through the script. <code>issues board setup</code> (the Status options, the
 views §5.2 names, and the <code>Deliverable</code> text field MIP-0070 §5.7 adds; needs <code>project</code> scope)
 and <code>board gates</code> (the five phase gate issues) are one-time bootstraps, and reshaping a shared
 board or filing issues is not something <code>just</code> should make easy. <code>sub add &lt;parent&gt; &lt;child&gt;</code>,
@@ -3384,7 +3384,7 @@ From there, a move into Spec or into In review is "someone's decision"; a move i
 2026-09-30 (MIP-0063 §4.4).</p>
 <h2 id="what-no-command-can-do">What no command can do<a class="headerlink" href="#what-no-command-can-do" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Filing an issue is human-gated</strong> (MIP §5.6, Decision 2). The <code>triage</code> skill drafts one and
+<li><strong>Filing an issue is human-gated</strong> (MIP §5.6, Decision 2). The <code>/marola-devkit:triage</code> skill drafts one and
   runs the readiness check; a person invokes it and a person files.</li>
 <li><strong>The board</strong> — org project <a href="https://github.com/orgs/marola-dev/projects/1">Marola</a> — <strong>is
   private, and §5.2 wants it public.</strong> There is no API for the switch.</li>

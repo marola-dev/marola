@@ -3256,9 +3256,12 @@
 <p>Every gate and every deploy is a GitHub Actions workflow under
 <a href="https://github.com/marola-dev/marola/tree/main/.github/workflows"><code>.github/workflows/</code></a>. All of
 them run on GitHub's standard <code>ubuntu-latest</code> runner except <code>marola-sea-publish</code>, which needs a GPU.
-The design behind this layout is <a href="../../MIPs/MIP-0065-ci-cd-on-github-hosted-runners/">MIP-0065</a>.</p>
+The design behind this layout is <a href="../../MIPs/MIP-0065-ci-cd-on-github-hosted-runners/">MIP-0065</a>.
+The generic jobs are <a href="https://github.com/marola-dev/marola-devkit">marola-devkit</a>'s reusable
+workflows (<a href="https://github.com/marola-dev/marola-devkit/blob/v0.2.2/docs/workflows.md">inputs</a>),
+called at the same tag as the flake input; bump them together.</p>
 <h2 id="how-a-change-reaches-maroladev">How a change reaches marola.dev<a class="headerlink" href="#how-a-change-reaches-maroladev" title="Permanent link">&para;</a></h2>
-<p><img alt="Kroki" src="kroki-generated-ac3e0bf2-a8da-39dd-934c-5916fdc11873.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-040df4d5-dff3-3073-9612-ad6aaae755a6.svg" /></p>
 <p><code>site-data</code> is an orphan branch that holds only generated output. Several workflows write to it,
 all through <code>scripts/site-data-push.sh</code>, which retries when two pushes race. <code>site.yml</code> copies its
 <code>smoke/</code>, <code>coverage/</code>, <code>stats/</code> and <code>docs/</code> directories into the page on every build. The coverage,
@@ -3280,15 +3283,15 @@ smoke and docs writers trigger a rebuild right away; <code>repo-stats</code> wai
 <td><code>ci.yml</code></td>
 <td>PR; push to <code>main</code></td>
 <td><code>ubuntu-latest</code></td>
-<td>The merge gates, each run only when <code>dorny/paths-filter</code> says its inputs changed: <code>build-test</code> (scalafmt, scalafix, compile, test), <code>quality-other</code> (ruff, actionlint, hadolint, the <code>scripts/*</code> self-tests, <code>workflow_runners.py</code>), <code>docs-build</code> (<code>mkdocs --strict</code>). On <code>main</code> only: the coverage badge and <code>repo-stats</code> go to <code>site-data</code>, and <code>resources-tarball</code> uploads the <code>ml-resources</code> artifact (the app -&gt; ml contract, MIP-0070 §5.4) for <code>finetune/build_dataset.py --resources</code></td>
+<td>The merge gates, each run only when <code>dorny/paths-filter</code> says its inputs changed: <code>build-test</code> (devkit <code>scala-ci</code>: scalafmt, scalafix, compile, test), <code>python-ci</code> (devkit: ruff and marola's <code>scripts/*</code> self-tests), <code>static-ci</code> (devkit: actionlint, hadolint, the site harness, <code>docker compose config</code>), <code>agents-check</code> (devkit: the AGENTS.md invariants block), <code>quality-other</code> (nix: <code>flake.lock</code> is current, <code>just --list</code>, <code>workflow-runners</code>), <code>docs-build</code> (<code>mkdocs --strict</code>). On <code>main</code> only: <code>coverage</code> publishes the badge and <code>repo-stats</code> the stats to <code>site-data</code>, and <code>resources-tarball</code> uploads the <code>ml-resources</code> artifact (the app -&gt; ml contract, MIP-0070 §5.4) for <code>finetune/build_dataset.py --resources</code></td>
 <td><code>GITHUB_TOKEN</code></td>
 <td><code>just build &amp;&amp; just test &amp;&amp; just quality</code> locally; re-run from the Actions tab</td>
 </tr>
 <tr>
-<td><code>ci-short-circuit-pr-close.yml</code></td>
+<td><code>ci-short-circuit.yml</code></td>
 <td>PR closed</td>
 <td><code>ubuntu-latest</code></td>
-<td>Cancels the closed PR's in-flight runs, which the concurrency group can't see</td>
+<td>Devkit <code>ci-short-circuit</code>: cancels the closed PR's in-flight runs, which the concurrency group can't see</td>
 <td><code>GITHUB_TOKEN</code></td>
 <td>—</td>
 </tr>
@@ -3296,9 +3299,17 @@ smoke and docs writers trigger a rebuild right away; <code>repo-stats</code> wai
 <td><code>pr-body.yml</code></td>
 <td>PR opened, reopened, ready, pushed</td>
 <td><code>ubuntu-latest</code></td>
-<td>Fills the description from the commits (<code>scripts/uprd.sh</code>); skips forks and bot branches</td>
+<td>Devkit <code>pr-body</code>: fills the description from the commits (<code>uprd</code>); skips forks and bot branches</td>
 <td><code>GITHUB_TOKEN</code></td>
 <td><code>just uprd</code></td>
+</tr>
+<tr>
+<td><code>labels.yml</code></td>
+<td>dispatch only</td>
+<td><code>ubuntu-latest</code></td>
+<td>Devkit <code>labels-sync</code>: applies the devkit's label manifest to this repo</td>
+<td><code>GITHUB_TOKEN</code></td>
+<td><code>gh workflow run labels.yml</code>; <code>just labels-sync</code> locally</td>
 </tr>
 <tr>
 <td><code>api-docs.yml</code></td>
@@ -3387,7 +3398,7 @@ because GHCR storage used to be billed while the repo was private (MIP-0065 §4.
 <h2 id="the-self-hosted-rule">The self-hosted rule<a class="headerlink" href="#the-self-hosted-rule" title="Permanent link">&para;</a></h2>
 <p>Only <code>marola-sea-publish.yml</code> may run on a self-hosted runner, and it may never gain a
 <code>pull_request</code>, <code>pull_request_target</code> or <code>workflow_call</code> trigger. Everywhere else a <code>runs-on:</code> or
-<code>runner:</code> value must be a literal, never a <code>${{ }}</code> expression that could resolve to the desktop. <code>scripts/workflow_runners.py</code> enforces this in
+<code>runner:</code> value must be a literal, never a <code>${{ }}</code> expression that could resolve to the desktop. <code>workflow-runners</code> enforces this in
 <code>quality-other</code>.</p>
 <p>The repo is public, and on a public repo anyone can open a pull request. A <code>pull_request</code> job on
 a self-hosted runner would run a fork's code on the maintainer's machine, which is what GitHub
@@ -3395,7 +3406,7 @@ warns against in "Self-hosted runners should almost never be used for public rep
 old reason for self-hosting was running out of minutes on a private repo (#340), and it no longer
 applies: standard hosted runners are free for public repos. Larger and GPU runners are always
 billed, so GPU training stays on the desktop, behind a manual dispatch.</p>
-<p><img alt="Kroki" src="kroki-generated-59c404af-0206-3091-8941-ed741f4b52dc.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-c6c326b6-e962-339d-a871-9074c3448ce7.svg" /></p>
 <h2 id="the-maintainers-manual-settings">The maintainer's manual settings<a class="headerlink" href="#the-maintainers-manual-settings" title="Permanent link">&para;</a></h2>
 <p>Repository settings that no workflow or agent can change. MIP-0065 depends on them:</p>
 <ul>

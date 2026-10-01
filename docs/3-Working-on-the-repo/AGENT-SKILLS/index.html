@@ -684,6 +684,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#11-marola-devkit-plugin-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 marola-devkit plugin skills
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2-superpowers-what-fits-what-doesnt" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3233,6 +3244,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#11-marola-devkit-plugin-skills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 marola-devkit plugin skills
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2-superpowers-what-fits-what-doesnt" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3323,7 +3345,8 @@
 rule of thumb from <code>AGENTS.md</code>: every loaded skill costs context on every turn, so adopt the ones
 that map to a real step of this repo's workflow and skip the rest.</p>
 <p>Harness note: the in-repo skills (§1) are plain <code>SKILL.md</code> files that OpenCode also discovers
-(<code>.claude/skills/</code> is on its search path); the superpowers plugin (§2) is Claude Code only. See
+(<code>.claude/skills/</code> is on its search path); the marola-devkit plugin (§1.1) and superpowers (§2)
+are Claude Code only. See
 <code>docs/MIPs/MIP-0013-opencode-tryout.md</code>.</p>
 <h2 id="1-in-repo-skills-claudeskills">1. In-repo skills (<code>.claude/skills/</code>)<a class="headerlink" href="#1-in-repo-skills-claudeskills" title="Permanent link">&para;</a></h2>
 <table>
@@ -3336,57 +3359,73 @@ that map to a real step of this repo's workflow and skip the rest.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>mip</code></td>
-<td>Any non-trivial change: new data source, integration, scoring change, user-visible output, autonomous behaviour</td>
-<td>The plan layer. Produces <code>docs/MIPs/MIP-NNNN-*.md</code> with verified sources and open questions; implementation is a separate PR with a <code>Cost:</code> line</td>
-</tr>
-<tr>
-<td><code>mip-tasks</code></td>
-<td>An accepted MIP that is more than one PR of work</td>
-<td>The delivery layer: <code>docs/MIPs/MIP-NNNN.tasks.md</code> (ordered tasks, each with its test) and stacked PRs, one per task, via <code>scripts/stack.sh start / pr / restack / status</code></td>
-</tr>
-<tr>
-<td><code>triage</code></td>
-<td>A raw idea, a voice-note fragment or a bug report that should become one tracked issue</td>
-<td>The intake layer for MIP-0063's standard: picks the tier, drafts the body in the matching form's heading shape (<code>.github/ISSUE_TEMPLATE/</code>), proposes <code>area/*</code>/<code>layer/*</code>/<code>size/*</code> and checks the five-rule Definition of Ready — then <strong>stops</strong>. Human-invoked only (<code>disable-model-invocation: true</code>, MIP-0063 §5.6 Decision 2): an agent filing its own issues would pollute the queue faster than anyone can triage it</td>
-</tr>
-<tr>
 <td><code>site-frontend</code></td>
 <td>Any change to what a visitor sees on the static map (<code>site/static/</code>), or a request to make it "modern", "appealing", a better first impression</td>
 <td>The product layer for the page: look at the built page first (its <code>site_check.js</code> stub-DOM harness runs <code>app.js</code> against <code>site/dist</code>), one type scale, the data colours untouched, a red-flags list for the generated look. Written with <code>writing-skills</code>: a baseline agent produced a gradient header, frosted pills, Tailwind hex codes and 250 unrendered CSS lines; the recipe targets exactly that</td>
-</tr>
-<tr>
-<td><code>voice-note-ingest</code></td>
-<td>A MIP or task references audio that needs a real transcript, or asked explicitly to transcribe a voice memo</td>
-<td>Local Whisper only (<code>faster_whisper</code> preferred, <code>whisper</code> fallback), pt-BR default; writes <code>&lt;audio&gt;.txt</code> next to the file, never commits the audio, translates separately rather than via Whisper's <code>--task translate</code>, and anonymizes every name but the repo owner's by hand before the transcript reaches a tracked file. <code>scripts/transcribe.py --self-test</code> checks its own arg-parsing/output-path logic, not wired into <code>just quality</code></td>
-</tr>
-<tr>
-<td><code>voice-to-feature</code></td>
-<td>Explicitly demoing "voice note to feature" end-to-end, or <code>/voice-to-feature</code></td>
-<td><strong>Demo-only, not the normal dev flow</strong> (its own description says so): collapses transcribe → draft MIP → scaffold → Draft PR into one pass, gated at the one point that matters — <code>gh pr merge</code>/close are tool-level <code>disallowed-tools</code>, so nothing it does can reach <code>main</code> unattended. Real feature work still goes through <code>mip</code> then <code>mip-tasks</code></td>
 </tr>
 <tr>
 <td><code>eli5</code></td>
 <td>Someone needs a topic explained from zero — a rip current, swell period, upwelling, the swimability score, the Kyo effect boundary — or <code>/eli5 &lt;topic&gt;</code></td>
 <td>The teaching layer, read-only: grounds the explanation in <code>knowledge/*.md</code> (for sea topics, the same corpus <code>--ask</code> answers from) or <code>docs/2-Building-marola/ARCHITECTURE.md</code>/<code>docs/MIPs/</code> (for internals), one picture before the prose, pt-BR or English to match the question. Writes nothing but an optional page under <code>.tmp/eli5/</code>; a fact that belongs in the corpus goes through <code>corpus-doc</code> instead. Adapted from the community <code>eli5</code> skill (Thariq Shihipar, MIT)</td>
 </tr>
+</tbody>
+</table>
+<h2 id="11-marola-devkit-plugin-skills">1.1 marola-devkit plugin skills<a class="headerlink" href="#11-marola-devkit-plugin-skills" title="Permanent link">&para;</a></h2>
+<p>The generic skills, and the <code>mip-reviewer</code>/<code>mip-claims-auditor</code> agents (as
+<code>marola-devkit:mip-reviewer</code>, …), come from the <code>marola-devkit</code> plugin, declared in
+<code>.claude/settings.json</code> (<code>extraKnownMarketplaces</code> + <code>enabledPlugins</code>) the same way superpowers is
+(§2). Their source is <a href="https://github.com/marola-dev/marola-devkit/tree/v0.2.2/plugins/marola-devkit">marola-devkit's <code>plugins/marola-devkit/</code></a>.</p>
+<table>
+<thead>
 <tr>
-<td><code>humanizer</code></td>
+<th>Skill</th>
+<th>Use when</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/marola-devkit:mip</code></td>
+<td>Any non-trivial change: new data source, integration, scoring change, user-visible output, autonomous behaviour</td>
+<td>The plan layer. Produces <code>docs/MIPs/MIP-NNNN-*.md</code> with verified sources and open questions; implementation is a separate PR with a <code>Cost:</code> line</td>
+</tr>
+<tr>
+<td><code>/marola-devkit:mip-tasks</code></td>
+<td>An accepted MIP that is more than one PR of work</td>
+<td>The delivery layer: <code>docs/MIPs/MIP-NNNN.tasks.md</code> (ordered tasks, each with its test) and stacked PRs, one per task, via <code>stack start / pr / restack / status</code></td>
+</tr>
+<tr>
+<td><code>/marola-devkit:triage</code></td>
+<td>A raw idea, a voice-note fragment or a bug report that should become one tracked issue</td>
+<td>The intake layer for MIP-0063's standard: picks the tier, drafts the body in the matching form's heading shape (<code>.github/ISSUE_TEMPLATE/</code>), proposes <code>area/*</code>/<code>layer/*</code>/<code>size/*</code> and checks the five-rule Definition of Ready — then <strong>stops</strong>. Human-invoked only (<code>disable-model-invocation: true</code>, MIP-0063 §5.6 Decision 2): an agent filing its own issues would pollute the queue faster than anyone can triage it</td>
+</tr>
+<tr>
+<td><code>/marola-devkit:voice-note-ingest</code></td>
+<td>A MIP or task references audio that needs a real transcript, or asked explicitly to transcribe a voice memo</td>
+<td>Local Whisper only (<code>faster_whisper</code> preferred, <code>whisper</code> fallback), pt-BR default; writes <code>&lt;audio&gt;.txt</code> next to the file, never commits the audio, translates separately rather than via Whisper's <code>--task translate</code>, and anonymizes every name but the repo owner's by hand before the transcript reaches a tracked file. The skill's <code>scripts/transcribe.py --self-test</code> checks its own arg-parsing/output-path logic, not wired into <code>just quality</code></td>
+</tr>
+<tr>
+<td><code>/marola-devkit:voice-to-feature</code></td>
+<td>Explicitly demoing "voice note to feature" end-to-end, or <code>/marola-devkit:voice-to-feature</code></td>
+<td><strong>Demo-only, not the normal dev flow</strong> (its own description says so): collapses transcribe → draft MIP → scaffold → Draft PR into one pass, gated at the one point that matters — <code>gh pr merge</code>/close are tool-level <code>disallowed-tools</code>, so nothing it does can reach <code>main</code> unattended. Real feature work still goes through <code>/marola-devkit:mip</code> then <code>/marola-devkit:mip-tasks</code></td>
+</tr>
+<tr>
+<td><code>/marola-devkit:humanizer</code></td>
 <td>Editing or reviewing prose — a doc, a MIP, a PR body, a comment — that reads as generated: staged contrasts, one-line closers, forced triads, dashes everywhere, inflated claims</td>
 <td>Vendored verbatim from <code>blader/humanizer</code> v3.0.0 (MIT, <code>LICENSE</code> beside it), based on Wikipedia's "Signs of AI writing". It rewrites wording only; a claim, number or file reference stays exactly as it was</td>
 </tr>
 <tr>
-<td><code>ponytail</code>, <code>ponytail-review</code>, <code>ponytail-audit</code></td>
+<td><code>/marola-devkit:ponytail</code>, <code>…:ponytail-review</code>, <code>…:ponytail-audit</code></td>
 <td>Writing code (<code>ponytail</code>), reviewing a diff for over-engineering (<code>ponytail-review</code>), or auditing the whole tree for it (<code>ponytail-audit</code>)</td>
 <td>Vendored verbatim from <code>DietrichGebert/ponytail</code> (MIT, <code>LICENSE</code> beside each): reuse what the repo has, then the stdlib, then the platform, before writing new code. Review and audit list findings only. Where it disagrees with <code>AGENTS.md</code> (comment restraint, the <code>just build &amp;&amp; just test &amp;&amp; just quality</code> gate), <code>AGENTS.md</code> wins</td>
 </tr>
 <tr>
-<td><code>sharingan</code> (alias <code>/skill-copy</code>)</td>
+<td><code>/marola-devkit:sharingan</code> (alias <code>/marola-devkit:skill-copy</code>)</td>
 <td>A URL to a skill, workflow or pattern in another repo that should exist here too</td>
 <td>Runs on Opus 5.5 at <code>xhigh</code>. Fetches the whole unit at a pinned sha, lets the licence decide vendor / adapt / rewrite, and maps every upstream concept to what Claude Code or marola already has (ADR → MIP, practices → <code>AGENTS.md</code>, resume → <code>claude --continue</code>) before writing, so a port never rebuilds a built-in. Evals go through skill-creator (§2.3)</td>
 </tr>
 <tr>
-<td><code>obsidian-vault</code></td>
+<td><code>/marola-devkit:obsidian-vault</code></td>
 <td>Saving a session handoff, resuming one ("what was I working on"), or refreshing the marola note in the maintainer's Obsidian vault</td>
 <td>Vault at <code>$MAROLA_OBSIDIAN_VAULT</code> (default <code>~/Documents/2nd-brain</code>), usually invisible inside the jail. Resume tries <code>claude --continue</code>/<code>--resume</code> first and checks a handoff against the repo before trusting it; sync writes one digest that links to MIPs and PRs, never copies of them. Rewritten via <code>sharingan</code> from <code>edvmorango/nix-home-config</code> (no licence)</td>
 </tr>
@@ -3476,7 +3515,7 @@ pinned to a version). Opt out on one machine with the same key set to <code>fals
 <h2 id="21-using-superpowers-here-one-mip-start-to-finish">2.1 Using superpowers here — one MIP, start to finish<a class="headerlink" href="#21-using-superpowers-here-one-mip-start-to-finish" title="Permanent link">&para;</a></h2>
 <p>Superpowers activates from context, so mostly you just work; but here is the explicit sequence
 for a MIP, with which skill does what and which session it runs in:</p>
-<p><img alt="Kroki" src="kroki-generated-6abf7183-22d9-34df-9259-893e25595d68.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-c44ed826-156a-333d-9f96-e2ec5bf03bc2.svg" /></p>
 <p>The whole loop (including how a MIP gets <em>accepted</em> and what GitHub shows for a stack) is
 written once in <code>docs/3-Working-on-the-repo/DEV-FLOW.md</code>; this section is the skill-by-skill view of it.</p>
 <h2 id="22-other-plugins-in-use-on-the-maintainers-machine">2.2 Other plugins in use on the maintainer's machine<a class="headerlink" href="#22-other-plugins-in-use-on-the-maintainers-machine" title="Permanent link">&para;</a></h2>
@@ -3506,7 +3545,7 @@ tooling might have shaped it:</p>
 <tr>
 <td><code>heavy-usage@heavy-usage</code> (<code>heavyc-dev/heavy-usage</code>)</td>
 <td>Third-party marketplace</td>
-<td>Usage-window tracking (<code>/heavy-usage:usage</code>) feeding <code>/mip-solve-perpetual</code>'s wind-down math — see <code>docs/3-Working-on-the-repo/DEV-FLOW.md</code>'s "verified against its actual source" section for exactly what it can and can't do (soft signal only, no hard <code>PreToolUse</code> block).</td>
+<td>Usage-window tracking (<code>/heavy-usage:usage</code>) feeding <code>/marola-devkit:mip-solve-perpetual</code>'s wind-down math — see <code>docs/3-Working-on-the-repo/DEV-FLOW.md</code>'s "verified against its actual source" section for exactly what it can and can't do (soft signal only, no hard <code>PreToolUse</code> block).</td>
 </tr>
 <tr>
 <td><code>portal@portal</code> (<code>spotify/portal-ai-plugins</code>)</td>
@@ -3554,7 +3593,7 @@ here would drift. Use it for the parts of skill work <code>writing-skills</code>
 <ul>
 <li>"Frontend design" style skills: relevant only once MIP-0005's map page exists; add then.</li>
 <li>Any skill that generates safety text or marine facts: violates the "no unsourced text reaches a
-  user" rule (<code>.claude/skills/mip/SKILL.md</code>).</li>
+  user" rule (<code>/marola-devkit:mip</code>).</li>
 </ul>
 
 
