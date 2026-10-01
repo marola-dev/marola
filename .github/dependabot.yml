@@ -1,5 +1,4 @@
-# Scala/sbt dependencies (core/local/cli) are watched by scala-steward.yml instead — see
-# CONTRIBUTING.md.
+# The Scala app's dependencies are marola-app's (its scala-steward.yml and dependabot.yml).
 #
 # One pull request for every dependency update (dspy/ and finetune/'s pip entries left with their
 # code for marola-ml, MIP-0070). The multi-ecosystem group's schedule (Mondays and Fridays, 09:00

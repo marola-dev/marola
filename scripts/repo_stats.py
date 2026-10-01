@@ -50,8 +50,9 @@ from pathlib import Path
 
 SCHEMA = 1
 
-SCALA_PATHS = ("core", "local", "cli")
-PYTHON_PATHS = ("scripts",)
+# The app is the marola-app submodule (MIP-0070 task 15); ci.yml checks it out for the count.
+SCALA_PATHS = ("marola-app/core", "marola-app/local", "marola-app/cli")
+PYTHON_PATHS = ("scripts", "marola-app/scripts")
 EXCLUDE_DIRS = ("target", "__pycache__", ".venv", "venv", "node_modules")
 
 SCALA_COLOR = "DC322F"  # = the README's hand-written Scala badge
@@ -62,11 +63,9 @@ PYTHON_COLOR = "3776AB"  # = python.org's brand blue, as used by shields' own py
 # already runs, not a second, friendlier suite. (The `.sh` self-tests in the same recipe are not
 # Python and cannot contribute statements.)
 SELF_TEST_SCRIPTS = (
-    "scripts/smoke_record.py",
     "scripts/repo_stats.py",
     "scripts/arxiv_digest.py",
     "scripts/awesome_agentic_digest.py",
-    "scripts/ocr-post.py",
     "scripts/mip_graph.py",
     "scripts/strip_external_scripts.py",
 )
