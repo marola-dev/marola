@@ -4,18 +4,18 @@ Which Claude Code skills to use here, in-repo and from the **superpowers** plugi
 rule of thumb from `AGENTS.md`: every loaded skill costs context on every turn, so adopt the ones
 that map to a real step of this repo's workflow and skip the rest.
 
-Harness note: the in-repo skills (§1) are plain `SKILL.md` files that OpenCode also discovers
+Harness note: in-repo skills (§1, none here since the split) are plain `SKILL.md` files that OpenCode also discovers
 (`.claude/skills/` is on its search path); the marola-devkit plugin (§1.1) and superpowers (§2)
 are Claude Code only. See
 `docs/MIPs/MIP-0013-opencode-tryout.md`.
 
 ## 1. In-repo skills (`.claude/skills/`)
 
-The map's `site-frontend` skill moved to [marola-site](https://github.com/marola-dev/marola-site) with the page.
-
-| Skill | Use when | Notes |
-|---|---|---|
-| `eli5` | Someone needs a topic explained from zero — a rip current, swell period, upwelling, the swimability score, the Kyo effect boundary — or `/eli5 <topic>` | The teaching layer, read-only: grounds the explanation in `knowledge/*.md` (for sea topics, the same corpus `--ask` answers from) or `docs/2-Building-marola/ARCHITECTURE.md`/`docs/MIPs/` (for internals), one picture before the prose, pt-BR or English to match the question. Writes nothing but an optional page under `.tmp/eli5/`; a fact that belongs in the corpus goes through `corpus-doc` instead. Adapted from the community `eli5` skill (Thariq Shihipar, MIT) |
+The map's `site-frontend` skill moved to [marola-site](https://github.com/marola-dev/marola-site)
+with the page, and `eli5` and `corpus-doc` to
+[marola-corpus](https://github.com/marola-dev/marola-corpus) with the corpus (MIP-0070 task 13),
+so this repo has no `.claude/skills/` of its own. Inside the umbrella, start the session in
+`marola-corpus/` to have them.
 
 ## 1.1 marola-devkit plugin skills
 
@@ -137,7 +137,7 @@ here would drift. Use it for the parts of skill work `writing-skills` leaves to 
 
 - **Evals** — skill-creator's two formats: `{prompt, expected_output, assertions}` output cases in
   `evals/evals.json`, `{query, should_trigger}` trigger sets in `evals/trigger-evals.json`
-  (`corpus-doc` predates the split and keeps its trigger set in `evals.json`).
+  (marola-corpus's `corpus-doc` predates the split and keeps its trigger set in `evals.json`).
   `scripts/quick_validate.py` checks frontmatter against the portable spec only, so it flags
   Claude Code's own keys (`model`, `effort`, `argument-hint`, …) — expected.
 - **Description tuning** — its trigger-rate loop, when a skill fires too often or never.
@@ -154,8 +154,8 @@ Proposed, with hooks, rules, subagents and a permission allowlist, as
 - **`benchmark-compare`**: run `just benchmark` twice at temperature 0, diff against
   `docs/benchmarks/`, and write the comparison paragraph a PR needs when it touches prompts, corpus
   or embedder.
-- **`corpus-doc`**: add a `knowledge/*.md` document: title, one `Source:` URL, paragraphs, then the
-  human-check note in `knowledge/README.md`, then re-index and one `just ask` that should now cite it.
+- **`corpus-doc`**: written, and now in marola-corpus: a `knowledge/*.md` document with a title,
+  one `Source:` URL and paragraphs, then one `just ask` that should cite it.
 - **`water-provider`**: probe a new agency feed the way MIP-0001 §4.1 probed IMA, and scaffold a
   `WaterQualityClient` + fixture + spec.
 

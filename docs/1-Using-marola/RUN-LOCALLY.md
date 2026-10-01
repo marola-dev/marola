@@ -77,7 +77,7 @@ mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --summarize"
 ...
 [info] running marola.Main -- --summarize
 marola :: best hour tomorrow to swim nearby (POC)
-config -> telegram=unset llm=Local(http://localhost:11434/v1 llama3.2) embed=llama3.2 knowledge=./knowledge -> ./data/knowledge-index.json lore=on ask=General>=0.0 origin=-27.6733,-48.4700 radius=15km water=Auto sightings=Local(./data/sightings.jsonl) vision=Local(llava)
+config -> telegram=unset llm=Local(http://localhost:11434/v1 llama3.2) embed=llama3.2 knowledge=.tmp/knowledge -> ./data/knowledge-index.json lore=on ask=General>=0.0 origin=-27.6733,-48.4700 radius=15km water=Auto sightings=Local(./data/sightings.jsonl) vision=Local(llava)
 origin -> lat=-27.6733, lon=-48.4700 (radius 15km, source: MAROLA_ORIGIN_LAT/MAROLA_ORIGIN_LON)
 water quality -> IMA/SC
  1. [ 55/100] Praia da Joaquina      (4.6km)  Sun 6 Sep, 10:00  |  water: PRÓPRIA (1/1 pts, 25 Aug)  |  19.0°C, 27km/h, 1.3m  |  jellyfish: Low  |  choppy (1.3m waves), breezy (27km/h), cold water (19.0°C)
@@ -168,8 +168,9 @@ just run -- --analyze-photo ./some-beach-photo.jpg
 ## 5.1 Ask the ocean notes (local RAG) and the marola model variant
 
 ```bash
-# Grounded Q&A over knowledge/*.md — first run embeds the corpus with llama3.2 (seconds on a GPU,
-# a few minutes on CPU), later runs reuse ./data/knowledge-index.json:
+# Grounded Q&A over the marola-corpus release in corpus.version, which `just ask` first unpacks into
+# .tmp/knowledge (once per pin). The first run embeds it with llama3.2 (seconds on a GPU, a few
+# minutes on CPU); later runs reuse ./data/knowledge-index.json:
 just ask "what should I do if I get caught in a rip current?"
 
 # Expected shape: an answer with [n] citations, then the passages' sources

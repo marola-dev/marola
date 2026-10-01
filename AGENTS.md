@@ -33,6 +33,11 @@ One sbt multi-project build (root `build.sbt`), split into three modules at the 
   with no source of its own).
 - `dspy/`: offline Python DSPy prompt-compile step; produces a JSON artifact the Scala side
   loads, never a runtime dependency.
+- The knowledge corpus (`--ask`'s sourced notes) and its `corpus-doc`/`eli5` skills live in
+  [marola-corpus](https://github.com/marola-dev/marola-corpus) (the `marola-corpus/` submodule).
+  `corpus.version` pins its release; `just corpus-fetch` unpacks it into `.tmp/knowledge`, which
+  `just test`/`ask`/`run` and the image read. `MAROLA_KNOWLEDGE_DIR=marola-corpus/knowledge` uses
+  the submodule's checkout instead, to try an unreleased document.
 
 `PHILOSOPHY.md` (repo root) holds the reasons behind the rules below: why Scala 3 on the JVM, Nix,
 `just`, ai-jail, MIPs. Docs live under `docs/`, grouped into the four audience directories the
@@ -66,7 +71,7 @@ are the only thing ordering the sections. The build is `--strict`, so a link tha
 inside `docs/` fails it; that is why `AGENTS.md`, `PHILOSOPHY.md` and `docs/benchmarks/` are
 referenced at GitHub rather than relatively. Preview with `just docs-serve` before pushing. On
 `main`, a push touching `docs/**` or `mkdocs/**` runs `docs.yml`, which renders this repo's docs
-plus every submodule's (`mkdocs/repos.yml`; `marola-site` is the first), folds the API docs in
+plus every submodule's (`mkdocs/repos.yml`: `marola-site`, `marola-corpus`), folds the API docs in
 under `api/` from release assets, and deploys docs.marola.dev. The map at marola.dev is
 [marola-site](https://github.com/marola-dev/marola-site)'s.
 

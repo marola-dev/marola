@@ -76,7 +76,7 @@ projeto (uma "MIP"), para que você veja exatamente o que já está pronto e o q
   valioso.
 - **Conte o que você vê na água**, como água-viva ou baleia, ou uma praia que está faltando.
 - **Compartilhe conhecimento local**: segurança no mar, vida marinha, condições da sua praia. Tudo
-  o que o marola explica vem de uma nota com fonte em [`knowledge/`](./knowledge/).
+  o que o marola explica vem de uma nota com fonte em [marola-corpus](https://github.com/marola-dev/marola-corpus).
 - **Abra uma issue**, em português ou em inglês:
   [github.com/marola-dev/marola/issues](https://github.com/marola-dev/marola/issues).
 
