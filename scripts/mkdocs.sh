@@ -82,10 +82,16 @@ run() {
   compose=("$rt" compose -p "$project")
   export PODMAN_COMPOSE_WARNING_LOGS=false
 
+  # DOCS_SRC overrides what gets staged, relative to repo_root: docs.yml points this at the
+  # aggregated tree scripts/prepare-docs.sh builds (this repo's docs/ plus every submodule's), so
+  # the tracked docs/ tree itself is never written to (MIP-0070 §5.5, ruling T10-8).
+  local docs_src="$repo_root/docs"
+  [ -n "${DOCS_SRC:-}" ] && docs_src="$repo_root/$DOCS_SRC"
+
   cd "$repo_root/mkdocs"
   "${compose[@]}" "${files[@]}" down >/dev/null 2>&1 || true
   rm -rf generated-docs
-  stage_docs "$repo_root/docs" docs
+  stage_docs "$docs_src" docs
   "$rt" build --tag "$image" --rm .
 
   # -d then `logs -f`, not a foreground `up`: podman-compose does not enforce depends_on health
