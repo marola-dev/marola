@@ -43,7 +43,8 @@ jobs:
               - '.scalafix.conf'
               - '**/src/main/resources/**'
               - '**/src/test/resources/**'
-              - 'knowledge/**'        # RagOfflineSpec reads the real corpus
+              - 'corpus.version'      # RagOfflineSpec reads the pinned corpus release
+              - 'scripts/corpus-fetch.sh'
               - '.github/workflows/ci.yml'
             python:
               - 'dspy/**'
@@ -76,11 +77,15 @@ jobs:
               - 'mkdocs/**'
               - '.gitmodules'
               - 'marola-site'
+              - 'marola-corpus'
 
   build-test:
     needs: changes
     if: needs.changes.outputs.scala == 'true'
     uses: marola-dev/marola-devkit/.github/workflows/scala-ci.yml@v0.2.2
+    with:
+      # corpusFetch (build.sbt) puts the release in corpus.version where RagOfflineSpec reads it.
+      sbt-tasks: 'corpusFetch scalafmtCheckAll "scalafixAll --check" compile test'
 
   # scala-ci leaves coverage out on purpose (marola-app-specific): `sbt-scoverage`
   # (project/plugins.sbt) re-instruments core/local/cli after the gate above passed, and
@@ -117,7 +122,7 @@ jobs:
 
       - name: Coverage — instrumented build, statement %, shields.io endpoint JSON
         run: |
-          sbt clean coverage test coverageReport coverageAggregate
+          sbt clean corpusFetch coverage test coverageReport coverageAggregate
           xml="$(find target -maxdepth 3 -path '*/scoverage-report/scoverage.xml')"
           python3 - "$xml" > coverage.json <<'PY'
           import json, re, sys
@@ -253,6 +258,7 @@ jobs:
         python3 scripts/benchmark_gate.py --self-test
         python3 scripts/repo_stats.py --self-test
         scripts/gh-billing.sh --self-test
+        scripts/corpus-fetch.sh --self-test
         scripts/site-data-push.sh --self-test
         scripts/build-resources-tarball.sh --self-test
         python3 scripts/ocr-post.py --self-test

@@ -7,7 +7,7 @@ import kyo.*
 import marola.llm.{ChatMessage, LlmClient}
 
 /**
- * The RAG mechanics — chunking the real `knowledge/` corpus, indexing, fingerprint caching,
+ * The RAG mechanics — chunking the real marola-corpus release, indexing, fingerprint caching,
  * retrieval, and grounded prompt building — with a deterministic bag-of-words "embedder" instead of
  * Ollama.
  */
@@ -32,11 +32,10 @@ class RagOfflineSpec extends munit.FunSuite:
         }
       }
 
-  // MIP-0070 §5.4: no directory walk — MAROLA_KNOWLEDGE_DIR is the one thing that says where the
-  // corpus is, so a wrong or empty pin fails these tests loudly instead of silently finding the
-  // real knowledge/ some levels up.
+  // MIP-0070 §5.4: no directory walk — MAROLA_KNOWLEDGE_DIR, else the release corpus-fetch.sh
+  // unpacked, so a wrong or empty pin fails these tests loudly instead of finding a stray copy.
   private val knowledgeDir: Path =
-    Paths.get(sys.env.getOrElse("MAROLA_KNOWLEDGE_DIR", "knowledge"))
+    Paths.get(sys.env.getOrElse("MAROLA_KNOWLEDGE_DIR", ".tmp/knowledge"))
 
   private def store(embedder: Embedder, tmp: Path) =
     FileKnowledgeStore(knowledgeDir.toString, tmp.resolve("index.json").toString, embedder)

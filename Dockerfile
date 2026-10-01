@@ -33,9 +33,11 @@ RUN addgroup -S -g 10001 marola && adduser -S -u 10001 -G marola marola \
  && mkdir -p /app/data && chown -R marola:marola /app
 WORKDIR /app
 COPY --from=builder /marola.jar /app/marola.jar
-# RAG corpus lives here for `--ask`. `board.schema.json` ships inside the jar; `--site` writes
-# board data only (SiteBuilder, MIP-0070 §5.4) from an `--areas` file the caller passes in.
-COPY --chown=marola:marola knowledge /app/knowledge
+# RAG corpus for `--ask`: the marola-corpus release pinned in corpus.version, which
+# scripts/corpus-fetch.sh unpacks before the build. `board.schema.json` ships inside the jar;
+# `--site` writes board data only (SiteBuilder, MIP-0070 §5.4) from an `--areas` file the caller
+# passes in.
+COPY --chown=marola:marola .tmp/knowledge /app/knowledge
 USER 10001:10001
 VOLUME ["/app/data"]
 # One CLI run at a time, short-lived: the serial GC and a small heap beat the defaults here.
@@ -69,7 +71,7 @@ FROM gcr.io/distroless/base-debian12:nonroot AS native
 WORKDIR /app
 COPY --from=zlib /usr/lib/x86_64-linux-gnu/libz.so.1 /usr/lib/x86_64-linux-gnu/libz.so.1
 COPY --from=native-build /build/marola /app/marola
-COPY --chown=nonroot:nonroot knowledge /app/knowledge
+COPY --chown=nonroot:nonroot .tmp/knowledge /app/knowledge
 VOLUME ["/app/data"]
 ENTRYPOINT ["/app/marola"]
 CMD ["--brief"]

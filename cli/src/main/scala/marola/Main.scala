@@ -284,7 +284,7 @@ object Main extends KyoApp:
           model = config.localLlmModel,
           embedModel = config.localEmbedModel,
           minScore = config.askMinScore,
-          corpusSha = BenchmarkLedger.corpusSha(Paths.get("knowledge")),
+          corpusSha = BenchmarkLedger.corpusSha(Paths.get(config.knowledgeDir)),
           gitSha = BenchmarkLedger.gitSha()
         )
         for

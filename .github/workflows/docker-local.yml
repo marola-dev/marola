@@ -8,7 +8,7 @@ on:
     paths:
       - "finetune/Modelfile"
       - "Dockerfile.local"
-      - "knowledge/**"
+      - "corpus.version"
       - "core/src/main/resources/**"
       - "cli/src/main/resources/benchmark_questions.json"
       - "scripts/benchmark_gate.py"
@@ -89,9 +89,11 @@ jobs:
 
       # The same `just benchmark`, with the candidate's model; the embedder is the stock llama3.2
       # the image also carries (OllamaEmbedder's default).
+      - run: scripts/corpus-fetch.sh
       - name: just benchmark against the candidate
         env:
           MAROLA_LOCAL_LLM_MODEL: marola-llama3.2
+          MAROLA_KNOWLEDGE_DIR: .tmp/knowledge
         run: sbt "cli/run -- --benchmark"
 
       - uses: actions/upload-artifact@v7

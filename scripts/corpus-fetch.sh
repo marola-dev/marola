@@ -1,53 +1,77 @@
 #!/usr/bin/env bash
-# corpus-fetch — resolve the pin in corpus.version into .tmp/knowledge.
-#
-# MIP-0070 §5.4: once knowledge/ moves to its own repo, `local` is what an in-tree checkout still
-# uses and any other value is a real corpus release tag. Task 13 is the only later change that
-# needs to touch: it teaches `local` a fetch, without RagOfflineSpec/`just ask`/the image build
-# (which all read MAROLA_KNOWLEDGE_DIR, not this script) noticing the difference.
+# corpus-fetch — unpack the marola-corpus release pinned in corpus.version into .tmp/knowledge
+# (MIP-0070 §5.4), where `sbt test`, `just ask` and the image build read it. A pin already
+# fetched is not downloaded again (.tmp/knowledge.version). A corpus checkout, such as the
+# marola-corpus/ submodule, is used without this script: MAROLA_KNOWLEDGE_DIR=marola-corpus/knowledge.
 #
 #   scripts/corpus-fetch.sh              # resolve the pin in the repo root's corpus.version
 #   scripts/corpus-fetch.sh --self-test
+#
+# MAROLA_CORPUS_URL overrides the release base (the self-test serves file:// fixtures).
 set -euo pipefail
 
 fetch() {
-  local root="$1" pin
+  local root="$1" pin base
   pin="$(<"$root/corpus.version")"
-  case "$pin" in
-    local)
-      rm -rf "$root/.tmp/knowledge"
-      mkdir -p "$root/.tmp"
-      cp -r "$root/knowledge" "$root/.tmp/knowledge"
-      ;;
-    *)
-      echo "corpus-fetch: pin '$pin' not yet supported until MIP-0070 task 13" >&2
-      return 1
-      ;;
-  esac
+  [[ "$pin" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "corpus-fetch: corpus.version must be a marola-corpus tag (vX.Y.Z), got '$pin'" >&2; return 1; }
+  if [ -d "$root/.tmp/knowledge" ] && [ "$(cat "$root/.tmp/knowledge.version" 2>/dev/null)" = "$pin" ]; then
+    return 0
+  fi
+  base="${MAROLA_CORPUS_URL:-https://github.com/marola-dev/marola-corpus/releases/download}"
+  mkdir -p "$root/.tmp"
+  # A subshell, so the EXIT trap cleans up without touching the caller's traps.
+  (
+    tmp="$(mktemp -d "$root/.tmp/corpus-fetch.XXXXXX")"
+    trap 'rm -rf "$tmp"' EXIT
+    curl -fsSL --retry 3 -o "$tmp/corpus.tar.gz" "$base/$pin/marola-corpus-$pin.tar.gz" ||
+      { echo "corpus-fetch: could not download marola-corpus $pin from $base" >&2; exit 1; }
+    tar -xzf "$tmp/corpus.tar.gz" -C "$tmp"
+    [ -d "$tmp/knowledge" ] || { echo "corpus-fetch: marola-corpus $pin's tarball has no knowledge/" >&2; exit 1; }
+    rm -rf "$root/.tmp/knowledge"
+    mv "$tmp/knowledge" "$root/.tmp/knowledge"
+    echo "$pin" >"$root/.tmp/knowledge.version"
+    echo "corpus-fetch: marola-corpus $pin -> .tmp/knowledge"
+  )
 }
 
 self_test() {
   local t f=0
   t="$(mktemp -d)"
   trap 'rm -rf "$t"' RETURN
-  mkdir -p "$t/knowledge/safety"
-  echo "# Doc" >"$t/knowledge/doc.md"
-  echo "# Safety doc" >"$t/knowledge/safety/safe.md"
-  echo local >"$t/corpus.version"
+  # Fake releases, laid out as GitHub serves them: <base>/<tag>/marola-corpus-<tag>.tar.gz.
+  release() {
+    local tag=$1 src="$t/src-$1"
+    shift
+    mkdir -p "$src/knowledge/safety" "$t/releases/$tag"
+    for doc in "$@"; do echo "# $doc" >"$src/knowledge/$doc"; done
+    tar -czf "$t/releases/$tag/marola-corpus-$tag.tar.gz" -C "$src" knowledge
+  }
+  release v0.1.0 doc.md safety/safe.md stale.md
+  release v0.2.0 doc.md safety/safe.md
+  mkdir -p "$t/releases/v0.3.0" "$t/empty"
+  tar -czf "$t/releases/v0.3.0/marola-corpus-v0.3.0.tar.gz" -C "$t/empty" .
+  mkdir -p "$t/repo"
+  export MAROLA_CORPUS_URL="file://$t/releases"
 
-  fetch "$t" || { echo "FAIL: local fetch"; f=1; }
-  [ -f "$t/.tmp/knowledge/doc.md" ] || { echo "FAIL: doc.md missing after fetch"; f=1; }
-  [ -f "$t/.tmp/knowledge/safety/safe.md" ] || { echo "FAIL: safety/safe.md missing after fetch"; f=1; }
+  echo v0.1.0 >"$t/repo/corpus.version"
+  fetch "$t/repo" || { echo "FAIL: fetch v0.1.0"; f=1; }
+  [ -f "$t/repo/.tmp/knowledge/safety/safe.md" ] || { echo "FAIL: safety/safe.md missing after fetch"; f=1; }
 
-  # Idempotent re-run: a file that only exists in a stale .tmp/knowledge must not survive.
-  echo stale >"$t/.tmp/knowledge/stale.md"
-  fetch "$t" || { echo "FAIL: second fetch"; f=1; }
-  [ -f "$t/.tmp/knowledge/stale.md" ] && { echo "FAIL: stale file survived a re-fetch (replace, not merge)"; f=1; }
+  # Idempotent: the same pin again is a no-op, so it works offline once fetched.
+  MAROLA_CORPUS_URL="file://$t/nowhere" fetch "$t/repo" || { echo "FAIL: a re-run of the same pin downloaded again"; f=1; }
 
-  echo unreleased-tag >"$t/corpus.version"
-  if fetch "$t" 2>/dev/null; then
-    echo "FAIL: an unsupported pin should exit non-zero"; f=1
-  fi
+  # A bump replaces the tree, it does not merge: what v0.2.0 dropped is gone.
+  echo v0.2.0 >"$t/repo/corpus.version"
+  fetch "$t/repo" || { echo "FAIL: fetch v0.2.0"; f=1; }
+  [ -f "$t/repo/.tmp/knowledge/doc.md" ] || { echo "FAIL: doc.md missing after the bump"; f=1; }
+  [ -f "$t/repo/.tmp/knowledge/stale.md" ] && { echo "FAIL: a file v0.2.0 dropped survived the bump"; f=1; }
+
+  # A failed fetch leaves the last good corpus in place.
+  for pin in v9.9.9 v0.3.0 local; do
+    echo "$pin" >"$t/repo/corpus.version"
+    if fetch "$t/repo" 2>/dev/null; then echo "FAIL: pin $pin should exit non-zero"; f=1; fi
+    [ -f "$t/repo/.tmp/knowledge/doc.md" ] || { echo "FAIL: pin $pin removed the last good corpus"; f=1; }
+  done
 
   echo "corpus-fetch self-test:" "$([ "$f" -eq 0 ] && echo ok || echo FAILED)"
   [ "$f" -eq 0 ]

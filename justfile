@@ -4,6 +4,11 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 # (sbt.internal.BootServerSocket).
 export XDG_RUNTIME_DIR := justfile_directory() + "/.tmp/sbt-runtime"
 
+# Where the app's recipes read the corpus: the release `corpus-fetch` unpacks, unless overridden
+# (a corpus checkout, e.g. MAROLA_KNOWLEDGE_DIR=marola-corpus/knowledge). Not exported: `docker-run`
+# forwards every MAROLA_* variable, and the image's corpus is /app/knowledge.
+knowledge := env("MAROLA_KNOWLEDGE_DIR", ".tmp/knowledge")
+
 # marola-devkit's shared recipes (uprd, pr, stack, issue-*, cost-*, runner-*, …), from the tree the
 # flake's shellHook links at .devkit. Optional so the file still parses outside `nix develop`.
 import? '.devkit/devkit.just'
@@ -49,12 +54,12 @@ log n="10" *args="":
 build:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt compile
 
-test:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt test
+test: corpus-fetch
+    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt test
 
 # Statement coverage across core/local/cli (sbt-scoverage, project/plugins.sbt).
-coverage:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt clean coverage test coverageReport coverageAggregate
+coverage: corpus-fetch
+    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt clean coverage test coverageReport coverageAggregate
 
 # Statement % of scripts/**/*.py, measured while each script's own --self-test runs.
 coverage-python:
@@ -157,12 +162,12 @@ prepush:
     fi
 
 # Run marola's CLI (build.sbt's `cli` project).
-run *args:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run {{ args }}"
+run *args: corpus-fetch
+    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt "cli/run {{ args }}"
 
 # Run marola's MCP tool server — a separate main class from `run`'s (see build.sbt).
-mcp-server:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt -error "cli/runMain marola.agent.SwimConditionsMcpServer"
+mcp-server: corpus-fetch
+    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt -error "cli/runMain marola.agent.SwimConditionsMcpServer"
 
 watch:
     mkdir -p "$XDG_RUNTIME_DIR" && sbt "~compile"
@@ -215,17 +220,17 @@ e2e:
 # Knowledge (local RAG) and fine-tuning — MIP-0001, docs/4-Research-and-plans/FUTURE-WORK.md §9.1
 # ---------------------------------------------------------------------
 
-# Resolve corpus.version's pin into .tmp/knowledge (MIP-0070 §5.4).
+# Unpack the marola-corpus release pinned in corpus.version into .tmp/knowledge (MIP-0070 §5.4).
 corpus-fetch:
     scripts/corpus-fetch.sh
 
-# Ask knowledge/*.md a question — local RAG, Ollama embeds and answers. MIP-0001.
-ask question:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --ask \"{{ question }}\""
+# Ask the corpus a question — local RAG, Ollama embeds and answers. MIP-0001.
+ask question: corpus-fetch
+    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt "cli/run -- --ask \"{{ question }}\""
 
-# Force a re-embed of knowledge/ (normally automatic when a file or the embed model changes).
-knowledge-index:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --reindex"
+# Force a re-embed of the corpus (normally automatic when a file or the embed model changes).
+knowledge-index: corpus-fetch
+    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt "cli/run -- --reindex"
 
 # Tier 2: a trained adapter on its own base, as the Ollama model `marola-sea-<preset>`.
 finetune-adapter-model preset="tiny":
@@ -250,12 +255,12 @@ finetune-train preset="tiny" *args="":
     python3 finetune/train_lora.py --preset {{ preset }} {{ args }}
 
 # marola vs a plain prompt on 22 ocean questions, 3 arms — writes data/benchmark-*.md.
-benchmark:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "cli/run -- --benchmark"
+benchmark: corpus-fetch
+    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt "cli/run -- --benchmark"
 
-# Tier 2 prep: chat-format JSONL from the DSPy demos, sea lore and knowledge/.
-finetune-dataset:
-    python3 finetune/build_dataset.py
+# Tier 2 prep: chat-format JSONL from the DSPy demos, sea lore and the corpus.
+finetune-dataset: corpus-fetch
+    MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" python3 finetune/build_dataset.py
 
 # VRAM, RAM, disk and a rough ETA for a fine-tune on this machine, before starting it. MIP-0048.
 finetune-preflight preset="tiny" *args="":
@@ -305,7 +310,7 @@ docs-serve:
 # ---------------------------------------------------------------------
 
 # Build the CLI image. target=jvm (default), dev, or local (Dockerfile.local). MIP-0008.
-docker-build target="jvm":
+docker-build target="jvm": corpus-fetch
     #!/usr/bin/env bash
     set -euo pipefail
     if [ "{{ target }}" = local ]; then docker build -f Dockerfile.local -t marola:local .; else docker build --target {{ target }} -t marola:{{ target }} .; fi
