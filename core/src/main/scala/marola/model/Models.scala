@@ -96,7 +96,7 @@ final case class BestHour(
     score: Int,
     jellyfishRisk: JellyfishRisk,
     whaleSightingLikelihood: WhaleSightingLikelihood,
-    notes: List[String],
+    notes: List[marola.scoring.Note],
     // MIP-0001: per-beach bathing-water verdict (None when no provider/no matched point), the
     // day's tide turns, and the daylight hour with the best whale-spotting odds — all computed
     // once per beach in `Recommender.scoreTomorrow`, carried here so `Main`'s detailed block and

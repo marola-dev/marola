@@ -7,7 +7,7 @@
   "required": ["schema", "area", "day", "today", "generated_at", "sources", "lore", "beaches"],
   "additionalProperties": false,
   "properties": {
-    "schema": { "type": "integer", "enum": [1] },
+    "schema": { "type": "integer", "enum": [1, 2], "description": "2 adds note_codes (MIP-0054 §5.1); a schema-1 board still validates" },
     "area": { "type": "string" },
     "day": { "type": "string", "description": "ISO date the hours belong to, in the area's zone" },
     "today": { "type": "string", "description": "ISO date the board was computed for ('today' in the area's zone) — water-quality freshness is judged against it" },
@@ -43,6 +43,19 @@
   },
   "$defs": {
     "likelihood": { "type": "string", "enum": ["Low", "Moderate", "High"] },
+    "note_codes": {
+      "description": "MIP-0054 §5.1: the same reasons as notes, in the same order, as codes the page words per language. Optional: a schema-1 board has none. args: numbers stay numbers, dates are ISO strings. Per code: rough_seas/choppy {wave_m}; strong_wind/breezy {wind_kmh}; cold_water/warm_water {sea_temp_c}; rain_likely {rain_pct}; water_stale {sampled_on}; water_unfit {source, sampled_on, point, location, enterococci_per_100ml (absent when unknown)}; water_mixed {proper, total, avoid: [location]}; no_wave_data, no_wind_data, no_sea_temp_data, dark, jellyfish_elevated, jellyfish_some {}",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "args"],
+        "additionalProperties": false,
+        "properties": {
+          "code": { "type": "string", "enum": ["rough_seas", "choppy", "no_wave_data", "strong_wind", "breezy", "no_wind_data", "cold_water", "warm_water", "no_sea_temp_data", "rain_likely", "dark", "jellyfish_elevated", "jellyfish_some", "water_stale", "water_unfit", "water_mixed"] },
+          "args": { "type": "object" }
+        }
+      }
+    },
     "hhmm": { "type": "string", "description": "local time, HH:mm" },
     "near_anchor": {
       "description": "the nearer beach/lake anchor of this kind, or null when none is within 500m (or none nearby carries a name)",
@@ -87,7 +100,8 @@
           "properties": {
             "hour": { "$ref": "#/$defs/hhmm" },
             "score": { "type": "integer", "description": "0-100; 0 with water.unfit=true is a veto" },
-            "notes": { "type": "array", "items": { "type": "string" } }
+            "notes": { "type": "array", "items": { "type": "string" } },
+            "note_codes": { "$ref": "#/$defs/note_codes" }
           }
         },
         "hours": {
@@ -101,6 +115,7 @@
               "h": { "$ref": "#/$defs/hhmm" },
               "score": { "type": "integer" },
               "notes": { "type": "array", "items": { "type": "string" } },
+              "note_codes": { "$ref": "#/$defs/note_codes" },
               "sea_temp_c": { "type": ["number", "null"] },
               "wave_m": { "type": ["number", "null"] },
               "wind_kmh": { "type": ["number", "null"] },

@@ -128,7 +128,7 @@ class PipelineGoldenSpec extends munit.FunSuite:
       Set("Ponto 35", "Ponto 73", "Ponto 75", "Ponto 89", "Ponto 90")
     )
     assert(
-      campeche.notes.exists(n => n.contains("avoid") && n.contains("Riozinho")),
+      campeche.notes.map(_.english).exists(n => n.contains("avoid") && n.contains("Riozinho")),
       campeche.notes.toString
     )
     assert(Report.waterSummary(campeche).startsWith("4/5 PRÓPRIA"), Report.waterSummary(campeche))

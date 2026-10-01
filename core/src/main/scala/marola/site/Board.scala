@@ -20,7 +20,7 @@ import marola.water.{BathingCondition, WaterQuality}
 object Board:
 
   /** Bumped when a consumer would need to change; the page refuses a board it doesn't know. */
-  val SchemaVersion = 1
+  val SchemaVersion = 2
 
   final case class Sources(beaches: String, forecast: String, water: Option[String])
 
@@ -82,7 +82,8 @@ object Board:
       "best" -> JsonValue.obj(
         "hour" -> JsonValue.str(best.hour.time.format(hhmm)),
         "score" -> JsonValue.num(best.score.toDouble),
-        "notes" -> JsonValue.arr(best.notes.map(JsonValue.str)*)
+        "notes" -> JsonValue.arr(best.notes.map(n => JsonValue.str(n.english))*),
+        "note_codes" -> JsonValue.arr(best.notes.map(_.json)*)
       ),
       "hours" -> JsonValue.arr(hours.map(hourJson)*),
       "water" -> waterJson(best.waterQuality, today),
@@ -112,7 +113,8 @@ object Board:
     JsonValue.obj(
       "h" -> JsonValue.str(r.hour.time.format(hhmm)),
       "score" -> JsonValue.num(r.score.toDouble),
-      "notes" -> JsonValue.arr(r.notes.map(JsonValue.str)*),
+      "notes" -> JsonValue.arr(r.notes.map(n => JsonValue.str(n.english))*),
+      "note_codes" -> JsonValue.arr(r.notes.map(_.json)*),
       "sea_temp_c" -> optNum(r.hour.seaTempC),
       "wave_m" -> optNum(r.hour.waveHeightM),
       "wind_kmh" -> optNum(r.hour.windSpeedKmh),
@@ -167,7 +169,7 @@ object Board:
     JsonValue.obj(
       "summary" -> JsonValue.str(verdict.summary),
       "unfit" -> JsonValue.bool(verdict.veto),
-      "note" -> optStr(verdict.note),
+      "note" -> optStr(verdict.note.map(_.english)),
       "source" -> optStr(water.map(_.source)),
       "points" -> JsonValue.arr(points*)
     )
