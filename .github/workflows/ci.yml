@@ -268,6 +268,8 @@ jobs:
         scripts/build-resources-tarball.sh --self-test
         python3 scripts/ocr-post.py --self-test
         python3 scripts/i18n_bundle.py --self-test
+        scripts/prepare-docs.sh --self-test
+        scripts/fetch-api-docs.sh --self-test
 
   static-ci:
     needs: changes
