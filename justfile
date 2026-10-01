@@ -101,6 +101,8 @@ quality-other:
     python3 scripts/ocr-post.py --self-test
     python3 scripts/mip_graph.py --self-test
     scripts/mkdocs.sh --self-test
+    scripts/prepare-docs.sh --self-test
+    scripts/fetch-api-docs.sh --self-test
     python3 scripts/strip_external_scripts.py --self-test
     workflow-runners
     python3 scripts/mip_graph.py --check
