@@ -57,6 +57,7 @@ jobs:
               - '.github/ISSUE_TEMPLATE/**'  # issues.sh --self-test parses these forms
               - '.github/labels.yml'          # and diffs this manifest
               - 'docs/MIPs/*.tasks.md'        # mip_graph.py --check regenerates the graph from all of them
+              - 'docs/PHASES.md'    # issues.sh --self-test parses it for real when this checkout has one
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
             site:
               - 'site/**'            # app.js/CSS/fixtures → scripts/site_check.js (MIP-0009 task 2)

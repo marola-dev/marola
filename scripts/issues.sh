@@ -3033,6 +3033,69 @@ EOF
     "$(grep -c -- '— already wired' <<<"$t2y_out")" "0"
   check "it is wired fresh instead" "$(grep -c '^edge 500 <- 500' "$t2y/log")" "1"
 
+  echo
+  echo "-- tasks-to-issues: an unresolvable H1 refuses the run rather than filing under a bare title (§5.7, review round 2 #5) --"
+  local t2h="$tmp/t2h" t2h_out t2h_file t2h_rc=0
+  write_gh_stub "$t2h"
+  : > "$t2h/stateful"
+  printf '[]\n' > "$t2h/mip-list.json"
+  printf '[]\n' > "$t2h/issues-all.json"
+  printf '{"projects":[{"number":7,"id":"PVT_t2h","title":"Marola"}]}\n' > "$t2h/projects.json"
+  printf '{"fields":[{"id":"PVTF_t","name":"Title","type":"ProjectV2Field"}]}\n' > "$t2h/fields.json"
+  printf '{"items":[]}\n' > "$t2h/items.json"
+  t2h_file="$t2h/MIP-0091.tasks.md"
+  {
+    echo '| # | slug | delivers | tests | depends on |'
+    echo '|---|---|---|---|---|'
+    printf '| 1 | a-thing | d | t | – |\n'
+  } > "$t2h_file"
+  : > "$t2h/log"
+  t2h_out="$(PATH="$t2h/bin:$PATH" STUB_DIR="$t2h" STUB_LOG="$t2h/log" STUB_SCOPES=project nwo="" \
+    MAROLA_UMBRELLA=marola-dev/marola cmd_tasks_to_issues "$t2h_file" 2>&1)" || t2h_rc=$?
+  check "an unresolvable H1 refuses the run" "$t2h_rc" "1"
+  check "with a clear message naming the MIP and the reason" \
+    "$(grep -c "could not resolve MIP-0091's own H1" <<<"$t2h_out")" "1"
+  check "nothing was created before the refusal" "$(cat "$t2h/log")" ""
+
+  echo
+  echo "-- tasks-to-issues: --milestone is scoped to the umbrella — a foreign-repo row gets none (§5.7 Decision 6, review round 2 #6) --"
+  local t2m="$tmp/t2m" t2m_out t2m_file
+  write_gh_stub "$t2m"
+  : > "$t2m/stateful"
+  printf '[{"name":"MIP-0090-demo.md"}]\n' > "$t2m/mip-list.json"
+  mkdir -p "$t2m/mip-content"
+  printf '# MIP-0090: A demo MIP\n' > "$t2m/mip-content/MIP-0090-demo.md"
+  printf 'marola-dev/marola-m\n' > "$t2m/existing-repos"
+  printf '[{"number":9,"title":"Launch week"}]\n' > "$t2m/milestones.json"
+  printf '[]\n' > "$t2m/issues-all.json"
+  printf '[]\n' > "$t2m/issues-all.marola-dev_marola-m.json"
+  printf '{"projects":[{"number":7,"id":"PVT_t2m","title":"Marola"}]}\n' > "$t2m/projects.json"
+  printf '{"fields":[{"id":"PVTF_t","name":"Title","type":"ProjectV2Field"}]}\n' > "$t2m/fields.json"
+  printf '{"items":[]}\n' > "$t2m/items.json"
+  t2m_file="$t2m/MIP-0090.tasks.md"
+  {
+    echo '| # | slug | delivers | tests | depends on |'
+    echo '|---|---|---|---|---|'
+    printf '| 1 | own-thing | d | t | – |\n'
+    printf '| 2 | foreign-thing | **marola-m** — x | t | – |\n'
+  } > "$t2m_file"
+  : > "$t2m/log"
+  # --dry-run, not a real create: run()'s dry branch prints each `gh issue create` through `%q`,
+  # which escapes the row body's own embedded newlines inline rather than emitting them literally
+  # — the whole invocation stays on one grep-able line, parent and rows alike.
+  t2m_out="$(PATH="$t2m/bin:$PATH" STUB_DIR="$t2m" STUB_LOG="$t2m/log" STUB_SCOPES=project nwo="" \
+    dry=1 MAROLA_UMBRELLA=marola-dev/marola cmd_tasks_to_issues "$t2m_file" --milestone "Launch week" 2>&1)" || failed=1
+  local t2m_parent_line t2m_own_line t2m_foreign_line
+  t2m_parent_line="$(grep -- '--repo marola-dev/marola --title MIP-0090:' <<<"$t2m_out")"
+  t2m_own_line="$(grep -- '--repo marola-dev/marola --title 0090-T1:' <<<"$t2m_out")"
+  t2m_foreign_line="$(grep -- '--repo marola-dev/marola-m --title 0090-T2:' <<<"$t2m_out")"
+  check "the parent's create call is captured" "$([ -n "$t2m_parent_line" ] && echo yes || echo no)" "yes"
+  check "and it carries the milestone" "$(grep -c -- '--milestone' <<<"$t2m_parent_line")" "1"
+  check "the umbrella row's create call is captured" "$([ -n "$t2m_own_line" ] && echo yes || echo no)" "yes"
+  check "and it carries the milestone too" "$(grep -c -- '--milestone' <<<"$t2m_own_line")" "1"
+  check "the foreign-repo row's create call is captured" "$([ -n "$t2m_foreign_line" ] && echo yes || echo no)" "yes"
+  check "and it carries no milestone" "$(grep -c -- '--milestone' <<<"$t2m_foreign_line")" "0"
+
   echo "-- the board: scopes, the Status lookup and the sync plan (MIP-0063 §5.2) --"
   check "read:project is not project" "$(has_scope "repo, read:project, workflow" project && echo yes || echo no)" "no"
   check "project is" "$(has_scope "repo, project, workflow" project && echo yes || echo no)" "yes"
