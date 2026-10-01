@@ -209,7 +209,7 @@ is green; MIP status right; `docs/4-Research-and-plans/FABLE_REVIEW.md` item clo
   (`cost-fill`, run by `stack pr` — itself run by `just pr`, or directly per
   step 2 of `/marola-devkit:mip-tasks` — writes it above the trailers), so the
   squash-merge commit on `main` closes the issue and the board moves it to Done. The PR body
-  carries the same line too (`uprd.sh` copies it there so the link shows on GitHub), but in this
+  carries the same line too (`uprd` copies it there so the link shows on GitHub), but in this
   repo the body-only line did not close anything: #514–#519 carried it and their issues
   #502–#507 stayed open past merge (cause unknown, #524), while #511/#512 closed on a commit-body
   one. `TASK_PARTIAL=1 just pr` skips the line for a task that only delivers part of its row,

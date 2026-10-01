@@ -8,6 +8,9 @@ on:
     # labeled/unlabeled only for task-partial, which flips Closes #N to Part of #N (#512).
     types: [opened, reopened, ready_for_review, synchronize, labeled, unlabeled]
 
+# No concurrency block here: the callee declares `pr-body-<PR>` with cancel-in-progress, so a newer
+# run supersedes an older one (else a synchronize run could rewrite Closes after a task-partial run
+# wrote Part of). A second group here would deadlock against it.
 permissions:
   contents: read
   pull-requests: write

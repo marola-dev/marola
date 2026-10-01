@@ -251,12 +251,14 @@ jobs:
         run: scripts/mkdocs.sh
 
   # Free, fast, and independent of the JVM build — the same gates as `just quality-other`, split
-  # across the devkit's reusable workflows plus the nix-only checks below.
+  # across the devkit's reusable workflows plus the nix-only checks below. The tool versions are
+  # what flake.lock's nixpkgs builds for labs/lint (0968519): move them with `nix flake update`.
   python-ci:
     needs: changes
     if: needs.changes.outputs.python == 'true'
     uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.2.0
     with:
+      ruff-version: "0.16.5"
       self-test-commands: |
         python3 scripts/smoke_record.py --self-test
         python3 scripts/benchmark_gate.py --self-test
@@ -271,6 +273,8 @@ jobs:
     if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true' || needs.changes.outputs.site == 'true'
     uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.2.0
     with:
+      actionlint-version: "1.7.12"
+      hadolint-version: "2.14.0"
       # Dockerfile.local is missing until MIP-0065 task 2 fixes its hadolint failure.
       hadolint-files: Dockerfile mkdocs/Dockerfile
       # The site harness runs app.js against site/fixtures in a stub DOM (MIP-0009); every compose

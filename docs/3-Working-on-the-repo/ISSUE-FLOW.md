@@ -74,7 +74,7 @@ run by `stack pr` (itself run by `just pr`, or directly per
 `/marola-devkit:mip-tasks`'s step 2), writes `Closes #N` into the branch's own commit body,
 above the `Tested:`/`Cost:`/`Co-Authored-By:` trailers, for the issue that row `k` of
 `MIP-NNNN.tasks.md` links; the merge into `main` then closes it, and that clears rule 5 for every
-task blocked by it. `uprd.sh` still copies the same line into the PR body so the link is visible on
+task blocked by it. `uprd` still copies the same line into the PR body so the link is visible on
 GitHub, but that copy closes nothing by itself. Set `TASK_PARTIAL=1` before `just pr` for a task
 that only delivers part of its row — cost-fill then writes no `Closes #N` at all, since the
 `task-partial` label a PR would otherwise carry doesn't exist yet at first push; the issue stays

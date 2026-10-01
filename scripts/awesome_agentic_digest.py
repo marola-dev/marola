@@ -23,8 +23,8 @@ Cache layout, under .tmp/awesome_agentic_cache/ (gitignored — fetched data, no
                                   fetched_at) — rewritten each run from the current repos/ contents,
                                   so it never drifts from them
 
-Network is stdlib-only (`urllib.request`), matching this repo's other scripts (arxiv_digest.py,
-cost-split.py). GitHub's search API needs no auth token for reasonable unauthenticated use
+Network is stdlib-only (`urllib.request`), matching arxiv_digest.py and marola-devkit's
+cost-split. GitHub's search API needs no auth token for reasonable unauthenticated use
 (confirmed live) but its rate limit is tight (empirically low tens of requests/minute for search
 specifically) — this script runs a small, fixed query set once per invocation, no retry-hammering.
 """

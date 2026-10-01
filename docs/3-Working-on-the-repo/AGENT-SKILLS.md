@@ -28,7 +28,7 @@ The generic skills, and the `mip-reviewer`/`mip-claims-auditor` agents (as
 | `/marola-devkit:mip` | Any non-trivial change: new data source, integration, scoring change, user-visible output, autonomous behaviour | The plan layer. Produces `docs/MIPs/MIP-NNNN-*.md` with verified sources and open questions; implementation is a separate PR with a `Cost:` line |
 | `/marola-devkit:mip-tasks` | An accepted MIP that is more than one PR of work | The delivery layer: `docs/MIPs/MIP-NNNN.tasks.md` (ordered tasks, each with its test) and stacked PRs, one per task, via `stack start / pr / restack / status` |
 | `/marola-devkit:triage` | A raw idea, a voice-note fragment or a bug report that should become one tracked issue | The intake layer for MIP-0063's standard: picks the tier, drafts the body in the matching form's heading shape (`.github/ISSUE_TEMPLATE/`), proposes `area/*`/`layer/*`/`size/*` and checks the five-rule Definition of Ready — then **stops**. Human-invoked only (`disable-model-invocation: true`, MIP-0063 §5.6 Decision 2): an agent filing its own issues would pollute the queue faster than anyone can triage it |
-| `/marola-devkit:voice-note-ingest` | A MIP or task references audio that needs a real transcript, or asked explicitly to transcribe a voice memo | Local Whisper only (`faster_whisper` preferred, `whisper` fallback), pt-BR default; writes `<audio>.txt` next to the file, never commits the audio, translates separately rather than via Whisper's `--task translate`, and anonymizes every name but the repo owner's by hand before the transcript reaches a tracked file. its `scripts/transcribe.py --self-test` checks its own arg-parsing/output-path logic, not wired into `just quality` |
+| `/marola-devkit:voice-note-ingest` | A MIP or task references audio that needs a real transcript, or asked explicitly to transcribe a voice memo | Local Whisper only (`faster_whisper` preferred, `whisper` fallback), pt-BR default; writes `<audio>.txt` next to the file, never commits the audio, translates separately rather than via Whisper's `--task translate`, and anonymizes every name but the repo owner's by hand before the transcript reaches a tracked file. The skill's `scripts/transcribe.py --self-test` checks its own arg-parsing/output-path logic, not wired into `just quality` |
 | `/marola-devkit:voice-to-feature` | Explicitly demoing "voice note to feature" end-to-end, or `/marola-devkit:voice-to-feature` | **Demo-only, not the normal dev flow** (its own description says so): collapses transcribe → draft MIP → scaffold → Draft PR into one pass, gated at the one point that matters — `gh pr merge`/close are tool-level `disallowed-tools`, so nothing it does can reach `main` unattended. Real feature work still goes through `/marola-devkit:mip` then `/marola-devkit:mip-tasks` |
 | `/marola-devkit:humanizer` | Editing or reviewing prose — a doc, a MIP, a PR body, a comment — that reads as generated: staged contrasts, one-line closers, forced triads, dashes everywhere, inflated claims | Vendored verbatim from `blader/humanizer` v3.0.0 (MIT, `LICENSE` beside it), based on Wikipedia's "Signs of AI writing". It rewrites wording only; a claim, number or file reference stays exactly as it was |
 | `/marola-devkit:ponytail`, `…:ponytail-review`, `…:ponytail-audit` | Writing code (`ponytail`), reviewing a diff for over-engineering (`ponytail-review`), or auditing the whole tree for it (`ponytail-audit`) | Vendored verbatim from `DietrichGebert/ponytail` (MIT, `LICENSE` beside each): reuse what the repo has, then the stdlib, then the platform, before writing new code. Review and audit list findings only. Where it disagrees with `AGENTS.md` (comment restraint, the `just build && just test && just quality` gate), `AGENTS.md` wins |
@@ -80,10 +80,10 @@ flowchart LR
   end
   subgraph sessionBN["Session B..N (execute, one per task, Sonnet)"]
     direction TB
-    b1["/rename +<br/>stack.sh start"]
+    b1["/rename +<br/>stack start"]
     b2["executing-plans<br/>(task row = plan)"]
     b3["TDD -><br/>debugging -><br/>verification"]
-    b4["commit (Cost:) -><br/>stack.sh pr"]
+    b4["commit (Cost:) -><br/>stack pr"]
     b5["requesting-code-review<br/>(self-checklist) -> /clear"]
     b1 --> b2 --> b3 --> b4 --> b5
   end
@@ -95,7 +95,7 @@ flowchart LR
   end
   subgraph afterMerge["After each merge"]
     direction TB
-    m1["stack.sh restack"]
+    m1["stack restack"]
     m2["finishing-a-<br/>development-branch"]
     m1 --> m2
   end
