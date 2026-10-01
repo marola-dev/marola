@@ -30,12 +30,12 @@ fetch() {
     rm -rf "$root/.tmp/knowledge"
     mv "$tmp/knowledge" "$root/.tmp/knowledge"
     echo "$pin" >"$root/.tmp/knowledge.version"
-    echo "corpus-fetch: marola-corpus $pin -> .tmp/knowledge"
+    echo "corpus-fetch: marola-corpus $pin -> .tmp/knowledge" >&2
   )
 }
 
 self_test() {
-  local t f=0
+  local t f=0 out
   t="$(mktemp -d)"
   trap 'rm -rf "$t"' RETURN
   # Fake releases, laid out as GitHub serves them: <base>/<tag>/marola-corpus-<tag>.tar.gz.
@@ -48,29 +48,35 @@ self_test() {
   }
   release v0.1.0 doc.md safety/safe.md stale.md
   release v0.2.0 doc.md safety/safe.md
-  mkdir -p "$t/releases/v0.3.0" "$t/empty"
+  mkdir -p "$t/releases/v0.3.0" "$t/releases/v0.4.0" "$t/empty"
   tar -czf "$t/releases/v0.3.0/marola-corpus-v0.3.0.tar.gz" -C "$t/empty" .
+  head -c 40 "$t/releases/v0.1.0/marola-corpus-v0.1.0.tar.gz" >"$t/releases/v0.4.0/marola-corpus-v0.4.0.tar.gz"
   mkdir -p "$t/repo"
   export MAROLA_CORPUS_URL="file://$t/releases"
+  # In a child shell with errexit on, as production runs it: a caller's `||` or `if` would turn
+  # errexit off inside fetch and hide a failing step.
+  run_fetch() { bash -euo pipefail -c "$(declare -f fetch); fetch \"\$1\"" _ "$t/repo" 2>/dev/null; }
 
   echo v0.1.0 >"$t/repo/corpus.version"
-  fetch "$t/repo" || { echo "FAIL: fetch v0.1.0"; f=1; }
+  out="$(run_fetch)" || { echo "FAIL: fetch v0.1.0"; f=1; }
+  [ -z "$out" ] || { echo "FAIL: fetch wrote to stdout (an MCP stdio server runs after it): $out"; f=1; }
   [ -f "$t/repo/.tmp/knowledge/safety/safe.md" ] || { echo "FAIL: safety/safe.md missing after fetch"; f=1; }
 
   # Idempotent: the same pin again is a no-op, so it works offline once fetched.
-  MAROLA_CORPUS_URL="file://$t/nowhere" fetch "$t/repo" || { echo "FAIL: a re-run of the same pin downloaded again"; f=1; }
+  MAROLA_CORPUS_URL="file://$t/nowhere" run_fetch || { echo "FAIL: a re-run of the same pin downloaded again"; f=1; }
 
   # A bump replaces the tree, it does not merge: what v0.2.0 dropped is gone.
   echo v0.2.0 >"$t/repo/corpus.version"
-  fetch "$t/repo" || { echo "FAIL: fetch v0.2.0"; f=1; }
+  run_fetch || { echo "FAIL: fetch v0.2.0"; f=1; }
   [ -f "$t/repo/.tmp/knowledge/doc.md" ] || { echo "FAIL: doc.md missing after the bump"; f=1; }
   [ -f "$t/repo/.tmp/knowledge/stale.md" ] && { echo "FAIL: a file v0.2.0 dropped survived the bump"; f=1; }
 
-  # A failed fetch leaves the last good corpus in place.
-  for pin in v9.9.9 v0.3.0 local; do
+  # A failed fetch (no release, no knowledge/, a truncated tarball, a bad pin) keeps the last good corpus.
+  for pin in v9.9.9 v0.3.0 v0.4.0 local; do
     echo "$pin" >"$t/repo/corpus.version"
-    if fetch "$t/repo" 2>/dev/null; then echo "FAIL: pin $pin should exit non-zero"; f=1; fi
+    if run_fetch; then echo "FAIL: pin $pin should exit non-zero"; f=1; fi
     [ -f "$t/repo/.tmp/knowledge/doc.md" ] || { echo "FAIL: pin $pin removed the last good corpus"; f=1; }
+    [ "$(cat "$t/repo/.tmp/knowledge.version")" = v0.2.0 ] || { echo "FAIL: pin $pin moved the recorded version"; f=1; }
   done
 
   echo "corpus-fetch self-test:" "$([ "$f" -eq 0 ] && echo ok || echo FAILED)"
