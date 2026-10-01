@@ -1,6 +1,6 @@
-# api-docs — build Scaladoc and pdoc and publish them as api-docs.tar.gz on the rolling `api-docs`
-# release, which docs.yml unpacks under docs.marola.dev/api/ (MIP-0070 §5.5). Scaladoc moves to
-# marola-app (task 15) and pdoc to marola-ml (task 14) with their code.
+# api-docs — build Scaladoc and publish it as api-docs.tar.gz on the rolling `api-docs` release,
+# which docs.yml unpacks under docs.marola.dev/api/ (MIP-0070 §5.5). It moves to marola-app with
+# the code (task 15); pdoc is marola-ml's own release asset.
 name: API docs
 
 on:
@@ -10,8 +10,6 @@ on:
       - '**/*.scala'
       - 'build.sbt'
       - 'project/**'
-      - 'scripts/**.py'
-      - 'finetune/build_dataset.py'
   workflow_dispatch:
 
 permissions:
@@ -45,18 +43,10 @@ jobs:
             cp -r "$m"/target/scala-*/api/. out/api/scala/"$m"/
           done
 
-      - name: pdoc for the scripts
-        run: |
-          set -euo pipefail
-          # Every finetune/ script keeps torch/peft/trl behind lazy imports, so pdoc imports them
-          # without the ML stack. pipx, not pip: the hosted image's Python refuses `pip install`.
-          pipx run pdoc -o out/api/python scripts/*.py finetune/*.py || \
-            echo "pdoc produced nothing for some inputs — continuing with what it did produce"
-
       - name: strip third-party scripts so the docs keep script-src 'self'
         run: |
           set -euo pipefail
-          python3 scripts/strip_external_scripts.py out/api/scala out/api/python
+          python3 scripts/strip_external_scripts.py out/api/scala
           python3 scripts/strip_external_scripts.py --check out/api
 
       - name: publish api-docs.tar.gz on the api-docs release
@@ -65,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           tar -czf api-docs.tar.gz -C out/api .
-          notes="Scaladoc + pdoc from ${GITHUB_SHA::12}, unpacked by docs.yml under docs.marola.dev/api/."
+          notes="Scaladoc from ${GITHUB_SHA::12}, unpacked by docs.yml under docs.marola.dev/api/."
           if gh release view api-docs >/dev/null 2>&1; then
             gh release upload api-docs api-docs.tar.gz --clobber
             gh release edit api-docs --notes "$notes" --latest

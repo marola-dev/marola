@@ -1,5 +1,5 @@
 {
-  description = "marola dev shell — Scala 3.9 / Kyo tooling, plus Python for the offline DSPy compile step; works on plain Ubuntu (not NixOS-specific)";
+  description = "marola dev shell — Scala 3.9 / Kyo tooling; works on plain Ubuntu (not NixOS-specific)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -13,10 +13,6 @@
       url = "github:h0ffmann/nix-config/labs/agentic?dir=labs/agentic";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    cuda = {
-      url = "github:h0ffmann/nix-config/labs/cuda?dir=labs/cuda";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # The shared dev-flow harness (MIP-0070 §5.1): stack, uprd, issues, cost-split, … on PATH, the
     # git hooks and the just module under .devkit. Bumped by hand, together with every `@v…` and
     # `devkit-ref:` in .github/workflows/ (dependabot ignores marola-devkit for that reason).
@@ -28,7 +24,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, lint, agentic, cuda, marola-devkit }:
+  outputs = { self, nixpkgs, flake-utils, lint, agentic, marola-devkit }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -40,8 +36,8 @@
         sbtOnJdk25 = pkgs.sbt.override { jre = jdk; };
         devkit = marola-devkit.lib.${system};
 
-        # marola's own tools. Lint, the agent sandbox and the CUDA host scripts come from
-        # labs/lint, labs/agentic and labs/cuda (x86_64-linux only), appended below.
+        # marola's own tools. Lint and the agent sandbox come from labs/lint and labs/agentic,
+        # appended below.
         projectTools = [
           jdk
           sbtOnJdk25
@@ -67,9 +63,9 @@
           pkgs.jq
           pkgs.git
 
-          # The self-hosted Actions runner for marola-sea-publish.yml (`runs-on: [self-hosted,
-          # marola-sea]`): gigabytes of weights, a training run and a Hugging Face token do not
-          # belong on shared infrastructure. Register from ~/.marola-runner with config.sh
+          # The self-hosted Actions runner for marola-ml's marola-sea-publish.yml (`runs-on:
+          # [self-hosted, marola-sea]`): gigabytes of weights, a training run and a Hugging Face
+          # token do not belong on shared infrastructure. Register from ~/.marola-runner with config.sh
           # (--labels marola-sea,dependabot); `just ghar` / `just gha` / `just ghas` drive it.
           # `dependabot` is the label GitHub's own Dependabot needs once "Dependabot on
           # self-hosted runners" is enabled; its updater runs in containers, so the runner user
@@ -84,8 +80,7 @@
       {
         devShells.default = pkgs.mkShell {
           name = "marola";
-          packages = projectTools ++ lint.lib.${system}.tools ++ devkit.tools ++ agentic.lib.${system}.tools
-            ++ pkgs.lib.optionals (system == "x86_64-linux") cuda.lib.${system}.tools;
+          packages = projectTools ++ lint.lib.${system}.tools ++ devkit.tools ++ agentic.lib.${system}.tools;
 
           JAVA_HOME = "${jdk}";
           inherit (agentic.lib.${system}.env) BWRAP_BIN;

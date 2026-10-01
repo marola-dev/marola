@@ -92,14 +92,11 @@ quality-other: corpus-fetch
     ruff check .
     ruff format --check .
     python3 scripts/smoke_record.py --self-test
-    python3 scripts/benchmark_gate.py --self-test
     python3 scripts/repo_stats.py --self-test
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
     scripts/corpus-fetch.sh --self-test
-    scripts/marola-sea-pull.sh --self-test
-    python3 scripts/analyze_training.py --self-test
     scripts/site-data-push.sh --self-test
     scripts/build-resources-tarball.sh --self-test
     python3 scripts/ocr-post.py --self-test
@@ -111,13 +108,8 @@ quality-other: corpus-fetch
     workflow-runners
     python3 scripts/mip_graph.py --check
     agents-check
-    python3 finetune/train_lora.py --self-test
-    MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" python3 finetune/build_dataset.py --self-test
-    python3 finetune/build_dpo_dataset.py --self-test
-    python3 finetune/preflight.py --self-test
-    python3 finetune/merge_export.py --self-test
     actionlint
-    hadolint Dockerfile Dockerfile.local mkdocs/Dockerfile
+    hadolint Dockerfile mkdocs/Dockerfile
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
 
 quality-fix:
@@ -192,11 +184,6 @@ ollama-serve:
         curl -sf -m 2 "$api" >/dev/null || { echo "ollama: server did not come up — see .tmp/ollama.log" >&2; exit 1; }
     fi
 
-# Pull the published marola-sea GGUF from Hugging Face into Ollama as `marola-sea`.
-#   just marola-sea-pull small Q8_0
-marola-sea-pull preset="tiny" quant="Q4_K_M" owner="": ollama-serve
-    scripts/marola-sea-pull.sh {{ preset }} {{ quant }} {{ owner }}
-
 # Make sure an Ollama server is reachable and has `model` pulled.
 ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2") embed=env_var_or_default("MAROLA_LOCAL_EMBED_MODEL", "llama3.2"): ollama-serve
     #!/usr/bin/env bash
@@ -217,7 +204,7 @@ e2e:
         'cli/testOnly marola.E2ESpec'
 
 # ---------------------------------------------------------------------
-# Knowledge (local RAG) and fine-tuning — MIP-0001, docs/4-Research-and-plans/FUTURE-WORK.md §9.1
+# Knowledge (local RAG) — MIP-0001. The fine-tune and the benchmark gate are marola-ml's.
 # ---------------------------------------------------------------------
 
 # Unpack the marola-corpus release pinned in corpus.version into .tmp/knowledge (MIP-0070 §5.4).
@@ -232,64 +219,9 @@ ask question: corpus-fetch
 knowledge-index: corpus-fetch
     mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt "cli/run -- --reindex"
 
-# Tier 2: a trained adapter on its own base, as the Ollama model `marola-sea-<preset>`.
-finetune-adapter-model preset="tiny":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    from="$(python3 -c "import sys; sys.path.insert(0, 'finetune'); from train_lora import PRESETS; print(PRESETS['{{ preset }}']['ollama'])")"
-    gguf="$PWD/finetune/out/{{ preset }}/adapter.gguf"
-    if [ ! -f "$gguf" ]; then
-      echo "no adapter GGUF at $gguf — train it, then convert with llama.cpp's convert_lora_to_gguf.py" >&2
-      exit 1
-    fi
-    mkdir -p .tmp
-    sed -e "s|^FROM .*|FROM $from|" -e "s|^ADAPTER .*|ADAPTER $gguf|" finetune/Modelfile.adapter > .tmp/Modelfile.adapter
-    ollama create marola-sea-{{ preset }} -f .tmp/Modelfile.adapter
-
-# Tier 1: llama3.2 plus marola's persona/decoding as an Ollama model (finetune/Modelfile).
-finetune-model base="llama3.2":
-    mkdir -p .tmp && sed 's/^FROM .*/FROM {{ base }}/' finetune/Modelfile > .tmp/Modelfile && ollama create marola-llama3.2 -f .tmp/Modelfile
-
-# Tier 2: QLoRA adapter. preset=tiny trains on CPU in minutes; small|base need more.
-finetune-train preset="tiny" *args="":
-    python3 finetune/train_lora.py --preset {{ preset }} {{ args }}
-
 # marola vs a plain prompt on 22 ocean questions, 3 arms — writes data/benchmark-*.md.
 benchmark: corpus-fetch
     mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt "cli/run -- --benchmark"
-
-# Tier 2 prep: chat-format JSONL from the DSPy demos, sea lore and the corpus.
-finetune-dataset: corpus-fetch
-    MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" python3 finetune/build_dataset.py
-
-# VRAM, RAM, disk and a rough ETA for a fine-tune on this machine, before starting it. MIP-0048.
-finetune-preflight preset="tiny" *args="":
-    python3 finetune/preflight.py --preset {{ preset }} {{ args }}
-
-# Layer 3 — DPO preference pairs from Reviewer.scala's reject/revise decisions. MIP-0025 §4.3.
-finetune-dpo-dataset:
-    python3 finetune/build_dpo_dataset.py
-
-# Layer 3 training: DPO on top of an existing SFT adapter (`just finetune-train` first).
-finetune-train-dpo preset="tiny" *args="":
-    python3 finetune/train_dpo.py --preset {{ preset }} {{ args }}
-
-# Create/update the venv marola-sea trains in — labs/cuda's setup-ml-venv (h0ffmann/nix-config);
-# call its bin/python-cuda afterwards, never bin/python.
-ml-venv *args:
-    REQUIREMENTS=finetune/requirements.txt VENV_ROOT="${VENV_ROOT:-$HOME/.marola-ml-venv}" setup-ml-venv {{ args }}
-
-# One-time host setup: the CUDA binary cache, so torchWithCuda is fetched, not compiled.
-gpu-cache-setup *args:
-    setup-cuda-cache {{ args }}
-
-# Merge a LoRA adapter into its base and export GGUFs. MIP-0025 §5.1.
-finetune-merge preset="tiny" llama_cpp="" *args="":
-    python3 finetune/merge_export.py --preset {{ preset }} {{ if llama_cpp != "" { "--llama-cpp " + llama_cpp } else { "--dry-run" } }} {{ args }}
-
-# Publish a trained .gguf to a Hugging Face model repo (MIP-0025 §5.1).
-finetune-publish repo gguf base *args:
-    python3 finetune/publish_hf.py --repo {{ repo }} --gguf {{ gguf }} --base-model {{ base }} {{ args }}
 
 # ---------------------------------------------------------------------
 # The docs site — MIP-0064: mkdocs-material + a self-hosted Kroki (mkdocs/)
@@ -309,11 +241,9 @@ docs-serve:
 # Docker — MIP-0008: the CLI as an image (Dockerfile, docker-compose.yml)
 # ---------------------------------------------------------------------
 
-# Build the CLI image. target=jvm (default), dev, or local (Dockerfile.local). MIP-0008.
+# Build the CLI image. target=jvm (default) or dev. MIP-0008. The `:local` model image is marola-ml's.
 docker-build target="jvm": corpus-fetch
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ "{{ target }}" = local ]; then docker build -f Dockerfile.local -t marola:local .; else docker build --target {{ target }} -t marola:{{ target }} .; fi
+    docker build --target {{ target }} -t marola:{{ target }} .
 
 # Run the CLI image with host networking, so a local Ollama on :11434 is reachable.
 docker-run *args:
@@ -504,33 +434,6 @@ gh-auth *args:
         gh auth login
         gh-token --source >/dev/null && echo "gh-auth: done — now run: just jco"
     fi
-
-# Analyse a finished training run (HF trainer_state.json) and say what the next should change.
-# Defaults to the local checkpoints; for a CI run, `just training-logs <run-id>` first.
-analyze-training *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ -n "{{ args }}" ]; then
-        python3 scripts/analyze_training.py {{ args }}
-    else
-        root="${CKPT_ROOT:-../marola-checkpoints}/${PRESET:-tiny}"
-        python3 scripts/analyze_training.py "$root/adapter" "$root/dpo-adapter"
-    fi
-
-# Download a marola-sea publish run's logs (default: the latest) into .tmp/training-logs/.
-training-logs run_id="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    id="{{ run_id }}"
-    if [ -z "$id" ]; then
-        id="$(gh run list --workflow "marola-sea publish" --limit 1 --json databaseId \
-              --jq '.[0].databaseId')"
-        echo "training-logs: most recent run is $id"
-    fi
-    mkdir -p .tmp/training-logs
-    gh run download "$id" --dir .tmp/training-logs
-    echo "training-logs: downloaded to .tmp/training-logs — analyse with:"
-    echo "  just analyze-training .tmp/training-logs/*/"
 
 # A second checkout at origin/main (.tmp/wt-main), created or fast-forwarded. Detached on
 # purpose: git refuses one branch in two worktrees, so holding `main` would break the main checkout.

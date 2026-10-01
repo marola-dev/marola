@@ -47,8 +47,6 @@ jobs:
               - 'scripts/corpus-fetch.sh'
               - '.github/workflows/ci.yml'
             python:
-              - 'dspy/**'
-              - 'finetune/**'
               - 'scripts/*.py'
               - '**/*.py'           # ruff lints the whole repo, so any .py anywhere counts
               - 'scripts/*.sh'      # gh-billing.sh's self-test lives in the same python-ci job
@@ -78,6 +76,7 @@ jobs:
               - '.gitmodules'
               - 'marola-site'
               - 'marola-corpus'
+              - 'marola-ml'
 
   build-test:
     needs: changes
@@ -163,8 +162,8 @@ jobs:
           GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
         run: gh api repos/marola-dev/marola-site/dispatches -f event_type=site-data-updated || echo "could not dispatch to marola-site — its next scheduled build (≤ 3 h) will pick the coverage number up"
 
-  # app -> ml contract (MIP-0070 §5.4): finetune/build_dataset.py and the benchmark gate read this
-  # unpacked tarball instead of ../core once marola-ml is a separate repo.
+  # app -> ml contract (MIP-0070 §5.4). marola-ml's resources-fetch.sh reads it from a release
+  # asset, ml-resources-<tag>.tar.gz, which nothing publishes yet (MIP-0070 task 15's app release).
   resources-tarball:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -255,7 +254,6 @@ jobs:
       ruff-version: "0.16.5"
       self-test-commands: |
         python3 scripts/smoke_record.py --self-test
-        python3 scripts/benchmark_gate.py --self-test
         python3 scripts/repo_stats.py --self-test
         scripts/gh-billing.sh --self-test
         scripts/corpus-fetch.sh --self-test
@@ -272,7 +270,6 @@ jobs:
     with:
       actionlint-version: "1.7.12"
       hadolint-version: "2.14.0"
-      # Dockerfile.local is missing until MIP-0065 task 2 fixes its hadolint failure.
       hadolint-files: Dockerfile mkdocs/Dockerfile
       # Every compose profile must still render (MIP-0010), and both mkdocs overrides (MIP-0064).
       extra-commands: |
@@ -287,8 +284,8 @@ jobs:
     with:
       devkit-ref: v0.2.2
 
-  # What needs this repo's own flake: the lock is current, the justfile parses, and only
-  # marola-sea-publish.yml may be self-hosted (MIP-0065; the devkit's workflow-runners).
+  # What needs this repo's own flake: the lock is current, the justfile parses, and no workflow
+  # here is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's).
   quality-other:
     needs: changes
     if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true'
@@ -323,5 +320,5 @@ jobs:
       # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
       - name: just --list (the justfile parses)
         run: just --list >/dev/null
-      - name: workflow-runners — only marola-sea-publish.yml may be self-hosted (MIP-0065)
+      - name: workflow-runners — no self-hosted workflow here (MIP-0065)
         run: workflow-runners

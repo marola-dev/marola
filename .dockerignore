@@ -15,8 +15,6 @@
 !flake.lock
 !justfile
 !scripts
-!dspy
-!finetune
 !docs
 !README.md
 !AGENTS.md
@@ -31,6 +29,4 @@
 **/.bsp
 **/.metals
 **/__pycache__
-finetune/out
-finetune/data
 docs/**/*.pdf
