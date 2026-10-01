@@ -1,10 +1,9 @@
 package marola.site
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path, StandardCopyOption}
+import java.nio.file.{Files, Path}
 import java.time.{OffsetDateTime, ZoneId}
 
-import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
 import kyo.*
@@ -20,8 +19,8 @@ import marola.water.WaterQualityClient
 /**
  * MIP-0005 §5.3: `just site-build` — run the pipeline once per *area* (not per user) and write the
  * boards the static map reads: `data/<area>/<day>.json` for today and tomorrow, `latest.json`
- * pointing at both, `data/areas.json` listing every area for the page's area switch, and a copy of
- * `site/static/` (the page itself).
+ * pointing at both, and `data/areas.json` listing every area for the page's area switch. Board data
+ * only (MIP-0070 §5.4): the caller copies `site/static/` (the page itself) separately.
  */
 object SiteBuilder:
 
@@ -70,7 +69,6 @@ object SiteBuilder:
       }
 
   val DefaultOut: Path = Path.of("site", "dist")
-  val DefaultStatic: Path = Path.of("site", "static")
 
   /**
    * `gotData` comes from the scored beaches, not from which client was configured. Naming a
@@ -90,7 +88,6 @@ object SiteBuilder:
   def build(
       areas: List[Area],
       out: Path,
-      static: Path,
       water: Coordinates => Option[WaterQualityClient],
       now: OffsetDateTime,
       accessibility: Option[AccessibilityClient] = None
@@ -98,8 +95,7 @@ object SiteBuilder:
     for
       boards <- Kyo.foreach(areas)(a => buildArea(a, out, water(a.origin), now, accessibility))
       index <- Sync.defer(writeAreasIndex(areas, out))
-      copied <- Sync.defer(copyStatic(static, out))
-    yield boards.flatten ++ (index :: copied)
+    yield boards.flatten :+ index
 
   private def buildArea(
       area: Area,
@@ -170,20 +166,6 @@ object SiteBuilder:
         )
       )
     )
-
-  /** Recursive copy of `site/static/` over `out/` (missing source = nothing to copy). */
-  private def copyStatic(static: Path, out: Path): List[Path] =
-    if !Files.isDirectory(static) then Nil
-    else
-      Files.createDirectories(out)
-      val stream = Files.walk(static)
-      try
-        stream.iterator.asScala.toList.filter(Files.isRegularFile(_)).map { src =>
-          val dest = out.resolve(static.relativize(src).toString)
-          Files.createDirectories(dest.getParent)
-          Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING)
-        }
-      finally stream.close()
 
   private def write(path: Path, json: JsonValue): Path =
     Files.writeString(path, json.render, StandardCharsets.UTF_8)

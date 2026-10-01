@@ -51,16 +51,18 @@ jobs:
               - '**/*.py'           # ruff lints the whole repo, so any .py anywhere counts
               - 'scripts/*.sh'      # gh-billing.sh's self-test lives in the same quality-other job
               - 'scripts/fixtures/**'
+              - 'AGENTS.md'          # agents-check.sh verifies the org invariants block (MIP-0070 §5.6)
+              - 'agents/**'
               - 'ruff.toml'
               - '.github/ISSUE_TEMPLATE/**'  # issues.sh --self-test parses these forms
               - '.github/labels.yml'          # and diffs this manifest
-              - 'docs/MIPs/*.tasks.md'        # tasks_issues.py --self-test parses all of them
-              - 'docs/2-Building-marola/ARCHITECTURE.md'        # §11's phase names are the gate-issue titles
-              - 'docs/MIPs/MIP-0063.tasks.md' # and its slug column is the branch `claim` prints
+              - 'docs/MIPs/*.tasks.md'        # mip_graph.py --check regenerates the graph from all of them
+              - 'docs/PHASES.md'    # issues.sh --self-test parses it for real when this checkout has one
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
             site:
-              - 'site/**'            # app.js/CSS/schema/fixtures → scripts/site_check.js (MIP-0009 task 2)
+              - 'site/**'            # app.js/CSS/fixtures → scripts/site_check.js (MIP-0009 task 2)
               - 'scripts/site_check.js'
+              - 'cli/src/main/resources/board.schema.json'  # moved out of site/ (MIP-0070 §5.4)
             workflows:
               - '.github/workflows/**'
             docker:
@@ -79,6 +81,10 @@ jobs:
     if: needs.changes.outputs.scala == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # RagOfflineSpec reads this directly now (MIP-0070 §5.4) instead of walking up to find
+    # knowledge/, so the pin is explicit rather than relying on sbt's cwd being the repo root.
+    env:
+      MAROLA_KNOWLEDGE_DIR: knowledge
     # Elevated past the workflow-level `contents: read` only for this job's main-only coverage
     # steps below: pushing coverage/latest.json to the orphan site-data branch, and re-triggering
     # site.yml so the badge refreshes right away.
@@ -182,6 +188,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run site.yml || echo "could not trigger site.yml — the next scheduled build (≤ 3 h) will pick the coverage number up"
+
+  # app -> ml contract (MIP-0070 §5.4): finetune/build_dataset.py and the benchmark gate read this
+  # unpacked tarball instead of ../core once marola-ml is a separate repo.
+  resources-tarball:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: scripts/build-resources-tarball.sh .tmp/ml-resources.tar.gz
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ml-resources
+          path: .tmp/ml-resources.tar.gz
 
   # README badges: this run's green steps, plus the Scala and Python line counts.
   repo-stats:
@@ -313,6 +333,9 @@ jobs:
       - name: self-test — site-data-push (the retry every site-data writer pushes through)
         if: needs.changes.outputs.python == 'true'
         run: scripts/site-data-push.sh --self-test
+      - name: self-test — build-resources-tarball (app → ml resources tarball, MIP-0070 §5.4)
+        if: needs.changes.outputs.python == 'true'
+        run: scripts/build-resources-tarball.sh --self-test
       - name: self-test — req_merge (requirements-file conflict auto-resolve)
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/req_merge.py --self-test
@@ -337,6 +360,12 @@ jobs:
       - name: "self-test — tasks_issues (MIP task table → issues: dedup, row link, the depends-on DAG)"
         if: needs.changes.outputs.python == 'true'
         run: python3 scripts/lib/tasks_issues.py --self-test
+      - name: self-test — agents-check (org invariants block drift, MIP-0070 §5.6)
+        if: needs.changes.outputs.python == 'true'
+        run: scripts/agents-check.sh --self-test
+      - name: agents-check (AGENTS.md's invariants block matches agents/invariants.md)
+        if: needs.changes.outputs.python == 'true'
+        run: scripts/agents-check.sh
       - name: site harness — app.js against site/fixtures in a stub DOM (MIP-0009)
         if: needs.changes.outputs.site == 'true'
         run: |

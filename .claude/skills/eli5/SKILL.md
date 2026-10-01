@@ -22,9 +22,9 @@ read whichever of these covers the topic:
   `--ask`/`ask_ocean_question` answer from it and nothing else. Explain what *this* corpus says,
   in its terms, so the explanation and the bot agree.
 - **How marola works** → `docs/2-Building-marola/ARCHITECTURE.md`: §3 is what is actually built, §5 the six
-  pluggable integrations, §8 the honest limits of the jellyfish/whale heuristics, §11 the phases.
-  §3 and §9 mark what is verified live versus written-not-run; carry that distinction into the
-  explanation instead of flattening it.
+  pluggable integrations, §8 the honest limits of the jellyfish/whale heuristics, `docs/PHASES.md`
+  the phases. §3 and §9 mark what is verified live versus written-not-run; carry that distinction
+  into the explanation instead of flattening it.
 - **Why it is shaped that way** → the MIP in `docs/MIPs/` (`docs/MIPs/README.md` indexes them with
   status), `PHILOSOPHY.md` for the repo-wide choices, `AGENTS.md` for the rules.
 - **The code itself** → `core/src/main/scala/marola/...` for the real behaviour: `scoring/`,

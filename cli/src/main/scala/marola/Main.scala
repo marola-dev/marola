@@ -187,9 +187,9 @@ object Main extends KyoApp:
     yield ()
 
   /**
-   * `--site [area-id]` (MIP-0005): build the static map's data for one area of `site/areas.json`,
-   * or every area when no id is given, into `site/dist/` (`--site-out <dir>` to change it, `--areas
-   * <file>` for another areas file).
+   * `--site [area-id]` (MIP-0005): build the static map's board data for one area of
+   * `site/areas.json`, or every area when no id is given, into `site/dist/` (`--site-out <dir>` to
+   * change it, `--areas <file>` for another areas file). See `SiteBuilder` (MIP-0070 §5.4).
    */
   private def buildSite(args: Array[String], config: AppConfig): Unit < Async =
     val areasPath = argValue(args, "--areas")
@@ -198,48 +198,50 @@ object Main extends KyoApp:
     val out =
       argValue(args, "--site-out").map(java.nio.file.Path.of(_)).getOrElse(SiteBuilder.DefaultOut)
     val wanted = argValue(args, "--site").filterNot(_.startsWith("--"))
-    val all = SiteBuilder.Areas.load(areasPath)
-    val areas = wanted.fold(all)(id => all.filter(_.id == id))
-    if areas.isEmpty then
-      Console.printLine(
-        s"(no area ${wanted.getOrElse("")} in $areasPath — known: ${all.map(_.id).mkString(", ")})"
-      )
+    if !java.nio.file.Files.exists(areasPath) then
+      Console.printLine(s"(no areas file at $areasPath — pass --areas <file>)")
     else
-      for
-        _ <- Console.printLine(
-          s"marola :: building the site boards for ${areas.map(_.id).mkString(", ")} -> $out"
+      val all = SiteBuilder.Areas.load(areasPath)
+      val areas = wanted.fold(all)(id => all.filter(_.id == id))
+      if areas.isEmpty then
+        Console.printLine(
+          s"(no area ${wanted.getOrElse("")} in $areasPath — known: ${all.map(_.id).mkString(", ")})"
         )
-        outcome <- Abort.run(
-          Abort.catching[Throwable](
-            SiteBuilder.build(
-              areas,
-              out,
-              SiteBuilder.DefaultStatic,
-              water = config.waterQualityClient,
-              now = java.time.OffsetDateTime.now(),
-              accessibility = Some(config.accessibilityClient)
+      else
+        for
+          _ <- Console.printLine(
+            s"marola :: building the site boards for ${areas.map(_.id).mkString(", ")} -> $out"
+          )
+          outcome <- Abort.run(
+            Abort.catching[Throwable](
+              SiteBuilder.build(
+                areas,
+                out,
+                water = config.waterQualityClient,
+                now = java.time.OffsetDateTime.now(),
+                accessibility = Some(config.accessibilityClient)
+              )
             )
           )
-        )
-        _ <- outcome match
-          case Result.Success(files) =>
-            Console.printLine(
-              s"wrote ${files.size} files; boards: " +
-                files.filter(_.toString.endsWith(".json")).map(_.toString).mkString(", ")
-            )
-          case failure =>
-            // Fail the *process*, not just the line: site.yml deploys whatever this step leaves
-            // in site/dist, and on 5 Sep 2026 that was the first area's boards and no index.html
-            // — a 404 at the site root — because the second area's Overpass query failed after
-            // the first area had been written and the JVM still exited 0.
-            for
-              _ <- Console.printLine(s"(site build failed: $failure)")
-              _ <- Sync.defer {
-                import AllowUnsafe.embrace.danger
-                exit(1)
-              }
-            yield ()
-      yield ()
+          _ <- outcome match
+            case Result.Success(files) =>
+              Console.printLine(
+                s"wrote ${files.size} files; boards: " +
+                  files.filter(_.toString.endsWith(".json")).map(_.toString).mkString(", ")
+              )
+            case failure =>
+              // Fail the *process*, not just the line: site.yml deploys whatever this step leaves
+              // in site/dist, and on 5 Sep 2026 that was the first area's boards and no index.html
+              // — a 404 at the site root — because the second area's Overpass query failed after
+              // the first area had been written and the JVM still exited 0.
+              for
+                _ <- Console.printLine(s"(site build failed: $failure)")
+                _ <- Sync.defer {
+                  import AllowUnsafe.embrace.danger
+                  exit(1)
+                }
+              yield ()
+        yield ()
 
   /** `--benchmark` — marola vs. a plain prompt on ocean questions; see `bench/OceanBenchmark`. */
   private def runBenchmark(config: AppConfig): Unit < Async =
