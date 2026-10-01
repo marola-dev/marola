@@ -3419,7 +3419,7 @@
 
 
 <h1 id="development-flow">Development flow<a class="headerlink" href="#development-flow" title="Permanent link">&para;</a></h1>
-<p><img alt="Kroki" src="kroki-generated-cf83cac0-0d61-3127-9de4-8aeac71a3365.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-200e85cf-6357-3daa-a855-0875dc6563e8.svg" /></p>
 <p>This page is the one place the whole loop is written down; the pieces live in the <code>/marola-devkit:mip</code> and
 <code>/marola-devkit:mip-tasks</code> skills, <code>AGENTS.md</code> (the hard rules), <code>docs/3-Working-on-the-repo/AGENT-SKILLS.md</code>
 (which superpowers skill does what) and the tools of <a href="https://github.com/marola-dev/marola-devkit">marola-devkit</a>
@@ -3490,7 +3490,7 @@ git<span class="w"> </span>commit<span class="w">                               
 just<span class="w"> </span>pr<span class="w">                                            </span><span class="c1"># fills any missing trailer and a task's Closes line (just cost-fill), pushes, opens/updates the PR — stack pr's base logic on a mip-NNNN/k-* branch</span>
 </code></pre></div>
 <p>The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:</p>
-<p><img alt="Kroki" src="kroki-generated-b7aa556c-98c9-3c2f-ae66-8135cee387e3.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-83efa820-c683-3644-a120-8dedd1afaa89.svg" /></p>
 <p><code>just pr --dry-run</code> prints every step (the trailers <code>cost-fill</code> would add, the body <code>uprd</code> would
 write) without pushing or touching <code>gh</code>. It refuses the same way the real run would (on <code>main</code>, or a
 dirty tree) so the preview matches what actually happens.</p>

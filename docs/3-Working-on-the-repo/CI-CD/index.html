@@ -3261,7 +3261,7 @@ The generic jobs are <a href="https://github.com/marola-dev/marola-devkit">marol
 workflows (<a href="https://github.com/marola-dev/marola-devkit/blob/v0.2.2/docs/workflows.md">inputs</a>),
 called at the same tag as the flake input; bump them together.</p>
 <h2 id="how-a-change-reaches-maroladev">How a change reaches marola.dev<a class="headerlink" href="#how-a-change-reaches-maroladev" title="Permanent link">&para;</a></h2>
-<p><img alt="Kroki" src="kroki-generated-040df4d5-dff3-3073-9612-ad6aaae755a6.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-afdcdee9-d03d-381d-a2f4-36f3a79a0617.svg" /></p>
 <p><code>site-data</code> is an orphan branch that holds only generated output. Several workflows write to it,
 all through <code>scripts/site-data-push.sh</code>, which retries when two pushes race. <code>site.yml</code> copies its
 <code>smoke/</code>, <code>coverage/</code>, <code>stats/</code> and <code>docs/</code> directories into the page on every build. The coverage,
@@ -3318,6 +3318,14 @@ smoke and docs writers trigger a rebuild right away; <code>repo-stats</code> wai
 <td>Builds scaladoc, pdoc and the mkdocs site (Kroki containers) into <code>docs/</code> on <code>site-data</code></td>
 <td><code>GITHUB_TOKEN</code></td>
 <td><code>gh workflow run api-docs.yml</code>; <code>just docs</code> locally</td>
+</tr>
+<tr>
+<td><code>docs.yml</code></td>
+<td><code>repository_dispatch: submodule-docs-updated</code>; push to <code>main</code> touching <code>docs/**</code>/<code>mkdocs/**</code>; daily; dispatch</td>
+<td><code>ubuntu-latest</code></td>
+<td>The umbrella aggregator (MIP-0070 §5.5): builds a gitignored aggregated tree (<code>scripts/prepare-docs.sh</code> — this repo's own <code>docs/</code> plus each submodule's <code>README.md</code> + <code>docs/</code>; the tracked <code>docs/</code> is never written to), builds the same <code>mkdocs --strict</code> as <code>api-docs.yml</code> from it, then folds in each submodule's pre-built API docs (<code>scripts/fetch-api-docs.sh</code>, a release asset — no <code>sbt doc</code> here). Uploads a Pages artifact only — no <code>deploy</code> job yet (ruling T10-7); task 12 adds it once this repo serves <code>docs.marola.dev</code></td>
+<td><code>GITHUB_TOKEN</code></td>
+<td><code>gh workflow run docs.yml</code></td>
 </tr>
 <tr>
 <td><code>site.yml</code></td>
@@ -3406,7 +3414,7 @@ warns against in "Self-hosted runners should almost never be used for public rep
 old reason for self-hosting was running out of minutes on a private repo (#340), and it no longer
 applies: standard hosted runners are free for public repos. Larger and GPU runners are always
 billed, so GPU training stays on the desktop, behind a manual dispatch.</p>
-<p><img alt="Kroki" src="kroki-generated-c6c326b6-e962-339d-a871-9074c3448ce7.svg" /></p>
+<p><img alt="Kroki" src="kroki-generated-f9cd7082-e03c-3043-83df-4c7966d403e9.svg" /></p>
 <h2 id="the-maintainers-manual-settings">The maintainer's manual settings<a class="headerlink" href="#the-maintainers-manual-settings" title="Permanent link">&para;</a></h2>
 <p>Repository settings that no workflow or agent can change. MIP-0065 depends on them:</p>
 <ul>
