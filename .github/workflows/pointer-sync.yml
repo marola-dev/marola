@@ -55,7 +55,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
         run: |
-          git push --force origin "$BRANCH"
+          # Same pointers as the rolling branch already carries: skip the push, so CI doesn't re-run and
+          # approvals aren't dismissed for a daily no-op.
+          if git fetch -q origin "$BRANCH" 2>/dev/null && [ "$(git rev-parse 'HEAD^{tree}')" = "$(git rev-parse 'FETCH_HEAD^{tree}')" ]; then
+            echo "$BRANCH already has these pointers; not pushing"
+          else
+            git push --force origin "$BRANCH"
+          fi
           title="$(git log -1 --format=%s)"
           pr="$(gh pr list --head "$BRANCH" --base main --state open --json number -q '.[0].number // empty')"
           if [ -n "$pr" ]; then

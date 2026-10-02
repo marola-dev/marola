@@ -41,7 +41,6 @@
       "Bash(just test*)",
       "Bash(just quality*)",
       "Bash(just fmt*)",
-      "Bash(sbt *)",
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",

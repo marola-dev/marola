@@ -333,8 +333,8 @@ restates and `agents-check` enforces.
 - **Follow-ups from execution** (2026-10-02):
   - Pointer-sync senders: each code repo dispatches `submodule-updated` on every push to `main`;
     until then only docs pushes dispatch, and the daily run moves the rest.
-  - MIP-0054's site half (Decision 1's #544 follow-up): confirm marola-dev/marola-site#16, #17,
-    #21 and #23 complete it.
+  - MIP-0054: its app half landed as #592 and its site half as marola-dev/marola-site#16, #17, #21
+    and #23; #544 is superseded and MIP-0054's own status still needs flipping.
   - The paused MIP-0056 stack and the #529 scoring fix, recreated as marola-dev/marola-app#15–#24,
     wait for their owner.
   - marola-dev/marola-ml#4: RAG with `nomic-embed-text` trails the plain prompt (an embedder
