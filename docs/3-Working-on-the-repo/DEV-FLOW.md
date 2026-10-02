@@ -11,9 +11,10 @@ flowchart TD
   merge --> finish["finish<br/>(MIP → Implemented)"]
 ```
 
-This page is the one place the whole loop is written down; the pieces live in the `mip` and
-`mip-tasks` skills (`.claude/skills/`), `AGENTS.md` (the hard rules), `docs/3-Working-on-the-repo/AGENT-SKILLS.md`
-(which superpowers skill does what) and the scripts under `scripts/`.
+This page is the one place the whole loop is written down; the pieces live in the `/marola-devkit:mip` and
+`/marola-devkit:mip-tasks` skills, `AGENTS.md` (the hard rules), `docs/3-Working-on-the-repo/AGENT-SKILLS.md`
+(which superpowers skill does what) and the tools of [marola-devkit](https://github.com/marola-dev/marola-devkit)
+(`stack`, `uprd`, `issues`, `cost-split`, …, on `PATH` inside `nix develop`).
 
 Sessions: one per MIP for planning, one per task for execution (`/clear`, `/rename
 mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-cost` map to PRs.
@@ -24,7 +25,7 @@ mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-
    follows: tier 1 (bug, chore, docs) and tier 2 (small enhancement, the issue body *is* the spec)
    stop here and go straight to §4; only tier 3 (a new data source, a scoring change, a new
    integration, anything paid) continues into a MIP, as a **MIP proposal** issue that is
-   relabelled rather than replaced when the MIP PR opens. Filing is a human's act: the `triage`
+   relabelled rather than replaced when the MIP PR opens. Filing is a human's act: the `/marola-devkit:triage`
    skill drafts the body and runs the readiness check, a person presses the button
    (`docs/3-Working-on-the-repo/ISSUE-FLOW.md`, MIP-0063 §5.6). An agent picks work up from `just issue-queue` and takes
    it with `just issue-claim <n>`; it may not start on an issue without `agent-ready`.
@@ -32,7 +33,7 @@ mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-
    Socratic questions until MIP §1-§3 (summary, motivation, user-visible change) have answers.
    Voice notes and chat pastes go through `just context-mips` + a browser session first
    (`RUN-LOCALLY.md` §8).
-3. **Write the MIP**: the `mip` skill: next number from `docs/MIPs/README.md`, the template,
+3. **Write the MIP**: the `/marola-devkit:mip` skill: next number from `docs/MIPs/README.md`, the template,
    every external claim fetched and dated, what was *not* checked said so, open questions listed.
    Add the index row. Link it from `FUTURE-WORK.md` if it closes something.
 4. **Open it as its own PR**, status **Draft**. A MIP is never built in the same change (`mip`
@@ -95,11 +96,11 @@ Per task, in its own session (superpowers `executing-plans`: the task row is the
 = first failing test, before push):
 
 ```bash
-scripts/stack.sh start MIP-NNNN <k> <slug>        # branch mip-nnnn/k-slug off task k-1's branch (main for k = 1)
+stack start MIP-NNNN <k> <slug>        # branch mip-nnnn/k-slug off task k-1's branch (main for k = 1)
 # red → green → refactor  (superpowers test-driven-development; systematic-debugging when green won't come)
 just build && just test && just quality           # + a live check whenever a data path changed (superpowers verification-before-completion: evidence, then the claim)
 git commit                                         # message ends with Tested: and Cost: trailers (AGENTS.md) — the PR's Tested/Cost sections come from them
-just pr                                            # fills any missing trailer and a task's Closes line (just cost-fill), pushes, opens/updates the PR — scripts/stack.sh pr's base logic on a mip-NNNN/k-* branch
+just pr                                            # fills any missing trailer and a task's Closes line (just cost-fill), pushes, opens/updates the PR — stack pr's base logic on a mip-NNNN/k-* branch
 ```
 
 The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:
@@ -122,8 +123,8 @@ gitGraph
 write) without pushing or touching `gh`. It refuses the same way the real run would (on `main`, or a
 dirty tree) so the preview matches what actually happens.
 
-Every push (`scripts/stack.sh pr`, `just uprds`, a plain `git push`) goes through
-`.githooks/pre-push`, which runs `just quality-other` (ruff on every `.py`, the script self-tests,
+Every push (`stack pr`, `just uprds`, a plain `git push`) goes through
+the devkit's pre-push hook, which runs this repo's `just prepush`: `just quality-other` (ruff on every `.py`, the script self-tests,
 actionlint, hadolint) and, when a pushed commit touches Scala, `just quality-scala` (scalafmt +
 scalafix). Code is linted before the last push, not found red in CI after the merge; `git push
 --no-verify` skips the hook, CI does not.
@@ -143,14 +144,14 @@ at the end of each body, with the summed Cost, for readers without the feature.
 
 A PR opened any other way (the GitHub UI's "Compare & pull request", a bare `gh pr create`) gets
 the same body without anyone running `just uprd`: `.github/workflows/pr-body.yml` runs
-`scripts/uprd.sh <PR#>` when the PR is opened, reopened, marked ready, or gets new commits, as long
+`uprd <PR#>` when the PR is opened, reopened, marked ready, or gets new commits, as long
 as the body is empty, still the raw template, or carries uprd's own first-line marker (a
 hand-written body is left alone; delete the marker line to stop regeneration). It also replaces a
 title that is still the branch name with the first commit's subject. Forks and bot PRs are skipped.
 
 The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape: bold labels, a compact
 MIP/Tested/Cost table, no `#` headings, one screen for a typical two-commit PR; the PR title is
-the first commit's subject on the branch, capped at 70 characters (`scripts/lib/uprd_title.sh`) so
+the first commit's subject on the branch, capped at 70 characters (the devkit's [`scripts/lib/uprd_title.sh`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/uprd_title.sh)) so
 it stays skimmable. `just uprd`/`just uprds` print a warning when a title had to be cut, worth a
 manual retitle if the cut reads awkwardly.
 
@@ -160,7 +161,7 @@ log by commit time (subagent transcripts included: `<session>/subagents/*.jsonl`
 trailer per branch; amend with `GIT_COMMITTER_DATE` preserved so the split stays stable, re-stack,
 force-push with lease, `just uprds`. Nothing logged at all for a commit (a subagent whose worktree
 session never re-attached, a commit from another machine) → `just cost-fill` (or plain `just pr`)
-adds `scripts/cost-split.py --estimate`'s diff-size estimate instead, always labelled `est.` so it
+adds `cost-split --estimate`'s diff-size estimate instead, always labelled `est.` so it
 reads differently from a measured number at a glance.
 
 ## 5. Final review — only when asked
@@ -202,20 +203,20 @@ is green; MIP status right; `docs/4-Research-and-plans/FABLE_REVIEW.md` item clo
   all-or-nothing operation (`gh stack merge`), no restack in between.
 - One at a time: **bottom-up**, squash (the repo's habit). GitHub retargets the next PR to `main`
   when the merged branch is deleted; the commits still need a rebase:
-  `scripts/stack.sh restack` on the next branch, or `just stack-sync MIP-NNNN` for the whole
+  `stack restack` on the next branch, or `just stack-sync MIP-NNNN` for the whole
   stack (it adopts the stack from GitHub first; `gh stack link` keeps no local state).
 - A task branch's own commit carries `Closes #N` for the issue its `MIP-NNNN.tasks.md` row links
-  (`scripts/cost-fill.sh`, run by `scripts/stack.sh pr` — itself run by `just pr`, or directly per
-  step 2 of `.claude/skills/mip-tasks/SKILL.md` — writes it above the trailers), so the
+  (`cost-fill`, run by `stack pr` — itself run by `just pr`, or directly per
+  step 2 of `/marola-devkit:mip-tasks` — writes it above the trailers), so the
   squash-merge commit on `main` closes the issue and the board moves it to Done. The PR body
-  carries the same line too (`uprd.sh` copies it there so the link shows on GitHub), but in this
+  carries the same line too (`uprd` copies it there so the link shows on GitHub), but in this
   repo the body-only line did not close anything: #514–#519 carried it and their issues
   #502–#507 stayed open past merge (cause unknown, #524), while #511/#512 closed on a commit-body
   one. `TASK_PARTIAL=1 just pr` skips the line for a task that only delivers part of its row,
   before the PR (and its `task-partial` label) exist; the issue stays open. A PR merged into
   another task branch closes nothing regardless; GitHub honours the keyword only on the default
   branch.
-- `scripts/stack.sh status` / `just stack-view` until every PR is merged.
+- `stack status` / `just stack-view` until every PR is merged.
 - Last merge: superpowers `finishing-a-development-branch`: full suite green, delete the task
   branches, flip the MIP to **Implemented** with the PR numbers and the summed Cost in its status
   row, update `docs/MIPs/README.md`. A follow-up after a merge is a new branch off `main`, never a
@@ -223,11 +224,11 @@ is green; MIP status right; `docs/4-Research-and-plans/FABLE_REVIEW.md` item clo
 
 ### Dependency PRs
 
-dependabot (`.github/dependabot.yml`) and scala-steward (`.github/workflows/scala-steward.yml`)
-each open their own one-off PR per bump. Left alone, ten open bumps cost ten separate CI runs to
+dependabot (`.github/dependabot.yml`) and, in marola-app, scala-steward
+(`.github/workflows/scala-steward.yml`) each open their own one-off PR per bump. Left alone, ten open bumps cost ten separate CI runs to
 land. `just deps-stack` chains the open **dependabot** PRs (`--include-steward` adds
 scala-steward's, once its author identity on this repo is confirmed; see
-`scripts/deps-stack.sh`'s header) into one `deps/<date>/k-slug` stack, github-actions PRs first
+`deps-stack`'s header) into one `deps/<date>/k-slug` stack, github-actions PRs first
 then pip, same shape as a MIP's task branches: run it weekly, or right before a release, rather
 than merging bumps one at a time. A PR's head branch can't be moved after it's opened, so the
 default (and only implemented) path opens one *new* PR per chain branch, stacked on the previous,
@@ -238,8 +239,8 @@ checkout: a run of `just deps-stack` (`status`, `clean`, `--resume`, or a confli
 included) never switches your branch or touches your index. Two dependency bumps landing on
 adjacent lines of the same file (the only conflict shape dependabot produces) resolve
 themselves: `*requirements*.txt` keeps the higher lower bound per package
-(`scripts/lib/req_merge.py`), a workflow's `uses: owner/action@vN` steps keep the higher version
-per action (`scripts/lib/uses_merge.py`, the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0`
+(the devkit's [`scripts/lib/req_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/req_merge.py)), a workflow's `uses: owner/action@vN` steps keep the higher version
+per action ([`scripts/lib/uses_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/uses_merge.py), the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0`
 case); anything else still stops the script
 with the branch left mid-cherry-pick in that worktree and prints the exact `cd .tmp/wt-deps-stack
 && git status` / resolve / `git cherry-pick --continue` / `just deps-stack --resume` steps. Once
@@ -253,12 +254,12 @@ Drafts pile up the same way bumps do: one `docs/mip-NNNN-*` branch per proposal,
 days, and they fight over one line: every draft appends its row to `docs/MIPs/README.md` at the
 same place, so the moment one merges the rest conflict there. `just mip-stack` chains the open
 draft PRs (any PR whose head is `docs/mip-*` or that adds a `docs/MIPs/MIP-NNNN-*.md`; task
-branches `mip-NNNN/k-*` are left to `scripts/stack.sh`) into one `mips/<date>/k-slug` stack
+branches `mip-NNNN/k-*` are left to `stack`) into one `mips/<date>/k-slug` stack
 ordered by MIP number, the exact shape `just deps-stack` gives dependabot: built in its own
 worktree (`.tmp/wt-mip-stack`), one new PR per chain branch stacked on the previous, the original
 PR closed with a pointer, `gh stack link` at the end, `just mip-stack status` / `clean` /
 `--resume` / `--skip` / `--dry-run` as for deps. The index-row conflict resolves itself
-(`scripts/lib/mip_index_merge.py`: both sides' rows, one per MIP, in number order; the same row
+(the devkit's [`scripts/lib/mip_index_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/mip_index_merge.py): both sides' rows, one per MIP, in number order; the same row
 edited differently on both sides is a real edit and stops for a human). A draft that merged
 another draft's branch to stay mergeable is fine: merge commits are skipped and commits the
 chain already carries are dropped by patch-id. Then `just stack-merge <stack#> --squash` lands
@@ -266,12 +267,12 @@ the lot bottom-up.
 
 ## 7. Overnight/unattended runs
 
-`.claude/skills/mip-solve-perpetual/SKILL.md` works through a `MIP-NNNN.tasks.md` file one task at
+`/marola-devkit:mip-solve-perpetual` works through a `MIP-NNNN.tasks.md` file one task at
 a time, unattended, via a `/goal` + `/loop`. Two mechanics can drive the recurring re-invocation.
 Pick one per run, don't build both (MIP-0011 §11's OQ7 spike, resolved below):
 
 - **Local `/goal` + `/loop`** (the one actually run, end to end, while writing this MIP's own
-  task stack): the human types `/mip-solve-perpetual NNNN` once and that single turn works through
+  task stack): the human types `/marola-devkit:mip-solve-perpetual NNNN` once and that single turn works through
   the whole task file, checkpointing per task. **Chosen as the default**: no extra setup, and
   demonstrated for real (eleven MIP-0011 tasks, real pushed branches, real `GH_POST_MORTEM.md`
   entries when `gh` had no session auth). **What it cannot do, verified 2026-09-06 05:01:** start
@@ -320,7 +321,7 @@ waking up, full stop.
 
 ## 8. The docs site
 
-Everything under `docs/` is published at <https://marola.dev/docs/>, rendered and full-text
+Everything under `docs/` is published at <https://docs.marola.dev/>, rendered and full-text
 searchable, by mkdocs-material with a self-hosted Kroki rendering the Mermaid fences to SVG
 (MIP-0064). The prose ships the same way the code does, so it carries the same gates.
 
@@ -337,22 +338,24 @@ adding a doc needs no edit to `mkdocs/mkdocs.yml`.
 | `docs/MIPs/` | the proposals; no prefix — digits sort before letters, so it lands last on its own |
 
 Add its row to `docs/index.md` in the same change: that file is the site's landing page as well as
-the index of what inside each doc is MIP material. `docs/benchmarks/` and `docs/superpowers/` are
-`exclude_docs`'d — repo artefacts, not documentation — and are linked at GitHub when referenced.
+the index of what inside each doc is MIP material. `superpowers/` and `benchmarks/` (marola-ml's
+kept runs, at any depth) are `exclude_docs`'d — repo artefacts, not documentation — and are linked
+at GitHub when referenced.
 
 **Preview, and the gate.** `just docs-serve` serves the real build on
-<http://localhost:8001/docs/>; the docs are baked into the image, so a doc edit needs a restart,
+<http://localhost:8001/>; the docs are baked into the image, so a doc edit needs a restart,
 not a reload. `just docs` is the build alone, and it is `--strict`: one unresolved internal link
 anywhere in `docs/` turns it red. Links that leave `docs/` — `AGENTS.md`, `PHILOSOPHY.md`,
-`docs/benchmarks/` — are absolute GitHub URLs for exactly that reason. Both need a Docker or
+another repo's files — are absolute GitHub URLs for exactly that reason. Both need a Docker or
 Podman daemon (MIP-0064 decision 4); neither is part of `just quality`, so a docs change is
 previewed by hand.
 
-**How it ships.** A push to `main` touching `docs/**` or `mkdocs/**` runs `api-docs.yml`: scaladoc
-and pdoc, then `scripts/mkdocs.sh`, then the API trees folded into the site under `api/`, then
-`strip_external_scripts.py --check` over the merged tree, then the whole thing pushed to the
-`site-data` branch. `site.yml` deploys from there. A docs-only edit therefore pays for the whole
-job, scaladoc included, and appears on marola.dev after the next site deploy rather than on merge.
+**How it ships.** A push to `main` touching `docs/**` or `mkdocs/**` runs `docs.yml`: this repo's
+`docs/` plus each submodule's `README.md` + `docs/` (`scripts/prepare-docs.sh`, MIP-0070 §5.5),
+`scripts/mkdocs.sh`, then the API docs unpacked under `api/` from release assets, then a Pages
+deploy to docs.marola.dev on merge. No sbt runs: marola-app's `release.yml` attaches its Scaladoc to
+each `v*` tag, and the docs build fetches the latest one. A push to a submodule's `docs/` redeploys the same way, through
+its `submodule-docs-updated` dispatch.
 
 ## 9. Command reference
 
@@ -363,35 +366,35 @@ job, scaladoc included, and appears on marola.dev after the next site deploy rat
 | Re-check one issue's readiness | `just issue-ready <n>` — names the rule that failed; adds or removes `agent-ready` |
 | A MIP's task table into issues | `just tasks-to-issues MIP-NNNN [--milestone "<name>"]` — idempotent; the milestone must exist |
 | New deliverable milestone | `just milestone-new "<name>" [--mip MIP-NNNN]` |
-| Labels back in sync with the manifest | `just labels-sync` (`.github/labels.yml`; `--prune` to delete orphans) |
-| The board | `just board-sync`; the one-time bootstraps have no recipe: `scripts/issues.sh board setup`, `scripts/issues.sh board gates` |
-| One dependency or sub-issue edge by hand | `scripts/issues.sh deps add <n> --blocked-by <m>`, `deps list <n>`, `sub add <parent> <child>` — no recipe either; `tasks-to-issues` calls `deps add` for a whole table's worth |
+| Labels back in sync with the manifest | `just labels-sync` (the devkit's [`.github/labels.yml`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/.github/labels.yml); `--prune` to delete orphans) |
+| The board | `just board-sync`; the one-time bootstraps have no recipe: `issues board setup`, `issues board gates` |
+| One dependency or sub-issue edge by hand | `issues deps add <n> --blocked-by <m>`, `deps list <n>`, `sub add <parent> <child>` — no recipe either; `tasks-to-issues` calls `deps add` for a whole table's worth |
 | Pack docs for a browser MIP session | `just context-mips` |
-| New task branch | `scripts/stack.sh start MIP-NNNN k slug` |
-| Gates | `just build && just test && just quality` (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part) |
-| Before every push | `.githooks/pre-push` runs `just quality-other`, plus `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
-| Statement coverage (aggregated core/local/cli) | `just coverage`; published to the README badge by ci.yml on pushes to `main` |
-| Live checks | `just run -- --brief`, `just e2e`; once MIP-0005 lands, `just site-build floripa && just site-serve` |
-| The docs site | `just docs` (strict build into `mkdocs/generated-docs`), `just docs-serve` (preview on `localhost:8001/docs/`) — both need a Docker or Podman daemon |
+| New task branch | `stack start MIP-NNNN k slug` |
+| Gates | `just build && just test && just quality` in marola-app (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part); `just quality` here |
+| Before every push | the pre-push hook runs the repo's `just prepush`: here `just quality-other`; in marola-app also `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
+| Statement coverage (aggregated core/local/cli) | `just coverage` in marola-app; published to the README badge by its ci.yml on pushes to `main` |
+| Live checks | `just run -- --brief`, `just e2e` in marola-app; the map is marola-site's `just site-build floripa && just site-serve` |
+| The docs site | `just docs` (strict build into `mkdocs/generated-docs`), `just docs-serve` (preview on `localhost:8001`) — both need a Docker or Podman daemon |
 | One PR, start to finish | `just pr` (`--dry-run` prints every step and the body, no push, no `gh`) — fills missing trailers, pushes, opens/updates the PR |
 | Fill missing trailers only | `just cost-fill` (`--dry-run` to preview) — adds a measured or `est.` `Cost:` and a `ci-only` `Tested:` to any commit missing one, dates preserved |
-| Diff-size Cost estimate | `scripts/cost-split.py --estimate [--verbose]` (whole branch), `--estimate-commit <sha>` (one commit) — used automatically by `cost-fill`/`uprd` when nothing was logged |
-| One PR (lower-level) | `scripts/stack.sh pr` (`--dry-run` prints the gh commands) — what `just pr` calls for a `mip-NNNN/k-*` branch |
+| Diff-size Cost estimate | `cost-split --estimate [--verbose]` (whole branch), `--estimate-commit <sha>` (one commit) — used automatically by `cost-fill`/`uprd` when nothing was logged |
+| One PR (lower-level) | `stack pr` (`--dry-run` prints the gh commands) — what `just pr` calls for a `mip-NNNN/k-*` branch |
 | gh inside the jail | `GH_TOKEN` in `.env` (fine-grained, this repo, PRs read/write) — `just jail-claude` passes it through, so the agent runs `just pr` itself |
 | One PR by number | `just uprd 84` — head branch and base come from GitHub, so it works from any checkout |
 | Every PR of a stack | `just uprds MIP-NNNN` |
 | PR body shape / title length | `.github/PULL_REQUEST_TEMPLATE.md`; title capped at 70 chars, cut point printed as a warning |
 | Tested row | `Tested: gates, e2e, live, ci-only — <not run, why>` trailer per commit (`just cost-fill` adds `ci-only` if one is missing); `just uprd` sets the ✅/⬜ glyphs, never guesses |
 | GitHub Stack | `just stack-setup` once, then `just stack-link MIP-NNNN`, `just stack-view`, `just stack-sync MIP-NNNN` |
-| Local stack view | `scripts/stack.sh status [MIP-NNNN]`, `just stack status MIP-NNNN` |
-| After a base merged | `scripts/stack.sh restack` (one branch) or `just stack-sync MIP-NNNN` (whole stack) — it refuses, mid-stack, when the deleted base branch's head cannot be recovered from its merged PR; `scripts/stack.sh restack --onto-base <sha>` names it by hand |
+| Local stack view | `stack status [MIP-NNNN]`, `just stack status MIP-NNNN` |
+| After a base merged | `stack restack` (one branch) or `just stack-sync MIP-NNNN` (whole stack) — it refuses, mid-stack, when the deleted base branch's head cannot be recovered from its merged PR; `stack restack --onto-base <sha>` names it by hand |
 | Merge the whole stack | `just stack-merge <stack#> --squash` (all-or-nothing, bottom-up) |
 | Delete merged branches | `just branches-clean` (local + remote ref, skips current branch/main) |
-| PR for a stray plain branch | `just branches-open` (base=main; stack branches point at `scripts/stack.sh pr`) |
+| PR for a stray plain branch | `just branches-open` (base=main; stack branches point at `stack pr`) |
 | Stack the open dependency PRs | `just deps-stack` (`--dry-run`, `--resume`, `--skip <PR#>`, `--include-steward`); `just deps-stack status` / `just deps-stack clean` |
 | Stack the open MIP draft PRs | `just mip-stack` (`--dry-run`, `--resume`, `--skip <PR#>`); `just mip-stack status` / `just mip-stack clean` |
 | Cost per PR | `just cost-split MIP-NNNN [--session <id>] [--estimate]`, `just claude-cost` |
 | Review (on request) | superpowers `requesting-code-review`; `/code-review <PR#> [--comment]`; `/code-review ultra <PR#>` |
-| Status line | `.claude/statusline.sh`, shared via `.claude/settings.json` |
+| Status line | the devkit's `.devkit/.claude/statusline.sh`, wired in `.claude/settings.json` |
 | Push text to the clipboard (write-only) | `just clip` — needs `JAIL_CLIPBOARD=1 just jail-claude` inside the jail, works directly outside it |
 | Claude Code's own image paste (Ctrl+V) inside the jail | `JAIL_CLIPBOARD_PASTE=1 just jail-claude` — opt-in X11/Wayland display passthrough, off by default (bigger grant than the write-only bridge, see justfile's `jail-claude` comment) |

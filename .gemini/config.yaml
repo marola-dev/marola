@@ -13,9 +13,6 @@ code_review:
     code_review: false
     include_drafts: false
 ignore_patterns:
-  - "docs/benchmarks/**"
-  - "finetune/data/**"
   - "**/src/test/resources/fixtures/**"
   - "**/reachability-metadata.json"
   - "flake.lock"
-  - "site/static/vendor/**"

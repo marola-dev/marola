@@ -1,7 +1,7 @@
 # AGENTS.md
 
-Instructions for any AI coding agent working in this repository (Claude Code or otherwise). Read
-this before writing, modifying, or deploying anything. Humans should read it too.
+Instructions for any AI coding agent working in the marola workspace (Claude Code or otherwise).
+Read this before writing, modifying, or deploying anything. Humans should read it too.
 
 <!-- invariants:start -->
 ## Org invariants
@@ -15,101 +15,118 @@ Non-negotiable in every marola repo; a repo may make these stricter, never loose
 - **Phase discipline**: work one phase at a time; never start a later phase before the current one is done ([AGENTS.md](AGENTS.md#phase-discipline-hard-rule)).
 <!-- invariants:end -->
 
-## What this repo is
+## What this workspace is
 
-**marola** is the ocean intelligence layer for a stretch of coast, reachable as a Telegram
-assistant: real nearby beach discovery (OpenStreetMap), live sea/weather conditions (Open-Meteo), a
-jellyfish/whale heuristic, an LLM-generated summary reviewed by a second LLM pass. Its first case
-is "what's the best hour tomorrow to swim nearby?", all runnable **entirely locally
-with a free Ollama model, no cloud account needed**. GCP (MIP-0057) is the opt-in cloud path.
+**marola** is the ocean intelligence layer for a stretch of coast: real nearby beaches
+(OpenStreetMap), live sea and weather (Open-Meteo), official bathing-water quality, a 0–100
+swimability score with a deterministic safety veto, and an LLM summary reviewed by a second pass,
+all runnable locally with a free Ollama model. GCP (MIP-0057) is the opt-in cloud path.
 
-One sbt multi-project build (root `build.sbt`), split into three modules at the repo root:
+This repo, `marola-dev/marola`, is the **umbrella** (MIP-0070): the team layer, with every code
+repo as a git submodule. It holds this file, the ways of working (`docs/3-Working-on-the-repo/`),
+research and plans (`docs/4-Research-and-plans/`), the MIPs and their `.tasks.md`, the phase list
+(`docs/PHASES.md`), MIP and cross-repo parent issues, the aggregated docs site at
+<https://docs.marola.dev/>, and the submodule pointers. **It holds no code**: no build, no app
+gates. `PHILOSOPHY.md` holds the reasons behind the rules here.
 
-- `core/`: pure pipeline logic, shared HTTP/JSON helpers, the traits (`LlmClient`, `VisionClient`,
-  `SightingStore`) `local/` implements.
-- `local/`: Ollama-backed implementations (LLM, vision) and the local-file sighting store.
-- `cli/`: `Main`, `AppConfig` (reads settings from env vars), the MCP tool server. Depends on
-  both above; use `sbt cli/run`/`cli/runMain ...`, not `sbt run` at the root (a pure aggregate
-  with no source of its own).
-- `dspy/`: offline Python DSPy prompt-compile step; produces a JSON artifact the Scala side
-  loads, never a runtime dependency.
+## The repos
 
-`PHILOSOPHY.md` (repo root) holds the reasons behind the rules below: why Scala 3 on the JVM, Nix,
-`just`, ai-jail, MIPs. Docs live under `docs/`, grouped into the four audience directories the
-paths below show, and are published as a rendered, searchable site at <https://marola.dev/docs/>
-(MIP-0064). `docs/index.md` is both that site's landing page and the index of what is MIP
-material; check these before assuming something is undecided or unbuilt (MIP status vocabulary and
-template pointer: `.claude/rules/docs.md`):
+Each repo has its own `AGENTS.md`, `docs/`, gates and issues. Read that repo's `AGENTS.md` before
+changing anything in it; it says what it overrides.
 
-| Doc | Covers |
-|---|---|
-| `docs/2-Building-marola/ARCHITECTURE.md` | The pipeline, its integrations, what's verified live vs. written-not-run |
-| `docs/4-Research-and-plans/FUTURE-WORK.md` | Design sketches, reviewed-but-not-adopted libraries, harness ideas |
-| `docs/2-Building-marola/EFFECTS-MAP.md` | A Scala/FP-purity review: what's pure, what's effectful, what's hidden |
-| `docs/1-Using-marola/RUN-LOCALLY.md` | Run it now, with Ollama, no Telegram or cloud account |
-| `docs/1-Using-marola/TELEGRAM-SETUP.md` | Registering the bot and its local-dev credential path |
-| `docs/4-Research-and-plans/SKILLS.md` | A skills roadmap: what to practice, in order, using marola as the vehicle |
-| `docs/2-Building-marola/SCALA3-JDK-REVIEW.md` | Scala 3 / JDK 21-25 features reviewed against this code: adopt list and order |
-| `docs/4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY.md` | Multi-agent frameworks survey: Python ideas → Scala shapes, Pekko fit, reading list |
-| `docs/4-Research-and-plans/AGENT-STACK-SURVEY.md` | agent4s / llm4s / ADK mapped to the MIPs, how they compose, the project Q&A agent |
-| `docs/3-Working-on-the-repo/DEV-FLOW.md` | The loop end to end: idea → MIP → acceptance → tasks → stacked PRs (verified, costed) → review on request → merge/restack → Implemented; command reference |
-| `docs/3-Working-on-the-repo/CI-CD.md` | Every workflow: trigger, runner, what it gates or deploys, secrets, how to run it by hand; the self-hosted rule and the maintainer's manual settings (MIP-0065) |
-| `docs/3-Working-on-the-repo/ISSUE-FLOW.md` | The GitHub tracking standard in use: the object model, the three intake tiers, the Definition of Ready, and every `issues.sh`/`just` command (MIP-0063) |
-| `docs/3-Working-on-the-repo/AGENT-SKILLS.md` | Which agent skills to use in this repo: `mip` (plan), `mip-tasks` (tasks → stacked PRs, `scripts/stack.sh`), superpowers walkthrough, candidates to write |
-| `docs/benchmarks/` | Kept `just benchmark` runs: re-run and compare before changing prompt/corpus/embedder/model |
-| `docs/MIPs/` | Marola Improvement Proposals: design a non-trivial change here first, via the `mip` skill (`.claude/skills/mip/SKILL.md`), before building it. `just context-mips` packs what a browser session needs to draft one from voice notes; `just context-mip MIP-NNNN` packs one already-written MIP for an independent, non-Claude reviewer |
-| `docs/4-Research-and-plans/FABLE_REVIEW.md` | Code and documentation review at the initial import: open findings, ranked, with file:line references |
+| Repo | Holds | Produces → consumed by | Consumes |
+|---|---|---|---|
+| [marola-app](https://github.com/marola-dev/marola-app) (`marola-app/`) | The Scala 3 + Kyo product on JDK 25: the sbt build (`core/`, `local/`, `cli/`), the CLI, the MCP server, the benchmark runner, the OODS ingest code (arriving with MIP-0056), the user and build docs (`docs/1-*`, `docs/2-*`) | The image `ghcr.io/marola-dev/marola-app` → site, ml, oods; releases with Scaladoc (`api-docs.tar.gz`) → these docs, and `ml-resources-<tag>.tar.gz` → ml; `coverage/`, `smoke/` → marola-site's `site-data` | marola-corpus's release (`corpus.version`); compiled prompts from marola-ml as PRs |
+| [marola-site](https://github.com/marola-dev/marola-site) (`marola-site/`) | The map at <https://marola.dev/>: the static page, `areas.json`, the `site-data` branch, live checks | GitHub Pages at marola.dev | The app image (`marola-image`, tag + digest) for the boards; `site-data` |
+| [marola-corpus](https://github.com/marola-dev/marola-corpus) (`marola-corpus/`) | The sourced ocean knowledge (`knowledge/*.md`) and the `corpus-doc`/`eli5` skills | `marola-corpus-<tag>.tar.gz` per `v*` release → app, ml | — |
+| [marola-ml](https://github.com/marola-dev/marola-ml) (`marola-ml/`) | Offline Python: the DSPy prompt compile, the marola-sea fine-tune, the benchmark gate and its kept runs (`docs/benchmarks/`) | Compiled-prompt PRs → app; pdoc release asset → these docs; marola-sea on Hugging Face | The app image (`marola-image`), its resources tarball (`resources.version`), the corpus (`corpus.version`) |
+| [marola-oods](https://github.com/marola-dev/marola-oods) (`marola-oods/`) | The Open Ocean Data Store's data only (`data/oods/`, MIP-0056); starts empty | The dataset → app (an export tag, MIP-0056 §5.5) | The app image (`marola-image`) for `oods-check`; commits from the app's ingest workflow |
+| [marola-devkit](https://github.com/marola-dev/marola-devkit) (not a submodule) | The shared harness: the dev-flow tools, git hooks, the `marola-devkit` Claude Code plugin, reusable workflows, the invariants block | A flake input, a plugin marketplace and `uses:` workflows, each pinned to a tag → every repo | — |
 
-**Writing a doc is a deploy.** A new or moved file under `docs/` needs no `nav:` entry: mkdocs
-builds the sidebar from the file tree, which is why the directories carry `1-`…`4-` prefixes — they
-are the only thing ordering the sections. The build is `--strict`, so a link that does not resolve
-inside `docs/` fails it; that is why `AGENTS.md`, `PHILOSOPHY.md` and `docs/benchmarks/` are
-referenced at GitHub rather than relatively. Preview with `just docs-serve` before pushing. On
-`main`, a push touching `docs/**` or `mkdocs/**` runs `api-docs.yml`, which renders the site, folds
-the scaladoc/pdoc trees in under `api/`, and pushes the result to the `site-data` branch for
-`site.yml` to deploy.
+The rule behind the table (MIP-0070 §5.4): no repo reads another repo's tree, in CI or in tests,
+and no consumer builds its producer from source. A consumer moves to a new producer version by
+bumping its pin in a PR.
+
+## Where a change belongs
+
+- **One repo**: work in that repo, under its `AGENTS.md`, and run its gates there. Code, its docs,
+  its workflows and its issues live together. A change to how the team works, a MIP, or the phase
+  list belongs here.
+- **Across repos** (a contract changes): plan the contract first, in a MIP if it is non-trivial.
+  Use the same branch name in every repo, one PR per repo, each linked to the others. The producer
+  merges and releases first, the consumers bump their pins after, and the umbrella's pointers move
+  last, through the sync PR.
+- **Issues**: one issue per PR, in the repo the PR lands in, so `Closes #N` stays local. Cross-repo
+  work is an umbrella parent issue with a sub-issue in each target repo, and every issue sits on the
+  org Project (`marola-dev` Project 1). A reference to an issue in another repo is always fully
+  qualified (`marola-dev/marola-app#15`). `docs/3-Working-on-the-repo/ISSUE-FLOW.md` has the commands.
+
+## Submodule mechanics
+
+- Clone with `git clone --recurse-submodules https://github.com/marola-dev/marola`. In an existing
+  clone, `git submodule update --init` checks every repo out at its pinned commit.
+- A submodule is checked out on a detached HEAD at the pinned commit. To work in one, `cd` into
+  it, `git switch -c <branch> origin/main`, and push and open the PR from there, against that repo.
+- **Pointers move only through the sync PR.** `pointer-sync.yml` moves each submodule to its
+  default branch's tip and keeps one rolling PR open on `chore/pointer-sync` (daily, and on a
+  `submodule-updated` or `submodule-docs-updated` dispatch). Never commit a pointer change by hand,
+  and never commit inside a submodule from the umbrella's own branch.
+- `docs.yml` builds the docs from each submodule's latest `main` regardless of the pointers;
+  `ci.yml`'s `docs-build` builds a PR on its pinned commits.
 
 ## Setup & commands
 
 ```bash
-nix develop          # reproducible dev shell (JDK 25, sbt, scala-cli, coursier,
-                      # just, python3, ruff, gh, hadolint, actionlint — see flake.nix; Docker itself is the host's)
-just                  # list all available recipes
-just build            # sbt compile
-just test             # sbt test
-just fmt              # scalafmtAll
-just run              # marola CLI (just run -- --summarize forwards flags)
-just mcp-server       # marola's MCP tool server
-just e2e              # marola's live E2E test (Overpass/Open-Meteo/Ollama) — excluded from `just test`
-just coverage         # sbt-scoverage: statement coverage across core/local/cli (README badge, main only)
-just docs             # build docs/ into mkdocs/generated-docs (needs a Docker or Podman daemon)
-just docs-serve       # preview the docs on http://localhost:8001/docs/
+git clone --recurse-submodules https://github.com/marola-dev/marola
+nix develop      # just, python3, ruff, gh, hadolint, actionlint (flake.nix); Docker is the host's
+just             # list the recipes
+just quality     # this repo's gates
+just docs        # the aggregated docs (docs/ + every submodule's) into mkdocs/generated-docs
+just docs-serve  # preview on http://localhost:8001/
 ```
 
-Always run `just build && just test && just quality` before considering a change done (`quality` =
-`quality-scala`, scalafmt + scalafix, plus `quality-other`, ruff + actionlint + hadolint +
-`scripts/*.py` self-tests: the same gates as `ci.yml`; a missing lint tool fails rather than
-skips, so use `nix develop`). `.githooks/pre-push` runs `quality-other` before every push and
-`quality-scala` too when Scala changed. `git push --no-verify` bypasses it, CI does not.
-**JDK 25 is required, not just "17+".** Kyo's artifacts won't load on an older JVM. See
-`.claude/rules/scala.md` (loaded automatically while editing `.scala`/`build.sbt`) for the full
-JDK/Kyo-versioning detail and the jar-verification approach for Kyo's pre-1.0 API surface.
+Run the gates of the repo you changed before calling a change done: here `just quality`
+(`quality-other`: ruff, actionlint, hadolint and the `scripts/*` self-tests, the gates `ci.yml`
+runs, at the versions `flake.lock` pins; a missing tool fails rather than skips, so use
+`nix develop`); in a submodule, its own `AGENTS.md` names them. The pre-push hook runs
+`just prepush`; `git push --no-verify` bypasses it, CI does not.
+
+**Writing a doc is a deploy.** mkdocs builds the sidebar from the file tree (the `1-`…`4-`
+prefixes order it), and the build is `--strict`: a link that does not resolve inside the
+aggregated tree fails it, which is why `AGENTS.md` and `PHILOSOPHY.md` are linked at GitHub. A push
+to `main` touching `docs/**` or `mkdocs/**`, a submodule's docs dispatch, or the daily cron runs
+`docs.yml`, which deploys docs.marola.dev (`mkdocs/repos.yml` maps each submodule to its mount;
+marola-app's mounts at the root). `docs/index.md` is the site's landing page and the index of what
+is MIP material; `.claude/rules/docs.md` has the MIP status vocabulary.
+
+The harness is [marola-devkit](https://github.com/marola-dev/marola-devkit), a flake input pinned
+to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `cost-split`, `cost-fill`,
+`agents-check`, …), their recipes (`import? '.devkit/devkit.just'`), the git hooks, the reusable
+workflows and the `marola-devkit` plugin (`/marola-devkit:mip` and the other generic skills). Bump
+the flake input, every `@v…`/`devkit-ref` in `.github/workflows/` and the marketplace `ref` in
+`.claude/settings.json` together. The shellHook links this worktree's `.devkit` and points
+`core.hooksPath` at it; a worktree made outside `nix develop` and `just worktree` needs
+`just devkit-link` once. OpenCode does not load Claude Code plugins: the skills are plain
+`SKILL.md` files under `.devkit/plugins/marola-devkit/skills/`.
+
+`just context-mips` packs what a browser session needs to draft a MIP from voice notes, and
+`just context-mip MIP-NNNN` packs one MIP for a reviewer outside this project's coding agent.
 
 ## Phase discipline (hard rule)
 
-Work **one phase at a time**, per `docs/PHASES.md`: do not start Phase 2 (going live on
-a cloud backend, GCP per MIP-0057) before Phase 1 (Telegram bot actually working) is done. This
-exists to prevent an expensive mistake, so don't skip it because a later phase looks more interesting. If asked to jump ahead,
-implement the requested feature but flag which earlier-phase prerequisite is still missing.
+Work **one phase at a time**, per `docs/PHASES.md`: do not start Phase 2 (going live on a cloud
+backend, GCP per MIP-0057) before Phase 1 (the Telegram bot actually working) is done. This exists
+to prevent an expensive mistake. If asked to jump ahead, implement the requested feature but flag
+which earlier-phase prerequisite is still missing. Every repo follows this list; it lives here.
 
 ## Issue tracking (hard rule)
 
 **An agent may only begin implementation on an issue carrying `agent-ready`.** That label is the
 only statement that a human has decided what done means and what proves it; `just issue-ready <n>`
-adds it when the five-rule Definition of Ready passes (`docs/3-Working-on-the-repo/ISSUE-FLOW.md`). Read the queue with
-`just issue-queue`, take one with `just issue-claim <n>` — it re-checks the rules and prints the
-branch command. An idea with no issue is not work yet, and **filing is a human's act**: the
-`triage` skill drafts, a person files (MIP-0063 §5.6).
+adds it when the five-rule Definition of Ready passes. Read the queue with `just issue-queue` (it
+spans `org:marola-dev`), take one with `just issue-claim <n>`. An idea with no issue is not work
+yet, and **filing is a human's act**: the `/marola-devkit:triage` skill drafts, a person files
+(MIP-0063 §5.6).
 
 ## Cost & deployment safety (hard rule)
 
@@ -120,90 +137,56 @@ it does not replace this rule.
 
 ## Attribution and cost accounting (hard rule)
 
-- **Commits carry three trailers and nothing else:** `Tested:`, `Cost:` (both below) and
+- **Commits carry three trailers and nothing else:** `Tested:`, `Cost:` and
   `Co-Authored-By: Claude <noreply@anthropic.com>`. No session links, no "Generated with" banners,
-  no PR-body attribution. This is enforced by `.claude/settings.json` (`attribution.commit`,
-  `attribution.pr: ""`, `attribution.sessionUrl: false`), the shared project settings. Don't add
-  attribution text by hand.
-- **The whole PR workflow is one command.** Write the commit (a body plus `Tested:`/`Cost:`
-  trailers), then `just pr`: it fills any missing trailer (`just cost-fill`), pushes, and writes
-  the PR from `.github/PULL_REQUEST_TEMPLATE.md` (`just uprd`, or `scripts/stack.sh pr` on a
-  `mip-NNNN/k-*` branch). `Cost:` prefers `just cost-split`'s measured figure over
-  `scripts/cost-split.py --estimate`'s diff-size fallback, labelled `est.`.
+  no PR-body attribution; `.claude/settings.json` enforces this for Claude Code. Automation commits
+  carry them too (`pointer-sync.yml`: `Cost: n/a (automation)`).
+- **The PR workflow is one command.** Write the commit (a body plus `Tested:`/`Cost:`), then
+  `just pr`: it fills a missing trailer (`just cost-fill`), pushes, and writes the PR from the
+  template (`just uprd`, or `stack pr` on a `mip-NNNN/k-*` branch). `Cost:` prefers
+  `just cost-split`'s measured figure over `cost-split --estimate`'s diff-size fallback (`est.`).
 - **One feature, one session.** Start a feature with `/clear` and `/rename` it to the branch name
-  so `/usage`'s session block and ccusage's per-session rows map to one PR. Re-runs of
-  `just benchmark`/`just e2e` driven by the agent count toward the feature; note them. When one
-  session produces several PRs (a MIP stack), `just cost-split MIP-NNNN` attributes usage to each
-  commit by time and prints the per-branch `Cost:` trailer, measured, not estimated.
-  `just uprds MIP-NNNN` refreshes every PR of the stack with its Cost section.
-- **Heavier option, when it matters:** Claude Code exports `claude_code.cost.usage`/
-  `claude_code.token.usage` over OpenTelemetry (`CLAUDE_CODE_ENABLE_TELEMETRY=1`,
-  `OTEL_METRICS_EXPORTER=otlp`, `OTEL_EXPORTER_OTLP_ENDPOINT=...`) tagged by `session.id`/`model`/
-  `skill.name`/`mcp_tool.name`; a future Phase 2 could land agent spend next to marola's own
-  `Telemetry` traces.
+  so the usage logs map to one PR. For a MIP stack, `just cost-split MIP-NNNN` attributes usage to
+  each commit by time, across repos, and `just uprds MIP-NNNN` refreshes each PR's Cost section.
 
 ## Code style
 
-Scala style, the Kyo effect boundary, and testing discipline are in `.claude/rules/scala.md`,
-auto-loaded while editing `.scala`/`build.sbt`. Short version for every language: prefer `enum` +
-exhaustive matching over exceptions for expected failure modes, and reproduce a bug with a failing
-test before fixing it.
+Every repo's style rules are its own (marola-app's Scala and Kyo rules are its
+`.claude/rules/scala.md`). For every language: prefer `enum` + exhaustive matching over exceptions
+for expected failure modes, and reproduce a bug with a failing test before fixing it.
 
 **Comments: write few, and only what the code cannot say.** Agents overshoot here badly: #280,
-#284, #286 and #287 were four separate passes cutting comment lines roughly in half (Scala 1882 to
-793, shell 1071 to 565, the justfile 392 to 135, JavaScript 166 to 115), and the same verbosity
-grows straight back unless it is refused in review. Before writing a comment, check it is one of
-these:
+#284, #286 and #287 were four passes cutting comment lines roughly in half, and the verbosity grows
+straight back unless review refuses it. A comment is one of:
 
 - **why, not what**: a non-obvious decision, a rejected alternative, a constraint from outside the
-  file (an API's behaviour, a licence, a version pin). `// increment i` is noise; "429 is Overpass's
-  documented back-pressure, not an exception" is not.
+  file (an API's behaviour, a licence, a version pin).
 - **a trap**: something that will look like a bug, or bite the next reader, and is invisible here.
 - **a pointer**: the MIP or issue that explains the shape, in one reference, not a summary of it.
 
-Everything else belongs in the commit message, the MIP, or nowhere. Specifically: do not restate
-the code in prose, do not narrate the history of a fix in the file it fixed, do not re-explain in a
-comment what a good name already says, and do not paste a paragraph where a clause works. A
-docstring that is longer than the function it documents is a defect, not thoroughness. The commit
-message is the right home for reasoning and evidence: it is versioned, it is read once, and it
-does not have to be maintained forever alongside the code.
+Everything else belongs in the commit message, the MIP, or nowhere: do not restate the code, do not
+narrate a fix's history in the file it fixed, do not re-explain a good name. A docstring longer than
+its function is a defect. The same goes for prose in docs.
 
 Prefer running agent tools through [ai-jail](https://github.com/akitaonrails/ai-jail), via
-`just jail-claude` (or `jcf`/`jcs`, pinned to fable/sonnet), over bare. It sandboxes the process
-(bubblewrap/Landlock/seccomp); it doesn't replace the rules above or stop bad code/overspend, only
-out-of-sandbox access. `.env`/`*.pem`/`*.key` are masked regardless of disk content;
-`just jail-dry-run <cmd>` previews a jailed command. **A jail never has a `gh` login of its own,
-and cannot acquire one:** `~/.config/gh` is not mapped in, so `gh auth login` *inside* the jail
-writes to an ephemeral HOME and is gone by the next session. That is the "reauth every time" loop,
-not a bug in `gh`. `just jail-claude`/`just jail-opencode` therefore resolve a token on the host,
-via labs/agentic's `gh-token` (h0ffmann/nix-config, a flake input), and forward the value with
-`--env GH_TOKEN`: a fine-grained key in the gitignored `.env` first (the shellHook loads it, the
-narrowest credential, so it wins), otherwise the host's own `gh auth token`. Authenticate **once on
-the host**, never inside the jail. If neither exists, `jail-claude` says so at startup rather than
-letting you discover it when `just uprd` fails. `jail-claude` runs `ai-jail --exec`, direct
-execution with no PTY proxy/status bar, because the proxy is what broke Ctrl+C (it owns the raw
-terminal and must relay the interrupt byte itself) and mangled multi-line/bracketed pastes; see the
-justfile comment above `jail-claude` for the full diagnosis. `JAIL_CLIPBOARD=1` opts into a
-write-only clipboard bridge (`just clip`), off by default. Plain text Ctrl+V paste needs nothing
-extra (the terminal emulator injects it as ordinary input); Claude Code's own image-paste needs a
-real X11/Wayland socket, which `JAIL_CLIPBOARD_PASTE=1` opts into. That is off by default, and a
-bigger grant than the write-only bridge (a full display socket, not a one-way pipe; on X11
-specifically, any client on that socket can read other windows and inject input, not just read the
-clipboard). **Ubuntu 24.04:** `bwrap: setting up uid map: Permission denied` means unprivileged
-user namespaces are blocked by default. Fix via a scoped AppArmor profile, or disable the sysctl
-(weakens the protection globally).
+`just jail-claude` (or `jcf`/`jcs`/`jco`), over bare. It sandboxes the process; it doesn't replace
+the rules above. A jail has no `gh` login of its own and cannot keep one (`~/.config/gh` is not
+mapped in), so `jail-claude` resolves a token on the host (a fine-grained key in the gitignored
+`.env` first, else `gh auth token`) and forwards it as `GH_TOKEN`: authenticate once on the host,
+never inside the jail. `JAIL_CLIPBOARD=1` opts into a write-only clipboard bridge (`just clip`);
+`JAIL_CLIPBOARD_PASTE=1` maps a real display socket for image paste, a much bigger grant (on X11,
+any client on it can read other windows). On Ubuntu 24.04, `bwrap: setting up uid map: Permission
+denied` means unprivileged user namespaces are blocked: fix it with a scoped AppArmor profile.
 
 ## Before implementing a feature
 
-Check `docs/MIPs/` and `docs/4-Research-and-plans/FUTURE-WORK.md` first: the idea may already be designed or decided.
-For a proactive/autonomous agent behavior (e.g. the escalation-agent idea in
-`docs/4-Research-and-plans/FUTURE-WORK.md`), keep the human-confirmation gate unless a MIP decides otherwise. This is not
-optional polish.
+Check `docs/MIPs/` and `docs/4-Research-and-plans/FUTURE-WORK.md` first: the idea may already be
+designed or decided. For a proactive or autonomous agent behaviour, keep the human-confirmation
+gate unless a MIP decides otherwise.
 
 ## When something here turns out to be wrong
 
-Update this file, `.claude/rules/*.md`, or the relevant `docs/*.md` in the same change (a cloud
-API/limit/version changes, a library moves past the version pinned in `build.sbt`, etc.). Rules
-files are excerpts that link back here, not the only copy. This file is read by non-Claude agents
-too, so a rule that matters everywhere stays stated here even if the full detail moved.
-</content>
+Update this file, `.claude/rules/*.md`, or the relevant doc in the same change. Rules files are
+excerpts that link back here, not the only copy. This file is read by non-Claude agents too, so a
+rule that matters everywhere stays stated here even when its detail lives in a repo's own
+`AGENTS.md`.

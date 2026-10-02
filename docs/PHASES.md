@@ -12,11 +12,12 @@
    MIP-0057) for whichever integrations you actually want (all optional, none required). First
    real cloud spend, entirely your choice which pieces.
 4. **Phase 3: Deploy.** A hosted webhook. The first deploy artefact is
-   already here and free: `.github/workflows/site.yml` builds MIP-0005's boards every 3 h and
+   already here and free: [marola-site](https://github.com/marola-dev/marola-site)'s `site.yml` builds MIP-0005's boards every 3 h and
    publishes the static map to GitHub Pages: no cloud account, no server, no per-visitor cost. The
-   second is the image a hosted service will run: `Dockerfile` (`jvm` = Temurin 25 JRE + the
-   fat jar, `native` = the GraalVM binary on distroless, `dev` = the Nix dev shell) and
-   `docker-compose.yml` (marola + an Ollama sidecar): MIP-0008, `RUN-LOCALLY.md` §10.
+   second is the image a hosted service will run, [marola-app](https://github.com/marola-dev/marola-app)'s
+   `Dockerfile` (`jvm` = Temurin 25 JRE + the fat jar, `native` = the GraalVM binary on distroless,
+   `dev` = the Nix dev shell) and `docker-compose.yml` (marola + an Ollama sidecar): MIP-0008,
+   [`RUN-LOCALLY.md`](1-Using-marola/RUN-LOCALLY.md) §10.
 5. **Phase 4: Harden & calibrate.** Caching, per-user rate limiting, feeding accumulated
    `SightingStore` reports back into the jellyfish/whale heuristics (`ARCHITECTURE.md` §8).
 

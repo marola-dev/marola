@@ -35,7 +35,7 @@ ultrareview-verified) turned the rules that must not be optional into things the
 hooks, a shared permission allowlist, path-scoped rules, subagents, skills; `docs/3-Working-on-the-repo/DEV-FLOW.md` is
 the loop from idea to merged PR. "Open to other coders" is not a wish either: MIP-0013 (Draft) is a
 bounded OpenCode tryout that states what replacing Claude Code would actually cost, down to the one
-hard dependency (`scripts/cost-split.py` reads Claude Code's own session logs). This file and the
+hard dependency (marola-devkit's `cost-split` reads Claude Code's own session logs). This file and the
 MIP discipline around it are the pillar's output, not a description of it.
 
 **Pillar 2: models reasoning over open water, with the deterministic parts kept deterministic.**
@@ -57,7 +57,7 @@ physics models win, and the right one only for the series marola itself accumula
 purpose: MIP-0010 (Implemented, v1, local) makes MLflow the ledger for benchmark runs, prompt
 compiles and pipeline traces, so a model change is compared on recorded params and metrics rather
 than on impression. The model half is MIP-0025 (Draft): `marola-sea-1.0`, a 3B base post-trained in
-three layers and served through Ollama, where `finetune/`'s Tier 1 has run and Tier 2 is written,
+three layers and served through Ollama, where marola-ml's `finetune/` Tier 1 has run and Tier 2 is written,
 not run, for want of a GPU. Its own status line is `do when X lands`, and the X is money: compute is
 the gate, the same human go-ahead `AGENTS.md` requires before any paid resource applies to a rented
 GPU as much as to a cloud one, and whatever comes out still has to clear `just benchmark`'s existing
@@ -82,7 +82,7 @@ veto, the darkness rule, the rough-sea deduction) is plain Scala in `scoring/`, 
 outside the prompt (`docs/2-Building-marola/ARCHITECTURE.md` §5a, §8). A second, independently compiled reviewer
 pass grades the first model's sentence and can rewrite it. Lore shown to a user is a curated file
 with a source per entry, shown verbatim; the model never gets to invent a fact about the sea.
-The rule in the `mip` skill says it shortest: *no unsourced text reaches a user*.
+The rule in the `/marola-devkit:mip` skill says it shortest: *no unsourced text reaches a user*.
 
 ## Why Scala 3 on the JVM
 
@@ -115,7 +115,7 @@ the gate is the build (there by construction) and Scala 3 makes it strict withou
 For a backend system that will live for years and be written largely by agents, that is the bet
 this repo makes: compile-time safety, one build tool with pinned resolution, and ergonomics that
 hold up as the codebase grows beat Python's faster start over the long term. Python keeps the
-places where its libraries are the only ones (the offline steps: `dspy/`, `finetune/`) and stays
+places where its libraries are the only ones (the offline steps, in marola-ml: `dspy/`, `finetune/`) and stays
 out of the runtime path on purpose.
 
 ## Why Nix
@@ -131,7 +131,7 @@ image and the laptop run the same shell.
 ## Why a `justfile`
 
 Recipes are the agent's vocabulary. `just build`, `just test`, `just quality`, `just benchmark`,
-`just e2e`, `just site-build`, `just uprd`, `just cost-split`: each is a short, discoverable
+`just e2e`, `just docs`, `just uprd`, `just cost-split`: each is a short, discoverable
 name for a command that would otherwise be reconstructed from memory, slightly differently each
 time. `just --list` is documentation that cannot go stale, and a recipe is where the environment
 quirks live once (the `XDG_RUNTIME_DIR` override sbt needs inside the sandbox is at the top of the
@@ -162,7 +162,7 @@ runs → review only when asked → merge.
 
 - Not a claim that a typed platform makes the model right. It makes the model *checkable*; the
   checks still have to be written (`scoring/`'s tests, the golden pipeline fixtures, the benchmark
-  under `docs/benchmarks/`).
+  under marola-ml's `docs/benchmarks/`).
 - Not anti-Python, anti-cloud or anti-anything. Every path has a free local default
   (`docs/2-Building-marola/ARCHITECTURE.md` §5), because "runs entirely locally with a free model" is also a
   constraint: it keeps the thing testable by anyone, including the agent, without a bill.

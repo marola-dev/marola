@@ -1,17 +1,3 @@
-# sbt / Scala
-target/
-project/target/
-project/project/
-.bloop/
-.bsp/
-.metals/
-.ammonite/
-metals.sbt
-
-# Coursier / Ivy
-.ivy2/
-.coursier/
-
 # Nix
 result
 result-*
@@ -31,26 +17,15 @@ result-*
 # Logs
 *.log
 
-# sbt boot server socket dir (see justfile's XDG_RUNTIME_DIR override)
+# Scratch: worktrees, docs builds, repomix packs
 /.tmp/*
 !/.tmp/.gitkeep
 
-# LocalFileSightingStore's default output (sightings/) — runtime data, not a build artifact
-/data/*
-!/data/.gitkeep
-/finetune/data/*
-!/finetune/data/.gitkeep
-/finetune/out/*
-!/finetune/out/.gitkeep
 
 # repomix — `just context-*` writes under /.tmp/ (ignored above); these are repomix's own default
 # output names in case it's run bare from the repo root
 repomix-output.*
 repomix-output/
-
-# MIP-0005: `just site-build` output (boards + a copy of site/static/) — derived, deployed, not committed
-/site/dist/*
-!/site/dist/.gitkeep
 
 # Claude Code agent worktrees (Agent tool, isolation: worktree) — ephemeral nested checkouts
 .claude/worktrees/
@@ -73,3 +48,6 @@ __pycache__/
 # mkdocs/generated-docs. Both are throwaway; the site is published from CI, not from here.
 /mkdocs/docs/
 /mkdocs/generated-docs/
+
+# marola-devkit's pinned tree, linked by the flake's shellHook (MIP-0070)
+/.devkit

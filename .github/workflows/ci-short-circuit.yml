@@ -1,0 +1,13 @@
+# A merged (or closed) PR's runs keep going in their own concurrency group; cancel them by head SHA.
+name: ci short-circuit on PR close
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  cancel:
+    uses: marola-dev/marola-devkit/.github/workflows/ci-short-circuit.yml@v0.2.3

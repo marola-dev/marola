@@ -1,1 +1,0 @@
-# Runtime output, gitignored (everything here but this file): data/sightings.jsonl (--report-sighting), data/knowledge-index.json (--ask, rebuilt when knowledge/ changes), data/benchmark-*.md (just benchmark). In Docker this is the /app/data volume.
