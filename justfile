@@ -68,6 +68,7 @@ quality-other:
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
     scripts/site-data-push.sh --self-test
+    scripts/pointer-sync.sh --self-test
     python3 scripts/mip_graph.py --self-test
     scripts/mkdocs.sh --self-test
     scripts/prepare-docs.sh --self-test
@@ -123,8 +124,9 @@ docs-serve:
 # Browser-session context — repomix.config.json, repomix-instruction.md
 # ---------------------------------------------------------------------
 
-# Pack README, AGENTS.md, ARCHITECTURE, FUTURE-WORK, the MIP skill and all MIPs (~35k tokens, no
-# code) into .tmp/marola-context-mips.md and copy it to the clipboard.
+# Pack README, AGENTS.md, marola-app's README and ARCHITECTURE, PHASES, FUTURE-WORK, the MIP skill
+# and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads the
+# marola-app submodule: `git submodule update --init` first.
 context-mips:
     mkdir -p .tmp && "$(just _repomix)" -c repomix.config.json
     # The MIP template is marola-devkit's mip skill, under .devkit, which repomix skips as gitignored.
@@ -153,9 +155,12 @@ context-mip mip:
     "$(just _repomix)" -c "$cfg"
     just _clip "$out"
 
-# The whole repo, code included, comments stripped — big.
+# The workspace with every checked-out submodule's code, comments stripped — big. Its own -c config:
+# a bare run auto-loads repomix.config.json and packs only the MIP set.
 context-full:
-    mkdir -p .tmp && "$(just _repomix)" --style markdown --compress --remove-comments -o .tmp/marola-context-full.md .
+    mkdir -p .tmp
+    printf '{\n  "output": { "filePath": ".tmp/marola-context-full.md", "style": "markdown", "compress": true, "removeComments": true },\n  "ignore": { "useGitignore": true, "useDefaultPatterns": true }\n}\n' > .tmp/repomix-full.config.json
+    "$(just _repomix)" -c .tmp/repomix-full.config.json
     @just _clip .tmp/marola-context-full.md
 
 # The nixpkgs (Node) repomix, matched by store path: the unrelated PyPI "repomix" can shadow it

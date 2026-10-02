@@ -1,0 +1,81 @@
+# pointer-sync — the one way submodule pointers move (MIP-0070 §5.6): each submodule to its default
+# branch's tip, as one rolling PR on `chore/pointer-sync`, force-updated on every run.
+name: pointer sync
+
+on:
+  repository_dispatch:
+    # submodule-docs-updated is what each repo's notify-umbrella sends today; submodule-updated is
+    # the every-push event (CI-CD.md). The daily run moves pointers without either.
+    types: [submodule-updated, submodule-docs-updated]
+  schedule:
+    - cron: "40 5 * * *" # after docs.yml's 05:20, off the hour other workflows use (CI-CD.md)
+  workflow_dispatch:
+
+# Every write goes through MAROLA_CROSS_REPO_PAT: a branch pushed or a PR opened with GITHUB_TOKEN
+# triggers no workflow, so the sync PR's CI would never run.
+permissions: {}
+
+concurrency:
+  group: pointer-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BRANCH: chore/pointer-sync
+    steps:
+      - name: MAROLA_CROSS_REPO_PAT is set
+        env:
+          PAT: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+        run: |
+          if [ -z "$PAT" ]; then
+            echo "::error::MAROLA_CROSS_REPO_PAT is not set: it pushes $BRANCH and opens its PR (Contents and Pull requests: write on marola-dev/marola; CI-CD.md)"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          submodules: true
+          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+
+      - name: Move every submodule to its default branch's tip
+        id: bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          scripts/pointer-sync.sh --out "$RUNNER_TEMP/pointer-sync"
+          if [ -s "$RUNNER_TEMP/pointer-sync/moved.tsv" ]; then echo "moved=true" >>"$GITHUB_OUTPUT"; fi
+
+      - name: Force-update the rolling branch and open or update its PR
+        if: steps.bump.outputs.moved == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+        run: |
+          # Same pointers as the rolling branch already carries: skip the push, so CI doesn't re-run and
+          # approvals aren't dismissed for a daily no-op.
+          if git fetch -q origin "$BRANCH" 2>/dev/null && [ "$(git rev-parse 'HEAD^{tree}')" = "$(git rev-parse 'FETCH_HEAD^{tree}')" ]; then
+            echo "$BRANCH already has these pointers; not pushing"
+          else
+            git push --force origin "$BRANCH"
+          fi
+          title="$(git log -1 --format=%s)"
+          pr="$(gh pr list --head "$BRANCH" --base main --state open --json number -q '.[0].number // empty')"
+          if [ -n "$pr" ]; then
+            gh pr edit "$pr" --title "$title" --body-file "$RUNNER_TEMP/pointer-sync/pr-body.md"
+          else
+            gh pr create --head "$BRANCH" --base main --title "$title" --body-file "$RUNNER_TEMP/pointer-sync/pr-body.md"
+          fi
+
+      - name: Close a sync PR that main has caught up with
+        if: steps.bump.outputs.moved != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+        run: |
+          pr="$(gh pr list --head "$BRANCH" --base main --state open --json number -q '.[0].number // empty')"
+          if [ -n "$pr" ]; then
+            gh pr close "$pr" --delete-branch --comment "main already points at every submodule's default-branch tip."
+          fi

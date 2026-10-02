@@ -3,7 +3,7 @@
   "output": {
     "filePath": ".tmp/marola-context-mips.md",
     "style": "markdown",
-    "headerText": "marola — context pack for writing MIPs in a browser session. Only the documents an author needs: what the product is, its architecture, the MIP process/template, the existing MIPs, and the future-work backlog. No source code (see the repo for that).",
+    "headerText": "marola — context pack for writing MIPs in a browser session. Only the documents an author needs: the workspace and its repos, what the product is, its architecture, the MIP process/template, the existing MIPs, and the future-work backlog. No source code (it lives in the submodule repos).",
     "instructionFilePath": "repomix-instruction.md",
     "fileSummary": true,
     "directoryStructure": true,
@@ -16,6 +16,7 @@
   "include": [
     "README.md",
     "AGENTS.md",
+    "marola-app/README.md",
     "marola-app/docs/2-Building-marola/ARCHITECTURE.md",
     "docs/PHASES.md",
     "docs/4-Research-and-plans/FUTURE-WORK.md",

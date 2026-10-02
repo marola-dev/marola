@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted — discussed in [#522](https://github.com/marola-dev/marola/discussions/522); merged as #521; `Tasks: docs/MIPs/MIP-0070.tasks.md` ([`MIP-0070.tasks.md`](./MIP-0070.tasks.md)) |
+| **Status** | Implemented — the MIP #521; tasks #574 (1) → #576 (2) → #577 (3) → #578 (4) → #579 (5) → #580 (6) → marola-devkit's extraction (7, `v0.1.0`) and marola-dev/marola-devkit#2 (8) → #585 (9) → #586 (10) → marola-site's extraction (11) → #589 (12) → #591 (13) → #593 (14) → #597 (15) → #598 (16) → the task 17 PR (closes #573); fix-forwards #581, #582, #584, marola-dev/marola-devkit#3, #4, #5, marola-dev/marola-site#1, #6, #27, marola-dev/marola-ml#5. `Tasks: docs/MIPs/MIP-0070.tasks.md` ([`MIP-0070.tasks.md`](./MIP-0070.tasks.md)); discussed in [#522](https://github.com/marola-dev/marola/discussions/522) |
 | **Author** | Claude (Opus 5.5), with Bruno, from a brainstorm on 2026-09-30 |
 | **Created** | 2026-09-30 |
 | **Phase** | Repo structure, orthogonal to `ARCHITECTURE.md` §11: no Phase 1 prerequisite, no runtime behaviour change, no paid resource |
@@ -13,7 +13,7 @@
 | **Depends on** | Coordination, not a merge edge: the MIP-0056 OODS stack (#372–#380) and MIP-0061 (#394/#395) should land first so their history moves with the code. Human-only configuration: one fine-grained PAT (the cross-repo credential) for dispatch events, `site-data` pushes and pointer-sync PRs, and one DNS `CNAME` for `docs.marola.dev`. No Phase 1 gate, no paid resource |
 | **Blocked by** | none |
 | **Risk** | Cross-repo contracts turn out denser than §5.4 shows: every missed coupling becomes a broken build in a repo that can no longer see its producer |
-| **Cost so far** | — |
+| **Cost so far** | ~$223.43 measured — `cost-split.py MIP-0070` over session 43ec6d89, the merged task branches (1 $42.52, 3 $2.79, 5 $0.92, 6 $58.66, 9 $56.08, 12 $7.69, 13 $4.78, 14 $25.04, 15 $19.95, 16 $5.00; work for tasks 2, 4, 7, 8, 10 and 11 and the other repos' PRs falls in those windows). Cross-check: the merged PRs' own `Cost:` trailers sum to ~$198.34 (~$12.00 of it `est.`; marola $162.23, marola-devkit $34.81, marola-site $0.90, marola-ml $0.40; a stacked squash commit's repeats of its base's trailers counted once). Task 17's own figure is in its commits |
 
 ## 1. Summary
 
@@ -330,6 +330,17 @@ restates and `agents-check` enforces.
   but not Pages, and GitHub App installations are per org. So the move re-points
   `docs.marola.dev`, reinstalls the cross-repo credential and bumps `MAROLA_UMBRELLA`. Do it after
   step 5, never mid-migration.
+- **Follow-ups from execution** (2026-10-02):
+  - Pointer-sync senders: each code repo dispatches `submodule-updated` on every push to `main`;
+    until then only docs pushes dispatch, and the daily run moves the rest.
+  - MIP-0054: its app half landed as #592 and its site half as marola-dev/marola-site#16, #17, #21
+    and #23; #544 is superseded and MIP-0054's own status still needs flipping.
+  - The paused MIP-0056 stack and the #529 scoring fix, recreated as marola-dev/marola-app#15–#24,
+    wait for their owner.
+  - marola-dev/marola-ml#4: RAG with `nomic-embed-text` trails the plain prompt (an embedder
+    regression).
+  - marola-dev/marola-site#4: INEA is unreachable from GitHub-hosted runners, so Rio reads "no data".
+  - `ruleset-sync` (marola-devkit v0.2.3) applied to every repo created from now on.
 - **Follow-up MIP:** umbrella-level orchestration (`just up` over each repo's compose file) and
   cross-repo flow tests (board → rendered map). Out of scope here; it needs the next MIP number.
 

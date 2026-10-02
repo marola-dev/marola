@@ -178,16 +178,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1790848995,
-        "narHash": "sha256-BqcaHjaGtWQS1065M2VWk+R48cF70dxci7NvTfkmDMw=",
+        "lastModified": 1790927084,
+        "narHash": "sha256-F9HAFmATonNl77eb94NM0OXkoe58ucbLQMGGv6D6E8o=",
         "owner": "marola-dev",
         "repo": "marola-devkit",
-        "rev": "3c0da669b3a8845380a59e57c6ffe86e4ad8e0ee",
+        "rev": "d1872deb55f9bac781870cd4cb1d0687800f7af6",
         "type": "github"
       },
       "original": {
         "owner": "marola-dev",
-        "ref": "v0.2.2",
+        "ref": "v0.2.3",
         "repo": "marola-devkit",
         "type": "github"
       }
