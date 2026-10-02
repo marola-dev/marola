@@ -217,7 +217,7 @@ Ref: sample.(source_id, point_key) > point.(source_id, point_key)
 ## vegalite
 
 Coverage per arm in run 2 of the
-[2026-09-05 ocean-answer benchmark](https://github.com/marola-dev/marola/blob/main/docs/benchmarks/2026-09-05.md):
+[2026-09-05 ocean-answer benchmark](https://github.com/marola-dev/marola-ml/blob/main/docs/benchmarks/2026-09-05.md):
 
 ```vegalite {bg-dark=white}
 {

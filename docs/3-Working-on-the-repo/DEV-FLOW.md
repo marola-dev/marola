@@ -151,7 +151,7 @@ title that is still the branch name with the first commit's subject. Forks and b
 
 The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape: bold labels, a compact
 MIP/Tested/Cost table, no `#` headings, one screen for a typical two-commit PR; the PR title is
-the first commit's subject on the branch, capped at 70 characters (the devkit's [`scripts/lib/uprd_title.sh`](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/uprd_title.sh)) so
+the first commit's subject on the branch, capped at 70 characters (the devkit's [`scripts/lib/uprd_title.sh`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/uprd_title.sh)) so
 it stays skimmable. `just uprd`/`just uprds` print a warning when a title had to be cut, worth a
 manual retitle if the cut reads awkwardly.
 
@@ -224,8 +224,8 @@ is green; MIP status right; `docs/4-Research-and-plans/FABLE_REVIEW.md` item clo
 
 ### Dependency PRs
 
-dependabot (`.github/dependabot.yml`) and scala-steward (`.github/workflows/scala-steward.yml`)
-each open their own one-off PR per bump. Left alone, ten open bumps cost ten separate CI runs to
+dependabot (`.github/dependabot.yml`) and, in marola-app, scala-steward
+(`.github/workflows/scala-steward.yml`) each open their own one-off PR per bump. Left alone, ten open bumps cost ten separate CI runs to
 land. `just deps-stack` chains the open **dependabot** PRs (`--include-steward` adds
 scala-steward's, once its author identity on this repo is confirmed; see
 `deps-stack`'s header) into one `deps/<date>/k-slug` stack, github-actions PRs first
@@ -239,8 +239,8 @@ checkout: a run of `just deps-stack` (`status`, `clean`, `--resume`, or a confli
 included) never switches your branch or touches your index. Two dependency bumps landing on
 adjacent lines of the same file (the only conflict shape dependabot produces) resolve
 themselves: `*requirements*.txt` keeps the higher lower bound per package
-(the devkit's [`scripts/lib/req_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/req_merge.py)), a workflow's `uses: owner/action@vN` steps keep the higher version
-per action ([`scripts/lib/uses_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/uses_merge.py), the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0`
+(the devkit's [`scripts/lib/req_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/req_merge.py)), a workflow's `uses: owner/action@vN` steps keep the higher version
+per action ([`scripts/lib/uses_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/uses_merge.py), the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0`
 case); anything else still stops the script
 with the branch left mid-cherry-pick in that worktree and prints the exact `cd .tmp/wt-deps-stack
 && git status` / resolve / `git cherry-pick --continue` / `just deps-stack --resume` steps. Once
@@ -259,7 +259,7 @@ ordered by MIP number, the exact shape `just deps-stack` gives dependabot: built
 worktree (`.tmp/wt-mip-stack`), one new PR per chain branch stacked on the previous, the original
 PR closed with a pointer, `gh stack link` at the end, `just mip-stack status` / `clean` /
 `--resume` / `--skip` / `--dry-run` as for deps. The index-row conflict resolves itself
-(the devkit's [`scripts/lib/mip_index_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/mip_index_merge.py): both sides' rows, one per MIP, in number order; the same row
+(the devkit's [`scripts/lib/mip_index_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/mip_index_merge.py): both sides' rows, one per MIP, in number order; the same row
 edited differently on both sides is a real edit and stops for a human). A draft that merged
 another draft's branch to stay mergeable is fine: merge commits are skipped and commits the
 chain already carries are dropped by patch-id. Then `just stack-merge <stack#> --squash` lands
@@ -338,22 +338,23 @@ adding a doc needs no edit to `mkdocs/mkdocs.yml`.
 | `docs/MIPs/` | the proposals; no prefix — digits sort before letters, so it lands last on its own |
 
 Add its row to `docs/index.md` in the same change: that file is the site's landing page as well as
-the index of what inside each doc is MIP material. `docs/benchmarks/` and `docs/superpowers/` are
-`exclude_docs`'d — repo artefacts, not documentation — and are linked at GitHub when referenced.
+the index of what inside each doc is MIP material. `superpowers/` and `benchmarks/` (marola-ml's
+kept runs, at any depth) are `exclude_docs`'d — repo artefacts, not documentation — and are linked
+at GitHub when referenced.
 
 **Preview, and the gate.** `just docs-serve` serves the real build on
 <http://localhost:8001/>; the docs are baked into the image, so a doc edit needs a restart,
 not a reload. `just docs` is the build alone, and it is `--strict`: one unresolved internal link
 anywhere in `docs/` turns it red. Links that leave `docs/` — `AGENTS.md`, `PHILOSOPHY.md`,
-`docs/benchmarks/` — are absolute GitHub URLs for exactly that reason. Both need a Docker or
+another repo's files — are absolute GitHub URLs for exactly that reason. Both need a Docker or
 Podman daemon (MIP-0064 decision 4); neither is part of `just quality`, so a docs change is
 previewed by hand.
 
 **How it ships.** A push to `main` touching `docs/**` or `mkdocs/**` runs `docs.yml`: this repo's
 `docs/` plus each submodule's `README.md` + `docs/` (`scripts/prepare-docs.sh`, MIP-0070 §5.5),
 `scripts/mkdocs.sh`, then the API docs unpacked under `api/` from release assets, then a Pages
-deploy to docs.marola.dev on merge. No sbt runs: `api-docs.yml` builds the API docs separately,
-when Scala or the scripts change. A push to a submodule's `docs/` redeploys the same way, through
+deploy to docs.marola.dev on merge. No sbt runs: marola-app's `release.yml` attaches its Scaladoc to
+each `v*` tag, and the docs build fetches the latest one. A push to a submodule's `docs/` redeploys the same way, through
 its `submodule-docs-updated` dispatch.
 
 ## 9. Command reference
@@ -365,15 +366,15 @@ its `submodule-docs-updated` dispatch.
 | Re-check one issue's readiness | `just issue-ready <n>` — names the rule that failed; adds or removes `agent-ready` |
 | A MIP's task table into issues | `just tasks-to-issues MIP-NNNN [--milestone "<name>"]` — idempotent; the milestone must exist |
 | New deliverable milestone | `just milestone-new "<name>" [--mip MIP-NNNN]` |
-| Labels back in sync with the manifest | `just labels-sync` (the devkit's [`.github/labels.yml`](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/.github/labels.yml); `--prune` to delete orphans) |
+| Labels back in sync with the manifest | `just labels-sync` (the devkit's [`.github/labels.yml`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/.github/labels.yml); `--prune` to delete orphans) |
 | The board | `just board-sync`; the one-time bootstraps have no recipe: `issues board setup`, `issues board gates` |
 | One dependency or sub-issue edge by hand | `issues deps add <n> --blocked-by <m>`, `deps list <n>`, `sub add <parent> <child>` — no recipe either; `tasks-to-issues` calls `deps add` for a whole table's worth |
 | Pack docs for a browser MIP session | `just context-mips` |
 | New task branch | `stack start MIP-NNNN k slug` |
-| Gates | `just build && just test && just quality` (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part) |
-| Before every push | the pre-push hook runs `just prepush`: `just quality-other`, plus `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
-| Statement coverage (aggregated core/local/cli) | `just coverage`; published to the README badge by ci.yml on pushes to `main` |
-| Live checks | `just run -- --brief`, `just e2e`; the map is marola-site's `just site-build floripa && just site-serve` |
+| Gates | `just build && just test && just quality` in marola-app (`quality` = `quality-scala` + `quality-other`; `just quality-fix` for the auto-fixable part); `just quality` here |
+| Before every push | the pre-push hook runs the repo's `just prepush`: here `just quality-other`; in marola-app also `just quality-scala` when Scala changed — automatic, `--no-verify` to bypass |
+| Statement coverage (aggregated core/local/cli) | `just coverage` in marola-app; published to the README badge by its ci.yml on pushes to `main` |
+| Live checks | `just run -- --brief`, `just e2e` in marola-app; the map is marola-site's `just site-build floripa && just site-serve` |
 | The docs site | `just docs` (strict build into `mkdocs/generated-docs`), `just docs-serve` (preview on `localhost:8001`) — both need a Docker or Podman daemon |
 | One PR, start to finish | `just pr` (`--dry-run` prints every step and the body, no push, no `gh`) — fills missing trailers, pushes, opens/updates the PR |
 | Fill missing trailers only | `just cost-fill` (`--dry-run` to preview) — adds a measured or `est.` `Cost:` and a `ci-only` `Tested:` to any commit missing one, dates preserved |

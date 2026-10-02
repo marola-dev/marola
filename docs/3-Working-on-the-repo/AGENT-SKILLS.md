@@ -15,16 +15,17 @@ The map's `site-frontend` skill moved to [marola-site](https://github.com/marola
 with the page, and `eli5` and `corpus-doc` to
 [marola-corpus](https://github.com/marola-dev/marola-corpus) with the corpus (MIP-0070 task 13),
 so this repo has no `.claude/skills/` of its own. To use them, start the session in
-`marola-corpus/`; their steps that run marola (`just ask`, `just knowledge-index`) run from this
-checkout's root with `MAROLA_KNOWLEDGE_DIR=marola-corpus/knowledge`, as marola-corpus's
-AGENTS.md says.
+`marola-corpus/`; their steps that run marola (`just ask`, `just knowledge-index`) run in
+`marola-app/` with `MAROLA_KNOWLEDGE_DIR=../marola-corpus/knowledge`, as marola-corpus's AGENTS.md
+says. The Scala rules (`.claude/rules/scala.md`) and the `jar-verifier` agent moved to marola-app
+with the code (task 15).
 
 ## 1.1 marola-devkit plugin skills
 
 The generic skills, and the `mip-reviewer`/`mip-claims-auditor` agents (as
 `marola-devkit:mip-reviewer`, …), come from the `marola-devkit` plugin, declared in
 `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`) the same way superpowers is
-(§2). Their source is [marola-devkit's `plugins/marola-devkit/`](https://github.com/marola-dev/marola-devkit/tree/v0.2.2/plugins/marola-devkit).
+(§2). Their source is [marola-devkit's `plugins/marola-devkit/`](https://github.com/marola-dev/marola-devkit/tree/v0.2.3/plugins/marola-devkit).
 
 | Skill | Use when | Notes |
 |---|---|---|
@@ -154,7 +155,7 @@ Proposed, with hooks, rules, subagents and a permission allowlist, as
 - **`fixture-refresh`**: re-record the golden fixtures (`docs/1-Using-marola/RUN-LOCALLY.md` §7) and bump the
   pinned date in `PipelineGoldenSpec`; the most repeated manual procedure here.
 - **`benchmark-compare`**: run `just benchmark` twice at temperature 0, diff against
-  `docs/benchmarks/`, and write the comparison paragraph a PR needs when it touches prompts, corpus
+  marola-ml's `docs/benchmarks/`, and write the comparison paragraph a PR needs when it touches prompts, corpus
   or embedder.
 - **`corpus-doc`**: written, and now in marola-corpus: a `knowledge/*.md` document with a title,
   one `Source:` URL and paragraphs, then one `just ask` that should cite it.

@@ -82,27 +82,41 @@ projeto (uma "MIP"), para que você veja exatamente o que já está pronto e o q
 
 ---
 
-## Para quem programa
+## Para rodar em cinco minutos
 
-O marola é escrito em [Scala](https://www.scala-lang.org/), uma linguagem de programação criada na
-[EPFL](https://www.epfl.ch/) (a Escola Politécnica Federal de Lausanne, na Suíça) pelo laboratório
-de Martin Odersky, e mantida hoje pelo [Scala Center](https://scala.epfl.ch/) da EPFL junto com a
-VirtusLab e a Akka (antiga Lightbend). O marola usa Scala 3 com [Kyo](https://getkyo.io/) na JVM,
-e um modelo local gratuito via [Ollama](https://ollama.com/). A nota e o veto de segurança são Scala determinístico; o modelo
-apenas interpreta e redige, e nunca derruba um veto. Para rodar em cinco minutos:
+O marola é um espaço de trabalho com repositórios de propósito único; este aqui junta todos como
+submódulos git. O app que você roda é o [marola-app](https://github.com/marola-dev/marola-app):
 
 ```bash
-nix develop                                                        # JDK 25, sbt, just, ollama (veja flake.nix)
+git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
+nix develop                                                        # JDK 25, sbt, just, ollama (veja o flake.nix dele)
 just run -- --brief --lat -27.6733 --lon -48.4700                  # caminho mais rápido: lista em ordem, sem LLM
 just ollama-up                                                     # inicia o `ollama serve` e baixa o llama3.2
 just run -- --summarize --lat -27.6733 --lon -48.4700              # lista + resumo do LLM + revisão
 just ask "o que fazer se eu for pego por uma corrente de retorno?" # resposta com fontes
 ```
 
-Sem conta na nuvem, sem chave de API. O resto da documentação técnica está em inglês:
-[`README.md`](./README.md#for-developers), [`docs/1-Using-marola/RUN-LOCALLY.md`](./docs/1-Using-marola/RUN-LOCALLY.md),
-[`PHILOSOPHY.md`](./PHILOSOPHY.md) e [`CONTRIBUTING.md`](./CONTRIBUTING.md). Leia também o
-[Código de Conduta](./CODE_OF_CONDUCT.md).
+Sem conta na nuvem, sem chave de API. Passo a passo com saída real (em inglês):
+[RUN-LOCALLY](https://docs.marola.dev/1-Using-marola/RUN-LOCALLY/).
+
+## Os repositórios
+
+| Repositório | O que é |
+|---|---|
+| [marola](https://github.com/marola-dev/marola) (este) | O espaço de trabalho: o jeito de trabalhar, os documentos de projeto ([MIPs](./docs/MIPs/README.md)), a lista de fases, o site de documentação em [docs.marola.dev](https://docs.marola.dev/), e cada repositório abaixo como submódulo |
+| [marola-app](https://github.com/marola-dev/marola-app) | O produto, em Scala 3 com [Kyo](https://getkyo.io/) na JVM: o pipeline, a nota e o veto de segurança, a linha de comando, o servidor de ferramentas MCP, a imagem de contêiner |
+| [marola-site](https://github.com/marola-dev/marola-site) | O mapa em [marola.dev](https://marola.dev/), refeito a cada 3 horas a partir da imagem do app |
+| [marola-corpus](https://github.com/marola-dev/marola-corpus) | O conhecimento sobre o mar, com fontes, de onde o marola tira as respostas |
+| [marola-ml](https://github.com/marola-dev/marola-ml) | Python offline: a compilação de prompts com DSPy, o portão de benchmark e o [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF), o modelo pequeno do próprio marola |
+| [marola-oods](https://github.com/marola-dev/marola-oods) | O Open Ocean Data Store: um arquivo aberto e versionado da balneabilidade das praias brasileiras (começando vazio) |
+| [marola-devkit](https://github.com/marola-dev/marola-devkit) | As ferramentas de desenvolvimento compartilhadas que todo repositório fixa numa versão: scripts, hooks, skills do Claude Code, workflows de CI |
+
+A nota e o veto de segurança são Scala determinístico; o modelo apenas interpreta e redige, e nunca
+derruba um veto. Toda a documentação técnica, de todos os repositórios, está em inglês em
+**[docs.marola.dev](https://docs.marola.dev/)**; veja também o [`PHILOSOPHY.md`](./PHILOSOPHY.md),
+o [`CONTRIBUTING.md`](./CONTRIBUTING.md) e o [Código de Conduta](./CODE_OF_CONDUCT.md). Se você é um
+agente de IA: leia primeiro o [`AGENTS.md`](./AGENTS.md), depois o `AGENTS.md` do repositório que
+vai mudar.
 
 ## Agradecimentos
 

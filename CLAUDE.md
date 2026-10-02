@@ -1,8 +1,8 @@
 @AGENTS.md
 
-Read AGENTS.md before doing anything in this repository: it holds every rule (phase discipline,
-cost and deployment safety, the Cost: trailer, code style, testing). The line above imports it
-for Claude Code; tools that read this file as plain text must open AGENTS.md themselves.
+Read AGENTS.md before doing anything in this workspace: it holds the org invariants, the repo
+inventory, where a change belongs and the submodule mechanics. The line above imports it for
+Claude Code; tools that read this file as plain text must open AGENTS.md themselves.
 
 ## Claude Code-specific additions (MIP-0011 §5 item 10)
 
@@ -14,6 +14,9 @@ for Claude Code; tools that read this file as plain text must open AGENTS.md the
   result), and the `Cost:` figure so far.** These three are exactly what a resumed session needs
   to avoid re-deriving state or re-running gates that already passed. Everything else (the
   back-and-forth that got there) is fine to lose.
+- **Start Claude Code in the repo you are changing.** A submodule has its own `CLAUDE.md`,
+  `.claude/settings.json` and repo-only skills; started from the umbrella, its `CLAUDE.md` loads
+  only once files under it are read, and its settings and hooks not at all.
 - **`CLAUDE.local.md`** (gitignored, see `.gitignore`) is for genuinely personal,
   machine-specific overrides, such as a local Ollama port or a preferred jail flag, that shouldn't
   be forced on every clone of this repo the way `.claude/settings.json` is. Don't put anything here

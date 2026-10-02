@@ -56,15 +56,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: scripts/fetch-api-docs.sh mkdocs/generated-docs
 
-      # This repo is still the app until MIP-0070 task 15: its api-docs.yml release lands at /api/,
-      # where docs/2-Building-marola/API.md links.
-      - name: Fold in this repo's own API docs
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          printf -- '- name: %s\n  mount: ./\n' "${GITHUB_REPOSITORY#*/}" > .tmp/self-repos.yml
-          scripts/fetch-api-docs.sh mkdocs/generated-docs .tmp/self-repos.yml
-
       - name: The published tree keeps script-src 'self'
         run: python3 scripts/strip_external_scripts.py --check mkdocs/generated-docs
 

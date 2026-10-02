@@ -9,7 +9,7 @@
       "source": {
         "source": "github",
         "repo": "marola-dev/marola-devkit",
-        "ref": "v0.2.2"
+        "ref": "v0.2.3"
       }
     }
   },
@@ -41,7 +41,6 @@
       "Bash(just test*)",
       "Bash(just quality*)",
       "Bash(just fmt*)",
-      "Bash(sbt *)",
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",

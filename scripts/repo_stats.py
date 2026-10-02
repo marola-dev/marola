@@ -33,10 +33,8 @@ Python coverage is measured, never estimated — but read the label narrowly. ma
 suite; every `scripts/**/*.py` is tested by its own `--self-test` flag, the list `just
 quality-other` runs. So this badge is *statement coverage of `scripts/` while those self-tests
 run*, and nothing more: a branch a self-test never bothers to call is uncovered by construction,
-which is why the figure sits in the 70s rather than the 90s. `dspy/` and `finetune/` are out of
-scope — no `--self-test` entry point, and importing them needs torch/DSPy — so they are neither
-numerator nor denominator, while a `scripts/*.py` that grows without a self-test does count
-(at 0%), which is the point. Mechanically: one `coverage run --parallel-mode` per self-test into
+which is why the figure sits in the 70s rather than the 90s. A `scripts/*.py` that grows without
+a self-test does count (at 0%), which is the point. Mechanically: one `coverage run --parallel-mode` per self-test into
 a temp data file, then `coverage combine` + `coverage json`.
 
 Standard library only; `cloc` and `coverage` are the external tools, and only `write` needs them.
@@ -52,8 +50,9 @@ from pathlib import Path
 
 SCHEMA = 1
 
-SCALA_PATHS = ("core", "local", "cli")
-PYTHON_PATHS = ("dspy", "finetune", "scripts")
+# The app is the marola-app submodule (MIP-0070 task 15); ci.yml checks it out for the count.
+SCALA_PATHS = ("marola-app/core", "marola-app/local", "marola-app/cli")
+PYTHON_PATHS = ("scripts", "marola-app/scripts")
 EXCLUDE_DIRS = ("target", "__pycache__", ".venv", "venv", "node_modules")
 
 SCALA_COLOR = "DC322F"  # = the README's hand-written Scala badge
@@ -64,17 +63,12 @@ PYTHON_COLOR = "3776AB"  # = python.org's brand blue, as used by shields' own py
 # already runs, not a second, friendlier suite. (The `.sh` self-tests in the same recipe are not
 # Python and cannot contribute statements.)
 SELF_TEST_SCRIPTS = (
-    "scripts/smoke_record.py",
-    "scripts/benchmark_gate.py",
     "scripts/repo_stats.py",
     "scripts/arxiv_digest.py",
     "scripts/awesome_agentic_digest.py",
-    "scripts/ocr-post.py",
     "scripts/mip_graph.py",
     "scripts/strip_external_scripts.py",
-    "scripts/analyze_training.py",
 )
-# Measured tree. `dspy/`/`finetune/` are excluded on purpose — see the module docstring.
 COVERAGE_SOURCE = "scripts"
 
 # A step that reached one of these actually executed; anything else (`skipped`, `neutral`, or a

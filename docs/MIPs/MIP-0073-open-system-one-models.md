@@ -177,6 +177,10 @@ assumption, not a measurement".
 
 ## 5. Design
 
+Since MIP-0070 task 15 (marola-dev/marola#597), the code this section names (`core/`, `local/`,
+`scoring/`, `docker-compose.yml`, `ARCHITECTURE.md`) lives in marola-dev/marola-app, and the
+implementation is tracked there as marola-dev/marola-app#14.
+
 ### 5.1 One client for every System One backend
 
 MIP-0059's `JevClient` becomes `SystemOneClient`. It stays in `core/` beside the trait, because it

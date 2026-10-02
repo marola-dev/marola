@@ -1,14 +1,5 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-# sbt's launcher needs a writable XDG_RUNTIME_DIR to create its boot server socket
-# (sbt.internal.BootServerSocket).
-export XDG_RUNTIME_DIR := justfile_directory() + "/.tmp/sbt-runtime"
-
-# Where the app's recipes read the corpus: the release `corpus-fetch` unpacks, unless overridden
-# (a corpus checkout, e.g. MAROLA_KNOWLEDGE_DIR=marola-corpus/knowledge). Not exported: `docker-run`
-# forwards every MAROLA_* variable, and the image's corpus is /app/knowledge.
-knowledge := env("MAROLA_KNOWLEDGE_DIR", ".tmp/knowledge")
-
 # marola-devkit's shared recipes (uprd, pr, stack, issue-*, cost-*, runner-*, …), from the tree the
 # flake's shellHook links at .devkit. Optional so the file still parses outside `nix develop`.
 import? '.devkit/devkit.just'
@@ -51,36 +42,17 @@ log n="10" *args="":
 # Build / test / lint
 # ---------------------------------------------------------------------
 
-build:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt compile
-
-test: corpus-fetch
-    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt test
-
-# Statement coverage across core/local/cli (sbt-scoverage, project/plugins.sbt).
-coverage: corpus-fetch
-    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt clean coverage test coverageReport coverageAggregate
-
 # Statement % of scripts/**/*.py, measured while each script's own --self-test runs.
 coverage-python:
     python3 scripts/repo_stats.py python-coverage
 
-fmt:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll
+# All free quality gates, same as ci.yml. `just quality-fix` applies the auto-fixable ones. The
+# app's gates are marola-app's own (`cd marola-app && just quality`).
+quality: quality-other
 
-lint:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll
-
-# All free quality gates, same as ci.yml. `just quality-fix` applies the auto-fixable ones.
-quality: quality-scala quality-other
-
-# scalafmt + scalafix (semantic lint).
-quality-scala:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtCheckAll "scalafixAll --check"
-
-# The JVM-free gates: ruff, the script self-tests, actionlint, hadolint. A missing tool fails, never skips.
+# Ruff, the script self-tests, actionlint, hadolint. A missing tool fails, never skips.
 # The devkit's own scripts are self-tested in its CI; here only marola's run.
-quality-other: corpus-fetch
+quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
     [ -e .devkit/devkit.just ] || echo "quality-other: no .devkit here — the devkit's recipes (pr, stack, issue-*) are missing; run 'nix develop', or 'just devkit-link'" >&2
@@ -91,18 +63,12 @@ quality-other: corpus-fetch
     # One command per line: `set -e` exempts the left side of `a && b`.
     ruff check .
     ruff format --check .
-    python3 scripts/smoke_record.py --self-test
-    python3 scripts/benchmark_gate.py --self-test
     python3 scripts/repo_stats.py --self-test
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
-    scripts/corpus-fetch.sh --self-test
-    scripts/marola-sea-pull.sh --self-test
-    python3 scripts/analyze_training.py --self-test
     scripts/site-data-push.sh --self-test
-    scripts/build-resources-tarball.sh --self-test
-    python3 scripts/ocr-post.py --self-test
+    scripts/pointer-sync.sh --self-test
     python3 scripts/mip_graph.py --self-test
     scripts/mkdocs.sh --self-test
     scripts/prepare-docs.sh --self-test
@@ -111,32 +77,19 @@ quality-other: corpus-fetch
     workflow-runners
     python3 scripts/mip_graph.py --check
     agents-check
-    python3 finetune/train_lora.py --self-test
-    MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" python3 finetune/build_dataset.py --self-test
-    python3 finetune/build_dpo_dataset.py --self-test
-    python3 finetune/preflight.py --self-test
-    python3 finetune/merge_export.py --self-test
     actionlint
-    hadolint Dockerfile Dockerfile.local mkdocs/Dockerfile
-    if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose --profile mlflow --profile ollama --profile local config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
+    hadolint mkdocs/Dockerfile
+    if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
 
 quality-fix:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt scalafmtAll scalafixAll
     ruff check --fix . && ruff format .
 
-# Run by the devkit's pre-commit hook (.devkit/.githooks): staged Scala must compile, staged
-# workflows must pass actionlint. The lint gates are prepush's.
+# Run by the devkit's pre-commit hook (.devkit/.githooks): staged workflows must pass actionlint.
+# The lint gates are prepush's.
 precommit:
     #!/usr/bin/env bash
     set -euo pipefail
     staged="$(git diff --cached --name-only --diff-filter=ACM)"
-    if grep -qE '\.scala$' <<<"$staged"; then
-        echo "precommit: staged Scala changes, running sbt Test/compile..."
-        mkdir -p "$XDG_RUNTIME_DIR"
-        sbt Test/compile
-    else
-        echo "precommit: no staged .scala files, skipping sbt compile."
-    fi
     if ! grep -qE '^\.github/workflows/.*\.ya?ml$' <<<"$staged"; then
         echo "precommit: no staged workflow files, skipping actionlint."
     elif command -v actionlint >/dev/null; then
@@ -146,220 +99,34 @@ precommit:
         echo "precommit: staged workflow changes but actionlint not installed — skipping (use 'nix develop')."
     fi
 
-# Run by the devkit's pre-push hook, which does not pass the pushed refs on: this checks what HEAD
-# has that its push target (else origin/main) lacks, so a push of another branch is checked as HEAD.
+# Run by the devkit's pre-push hook.
 prepush:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    base="$(git rev-parse -q --verify '@{push}' 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || true)"
-    echo "prepush: running 'just quality-other'..."
     just quality-other
-    if [ -z "$base" ] || grep -qE '\.(scala|sbt)$|^project/|^\.scalafmt\.conf$|^\.scalafix\.conf$' <<<"$(git diff --name-only "$base" HEAD)"; then
-        echo "prepush: Scala/sbt changes in the pushed commits, running 'just quality-scala'..."
-        just quality-scala
-    else
-        echo "prepush: no Scala/sbt changes in the pushed commits, skipping quality-scala."
-    fi
-
-# Run marola's CLI (build.sbt's `cli` project).
-run *args: corpus-fetch
-    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt "cli/run {{ args }}"
-
-# Run marola's MCP tool server — a separate main class from `run`'s (see build.sbt).
-mcp-server: corpus-fetch
-    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt -error "cli/runMain marola.agent.SwimConditionsMcpServer"
-
-watch:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt "~compile"
-
-# ---------------------------------------------------------------------
-# Ollama — marola's default local LLM backend (LocalLlmClient, docs/1-Using-marola/RUN-LOCALLY.md)
-# ---------------------------------------------------------------------
-
-# Make sure an Ollama server is reachable, starting one if not.
-ollama-serve:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    api=http://localhost:11434/api/tags
-    if ! curl -sf -m 2 "$api" >/dev/null; then
-        mkdir -p "{{ justfile_directory() }}/.tmp"
-        echo "ollama: not reachable on localhost:11434 — starting 'ollama serve' in the background"
-        nohup ollama serve >"{{ justfile_directory() }}/.tmp/ollama.log" 2>&1 &
-        for _ in $(seq 1 30); do
-            curl -sf -m 1 "$api" >/dev/null && break
-            sleep 1
-        done
-        curl -sf -m 2 "$api" >/dev/null || { echo "ollama: server did not come up — see .tmp/ollama.log" >&2; exit 1; }
-    fi
-
-# Pull the published marola-sea GGUF from Hugging Face into Ollama as `marola-sea`.
-#   just marola-sea-pull small Q8_0
-marola-sea-pull preset="tiny" quant="Q4_K_M" owner="": ollama-serve
-    scripts/marola-sea-pull.sh {{ preset }} {{ quant }} {{ owner }}
-
-# Make sure an Ollama server is reachable and has `model` pulled.
-ollama-up model=env_var_or_default("MAROLA_LOCAL_LLM_MODEL", "llama3.2") embed=env_var_or_default("MAROLA_LOCAL_EMBED_MODEL", "llama3.2"): ollama-serve
-    #!/usr/bin/env bash
-    set -euo pipefail
-    for m in "{{ model }}" "{{ embed }}"; do
-        if ollama list | awk 'NR>1 {print $1}' | grep -qx "$m"; then
-            echo "ollama: serving, model '$m' already pulled"
-        else
-            echo "ollama: pulling '$m'..."
-            ollama pull "$m"
-        fi
-    done
-
-# marola's live E2E test (E2ESpec) against Overpass/Open-Meteo, plus Ollama if reachable.
-e2e:
-    mkdir -p "$XDG_RUNTIME_DIR" && sbt \
-        'set cli/Test/testOptions := Seq(Tests.Argument(new TestFramework("munit.Framework"), "--include-tags=E2E"))' \
-        'cli/testOnly marola.E2ESpec'
-
-# ---------------------------------------------------------------------
-# Knowledge (local RAG) and fine-tuning — MIP-0001, docs/4-Research-and-plans/FUTURE-WORK.md §9.1
-# ---------------------------------------------------------------------
-
-# Unpack the marola-corpus release pinned in corpus.version into .tmp/knowledge (MIP-0070 §5.4).
-corpus-fetch:
-    scripts/corpus-fetch.sh
-
-# Ask the corpus a question — local RAG, Ollama embeds and answers. MIP-0001.
-ask question: corpus-fetch
-    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt "cli/run -- --ask \"{{ question }}\""
-
-# Force a re-embed of the corpus (normally automatic when a file or the embed model changes).
-knowledge-index: corpus-fetch
-    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt "cli/run -- --reindex"
-
-# Tier 2: a trained adapter on its own base, as the Ollama model `marola-sea-<preset>`.
-finetune-adapter-model preset="tiny":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    from="$(python3 -c "import sys; sys.path.insert(0, 'finetune'); from train_lora import PRESETS; print(PRESETS['{{ preset }}']['ollama'])")"
-    gguf="$PWD/finetune/out/{{ preset }}/adapter.gguf"
-    if [ ! -f "$gguf" ]; then
-      echo "no adapter GGUF at $gguf — train it, then convert with llama.cpp's convert_lora_to_gguf.py" >&2
-      exit 1
-    fi
-    mkdir -p .tmp
-    sed -e "s|^FROM .*|FROM $from|" -e "s|^ADAPTER .*|ADAPTER $gguf|" finetune/Modelfile.adapter > .tmp/Modelfile.adapter
-    ollama create marola-sea-{{ preset }} -f .tmp/Modelfile.adapter
-
-# Tier 1: llama3.2 plus marola's persona/decoding as an Ollama model (finetune/Modelfile).
-finetune-model base="llama3.2":
-    mkdir -p .tmp && sed 's/^FROM .*/FROM {{ base }}/' finetune/Modelfile > .tmp/Modelfile && ollama create marola-llama3.2 -f .tmp/Modelfile
-
-# Tier 2: QLoRA adapter. preset=tiny trains on CPU in minutes; small|base need more.
-finetune-train preset="tiny" *args="":
-    python3 finetune/train_lora.py --preset {{ preset }} {{ args }}
-
-# marola vs a plain prompt on 22 ocean questions, 3 arms — writes data/benchmark-*.md.
-benchmark: corpus-fetch
-    mkdir -p "$XDG_RUNTIME_DIR" && MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" sbt "cli/run -- --benchmark"
-
-# Tier 2 prep: chat-format JSONL from the DSPy demos, sea lore and the corpus.
-finetune-dataset: corpus-fetch
-    MAROLA_KNOWLEDGE_DIR="{{ knowledge }}" python3 finetune/build_dataset.py
-
-# VRAM, RAM, disk and a rough ETA for a fine-tune on this machine, before starting it. MIP-0048.
-finetune-preflight preset="tiny" *args="":
-    python3 finetune/preflight.py --preset {{ preset }} {{ args }}
-
-# Layer 3 — DPO preference pairs from Reviewer.scala's reject/revise decisions. MIP-0025 §4.3.
-finetune-dpo-dataset:
-    python3 finetune/build_dpo_dataset.py
-
-# Layer 3 training: DPO on top of an existing SFT adapter (`just finetune-train` first).
-finetune-train-dpo preset="tiny" *args="":
-    python3 finetune/train_dpo.py --preset {{ preset }} {{ args }}
-
-# Create/update the venv marola-sea trains in — labs/cuda's setup-ml-venv (h0ffmann/nix-config);
-# call its bin/python-cuda afterwards, never bin/python.
-ml-venv *args:
-    REQUIREMENTS=finetune/requirements.txt VENV_ROOT="${VENV_ROOT:-$HOME/.marola-ml-venv}" setup-ml-venv {{ args }}
-
-# One-time host setup: the CUDA binary cache, so torchWithCuda is fetched, not compiled.
-gpu-cache-setup *args:
-    setup-cuda-cache {{ args }}
-
-# Merge a LoRA adapter into its base and export GGUFs. MIP-0025 §5.1.
-finetune-merge preset="tiny" llama_cpp="" *args="":
-    python3 finetune/merge_export.py --preset {{ preset }} {{ if llama_cpp != "" { "--llama-cpp " + llama_cpp } else { "--dry-run" } }} {{ args }}
-
-# Publish a trained .gguf to a Hugging Face model repo (MIP-0025 §5.1).
-finetune-publish repo gguf base *args:
-    python3 finetune/publish_hf.py --repo {{ repo }} --gguf {{ gguf }} --base-model {{ base }} {{ args }}
 
 # ---------------------------------------------------------------------
 # The docs site — MIP-0064: mkdocs-material + a self-hosted Kroki (mkdocs/)
 # ---------------------------------------------------------------------
 
-# Build docs/ into mkdocs/generated-docs. Needs a Docker or Podman daemon. Strict: a broken
-# internal link anywhere in docs/ fails this.
+# Build the aggregated docs (docs/ plus every checked-out submodule's, as docs.yml does) into
+# mkdocs/generated-docs. Needs a Docker or Podman daemon and `git submodule update --init`.
+# Strict: a broken internal link anywhere fails this, including links into marola-app's pages.
 docs:
-    scripts/mkdocs.sh
+    scripts/prepare-docs.sh
+    DOCS_SRC=.tmp/docs-aggregated scripts/mkdocs.sh
 
 # Serve the docs on http://localhost:8001/. The docs are baked into the image, so a doc edit needs
 # a restart — no live reload.
 docs-serve:
-    scripts/mkdocs.sh --serve
-
-# ---------------------------------------------------------------------
-# Docker — MIP-0008: the CLI as an image (Dockerfile, docker-compose.yml)
-# ---------------------------------------------------------------------
-
-# Build the CLI image. target=jvm (default), dev, or local (Dockerfile.local). MIP-0008.
-docker-build target="jvm": corpus-fetch
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ "{{ target }}" = local ]; then docker build -f Dockerfile.local -t marola:local .; else docker build --target {{ target }} -t marola:{{ target }} .; fi
-
-# Run the CLI image with host networking, so a local Ollama on :11434 is reachable.
-docker-run *args:
-    docker run --rm --network host --env-file <(env | grep '^MAROLA_' || true) marola:jvm {{ args }}
-
-# GraalVM native-image of the CLI → cli/target/marola (MIP-0008 task 3).
-native-image:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    mkdir -p "$XDG_RUNTIME_DIR"
-    nix shell nixpkgs#graalvmPackages.graalvm-ce --command bash -c '
-        export GRAALVM_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v native-image)")")")"
-        echo "native-image: $(native-image --version | head -1) at $GRAALVM_HOME"
-        sbt -batch cli/nativeImage'
-    ls -la cli/target/marola
-
-# Run the GraalVM native binary.
-native-run *args:
-    ./cli/target/marola {{ args }}
-
-# Start a local MLflow server for the run ledger. MIP-0010.
-mlflow-up:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    mkdir -p .tmp/mlflow
-    docker compose --profile mlflow up -d --wait mlflow
-    echo "mlflow: http://127.0.0.1:5000 — export MAROLA_MLFLOW_TRACKING_URI=http://127.0.0.1:5000 to log runs"
-
-# Open the MLflow UI (or print the URL when no opener is around).
-mlflow-ui:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    url=http://127.0.0.1:5000
-    curl -fsS "$url/health" >/dev/null 2>&1 || echo "mlflow is not answering at $url — run 'just mlflow-up' first" >&2
-    if command -v xdg-open >/dev/null; then xdg-open "$url"; elif command -v open >/dev/null; then open "$url"; else echo "$url"; fi
-
-# Stop the MLflow server.
-mlflow-down:
-    docker compose --profile mlflow down
+    scripts/prepare-docs.sh
+    DOCS_SRC=.tmp/docs-aggregated scripts/mkdocs.sh --serve
 
 # ---------------------------------------------------------------------
 # Browser-session context — repomix.config.json, repomix-instruction.md
 # ---------------------------------------------------------------------
 
-# Pack README, AGENTS.md, ARCHITECTURE, FUTURE-WORK, the MIP skill and all MIPs (~35k tokens, no
-# code) into .tmp/marola-context-mips.md and copy it to the clipboard.
+# Pack README, AGENTS.md, marola-app's README and ARCHITECTURE, PHASES, FUTURE-WORK, the MIP skill
+# and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads the
+# marola-app submodule: `git submodule update --init` first.
 context-mips:
     mkdir -p .tmp && "$(just _repomix)" -c repomix.config.json
     # The MIP template is marola-devkit's mip skill, under .devkit, which repomix skips as gitignored.
@@ -388,9 +155,12 @@ context-mip mip:
     "$(just _repomix)" -c "$cfg"
     just _clip "$out"
 
-# The whole repo, code included, comments stripped — big.
+# The workspace with every checked-out submodule's code, comments stripped — big. Its own -c config:
+# a bare run auto-loads repomix.config.json and packs only the MIP set.
 context-full:
-    mkdir -p .tmp && "$(just _repomix)" --style markdown --compress --remove-comments -o .tmp/marola-context-full.md .
+    mkdir -p .tmp
+    printf '{\n  "output": { "filePath": ".tmp/marola-context-full.md", "style": "markdown", "compress": true, "removeComments": true },\n  "ignore": { "useGitignore": true, "useDefaultPatterns": true }\n}\n' > .tmp/repomix-full.config.json
+    "$(just _repomix)" -c .tmp/repomix-full.config.json
     @just _clip .tmp/marola-context-full.md
 
 # The nixpkgs (Node) repomix, matched by store path: the unrelated PyPI "repomix" can shadow it
@@ -504,33 +274,6 @@ gh-auth *args:
         gh auth login
         gh-token --source >/dev/null && echo "gh-auth: done — now run: just jco"
     fi
-
-# Analyse a finished training run (HF trainer_state.json) and say what the next should change.
-# Defaults to the local checkpoints; for a CI run, `just training-logs <run-id>` first.
-analyze-training *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ -n "{{ args }}" ]; then
-        python3 scripts/analyze_training.py {{ args }}
-    else
-        root="${CKPT_ROOT:-../marola-checkpoints}/${PRESET:-tiny}"
-        python3 scripts/analyze_training.py "$root/adapter" "$root/dpo-adapter"
-    fi
-
-# Download a marola-sea publish run's logs (default: the latest) into .tmp/training-logs/.
-training-logs run_id="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    id="{{ run_id }}"
-    if [ -z "$id" ]; then
-        id="$(gh run list --workflow "marola-sea publish" --limit 1 --json databaseId \
-              --jq '.[0].databaseId')"
-        echo "training-logs: most recent run is $id"
-    fi
-    mkdir -p .tmp/training-logs
-    gh run download "$id" --dir .tmp/training-logs
-    echo "training-logs: downloaded to .tmp/training-logs — analyse with:"
-    echo "  just analyze-training .tmp/training-logs/*/"
 
 # A second checkout at origin/main (.tmp/wt-main), created or fast-forwarded. Detached on
 # purpose: git refuses one branch in two worktrees, so holding `main` would break the main checkout.

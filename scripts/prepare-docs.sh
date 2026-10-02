@@ -6,8 +6,9 @@
 # from scratch every run, so a submodule dropped from the manifest leaves nothing behind.
 #
 # Reads mkdocs/repos.yml (scripts/lib/repos_manifest.sh): submodule name -> mount point, default
-# repos/<name>/. A submodule listed in the manifest but not checked out at the repo root is a hard
-# error — docs.yml's `git submodule update` step is what keeps that from happening in CI.
+# repos/<name>/, or ./ for the site root (mount_at_root). A submodule listed in the manifest but
+# not checked out at the repo root is a hard error — docs.yml's `git submodule update` step is
+# what keeps that from happening in CI.
 #
 # README links of the form `docs/X.md` or `./docs/X.md` become `X.md`: the README is mounted as
 # <mount>/index.md, a sibling of the copied docs/** tree, not a parent of it. An absolute URL
@@ -29,6 +30,7 @@ mount_submodule() {
     echo "prepare-docs: $name is in mkdocs/repos.yml but not checked out at $src — run \`git submodule update --init\` first" >&2
     return 1
   fi
+  [ "$mount" != "./" ] || { mount_at_root "$src" "$name" "$build_dir"; return; }
   rm -rf "$dest"
   mkdir -p "$dest"
   if [ -f "$src/README.md" ]; then
@@ -38,18 +40,36 @@ mount_submodule() {
   return 0
 }
 
-# check_links <build_dir> <mount>... -> every relative markdown link under each mount resolves to
-# a real file, reported here rather than deep in a `mkdocs --strict` log. Covers both inline
-# links (`[text](target)`) and reference-style definitions (`[label]: target`). Absolute URLs
-# (://), mailto:, in-page anchors (#...) and build_dir-absolute links (/...) are left alone — they
-# are either external or mkdocs' own concern.
+# mount ./ (marola-app, so its pages keep their URLs, MIP-0070 §5.5): the root already holds the
+# umbrella's pages and index.md, so the README is left out, docs/index.md becomes <name>.md, and a
+# path both trees have fails instead of one silently replacing the other.
+mount_at_root() {
+  local src="$1" name="$2" build_dir="$3" rel dest clash=0
+  [ -d "$src/docs" ] || return 0
+  while IFS= read -r -d '' rel; do
+    rel="${rel#./}"
+    dest="$build_dir/$rel"
+    [ "$rel" != index.md ] || dest="$build_dir/$name.md"
+    if [ -e "$dest" ]; then
+      echo "prepare-docs: $name/docs/$rel collides with ${dest#"$build_dir"/} in the umbrella's docs" >&2
+      clash=1
+      continue
+    fi
+    mkdir -p "$(dirname "$dest")"
+    cp "$src/docs/$rel" "$dest"
+  done < <(cd "$src/docs" && find . -type f -print0)
+  [ "$clash" -eq 0 ]
+}
+
+# check_links <build_dir> <file>... -> every relative markdown link in each mounted page resolves
+# to a real file, reported here rather than deep in a `mkdocs --strict` log. Covers both inline
+# links (`[text](target)`) and reference-style definitions (`[label]: target`), outside code spans
+# and fenced blocks. Absolute URLs (://), mailto:, in-page anchors (#...) and build_dir-absolute
+# links (/...) are left alone — they are either external or mkdocs' own concern.
 check_links() {
   local build_dir="$1"; shift
-  local fails=0 mount base f link target
-  for mount in "$@"; do
-    base="$build_dir/$mount"
-    [ -d "$base" ] || continue
-    while IFS= read -r -d '' f; do
+  local fails=0 f link target
+  for f in "$@"; do
       while IFS= read -r link; do
         case "$link" in
           *://*|mailto:*|/*|'#'*) continue ;;
@@ -61,12 +81,17 @@ check_links() {
           fails=$((fails + 1))
         fi
       done < <(
-        grep -oE '\]\([^)]+\)' "$f" | sed -E 's/^\]\((.*)\)$/\1/'
-        grep -oE '^\[[^]]+\]:[ \t]+[^ \t]+' "$f" | sed -E 's/^\[[^]]+\]:[ \t]+//'
+        prose "$f" | grep -oE '\]\([^)]+\)' | sed -E 's/^\]\((.*)\)$/\1/'
+        prose "$f" | grep -oE '^\[[^]]+\]:[ \t]+[^ \t]+' | sed -E 's/^\[[^]]+\]:[ \t]+//'
       )
-    done < <(find "$base" -name '*.md' -print0)
   done
   [ "$fails" -eq 0 ]
+}
+
+# A page without its fenced blocks and inline code spans, where `](` is code, not a link.
+prose() {
+  # shellcheck disable=SC2016 # the backticks are sed's, not a shell expansion
+  awk '/^[ \t]*(```|~~~)/ { fence = !fence; next } !fence' "$1" | sed -E 's/`[^`]*`//g'
 }
 
 prepare() {
@@ -74,8 +99,8 @@ prepare() {
   rm -rf "$build_dir"
   mkdir -p "$build_dir"
   cp -R "$docs_src/." "$build_dir/"
-  local name mount
-  local -a mounts=()
+  local name mount f
+  local -a pages=()
   while IFS=$'\t' read -r name mount; do
     [ -n "$name" ] || continue
     # Explicit `|| return`, not bare `set -e`: a function called where its own exit status is
@@ -83,10 +108,19 @@ prepare() {
     # (bash(1), "The -e option" — a well-known trap), so a failing mount_submodule would otherwise
     # be swallowed here instead of failing the whole run.
     mount_submodule "$root" "$name" "$mount" "$build_dir" || return 1
-    mounts+=("$mount")
+    # Only what this submodule brought: at ./ that is not everything under the mount.
+    if [ "$mount" = "./" ] && [ -d "$root/$name/docs" ]; then
+      while IFS= read -r -d '' f; do
+        f="${f#./}"
+        [ "$f" != index.md ] || f="$name.md"
+        pages+=("$build_dir/$f")
+      done < <(cd "$root/$name/docs" && find . -name '*.md' -print0)
+    elif [ "$mount" != "./" ]; then
+      while IFS= read -r -d '' f; do pages+=("$f"); done < <(find "$build_dir/$mount" -name '*.md' -print0)
+    fi
   done < <(repos_manifest "$manifest")
-  [ "${#mounts[@]}" -gt 0 ] || return 0
-  check_links "$build_dir" "${mounts[@]}"
+  [ "${#pages[@]}" -gt 0 ] || return 0
+  check_links "$build_dir" "${pages[@]}"
 }
 
 self_test() {
@@ -160,6 +194,34 @@ EOF
   rm -rf "$t"
 
   echo
+  echo "-- mount ./ puts a submodule's docs/ beside the umbrella's own pages --"
+  t="$(mktemp -d)"
+  mkdir -p "$t/root/fake-app/docs/1-Using" "$t/docs-src/existing"
+  echo "# fake-app readme" >"$t/root/fake-app/README.md"
+  echo "# fake-app docs index, see [run](1-Using/RUN.md)" >"$t/root/fake-app/docs/index.md"
+  echo "# run, back to [the umbrella](../existing/page.md)" >"$t/root/fake-app/docs/1-Using/RUN.md"
+  echo "# umbrella index, see [run](1-Using/RUN.md)" >"$t/docs-src/index.md"
+  echo "today's doc, with [a link mkdocs checks](not-here.md)" >"$t/docs-src/existing/page.md"
+  printf -- '- name: fake-app\n  mount: ./\n' >"$t/manifest.yml"
+  rc=0
+  out="$(prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
+  ok "$rc" "0" "a root mount builds, checking the submodule's pages only (the umbrella's are mkdocs')"
+  ok "$([ -f "$t/build/existing/page.md" ] && echo yes || echo no)" "yes" "the umbrella's own pages survive the mount"
+  ok "$(cat "$t/build/index.md" 2>/dev/null)" "# umbrella index, see [run](1-Using/RUN.md)" "the site's index.md stays the umbrella's"
+  ok "$([ -f "$t/build/1-Using/RUN.md" ] && echo yes || echo no)" "yes" "docs/1-Using/RUN.md lands at the site root's 1-Using/"
+  ok "$(head -c 24 "$t/build/fake-app.md" 2>/dev/null)" "# fake-app docs index, s" "the submodule's docs/index.md becomes <name>.md"
+  ok "$(grep -rl 'fake-app readme' "$t/build" 2>/dev/null | wc -l | tr -d ' ')" "0" "its README is not mounted (the root has an index already)"
+  echo "# a second umbrella page" >"$t/root/fake-app/docs/1-Using/clash.md"
+  mkdir -p "$t/docs-src/1-Using"
+  echo "# umbrella's" >"$t/docs-src/1-Using/clash.md"
+  rc=0
+  out="$(prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
+  ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "a page both trees have fails the run"
+  ok "$(printf '%s' "$out" | grep -c 'fake-app/docs/1-Using/clash.md collides')" "1" "...naming the colliding path"
+  ok "$(cat "$t/build/1-Using/clash.md" 2>/dev/null)" "# umbrella's" "...and the umbrella's page is not overwritten"
+  rm -rf "$t"
+
+  echo
   echo "-- a broken relative link is reported (inline and reference-style) --"
   t="$(mktemp -d)"
   mkdir -p "$t/root/fake-broken/docs" "$t/docs-src"
@@ -168,6 +230,12 @@ EOF
 See [gone](missing.md).
 
 [ref]: also-missing.md
+
+Code is not a link: `f[A](effect: A)`, and
+
+```text
+q='node(around:15000,-27.6,-48.4)[x](in-a-fence.md)'
+```
 EOF
   printf -- '- name: fake-broken\n' >"$t/manifest.yml"
   local out rc=0
@@ -175,6 +243,7 @@ EOF
   ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "a broken relative link fails the run"
   ok "$(printf '%s' "$out" | grep -c 'broken relative link: missing.md')" "1" "...an inline link, naming the file and the link"
   ok "$(printf '%s' "$out" | grep -c 'broken relative link: also-missing.md')" "1" "...and a reference-style [label]: target definition too"
+  ok "$(printf '%s' "$out" | grep -c 'broken relative link')" "2" "...but nothing inside a code span or a fenced block"
   rm -rf "$t"
 
   echo
