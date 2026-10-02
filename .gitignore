@@ -38,10 +38,6 @@ result-*
 # LocalFileSightingStore's default output (sightings/) — runtime data, not a build artifact
 /data/*
 !/data/.gitkeep
-/finetune/data/*
-!/finetune/data/.gitkeep
-/finetune/out/*
-!/finetune/out/.gitkeep
 
 # repomix — `just context-*` writes under /.tmp/ (ignored above); these are repomix's own default
 # output names in case it's run bare from the repo root

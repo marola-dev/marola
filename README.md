@@ -168,7 +168,7 @@ roadmap: [`docs/MIPs/README.md`](./docs/MIPs/README.md), [`docs/4-Research-and-p
 | [`FUTURE-WORK.md`](./docs/4-Research-and-plans/FUTURE-WORK.md) / [`EFFECTS-MAP.md`](./docs/2-Building-marola/EFFECTS-MAP.md) | Design sketches, reviewed-not-adopted libraries; a Scala/FP-purity review |
 | [`SKILLS.md`](./docs/4-Research-and-plans/SKILLS.md) / [`AGENT-SKILLS.md`](./docs/3-Working-on-the-repo/AGENT-SKILLS.md) | A skills roadmap for humans; which Claude Code skills to use here |
 | [`AGENT-FRAMEWORKS-SURVEY.md`](./docs/4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY.md) | Multi-agent frameworks: Python ideas, JVM/Scala libraries, where Apache Pekko fits |
-| [`benchmarks/`](./docs/benchmarks/2026-09-05.md) / [`mips/`](./docs/MIPs/README.md) | Kept benchmark runs; numbered design docs written before a feature is built |
+| [`benchmarks/`](https://github.com/marola-dev/marola-ml/blob/main/docs/benchmarks/2026-09-05.md) / [`mips/`](./docs/MIPs/README.md) | Kept benchmark runs (in marola-ml); numbered design docs written before a feature is built |
 | [`FABLE_REVIEW.md`](./docs/4-Research-and-plans/FABLE_REVIEW.md) / [`DEV-FLOW.md`](./docs/3-Working-on-the-repo/DEV-FLOW.md) | Code review at the initial import; the dev loop end to end, MIP → PRs → merge |
 
 If you're an AI coding agent picking this repo up: read [`AGENTS.md`](./AGENTS.md) first.
@@ -179,19 +179,19 @@ marola's own small model, trained on the repo's ocean corpus and published as GG
 **[h0ffmann/marola-sea-tiny-GGUF](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF)**.
 
 ```bash
-just marola-sea-pull tiny Q8_0     # pull it into Ollama as `marola-sea`
+just marola-sea-pull tiny Q8_0     # in a marola-ml checkout: pull it into Ollama as `marola-sea`
 MAROLA_LOCAL_LLM_MODEL=marola-sea just run -- --summarize
 ```
 
 The `tiny` preset is SmolLM2-360M, a **pipeline proof, not a quality bar**, exactly as
-[`finetune/README.md`](./finetune/README.md) frames it. On a real swim summary it ignores the
+[`finetune/README.md`](https://github.com/marola-dev/marola-ml/blob/main/finetune/README.md) frames it. On a real swim summary it ignores the
 facts it is given and invents its own; `marola-llama3.2` (Llama 3.2 with marola's persona, built
-locally by `just finetune-model`) produces a usable answer from the same input. Scaling it is
+locally by marola-ml's `just finetune-model`) produces a usable answer from the same input. Scaling it is
 [`MIP-0048`](./docs/MIPs/MIP-0048-scaling-marola-sea.md).
 
 | Doc | What it covers |
 |---|---|
-| [`finetune/README.md`](./finetune/README.md) | The two tiers, what each costs, what is actually run |
+| [`finetune/README.md`](https://github.com/marola-dev/marola-ml/blob/main/finetune/README.md) | The two tiers, what each costs, what is actually run ([marola-ml](https://github.com/marola-dev/marola-ml), the `marola-ml/` submodule, holds the fine-tune, the DSPy compile and the benchmark gate) |
 | [`MIP-0025`](./docs/MIPs/README.md) | The chain: dataset → SFT → DPO → merge → GGUF → publish |
 | [`MIP-0048`](./docs/MIPs/MIP-0048-scaling-marola-sea.md) | Which model, which checkpoint, which hardware, the data ceiling |
 

@@ -3,7 +3,7 @@
 #
 #   docker compose run --rm marola --brief --lat -27.6733 --lon -48.47                          # no LLM: Overpass + Open-Meteo + scoring
 #   docker compose --profile ollama run --rm marola --summarize --lat -27.6733 --lon -48.47     # + draft + reviewer on llama3.2 (pulled once)
-#   docker compose --profile local run --rm marola-local --summarize --lat -27.6733 --lon -48.47  # marola-llama3.2, from the :local image (Dockerfile.local)
+#   docker compose --profile local run --rm marola-local --summarize --lat -27.6733 --lon -48.47  # marola-llama3.2, from marola-ml's :local image
 #   docker compose --profile ollama run --rm marola --ask "what if I'm caught in a rip current?"
 #   docker compose --profile mlflow up -d mlflow                                                # MIP-0010: the experiment ledger, http://127.0.0.1:5000
 #
@@ -36,9 +36,10 @@ services:
         condition: service_completed_successfully
         required: false
 
-  # Same CLI image, the Tier 1 fine-tune as the model, served by the marola-local image
-  # (Dockerfile.local: Ollama with marola-llama3.2 already in its store, built and benchmark-gated
-  # by docker-local.yml) — profile `local`. No pull, no `ollama create` on the user's machine.
+  # Same CLI image, the Tier 1 fine-tune as the model, served by marola-ml's marola-local image
+  # (its Dockerfile.local: Ollama with marola-llama3.2 already in its store, built and
+  # benchmark-gated by its docker-local.yml) — profile `local`. No pull, no `ollama create` on the
+  # user's machine.
   marola-local:
     extends: marola
     profiles: [local]
@@ -50,10 +51,7 @@ services:
         condition: service_healthy
 
   ollama-local:
-    image: ghcr.io/marola-dev/marola:local
-    build:
-      context: .
-      dockerfile: Dockerfile.local
+    image: ghcr.io/marola-dev/marola-ml:local
     profiles: [local]
     # A GPU makes the summary ~10x faster; uncomment on a machine with the NVIDIA toolkit:
     # deploy: { resources: { reservations: { devices: [{ driver: nvidia, count: all, capabilities: [gpu] }] } } }

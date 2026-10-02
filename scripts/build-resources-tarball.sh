@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # build-resources-tarball — the app -> ml contract (MIP-0070 §5.4): a tarball of the resource
-# files finetune/build_dataset.py needs, so it can read an unpacked directory instead of reaching
-# into ../core once marola-ml is a separate repo. ci.yml uploads this on every push to main.
+# files marola-ml's finetune/ and benchmark gate read. ci.yml uploads this on every push to main;
+# marola-ml's resources-fetch.sh expects it as ml-resources-<tag>.tar.gz on an app release.
 #
 #   scripts/build-resources-tarball.sh [out-tar.gz]   # default .tmp/ml-resources.tar.gz
 #   scripts/build-resources-tarball.sh --self-test

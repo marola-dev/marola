@@ -27,10 +27,10 @@ names the ideas in that file that are big enough for a Marola Improvement Propos
 | [`ROADMAP.md`](./4-Research-and-plans/ROADMAP.md) | plan | the ordering: today's review bugs (P0), open MIPs, the proposed multi-agent MIPs (§5), ten triaged external candidates with a provider-query checklist |
 | [`AGENT-SKILLS.md`](./3-Working-on-the-repo/AGENT-SKILLS.md) | how-to | §3 four skill candidates → MIP-0011 task 8 |
 | [`FABLE_REVIEW.md`](./4-Research-and-plans/FABLE_REVIEW.md) | review | §3 jail notes → MIP-0011 task 5 |
-| [`API.md`](./2-Building-marola/API.md) | reference | none; the way in to the scaladoc/pdoc trees `api-docs.yml` generates (**MIP-0064**) |
+| [`API.md`](./2-Building-marola/API.md) | reference | none; the way in to the scaladoc tree `api-docs.yml` generates and marola-ml's pdoc (**MIP-0064**) |
 | [`SELF-DOCUMENTING.md`](./3-Working-on-the-repo/SELF-DOCUMENTING.md) | reference | the research behind **MIP-0018** (weekly post-planner + multi-platform exporter) |
 | [`AWESOME-AGENTIC-ENGINEERING.md`](./4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md) | reference | **MIP-0043** (Draft) — the doc itself and its human-gated `scripts/awesome_agentic_digest.py` update routine; no further MIP material inside |
-| [`benchmarks/`](https://github.com/marola-dev/marola/blob/main/docs/benchmarks/) | reference | the runs MIP-0010 would move into a ledger (Markdown stays canonical in v1) |
+| [`benchmarks/`](https://github.com/marola-dev/marola-ml/tree/main/docs/benchmarks) (marola-ml) | reference | the runs MIP-0010 would move into a ledger (Markdown stays canonical in v1) |
 | [`mips/`](./MIPs/README.md) | — | the proposals themselves, with status |
 
 ## `FUTURE-WORK.md`, section by section
@@ -46,7 +46,7 @@ names the ideas in that file that are big enough for a Marola Improvement Propos
 | 6 | Two more Scala 3 libraries | Adopt directly if at all |
 | 7 | Splitting out of the monorepo / into modules | Superseded / done |
 | 8 | Smaller items | Direct fixes |
-| 9.1 | RAG and fine-tuning over marine literature | Shipped as MIP-0001 (RAG) and `finetune/` tiers |
+| 9.1 | RAG and fine-tuning over marine literature | Shipped as MIP-0001 (RAG) and marola-ml's `finetune/` tiers |
 | 9.2 | Catastrophe/hazard detection agent competing with public alerts | **Candidate MIP**, gated by a human-confirmation design for proactive alerts — write that gate first |
 | 10 | Scala/JVM LLMOps gap; `ds4s` (DSPy for Scala) | `ds4s` is **not a marola MIP by its own definition** — "a separate library-shaped project … large enough to be its own repo" that marola would consume. The other half of §10, Langfuse-shaped LLM tracing on the JVM, **is MIP-0010**. The "DSPy stays Python" conclusion is revisited by **MIP-0012** (marola's small bootstrap becomes a Scala step in `core/prompt/`; `dspy/` deprecated) |
 | 11 | Garmin data: FIT-file import first | **Candidate MIP** (Phase 4, personalisation); the doc already decided the shape (files, never the unofficial API) |

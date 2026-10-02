@@ -99,11 +99,12 @@ cli/src/main/scala/marola/       depends on core + local — the one place that 
                                   factory method per pluggable integration
   agent/SwimConditionsMcpServer.scala   §5c — exposes BeachFinder/Recommender as MCP tools
 
-dspy/
-  compile_recommendation_prompt.py   offline DSPy compile step (§5a) — defaults to a local Ollama
-                                      model, run for real against one (see Status note below);
-                                      optional Langfuse tracing
 ```
+
+The offline DSPy compile step (§5a), the fine-tune (§5h) and the benchmark gate live in
+[marola-ml](https://github.com/marola-dev/marola-ml) (MIP-0070): its `dspy/` writes the compiled
+prompts to a PR against `core/src/main/resources/`, and it runs this repo's image rather than
+reading its tree.
 
 The tree above lists what's in each module; the dependency direction it can't show — traits live in
 `core`, `local` implements them, `cli` is the one place that wires both together:
@@ -113,12 +114,12 @@ direction: right
 core: "core/\npure pipeline, traits"
 local: "local/\nOllama + file-based impls"
 cli: "cli/\nMain, AppConfig, MCP server"
-dspy: "dspy/\noffline DSPy compile"
+dspy: "marola-ml dspy/\noffline DSPy compile"
 
 local -> core: "implements the traits\n(LlmClient, VisionClient,\nSightingStore, ...)"
 cli -> core: "depends on"
 cli -> local: "depends on,\nwires via AppConfig"
-dspy -> core: "recommendation_prompt.json\n(compiled artifact, in resources)"
+dspy -> core: "recommendation_prompt.json\n(compiled artifact, a PR into resources)"
 ```
 
 ### 3.1 `Main`'s CLI surface
@@ -211,7 +212,7 @@ machine, forever. A wrong number there is a bug with a stack trace, not a halluc
 **The chat app is a fine-tuned open model.** `cli/src/main/scala/marola/agent/ChatServer.scala`
 answers questions through `config.llmClient` grounded on `config.knowledgeStore` (RAG over
 `knowledge/*.md`), and the model behind it can be marola's own: marola-sea, a QLoRA SFT + tool-call
-SFT + DPO fine-tune of an open base, served through Ollama (MIP-0025, `finetune/`). Point
+SFT + DPO fine-tune of an open base, served through Ollama (MIP-0025, marola-ml's `finetune/`). Point
 `MAROLA_LOCAL_LLM_MODEL` at it and the chat runs on a model trained on marola's corpus. This half
 *is* generative, so it gets the treatment generative output needs, which is the third piece:
 
@@ -343,7 +344,7 @@ one or two natural-language sentences, not decide the ranking itself. Keeping th
 deterministic and outside the model is deliberate: let the model do the part only it's good at, and
 keep anything safety/correctness-sensitive in plain, testable code.
 
-**The DSPy step** (`dspy/compile_recommendation_prompt.py`) optimizes the prompt that does
+**The DSPy step** (marola-ml's `dspy/compile_recommendation_prompt.py`) optimizes the prompt that does
 that summarization: a `dspy.Signature` over the structured `BestHour` fields (including
 `whale_sighting_likelihood`), compiled offline with `dspy.teleprompt.BootstrapFewShot` against a
 small hand-labeled trainset, using a metric that rewards mentioning jellyfish risk when
@@ -579,7 +580,7 @@ turns print from the sea-level series. Unit tests: matcher, verdict rows, tides,
 on a real-feed fixture (44 tests total). Known limits: §9 (centroid distance, Overpass slowness)
 plus MIP-0001 §8 (undocumented endpoint, off-season staleness).
 
-### 5h. Ocean knowledge — local RAG, and local fine-tuning — marola-corpus, `finetune/`
+### 5h. Ocean knowledge — local RAG, and local fine-tuning — marola-corpus, marola-ml
 
 `FUTURE-WORK.md` §9.1's first cut, local-only by request: **RAG first, fine-tuning as a labelled
 scaffold.**
@@ -618,7 +619,7 @@ flowchart TD
   deterministic (keyword coverage, citation present, abstained, latency) and the report ends with a
   computed verdict and what would beat the baseline where it loses (more corpus documents on the
   topics where strict abstained; a sharper embedder). Output under `data/benchmark-*.md`; the
-  2026-09-05 baseline is kept in [`benchmarks/2026-09-05.md`](https://github.com/marola-dev/marola/blob/main/docs/benchmarks/2026-09-05.md): the
+  2026-09-05 baseline is kept in [`benchmarks/2026-09-05.md`](https://github.com/marola-dev/marola-ml/blob/main/docs/benchmarks/2026-09-05.md): the
   default mode beat the plain prompt 0.84 vs 0.75 overall, 0.92 vs 0.55 inside the corpus, citing
   on 41% of answers, after adding the `NO_ANSWER_IN_PASSAGES` two-stage fallback, without which
   `llama3.2`'s own embeddings could not tell relevant passages from irrelevant ones.
@@ -626,7 +627,7 @@ flowchart TD
   logged to the `RunLedger`: experiment `marola/benchmark`, params `model`/`embed_model`/
   `min_score`/`corpus_sha`/`git_sha`/`questions`, one metric per arm column, the Markdown report
   as the artifact (`cli/bench/BenchmarkLedger`); the Markdown file stays what the gate reads.
-- **Fine-tuning.** `finetune/` (README there is the honest status): Tier 1 is an Ollama
+- **Fine-tuning.** marola-ml's `finetune/` (README there is the honest status): Tier 1 is an Ollama
   `Modelfile` variant `marola-llama3.2` (persona + decoding parameters, no weight change), built
   and run. Tier 2 is a QLoRA recipe (`build_dataset.py` → 41 chat examples from the DSPy demos,
   sea lore and corpus; `train_lora.py` with peft/trl; `Modelfile.adapter`), written, not run: no
@@ -683,7 +684,7 @@ swim in.
 `VisionClient` (§5e) are the concrete mechanism for "let users report sightings back... accumulate
 that as real labeled data", not yet wired into either heuristic's thresholds, but the storage and
 photo-analysis pieces now exist, which they didn't before this change. Feeding accumulated reports
-back into `dspy/compile_recommendation_prompt.py`'s trainset (LLM phrasing) or retraining the
+back into marola-ml's `dspy/compile_recommendation_prompt.py` trainset (LLM phrasing) or retraining the
 heuristics' thresholds/weights (the bigger lift) remains future work.
 
 ## 9. Other known limitations (POC-stage, not hidden)

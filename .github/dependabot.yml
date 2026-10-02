@@ -1,12 +1,10 @@
 # Scala/sbt dependencies (core/local/cli) are watched by scala-steward.yml instead — see
 # CONTRIBUTING.md.
 #
-# One pull request for every dependency update, across all three ecosystems. Per-entry `groups`
-# was already collapsing a dozen PRs into one per entry, but the floor was still three — a group
-# cannot span update entries, so github-actions, dspy and finetune each opened their own. A
-# multi-ecosystem group is the key that does span them: its schedule (Mondays and Fridays, 09:00
-# America/Sao_Paulo) replaces the per-entry ones, and `patterns` is required on every entry that
-# joins it. `cronjob` is required whenever `interval` is `cron`, `day`/`time` are not allowed
+# One pull request for every dependency update (dspy/ and finetune/'s pip entries left with their
+# code for marola-ml, MIP-0070). The multi-ecosystem group's schedule (Mondays and Fridays, 09:00
+# America/Sao_Paulo) is the one that applies, and `patterns` is required on every entry that joins
+# it. `cronjob` is required whenever `interval` is `cron`, `day`/`time` are not allowed
 # beside it, and the zone goes in `timezone`, never inside the expression
 # (schemastore.org/dependabot-2.0.json, verified 2026-09-12).
 version: 2
@@ -27,13 +25,3 @@ updates:
     # would leave behind, and deps-merge auto-merges a green PR.
     ignore:
       - dependency-name: "marola-dev/marola-devkit*"
-
-  - package-ecosystem: "pip"
-    directory: "/dspy"
-    patterns: ["*"]
-    multi-ecosystem-group: "marola-deps"
-
-  - package-ecosystem: "pip"
-    directory: "/finetune"
-    patterns: ["*"]
-    multi-ecosystem-group: "marola-deps"
