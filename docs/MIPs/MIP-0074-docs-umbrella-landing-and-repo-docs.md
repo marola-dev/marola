@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (2026-10-02, maintainer review on #603) |
+| **Status** | Accepted (2026-10-02, maintainer review on #603) — `Tasks: docs/MIPs/MIP-0074.tasks.md` ([`MIP-0074.tasks.md`](./MIP-0074.tasks.md)) |
 | **Author** | Claude (Opus 5.5), from the maintainer's decisions on the post-split docs review |
 | **Created** | 2026-10-02 |
 | **Phase** | None: docs and repo structure, orthogonal to `docs/PHASES.md`. No Phase 1 prerequisite, no paid resource |
@@ -159,7 +159,8 @@ skipped with a notice. The trees are inside the build, so pages link them relati
 app's `ml-resources` asset stays. Per-version docs published on tags are a possible follow-up,
 not designed here.
 
-**Required changes**, all in the umbrella PR of §5.7 step 3:
+**Required changes**, all landed by the umbrella PR of §5.7 step 3 at the latest (the devkit
+source, the branch fetch and the redirect machinery go first, in step 2):
 
 | File | Change |
 |---|---|
@@ -208,19 +209,25 @@ MIP-0070's §5.5 gets a "superseded for docs by MIP-0074" line in step 3.
 
 ### 5.7 Rollout
 
-1. Stale facts, then the devkit's `docs-lint` and its docs, then a tag. Every repo adopts `docs-lint`.
-2. **The guard**, a small umbrella PR. Today's `mount_at_root` fails unless marola-app has
-   `docs/index.md` and nothing outside `docs/1-Using-marola/` and `docs/2-Building-marola/`. From
-   then on, an aggregator meets an app layout it does not expect and fails instead of deploying. A
-   self-test proves that the old aggregator with the new app layout fails.
-3. **The pair**: marola-app's restructure and the umbrella PR (aggregator, §5.3's table, redirects,
-   the pages it receives, the four org pages). Before the pair, the app adopts the devkit
-   `api-docs` workflow, which runs harmlessly beside the old release job.
+1. The devkit's `docs-lint` and `api-docs` workflow, its README landing, then a tag.
+2. **Before the pair, each step safe on today's aggregator.** The guard, a small umbrella PR:
+   today's `mount_at_root` fails unless marola-app has `docs/index.md` and nothing outside
+   `docs/1-Using-marola/` and `docs/2-Building-marola/`, so an aggregator that meets an app layout
+   it does not expect fails instead of deploying; a self-test proves that the old aggregator with
+   the new app layout fails. The redirect machinery, the link rewriter, the branch fetch and the
+   devkit source land too, unwired where they would change the site. app and ml adopt the devkit
+   `api-docs` workflow, which runs harmlessly beside the old release job. site, corpus, ml, oods
+   and devkit move to README landings and drop `docs/index.md`: the new aggregator refuses a repo
+   with both, and today's already copies the README when `docs/index.md` is absent.
+3. **The pair**: marola-app's restructure and the umbrella PR (aggregator, §5.3's table,
+   redirects). The umbrella receives RUN-LOCALLY, TELEGRAM-SETUP and ARCHITECTURE with their links
+   fixed and nothing else; every Appendix B URL is final from the pair on, so the four org pages
+   and the content rewrites follow as ordinary PRs that change content, never URLs.
    The umbrella PR's CI builds against the app PR's head first. Whichever merges first, the other
    side's guard (step 2, or D1 against `docs/index.md`) turns `docs.yml` red. The live site stays on
    its last good deploy until the second merge, and is never deployed half-moved.
-4. site, corpus, ml, oods, devkit: README landing, skeleton pages, content revised. ml adopts the
-   `api-docs` workflow. Each step is safe on either aggregator.
+4. Every repo's skeleton pages and revised content, then the umbrella's pages section by section.
+   Each repo turns the `docs-lint` gate on in its last content PR, once its tree passes.
 5. Once the umbrella reads the branches, the `api-docs.tar.gz` release jobs in app and ml are
    removed.
 6. `marola-dev/.github` is created, then the umbrella's root health files go.
@@ -254,14 +261,17 @@ user pages (§5.1). The corpus's unverified-sources status moves up into its REA
     `# in a marola-<name> checkout`.
   - (b) A relative path or bare-prose path beginning `core/`, `local/`, `cli/`, `finetune/`, `dspy/`,
     `knowledge/` or `site/` fails outside the repo that owns it. Absolute GitHub URLs are allowed.
-  - (c) Any of these fails: `docs/1-Using-marola`, `docs/2-Building-marola`,
+  - (c) Any of these fails: `docs/1-Using-marola`, `docs/2-Building-marola` (except in the umbrella,
+    which owns both directories),
     `marola-dev/marola/blob/main/docs/2-`, the pre-org repo URL, the word "monorepo".
-  - (d) `docs/index.md` fails.
+  - (d) `docs/index.md` fails. Every repo has one until its landing, so a repo adds `docs-lint` to
+    `quality-other` in its last content PR (§5.7 step 4), not before.
   - (e) A relative link that leaves the repo fails.
   - Self-test cases: `recipe_defined_ok`, `foreign_recipe_fails`, `foreign_recipe_marked_in_prose_ok`,
     `foreign_recipe_marked_in_fence_ok`, `marker_in_other_sentence_fails`, `app_path_in_prose_fails`,
     `app_path_in_github_url_ok`, `app_path_in_fence_fails`, `monorepo_word_fails`,
-    `mips_dir_allowlisted`, `docs_index_fails`, `escaping_link_fails`.
+    `mips_dir_allowlisted`, `docs_index_fails`, `escaping_link_fails`,
+    `umbrella_owns_its_numbered_dirs_ok`.
 - **Routing table, one copy**: `scripts/agents_repos_check.sh` in the umbrella's `quality-other` fails
   when AGENTS.md has a table row naming a repo (`^\| \[?marola-(app|site|corpus|ml|oods|devkit)`) or
   names a pin file (`marola-image`, `corpus.version`, `resources.version`), and passes when it links
