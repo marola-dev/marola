@@ -1,0 +1,80 @@
+# docs — the umbrella's aggregated documentation site at docs.marola.dev: this repo's own docs/
+# plus every submodule's README.md + docs/, and each submodule's pre-built API docs when it
+# publishes one (MIP-0070 §5.5). The map at marola.dev is marola-site's, deployed separately.
+name: docs
+
+on:
+  # Sent by each submodule's notify-umbrella.yml (a devkit workflow).
+  repository_dispatch:
+    types: [submodule-docs-updated]
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs/**'
+  schedule:
+    - cron: "20 5 * * *" # once a day, off the hour other workflows use (CI-CD.md)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs
+  cancel-in-progress: false # never kill a Pages deploy mid-way
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      # §5.5: non-PR builds track each submodule's latest main; a PR build stays on the pinned
+      # commit the gitlink already carries, so it doesn't fail on something merged after it opened.
+      # No `pull_request` trigger here (ci.yml's docs-build is the PR build), so this always runs.
+      - name: Track every submodule's latest main
+        if: github.event_name != 'pull_request'
+        run: git submodule update --init --remote
+
+      # Builds .tmp/docs-aggregated: this repo's own docs/ plus every submodule's README.md +
+      # docs/, under its manifest mount. The tracked docs/ tree itself is never written to
+      # (ruling T10-8) — scripts/mkdocs.sh stages and builds from this directory instead.
+      - name: Build the aggregated docs tree
+        run: scripts/prepare-docs.sh
+
+      - name: mkdocs (material + kroki), from the aggregated tree
+        env:
+          CONTAINER_RUNTIME: docker
+          DOCS_SRC: .tmp/docs-aggregated
+        run: scripts/mkdocs.sh
+
+      - name: Fold in each submodule's pre-built API docs, from a release asset (no sbt here)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/fetch-api-docs.sh mkdocs/generated-docs
+
+      - name: The published tree keeps script-src 'self'
+        run: python3 scripts/strip_external_scripts.py --check mkdocs/generated-docs
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: mkdocs/generated-docs
+
+  # The custom domain is a repo setting: an Actions-deployed Pages site ignores a CNAME file.
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

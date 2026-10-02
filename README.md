@@ -2,9 +2,9 @@
 
 <p align="center">
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-<a href="https://github.com/marola-dev/marola/actions/workflows/site.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
-<!-- Aggregated statement coverage: ci.yml measures it (sbt-scoverage) on pushes to main and writes this shields.io endpoint JSON to Pages via the site-data branch. -->
-<a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fcoverage%2Flatest.json" alt="Scala statement coverage (sbt-scoverage)" /></a>
+<a href="https://github.com/marola-dev/marola-site/actions/workflows/site.yml"><img src="https://github.com/marola-dev/marola-site/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
+<!-- Aggregated statement coverage: marola-app's ci.yml measures it (sbt-scoverage) on pushes to main and writes this shields.io endpoint JSON to marola-site's site-data branch, which its Pages serves. -->
+<a href="https://github.com/marola-dev/marola-app/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fcoverage%2Flatest.json" alt="Scala statement coverage (sbt-scoverage)" /></a>
 <!-- The Python half, measured the only way marola tests Python: statement coverage of scripts/**/*.py while each script's own --self-test runs (there is no pytest suite). scripts/repo_stats.py, same repo-stats job and site-data branch as the badges below. -->
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fpython-coverage.json" alt="Python statement coverage under the scripts' own --self-tests" /></a>
 <!-- Same mechanism, ci.yml's repo-stats job (scripts/repo_stats.py): how many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line counts for the three Scala modules and the Python trees. -->
@@ -52,22 +52,20 @@ A few promises marola keeps:
 
 ## Run it in five minutes
 
+marola is a workspace of single-purpose repos; this one ties them together as git submodules. The
+app you run is [marola-app](https://github.com/marola-dev/marola-app):
+
 ```bash
-nix develop                                                        # JDK 25, sbt, just, ollama — see flake.nix
+git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
+nix develop                                                        # JDK 25, sbt, just, ollama — see its flake.nix
 just run -- --brief --lat -27.6733 --lon -48.4700                  # fastest path: ranked list, no LLM
 just ollama-up                                                     # starts `ollama serve`, pulls llama3.2 if missing
 just run -- --summarize --lat -27.6733 --lon -48.4700              # ranked list + top-pick block + LLM summary + review
 just ask "what should I do if I get caught in a rip current?"      # grounded answer with sources
-just site-build floripa && just site-serve                         # the map, locally, at :8000
 ```
 
-No cloud account, no API key needed for any of the above. Full walkthrough with
-real output: [`docs/1-Using-marola/RUN-LOCALLY.md`](./docs/1-Using-marola/RUN-LOCALLY.md). Docker instead of Nix/sbt/Ollama
-([MIP-0008](./docs/MIPs/MIP-0008-docker-images-and-smoke-test.md)):
-
-```bash
-docker compose --profile ollama run --rm marola --summarize --lat -27.6733 --lon -48.4700
-```
+No cloud account, no API key needed for any of the above. Full walkthrough with real output:
+[RUN-LOCALLY](https://docs.marola.dev/1-Using-marola/RUN-LOCALLY/).
 
 ## Why it's open source: citizen science 🔬
 
@@ -113,93 +111,36 @@ it's built, so you can see exactly what is done and what is still a plan: [`docs
   valuable data.
 - **Tell us what you see in the water**, like jellyfish or whales, or a beach that's missing.
 - **Share local knowledge**: sea safety, marine life, local conditions. Every fact marola explains
-  comes from a sourced note in [`knowledge/`](./knowledge/).
+  comes from a sourced note in [marola-corpus](https://github.com/marola-dev/marola-corpus).
 - **Open an issue**, in English or Portuguese: [github.com/marola-dev/marola/issues](https://github.com/marola-dev/marola/issues).
 
 ---
 
-## For developers
+## The repos
 
-marola is written in [Scala](https://www.scala-lang.org/), a programming language created at
-[EPFL](https://www.epfl.ch/) (the Swiss Federal Institute of Technology in Lausanne) by Martin
-Odersky's lab, and maintained today by EPFL's [Scala Center](https://scala.epfl.ch/) together with
-VirtusLab and Akka (formerly Lightbend). marola uses Scala 3 with [Kyo](https://getkyo.io/) on the
-JVM, and a free local model through [Ollama](https://ollama.com/). The score and its safety veto
-are deterministic Scala; the model only interprets and phrases, and never overturns a veto. The reasoning behind that split:
-[`PHILOSOPHY.md`](./PHILOSOPHY.md). The map is rebuilt every 3 hours and on every relevant merge
-to `main` ([`site.yml`](./.github/workflows/site.yml), [MIP-0005](./docs/MIPs/MIP-0005-map-and-static-site.md)).
-
-```console
-$ just run -- --brief --lat -27.6733 --lon -48.4700   # real run, 7 Sep 2026; header lines and the last 2 of 6 beaches trimmed
-origin -> lat=-27.6733, lon=-48.4700 (radius 15km, source: --lat/--lon flags)
-water quality -> IMA/SC
- 1. [ 55/100] Praia da Joaquina      (4.6km away)  best at Tue 8 Sep, 10:00  |  18.3°C sea, 11km/h wind  |  jellyfish: Moderate  |  whale sighting: High  |  choppy (0.6m waves), cold water (18.3°C), some jellyfish likelihood  · facilities: no data
- 2. [ 55/100] Praia do Rio Tavares   (2.1km away)  best at Tue 8 Sep, 10:00  |  18.3°C sea, 11km/h wind  |  jellyfish: Moderate  |  whale sighting: High  |  choppy (0.6m waves), cold water (18.3°C), some jellyfish likelihood  · lifeguard post: yes
- 3. [ 55/100] Praia do Morro das Pedras (5.1km away)  best at Tue 8 Sep, 10:00  |  17.9°C sea, 13km/h wind  |  jellyfish: Moderate  |  whale sighting: High  |  choppy (0.8m waves), cold water (17.9°C), some jellyfish likelihood  · facilities: no data
- 4. [ 40/100] Praia da Armação       (7.9km away)  best at Tue 8 Sep, 11:00  |  18.2°C sea, 15km/h wind  |  jellyfish: Moderate  |  whale sighting: High  |  breezy (15km/h), cold water (18.2°C), some jellyfish likelihood, 2/6 points PRÓPRIA — avoid Em frente à Avenida Antônio Borges dos Santos, n°792, Foz do Rio Sangradouro; Em frente à Rua Francisco Fagundes; Em frente à Rua Maria Emília de Costa, n°62; Em frente à Rua Antônio Aniceto da Costa  · facilities: no data
-```
-
-### The integrations: local and free
-
-Every integration is a trait with a free local implementation. Full detail, including what's
-verified live vs. written-not-run: [`docs/2-Building-marola/ARCHITECTURE.md`](./docs/2-Building-marola/ARCHITECTURE.md) §5.
-
-| Capability | Implementation | Switch |
-|---|---|---|
-| Query synthesis | Ollama chat completion | n/a |
-| Beach distance | Haversine (straight line) | n/a |
-| Agentic tool access | MCP server over stdio | n/a |
-| Sighting reports | JSON-lines file | n/a |
-| Photo analysis | Multimodal Ollama (`llava`) | n/a |
-| Observability | Off, or OTLP traces into local MLflow | `MAROLA_TRACES=off\|mlflow` |
-
-**Next:** the rest of the sea (surf, diving, fishing) as new scoring functions over the same data;
-roadmap: [`docs/MIPs/README.md`](./docs/MIPs/README.md), [`docs/4-Research-and-plans/FUTURE-WORK.md`](./docs/4-Research-and-plans/FUTURE-WORK.md) §1.
-
-### Documentation
-
-**Start here:** [`docs/1-Using-marola/RUN-LOCALLY.md`](./docs/1-Using-marola/RUN-LOCALLY.md). Everything else lives under `docs/`:
-
-| Doc | What it covers |
+| Repo | What it is |
 |---|---|
-| [`PHILOSOPHY.md`](./PHILOSOPHY.md) | Why marola is built the way it is: the three pillars, why agents, why Scala/Nix/`just` |
-| [`ARCHITECTURE.md`](./docs/2-Building-marola/ARCHITECTURE.md) | The pipeline, its local integrations, verified-live vs. written-not-run |
-| [`RUN-LOCALLY.md`](./docs/1-Using-marola/RUN-LOCALLY.md) | Run it now with Ollama, no cloud account needed |
-| [`FUTURE-WORK.md`](./docs/4-Research-and-plans/FUTURE-WORK.md) / [`EFFECTS-MAP.md`](./docs/2-Building-marola/EFFECTS-MAP.md) | Design sketches, reviewed-not-adopted libraries; a Scala/FP-purity review |
-| [`SKILLS.md`](./docs/4-Research-and-plans/SKILLS.md) / [`AGENT-SKILLS.md`](./docs/3-Working-on-the-repo/AGENT-SKILLS.md) | A skills roadmap for humans; which Claude Code skills to use here |
-| [`AGENT-FRAMEWORKS-SURVEY.md`](./docs/4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY.md) | Multi-agent frameworks: Python ideas, JVM/Scala libraries, where Apache Pekko fits |
-| [`benchmarks/`](./docs/benchmarks/2026-09-05.md) / [`mips/`](./docs/MIPs/README.md) | Kept benchmark runs; numbered design docs written before a feature is built |
-| [`FABLE_REVIEW.md`](./docs/4-Research-and-plans/FABLE_REVIEW.md) / [`DEV-FLOW.md`](./docs/3-Working-on-the-repo/DEV-FLOW.md) | Code review at the initial import; the dev loop end to end, MIP → PRs → merge |
+| [marola](https://github.com/marola-dev/marola) (this one) | The workspace: ways of working, the design docs ([MIPs](./docs/MIPs/README.md)), the phase list, the docs site at [docs.marola.dev](https://docs.marola.dev/), and every repo below as a submodule |
+| [marola-app](https://github.com/marola-dev/marola-app) | The product, in Scala 3 with [Kyo](https://getkyo.io/) on the JVM: the pipeline, the score and its safety veto, the CLI, the MCP tool server, the container image |
+| [marola-site](https://github.com/marola-dev/marola-site) | The map at [marola.dev](https://marola.dev/), rebuilt every 3 hours from the app's image |
+| [marola-corpus](https://github.com/marola-dev/marola-corpus) | The sourced ocean knowledge marola answers from |
+| [marola-ml](https://github.com/marola-dev/marola-ml) | Offline Python: the DSPy prompt compile, the benchmark gate, and [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF), marola's own small model |
+| [marola-oods](https://github.com/marola-dev/marola-oods) | The Open Ocean Data Store: an open, versioned archive of Brazil's bathing-water quality (starting empty) |
+| [marola-devkit](https://github.com/marola-dev/marola-devkit) | The shared dev harness every repo pins: tools, hooks, Claude Code skills, CI workflows |
 
-If you're an AI coding agent picking this repo up: read [`AGENTS.md`](./AGENTS.md) first.
+The score and its safety veto are deterministic Scala; the model only interprets and phrases, and
+never overturns a veto. Why it's built this way: [`PHILOSOPHY.md`](./PHILOSOPHY.md). How it works:
+[ARCHITECTURE](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/). Everything else, from
+every repo, is searchable at **[docs.marola.dev](https://docs.marola.dev/)**.
 
-### marola-sea — the fine-tuned model
-
-marola's own small model, trained on the repo's ocean corpus and published as GGUF:
-**[h0ffmann/marola-sea-tiny-GGUF](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF)**.
-
-```bash
-just marola-sea-pull tiny Q8_0     # pull it into Ollama as `marola-sea`
-MAROLA_LOCAL_LLM_MODEL=marola-sea just run -- --summarize
-```
-
-The `tiny` preset is SmolLM2-360M, a **pipeline proof, not a quality bar**, exactly as
-[`finetune/README.md`](./finetune/README.md) frames it. On a real swim summary it ignores the
-facts it is given and invents its own; `marola-llama3.2` (Llama 3.2 with marola's persona, built
-locally by `just finetune-model`) produces a usable answer from the same input. Scaling it is
-[`MIP-0048`](./docs/MIPs/MIP-0048-scaling-marola-sea.md).
-
-| Doc | What it covers |
-|---|---|
-| [`finetune/README.md`](./finetune/README.md) | The two tiers, what each costs, what is actually run |
-| [`MIP-0025`](./docs/MIPs/README.md) | The chain: dataset → SFT → DPO → merge → GGUF → publish |
-| [`MIP-0048`](./docs/MIPs/MIP-0048-scaling-marola-sea.md) | Which model, which checkpoint, which hardware, the data ceiling |
+If you're an AI coding agent: read [`AGENTS.md`](./AGENTS.md) first, then the `AGENTS.md` of the
+repo you're changing.
 
 ## Contributing
 
-Small PRs, one topic each; non-trivial changes start as a MIP under `docs/MIPs/`; every commit
-carries the `Co-Authored-By: Claude <noreply@anthropic.com>` trailer and every PR body ends with a
-`Cost:` line. AI agents are first-class contributors here and follow `AGENTS.md` like anyone else.
+Small PRs, one topic each, in the repo the change belongs to; non-trivial changes start as a MIP
+under `docs/MIPs/` here; every commit carries `Tested:`, `Cost:` and
+`Co-Authored-By: Claude <noreply@anthropic.com>` trailers. AI agents are first-class contributors here and follow `AGENTS.md` like anyone else.
 Full guide: [`CONTRIBUTING.md`](./CONTRIBUTING.md). Please also read the
 [Code of Conduct](./CODE_OF_CONDUCT.md) and, for a vulnerability, [`SECURITY.md`](./SECURITY.md).
 

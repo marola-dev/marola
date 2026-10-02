@@ -23,7 +23,7 @@ machine. §8 has the survey.
 
 | File | Does |
 |---|---|
-| `.gemini/config.yaml` | Turns off review-on-open, summary-on-open and draft handling; `MEDIUM` severity floor; at most 10 comments; ignores benchmark outputs, finetune data, test fixtures, `flake.lock`, native-image metadata, vendored JS. |
+| `.gemini/config.yaml` | Turns off review-on-open, summary-on-open and draft handling; `MEDIUM` severity floor; at most 10 comments; ignores test fixtures, `flake.lock`, native-image metadata, vendored JS. |
 | `.gemini/styleguide.md` | The subset of `AGENTS.md`/`.claude/rules/scala.md` a diff reviewer can check. Gemini injects this file into its prompt; it does **not** read `AGENTS.md` on its own. |
 | `DEV-FLOW.md` §5 | Route 4: `/gemini review`, on request only. |
 

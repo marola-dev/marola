@@ -1,4 +1,4 @@
-# 8001 on the host: `just site-serve` already owns 8000 (justfile).
+# 8001 on the host: 8000 is marola-site's `just site-serve`.
 services:
   mkdocs:
     command: mkdocs serve -a 0.0.0.0:8000

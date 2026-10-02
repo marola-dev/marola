@@ -49,29 +49,6 @@
         "type": "github"
       }
     },
-    "cuda": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "dir": "labs/cuda",
-        "lastModified": 1789347872,
-        "narHash": "sha256-RSi+/23vqxeFkvoYsX/E/vxbE53YeaGwHLQNDM+ybOM=",
-        "owner": "h0ffmann",
-        "repo": "nix-config",
-        "rev": "0cd8343dddf1eb73e6d46e70ae2bc8fe7f1297ff",
-        "type": "github"
-      },
-      "original": {
-        "dir": "labs/cuda",
-        "owner": "h0ffmann",
-        "ref": "labs/cuda",
-        "repo": "nix-config",
-        "type": "github"
-      }
-    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -109,6 +86,24 @@
     "flake-utils_2": {
       "inputs": {
         "systems": "systems_2"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_3": {
+      "inputs": {
+        "systems": "systems_3"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -169,6 +164,34 @@
         "type": "github"
       }
     },
+    "marola-devkit": {
+      "inputs": {
+        "agentic": [
+          "agentic"
+        ],
+        "flake-utils": "flake-utils_3",
+        "lint": [
+          "lint"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790927084,
+        "narHash": "sha256-F9HAFmATonNl77eb94NM0OXkoe58ucbLQMGGv6D6E8o=",
+        "owner": "marola-dev",
+        "repo": "marola-devkit",
+        "rev": "d1872deb55f9bac781870cd4cb1d0687800f7af6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "marola-dev",
+        "ref": "v0.2.3",
+        "repo": "marola-devkit",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1788404924,
@@ -212,9 +235,9 @@
     "root": {
       "inputs": {
         "agentic": "agentic",
-        "cuda": "cuda",
         "flake-utils": "flake-utils_2",
         "lint": "lint",
+        "marola-devkit": "marola-devkit",
         "nixpkgs": "nixpkgs"
       }
     },
@@ -256,6 +279,21 @@
       }
     },
     "systems_2": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_3": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
