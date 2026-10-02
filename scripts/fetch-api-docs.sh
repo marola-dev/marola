@@ -107,7 +107,7 @@ SH
   rm -rf "$t"
 
   echo
-  echo "-- mount ./ lands the asset at the site root's api/ (this repo's own, until task 15) --"
+  echo "-- mount ./ lands the asset at the site root's api/ (marola-app's) --"
   t="$(mktemp -d)"
   printf -- '- name: has-asset\n  mount: ./\n' >"$t/manifest.yml"
   PATH="$stub:$PATH" fetch_all "$t/site" "$t/manifest.yml" >/dev/null 2>&1

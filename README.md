@@ -3,8 +3,8 @@
 <p align="center">
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 <a href="https://github.com/marola-dev/marola-site/actions/workflows/site.yml"><img src="https://github.com/marola-dev/marola-site/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
-<!-- Aggregated statement coverage: ci.yml measures it (sbt-scoverage) on pushes to main and writes this shields.io endpoint JSON to marola-site's site-data branch, which its Pages serves. -->
-<a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fcoverage%2Flatest.json" alt="Scala statement coverage (sbt-scoverage)" /></a>
+<!-- Aggregated statement coverage: marola-app's ci.yml measures it (sbt-scoverage) on pushes to main and writes this shields.io endpoint JSON to marola-site's site-data branch, which its Pages serves. -->
+<a href="https://github.com/marola-dev/marola-app/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fcoverage%2Flatest.json" alt="Scala statement coverage (sbt-scoverage)" /></a>
 <!-- The Python half, measured the only way marola tests Python: statement coverage of scripts/**/*.py while each script's own --self-test runs (there is no pytest suite). scripts/repo_stats.py, same repo-stats job and site-data branch as the badges below. -->
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fpython-coverage.json" alt="Python statement coverage under the scripts' own --self-tests" /></a>
 <!-- Same mechanism, ci.yml's repo-stats job (scripts/repo_stats.py): how many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line counts for the three Scala modules and the Python trees. -->
@@ -52,8 +52,11 @@ A few promises marola keeps:
 
 ## Run it in five minutes
 
+The app is [marola-app](https://github.com/marola-dev/marola-app), a submodule of this workspace:
+
 ```bash
-nix develop                                                        # JDK 25, sbt, just, ollama — see flake.nix
+git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
+nix develop                                                        # JDK 25, sbt, just, ollama — see its flake.nix
 just run -- --brief --lat -27.6733 --lon -48.4700                  # fastest path: ranked list, no LLM
 just ollama-up                                                     # starts `ollama serve`, pulls llama3.2 if missing
 just run -- --summarize --lat -27.6733 --lon -48.4700              # ranked list + top-pick block + LLM summary + review
@@ -62,7 +65,7 @@ just run -- --site floripa --areas cli/src/test/resources/site/areas.json   # th
 ```
 
 No cloud account, no API key needed for any of the above. Full walkthrough with
-real output: [`docs/1-Using-marola/RUN-LOCALLY.md`](./docs/1-Using-marola/RUN-LOCALLY.md). Docker instead of Nix/sbt/Ollama
+real output: [`docs/1-Using-marola/RUN-LOCALLY.md`](https://docs.marola.dev/1-Using-marola/RUN-LOCALLY/). Docker instead of Nix/sbt/Ollama
 ([MIP-0008](./docs/MIPs/MIP-0008-docker-images-and-smoke-test.md)):
 
 ```bash
@@ -142,7 +145,7 @@ water quality -> IMA/SC
 ### The integrations: local and free
 
 Every integration is a trait with a free local implementation. Full detail, including what's
-verified live vs. written-not-run: [`docs/2-Building-marola/ARCHITECTURE.md`](./docs/2-Building-marola/ARCHITECTURE.md) §5.
+verified live vs. written-not-run: [`docs/2-Building-marola/ARCHITECTURE.md`](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/) §5.
 
 | Capability | Implementation | Switch |
 |---|---|---|
@@ -158,14 +161,14 @@ roadmap: [`docs/MIPs/README.md`](./docs/MIPs/README.md), [`docs/4-Research-and-p
 
 ### Documentation
 
-**Start here:** [`docs/1-Using-marola/RUN-LOCALLY.md`](./docs/1-Using-marola/RUN-LOCALLY.md). Everything else lives under `docs/`:
+**Start here:** [`docs/1-Using-marola/RUN-LOCALLY.md`](https://docs.marola.dev/1-Using-marola/RUN-LOCALLY/). Everything else lives under `docs/`:
 
 | Doc | What it covers |
 |---|---|
 | [`PHILOSOPHY.md`](./PHILOSOPHY.md) | Why marola is built the way it is: the three pillars, why agents, why Scala/Nix/`just` |
-| [`ARCHITECTURE.md`](./docs/2-Building-marola/ARCHITECTURE.md) | The pipeline, its local integrations, verified-live vs. written-not-run |
-| [`RUN-LOCALLY.md`](./docs/1-Using-marola/RUN-LOCALLY.md) | Run it now with Ollama, no cloud account needed |
-| [`FUTURE-WORK.md`](./docs/4-Research-and-plans/FUTURE-WORK.md) / [`EFFECTS-MAP.md`](./docs/2-Building-marola/EFFECTS-MAP.md) | Design sketches, reviewed-not-adopted libraries; a Scala/FP-purity review |
+| [`ARCHITECTURE.md`](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/) | The pipeline, its local integrations, verified-live vs. written-not-run |
+| [`RUN-LOCALLY.md`](https://docs.marola.dev/1-Using-marola/RUN-LOCALLY/) | Run it now with Ollama, no cloud account needed |
+| [`FUTURE-WORK.md`](./docs/4-Research-and-plans/FUTURE-WORK.md) / [`EFFECTS-MAP.md`](https://docs.marola.dev/2-Building-marola/EFFECTS-MAP/) | Design sketches, reviewed-not-adopted libraries; a Scala/FP-purity review |
 | [`SKILLS.md`](./docs/4-Research-and-plans/SKILLS.md) / [`AGENT-SKILLS.md`](./docs/3-Working-on-the-repo/AGENT-SKILLS.md) | A skills roadmap for humans; which Claude Code skills to use here |
 | [`AGENT-FRAMEWORKS-SURVEY.md`](./docs/4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY.md) | Multi-agent frameworks: Python ideas, JVM/Scala libraries, where Apache Pekko fits |
 | [`benchmarks/`](https://github.com/marola-dev/marola-ml/blob/main/docs/benchmarks/2026-09-05.md) / [`mips/`](./docs/MIPs/README.md) | Kept benchmark runs (in marola-ml); numbered design docs written before a feature is built |

@@ -1,17 +1,3 @@
-# sbt / Scala
-target/
-project/target/
-project/project/
-.bloop/
-.bsp/
-.metals/
-.ammonite/
-metals.sbt
-
-# Coursier / Ivy
-.ivy2/
-.coursier/
-
 # Nix
 result
 result-*
@@ -31,21 +17,15 @@ result-*
 # Logs
 *.log
 
-# sbt boot server socket dir (see justfile's XDG_RUNTIME_DIR override)
+# Scratch: worktrees, docs builds, repomix packs
 /.tmp/*
 !/.tmp/.gitkeep
 
-# LocalFileSightingStore's default output (sightings/) — runtime data, not a build artifact
-/data/*
-!/data/.gitkeep
 
 # repomix — `just context-*` writes under /.tmp/ (ignored above); these are repomix's own default
 # output names in case it's run bare from the repo root
 repomix-output.*
 repomix-output/
-
-# MIP-0005: `--site`'s default output — derived; the map itself is marola-site's
-/site/dist/
 
 # Claude Code agent worktrees (Agent tool, isolation: worktree) — ephemeral nested checkouts
 .claude/worktrees/

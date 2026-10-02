@@ -92,7 +92,8 @@ e um modelo local gratuito via [Ollama](https://ollama.com/). A nota e o veto de
 apenas interpreta e redige, e nunca derruba um veto. Para rodar em cinco minutos:
 
 ```bash
-nix develop                                                        # JDK 25, sbt, just, ollama (veja flake.nix)
+git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
+nix develop                                                        # JDK 25, sbt, just, ollama (veja o flake.nix dele)
 just run -- --brief --lat -27.6733 --lon -48.4700                  # caminho mais rápido: lista em ordem, sem LLM
 just ollama-up                                                     # inicia o `ollama serve` e baixa o llama3.2
 just run -- --summarize --lat -27.6733 --lon -48.4700              # lista + resumo do LLM + revisão
@@ -100,7 +101,7 @@ just ask "o que fazer se eu for pego por uma corrente de retorno?" # resposta co
 ```
 
 Sem conta na nuvem, sem chave de API. O resto da documentação técnica está em inglês:
-[`README.md`](./README.md#for-developers), [`docs/1-Using-marola/RUN-LOCALLY.md`](./docs/1-Using-marola/RUN-LOCALLY.md),
+[`README.md`](./README.md#for-developers), [`docs/1-Using-marola/RUN-LOCALLY.md`](https://docs.marola.dev/1-Using-marola/RUN-LOCALLY/),
 [`PHILOSOPHY.md`](./PHILOSOPHY.md) e [`CONTRIBUTING.md`](./CONTRIBUTING.md). Leia também o
 [Código de Conduta](./CODE_OF_CONDUCT.md).
 

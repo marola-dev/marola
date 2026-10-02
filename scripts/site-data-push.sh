@@ -5,7 +5,8 @@
 #   scripts/site-data-push.sh <checkout-dir>
 #   scripts/site-data-push.sh --self-test
 #
-# ci.yml (coverage, stats) and docker-smoke.yml each write their own directory, so a
+# This repo's ci.yml (stats) and marola-app's ci.yml (coverage) and docker-smoke.yml (the
+# workflows that keep a copy of this script) each write their own directory, so a
 # rejected push never conflicts in content, only in ref. The checkouts are --depth=1, which is why
 # this replays only HEAD (`--onto FETCH_HEAD HEAD~1`): a plain rebase would also try to replay the
 # shallow root, i.e. the whole old tree.

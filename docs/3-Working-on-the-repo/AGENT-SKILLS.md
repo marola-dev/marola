@@ -15,9 +15,10 @@ The map's `site-frontend` skill moved to [marola-site](https://github.com/marola
 with the page, and `eli5` and `corpus-doc` to
 [marola-corpus](https://github.com/marola-dev/marola-corpus) with the corpus (MIP-0070 task 13),
 so this repo has no `.claude/skills/` of its own. To use them, start the session in
-`marola-corpus/`; their steps that run marola (`just ask`, `just knowledge-index`) run from this
-checkout's root with `MAROLA_KNOWLEDGE_DIR=marola-corpus/knowledge`, as marola-corpus's
-AGENTS.md says.
+`marola-corpus/`; their steps that run marola (`just ask`, `just knowledge-index`) run in
+`marola-app/` with `MAROLA_KNOWLEDGE_DIR=../marola-corpus/knowledge`, as marola-corpus's AGENTS.md
+says. The Scala rules (`.claude/rules/scala.md`) and the `jar-verifier` agent moved to marola-app
+with the code (task 15).
 
 ## 1.1 marola-devkit plugin skills
 
