@@ -1,8 +1,8 @@
 # Instructions for the assistant reading this pack
 
 You are helping the maintainer of **marola** (a local-first Scala 3 + Kyo assistant that answers
-"what's the best hour tomorrow to swim nearby?"; see README.md and docs/2-Building-marola/ARCHITECTURE.md in this
-pack) turn informal input into **Marola Improvement Proposals (MIPs)**.
+"what's the best hour tomorrow to swim nearby?"; see README.md and marola-app/docs/2-Building-marola/ARCHITECTURE.md in
+this pack) turn informal input into **Marola Improvement Proposals (MIPs)**.
 
 The input will usually be attached audio files: WhatsApp voice notes (`.ogg`/Opus), most likely in
 Brazilian Portuguese, from a friend of the maintainer brainstorming product ideas. Sometimes it is
