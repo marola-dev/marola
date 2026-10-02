@@ -241,6 +241,13 @@ lives in the callers. An unparseable item is dropped and counted, not fatal: one
 
 ### 5.2 Inbound A — operational alerts (`core/alerts`), never corpus
 
+**Amended by [MIP-0071](./MIP-0071-official-alerts-per-state.md) (Draft, 2026-09-30).** The site's
+alert data comes from MIP-0071's append-only store, filled by its own ingest workflow, never from a
+fetch during the site build (#535). MIP-0071 builds this section's `CapParser` and replaces task 6's
+`scripts/inmet_backfill.py` with its ingest's backfill mode. The CLI banner (§3) and the map banner
+stay here; the map banner reads MIP-0071's rendered `data/alerts/active.json` instead of a board
+field.
+
 ```scala
 final case class MarineAlert(
     id: String, event: String, severity: String,
