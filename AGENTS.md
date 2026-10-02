@@ -38,6 +38,10 @@ This repo is the umbrella (MIP-0070) and keeps no app code. The Scala app (the s
   [marola-corpus](https://github.com/marola-dev/marola-corpus) (the `marola-corpus/` submodule).
   marola-app's `corpus.version` pins its release; `MAROLA_KNOWLEDGE_DIR=../marola-corpus/knowledge`
   there uses the submodule's checkout instead, to try an unreleased document.
+- The Open Ocean Data Store (MIP-0056), Brazilian bathing-water samples under `data/oods/`, lives
+  in [marola-oods](https://github.com/marola-dev/marola-oods) (the `marola-oods/` submodule). It
+  starts empty: the ingest code that commits there arrives in marola-app through the recreated
+  MIP-0056 stack, not here.
 
 `PHILOSOPHY.md` (repo root) holds the reasons behind the rules below: why Scala 3 on the JVM, Nix,
 `just`, ai-jail, MIPs. Docs live under `docs/`, grouped into the four audience directories the
@@ -71,9 +75,9 @@ are the only thing ordering the sections. The build is `--strict`, so a link tha
 inside `docs/` fails it; that is why `AGENTS.md` and `PHILOSOPHY.md` are referenced at GitHub
 rather than relatively. Preview with `just docs-serve` before pushing. On
 `main`, a push touching `docs/**` or `mkdocs/**` runs `docs.yml`, which renders this repo's docs
-plus every submodule's (`mkdocs/repos.yml`: `marola-site`, `marola-corpus`, `marola-ml`, and
-`marola-app` at the root, so its `1-Using-marola/` and `2-Building-marola/` keep their URLs), folds
-the API docs in
+plus every submodule's (`mkdocs/repos.yml`: `marola-site`, `marola-corpus`, `marola-ml`,
+`marola-app` at the root, so its `1-Using-marola/` and `2-Building-marola/` keep their URLs, and
+`marola-oods`), folds the API docs in
 under `api/` from release assets, and deploys docs.marola.dev. The map at marola.dev is
 [marola-site](https://github.com/marola-dev/marola-site)'s.
 

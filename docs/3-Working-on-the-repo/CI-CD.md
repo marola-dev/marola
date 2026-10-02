@@ -59,6 +59,15 @@ resources tarball to each `v*` tag. Nothing here builds Scala. marola-app is thi
 submodule and mounts at the site's root, so its `1-Using-marola/` and `2-Building-marola/` keep
 their URLs, and its Scaladoc lands at `/api/`.
 
+The water-quality dataset is [marola-oods](https://github.com/marola-dev/marola-oods)'s (task 16):
+it starts empty, with only its own `oods-check.yml` — on a push or PR touching `data/` or
+`marola-image`, it pulls the pinned app image (the same tag-and-digest pin marola-site and
+marola-ml use) and runs a smoke command the image supports today, then checks `data/oods/`'s shape
+against the formats MIP-0056 specifies; an empty tree passes. It never builds or writes to
+anything. The actual ingest workflow, `oods-ingest.yml`, and the OODS command it checks against,
+land in marola-app through the recreated MIP-0056 stack, not here. marola-oods is this repo's
+fifth submodule, published under `docs.marola.dev/repos/marola-oods/`.
+
 ## The workflows
 
 | Workflow | Trigger | Runner | Gates or deploys | Secrets and variables | By hand |

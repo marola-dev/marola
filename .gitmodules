@@ -10,3 +10,6 @@
 [submodule "marola-app"]
 	path = marola-app
 	url = https://github.com/marola-dev/marola-app.git
+[submodule "marola-oods"]
+	path = marola-oods
+	url = https://github.com/marola-dev/marola-oods.git
