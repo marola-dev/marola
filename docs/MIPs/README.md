@@ -85,6 +85,7 @@ as an unfilled placeholder).
 | [MIP-0067](./MIP-0067-inea-multi-city-bathing-water.md) | INEA bathing water beyond one PDF: discover the newest dated bulletin per zone and use its real date, one header-derived layout for Rio's four zones, Niterói and Cabo Frio, one coordinate per point, and a Cabo Frio area | Draft | 2026-09-28 | L — four more bulletin layouts, ~100 curated coordinates, a new site area; no new dependency | user value (Rio, Niterói, Cabo Frio verdicts, and no stale verdict shown as current) | `do next` — #487 and #488 already filed and unblock it | — |
 | [MIP-0068](./MIP-0068-diagrams-in-docs.md) | Diagrams in the docs, for the site as the medium: the dialect best suited to each picture (mostly Mermaid; D2/C4-PlantUML for architecture, DBML for schemas, Vega-Lite for charts, Excalidraw for sketches through a new Kroki companion, only where a sketch earns it). Makes the site dark-only with diagrams styled for slate (today's arrows are near-invisible), hardens `mkdocs.yml`'s kroki block (`fail_fast`, BPMN and diagrams.net off), adds `DIAGRAMS.md` and a rule in `.claude/rules/docs.md`, and converts ~40 strong candidates from an inventory of all 105 pages | Implemented — #510, #514–#520 | 2026-09-29 | M — config hardening plus one companion container, then ~40 diagrams across ~25 pages; no Scala, no new script | infra/dev-loop; user value | cheap win — the renderer already runs in CI; only the diagrams are missing | — |
 | [MIP-0070](./MIP-0070-umbrella-and-polyrepo-split.md) | Split marola into single-purpose repos under an umbrella: `marola-dev/marola` becomes the team layer (ways of working, MIPs, the aggregated docs site on `docs.marola.dev`) with every repo as a submodule; code moves out with history into `marola-app`, `marola-site`, `marola-corpus`, `marola-ml`, `marola-oods` (data only), plus `marola-devkit` shipped as a flake, a plugin marketplace and reusable workflows. Path couplings become pinned artifacts; each repo keeps its own AGENTS.md, docs and issues (coordinated on the org Project), with org invariants restated and checked | Accepted — `Tasks: MIP-0070.tasks.md` | 2026-09-30 | XL — five new repos, a tooling repo published three ways and taught to find the umbrella, a cross-repo docs aggregator, a Pages/DNS move, one app change (data-only `--site`), history-preserving extraction | infra/dev-loop; cost/ops | do when X lands — after the in-flight MIP-0056/0061/0063–0068 stacks merge | — |
+| [MIP-0073](./MIP-0073-open-system-one-models.md) | Open-weights System One models as the local `DecisionClient`: MIP-0059's `JevClient` becomes one `SystemOneClient` with a base URL, since Laya and Decider (both Apache-2.0) serve Jev's own `POST /v1/systemone` locally. Laya is the first sidecar, benchmarked against Decider and the Ollama judge before any use. Answers whether this model class may make the safety veto or an activity score: no for both, yes for routing, offline judging, parser cross-checks and proposals a human reviews | Draft | 2026-10-02 | M: one client generalised, a pinned sidecar in `docker-compose.yml`, no change to `scoring/` | infra/dev-loop; cost/ops | do when MIP-0059's trait lands | — |
 
 <!-- mip-graph:start -->
 ```mermaid
@@ -101,14 +102,17 @@ flowchart TD
   M0048["MIP-0048"]:::draft
   M0051["MIP-0051"]:::draft
   M0053["MIP-0053"]:::draft
+  M0059["MIP-0059"]:::draft
   M0064["MIP-0064"]:::implemented
   M0065["MIP-0065"]:::implemented
+  M0073["MIP-0073"]:::draft
   M0025 --> M0048
   M0033 --> M0036
   M0034 --> M0044
   M0051 --> M0053
+  M0059 --> M0073
   M0064 --> M0065
 ```
 
-_54 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052, MIP-0054, MIP-0055, MIP-0056, MIP-0057, MIP-0058, MIP-0059, MIP-0060, MIP-0062, MIP-0063, MIP-0066, MIP-0067, MIP-0068, MIP-0070._
+_53 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052, MIP-0054, MIP-0055, MIP-0056, MIP-0057, MIP-0058, MIP-0060, MIP-0062, MIP-0063, MIP-0066, MIP-0067, MIP-0068, MIP-0070._
 <!-- mip-graph:end -->

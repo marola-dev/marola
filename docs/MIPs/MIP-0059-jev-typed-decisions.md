@@ -6,7 +6,7 @@
 | **Author** | Claude (Opus 5), for M. Hoffmann |
 | **Created** | 2026-09-19 |
 | **Phase** | 0 (dev-loop and offline uses), 1 for anything user-facing |
-| **Related** | `ARCHITECTURE.md` §5a (query synthesis) and §5h (RAG), `FUTURE-WORK.md` §4.1 (eval harness), MIP-0001 (corpus/RAG), MIP-0010 (run ledger), MIP-0025 (fine-tuning) |
+| **Related** | `ARCHITECTURE.md` §5a (query synthesis) and §5h (RAG), `FUTURE-WORK.md` §4.1 (eval harness), MIP-0001 (corpus/RAG), MIP-0010 (run ledger), MIP-0025 (fine-tuning), MIP-0073 (open-weights System One models: a local backend for this trait) |
 | **Effort** | M — one new trait with two implementations, an `AppConfig` factory and an HTTP call through the existing `Http`/`Json` helpers; no new module, no SDK (there is no Scala SDK, §4) |
 | **Gain** | `infra/dev-loop` (a judge and a reranker that cannot emit malformed output); `cost/ops` (output tokens are free and input is $0.042/MTok, §4) |
 | **Effort vs Gain** | `cheap win` for the two offline uses (§5.3 bootstrap), `do when Phase 1 lands` for anything a user sees |
@@ -211,6 +211,9 @@ than guesses, which is the point of `confidence` being separate from `probabilit
   probabilities or a confidence, and it is slower, not faster. **This is the real competitor** and
   should be benchmarked against Jev in the bootstrap ⚠ (not evaluated here).
 - **A fine-tuned local classifier** (MIP-0025 tiers). Cheapest at runtime, most work up front.
+- **Open-weights System One models.** Released after this MIP was written (Laya on 2026-09-18,
+  then Decider and others), several serve Jev's own `POST /v1/systemone` locally, with no key and
+  nothing leaving the machine. MIP-0073 evaluates them as a local backend for this trait.
 
 ## 11. Open questions
 
