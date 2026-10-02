@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted (2026-10-02, maintainer review on #603) |
 | **Author** | Claude (Opus 5.5), from the maintainer's decisions on the post-split docs review |
 | **Created** | 2026-10-02 |
 | **Phase** | None: docs and repo structure, orthogonal to `docs/PHASES.md`. No Phase 1 prerequisite, no paid resource |
