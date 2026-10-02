@@ -17,7 +17,8 @@ codebase as expected, not as something to guess past.
 ## What each document in this pack is for
 
 - **`README.md`**: what marola is and does, for a newcomer.
-- **`AGENTS.md`**: the project's hard rules for anyone (human or AI) working in this repo:
+- **`AGENTS.md`**: the workspace's repo map (marola is an umbrella repo with one submodule per
+  code repo) and the project's hard rules for anyone (human or AI) working in it:
   phase discipline (don't go live on a paid cloud integration before a local path works), cost
   and deployment safety (never provision a paid resource without explicit human confirmation),
   attribution/commit conventions, code style, and testing discipline. A MIP that violates one of
