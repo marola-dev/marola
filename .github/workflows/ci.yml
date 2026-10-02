@@ -63,6 +63,7 @@ jobs:
               - 'marola-corpus'
               - 'marola-ml'
               - 'marola-app'
+              - 'marola-oods'
 
   # README badges: this run's green steps, plus the Scala and Python line counts, counted in the
   # checked-out submodules (MIP-0070 §5.4: the umbrella runs repo_stats.py over every repo).
@@ -147,6 +148,7 @@ jobs:
         python3 scripts/repo_stats.py --self-test
         scripts/gh-billing.sh --self-test
         scripts/site-data-push.sh --self-test
+        scripts/pointer-sync.sh --self-test
         scripts/prepare-docs.sh --self-test
         scripts/fetch-api-docs.sh --self-test
 

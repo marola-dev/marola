@@ -68,6 +68,7 @@ quality-other:
     python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
     scripts/site-data-push.sh --self-test
+    scripts/pointer-sync.sh --self-test
     python3 scripts/mip_graph.py --self-test
     scripts/mkdocs.sh --self-test
     scripts/prepare-docs.sh --self-test

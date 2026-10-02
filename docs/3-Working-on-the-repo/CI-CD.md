@@ -19,6 +19,9 @@ flowchart LR
   main --> docs[docs.yml]
   cron([schedule]) --> docs
   sub([submodule-docs-updated]) --> docs
+  sub --> sync[pointer-sync.yml]
+  cron --> sync
+  sync -- "one rolling PR" --> pr
   app[marola-app workflows] -- ":jvm :native" --> ghcr[(GHCR<br/>ghcr.io/marola-dev/marola-app)]
   app -- "api-docs.tar.gz on v* releases" --> docs
   docs --> dpages[GitHub Pages<br/>docs.marola.dev]
@@ -77,6 +80,7 @@ fifth submodule, published under `docs.marola.dev/repos/marola-oods/`.
 | `pr-body.yml` | PR opened, reopened, ready, pushed | `ubuntu-latest` | Devkit `pr-body`: fills the description from the commits (`uprd`); skips forks and bot branches | `GITHUB_TOKEN` | `just uprd` |
 | `labels.yml` | dispatch only | `ubuntu-latest` | Devkit `labels-sync`: applies the devkit's label manifest to this repo | `GITHUB_TOKEN` | `gh workflow run labels.yml`; `just labels-sync` locally |
 | `docs.yml` | `repository_dispatch: submodule-docs-updated`; push to `main` touching `docs/**`/`mkdocs/**`; daily; dispatch | `ubuntu-latest` | The umbrella aggregator (MIP-0070 §5.5): builds a gitignored aggregated tree (`scripts/prepare-docs.sh` — this repo's own `docs/` plus each submodule's `README.md` + `docs/`, submodules at their latest `main`), runs `mkdocs --strict` on it, folds in each submodule's API docs, marola-app's at `/api/` (`scripts/fetch-api-docs.sh`, the latest release's `api-docs.tar.gz` — no `sbt doc` here), and on `main` **deploys** to Pages at `docs.marola.dev` (`github-pages` environment) | `GITHUB_TOKEN` | `gh workflow run docs.yml`; `just docs` locally |
+| `pointer-sync.yml` | `repository_dispatch: submodule-updated` or `submodule-docs-updated`; daily; dispatch | `ubuntu-latest` | The only thing that moves submodule pointers (MIP-0070 §5.6): `scripts/pointer-sync.sh` runs `git submodule update --remote` and commits whatever moved onto `chore/pointer-sync`, force-pushed, with one open PR listing each submodule's old → new commit and a compare link; when `main` has caught up, that PR is closed. Pushed and opened with the PAT so the PR's CI runs | `MAROLA_CROSS_REPO_PAT` | `gh workflow run pointer-sync.yml` |
 | `profile-activity.yml` | PR merged into `main` | `ubuntu-latest` (reusable workflow's `runner:` input) | Pings `h0ffmann/h0ffmann` to refresh its activity list; without the token it only leaves a notice | `PROFILE_DISPATCH_TOKEN` | — |
 
 `site.yml` and `site-health.yml` moved to marola-site with the map (MIP-0070 task 11),
@@ -128,7 +132,8 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
   `PROFILE_DISPATCH_TOKEN`. `MAROLA_CROSS_REPO_PAT` is an
   org secret: a fine-grained token that needs Contents read and write on **both** marola and
   marola-site (and on each new repo as it is created). marola uses it to push to marola-site's
-  `site-data` and to dispatch `site-data-updated`; marola-site uses it to dispatch
+  `site-data`, to dispatch `site-data-updated`, and to push `chore/pointer-sync` and open its PR
+  (so it also needs Pull requests read and write on marola); marola-site uses it to dispatch
   `submodule-docs-updated` back to marola; marola-ml uses it for that and to open its
   compiled-prompt pull requests here.
 - **Pages:** source "GitHub Actions", custom domain `docs.marola.dev` (a DNS `CNAME` to
