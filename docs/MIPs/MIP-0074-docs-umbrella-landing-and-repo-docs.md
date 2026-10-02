@@ -87,7 +87,7 @@ The split is first-class content:
 | Page | Contents |
 |---|---|
 | landing (umbrella `README.md`) | Today's README as it is (what marola is, run it, the repos, contributing). Only split-driven changes: "workspace" → "umbrella", the repo table links each repo's `5-Repos/` page, the health-file links are re-pointed, and the low-level badges (lines of code, coverage, Scala/JDK/Ollama/MCP) move to the README of the repo they measure |
-| `2-Building-marola/REPOS.md` | The three layers (MIP-0070 §5.1) · **the routing table, its only copy**: one row per repo with what it owns, the artifact it publishes, its consumers, and the workflow or pin file that moves it (e.g. marola-corpus · `knowledge/` · `marola-corpus-<tag>.tar.gz` · app, ml · `release.yml` → `corpus.version`). AGENTS.md links it instead of restating it (§7) · **the contracts**: one producer→consumer diagram plus a table of artifacts and pins (the app image and `marola-image`; corpus, `ml-resources` and `api-docs` tarballs; `corpus.version` and `resources.version`; compiled-prompt PRs; `site-data`; OODS ingest commits and export; `notify-umbrella` dispatches) · no repo reads another's tree · the org invariants |
+| `2-Building-marola/REPOS.md` | The three layers (MIP-0070 §5.1) · **the routing table, its only copy**: one row per repo with what it owns, the artifact it publishes, its consumers, and the workflow or pin file that moves it (e.g. marola-corpus · `knowledge/` · `marola-corpus-<tag>.tar.gz` · app, ml · `release.yml` → `corpus.version`). AGENTS.md links it instead of restating it (§7) · **the contracts**: one producer→consumer diagram plus a table of artifacts and pins (the app image and `marola-image`; corpus and `ml-resources` tarballs; `corpus.version` and `resources.version`; compiled-prompt PRs; `site-data`; OODS ingest commits and export; `notify-umbrella` dispatches) · no repo reads another's tree · the org invariants |
 | `2-Building-marola/SPLIT.md` | Why (MIP-0070 §2) · the decisions and what they beat: submodules, OODS split into code and data, contracts instead of paths, no published Scala libraries, aggregated docs, the devkit as a flake · what moved where (MIP-0070's file assignment) · timeline (#521 → #574…#599) · what was given up |
 | `3-Ways-of-working/WORKING-ACROSS-REPOS.md` | Clone with submodules · detached HEAD and branching inside a submodule · where a change belongs · producer releases, consumers bump, the pointer moves last via `pointer-sync` · issues per repo, umbrella parent and sub-issues, fully qualified references · cross-repo PRs on one branch name · which checkout a recipe needs |
 
@@ -106,19 +106,30 @@ heuristics' internals and links back to it (§6).
   splits into `_` siblings, which sort after their parent (`-` < `.` < `_`): `1-design.md`, then
   `1-design_integrations.md`. The pages: `1-design` (patterns, module map, effect boundary) ·
   `2-libraries` (each library and pinned tool, why, version, alternatives) · `3-development`
-  (build, test, CI, releases, secrets and cost, for this repo only) · `4-reference` (config, CLI,
-  data formats). `3-development` and `4-reference` go beyond the four low-level categories
-  named in the brief (§11).
+  (this repo's build, test, CI, releases, secrets and cost) · `4-reference` (this repo's config,
+  CLI, data formats, and hand-written API notes). Both are low-level because they are specific to
+  one repo. General guidelines (how every repo tests, releases, reviews and runs CI) are umbrella
+  `3-Ways-of-working/` pages, which the repo pages link and do not restate.
 - **ADRs** live at `docs/adr/NNNN-<slug>.md` (template: Appendix C). prepare-docs generates
   `adr/index.md` (number, title, status), and a hand-written one fails. An ADR records a decision
   that starts and ends inside one repo. Anything crossing a repo boundary, or visible to users, is a
   MIP.
-- **API docs**: generation stays in each repo's release workflow. `docs/api-docs/` holds only
-  hand-written sources: an `index.md`, and later `openapi/<service>.yaml`, rendered statically by
-  a renderer the first spec's MIP picks. Generated output is never committed. `fetch-api-docs`
-  unpacks `api-docs.tar.gz` under `5-Repos/<name>/api-docs/`. The tarball's top level holds language
-  directories only (`scala/`, `python/`). Links into generated trees are absolute
-  `https://docs.marola.dev/…`, checked after the fetch (§7).
+- **API docs**: `docs/api-docs/` holds **only generated output**: Scaladoc in marola-app
+  (`api-docs/scala/`), pdoc in marola-ml (`api-docs/python/`), and OpenAPI-rendered pages later,
+  from whichever generator the first spec's MIP picks. Nothing hand-written lives there.
+  Generation is the repo's job, done in its commit flow. The devkit provides the entry points,
+  `just api-docs` and `just api-docs-check`, and each repo supplies its own generator
+  (`scripts/api-docs.sh`: `sbt doc` plus `strip_external_scripts.py`, or pdoc). The author
+  regenerates and commits `docs/api-docs/` in the same PR as the code. CI runs `api-docs-check`,
+  which regenerates and fails on `git diff --exit-code docs/api-docs/`. This is the pattern
+  `flake.lock` and the MIP graph already follow. The umbrella only copies `docs/`, so it never needs
+  to know how to generate anything.
+- **Committing generated HTML.** The app's Scaladoc is 17 MB unpacked (1368 files, 2.0 MB as
+  today's tarball) and ml's pdoc is 0.3 MB compressed. Git stores an unchanged file once, so a
+  regeneration only adds the pages that changed. The recipe is meant to run when the documented API
+  changes, and the stale check enforces that. `.gitattributes` marks `docs/api-docs/**`
+  `linguist-generated=true -diff`, so GitHub folds it in PR diffs and drops it from language stats.
+  docs-lint, search and future graph tooling skip it.
 - **Not in a repo**: using marola, anything spanning repos, process, research, MIPs.
 
 ### 5.3 The build
@@ -141,18 +152,21 @@ including own-repo `github.com/…/blob/main/…` links, which are normalised to
 through `mkdocs/overrides/404.html`, which keeps the path, query and hash. A moved page in any repo gets a
 `redirect_maps` entry in the same PR pair.
 
+**Retired outside the umbrella**: the `api-docs.tar.gz` build and upload in marola-app's and
+marola-ml's `release.yml`. The app's `ml-resources` asset stays. They go only after the pair in §5.7,
+so the old fetch keeps working until then.
+
 **Required changes**, all in the umbrella PR of §5.7 step 3:
 
 | File | Change |
 |---|---|
-| `.github/workflows/docs.yml`, `ci.yml` (`docs` filter) | Path filters add `README.md`, `flake.lock`, `scripts/{prepare,fetch-api}-docs.sh`, `scripts/lib/repos_manifest.sh` |
+| `.github/workflows/docs.yml`, `ci.yml` (`docs` filter) | Path filters add `README.md`, `flake.lock`, `scripts/prepare-docs.sh`, `scripts/lib/repos_manifest.sh`. The fetch step is removed |
 | `scripts/lib/repos_manifest.sh` | Accepts `  source: flake-lock` (that value only). `mount:` and trailing comments still fail |
 | `mkdocs/repos.yml` | `mount:` removed (every repo at `5-Repos/<name>/`); `- name: marola-devkit` + `source: flake-lock` added |
 | `scripts/prepare-docs.sh` | Everything above. `mount_at_root` deleted. The devkit is read with python3 from `flake.lock` (`nodes.marola-devkit.locked.rev`) and fetched with `git fetch --depth 1 <url> <rev>` into `.tmp/docs-sources/` (no nix in CI) |
-| `scripts/fetch-api-docs.sh` | Unpacks under `api-docs/`, rejects a top-level file, takes the release whose tag is `git describe --tags --abbrev=0 --match 'v*'` of the built commit |
-| `docs.yml` and `ci.yml` checkout | `git submodule foreach 'git fetch --quiet --unshallow --tags --filter=tree:0'`: commit history and tags, no trees, so `describe` works on today's shallow checkout |
+| `scripts/fetch-api-docs.sh`, its `ci.yml` self-test line | retired: api-docs arrive with `docs/` |
 | `scripts/mkdocs.sh` | The `docs/index.md` check (`:132`) and self-test (`:201`) move to the build directory's `index.md` |
-| `mkdocs/mkdocs.yml`, `Dockerfile` | `theme.custom_dir: overrides`, `redirects` plugin (+ `mkdocs-redirects==1.2.2`), `validation: anchors: warn`, `not_in_nav` → `6-MIPs/*.tasks.md` and `6-MIPs/*/screenshots/*` |
+| `mkdocs/mkdocs.yml`, `Dockerfile` | `theme.custom_dir: overrides`, `redirects` plugin (+ `mkdocs-redirects==1.2.2`), `validation: anchors: warn`, `strip_external_scripts.py --check` kept on the output, `not_in_nav` → `6-MIPs/*.tasks.md` and `6-MIPs/*/screenshots/*` |
 
 ### 5.4 Placement, page by page
 
@@ -197,13 +211,15 @@ MIP-0070's §5.5 gets a "superseded for docs by MIP-0074" line in step 3.
    then on, an aggregator meets an app layout it does not expect and fails instead of deploying. A
    self-test proves that the old aggregator with the new app layout fails.
 3. **The pair**: marola-app's restructure and the umbrella PR (aggregator, §5.3's table, redirects,
-   the pages it receives, the four org pages, and the ml release that moves pdoc under `python/`).
+   the pages it receives, the four org pages, and the app's committed `docs/api-docs/` with its
+   stale check).
    The umbrella PR's CI builds against the app PR's head first. Whichever merges first, the other
    side's guard (step 2, or D1 against `docs/index.md`) turns `docs.yml` red. The live site stays on
    its last good deploy until the second merge, and is never deployed half-moved.
-4. site, corpus, ml, oods, devkit: README landing, skeleton pages, content revised. Each is safe on
-   either aggregator.
-5. `marola-dev/.github` is created, then the umbrella's root health files go.
+4. site, corpus, ml, oods, devkit: README landing, skeleton pages, content revised. ml commits
+   `docs/api-docs/python/` with its stale check. Each is safe on either aggregator.
+5. After both, the `api-docs.tar.gz` release jobs in app and ml are removed.
+6. `marola-dev/.github` is created, then the umbrella's root health files go.
 
 ## 6. Scoring / safety impact
 
@@ -214,12 +230,14 @@ user pages (§5.1). The corpus's unverified-sources status moves up into its REA
 
 - **prepare-docs `--self-test`**: one case per Appendix A row, plus the landing rule, the
   `mount:`/`source:` parsing, the devkit rev, `build.json` and the ADR index (Appendix E).
-- **fetch-api-docs `--self-test`**: unpack under `api-docs/`, reject a top-level file, and choose the
-  tag from a real temp repo with history (not a stub).
+- **Stale API docs, per repo**: `just api-docs-check` in app and ml CI fails a PR whose code changes
+  the generated output without committing it. A devkit self-test covers a fake generator, stale →
+  fails, regenerated → passes.
 - **Guard**: the step-2 self-test. **404 forward**: `scripts/docs_redirect_check.js` under node
   (`flake.nix:47`), in the style of marola-site's `redirect_check.js`.
-- **Build**: `just docs` (`--strict`, anchors at warn) with every repo at its new commit.
-- **`scripts/site_links_check.py`** (stdlib, no network), after the fetch: every
+- **Build**: `just docs` (`--strict`, anchors at warn) with every repo at its new commit and no
+  fetch step. The API trees are present because they arrived with `docs/`.
+- **`scripts/site_links_check.py`** (stdlib, no network), after the build: every
   `https://docs.marola.dev/…` href in `generated-docs` resolves. `--old-sitemap <file>`: every `<loc>`
   of the previous live sitemap resolves as a page, a redirect stub or a 404-forward entry, so a
   move cannot silently drop a URL.
@@ -277,24 +295,29 @@ to the nav label.
   MIP tools and every MIP link, for a site-only concern.
 - Redirects all in the 404 page: unchecked at build time. Hand-written stubs: they reimplement the
   plugin.
-- Committed generated API docs: generated HTML in every repo's history, for no gain.
+- API docs from release assets (today): the umbrella has to know each repo's asset contract and
+  fetch it at build time, and the docs track releases rather than the code on `main`.
+- A generated-docs branch per repo, written by CI and fetched by the umbrella: every repo's
+  `main-rule` ruleset blocks bot pushes to `main`, and a side branch would need its own credential,
+  ruleset exception and fetch logic. Committing in the PR needs none of that.
 - The devkit as a docs-only submodule: a second pin besides `flake.lock`, against `AGENTS.md:44`.
 - Per-repo `mkdocs.yml`: seven theme configs to keep in step. `docs-lint` catches what breaks the
   build, without Docker.
 
 ## 11. Open questions
 
-1. **Please confirm two interpretations**: `3-development` and `4-reference` are added to the low-level
-   categories, and "API docs under `docs/api-docs/`" means hand-written sources, with the generated
-   trees coming from release assets.
-- **Follow-up MIP** (needs the next number): agent graph tooling in marola-devkit. It covers a pinned
-  graphify, an offline `graph` recipe that writes outside the checkout, a parser for workflow and
-  pin-file edges, and a plugin skill. The umbrella builds the workspace graph as a CI artifact,
-  never committed. That MIP also revisits AGENTS.md to reference the graph setup. Spike: 4530 nodes
-  / 7978 edges in 2.6 s, but 0 real cross-repo wiring edges (the 85 workflow YAMLs are absent without
-  an LLM), and 3 hits / 3 partial / 2 misses in 8 routing questions.
-- **Follow-ups, not MIPs**: `repo_stats.py` reading the `marola-app/` tree in CI, which also has to emit per-repo badge
-  endpoints for decision 3; a "lands in" column for MIPs.
+None. The maintainer decided every question raised in review.
+
+### Follow-ups
+
+- **Follow-up MIP** (needs the next number): agent graph tooling in marola-devkit. It covers a
+  pinned graphify, an offline `graph` recipe that writes outside the checkout, a parser for workflow
+  and pin-file edges, and a plugin skill. The umbrella builds the workspace graph as a CI artifact,
+  never committed. That MIP also revisits AGENTS.md to reference the graph setup. The spike found
+  4530 nodes / 7978 edges in 2.6 s, but 0 real cross-repo wiring edges, because the 85 workflow YAMLs
+  are absent without an LLM. Routing scored 3 hits, 3 partial and 2 misses out of 8 questions.
+- **Not MIPs**: `repo_stats.py` reads the `marola-app/` tree in CI, and must also emit per-repo badge
+  endpoints for decision 3. And a "lands in" column for MIPs.
 
 ## Appendix
 
@@ -322,7 +345,7 @@ rules. `<repo>` is the repo being mounted. `<sha>` is the commit it was built fr
 | `https://github.com/marola-dev/<repo>/(blob\|tree)/<branch>/<path>` (own repo, any branch name) | the same URL with `<sha>` in place of `<branch>` |
 | umbrella only: `marola-<name>/README.md` or `marola-<name>/docs/x.md` (e.g. `../marola-app/…` from `docs/**`) | the site path `5-Repos/marola-<name>/index.md` or `5-Repos/marola-<name>/x.md`, made relative |
 | umbrella only: `marola-<name>/<code path>` | `https://github.com/marola-dev/marola-<name>/blob/<that repo's sha>/<path>` |
-| `/…` root-absolute (e.g. API.md's `/api/scala/core/marola.html`) | fails; a generated tree is linked as `https://docs.marola.dev/5-Repos/<repo>/api-docs/…`, checked by `site_links_check.py` |
+| `/…` root-absolute (e.g. API.md's `/api/scala/core/marola.html`) | fails; link the generated tree relatively (`api-docs/scala/core/marola.html`), which now exists at build time |
 | an image outside `docs/` | fails: move it under `docs/` |
 | `../…` out of the repo, or a path missing at `<sha>` | fails, naming the file and the link |
 | any other `https://…`, `mailto:` (docs.marola.dev included) | unchanged |
@@ -339,7 +362,7 @@ rules. `<repo>` is the repo being mounted. `<sha>` is the commit it was built fr
 | `/marola-app/` | `/5-Repos/marola-app/` | plugin |
 | `/2-Building-marola/EFFECTS-MAP/` | `/5-Repos/marola-app/1-design_effects/` | plugin |
 | `/2-Building-marola/SCALA3-JDK-REVIEW/` | `/5-Repos/marola-app/2-libraries_scala3-jdk/` | plugin |
-| `/2-Building-marola/API/` | `/5-Repos/marola-app/api-docs/` | plugin |
+| `/2-Building-marola/API/` | `/5-Repos/marola-app/4-reference_api/` | plugin |
 | `/api/**` | `/5-Repos/marola-app/api-docs/**` | 404 forward |
 | `/repos/marola-ml/api/**` | `/5-Repos/marola-ml/api-docs/python/**` | 404 forward |
 | `/repos/**` (site, corpus, ml, oods landings) | `/5-Repos/**` | 404 forward |
@@ -436,7 +459,8 @@ Every row's last step is `docs-lint` (§7).
 | ARCH §11 | — | retire | a "moved to PHASES" stub |
 | `2-Building-marola/EFFECTS-MAP.md` | app `1-design_effects.md` | move + revise: drop "see git history" (filtered by the split) | design and patterns |
 | `2-Building-marola/SCALA3-JDK-REVIEW.md` | app `2-libraries_scala3-jdk.md` | move | language/JDK choices |
-| `2-Building-marola/API.md` | app `api-docs/index.md` | move + revise: `just docs` is not an app recipe; `/api/…` and `/repos/marola-ml/api/` links → absolute `https://docs.marola.dev/5-Repos/…/api-docs/…` (App. A) | the way into the generated trees |
+| `2-Building-marola/API.md` | app `4-reference_api.md` | move + revise: `just docs` is not an app recipe; `/api/…` links → relative `api-docs/scala/…`; ml's pdoc linked at `https://docs.marola.dev/5-Repos/marola-ml/api-docs/python/` | `api-docs/` holds generated output only |
+| — | app `docs/api-docs/scala/` | new, generated by `just api-docs`, committed, checked for staleness | the umbrella no longer fetches release assets |
 | — | app `2-libraries.md`, `4-reference_config.md` (every `MAROLA_*` var), `adr/0001-three-sbt-modules.md`, `3-development.md` (+ the nine workflows and release assets) | new, from FUTURE-WORK §2/3/5/6/7.3, `AppConfig.scala`, umbrella CI-CD | missing reference |
 | `.env.example` | stays | rewrite: the app's `MAROLA_*` placeholders instead of `DATABASE_URL`/`COST_GOVERNOR_*` | another project's file |
 | `AGENTS.md` | stays | revise `:34` (the root-mount claim) and the docs paths | stale after D2 |
@@ -460,7 +484,7 @@ Every row's last step is `docs-lint` (§7).
 | ml `finetune/README.md` | `3-development_finetune.md`; a 3-line pointer stays | split → revise: `just run`/`e2e`/`quality-other` qualified or removed, resources from the tarball | off-site, stale recipes |
 | ml — | `1-design.md` (three jobs, none on the request path), `2-libraries.md`, `3-development.md` (environment, GPU, self-hosted runner, cost and who may run what, publishing, pins) | new | AGENTS.md-only today |
 | ml `docs/benchmarks/` | stays, off-site | keep; README links to it go to GitHub at `<sha>` (App. A) | a ledger |
-| ml — | `docs/api-docs/index.md` | new: the way into the pdoc tree at `api-docs/python/` | App. B forwards there and the landing needs an entry |
+| ml — | `docs/api-docs/python/` | new, generated by `just api-docs` (pdoc), committed, checked for staleness; the README links it | App. B forwards there |
 | oods `README.md` + `docs/index.md` | landing; checks → `3-development.md` | rewrite: a status line instead of PR-number history, the tree labelled "planned (MIP-0056)" (licence: #601) | D1; history belongs in the MIP |
 | devkit `README.md` + `docs/index.md` | landing | merge + revise: the stale mkdocs line (`README.md:27`), the false "the site mounts this" claim, the missing tools (`workflow-runners`, `pr-label-nlp`, `backfill-pr-labels`) | D1, and it is not mounted today |
 | devkit `docs/workflows.md` | `4-reference_workflows.md` | move + revise: no monorepo wording, `MAROLA_CROSS_REPO_PAT` | stale |
@@ -495,13 +519,14 @@ Every row's last step is `docs-lint` (§7).
 - `squidfunk/mkdocs-material` `docs/customization.md` (master), 2026-10-02: `custom_dir` theme extension; `404.html` listed as an overridable template.
 - `https://api.github.com/repos/marola-dev/.github`, 2026-10-02: 404. `raw.githubusercontent.com/marola-dev/<repo>/main/{CONTRIBUTING,SECURITY}.md` for app, site, corpus, ml, oods, devkit: 404.
 - Shallow clones on 2026-10-02, matching the umbrella's pins: app `16ab0c4`, site `568199a`, corpus `c62001b`, ml `50d08b3`, oods `dad1e0a`, devkit `d1872de` (= `flake.lock`'s locked rev for `v0.2.3`). Read: every `.md` (Appendix D), each `LICENSE` (all MIT), the app's `.env.example` (`DATABASE_URL`, three `COST_GOVERNOR_*`), `grep MAROLA_LLM_PROVIDER` over the app's `core`/`local`/`cli` (no hits), the app's and ml's `release.yml` (`api-docs.tar.gz`), marola-site's `404.html` forward.
+- `gh release view` / `download`, 2026-10-02: marola-app `v0.1.0` `api-docs.tar.gz` 2,055,556 B, unpacked 17 MB, 1368 entries (187 HTML); marola-ml `v0.1.0` 292,846 B.
 - Umbrella at `8387c25`: `scripts/prepare-docs.sh`, `scripts/fetch-api-docs.sh`, `scripts/lib/repos_manifest.sh`, `mkdocs/{repos.yml,mkdocs.yml,Dockerfile}`, `.github/workflows/docs.yml`, `flake.nix`, and the file:line citations in §2 and Appendix D, re-read. `git log origin/main`: #599 is MIP-0070 task 17.
 
 ### Not checked
 
 - Any of the new code: the rewrite engine, the guard, `docs-lint`, the 404 override, `site_links_check.py`. These are written, not run.
 - mkdocs 1.6's `validation.anchors` setting and the Python-Markdown `toc` slug of emoji headings, assumed from memory.
-- `git fetch --unshallow --tags --filter=tree:0` inside an `actions/checkout` submodule (needs server-side partial-clone support; GitHub has it, not run here).
+- That mkdocs copies the committed HTML trees under `docs/api-docs/` as static files without warnings under strict, and that Scaladoc output is byte-stable across runs (the stale check depends on it).
 - The graphify numbers in §11 come from the controller's spike report (graphify 0.9.73, 2026-10-02), not re-run.
 - mkdocs-redirects 1.2.2 actually building with mkdocs 1.6.1 and material 9.7.7 in this image.
 - How Material's privacy plugin treats external badge images (the landing keeps static badges either way).
