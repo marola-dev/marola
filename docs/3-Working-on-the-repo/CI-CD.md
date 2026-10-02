@@ -6,7 +6,7 @@ them run on GitHub's standard `ubuntu-latest` runner. The GPU one, `marola-sea-p
 marola-ml with the fine-tune (below).
 The design behind this layout is [MIP-0065](../MIPs/MIP-0065-ci-cd-on-github-hosted-runners.md).
 The generic jobs are [marola-devkit](https://github.com/marola-dev/marola-devkit)'s reusable
-workflows ([inputs](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/docs/workflows.md)),
+workflows ([inputs](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/docs/workflows.md)),
 called at the same tag as the flake input; bump them together.
 
 ## How a change reaches marola.dev and docs.marola.dev

@@ -151,7 +151,7 @@ title that is still the branch name with the first commit's subject. Forks and b
 
 The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape: bold labels, a compact
 MIP/Tested/Cost table, no `#` headings, one screen for a typical two-commit PR; the PR title is
-the first commit's subject on the branch, capped at 70 characters (the devkit's [`scripts/lib/uprd_title.sh`](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/uprd_title.sh)) so
+the first commit's subject on the branch, capped at 70 characters (the devkit's [`scripts/lib/uprd_title.sh`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/uprd_title.sh)) so
 it stays skimmable. `just uprd`/`just uprds` print a warning when a title had to be cut, worth a
 manual retitle if the cut reads awkwardly.
 
@@ -239,8 +239,8 @@ checkout: a run of `just deps-stack` (`status`, `clean`, `--resume`, or a confli
 included) never switches your branch or touches your index. Two dependency bumps landing on
 adjacent lines of the same file (the only conflict shape dependabot produces) resolve
 themselves: `*requirements*.txt` keeps the higher lower bound per package
-(the devkit's [`scripts/lib/req_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/req_merge.py)), a workflow's `uses: owner/action@vN` steps keep the higher version
-per action ([`scripts/lib/uses_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/uses_merge.py), the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0`
+(the devkit's [`scripts/lib/req_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/req_merge.py)), a workflow's `uses: owner/action@vN` steps keep the higher version
+per action ([`scripts/lib/uses_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/uses_merge.py), the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0`
 case); anything else still stops the script
 with the branch left mid-cherry-pick in that worktree and prints the exact `cd .tmp/wt-deps-stack
 && git status` / resolve / `git cherry-pick --continue` / `just deps-stack --resume` steps. Once
@@ -259,7 +259,7 @@ ordered by MIP number, the exact shape `just deps-stack` gives dependabot: built
 worktree (`.tmp/wt-mip-stack`), one new PR per chain branch stacked on the previous, the original
 PR closed with a pointer, `gh stack link` at the end, `just mip-stack status` / `clean` /
 `--resume` / `--skip` / `--dry-run` as for deps. The index-row conflict resolves itself
-(the devkit's [`scripts/lib/mip_index_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/scripts/lib/mip_index_merge.py): both sides' rows, one per MIP, in number order; the same row
+(the devkit's [`scripts/lib/mip_index_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/scripts/lib/mip_index_merge.py): both sides' rows, one per MIP, in number order; the same row
 edited differently on both sides is a real edit and stops for a human). A draft that merged
 another draft's branch to stay mergeable is fine: merge commits are skipped and commits the
 chain already carries are dropped by patch-id. Then `just stack-merge <stack#> --squash` lands
@@ -366,7 +366,7 @@ its `submodule-docs-updated` dispatch.
 | Re-check one issue's readiness | `just issue-ready <n>` — names the rule that failed; adds or removes `agent-ready` |
 | A MIP's task table into issues | `just tasks-to-issues MIP-NNNN [--milestone "<name>"]` — idempotent; the milestone must exist |
 | New deliverable milestone | `just milestone-new "<name>" [--mip MIP-NNNN]` |
-| Labels back in sync with the manifest | `just labels-sync` (the devkit's [`.github/labels.yml`](https://github.com/marola-dev/marola-devkit/blob/v0.2.2/.github/labels.yml); `--prune` to delete orphans) |
+| Labels back in sync with the manifest | `just labels-sync` (the devkit's [`.github/labels.yml`](https://github.com/marola-dev/marola-devkit/blob/v0.2.3/.github/labels.yml); `--prune` to delete orphans) |
 | The board | `just board-sync`; the one-time bootstraps have no recipe: `issues board setup`, `issues board gates` |
 | One dependency or sub-issue edge by hand | `issues deps add <n> --blocked-by <m>`, `deps list <n>`, `sub add <parent> <child>` — no recipe either; `tasks-to-issues` calls `deps add` for a whole table's worth |
 | Pack docs for a browser MIP session | `just context-mips` |
