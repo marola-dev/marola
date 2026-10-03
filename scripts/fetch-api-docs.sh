@@ -65,6 +65,10 @@ self_test() {
   # A pre-push hook exports GIT_DIR (and a worktree, GIT_COMMON_DIR); the fixtures below would
   # otherwise commit into the caller's own repo.
   unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR
+  # The seed commit below has no -c for gpgsign/hooksPath; isolate every git call in this
+  # self-test from the operator's global/system config instead (scripts/pointer-sync.sh's
+  # self-test idiom), so a signing key or a global hook can't reach the fixture repos.
+  export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
   local fails=0
   ok() { if [ "$1" = "$2" ]; then echo "  ok   $3"; else echo "  FAIL $3 — got '$1' want '$2'"; fails=$((fails + 1)); fi; }
 
