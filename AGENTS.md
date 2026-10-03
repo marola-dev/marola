@@ -94,8 +94,9 @@ runs, at the versions `flake.lock` pins; a missing tool fails rather than skips,
 **Writing a doc is a deploy.** mkdocs builds the sidebar from the file tree (the `1-`…`4-`
 prefixes order it), and the build is `--strict`: a link that does not resolve inside the
 aggregated tree fails it, which is why `AGENTS.md` and `PHILOSOPHY.md` are linked at GitHub. A push
-to `main` touching `docs/**` or `mkdocs/**`, a submodule's docs dispatch, or the daily cron runs
-`docs.yml`, which deploys docs.marola.dev (`mkdocs/repos.yml` maps each repo to its mount;
+to `main` touching `docs/**`, `mkdocs/**`, `README.md`, `flake.lock`, `scripts/prepare-docs.sh` or
+`scripts/lib/repos_manifest.sh`, a submodule's docs dispatch, or the daily cron runs `docs.yml`,
+which deploys docs.marola.dev (`mkdocs/repos.yml` maps each repo to its mount;
 marola-app's mounts at the root, marola-devkit is fetched at `flake.lock`'s locked rev).
 `docs/index.md` is the site's landing page and the index of what is MIP material;
 `.claude/rules/docs.md` has the MIP status vocabulary.

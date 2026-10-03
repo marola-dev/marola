@@ -38,10 +38,13 @@ fetch_flake_lock_source() {
   url="${DOCS_SOURCE_REMOTE//<repo>/$name}"
   dir="$root/.tmp/docs-sources/$name"
   rm -rf "$dir"
-  git init -q "$dir"
+  # Every step checks itself: callers run this in $(...), where errexit is off.
+  git init -q "$dir" ||
+    { echo "prepare-docs: could not create $dir for $name" >&2; return 1; }
   git -C "$dir" fetch -q --depth 1 "$url" "$rev" ||
     { echo "prepare-docs: could not fetch $name at $rev from $url" >&2; return 1; }
-  git -C "$dir" -c advice.detachedHead=false checkout -q FETCH_HEAD
+  git -C "$dir" -c advice.detachedHead=false checkout -q FETCH_HEAD ||
+    { echo "prepare-docs: could not check out $name at $rev in $dir" >&2; return 1; }
   printf '%s\n' "$dir"
 }
 
@@ -377,6 +380,14 @@ EOF
   ok "$(head -1 "$t/build/repos/fake-devkit/index.md" 2>/dev/null)" "# locked, see [ref](ref.md)" "its README is the locked commit's, rewritten like a submodule's"
   ok "$([ -f "$t/build/repos/fake-devkit/ref.md" ] && echo yes || echo no)" "yes" "...and its docs/** is copied beside it"
   ok "$(git -C "$t/root/.tmp/docs-sources/fake-devkit" rev-parse HEAD 2>/dev/null)" "$locked" "the fetch lands in .tmp/docs-sources/<name> at the locked rev"
+  mkdir -p "$t/bin"
+  # shellcheck disable=SC2016 # $a and "$@" belong to the stub git, not to this shell
+  printf '#!/bin/sh\nfor a; do [ "$a" = checkout ] && exit 1; done\nexec %s "$@"\n' "$(command -v git)" >"$t/bin/git"
+  chmod +x "$t/bin/git"
+  rc=0
+  out="$(PATH="$t/bin:$PATH" DOCS_SOURCE_REMOTE="$t/remote/<repo>.git" prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
+  ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "a failing checkout fails the fetch"
+  ok "$(grep -c 'could not check out fake-devkit' <<<"$out")" "1" "...naming the checkout"
   rm -rf "$t"
 
   echo
