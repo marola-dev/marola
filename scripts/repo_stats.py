@@ -69,6 +69,7 @@ SELF_TEST_SCRIPTS = (
     "scripts/mip_graph.py",
     "scripts/strip_external_scripts.py",
     "scripts/lib/doc_links.py",
+    "scripts/site_links_check.py",
 )
 COVERAGE_SOURCE = "scripts"
 

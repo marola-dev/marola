@@ -32,6 +32,11 @@ jobs:
         with:
           submodules: true
 
+      # Taken before this run's own build can move a page: the only honest baseline for "did a
+      # move drop a URL" is the site as it stood before this deploy (MIP-0074 §7).
+      - name: Save the live sitemap, before this build can change it
+        run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml
+
       # §5.5: non-PR builds track each submodule's latest main; a PR build stays on the pinned
       # commit the gitlink already carries, so it doesn't fail on something merged after it opened.
       # No `pull_request` trigger here (ci.yml's docs-build is the PR build), so this always runs.
@@ -58,6 +63,9 @@ jobs:
 
       - name: The published tree keeps script-src 'self'
         run: python3 scripts/strip_external_scripts.py --check mkdocs/generated-docs
+
+      - name: Every docs.marola.dev link resolves, and no old sitemap URL was dropped
+        run: python3 scripts/site_links_check.py mkdocs/generated-docs --old-sitemap old-sitemap.xml
 
       - uses: actions/upload-pages-artifact@v5
         with:
