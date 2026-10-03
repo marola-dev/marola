@@ -6,7 +6,8 @@ FROM python:3.13-slim
 RUN pip install --no-cache-dir \
       mkdocs==1.6.1 \
       mkdocs-material==9.7.7 \
-      mkdocs-kroki-plugin==1.7.0
+      mkdocs-kroki-plugin==1.7.0 \
+      mkdocs-redirects==1.2.2
 
 WORKDIR /mkdocs
 

@@ -198,6 +198,11 @@ self_test() {
   ok "$(printf 'site_url: https://example.com/docs/\n' >"$tmpcfg"; serve_path "$tmpcfg")" "/docs/" "the serve banner follows site_url's path, which is where the dev server answers"
   ok "$(printf 'site_url: https://example.com\n' >"$tmpcfg"; serve_path "$tmpcfg")" "/" "a site_url with no path serves at the root"
   ok "$(grep -c '^strict: true' "$cfg")" "1" "the build is strict, so a broken internal link fails it"
+  ok "$(grep -c '^  anchors: warn' "$cfg")" "1" "anchor checks warn, so under strict a dangling #anchor fails the build"
+  # MIP-0074 §5.3: the redirect machinery. scripts/docs_redirect_check.js tests the 404 page itself.
+  ok "$(grep -c '^  custom_dir: overrides' "$cfg")" "1" "the theme reads mkdocs/overrides, where the forwarding 404.html is"
+  ok "$(grep -c '^  - redirects:' "$cfg")" "1" "the redirects plugin is on, for single page moves"
+  ok "$(grep -c 'mkdocs-redirects==1.2.2' "$repo_root/mkdocs/Dockerfile")" "1" "and its package is pinned in the image"
   ok "$([ -f "$repo_root/docs/index.md" ] && echo yes || echo no)" "yes" "docs/index.md exists — strict does not check for it, and without it the site has no landing page"
 
   # #511: mkdocs/hooks/mermaid_font.py runs before the kroki plugin (event_priority) and pins

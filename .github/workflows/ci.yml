@@ -38,6 +38,7 @@ jobs:
               - 'scripts/*.py'
               - '**/*.py'           # ruff lints the whole repo, so any .py anywhere counts
               - 'scripts/*.sh'      # gh-billing.sh's self-test lives in the same python-ci job
+              - 'scripts/*.js'      # docs_redirect_check.js too
               - 'scripts/fixtures/**'
               - 'ruff.toml'
               - 'docs/MIPs/*.tasks.md'        # mip_graph.py --check regenerates the graph from all of them
@@ -151,6 +152,7 @@ jobs:
         scripts/pointer-sync.sh --self-test
         scripts/prepare-docs.sh --self-test
         scripts/fetch-api-docs.sh --self-test
+        node scripts/docs_redirect_check.js
 
   static-ci:
     needs: changes

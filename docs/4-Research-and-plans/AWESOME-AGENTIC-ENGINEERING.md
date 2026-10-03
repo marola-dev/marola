@@ -17,13 +17,13 @@ section below for how marola itself fits this landscape.
 
 ## Contents
 
-- [Agent Frameworks & Orchestration](#agent-frameworks--orchestration)
+- [Agent Frameworks & Orchestration](#agent-frameworks-orchestration)
 - [MCP Tooling](#mcp-tooling)
-- [DSPy & Prompt Compilation](#dspy--prompt-compilation)
-- [Critic / Reviewer-Pattern & Multi-Agent Pipelines](#critic--reviewer-pattern--multi-agent-pipelines)
-- [Spec / RFC-Driven Agent Dev-Loops](#spec--rfc-driven-agent-dev-loops)
-- [Local-First / Ollama-Based Agents](#local-first--ollama-based-agents)
-- [Cost- and Usage-Tracked Agent Development](#cost--and-usage-tracked-agent-development)
+- [DSPy & Prompt Compilation](#dspy-prompt-compilation)
+- [Critic / Reviewer-Pattern & Multi-Agent Pipelines](#critic-reviewer-pattern-multi-agent-pipelines)
+- [Spec / RFC-Driven Agent Dev-Loops](#spec-rfc-driven-agent-dev-loops)
+- [Local-First / Ollama-Based Agents](#local-first-ollama-based-agents)
+- [Cost- and Usage-Tracked Agent Development](#cost-and-usage-tracked-agent-development)
 - [Top 10 GitHub repos most similar to marola](#top-10-github-repos-most-similar-to-marola)
 
 ## Agent Frameworks & Orchestration
