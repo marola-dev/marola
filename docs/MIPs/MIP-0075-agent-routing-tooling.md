@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted (2026-10-03, maintainer review on #635) |
 | **Author** | Claude (Opus 5.5), from the maintainer's graphify question and two offline spikes (2026-10-02, 2026-10-03) |
 | **Created** | 2026-10-03 |
 | **Phase** | None: dev-loop tooling, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
