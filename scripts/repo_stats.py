@@ -68,6 +68,7 @@ SELF_TEST_SCRIPTS = (
     "scripts/awesome_agentic_digest.py",
     "scripts/mip_graph.py",
     "scripts/strip_external_scripts.py",
+    "scripts/lib/doc_links.py",
 )
 COVERAGE_SOURCE = "scripts"
 

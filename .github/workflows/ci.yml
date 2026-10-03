@@ -153,6 +153,7 @@ jobs:
         scripts/prepare-docs.sh --self-test
         scripts/fetch-api-docs.sh --self-test
         node scripts/docs_redirect_check.js
+        python3 scripts/lib/doc_links.py --self-test
 
   static-ci:
     needs: changes
