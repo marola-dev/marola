@@ -15,6 +15,9 @@ site_dir: generated-docs
 # It does NOT cover a missing docs/index.md: mkdocs builds that with exit 0 and no warning at all,
 # just without a landing page, so scripts/mkdocs.sh checks for the file itself. MIP-0064 §4.4.
 strict: true
+# Anchor checks are info by default; at warn, strict fails a link to a heading that is not there.
+validation:
+  anchors: warn
 
 # Built and reachable by URL, just not listed: the task files are execution bookkeeping for a MIP,
 # linked from the MIP that owns them. 12 of them interleaved with 59 MIPs is noise in a sidebar.
@@ -40,6 +43,8 @@ exclude_docs: |
 
 theme:
   name: material
+  # overrides/404.html forwards the moved prefixes (MIP-0074 Appendix B).
+  custom_dir: overrides
   # c0-traced's mark, the maintainer's own traced artwork, used for both. Its README warns the
   # emblem goes to mush at 16px and points at g2-cut-wave's favicon instead; that was overridden
   # deliberately — the tab icon is the place to check it. The mark carries an opaque white disc
@@ -120,3 +125,6 @@ plugins:
         note: { fill: "#082f45", stroke: "#19ddf0", color: "#ffffff" }
         package: { fill: "#082f45", stroke: "#057b9e", color: "#ffffff" }
         background: { fill: "transparent" }
+  # Single page moves, old path to new (MIP-0074 Appendix B); prefix moves are overrides/404.html's.
+  - redirects:
+      redirect_maps: {}

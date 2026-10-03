@@ -74,6 +74,7 @@ quality-other:
     scripts/prepare-docs.sh --self-test
     scripts/fetch-api-docs.sh --self-test
     python3 scripts/strip_external_scripts.py --self-test
+    node scripts/docs_redirect_check.js
     workflow-runners
     python3 scripts/mip_graph.py --check
     agents-check
