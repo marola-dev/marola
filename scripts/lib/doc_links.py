@@ -46,7 +46,9 @@ class Context:
     # mkdocs.yml's patterns are relative to the site root; matched against the repo's docs/ they
     # agree only while unanchored (benchmarks/), which is all mkdocs.yml has.
     exclude_docs: tuple[str, ...] = ()
-    submodule_shas: dict[str, str] = field(default_factory=dict)  # umbrella only
+    # Umbrella only; each submodule must be checked out at its sha under repo/<name>, where the
+    # existence checks read it.
+    submodule_shas: dict[str, str] = field(default_factory=dict)
 
 
 def _fenced(text: str) -> list[tuple[bool, str]]:
@@ -133,7 +135,7 @@ def rewrite(text: str, source: str, repo: Path, *, ctx: Context) -> tuple[str, l
     errors: list[str] = []
     anchors: dict[str, str] | None = None
     own_github = re.compile(
-        rf"https://github\.com/marola-dev/{re.escape(ctx.name)}/(blob|tree)/([^/?#]+)/?([^?#]*)(.*)"
+        rf"https://github\.com/marola-dev/{re.escape(ctx.name)}/(?:blob|tree)/([^?#]+)(.*)"
     )
 
     def readme_anchor(link: str, anchor: str) -> str | None:
@@ -163,11 +165,17 @@ def rewrite(text: str, source: str, repo: Path, *, ctx: Context) -> tuple[str, l
             return link
         if SCHEME.match(link):
             m = own_github.fullmatch(link)
-            if not m or re.fullmatch(r"[0-9a-f]{40}", m.group(2)):
+            if not m or re.fullmatch(r"[0-9a-f]{40}", m.group(1).split("/")[0]):
                 return link
-            if not (repo / unquote(m.group(3))).exists():
-                return fail(f"missing at {ctx.sha}")
-            return link[: m.start(2)] + ctx.sha + link[m.end(2) :]
+            # A branch may hold slashes (mip-NNNN/k-*): like GitHub, take the shortest ref whose
+            # remaining path exists. A slashed ref with no path at all is refused as ambiguous.
+            parts = m.group(1).split("/")
+            for i in range(1, len(parts) + 1):
+                rest = "/".join(parts[i:])
+                if (rest or i == 1) and (repo / unquote(rest)).exists():
+                    ref = "/".join(parts[:i])
+                    return link[: m.start(1)] + ctx.sha + link[m.start(1) + len(ref) :]
+            return fail(f"missing at {ctx.sha}")
         path, hash_, anchor = link.partition("#")
         path, qmark, query = path.partition("?")
         query = qmark + query
@@ -181,9 +189,12 @@ def rewrite(text: str, source: str, repo: Path, *, ctx: Context) -> tuple[str, l
         if resolved == ".." or resolved.startswith("../"):
             return fail("leaves the repo")
         is_dir = path.endswith("/") or (repo / unquote(resolved)).is_dir()
+        image = image or posixpath.splitext(resolved)[1].lower() in IMAGE_SUFFIXES
         head, _, rest = resolved.partition("/")
         if ctx.umbrella and head in ctx.submodule_shas:
             if rest not in ("", "README.md", "docs") and not rest.startswith("docs/"):
+                if image:
+                    return fail("an image outside docs/; move it under docs/")
                 return github(
                     head, ctx.submodule_shas[head], repo / head, rest, query + hash_ + anchor
                 )
@@ -192,7 +203,7 @@ def rewrite(text: str, source: str, repo: Path, *, ctx: Context) -> tuple[str, l
                 f"{rel}/index.md" if rel and is_dir else rel or "index.md"
             )
         elif resolved != "docs" and not resolved.startswith("docs/"):
-            if image or posixpath.splitext(resolved)[1].lower() in IMAGE_SUFFIXES:
+            if image:
                 return fail("an image outside docs/; move it under docs/")
             if resolved != "README.md":
                 return github(ctx.name, ctx.sha, repo, resolved, query + hash_ + anchor)
@@ -202,6 +213,8 @@ def rewrite(text: str, source: str, repo: Path, *, ctx: Context) -> tuple[str, l
         else:
             rel = resolved.removeprefix("docs").removeprefix("/")
             if rel and _excluded(rel, ctx.exclude_docs, is_dir):
+                if image:
+                    return fail("an image under exclude_docs; move it to a published docs/ path")
                 return github(ctx.name, ctx.sha, repo, resolved, query + hash_ + anchor)
             if rel == "index.md":
                 return fail("docs/index.md is banned (MIP-0074 D1); link docs/ for the landing")
@@ -275,6 +288,7 @@ def self_test() -> int:
             "docs/guide/page.md",
             "docs/img/a.png",
             "docs/benchmarks/2026-09-05.md",
+            "docs/benchmarks/plot.png",
             "AGENTS.md",
             "scripts/x.sh",
             "knowledge/tides.md",
@@ -343,6 +357,24 @@ def self_test() -> int:
             [
                 ("![l](assets/logo.png)", refused("README.md", "assets/logo.png", outside)),
                 ('<img src="logo.svg">', refused("README.md", "logo.svg", outside)),
+            ],
+        )
+        off_site = "an image under exclude_docs; move it to a published docs/ path"
+        case(
+            "image_outside_docs_fails",
+            [
+                readme("![p](docs/benchmarks/plot.png)"),
+                readme('<img src="docs/benchmarks/plot.png">'),
+            ],
+            [
+                (
+                    "![p](docs/benchmarks/plot.png)",
+                    refused("README.md", "docs/benchmarks/plot.png", off_site),
+                ),
+                (
+                    '<img src="docs/benchmarks/plot.png">',
+                    refused("README.md", "docs/benchmarks/plot.png", off_site),
+                ),
             ],
         )
         case(
@@ -459,6 +491,15 @@ def self_test() -> int:
                 [],
             ),
         )
+        # GitHub splits ref/path at the shortest ref whose remainder exists; branches here are
+        # routinely mip-NNNN/k-*.
+        case(
+            "own_github_main_link_pinned",
+            readme(
+                f"[t]({own}/tree/mip-0074/x/knowledge) [a]({own}/blob/mip-0074/k-y/AGENTS.md#L1)"
+            ),
+            (f"[t]({tree}/knowledge) [a]({gh}/AGENTS.md#L1)", []),
+        )
         others = (
             "[a](https://github.com/marola-dev/marola-app/blob/main/README.md) "
             "[b](https://github.com/marola-dev/marola-ml-old/blob/main/AGENTS.md) "
@@ -500,6 +541,8 @@ def self_test() -> int:
             "marola-app/README.md",
             "marola-app/docs/x.md",
             "marola-app/core/A.scala",
+            "marola-app/core/l.svg",
+            "marola-app/assets/l.png",
         ):
             (umbrella / f).parent.mkdir(parents=True, exist_ok=True)
             (umbrella / f).write_text("# t\n", encoding="utf-8")
@@ -538,6 +581,23 @@ def self_test() -> int:
                 (
                     "[m](marola-app/core/Nope.scala)",
                     refused("README.md", "marola-app/core/Nope.scala", "missing at " + app_sha),
+                ),
+            ],
+        )
+        case(
+            "image_outside_docs_fails",
+            [
+                upage("![l](marola-app/assets/l.png)", "README.md"),
+                upage('<img src="marola-app/core/l.svg">', "README.md"),
+            ],
+            [
+                (
+                    "![l](marola-app/assets/l.png)",
+                    refused("README.md", "marola-app/assets/l.png", outside),
+                ),
+                (
+                    '<img src="marola-app/core/l.svg">',
+                    refused("README.md", "marola-app/core/l.svg", outside),
                 ),
             ],
         )
