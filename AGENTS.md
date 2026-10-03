@@ -95,9 +95,10 @@ runs, at the versions `flake.lock` pins; a missing tool fails rather than skips,
 prefixes order it), and the build is `--strict`: a link that does not resolve inside the
 aggregated tree fails it, which is why `AGENTS.md` and `PHILOSOPHY.md` are linked at GitHub. A push
 to `main` touching `docs/**` or `mkdocs/**`, a submodule's docs dispatch, or the daily cron runs
-`docs.yml`, which deploys docs.marola.dev (`mkdocs/repos.yml` maps each submodule to its mount;
-marola-app's mounts at the root). `docs/index.md` is the site's landing page and the index of what
-is MIP material; `.claude/rules/docs.md` has the MIP status vocabulary.
+`docs.yml`, which deploys docs.marola.dev (`mkdocs/repos.yml` maps each repo to its mount;
+marola-app's mounts at the root, marola-devkit is fetched at `flake.lock`'s locked rev).
+`docs/index.md` is the site's landing page and the index of what is MIP material;
+`.claude/rules/docs.md` has the MIP status vocabulary.
 
 The harness is [marola-devkit](https://github.com/marola-dev/marola-devkit), a flake input pinned
 to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `cost-split`, `cost-fill`,

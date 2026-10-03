@@ -54,8 +54,8 @@ fetch_branch_one() {
 
 fetch_all() {
   local site_dir="$1" manifest="$2" org="${MAROLA_UMBRELLA%%/*}"
-  local name mount
-  while IFS=$'\t' read -r name mount; do
+  local name mount _source
+  while IFS=$'\t' read -r name mount _source; do
     [ -n "$name" ] || continue
     fetch_one "$org/$name" "$site_dir/$mount/api"
   done < <(repos_manifest "$manifest")

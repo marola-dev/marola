@@ -12,6 +12,10 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs/**'
+      - 'README.md'
+      - 'flake.lock' # marola-devkit mounts at its locked rev
+      - 'scripts/prepare-docs.sh'
+      - 'scripts/lib/repos_manifest.sh'
   schedule:
     - cron: "20 5 * * *" # once a day, off the hour other workflows use (CI-CD.md)
   workflow_dispatch:

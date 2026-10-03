@@ -8,7 +8,8 @@
 # Reads mkdocs/repos.yml (scripts/lib/repos_manifest.sh): submodule name -> mount point, default
 # repos/<name>/, or ./ for the site root (mount_at_root). A submodule listed in the manifest but
 # not checked out at the repo root is a hard error — docs.yml's `git submodule update` step is
-# what keeps that from happening in CI.
+# what keeps that from happening in CI. A `source: flake-lock` repo (marola-devkit, MIP-0074 §5.3)
+# is no submodule: it is fetched at flake.lock's locked rev into .tmp/docs-sources/<name>.
 #
 # README links of the form `docs/X.md` or `./docs/X.md` become `X.md`: the README is mounted as
 # <mount>/index.md, a sibling of the copied docs/** tree, not a parent of it. An absolute URL
@@ -17,15 +18,36 @@
 #
 #   scripts/prepare-docs.sh [BUILD_DIR]   # default .tmp/docs-aggregated, rebuilt fresh every run
 #   scripts/prepare-docs.sh --self-test   # hermetic: a fake two-submodule tree, no network
+#
+# DOCS_SOURCE_REMOTE=<url template> overrides a flake-lock source's remote; <repo> is replaced with
+# its name (the self-test points it at a local bare repo).
 set -euo pipefail
+
+DOCS_SOURCE_REMOTE="${DOCS_SOURCE_REMOTE:-https://github.com/marola-dev/<repo>}"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/repos_manifest.sh
 source "$script_dir/lib/repos_manifest.sh"
 
+# fetch_flake_lock_source <root> <name> -> the path of <name> checked out at
+# flake.lock's nodes.<name>.locked.rev. python3, not nix: CI has no nix.
+fetch_flake_lock_source() {
+  local root="$1" name="$2" rev url dir
+  rev="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["nodes"][sys.argv[2]]["locked"]["rev"])' "$root/flake.lock" "$name")" ||
+    { echo "prepare-docs: no nodes.$name.locked.rev in $root/flake.lock" >&2; return 1; }
+  url="${DOCS_SOURCE_REMOTE//<repo>/$name}"
+  dir="$root/.tmp/docs-sources/$name"
+  rm -rf "$dir"
+  git init -q "$dir"
+  git -C "$dir" fetch -q --depth 1 "$url" "$rev" ||
+    { echo "prepare-docs: could not fetch $name at $rev from $url" >&2; return 1; }
+  git -C "$dir" -c advice.detachedHead=false checkout -q FETCH_HEAD
+  printf '%s\n' "$dir"
+}
+
 mount_submodule() {
   local root="$1" name="$2" mount="$3" build_dir="$4"
-  local src="$root/$name" dest="$build_dir/$mount"
+  local src="${5:-$root/$name}" dest="$build_dir/$mount"
   if [ ! -d "$src" ]; then
     echo "prepare-docs: $name is in mkdocs/repos.yml but not checked out at $src — run \`git submodule update --init\` first" >&2
     return 1
@@ -115,26 +137,32 @@ prepare() {
   rm -rf "$build_dir"
   mkdir -p "$build_dir"
   cp -R "$docs_src/." "$build_dir/"
-  local name mount f
+  local name mount source src entries f
   local -a pages=()
-  while IFS=$'\t' read -r name mount; do
+  # Read up front: a parse error inside `< <(...)` would be swallowed, building a site without it.
+  entries="$(repos_manifest "$manifest")" || return 1
+  while IFS=$'\t' read -r name mount source; do
     [ -n "$name" ] || continue
+    src="$root/$name"
+    if [ "$source" = flake-lock ]; then
+      src="$(fetch_flake_lock_source "$root" "$name")" || return 1
+    fi
     # Explicit `|| return`, not bare `set -e`: a function called where its own exit status is
     # tested (as `prepare` is, by every caller below) runs with -e ignored throughout its body
     # (bash(1), "The -e option" — a well-known trap), so a failing mount_submodule would otherwise
     # be swallowed here instead of failing the whole run.
-    mount_submodule "$root" "$name" "$mount" "$build_dir" || return 1
+    mount_submodule "$root" "$name" "$mount" "$build_dir" "$src" || return 1
     # Only what this submodule brought: at ./ that is not everything under the mount.
-    if [ "$mount" = "./" ] && [ -d "$root/$name/docs" ]; then
+    if [ "$mount" = "./" ] && [ -d "$src/docs" ]; then
       while IFS= read -r -d '' f; do
         f="${f#./}"
         [ "$f" != index.md ] || f="$name.md"
         pages+=("$build_dir/$f")
-      done < <(cd "$root/$name/docs" && find . -name '*.md' -print0)
+      done < <(cd "$src/docs" && find . -name '*.md' -print0)
     elif [ "$mount" != "./" ]; then
       while IFS= read -r -d '' f; do pages+=("$f"); done < <(find "$build_dir/$mount" -name '*.md' -print0)
     fi
-  done < <(repos_manifest "$manifest")
+  done <<<"$entries"
   [ "${#pages[@]}" -gt 0 ] || return 0
   check_links "$build_dir" "${pages[@]}"
 }
@@ -301,6 +329,57 @@ EOF
   rm -rf "$t"
 
   echo
+  echo "-- source_flake_lock_accepted: \`  source: flake-lock\` is the third column --"
+  t="$(mktemp -d)"
+  printf -- '- name: fake-devkit\n  source: flake-lock\n- name: fake-app\n' >"$t/manifest.yml"
+  rc=0
+  out="$(repos_manifest "$t/manifest.yml" 2>&1)" || rc=$?
+  ok "$rc" "0" "source: flake-lock parses"
+  ok "$out" "$(printf 'fake-devkit\trepos/fake-devkit/\tflake-lock\nfake-app\trepos/fake-app/\t')" "...as name, mount, source; a submodule's source is empty"
+  rm -rf "$t"
+
+  echo
+  echo "-- source_other_value_rejected: flake-lock is the only source --"
+  t="$(mktemp -d)"
+  printf -- '- name: fake-devkit\n  source: submodule\n' >"$t/manifest.yml"
+  rc=0
+  out="$(repos_manifest "$t/manifest.yml" 2>&1)" || rc=$?
+  ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "source: submodule fails"
+  ok "$(printf '%s' "$out" | grep -c "source must be flake-lock")" "1" "...naming the one allowed value"
+  mkdir -p "$t/root" "$t/docs-src"
+  rc=0
+  prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" >/dev/null 2>&1 || rc=$?
+  ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "...and fails prepare, not just the parser"
+  rm -rf "$t"
+
+  echo
+  echo "-- devkit_fetched_at_locked_rev: a flake-lock source mounts flake.lock's rev, not the tip --"
+  unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR
+  export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+  t="$(mktemp -d)"
+  git init -q --bare "$t/remote/fake-devkit.git"
+  git init -q "$t/seed"
+  mkdir -p "$t/seed/docs"
+  echo "# locked, see [ref](docs/ref.md)" >"$t/seed/README.md"
+  echo "# ref" >"$t/seed/docs/ref.md"
+  git -C "$t/seed" add -A
+  git -C "$t/seed" -c user.email=t@t -c user.name=t commit -q -m locked
+  local locked; locked="$(git -C "$t/seed" rev-parse HEAD)"
+  echo "# tip" >"$t/seed/README.md"
+  git -C "$t/seed" -c user.email=t@t -c user.name=t commit -q -am tip
+  git -C "$t/seed" push -q "$t/remote/fake-devkit.git" HEAD:refs/heads/main
+  mkdir -p "$t/root" "$t/docs-src"
+  printf '{"nodes":{"fake-devkit":{"locked":{"rev":"%s"}}},"root":"root","version":7}\n' "$locked" >"$t/root/flake.lock"
+  printf -- '- name: fake-devkit\n  source: flake-lock\n' >"$t/manifest.yml"
+  rc=0
+  out="$(DOCS_SOURCE_REMOTE="$t/remote/<repo>.git" prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
+  ok "$rc" "0" "a flake-lock source builds without a checkout at the repo root"
+  ok "$(head -1 "$t/build/repos/fake-devkit/index.md" 2>/dev/null)" "# locked, see [ref](ref.md)" "its README is the locked commit's, rewritten like a submodule's"
+  ok "$([ -f "$t/build/repos/fake-devkit/ref.md" ] && echo yes || echo no)" "yes" "...and its docs/** is copied beside it"
+  ok "$(git -C "$t/root/.tmp/docs-sources/fake-devkit" rev-parse HEAD 2>/dev/null)" "$locked" "the fetch lands in .tmp/docs-sources/<name> at the locked rev"
+  rm -rf "$t"
+
+  echo
   if [ "$fails" -eq 0 ]; then echo "prepare-docs self-test: ok"; return 0; fi
   echo "prepare-docs self-test: $fails failure(s)" >&2
   return 1
@@ -309,7 +388,7 @@ EOF
 root_default="$(cd "$script_dir/.." && pwd)"
 case "${1:-}" in
   --self-test) self_test ;;
-  -h|--help) sed -n '2,18p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ;;
+  -h|--help) sed -n '2,23p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ;;
   -*) echo "prepare-docs: unknown argument '$1' (try --help)" >&2; exit 2 ;;
   *) prepare "$root_default" "$root_default/mkdocs/repos.yml" "$root_default/docs" "${1:-$root_default/.tmp/docs-aggregated}" ;;
 esac
