@@ -34,6 +34,9 @@ HTML_ATTR = re.compile(r"(?<=\s)(href|src)(\s*=\s*)([\"'])([^\"']*)\3", re.I)
 SCHEME = re.compile(r"^(?:[a-zA-Z][a-zA-Z0-9+.-]*:|//)")
 HEADING = re.compile(r"^ {0,3}#{1,6}[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$")
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".avif", ".ico"}
+# A GitHub permalink sha (7-40 hex, abbreviated or full) or a version tag: already pinned, so left
+# exactly as written, #L anchors included, with no existence check against ctx.sha.
+PINNED_REF = re.compile(r"[0-9a-f]{7,40}|v\d[\w.\-]*")
 
 
 @dataclass(frozen=True)
@@ -165,7 +168,7 @@ def rewrite(text: str, source: str, repo: Path, *, ctx: Context) -> tuple[str, l
             return link
         if SCHEME.match(link):
             m = own_github.fullmatch(link)
-            if not m or re.fullmatch(r"[0-9a-f]{40}", m.group(1).split("/")[0]):
+            if not m or PINNED_REF.fullmatch(m.group(1).split("/")[0]):
                 return link
             # A branch may hold slashes (mip-NNNN/k-*): like GitHub, take the shortest ref whose
             # remaining path exists. A slashed ref with no path at all is refused as ambiguous.
@@ -499,6 +502,25 @@ def self_test() -> int:
                 f"[t]({own}/tree/mip-0074/x/knowledge) [a]({own}/blob/mip-0074/k-y/AGENTS.md#L1)"
             ),
             (f"[t]({tree}/knowledge) [a]({gh}/AGENTS.md#L1)", []),
+        )
+        short_sha = "7ba0458"
+        case(
+            "own_github_main_link_pinned",
+            readme(f"[a]({own}/blob/{short_sha}/.claude/hooks/stop-gate.sh#L23)"),
+            (f"[a]({own}/blob/{short_sha}/.claude/hooks/stop-gate.sh#L23)", []),
+        )
+        tag = "v0.2.4"
+        case(
+            "own_github_main_link_pinned",
+            readme(f"[a]({own}/blob/{tag}/.claude/hooks/stop-gate.sh#L23)"),
+            (f"[a]({own}/blob/{tag}/.claude/hooks/stop-gate.sh#L23)", []),
+        )
+        # Locks in trailing-slash handling on the still-rewritten (unpinned branch) path, so the
+        # pinned-ref bypass above can't be confused with it.
+        case(
+            "own_github_main_link_pinned",
+            readme(f"[t]({own}/tree/main/) [k]({own}/tree/main/knowledge/)"),
+            (f"[t]({tree}/) [k]({tree}/knowledge/)", []),
         )
         others = (
             "[a](https://github.com/marola-dev/marola-app/blob/main/README.md) "
