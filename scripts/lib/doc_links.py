@@ -15,7 +15,9 @@ import unicodedata
 from pathlib import Path
 
 FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
-CODE_SPAN = re.compile(r"(?<!`)(`+)(?!`).*?(?<!`)\1(?!`)", re.S)
+# A code span may wrap lines but never crosses a blank line (CommonMark), so a lone ` can't mask
+# later paragraphs.
+CODE_SPAN = re.compile(r"(?<!`)(`+)(?!`)(?:(?!\n[ \t]*\n).)*?(?<!`)\1(?!`)", re.S)
 INLINE = re.compile(
     r"(!?)\[((?:[^\[\]]|\[[^\[\]]*\])*)\]"
     r"\(\s*(<[^>]*>|[^)\s]+)((?:\s+(?:\"[^\"]*\"|'[^']*'|\([^)]*\)))?\s*)\)"
@@ -278,6 +280,13 @@ def self_test() -> int:
             readme("`[a](docs/x.md)` [`b`](docs/x.md) ``[c](/abs)``\n" + fenced),
             ("`[a](docs/x.md)` [`b`](x.md) ``[c](/abs)``\n" + fenced, []),
         )
+        stray = "Type ` to start.\n\n[a](docs/x.md) and [b](/abs)\n\nlater ` here\n"
+        case(
+            "code_span_and_fence_untouched",
+            readme(stray)[0],
+            stray.replace("(docs/x.md)", "(x.md)"),
+        )
+        case("code_span_and_fence_untouched", len(readme(stray)[1]), 1)
 
     if fails:
         print(f"doc_links self-test: {fails} failure(s)", file=sys.stderr)
