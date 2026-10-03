@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 # fetch-api-docs — fold each submodule's pre-built API docs (scaladoc/pdoc) into the umbrella's
-# generated site, from a release asset its own CI publishes. The umbrella never builds Scala or
-# Python here (MIP-0070 §5.5): no `sbt doc`, no pdoc. The asset name is a cross-repo contract —
-# api-docs.tar.gz, attached to GitHub's "latest" release — unpacked under <mount>/api/, a sibling
-# of the mounted README/docs. A missing release or asset is not an error, just a skip.
+# generated site. The umbrella never builds Scala or Python here (MIP-0070 §5.5): no `sbt doc`,
+# no pdoc. Two sources, both live until MIP-0074 task 18 retires the first:
+#   - a release asset its own CI publishes: api-docs.tar.gz on GitHub's "latest" release,
+#     unpacked under <mount>/api/ (fetch_one/fetch_all below). A missing release or asset is a skip.
+#   - the repo's `api-docs` branch (MIP-0074 §5.3, fetch_branch_one), not yet wired into fetch_all
+#     or the CLI below — that wiring is task 18's.
 #
 #   scripts/fetch-api-docs.sh SITE_DIR [REPOS_FILE]   # default mkdocs/repos.yml
-#   scripts/fetch-api-docs.sh --self-test              # stubs gh; no network
+#   scripts/fetch-api-docs.sh --self-test              # stubs gh for the release path; no network
 #
 # API_DOCS_TAG=<tag> downloads that release instead of the latest one.
+# API_DOCS_REMOTE=<url template> overrides the api-docs branch's remote; <repo> is replaced with
+# the repo name (self-test points it at a local bare repo).
 set -euo pipefail
 
 ASSET_NAME="api-docs.tar.gz"
 MAROLA_UMBRELLA="${MAROLA_UMBRELLA:-marola-dev/marola}"
+API_DOCS_BRANCH="api-docs"
+API_DOCS_REMOTE="${API_DOCS_REMOTE:-https://github.com/marola-dev/<repo>}"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/repos_manifest.sh
@@ -28,6 +34,20 @@ fetch_one() {
     echo "fetch-api-docs: $repo -> $dest"
   else
     echo "fetch-api-docs: $repo has no $ASSET_NAME on its latest release yet — skipping"
+  fi
+  rm -rf "$tmp"
+}
+
+fetch_branch_one() {
+  local repo="$1" dest="$2" url tmp
+  url="${API_DOCS_REMOTE//<repo>/$repo}"
+  tmp="$(mktemp -d)"
+  if git init -q "$tmp" && git -C "$tmp" fetch --depth 1 -q "$url" "$API_DOCS_BRANCH" >/dev/null 2>&1; then
+    mkdir -p "$dest"
+    git -C "$tmp" archive FETCH_HEAD | tar -x -C "$dest"
+    echo "fetch-api-docs: $repo -> $dest ($API_DOCS_BRANCH branch)"
+  else
+    echo "fetch-api-docs: $repo has no $API_DOCS_BRANCH branch yet — skipping"
   fi
   rm -rf "$tmp"
 }
@@ -116,6 +136,33 @@ SH
   rm -rf "$stub"
 
   echo
+  echo "-- the api-docs branch (MIP-0074 §5.3): present is unpacked, absent is a notice --"
+  local remote; remote="$(mktemp -d)"
+  git init -q --bare "$remote/with-branch.git"
+  git init -q --bare "$remote/no-branch.git"
+  local seed; seed="$(mktemp -d)"
+  git init -q "$seed"
+  git -C "$seed" checkout -q --orphan api-docs
+  echo hi >"$seed/index.html"
+  git -C "$seed" add index.html
+  git -C "$seed" -c user.email=t@t -c user.name=t commit -q -m docs
+  git -C "$seed" push -q "$remote/with-branch.git" api-docs
+  rm -rf "$seed"
+
+  t="$(mktemp -d)"
+  API_DOCS_REMOTE="$remote/<repo>.git" fetch_branch_one "with-branch" "$t/dest" >/dev/null
+  ok "$([ -f "$t/dest/index.html" ] && echo yes || echo no)" "yes" "the branch tip is unpacked into the given dir"
+  rm -rf "$t"
+
+  t="$(mktemp -d)"
+  rc=0
+  out="$(API_DOCS_REMOTE="$remote/<repo>.git" fetch_branch_one "no-branch" "$t/dest" 2>&1)" || rc=$?
+  ok "$rc" "0" "a missing api-docs branch is not a failure"
+  ok "$([ -d "$t/dest" ] && echo yes || echo no)" "no" "...and nothing is written"
+  ok "$(printf '%s' "$out" | grep -c 'skipping')" "1" "...with a one-line explanation"
+  rm -rf "$t" "$remote"
+
+  echo
   if [ "$fails" -eq 0 ]; then echo "fetch-api-docs self-test: ok"; return 0; fi
   echo "fetch-api-docs self-test: $fails failure(s)" >&2
   return 1
@@ -124,7 +171,7 @@ SH
 root_default="$(cd "$script_dir/.." && pwd)"
 case "${1:-}" in
   --self-test) self_test ;;
-  -h|--help) sed -n '2,11p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ;;
+  -h|--help) sed -n '2,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ;;
   "") echo "usage: $0 SITE_DIR [REPOS_FILE] | --self-test" >&2; exit 2 ;;
   -*) echo "fetch-api-docs: unknown argument '$1' (try --help)" >&2; exit 2 ;;
   *) fetch_all "$1" "${2:-$root_default/mkdocs/repos.yml}" ;;
