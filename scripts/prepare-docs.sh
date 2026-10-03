@@ -43,11 +43,27 @@ mount_submodule() {
 # mount ./ (marola-app, so its pages keep their URLs, MIP-0070 §5.5): the root already holds the
 # umbrella's pages and index.md, so the README is left out, docs/index.md becomes <name>.md, and a
 # path both trees have fails instead of one silently replacing the other.
+#
+# Guarded to marola-app's current/future layout (MIP-0074 §5.7 step 2): docs/index.md plus nothing
+# outside docs/1-Using-marola/ and docs/2-Building-marola/. mount_at_root has no other caller today,
+# but the guard still fails rather than deploys if that ever changes to a layout it doesn't expect.
 mount_at_root() {
-  local src="$1" name="$2" build_dir="$3" rel dest clash=0
+  local src="$1" name="$2" build_dir="$3" rel dest clash=0 bad=0
   [ -d "$src/docs" ] || return 0
+  if [ ! -f "$src/docs/index.md" ]; then
+    echo "prepare-docs: $name is missing docs/index.md — mount: ./ needs it, plus docs/1-Using-marola/ and/or docs/2-Building-marola/" >&2
+    return 1
+  fi
   while IFS= read -r -d '' rel; do
     rel="${rel#./}"
+    case "$rel" in
+      index.md | 1-Using-marola/* | 2-Building-marola/*) ;;
+      *)
+        echo "prepare-docs: $name/docs/$rel is outside docs/1-Using-marola/ and docs/2-Building-marola/ — mount: ./ needs the app layout" >&2
+        bad=1
+        continue
+        ;;
+    esac
     dest="$build_dir/$rel"
     [ "$rel" != index.md ] || dest="$build_dir/$name.md"
     if [ -e "$dest" ]; then
@@ -58,7 +74,7 @@ mount_at_root() {
     mkdir -p "$(dirname "$dest")"
     cp "$src/docs/$rel" "$dest"
   done < <(cd "$src/docs" && find . -type f -print0)
-  [ "$clash" -eq 0 ]
+  [ "$clash" -eq 0 ] && [ "$bad" -eq 0 ]
 }
 
 # check_links <build_dir> <file>... -> every relative markdown link in each mounted page resolves
@@ -196,29 +212,56 @@ EOF
   echo
   echo "-- mount ./ puts a submodule's docs/ beside the umbrella's own pages --"
   t="$(mktemp -d)"
-  mkdir -p "$t/root/fake-app/docs/1-Using" "$t/docs-src/existing"
+  mkdir -p "$t/root/fake-app/docs/1-Using-marola" "$t/docs-src/existing"
   echo "# fake-app readme" >"$t/root/fake-app/README.md"
-  echo "# fake-app docs index, see [run](1-Using/RUN.md)" >"$t/root/fake-app/docs/index.md"
-  echo "# run, back to [the umbrella](../existing/page.md)" >"$t/root/fake-app/docs/1-Using/RUN.md"
-  echo "# umbrella index, see [run](1-Using/RUN.md)" >"$t/docs-src/index.md"
+  echo "# fake-app docs index, see [run](1-Using-marola/RUN.md)" >"$t/root/fake-app/docs/index.md"
+  echo "# run, back to [the umbrella](../existing/page.md)" >"$t/root/fake-app/docs/1-Using-marola/RUN.md"
+  echo "# umbrella index, see [run](1-Using-marola/RUN.md)" >"$t/docs-src/index.md"
   echo "today's doc, with [a link mkdocs checks](not-here.md)" >"$t/docs-src/existing/page.md"
   printf -- '- name: fake-app\n  mount: ./\n' >"$t/manifest.yml"
   rc=0
   out="$(prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
   ok "$rc" "0" "a root mount builds, checking the submodule's pages only (the umbrella's are mkdocs')"
   ok "$([ -f "$t/build/existing/page.md" ] && echo yes || echo no)" "yes" "the umbrella's own pages survive the mount"
-  ok "$(cat "$t/build/index.md" 2>/dev/null)" "# umbrella index, see [run](1-Using/RUN.md)" "the site's index.md stays the umbrella's"
-  ok "$([ -f "$t/build/1-Using/RUN.md" ] && echo yes || echo no)" "yes" "docs/1-Using/RUN.md lands at the site root's 1-Using/"
+  ok "$(cat "$t/build/index.md" 2>/dev/null)" "# umbrella index, see [run](1-Using-marola/RUN.md)" "the site's index.md stays the umbrella's"
+  ok "$([ -f "$t/build/1-Using-marola/RUN.md" ] && echo yes || echo no)" "yes" "docs/1-Using-marola/RUN.md lands at the site root's 1-Using-marola/"
   ok "$(head -c 24 "$t/build/fake-app.md" 2>/dev/null)" "# fake-app docs index, s" "the submodule's docs/index.md becomes <name>.md"
   ok "$(grep -rl 'fake-app readme' "$t/build" 2>/dev/null | wc -l | tr -d ' ')" "0" "its README is not mounted (the root has an index already)"
-  echo "# a second umbrella page" >"$t/root/fake-app/docs/1-Using/clash.md"
-  mkdir -p "$t/docs-src/1-Using"
-  echo "# umbrella's" >"$t/docs-src/1-Using/clash.md"
+  echo "# a second umbrella page" >"$t/root/fake-app/docs/1-Using-marola/clash.md"
+  mkdir -p "$t/docs-src/1-Using-marola"
+  echo "# umbrella's" >"$t/docs-src/1-Using-marola/clash.md"
   rc=0
   out="$(prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
   ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "a page both trees have fails the run"
-  ok "$(printf '%s' "$out" | grep -c 'fake-app/docs/1-Using/clash.md collides')" "1" "...naming the colliding path"
-  ok "$(cat "$t/build/1-Using/clash.md" 2>/dev/null)" "# umbrella's" "...and the umbrella's page is not overwritten"
+  ok "$(printf '%s' "$out" | grep -c 'fake-app/docs/1-Using-marola/clash.md collides')" "1" "...naming the colliding path"
+  ok "$(cat "$t/build/1-Using-marola/clash.md" 2>/dev/null)" "# umbrella's" "...and the umbrella's page is not overwritten"
+  rm -rf "$t"
+
+  echo
+  echo "-- old_aggregator_rejects_new_app_layout: mount ./ refuses anything but docs/index.md + docs/{1-Using-marola,2-Building-marola}/ (§5.7 step 2) --"
+  t="$(mktemp -d)"
+  mkdir -p "$t/root/fake-app/docs/1-Using-marola" "$t/root/fake-app/docs/2-Building-marola" "$t/docs-src"
+  echo "# fake-app docs index" >"$t/root/fake-app/docs/index.md"
+  echo "# run" >"$t/root/fake-app/docs/1-Using-marola/RUN.md"
+  echo "# architecture" >"$t/root/fake-app/docs/2-Building-marola/ARCHITECTURE.md"
+  echo "# umbrella index" >"$t/docs-src/index.md"
+  printf -- '- name: fake-app\n  mount: ./\n' >"$t/manifest.yml"
+  rc=0
+  out="$(prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
+  ok "$rc" "0" "today's app tree (index.md + 1-Using-marola/ + 2-Building-marola/) still passes"
+
+  rm -f "$t/root/fake-app/docs/index.md"
+  rc=0
+  out="$(prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
+  ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "no docs/index.md fails the mount"
+  ok "$(printf '%s' "$out" | grep -c 'fake-app is missing docs/index.md')" "1" "...naming the missing index"
+
+  echo "# fake-app docs index" >"$t/root/fake-app/docs/index.md"
+  echo "# a page outside the app layout" >"$t/root/fake-app/docs/1-design.md"
+  rc=0
+  out="$(prepare "$t/root" "$t/manifest.yml" "$t/docs-src" "$t/build" 2>&1)" || rc=$?
+  ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "a docs/1-design.md outside the two allowed directories fails the mount"
+  ok "$(printf '%s' "$out" | grep -c 'fake-app/docs/1-design.md is outside')" "1" "...naming the offending file"
   rm -rf "$t"
 
   echo
