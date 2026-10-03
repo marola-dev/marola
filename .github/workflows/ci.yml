@@ -154,6 +154,7 @@ jobs:
         scripts/fetch-api-docs.sh --self-test
         node scripts/docs_redirect_check.js
         python3 scripts/lib/doc_links.py --self-test
+        python3 scripts/site_links_check.py --self-test
 
   static-ci:
     needs: changes
