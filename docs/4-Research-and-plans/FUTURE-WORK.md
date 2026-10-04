@@ -86,7 +86,8 @@ new kind of input this repo doesn't have a source for yet.
 ### 1.4 What dive scoring specifically needs
 
 - **Underwater visibility**: no free API was found for this (checked while researching; same
-  "doesn't exist" conclusion `ARCHITECTURE.md` §8 reached for jellyfish forecasts). The closest real
+  "doesn't exist" conclusion [LIMITATIONS §8](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations)
+  reached for jellyfish forecasts). The closest real
   signal: [Copernicus Marine Service](https://marine.copernicus.eu/) publishes turbidity and
   chlorophyll concentration layers that correlate with visibility, but it's a much heavier
   integration (NetCDF/gridded data, not a simple REST JSON call like everything else this repo
@@ -180,11 +181,14 @@ is cleared today.
 
 Not repeated in full here; see the cross-referenced section:
 
-- Calibrating the jellyfish/whale heuristics against real `SightingStore` data: `ARCHITECTURE.md`
-  §8.
+- Calibrating the jellyfish/whale heuristics against real `SightingStore` data:
+  [LIMITATIONS §8](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations).
 - Real per-beach travel time/distance instead of straight-line distance (driving/walking/transit
-  modes); `ARCHITECTURE.md` §5b, §9.
-- Caching and per-user rate limiting for the core pipeline: `ARCHITECTURE.md` §9, §11 Phase 4.
+  modes); `ARCHITECTURE.md` §5b,
+  [LIMITATIONS §9](../1-Using-marola/LIMITATIONS.md#other-known-limitations-poc-stage-not-hidden).
+- Caching and per-user rate limiting for the core pipeline:
+  [LIMITATIONS §9](../1-Using-marola/LIMITATIONS.md#other-known-limitations-poc-stage-not-hidden),
+  `ARCHITECTURE.md` §11 Phase 4.
 
 ## 9. Ocean-knowledge grounding: RAG and fine-tuning over marine science, plus catastrophe detection
 

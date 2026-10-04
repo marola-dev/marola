@@ -10,7 +10,7 @@ from single-model work to multi-agent systems.
 
 | Skill | Practice it via | Ready now? |
 |---|---|---|
-| Responsible AI: stating limitations honestly | `ARCHITECTURE.md` §8/§9 — write your own one-paragraph "known limitations" section for a feature you add, in that style, before calling it done | Yes |
+| Responsible AI: stating limitations honestly | [LIMITATIONS §8](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations)/[§9](../1-Using-marola/LIMITATIONS.md#other-known-limitations-poc-stage-not-hidden) — write your own one-paragraph "known limitations" section for a feature you add, in that style, before calling it done | Yes |
 
 ## Stage 2 — Generative AI implementation
 
@@ -36,7 +36,7 @@ from single-model work to multi-agent systems.
 | Skill | Practice it via | Ready now? |
 |---|---|---|
 | Local multimodal model calls | marola-app's [`LocalVisionClient`](https://github.com/marola-dev/marola-app/blob/main/local/src/main/scala/marola/vision/LocalVisionClient.scala) via `just run -- --analyze-photo <path>`, in a marola-app checkout | Yes |
-| Closing the loop: vision output feeding a decision | Not built — `SightingStore` records vision-analyzed sightings but nothing yet feeds them back into `Swimability`'s heuristics (`ARCHITECTURE.md` §8). Build the calibration step to practice this | Design only |
+| Closing the loop: vision output feeding a decision | Not built — `SightingStore` records vision-analyzed sightings but nothing yet feeds them back into `Swimability`'s heuristics ([LIMITATIONS §8](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations)). Build the calibration step to practice this | Design only |
 
 ## Stage 5 — NLP / text analysis
 
