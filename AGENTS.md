@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for any AI coding agent working in the marola workspace (Claude Code or otherwise).
+Instructions for any AI coding agent working in the marola umbrella (Claude Code or otherwise).
 Read this before writing, modifying, or deploying anything. Humans should read it too.
 
 <!-- invariants:start -->
@@ -15,7 +15,7 @@ Non-negotiable in every marola repo; a repo may make these stricter, never loose
 - **Phase discipline**: work one phase at a time; never start a later phase before the current one is done ([AGENTS.md](AGENTS.md#phase-discipline-hard-rule)).
 <!-- invariants:end -->
 
-## What this workspace is
+## What this umbrella is
 
 **marola** is the ocean intelligence layer for a stretch of coast: real nearby beaches
 (OpenStreetMap), live sea and weather (Open-Meteo), official bathing-water quality, a 0–100
@@ -27,7 +27,8 @@ repo as a git submodule. It holds this file, the ways of working (`docs/3-Ways-o
 research and plans (`docs/4-Research-and-plans/`), the MIPs and their `.tasks.md`, the phase list
 (`docs/PHASES.md`), MIP and cross-repo parent issues, the aggregated docs site at
 <https://docs.marola.dev/>, and the submodule pointers. **It holds no code**: no build, no app
-gates. `PHILOSOPHY.md` holds the reasons behind the rules here.
+gates. [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md) holds the reasons behind the rules here, and
+[CONTRIBUTING](docs/3-Ways-of-working/CONTRIBUTING.md) is the guide for every repo.
 
 ## The repos
 
@@ -50,7 +51,11 @@ producer version by bumping its pin in a PR.
 - **Issues**: one issue per PR, in the repo the PR lands in, so `Closes #N` stays local. Cross-repo
   work is an umbrella parent issue with a sub-issue in each target repo, and every issue sits on the
   org Project (`marola-dev` Project 1). A reference to an issue in another repo is always fully
-  qualified (`marola-dev/marola-app#15`). `docs/3-Ways-of-working/ISSUE-FLOW.md` has the commands.
+  qualified (`marola-dev/marola-app#15`). [ISSUE-FLOW](docs/3-Ways-of-working/ISSUE-FLOW.md) has the
+  tiers and the Definition of Ready.
+
+[WORKING-ACROSS-REPOS](docs/3-Ways-of-working/WORKING-ACROSS-REPOS.md) has the whole of it, with
+which checkout each recipe needs.
 
 ## Submodule mechanics
 
@@ -64,6 +69,7 @@ producer version by bumping its pin in a PR.
   and never commit inside a submodule from the umbrella's own branch.
 - `docs.yml` builds the docs from each submodule's latest `main` regardless of the pointers;
   `ci.yml`'s `docs-build` builds a PR on its pinned commits.
+- Adding a repo is [NEW-REPO](docs/3-Ways-of-working/NEW-REPO.md)'s checklist.
 
 ## Setup & commands
 
@@ -92,7 +98,8 @@ site (MIP-0074 Appendix A), so write them relative inside a repo and absolute ac
 that moves gets a `redirect_maps` entry in `mkdocs/mkdocs.yml`. A push to `main` touching
 `docs/**`, `mkdocs/**`, `README.md`, `flake.lock` or the docs scripts, a submodule's docs dispatch,
 or the daily cron runs `docs.yml`, which deploys docs.marola.dev. `docs/MIPs/CANDIDATES.md` indexes
-what is MIP material; `.claude/rules/docs.md` has the MIP status vocabulary.
+what is MIP material; `.claude/rules/docs.md` has the MIP status vocabulary, and
+[DOCS-SITE](docs/3-Ways-of-working/DOCS-SITE.md) how the site is built.
 
 The harness is [marola-devkit](https://github.com/marola-dev/marola-devkit), a flake input pinned
 to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `cost-split`, `cost-fill`,
