@@ -44,7 +44,7 @@
 5. **Phase 4: Harden & calibrate.** Caching, per-user rate limiting, feeding accumulated
    [`SightingStore`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/scala/marola/sightings/SightingStore.scala)
    reports back into the jellyfish/whale heuristics
-   ([`ARCHITECTURE.md`](2-Building-marola/ARCHITECTURE.md) §8).
+   ([`LIMITATIONS.md`](1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations)).
 
    *Status: not started; the shared cache and rate limiting are
    [MIP-0003](MIPs/MIP-0003-fast-replies-caching-and-fan-out.md) (Draft), calibrating the
