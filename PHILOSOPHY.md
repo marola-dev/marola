@@ -32,7 +32,7 @@ day-to-day through an agentic coder (Claude Code, currently), and the constraint
 necessary are the repository's most finished work. `AGENTS.md` is the rulebook, deliberately
 agent-agnostic prose rather than one vendor's config format; MIP-0011 (Implemented,
 ultrareview-verified) turned the rules that must not be optional into things the harness enforces:
-hooks, a shared permission allowlist, path-scoped rules, subagents, skills; `docs/3-Working-on-the-repo/DEV-FLOW.md` is
+hooks, a shared permission allowlist, path-scoped rules, subagents, skills; `docs/3-Ways-of-working/DEV-FLOW.md` is
 the loop from idea to merged PR. "Open to other coders" is not a wish either: MIP-0013 (Draft) is a
 bounded OpenCode tryout that states what replacing Claude Code would actually cost, down to the one
 hard dependency (marola-devkit's `cost-split` reads Claude Code's own session logs). This file and the
@@ -154,7 +154,7 @@ every external claim fetched and dated and every unverified one parked in "Open 
 agent is a fast writer of plausible designs; the MIP template forces the plausible to become the
 checked. The `Cost:` trailer on every commit and PR (`AGENTS.md`) exists for the same reason at
 the meta level: an agent's work is cheap to ask for and not free to run, and a repository that
-records what a feature cost in tokens learns what to ask for next. `docs/3-Working-on-the-repo/DEV-FLOW.md` is the loop
+records what a feature cost in tokens learns what to ask for next. `docs/3-Ways-of-working/DEV-FLOW.md` is the loop
 end to end: idea → MIP → acceptance → tasks → small stacked PRs, each green on the same gates CI
 runs → review only when asked → merge.
 

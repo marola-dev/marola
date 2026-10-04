@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Tier 2: a small enhancement (roughly two tasks or fewer, no new dependency). See
-        `docs/3-Working-on-the-repo/ISSUE-FLOW.md` for the three tiers. Bigger — a new data source, a scoring change, a
+        `docs/3-Ways-of-working/ISSUE-FLOW.md` for the three tiers. Bigger — a new data source, a scoring change, a
         new integration, anything paid — use the **MIP proposal** form instead; that is tier 3.
   - type: textarea
     id: problem

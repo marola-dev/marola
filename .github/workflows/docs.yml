@@ -1,6 +1,6 @@
-# docs — the umbrella's aggregated documentation site at docs.marola.dev: this repo's own docs/
-# plus every submodule's README.md + docs/, and each submodule's pre-built API docs when it
-# publishes one (MIP-0070 §5.5). The map at marola.dev is marola-site's, deployed separately.
+# docs — the umbrella's aggregated documentation site at docs.marola.dev: this repo at the root,
+# every repo's README.md + docs/ and api-docs branch at 5-Repos/<name>/ (MIP-0074 §5.3). The map at
+# marola.dev is marola-site's, deployed separately.
 name: docs
 
 on:
@@ -15,7 +15,9 @@ on:
       - 'README.md'
       - 'flake.lock' # marola-devkit mounts at its locked rev
       - 'scripts/prepare-docs.sh'
+      - 'scripts/fetch-api-docs.sh'
       - 'scripts/lib/repos_manifest.sh'
+      - 'scripts/lib/doc_links.py'
   schedule:
     - cron: "20 5 * * *" # once a day, off the hour other workflows use (CI-CD.md)
   workflow_dispatch:
@@ -37,9 +39,11 @@ jobs:
           submodules: true
 
       # Taken before this run's own build can move a page: the only honest baseline for "did a
-      # move drop a URL" is the site as it stood before this deploy (MIP-0074 §7).
+      # move drop a URL" is the site as it stood before this deploy (MIP-0074 §7). A site that is
+      # down must not block the deploy that recovers it, so a failed fetch skips that check.
       - name: Save the live sitemap, before this build can change it
-        run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml
+        continue-on-error: true
+        run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml || { rm -f old-sitemap.xml; exit 1; }
 
       # §5.5: non-PR builds track each submodule's latest main; a PR build stays on the pinned
       # commit the gitlink already carries, so it doesn't fail on something merged after it opened.
@@ -48,9 +52,8 @@ jobs:
         if: github.event_name != 'pull_request'
         run: git submodule update --init --remote
 
-      # Builds .tmp/docs-aggregated: this repo's own docs/ plus every submodule's README.md +
-      # docs/, under its manifest mount. The tracked docs/ tree itself is never written to
-      # (ruling T10-8) — scripts/mkdocs.sh stages and builds from this directory instead.
+      # Builds .tmp/docs-aggregated, api-docs branches included; the tracked docs/ tree is never
+      # written to (ruling T10-8).
       - name: Build the aggregated docs tree
         run: scripts/prepare-docs.sh
 
@@ -60,16 +63,17 @@ jobs:
           DOCS_SRC: .tmp/docs-aggregated
         run: scripts/mkdocs.sh
 
-      - name: Fold in each submodule's pre-built API docs, from a release asset (no sbt here)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: scripts/fetch-api-docs.sh mkdocs/generated-docs
-
       - name: The published tree keeps script-src 'self'
         run: python3 scripts/strip_external_scripts.py --check mkdocs/generated-docs
 
       - name: Every docs.marola.dev link resolves, and no old sitemap URL was dropped
-        run: python3 scripts/site_links_check.py mkdocs/generated-docs --old-sitemap old-sitemap.xml
+        run: |
+          if [ -s old-sitemap.xml ]; then
+            python3 scripts/site_links_check.py mkdocs/generated-docs --old-sitemap old-sitemap.xml
+          else
+            echo "::warning::no live sitemap fetched; the dropped-URL check is skipped"
+            python3 scripts/site_links_check.py mkdocs/generated-docs
+          fi
 
       - uses: actions/upload-pages-artifact@v5
         with:
