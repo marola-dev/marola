@@ -32,12 +32,24 @@ mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-
 2. **Refine the idea**: superpowers `brainstorming` (activates on "let's plan", "I have an idea"):
    Socratic questions until MIP §1-§3 (summary, motivation, user-visible change) have answers.
    Voice notes and chat pastes go through `just context-mips` + a browser session first
-   (`RUN-LOCALLY.md` §8).
+   ([below](#voice-notes-into-mips-in-a-browser-session)).
 3. **Write the MIP**: the `/marola-devkit:mip` skill: next number from `docs/MIPs/README.md`, the template,
    every external claim fetched and dated, what was *not* checked said so, open questions listed.
    Add the index row. Link it from `FUTURE-WORK.md` if it closes something.
 4. **Open it as its own PR**, status **Draft**. A MIP is never built in the same change (`mip`
    skill, step 8). The PR body ends with a `Cost:` line like any other.
+
+### Voice notes into MIPs in a browser session
+
+`just context-mips` packs what a MIP author needs, and no code, with repomix into
+`.tmp/marola-context-mips.md` and copies it to the clipboard: the README, AGENTS.md, marola-app's
+README (so run `git submodule update --init` first), ARCHITECTURE, PHASES, FUTURE-WORK, the
+`/marola-devkit:mip` skill and every existing MIP. In a browser Claude chat, paste it, attach the
+WhatsApp voice notes (`.ogg`) or the chat text, and say "convert the audios into MIP proposals".
+The pack's instruction section (`repomix-instruction.md`) fixes the template, the numbering, the
+transcript appendix and the rule that unverified claims go under "Open questions". Save the
+returned files under `docs/MIPs/` and let the in-repo agent verify the sources (moved from
+[Run it locally](../1-Using-marola/RUN-LOCALLY.md) §8).
 
 ## 2. Acceptance
 

@@ -34,7 +34,7 @@
    [`Dockerfile`](https://github.com/marola-dev/marola-app/blob/main/Dockerfile) (`jvm` = Temurin
    25 JRE + the fat jar, `native` = the GraalVM binary on distroless, `dev` = the Nix dev shell)
    and [`docker-compose.yml`](https://github.com/marola-dev/marola-app/blob/main/docker-compose.yml)
-   (marola + an Ollama sidecar): MIP-0008, [`RUN-LOCALLY.md`](1-Using-marola/RUN-LOCALLY.md) §10.
+   (marola + an Ollama sidecar): MIP-0008, [`DOCKER.md`](1-Using-marola/DOCKER.md).
 
    *Status: both artefacts ship ([MIP-0005](MIPs/MIP-0005-map-and-static-site.md) and
    [MIP-0008](MIPs/MIP-0008-docker-images-and-smoke-test.md), Implemented); the hosted webhook is
