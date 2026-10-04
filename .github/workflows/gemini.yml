@@ -2,7 +2,8 @@
 name: gemini
 
 on:
-  pull_request:
+  # Base-branch workflow and secrets, so a fork PR gets a review; only a maintainer can request the team.
+  pull_request_target:
     types: [review_requested]
 
 permissions:
@@ -11,7 +12,7 @@ permissions:
 jobs:
   gemini:
     if: github.event.requested_team.slug == 'gemini'
-    uses: marola-dev/marola-devkit/.github/workflows/gemini-review.yml@v0.4.0
+    uses: marola-dev/marola-devkit/.github/workflows/gemini-review.yml@v0.5.0
     secrets: inherit
     with:
-      devkit-ref: v0.4.0
+      devkit-ref: v0.5.0
