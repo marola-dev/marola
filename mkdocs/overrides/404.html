@@ -1,0 +1,22 @@
+{% extends "main.html" %}
+{% block content %}
+  <h1>404 - Not found</h1>
+  {#- Pages answers a missing path only with this page, so MIP-0074 Appendix B's prefix moves are
+      forwarded from here. scripts/docs_redirect_check.js runs this script. -#}
+  <script>
+    (function (l) {
+      var moves = [
+        ['/repos/marola-ml/api/', '/5-Repos/marola-ml/api-docs/python/'],
+        ['/repos/', '/5-Repos/'],
+        ['/MIPs/', '/6-MIPs/'],
+        ['/api/', '/5-Repos/marola-app/api-docs/']
+      ].sort(function (a, b) { return b[0].length - a[0].length; });
+      for (var i = 0; i < moves.length; i++) {
+        if (l.pathname.indexOf(moves[i][0]) === 0) {
+          l.replace(moves[i][1] + l.pathname.slice(moves[i][0].length) + l.search + l.hash);
+          return;
+        }
+      }
+    })(window.location);
+  </script>
+{% endblock %}

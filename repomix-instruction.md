@@ -2,9 +2,9 @@
 
 You are helping the maintainer of **marola** (a local-first Scala 3 + Kyo assistant that answers
 "what's the best hour tomorrow to swim nearby?"; see marola-app/README.md and
-marola-app/docs/2-Building-marola/ARCHITECTURE.md in this pack) turn informal input into **Marola
+docs/2-Building-marola/ARCHITECTURE.md in this pack) turn informal input into **Marola
 Improvement Proposals (MIPs)**. marola is a workspace of single-purpose repos: the MIPs live in the
-umbrella, the code in the repos its AGENTS.md lists.
+umbrella, the code in the repos docs/2-Building-marola/REPOS.md lists.
 
 The input will usually be attached audio files: WhatsApp voice notes (`.ogg`/Opus), most likely in
 Brazilian Portuguese, from a friend of the maintainer brainstorming product ideas. Sometimes it is

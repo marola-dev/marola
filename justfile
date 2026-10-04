@@ -50,13 +50,13 @@ coverage-python:
 # app's gates are marola-app's own (`cd marola-app && just quality`).
 quality: quality-other
 
-# Ruff, the script self-tests, actionlint, hadolint. A missing tool fails, never skips.
+# Ruff, the script self-tests, actionlint, hadolint, docs-lint. A missing tool fails, never skips.
 # The devkit's own scripts are self-tested in its CI; here only marola's run.
 quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
     [ -e .devkit/devkit.just ] || echo "quality-other: no .devkit here — the devkit's recipes (pr, stack, issue-*) are missing; run 'nix develop', or 'just devkit-link'" >&2
-    for tool in ruff actionlint hadolint agents-check workflow-runners; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
+    for tool in ruff actionlint hadolint agents-check workflow-runners docs-lint; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
     # Not `just --fmt --check`: its --unstable style differed between this machine and the CI
     # runner on the same file and version. --list only checks that the file parses.
     just --list >/dev/null
@@ -74,9 +74,15 @@ quality-other:
     scripts/prepare-docs.sh --self-test
     scripts/fetch-api-docs.sh --self-test
     python3 scripts/strip_external_scripts.py --self-test
+    node scripts/docs_redirect_check.js
+    python3 scripts/lib/doc_links.py --self-test
+    python3 scripts/site_links_check.py --self-test
+    scripts/agents_repos_check.sh --self-test
+    scripts/agents_repos_check.sh
     workflow-runners
     python3 scripts/mip_graph.py --check
     agents-check
+    docs-lint
     actionlint
     hadolint mkdocs/Dockerfile
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
@@ -124,9 +130,9 @@ docs-serve:
 # Browser-session context — repomix.config.json, repomix-instruction.md
 # ---------------------------------------------------------------------
 
-# Pack README, AGENTS.md, marola-app's README and ARCHITECTURE, PHASES, FUTURE-WORK, the MIP skill
-# and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads the
-# marola-app submodule: `git submodule update --init` first.
+# Pack README, AGENTS.md, marola-app's README, ARCHITECTURE, REPOS, PHASES, FUTURE-WORK, the MIP
+# skill and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads
+# the marola-app submodule: `git submodule update --init` first.
 context-mips:
     mkdir -p .tmp && "$(just _repomix)" -c repomix.config.json
     # The MIP template is marola-devkit's mip skill, under .devkit, which repomix skips as gitignored.
@@ -142,13 +148,13 @@ context-mip mip:
     if [ -z "$num" ]; then echo "usage: just context-mip MIP-NNNN" >&2; exit 1; fi
     mip_file="$(ls docs/MIPs/MIP-"$num"-*.md 2>/dev/null | head -1)"
     if [ -z "$mip_file" ]; then echo "no docs/MIPs/MIP-$num-*.md found" >&2; exit 1; fi
-    include="\"README.md\", \"AGENTS.md\", \"PHILOSOPHY.md\", \"$mip_file\""
+    include="\"README.md\", \"AGENTS.md\", \"docs/3-Ways-of-working/PHILOSOPHY.md\", \"$mip_file\""
     tasks_file="docs/MIPs/MIP-$num.tasks.md"
     [ -f "$tasks_file" ] && include="$include, \"$tasks_file\""
     mkdir -p .tmp
     out=".tmp/marola-context-mip-MIP-$num.md"
     cfg=".tmp/repomix-mip-review-MIP-$num.config.json"
-    header="marola — MIP-$num review request pack for a reviewer outside this project's own coding agent (a different model, or a human). README, AGENTS.md, PHILOSOPHY.md plus this one MIP — no other code or docs. See the instruction section for what is being asked."
+    header="marola — MIP-$num review request pack for a reviewer outside this project's own coding agent (a different model, or a human). README, AGENTS.md, docs/3-Ways-of-working/PHILOSOPHY.md plus this one MIP — no other code or docs. See the instruction section for what is being asked."
     # A dedicated -c config: repomix auto-loads repomix.config.json (every MIP) and CLI --include
     # doesn't override it. printf, not a heredoc: an unindented heredoc body ends the recipe.
     printf '{\n  "$schema": "https://repomix.com/schemas/latest/schema.json",\n  "output": {\n    "filePath": "%s",\n    "style": "markdown",\n    "headerText": "%s",\n    "instructionFilePath": "repomix-instruction-mip-review.md"\n  },\n  "include": [%s],\n  "ignore": { "useGitignore": true, "useDefaultPatterns": true }\n}\n' "$out" "$header" "$include" > "$cfg"

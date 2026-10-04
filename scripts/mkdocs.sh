@@ -68,6 +68,15 @@ stage_docs() {
   cp -R "$src/." "$dest/"
 }
 
+# strict does not cover this: a tree with no index.md builds green with no landing page, which
+# reaches docs.marola.dev as a 404.
+check_index() {
+  [ -f "$1/index.md" ] || {
+    echo "mkdocs: $1 has no index.md — build it with scripts/prepare-docs.sh, which writes the umbrella README there" >&2
+    return 1
+  }
+}
+
 run() {
   local mode="$1" rt files compose image
   rt="$(pick_runtime)" || {
@@ -88,6 +97,7 @@ run() {
   local docs_src="$repo_root/docs"
   [ -n "${DOCS_SRC:-}" ] && docs_src="$repo_root/$DOCS_SRC"
 
+  check_index "$docs_src"
   cd "$repo_root/mkdocs"
   "${compose[@]}" "${files[@]}" down >/dev/null 2>&1 || true
   rm -rf generated-docs
@@ -126,10 +136,8 @@ run() {
   if [ "$mode" = build ]; then
     rm -rf docs generated-docs
     "$rt" cp "$cid:/mkdocs/generated-docs/" .
-    # strict mode does not cover this: a site with no index.md builds green and simply has no
-    # landing page, which reaches docs.marola.dev as a 404. Checked here instead.
     [ -f generated-docs/index.html ] || {
-      echo "mkdocs: built no generated-docs/index.html — docs/index.md is missing or was renamed" >&2
+      echo "mkdocs: built no generated-docs/index.html from $docs_src/index.md" >&2
       exit 1
     }
     echo "built: mkdocs/generated-docs/index.html"
@@ -198,7 +206,17 @@ self_test() {
   ok "$(printf 'site_url: https://example.com/docs/\n' >"$tmpcfg"; serve_path "$tmpcfg")" "/docs/" "the serve banner follows site_url's path, which is where the dev server answers"
   ok "$(printf 'site_url: https://example.com\n' >"$tmpcfg"; serve_path "$tmpcfg")" "/" "a site_url with no path serves at the root"
   ok "$(grep -c '^strict: true' "$cfg")" "1" "the build is strict, so a broken internal link fails it"
-  ok "$([ -f "$repo_root/docs/index.md" ] && echo yes || echo no)" "yes" "docs/index.md exists — strict does not check for it, and without it the site has no landing page"
+  ok "$(grep -c '^  anchors: warn' "$cfg")" "1" "anchor checks warn, so under strict a dangling #anchor fails the build"
+  # MIP-0074 §5.3: the redirect machinery. scripts/docs_redirect_check.js tests the 404 page itself.
+  ok "$(grep -c '^  custom_dir: overrides' "$cfg")" "1" "the theme reads mkdocs/overrides, where the forwarding 404.html is"
+  ok "$(grep -c '^  - redirects:' "$cfg")" "1" "the redirects plugin is on, for single page moves"
+  ok "$(grep -c 'mkdocs-redirects==1.2.2' "$repo_root/mkdocs/Dockerfile")" "1" "and its package is pinned in the image"
+  tmp="$(mktemp -d)"
+  ok "$(check_index "$tmp" 2>/dev/null && echo pass || echo fail)" "fail" "a build dir with no index.md fails before mkdocs runs — strict does not check for it"
+  ok "$(check_index "$tmp" 2>&1 | grep -c 'prepare-docs.sh')" "1" "...pointing at prepare-docs, which writes it from the README"
+  echo "# landing" >"$tmp/index.md"
+  ok "$(check_index "$tmp" && echo pass || echo fail)" "pass" "...and one with index.md passes"
+  rm -rf "$tmp"
 
   # #511: mkdocs/hooks/mermaid_font.py runs before the kroki plugin (event_priority) and pins
   # every top-level ```mermaid fence to a font Kroki actually has, so it never measures label

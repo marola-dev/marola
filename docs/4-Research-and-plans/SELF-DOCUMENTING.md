@@ -7,7 +7,7 @@ reconstructing "what happened this week" from scratch each time. This doc is the
 proposal for what to actually build is [MIP-0018](../MIPs/MIP-0018-self-documentation-and-media-exporter.md).
 
 Nothing here is marola-the-product. It's dev-tooling for the person building marola, same
-category as `docs/3-Working-on-the-repo/DEV-FLOW.md` and `AGENTS.md`'s "Attribution and cost accounting" section.
+category as `docs/3-Ways-of-working/DEV-FLOW.md` and `AGENTS.md`'s "Attribution and cost accounting" section.
 
 ## 1. What marola already produces that's (almost) pre-written narrative
 

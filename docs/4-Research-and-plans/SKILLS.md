@@ -10,7 +10,7 @@ from single-model work to multi-agent systems.
 
 | Skill | Practice it via | Ready now? |
 |---|---|---|
-| Responsible AI: stating limitations honestly | `ARCHITECTURE.md` §8/§9 — write your own one-paragraph "known limitations" section for a feature you add, in that style, before calling it done | Yes |
+| Responsible AI: stating limitations honestly | [LIMITATIONS §8](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations)/[§9](../1-Using-marola/LIMITATIONS.md#other-known-limitations-poc-stage-not-hidden) — write your own one-paragraph "known limitations" section for a feature you add, in that style, before calling it done | Yes |
 
 ## Stage 2 — Generative AI implementation
 
@@ -18,25 +18,25 @@ from single-model work to multi-agent systems.
 |---|---|---|
 | Calling a model through an OpenAI-compatible endpoint | `LocalLlmClient.complete` (Ollama's `/v1/chat/completions`) | Yes |
 | Structured/parsed output from a model | `CompiledPrompt.buildMessages` + `LlmClient.extractContent` (summary field), `Reviewer.extractJsonObject` (JSON-from-prose fallback) | Yes |
-| Systematic prompt optimization (not hand-tuning) | `dspy/compile_recommendation_prompt.py` — run it yourself against `llama3.2:1b`, inspect the compiled `recommendation_prompt.json`, then hand-edit the trainset and re-run to see the artifact change | Yes — see `RUN-LOCALLY.md` |
-| RAG | Not built. First real exercise: implement `core/knowledge/KnowledgeStore` per `FUTURE-WORK.md` §9.1 against a small local corpus | Design only — build it to practice this |
+| Systematic prompt optimization (not hand-tuning) | marola-ml's [`dspy/compile_recommendation_prompt.py`](https://github.com/marola-dev/marola-ml/blob/main/dspy/compile_recommendation_prompt.py) — run it yourself against `llama3.2:1b`, inspect the compiled `recommendation_prompt.json`, then hand-edit the trainset and re-run to see the artifact change | Yes — see `RUN-LOCALLY.md` |
+| RAG | Built: marola-app's [`core/knowledge/KnowledgeStore`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/scala/marola/knowledge/KnowledgeStore.scala) — read it, then extend it (a second corpus, a different chunking strategy) per `FUTURE-WORK.md` §9.1 | Yes — already built, extend it |
 | Fine-tuning a small open model | `FUTURE-WORK.md` §9.1 step 4 (Ollama `Modelfile` + QLoRA-style adapter) | Design only |
 
 ## Stage 3 — Agentic solutions
 
 | Skill | Practice it via | Ready now? |
 |---|---|---|
-| Exposing app logic as MCP tools | `cli/agent/SwimConditionsMcpServer.scala` — read it, then add a new tool (e.g. `ask_ocean_question` once §9.1 exists) yourself | Yes |
-| Testing an MCP server without a full agent client | Pipe raw JSON-RPC to the server's stdin yourself (`ARCHITECTURE.md` §5c's Status note describes how this was verified) — do this once by hand before trusting any higher-level client | Yes |
-| Multi-step agent pipelines (plan → act → critique) | `Recommender.bestPerBeachTomorrow` → `Reviewer.review` — trace one real request through both LLM calls end to end with `just run -- --summarize` | Yes |
-| Recognizing when orchestration frameworks are and aren't worth adopting | `FUTURE-WORK.md` §5 (`workflows4s` review) — do your own version of this exercise on a framework not yet reviewed here before adding one | Yes, as a practice exercise |
+| Exposing app logic as MCP tools | marola-app's [`SwimConditionsMcpServer.scala`](https://github.com/marola-dev/marola-app/blob/main/cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala) — read it, then add a fifth tool yourself (`ask_ocean_question` is already the fourth) | Yes |
+| Testing an MCP server without a full agent client | Pipe raw JSON-RPC to the server's stdin yourself (marola-app's [Agentic tool access](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#agentic-tool-access) describes how this was verified) — do this once by hand before trusting any higher-level client | Yes |
+| Multi-step agent pipelines (plan → act → critique) | `Recommender.bestPerBeachTomorrow` → `Reviewer.review` — trace one real request through both LLM calls end to end with `just run -- --summarize`, in a marola-app checkout | Yes |
+| Recognizing when orchestration frameworks are and aren't worth adopting | marola-app's [Libraries](https://docs.marola.dev/5-Repos/marola-app/2-libraries/#workflows4s) page (`workflows4s` review) — do your own version of this exercise on a framework not yet reviewed there before adding one | Yes, as a practice exercise |
 
 ## Stage 4 — Computer vision
 
 | Skill | Practice it via | Ready now? |
 |---|---|---|
-| Local multimodal model calls | `local/vision/LocalVisionClient` via `just run -- --analyze-photo <path>` | Yes |
-| Closing the loop: vision output feeding a decision | Not built — `SightingStore` records vision-analyzed sightings but nothing yet feeds them back into `Swimability`'s heuristics (`ARCHITECTURE.md` §8). Build the calibration step to practice this | Design only |
+| Local multimodal model calls | marola-app's [`LocalVisionClient`](https://github.com/marola-dev/marola-app/blob/main/local/src/main/scala/marola/vision/LocalVisionClient.scala) via `just run -- --analyze-photo <path>`, in a marola-app checkout | Yes |
+| Closing the loop: vision output feeding a decision | Not built — `SightingStore` records vision-analyzed sightings but nothing yet feeds them back into `Swimability`'s heuristics ([LIMITATIONS §8](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations)). Build the calibration step to practice this | Design only |
 
 ## Stage 5 — NLP / text analysis
 
@@ -106,7 +106,7 @@ skipped).
 |---|---|---|
 | An agent evaluating another agent (generator/critic) | `Reviewer.review` — already built; study it as the generator/critic pattern it is, not just a marola feature | Yes |
 | A held-out eval set, not just a training set doing double duty | `FUTURE-WORK.md` §4.1's gap — build a real `dspy.Evaluate` loop over held-out examples | Design only |
-| LLM-call-shaped tracing (prompt/completion/cost/eval-score per span), not just infra tracing | `FUTURE-WORK.md` §10 flags this as a real JVM/Scala tooling gap (no Langfuse-equivalent) — extend `Telemetry.scala`'s existing OpenTelemetry plumbing yourself | Design only, scoped and doable |
+| LLM-call-shaped tracing (prompt/completion/cost/eval-score per span), not just infra tracing | `FUTURE-WORK.md` §10 flags this as a real JVM/Scala tooling gap (no Langfuse-equivalent) — extend marola-app's [`Tracing.scala`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/scala/marola/observability/Tracing.scala)'s existing OpenTelemetry plumbing yourself | Design only, scoped and doable |
 
 ## Stage 10 — Securing, governing, and deploying multi-agent systems
 
@@ -114,4 +114,4 @@ skipped).
 |---|---|---|
 | A human-confirmation gate on autonomous (not just responsive) agent behavior | `AGENTS.md`'s existing cost-safety gate is the template — design the equivalent for the escalation agent's proactive alerts before building it (`FUTURE-WORK.md` §9.2) | Design only |
 | Content-safety review on agent output meant for the public | Same escalation agent — its alert text is the first marola output that isn't only shown to the person who asked for it | Design only |
-| Audit trails across agent boundaries | Extend `Telemetry.scala` rather than building a new system | Design only |
+| Audit trails across agent boundaries | Extend `Tracing.scala` rather than building a new system | Design only |

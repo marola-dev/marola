@@ -55,7 +55,7 @@ SCALA_PATHS = ("marola-app/core", "marola-app/local", "marola-app/cli")
 PYTHON_PATHS = ("scripts", "marola-app/scripts")
 EXCLUDE_DIRS = ("target", "__pycache__", ".venv", "venv", "node_modules")
 
-SCALA_COLOR = "DC322F"  # = the README's hand-written Scala badge
+SCALA_COLOR = "DC322F"  # = marola-app's README's hand-written Scala badge
 PYTHON_COLOR = "3776AB"  # = python.org's brand blue, as used by shields' own python logo
 
 # Every `python3 <script> --self-test` line of justfile's `quality-other`, in its order. Keeping
@@ -68,6 +68,8 @@ SELF_TEST_SCRIPTS = (
     "scripts/awesome_agentic_digest.py",
     "scripts/mip_graph.py",
     "scripts/strip_external_scripts.py",
+    "scripts/lib/doc_links.py",
+    "scripts/site_links_check.py",
 )
 COVERAGE_SOURCE = "scripts"
 
