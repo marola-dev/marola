@@ -34,7 +34,7 @@
    [`Dockerfile`](https://github.com/marola-dev/marola-app/blob/main/Dockerfile) (`jvm` = Temurin
    25 JRE + the fat jar, `native` = the GraalVM binary on distroless, `dev` = the Nix dev shell)
    and [`docker-compose.yml`](https://github.com/marola-dev/marola-app/blob/main/docker-compose.yml)
-   (marola + an Ollama sidecar): MIP-0008, [`RUN-LOCALLY.md`](1-Using-marola/RUN-LOCALLY.md) §10.
+   (marola + an Ollama sidecar): MIP-0008, [`DOCKER.md`](1-Using-marola/DOCKER.md).
 
    *Status: both artefacts ship ([MIP-0005](MIPs/MIP-0005-map-and-static-site.md) and
    [MIP-0008](MIPs/MIP-0008-docker-images-and-smoke-test.md), Implemented); the hosted webhook is
@@ -44,7 +44,7 @@
 5. **Phase 4: Harden & calibrate.** Caching, per-user rate limiting, feeding accumulated
    [`SightingStore`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/scala/marola/sightings/SightingStore.scala)
    reports back into the jellyfish/whale heuristics
-   ([`ARCHITECTURE.md`](2-Building-marola/ARCHITECTURE.md) §8).
+   ([`LIMITATIONS.md`](1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations)).
 
    *Status: not started; the shared cache and rate limiting are
    [MIP-0003](MIPs/MIP-0003-fast-replies-caching-and-fan-out.md) (Draft), calibrating the

@@ -27,7 +27,7 @@ each of its sections a verdict in its own heading; only its candidates are repea
 |---|---|---|
 | llm4s as an opt-in module: agent loop, MCP client/server, guardrails, structured output | [`AGENT-FRAMEWORKS-SURVEY.md`](../4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY.md) §1.2; [`AGENT-STACK-SURVEY.md`](../4-Research-and-plans/AGENT-STACK-SURVEY.md) (2026-09-23) | MIP-0012 (Draft). llm4s stays its in-process layer, ADK only with MIP-0057, agent4s read-only |
 | The Telegram bot | [`TELEGRAM-SETUP.md`](../1-Using-marola/TELEGRAM-SETUP.md) | MIP-0002 (Draft) |
-| Calibrating the jellyfish/whale heuristics on reports | [`ARCHITECTURE.md`](../2-Building-marola/ARCHITECTURE.md) §8 | MIP-0007 (Draft) |
+| Calibrating the jellyfish/whale heuristics on reports | [`LIMITATIONS.md`](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations) | MIP-0007 (Draft) |
 | Benchmark runs in a ledger | marola-ml's [`docs/benchmarks/`](https://github.com/marola-dev/marola-ml/tree/main/docs/benchmarks) | MIP-0010; the Markdown stays canonical in v1 |
 | Four skill candidates | [`AGENT-SKILLS.md`](../3-Ways-of-working/AGENT-SKILLS.md) §3 | MIP-0011 task 8 |
 | Jail notes | [`FABLE_REVIEW.md`](https://github.com/marola-dev/marola/blob/70526c8d22ad785c7d895f9241e1f6839f215add/docs/4-Research-and-plans/FABLE_REVIEW.md) §3 (retired) | MIP-0011 task 5 |
@@ -40,7 +40,8 @@ Refactors and fixes, for a direct PR: [`EFFECTS-MAP`](https://docs.marola.dev/5-
 §2 (`AppConfig.fromEnv`'s hidden effect), §3 (the MCP unsafe boundary) and §4 (resource
 lifecycle); the [Scala 3 / JDK review](https://docs.marola.dev/5-Repos/marola-app/2-libraries_scala3-jdk/)'s
 adopt list, in the order its §4 gives; [`SKILLS.md`](../4-Research-and-plans/SKILLS.md)'s Stage 6
-items (typed `Abort` channels, `Async.foreach`); and `ARCHITECTURE.md` §9's known limitations.
+items (typed `Abort` channels, `Async.foreach`); and [`LIMITATIONS.md`](../1-Using-marola/LIMITATIONS.md#other-known-limitations-poc-stage-not-hidden)'s
+known limitations.
 
 ## How a candidate becomes a MIP
 
