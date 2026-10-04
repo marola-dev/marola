@@ -52,7 +52,7 @@
 
 Do not skip Phase 1 to get to Phase 2 early; see `AGENTS.md`'s phase-discipline rule: a Telegram
 bot that can't yet share a real location or photo has nothing meaningful to feed
-[`ARCHITECTURE.md`](2-Building-marola/ARCHITECTURE.md) §5's integrations in production, even
+the [integrations](2-Building-marola/ARCHITECTURE.md#local-first-integration-pattern) in production, even
 though every one of them is independently testable today via
 [`Main`](https://github.com/marola-dev/marola-app/blob/main/cli/src/main/scala/marola/Main.scala)'s
 CLI flags.

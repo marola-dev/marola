@@ -27,7 +27,7 @@ from single-model work to multi-agent systems.
 | Skill | Practice it via | Ready now? |
 |---|---|---|
 | Exposing app logic as MCP tools | marola-app's [`SwimConditionsMcpServer.scala`](https://github.com/marola-dev/marola-app/blob/main/cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala) — read it, then add a fifth tool yourself (`ask_ocean_question` is already the fourth) | Yes |
-| Testing an MCP server without a full agent client | Pipe raw JSON-RPC to the server's stdin yourself (`ARCHITECTURE.md` §5c's Status note describes how this was verified) — do this once by hand before trusting any higher-level client | Yes |
+| Testing an MCP server without a full agent client | Pipe raw JSON-RPC to the server's stdin yourself (marola-app's [Agentic tool access](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#agentic-tool-access) describes how this was verified) — do this once by hand before trusting any higher-level client | Yes |
 | Multi-step agent pipelines (plan → act → critique) | `Recommender.bestPerBeachTomorrow` → `Reviewer.review` — trace one real request through both LLM calls end to end with `just run -- --summarize`, in a marola-app checkout | Yes |
 | Recognizing when orchestration frameworks are and aren't worth adopting | marola-app's [Libraries](https://docs.marola.dev/5-Repos/marola-app/2-libraries/#workflows4s) page (`workflows4s` review) — do your own version of this exercise on a framework not yet reviewed there before adding one | Yes, as a practice exercise |
 

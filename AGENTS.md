@@ -32,20 +32,11 @@ gates. `PHILOSOPHY.md` holds the reasons behind the rules here.
 ## The repos
 
 Each repo has its own `AGENTS.md`, `docs/`, gates and issues. Read that repo's `AGENTS.md` before
-changing anything in it; it says what it overrides.
-
-| Repo | Holds | Produces → consumed by | Consumes |
-|---|---|---|---|
-| [marola-app](https://github.com/marola-dev/marola-app) (`marola-app/`) | The Scala 3 + Kyo product on JDK 25: the sbt build (`core/`, `local/`, `cli/`), the CLI, the MCP server, the benchmark runner, the OODS ingest code (arriving with MIP-0056), its low-level docs | The image `ghcr.io/marola-dev/marola-app` → site, ml, oods; Scaladoc on its `api-docs` branch → these docs, and `ml-resources-<tag>.tar.gz` → ml; `coverage/`, `smoke/` → marola-site's `site-data` | marola-corpus's release (`corpus.version`); compiled prompts from marola-ml as PRs |
-| [marola-site](https://github.com/marola-dev/marola-site) (`marola-site/`) | The map at <https://marola.dev/>: the static page, `areas.json`, the `site-data` branch, live checks | GitHub Pages at marola.dev | The app image (`marola-image`, tag + digest) for the boards; `site-data` |
-| [marola-corpus](https://github.com/marola-dev/marola-corpus) (`marola-corpus/`) | The sourced ocean knowledge (`knowledge/*.md`) and the `corpus-doc`/`eli5` skills | `marola-corpus-<tag>.tar.gz` per `v*` release → app, ml | — |
-| [marola-ml](https://github.com/marola-dev/marola-ml) (`marola-ml/`) | Offline Python: the DSPy prompt compile, the marola-sea fine-tune, the benchmark gate and its kept runs (`docs/benchmarks/`) | Compiled-prompt PRs → app; pdoc on its `api-docs` branch → these docs; marola-sea on Hugging Face | The app image (`marola-image`), its resources tarball (`resources.version`), the corpus (`corpus.version`) |
-| [marola-oods](https://github.com/marola-dev/marola-oods) (`marola-oods/`) | The Open Ocean Data Store's data only (`data/oods/`, MIP-0056); starts empty | The dataset → app (an export tag, MIP-0056 §5.5) | The app image (`marola-image`) for `oods-check`; commits from the app's ingest workflow |
-| [marola-devkit](https://github.com/marola-dev/marola-devkit) (not a submodule) | The shared harness: the dev-flow tools, git hooks, the `marola-devkit` Claude Code plugin, reusable workflows, the invariants block | A flake input, a plugin marketplace and `uses:` workflows, each pinned to a tag → every repo | — |
-
-The rule behind the table (MIP-0070 §5.4): no repo reads another repo's tree, in CI or in tests,
-and no consumer builds its producer from source. A consumer moves to a new producer version by
-bumping its pin in a PR.
+changing anything in it; it says what it overrides. What each repo owns, publishes and pins is in
+[`docs/2-Building-marola/REPOS.md`](docs/2-Building-marola/REPOS.md), the routing table's only copy
+(`scripts/agents_repos_check.sh` fails if this file restates it). No repo reads another repo's
+tree, in CI or in tests, and no consumer builds its producer from source: a consumer moves to a new
+producer version by bumping its pin in a PR.
 
 ## Where a change belongs
 

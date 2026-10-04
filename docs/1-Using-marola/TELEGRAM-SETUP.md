@@ -62,7 +62,7 @@ MAROLA_TELEGRAM_BOT_TOKEN=123456789:AAH...
 Once Phase 1's polling loop exists, running it locally means **long polling**: the bot process
 itself reaches out to Telegram's servers to ask "any new messages?" in a loop, so it needs no
 public IP, no domain, no inbound firewall rule. This is exactly why
-[ARCHITECTURE §2](../2-Building-marola/ARCHITECTURE.md#2-why-telegram-not-whatsapp-or-a-streamlit-page)
+[ARCHITECTURE](../2-Building-marola/ARCHITECTURE.md#why-telegram-not-whatsapp-or-a-streamlit-page)
 recommended Telegram over a webhook-only interface for the POC: you can run the whole thing,
 including a real bot a real phone can message, from a laptop behind NAT.
 
@@ -95,6 +95,6 @@ that URL will just leave the bot unable to receive messages until one does.
 ## 4. Cost note
 
 Telegram's Bot API itself is free with no usage-based billing
-([ARCHITECTURE §7](../2-Building-marola/ARCHITECTURE.md#7-third-party-apis-used-all-free-no-key-confirmed-live-against-real-data)), and §2's
+([ARCHITECTURE's data sources](../2-Building-marola/ARCHITECTURE.md#data-sources)), and §2's
 path runs on your own machine. Deploying for a webhook follows the same `AGENTS.md` cost-safety
 rule as everywhere else in this repo: nothing gets provisioned without an explicit go-ahead.

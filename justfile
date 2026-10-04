@@ -77,6 +77,8 @@ quality-other:
     node scripts/docs_redirect_check.js
     python3 scripts/lib/doc_links.py --self-test
     python3 scripts/site_links_check.py --self-test
+    scripts/agents_repos_check.sh --self-test
+    scripts/agents_repos_check.sh
     workflow-runners
     python3 scripts/mip_graph.py --check
     agents-check
@@ -127,9 +129,9 @@ docs-serve:
 # Browser-session context — repomix.config.json, repomix-instruction.md
 # ---------------------------------------------------------------------
 
-# Pack README, AGENTS.md, marola-app's README, ARCHITECTURE, PHASES, FUTURE-WORK, the MIP skill
-# and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads the
-# marola-app submodule: `git submodule update --init` first.
+# Pack README, AGENTS.md, marola-app's README, ARCHITECTURE, REPOS, PHASES, FUTURE-WORK, the MIP
+# skill and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads
+# the marola-app submodule: `git submodule update --init` first.
 context-mips:
     mkdir -p .tmp && "$(just _repomix)" -c repomix.config.json
     # The MIP template is marola-devkit's mip skill, under .devkit, which repomix skips as gitignored.

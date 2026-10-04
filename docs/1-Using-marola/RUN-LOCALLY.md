@@ -256,5 +256,5 @@ Moved to marola-app's
 
 The Telegram bot (there is no bot loop yet; [Telegram bot setup](TELEGRAM-SETUP.md) gets the
 credentials ready ahead of Phase 1) and any cloud backend
-([ARCHITECTURE](../2-Building-marola/ARCHITECTURE.md) §6: all optional, none needed for anything
+([ARCHITECTURE's cloud options](../2-Building-marola/ARCHITECTURE.md#cloud-options): all optional, none needed for anything
 above).

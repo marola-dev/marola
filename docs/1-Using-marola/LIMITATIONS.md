@@ -23,9 +23,9 @@ caveat as jellyfish: a heuristic, not a validated sighting-probability model. De
 from `score`: whether you might see a whale doesn't make an hour more or less safe or pleasant to
 swim in.
 
-**How [ARCHITECTURE §5d/§5e](../2-Building-marola/ARCHITECTURE.md#5d-sighting-reports-sightings)
-actually close this loop, not just gesture at it:** `SightingStore` (§5d) and
-`VisionClient` (§5e) are the concrete mechanism for "let users report sightings back... accumulate
+**How [sighting reports and photo analysis](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#sighting-reports)
+actually close this loop, not just gesture at it:** `SightingStore` and
+`VisionClient` are the concrete mechanism for "let users report sightings back... accumulate
 that as real labeled data", not yet wired into either heuristic's thresholds, but the storage and
 photo-analysis pieces now exist, which they didn't before this change. Feeding accumulated reports
 back into marola-ml's
@@ -36,7 +36,7 @@ future work.
 ## Other known limitations (POC-stage, not hidden)
 
 - **Beach distance is haversine** ("as the crow flies",
-  [ARCHITECTURE §5b](../2-Building-marola/ARCHITECTURE.md#5b-beach-distance-haversine)), confirmed
+  [beach distance](https://docs.marola.dev/5-Repos/marola-app/1-design/#beach-distance)), confirmed
   on real data: beaches across Guanabara Bay from Arpoador show up within the 15km radius despite
   not being reachable without a boat or a long drive around the bay.
 - **A beach's distance is measured to its OSM centroid, not its nearest shoreline.** Large beaches
@@ -54,7 +54,7 @@ future work.
 - **No caching, no persistence for the core pipeline, no rate limiting yet.** Every query re-fetches
   from Overpass and Open-Meteo live. Fine for a personal POC; a public bot needs both before real
   usage (Overpass's fair-use policy,
-  [ARCHITECTURE §7](../2-Building-marola/ARCHITECTURE.md#7-third-party-apis-used-all-free-no-key-confirmed-live-against-real-data),
+  [ARCHITECTURE's data sources](../2-Building-marola/ARCHITECTURE.md#data-sources),
   is the more pressing one). Since then, two partial caches exist: water-quality fetches are kept
   per agency as an outage fallback, and `MAROLA_BEACHES_DIR` can serve beach lists instead of
   Overpass ([configuration](https://docs.marola.dev/5-Repos/marola-app/4-reference_config/#outside-appconfig));
@@ -63,12 +63,12 @@ future work.
   logic is unit-tested (`SwimabilitySpec`), consistent with marola-app's "pure logic is where the
   tests are cheap" convention (its `AGENTS.md`'s code style section, which points to
   [`.claude/rules/scala.md`](https://github.com/marola-dev/marola-app/blob/main/.claude/rules/scala.md)). Every integration layer was
-  instead verified by actually running it against live services/data; see each subsection of
-  [ARCHITECTURE §5](../2-Building-marola/ARCHITECTURE.md#5-the-six-pluggable-integrations) for
+  instead verified by actually running it against live services/data; see each section of
+  marola-app's [Integrations](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/) for
   exactly what was and wasn't exercised. Since then, this no longer holds: recorded Overpass,
   Open-Meteo and agency responses replay through the unchanged integration code in
   `PipelineGoldenSpec` and the parser suites
   ([testing](https://docs.marola.dev/5-Repos/marola-app/3-development/#testing)).
 - **`CompiledPrompt`'s chat-message replay is a good-faith approximation** of DSPy's own
   `ChatAdapter` formatting, not byte-identical; see
-  [ARCHITECTURE §5a](../2-Building-marola/ARCHITECTURE.md#5a-query-synthesis-llm).
+  [query synthesis](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#query-synthesis).
