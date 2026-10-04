@@ -114,7 +114,7 @@ Sem conta na nuvem, sem chave de API. Passo a passo com saída real (em inglês)
 
 A nota e o veto de segurança são Scala determinístico; o modelo apenas interpreta e redige, e nunca
 derruba um veto. Toda a documentação técnica, de todos os repositórios, está em inglês em
-**[docs.marola.dev](https://docs.marola.dev/)**; veja também o [`PHILOSOPHY.md`](./PHILOSOPHY.md),
+**[docs.marola.dev](https://docs.marola.dev/)**; veja também o [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md),
 o [`CONTRIBUTING.md`](./CONTRIBUTING.md) e o [Código de Conduta](./CODE_OF_CONDUCT.md). Se você é um
 agente de IA: leia primeiro o [`AGENTS.md`](./AGENTS.md), depois o `AGENTS.md` do repositório que
 vai mudar.

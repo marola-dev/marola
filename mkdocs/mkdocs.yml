@@ -28,7 +28,7 @@ not_in_nav: |
 # Off the site entirely, not merely out of the sidebar. benchmarks/ is a ledger of kept runs and
 # superpowers/ is working notes for a skill — both are repo artefacts rather than documentation,
 # and grouping promoted them into top-level sections beside the four real ones. The two links into
-# benchmarks/ now point at GitHub, the same treatment AGENTS.md and PHILOSOPHY.md get.
+# benchmarks/ now point at GitHub, the same treatment AGENTS.md gets.
 exclude_docs: |
   benchmarks/
   superpowers/
