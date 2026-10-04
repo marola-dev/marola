@@ -1,7 +1,7 @@
 # MIP index
 
 Design docs for non-trivial changes, written before they're built. The process and template live
-in the `mip` skill (`.claude/skills/mip/SKILL.md`); this file is the index. Statuses: Draft →
+in the `/marola-devkit:mip` skill; this file is the index. Statuses: Draft →
 Accepted → Implemented (or Rejected / Superseded). A MIP built in stages before every task lands
 carries `Partially implemented (tasks a–b of N — #PR #PR)`, naming exactly which tasks are done and
 what's still missing in its own status row — never a bare "Implemented" until the whole task list
