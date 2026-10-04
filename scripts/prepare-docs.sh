@@ -2,10 +2,11 @@
 # prepare-docs — build docs.marola.dev's source tree in a gitignored directory (MIP-0074 §5.3): the
 # umbrella at the root (README.md as index.md, docs/** beside it, docs/MIPs/ at 6-MIPs/) and every
 # repo in mkdocs/repos.yml at 5-Repos/<name>/ (its README.md as index.md, its docs/** beside it,
-# its api-docs branch under api-docs/). scripts/lib/doc_links.py rewrites the links (Appendix A);
-# build.json and a line on each landing record the commit each repo was built from. A repo with no
-# README.md, or with both README.md and docs/index.md, fails the run. The tracked docs/ tree is
-# never written to: scripts/mkdocs.sh builds from this directory (DOCS_SRC).
+# its api-docs branch under api-docs/). scripts/lib/doc_links.py rewrites the links (Appendix A)
+# and generates each adr/index.md; build.json and a line on each landing record the commit each
+# repo was built from. A repo with no README.md, with both README.md and docs/index.md, or with a
+# hand-written docs/adr/index.md fails the run. scripts/mkdocs.sh builds from this directory
+# (DOCS_SRC); the tracked docs/ tree is never written to. See docs/3-Ways-of-working/DOCS-SITE.md.
 #
 #   scripts/prepare-docs.sh [BUILD_DIR]   # default .tmp/docs-aggregated, rebuilt fresh every run
 #   scripts/prepare-docs.sh --self-test   # hermetic: fake repos and local remotes, no network
@@ -211,6 +212,54 @@ and [a run]($blob/docs/benchmarks/run.md)." "README links: docs/ and ./docs/ dro
   rm -rf "$t"
 
   echo
+  echo "-- adr_index_generated: adr/index.md lists each ADR's number, title and status --"
+  t="$(mktemp -d)"
+  umbrella "$t/root" $'- name: fake-app\n'
+  app "$t/root/fake-app"
+  mkdir -p "$t/root/fake-app/docs/adr"
+  printf '# ADR-0002: Drop the cache | for now\n\n| | |\n|---|---|\n| **Status** | Superseded by [ADR-0003](0003-y.md) |\n' >"$t/root/fake-app/docs/adr/0002-x.md"
+  printf '# ADR-0003: Keep one cache\n\n| | |\n|---|---|\n| **Status** | Accepted |\n| **Date** | 2026-10-04 |\n' >"$t/root/fake-app/docs/adr/0003-y.md"
+  echo "Decisions: [ADRs](docs/adr/)." >>"$t/root/fake-app/README.md"
+  git -C "$t/root/fake-app" add -A
+  git -C "$t/root/fake-app" -c user.email=t@t -c user.name=t commit -q -m adrs
+  commit_all "$t/root"
+  rc=0
+  out="$(prepare "$t/root" "$t/build" 2>&1)" || rc=$?
+  ok "$rc" "0" "a repo with docs/adr/ builds, its README's docs/adr/ link resolving"
+  ok "$(cat "$t/build/5-Repos/fake-app/adr/index.md" 2>/dev/null)" "# Architecture decisions
+
+| ADR | Decision | Status |
+|---|---|---|
+| [0002](0002-x.md) | Drop the cache \| for now | Superseded by [ADR-0003](0003-y.md) |
+| [0003](0003-y.md) | Keep one cache | Accepted |" "one row per ADR, in number order, from its H1 and Status row"
+  ok "$([ -e "$t/build/adr" ] && echo yes || echo no)" "no" "a repo without docs/adr/ gets no index"
+  printf '# ADR-0004 keep\n' >"$t/root/fake-app/docs/adr/0004-z.md"
+  rc=0
+  out="$(prepare "$t/root" "$t/build" 2>&1)" || rc=$?
+  ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "an ADR off the template fails the run"
+  ok "$(grep -c 'docs/adr/0004-z.md: no "# ADR-0004: <decision>" heading' <<<"$out")" "1" "...naming the file and what is missing"
+  rm -rf "$t"
+
+  echo
+  echo "-- handwritten_adr_index_fails: adr/index.md is generated, so a committed one is refused --"
+  t="$(mktemp -d)"
+  umbrella "$t/root" $'- name: fake-app\n'
+  app "$t/root/fake-app"
+  mkdir -p "$t/root/fake-app/docs/adr"
+  printf '# ADR-0001: One\n\n| **Status** | Accepted |\n' >"$t/root/fake-app/docs/adr/0001-one.md"
+  echo "# my ADRs" >"$t/root/fake-app/docs/adr/index.md"
+  commit_all "$t/root"
+  rc=0
+  out="$(prepare "$t/root" "$t/build" 2>&1)" || rc=$?
+  ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "a hand-written docs/adr/index.md fails the run"
+  ok "$(grep -c 'fake-app: docs/adr/index.md: hand-written' <<<"$out")" "1" "...naming the repo and the file"
+  mv "$t/root/fake-app/docs/adr/index.md" "$t/root/fake-app/docs/adr/README.md"
+  rc=0
+  out="$(prepare "$t/root" "$t/build" 2>&1)" || rc=$?
+  ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "...and so does docs/adr/README.md, which mkdocs would also serve as the index"
+  rm -rf "$t"
+
+  echo
   echo "-- readme_and_docs_index_fails: README.md plus docs/index.md is refused (D1) --"
   t="$(mktemp -d)"
   umbrella "$t/root" $'- name: fake-app\n'
@@ -274,7 +323,7 @@ and [a run]($blob/docs/benchmarks/run.md)." "README links: docs/ and ./docs/ dro
   rm -rf "$t"
 
   echo
-  echo "-- a broken relative link is reported (inline and reference-style), not inside code --"
+  echo "-- a broken relative link is reported (inline, reference-style and HTML), not inside code --"
   t="$(mktemp -d)"
   umbrella "$t/root" $'- name: fake-app\n'
   app "$t/root/fake-app"
@@ -282,6 +331,8 @@ and [a run]($blob/docs/benchmarks/run.md)." "README links: docs/ and ./docs/ dro
 See [gone](missing.md).
 
 [ref]: also-missing.md
+
+<img src="gone.png" alt="x"> and <a href="https://example.com/x">absolute</a>
 
 Code is not a link: `f[A](effect: A)`, nor in a span that wraps: `way["n"](around:R, lat, lon); out
 geom;`, and
@@ -304,7 +355,8 @@ EOF
   ok "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)" "nonzero" "a broken relative link fails the run"
   ok "$(grep -c 'broken relative link: missing.md' <<<"$out")" "1" "...an inline link, naming the file and the link"
   ok "$(grep -c 'broken relative link: also-missing.md' <<<"$out")" "1" "...and a reference-style [label]: target definition too"
-  ok "$(grep -c 'broken relative link' <<<"$out")" "2" "...but nothing inside a code span (one that wraps a line too) or a fence, nested fences included"
+  ok "$(grep -c 'broken relative link: gone.png' <<<"$out")" "1" "...and an HTML src= (or href=)"
+  ok "$(grep -c 'broken relative link' <<<"$out")" "3" "...but nothing inside a code span (one that wraps a line too) or a fence, nested fences included"
   rm -rf "$t"
 
   echo
@@ -433,7 +485,7 @@ EOF
 root_default="$(cd "$script_dir/.." && pwd)"
 case "${1:-}" in
   --self-test) self_test ;;
-  -h|--help) sed -n '2,14p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ;;
+  -h|--help) sed -n '2,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' ;;
   -*) echo "prepare-docs: unknown argument '$1' (try --help)" >&2; exit 2 ;;
   *) prepare "$root_default" "${1:-$root_default/.tmp/docs-aggregated}" ;;
 esac

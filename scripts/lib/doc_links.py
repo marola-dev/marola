@@ -272,7 +272,7 @@ def rewrite(text: str, source: str, repo: Path, *, ctx: Context) -> tuple[str, l
 
 
 def links(text: str) -> list[str]:
-    """Every reference definition, then inline link, target outside code, as written."""
+    """Every reference definition, inline link, then HTML href=/src= target outside code, as written."""
     found: list[str] = []
 
     def inline(chunk: str) -> None:
@@ -287,6 +287,8 @@ def links(text: str) -> list[str]:
                 m.group(2).removeprefix("<").removesuffix(">") for m in REFDEF.finditer(chunk)
             ]
             inline(chunk)
+            for tag in HTML_TAG.finditer(chunk):
+                found += [m.group(4) for m in HTML_ATTR.finditer(tag.group(0))]
     return found
 
 
@@ -306,6 +308,46 @@ def mount(repo: Path, out: Path, ctx: Context) -> list[str]:
             errors += errs
         else:
             shutil.copyfile(repo / source, dest)
+    if (repo / "docs/adr").is_dir():
+        errors += adr_index(repo / "docs/adr", out / _docs_mount("adr", ctx))
+    return errors
+
+
+ADR_FILE = re.compile(r"(\d{4})-[^/]+\.md")
+ADR_STATUS = re.compile(r"^\|\s*\*\*Status\*\*\s*\|\s*(.*?)\s*\|\s*$", re.M)
+
+
+def adr_index(src: Path, out: Path) -> list[str]:
+    """Write out/index.md from the ADRs' rewritten copies in out (their links are the site's)."""
+    errors = [
+        f"docs/adr/{name}: hand-written; prepare-docs generates adr/index.md"
+        for name in ("index.md", "README.md")
+        if (src / name).exists()
+    ]
+    rows = []
+    for page in sorted(p.name for p in src.glob("*.md")):
+        if page in ("index.md", "README.md"):
+            continue
+        m = ADR_FILE.fullmatch(page)
+        if not m:
+            errors.append(f"docs/adr/{page}: not NNNN-<slug>.md")
+            continue
+        n = m.group(1)
+        text = (out / page).read_text(encoding="utf-8")
+        title = re.search(rf"^# ADR-{n}:[ \t]*(\S.*?)[ \t]*$", text, re.M)
+        status = ADR_STATUS.search(text)
+        if not title:
+            errors.append(f'docs/adr/{page}: no "# ADR-{n}: <decision>" heading')
+        if not status:
+            errors.append(f"docs/adr/{page}: no | **Status** | row")
+        if title and status:
+            cell = title.group(1).replace("|", "\\|")
+            rows.append(f"| [{n}]({page}) | {cell} | {status.group(1)} |")
+    out.mkdir(parents=True, exist_ok=True)
+    table = ["| ADR | Decision | Status |", "|---|---|---|", *rows] if rows else ["_None yet._"]
+    (out / "index.md").write_text(
+        "\n".join(["# Architecture decisions", "", *table]) + "\n", encoding="utf-8"
+    )
     return errors
 
 
