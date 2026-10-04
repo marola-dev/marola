@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (2026-10-03, maintainer review on #635) |
+| **Status** | Accepted (2026-10-03, maintainer review on #635) — `Tasks: docs/MIPs/MIP-0076.tasks.md` ([`MIP-0076.tasks.md`](./MIP-0076.tasks.md)) |
 | **Author** | Claude (Opus 5.5), from the maintainer's graphify question and two offline spikes (2026-10-02, 2026-10-03) |
 | **Created** | 2026-10-03 |
 | **Phase** | None: dev-loop tooling, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
