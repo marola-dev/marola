@@ -73,15 +73,15 @@ mount_repo() {
 
 # check_links <build_dir> <file>... -> every relative link in each page resolves to a real file,
 # reported here rather than deep in a `mkdocs --strict` log. The links are doc_links.py's, so code
-# spans and fences are read the way the rewrite (and docs-lint) read them. Absolute URLs, mailto:,
-# anchors and /… are skipped (doc_links refuses /… already).
+# spans and fences are read the way the rewrite (and docs-lint) read them. --links leaves out any
+# URI with a scheme (data:, tel:, …); anchors and /… are skipped here (doc_links refuses /… already).
 check_links() {
   local build_dir="$1"; shift
   local fails=0 f link target listed
   listed="$(python3 "$script_dir/lib/doc_links.py" --links "$@")" || return 1
   while IFS=$'\t' read -r f link; do
     case "$link" in
-      ''|*://*|mailto:*|/*|'#'*) continue ;;
+      ''|/*|'#'*) continue ;;
     esac
     target="${link%%#*}"
     target="${target%%\?*}"
@@ -232,7 +232,7 @@ and [a run]($blob/docs/benchmarks/run.md)." "README links: docs/ and ./docs/ dro
 |---|---|---|
 | [0002](0002-x.md) | Drop the cache \| for now | Superseded by [ADR-0003](0003-y.md) |
 | [0003](0003-y.md) | Keep one cache | Accepted |" "one row per ADR, in number order, from its H1 and Status row"
-  ok "$([ -e "$t/build/adr" ] && echo yes || echo no)" "no" "a repo without docs/adr/ gets no index"
+  ok "$([ -e "$t/build/adr" ] && echo yes || echo no)" "no" "the umbrella, with no docs/adr/, gets no index"
   printf '# ADR-0004 keep\n' >"$t/root/fake-app/docs/adr/0004-z.md"
   rc=0
   out="$(prepare "$t/root" "$t/build" 2>&1)" || rc=$?
@@ -357,6 +357,21 @@ EOF
   ok "$(grep -c 'broken relative link: also-missing.md' <<<"$out")" "1" "...and a reference-style [label]: target definition too"
   ok "$(grep -c 'broken relative link: gone.png' <<<"$out")" "1" "...and an HTML src= (or href=)"
   ok "$(grep -c 'broken relative link' <<<"$out")" "3" "...but nothing inside a code span (one that wraps a line too) or a fence, nested fences included"
+  rm -rf "$t"
+
+  echo
+  echo "-- uri_schemes_skipped: a data:, tel: or javascript: link is not a relative link --"
+  t="$(mktemp -d)"
+  umbrella "$t/root" $'- name: fake-app\n'
+  app "$t/root/fake-app"
+  printf '%s\n' '<img src="data:image/png;base64,AA==" alt="x"> [call](tel:+554800000000) <a href="javascript:void(0)">x</a>' >"$t/root/fake-app/docs/page.md"
+  git -C "$t/root/fake-app" add -A
+  git -C "$t/root/fake-app" -c user.email=t@t -c user.name=t commit -q -m more
+  commit_all "$t/root"
+  rc=0
+  out="$(prepare "$t/root" "$t/build" 2>&1)" || rc=$?
+  ok "$rc" "0" "a page with a data: image and tel:/javascript: links builds"
+  ok "$(grep -c 'broken relative link' <<<"$out")" "0" "...none reported broken"
   rm -rf "$t"
 
   echo

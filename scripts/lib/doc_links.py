@@ -3,7 +3,7 @@
 
 scripts/lib/doc_links.py --repo DIR --name NAME --sha SHA --out DIR [--umbrella]
     [--exclude PATTERN]... [--submodule NAME=SHA]...
-scripts/lib/doc_links.py --links FILE...   # FILE<TAB>link per link outside code
+scripts/lib/doc_links.py --links FILE...   # FILE<TAB>link per relative link outside code
 scripts/lib/doc_links.py --self-test
 """
 
@@ -309,7 +309,7 @@ def mount(repo: Path, out: Path, ctx: Context) -> list[str]:
         else:
             shutil.copyfile(repo / source, dest)
     if (repo / "docs/adr").is_dir():
-        errors += adr_index(repo / "docs/adr", out / _docs_mount("adr", ctx))
+        errors += adr_index(repo / "docs/adr", out / _docs_mount("adr", ctx), ctx.exclude_docs)
     return errors
 
 
@@ -317,8 +317,8 @@ ADR_FILE = re.compile(r"(\d{4})-[^/]+\.md")
 ADR_STATUS = re.compile(r"^\|\s*\*\*Status\*\*\s*\|\s*(.*?)\s*\|\s*$", re.M)
 
 
-def adr_index(src: Path, out: Path) -> list[str]:
-    """Write out/index.md from the ADRs' rewritten copies in out (their links are the site's)."""
+def adr_index(src: Path, out: Path, exclude_docs: tuple[str, ...] = ()) -> list[str]:
+    """Write out/index.md from the published ADRs' rewritten copies in out (their links are the site's)."""
     errors = [
         f"docs/adr/{name}: hand-written; prepare-docs generates adr/index.md"
         for name in ("index.md", "README.md")
@@ -326,7 +326,7 @@ def adr_index(src: Path, out: Path) -> list[str]:
     ]
     rows = []
     for page in sorted(p.name for p in src.glob("*.md")):
-        if page in ("index.md", "README.md"):
+        if page in ("index.md", "README.md") or _excluded(f"adr/{page}", exclude_docs, False):
             continue
         m = ADR_FILE.fullmatch(page)
         if not m:
@@ -761,6 +761,20 @@ def self_test() -> int:
             ),
         )
 
+        adrs = Path(tmp) / "adrs"
+        for n in ("0001", "0002"):
+            (adrs / "docs/adr").mkdir(parents=True, exist_ok=True)
+            (adrs / f"docs/adr/{n}-x.md").write_text(
+                f"# ADR-{n}: D{n}\n\n| **Status** | Accepted |\n", encoding="utf-8"
+            )
+        (adrs / "README.md").write_text("# adrs\n", encoding="utf-8")
+        try:
+            errs = mount(adrs, out / "adrs", Context("adrs", sha, exclude_docs=("0002-*.md",)))
+            got = (errs, (out / "adrs/adr/index.md").read_text(encoding="utf-8").splitlines()[-1])
+        except OSError as e:
+            got = type(e).__name__
+        case("adr_index_skips_excluded", got, ([], "| [0001](0001-x.md) | D0001 | Accepted |"))
+
     if fails:
         print(f"doc_links self-test: {fails} failure(s)", file=sys.stderr)
         return 1
@@ -787,7 +801,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.links:
         for f in args.links:
             for link in links(f.read_text(encoding="utf-8")):
-                print(f"{f}\t{link}")
+                if not SCHEME.match(link):
+                    print(f"{f}\t{link}")
         return 0
     if not (args.repo and args.name and args.sha and args.out):
         ap.print_help()
