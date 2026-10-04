@@ -321,41 +321,8 @@ waking up, full stop.
 
 ## 8. The docs site
 
-Everything under `docs/` is published at <https://docs.marola.dev/>, rendered and full-text
-searchable, by mkdocs-material with a self-hosted Kroki rendering the Mermaid fences to SVG
-(MIP-0064). The prose ships the same way the code does, so it carries the same gates.
-
-**Where a new doc goes.** One of the four audience directories. Their `1-`…`4-` prefixes exist
-only to order the sidebar: there is no `nav:` key, mkdocs builds the tree from the filenames, so
-adding a doc needs no edit to `mkdocs/mkdocs.yml`.
-
-| Directory | For |
-|---|---|
-| `docs/1-Using-marola/` | someone running marola |
-| `docs/2-Building-marola/` | someone reading or changing the code |
-| `docs/3-Ways-of-working/` | someone working the process — this file, `ISSUE-FLOW.md`, `AGENT-SKILLS.md` |
-| `docs/4-Research-and-plans/` | surveys, roadmaps, reviews: ideas, most of them not built |
-| `docs/MIPs/` | the proposals; no prefix — digits sort before letters, so it lands last on its own |
-
-Add its row to `docs/index.md` in the same change: that file is the site's landing page as well as
-the index of what inside each doc is MIP material. `superpowers/` and `benchmarks/` (marola-ml's
-kept runs, at any depth) are `exclude_docs`'d — repo artefacts, not documentation — and are linked
-at GitHub when referenced.
-
-**Preview, and the gate.** `just docs-serve` serves the real build on
-<http://localhost:8001/>; the docs are baked into the image, so a doc edit needs a restart,
-not a reload. `just docs` is the build alone, and it is `--strict`: one unresolved internal link
-anywhere in `docs/` turns it red. Links that leave `docs/` — `AGENTS.md`, `PHILOSOPHY.md`,
-another repo's files — are absolute GitHub URLs for exactly that reason. Both need a Docker or
-Podman daemon (MIP-0064 decision 4); neither is part of `just quality`, so a docs change is
-previewed by hand.
-
-**How it ships.** A push to `main` touching `docs/**` or `mkdocs/**` runs `docs.yml`: this repo's
-`docs/` plus each submodule's `README.md` + `docs/` (`scripts/prepare-docs.sh`, MIP-0070 §5.5),
-`scripts/mkdocs.sh`, then the API docs unpacked under `api/` from release assets, then a Pages
-deploy to docs.marola.dev on merge. No sbt runs: marola-app's `release.yml` attaches its Scaladoc to
-each `v*` tag, and the docs build fetches the latest one. A push to a submodule's `docs/` redeploys the same way, through
-its `submodule-docs-updated` dispatch.
+Moved to [DOCS-SITE.md](DOCS-SITE.md): what the build mounts where, the landing and link rules, the
+per-repo skeleton and ADRs, redirects, the checks, preview and deploy.
 
 ## 9. Command reference
 

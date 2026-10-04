@@ -23,7 +23,7 @@ flowchart LR
   cron --> sync
   sync -- "one rolling PR" --> pr
   app[marola-app workflows] -- ":jvm :native" --> ghcr[(GHCR<br/>ghcr.io/marola-dev/marola-app)]
-  app -- "api-docs.tar.gz on v* releases" --> docs
+  app -- "api-docs branch" --> docs
   docs --> dpages[GitHub Pages<br/>docs.marola.dev]
   ci -- "stats/" --> sd[(marola-site<br/>site-data branch)]
   app -- "coverage/ smoke/" --> sd
@@ -38,12 +38,12 @@ writers and this repo's `repo-stats` push to it with `MAROLA_CROSS_REPO_PAT` thr
 `scripts/site-data-push.sh`, which retries when two pushes race. Its `site.yml` copies `smoke/`, `coverage/` and `stats/` into the page on every build. The
 coverage and smoke writers dispatch `site-data-updated` to rebuild it right away; `repo-stats`
 waits for its 3-hourly schedule. marola-site is also this repo's first submodule, and its
-`README.md` + `docs/` are published under `docs.marola.dev/repos/marola-site/`.
+`README.md` + `docs/` are published under `docs.marola.dev/5-Repos/marola-site/`.
 
 The corpus is [marola-corpus](https://github.com/marola-dev/marola-corpus)'s (task 13): its
 `release.yml` attaches `marola-corpus-<tag>.tar.gz` to each `v*` tag, and each consumer pins one in
 its own `corpus.version`. marola-corpus is this repo's second submodule, published under
-`docs.marola.dev/repos/marola-corpus/`.
+`docs.marola.dev/5-Repos/marola-corpus/`.
 
 The offline Python is [marola-ml](https://github.com/marola-dev/marola-ml)'s (task 14): `dspy/`,
 `finetune/`, the benchmark gate and its kept runs, and the workflows that went with them,
@@ -51,16 +51,17 @@ The offline Python is [marola-ml](https://github.com/marola-dev/marola-ml)'s (ta
 (with `HF_TOKEN`). It never builds the app: its benchmark runs the app image, pinned by tag and
 digest in its `marola-image`, and its gate reads the question set from the resources tarball on a
 marola-app release. Its `compile-prompt.yml` sends the compiled prompts to marola-app as a pull
-request, opened with `MAROLA_CROSS_REPO_PAT`. Its pdoc is `api-docs.tar.gz` on its
-own releases, published under `docs.marola.dev/repos/marola-ml/api/` with its `README.md` + `docs/`.
+request, opened with `MAROLA_CROSS_REPO_PAT`. The site reads its pdoc from its `api-docs` branch,
+published under `docs.marola.dev/5-Repos/marola-ml/api-docs/` with its `README.md` + `docs/`; the
+`api-docs.tar.gz` its releases still attach is no longer read (MIP-0074 §5.7 step 5 retires it).
 
 The app is [marola-app](https://github.com/marola-dev/marola-app)'s (task 15), with the workflows
 that build, test and publish it: its `ci.yml` (scala-ci, coverage to `site-data`), `docker.yml`
 (the `ghcr.io/marola-dev/marola-app` image), `docker-smoke.yml`, `marola-e2e.yml`,
-`scala-steward.yml`, and `release.yml`, which attaches Scaladoc (`api-docs.tar.gz`) and the ml
-resources tarball to each `v*` tag. Nothing here builds Scala. marola-app is this repo's fourth
-submodule and mounts at the site's root, so its `1-Using-marola/` and `2-Building-marola/` keep
-their URLs, and its Scaladoc lands at `/api/`.
+`scala-steward.yml`, and `release.yml`, which attaches the ml resources tarball to each `v*` tag
+(and Scaladoc as `api-docs.tar.gz`, unread like ml's). Nothing here builds Scala. marola-app is
+this repo's fourth submodule, published under `docs.marola.dev/5-Repos/marola-app/`, its Scaladoc
+from its `api-docs` branch at `api-docs/` there.
 
 The water-quality dataset is [marola-oods](https://github.com/marola-dev/marola-oods)'s (task 16):
 it starts empty, with only its own `oods-check.yml` — on a push or PR touching `data/` or
@@ -69,7 +70,7 @@ marola-ml use) and runs a smoke command the image supports today, then checks `d
 against the formats MIP-0056 specifies; an empty tree passes. It never builds or writes to
 anything. The actual ingest workflow, `oods-ingest.yml`, and the OODS command it checks against,
 land in marola-app through the recreated MIP-0056 stack, not here. marola-oods is this repo's
-fifth submodule, published under `docs.marola.dev/repos/marola-oods/`.
+fifth submodule, published under `docs.marola.dev/5-Repos/marola-oods/`.
 
 ## The workflows
 
@@ -79,7 +80,7 @@ fifth submodule, published under `docs.marola.dev/repos/marola-oods/`.
 | `ci-short-circuit.yml` | PR closed | `ubuntu-latest` | Devkit `ci-short-circuit`: cancels the closed PR's in-flight runs, which the concurrency group can't see | `GITHUB_TOKEN` | — |
 | `pr-body.yml` | PR opened, reopened, ready, pushed | `ubuntu-latest` | Devkit `pr-body`: fills the description from the commits (`uprd`); skips forks and bot branches | `GITHUB_TOKEN` | `just uprd` |
 | `labels.yml` | dispatch only | `ubuntu-latest` | Devkit `labels-sync`: applies the devkit's label manifest to this repo | `GITHUB_TOKEN` | `gh workflow run labels.yml`; `just labels-sync` locally |
-| `docs.yml` | `repository_dispatch: submodule-docs-updated`; push to `main` touching `docs/**`/`mkdocs/**`; daily; dispatch | `ubuntu-latest` | The umbrella aggregator (MIP-0070 §5.5): builds a gitignored aggregated tree (`scripts/prepare-docs.sh` — this repo's own `docs/` plus each submodule's `README.md` + `docs/`, submodules at their latest `main`), runs `mkdocs --strict` on it, folds in each submodule's API docs, marola-app's at `/api/` (`scripts/fetch-api-docs.sh`, the latest release's `api-docs.tar.gz` — no `sbt doc` here), and on `main` **deploys** to Pages at `docs.marola.dev` (`github-pages` environment) | `GITHUB_TOKEN` | `gh workflow run docs.yml`; `just docs` locally |
+| `docs.yml` | `repository_dispatch: submodule-docs-updated`; push to `main` touching `docs/**`, `mkdocs/**`, `README.md`, `flake.lock` or the docs scripts; daily; dispatch | `ubuntu-latest` | Builds docs.marola.dev from every repo and, on `main`, **deploys** it to Pages (`github-pages` environment): [DOCS-SITE.md](DOCS-SITE.md) | `GITHUB_TOKEN` | `gh workflow run docs.yml`; `just docs` locally |
 | `pointer-sync.yml` | `repository_dispatch: submodule-updated` or `submodule-docs-updated`; daily; dispatch | `ubuntu-latest` | The only thing that moves submodule pointers (MIP-0070 §5.6): `scripts/pointer-sync.sh` runs `git submodule update --remote` and commits whatever moved onto `chore/pointer-sync`, force-pushed, with one open PR listing each submodule's old → new commit and a compare link; when `main` has caught up, that PR is closed. Pushed and opened with the PAT so the PR's CI runs | `MAROLA_CROSS_REPO_PAT` | `gh workflow run pointer-sync.yml` |
 | `profile-activity.yml` | PR merged into `main` | `ubuntu-latest` (reusable workflow's `runner:` input) | Pings `h0ffmann/h0ffmann` to refresh its activity list; without the token it only leaves a notice | `PROFILE_DISPATCH_TOKEN` | — |
 

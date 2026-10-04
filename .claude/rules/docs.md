@@ -44,7 +44,7 @@ nothing for an author to add.
 
 ## Everything else under `docs/`
 
-The site is built from every repo (`AGENTS.md`, "Writing a doc is a deploy"; MIP-0074):
+The site is built from every repo (`docs/3-Ways-of-working/DOCS-SITE.md`; MIP-0074):
 
 - **Landing**: a repo's `README.md` is its landing page (this repo's is the site's root). There
   is no `docs/index.md` in any repo; the build refuses one.
