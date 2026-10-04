@@ -260,3 +260,7 @@ Moved to [Limitations](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-
 ### 9. Other known limitations (POC-stage, not hidden)
 
 Moved to [Limitations](../1-Using-marola/LIMITATIONS.md#other-known-limitations-poc-stage-not-hidden).
+
+### 11. Development phases
+
+Moved to [Phases](../PHASES.md).
