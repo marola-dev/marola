@@ -53,7 +53,10 @@ were checked on 2026-09-23 unless marked ⚠.
   which also wrap at one adapter, but it puts a reactive runtime inside the JVM. agent4s brings
   cats-effect `IO`; running two effect systems in one process is the cost `MIP-0012` already
   refused for less.
-- **Dependency weight.** `core/` and `local/` stay free of any of the three. llm4s (154 jars) and ADK
+- **Dependency weight.** marola-app's
+  [`core/`](https://github.com/marola-dev/marola-app/tree/main/core) and
+  [`local/`](https://github.com/marola-dev/marola-app/tree/main/local) stay free of any of the
+  three. llm4s (154 jars) and ADK
   (207 jars) each belong in their own opt-in module, the way the removed Azure module used to sit.
   Putting both in one module invites Jackson/OkHttp/protobuf version fights; keep them apart.
 - **Cloud is opt-in and GCP-shaped** (`MIP-0057`). ADK is the only one of the three with a deploy
@@ -78,7 +81,8 @@ were checked on 2026-09-23 unless marked ⚠.
 | `MIP-0025` / `MIP-0048` marola-sea model | call a model served by Ollama | yes (with the tool caveat) | yes, via LangChain4j | no |
 | `MIP-0050` Brazilian models | swap models per task | provider switch | model per agent | |
 
-The deterministic guards (`MIP-0022`, `MIP-0039`) stay in `core/` whichever toolkit runs the agent.
+The deterministic guards (`MIP-0022`, `MIP-0039`) stay in marola-app's
+[`core/`](https://github.com/marola-dev/marola-app/tree/main/core) whichever toolkit runs the agent.
 Both llm4s guardrails and ADK callbacks are places to *call* them from, not reasons to move them.
 
 ## 5. The first agent: "ask marola about marola"
@@ -123,7 +127,7 @@ jvm: "marola JVM (cli)" {
   llm4s: "llm4s agent (opt-in module)"
   mcp: "SwimConditionsMcpServer"
   traits: "LlmClient / KnowledgeStore (core traits)"
-  local: "local/: Ollama, file index"
+  local: "local backends: Ollama, file index"
   llm4s -> mcp: "MCP client"
   llm4s -> traits
   mcp -> traits
@@ -170,5 +174,8 @@ adk.router -> jvm.mcp: "MCP tools"
 - [ADK for Java and LangChain4j (Google Developers Blog)](https://developers.googleblog.com/adk-for-java-opening-up-to-third-party-language-models-via-langchain4j-integration/)
   and [an ADK Java agent on Gemma 4 via Ollama (G. Laforge, 2026-04-02)](https://glaforge.dev/posts/2026/04/02/an-adk-java-agent-powered-by-gemma-4/).
 - marola: `docs/MIPs/MIP-0012-llm4s-adoption-and-dspy-deprecation.md` §4 (llm4s closure and Ollama
-  findings), `core/src/main/scala/marola/knowledge/{Corpus,OceanQa}.scala`,
-  `cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala`.
+  findings), marola-app's
+  [`Corpus.scala`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/scala/marola/knowledge/Corpus.scala)
+  and
+  [`OceanQa.scala`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/scala/marola/knowledge/OceanQa.scala),
+  [`SwimConditionsMcpServer.scala`](https://github.com/marola-dev/marola-app/blob/main/cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala).
