@@ -1,6 +1,6 @@
 # Future work
 
-Companion to [`ARCHITECTURE.md`](../2-Building-marola/ARCHITECTURE.md) (the pipeline, the six pluggable integrations),
+Companion to [`ARCHITECTURE.md`](../2-Building-marola/ARCHITECTURE.md) (the pipeline, the integration pattern),
 [`EFFECTS-MAP.md`](https://docs.marola.dev/5-Repos/marola-app/1-design_effects/) (what's pure vs. effectful vs. hidden), and
 [`RUN-LOCALLY.md`](../1-Using-marola/RUN-LOCALLY.md)/[`TELEGRAM-SETUP.md`](../1-Using-marola/TELEGRAM-SETUP.md) (how to run any of
 it): design sketches and reviewed-but-not-adopted ideas for where marola goes next. Most of this
@@ -106,7 +106,8 @@ new kind of input this repo doesn't have a source for yet.
 "Users can subscribe to more than one activity" is a per-user preference, which needs persisted
 per-user state, something marola doesn't have yet in any form (the closest existing piece is
 `SightingStore`, which is per-*beach*, not per-*user*). The natural extension, following the same
-local-default pattern as everything in `ARCHITECTURE.md` §5:
+local-default pattern as everything else
+([ARCHITECTURE](../2-Building-marola/ARCHITECTURE.md#local-first-integration-pattern)):
 
 ```scala
 trait UserPreferencesStore:
@@ -116,7 +117,7 @@ trait UserPreferencesStore:
 ```
 
 with `LocalFileUserPreferencesStore` (JSON-lines, same shape as `LocalFileSightingStore`) as the
-default. The Telegram bot (once built; see `TELEGRAM-SETUP.md` and `ARCHITECTURE.md` §11 Phase 1)
+default. The Telegram bot (once built; see `TELEGRAM-SETUP.md` and [PHASES](../PHASES.md) Phase 1)
 would expose this via commands like `/subscribe surf`, `/unsubscribe dive`, and a daily digest that
 only includes conditions for a user's subscribed activities.
 
@@ -127,7 +128,7 @@ product features:
 
 ### 4.1 An actual evaluation harness, not just a training set
 
-> Partly built: `just benchmark`, in a marola-app checkout (`ARCHITECTURE.md` §5h), is a
+> Partly built: `just benchmark`, in a marola-app checkout ([Ocean knowledge](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#ocean-knowledge-retrieval)), is a
 > deterministic held-out check for the *answering* path (RAG vs. plain prompt). The
 > summarizer/reviewer path still has only its trainset.
 > The model axis of that benchmark (closed API vs. open local vs. RAG vs. tuned, with latency and
@@ -165,7 +166,7 @@ overclaimed safety framing) and returning a `0-100` score, a `verdict` (`approve
 `final_summary`: the original text unchanged if approved, or the reviewer's own correction if not.
 Verified live against a real local Ollama model, including one run where the reviewer's compiled
 demos correctly caught a deliberately-planted flaw (a draft missing a required jellyfish mention)
-and produced a corrected version; see `ARCHITECTURE.md` §5a and marola-app's
+and produced a corrected version; see marola-app's [Query synthesis](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#query-synthesis) and
 [`review_prompt.json`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/resources/review_prompt.json)
 (a real compiled artifact, landed by a bot PR from marola-ml, not a hand-written fixture).
 
@@ -184,11 +185,11 @@ Not repeated in full here; see the cross-referenced section:
 - Calibrating the jellyfish/whale heuristics against real `SightingStore` data:
   [LIMITATIONS §8](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations).
 - Real per-beach travel time/distance instead of straight-line distance (driving/walking/transit
-  modes); `ARCHITECTURE.md` §5b,
+  modes); [Beach distance](https://docs.marola.dev/5-Repos/marola-app/1-design/#beach-distance),
   [LIMITATIONS §9](../1-Using-marola/LIMITATIONS.md#other-known-limitations-poc-stage-not-hidden).
 - Caching and per-user rate limiting for the core pipeline:
   [LIMITATIONS §9](../1-Using-marola/LIMITATIONS.md#other-known-limitations-poc-stage-not-hidden),
-  `ARCHITECTURE.md` §11 Phase 4.
+  [PHASES](../PHASES.md) Phase 4.
 
 ## 9. Ocean-knowledge grounding: RAG and fine-tuning over marine science, plus catastrophe detection
 
@@ -206,7 +207,7 @@ analysis) with one coherent feature rather than two disconnected ones.
 
 > **Built (first cut):** `docs/MIPs/MIP-0001-water-quality-and-sea-lore.md`: local RAG over
 > marola-corpus's [`knowledge/`](https://github.com/marola-dev/marola-corpus/tree/main/knowledge)
-> with citations (`ARCHITECTURE.md` §5h), the sourced sea-lore paragraph, and marola-ml's
+> with citations ([Ocean knowledge](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#ocean-knowledge-retrieval)), the sourced sea-lore paragraph, and marola-ml's
 > [`finetune/`](https://github.com/marola-dev/marola-ml/tree/main/finetune) scaffold (Tier 1 built,
 > Tier 2 written-not-run). Steps 1-3 below are
 > now real; step 4 (fine-tuning) has its recipe but no evaluation yet. The *retrieval* half is
@@ -293,7 +294,7 @@ closing that gap would take.
 - **[Langfuse](https://github.com/langfuse/langfuse)**: open-source LLM tracing/eval/prompt-
   management platform. Ships Python and TypeScript SDKs; no JVM/Scala SDK. marola-app's
   [`Tracing.scala`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/scala/marola/observability/Tracing.scala)
-  (`ARCHITECTURE.md` §5f) covers general OpenTelemetry tracing but nothing LLM-call-shaped
+  ([Observability](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#observability)) covers general OpenTelemetry tracing but nothing LLM-call-shaped
   (prompt/completion pairs, token/cost tracking, eval scores attached to a trace).
 - **[Promptfoo](https://github.com/promptfoo/promptfoo)**: prompt/model red-teaming and comparison,
   CLI + YAML config, Node-based; no Scala equivalent.
@@ -386,4 +387,4 @@ public API comparable to Overpass/Open-Meteo:
    safety-relevant heuristic (jellyfish/rough-seas deductions stay authoritative).
 4. Revisit the official Health API or an unofficial client only if manual import proves the feature
    is actually worth the friction: cheap validation before an expensive/risky integration decision,
-   same reasoning `ARCHITECTURE.md` §11's phase discipline already applies elsewhere in this repo.
+   same reasoning the [phase discipline](../PHASES.md) already applies elsewhere in this repo.

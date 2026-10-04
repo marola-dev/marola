@@ -129,9 +129,9 @@ docs-serve:
 # Browser-session context — repomix.config.json, repomix-instruction.md
 # ---------------------------------------------------------------------
 
-# Pack README, AGENTS.md, marola-app's README, ARCHITECTURE, PHASES, FUTURE-WORK, the MIP skill
-# and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads the
-# marola-app submodule: `git submodule update --init` first.
+# Pack README, AGENTS.md, marola-app's README, ARCHITECTURE, REPOS, PHASES, FUTURE-WORK, the MIP
+# skill and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads
+# the marola-app submodule: `git submodule update --init` first.
 context-mips:
     mkdir -p .tmp && "$(just _repomix)" -c repomix.config.json
     # The MIP template is marola-devkit's mip skill, under .devkit, which repomix skips as gitignored.

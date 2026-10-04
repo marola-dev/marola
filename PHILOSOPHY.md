@@ -79,7 +79,7 @@ LLM inside a constrained pipeline is genuinely better than either alone.
 Two jobs, and only two: turn a ranked row of numbers into one or two sentences, and answer ocean
 questions from a sourced corpus with citations. Everything safety-relevant (the score, the water
 veto, the darkness rule, the rough-sea deduction) is plain Scala in `scoring/`, unit-tested,
-outside the prompt (`docs/2-Building-marola/ARCHITECTURE.md` §5a, §8). A second, independently compiled reviewer
+outside the prompt (marola-app's query-synthesis design, `docs/1-Using-marola/LIMITATIONS.md`). A second, independently compiled reviewer
 pass grades the first model's sentence and can rewrite it. Lore shown to a user is a curated file
 with a source per entry, shown verbatim; the model never gets to invent a fact about the sea.
 The rule in the `/marola-devkit:mip` skill says it shortest: *no unsourced text reaches a user*.
@@ -164,7 +164,7 @@ runs → review only when asked → merge.
   checks still have to be written (`scoring/`'s tests, the golden pipeline fixtures, the benchmark
   under marola-ml's `docs/benchmarks/`).
 - Not anti-Python, anti-cloud or anti-anything. Every path has a free local default
-  (`docs/2-Building-marola/ARCHITECTURE.md` §5), because "runs entirely locally with a free model" is also a
+  (`docs/2-Building-marola/ARCHITECTURE.md`'s local-first integration pattern), because "runs entirely locally with a free model" is also a
   constraint: it keeps the thing testable by anyone, including the agent, without a bill.
 - Not finished. The honest status vocabulary used everywhere here (*verified live*, *confirmed
   against the jar*, *written, not run*, *not checked*) is the last constraint: the docs are not
