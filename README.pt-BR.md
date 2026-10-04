@@ -90,6 +90,10 @@ O marola é um conjunto de repositórios de propósito único; este aqui, o repo
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
+```
+
+```bash
+# in a marola-app checkout
 nix develop                                                        # JDK 25, sbt, just, ollama (veja o flake.nix dele)
 just run -- --brief --lat -27.6733 --lon -48.4700                  # caminho mais rápido: lista em ordem, sem LLM
 just ollama-up                                                     # inicia o `ollama serve` e baixa o llama3.2
@@ -115,7 +119,7 @@ Sem conta na nuvem, sem chave de API. Passo a passo com saída real (em inglês)
 A nota e o veto de segurança são Scala determinístico; o modelo apenas interpreta e redige, e nunca
 derruba um veto. Toda a documentação técnica, de todos os repositórios, está em inglês em
 **[docs.marola.dev](https://docs.marola.dev/)**; veja também o [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md),
-o [`CONTRIBUTING.md`](./CONTRIBUTING.md) e o [Código de Conduta](./CODE_OF_CONDUCT.md). Se você é um
+o guia de [contribuição](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTING/) e o [Código de Conduta](https://github.com/marola-dev/.github/blob/main/CODE_OF_CONDUCT.md). Se você é um
 agente de IA: leia primeiro o [`AGENTS.md`](./AGENTS.md), depois o `AGENTS.md` do repositório que
 vai mudar.
 
@@ -131,7 +135,7 @@ INEMA (Bahia) e do IMA/SC (Santa Catarina).
 ## Contato
 
 Para qualquer pedido sobre o marola, escreva para [admin@marola.dev](mailto:admin@marola.dev).
-Vulnerabilidades vão pelo canal privado descrito no [`SECURITY.md`](./SECURITY.md).
+Vulnerabilidades vão pelo canal privado descrito na [política de segurança](https://github.com/marola-dev/.github/blob/main/SECURITY.md).
 
 ## Licença
 
