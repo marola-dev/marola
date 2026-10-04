@@ -77,6 +77,8 @@ quality-other:
     node scripts/docs_redirect_check.js
     python3 scripts/lib/doc_links.py --self-test
     python3 scripts/site_links_check.py --self-test
+    scripts/agents_repos_check.sh --self-test
+    scripts/agents_repos_check.sh
     workflow-runners
     python3 scripts/mip_graph.py --check
     agents-check

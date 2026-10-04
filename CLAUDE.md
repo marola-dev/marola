@@ -1,8 +1,8 @@
 @AGENTS.md
 
-Read AGENTS.md before doing anything in this umbrella: it holds the org invariants, the repo
-inventory, where a change belongs and the submodule mechanics. The line above imports it for
-Claude Code; tools that read this file as plain text must open AGENTS.md themselves.
+Read AGENTS.md before doing anything in this umbrella: it holds the org invariants, where a
+change belongs and the submodule mechanics, and links the repo inventory. The line above imports
+it for Claude Code; tools that read this file as plain text must open AGENTS.md themselves.
 
 ## Claude Code-specific additions (MIP-0011 §5 item 10)
 

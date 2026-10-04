@@ -44,6 +44,7 @@ jobs:
               - 'docs/MIPs/*.tasks.md'        # mip_graph.py --check regenerates the graph from all of them
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
               - '.github/workflows/ci.yml'  # the self-test list below
+              - 'AGENTS.md'          # agents_repos_check.sh reads it
             workflows:
               - '.github/workflows/**'
             docker:
@@ -175,6 +176,8 @@ jobs:
         node scripts/docs_redirect_check.js
         python3 scripts/lib/doc_links.py --self-test
         python3 scripts/site_links_check.py --self-test
+        scripts/agents_repos_check.sh --self-test
+        scripts/agents_repos_check.sh
 
   static-ci:
     needs: changes
