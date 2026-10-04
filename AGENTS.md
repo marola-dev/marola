@@ -83,9 +83,9 @@ just docs-serve  # preview on http://localhost:8001/
 ```
 
 Run the gates of the repo you changed before calling a change done: here `just quality`
-(`quality-other`: ruff, actionlint, hadolint and the `scripts/*` self-tests, the gates `ci.yml`
-runs, at the versions `flake.lock` pins; a missing tool fails rather than skips, so use
-`nix develop`); in a submodule, its own `AGENTS.md` names them. The pre-push hook runs
+(`quality-other`: ruff, actionlint, hadolint, `docs-lint` and the `scripts/*` self-tests, the
+gates `ci.yml` runs, at the versions `flake.lock` pins; a missing tool fails rather than skips, so
+use `nix develop`); in a submodule, its own `AGENTS.md` names them. The pre-push hook runs
 `just prepush`; `git push --no-verify` bypasses it, CI does not.
 
 **Writing a doc is a deploy.** mkdocs builds the sidebar from the file tree (the `1-`…`6-`
