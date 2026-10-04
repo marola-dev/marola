@@ -52,7 +52,8 @@ rewritten to `marola-dev/marola#N`), and the open issues for each area moved wit
 |---|---|---|
 | 2026-09-30 | [#521](https://github.com/marola-dev/marola/pull/521) | MIP-0070 |
 | 2026-09-30 | [#574](https://github.com/marola-dev/marola/pull/574), [#576](https://github.com/marola-dev/marola/pull/576), [#577](https://github.com/marola-dev/marola/pull/577) | Prep inside the one tree: `--site` writes board data only; the app reads knowledge from one directory; ml reads the resources tarball |
-| 2026-10-01 | [#578](https://github.com/marola-dev/marola/pull/578), [#579](https://github.com/marola-dev/marola/pull/579), [#580](https://github.com/marola-dev/marola/pull/580) | The tooling resolves MIPs from the umbrella; the invariants block; issues per repo |
+| 2026-09-30 | [#578](https://github.com/marola-dev/marola/pull/578), [#579](https://github.com/marola-dev/marola/pull/579) | The tooling resolves MIPs from the umbrella; the invariants block |
+| 2026-10-01 | [#580](https://github.com/marola-dev/marola/pull/580) | Issues per repo |
 | 2026-10-01 | marola-devkit `v0.1.0`, [#585](https://github.com/marola-dev/marola/pull/585) | The devkit extracted, then consumed as a flake, plugin and workflows |
 | 2026-10-01 | [#586](https://github.com/marola-dev/marola/pull/586), [#589](https://github.com/marola-dev/marola/pull/589) | The docs aggregator; marola-site extracted, taking Pages and `marola.dev`, while docs move to docs.marola.dev |
 | 2026-10-01 | [#591](https://github.com/marola-dev/marola/pull/591) | marola-corpus |

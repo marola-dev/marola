@@ -19,7 +19,7 @@ check() {   # $1 = file; prints each finding, returns 1 if any
     echo "agents_repos_check: $file: names a pin file ($(paste -sd' ' - <<<"$hits")); it belongs in $REPOS_PAGE"
     found=1
   fi
-  if ! grep -qF "$REPOS_PAGE" "$file"; then
+  if ! grep -qF "]($REPOS_PAGE" "$file"; then
     echo "agents_repos_check: $file does not link $REPOS_PAGE"
     found=1
   fi
@@ -47,6 +47,10 @@ self_test() {
   printf '# AGENTS.md\n\nRead marola-app'"'"'s own AGENTS.md before changing it.\n' >"$t/AGENTS.md"
   rc=0; check "$t/AGENTS.md" >/dev/null || rc=$?
   ok "$rc" "1" "missing_link_fails: no link to the routing table"
+
+  printf '# AGENTS.md\n\nThe routing table is %s, see there.\n' "$REPOS_PAGE" >"$t/AGENTS.md"
+  rc=0; check "$t/AGENTS.md" >/dev/null || rc=$?
+  ok "$rc" "1" "mention_only_fails: the path named, not linked"
 
   rm -rf "$t"
   echo
