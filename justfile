@@ -127,7 +127,7 @@ docs-serve:
 # Browser-session context — repomix.config.json, repomix-instruction.md
 # ---------------------------------------------------------------------
 
-# Pack README, AGENTS.md, marola-app's README and ARCHITECTURE, PHASES, FUTURE-WORK, the MIP skill
+# Pack README, AGENTS.md, marola-app's README, ARCHITECTURE, PHASES, FUTURE-WORK, the MIP skill
 # and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads the
 # marola-app submodule: `git submodule update --init` first.
 context-mips:

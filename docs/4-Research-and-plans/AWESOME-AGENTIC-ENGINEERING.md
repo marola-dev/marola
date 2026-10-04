@@ -122,7 +122,7 @@ states explicitly which axis(es) it matches and why.
 5. **[github/spec-kit](https://github.com/github/spec-kit)** (~133.8k★): GitHub's own toolkit for
    spec-driven development with coding agents: specify → plan → tasks → implement. **Philosophy
    axis**: near-exact structural match to marola's MIP-driven, design-doc-before-code culture
-   (`docs/MIPs/`, the `/marola-devkit:mip`/`mip-tasks` skills, `docs/3-Working-on-the-repo/DEV-FLOW.md`'s idea→MIP→tasks→PR loop); both
+   (`docs/MIPs/`, the `/marola-devkit:mip`/`mip-tasks` skills, `docs/3-Ways-of-working/DEV-FLOW.md`'s idea→MIP→tasks→PR loop); both
    make a written spec/plan a mandatory gate before implementation.
 6. **[jonigl/mcp-client-for-ollama](https://github.com/jonigl/mcp-client-for-ollama)** (~816★): a
    terminal UI connecting local Ollama models to MCP servers, with agent mode, multi-server

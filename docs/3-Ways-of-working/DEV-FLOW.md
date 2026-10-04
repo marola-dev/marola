@@ -12,7 +12,7 @@ flowchart TD
 ```
 
 This page is the one place the whole loop is written down; the pieces live in the `/marola-devkit:mip` and
-`/marola-devkit:mip-tasks` skills, `AGENTS.md` (the hard rules), `docs/3-Working-on-the-repo/AGENT-SKILLS.md`
+`/marola-devkit:mip-tasks` skills, `AGENTS.md` (the hard rules), `docs/3-Ways-of-working/AGENT-SKILLS.md`
 (which superpowers skill does what) and the tools of [marola-devkit](https://github.com/marola-dev/marola-devkit)
 (`stack`, `uprd`, `issues`, `cost-split`, …, on `PATH` inside `nix develop`).
 
@@ -27,7 +27,7 @@ mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-
    integration, anything paid) continues into a MIP, as a **MIP proposal** issue that is
    relabelled rather than replaced when the MIP PR opens. Filing is a human's act: the `/marola-devkit:triage`
    skill drafts the body and runs the readiness check, a person presses the button
-   (`docs/3-Working-on-the-repo/ISSUE-FLOW.md`, MIP-0063 §5.6). An agent picks work up from `just issue-queue` and takes
+   (`docs/3-Ways-of-working/ISSUE-FLOW.md`, MIP-0063 §5.6). An agent picks work up from `just issue-queue` and takes
    it with `just issue-claim <n>`; it may not start on an issue without `agent-ready`.
 2. **Refine the idea**: superpowers `brainstorming` (activates on "let's plan", "I have an idea"):
    Socratic questions until MIP §1-§3 (summary, motivation, user-visible change) have answers.
@@ -333,7 +333,7 @@ adding a doc needs no edit to `mkdocs/mkdocs.yml`.
 |---|---|
 | `docs/1-Using-marola/` | someone running marola |
 | `docs/2-Building-marola/` | someone reading or changing the code |
-| `docs/3-Working-on-the-repo/` | someone working the process — this file, `ISSUE-FLOW.md`, `AGENT-SKILLS.md` |
+| `docs/3-Ways-of-working/` | someone working the process — this file, `ISSUE-FLOW.md`, `AGENT-SKILLS.md` |
 | `docs/4-Research-and-plans/` | surveys, roadmaps, reviews: ideas, most of them not built |
 | `docs/MIPs/` | the proposals; no prefix — digits sort before letters, so it lands last on its own |
 

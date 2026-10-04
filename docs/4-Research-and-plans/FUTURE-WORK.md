@@ -1,7 +1,7 @@
 # Future work
 
 Companion to [`ARCHITECTURE.md`](../2-Building-marola/ARCHITECTURE.md) (the pipeline, the six pluggable integrations),
-[`EFFECTS-MAP.md`](../2-Building-marola/EFFECTS-MAP.md) (what's pure vs. effectful vs. hidden), and
+[`EFFECTS-MAP.md`](https://docs.marola.dev/5-Repos/marola-app/1-design_effects/) (what's pure vs. effectful vs. hidden), and
 [`RUN-LOCALLY.md`](../1-Using-marola/RUN-LOCALLY.md)/[`TELEGRAM-SETUP.md`](../1-Using-marola/TELEGRAM-SETUP.md) (how to run any of
 it): design sketches and reviewed-but-not-adopted ideas for where marola goes next. Most of this
 file is *not* built: where a section reports a finding ("X is real and confirmed present"), that's
@@ -309,7 +309,7 @@ similar monorepo-split situation comes up again elsewhere.
 
 ### 7.2 CI
 
-Superseded by MIP-0065; the workflows are described in `docs/3-Working-on-the-repo/CI-CD.md`.
+Superseded by MIP-0065; the workflows are described in `docs/3-Ways-of-working/CI-CD.md`.
 
 ### 7.3 Splitting marola *itself* into multiple sbt modules — DONE
 
@@ -478,7 +478,7 @@ Scala" as an unrecorded aside.
 **Update (2026-09-05):** the "Langfuse-shaped tracing" half of this section is proposed as
 `docs/MIPs/MIP-0010-mlflow-experiment-tracking.md`: MLflow's server ingests OpenTelemetry traces
 over OTLP/HTTP from any language, so the JVM side needs no LLMOps SDK; `ds4s` stays a separate
-project by its own definition above. `docs/index.md` classifies every section of this file.
+project by its own definition above. `docs/MIPs/CANDIDATES.md` classifies every section of this file.
 
 **Update (2026-09-05, continued):** `MIP-0010.tasks.md` tasks 5-6 (tracing core split,
 `local/MlflowTracing.scala` + `TracedLlmClient`) are the JVM half that actually closes this
