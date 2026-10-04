@@ -44,20 +44,22 @@ convenience for people and agents, never a build input.
 
 ```mermaid
 flowchart LR
-  devkit[marola-devkit] -. "tag: flake, plugin, workflows" .-> every[every repo]
-  corpus[marola-corpus] -- "tarball (corpus.version)" --> app[marola-app]
-  corpus -- "tarball (corpus.version)" --> ml[marola-ml]
-  app -- "image (marola-image)" --> site[marola-site]
-  app -- "image (marola-image),<br/>resources tarball (resources.version)" --> ml
-  app -- "image (marola-image)" --> oods[marola-oods]
-  ml -- "compiled-prompt PR" --> app
-  app -- "coverage, smoke (site-data)" --> site
-  umbrella[marola umbrella] -- "stats (site-data)" --> site
-  app -- "api-docs branch" --> umbrella
-  ml -- "api-docs branch" --> umbrella
-  app -. "ingest commits (planned)" .-> oods
-  oods -. "export tag (planned)" .-> app
+  devkit[marola-devkit] -.->|"tag: flake, plugin, workflows"| every[every repo]
+  corpus[marola-corpus] -->|"tarball (corpus.version)"| app[marola-app]
+  corpus -->|"tarball (corpus.version)"| ml[marola-ml]
+  app -->|"image (marola-image)"| site[marola-site]
+  app -->|"image (marola-image),<br/>resources tarball (resources.version)"| ml
+  app -->|"image (marola-image)"| oods[marola-oods]
+  ml -->|"compiled-prompt PR"| app
+  app -->|"coverage, smoke (site-data)"| site
+  umbrella[marola umbrella] -->|"stats (site-data)"| site
+  app -->|"api-docs branch"| umbrella
+  ml -->|"api-docs branch"| umbrella
+  app -.->|"ingest commits (planned)"| oods
+  oods -.->|"export tag (planned)"| app
 ```
+
+<!-- wiring:start -->
 
 | Artifact | Produced by | Read by | Pinned by |
 |---|---|---|---|
@@ -70,6 +72,8 @@ flowchart LR
 | OODS ingest commits and export | marola-app's ingest workflow (MIP-0056, not built) | marola-oods; the export back to marola-app | An export tag and its env var (planned) |
 | `notify-umbrella` dispatches (`submodule-docs-updated`) | Every repo's `notify-umbrella.yml`, on a push to `main` touching `README.md` or `docs/` | The umbrella's `docs.yml` and `pointer-sync.yml` | The gitlinks, moved by the sync PR |
 | A devkit tag | marola-devkit | Every repo | `flake.lock`, `@v…`/`devkit-ref:`, the marketplace `ref` |
+
+<!-- wiring:end -->
 
 The `api-docs.tar.gz` release asset is retired: the site reads the `api-docs` branches instead
 (marola-dev/marola-ml#17, marola-dev/marola-app#51).
