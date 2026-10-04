@@ -1,0 +1,17 @@
+# Gemini review on request: request the team `gemini` on a PR (marola-dev/marola#641).
+name: gemini
+
+on:
+  pull_request:
+    types: [review_requested]
+
+permissions:
+  contents: read
+
+jobs:
+  gemini:
+    if: github.event.requested_team.slug == 'gemini'
+    uses: marola-dev/marola-devkit/.github/workflows/gemini-review.yml@v0.4.0
+    secrets: inherit
+    with:
+      devkit-ref: v0.4.0
