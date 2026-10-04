@@ -328,7 +328,7 @@ None. The maintainer decided every question raised in review.
 
 ### Follow-ups
 
-- **Follow-up MIP** (needs the next number): agent graph tooling in marola-devkit. It covers a
+- **Follow-up MIP** ([MIP-0076](./MIP-0076-agent-routing-tooling.md)): agent graph tooling in marola-devkit. It covers a
   pinned graphify, an offline `graph` recipe that writes outside the checkout, a parser for workflow
   and pin-file edges, and a plugin skill. The umbrella builds the workspace graph as a CI artifact,
   never committed. That MIP also revisits AGENTS.md to reference the graph setup. The spike found
