@@ -199,11 +199,12 @@ jobs:
     with:
       devkit-ref: v0.4.1
 
-  # What needs this repo's own flake: the lock is current, the justfile parses, and no workflow
-  # here is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's).
+  # What needs this repo's own flake: the lock is current, the justfile parses, no workflow here
+  # is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's),
+  # and docs-lint passes at the devkit flake.lock pins (MIP-0074 §7).
   quality-other:
     needs: changes
-    if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true'
+    if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true' || needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -230,10 +231,12 @@ jobs:
       - name: lint shell tools from nix develop .#lint
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which just workflow-runners \
+          nix develop .#lint --command which just workflow-runners docs-lint \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
       - name: just --list (the justfile parses)
         run: just --list >/dev/null
       - name: workflow-runners — no self-hosted workflow here (MIP-0065)
         run: workflow-runners
+      - name: docs-lint — no stale paths, recipes or links in README.md and docs/
+        run: docs-lint

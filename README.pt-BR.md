@@ -90,6 +90,10 @@ O marola é um conjunto de repositórios de propósito único; este aqui, o repo
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
+```
+
+```bash
+# in a marola-app checkout
 nix develop                                                        # JDK 25, sbt, just, ollama (veja o flake.nix dele)
 just run -- --brief --lat -27.6733 --lon -48.4700                  # caminho mais rápido: lista em ordem, sem LLM
 just ollama-up                                                     # inicia o `ollama serve` e baixa o llama3.2

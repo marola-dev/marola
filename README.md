@@ -50,6 +50,10 @@ submodules. The app you run is [marola-app](https://github.com/marola-dev/marola
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
+```
+
+```bash
+# in a marola-app checkout
 nix develop                                                        # JDK 25, sbt, just, ollama — see its flake.nix
 just run -- --brief --lat -27.6733 --lon -48.4700                  # fastest path: ranked list, no LLM
 just ollama-up                                                     # starts `ollama serve`, pulls llama3.2 if missing
