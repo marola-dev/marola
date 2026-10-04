@@ -12,6 +12,6 @@ permissions:
 
 jobs:
   sync:
-    uses: marola-dev/marola-devkit/.github/workflows/labels-sync.yml@v0.2.4
+    uses: marola-dev/marola-devkit/.github/workflows/labels-sync.yml@v0.4.1
     with:
-      devkit-ref: v0.2.4
+      devkit-ref: v0.4.1

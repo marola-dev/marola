@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (2026-10-02, maintainer review on #603) — `Tasks: docs/MIPs/MIP-0074.tasks.md` ([`MIP-0074.tasks.md`](./MIP-0074.tasks.md)) |
+| **Status** | Implemented — the MIP #603 and its tasks #604; marola #629 (3), #627 (4), #628 (5), #636 (6), #630 (7), #637 (8), #639 (16), #643 (18), #644 (19), #646 (23), #649 (27), #651 (28), #647 (29), #645 (30), #652 (31), #653 (34) and the task 37 PR (closes #624); marola-dev/marola-devkit#11 (1), #12 (2), #15 (9, `v0.3.0`), #17 (26, `v0.3.1`); marola-dev/marola-app#35 (10), #38 (17), #39 (20), #40 (21), #47 (24), #51 (35); marola-dev/marola-site#49 (12), #53 (22); marola-dev/marola-corpus#4 (13), #7 (32); marola-dev/marola-ml#11 (11), #12 (14), #16 (25), #17 (36); marola-dev/marola-oods#5 (15); marola-dev/.github#1 (33). Follow-ups: marola-dev/marola-devkit#16 (dates `v0.3.0`) and #18 (`v0.4.1`, docs-lint skips `docs/benchmarks/**`), cut on #19 (`v0.4.0`, gemini-review, marola-dev/marola#641's work, not this MIP's); pointer-sync #625, #632, #634, #640, #648, #650. `Tasks: docs/MIPs/MIP-0074.tasks.md` ([`MIP-0074.tasks.md`](./MIP-0074.tasks.md)) |
 | **Author** | Claude (Opus 5.5), from the maintainer's decisions on the post-split docs review |
 | **Created** | 2026-10-02 |
 | **Phase** | None: docs and repo structure, orthogonal to `docs/PHASES.md`. No Phase 1 prerequisite, no paid resource |
@@ -13,7 +13,7 @@
 | **Depends on** | MIP-0070 (Implemented): the submodules, `mkdocs/repos.yml` and `scripts/prepare-docs.sh` this changes. Human-only step: creating `marola-dev/.github`. Licences are out of scope (marola-dev/marola#601). No Phase 1 gate, no paid resource |
 | **Blocked by** | none |
 | **Risk** | The umbrella's user pages describe marola-app's CLI from another repo, and drift from it unless the app's reference pages stay the single source for flags and settings and the paired-PR rule holds (§8) |
-| **Cost so far** | — |
+| **Cost so far** | ~$1,000.58, an estimate: the merged PRs' summed `Cost:` trailers, nearly all `cost-split --estimate-commit` diff-size figures (a stacked PR's copies of its base's commits counted once). marola $393.11 (of it $17.00 for #603 and #604), marola-app $240.68, marola-corpus $123.91, marola-site $102.71, marola-devkit $97.25, marola-ml $41.55, .github $0.80, marola-oods $0.57. Commit 2671ebe in #652 alone is ~$51.51, inflated by 1,582 deleted lines. Not counted: marola-dev/marola-devkit#19 (~$7.50, not this MIP's) and the pointer-sync PRs (`n/a (automation)`). Task 37's own figure is in its commits |
 
 
 ## 1. Summary
@@ -328,7 +328,7 @@ None. The maintainer decided every question raised in review.
 
 ### Follow-ups
 
-- **Follow-up MIP** ([MIP-0075](./MIP-0075-agent-routing-tooling.md)): agent graph tooling in marola-devkit. It covers a
+- **Follow-up MIP** ([MIP-0076](./MIP-0076-agent-routing-tooling.md)): agent graph tooling in marola-devkit. It covers a
   pinned graphify, an offline `graph` recipe that writes outside the checkout, a parser for workflow
   and pin-file edges, and a plugin skill. The umbrella builds the workspace graph as a CI artifact,
   never committed. That MIP also revisits AGENTS.md to reference the graph setup. The spike found
@@ -479,7 +479,7 @@ Every row's last step is `docs-lint` (§7).
 | `2-Building-marola/SCALA3-JDK-REVIEW.md` | app `2-libraries_scala3-jdk.md` | move | language/JDK choices |
 | `2-Building-marola/API.md` | app `4-reference_api.md` | move + revise: `just docs` is not an app recipe; `/api/…` links → relative `api-docs/scala/…`; ml's pdoc linked at `https://docs.marola.dev/5-Repos/marola-ml/api-docs/python/` | `api-docs/` holds generated output only |
 | — | app `api-docs` branch (`scala/`) | new: the devkit workflow plus `just api-docs`, force-pushed on every `main` push, checked on PRs | replaces the release asset |
-| — | app `2-libraries.md`, `4-reference_config.md` (every `MAROLA_*` var), `adr/0001-three-sbt-modules.md`, `3-development.md` (+ the nine workflows and release assets) | new, from FUTURE-WORK §2/3/5/6/7.3, `AppConfig.scala`, umbrella CI-CD | missing reference |
+| — | app `2-libraries.md`, `4-reference_config.md` (every `MAROLA_*` var), `adr/0001-three-sbt-modules.md`, `3-development.md` (+ the ten workflows and release assets) | new, from FUTURE-WORK §2/3/5/6/7.3, `AppConfig.scala`, umbrella CI-CD | missing reference |
 | `.env.example` | stays | rewrite: the app's `MAROLA_*` placeholders instead of `DATABASE_URL`/`COST_GOVERNOR_*` | another project's file |
 | `AGENTS.md` | stays | revise `:34` (the root-mount claim) and the docs paths | stale after D2 |
 | `README.md` | stays | revise: receives the umbrella's Scala coverage, lines-of-code and Scala/JDK/Ollama/MCP badges | decision 3: low-level stats belong to the repo they measure |

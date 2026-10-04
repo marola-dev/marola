@@ -17,6 +17,6 @@ permissions:
 
 jobs:
   fill:
-    uses: marola-dev/marola-devkit/.github/workflows/pr-body.yml@v0.2.4
+    uses: marola-dev/marola-devkit/.github/workflows/pr-body.yml@v0.4.1
     with:
-      devkit-ref: v0.2.4
+      devkit-ref: v0.4.1

@@ -32,7 +32,7 @@ not an adopted dependency, until a MIP says otherwise.
 
 | Library | Effect stack | What it gives | Maturity (as seen 2026-09-05) |
 |---|---|---|---|
-| **Kyo AI modules** (already marola's effect system) | Kyo | Typed tool inputs/outputs, resources and prompt templates, OAuth 2.1, MCP 2025-11-25 and 2026-07-28 protocol revisions with negotiation | Part of Kyo 1.x; marola pins RC5 — check what's in the pinned jar before relying on it (`AGENTS.md` rule) |
+| **Kyo AI modules** (already marola's effect system) | Kyo | Typed tool inputs/outputs, resources and prompt templates, OAuth 2.1, MCP 2025-11-25 and 2026-07-28 protocol revisions with negotiation | Part of Kyo 1.x; marola pins RC7 — check what's in the pinned jar before relying on it (marola-app's [`AGENTS.md`](https://github.com/marola-dev/marola-app/blob/main/AGENTS.md) rule) |
 | **agent4s** | cats-effect, fs2, http4s | Unified providers (Claude, OpenAI, Gemini, DeepSeek, Perplexity), type-safe tool calling with derived JSON schema, a **LangGraph-style graph module** (state-machine workflows, conditional routing) | v0.1.0, 0 stars, no Ollama listed — read the graph module, don't depend on it |
 | **llm4s** | Scala (plain `Either`, `Future` for orchestration) | "Agentic and LLM programming in Scala"; roadmap aims at stable API contracts, provider parity, Java/Kotlin interop, security hardening. Checked against the 0.4.1 jar in MIP-0012: agent loop + handoffs + guardrails, MCP client (stdio/SSE/Streamable HTTP) and HTTP MCP server, `ResponseFormat.JsonSchema`; Ollama client drops tool messages; provider auth is key-only; 154 transitive jars | Active, pre-production per its own roadmap (v0.4.1, 2026-08-29) — **proposed as an opt-in module: `docs/MIPs/MIP-0012-llm4s-adoption-and-dspy-deprecation.md`** |
 | **sttp-ai** | fs2 / ZIO / Pekko Streams / Ox | OpenAI, Anthropic, Gemini, **Ollama** and OpenAI-compatible endpoints; structured outputs, tool calling, streaming | Mature client layer; the only one listing Ollama and Pekko Streams explicitly |
@@ -47,12 +47,12 @@ per-step observability. That absence is the design space, not a reason to import
 |---|---|---|---|
 | Graph of nodes over typed state with conditional edges | LangGraph | An `enum` of node types and a pure `step: (State, Event) => (State, Next)`; run it from an actor or a Kyo loop. Exhaustive `match` replaces LangGraph's runtime edge validation. | `Main.summarizeTop → Reviewer.review` is a two-node graph hardcoded in a for-comprehension |
 | Roles with a shared task board and handoffs | CrewAI, AutoGen | One actor per role; the board is an actor holding an event-sourced task list; a handoff is a message. Pekko gives supervision, mailboxes, timeouts and location transparency for free. | Summarizer, reviewer, and the escalation agent (MIP-0004 / `FUTURE-WORK.md` §9.2) are three roles |
-| Tools as typed function signatures | OpenAI Agents SDK, PydanticAI | `case class` parameters with a derived JSON schema (Kyo's typed tool I/O or agent4s's registry); MCP as the transport | `SwimConditionsMcpServer` exposes three tools with hand-written schemas |
-| Structured outputs validated at the boundary | PydanticAI | Opaque types / Iron at the parse boundary, `Abort[E]` as the failure channel (`SCALA3-JDK-REVIEW.md` §2.1, §2.3) | `Reviewer.extractJsonObject` is the untyped version |
+| Tools as typed function signatures | OpenAI Agents SDK, PydanticAI | `case class` parameters with a derived JSON schema (Kyo's typed tool I/O or agent4s's registry); MCP as the transport | [`SwimConditionsMcpServer`](https://github.com/marola-dev/marola-app/blob/main/cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala) exposes four tools with hand-written schemas |
+| Structured outputs validated at the boundary | PydanticAI | Opaque types / Iron at the parse boundary, `Abort[E]` as the failure channel (the [Scala 3 and JDK review](https://docs.marola.dev/5-Repos/marola-app/2-libraries_scala3-jdk/#21-opaque-types-for-units-and-ranges-highest-payoff) §2.1, [§2.3](https://docs.marola.dev/5-Repos/marola-app/2-libraries_scala3-jdk/#23-typed-error-channels-with-aborte)) | [`Reviewer.extractJsonObject`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/scala/marola/llm/Reviewer.scala) is the untyped version |
 | Compiled prompts and optimisers | DSPy | `ds4s` (`FUTURE-WORK.md` §10): `Signature` as a case class, `Predict` as a Kyo effect, `BootstrapFewShot` over a trainset | Two DSPy-compiled artifacts loaded by `CompiledPrompt` |
 | Human-in-the-loop interrupts, checkpoints | LangGraph | Persistent actors with snapshots, or a Kyo `Scope` around a durable store — the gate MIP-0004 requires before proactive alerts | Not built |
 | Memory across turns and agents | AutoGen, Akka Memory | An actor per conversation holding a bounded window + `KnowledgeStore` for long-term recall | `FileKnowledgeStore` is long-term memory without the per-conversation part |
-| Budgets, termination, tracing per step | every framework, none of the Scala libs | A hard cap on model calls per task and per role; a span per step through the existing `Telemetry` seam; a `Terminated` node type in the graph | `Telemetry.withSpan` wraps one call; no budgets anywhere |
+| Budgets, termination, tracing per step | every framework, none of the Scala libs | A hard cap on model calls per task and per role; a span per step through the existing `Tracing` seam; a `Terminated` node type in the graph | `Tracing.withSpan` wraps one call; no budgets anywhere |
 
 ## 3. Where Pekko fits marola — and where it doesn't
 
@@ -60,7 +60,7 @@ Pekko earns its place the moment marola has more than one **long-lived, stateful
 concurrently: the Telegram poll loop, per-chat conversations, a digest scheduler, an escalation
 agent watching conditions. Those are actors: they have state, outlive a request, need supervision
 and backpressure. The current request-scoped pipeline does not need it; Kyo `Async` covers
-fan-out inside one request (`SCALA3-JDK-REVIEW.md` §3).
+fan-out inside one request (the [Scala 3 and JDK review](https://docs.marola.dev/5-Repos/marola-app/2-libraries_scala3-jdk/#3-jdk-the-project-is-on-25-what-21-offers-this-code) §3).
 
 Sketch (a natural MIP-0005):
 
@@ -94,7 +94,8 @@ designed. That is §2's last row, and the part a MIP must not skip.
 1. Pekko Typed actors guide: the `Behavior` model and testkit.
 2. agent4s's graph module: the smallest LangGraph-in-Scala to steal the shape from.
 3. sttp-ai's Ollama + tool-calling API, if marola ever replaces `Http`/`JsonValue` for LLM calls
-   (`FUTURE-WORK.md` §2 already considers kyo-http; sttp-ai is the alternative).
+   (marola-app's [Libraries](https://docs.marola.dev/5-Repos/marola-app/2-libraries/#kyo-http-and-kyo-schema)
+   page already considers kyo-http; sttp-ai is the alternative).
 4. Akka SDK's Agent/Workflow docs: the most complete design to compare against, licence aside.
 5. LangGraph's and PydanticAI's docs: for the *ideas* in §2, not the code.
 

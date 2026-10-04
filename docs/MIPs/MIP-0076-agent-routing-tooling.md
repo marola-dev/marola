@@ -1,4 +1,4 @@
-# MIP-0075: Agent routing tooling — a generated wiring table for cross-repo questions, a pinned offline graph for symbols
+# MIP-0076: Agent routing tooling — a generated wiring table for cross-repo questions, a pinned offline graph for symbols
 
 | | |
 |---|---|

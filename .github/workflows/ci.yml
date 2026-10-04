@@ -44,6 +44,7 @@ jobs:
               - 'docs/MIPs/*.tasks.md'        # mip_graph.py --check regenerates the graph from all of them
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
               - '.github/workflows/ci.yml'  # the self-test list below
+              - 'AGENTS.md'          # agents_repos_check.sh reads it
             workflows:
               - '.github/workflows/**'
             docker:
@@ -59,6 +60,14 @@ jobs:
             docs:
               - 'docs/**'
               - 'mkdocs/**'
+              - 'README.md'
+              - 'flake.lock'         # marola-devkit mounts at its locked rev
+              - 'scripts/prepare-docs.sh'
+              - 'scripts/fetch-api-docs.sh'
+              - 'scripts/lib/repos_manifest.sh'
+              - 'scripts/lib/doc_links.py'
+              - 'scripts/site_links_check.py'
+              - 'scripts/mkdocs.sh'
               - '.gitmodules'
               - 'marola-site'
               - 'marola-corpus'
@@ -129,12 +138,24 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: true
+      # A page move is checked here, before merge, not first by docs.yml's deploy (MIP-0074 §7).
+      - name: Save the live sitemap
+        continue-on-error: true
+        run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml || { rm -f old-sitemap.xml; exit 1; }
       - run: scripts/prepare-docs.sh
       - name: mkdocs --strict, in the Kroki container stack
         env:
           CONTAINER_RUNTIME: docker
           DOCS_SRC: .tmp/docs-aggregated
         run: scripts/mkdocs.sh
+      - name: Every docs.marola.dev link resolves, and no old sitemap URL was dropped
+        run: |
+          if [ -s old-sitemap.xml ]; then
+            python3 scripts/site_links_check.py mkdocs/generated-docs --old-sitemap old-sitemap.xml
+          else
+            echo "::warning::no live sitemap fetched; the dropped-URL check is skipped"
+            python3 scripts/site_links_check.py mkdocs/generated-docs
+          fi
 
   # Free, fast, and independent of the JVM build — the same gates as `just quality-other`, split
   # across the devkit's reusable workflows plus the nix-only checks below. The tool versions are
@@ -142,7 +163,7 @@ jobs:
   python-ci:
     needs: changes
     if: needs.changes.outputs.python == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.2.4
+    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.4.1
     with:
       ruff-version: "0.16.5"
       self-test-commands: |
@@ -154,11 +175,14 @@ jobs:
         scripts/fetch-api-docs.sh --self-test
         node scripts/docs_redirect_check.js
         python3 scripts/lib/doc_links.py --self-test
+        python3 scripts/site_links_check.py --self-test
+        scripts/agents_repos_check.sh --self-test
+        scripts/agents_repos_check.sh
 
   static-ci:
     needs: changes
     if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.2.4
+    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.4.1
     with:
       actionlint-version: "1.7.12"
       hadolint-version: "2.14.0"
@@ -171,15 +195,16 @@ jobs:
   agents-check:
     needs: changes
     if: needs.changes.outputs.agents == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.2.4
+    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.4.1
     with:
-      devkit-ref: v0.2.4
+      devkit-ref: v0.4.1
 
-  # What needs this repo's own flake: the lock is current, the justfile parses, and no workflow
-  # here is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's).
+  # What needs this repo's own flake: the lock is current, the justfile parses, no workflow here
+  # is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's),
+  # and docs-lint passes at the devkit flake.lock pins (MIP-0074 §7).
   quality-other:
     needs: changes
-    if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true'
+    if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true' || needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -206,10 +231,12 @@ jobs:
       - name: lint shell tools from nix develop .#lint
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which just workflow-runners \
+          nix develop .#lint --command which just workflow-runners docs-lint \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
       - name: just --list (the justfile parses)
         run: just --list >/dev/null
       - name: workflow-runners — no self-hosted workflow here (MIP-0065)
         run: workflow-runners
+      - name: docs-lint — no stale paths, recipes or links in README.md and docs/
+        run: docs-lint

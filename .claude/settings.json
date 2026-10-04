@@ -9,7 +9,7 @@
       "source": {
         "source": "github",
         "repo": "marola-dev/marola-devkit",
-        "ref": "v0.2.4"
+        "ref": "v0.4.1"
       }
     }
   },
