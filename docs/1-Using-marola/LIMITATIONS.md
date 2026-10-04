@@ -60,8 +60,9 @@ future work.
   Overpass ([configuration](https://docs.marola.dev/5-Repos/marola-app/4-reference_config/#outside-appconfig));
   Open-Meteo is still fetched on every run.
 - **No tests for any of the HTTP/JSON integration layer**: only the pure `Swimability` scoring
-  logic is unit-tested (`SwimabilitySpec`), consistent with this repo's "pure logic is where the
-  tests are cheap" convention (`AGENTS.md`'s code style section). Every integration layer was
+  logic is unit-tested (`SwimabilitySpec`), consistent with marola-app's "pure logic is where the
+  tests are cheap" convention (its `AGENTS.md`'s code style section, which points to
+  [`.claude/rules/scala.md`](https://github.com/marola-dev/marola-app/blob/main/.claude/rules/scala.md)). Every integration layer was
   instead verified by actually running it against live services/data; see each subsection of
   [ARCHITECTURE §5](../2-Building-marola/ARCHITECTURE.md#5-the-six-pluggable-integrations) for
   exactly what was and wasn't exercised. Since then, this no longer holds: recorded Overpass,

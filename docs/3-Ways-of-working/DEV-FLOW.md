@@ -48,8 +48,7 @@ README (so run `git submodule update --init` first), ARCHITECTURE, PHASES, FUTUR
 WhatsApp voice notes (`.ogg`) or the chat text, and say "convert the audios into MIP proposals".
 The pack's instruction section (`repomix-instruction.md`) fixes the template, the numbering, the
 transcript appendix and the rule that unverified claims go under "Open questions". Save the
-returned files under `docs/MIPs/` and let the in-repo agent verify the sources (moved from
-[Run it locally](../1-Using-marola/RUN-LOCALLY.md) §8).
+returned files under `docs/MIPs/` and let the in-repo agent verify the sources.
 
 ## 2. Acceptance
 
