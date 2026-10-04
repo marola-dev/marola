@@ -90,8 +90,8 @@ jobs:
         with:
           submodules: true
 
+      # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
       - uses: DeterminateSystems/nix-installer-action@v23
-      - uses: DeterminateSystems/magic-nix-cache-action@v15
       - name: cloc + coverage.py from the lint shell
         shell: bash -eo pipefail {0}
         run: |
@@ -209,8 +209,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+      # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
       - uses: DeterminateSystems/nix-installer-action@v23
-      - uses: DeterminateSystems/magic-nix-cache-action@v15
       - name: nix flake lock (adds a new input's pin, changes nothing else)
         id: lock
         run: nix flake lock
