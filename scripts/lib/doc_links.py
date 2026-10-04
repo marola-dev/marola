@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """Rewrite one repo's README and docs/** links for its mount on the docs site (MIP-0074 Appendix A).
 
+scripts/lib/doc_links.py --repo DIR --name NAME --sha SHA --out DIR [--umbrella]
+    [--exclude PATTERN]... [--submodule NAME=SHA]...
+scripts/lib/doc_links.py --links FILE...   # FILE<TAB>link per link outside code
 scripts/lib/doc_links.py --self-test
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import fnmatch
+import io
 import posixpath
 import re
+import shutil
 import sys
 import tempfile
 import unicodedata
@@ -263,6 +269,44 @@ def rewrite(text: str, source: str, repo: Path, *, ctx: Context) -> tuple[str, l
         return MASK.sub(lambda m: spans[int(m.group(1))], chunk)
 
     return "".join(c if is_fence else prose(c) for is_fence, c in _fenced(text)), errors
+
+
+def links(text: str) -> list[str]:
+    """Every reference definition, then inline link, target outside code, as written."""
+    found: list[str] = []
+
+    def inline(chunk: str) -> None:
+        for m in INLINE.finditer(chunk):
+            found.append(m.group(3).removeprefix("<").removesuffix(">"))
+            inline(m.group(2))
+
+    for is_fence, chunk in _fenced(text):
+        if not is_fence:
+            chunk = CODE_SPAN.sub("", chunk)
+            found += [
+                m.group(2).removeprefix("<").removesuffix(">") for m in REFDEF.finditer(chunk)
+            ]
+            inline(chunk)
+    return found
+
+
+def mount(repo: Path, out: Path, ctx: Context) -> list[str]:
+    """Write README.md as out/index.md and docs/** beside it, skipping exclude_docs; the errors."""
+    errors: list[str] = []
+    docs = sorted(p.relative_to(repo).as_posix() for p in (repo / "docs").rglob("*") if p.is_file())
+    sources = ["README.md", *docs]
+    for source in sources:
+        if source != "README.md" and _excluded(source[len("docs/") :], ctx.exclude_docs, False):
+            continue
+        dest = out / _out_path(source, ctx)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if source.endswith(".md"):
+            text, errs = rewrite((repo / source).read_text(encoding="utf-8"), source, repo, ctx=ctx)
+            dest.write_text(text, encoding="utf-8")
+            errors += errs
+        else:
+            shutil.copyfile(repo / source, dest)
+    return errors
 
 
 def self_test() -> int:
@@ -637,6 +681,44 @@ def self_test() -> int:
             ],
         )
 
+        case(
+            "links_outside_code",
+            links(
+                "[a](x.md#s) [![i](img/a.png)](<y z.md>)\n[r]: ref.md\n"
+                "`[c](span.md)` and `wrapped\n[d](span2.md)`\n\n````\n```bash\n[e](f.md)\n```\n````\n"
+            ),
+            ["ref.md", "x.md#s", "y z.md", "img/a.png"],
+        )
+
+        out = Path(tmp) / "out"
+        args = ["--repo", str(repo), "--name", "marola-ml", "--sha", sha, "--out", str(out)]
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = main([*args, "--exclude", "benchmarks/"])
+        case(
+            "mount_writes_landing_and_docs",
+            (
+                rc,
+                (out / "index.md").read_text(encoding="utf-8").splitlines()[0],
+                (out / "img/a.png").is_file(),
+                (out / "sub/index.md").is_file(),
+                (out / "benchmarks").exists(),
+            ),
+            (0, "# Repo", True, True, False),
+        )
+        (repo / "docs/bad.md").write_text("[x](/abs)\n", encoding="utf-8")
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = main(args)
+        case(
+            "mount_writes_landing_and_docs",
+            (rc, err.getvalue()),
+            (
+                1,
+                "doc_links: marola-ml: docs/bad.md: /abs: root-absolute; link the page relatively\n",
+            ),
+        )
+
     if fails:
         print(f"doc_links self-test: {fails} failure(s)", file=sys.stderr)
         return 1
@@ -649,11 +731,36 @@ def main(argv: list[str] | None = None) -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--repo", type=Path)
+    ap.add_argument("--name")
+    ap.add_argument("--sha")
+    ap.add_argument("--out", type=Path)
+    ap.add_argument("--umbrella", action="store_true")
+    ap.add_argument("--exclude", action="append", default=[])
+    ap.add_argument("--submodule", action="append", default=[], metavar="NAME=SHA")
+    ap.add_argument("--links", nargs="+", type=Path, metavar="FILE")
     args = ap.parse_args(argv)
     if args.self_test:
         return self_test()
-    ap.print_help()
-    return 2
+    if args.links:
+        for f in args.links:
+            for link in links(f.read_text(encoding="utf-8")):
+                print(f"{f}\t{link}")
+        return 0
+    if not (args.repo and args.name and args.sha and args.out):
+        ap.print_help()
+        return 2
+    ctx = Context(
+        args.name,
+        args.sha,
+        umbrella=args.umbrella,
+        exclude_docs=tuple(args.exclude),
+        submodule_shas=dict(s.split("=", 1) for s in args.submodule),
+    )
+    errors = mount(args.repo, args.out, ctx)
+    for error in errors:
+        print(f"doc_links: {args.name}: {error}", file=sys.stderr)
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":
