@@ -43,11 +43,12 @@ were checked on 2026-09-23 unless marked ⚠.
 
 ## 3. What marola's constraints say about each
 
-- **Local-first, Ollama by default** (`AGENTS.md`, `PHILOSOPHY.md`). llm4s has a native Ollama
-  client, but its tool-message gap matters for any agent that calls tools: a local tool-using agent
-  would need Ollama's OpenAI-compatible `/v1` endpoint through llm4s's OpenAI client, which
-  `MIP-0012` found to be key-only (a dummy key may work ⚠ untested). ADK Java reaches Ollama through
-  LangChain4j, one more layer but a maintained one. agent4s has no local path at all.
+- **Local-first, Ollama by default** (`AGENTS.md`,
+  [PHILOSOPHY](../3-Ways-of-working/PHILOSOPHY.md)). llm4s has a native Ollama client, but its
+  tool-message gap matters for any agent that calls tools: a local tool-using agent would need
+  Ollama's OpenAI-compatible `/v1` endpoint through llm4s's OpenAI client, which `MIP-0012` found to
+  be key-only (a dummy key may work ⚠ untested). ADK Java reaches Ollama through LangChain4j, one
+  more layer but a maintained one. agent4s has no local path at all.
 - **The Kyo effect boundary** (`.claude/rules/scala.md`). llm4s returns `Either`/`Future`, which
   wraps into Kyo at one adapter, as `MIP-0012` §5 designs. ADK Java returns RxJava `Flowable`s,
   which also wrap at one adapter, but it puts a reactive runtime inside the JVM. agent4s brings

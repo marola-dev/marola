@@ -147,13 +147,13 @@ context-mip mip:
     if [ -z "$num" ]; then echo "usage: just context-mip MIP-NNNN" >&2; exit 1; fi
     mip_file="$(ls docs/MIPs/MIP-"$num"-*.md 2>/dev/null | head -1)"
     if [ -z "$mip_file" ]; then echo "no docs/MIPs/MIP-$num-*.md found" >&2; exit 1; fi
-    include="\"README.md\", \"AGENTS.md\", \"PHILOSOPHY.md\", \"$mip_file\""
+    include="\"README.md\", \"AGENTS.md\", \"docs/3-Ways-of-working/PHILOSOPHY.md\", \"$mip_file\""
     tasks_file="docs/MIPs/MIP-$num.tasks.md"
     [ -f "$tasks_file" ] && include="$include, \"$tasks_file\""
     mkdir -p .tmp
     out=".tmp/marola-context-mip-MIP-$num.md"
     cfg=".tmp/repomix-mip-review-MIP-$num.config.json"
-    header="marola — MIP-$num review request pack for a reviewer outside this project's own coding agent (a different model, or a human). README, AGENTS.md, PHILOSOPHY.md plus this one MIP — no other code or docs. See the instruction section for what is being asked."
+    header="marola — MIP-$num review request pack for a reviewer outside this project's own coding agent (a different model, or a human). README, AGENTS.md, docs/3-Ways-of-working/PHILOSOPHY.md plus this one MIP — no other code or docs. See the instruction section for what is being asked."
     # A dedicated -c config: repomix auto-loads repomix.config.json (every MIP) and CLI --include
     # doesn't override it. printf, not a heredoc: an unindented heredoc body ends the recipe.
     printf '{\n  "$schema": "https://repomix.com/schemas/latest/schema.json",\n  "output": {\n    "filePath": "%s",\n    "style": "markdown",\n    "headerText": "%s",\n    "instructionFilePath": "repomix-instruction-mip-review.md"\n  },\n  "include": [%s],\n  "ignore": { "useGitignore": true, "useDefaultPatterns": true }\n}\n' "$out" "$header" "$include" > "$cfg"

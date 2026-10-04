@@ -17,7 +17,7 @@
     # git hooks and the just module under .devkit. Bumped by hand, together with every `@v…` and
     # `devkit-ref:` in .github/workflows/ (dependabot ignores marola-devkit for that reason).
     marola-devkit = {
-      url = "github:marola-dev/marola-devkit/v0.3.0";
+      url = "github:marola-dev/marola-devkit/v0.4.1";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.lint.follows = "lint";
       inputs.agentic.follows = "agentic";

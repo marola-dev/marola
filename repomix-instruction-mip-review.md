@@ -8,7 +8,7 @@ A MIP is written and reviewed *before* the change is built, the same way an RFC 
 would be elsewhere in this project's process.
 
 This pack intentionally does not include the project's source code, its full documentation set,
-or its other MIPs; only three context documents (`README.md`, `AGENTS.md`, `PHILOSOPHY.md`) plus
+or its other MIPs; only three context documents (`README.md`, `AGENTS.md`, `docs/3-Ways-of-working/PHILOSOPHY.md`) plus
 the one MIP under review (and its task breakdown, if one exists). You are being asked for an
 outside opinion precisely because you have not seen the rest of the repository and are not the
 same model family the project's own coding agent runs on: treat gaps in your knowledge of the
@@ -17,13 +17,13 @@ codebase as expected, not as something to guess past.
 ## What each document in this pack is for
 
 - **`README.md`**: what marola is and does, for a newcomer.
-- **`AGENTS.md`**: the workspace's repo map (marola is an umbrella repo with one submodule per
-  code repo) and the project's hard rules for anyone (human or AI) working in it:
+- **`AGENTS.md`**: what the umbrella is (one submodule per code repo; the repo map itself,
+  `docs/2-Building-marola/REPOS.md`, is not in this pack) and the project's hard rules for anyone (human or AI) working in it:
   phase discipline (don't go live on a paid cloud integration before a local path works), cost
   and deployment safety (never provision a paid resource without explicit human confirmation),
   attribution/commit conventions, code style, and testing discipline. A MIP that violates one of
   these rules without saying so, or without a stated plan to reconcile it, is a real finding.
-- **`PHILOSOPHY.md`**: *why* the project is built the way it is (why Scala 3 on the JVM, why
+- **`docs/3-Ways-of-working/PHILOSOPHY.md`**: *why* the project is built the way it is (why Scala 3 on the JVM, why
   Nix, why a design-doc-first process at all). A MIP whose design cuts against this document's
   stated reasoning, without acknowledging the tension, is worth flagging even if the code would
   technically work.

@@ -68,6 +68,9 @@ has every rule).
   outside `docs/`, a directory with no `index.md`, a path missing at the built commit. Each failure
   names the file and the link.
 - Code spans and fences are left alone.
+- **Recipes.** A doc names only its own repo's recipes and the devkit's. Any other carries the
+  checkout marker: "in a marola-<name> checkout" in the same sentence, or
+  `# in a marola-<name> checkout` as a fence's first line. `docs-lint` reads it.
 
 ## The skeleton
 
