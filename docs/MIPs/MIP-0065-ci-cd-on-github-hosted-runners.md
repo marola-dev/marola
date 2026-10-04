@@ -114,6 +114,10 @@ the paid tier and is not used. **Pick:** installer v23 + magic-nix-cache v15. Th
 `nix develop .#lint` with no cache. `nix-community/cache-nix-action` does not list this installer as
 compatible, so it is not a drop-in.
 
+**Measured 2026-10-04 (#657): magic-nix-cache dropped.** Its post step uploaded ~200 store paths
+one at a time, 3½–5 min per `quality-other` run, while `nix develop .#lint` took the same 31–37 s
+with or without it (cache.nixos.org already serves every path). CI runs the cold fallback above.
+
 `scala-steward-action`'s "Unable to install managed tools" is issue #793: no JVM on the runner
 when coursier installs its tools. It was fixed in v2.87.0 (2026-04-24); the latest is v2.96.0,
 which `@v2` resolves to. The workflow already runs `setup-java` first, so a failure that persists on
@@ -301,5 +305,5 @@ None. No scoring, no user-facing text beyond the map's "Last live run" timestamp
 
 - The desktop runner's registration after the transfer (403, §11).
 - The repository's current fork-PR approval setting (needs admin scope).
-- magic-nix-cache's real hit rate and 429 behaviour on this repo; measured in task 1.
+- magic-nix-cache's real hit rate and 429 behaviour on this repo; measured in task 1. (No gain, dropped: §4.5, #657.)
 - Why `scala-steward` still fails on `@v2` after the upstream fix; assumed to be the desktop.
