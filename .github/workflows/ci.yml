@@ -65,6 +65,8 @@ jobs:
               - 'scripts/fetch-api-docs.sh'
               - 'scripts/lib/repos_manifest.sh'
               - 'scripts/lib/doc_links.py'
+              - 'scripts/site_links_check.py'
+              - 'scripts/mkdocs.sh'
               - '.gitmodules'
               - 'marola-site'
               - 'marola-corpus'
@@ -138,7 +140,7 @@ jobs:
       # A page move is checked here, before merge, not first by docs.yml's deploy (MIP-0074 §7).
       - name: Save the live sitemap
         continue-on-error: true
-        run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml
+        run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml || { rm -f old-sitemap.xml; exit 1; }
       - run: scripts/prepare-docs.sh
       - name: mkdocs --strict, in the Kroki container stack
         env:

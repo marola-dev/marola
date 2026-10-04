@@ -43,7 +43,7 @@ jobs:
       # down must not block the deploy that recovers it, so a failed fetch skips that check.
       - name: Save the live sitemap, before this build can change it
         continue-on-error: true
-        run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml
+        run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml || { rm -f old-sitemap.xml; exit 1; }
 
       # §5.5: non-PR builds track each submodule's latest main; a PR build stays on the pinned
       # commit the gitlink already carries, so it doesn't fail on something merged after it opened.

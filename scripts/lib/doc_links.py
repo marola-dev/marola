@@ -711,7 +711,7 @@ def self_test() -> int:
         with contextlib.redirect_stderr(err):
             rc = main(args)
         case(
-            "mount_writes_landing_and_docs",
+            "mount_reports_refused_link",
             (rc, err.getvalue()),
             (
                 1,
