@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for any AI coding agent working in the marola workspace (Claude Code or otherwise).
+Instructions for any AI coding agent working in the marola umbrella (Claude Code or otherwise).
 Read this before writing, modifying, or deploying anything. Humans should read it too.
 
 <!-- invariants:start -->
@@ -15,7 +15,7 @@ Non-negotiable in every marola repo; a repo may make these stricter, never loose
 - **Phase discipline**: work one phase at a time; never start a later phase before the current one is done ([AGENTS.md](AGENTS.md#phase-discipline-hard-rule)).
 <!-- invariants:end -->
 
-## What this workspace is
+## What this umbrella is
 
 **marola** is the ocean intelligence layer for a stretch of coast: real nearby beaches
 (OpenStreetMap), live sea and weather (Open-Meteo), official bathing-water quality, a 0–100
@@ -23,29 +23,21 @@ swimability score with a deterministic safety veto, and an LLM summary reviewed 
 all runnable locally with a free Ollama model. GCP (MIP-0057) is the opt-in cloud path.
 
 This repo, `marola-dev/marola`, is the **umbrella** (MIP-0070): the team layer, with every code
-repo as a git submodule. It holds this file, the ways of working (`docs/3-Working-on-the-repo/`),
+repo as a git submodule. It holds this file, the ways of working (`docs/3-Ways-of-working/`),
 research and plans (`docs/4-Research-and-plans/`), the MIPs and their `.tasks.md`, the phase list
 (`docs/PHASES.md`), MIP and cross-repo parent issues, the aggregated docs site at
 <https://docs.marola.dev/>, and the submodule pointers. **It holds no code**: no build, no app
-gates. `PHILOSOPHY.md` holds the reasons behind the rules here.
+gates. [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md) holds the reasons behind the rules
+here, and [CONTRIBUTING](docs/3-Ways-of-working/CONTRIBUTING.md) is the guide for every repo.
 
 ## The repos
 
 Each repo has its own `AGENTS.md`, `docs/`, gates and issues. Read that repo's `AGENTS.md` before
-changing anything in it; it says what it overrides.
-
-| Repo | Holds | Produces → consumed by | Consumes |
-|---|---|---|---|
-| [marola-app](https://github.com/marola-dev/marola-app) (`marola-app/`) | The Scala 3 + Kyo product on JDK 25: the sbt build (`core/`, `local/`, `cli/`), the CLI, the MCP server, the benchmark runner, the OODS ingest code (arriving with MIP-0056), the user and build docs (`docs/1-*`, `docs/2-*`) | The image `ghcr.io/marola-dev/marola-app` → site, ml, oods; releases with Scaladoc (`api-docs.tar.gz`) → these docs, and `ml-resources-<tag>.tar.gz` → ml; `coverage/`, `smoke/` → marola-site's `site-data` | marola-corpus's release (`corpus.version`); compiled prompts from marola-ml as PRs |
-| [marola-site](https://github.com/marola-dev/marola-site) (`marola-site/`) | The map at <https://marola.dev/>: the static page, `areas.json`, the `site-data` branch, live checks | GitHub Pages at marola.dev | The app image (`marola-image`, tag + digest) for the boards; `site-data` |
-| [marola-corpus](https://github.com/marola-dev/marola-corpus) (`marola-corpus/`) | The sourced ocean knowledge (`knowledge/*.md`) and the `corpus-doc`/`eli5` skills | `marola-corpus-<tag>.tar.gz` per `v*` release → app, ml | — |
-| [marola-ml](https://github.com/marola-dev/marola-ml) (`marola-ml/`) | Offline Python: the DSPy prompt compile, the marola-sea fine-tune, the benchmark gate and its kept runs (`docs/benchmarks/`) | Compiled-prompt PRs → app; pdoc release asset → these docs; marola-sea on Hugging Face | The app image (`marola-image`), its resources tarball (`resources.version`), the corpus (`corpus.version`) |
-| [marola-oods](https://github.com/marola-dev/marola-oods) (`marola-oods/`) | The Open Ocean Data Store's data only (`data/oods/`, MIP-0056); starts empty | The dataset → app (an export tag, MIP-0056 §5.5) | The app image (`marola-image`) for `oods-check`; commits from the app's ingest workflow |
-| [marola-devkit](https://github.com/marola-dev/marola-devkit) (not a submodule) | The shared harness: the dev-flow tools, git hooks, the `marola-devkit` Claude Code plugin, reusable workflows, the invariants block | A flake input, a plugin marketplace and `uses:` workflows, each pinned to a tag → every repo | — |
-
-The rule behind the table (MIP-0070 §5.4): no repo reads another repo's tree, in CI or in tests,
-and no consumer builds its producer from source. A consumer moves to a new producer version by
-bumping its pin in a PR.
+changing anything in it; it says what it overrides. What each repo owns, publishes and pins is in
+[`docs/2-Building-marola/REPOS.md`](docs/2-Building-marola/REPOS.md), the routing table's only copy
+(`scripts/agents_repos_check.sh` fails if this file restates it). No repo reads another repo's
+tree, in CI or in tests, and no consumer builds its producer from source: a consumer moves to a new
+producer version by bumping its pin in a PR.
 
 ## Where a change belongs
 
@@ -59,7 +51,11 @@ bumping its pin in a PR.
 - **Issues**: one issue per PR, in the repo the PR lands in, so `Closes #N` stays local. Cross-repo
   work is an umbrella parent issue with a sub-issue in each target repo, and every issue sits on the
   org Project (`marola-dev` Project 1). A reference to an issue in another repo is always fully
-  qualified (`marola-dev/marola-app#15`). `docs/3-Working-on-the-repo/ISSUE-FLOW.md` has the commands.
+  qualified (`marola-dev/marola-app#15`). [ISSUE-FLOW](docs/3-Ways-of-working/ISSUE-FLOW.md) has the
+  tiers and the Definition of Ready.
+
+[WORKING-ACROSS-REPOS](docs/3-Ways-of-working/WORKING-ACROSS-REPOS.md) has the whole of it, with
+which checkout each recipe needs.
 
 ## Submodule mechanics
 
@@ -73,6 +69,7 @@ bumping its pin in a PR.
   and never commit inside a submodule from the umbrella's own branch.
 - `docs.yml` builds the docs from each submodule's latest `main` regardless of the pointers;
   `ci.yml`'s `docs-build` builds a PR on its pinned commits.
+- Adding a repo is [NEW-REPO](docs/3-Ways-of-working/NEW-REPO.md)'s checklist.
 
 ## Setup & commands
 
@@ -86,18 +83,23 @@ just docs-serve  # preview on http://localhost:8001/
 ```
 
 Run the gates of the repo you changed before calling a change done: here `just quality`
-(`quality-other`: ruff, actionlint, hadolint and the `scripts/*` self-tests, the gates `ci.yml`
-runs, at the versions `flake.lock` pins; a missing tool fails rather than skips, so use
-`nix develop`); in a submodule, its own `AGENTS.md` names them. The pre-push hook runs
+(`quality-other`: ruff, actionlint, hadolint, `docs-lint` and the `scripts/*` self-tests, the
+gates `ci.yml` runs, at the versions `flake.lock` pins; a missing tool fails rather than skips, so
+use `nix develop`); in a submodule, its own `AGENTS.md` names them. The pre-push hook runs
 `just prepush`; `git push --no-verify` bypasses it, CI does not.
 
-**Writing a doc is a deploy.** mkdocs builds the sidebar from the file tree (the `1-`…`4-`
+**Writing a doc is a deploy.** mkdocs builds the sidebar from the file tree (the `1-`…`6-`
 prefixes order it), and the build is `--strict`: a link that does not resolve inside the
-aggregated tree fails it, which is why `AGENTS.md` and `PHILOSOPHY.md` are linked at GitHub. A push
-to `main` touching `docs/**` or `mkdocs/**`, a submodule's docs dispatch, or the daily cron runs
-`docs.yml`, which deploys docs.marola.dev (`mkdocs/repos.yml` maps each submodule to its mount;
-marola-app's mounts at the root). `docs/index.md` is the site's landing page and the index of what
-is MIP material; `.claude/rules/docs.md` has the MIP status vocabulary.
+aggregated tree fails it. `scripts/prepare-docs.sh` puts this repo at the root, with `README.md` as
+the landing page and `docs/MIPs/` at `6-MIPs/`, and every repo in `mkdocs/repos.yml` at
+`5-Repos/<name>/` (marola-devkit fetched at `flake.lock`'s locked rev), each README its landing and
+its `api-docs` branch under `api-docs/`. No repo has a `docs/index.md`. Links are rewritten for the
+site (MIP-0074 Appendix A), so write them relative inside a repo and absolute across repos. A page
+that moves gets a `redirect_maps` entry in `mkdocs/mkdocs.yml`. A push to `main` touching
+`docs/**`, `mkdocs/**`, `README.md`, `flake.lock` or the docs scripts, a submodule's docs dispatch,
+or the daily cron runs `docs.yml`, which deploys docs.marola.dev. `docs/MIPs/CANDIDATES.md` indexes
+what is MIP material; `.claude/rules/docs.md` has the MIP status vocabulary, and
+[DOCS-SITE](docs/3-Ways-of-working/DOCS-SITE.md) how the site is built.
 
 The harness is [marola-devkit](https://github.com/marola-dev/marola-devkit), a flake input pinned
 to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `cost-split`, `cost-fill`,

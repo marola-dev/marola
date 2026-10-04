@@ -123,7 +123,7 @@ stack.mkdocs -> host.out: "copied out"
 ## c4plantuml
 
 The Telegram bot's system context, from
-[ARCHITECTURE.md §4](../2-Building-marola/ARCHITECTURE.md#4-target-architecture-telegram-bot-once-built):
+[ARCHITECTURE.md's target architecture](../2-Building-marola/ARCHITECTURE.md#target-architecture-the-telegram-bot):
 
 ```c4plantuml
 @startuml

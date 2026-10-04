@@ -142,6 +142,8 @@ producer from source.
 
 ### 5.5 Docs: per repo, aggregated and hosted by the umbrella
 
+Superseded for docs by [MIP-0074](./MIP-0074-docs-umbrella-landing-and-repo-docs.md).
+
 ```mermaid
 sequenceDiagram
   participant R as code repo (main)

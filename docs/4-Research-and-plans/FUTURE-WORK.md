@@ -1,14 +1,18 @@
 # Future work
 
-Companion to [`ARCHITECTURE.md`](../2-Building-marola/ARCHITECTURE.md) (the pipeline, the six pluggable integrations),
-[`EFFECTS-MAP.md`](../2-Building-marola/EFFECTS-MAP.md) (what's pure vs. effectful vs. hidden), and
+Companion to [`ARCHITECTURE.md`](../2-Building-marola/ARCHITECTURE.md) (the pipeline, the integration pattern),
+[`EFFECTS-MAP.md`](https://docs.marola.dev/5-Repos/marola-app/1-design_effects/) (what's pure vs. effectful vs. hidden), and
 [`RUN-LOCALLY.md`](../1-Using-marola/RUN-LOCALLY.md)/[`TELEGRAM-SETUP.md`](../1-Using-marola/TELEGRAM-SETUP.md) (how to run any of
 it): design sketches and reviewed-but-not-adopted ideas for where marola goes next. Most of this
 file is *not* built: where a section reports a finding ("X is real and confirmed present"), that's
 investigation done to inform a future decision. §4.2 is the one exception, marked as such: it moved
 from proposal to shipped code partway through this file's life and is left in place with an updated
 status rather than deleted, since the surrounding "why this exists" reasoning is still the right
-context for it.
+context for it. The library reviews that used to be §2, §3, §5 and §6 here now live with the code
+they judge, in marola-app's [`2-libraries.md`](https://docs.marola.dev/5-Repos/marola-app/2-libraries/);
+the old §7 (splitting marola out of an earlier shared repo) is retired, its still-relevant part now
+marola-app's [ADR-0001](https://docs.marola.dev/5-Repos/marola-app/adr/0001-three-sbt-modules/).
+The remaining sections keep their original numbers.
 
 ## 1. Beyond swimming: diving, surfing, any sea-related activity
 
@@ -82,7 +86,8 @@ new kind of input this repo doesn't have a source for yet.
 ### 1.4 What dive scoring specifically needs
 
 - **Underwater visibility**: no free API was found for this (checked while researching; same
-  "doesn't exist" conclusion `ARCHITECTURE.md` §8 reached for jellyfish forecasts). The closest real
+  "doesn't exist" conclusion [LIMITATIONS §8](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations)
+  reached for jellyfish forecasts). The closest real
   signal: [Copernicus Marine Service](https://marine.copernicus.eu/) publishes turbidity and
   chlorophyll concentration layers that correlate with visibility, but it's a much heavier
   integration (NetCDF/gridded data, not a simple REST JSON call like everything else this repo
@@ -101,7 +106,8 @@ new kind of input this repo doesn't have a source for yet.
 "Users can subscribe to more than one activity" is a per-user preference, which needs persisted
 per-user state, something marola doesn't have yet in any form (the closest existing piece is
 `SightingStore`, which is per-*beach*, not per-*user*). The natural extension, following the same
-local-default pattern as everything in `ARCHITECTURE.md` §5:
+local-default pattern as everything else
+([ARCHITECTURE](../2-Building-marola/ARCHITECTURE.md#local-first-integration-pattern)):
 
 ```scala
 trait UserPreferencesStore:
@@ -111,59 +117,9 @@ trait UserPreferencesStore:
 ```
 
 with `LocalFileUserPreferencesStore` (JSON-lines, same shape as `LocalFileSightingStore`) as the
-default. The Telegram bot (once built; see `TELEGRAM-SETUP.md` and `ARCHITECTURE.md` §11 Phase 1)
+default. The Telegram bot (once built; see `TELEGRAM-SETUP.md` and [PHASES](../PHASES.md) Phase 1)
 would expose this via commands like `/subscribe surf`, `/unsubscribe dive`, and a daily digest that
 only includes conditions for a user's subscribed activities.
-
-## 2. Reviewed: kyo-http + kyo-schema instead of the hand-rolled `Http`/`Json` modules
-
-**Finding: the hand-rolled modules are not a "kyo doesn't have this" workaround. kyo-http's own
-client (`getJson`, `postJson`, `getText`, `postBinary`, ...) is real and present at the exact
-1.0.0-RC5 version this repo pins,** confirmed by decompiling the actual jar rather than relying on
-getkyo.io's docs (which are only published for the *latest* version, RC6, and don't cover RC5
-specifically, a documentation gap, not an API gap). Its JSON codec typeclass, `kyo.Schema[A]`,
-lives in a separate `kyo-schema` artifact that `kyo-http` pulls in transitively. `kyo-http` itself
-was dropped from `build.sbt` as unused, so migrating means adding it back.
-
-**What migrating would mean:** dropping `http/Http.scala` (currently ~130 lines: 4 methods,
-`getString`, `postForm`, `postJson`, `postBytes`) and `json/Json.scala` (~200 lines: a
-recursive-descent parser plus a renderer) in favor of `kyo.HttpClient.getJson[A]`/`postJson[A, B]`
-calls with `derives Schema` case classes for every shape this repo currently parses by hand
-(Overpass responses, Open-Meteo responses, Ollama chat completions, Telegram's Bot API shapes once
-the bot exists). That's a real, positive trade: less hand-rolled parsing code, typed models instead
-of stringly-typed `JsonValue` navigation, and a client that (per kyo-http's design) also targets
-JS/Native if marola's Scala code were ever reused outside the JVM.
-
-**Why not done in this pass:** every HTTP/JSON call site in this repo was *live-verified* against
-real APIs while building it this session (Overpass, Open-Meteo, Ollama). Migrating now means
-re-doing that verification against a library with no version-specific published docs (RC5's actual
-behavior was confirmed by reading bytecode, not by reading a doc page): real risk of a subtle
-behavioral difference (timeout defaults, redirect handling, connection pooling) going unnoticed
-until it breaks something that currently works. This is exactly the kind of change worth doing
-*deliberately*, in its own pass, with its own round of live re-verification per integration, not
-bundled into unrelated feature work.
-
-**Recommendation:** migrate, but as a dedicated task: one integration at a time (start with
-`OpenMeteoClient`, the simplest/most-called shape), re-verify each against live data before moving
-to the next, and only remove `Http.scala`/`Json.scala` once every call site is off them.
-
-## 3. Reviewed: "kyo-ai" / `kyo-llm` — not a good fit today
-
-No package named `kyo-ai` exists on Maven Central (checked directly). The closest real thing is
-**`kyo-llm`** (plus `kyo-llm-macros`, `kyo-llm-bench`): an actual published Kyo module for LLM
-integration. Checked its release history directly: **last published version is `0.9.0`, from
-March 2024.** The `kyo-core` this repo pins is `1.0.0-RC5`, two major generations later, after
-Kyo's own well-documented 0.x → 1.0 API redesign (the effect-suspension model itself changed
-significantly across that gap, per Kyo's own release notes referenced elsewhere in this repo's
-`AGENTS.md`/`build.sbt` comments).
-
-**Recommendation: do not adopt kyo-llm.** A ~2-year-stale library built against a fundamentally
-different, pre-redesign version of its own core dependency is a real risk (likely won't even
-resolve/compile cleanly alongside `kyo-core:1.0.0-RC5`, and if it did, its API idioms would predate
-the ones the rest of this codebase uses). The custom `llm/LlmClient` abstraction built this session
-(local Ollama, plain HTTP) is the right call for now: it's small, verified live, and has zero
-dependency-compatibility risk. Revisit only if `kyo-llm` (or a genuine `kyo-ai` successor) sees a
-real release against the Kyo 1.x line.
 
 ## 4. Harness ideas: evaluation and a reviewer/critic pass
 
@@ -172,12 +128,14 @@ product features:
 
 ### 4.1 An actual evaluation harness, not just a training set
 
-> Partly built: `just benchmark` (`ARCHITECTURE.md` §5h) is a deterministic held-out check for the
-> *answering* path (RAG vs. plain prompt). The summarizer/reviewer path still has only its trainset.
+> Partly built: `just benchmark`, in a marola-app checkout ([Ocean knowledge](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#ocean-knowledge-retrieval)), is a
+> deterministic held-out check for the *answering* path (RAG vs. plain prompt). The
+> summarizer/reviewer path still has only its trainset.
 > The model axis of that benchmark (closed API vs. open local vs. RAG vs. tuned, with latency and
 > cost columns) is proposed as `docs/MIPs/MIP-0032-model-strategy-benchmark-matrix.md`.
 
-`dspy/compile_recommendation_prompt.py`'s `TRAINSET` currently does double duty as both the
+marola-ml's [`dspy/compile_recommendation_prompt.py`](https://github.com/marola-dev/marola-ml/blob/main/dspy/compile_recommendation_prompt.py)'s
+`TRAINSET` currently does double duty as both the
 few-shot demo source *and* the only quality check (`jellyfish_and_whale_mentioned_when_relevant`,
 a crude keyword-match metric (literally `"jelly" not in text.lower()`). DSPy has a dedicated
 [`dspy.Evaluate`](https://dspy.ai) utility for scoring a compiled program against a **held-out**
@@ -208,8 +166,9 @@ overclaimed safety framing) and returning a `0-100` score, a `verdict` (`approve
 `final_summary`: the original text unchanged if approved, or the reviewer's own correction if not.
 Verified live against a real local Ollama model, including one run where the reviewer's compiled
 demos correctly caught a deliberately-planted flaw (a draft missing a required jellyfish mention)
-and produced a corrected version; see `ARCHITECTURE.md` §5a and `dspy/review_prompt.json` (a real
-compiled artifact, not a hand-written fixture).
+and produced a corrected version; see marola-app's [Query synthesis](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#query-synthesis) and
+[`review_prompt.json`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/resources/review_prompt.json)
+(a real compiled artifact, landed by a bot PR from marola-ml, not a hand-written fixture).
 
 **What's still open, not done:** the metric that scored the *compile-time* trainset
 (`review_json_is_well_formed_and_sound`) only checks JSON structure and verdict match against 3
@@ -219,135 +178,18 @@ Everything in §4.1 (a real dev/train split, `dspy.Evaluate`, an LLM-as-judge up
 exists," not "the layer is rigorously evaluated": those are different bars, and only the first one
 is cleared today.
 
-## 5. Reviewed: `workflows4s` (business4s) — not a fit yet, revisit if orchestration grows
-
-[`workflows4s`](https://github.com/business4s/workflows4s) is a real, actively-developed Scala 3
-library (checked directly: current version `0.6.2`) for composing long-running, stateful business
-processes (approval chains, sagas, CI/CD-shaped pipelines) with event-sourcing semantics and
-built-in BPMN diagram rendering. It's effect-system-agnostic (its `WorkflowContext` is pluggable;
-the getting-started docs demo it with `cats-effect`, not Kyo, but nothing in its design is
-cats-effect-specific).
-
-**Why not now:** marola's actual pipeline (`Recommender.bestPerBeachTomorrow` → optionally
-`summarize` → `Reviewer.review`) is a single-shot request/response, not a long-running stateful
-process. There's no "state" to persist between steps, no need to survive a restart mid-flow, no
-approval-style human-in-the-loop step. Reaching for a workflow orchestration library for a
-three-step synchronous call chain would be solving a problem this codebase doesn't have.
-
-**Where it could genuinely fit later:** if §1's multi-activity subscriptions grow into something
-with real state machine shape: a sighting report going through a moderation/approval step before
-it's trusted, a daily-digest scheduler that needs to track "have I already sent today's digest to
-this user," or a `Reviewer`-triggered retry loop (draft → review → revise → re-review, bounded),
-that's the point where workflows4s' actual value proposition (typed state transitions, diagram
-rendering, recoverable long-running state) starts to apply. Marked as "revisit if orchestration
-complexity grows," not adopted now. `workflows4s`' own sibling project,
-[`decisions4s`](https://github.com/business4s/decisions4s) (a business-rules/decision-table
-engine), surfaced in the same research pass, not evaluated in depth, but worth a look if the
-jellyfish/whale heuristics (`ARCHITECTURE.md` §8) ever grow past a handful of hand-coded thresholds
-into something closer to a real rules table.
-
-## 6. Reviewed: two more Scala 3 libraries
-
-**`neotypes`** ([github.com/neotypes/neotypes](https://github.com/neotypes/neotypes)): a real,
-actively-maintained (last updated September 2025), type-safe, effect-agnostic Scala driver for
-**Neo4j**. Not a fit: marola has no graph data model anywhere; no relationships-between-entities
-problem that a graph database is the right tool for. If §1's multi-activity subscriptions or a
-future "beaches near beaches" / social feature ever genuinely needs graph queries, evaluate it then.
-
-**`Iron`** ([github.com/Iltotore/iron](https://github.com/Iltotore/iron)): actively maintained
-(current major version `3.x`), Scala 3 refined types: attach compile-time-or-runtime-checked
-constraints to a type (`Double :| Interval.Closed[0, 100]`, `Double :| Positive`, ...) rather than
-validating with plain runtime code. **A real, concrete fit**, and directly related to
-`EFFECTS-MAP.md`'s own findings: `Swimability.score`'s `0-100` range is currently a runtime
-`.max(0).min(100)` clamp with nothing stopping some other code path from constructing a `BestHour`
-with an out-of-range score; `Coordinates(lat, lon)` accepts any `Double` today, not just valid
-latitude/longitude ranges. Iron would make both illegal states unrepresentable at the type level
-instead of relying on every caller remembering to clamp/validate. Not adopted here: a genuine
-"worth doing," scoped small enough (a handful of type aliases in `model/Models.scala`, no
-architecture change) that it's a reasonable first Scala-3-ergonomics task for whoever picks this
-file up next, well before the larger `kyo-http`/`kyo-schema` migration (§2).
-
-## 7. Splitting marola out of the earlier monorepo — superseded, see below
-
-The opposite direction, splitting this repo into single-purpose repos under an umbrella, is
-MIP-0070 (`docs/MIPs/MIP-0070-umbrella-and-polyrepo-split.md`).
-
-### 7.1 Status: superseded by a simpler outcome
-
-This section originally described preparing marola to be `git subtree split` out of a shared
-monorepo that also contained an unrelated project (nf-organizer, a nota-fiscal/expense
-organizer). That plan involved marola/ carrying self-contained copies of every infra file a
-standalone repo would need (`.ai-jail`, `.gitignore`, a pre-commit hook, `.scalafmt.conf`,
-`flake.nix`, `justfile`, `project/`, and a `build.sbt.standalone`: a complete, working
-single-project build kept under a non-`build.sbt` name specifically because sbt auto-merges a
-per-subproject `build.sbt` into the enclosing multi-project build's settings, confirmed the hard
-way when a file literally named `marola/build.sbt` got loaded twice by a root `sbt compile`).
-
-**What actually happened instead, once the decision was made to make this repo marola's own repo
-rather than extract marola from it:** nf-organizer's content was moved to an external backup
-(outside this repo, not deleted) and removed here entirely; marola's module directories and `dspy/`
-were hoisted from `marola/` up to the repo root; all the duplicate infra files listed above were
-deleted (root's copies already cover the whole repo now; nothing else needs them); and `build.sbt`
-was simplified to one root aggregate with no `nfOrganizer` project and no `marola` umbrella project:
-`core`, `local`, `cli` are now aggregated directly under root. No `git subtree split`, no history
-rewrite, no `RootProject`/`.standalone`-file workaround needed. The entire reason for those was the
-monorepo-with-two-projects shape, which no longer exists.
-
-The `RootProject` investigation below is kept for its own sake: it's a real, independently useful
-finding about sbt, but it no longer describes a decision this repo needs to make.
-
-**Considered and rejected at the time: sbt's `RootProject`** as a cleaner alternative to the
-`.standalone` naming workaround, actually tested live in a throwaway sandbox, not just read about.
-`RootProject(file("marola"))` + `.aggregate()` genuinely does avoid the settings-merge problem
-(confirmed: the referenced build stays fully independent, its own `build.sbt` can keep its ordinary
-name, its own `scalaVersion`/settings never leak into or from the parent). But it has a real,
-confirmed cost: a `RootProject`-referenced build is **not addressable via `sbt "name/task"` scoped
-syntax** from the parent's session: `sbt "subBuild/compile"`, `sbt "sub/compile"`, and even
-`project subBuild` all failed with "Not a valid project ID" in the test. The only way to run a task
-in it is a separate `cd <dir> && sbt <task>` invocation: a real limitation to know about if a
-similar monorepo-split situation comes up again elsewhere.
-
-### 7.2 CI
-
-Superseded by MIP-0065; the workflows are described in `docs/3-Working-on-the-repo/CI-CD.md`.
-
-### 7.3 Splitting marola *itself* into multiple sbt modules — DONE
-
-Executed. Root `build.sbt` defines three subprojects, sbt project IDs `core`, `local`, `cli`
-(artifact names `marola-core`/`marola-local`/`marola-cli`), aggregated directly under the root
-project.
-
-(Originally these lived nested one level down, under `marola/core|local|cli/`, from when this repo
-was a shared monorepo with a second, unrelated project. Once this repo became marola's own repo,
-that nesting no longer served a purpose, so the module directories (plus `dspy/` and all the `.md`
-docs, now centralized under `docs/`) were hoisted up to the repo root. Any older text below
-referencing `marola/core`-style paths or `core`-style sbt project IDs predates that hoist; the
-directories are `core/`, `local/`, `cli/` and the sbt IDs are `core`, `local`, `cli` now.)
-
-| Module | Contains | Depends on |
-|---|---|---|
-| `marola-core` | `model/`, `scoring/`, `beaches/BeachFinder`, `conditions/OpenMeteoClient`, `Recommender`, `http/`, `json/`, `llm/LlmClient` (trait + `CompiledPrompt` + `Reviewer`), `sightings/{SightingStore,Sighting}`, `vision/VisionClient` (trait) | nothing else in marola |
-| `marola-local` | `llm/LocalLlmClient`, `vision/LocalVisionClient`, `sightings/LocalFileSightingStore` | `marola-core` |
-| `marola-cli` | `Main`, `AppConfig`, `agent/SwimConditionsMcpServer` | `marola-core`, `marola-local` |
-
-(`marola-bot`, the originally-proposed fifth module for the Telegram polling loop, wasn't created
-since that code still doesn't exist: Phase 1 is still not built. Add it when that lands.)
-
-**Verified, not just compiled:** full `sbt compile`/`sbt test` (every unit test passed across the new
-module boundaries), `sbt cli/run` and `sbt cli/run -- --summarize` against live
-Overpass/Open-Meteo/Ollama (including the Reviewer pass), both `E2ESpec` tests, and
-`sbt cli/assembly` producing a working fat jar (`java -jar
-marola-cli-assembly-*.jar` runs correctly), all after the split, not just before it.
-
 ## 8. Smaller items already flagged elsewhere
 
 Not repeated in full here; see the cross-referenced section:
 
-- Calibrating the jellyfish/whale heuristics against real `SightingStore` data: `ARCHITECTURE.md`
-  §8.
+- Calibrating the jellyfish/whale heuristics against real `SightingStore` data:
+  [LIMITATIONS §8](../1-Using-marola/LIMITATIONS.md#the-jellyfish-and-whale-heuristics-honest-limitations).
 - Real per-beach travel time/distance instead of straight-line distance (driving/walking/transit
-  modes); `ARCHITECTURE.md` §5b, §9.
-- Caching and per-user rate limiting for the core pipeline: `ARCHITECTURE.md` §9, §11 Phase 4.
+  modes); [Beach distance](https://docs.marola.dev/5-Repos/marola-app/1-design/#beach-distance),
+  [LIMITATIONS §9](../1-Using-marola/LIMITATIONS.md#other-known-limitations-poc-stage-not-hidden).
+- Caching and per-user rate limiting for the core pipeline:
+  [LIMITATIONS §9](../1-Using-marola/LIMITATIONS.md#other-known-limitations-poc-stage-not-hidden),
+  [PHASES](../PHASES.md) Phase 4.
 
 ## 9. Ocean-knowledge grounding: RAG and fine-tuning over marine science, plus catastrophe detection
 
@@ -364,8 +206,10 @@ analysis) with one coherent feature rather than two disconnected ones.
 > [`MIP-0048`](../MIPs/MIP-0048-scaling-marola-sea.md).
 
 > **Built (first cut):** `docs/MIPs/MIP-0001-water-quality-and-sea-lore.md`: local RAG over
-> `knowledge/` with citations (`ARCHITECTURE.md` §5h), the sourced sea-lore paragraph, and a
-> fine-tuning scaffold under `finetune/` (Tier 1 built, Tier 2 written-not-run). Steps 1-3 below are
+> marola-corpus's [`knowledge/`](https://github.com/marola-dev/marola-corpus/tree/main/knowledge)
+> with citations ([Ocean knowledge](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#ocean-knowledge-retrieval)), the sourced sea-lore paragraph, and marola-ml's
+> [`finetune/`](https://github.com/marola-dev/marola-ml/tree/main/finetune) scaffold (Tier 1 built,
+> Tier 2 written-not-run). Steps 1-3 below are
 > now real; step 4 (fine-tuning) has its recipe but no evaluation yet. The *retrieval* half is
 > revisited in `docs/MIPs/MIP-0045-nlp-and-parsing-over-llm.md` §5.1, which proposes a lexical
 > (TF-IDF) `KnowledgeStore` as the local default in place of the per-question embedding call. The
@@ -389,7 +233,9 @@ actually answer open marine-safety/marine-biology questions, sourced, not halluc
    `nomic-embed-text`, which keeps the local-first, no-cloud-account property this whole repo is
    built around) over chunked documents. Ingesting the corpus is itself a text-analysis/extraction
    task (pulling structured hazard facts out of prose bulletins).
-3. **New module shape:** a `core/knowledge/` package (`KnowledgeStore` trait, mirroring the existing
+3. **New module shape:** marola-app's
+   [`core/knowledge/`](https://github.com/marola-dev/marola-app/tree/main/core/src/main/scala/marola/knowledge)
+   package (`KnowledgeStore` trait, mirroring the existing
    `SightingStore`/`VisionClient` trait pattern) plus a new agent role: a
    "marine-knowledge agent" distinct from the summarizer/reviewer pair, callable as its own MCP tool
    (`ask_ocean_question`) so it's usable independently of the swim-hour pipeline, not bolted onto it.
@@ -442,11 +288,13 @@ closing that gap would take.
 **Python-only tools with no confirmed Scala/JVM equivalent today:**
 
 - **[DSPy](https://dspy.ai)**: declarative LLM programming + optimizers (`BootstrapFewShot`,
-  `MIPROv2`). This repo already depends on it (`dspy/`). No JVM port exists (confirmed by search,
-  not just absence of prior knowledge.
+  `MIPROv2`). marola already depends on it, via marola-ml's
+  [`dspy/`](https://github.com/marola-dev/marola-ml/tree/main/dspy). No JVM port exists (confirmed
+  by search, not just absence of prior knowledge.
 - **[Langfuse](https://github.com/langfuse/langfuse)**: open-source LLM tracing/eval/prompt-
-  management platform. Ships Python and TypeScript SDKs; no JVM/Scala SDK. `Telemetry.scala`
-  (`ARCHITECTURE.md` §5f) covers general OpenTelemetry tracing but nothing LLM-call-shaped
+  management platform. Ships Python and TypeScript SDKs; no JVM/Scala SDK. marola-app's
+  [`Tracing.scala`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/scala/marola/observability/Tracing.scala)
+  ([Observability](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#observability)) covers general OpenTelemetry tracing but nothing LLM-call-shaped
   (prompt/completion pairs, token/cost tracking, eval scores attached to a trace).
 - **[Promptfoo](https://github.com/promptfoo/promptfoo)**: prompt/model red-teaming and comparison,
   CLI + YAML config, Node-based; no Scala equivalent.
@@ -470,7 +318,8 @@ later stretch goal), built on Kyo for the effect boundary (LLM calls are `< Sync
 consistent with everything else in this repo) and `kyo-schema`/Iron for typed signature fields
 instead of DSPy's dynamic Python typing. This is explicitly **not scoped for this repo to build as
 part of marola**: it's a separate library-shaped project, large enough to be its own repo, that
-marola would become a *consumer* of once it existed (replacing `dspy/compile_recommendation_prompt.py`
+marola would become a *consumer* of once it existed (replacing marola-ml's
+[`compile_recommendation_prompt.py`](https://github.com/marola-dev/marola-ml/blob/main/dspy/compile_recommendation_prompt.py)
 with a Scala equivalent and eliminating the Python subprocess step entirely). Flagging it here as the
 concrete, named future-work item it deserves to be, rather than leaving "someone should port DSPy to
 Scala" as an unrecorded aside.
@@ -478,18 +327,22 @@ Scala" as an unrecorded aside.
 **Update (2026-09-05):** the "Langfuse-shaped tracing" half of this section is proposed as
 `docs/MIPs/MIP-0010-mlflow-experiment-tracking.md`: MLflow's server ingests OpenTelemetry traces
 over OTLP/HTTP from any language, so the JVM side needs no LLMOps SDK; `ds4s` stays a separate
-project by its own definition above. `docs/index.md` classifies every section of this file.
+project by its own definition above. `docs/MIPs/CANDIDATES.md` lists this file's MIP candidates.
 
-**Update (2026-09-05, continued):** `MIP-0010.tasks.md` tasks 5-6 (tracing core split,
-`local/MlflowTracing.scala` + `TracedLlmClient`) are the JVM half that actually closes this
-gap, planned/in progress as of this note, not confirmed merged. `dspy/compile_recommendation_prompt.py`
+**Update (2026-09-05, continued):** `MIP-0010.tasks.md` tasks 5-6 (tracing core split, marola-app's
+[`MlflowTracing.scala`](https://github.com/marola-dev/marola-app/blob/main/local/src/main/scala/marola/observability/MlflowTracing.scala)
++ `TracedLlmClient`) are the JVM half that actually closes this gap, planned/in progress as of this
+note, not confirmed merged. marola-ml's
+[`compile_recommendation_prompt.py`](https://github.com/marola-dev/marola-ml/blob/main/dspy/compile_recommendation_prompt.py)
 already logs its own compile runs to MLflow (task 7, the Python-only half, independent of tasks
-5-6); see `dspy/README.md`'s "Optional: logging compile runs to MLflow" section.
+5-6); see its
+[`README.md`](https://github.com/marola-dev/marola-ml/blob/main/dspy/README.md)'s "Optional:
+logging compile runs to MLflow" section.
 
 **Update (2026-09-05, later):** the "DSPy stays a Python subprocess indefinitely" conclusion is
 revisited by `docs/MIPs/MIP-0012-llm4s-adoption-and-dspy-deprecation.md`: marola's actual use of
 DSPy (a three-example `BootstrapFewShot` with a deterministic metric) is small enough to own as a
-Scala step in `core/prompt/` over the existing `LlmClient`, with the held-out eval §4.1 asks for;
+Scala step alongside `CompiledPrompt`, over the existing `LlmClient`, with the held-out eval §4.1 asks for;
 `ds4s` as a *general library* remains a non-marola idea. The same MIP checks llm4s against its jar
 (agent loop, MCP client/server, guardrails, structured output, and no prompt optimiser).
 
@@ -520,7 +373,7 @@ public API comparable to Overpass/Open-Meteo:
 
 **Recommended shape, if this gets built: start with (c), never (b).**
 
-1. A `core/history/` package (mirroring the existing store-trait pattern where it makes sense) with
+1. A new package in `core` (mirroring the existing store-trait pattern where it makes sense) with
    a `SwimHistoryStore` reading manually-imported activity records: beach name (or nearest-match by
    GPS coordinates against `BeachFinder`'s results), timestamp, duration.
 2. A small **TCX parser first** (XML, human-readable, easier to hand-write correctly than FIT's
@@ -534,4 +387,4 @@ public API comparable to Overpass/Open-Meteo:
    safety-relevant heuristic (jellyfish/rough-seas deductions stay authoritative).
 4. Revisit the official Health API or an unofficial client only if manual import proves the feature
    is actually worth the friction: cheap validation before an expensive/risky integration decision,
-   same reasoning `ARCHITECTURE.md` §11's phase discipline already applies elsewhere in this repo.
+   same reasoning the [phase discipline](../PHASES.md) already applies elsewhere in this repo.

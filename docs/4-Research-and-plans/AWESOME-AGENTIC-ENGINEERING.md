@@ -11,19 +11,19 @@ This list follows the [`sindresorhus/awesome`](https://github.com/sindresorhus/a
 (badge, Contents, categorized entries, Contributing, License), verified live against that repo's
 own README and `pull_request_template.md` on 2026-09-07. See `docs/MIPs/MIP-0043-awesome-
 agentic-engineering-list.md` §4.1 for what was checked. It is maintained from
-[marola](https://github.com/h0ffmann/marola), the ocean-intelligence Telegram assistant this repo
-belongs to. See the [Top 10 repos most similar to marola](#top-10-github-repos-most-similar-to-marola)
+[marola](https://github.com/marola-dev/marola), the ocean-intelligence Telegram assistant this
+umbrella's repos build together. See the [Top 10 repos most similar to marola](#top-10-github-repos-most-similar-to-marola)
 section below for how marola itself fits this landscape.
 
 ## Contents
 
-- [Agent Frameworks & Orchestration](#agent-frameworks--orchestration)
+- [Agent Frameworks & Orchestration](#agent-frameworks-orchestration)
 - [MCP Tooling](#mcp-tooling)
-- [DSPy & Prompt Compilation](#dspy--prompt-compilation)
-- [Critic / Reviewer-Pattern & Multi-Agent Pipelines](#critic--reviewer-pattern--multi-agent-pipelines)
-- [Spec / RFC-Driven Agent Dev-Loops](#spec--rfc-driven-agent-dev-loops)
-- [Local-First / Ollama-Based Agents](#local-first--ollama-based-agents)
-- [Cost- and Usage-Tracked Agent Development](#cost--and-usage-tracked-agent-development)
+- [DSPy & Prompt Compilation](#dspy-prompt-compilation)
+- [Critic / Reviewer-Pattern & Multi-Agent Pipelines](#critic-reviewer-pattern-multi-agent-pipelines)
+- [Spec / RFC-Driven Agent Dev-Loops](#spec-rfc-driven-agent-dev-loops)
+- [Local-First / Ollama-Based Agents](#local-first-ollama-based-agents)
+- [Cost- and Usage-Tracked Agent Development](#cost-and-usage-tracked-agent-development)
 - [Top 10 GitHub repos most similar to marola](#top-10-github-repos-most-similar-to-marola)
 
 ## Agent Frameworks & Orchestration
@@ -101,13 +101,14 @@ states explicitly which axis(es) it matches and why.
 
 1. **[stanfordnlp/dspy](https://github.com/stanfordnlp/dspy)** (~37.8k★): Stanford NLP's framework
    for programming (not manually prompting) LMs, with optimizers that compile modules into tuned
-   prompts/few-shot demos. **Architecture axis**: this is the exact upstream project marola's
-   offline `dspy/` compile step is built on: the same "compile once, replay the artifact at
-   runtime" idea marola applies by loading a JSON artifact from Scala instead of keeping a runtime
-   DSPy dependency.
+   prompts/few-shot demos. **Architecture axis**: this is the exact upstream project marola-ml's
+   offline [`dspy/`](https://github.com/marola-dev/marola-ml/tree/main/dspy) compile step is built
+   on: the same "compile once, replay the artifact at runtime" idea marola applies by loading a
+   JSON artifact from Scala instead of keeping a runtime DSPy dependency.
 2. **[modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers)** (~90.1k★):
-   the official reference-implementation repo for MCP servers. **Architecture axis**: marola's
-   `cli/` module exposes its own capabilities as an MCP tool server (`just mcp-server`); this repo
+   the official reference-implementation repo for MCP servers. **Architecture axis**: marola-app's
+   [`cli/`](https://github.com/marola-dev/marola-app/tree/main/cli) module exposes its own
+   capabilities as an MCP tool server (`just mcp-server` in a marola-app checkout); this repo
    is the canonical pattern/spec marola's server follows.
 3. **[getkyo/kyo](https://github.com/getkyo/kyo)** (~812★): a Scala 3 toolkit built on algebraic
    effects (the `A < S` pending type), where an unhandled error or undeclared effect fails to
@@ -122,7 +123,7 @@ states explicitly which axis(es) it matches and why.
 5. **[github/spec-kit](https://github.com/github/spec-kit)** (~133.8k★): GitHub's own toolkit for
    spec-driven development with coding agents: specify → plan → tasks → implement. **Philosophy
    axis**: near-exact structural match to marola's MIP-driven, design-doc-before-code culture
-   (`docs/MIPs/`, the `/marola-devkit:mip`/`mip-tasks` skills, `docs/3-Working-on-the-repo/DEV-FLOW.md`'s idea→MIP→tasks→PR loop); both
+   (`docs/MIPs/`, the `/marola-devkit:mip`/`mip-tasks` skills, `docs/3-Ways-of-working/DEV-FLOW.md`'s idea→MIP→tasks→PR loop); both
    make a written spec/plan a mandatory gate before implementation.
 6. **[jonigl/mcp-client-for-ollama](https://github.com/jonigl/mcp-client-for-ollama)** (~816★): a
    terminal UI connecting local Ollama models to MCP servers, with agent mode, multi-server
@@ -179,7 +180,8 @@ python3 scripts/awesome_agentic_digest.py --self-test # no network, run via `jus
 
 ## Contributing
 
-This list is maintained inside the [marola](https://github.com/h0ffmann/marola) repository. To
+This list is maintained inside the [marola](https://github.com/marola-dev/marola) umbrella
+repository. To
 propose an addition: run `scripts/awesome_agentic_digest.py` (above) to find candidates, or suggest
 one you already know of directly: either way, a human confirms the repo genuinely exists and fits
 a category before it's added, following the [`sindresorhus/awesome`](https://github.com/sindresorhus/awesome)
