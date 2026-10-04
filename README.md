@@ -3,19 +3,12 @@
 <p align="center">
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 <a href="https://github.com/marola-dev/marola-site/actions/workflows/site.yml"><img src="https://github.com/marola-dev/marola-site/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
-<!-- Aggregated statement coverage: marola-app's ci.yml measures it (sbt-scoverage) on pushes to main and writes this shields.io endpoint JSON to marola-site's site-data branch, which its Pages serves. -->
-<a href="https://github.com/marola-dev/marola-app/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fcoverage%2Flatest.json" alt="Scala statement coverage (sbt-scoverage)" /></a>
-<!-- The Python half, measured the only way marola tests Python: statement coverage of scripts/**/*.py while each script's own --self-test runs (there is no pytest suite). scripts/repo_stats.py, same repo-stats job and site-data branch as the badges below. -->
+<!-- Python statement coverage of scripts/**/*.py while each script's own --self-test runs, the only way marola tests Python (there is no pytest suite). ci.yml's repo-stats job (scripts/repo_stats.py) writes it and the badges below as shields.io endpoint JSON to marola-site's site-data branch, which marola.dev serves. The Scala badges are marola-app's README's. -->
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fpython-coverage.json" alt="Python statement coverage under the scripts' own --self-tests" /></a>
-<!-- Same mechanism, ci.yml's repo-stats job (scripts/repo_stats.py): how many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line counts for the three Scala modules and the Python trees. -->
+<!-- How many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line count for the Python trees (this repo's scripts/ and marola-app's). -->
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fci.json" alt="CI steps green on the last main run" /></a>
-<img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fscala-loc.json" alt="Scala lines of code" />
 <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fpython-loc.json" alt="Python lines of code" />
 <a href="https://marola.dev/"><img src="https://img.shields.io/badge/live_map-marola.dev-0b6e99?logo=leaflet&logoColor=white" alt="live map" /></a>
-<img src="https://img.shields.io/badge/Scala-3.9_LTS-DC322F?logo=scala&logoColor=white" alt="Scala 3.9" />
-<img src="https://img.shields.io/badge/JDK-25-007396?logo=openjdk&logoColor=white" alt="JDK 25" />
-<img src="https://img.shields.io/badge/runs_on-Ollama_%C2%B7_llama3.2-000000?logo=ollama&logoColor=white" alt="Ollama" />
-<img src="https://img.shields.io/badge/agents-MCP_tools-000000?logo=modelcontextprotocol&logoColor=white" alt="MCP" />
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT" /></a>
 </p>
 
@@ -52,8 +45,8 @@ A few promises marola keeps:
 
 ## Run it in five minutes
 
-marola is a workspace of single-purpose repos; this one ties them together as git submodules. The
-app you run is [marola-app](https://github.com/marola-dev/marola-app):
+marola is a set of single-purpose repos; this one, the umbrella, ties them together as git
+submodules. The app you run is [marola-app](https://github.com/marola-dev/marola-app):
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
@@ -118,20 +111,20 @@ it's built, so you can see exactly what is done and what is still a plan: [`docs
 
 ## The repos
 
-| Repo | What it is |
-|---|---|
-| [marola](https://github.com/marola-dev/marola) (this one) | The workspace: ways of working, the design docs ([MIPs](./docs/MIPs/README.md)), the phase list, the docs site at [docs.marola.dev](https://docs.marola.dev/), and every repo below as a submodule |
-| [marola-app](https://github.com/marola-dev/marola-app) | The product, in Scala 3 with [Kyo](https://getkyo.io/) on the JVM: the pipeline, the score and its safety veto, the CLI, the MCP tool server, the container image |
-| [marola-site](https://github.com/marola-dev/marola-site) | The map at [marola.dev](https://marola.dev/), rebuilt every 3 hours from the app's image |
-| [marola-corpus](https://github.com/marola-dev/marola-corpus) | The sourced ocean knowledge marola answers from |
-| [marola-ml](https://github.com/marola-dev/marola-ml) | Offline Python: the DSPy prompt compile, the benchmark gate, and [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF), marola's own small model |
-| [marola-oods](https://github.com/marola-dev/marola-oods) | The Open Ocean Data Store: an open, versioned archive of Brazil's bathing-water quality (starting empty) |
-| [marola-devkit](https://github.com/marola-dev/marola-devkit) | The shared dev harness every repo pins: tools, hooks, Claude Code skills, CI workflows |
+| Repo | What it is | Docs |
+|---|---|---|
+| [marola](https://github.com/marola-dev/marola) (this one) | The umbrella: ways of working, the design docs ([MIPs](./docs/MIPs/README.md)), the phase list, the docs site at [docs.marola.dev](https://docs.marola.dev/), and every repo below as a submodule | [docs](https://docs.marola.dev/) |
+| [marola-app](https://github.com/marola-dev/marola-app) | The product, in Scala 3 with [Kyo](https://getkyo.io/) on the JVM: the pipeline, the score and its safety veto, the CLI, the MCP tool server, the container image | [docs](https://docs.marola.dev/5-Repos/marola-app/) |
+| [marola-site](https://github.com/marola-dev/marola-site) | The map at [marola.dev](https://marola.dev/), rebuilt every 3 hours from the app's image | [docs](https://docs.marola.dev/5-Repos/marola-site/) |
+| [marola-corpus](https://github.com/marola-dev/marola-corpus) | The sourced ocean knowledge marola answers from | [docs](https://docs.marola.dev/5-Repos/marola-corpus/) |
+| [marola-ml](https://github.com/marola-dev/marola-ml) | Offline Python: the DSPy prompt compile, the benchmark gate, and [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF), marola's own small model | [docs](https://docs.marola.dev/5-Repos/marola-ml/) |
+| [marola-oods](https://github.com/marola-dev/marola-oods) | The Open Ocean Data Store: an open, versioned archive of Brazil's bathing-water quality (starting empty) | [docs](https://docs.marola.dev/5-Repos/marola-oods/) |
+| [marola-devkit](https://github.com/marola-dev/marola-devkit) | The shared dev harness every repo pins: tools, hooks, Claude Code skills, CI workflows | [docs](https://docs.marola.dev/5-Repos/marola-devkit/) |
 
 The score and its safety veto are deterministic Scala; the model only interprets and phrases, and
-never overturns a veto. Why it's built this way: [`PHILOSOPHY.md`](./PHILOSOPHY.md). How it works:
-[ARCHITECTURE](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/). Everything else, from
-every repo, is searchable at **[docs.marola.dev](https://docs.marola.dev/)**.
+never overturns a veto. Why it's built this way: [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md).
+How it works: [ARCHITECTURE](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/). Everything
+else, from every repo, is searchable at **[docs.marola.dev](https://docs.marola.dev/)**.
 
 If you're an AI coding agent: read [`AGENTS.md`](./AGENTS.md) first, then the `AGENTS.md` of the
 repo you're changing.

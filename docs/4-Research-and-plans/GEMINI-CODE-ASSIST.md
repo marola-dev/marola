@@ -1,31 +1,35 @@
 # Gemini Code Assist
 
-A free, advisory, on-request review pass on marola's PRs, and how to stand it up two ways: by
-hand in the Google Cloud console, or as a Besom (Pulumi for Scala) program with state in GCS.
-Everything dated here was checked on 2026-09-21; vendor pages move, so re-check before relying on
-a number.
+A free, advisory, on-request review pass on a repo's PRs, and how to stand up the full GCP product
+two ways: by hand in the Google Cloud console, or as a Besom (Pulumi for Scala) program with state
+in GCS. Everything dated here was checked on 2026-09-21; vendor pages move, so re-check before
+relying on a number.
 
-**This page is out of date as of 2026-09-30.** [MIP-0072](../MIPs/MIP-0072-gemini-review-on-request.md)
-extends and corrects it. The repo is public, under `marola-dev`. Google shut the consumer app down
-on 2026-07-17, so only the enterprise install in §3 remains, and §4's `githubApp` should be
-`GEMINI_CODE_ASSIST`. MIP-0072 also designs a review started by requesting `marola-dev/gemini`.
+Why this tool, still: every marola repo is public now (MIP-0070's split), so the original reason to
+reach for it — the only hosted reviewer free on a **private** repo — no longer holds, and being
+public opens CodeRabbit's and Sourcery's free tiers too (§8). What marola-devkit ships as of v0.4.0
+(2026-10-04) is lighter than any of these: `gemini-review`, a reusable workflow a repo opts into
+with one file, calling the Gemini API directly, no GCP project or billing account
+([`4-reference_workflows.md`](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_workflows/)).
+The umbrella, marola-app and marola-ml pin a devkit that has it, and none calls it yet. This
+page stays research because Gemini Code Assist for GitHub is still a materially different, more
+complete product — a managed GitHub App with its own severity/comment tuning, nothing to hold an
+API key for — and the Besom plan below (§4–§6) is what standing *that* up would look like, not a
+dead idea just because a cheaper alternative shipped. MIP-0060's local route (open-code-review on
+Ollama) is parked because `qwen2.5-coder:7b` cannot do the tool calls; this is the hosted
+alternative it reserved for a human go-ahead in its §5.5, because source still leaves the machine
+either way. §8 has the survey.
 
-Why this tool: `h0ffmann/marola` is a **private** repo, so every "free for open source" tier
-(CodeRabbit, Qodo's OSS programme, Sourcery's public-repo tier, Codacy) is out. Of what remains,
-Gemini Code Assist on GitHub is the only hosted reviewer that is free on a private repo with a
-quota marola cannot hit (Google's docs: ≥ 100 PR reviews/day per installation). Greptile's Starter
-plan (50 reviews/month, one developer) is the runner-up. MIP-0060's local route (open-code-review
-on Ollama) is parked because `qwen2.5-coder:7b` cannot do the tool calls; this is the hosted
-alternative it reserved for a human go-ahead in its §5.5, because private source leaves the
-machine. §8 has the survey.
-
-## 1. What is in the repo (this PR)
+## 1. What marola-app already has
 
 | File | Does |
 |---|---|
-| `.gemini/config.yaml` | Turns off review-on-open, summary-on-open and draft handling; `MEDIUM` severity floor; at most 10 comments; ignores test fixtures, `flake.lock`, native-image metadata, vendored JS. |
-| `.gemini/styleguide.md` | The subset of `AGENTS.md`/`.claude/rules/scala.md` a diff reviewer can check. Gemini injects this file into its prompt; it does **not** read `AGENTS.md` on its own. |
+| [`.gemini/config.yaml`](https://github.com/marola-dev/marola-app/blob/main/.gemini/config.yaml) | Turns off review-on-open, summary-on-open and draft handling; `MEDIUM` severity floor; at most 10 comments; ignores test fixtures, `flake.lock`, native-image metadata, vendored JS. |
+| [`.gemini/styleguide.md`](https://github.com/marola-dev/marola-app/blob/main/.gemini/styleguide.md) | The subset of `AGENTS.md`/`.claude/rules/scala.md` a diff reviewer can check. Gemini injects this file into its prompt; it does **not** read `AGENTS.md` on its own. |
 | `DEV-FLOW.md` §5 | Route 4: `/gemini review`, on request only. |
+
+These files are committed; the GCP-side connection below (§3–§4) has not been, pending a human
+go-ahead.
 
 Gemini's default is to review every PR the moment it opens. `DEV-FLOW.md` §5 says nothing reviews
 a PR automatically, and a nine-PR MIP stack would burn nine reviews at once, so
@@ -51,8 +55,8 @@ Reply to an inline comment to argue with it. Same discipline as a Claude review 
 The Feb-2025 "free for individuals, install the GitHub app" path is gone from Google's docs; the
 only documented install now goes through **Google Cloud Developer Connect** and needs a **GCP
 project with a billing account attached**. Google states there are no charges during Preview, but a
-card is on file. This is a human's action, never an agent's: it is the moment private source
-starts going to Google.
+card is on file. This is a human's action, never an agent's: it is the moment a card goes on file
+and source starts going to Google.
 
 1. Pick or create a project; confirm billing is linked. You need Owner/Admin on it, or Service
    Usage Admin plus `roles/geminicodeassistmanagement.scmConnectionAdmin` (grantable only via
@@ -61,8 +65,9 @@ starts going to Google.
    connection. Enable the Developer Connect API and the Gemini Code Assist Management API when
    the banners ask. The connection lands in `us-east1`; Google says an existing connection made
    for another feature (code customisation) cannot be reused.
-3. When GitHub asks: **Only select repositories → `h0ffmann/marola`**. Never "All repositories".
-4. Back in Developer Connect → **Link repositories** → marola.
+3. When GitHub asks: **Only select repositories → `marola-dev/marola-app`**. Never "All
+   repositories".
+4. Back in Developer Connect → **Link repositories** → `marola-app`.
 5. Gemini Code Assist privacy settings → turn off "use my data to improve Google products" (the
    individual edition defaults to sharing). §5 makes this a line of code instead.
 
@@ -80,14 +85,13 @@ year; read `repo1.maven.org/maven2/org/virtuslab/` directly.
 | Enable the two APIs | `gcp.projects.Service` | — |
 | The role the console cannot grant | `gcp.projects.IAMMember` | — |
 | The connection, in `us-east1` | `gcp.developerconnect.Connection` | 8.2.0 |
-| Link `h0ffmann/marola` | `gcp.developerconnect.GitRepositoryLink` | 8.2.0 |
+| Link `marola-dev/marola-app` | `gcp.developerconnect.GitRepositoryLink` | 8.2.0 |
 | Data-sharing opt-out, as code | `gcp.gemini.DataSharingWithGoogleSetting` + `…Binding` | 8.20.0 |
 | Gemini enablement, as code | `gcp.gemini.GeminiGcpEnablementSetting` + `…Binding` | 8.20.0 |
 
-Layout: a standalone scala-cli project under `infra/gemini/`, **not** an sbt module. The
-`besom-gcp` jar is the whole GCP surface and `just build` must not pay for it. `CLAUDE.md` puts
-`infra/**` behind plan mode, and it would be the repo's first IaC, so it is a MIP before it is a
-branch.
+Layout: a standalone scala-cli project under `infra/gemini/`, **not** an sbt module, so the
+`besom-gcp` jar — the whole GCP surface — never loads into whichever repo's ordinary build or test
+run. This would be that repo's first IaC, so it is a MIP before it is a branch.
 
 ```scala
 // infra/gemini/project.scala — sketch, not compiled
@@ -112,10 +116,11 @@ import besom.api.gcp
             oauthTokenSecretVersion = v)))),
     opts(dependsOn = apis))
 
-  val link = gcp.developerconnect.GitRepositoryLink("marola",
+  val link = gcp.developerconnect.GitRepositoryLink("marola-app",
     gcp.developerconnect.GitRepositoryLinkArgs(
       location = "us-east1", parentConnection = conn.connectionId,
-      gitRepositoryLinkId = "marola", cloneUri = "https://github.com/h0ffmann/marola.git"))
+      gitRepositoryLinkId = "marola-app",
+      cloneUri = "https://github.com/marola-dev/marola-app.git"))
 
   val noSharing = gcp.gemini.DataSharingWithGoogleSetting("no-sharing",
     gcp.gemini.DataSharingWithGoogleSettingArgs(
@@ -130,7 +135,7 @@ import besom.api.gcp
 Two things Besom does not remove:
 
 - **The GitHub app install is a browser step.** The first `pulumi up` creates the connection
-  pending and exports `installationStates[0].actionUri`; open it, install the app on marola only;
+  pending and exports `installationStates[0].actionUri`; open it, install the app on marola-app only;
   the flow writes an OAuth token to Secret Manager. Set `appInstallationId` and
   `oauthSecretVersion` in stack config and run `up` again. Two runs, one click: the workflow
   Pulumi's own docs describe, not a Besom limit.
@@ -202,27 +207,33 @@ Follow-up for the MIP, not this PR: add `pulumi up` / `pulumi destroy` to
 - No paid resource: Developer Connect and Secret Manager are within their free tiers, Gemini Code
   Assist on GitHub is free during Preview, GCS state is cents at most. The billing account is a
   prerequisite, not a charge.
-- Private source goes to Google on every `/gemini review`. §3 step 5 / §4's
+- Source goes to Google on every `/gemini review`, repo visibility aside. §3 step 5 / §4's
   `DataSharingWithGoogleSetting` stop it being used to improve Google's products; it is still
   processed by Google. This is the go-ahead MIP-0060 §5.5 reserved for a human, and installing the
-  app is that go-ahead.
+  app is that go-ahead. The devkit's `gemini-review` (see above) sends the same diff to the same
+  Gemini API, under one call's worth of data, with no GCP project to install into.
 - Pre-GA: "limited support", and the quota, the free status and the install path have all
   changed once already (2025 → 2026).
 
 ## 8. The alternatives, as of 2026-09-21
 
+Checked when every marola repo was still private; since the split (MIP-0070) they are all public,
+which changes the "On a private repo" column below for any repo that adopts one of these instead.
+
 | Tool | On a private repo | Verdict |
 |---|---|---|
 | Gemini Code Assist for GitHub | Free, ≥ 100 reviews/day per installation (one source: 33/day individual edition); needs a GCP billing account on file | **This doc** |
+| marola-devkit's `gemini-review` (v0.4.0) | Free, ~20 reviews/day per model, one Gemini API key, no GCP project | Already built; not yet adopted by any marola repo |
 | Greptile Starter | Free, 50 credits/month (1 = one review), unlimited repos, 1 developer; indexes the codebase | Second opinion for the PRs that matter |
-| CodeRabbit | Free forever on public repos only; private = 14-day trial then $24/dev/month | No lasting free path |
-| Qodo Merge | No permanent free tier any more; 14-day trial then $30/month; OSS programme needs a public repo with 200+ stars | No |
-| Sourcery | Free on public repos; private $15/dev/month | No |
+| CodeRabbit | Free forever on public repos only; private = 14-day trial then $24/dev/month | Free now that marola's repos are public; not re-verified since the split |
+| Qodo Merge | No permanent free tier any more; 14-day trial then $30/month; OSS programme needs a public repo with 200+ stars | No; marola's repos don't have the stars |
+| Sourcery | Free on public repos; private $15/dev/month | Free now that marola's repos are public; not re-verified since the split |
 | GitHub Copilot code review | Not in Copilot Free; Pro $10/month, and each review also burns Actions minutes since 2026-06 | No |
 | PR-Agent (Apache-2.0) / open-code-review (MIP-0060) | $0 software, bring your own model | The model is the cost; GitHub Models — the free-in-Actions inference — was retired 2026-07-30; the Gemini API free tier trains on requests |
 
 ## Sources
 
+- marola-devkit [`CHANGELOG.md`](https://github.com/marola-dev/marola-devkit/blob/main/CHANGELOG.md) v0.4.0: the `gemini-review` reusable workflow
 - [Customize Gemini Code Assist behavior in GitHub](https://docs.cloud.google.com/gemini/docs/code-review/customize-repo-review): `config.yaml` schema
 - [Set up Gemini Code Assist on GitHub](https://docs.cloud.google.com/gemini/docs/code-review/set-up-code-assist-github)
 - [Use Gemini Code Assist on GitHub](https://docs.cloud.google.com/gemini/docs/code-review/use-code-assist-github): commands

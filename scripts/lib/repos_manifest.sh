@@ -4,8 +4,8 @@
 # the repo avoids adding one — the same trade scripts/issues.sh's manifest_json makes for
 # .github/labels.yml.
 
-# repos_manifest <file> -> lines of "name<TAB>mount" (mount defaulted to repos/<name>/ when
-# omitted, always slash-terminated). A file with only comments/blank lines yields nothing.
+# repos_manifest <file> -> lines of "name<TAB>source" (source empty for a submodule, or flake-lock,
+# MIP-0074 §5.3). A file with only comments/blank lines yields nothing.
 repos_manifest() {
   local file="$1"
   [ -f "$file" ] || { echo "repos_manifest: manifest not found: $file" >&2; return 1; }
@@ -17,19 +17,19 @@ repos_manifest() {
       if (line ~ /^".*"$/) line = substr(line, 2, length(line) - 2)
       return line
     }
-    function flush(   m) {
+    function flush() {
       if (name == "") return
-      m = mount
-      if (m == "") m = "repos/" name "/"
-      if (m !~ /\/$/) m = m "/"
-      printf "%s\t%s\n", name, m
-      name = ""; mount = ""
+      printf "%s\t%s\n", name, source
+      name = ""; source = ""
     }
     /^[ \t]*$/ || /^[ \t]*#/ { next }
     /^- name:/  { flush(); name = val($0); next }
-    /^  mount:/ {
-      if (name == "") { printf "repos_manifest: %s:%d: mount before any `- name:`\n", FILENAME, NR > "/dev/stderr"; _abort = 1; exit 1 }
-      mount = val($0); next
+    /^  mount:/ { printf "repos_manifest: %s:%d: mount: is gone, every repo mounts at 5-Repos/<name>/ (MIP-0074 §5.3)\n", FILENAME, NR > "/dev/stderr"; _abort = 1; exit 1 }
+    /^  source:/ {
+      if (name == "") { printf "repos_manifest: %s:%d: source before any `- name:`\n", FILENAME, NR > "/dev/stderr"; _abort = 1; exit 1 }
+      source = val($0)
+      if (source != "flake-lock") { printf "repos_manifest: %s:%d: source must be flake-lock, got: %s\n", FILENAME, NR, source > "/dev/stderr"; _abort = 1; exit 1 }
+      next
     }
     { printf "repos_manifest: %s:%d: unrecognised line: %s\n", FILENAME, NR, $0 > "/dev/stderr"; _abort = 1; exit 1 }
     END { if (!_abort) flush() }

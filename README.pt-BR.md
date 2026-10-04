@@ -84,8 +84,9 @@ projeto (uma "MIP"), para que você veja exatamente o que já está pronto e o q
 
 ## Para rodar em cinco minutos
 
-O marola é um espaço de trabalho com repositórios de propósito único; este aqui junta todos como
-submódulos git. O app que você roda é o [marola-app](https://github.com/marola-dev/marola-app):
+O marola é um conjunto de repositórios de propósito único; este aqui, o repositório guarda-chuva
+(*umbrella*), junta todos como submódulos git. O app que você roda é o
+[marola-app](https://github.com/marola-dev/marola-app):
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
@@ -101,19 +102,19 @@ Sem conta na nuvem, sem chave de API. Passo a passo com saída real (em inglês)
 
 ## Os repositórios
 
-| Repositório | O que é |
-|---|---|
-| [marola](https://github.com/marola-dev/marola) (este) | O espaço de trabalho: o jeito de trabalhar, os documentos de projeto ([MIPs](./docs/MIPs/README.md)), a lista de fases, o site de documentação em [docs.marola.dev](https://docs.marola.dev/), e cada repositório abaixo como submódulo |
-| [marola-app](https://github.com/marola-dev/marola-app) | O produto, em Scala 3 com [Kyo](https://getkyo.io/) na JVM: o pipeline, a nota e o veto de segurança, a linha de comando, o servidor de ferramentas MCP, a imagem de contêiner |
-| [marola-site](https://github.com/marola-dev/marola-site) | O mapa em [marola.dev](https://marola.dev/), refeito a cada 3 horas a partir da imagem do app |
-| [marola-corpus](https://github.com/marola-dev/marola-corpus) | O conhecimento sobre o mar, com fontes, de onde o marola tira as respostas |
-| [marola-ml](https://github.com/marola-dev/marola-ml) | Python offline: a compilação de prompts com DSPy, o portão de benchmark e o [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF), o modelo pequeno do próprio marola |
-| [marola-oods](https://github.com/marola-dev/marola-oods) | O Open Ocean Data Store: um arquivo aberto e versionado da balneabilidade das praias brasileiras (começando vazio) |
-| [marola-devkit](https://github.com/marola-dev/marola-devkit) | As ferramentas de desenvolvimento compartilhadas que todo repositório fixa numa versão: scripts, hooks, skills do Claude Code, workflows de CI |
+| Repositório | O que é | Documentação |
+|---|---|---|
+| [marola](https://github.com/marola-dev/marola) (este) | O repositório guarda-chuva (*umbrella*): o jeito de trabalhar, os documentos de projeto ([MIPs](./docs/MIPs/README.md)), a lista de fases, o site de documentação em [docs.marola.dev](https://docs.marola.dev/), e cada repositório abaixo como submódulo | [docs](https://docs.marola.dev/) |
+| [marola-app](https://github.com/marola-dev/marola-app) | O produto, em Scala 3 com [Kyo](https://getkyo.io/) na JVM: o pipeline, a nota e o veto de segurança, a linha de comando, o servidor de ferramentas MCP, a imagem de contêiner | [docs](https://docs.marola.dev/5-Repos/marola-app/) |
+| [marola-site](https://github.com/marola-dev/marola-site) | O mapa em [marola.dev](https://marola.dev/), refeito a cada 3 horas a partir da imagem do app | [docs](https://docs.marola.dev/5-Repos/marola-site/) |
+| [marola-corpus](https://github.com/marola-dev/marola-corpus) | O conhecimento sobre o mar, com fontes, de onde o marola tira as respostas | [docs](https://docs.marola.dev/5-Repos/marola-corpus/) |
+| [marola-ml](https://github.com/marola-dev/marola-ml) | Python offline: a compilação de prompts com DSPy, o portão de benchmark e o [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF), o modelo pequeno do próprio marola | [docs](https://docs.marola.dev/5-Repos/marola-ml/) |
+| [marola-oods](https://github.com/marola-dev/marola-oods) | O Open Ocean Data Store: um arquivo aberto e versionado da balneabilidade das praias brasileiras (começando vazio) | [docs](https://docs.marola.dev/5-Repos/marola-oods/) |
+| [marola-devkit](https://github.com/marola-dev/marola-devkit) | As ferramentas de desenvolvimento compartilhadas que todo repositório fixa numa versão: scripts, hooks, skills do Claude Code, workflows de CI | [docs](https://docs.marola.dev/5-Repos/marola-devkit/) |
 
 A nota e o veto de segurança são Scala determinístico; o modelo apenas interpreta e redige, e nunca
 derruba um veto. Toda a documentação técnica, de todos os repositórios, está em inglês em
-**[docs.marola.dev](https://docs.marola.dev/)**; veja também o [`PHILOSOPHY.md`](./PHILOSOPHY.md),
+**[docs.marola.dev](https://docs.marola.dev/)**; veja também o [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md),
 o [`CONTRIBUTING.md`](./CONTRIBUTING.md) e o [Código de Conduta](./CODE_OF_CONDUCT.md). Se você é um
 agente de IA: leia primeiro o [`AGENTS.md`](./AGENTS.md), depois o `AGENTS.md` do repositório que
 vai mudar.

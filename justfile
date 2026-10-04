@@ -74,6 +74,11 @@ quality-other:
     scripts/prepare-docs.sh --self-test
     scripts/fetch-api-docs.sh --self-test
     python3 scripts/strip_external_scripts.py --self-test
+    node scripts/docs_redirect_check.js
+    python3 scripts/lib/doc_links.py --self-test
+    python3 scripts/site_links_check.py --self-test
+    scripts/agents_repos_check.sh --self-test
+    scripts/agents_repos_check.sh
     workflow-runners
     python3 scripts/mip_graph.py --check
     agents-check
@@ -124,9 +129,9 @@ docs-serve:
 # Browser-session context — repomix.config.json, repomix-instruction.md
 # ---------------------------------------------------------------------
 
-# Pack README, AGENTS.md, marola-app's README and ARCHITECTURE, PHASES, FUTURE-WORK, the MIP skill
-# and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads the
-# marola-app submodule: `git submodule update --init` first.
+# Pack README, AGENTS.md, marola-app's README, ARCHITECTURE, REPOS, PHASES, FUTURE-WORK, the MIP
+# skill and all MIPs (no code) into .tmp/marola-context-mips.md and copy it to the clipboard. Reads
+# the marola-app submodule: `git submodule update --init` first.
 context-mips:
     mkdir -p .tmp && "$(just _repomix)" -c repomix.config.json
     # The MIP template is marola-devkit's mip skill, under .devkit, which repomix skips as gitignored.
@@ -142,13 +147,13 @@ context-mip mip:
     if [ -z "$num" ]; then echo "usage: just context-mip MIP-NNNN" >&2; exit 1; fi
     mip_file="$(ls docs/MIPs/MIP-"$num"-*.md 2>/dev/null | head -1)"
     if [ -z "$mip_file" ]; then echo "no docs/MIPs/MIP-$num-*.md found" >&2; exit 1; fi
-    include="\"README.md\", \"AGENTS.md\", \"PHILOSOPHY.md\", \"$mip_file\""
+    include="\"README.md\", \"AGENTS.md\", \"docs/3-Ways-of-working/PHILOSOPHY.md\", \"$mip_file\""
     tasks_file="docs/MIPs/MIP-$num.tasks.md"
     [ -f "$tasks_file" ] && include="$include, \"$tasks_file\""
     mkdir -p .tmp
     out=".tmp/marola-context-mip-MIP-$num.md"
     cfg=".tmp/repomix-mip-review-MIP-$num.config.json"
-    header="marola — MIP-$num review request pack for a reviewer outside this project's own coding agent (a different model, or a human). README, AGENTS.md, PHILOSOPHY.md plus this one MIP — no other code or docs. See the instruction section for what is being asked."
+    header="marola — MIP-$num review request pack for a reviewer outside this project's own coding agent (a different model, or a human). README, AGENTS.md, docs/3-Ways-of-working/PHILOSOPHY.md plus this one MIP — no other code or docs. See the instruction section for what is being asked."
     # A dedicated -c config: repomix auto-loads repomix.config.json (every MIP) and CLI --include
     # doesn't override it. printf, not a heredoc: an unindented heredoc body ends the recipe.
     printf '{\n  "$schema": "https://repomix.com/schemas/latest/schema.json",\n  "output": {\n    "filePath": "%s",\n    "style": "markdown",\n    "headerText": "%s",\n    "instructionFilePath": "repomix-instruction-mip-review.md"\n  },\n  "include": [%s],\n  "ignore": { "useGitignore": true, "useDefaultPatterns": true }\n}\n' "$out" "$header" "$include" > "$cfg"

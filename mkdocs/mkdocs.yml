@@ -11,20 +11,24 @@ edit_uri: edit/main/docs/
 docs_dir: docs
 site_dir: generated-docs
 
-# Any unresolved internal link across all 90 pages fails the build instead of shipping a 404.
-# It does NOT cover a missing docs/index.md: mkdocs builds that with exit 0 and no warning at all,
-# just without a landing page, so scripts/mkdocs.sh checks for the file itself. MIP-0064 §4.4.
+# Any unresolved internal link fails the build instead of shipping a 404. It does NOT cover a
+# missing index.md (prepare-docs writes it from the umbrella README): mkdocs builds that with exit 0
+# and no landing page, so scripts/mkdocs.sh checks for the file itself. MIP-0064 §4.4.
 strict: true
+# Anchor checks are info by default; at warn, strict fails a link to a heading that is not there.
+validation:
+  anchors: warn
 
 # Built and reachable by URL, just not listed: the task files are execution bookkeeping for a MIP,
-# linked from the MIP that owns them. 12 of them interleaved with 59 MIPs is noise in a sidebar.
+# linked from the MIP that owns them; a MIP's screenshots README is not a section.
 not_in_nav: |
-  MIPs/*.tasks.md
+  6-MIPs/*.tasks.md
+  6-MIPs/*/screenshots/*
 
 # Off the site entirely, not merely out of the sidebar. benchmarks/ is a ledger of kept runs and
 # superpowers/ is working notes for a skill — both are repo artefacts rather than documentation,
 # and grouping promoted them into top-level sections beside the four real ones. The two links into
-# benchmarks/ now point at GitHub, the same treatment AGENTS.md and PHILOSOPHY.md get.
+# benchmarks/ now point at GitHub, the same treatment AGENTS.md gets.
 exclude_docs: |
   benchmarks/
   superpowers/
@@ -33,13 +37,14 @@ exclude_docs: |
 # which is why MIP-0001…MIP-0064 order correctly (four-digit zero padding) and why adding a MIP
 # needs no edit here. MIP-0064 §4.4, decision 1.
 #
-# It is also why the guide directories carry `1-`…`4-` prefixes: with no nav, that ordering can
-# only come from the filenames, and mkdocs builds each section's label from its directory name —
-# so the digits are visible in the sidebar. That was the accepted trade. `MIPs/` needs no prefix:
-# digits sort before letters, so it lands last on its own.
+# It is also why the sections carry `1-`…`6-` prefixes (MIP-0074 §5.1): with no nav, that
+# ordering can only come from the filenames, and mkdocs builds each section's label from its
+# directory name, so the digits are visible in the sidebar. That was the accepted trade.
 
 theme:
   name: material
+  # overrides/404.html forwards the moved prefixes (MIP-0074 Appendix B).
+  custom_dir: overrides
   # c0-traced's mark, the maintainer's own traced artwork, used for both. Its README warns the
   # emblem goes to mush at 16px and points at g2-cut-wave's favicon instead; that was overridden
   # deliberately — the tab icon is the place to check it. The mark carries an opaque white disc
@@ -120,3 +125,21 @@ plugins:
         note: { fill: "#082f45", stroke: "#19ddf0", color: "#ffffff" }
         package: { fill: "#082f45", stroke: "#057b9e", color: "#ffffff" }
         background: { fill: "transparent" }
+  # Single page moves, old path to new (MIP-0074 Appendix B); prefix moves are overrides/404.html's.
+  - redirects:
+      redirect_maps:
+        marola-app.md: 5-Repos/marola-app/index.md
+        2-Building-marola/EFFECTS-MAP.md: 5-Repos/marola-app/1-design_effects.md
+        2-Building-marola/SCALA3-JDK-REVIEW.md: 5-Repos/marola-app/2-libraries_scala3-jdk.md
+        2-Building-marola/API.md: 5-Repos/marola-app/4-reference_api.md
+        3-Working-on-the-repo/AGENT-SKILLS.md: 3-Ways-of-working/AGENT-SKILLS.md
+        3-Working-on-the-repo/CI-CD.md: 3-Ways-of-working/CI-CD.md
+        3-Working-on-the-repo/DEV-FLOW.md: 3-Ways-of-working/DEV-FLOW.md
+        3-Working-on-the-repo/DIAGRAMS.md: 3-Ways-of-working/DIAGRAMS.md
+        3-Working-on-the-repo/ISSUE-FLOW.md: 3-Ways-of-working/ISSUE-FLOW.md
+        3-Working-on-the-repo/GEMINI-CODE-ASSIST.md: 4-Research-and-plans/GEMINI-CODE-ASSIST.md
+        3-Working-on-the-repo/SELF-DOCUMENTING.md: 4-Research-and-plans/SELF-DOCUMENTING.md
+        # Retired; the last commit that had it.
+        4-Research-and-plans/FABLE_REVIEW.md: https://github.com/marola-dev/marola/blob/70526c8d22ad785c7d895f9241e1f6839f215add/docs/4-Research-and-plans/FABLE_REVIEW.md
+        # Retired: the MIP index's verdicts are the ordering now.
+        4-Research-and-plans/ROADMAP.md: 6-MIPs/README.md
