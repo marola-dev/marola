@@ -58,7 +58,7 @@ has every rule).
   `../README.md` from a page the landing, `docs/adr/` the generated ADR index.
 - **Outside `docs/`, relative too.** A file or directory elsewhere in the repo (`AGENTS.md`,
   `scripts/x.sh`, `mkdocs/`) becomes a GitHub link at the built commit, and so does a page under
-  `exclude_docs` (`benchmarks/`, `superpowers/`). A repo's `AGENTS.md` rule to link such files by
+  `exclude_docs` (`benchmarks/`). A repo's `AGENTS.md` rule to link such files by
   GitHub URL is no longer needed: a relative link works on GitHub and is pinned on the site. An
   own-repo `github.com/marola-dev/<repo>/blob/<branch>/…` link is pinned to the built commit too.
 - **Across repos, absolute** `https://docs.marola.dev/…`, the umbrella included. A link that leaves

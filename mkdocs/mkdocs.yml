@@ -25,13 +25,10 @@ not_in_nav: |
   6-MIPs/*.tasks.md
   6-MIPs/*/screenshots/*
 
-# Off the site entirely, not merely out of the sidebar. benchmarks/ is a ledger of kept runs and
-# superpowers/ is working notes for a skill — both are repo artefacts rather than documentation,
-# and grouping promoted them into top-level sections beside the four real ones. The two links into
-# benchmarks/ now point at GitHub, the same treatment AGENTS.md gets.
+# Off the site entirely, not merely out of the sidebar: benchmarks/ is a ledger of kept runs, a
+# repo artefact rather than documentation. Links into it point at GitHub.
 exclude_docs: |
   benchmarks/
-  superpowers/
 
 # No `nav:`. mkdocs builds one from the file tree, sorted alphanumerically with index files first,
 # which is why MIP-0001…MIP-0064 order correctly (four-digit zero padding) and why adding a MIP
