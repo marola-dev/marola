@@ -113,22 +113,84 @@ magnitude inside the free tier, so the expected monthly cost is $0.
 The previous draft's Supabase risk goes away with it: there is no project to pause after a week
 idle, and no connection pooler mode to get right.
 
-### 4.4 The client: DuckDB, already in MIP-0056
+### 4.4 DuckDB from Scala
 
 MIP-0056 already adds `org.duckdb:duckdb_jdbc` to the `oods` module, and only there, for its
 Parquet build and views (MIP-0056.tasks task 4). DuckDB's `httpfs` extension reads and writes
-S3-compatible stores, and has an R2 secret type (`CREATE SECRET (TYPE r2, KEY_ID …, SECRET …,
-ACCOUNT_ID …)`) so `COPY … TO 'r2://<bucket>/…' (FORMAT parquet)` and `read_parquet('r2://…')`
-work on the bucket directly (DuckDB docs, cited from memory, not re-read; see Not checked). The
-same SQL runs on a local directory in tests by swapping the prefix.
+S3-compatible stores and has an R2 secret type, so the same SQL writes a local directory in tests
+and the bucket in CI:
 
-So this MIP needs **no new client**: no `kyo-sql`, no JDBC to Postgres, no AWS SDK. The Kyo
-RC5 → RC7 bump that the Supabase draft needed (marola-app#33) is no longer a prerequisite; it
-stands or falls on its own. `httpfs` is loaded from a file baked into the image at build time,
-never downloaded at run time (`SET autoinstall_known_extensions = false`).
+```sql
+LOAD '/app/duckdb/httpfs.duckdb_extension';            -- baked into the image, never downloaded
+CREATE SECRET r2 (TYPE r2, KEY_ID getenv('R2_ACCESS_KEY_ID'),
+                  SECRET getenv('R2_SECRET_ACCESS_KEY'), ACCOUNT_ID getenv('R2_ACCOUNT_ID'));
+COPY (SELECT * FROM sample_rows WHERE year = 2026 ORDER BY point_key, sampled_on, sampled_at)
+  TO 'r2://marola-oods/oods/parquet/ima-sc/samples/year=2026/samples.parquet' (FORMAT parquet);
+```
+
+Checked on DuckDB 1.5.5 (2026-10-04, Python build, same engine as the JDBC jar): `httpfs` loads
+from a local file with `autoinstall_known_extensions` and `autoload_known_extensions` off; the
+`TYPE r2` secret is created with scope `r2://`; and `COPY … TO 'r2://marola-oods/…'` becomes an
+HTTP `PUT` to `https://<account_id>.r2.cloudflarestorage.com/marola-oods/…` (it failed there only
+because this sandbox blocks the host). The extension's version must match the engine's exactly,
+so the image pins both: `duckdb_jdbc` 1.5.6.0 and `httpfs` v1.5.6, fetched at `docker build`
+time from `extensions.duckdb.org` (or the `duckdb-extension-httpfs` wheel on PyPI).
+
+The Scala libraries that can drive it, read from Maven Central on 2026-10-04:
+
+| Library | Version | Scala 3 | DuckDB | Fit here |
+|---|---|---|---|---|
+| **`org.duckdb:duckdb_jdbc`** (official) | 1.5.6.0 (2026-09-28) | Java, any | the engine itself: an 85 MB jar bundling `libduckdb_java` for linux amd64/arm64, macOS and Windows; `DuckDBAppender` for bulk inserts | **proposed**: plain JDBC at the Kyo boundary, SQL in resource files |
+| [duck4s](https://github.com/softinio/duck4s) | 0.1.4 (2026-03) | yes | a Scala 3 wrapper returning `Either`, with batch helpers | pins `duckdb_jdbc` 1.4.4.0, so it would need an override; 0.1.x and one maintainer. A thin layer the module can write itself |
+| [Magnum](https://github.com/AugustNagro/magnum) | 2.0.0-M3 | yes | generic JDBC: `sql"…"` interpolation, `DbCodec` derivation; its `DbType`s are Postgres, MySQL, H2, SQLite, ClickHouse, Oracle, not DuckDB | an option for typed reads (`oods status`); its repositories need a `DbType`, so writes stay plain SQL |
+| [Anorm](https://github.com/playframework/anorm) | 3.1.0 | yes | generic JDBC, string SQL with row parsers | works, adds little over raw JDBC for SQL that lives in files |
+| ScalaSql | 0.3.2 | yes | dialects Postgres, MySQL, SQLite, MsSql only | no DuckDB dialect |
+| `kyo-sql` | 1.0.0-RC7 | yes | native Postgres, MySQL, SQLite and Dolt drivers, no JDBC | cannot reach DuckDB |
+| doobie | 1.0.0-RC12 | yes | generic JDBC on cats-effect | reaches Kyo only through `kyo-cats`, pinned at RC5: two effect systems in one module |
+| Quill | 4.8.6 (2024-10) | yes | JDBC contexts, no DuckDB idiom | stale, macro-heavy |
+
+So the module uses `duckdb_jdbc` directly: the work is SQL statements over files (`read_json`,
+`read_csv`, `COPY … TO`), not row mapping, and the rows an adapter produces go in through
+`DuckDBAppender`. One in-process connection per run, opened and closed in a Kyo `Scope`, every
+call wrapped in `Sync.defer` (JDBC blocks). No connection pool: DuckDB is embedded, and one writer
+per run is the design (§5.4). This MIP needs **no new dependency** beyond MIP-0056's: no
+`kyo-sql`, no Postgres driver, no AWS SDK. marola-app is on Kyo 1.0.0-RC7 already.
 
 For the map's build, which has no Scala in it, any S3 client reads the bucket: the AWS CLI with
 `--endpoint-url` (preinstalled on GitHub-hosted runners) is the proposal.
+
+### 4.5 Fetching through the Brazil proxy
+
+The adapters fetch with the app's own `marola.http.Http`, a thin `java.net.http.HttpClient`
+wrapper with retries, timeouts and the `Http.withTransport` seam the tests already use (marola-app
+`core/src/main/scala/marola/http/Http.scala`). DuckDB does not fetch the agencies: IMA's feed is a
+`POST`, the INEA and INEMA bulletins are PDFs the Scala parsers read, and keeping every agency
+request in one client keeps the throttle and the "no agency host in a build" test in one place.
+
+The route to Brazil is marola-dev/marola-site#20's, reused:
+
+- `br-proxy.sh` starts a tinyproxy on the runner that forwards only `sources.json`'s
+  `brazil_only` hosts to the `MAROLA_BR_PROXY` upstream (the Oracle Always Free VM, behind a
+  password) and sends everything else direct.
+- The JVM is pointed at that local proxy with `-Dhttp.proxyHost/-Dhttps.proxyHost` (INEMA is plain
+  `http://`, so both) through `JDK_JAVA_OPTIONS`, and `HttpClient.newBuilder()` picks it up through
+  the default `ProxySelector`, with no code change.
+- The password stays in tinyproxy's upstream line, never in the JVM. That avoids a JDK trap:
+  `HttpClient` refuses Basic proxy authentication on `CONNECT` tunnels unless
+  `jdk.http.auth.tunneling.disabledSchemes` is cleared, which is a global setting.
+- DuckDB's writes to R2 must not take that route. `httpfs` uses its own `http_proxy` setting,
+  empty by default (checked on 1.5.5), and tinyproxy would send R2 direct in any case, since it is
+  not a `brazil_only` host.
+
+The HTTP clients considered for the adapters, read from Maven Central on 2026-10-04:
+
+| Client | Version | Proxy | Fit here |
+|---|---|---|---|
+| **`marola.http.Http`** (`java.net.http`) | JDK 25 | `ProxySelector` (system properties by default) | **proposed**: already used by every agency client, with retries and a test seam |
+| `kyo-http` | 1.0.0-RC7 | none found among its classes | the app's `Http` was kept over it on purpose; no proxy class in the RC7 jar |
+| sttp client4 | 4.0.27 | `BackendOptions.httpProxy` | no maintained Kyo backend (`kyo-sttp` stopped at 1.0-RC1) |
+| requests-scala | 0.9.3 | `proxy = (host, port)` per request | synchronous, no Kyo integration; a second client for no gain |
+| http4s Ember | 1.0.0-M48 | no built-in proxy support | cats-effect, as doobie above |
 
 ## 5. Design
 
@@ -353,6 +415,9 @@ rule still decides when a stored bulletin stops counting. `proper_ratio` is show
   bug in either can publish a wrong partition. The manifest's hashes make every write
   reproducible, and R2 object versioning is not available to fall back on (not checked), so a
   bad week is repaired by re-running the load with the fix.
+- **DuckDB weighs 85 MB in the image**, and `httpfs` must match the engine's version exactly:
+  a `duckdb_jdbc` bump without the extension fails at `LOAD`, so both move in one PR and the
+  integration test loads the extension the image ships.
 - **R2's S3 compatibility is not complete.** DuckDB's `httpfs` and the AWS CLI are both used
   against R2 widely; the integration test runs on MinIO, so the first live run is the real test.
 - **One account, one person.** The bucket and tokens belong to whoever creates them; tokens are
@@ -413,6 +478,17 @@ rule still decides when a stored bulletin stops counting. `proper_ratio` is show
 - `contracts/schema.sql` + `schema-check.sql` on PostgreSQL 16.14 (2026-10-02): all assertions pass;
   a negative control (unknowns counted) fails with `US2.1: got 3/4 of 5 = 0.60`. These are the
   checks §7 ports to DuckDB; the port itself is not done.
+- DuckDB 1.5.5 (Python wheel) with `httpfs` v1.5.5 from the `duckdb-extension-httpfs` wheel
+  (2026-10-04): loaded from a file with auto-install off; `CREATE SECRET (TYPE r2, …)` gives scope
+  `r2://`; `COPY … TO 'r2://marola-oods/test/t.parquet'` issued a `PUT` to
+  `https://<account_id>.r2.cloudflarestorage.com/marola-oods/test/t.parquet`; the `http_proxy*`
+  settings exist and are empty.
+- Maven Central (2026-10-04): every version in §4.4's and §4.5's tables; the `duckdb_jdbc`
+  1.5.6.0 jar's native libraries and `DuckDBAppender`; the dialect and `DbType` classes in the
+  ScalaSql 0.3.2 and Magnum 2.0.0-M3 jars; no proxy class in `kyo-http` 1.0.0-RC7; duck4s
+  0.1.4's pom pinning `duckdb_jdbc` 1.4.4.0.
+- marola-app `core/src/main/scala/marola/http/Http.scala` and marola-dev/marola-site#20's
+  description (the tinyproxy route), read 2026-10-04.
 - This MIP's PR thread (2026-10-04): the object-storage comparison (B2 vs R2: 10 GB free each, B2
   about half the storage price, R2 free egress) and the maintainer's choice.
 
@@ -421,10 +497,10 @@ rule still decides when a stored bulletin stops counting. `proper_ratio` is show
 - `developers.cloudflare.com` (blocked here): R2's free-tier limits, the storage price, whether
   enabling R2 needs a payment method, and object versioning come from the PR comparison and
   memory.
-- DuckDB's `TYPE r2` secret and `COPY … TO 'r2://…'` (duckdb.org blocked here): from memory;
-  checked against the pinned `duckdb_jdbc` when task 4 of MIP-0056 lands.
-- `httpfs` loaded offline from a file inside the JVM image; the GraalVM native image is not used
-  by the `oods` entrypoint.
+- A real write to R2: the sandbox blocks `*.r2.cloudflarestorage.com`, so §4.4's `COPY` stopped at
+  the TLS connect. The first integration run against the bucket is the test.
+- The JDBC jar loading `httpfs` from a file inside the JVM image (checked on the Python build of
+  the same engine); the GraalVM native image is not used by the `oods` entrypoint.
 - MinIO image tags and `testcontainers-scala` versions: pick at implementation.
 - Every agency host (`*.gov.br` blocked); the size estimates in §4.3 and §5.4 are arithmetic from
   MIP-0056's counts, not measured.
