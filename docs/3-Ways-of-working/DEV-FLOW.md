@@ -20,26 +20,27 @@ umbrella's `docs/MIPs/`; the code they change lives in the repo each task names.
 spans repos also follows [WORKING-ACROSS-REPOS](WORKING-ACROSS-REPOS.md).
 
 Sessions: one per MIP for planning, one per task for execution (`/clear`, `/rename
-mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-cost` map to PRs.
+mip-nnnn/k-slug`), one per review. That is what makes `/usage` and `just claude-cost` (umbrella) map
+to PRs.
 
 ## 1. From an idea to an issue, then a MIP (Draft)
 
 1. **File the issue first** — the idea is not work until it is one, and the tier decides what
    follows: tier 1 (bug, chore, docs) and tier 2 (small enhancement, the issue body *is* the spec)
    stop here and go straight to §4; only tier 3 (a new data source, a scoring change, a new
-   integration, anything paid) continues into a MIP, as a **MIP proposal** issue that is
-   relabelled rather than replaced when the MIP PR opens. Filing is a human's act: the `/marola-devkit:triage`
+   integration, anything paid) continues into a MIP, as a **MIP proposal** issue that is relabelled
+   rather than replaced when the MIP PR opens. Filing is a human's act: the `/marola-devkit:triage`
    skill drafts the body and runs the readiness check, a person presses the button
-   ([ISSUE-FLOW](ISSUE-FLOW.md), MIP-0063 §5.6). An agent picks work up from `just issue-queue` and takes
-   it with `just issue-claim <n>`; it may not start on an issue without `agent-ready`.
+   ([ISSUE-FLOW](ISSUE-FLOW.md), MIP-0063 §5.6). An agent picks work up from `just issue-queue` and
+   takes it with `just issue-claim <n>`; it may not start on an issue without `agent-ready`.
 2. **Refine the idea**: superpowers `brainstorming` (activates on "let's plan", "I have an idea"):
    Socratic questions until MIP §1-§3 (summary, motivation, user-visible change) have answers.
    Voice notes and chat pastes go through `just context-mips` + a browser session first
    ([below](#voice-notes-into-mips-in-a-browser-session)).
-3. **Write the MIP**: the `/marola-devkit:mip` skill: next number from `docs/MIPs/README.md`, the template,
-   every external claim fetched and dated, what was *not* checked said so, open questions listed.
-   Add the index row. Link it from [FUTURE-WORK](../4-Research-and-plans/FUTURE-WORK.md) if it
-   closes something.
+3. **Write the MIP**: the `/marola-devkit:mip` skill: next number from `docs/MIPs/README.md`, the
+   template, every external claim fetched and dated, what was *not* checked said so, open questions
+   listed. Add the index row. Link it from [FUTURE-WORK](../4-Research-and-plans/FUTURE-WORK.md) if
+   it closes something.
 4. **Open it as its own PR**, status **Draft**. A MIP is never built in the same change (`mip`
    skill, step 8). The PR body ends with a `Cost:` line like any other.
 
@@ -168,26 +169,28 @@ hand-written body is left alone; delete the marker line to stop regeneration). I
 title that is still the branch name with the first commit's subject. Forks and bot PRs are skipped.
 
 The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape: bold labels, a compact
-MIP/Tested/Cost table, no `#` headings, one screen for a typical two-commit PR; the PR title is
-the first commit's subject on the branch, capped at 70 characters (the devkit's [`scripts/lib/uprd_title.sh`](https://github.com/marola-dev/marola-devkit/blob/v0.4.1/scripts/lib/uprd_title.sh)) so
-it stays skimmable. `just uprd`/`just uprds` print a warning when a title had to be cut, worth a
+MIP/Tested/Cost table, no `#` headings, one screen for a typical two-commit PR; the PR title is the
+first commit's subject on the branch, capped at 70 characters (the devkit's
+[`scripts/lib/uprd_title.sh`](https://github.com/marola-dev/marola-devkit/blob/v0.4.1/scripts/lib/uprd_title.sh))
+so it stays skimmable. `just uprd`/`just uprds` print a warning when a title had to be cut, worth a
 manual retitle if the cut reads awkwardly.
 
 Cost: a measured figure is always preferred over an estimate. One session per task → `/usage` or
-`just claude-cost`. One session for several tasks → `just cost-split MIP-NNNN` splits the session
-log by commit time (subagent transcripts included: `<session>/subagents/*.jsonl`) and prints the
-trailer per branch; amend with `GIT_COMMITTER_DATE` preserved so the split stays stable, re-stack,
-force-push with lease, `just uprds`. Nothing logged at all for a commit (a subagent whose worktree
-session never re-attached, a commit from another machine) → `just cost-fill` (or plain `just pr`)
-adds `cost-split --estimate`'s diff-size estimate instead, always labelled `est.` so it
+`just claude-cost` (umbrella). One session for several tasks → `just cost-split MIP-NNNN` splits the
+session log by commit time (subagent transcripts included: `<session>/subagents/*.jsonl`) and prints
+the trailer per branch; amend with `GIT_COMMITTER_DATE` preserved so the split stays stable,
+re-stack, force-push with lease, `just uprds`. Nothing logged at all for a commit (a subagent whose
+worktree session never re-attached, a commit from another machine) → `just cost-fill` (or plain
+`just pr`) adds `cost-split --estimate`'s diff-size estimate instead, always labelled `est.` so it
 reads differently from a measured number at a glance.
 
 ## 5. Final review — only when asked
 
-Nothing reviews a PR automatically. (Proposed change: [MIP-0060](../MIPs/MIP-0060-open-code-review-on-ready.md),
-an advisory local-model pass when a PR is marked ready.) Reviews start when the human says so ("review the stack",
-"claude review #21", `/code-review`). Three ways, cheapest first; all of them review **one PR
-against its own base**, bottom of the stack first, because that is the diff a reviewer sees.
+Nothing reviews a PR automatically. (Proposed change:
+[MIP-0060](../MIPs/MIP-0060-open-code-review-on-ready.md), an advisory local-model pass when a PR is
+marked ready.) Reviews start when the human says so ("review the stack", "claude review #21",
+`/code-review`). Three ways, cheapest first; all of them review **one PR against its own base**,
+bottom of the stack first, because that is the diff a reviewer sees.
 
 1. **superpowers `requesting-code-review`**: in a fresh session, per PR: dispatch the reviewer
    subagent with `BASE_SHA = git rev-parse origin/<base branch>`, `HEAD_SHA = git rev-parse
@@ -196,16 +199,18 @@ against its own base**, bottom of the stack first, because that is the diff a re
    Critical and Important before merging, note Minor in the PR. This is the default for "final
    review using superpowers".
 2. **`/code-review <PR#>`** (built-in; `--comment` posts the findings as inline PR comments) or the
-   `code-review` plugin's `/code-review` (five parallel agents, ≥ 80-confidence findings only,
-   one comment on the PR). Both look for `CLAUDE.md`; in every marola repo it imports `AGENTS.md` for
+   `code-review` plugin's `/code-review` (five parallel agents, ≥ 80-confidence findings only, one
+   comment on the PR). Both look for `CLAUDE.md`; in every marola repo it imports `AGENTS.md` for
    Claude Code sessions and tells any tool reading it as plain text to open `AGENTS.md`. The
    plugin's confidence scorer only credits rules it can read, so keep that instruction there.
 3. **`/code-review ultra <PR#>`**: the multi-agent cloud review, for the riskiest PR of a stack
-   (scoring, safety text, a new data source). User-triggered and billed; never launched by the agent.
+   (scoring, safety text, a new data source). User-triggered and billed; never launched by the
+   agent.
 4. **`/gemini review`** as a PR comment, in a repo that installed Gemini Code Assist on GitHub
-   (marola-app: its [code review](https://docs.marola.dev/5-Repos/marola-app/3-development/#code-review)
-   setup). Free, advisory, on request only, and skips `.github/workflows/**` by design. Source goes
-   to Google, so a human installs it, never an agent.
+   (marola-app: its
+   [code review](https://docs.marola.dev/5-Repos/marola-app/3-development/#code-review) setup).
+   Free, advisory, on request only, and skips `.github/workflows/**` by design. Source goes to
+   Google, so a human installs it, never an agent.
    [GEMINI-CODE-ASSIST](../4-Research-and-plans/GEMINI-CODE-ASSIST.md) is the evaluation.
 
 Author side: superpowers `receiving-code-review`: verify each finding before implementing it,
@@ -217,22 +222,20 @@ is green; MIP status right.
 ## 6. Merge, restack, finish
 
 - Approve per PR (GitHub reviews are per PR), then merge either one at a time or the whole stack
-  at once: `just stack-merge <stack#> --squash` merges every PR of the stack bottom-up in one
+  at once: `gh stack merge <stack#> --squash` merges every PR of the stack bottom-up in one
   all-or-nothing operation (`gh stack merge`), no restack in between.
 - One at a time: **bottom-up**, squash (the repo's habit). GitHub retargets the next PR to `main`
   when the merged branch is deleted; the commits still need a rebase:
   `stack restack` on the next branch, or `just stack-sync MIP-NNNN` for the whole
   stack (it adopts the stack from GitHub first; `gh stack link` keeps no local state).
 - A task branch's own commit carries `Closes #N` for the issue its `MIP-NNNN.tasks.md` row links
-  (`cost-fill`, run by `stack pr` — itself run by `just pr`, or directly per
-  step 2 of `/marola-devkit:mip-tasks` — writes it above the trailers), so the
-  squash-merge commit on `main` closes the issue and the board moves it to Done. The PR body
-  carries the same line too (`uprd` copies it there so the link shows on GitHub), but in this
-  repo the body-only line did not close anything: #514–#519 carried it and their issues
-  #502–#507 stayed open past merge (cause unknown, #524), while #511/#512 closed on a commit-body
-  one. `TASK_PARTIAL=1 just pr` skips the line for a task that only delivers part of its row,
-  before the PR (and its `task-partial` label) exist; the issue stays open. A PR merged into
-  another task branch closes nothing regardless; GitHub honours the keyword only on the default
+  (`cost-fill`, run by `stack pr` — itself run by `just pr`, or directly per step 2 of
+  `/marola-devkit:mip-tasks` — writes it above the trailers), so the squash-merge commit on `main`
+  closes the issue and the board moves it to Done. The PR body carries the same line too (`uprd`
+  copies it there so the link shows on GitHub), but the body-only line does not close the issue; the
+  commit-body one does. `TASK_PARTIAL=1 just pr` skips the line for a task that only delivers part
+  of its row, before the PR (and its `task-partial` label) exist; the issue stays open. A PR merged
+  into another task branch closes nothing regardless; GitHub honours the keyword only on the default
   branch.
 - `stack status` / `just stack-view` until every PR is merged.
 - Last merge: superpowers `finishing-a-development-branch`: full suite green, delete the task
@@ -243,55 +246,58 @@ is green; MIP status right.
 
 ### Dependency PRs
 
-dependabot (each repo's `.github/dependabot.yml`) and, in marola-app, scala-steward
-(its `.github/workflows/scala-steward.yml`) each open their own one-off PR per bump. Left alone, ten open bumps cost ten separate CI runs to
-land. `just deps-stack` chains the open **dependabot** PRs (`--include-steward` adds
-scala-steward's, once its author identity on this repo is confirmed; see
-`deps-stack`'s header) into one `deps/<date>/k-slug` stack, github-actions PRs first
-then pip, same shape as a MIP's task branches: run it weekly, or right before a release, rather
-than merging bumps one at a time. A PR's head branch can't be moved after it's opened, so the
-default (and only implemented) path opens one *new* PR per chain branch, stacked on the previous,
-and closes each original dependabot PR with a pointer comment. dependabot's own branches are
-never touched, so an abandoned stack doesn't stop dependabot from re-opening or updating them
-normally. The whole chain is built in a dedicated worktree, `.tmp/wt-deps-stack`, never your own
-checkout: a run of `just deps-stack` (`status`, `clean`, `--resume`, or a conflict mid-run
-included) never switches your branch or touches your index. Two dependency bumps landing on
-adjacent lines of the same file (the only conflict shape dependabot produces) resolve
-themselves: `*requirements*.txt` keeps the higher lower bound per package
-(the devkit's [`scripts/lib/req_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.4.1/scripts/lib/req_merge.py)), a workflow's `uses: owner/action@vN` steps keep the higher version
-per action ([`scripts/lib/uses_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.4.1/scripts/lib/uses_merge.py), the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0`
-case); anything else still stops the script
-with the branch left mid-cherry-pick in that worktree and prints the exact `cd .tmp/wt-deps-stack
-&& git status` / resolve / `git cherry-pick --continue` / `just deps-stack --resume` steps. Once
-the chain is up, it's a normal stack: `gh stack link` runs automatically, `just stack-merge
-<stack#> --squash` merges it bottom-up in one CI run instead of one-per-bump, and `just deps-stack
-clean` deletes the chain branches (and the worktree) once every stacked PR shows MERGED.
+dependabot (each repo's `.github/dependabot.yml`) and, in marola-app, scala-steward (its
+`.github/workflows/scala-steward.yml`) each open their own one-off PR per bump. Left alone, ten open
+bumps cost ten separate CI runs to land. `just deps-stack` chains the open **dependabot** PRs
+(`--include-steward` adds scala-steward's, once its author identity on marola-app is confirmed; see
+`deps-stack`'s header) into one `deps/<date>/k-slug` stack, github-actions PRs first then pip, same
+shape as a MIP's task branches: run it weekly, or right before a release, rather than merging bumps
+one at a time. A PR's head branch can't be moved after it's opened, so the default (and only
+implemented) path opens one *new* PR per chain branch, stacked on the previous, and closes each
+original dependabot PR with a pointer comment. dependabot's own branches are never touched, so an
+abandoned stack doesn't stop dependabot from re-opening or updating them normally. The whole chain
+is built in a dedicated worktree, `.tmp/wt-deps-stack`, never your own checkout: a run of `just
+deps-stack` (`status`, `clean`, `--resume`, or a conflict mid-run included) never switches your
+branch or touches your index. Two dependency bumps landing on adjacent lines of the same file (the
+only conflict shape dependabot produces) resolve themselves: `*requirements*.txt` keeps the higher
+lower bound per package (the devkit's
+[`scripts/lib/req_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.4.1/scripts/lib/req_merge.py)),
+a workflow's `uses: owner/action@vN` steps keep the higher version per action
+([`scripts/lib/uses_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.4.1/scripts/lib/uses_merge.py),
+the `actions/checkout@v7`-next-to-`hadolint-action@v3.5.0` case); anything else still stops the
+script with the branch left mid-cherry-pick in that worktree and prints the exact `cd
+.tmp/wt-deps-stack && git status` / resolve / `git cherry-pick --continue` / `just deps-stack
+--resume` steps. Once the chain is up, it's a normal stack: `gh stack link` runs automatically, `gh
+stack merge <stack#> --squash` merges it bottom-up in one CI run instead of one-per-bump, and `just
+deps-stack clean` deletes the chain branches (and the worktree) once every stacked PR shows MERGED.
 
 ### MIP draft PRs
 
-Drafts pile up the same way bumps do: one `docs/mip-NNNN-*` branch per proposal, each open for
-days, and they fight over one line: every draft appends its row to `docs/MIPs/README.md` at the
-same place, so the moment one merges the rest conflict there. `just mip-stack` chains the open
-draft PRs (any PR whose head is `docs/mip-*` or that adds a `docs/MIPs/MIP-NNNN-*.md`; task
-branches `mip-NNNN/k-*` are left to `stack`) into one `mips/<date>/k-slug` stack
-ordered by MIP number, the exact shape `just deps-stack` gives dependabot: built in its own
-worktree (`.tmp/wt-mip-stack`), one new PR per chain branch stacked on the previous, the original
-PR closed with a pointer, `gh stack link` at the end, `just mip-stack status` / `clean` /
-`--resume` / `--skip` / `--dry-run` as for deps. The index-row conflict resolves itself
-(the devkit's [`scripts/lib/mip_index_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.4.1/scripts/lib/mip_index_merge.py): both sides' rows, one per MIP, in number order; the same row
-edited differently on both sides is a real edit and stops for a human). A draft that merged
-another draft's branch to stay mergeable is fine: merge commits are skipped and commits the
-chain already carries are dropped by patch-id. Then `just stack-merge <stack#> --squash` lands
-the lot bottom-up.
+Drafts pile up the same way bumps do: one `docs/mip-NNNN-*` branch per proposal, each open for days,
+and they fight over one line: every draft appends its row to `docs/MIPs/README.md` at the same
+place, so the moment one merges the rest conflict there. `just mip-stack` chains the open draft PRs
+(any PR whose head is `docs/mip-*` or that adds a `docs/MIPs/MIP-NNNN-*.md`; task branches
+`mip-NNNN/k-*` are left to `stack`) into one `mips/<date>/k-slug` stack ordered by MIP number, the
+exact shape `just deps-stack` gives dependabot: built in its own worktree (`.tmp/wt-mip-stack`), one
+new PR per chain branch stacked on the previous, the original PR closed with a pointer, `gh stack
+link` at the end, `just mip-stack status` / `clean` / `--resume` / `--skip` / `--dry-run` as for
+deps. The index-row conflict resolves itself (the devkit's
+[`scripts/lib/mip_index_merge.py`](https://github.com/marola-dev/marola-devkit/blob/v0.4.1/scripts/lib/mip_index_merge.py):
+both sides' rows, one per MIP, in number order; the same row edited differently on both sides is a
+real edit and stops for a human). A draft that merged another draft's branch to stay mergeable is
+fine: merge commits are skipped and commits the chain already carries are dropped by patch-id. Then
+`gh stack merge <stack#> --squash` lands the lot bottom-up.
 
 ## 7. Overnight/unattended runs
 
-`/marola-devkit:mip-solve-perpetual` works through a task file unattended. Its mechanics, the
-usage guard (and what the `heavy-usage` plugin can and cannot stop) and the stop conditions are on
-the devkit's [runners](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_runners/#unattended-mip-runs)
-page; the skill itself is on its [plugin](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_plugin/)
-page. Merging stays a human act: every repo's `.claude/settings.json` should deny `gh pr merge`,
-`gh pr close`, `gh stack merge`, `gh stack unstack` and `gh stack delete`; check it before a run.
+`/marola-devkit:mip-solve-perpetual` works through a task file unattended. Its mechanics, the usage
+guard (and what the `heavy-usage` plugin can and cannot stop) and the stop conditions are on the
+devkit's
+[runners](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_runners/#unattended-mip-runs)
+page; the skill itself is on its
+[plugin](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_plugin/) page. Merging stays a
+human act: every repo's `.claude/settings.json` should deny `gh pr merge`, `gh pr close`, `gh stack
+merge`, `gh stack unstack` and `gh stack delete`; check it before a run.
 
 ## 8. The docs site
 

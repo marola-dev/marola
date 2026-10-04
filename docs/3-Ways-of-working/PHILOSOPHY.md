@@ -1,8 +1,9 @@
 # Philosophy
 
-[`AGENTS.md`](../../AGENTS.md) holds the rules; this page holds the reasons, for every marola repo. It exists because the choices below
-look unrelated from the outside (a beach app, LLMs, a Scala 3 build, Nix, a `justfile`, a
-sandbox for the coding agent, design docs before code), and they are one decision made six times.
+[`AGENTS.md`](../../AGENTS.md) holds the rules; this page holds the reasons, for every marola repo.
+It exists because the choices below look unrelated from the outside (a beach app, LLMs, a Scala 3
+build, Nix, a `justfile`, a sandbox for the coding agent, design docs before code), and they are one
+decision made six times.
 
 ## The one decision
 
@@ -27,32 +28,36 @@ something with real stakes, and the meeting has three standing pillars. They are
 delivered features; each is at a different stage, and the stages are named below rather than
 smoothed over.
 
-**Pillar 1: build marola with agents, and keep that portable.** The code here is written
-day-to-day through an agentic coder (Claude Code, currently), and the constraints that makes
-necessary are the repository's most finished work. `AGENTS.md` is the rulebook, deliberately
-agent-agnostic prose rather than one vendor's config format; MIP-0011 (Implemented,
-ultrareview-verified) turned the rules that must not be optional into things the harness enforces:
-hooks, a shared permission allowlist, path-scoped rules, subagents, skills; [DEV-FLOW](DEV-FLOW.md)
-is the loop from idea to merged PR. "Open to other coders" is not a wish either: MIP-0013 (Draft) is a
-bounded OpenCode tryout that states what replacing Claude Code would actually cost, down to the one
-hard dependency (marola-devkit's `cost-split` reads Claude Code's own session logs). This file and the
-MIP discipline around it are the pillar's output, not a description of it.
+**Pillar 1: build marola with agents, and keep that portable.** The code here is written day-to-day
+through an agentic coder (Claude Code, currently), and the constraints that makes necessary are the
+repository's most finished work. `AGENTS.md` is the rulebook, deliberately agent-agnostic prose
+rather than one vendor's config format; MIP-0011 (Implemented, ultrareview-verified) turned the
+rules that must not be optional into things the harness enforces: hooks, a shared permission
+allowlist, path-scoped rules, subagents, skills; [DEV-FLOW](DEV-FLOW.md) is the loop from idea to
+merged PR. "Open to other coders" is not a wish either: MIP-0013 (Draft) is a bounded OpenCode
+tryout that states what replacing Claude Code would actually cost, down to the one hard dependency
+(marola-devkit's `cost-split` reads Claude Code's own session logs). This file and the MIP
+discipline around it are the pillar's output, not a description of it.
 
 **Pillar 2: models reasoning over open water, with the deterministic parts kept deterministic.**
 Built today: marola-app's pipeline computes the score, the deductions and the bathing-water veto in
-plain Scala ([heuristics](https://docs.marola.dev/5-Repos/marola-app/1-design_heuristics/#the-score)), and a reviewer is a second,
-independently prompted pass that grades the first model's sentence and may rewrite it
-([two uses of AI](https://docs.marola.dev/5-Repos/marola-app/1-design/#two-uses-of-ai-kept-apart)). That is already the "LLM as judge over
-non-fuzzy APIs" shape: Open-Meteo, Overpass and the bathing-water agency are read literally; the
-model interprets and phrases them and can never overturn a veto. Not built: anomaly and hazard
-detection over the same series, rough-sea and storm-surge events, heavy rain, the water-related
-emergency nobody subscribes to a beach app for. It is proposed in
+plain Scala
+([heuristics](https://docs.marola.dev/5-Repos/marola-app/1-design_heuristics/#the-score)), and a
+reviewer is a second, independently prompted pass that grades the first model's sentence and may
+rewrite it
+([two uses of AI](https://docs.marola.dev/5-Repos/marola-app/1-design/#two-uses-of-ai-kept-apart)).
+That is already the "LLM as judge over non-fuzzy APIs" shape: Open-Meteo, Overpass and the
+bathing-water agency are read literally; the model interprets and phrases them and can never
+overturn a veto. Not built: anomaly and hazard detection over the same series, rough-sea and
+storm-surge events, heavy rain, the water-related emergency nobody subscribes to a beach app for. It
+is proposed in
 [FUTURE-WORK §9.2](../4-Research-and-plans/FUTURE-WORK.md#92-a-fourth-agent-catastrophehazard-detection-competing-with-public-alerts),
-with no MIP written yet; its own sketch puts a human-confirmation gate on alerting ahead of any code, since it would be the first
-thing marola does unasked. Forecasting proper is parked with an honest verdict attached: MIP-0007
-(Draft, Phase 4) covers time-series foundation models, TimeGPT alongside the open-weight Chronos,
-TimesFM and Moirai, and concludes they are the wrong tool for waves and wind, where Open-Meteo's
-physics models win, and the right one only for the series marola itself accumulates.
+with no MIP written yet; its own sketch puts a human-confirmation gate on alerting ahead of any
+code, since it would be the first thing marola does unasked. Forecasting proper is parked with an
+honest verdict attached: MIP-0007 (Draft, Phase 4) covers time-series foundation models, TimeGPT
+alongside the open-weight Chronos, TimesFM and Moirai, and concludes they are the wrong tool for
+waves and wind, where Open-Meteo's physics models win, and the right one only for the series marola
+itself accumulates.
 
 **Pillar 3: models of the ocean domain, if affordable.** The management half exists first on
 purpose: MIP-0010 (Implemented, v1, local) makes MLflow the ledger for benchmark runs, prompt
@@ -60,9 +65,10 @@ compiles and pipeline traces, so a model change is compared on recorded params a
 than on impression. The model half is MIP-0025 (Draft): `marola-sea-1.0`, a 3B base post-trained in
 three layers and served through Ollama, where marola-ml's
 [fine-tune](https://docs.marola.dev/5-Repos/marola-ml/3-development_finetune/) Tier 1 has run and
-Tier 2 is written, not run, for want of a GPU. Its own status line is `do when X lands`, and the X is money: compute is
-the gate, the same human go-ahead `AGENTS.md` requires before any paid resource applies to a rented
-GPU as much as to a cloud one, and whatever comes out still has to clear marola-ml's existing
+Tier 2 is written, not run, for want of a GPU. Its own status line is `do when X lands`, and the X
+is money: compute is the gate, the same human go-ahead `AGENTS.md` requires before any paid resource
+applies to a rented GPU as much as to a cloud one, and whatever comes out still has to clear
+marola-ml's existing
 [benchmark gate](https://docs.marola.dev/5-Repos/marola-ml/3-development_benchmark-gate/) rather
 than bypass it.
 
@@ -81,12 +87,13 @@ LLM inside a constrained pipeline is genuinely better than either alone.
 
 Two jobs, and only two: turn a ranked row of numbers into one or two sentences, and answer ocean
 questions from a sourced corpus with citations. Everything safety-relevant (the score, the water
-veto, the darkness rule, the rough-sea deduction) is plain Scala in marola-app's `scoring`
-package, unit-tested, outside the prompt (its [query synthesis](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#query-synthesis)
+veto, the darkness rule, the rough-sea deduction) is plain Scala in marola-app's `scoring` package,
+unit-tested, outside the prompt (its
+[query synthesis](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#query-synthesis)
 design; [LIMITATIONS](../1-Using-marola/LIMITATIONS.md)). A second, independently compiled reviewer
 pass grades the first model's sentence and can rewrite it. Lore shown to a user is a curated file
-with a source per entry, shown verbatim; the model never gets to invent a fact about the sea.
-The rule in the `/marola-devkit:mip` skill says it shortest: *no unsourced text reaches a user*.
+with a source per entry, shown verbatim; the model never gets to invent a fact about the sea. The
+rule in the `/marola-devkit:mip` skill says it shortest: *no unsourced text reaches a user*.
 
 ## Why Scala 3 on the JVM
 
@@ -94,9 +101,10 @@ Because the compiler is the cheapest reviewer an agent will ever have, and Scala
 reviewer be strict without being verbose:
 
 - `-language:strictEquality`, `-Wvalue-discard`, `-Wnonunit-statement` promoted to errors
-  (marola-app's [compiler flags](https://docs.marola.dev/5-Repos/marola-app/2-libraries_scala3-jdk/#27-compiler-and-tooling-flags)): a comparison between unrelated types, a dropped result, a statement whose value
-  was meant to be used: all compile errors. An agent that writes such code finds out in seconds,
-  not in production.
+  (marola-app's
+  [compiler flags](https://docs.marola.dev/5-Repos/marola-app/2-libraries_scala3-jdk/#27-compiler-and-tooling-flags)):
+  a comparison between unrelated types, a dropped result, a statement whose value was meant to be
+  used: all compile errors. An agent that writes such code finds out in seconds, not in production.
 - `enum` + exhaustive `match` for every expected failure mode; exceptions only for the genuinely
   unexpected. A new case the model forgot to handle is a warning-as-error, not a runtime surprise.
 - Direct-style Kyo effects (`Sync`, `Abort`, `Async`) only at the I/O boundary, so the decision
@@ -126,13 +134,14 @@ stays out of the runtime path on purpose.
 
 ## Why Nix
 
-A dev shell that is the same on every machine is the first constraint an agent meets. Every repo
-has a `flake.nix`, and the shared tools come from marola-devkit's. marola-app's pins JDK 25 (Kyo's artifacts will not load on 24: a real `UnsupportedClassVersionError`, not a
-hypothetical), sbt on that JDK, scala-cli, coursier, `just`, Python for the offline steps,
-`gh`; the lint toolchain (hadolint, actionlint, shellcheck, ruff, …) comes from `labs/lint` in
-h0ffmann/nix-config as one flake input. `nix develop` is the whole setup; there is no "works on my machine" left for the
-model to reason about, and no page of install instructions for it to skip. CI, the Docker `dev`
-image and the laptop run the same shell.
+A dev shell that is the same on every machine is the first constraint an agent meets. Every repo has
+a `flake.nix`, and the shared tools come from marola-devkit's. marola-app's pins JDK 25 (Kyo's
+artifacts will not load on 24: a real `UnsupportedClassVersionError`, not a hypothetical), sbt on
+that JDK, scala-cli, coursier, `just`, Python for the offline steps, `gh`; the lint toolchain
+(hadolint, actionlint, shellcheck, ruff, …) comes from `labs/lint` in h0ffmann/nix-config as one
+flake input. `nix develop` is the whole setup; there is no "works on my machine" left for the model
+to reason about, and no page of install instructions for it to skip. CI, the Docker `dev` image and
+the laptop run the same shell.
 
 ## Why a `justfile`
 
@@ -141,8 +150,8 @@ here, and build, test, benchmark and e2e recipes in the repos that have them: ea
 discoverable name for a command that would otherwise be reconstructed from memory, slightly
 differently each time. `just --list` is documentation that cannot go stale, and a recipe is where
 the environment quirks live once (the `XDG_RUNTIME_DIR` override sbt needs inside the sandbox is at
-the top of marola-app's justfile, with the reason). When the agent must run something, the question is "which recipe", not
-"which flags".
+the top of marola-app's justfile, with the reason). When the agent must run something, the question
+is "which recipe", not "which flags".
 
 ## Why ai-jail
 
@@ -158,11 +167,11 @@ code or spent budget. It is the same idea one layer down: give the mistake a wal
 A Marola Improvement Proposal (`docs/MIPs/`) is written before a non-trivial change is built, with
 every external claim fetched and dated and every unverified one parked in "Open questions". The
 agent is a fast writer of plausible designs; the MIP template forces the plausible to become the
-checked. The `Cost:` trailer on every commit and PR (`AGENTS.md`) exists for the same reason at
-the meta level: an agent's work is cheap to ask for and not free to run, and a repository that
-records what a feature cost in tokens learns what to ask for next. [DEV-FLOW](DEV-FLOW.md) is the
-loop end to end: idea → MIP → acceptance → tasks → small stacked PRs, each green on the same gates CI
-runs → review only when asked → merge.
+checked. The `Cost:` trailer on every commit and PR (`AGENTS.md`) exists for the same reason at the
+meta level: an agent's work is cheap to ask for and not free to run, and a repository that records
+what a feature cost in tokens learns what to ask for next. [DEV-FLOW](DEV-FLOW.md) is the loop end
+to end: idea → MIP → acceptance → tasks → small stacked PRs, each green on the same gates CI runs →
+review only when asked → merge.
 
 ## What this is not
 
@@ -170,8 +179,9 @@ runs → review only when asked → merge.
   checks still have to be written (marola-app's scoring tests and golden pipeline fixtures,
   marola-ml's benchmark).
 - Not anti-Python, anti-cloud or anti-anything. Every path has a free local default
-  ([ARCHITECTURE's local-first integration pattern](../2-Building-marola/ARCHITECTURE.md#local-first-integration-pattern)), because "runs entirely locally with a free model" is also a
-  constraint: it keeps the thing testable by anyone, including the agent, without a bill.
+  ([ARCHITECTURE's local-first integration pattern](../2-Building-marola/ARCHITECTURE.md#local-first-integration-pattern)),
+  because "runs entirely locally with a free model" is also a constraint: it keeps the thing
+  testable by anyone, including the agent, without a bill.
 - Not finished. The honest status vocabulary used everywhere here (*verified live*, *confirmed
   against the jar*, *written, not run*, *not checked*) is the last constraint: the docs are not
   allowed to sound more certain than the code.

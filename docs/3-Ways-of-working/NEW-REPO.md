@@ -2,8 +2,8 @@
 
 The checklist for a new `marola-<name>` repo, in the order it is done. Each step names the file or
 setting it changes. [marola-oods](https://docs.marola.dev/5-Repos/marola-oods/) is the smallest
-repo that has every step and is the one to copy from. Creating the repo on GitHub, and every
-setting under "GitHub settings", is a human's act.
+example; it still lacks `flake.lock` and the `gh stack` denies (marola-dev/marola-oods#7). Creating
+the repo on GitHub, and every setting under "GitHub settings", is a human's act.
 
 ## In the new repo
 
@@ -40,9 +40,9 @@ setting under "GitHub settings", is a human's act.
     ([the skeleton](DOCS-SITE.md#the-skeleton)).
 11. **`LICENSE`**.
 
-**The devkit pins move together.** The flake input, every `@v…` and `devkit-ref:` in
-`.github/workflows/`, the marketplace `ref` in `.claude/settings.json`, and a devkit clone in a
-workflow step if there is one, all name the same tag, and a bump changes them in one PR.
+**The devkit pins move together.** Every devkit pin (the devkit row of REPOS'
+[wiring table](../2-Building-marola/REPOS.md#artifacts-pins-and-dispatches)) names the same tag, and
+a bump changes them all in one PR.
 
 **Links follow [DOCS-SITE](DOCS-SITE.md#links).** Relative inside the repo, written to work on
 GitHub; absolute `https://docs.marola.dev/…` to another repo or the umbrella; a relative link that
@@ -58,14 +58,15 @@ checkout marker.
 14. **`MAROLA_CROSS_REPO_PAT`**: grant the fine-grained token Contents read and write on the new
     repo, and add the repo to the org secret's repository access
     ([CI/CD](CI-CD.md#the-maintainers-manual-settings)).
-15. **Org Project**: the repo's issues land on [Project 1](https://github.com/orgs/marola-dev/projects/1)
-    (its auto-add workflow, or `just board-sync`).
+15. **Org Project**: the repo's issues land on
+    [Project 1](https://github.com/orgs/marola-dev/projects/1) (its auto-add workflow, or `just
+    board-sync`).
 
 ## In the umbrella
 
-16. **`.gitmodules`** and the gitlink: `git submodule add https://github.com/marola-dev/marola-<name>.git marola-<name>`,
-    in a PR. Adding a submodule is the one pointer an umbrella PR commits; `pointer-sync.yml`
-    moves it from then on.
+16. **`.gitmodules`** and the gitlink: `git submodule add
+    https://github.com/marola-dev/marola-<name>.git marola-<name>`, in a PR. Adding a submodule is
+    the one pointer an umbrella PR commits; `pointer-sync.yml` moves it from then on.
 17. **`mkdocs/repos.yml`**: a `- name: marola-<name>` entry, so the site mounts it at
     `5-Repos/marola-<name>/`.
 18. **`docs/2-Building-marola/REPOS.md`**: a routing-table row, and a row in the artifacts, pins

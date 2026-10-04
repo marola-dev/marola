@@ -122,9 +122,9 @@ it's built, so you can see exactly what is done and what is still a plan: [`docs
 | [marola-devkit](https://github.com/marola-dev/marola-devkit) | The shared dev harness every repo pins: tools, hooks, Claude Code skills, CI workflows | [docs](https://docs.marola.dev/5-Repos/marola-devkit/) |
 
 The score and its safety veto are deterministic Scala; the model only interprets and phrases, and
-never overturns a veto. Why it's built this way: [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md). How it works:
-[ARCHITECTURE](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/). Everything else, from
-every repo, is searchable at **[docs.marola.dev](https://docs.marola.dev/)**.
+never overturns a veto. Why it's built this way: [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md).
+How it works: [ARCHITECTURE](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/). Everything
+else, from every repo, is searchable at **[docs.marola.dev](https://docs.marola.dev/)**.
 
 If you're an AI coding agent: read [`AGENTS.md`](./AGENTS.md) first, then the `AGENTS.md` of the
 repo you're changing.

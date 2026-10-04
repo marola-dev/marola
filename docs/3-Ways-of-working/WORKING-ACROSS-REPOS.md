@@ -62,16 +62,16 @@ flowchart LR
    submodule to its default branch's tip and keeps one rolling PR on `chore/pointer-sync`
    ([CI/CD](CI-CD.md#the-workflows)). It is the only thing that moves a pointer.
 
-A devkit release is the same: the devkit tags, then each repo moves its flake input, every
-`@v…` and `devkit-ref:` in `.github/workflows/`, and the marketplace `ref` in
-`.claude/settings.json`, together, in one PR.
+A devkit release is the same: the devkit tags, then each repo moves every devkit pin (REPOS'
+[wiring table](../2-Building-marola/REPOS.md#artifacts-pins-and-dispatches)) together, in one PR.
 
 ## Cross-repo PRs
 
 One branch name in every repo, one PR per repo, each PR linking the others with fully qualified
-references. Each PR passes its own repo's gates on its own; the merge order is the one above. A
-MIP whose tasks span repos uses `stack` per repo, and a task whose dependency lives in another repo
-starts once that PR has merged ([DEV-FLOW §4](DEV-FLOW.md#4-stacked-prs-one-task-one-branch-one-pr)).
+references. Each PR passes its own repo's gates on its own; the merge order is the one above. A MIP
+whose tasks span repos uses `stack` per repo, and a task whose dependency lives in another repo
+starts once that PR has merged
+([DEV-FLOW §4](DEV-FLOW.md#4-stacked-prs-one-task-one-branch-one-pr)).
 
 ## Issues
 

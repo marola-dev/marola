@@ -1,12 +1,11 @@
 # CI/CD
 
-Every gate and every deploy, in every marola repo, is a GitHub Actions workflow on GitHub's
-standard `ubuntu-latest` runner, except marola-ml's GPU publish (below). The design behind this
-layout is [MIP-0065](../MIPs/MIP-0065-ci-cd-on-github-hosted-runners.md). The generic jobs are
-marola-devkit's [reusable workflows](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_workflows/),
-called at the same tag as the flake input; bump them together. This page has the umbrella's own
-workflows, the org secret and the settings no workflow can change; each repo's workflows are on
-its own page.
+Every gate and every deploy, in every marola repo, is a GitHub Actions workflow on GitHub's standard
+`ubuntu-latest` runner, except marola-ml's GPU publish (below). The design behind this layout is
+[MIP-0065](../MIPs/MIP-0065-ci-cd-on-github-hosted-runners.md). The generic jobs are marola-devkit's
+[reusable workflows](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_workflows/), called
+at the same tag as the flake input; bump them together. This page has the umbrella's own workflows,
+the org secret and the settings no workflow can change; each repo's workflows are on its own page.
 
 ## How a change reaches marola.dev and docs.marola.dev
 
@@ -17,7 +16,7 @@ flowchart LR
   main([push to main]) --> ci
   main --> docs[docs.yml]
   cron([schedule]) --> docs
-  sub([submodule-docs-updated]) --> docs
+  sub([notify]) --> docs
   sub --> sync[pointer-sync.yml]
   cron --> sync
   sync -- "one rolling PR" --> pr
@@ -26,7 +25,7 @@ flowchart LR
   docs --> dpages[GitHub Pages<br/>docs.marola.dev]
   ci -- "stats/" --> sd[(marola-site<br/>site-data branch)]
   app -- "coverage/ smoke/" --> sd
-  app -. site-data-updated .-> site[marola-site site.yml]
+  app -. rebuild .-> site[marola-site site.yml]
   sd --> site
   site --> pages[GitHub Pages<br/>marola.dev]
 ```
@@ -73,10 +72,9 @@ CI there.
 
 The repo is public, and on a public repo anyone can open a pull request. A `pull_request` job on
 a self-hosted runner would run a fork's code on the maintainer's machine, which is what GitHub
-warns against in "Self-hosted runners should almost never be used for public repositories". The
-old reason for self-hosting was running out of minutes on a private repo (#340), and it no longer
-applies: standard hosted runners are free for public repos. Larger and GPU runners are always
-billed, so GPU training stays on the desktop, behind a manual dispatch.
+warns against in "Self-hosted runners should almost never be used for public repositories".
+Standard hosted runners are free for public repos; larger and GPU runners are always billed, so
+GPU training stays on the desktop, behind a manual dispatch.
 
 ```mermaid
 flowchart LR
@@ -94,19 +92,18 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
   contributors". The two weaker levels stop asking once a user has had any commit merged.
 - **The desktop runner** carries the `marola-sea` label only, so no `runs-on: ubuntu-latest` job
   can land on it. It serves marola-ml's `marola-sea-publish.yml`.
-- **No `CI_RUNNER` variable.** The repo has no Actions variables at all (checked 2026-09-29).
-- **The app image is marola-app's package**, `ghcr.io/marola-dev/marola-app` (the old
-  `ghcr.io/marola-dev/marola` stops receiving pushes). A package's first push creates it private:
+- **No `CI_RUNNER` variable.** The repo has no Actions variables at all.
+- **The app image is marola-app's package**, `ghcr.io/marola-dev/marola-app`. A package's first
+  push creates it private:
   either make it public, so `docker pull ghcr.io/marola-dev/marola-app:jvm` works logged out, or
   grant marola-site, marola-ml and marola-oods read access under its "Manage Actions access".
 - **Secrets:** `HF_TOKEN` is marola-ml's and `STEWARD_GH_TOKEN` marola-app's (their
   `3-development` pages). Here: optionally `PROFILE_DISPATCH_TOKEN`. `MAROLA_CROSS_REPO_PAT` is an
   org secret: a fine-grained token that needs Contents read and write on **both** marola and
   marola-site (and on each new repo as it is created). marola uses it to push to marola-site's
-  `site-data` and to push `chore/pointer-sync` and open its PR
-  (so it also needs Pull requests read and write on marola); marola-site uses it to dispatch
-  `submodule-docs-updated` back to marola; marola-ml uses it for that and to open its
-  compiled-prompt pull requests in marola-app. Every dispatch it sends is in REPOS'
+  `site-data` and to push `chore/pointer-sync` and open its PR (so it also needs Pull requests
+  read and write on marola). marola-site and marola-ml use it for their notify-umbrella dispatch,
+  and marola-ml to open compiled-prompt PRs in marola-app; every dispatch is in REPOS'
   [wiring table](../2-Building-marola/REPOS.md#artifacts-pins-and-dispatches).
 - **Pages:** source "GitHub Actions", custom domain `docs.marola.dev` (a DNS `CNAME` to
   `marola-dev.github.io`). An Actions-deployed site ignores a `CNAME` file, so the domain lives

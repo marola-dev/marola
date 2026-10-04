@@ -1,8 +1,8 @@
 # Agent skills
 
-Which Claude Code skills marola uses, which repo has each, and when to reach for them. The rule of
-thumb from `AGENTS.md`: every loaded skill costs context on every turn, so adopt the ones that map
-to a real step of the workflow and skip the rest.
+Which Claude Code skills marola uses, which repo has each, and when to reach for them. Every
+loaded skill costs context on every turn, so adopt the ones that map to a real step of the
+workflow and skip the rest.
 
 A repo's own skills are plain `SKILL.md` files under its `.claude/skills/`, which OpenCode also
 discovers; plugins (marola-devkit, superpowers, skill-creator) are Claude Code only
@@ -18,7 +18,7 @@ repo that has it, so start the agent in the repo you are changing.
 | marola-corpus | `corpus-doc` (adding a document), `eli5` (explaining a sea or marola topic from zero) | its `.claude/skills/` |
 | marola-app | no skills; the Scala and Kyo rules (`.claude/rules/scala.md`) and the `jar-verifier` agent | its `.claude/` |
 | marola-ml, marola-oods, the umbrella | no skills of their own | — |
-| superpowers, skill-creator | §2 and §2.3 | the umbrella's and marola-app's `.claude/settings.json` |
+| superpowers, skill-creator | §2 and §2.2 | the umbrella's and marola-app's `.claude/settings.json` |
 
 Each repo's `AGENTS.md` says when its skills apply. corpus's skills run marola's recipes, so those
 steps need a marola-app checkout pointed at the corpus with `MAROLA_KNOWLEDGE_DIR`, as its
@@ -32,15 +32,15 @@ skill disagrees with a repo's `AGENTS.md`, `AGENTS.md` wins.
 
 ## 2. superpowers — what fits, what doesn't
 
-The plugin (Jesse Vincent, `obra/superpowers`) ships workflow skills that activate from context.
-It is **declared in the repo**, not installed by hand: `.claude/settings.json` has
-`"enabledPlugins": {"superpowers@claude-plugins-official": true}`, so Claude Code installs and
-enables it for whoever opens this folder and accepts the trust dialog: the nearest thing to
-`nix develop` for plugins (plugin code is cached under `~/.claude/plugins`, not vendored; it is not
-pinned to a version). Opt out on one machine with the same key set to `false` in
-`.claude/settings.local.json`. Verify with `/plugin` → installed list. Manual install elsewhere:
-`/plugin install superpowers@claude-plugins-official`. As of
-2026-09-05 it lists these; the mapping to marola's workflow is ours:
+The plugin (Jesse Vincent, `obra/superpowers`) ships workflow skills that activate from context. It
+is **declared in the repo**, not installed by hand: `.claude/settings.json` has `"enabledPlugins":
+{"superpowers@claude-plugins-official": true}`, so Claude Code installs and enables it for whoever
+opens the umbrella or marola-app and accepts the trust dialog: the nearest thing to `nix develop`
+for plugins (plugin code is cached under `~/.claude/plugins`, not vendored; it is not pinned to a
+version). Opt out on one machine with the same key set to `false` in `.claude/settings.local.json`.
+Verify with `/plugin` → installed list. Manual install elsewhere: `/plugin install
+superpowers@claude-plugins-official`. As of 2026-09-05 it lists these; the mapping to marola's
+workflow is ours:
 
 | superpowers skill | Fit for marola | How it slots in |
 |---|---|---|
@@ -105,7 +105,7 @@ What you don't need to invoke by name: superpowers' skills trigger on phrases li
 `using-git-worktrees` is optional: with one task per session, a plain branch switch is enough;
 use worktrees when two tasks of the same stack are in flight at once.
 
-## 2.3 skill-creator — declared like superpowers
+## 2.2 skill-creator — declared like superpowers
 
 `skill-creator@claude-plugins-official` (Anthropic, Apache-2.0) is in `enabledPlugins` next to
 superpowers rather than vendored: its SKILL.md, scripts and eval viewer track upstream, and a copy
