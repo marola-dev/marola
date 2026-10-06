@@ -1,323 +1,235 @@
-# MIP-0030: Coastal and lakeside trails on the map — named OSM paths near a beach or a lake
+# MIP-0030: Coastal and lakeside trails on the map — named OSM paths and hiking routes near a beach or a lake
 
 | | |
 |---|---|
-| **Status** | Accepted — implemented, pending merge on `mip-0030/1-coastal-trails` |
-| **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "create a MIP for adding all trails info to the rendered map (only trails nearby the ocean or a lake), decide if the fetch mechanism should be the same as IMA/SC") |
-| **Created** | 2026-09-06 |
-| **Phase** | 0 (CLI/board field only, no bot text) — no earlier-phase prerequisite is missing |
-| **Related** | `BeachFinder` (`core/src/main/scala/marola/beaches/BeachFinder.scala`, the Overpass client this reuses verbatim); MIP-0021 (beach accessibility — the closest existing precedent: an OSM amenity layer anchored on `BeachFinder`'s results, "no data" never "none"); MIP-0005/MIP-0009 (the map and its marker layer this adds a sibling to); `docs/2-Building-marola/ARCHITECTURE.md` §5 (pluggable-integration pattern) and §7 (Overpass fair use). **Not related to, and does not touch**, the water-quality provider gap this MIP's investigation also turned up — see §11 |
-| **Effort** | S — one new Overpass client in `core/beaches` (same package, same HTTP/retry helper `BeachFinder` already uses), one extra query per area per run, one new top-level array in the board JSON, a map layer reusing MIP-0009's `divIcon`/tooltip machinery for a new icon shape. No new dependency, no LLM |
-| **Gain** | user value (a beach's own OSM page rarely says "there's a lakeside trail 400m north"; marola already answers "is the water clean" — "can I walk somewhere from here" is the same kind of fact) |
-| **Effort vs Gain** | cheap win — the exact same one-extra-Overpass-query shape MIP-0021 already validated, verified live against real coordinates in §4 below, not just described |
-| **Depends on** | Nothing blocking. Doesn't need Phase 1 (the bot) or a paid resource |
-| **Risk** | OSM's hiking-trail coverage is **inconsistent by tagging convention, not by geography** — proper `route=hiking` relations are essentially absent near marola's three areas (§4: zero found), while named `highway=path`/`track` ways are well-populated. A query written against `route=hiking` (the "correct" OSM way to tag a trail) would return nothing and look like a bug. §4 verifies the actual tag shape to query before committing to it |
-| **Cost so far** | — |
+| **Status** | Partially implemented (`TrailFinder` and the board's `trails` array are on marola-app `main`; the site's trails layer is built but shown as "em breve". Still missing: hiking-route relations, the read from MIP-0078's lake export, and switching the toggle on — marola-dev/marola#678) |
+| **Author** | Claude Sonnet 5, for M. Hoffmann (request of 2026-09-06: "create a MIP for adding all trails info to the rendered map (only trails nearby the ocean or a lake), decide if the fetch mechanism should be the same as IMA/SC"); revised by Claude for M. Hoffmann (2026-10-06: "use wikiloc or other free provider to draw trails in marola-site") |
+| **Created** | 2026-09-06 (revised 2026-10-06: provider review, route relations, the lake read path, Mapbox) |
+| **Phase** | 0 for the board field and the map layer. The lake read path is MIP-0078's and carries its Phase 2 question |
+| **Related** | `BeachFinder` (`core/src/main/scala/marola/beaches/BeachFinder.scala`, whose Overpass client this reuses); MIP-0021 (beach accessibility, the precedent: an OSM layer anchored on `BeachFinder`'s results, with "no data" never shown as "none"); MIP-0005/MIP-0009 (the map); MIP-0075 (the B2 lake and its `trail` table); MIP-0078 (open trail providers in that lake, per state); `docs/2-Building-marola/ARCHITECTURE.md` §7 (Overpass fair use) |
+| **Effort** | S — one Overpass client in `core/trails`, one top-level array on the board, one GeoJSON line layer on the map; this revision adds one relation clause to the query and a snapshot read |
+| **Gain** | user value: a beach's own OSM page rarely says "there's a lakeside trail 400 m north". marola already answers "is the water clean", and "can I walk somewhere from here" is the same kind of fact |
+| **Effort vs Gain** | cheap win — the board already carries trails, so the map can show them the day the toggle turns on |
+| **Depends on** | Nothing for the board and the layer. The lake read path depends on MIP-0078 |
+| **Risk** | OSM's trail coverage varies with tagging, not geography. Short local trails are named `highway=path`/`track` ways, and long waymarked trails are `route=hiking` relations. A query for only one of the two misses the other (§4.1) |
+| **Cost so far** | n/a |
 
 ## 1. Summary
 
-A `TrailFinder` client queries Overpass, the same free, keyless API `BeachFinder` already calls,
-for named hiking paths and tracks within 500 m of any beach or lake `marola` already found for
-that area. It returns as a new `trails` array in the board JSON, rendered as a small line/marker
-layer on the map, with whatever OSM tags exist (`sac_scale` difficulty, `trail_visibility`,
-surface) shown as facts, and nothing invented where OSM has nothing. One extra Overpass query per
-area per run, same cost shape as MIP-0021's amenity query.
+marola shows named trails from OpenStreetMap near any beach or lake it already found for an area:
+named `highway=path`/`track` ways within 500 m of an anchor, and `route=hiking`/`foot` relations
+with a member within that distance. Each trail keeps its OSM id, length, the `sac_scale` and
+`surface` tags when they are present, and its geometry, and the board carries them as a `trails`
+array. The map draws them as a line layer. OSM (ODbL) stays the only source: Wikiloc and AllTrails
+offer no licence to reuse their tracks (§4.3). Once MIP-0078 lands, a build reads trails from the
+lake's per-area export and stops querying Overpass for them.
 
 ## 2. Motivation
 
-Someone standing at Praia da Lagoinha do Leste today gets a swim score and nothing else; OSM
-already knows this beach is the end of a named 90-minute trail from Pântano do Sul
-(`Trilha da Lagoinha do Leste`), and that a second trail (`Trilha Lagoa do Peri - Sul`) runs along
-a freshwater lake 3 km away. marola computes "is this beach good right now" from live data; "is
-there somewhere to walk from here" is a fact the same map already has room to show and currently
-throws away. Overpass returns it in the same response shape `BeachFinder` already parses.
+Someone at Praia do Pântano do Sul today gets a swim score and nothing else. OSM already knows the
+beach is the start of `Trilha da Lagoinha do Leste`, and that `Trilha Lagoa do Peri - Sul` runs
+along a lake 3 km away. In Rio, OSM maps the Transcarioca as one 180 km hiking route
+(relation 6906578), which the first version of this MIP never asked for. The board has carried a
+`trails` array since 2026-09-07. The site still shows the trilhas toggle as "em breve"
+(marola-site `site/static/index.html`), so a visitor sees none of it.
 
 ## 3. User-visible change
 
-CLI (`--brief`/`--summarize`), one line per beach when at least one named trail is within 500 m
-(same style as MIP-0021's accessibility line):
+CLI (`--brief`/`--summarize`), one line per beach that has a trail within 500 m:
 
 ```
   Praia do Pântano do Sul   58/100 at 09:00  · trails nearby: Trilha da Lagoinha do Leste (2.1km, moderate)
   Praia da Joaquina         62/100 at 10:00  · trails: no data
 ```
 
-On the map (MIP-0005/MIP-0009): a thin dashed line along each trail's actual OSM geometry (not
-just a point), coloured by `sac_scale` when present (green = easy/hiking, amber = mountain_hiking,
-grey = unclassified/no data), with a hover tooltip naming the trail and its length. Board JSON gets
-a new top-level array, sibling to `beaches`:
+On the map, the trilhas toggle is on. Each trail is a line along its real OSM geometry, coloured
+by `sac_scale` (green for `hiking`, amber for `mountain_hiking` and above, grey when the tag is
+missing). Its tooltip gives the name, the length and "ver no OpenStreetMap", a link to the way or
+relation. A route relation is drawn slightly wider than a single way. The board's array:
 
 ```json
 "trails": [
-  { "name": "Trilha da Lagoinha do Leste", "length_km": 3.8,
-    "difficulty": "hiking", "surface": "ground",
+  { "name": "Trilha da Lagoinha do Leste", "osm": "way/123456789", "kind": "path",
+    "length_km": 2.1, "difficulty": null, "surface": null,
     "near": [{"beach": "Praia do Pântano do Sul", "distance_km": 0.1}],
-    "geometry": [[-27.7910, -48.4890], [-27.7925, -48.4871], ...] }
+    "geometry": [[-27.7910, -48.4890], [-27.7925, -48.4871]] },
+  { "name": "Trilha Transcarioca", "osm": "relation/6906578", "kind": "route",
+    "length_km": 68.1, "difficulty": null, "surface": null,
+    "near": [{"beach": "Praia de Grumari", "distance_km": 0.3}],
+    "geometry": [[[-23.04, -43.52], [-23.05, -43.51]], [[-22.95, -43.28], [-22.96, -43.27]]] }
 ]
 ```
 
-`difficulty`/`surface` are `null`, never guessed, when OSM carries no `sac_scale`/`surface` tag;
-the map draws that trail in the "no data" grey, matching MIP-0021's absence rule.
+`osm` and `kind` are new and optional, and the schema stays 1. A route's `geometry` is a list of
+lines, because a relation's members do not join into one line. `length_km` is the mapped length,
+never a length the route's tags claim. `difficulty` and `surface` are `null` when OSM has no tag,
+never a guess.
 
 ## 4. Data sources and dependencies reviewed
 
-### 4.1 OpenStreetMap via Overpass — verified live, 2026-09-06
+### 4.1 OpenStreetMap via Overpass — verified live, 2026-09-06 and 2026-10-06
 
-Same endpoint `BeachFinder` already uses (`https://overpass-api.de/api/interpreter`, free, no key,
-ODbL, attribution already carried by the map per MIP-0005). Two real queries run against the
-production Overpass API while writing this MIP:
+This is the endpoint `BeachFinder` already uses (`https://overpass-api.de/api/interpreter`). It is
+free, needs no key and is licensed ODbL. The map already carries the attribution (MIP-0005).
 
-**First attempt, `route=hiking` relations (the "textbook correct" OSM tag for a hiking trail),
-15 km around a known trailhead (Pântano do Sul, Florianópolis, `-27.7907,-48.4880`): zero
-results.** OSM's `route=hiking` relation convention exists for long-distance waymarked routes
-(the Camino de Santiago, the Appalachian Trail); it is essentially unused for short, local
-coastal/lake trails in this region.
+- **Named ways (2026-09-06).** Named `highway=path`/`track` ways within 15 km of Pântano do Sul
+  returned 45 results. They included `Trilha da Lagoinha do Leste`, `Trilha de Naufragados`
+  (`trail_visibility: excellent`) and `Trilha Praia do Maço-Guarda` (`sac_scale: mountain_hiking`).
+- **Route relations (2026-09-06 and 2026-10-06).** The same 15 km search for `route=hiking` found
+  none, and the first version of this MIP dropped relations on that result. That was wrong for Rio.
+  Waymarked Trails' API (`hiking.waymarkedtrails.org/api/v1/details/relation/6906578`, 2026-10-06)
+  returns `Trilha Transcarioca` with `route=hiking`, `network=rwn`, `official_length_m` 180000 and
+  `mapped_length_m` 68121. Its search lists seven more relations named "Acesso a Trilha
+  Transcarioca". Relations are rare near Florianópolis and real in Rio, so the query asks for both.
 
-**Second query, named `highway=path`/`track` ways, same radius: 45 results**, including real,
-verifiable trails: `Trilha da Lagoinha do Leste` (`alt_name: Trekking Pântano do Sul para Lagoinha
-do Leste`, `sac_scale` absent, `trail_visibility` absent on this segment), `Trilha de Naufragados`
-(`trail_visibility: excellent`), `Trilha do Farol`, `Trilha Lagoa do Peri - Sul`, `Trilha Praia do
-Maço-Guarda` (`sac_scale: mountain_hiking`, `trail_visibility: intermediate`), a real difficulty
-tag, confirming the field is worth carrying when present, not just theoretical.
-
-**Third query, the actual shape this MIP proposes**: beaches (`BeachFinder`'s own query) and
-named lakes (`natural=water`, `water` in `lake`/`pond`) as two anchor sets, then named
-`highway=path`/`track` ways within 500 m of either set, one combined Overpass request, 20 km
-around Florianópolis (`-27.6733,-48.4700`, the CLI's own default test origin): **20 named trail
-segments**, correctly finding both a beach-anchored trail (`Trilha da Lagoinha do Leste`) and a
-lake-anchored one (`Trilha Lagoa do Peri - Sul`) in a single query. Full Overpass QL:
+The query, one request per area:
 
 ```
 [out:json][timeout:60];
-way["natural"="beach"]["name"](./around:RADIUS,LAT,LON)->.beaches;
-(
-  way["natural"="water"]["water"~"^(lake|pond)$"](./around:RADIUS,LAT,LON);
-  relation["natural"="water"]["water"~"^(lake|pond)$"](./around:RADIUS,LAT,LON);
-)->.lakes;
-(
-  way(around.beaches:500)["highway"~"^(path|track)$"]["name"];
-  way(around.lakes:500)["highway"~"^(path|track)$"]["name"];
-);
-out tags geom;
+way["natural"="beach"]["name"](around:RADIUS,LAT,LON)->.beaches;
+( way["natural"="water"]["water"~"^(lake|pond)$"](around:RADIUS,LAT,LON);
+  relation["natural"="water"]["water"~"^(lake|pond)$"](around:RADIUS,LAT,LON); )->.lakes;
+( way(around.beaches:500)["highway"~"^(path|track)$"]["name"];
+  way(around.lakes:500)["highway"~"^(path|track)$"]["name"]; )->.ways;
+( way(around.beaches:500)["highway"]; way(around.lakes:500)["highway"]; )->.near;
+relation(bw.near)["type"="route"]["route"~"^(hiking|foot)$"]->.routes;
+.ways out tags geom;
+.routes out tags geom;
+.lakes out center;
 ```
 
-`out tags geom` (not `out center`, which `BeachFinder`/MIP-0021 use for point amenities) is
-needed here because a trail is a line, not a point: the map draws its actual path, not a marker
-at its bounding-box centre, which for a multi-kilometre trail can sit nowhere near the water.
+`out tags geom` returns each line's real path. A point at a multi-kilometre trail's bounding-box
+centre can sit nowhere near the water. The relation clause has not been run against Overpass yet
+(the sandbox cannot reach it): it is checked in §7 before the client changes.
 
-**Verified at implementation time (2026-09-07, see Appendix)**: both open items above. All three
-configured areas return real trail segments at their own `site/areas.json` radius, and the widest
-radius (Florianópolis, 30km) completed in ~22s, inside Overpass's `[timeout:60]` and this repo's
-own HTTP timeout; see the Appendix for exact counts and timings.
+### 4.2 Why not the IMA/SC pattern
 
-### 4.2 Why not the IMA/SC pattern — the actual design decision this MIP was asked to make
+`ImaScWaterQualityClient` scrapes one state agency's undocumented endpoint, because bathing water
+is measured and published by each state separately. Trails have no such split. OSM covers
+Florianópolis, Rio and Salvador through one API, so the model here is `BeachFinder` and
+`OverpassAccessibilityClient`, not a per-state scraper. MIP-0078 does run per state, but that is
+because each state is one slice of the same OSM data, not a separate publisher.
 
-**Decision: Overpass/OSM (§4.1), the same mechanism `BeachFinder` and (once built) MIP-0021's
-`AccessibilityClient` already use, explicitly *not* the `ImaScWaterQualityClient` pattern.**
+### 4.3 Other trail providers — checked 2026-10-06
 
-`ImaScWaterQualityClient` (`local/src/main/scala/marola/water/ImaScWaterQualityClient.scala`)
-works by calling Santa Catarina's *own* bathing-water portal's undocumented internal JSON endpoint
-(`POST https://balneabilidade.ima.sc.gov.br/relatorio/mapa`), a scrape of one Brazilian state
-agency's own website, with no equivalent for any other state or country. `WaterQuality.scala`'s
-own doc comment already names this as a per-region pattern: *"One implementation per
-agency/portal... INEA/RJ, CETESB/SP would be siblings."* That per-region-scraper shape exists
-because bathing-water sampling is measured and published independently by each region's own
-environmental agency, in whatever format that agency chose; there is no global standard or
-open dataset for it.
-
-Trails have no such constraint: OpenStreetMap already has global, uniformly-tagged coverage
-(`highway=path`/`track` plus whatever `name`/`sac_scale`/`surface` a mapper added), queried through
-one API that already works identically for Florianópolis, Rio, and Salvador (confirmed: `BeachFinder`
-already returns real named beaches for all three areas, verified live this session, 80/56/63
-beaches respectively). Building a `TrailFinder` as an IMA/SC-style per-region scraper would mean
-inventing a new integration per state for a fact OSM already has everywhere marola runs. The
-right analogy is `BeachFinder` and MIP-0021's `AccessibilityClient`, not `ImaScWaterQualityClient`.
-
-### 4.3 A related, separate finding: the water-quality "layers" gap the same investigation surfaced
-
-Requested alongside this MIP was "check why the website is not rendering info about Bahia and Rio
-de Janeiro." Investigated live this session: **it is not a bug.** Both areas' boards
-(`https://marola.dev/data/rio/2026-09-06.json`, `.../salvador/...`) build correctly, 56 and 63
-beaches respectively, verified by replaying the real board through `site/static/app.js` in
-`scripts/site_check.js`'s existing headless-DOM harness: zero console errors, correct marker/list
-counts for both. **What's actually missing is water-quality data for those two states**:
-`AppConfig.waterQualityClient`'s `Auto` case (`cli/src/main/scala/marola/AppConfig.scala:159`)
-only checks `ImaScWaterQualityClient.coversOrigin`, so any origin outside Santa Catarina correctly
-falls through to `None`, and every Rio/Salvador beach's `water.summary` is honestly `"no data"`,
-by design (§4.2's per-region pattern), not by error.
-
-This *is* fixable, and real public sources exist for both states (WebSearch, 2026-09-06, not yet
-verified to API/scrapeable-endpoint level the way §4.1 verified IMA/SC in MIP-0001): Rio de
-Janeiro's **INEA** (Instituto Estadual do Ambiente) publishes a weekly balneability bulletin
-covering 291 sampling points/201 beaches ([inea.rj.gov.br](https://www.inea.rj.gov.br/ar-agua-e-solo/balneabilidade-das-praias/)),
-apparently as PDF/HTML bulletins rather than a JSON endpoint like IMA/SC's, harder, not
-necessarily impossible (IMA/SC's own undocumented endpoint was only found by inspecting its portal's
-own network requests, per MIP-0001 §4.1; INEA may have an equivalent not yet checked). Bahia's
-**INEMA** publishes the same kind of weekly bulletin, but its data also appears as a structured
-open dataset on [Brasil.IO](https://brasil.io/dataset/balneabilidade-bahia/balneabilidade/),
-plausibly the easier integration of the two. **This is exactly the "new layer per region" case
-MIP-0021's `WaterQualityClient` trait doc comment already anticipated** ("INEA/RJ, CETESB/SP would
-be siblings"), but it is a water-quality MIP, not a trails one, and is **out of scope here**
-per `AGENTS.md`'s one-feature-one-MIP discipline. Flagged as a strong follow-up candidate
-(next MIP number after this one) in §11, not built or designed further in this document.
+| Provider | Data | Terms | Verdict |
+|---|---|---|---|
+| **OpenStreetMap** (Overpass; Geofabrik extracts in MIP-0078) | ways and route relations, global | ODbL 1.0, attribution "© OpenStreetMap contributors" | **the source** |
+| **Waymarked Trails** | renders OSM's route relations and has a JSON API | the data is OSM's (ODbL); the API has no published usage policy | a cross-check and a link target, not a second source |
+| **Wikiloc** | tracks uploaded by users | no public API found. In 2010 its founder declined blanket reuse unless three attributions were shown (wikiloc.com, the trail page and the author's page) ([OSM-talk](https://lists.openstreetmap.org/pipermail/talk/2010-May/050017.html)). The terms page refused automated fetches (403), so it was not read | **rejected** as a data source: copying tracks would need each author's permission |
+| **AllTrails** | curated trails | proprietary. Its affiliate programme declined marola on 2026-10-06 | rejected |
+| **Trilha Transcarioca** (official site) | an app, PDF guides, GPX "tracklogs" named in the page metadata | no reuse terms on the downloads page | not used. OSM's relation already maps 68 of its 180 km |
 
 ## 5. Design
 
-New file `core/src/main/scala/marola/trails/TrailFinder.scala`, same package shape as
-`marola.beaches`:
+`core/src/main/scala/marola/trails/TrailFinder.scala` exists on marola-app `main`. This revision
+changes it as follows:
 
 ```scala
+enum TrailKind:
+  case Path, Route
+
 final case class Trail(
   name: String,
-  lengthKm: Double,
-  difficulty: Option[String],   // OSM sac_scale, verbatim, e.g. "hiking", "mountain_hiking"
-  surface: Option[String],      // OSM surface, verbatim, e.g. "dirt", "ground", "paving_stones"
-  geometry: List[Coordinates],  // the way's actual node sequence, for map rendering
-  nearBeach: Option[(String, Double)],  // (beach name, distanceKm) — the nearer of beach/lake anchor
+  osm: String,                        // "way/123" | "relation/6906578", for the map's link
+  kind: TrailKind,
+  lengthKm: Double,                   // the mapped geometry's length, never a tag's claim
+  difficulty: Option[String],         // OSM sac_scale, verbatim
+  surface: Option[String],
+  geometry: List[List[Coordinates]],  // one line for a way, one per member run for a route
+  nearBeach: Option[(String, Double)],
   nearLake: Option[(String, Double)]
 )
-
-object TrailFinder:
-  def nearby(origin: Coordinates, radiusKm: Double, beaches: List[Beach]): List[Trail] < Sync
 ```
 
-Takes `BeachFinder`'s own already-fetched `beaches` list as one anchor set (no second beach query)
-plus a new lake sub-query, combined into the single Overpass request in §4.1's third query shape.
-Reuses `Http.postForm` with the same retry/timeout constants `BeachFinder` defines (or promotes
-them to a shared `OverpassConfig` if a second near-identical `private val OverpassRetries = 2`
-starts to smell like duplication; a call for whoever implements this, not decided here).
+- **The query** gains §4.1's relation clause, which keeps it one request per area. Same-named ways
+  are still merged into one `Trail` (§8). A way that is also a member of a returned relation is
+  drawn only as part of that relation.
+- **The snapshot read.** `TrailFinder.nearby` first reads `MAROLA_TRAILS_DIR/<BeachSnapshot.key>.json`
+  (MIP-0078's per-area export, in this array's shape) and asks Overpass only when that file is
+  missing. This is the same contract `BeachFinder` already has with `MAROLA_BEACHES_DIR`. A build
+  then calls Overpass for trails only in an area the lake does not cover yet.
+- **The map** (marola-site `site/static/app.js`): the layer drawn by `addTrailLayer()` takes the
+  multi-line geometry and the link, and `index.html` drops `disabled`/`soon` from the toggle. The
+  about page names OSM as the trail source under its licence, following the
+  `citizen-science-site` skill.
 
-`Board.scala` gains a sibling `trailJson`/`"trails" -> JsonValue.arr(...)` alongside the existing
-`"beaches"` array (`Board.scala:72`). `site/board.schema.json` gains a new top-level `trails`
-array, additive, same "schema stays 1" precedent MIP-0009 §5 already set for an optional field,
-here extended to a whole optional top-level key (an older client that doesn't know about `trails`
-still renders every existing field unchanged).
-
-`site/static/app.js` gains one new Leaflet layer: an `L.polyline` per trail (not a `divIcon`;
-trails are lines, beaches are points), styled by `difficulty` per §3, with a `bindTooltip` naming
-the trail, the same tooltip mechanism MIP-0009 already added for wave markers, applied to a line
-instead of a point.
-
-Nothing here is LLM-generated: trail name, length, difficulty and surface are all OSM tags or a
-computed geometry length, shown verbatim or "no data", same rule as every other integration.
-
-**Implementation note (2026-09-07):** §4.1's literal query text never outputs the `.beaches`/
-`.lakes` anchor sets themselves, only the trail ways filtered by them, fine for `nearBeach`
-(the caller already has named, located beaches from `BeachFinder`) but not for `nearLake`, which
-needs the lake's own name/position. The shipped query adds one line, `.lakes out center;`, to the
-same single request (still one Overpass call, not two) so a trail found only via a lake anchor can
-still be labelled. Same-named-segment merging (§8, §11) concatenates each segment's geometry and
-sums each segment's *own* length (not the length of the concatenation, which would add a spurious
-jump between two ways that don't share an endpoint); confirmed against two real duplicate-name
-groups in the Appendix's fixture capture.
+Nothing here passes through an LLM. The name, length, difficulty and surface are OSM tags or a
+computed length, shown as they are or as "no data".
 
 ## 6. Scoring / safety impact
 
-None. Trails do not affect `Swimability.score` or any safety-relevant text; this is a purely
-informational map/CLI layer, same category as MIP-0021's accessibility facts.
+None. Trails never change `Swimability.score` or any safety text. A trail's `sac_scale` is
+shown as OSM's tag, not as advice that the walk is safe.
 
 ## 7. Verification plan
 
-- `TrailFinderSpec`: parses a fixture Overpass response (captured from §4.1's real third query)
-  into `Trail`s: name, length, difficulty/surface presence and absence both covered (a way with
-  no `sac_scale` yields `None`, never a guessed value).
-- A live check before merge: run the real §4.1 query against all three configured areas
-  (`site/areas.json`: floripa, rio, salvador) and record actual counts in this MIP's Appendix.
-  §4.1 only verified Florianópolis.
-- `scripts/site_check.js` (already runs in `just quality`): extend the fixture board with a
-  `trails` array, assert one `L.polyline` per trail is created and that a board with no `trails`
-  key (an older/incomplete area) still renders every other layer unchanged.
-- "Done" = the CLI line renders for a real beach with a known nearby trail (Praia do Pântano do
-  Sul → Trilha da Lagoinha do Leste), the map draws its line, and a beach with zero nearby trails
-  says "no data", never "none" or a blank space.
+- Run §4.1's query live for floripa, rio and salvador at their `site/areas.json` radius. Record
+  the ways, relations, response time and size in the Appendix. Rio must return the Transcarioca
+  relation.
+- `TrailFinderSpec`: the captured Rio answer parses into one `Route` trail with several lines and
+  `osm = "relation/6906578"`. A way that belongs to that relation is not drawn twice. A file in
+  `MAROLA_TRAILS_DIR` is read without any request (through `Http.withTransport`).
+- `scripts/site_check.js` (marola-site): a fixture trail with multi-line geometry draws one
+  feature per line, and its tooltip has the OSM link. With the toggle enabled, `?trails=0` hides
+  the layer. A board with no `trails` key still renders every beach.
+- Done means the toggle is on at marola.dev and Praia do Pântano do Sul shows Trilha da Lagoinha
+  do Leste. In Rio, the Transcarioca's mapped sections show as one route.
 
 ## 8. Risks, limitations, and honest caveats
 
-- **Overpass fair use** (`ARCHITECTURE.md` §7): this is a second query per area per run, on top of
-  `BeachFinder`'s existing one. Both already share the same public instance's retry/backoff
-  behaviour; two queries per run for three areas every 3 hours is still well inside the informal
-  fair-use expectation the existing comment describes, but it is a real doubling of this
-  integration's Overpass load and should be watched if a fourth area is ever added.
-- **Trail data quality varies with who mapped it.** `trail_visibility`/`sac_scale` are present on
-  some segments and absent on others of the *same named trail* (confirmed in §4.1's second query:
-  `Trilha da Lagoinha do Leste` itself carries neither tag, while a `Trilha Praia do Maço-Guarda`
-  segment carries both). A trail's difficulty badge may need to be "unknown" even when its name
-  and length are known, and that's a fact to show, not smooth over.
-- **A named way can be split into many small OSM segments** (visible in §4.1's results: multiple
-  identical-named `Caminho da Costa da Lagoa ao Canto dos Araçás` entries). Naive per-segment
-  rendering would draw the "same" trail as several disconnected lines with duplicate tooltips.
-  §5's implementation needs to merge same-named segments into one `Trail` before this ships;
-  flagged here so it isn't discovered as a bug later.
-- **500 m is a guess, not verified against user expectation.** It matches MIP-0021's amenity
-  radius for consistency, but a trail's *trailhead* can be a kilometre inland from the beach it's
-  named for (e.g. `Trilha da Lagoinha do Leste`'s Pântano do Sul trailhead vs. the beach it ends
-  at). The radius may need to be larger, or measured to the nearest point of the trail's full
-  geometry rather than its Overpass-reported bounding position. Open question, §11.
+- **Overpass fair use** (`ARCHITECTURE.md` §7): this is a second query per area per build. Once
+  MIP-0078's exports exist, it runs only where an area has no export.
+- **Coverage follows the mappers.** `sac_scale` is present on some segments and missing on others
+  of the same trail (Appendix A.1). Only 68 of the Transcarioca's 180 km are mapped. The map shows
+  what OSM has and never fills a gap.
+- **Ways split into segments.** OSM often stores one named trail as several ways, and they are
+  merged by name within an area. Two different trails with the same name in one area would be
+  drawn as one line.
+- **500 m is a guess.** It matches MIP-0021's radius. A trailhead can sit a kilometre inland from
+  the beach the trail is named after.
 
 ## 9. Alternatives considered
 
-- **Do nothing.** Zero cost, but leaves a real, freely-available fact (OSM already has these
-  trails mapped) unused on a map whose whole premise is showing what's actually near a beach.
-- **A per-region trail-agency scraper, IMA/SC-style.** Rejected in §4.2: no such per-region
-  source exists for trails the way it does for bathing-water sampling; OSM already has global
-  coverage through one API.
-- **`route=hiking` relations only** (the "correct" OSM tagging convention). Rejected in §4.1:
-  verified zero results near a known real trail; would ship a feature that silently finds nothing.
+- **Do nothing.** Free, but it leaves a fact that is already mapped off a map that exists to show
+  what is near a beach.
+- **A per-state scraper, IMA/SC style** (§4.2), **ways only** (misses the Transcarioca), and
+  **relations only** (misses almost every local trail).
+- **Wikiloc or AllTrails tracks** (§4.3): no licence to reuse them.
+
+## 10. Exam-coverage mapping
+
+None.
 
 ## 11. Open questions
 
-- Verify the real Overpass query (§4.1's third form) against Rio and Salvador specifically, not
-  only Florianópolis, before implementation: different coastline shapes and lake density could
-  change the anchor-radius choice.
-- Confirm `out tags geom`'s response size/time at the largest configured radius (30 km,
-  Florianópolis) stays inside Overpass's budget the way `BeachFinder`'s point-only `out center`
-  query does: line geometry is heavier than a point per element.
-- Same-named-segment merging (§8) needs a concrete algorithm (merge by name within a run? by
-  shared endpoint nodes?); not designed here, left for the implementation PR.
-- **Follow-up MIP, not this one** (§4.3): a `WaterQualityClient` sibling for Rio (INEA) and/or
-  Bahia (INEMA, plausibly the easier of the two via its Brasil.IO dataset), needs its own
-  data-source verification pass (MIP-0001/MIP-0021's discipline: fetch the actual page/endpoint,
-  confirm format and update cadence, before naming a pick) before it's designable, let alone
-  buildable. Take the next MIP number after this one if picked up.
+- **A "procurar no Wikiloc" link** in the tooltip: a search URL with the trail's name, with no data
+  copied and no request from the page. It adds a link to a commercial site, which the about page
+  would have to explain. Maintainer's call. Not in §5 until he says so.
+- **The radius**: measure 500 m to the trail's nearest point (what Overpass's `around` does) or
+  to its trailhead?
 
 ## Appendix
 
-Raw Overpass responses from §4.1's verification queries are not committed (ephemeral live data,
-re-fetchable from the exact query text in §4.1); the query text itself is the reproducible
-artifact and is quoted verbatim above.
+The raw Overpass answers are not committed. They can be fetched again with the query text above,
+and that text is the reproducible artifact.
 
-### A.1 Live verification across all three configured areas (2026-09-07)
+### A.1 Ways across the three areas (2026-09-07)
 
-§4.1's third query (as extended in §5's implementation note, `.lakes out center;` included), run
-live against `https://overpass-api.de/api/interpreter` at each area's own `site/areas.json`
-radius (not the 20km used for §4.1's original Florianópolis-only check):
+The query without the relation clause, at each area's `site/areas.json` radius:
 
-| Area | Origin | Radius | Trail ways | Unique trail names | Same-named-segment groups | Named lakes | Query time |
+| Area | Origin | Radius | Trail ways | Unique names | Same-named groups | Named lakes | Query time |
 |---|---|---|---|---|---|---|---|
 | floripa | -27.60,-48.48 | 30km | 21 | 11 | 2 | 14 | ~22.5s |
-| rio | -22.9878,-43.1913 | 20km | 100 | 63 | 19 | 67 | (not separately timed; well under `[timeout:60]`) |
+| rio | -22.9878,-43.1913 | 20km | 100 | 63 | 19 | 67 | well under `[timeout:60]` |
 | salvador | -12.9777,-38.5016 | 25km | 43 | 36 | 5 | 129 | ~18.6s |
 
-All three areas return real, non-trivial trail coverage; §4.1's Florianópolis-only result was not
-an outlier. The widest configured radius (floripa, 30km) answers in ~22.5s, comfortably inside
-Overpass's own `[timeout:60]` and this repo's `HttpTimeoutSeconds = 60` client-side timeout.
-§11's "does the widest radius stay inside budget" question is answered yes. Rio has by far the
-richest trail data of the three (100 ways, 63 names, 19 real duplicate-name groups, Pão de Açúcar/
-Corcovado's dense hiking-trail network), and is also the only one of the three live captures whose
-`sac_scale` tag is populated on many trails (`hiking`, `mountain_hiking`, `demanding_mountain_hiking`
-all observed). floripa and salvador's captures carried no `sac_scale` at all in this run,
-consistent with §8's "trail data quality varies with who mapped it," not a bug in the query.
+Rio carried `sac_scale` on many trails (`hiking`, `mountain_hiking`,
+`demanding_mountain_hiking`). The Florianópolis and Salvador answers carried none.
 
 ### A.2 `TrailFinderSpec`'s fixture
 
-`core/src/test/resources/fixtures/overpass-trails-floripa.json` is §4.1's exact third query
-(`[out:json][timeout:60]; ... around:20000,-27.6733,-48.4700 ...`, plus `.lakes out center;`),
-captured live against the real endpoint on 2026-09-07, not fabricated. It returns 20 named trail
-`way`s / 10 unique names, including both of the real same-named-segment merge cases named in §8
-(`Caminho da Costa da Lagoa ao Canto dos Araçás` ×8 segments, `Trilha Parque Estadual do Rio
-Vermelho` ×4 segments) and the exact trail named in §7's "Done" example
-(`Trilha da Lagoinha do Leste`, single segment, 2.11km). This particular capture carries no
-`sac_scale` tag on any trail (difficulty absence is exercised; presence is not, in the live
-fixture) but does carry one real `surface=paving_stones` tag; `TrailFinderSpec` covers the
-difficulty-presence case with a small hand-written synthetic Overpass response instead, kept
-clearly separate from the live-fixture-based tests.
+`core/src/test/resources/fixtures/overpass-trails-floripa.json` is the ways query captured live on
+2026-09-07 (20 km around -27.6733,-48.4700): 20 ways, 10 names, including
+`Caminho da Costa da Lagoa ao Canto dos Araçás` (8 segments) and `Trilha Parque Estadual do Rio
+Vermelho` (4 segments). The relation case needs a new Rio capture (§7).
