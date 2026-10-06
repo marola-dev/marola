@@ -206,12 +206,11 @@ bottom of the stack first, because that is the diff a reviewer sees.
 3. **`/code-review ultra <PR#>`**: the multi-agent cloud review, for the riskiest PR of a stack
    (scoring, safety text, a new data source). User-triggered and billed; never launched by the
    agent.
-4. **`/gemini review`** as a PR comment, in a repo that installed Gemini Code Assist on GitHub
-   (marola-app: its
-   [code review](https://docs.marola.dev/5-Repos/marola-app/3-development/#code-review) setup).
-   Free, advisory, on request only, and skips `.github/workflows/**` by design. Source goes to
-   Google, so a human installs it, never an agent.
-   [GEMINI-CODE-ASSIST](../4-Research-and-plans/GEMINI-CODE-ASSIST.md) is the evaluation.
+4. **Request `marola-dev/gemini`** as a reviewer (sidebar, or `gh pr edit <N> --add-reviewer
+   marola-dev/gemini`), in any repo whose `.github/workflows/gemini.yml` calls the devkit's
+   `gemini-review` (MIP-0072). Free, advisory, on request only: one review, then one commit with
+   the fixes it can apply safely, never under `.github/`; a fork PR gets the review only. Source
+   goes to Google's Gemini API.
 
 Author side: superpowers `receiving-code-review`: verify each finding before implementing it,
 push back with reasoning when it is wrong, then fix → commit (`Cost:` trailer) → push → `just
