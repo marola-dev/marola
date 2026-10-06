@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Partially implemented (tasks 1–2 of 3 — marola-dev/marola-devkit#19, marola-dev/marola-devkit#24; task 3 in six of seven repos, §5.4). Missing: marola-corpus's caller (marola-dev/marola-corpus#5) and the team's Read on marola-app, marola-ml and marola-corpus (task H). Issues #546, #641. `Tasks: docs/MIPs/MIP-0072.tasks.md` |
+| **Status** | Partially implemented (tasks 1–3 of 3 — marola-dev/marola-devkit#19, marola-dev/marola-devkit#24, a caller in every repo, §5.4). Missing: the team's Read on marola-app, marola-ml and marola-corpus (task H). Issues #546, #641. `Tasks: docs/MIPs/MIP-0072.tasks.md` |
 | **Author** | Claude, for M. Hoffmann |
 | **Created** | 2026-09-30; revised 2026-10-06 to the design that shipped |
 | **Phase** | 0 (dev-loop; no user-facing surface) |
@@ -21,7 +21,7 @@ Requesting the empty, visible org team `marola-dev/gemini` as a reviewer on any 
 request starts a Gemini review. Each repo's `.github/workflows/gemini.yml` calls marola-devkit's
 reusable `gemini-review.yml`, which sends the diff to the Gemini API in one call, posts one review
 as the GitHub App `marola-gemini-bot`, and pushes one commit with the fixes it can apply safely.
-The PR merges once every repo has the caller (§5.4).
+Every repo has the caller (§5.4).
 
 ## 2. Motivation
 
@@ -96,7 +96,7 @@ suggestions there. The fix step is skipped: the App cannot push to a fork.
 | marola-app | `gemini.yml` | marola-dev/marola-app#37, merged |
 | marola-ml | `gemini.yml` | marola-dev/marola-ml#15, merged |
 | marola-oods | `gemini.yml` | marola-dev/marola-oods#6, merged |
-| marola-corpus | `gemini.yml` | marola-dev/marola-corpus#5, open |
+| marola-corpus | `gemini.yml` | marola-dev/marola-corpus#5, merged |
 
 Every caller pins `@v0.5.0` with `devkit-ref: v0.5.0` and triggers on `pull_request_target`.
 
