@@ -106,6 +106,8 @@ type: software
 authors:
   - family-names: Hoffmann
     given-names: Matheus
+  - family-names: Valério
+    given-names: Bruno
 license: MIT
 repository-code: "https://github.com/marola-dev/marola-app"
 url: "https://marola.dev"
@@ -117,8 +119,9 @@ keywords: [ocean, beaches, bathing water quality, Brazil, open data]
 ```
 
 No `version` or `date-released`: they would go stale between releases, and Zenodo takes the
-version from the release tag (§11 checks that). marola-corpus uses `type: dataset`. The author
-list and ORCID are the maintainer's call (§11).
+version from the release tag (§11 checks that). marola-corpus uses `type: dataset`. Every repo
+lists the same two authors, Matheus Hoffmann and Bruno Valério (maintainer's call, 2026-10-06);
+a later contributor is added by a PR to each `CITATION.cff`.
 
 ### 5.3 The switch (a human)
 
@@ -208,8 +211,8 @@ None.
 
 ## 11. Open questions
 
-- **Authors.** Matheus Hoffmann alone, or also Bruno Valério and @aracyla (or "marola
-  contributors")? An ORCID for each, if they have one.
+- **ORCIDs** for Matheus Hoffmann and Bruno Valério, if they have them (`orcid:` in each
+  author entry).
 - **A Zenodo community** (`marola`) to group the records: needs `.zenodo.json`, which then
   carries all the metadata. Default: no.
 - **The next release in each repo** (a human's act): `v0.1.1`, or wait for a release with real
