@@ -11,7 +11,7 @@ public opens CodeRabbit's and Sourcery's free tiers too (§8). What marola-devki
 (2026-10-04) is lighter than any of these: `gemini-review`, a reusable workflow a repo opts into
 with one file, calling the Gemini API directly, no GCP project or billing account
 ([`4-reference_workflows.md`](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_workflows/)).
-The umbrella, marola-app and marola-ml pin a devkit that has it, and none calls it yet. This
+Each repo opts in with its own `gemini.yml` (MIP-0072 §5.4). This
 page stays research because Gemini Code Assist for GitHub is still a materially different, more
 complete product — a managed GitHub App with its own severity/comment tuning, nothing to hold an
 API key for — and the Besom plan below (§4–§6) is what standing *that* up would look like, not a

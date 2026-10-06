@@ -2,308 +2,137 @@
 
 | | |
 |---|---|
-| **Status** | Draft, issue #546. `Tasks: docs/MIPs/MIP-0072.tasks.md` |
+| **Status** | Partially implemented (tasks 1–2 of 3 — marola-dev/marola-devkit#19, marola-dev/marola-devkit#24; task 3 in six of seven repos, §5.4). Missing: marola-corpus's caller (marola-dev/marola-corpus#5) and the team's Read on marola-app, marola-ml and marola-corpus (task H). Issues #546, #641. `Tasks: docs/MIPs/MIP-0072.tasks.md` |
 | **Author** | Claude, for M. Hoffmann |
-| **Created** | 2026-09-30 |
+| **Created** | 2026-09-30; revised 2026-10-06 to the design that shipped |
 | **Phase** | 0 (dev-loop; no user-facing surface) |
-| **Related** | `GEMINI-CODE-ASSIST.md` (#400; this MIP extends its §2 and corrects §3/§4), `DEV-FLOW.md` §5 route 4, MIP-0060 (§5.5 reserved the hosted route for a human go-ahead), MIP-0065 (`CI-CD.md`, the hosted-runner rule, the maintainer's manual settings), MIP-0063 (issue projection) |
-| **Effort** | L by the rubric (a new CI workflow), small in lines: one ~35-line workflow and edits to three docs, no script, no Scala. Most of the work is the human-only install (§5.4) |
-| **Gain** | `infra/dev-loop`: one gesture anyone with write or triage access can make, from the PR sidebar or `gh pr edit --add-reviewer`; `cost/ops`: a hosted review at $0 during Google's Preview, before a paid `/code-review` looks |
-| **Effort vs Gain** | `do next`, gated on the human install (task H): until the app is on `marola-dev`, neither the gesture nor `/gemini review` does anything |
-| **Depends on** | No MIP must land first. The `AGENTS.md` cost gate applies: the only install path left needs a GCP project with a billing account attached (§4.1), so a human confirms before anything is set up. Not gated by Phase 1. Shares `CI-CD.md` and `DEV-FLOW.md` §5 with MIP-0060's unbuilt tasks 2–3 (different rows) |
+| **Related** | `GEMINI-CODE-ASSIST.md` (#400, the hosted product this replaces for now), `DEV-FLOW.md` §5 route 4, MIP-0060 (§5.5 reserved a hosted review for a human go-ahead), MIP-0070 (the devkit's reusable workflows) |
+| **Effort** | M: one reusable workflow and one script in marola-devkit, a ~15-line caller per repo, human-only org settings |
+| **Gain** | `infra/dev-loop`: one gesture anyone with triage access can make, from the PR sidebar or `gh pr edit --add-reviewer`, in every repo; `cost/ops`: $0 on the Gemini API free tier, no GCP project or billing account |
+| **Effort vs Gain** | `do now` |
+| **Depends on** | No MIP. No paid resource: the API key is a free AI Studio key with no billing attached |
 | **Blocked by** | none |
-| **Risk** | Google changes the offer again. The consumer app was shut down on 2026-07-17 and the enterprise version is Preview; a charge or a second shutdown would strand the install and this workflow with it |
-| **Cost so far** | — |
+| **Risk** | Google cuts the free tier (about 20 requests a day per model) or retires the default model; `GEMINI_MODEL` switches models without a release |
+| **Cost so far** | see each PR's `Cost:` trailers |
 
 ## 1. Summary
 
-The maintainer wants a Gemini Code Assist review to start when someone adds "the Gemini reviewer"
-to a PR; no gesture does that today. This MIP makes "the Gemini reviewer" an empty org team,
-`marola-dev/gemini`. Requesting it runs a small workflow that posts `/gemini review` under a
-fine-grained token (third-party repos report that Gemini ignores `github-actions[bot]`, §4.2) and
-then removes the team request. Most of the work is a human's: the enterprise app install through
-Google Cloud, the team and the token.
+Requesting the empty, visible org team `marola-dev/gemini` as a reviewer on any marola pull
+request starts a Gemini review. Each repo's `.github/workflows/gemini.yml` calls marola-devkit's
+reusable `gemini-review.yml`, which sends the diff to the Gemini API in one call, posts one review
+as the GitHub App `marola-gemini-bot`, and pushes one commit with the fixes it can apply safely.
+The PR merges once every repo has the caller (§5.4).
 
 ## 2. Motivation
 
-State on 2026-09-30. #400 did the repo side: `.gemini/config.yaml` turns off review-on-open
-(`pull_request_opened.code_review: false`), so Gemini reviews only when asked, and
-`.gemini/styleguide.md` carries the `AGENTS.md` subset a diff reviewer can check. The app is not in
-use: no `gemini-code-assist[bot]` comment and no `/gemini` comment exists on any issue or PR (REST
-scan, appendix), and nothing suggests it is installed on `marola-dev` (reading that needs org-admin
-rights).
-
-`GEMINI-CODE-ASSIST.md` calls the repo private and installs on `h0ffmann/marola`, but the repo is
-public under the `marola-dev` org (appendix); it does not mention the consumer app's shutdown on
-2026-07-17 (§4.1), and its §4 sketch picks the Developer Connect app (§4.4). Typing is the only
-trigger (`DEV-FLOW.md` §5 route 4); no workflow listens to `review_requested` (`grep` over
-`.github/workflows/`), and a bot can't simply be requested as a reviewer (§4.3).
+The maintainer wants a review to start when someone adds "the Gemini reviewer" to a PR. The first
+draft of this MIP (2026-09-30) did that through Gemini Code Assist on GitHub. Google shut its
+consumer app down on 2026-07-17, and the enterprise install needs a GCP project with a billing
+account (`GEMINI-CODE-ASSIST.md`), which the cost gate in `AGENTS.md` would hold. Calling the
+Gemini API directly with a free AI Studio key needs neither, and the same workflow serves every
+repo from the devkit.
 
 ## 3. User-visible change
 
-Before: nothing reviews a PR, and no `/gemini review` has ever been answered on marola (§2).
+Before: no gesture asks for a review, and no Gemini comment exists on any marola PR.
 
 After (PR timeline):
 
 ```text
-brunogbv requested a review from marola-dev/gemini
-h0ffmann commented: /gemini review                  (gemini-review.yml, GEMINI_REVIEW_TOKEN)
+h0ffmann requested a review from marola-dev/gemini
 github-actions removed the review request for marola-dev/gemini
-gemini-code-assist[bot] reviewed: one summary, ≤ 10 inline comments at MEDIUM or above
+marola-gemini-bot reviewed: one summary, ≤ 10 inline comments tagged [high]/[medium]/[low]
+marola-gemini-bot pushed: fix: apply Gemini review findings   (same-repo PRs only)
 ```
 
-From a terminal: `gh pr edit <N> --add-reviewer marola-dev/gemini`. Typing `/gemini review` by
-hand keeps working and stays the route on a fork PR. The comment always carries the token owner's
-name; the first timeline line records who asked.
+From a terminal: `gh pr edit <N> --add-reviewer marola-dev/gemini`. Request it again after new
+commits for a fresh review. A fork PR gets the review and no fix commit.
 
 ## 4. Data sources and dependencies reviewed
 
-This sandbox's proxy blocks `developers.google.com`, `docs.cloud.google.com`, `docs.github.com`
-and `codeassist.google`. Claims about those pages come from search-result summaries and are marked
-so; the appendix lists what was fetched directly.
-
-### 4.1 Gemini Code Assist on GitHub
-
-- Google's deprecation page (search summary): the consumer version was deprecated on 2026-06-18
-  (no new installs) and shut down on 2026-07-17; the enterprise version is not affected. The app's
-  GitHub page (fetched) agrees, "This app is only available for Google Cloud customers", and its
-  Marketplace listing returns 404.
-- The enterprise version is installed through Google Cloud, as a Developer Connect connection
-  created from Gemini Code Assist → Agents & Tools → Source Code Management (search summary; the
-  same steps as `GEMINI-CODE-ASSIST.md` §3). "No charges ... during Preview", but reviews stop when
-  the project has no valid billing account (search summary). Google's 2025-10-15 blog (fetched)
-  also announces the public preview at no charge.
-- With review-on-open off, Gemini answers PR comments: `/gemini review`, `/gemini summary`,
-  `/gemini <question>`, `/gemini help`. It "listens to comments from any pull request contributor,
-  and decides whether it should respond" (search summary). Nothing documents a reaction to
-  `review_requested`.
-- `pull_request_opened.include_drafts` (default true; search summary of the customize page)
-  "enables agent functionality on draft pull requests". marola sets it false; whether that also
-  silences `/gemini review` on a draft is **to verify** (task H).
-
-### 4.2 Whether Gemini answers `github-actions[bot]`
-
-The only evidence is third-party. `mikejmckinney/CCTC`'s `agent-review-on-push.yml` (read at
-`9847e6d`) posts `/gemini review` with a user PAT because "Gemini Code Assist filters slash commands
-posted by `github-actions[bot]` to prevent reviewer loops, so a comment posted under GITHUB_TOKEN is
-silently ignored". `peanutDD/upload-download-util` does the same through `GEMINI_REVIEW_TOKEN ||
-GITHUB_TOKEN`. Google says nothing either way, and whether comments from other app bots are also
-dropped is unknown. **To verify:** task H posts once with the token.
-
-### 4.3 Requesting a reviewer on GitHub
-
-- `github/docs` `pull-request-reviews.md` (read at `d45a621`): "You can request a review from a
-  person or team with read access to the repository"; with code review assignment on, "specific
-  members will be requested and the team will be removed as a reviewer".
-- The `review_requested` payload (`octokit/webhooks` schema, `main`) carries either
-  `requested_reviewer` (a user) or `requested_team`, never both.
-- For bots, the CCTC workflow records REST `requested_reviewers` answering 422 "Reviews may only be
-  requested from collaborators" for Copilot's bot login. GraphQL `requestReviewsByLogin` has a
-  `botLogins` field (`cli/cli` `api/queries_pr_review.go`), which `gh` fills only for Copilot;
-  whether it accepts `gemini-code-assist[bot]` is **not checked**.
-- **Not checked:** whether an empty team can be requested, and whether it must be visible rather
-  than secret. Task H tries it on a throwaway PR.
-
-### 4.4 Developer Connect's app choice
-
-`googleapis` `developer_connect.proto`: `GitHubConfig.GitHubApp` is `DEVELOPER_CONNECT = 1`,
-`FIREBASE = 2`, `GEMINI_CODE_ASSIST = 3` ("The Gemini Code Assist Application").
-`GEMINI-CODE-ASSIST.md` §4's Besom sketch sets `githubApp = "DEVELOPER_CONNECT"`, which likely
-explains its open question about whether the reviewer picks up an API-made connection. Recorded
-for the Besom candidate MIP; this MIP uses the console path.
-
-### 4.5 This repo
-
-Public, owned by the `marola-dev` organisation (REST). Fine-grained tokens scoped to `marola-dev`
-wait for an org owner's approval (#496, the scala-steward token). Only `marola-sea-publish.yml`
-may be self-hosted (`scripts/workflow_runners.py`); a new `pull_request` workflow runs on
-`ubuntu-latest`, free on a public repo (MIP-0065).
-
-**Pick:** the enterprise app via the console (§4.1), triggered by a team review request (§4.3),
-the command posted under a user token (§4.2).
+- **A GitHub App cannot be requested as a reviewer**, so a team stands in for the bot. A team is
+  offered in the Reviewers box only when it has access to the repo; on 2026-10-06 the team had
+  Read on marola, marola-site, marola-devkit and marola-oods, and requesting it on a marola-oods PR
+  failed until it was added there (`gh api repos/marola-dev/<repo>/teams`).
+- **The `review_requested` payload** carries `requested_team.slug`, which the caller's `if` reads.
+- **The free tier** allows about 20 requests a day per model. An agent loop (`run-gemini-cli`)
+  spent them on one PR in testing, so the design makes one API call per review.
+- **`pull_request_target`** runs the base branch's workflow with the repo's secrets. It is safe here
+  because only someone with triage access can request a reviewer, and nothing from a fork's head is
+  executed (§5.3).
+- **A push with `GITHUB_TOKEN` starts no CI** on the PR; a push with the App's installation token
+  does. An App with no Workflows permission cannot push a change under `.github/workflows/`.
 
 ## 5. Design
 
 ### 5.1 The gesture
 
-"The Gemini reviewer" is the org team `marola-dev/gemini`: visible, no members, read access to
-`marola`, code review assignment off. It shows in the Reviewers picker, and `gh pr edit
---add-reviewer marola-dev/gemini` works from a terminal. With no members, it notifies nobody.
+The team `marola-dev/gemini`: visible, no members, Read on every repo that calls the workflow.
+The workflow removes the team request first, so it can be requested again.
 
-### 5.2 `.github/workflows/gemini-review.yml` (task 2 writes it; sketch passes actionlint 1.7.12)
+### 5.2 `gemini-review.yml` (marola-devkit)
 
-```yaml
-name: Gemini review on request
-on:
-  pull_request:
-    types: [review_requested]
-concurrency:
-  group: gemini-review-${{ github.event.pull_request.number }}
-permissions:
-  pull-requests: write
-jobs:
-  request:
-    # Fork PRs get no secrets under pull_request: a human comments `/gemini review` there.
-    if: >-
-      github.event.requested_team.slug == 'gemini'
-      && github.event.pull_request.head.repo.full_name == github.repository
-      && github.event.pull_request.state == 'open'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: post /gemini review as the token's user
-        env:
-          # Gemini drops slash commands from github-actions[bot] (MIP-0072 §4.2).
-          GH_TOKEN: ${{ secrets.GEMINI_REVIEW_TOKEN }}
-          PR: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-          [ -n "$GH_TOKEN" ] || { echo "::error::GEMINI_REVIEW_TOKEN is not set (CI-CD.md, manual settings)"; exit 1; }
-          gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body='/gemini review' --silent
-      - name: drop the team request, so the next request fires again
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
-        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/pulls/$PR/requested_reviewers" -f 'team_reviewers[]=gemini' --silent
-```
+One job. `scripts/gemini_review.py review` sends the diff, numbered by new-file line, with the
+repo's `.gemini/styleguide.md` and `AGENTS.md`, and asks for JSON. It keeps at most 10 comments
+GitHub accepts and posts one `COMMENT` review with suggestion blocks. `gemini_review.py fix` then
+applies a comment's fix only where its `original` text still matches, only in files the PR changed
+and never under `.github/`; the caller's `check-command` runs without the token; one commit carrying
+`Tested:`/`Cost:` (and any `extra-trailers`) is pushed. Inputs and secrets are in the devkit's
+[`4-reference_workflows`](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_workflows/#gemini-review).
 
-There is no checkout, so no PR code runs. The trigger is `pull_request`, not `pull_request_target`
-(§9). The job is advisory and never a required check. If task H finds that the Reviewers box
-offers `gemini-code-assist[bot]` itself and Gemini does not react to that request on its own,
-task 2 adds `|| github.event.requested_reviewer.login == 'gemini-code-assist[bot]'` to the `if`
-and skips the DELETE step for it; otherwise the team is the only gesture.
+### 5.3 Fork PRs (marola-dev/marola-devkit#23)
 
-```mermaid
-sequenceDiagram
-  actor Dev as Anyone with write or triage
-  participant GH as GitHub
-  participant WF as gemini-review.yml
-  participant Gem as gemini-code-assist[bot]
-  Dev->>GH: request review from marola-dev/gemini
-  GH->>WF: pull_request review_requested (requested_team.slug = gemini)
-  WF->>GH: comment "/gemini review" (GEMINI_REVIEW_TOKEN, a user)
-  WF->>GH: remove the team request (GITHUB_TOKEN)
-  GH->>Gem: issue_comment
-  Gem->>GH: summary + inline review
-```
+The workspace is the base commit, so the style guide is the repo's own. The fork's head is checked
+out into `.pr-head` without credentials and read as text, and `review --root .pr-head` anchors the
+suggestions there. The fix step is skipped: the App cannot push to a fork.
 
-### 5.3 The token
+### 5.4 Where it is wired
 
-`GEMINI_REVIEW_TOKEN`: the maintainer's fine-grained personal access token, resource owner
-`marola-dev`, repository `marola` only, Pull requests read and write (Issues too only if task H's
-post gets a 403), approved by an org owner, stored as a repository Actions secret. It posts one
-fixed string; nothing else reads it.
+| Repo | Caller | State |
+|---|---|---|
+| marola-devkit | the reusable workflow plus its own `gemini.yml` (`devkit-ref: ${{ github.sha }}`) | marola-dev/marola-devkit#19, #24, merged (v0.5.0) |
+| marola | `gemini.yml` | #642, merged |
+| marola-site | `gemini.yml` with `check-command: node scripts/site_check.js` and `MIP: none` | marola-dev/marola-site#52, merged |
+| marola-app | `gemini.yml` | marola-dev/marola-app#37, merged |
+| marola-ml | `gemini.yml` | marola-dev/marola-ml#15, merged |
+| marola-oods | `gemini.yml` | marola-dev/marola-oods#6, merged |
+| marola-corpus | `gemini.yml` | marola-dev/marola-corpus#5, open |
 
-### 5.4 Human-only steps
+Every caller pins `@v0.5.0` with `devkit-ref: v0.5.0` and triggers on `pull_request_target`.
 
-Task H's checklist in `MIP-0072.tasks.md` lists them, as `GEMINI-CODE-ASSIST.md` will after task 1.
+### 5.5 Human-only settings (task H)
 
-### 5.5 What else changes
-
-Task 1 brings `GEMINI-CODE-ASSIST.md` up to date. Task 2 adds the gesture to its §2 and edits
-`.gemini/config.yaml` (the header comment; `include_drafts` only if task H says so), `CI-CD.md` (a
-workflow row; the team and secret under the maintainer's manual settings) and `DEV-FLOW.md` §5
-route 4 ("request `marola-dev/gemini`").
+The org secrets `GEMINI_API_KEY` and `GEMINI_APP_PRIVATE_KEY` and the variable `GEMINI_APP_ID`,
+scoped to the repos above; the App installed on them with Contents and Pull requests read/write
+and no Workflows permission; the team with Read on each. The optional org variable `GEMINI_MODEL`
+overrides the default `gemini-3.5-flash`.
 
 ## 6. Scoring / safety impact
 
-None. No change to `Swimability`, any reply, or anything a user sees.
+None. The review is advisory and touches no app code path.
 
 ## 7. Verification plan
 
-1. Task H, by hand, before any workflow: steps 6–7 of its checklist (the install, a draft, the
-   empty team, the Reviewers picker, a re-request). Results go in this appendix.
-2. Task 2, static: `actionlint` and `scripts/workflow_runners.py` over `.github/workflows/` (both
-   in `quality-other`).
-3. Task 2, live, on its own PR (a `pull_request` run uses the PR's copy of the workflow): request
-   `marola-dev/gemini` → exactly one `/gemini review` comment by the token owner, the team request
-   gone, a Gemini review within minutes; request a human → the job is skipped; push, then request
-   the team again → a second review.
-4. `just docs` green under `--strict` for tasks 1 and 2.
-5. Done means three real PRs reviewed through the gesture, and `DEV-FLOW.md` §5 describing it.
+- Each caller passes `actionlint` in its repo's CI.
+- Live, on the devkit's own PRs: requesting the team posted a review and a fix commit whose push
+  started CI (marola-dev/marola-devkit#19).
+- Live, a fork PR (marola-dev/marola-site#54): one review, no fix commit, nothing from the fork run.
+- Per repo: request `marola-dev/gemini` on any PR; the request disappears and a review appears.
 
 ## 8. Risks, limitations, and honest caveats
 
-- Google has changed the offer once already (§4.1), and Preview terms can end. With a billing
-  account on file, a charge would not show up as a failure.
-- An expired or unapproved token turns the job red on the PR's checks and leaves the team request
-  in place, which shows the request went unhandled. It blocks nothing.
-- Fork PRs are not covered; requesting the team there does nothing, silently.
-- Two quick requests post two comments and cost two reviews; the per-PR concurrency group only
-  serialises them.
-- Each review sends PR content to Google. The repo is public, so this is no longer the private
-  source MIP-0060 §5.5 worried about.
+- The free tier's daily quota is shared by every repo; a busy day runs out and the job fails
+  until the next day.
+- One call cannot follow up: the review sees the diff, the style guide and `AGENTS.md`, not the
+  rest of the repo.
+- Source leaves the org for Google's API, as Gemini Code Assist would have sent it.
 
 ## 9. Alternatives considered
 
-- Request `gemini-code-assist[bot]` directly. It is closest to the ask, but nothing documents
-  that it works (§4.3); it stays as a second clause if task H shows it does (§5.2).
-- A `review/gemini` label on `pull_request: labeled`, removed after posting. The mechanics are
-  fully documented and no team is needed; it lost only because the ask was for a reviewer. It is
-  the fallback if an empty team cannot be requested (one `.github/labels.yml` row, `just
-  labels-sync`).
-- Review on open again (`pull_request_opened.code_review: true`) breaks `DEV-FLOW.md` §5
-  ("nothing reviews a PR automatically") and spends a review on every PR of a nine-PR stack.
-- An org GitHub App token (`actions/create-github-app-token`) has no expiry to rotate, but it
-  posts as `<app>[bot]`, and whether Gemini's filter drops every bot is unknown.
-- `pull_request_target` would cover forks and is safe in this shape (no checkout), but the repo
-  avoids the trigger (MIP-0060 §5.2), and fork authors can still type the command.
-- Do nothing. Once the app is installed, typing `/gemini review` works; the workflow adds only the
-  gesture. The install is the prerequisite either way.
+- **Gemini Code Assist on GitHub** (this MIP's first draft): needs a GCP project with billing since
+  the consumer app's shutdown. `GEMINI-CODE-ASSIST.md` keeps the plan.
+- **An agent loop (`run-gemini-cli`)**: spent the day's quota on a single PR.
 
 ## 11. Open questions
 
-1. **Cost go-ahead:** a GCP project with a billing account attached, $0 during Preview (§4.1). Does
-   the maintainer accept that, knowing the consumer app it replaces was shut down in July?
-2. Can an empty, visible team be requested? If not, the label (§9) replaces the team.
-3. Does the Reviewers box offer `gemini-code-assist[bot]`, and does Gemini react to a request?
-4. Does `include_drafts: false` silence `/gemini review` on drafts?
-5. PAT or org GitHub App token, given the filter's reach is unknown?
-6. **Follow-up MIP:** which hosted reviewer, now that the repo is public. `GEMINI-CODE-ASSIST.md`
-   chose Gemini because a private repo ruled out the free open-source tiers (§8 there), and that
-   premise is gone. Needs the next MIP number.
-
-## Appendix
-
-### Checked live
-
-All on 2026-09-30.
-
-- `github.com/apps/gemini-code-assist` (WebFetch): "This app is only available for Google Cloud
-  customers"; publisher Google.
-- `github.com/marketplace/gemini-code-assist`: HTTP 404.
-- `cloud.google.com/blog/products/ai-machine-learning/gemini-code-assist-in-github-for-enterprises`:
-  dated 2025-10-15; public preview at no charge; higher PR quota than the individual tier.
-- `cloud.google.com/blog/products/ai-machine-learning/gemini-code-assist-and-github-ai-code-reviews`:
-  dated 2025-07-31; "automatically assigned as a reviewer" on PR open; `/gemini` commands.
-- Web search summaries of `developers.google.com/gemini-code-assist/docs/deprecations/consumer-code-review`
-  (dates in §4.1), `docs.cloud.google.com/gemini/docs/code-review/use-code-assist-github` (commands,
-  "listens to comments from any pull request contributor"), `.../customize-repo-review` (keys),
-  `.../review-repo-code` (Preview no charge, billing, Developer Connect, 100+ PRs/day). The pages
-  themselves: blocked by the proxy.
-- `raw.githubusercontent.com/github/docs/d45a621.../content/pull-requests/reference/pull-request-reviews.md`:
-  the two quotes in §4.3.
-- `raw.githubusercontent.com/octokit/webhooks/main/payload-schemas/api.github.com/pull_request/review_requested.schema.json`:
-  `oneOf` user `requested_reviewer` / `requested_team`.
-- `cli/cli` `api/queries_pr_review.go` at `fc4b137` (code search): `RequestReviewsByLogin(...,
-  userLogins, botLogins, teamSlugs, union)`.
-- `raw.githubusercontent.com/mikejmckinney/CCTC/9847e6d.../agent-review-on-push.yml`: the §4.2
-  quote and the 422 text. `peanutDD/upload-download-util` `gemini-review-kickoff.yml` at `b591906`:
-  `GEMINI_REVIEW_TOKEN || GITHUB_TOKEN`.
-- `googleapis/googleapis` `google/cloud/developerconnect/v1/developer_connect.proto` at `93d6085`
-  (code search): the `GitHubApp` enum in §4.4.
-- `api.github.com/repos/marola-dev/marola`: `private: false`, owner type `Organization`.
-- `api.github.com/repos/marola-dev/marola/issues/comments` and `/pulls/comments`, all pages: 93 issue
-  comments (h0ffmann, dependabot[bot], brunogbv) and 29 review comments (brunogbv, osodracnai); none
-  from `gemini-code-assist[bot]`, none containing `/gemini`.
-- Sketch in §5.2: `actionlint` 1.7.12 clean (shellcheck not installed here, so its rule did not
-  run); `scripts/workflow_runners.py` clean.
-
-### Not checked
-
-- The Google documentation pages themselves (proxy-blocked); every "search summary" above.
-- Whether Preview is still free today, and any GA price.
-- Gemini's bot-comment filter (§4.2), its reach beyond `github-actions[bot]`, and `include_drafts`.
-- Empty or secret teams as reviewers; `requestReviewsByLogin` with a non-Copilot bot.
-- Whether the app is installed on `marola-dev` (needs org-admin rights).
-- The ≥ 100 reviews/day quota and the data-sharing default, repeated from `GEMINI-CODE-ASSIST.md`.
+None open. The draft's questions on Code Assist's bot-comment filter and drafts no longer apply.
