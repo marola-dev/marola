@@ -26,7 +26,7 @@ tide, even whether jellyfish or whales are around, and then they tell you the be
 That friend is marola. You can see it today at **[marola.dev](https://marola.dev/)**: a map of the
 beaches around Florianópolis, Rio de Janeiro and Salvador, each one ranked for today and tomorrow.
 
-<p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view.png" alt="marola.dev — best hour per beach, ranked, with the water-quality popup for a sampling point" width="720" /></a></p>
+<p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view.png" alt="marola.dev over Rio de Janeiro: Ipanema and Copacabana scored by best hour, water-quality drops from INEA, and Praia do Forte's card with sea, tide, jellyfish and whale odds" width="860" /></a></p>
 
 A few promises marola keeps:
 
