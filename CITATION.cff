@@ -17,8 +17,8 @@ abstract: >-
   fine-tuning and the benchmark gate), marola-corpus (the sourced knowledge corpus) and
   marola-devkit (the shared development harness).
 authors:
-  - family-names: "Santos"
-    given-names: "Matheus Hoffmann Fernandes"
+  - family-names: "Hoffmann"
+    given-names: "Matheus"
     orcid: "https://orcid.org/0009-0009-1056-7661"
     affiliation: "Escola Politécnica, Universidade Federal do Rio de Janeiro"
   - family-names: "Valério"

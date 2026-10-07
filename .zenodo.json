@@ -4,7 +4,7 @@
   "description": "<p>marola tells you whether and when to swim at a nearby beach, and why. It ranks the OpenStreetMap beaches around Florianópolis, Rio de Janeiro and Salvador by the hour from Open-Meteo sea, weather and tide forecasts and the official bathing-water bulletins of IMA/SC, INEA and INEMA, with a 0-100 swimability score whose safety veto is plain code, never a model's output. A local LLM (Ollama) only explains the result in words, and a second pass reviews it.</p><p>This record archives the marola umbrella: the design proposals (MIPs), the ways of working, the aggregated documentation and the pinned versions of every repository. The code and data live in the repositories listed under related works: marola-app (the Scala 3 pipeline), marola-site (the map at marola.dev), marola-oods (the Open Ocean Data Store), marola-ml (prompt compilation, fine-tuning and the benchmark gate), marola-corpus (the sourced knowledge corpus) and marola-devkit (the shared development harness).</p>",
   "creators": [
     {
-      "name": "Santos, Matheus Hoffmann Fernandes",
+      "name": "Hoffmann, Matheus",
       "affiliation": "Escola Politécnica, Universidade Federal do Rio de Janeiro",
       "orcid": "0009-0009-1056-7661"
     },

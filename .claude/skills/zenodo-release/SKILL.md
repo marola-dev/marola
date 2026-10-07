@@ -46,7 +46,7 @@ give him the `just release` command.
 - People: `just contributor-add "Family, Given" [--orcid ID] [--affiliation TEXT] [--type T]`
   adds a Zenodo contributor with a role (`ProjectMember`, `Researcher`, `Supervisor`, …);
   `--author` makes them a cited creator, which also puts them in the CFF. Supervisors are
-  contributors, never creators. The maintainer cites as "Santos, Matheus Hoffmann Fernandes".
+  contributors, never creators. The maintainer cites as "Hoffmann, Matheus".
 - ORCID: bare in `.zenodo.json` (`0000-0000-0000-0000`); the generator writes the full URL in the
   CFF. The check verifies the checksum.
 - Related works use Zenodo's relation vocabulary (the check lists it): the six repos are
