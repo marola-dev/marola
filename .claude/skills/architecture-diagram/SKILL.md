@@ -29,8 +29,8 @@ own source: no build step, no generator committed beside it. The reference is
    4. **Arrows**, so boxes paint over their ends. Orthogonal `path`s (`H`/`V` only).
    5. **Boxes**: an opaque `#0b1222` rect first, then the tinted rect on it, so no arrow shows through.
    6. The legend, below every boundary.
-4. **Two languages, two files.** When both READMEs show it, write `<name>.svg` and
-   `<name>.pt-BR.svg` with the same geometry; translate, then shorten any label that no longer fits.
+4. **One file for both READMEs.** `README.md` and `README.pt-BR.md` show the same SVG, labelled
+   in Portuguese, like the site; only each README's `alt` text is in its own language.
 5. **Check it renders**, then look at it: Chromium on a page that holds only the `<img>`
    (`--headless --screenshot`), at 1000 px. Fix any text crossing a box edge or another label.
    Then `just quality`.

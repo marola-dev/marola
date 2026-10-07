@@ -20,8 +20,8 @@ the rule below is also in `.claude/rules/docs.md`, which agents load for `docs/*
   diagram.
 - **A README diagram is a hand-written SVG.** GitHub renders no Kroki dialect and draws Mermaid
   plainly, so a README shows `docs/img/<name>.svg`, written by the `architecture-diagram` skill
-  (`.claude/skills/architecture-diagram/`); the SVG is its own source. A diagram in both READMEs
-  is two files, `<name>.svg` and `<name>.pt-BR.svg`, edited together.
+  (`.claude/skills/architecture-diagram/`); the SVG is its own source, and both READMEs show the
+  same file, labelled in Portuguese.
 - **Under about 15 nodes.** Split a diagram rather than grow it.
 - **`dbml`, `vegalite` and `excalidraw` fences take `{bg-dark=white}`.** Colours are injected into
   every other dialect in the table above for the slate theme; these three cannot be styled that
