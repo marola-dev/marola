@@ -32,6 +32,9 @@ authors:
     affiliation: "Escola Politécnica, Universidade Federal do Rio de Janeiro"
   - family-names: "Valério"
     given-names: "Bruno"
+  - family-names: "Soares da Silva Junior"
+    given-names: "Rob Kler"
+    orcid: "https://orcid.org/0009-0003-3102-4996"
 repository-code: "https://github.com/marola-dev/marola"
 url: "https://marola.dev"
 license: MIT

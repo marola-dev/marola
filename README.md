@@ -227,7 +227,7 @@ BibTeX:
 
 ```bibtex
 @software{hoffmann_2026_marola,
-  author    = {Hoffmann, Matheus and Valério, Bruno},
+  author    = {Hoffmann, Matheus and Valério, Bruno and Soares da Silva Junior, Rob Kler},
   title     = {{marola: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data}},
   year      = {2026},
   url       = {https://github.com/marola-dev/marola}
@@ -236,11 +236,11 @@ BibTeX:
 
 APA:
 
-> Hoffmann, M., & Valério, B. (2026). *marola: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data* [Computer software]. https://github.com/marola-dev/marola
+> Hoffmann, M., Valério, B., & Soares da Silva Junior, R. K. (2026). *marola: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data* [Computer software]. https://github.com/marola-dev/marola
 
 ABNT (NBR 6023):
 
-> HOFFMANN, Matheus; VALÉRIO, Bruno. **marola**: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data. [S. l.]: GitHub, 2026. Disponível em: https://github.com/marola-dev/marola.
+> HOFFMANN, Matheus; VALÉRIO, Bruno; SOARES DA SILVA JUNIOR, Rob Kler. **marola**: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data. [S. l.]: GitHub, 2026. Disponível em: https://github.com/marola-dev/marola.
 
 <!-- citation:end -->
 
