@@ -211,6 +211,16 @@ asked, reviews fork pull requests without pushing to them, and never edits `.git
 calls the devkit's [`gemini-review`](https://github.com/marola-dev/marola-devkit/blob/main/docs/4-reference_workflows.md#gemini-review)
 workflow.
 
+## How to cite
+
+Each release of this repo (`just release X.Y.Z`) is archived on [Zenodo](https://zenodo.org/),
+which gives it a DOI. The record lists every marola repository as a part of it, and the WW3 GPU
+Lab ([10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352)) as related work. Until
+the first archived release, use GitHub's **Cite this repository** button (right sidebar), which
+exports APA and BibTeX from [`CITATION.cff`](./CITATION.cff). That file is generated from
+[`.zenodo.json`](./.zenodo.json) by `just citation`, and `just contributor-add` adds a person to
+both ([MIP-0079](./docs/MIPs/MIP-0079-zenodo-dois-and-citation.md)).
+
 ## Thanks
 
 marola stands on other people's work. Five it could not exist without, alphabetically:

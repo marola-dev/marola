@@ -1,0 +1,21 @@
+# A pushed v* tag (`just release X.Y.Z`) becomes a published GitHub release; Zenodo's own webhook
+# then archives it with .zenodo.json and mints the version DOI (MIP-0079). No secret: the webhook
+# is Zenodo's, and GITHUB_TOKEN creates the release.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --title "marola $GITHUB_REF_NAME"

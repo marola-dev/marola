@@ -187,6 +187,14 @@ o guia de [contribuição](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTIN
 agente de IA: leia primeiro o [`AGENTS.md`](./AGENTS.md), depois o `AGENTS.md` do repositório que
 vai mudar.
 
+## Como citar
+
+Cada release deste repositório (`just release X.Y.Z`) é arquivada no [Zenodo](https://zenodo.org/),
+que dá a ela um DOI. O registro lista cada repositório do marola como parte dele, e o WW3 GPU Lab
+([10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352)) como trabalho relacionado.
+Até a primeira release arquivada, use o botão **Cite this repository** do GitHub (barra lateral
+direita), que exporta APA e BibTeX a partir do [`CITATION.cff`](./CITATION.cff).
+
 ## Agradecimentos
 
 O marola existe graças ao trabalho de muita gente: os colaboradores do

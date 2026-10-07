@@ -1,0 +1,25 @@
+# The citation metadata Zenodo and GitHub read (MIP-0079): .zenodo.json valid against Zenodo's
+# vocabularies and CITATION.cff generated from it (scripts/citation.py), then the CFF checked by
+# the Citation File Format project's own validator, so a bad file never reaches a release.
+name: citation
+
+on:
+  pull_request:
+    paths: [CITATION.cff, .zenodo.json, scripts/citation.py]
+  push:
+    branches: [main]
+    paths: [CITATION.cff, .zenodo.json, scripts/citation.py]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 scripts/citation.py --check
+      - uses: citation-file-format/cffconvert-github-action@2.0.0
+        with:
+          args: --validate

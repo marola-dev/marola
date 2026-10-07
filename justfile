@@ -70,6 +70,8 @@ quality-other:
     scripts/site-data-push.sh --self-test
     scripts/pointer-sync.sh --self-test
     python3 scripts/mip_graph.py --self-test
+    python3 scripts/citation.py --self-test
+    scripts/release.sh --self-test
     scripts/mkdocs.sh --self-test
     scripts/prepare-docs.sh --self-test
     scripts/fetch-api-docs.sh --self-test
@@ -81,6 +83,7 @@ quality-other:
     scripts/agents_repos_check.sh
     workflow-runners
     python3 scripts/mip_graph.py --check
+    python3 scripts/citation.py --check
     agents-check
     docs-lint
     actionlint
@@ -353,6 +356,24 @@ opencode-cost *args="session":
 # Push stdin (or --text "…") to the clipboard — write-only.
 clip *args:
     clip {{ args }}
+
+# Tag main as vX.Y.Z and push it; release.yml publishes the release and Zenodo mints its DOI
+# (MIP-0079). Refuses unless main is clean, level with origin and the citation metadata is valid.
+release *args:
+    scripts/release.sh {{ args }}
+
+# List the release tags, newest first.
+releases:
+    git fetch -q --tags origin && git tag -l 'v*' --sort=-v:refname --format='%(refname:short)  %(creatordate:short)  %(subject)'
+
+# Validate .zenodo.json and regenerate CITATION.cff from it; `--check` only checks.
+citation *args:
+    python3 scripts/citation.py {{ args }}
+
+# Add a person to the citation metadata: a contributor on Zenodo, or with --author a cited author.
+#   just contributor-add "Family, Given" --orcid 0000-0000-0000-0000 --affiliation "…" --type Researcher
+contributor-add name *args:
+    python3 scripts/citation.py add --name "{{ name }}" {{ args }}
 
 # Fetch origin and fast-forward local `main` when it is checked out and clean.
 sync-main:
