@@ -37,6 +37,11 @@ authors:
     orcid: "https://orcid.org/0009-0003-3102-4996"
 repository-code: "https://github.com/marola-dev/marola"
 url: "https://marola.dev"
+doi: 10.5281/zenodo.23224155
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23224155
+    description: Concept DOI, resolves to the latest release
 license: MIT
 keywords:
   - "ocean"

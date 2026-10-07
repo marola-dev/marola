@@ -29,7 +29,7 @@ READMES = (ROOT / "README.md", ROOT / "README.pt-BR.md")
 START, END = "<!-- citation:start -->", "<!-- citation:end -->"
 
 # Filled in by the PR that follows the first archived release (MIP-0079 §5.5).
-CONCEPT_DOI = ""
+CONCEPT_DOI = "10.5281/zenodo.23224155"
 HOMEPAGE = "https://marola.dev"
 YEAR = "2026"
 
@@ -310,7 +310,7 @@ def self_test() -> int:
     bad["creators"][0]["name"] = "Matheus Santos"
     bad["related_identifiers"][1]["relation"] = "isRelatedTo"
     assert len(validate(bad)) == 3, validate(bad)
-    cff = render_cff(good)
+    cff = render_cff(good, "")
     assert 'family-names: "Santos"' in cff and "orcid.org/0009-0009-1056-7661" in cff
     assert "  One & two.\n\n  Three.\n" in cff and "doi:" not in cff
     assert "doi: 10.5281/zenodo.1\n" in render_cff(good, "10.5281/zenodo.1")
@@ -322,7 +322,7 @@ def self_test() -> int:
         raise AssertionError("duplicate accepted")
     except ValueError:
         pass
-    refs = render_refs(good)
+    refs = render_refs(good, "")
     assert "author    = {Santos, Matheus Hoffmann Fernandes}" in refs and "doi" not in refs
     assert "> Santos, M. H. F. (2026). *t* [Computer software]. https://github.com/x/y" in refs
     good["creators"].append({"name": "Valério, Bruno"})
