@@ -499,7 +499,8 @@ so it outlives anyone leaving.
 6. **The smoke test**, in a local `duckdb`: a session `TYPE s3` secret as in §4.4 with the ETL
    token, `COPY` one row to `s3://br-open-ocean-data-storage/smoke/hello.parquet` and read it back,
    then attach a throwaway DuckLake with `DATA_PATH 's3://br-open-ocean-data-storage/smoke/lake/'`,
-   update a row and read `AT (VERSION => 1)`; delete `smoke/` afterwards (R2 → the bucket →
+   update a row and read the row from before the update `AT (VERSION => 2)` (`snapshots()`
+   shows the ids: 0 the schema, 1 the table, 2 the insert, 3 the update); delete `smoke/` afterwards (R2 → the bucket →
    Objects, or `aws s3 rm --recursive` with the flags of §5.4).
 7. **When marola-site reads the store**: a second Account API token, `marola-site-read`,
    **Object Read only**, this bucket only, as secrets `CLOUDFLARE_R2_READ_ACCESS_KEY_ID` and
