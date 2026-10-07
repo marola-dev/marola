@@ -28,8 +28,9 @@
 
 4. **Phase 3: Deploy.** A hosted webhook. The first deploy artefact is already here and free:
    [marola-site](https://github.com/marola-dev/marola-site)'s `site.yml` builds MIP-0005's boards
-   every 3 h and publishes the static map to GitHub Pages: no cloud account, no server, no
-   per-visitor cost. The second is the image a hosted service will run,
+   every 3 h and publishes the static map to a Cloudflare Worker serving static assets on the free
+   plan, with GitHub Pages as a fallback: no paid service, no server, no per-visitor cost. The
+   second is the image a hosted service will run,
    [marola-app](https://github.com/marola-dev/marola-app)'s
    [`Dockerfile`](https://github.com/marola-dev/marola-app/blob/main/Dockerfile) (`jvm` = Temurin
    25 JRE + the fat jar, `native` = the GraalVM binary on distroless, `dev` = the Nix dev shell)
