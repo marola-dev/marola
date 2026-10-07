@@ -6,7 +6,7 @@
 | **Author** | Claude Opus 5, for M. Hoffmann (request of 2026-09-07, verbatim: "create a MIP to implement RSS feeds into marola (to knowledge base), and which specific media formats (youtube, medium, stack) we could use to transform RSS feed into a marola direct feed... think in other ideas for RSS feeds, marola could have its own feed in the website") |
 | **Created** | 2026-09-07 |
 | **Phase** | 0 (`--ask`, the corpus tooling, the static site — all three arms). §5.2's alert banner reaches Phase 1 users for free once MIP-0002's bot exists; nothing here requires Phase 2 or any cloud resource |
-| **Related** | MIP-0001 (the curated-corpus + "no unsourced fact reaches a user" rule this MIP refuses to relax), MIP-0022 (the `knowledge/safety/` directory convention — respected, not redesigned; merged as #195), MIP-0005 (`site/dist`, the 3-hourly rebuild the outbound feed rides), MIP-0019 + `scripts/arxiv_digest.py` (the Atom-parsing and flat-file-cache precedent this MIP copies rather than reinvents), MIP-0018 (Substack/blog exporter — the *outbound-to-platforms* half; this MIP is the *feed* half and defers to it), MIP-0031 (the "the agency publishes no machine-readable feed" finding this MIP partially overturns for INMET), MIP-0033 (Release 0 — a public repo is what makes an outbound feed worth having), `FUTURE-WORK.md` §9.1 (RAG grounding) and §9.2 (proactive hazard detection — deliberately *not* built here) |
+| **Related** | marola-site spec 001 and §5.2a (the alerts archive page, amended 2026-10-05), MIP-0075 (the store it writes to), MIP-0001 (the curated-corpus + "no unsourced fact reaches a user" rule this MIP refuses to relax), MIP-0022 (the `knowledge/safety/` directory convention — respected, not redesigned; merged as #195), MIP-0005 (`site/dist`, the 3-hourly rebuild the outbound feed rides), MIP-0019 + `scripts/arxiv_digest.py` (the Atom-parsing and flat-file-cache precedent this MIP copies rather than reinvents), MIP-0018 (Substack/blog exporter — the *outbound-to-platforms* half; this MIP is the *feed* half and defers to it), MIP-0031 (the "the agency publishes no machine-readable feed" finding this MIP partially overturns for INMET), MIP-0033 (Release 0 — a public repo is what makes an outbound feed worth having), `FUTURE-WORK.md` §9.1 (RAG grounding) and §9.2 (proactive hazard detection — deliberately *not* built here) |
 | **Effort** | S/M/L per §5 item — §5.6 outbound Atom is S (one pure serializer + one `SiteBuilder` write); §5.3 reading queue is S/M (one Python script cloned from `arxiv_digest.py`); §5.1 + §5.2 inbound alerts are M/L (a new `core/feeds` parser, a `core/alerts` client, an area-name mapping table, and a new user-visible surface) |
 | **Gain** | user value (a live INMET coastal-wind/storm warning next to the swim score; a subscribable daily "best hour" feed); infra/dev-loop (a reading queue that feeds `corpus-doc` instead of ad-hoc browsing) |
 | **Effort vs Gain** | `cheap win` for §5.6 (outbound feed) and §5.3 (reading queue) — both ship alone, neither touches scoring; `do next` for §5.1/§5.2 (INMET alerts) once someone wants the banner; `park` for §5.5's transcript pipeline and §5.7c's alert feed; **reject** for auto-ingesting any feed into `knowledge/` (§9) |
@@ -282,6 +282,31 @@ object Geo:
   board JSON (a new optional `alerts` array, `Board.SchemaVersion` bumped to 2), and the map panel.
 - **Not in the LLM summary prompt in v1.** The banner is printed by Scala above the summary. §11.5
   asks whether the summarizer should also be *told* about an active warning.
+
+### 5.2a The alerts archive page (amendment, 2026-10-05)
+
+The maintainer's decisions for marola-dev/marola-site#10, a list of past alerts each checked by
+marola. The detailed design is marola-site's spec 001
+([`specs/001-alerts/`](https://github.com/marola-dev/marola-site/pull/58)); its storage is the open
+ocean data store of [MIP-0075](MIP-0075-water-quality-store-r2.md) and marola-oods spec 001.
+
+- **Source**: INMET only (§4.1), read as CAP 1.2 by id for live and past alerts alike.
+- **Per state**: alerts are ingested, stored and shown by state (IBGE code prefix of the alert's
+  municipalities), one row per alert and state. RJ first; another state is a configuration value.
+- **Every event**: §5.2's sea-relevant allow-list applies to the map banner only; the archive
+  keeps every INMET event.
+- **Storage**: two tables (`alert`, `alert_check`) in the DuckLake on Cloudflare R2, partitioned by
+  state and year, written by marola-app's `oods` module from a marola-oods workflow; one JSON
+  export per state that the site build copies into `site/dist/alerts/`. The page fetches nothing
+  but its own origin.
+- **The check**: once an alert's window has closed, Open-Meteo's recorded rain, gusts, humidity
+  and temperature at the alert's municipalities in that state are compared with the bounds INMET
+  forecast. The verdict is `confirmed`, `not_confirmed` or `not_checkable`, stored with its
+  evidence and a rule version, and shown as marola's, next to INMET's own words.
+- **History**: kept forever, and backfilled from before September 2026 by walking INMET's ids
+  (§4.1b).
+- **Language**: the alert's text in Portuguese only, as INMET wrote it.
+- **Where**: a new page, `alerts.html`, linked from the nav (MIP-0044 §11 updated).
 
 ### 5.3 Inbound B — the reading queue (`scripts/feed_digest.py`)
 
