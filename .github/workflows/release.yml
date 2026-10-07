@@ -1,6 +1,8 @@
 # A pushed v* tag (`just release X.Y.Z`) becomes a published GitHub release; Zenodo's own webhook
 # then archives it with .zenodo.json and mints the version DOI (MIP-0079). No secret: the webhook
 # is Zenodo's, and GITHUB_TOKEN creates the release.
+# Hard rule: a tag that only moves submodule pointers since the previous v* tag gets no release,
+# so no Zenodo version (`scripts/release.sh --guard`).
 name: release
 
 on:
@@ -16,6 +18,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: false
+      - run: python3 scripts/citation.py --check
+      - run: scripts/release.sh --guard "$GITHUB_REF_NAME"
       - env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --title "marola $GITHUB_REF_NAME"

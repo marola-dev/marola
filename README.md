@@ -221,6 +221,29 @@ exports APA and BibTeX from [`CITATION.cff`](./CITATION.cff). That file is gener
 [`.zenodo.json`](./.zenodo.json) by `just citation`, and `just contributor-add` adds a person to
 both (MIP-0079).
 
+<!-- citation:start -->
+
+BibTeX:
+
+```bibtex
+@software{santos_2026_marola,
+  author    = {Santos, Matheus Hoffmann Fernandes and Valério, Bruno},
+  title     = {{marola: an open, local-first guide to the sea near you, from public ocean and bathing-water data}},
+  year      = {2026},
+  url       = {https://github.com/marola-dev/marola}
+}
+```
+
+APA:
+
+> Santos, M. H. F., & Valério, B. (2026). *marola: an open, local-first guide to the sea near you, from public ocean and bathing-water data* [Computer software]. https://github.com/marola-dev/marola
+
+ABNT (NBR 6023):
+
+> SANTOS, Matheus Hoffmann Fernandes; VALÉRIO, Bruno. **marola**: an open, local-first guide to the sea near you, from public ocean and bathing-water data. [S. l.]: GitHub, 2026. Disponível em: https://github.com/marola-dev/marola.
+
+<!-- citation:end -->
+
 ## Thanks
 
 marola stands on other people's work. Five it could not exist without, alphabetically:

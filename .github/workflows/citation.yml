@@ -1,14 +1,14 @@
 # The citation metadata Zenodo and GitHub read (MIP-0079): .zenodo.json valid against Zenodo's
-# vocabularies and CITATION.cff generated from it (scripts/citation.py), then the CFF checked by
-# the Citation File Format project's own validator, so a bad file never reaches a release.
+# vocabularies, CITATION.cff and the READMEs' references generated from it (scripts/citation.py),
+# then the CFF checked by the Citation File Format project's own validator.
 name: citation
 
 on:
   pull_request:
-    paths: [CITATION.cff, .zenodo.json, scripts/citation.py]
+    paths: [CITATION.cff, .zenodo.json, scripts/citation.py, README.md, README.pt-BR.md]
   push:
     branches: [main]
-    paths: [CITATION.cff, .zenodo.json, scripts/citation.py]
+    paths: [CITATION.cff, .zenodo.json, scripts/citation.py, README.md, README.pt-BR.md]
 
 permissions:
   contents: read

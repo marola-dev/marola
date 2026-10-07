@@ -2,10 +2,11 @@
 """citation — .zenodo.json is the one hand-edited citation file; CITATION.cff is generated from it.
 
 Zenodo reads only .zenodo.json when both exist, and GitHub's "Cite this repository" reads only
-CITATION.cff, so the CFF is derived here and --check fails when they drift (MIP-0079).
+CITATION.cff, so the CFF is derived here, with the BibTeX, APA and ABNT references between the
+READMEs' citation markers, and --check fails when any of them drifts (MIP-0079).
 
-    scripts/citation.py                  # validate .zenodo.json, rewrite CITATION.cff
-    scripts/citation.py --check          # validate; exit 1 if CITATION.cff is stale
+    scripts/citation.py                  # validate .zenodo.json, rewrite CITATION.cff and the READMEs' block
+    scripts/citation.py --check          # validate; exit 1 if any generated text is stale
     scripts/citation.py add --name "Family, Given" [--orcid ID] [--affiliation TEXT]
                         [--type Researcher | --author]
     scripts/citation.py --self-test
@@ -24,10 +25,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ZENODO = ROOT / ".zenodo.json"
 CFF = ROOT / "CITATION.cff"
+READMES = (ROOT / "README.md", ROOT / "README.pt-BR.md")
+START, END = "<!-- citation:start -->", "<!-- citation:end -->"
 
-# Filled in by the PR that follows the first archived release (MIP-0079 §5.4).
+# Filled in by the PR that follows the first archived release (MIP-0079 §5.5).
 CONCEPT_DOI = ""
 HOMEPAGE = "https://marola.dev"
+YEAR = "2026"
 
 # developers.zenodo.org, deposit metadata, checked 2026-10-07.
 RELATIONS = {
@@ -115,12 +119,16 @@ def _plain(description: str) -> str:
     return html.unescape(re.sub(r"<[^>]+>", "", text)).strip()
 
 
-def render_cff(meta: dict, concept_doi: str = CONCEPT_DOI) -> str:
-    repo = next(
+def _repo(meta: dict) -> str:
+    return next(
         r["identifier"]
         for r in meta["related_identifiers"]
         if r["relation"] == "isSupplementTo" and r["scheme"] == "url"
     )
+
+
+def render_cff(meta: dict, concept_doi: str = CONCEPT_DOI) -> str:
+    repo = _repo(meta)
     out = [
         "# Generated from .zenodo.json by scripts/citation.py; edit that file, then `just citation`.",
         "cff-version: 1.2.0",
@@ -184,21 +192,97 @@ def write_json(path: Path, meta: dict) -> None:
     path.write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n")
 
 
-def run(zenodo: Path, cff: Path, check: bool) -> int:
+def _families(meta: dict) -> list[tuple[str, str]]:
+    return [tuple(p["name"].split(", ", 1)) for p in meta["creators"]]
+
+
+def render_refs(meta: dict, concept_doi: str = CONCEPT_DOI) -> str:
+    people = _families(meta)
+    repo = _repo(meta)
+    title = meta["title"]
+    short, _, sub = title.partition(": ")
+    slug = re.sub(r"[^a-z0-9]", "", short.lower())
+    bib = [
+        f"@software{{{people[0][0].lower()}_{YEAR}_{slug},",
+        f"  author    = {{{' and '.join(f'{f}, {g}' for f, g in people)}}},",
+        f"  title     = {{{{{title}}}}},",
+        f"  year      = {{{YEAR}}},",
+    ]
+    if concept_doi:
+        bib += ["  publisher = {Zenodo},", f"  doi       = {{{concept_doi}}},"]
+    bib += [f"  url       = {{{repo}}}", "}"]
+
+    def initials(given: str) -> str:
+        return " ".join(f"{part[0]}." for part in given.split())
+
+    apa_names = [f"{f}, {initials(g)}" for f, g in people]
+    apa_authors = (
+        apa_names[0] if len(apa_names) == 1 else ", ".join(apa_names[:-1]) + ", & " + apa_names[-1]
+    )
+    where = f"Zenodo. https://doi.org/{concept_doi}" if concept_doi else repo
+    apa = f"{apa_authors} ({YEAR}). *{title}* [Computer software]. {where}"
+    abnt_authors = "; ".join(f"{f.upper()}, {g}" for f, g in people)
+    abnt_title = f"**{short}**: {sub}" if sub else f"**{title}**"
+    if concept_doi:
+        abnt = f"{abnt_authors}. {abnt_title}. [S. l.]: Zenodo, {YEAR}. DOI {concept_doi}."
+    else:
+        abnt = f"{abnt_authors}. {abnt_title}. [S. l.]: GitHub, {YEAR}. Disponível em: {repo}."
+    return "\n".join(
+        [
+            START,
+            "",
+            "BibTeX:",
+            "",
+            "```bibtex",
+            *bib,
+            "```",
+            "",
+            "APA:",
+            "",
+            f"> {apa}",
+            "",
+            "ABNT (NBR 6023):",
+            "",
+            f"> {abnt}",
+            "",
+            END,
+        ]
+    )
+
+
+def splice(text: str, block: str) -> str:
+    head, sep, rest = text.partition(START)
+    _, sep2, tail = rest.partition(END)
+    if not sep or not sep2:
+        raise ValueError(f"no {START} ... {END} block")
+    return head + block + tail
+
+
+def run(zenodo: Path, cff: Path, check: bool, readmes: tuple[Path, ...] = READMES) -> int:
     meta = json.loads(zenodo.read_text())
     errs = validate(meta)
     if errs:
         print("citation: .zenodo.json is invalid:", *errs, sep="\n  ", file=sys.stderr)
         return 1
-    want = render_cff(meta)
-    if check:
-        if not cff.exists() or cff.read_text() != want:
-            print("citation: CITATION.cff is stale; run `just citation`", file=sys.stderr)
+    block = render_refs(meta)
+    wanted = {cff: render_cff(meta)}
+    for readme in readmes:
+        try:
+            wanted[readme] = splice(readme.read_text(), block)
+        except ValueError as e:
+            print(f"citation: {readme.name}: {e}", file=sys.stderr)
             return 1
-        print("citation: .zenodo.json valid, CITATION.cff current", file=sys.stderr)
+    stale = [p for p, text in wanted.items() if not p.exists() or p.read_text() != text]
+    if check:
+        if stale:
+            names = ", ".join(p.name for p in stale)
+            print(f"citation: stale: {names}; run `just citation`", file=sys.stderr)
+            return 1
+        print("citation: .zenodo.json valid, generated text current", file=sys.stderr)
         return 0
-    cff.write_text(want)
-    print(f"citation: wrote {cff.name}", file=sys.stderr)
+    for p in stale:
+        p.write_text(wanted[p])
+        print(f"citation: wrote {p.name}", file=sys.stderr)
     return 0
 
 
@@ -238,11 +322,28 @@ def self_test() -> int:
         raise AssertionError("duplicate accepted")
     except ValueError:
         pass
+    refs = render_refs(good)
+    assert "author    = {Santos, Matheus Hoffmann Fernandes}" in refs and "doi" not in refs
+    assert "> Santos, M. H. F. (2026). *t* [Computer software]. https://github.com/x/y" in refs
+    good["creators"].append({"name": "Valério, Bruno"})
+    good["title"] = "m: a sub"
+    refs = render_refs(good, "10.5281/zenodo.1")
+    assert (
+        "Santos, M. H. F., & Valério, B. (2026)" in refs
+        and "doi       = {10.5281/zenodo.1}" in refs
+    )
+    assert "SANTOS, Matheus Hoffmann Fernandes; VALÉRIO, Bruno. **m**: a sub." in refs
+    assert "DOI 10.5281/zenodo.1." in refs and "@software{santos_2026_m," in refs
+    assert splice(f"a\n{START}\nold\n{END}\nb", "NEW") == "a\nNEW\nb"
     with tempfile.TemporaryDirectory() as d:
-        z, c = Path(d, ".zenodo.json"), Path(d, "CITATION.cff")
+        z, c, r = Path(d, ".zenodo.json"), Path(d, "CITATION.cff"), Path(d, "README.md")
         write_json(z, good)
-        assert run(z, c, check=True) == 1
-        assert run(z, c, check=False) == 0 and run(z, c, check=True) == 0
+        r.write_text(f"# x\n\n{START}\n{END}\n\n## y\n")
+        assert run(z, c, True, (r,)) == 1
+        assert run(z, c, False, (r,)) == 0 and run(z, c, True, (r,)) == 0
+        assert "BibTeX:" in r.read_text() and r.read_text().endswith("\n\n## y\n")
+        r.write_text("no markers\n")
+        assert run(z, c, True, (r,)) == 1
     print("citation: self-test ok", file=sys.stderr)
     return 0
 

@@ -67,6 +67,9 @@ which checkout each recipe needs.
   default branch's tip and keeps one rolling PR open on `chore/pointer-sync` (daily, and on a
   `submodule-updated` or `submodule-docs-updated` dispatch). Never commit a pointer change by hand,
   and never commit inside a submodule from the umbrella's own branch.
+- **A pointer move never makes a release or a Zenodo version** (hard rule, MIP-0079). A release
+  needs a change outside the gitlinks since the previous `v*` tag; `scripts/release.sh --guard`
+  enforces it in `just release` and again in `release.yml`.
 - `docs.yml` builds the docs from each submodule's latest `main` regardless of the pointers;
   `ci.yml`'s `docs-build` builds a PR on its pinned commits.
 - Adding a repo is [NEW-REPO](docs/3-Ways-of-working/NEW-REPO.md)'s checklist.

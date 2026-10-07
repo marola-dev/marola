@@ -195,6 +195,29 @@ que dá a ela um DOI. O registro lista cada repositório do marola como parte de
 Até a primeira release arquivada, use o botão **Cite this repository** do GitHub (barra lateral
 direita), que exporta APA e BibTeX a partir do [`CITATION.cff`](./CITATION.cff).
 
+<!-- citation:start -->
+
+BibTeX:
+
+```bibtex
+@software{santos_2026_marola,
+  author    = {Santos, Matheus Hoffmann Fernandes and Valério, Bruno},
+  title     = {{marola: an open, local-first guide to the sea near you, from public ocean and bathing-water data}},
+  year      = {2026},
+  url       = {https://github.com/marola-dev/marola}
+}
+```
+
+APA:
+
+> Santos, M. H. F., & Valério, B. (2026). *marola: an open, local-first guide to the sea near you, from public ocean and bathing-water data* [Computer software]. https://github.com/marola-dev/marola
+
+ABNT (NBR 6023):
+
+> SANTOS, Matheus Hoffmann Fernandes; VALÉRIO, Bruno. **marola**: an open, local-first guide to the sea near you, from public ocean and bathing-water data. [S. l.]: GitHub, 2026. Disponível em: https://github.com/marola-dev/marola.
+
+<!-- citation:end -->
+
 ## Agradecimentos
 
 O marola existe graças ao trabalho de muita gente: os colaboradores do
