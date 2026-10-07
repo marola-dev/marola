@@ -85,11 +85,11 @@
       "resource_type": "software"
     },
     {
-      "identifier": "10.5281/zenodo.23221352",
+      "identifier": "10.5281/zenodo.23221351",
       "relation": "references",
       "scheme": "doi",
       "resource_type": "software"
     }
   ],
-  "notes": "Related work: WW3 GPU Lab (doi:10.5281/zenodo.23221352), a C++/Kokkos port of WAVEWATCH III kernels by the same author, is the groundwork for running a spectral wave model inside marola in the future (MIP-0052). Each repository listed under related works is MIT-licensed and will carry its own DOI once it is archived."
+  "notes": "Related work: WW3 GPU Lab (doi:10.5281/zenodo.23221351), a C++/Kokkos port of WAVEWATCH III kernels by the same author, is the groundwork for running a spectral wave model inside marola in the future (MIP-0052). Each repository listed under related works is MIT-licensed and will carry its own DOI once it is archived."
 }

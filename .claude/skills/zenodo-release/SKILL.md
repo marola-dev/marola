@@ -54,7 +54,10 @@ give him the `just release` command.
   to that DOI.
 - Concept DOI (once it exists): `CONCEPT_DOI` in `scripts/citation.py` (then `just citation`
   adds it to the CFF and the references) and the README badge. The badge and the concept DOI,
-  never a version DOI: `[![DOI](https://zenodo.org/badge/DOI/<concept>.svg)](https://doi.org/<concept>)`.
+  never a version DOI, as a shields.io image:
+  `[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.<n>-blue)](https://doi.org/<concept>)`.
+  zenodo.org's own badge URL answers 403 to the runner, and the docs build's privacy plugin then
+  fails on the missing download.
 - An edit reaches Zenodo only with the next release. A DOI cannot be deleted: confirm the version
   number with the maintainer before he tags. SemVer: PATCH for fixes and docs, MINOR for new
   MIPs, tools or repos, MAJOR only when he says so.
