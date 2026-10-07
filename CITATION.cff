@@ -2,7 +2,7 @@
 cff-version: 1.2.0
 message: "If you use marola, please cite it using the metadata below."
 type: software
-title: "marola: an open, local-first guide to the sea near you, from public ocean and bathing-water data"
+title: "marola: an open, local-first citizen-science platform for coastal ocean data, beach forecasts and bathing-water quality"
 abstract: >-
   marola tells you whether and when to swim at a nearby beach, and why. It ranks the OpenStreetMap
   beaches around Florianópolis, Rio de Janeiro and Salvador by the hour from Open-Meteo sea,
