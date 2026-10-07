@@ -1,7 +1,7 @@
 {
-  "title": "marola: an open, local-first guide to the sea near you, from public ocean and bathing-water data",
+  "title": "marola: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data",
   "upload_type": "software",
-  "description": "<p>marola tells you whether and when to swim at a nearby beach, and why. It ranks the OpenStreetMap beaches around Florianópolis, Rio de Janeiro and Salvador by the hour from Open-Meteo sea, weather and tide forecasts and the official bathing-water bulletins of IMA/SC, INEA and INEMA, with a 0-100 swimability score whose safety veto is plain code, never a model's output. A local LLM (Ollama) only explains the result in words, and a second pass reviews it.</p><p>This record archives the marola umbrella: the design proposals (MIPs), the ways of working, the aggregated documentation and the pinned versions of every repository. The code and data live in the repositories listed under related works: marola-app (the Scala 3 pipeline), marola-site (the map at marola.dev), marola-oods (the Open Ocean Data Store), marola-ml (prompt compilation, fine-tuning and the benchmark gate), marola-corpus (the sourced knowledge corpus) and marola-devkit (the shared development harness).</p>",
+  "description": "<p>marola tells you whether and when to go into the water at a beach, and why. It is a map of the beaches of Florianópolis, Rio de Janeiro and Salvador, each scored 0-100 for today and tomorrow from the sea, wind, waves, tide and the official bathing-water quality. Every number comes from public data: OpenStreetMap for the beaches, Open-Meteo for the sea and weather forecast, and the bulletins of IMA/SC, INEA (RJ) and INEMA (BA) for water quality. Anything that could put a swimmer at risk is decided by plain rules anyone can read. A language model only writes a short summary, a second automatic pass checks it against the numbers, and it never changes a score or drops an alert. When a source does not answer, marola says \"no data\".</p><p>marola starts from water quality because basic sanitation in Brazil is far from solved: before surfing, fishing or diving comes the question of whether the water is fit to enter. It is open source and non-profit because much of Brazil's ocean data is held privately, and the project's promise is to give everything it gathers back to everyone.</p><p>This record archives the marola umbrella: the design proposals (MIPs), the ways of working, the aggregated documentation and the pinned versions of every repository. The project is a distributed monolith, one plan with each part in its own repository: marola-app (the pipeline that joins forecast, beaches and water quality and computes the score), marola-site (the map at marola.dev), marola-oods (the Open Ocean Data Store, an open archive of beach and water history), marola-corpus (sourced notes about the sea), marola-ml (where models are trained and tested before use) and marola-devkit (the shared development tools).</p>",
   "creators": [
     {
       "name": "Hoffmann, Matheus",
@@ -29,7 +29,6 @@
     "Open-Meteo",
     "Brazil",
     "citizen science",
-    "local-first",
     "large language models",
     "retrieval-augmented generation",
     "research software"
