@@ -3,8 +3,8 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "The umbrella README's repo diagram looks poor on GitHub. Redraw docs/img/umbrella.svg so marola-oods also shows the beach ETL writing to it.",
-      "expected_output": "docs/img/umbrella.svg edited, Portuguese labels kept, both READMEs still pointing at it; arrows drawn before boxes; boxes masked with #0b1222; no script, external font or image; a Chromium screenshot checked; just quality run.",
+      "prompt": "The umbrella README's repo diagram looks poor on GitHub. Redraw docs/img/umbrella.svg and its pt-BR twin so marola-oods also shows the beach ETL writing to it.",
+      "expected_output": "docs/img/umbrella.svg and docs/img/umbrella.pt-BR.svg edited together with the same geometry; arrows drawn before boxes; boxes masked with #0b1222; no script, external font or image; a Chromium screenshot checked; just quality run.",
       "files": []
     },
     {

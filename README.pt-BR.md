@@ -130,7 +130,7 @@ função, o seu próprio `AGENTS.md`, documentação, CI e issues. Este aqui, `m
 Ele não tem código: guarda os documentos de projeto (MIPs), a lista de fases, o jeito de trabalhar,
 o site de documentação e cada repositório de código como um submódulo git, fixado num commit.
 
-<p align="center"><img src="./docs/img/umbrella.svg" alt="Como os repositórios do marola dependem uns dos outros: o marola-corpus entrega notas ao marola-app e ao marola-ml, a imagem do marola-app monta o mapa do marola-site e roda o benchmark do marola-ml, o marola-ml devolve prompts compilados, o ETL do marola-app grava o lago do marola-oods e fixa o contrato dele; o marola-devkit é fixado por todos" width="860" /></p>
+<p align="center"><img src="./docs/img/umbrella.pt-BR.svg" alt="Como os repositórios do marola dependem uns dos outros: o marola-corpus entrega notas ao marola-app e ao marola-ml, a imagem do marola-app monta o mapa do marola-site e roda o benchmark do marola-ml, o marola-ml devolve prompts compilados, o ETL do marola-app grava o lago do marola-oods e fixa o contrato dele; o marola-devkit é fixado por todos" width="860" /></p>
 
 - **Contratos, não código compartilhado.** Um repositório nunca lê a árvore de outro. Quem consome
   fixa um artefato publicado por quem produz (um tarball de release, o digest de uma imagem) e
