@@ -295,7 +295,7 @@ ocean data store of [MIP-0075](MIP-0075-water-quality-store-r2.md) and marola-oo
   municipalities), one row per alert and state. RJ first; another state is a configuration value.
 - **Every event**: §5.2's sea-relevant allow-list applies to the map banner only; the archive
   keeps every INMET event.
-- **Storage**: two tables (`alert`, `alert_check`) in the DuckLake on Backblaze B2, partitioned by
+- **Storage**: two tables (`alert`, `alert_check`) in the DuckLake on Cloudflare R2, partitioned by
   state and year, written by marola-app's `oods` module from a marola-oods workflow; one JSON
   export per state that the site build copies into `site/dist/alerts/`. The page fetches nothing
   but its own origin.
