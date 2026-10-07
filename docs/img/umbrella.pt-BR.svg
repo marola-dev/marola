@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" width="1000" height="620" role="img">
+<style>
+text{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+.name{fill:#f8fafc;font-size:15px;font-weight:700}
+.sub{fill:#94a3b8;font-size:11.5px}
+.edge{fill:#cbd5e1;font-size:11px;paint-order:stroke;stroke:#020617;stroke-width:5px;stroke-linejoin:round}
+.title{fill:#e2e8f0;font-size:14px;font-weight:600}
+.region{fill:#22d3ee;font-size:13px;font-weight:700}
+.regionsub{fill:#67e8f9;font-size:11px;opacity:.8}
+.leg{fill:#94a3b8;font-size:11px}
+</style>
+<defs>
+<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.6"/></pattern>
+<marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#7dd3fc"/></marker>
+<marker id="b" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#c4b5fd"/></marker>
+<marker id="o" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#fb923c"/></marker>
+</defs>
+<rect width="1000" height="620" rx="18" fill="#020617"/>
+<rect width="1000" height="620" rx="18" fill="url(#grid)"/>
+<circle cx="34" cy="34" r="5" fill="#22d3ee"/>
+<text x="48" y="39" class="title" text-anchor="start">como os repositórios do marola se encaixam</text>
+<rect x="20" y="62" width="960" height="416" rx="14" fill="rgba(34,211,238,0.04)" stroke="#22d3ee" stroke-width="1.2" stroke-dasharray="8,5"/>
+<text x="42" y="86" class="region" text-anchor="start">marola · o guarda-chuva</text>
+<text x="42" y="104" class="regionsub" text-anchor="start">MIPs · lista de fases · docs.marola.dev · cada repositório abaixo como submódulo git</text>
+<path d="M 194 270 H 328" stroke="#7dd3fc" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+<text x="261" y="262" class="edge" text-anchor="middle">tarball de release</text>
+<path d="M 112 302 V 454 H 966 V 280 H 952" stroke="#7dd3fc" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+<text x="548" y="448" class="edge" text-anchor="middle">tarball de release</text>
+<path d="M 550 240 H 620 V 165 H 718" stroke="#7dd3fc" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+<text x="669" y="157" class="edge" text-anchor="middle">imagem fixada</text>
+<path d="M 550 268 H 718" stroke="#7dd3fc" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+<text x="634" y="261" class="edge" text-anchor="middle">imagem + recursos</text>
+<path d="M 718 298 H 552" stroke="#c4b5fd" stroke-width="1.8" fill="none" stroke-dasharray="6,4" marker-end="url(#b)"/>
+<text x="634" y="315" class="edge" text-anchor="middle">prompts compilados (PR)</text>
+<path d="M 480 322 V 382 H 718" stroke="#7dd3fc" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+<text x="600" y="375" class="edge" text-anchor="middle">jobs de ETL gravam</text>
+<path d="M 718 412 H 410 V 324" stroke="#c4b5fd" stroke-width="1.8" fill="none" stroke-dasharray="6,4" marker-end="url(#b)"/>
+<text x="600" y="405" class="edge" text-anchor="middle">contrato do lago</text>
+<path d="M 500 520 V 482" stroke="#fb923c" stroke-width="1.8" fill="none" stroke-dasharray="4,4" marker-end="url(#o)"/>
+<text x="512" y="503" class="edge" text-anchor="start">fixado</text>
+<rect x="30" y="236" width="164" height="66" rx="8" fill="#0b1222"/>
+<rect x="30" y="236" width="164" height="66" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="112.0" y="265.5" class="name" text-anchor="middle">marola-corpus</text>
+<text x="112.0" y="284.5" class="sub" text-anchor="middle">notas sobre o mar</text>
+<rect x="330" y="206" width="220" height="114" rx="8" fill="#0b1222"/>
+<rect x="330" y="206" width="220" height="114" rx="8" fill="rgba(6,78,59,0.55)" stroke="#34d399" stroke-width="1.6"/>
+<text x="440.0" y="251.0" class="name" text-anchor="middle">marola-app</text>
+<text x="440.0" y="270.0" class="sub" text-anchor="middle">pipeline em Scala 3 + Kyo</text>
+<text x="440.0" y="287.0" class="sub" text-anchor="middle">nota · veto · CLI · imagem</text>
+<rect x="720" y="132" width="230" height="66" rx="8" fill="#0b1222"/>
+<rect x="720" y="132" width="230" height="66" rx="8" fill="rgba(8,51,68,0.55)" stroke="#22d3ee" stroke-width="1.6"/>
+<text x="835.0" y="161.5" class="name" text-anchor="middle">marola-site</text>
+<text x="835.0" y="180.5" class="sub" text-anchor="middle">o mapa do marola.dev</text>
+<rect x="720" y="232" width="230" height="86" rx="8" fill="#0b1222"/>
+<rect x="720" y="232" width="230" height="86" rx="8" fill="rgba(120,53,15,0.45)" stroke="#fbbf24" stroke-width="1.6"/>
+<text x="835.0" y="263.0" class="name" text-anchor="middle">marola-ml</text>
+<text x="835.0" y="282.0" class="sub" text-anchor="middle">prompts · benchmark</text>
+<text x="835.0" y="299.0" class="sub" text-anchor="middle">marola-sea, modelo próprio</text>
+<rect x="720" y="352" width="230" height="80" rx="8" fill="#0b1222"/>
+<rect x="720" y="352" width="230" height="80" rx="8" fill="rgba(76,29,149,0.5)" stroke="#a78bfa" stroke-width="1.6"/>
+<text x="835.0" y="380.0" class="name" text-anchor="middle">marola-oods</text>
+<text x="835.0" y="399.0" class="sub" text-anchor="middle">lago de dados aberto</text>
+<text x="835.0" y="416.0" class="sub" text-anchor="middle">DuckLake no Backblaze B2</text>
+<rect x="150" y="522" width="700" height="54" rx="8" fill="#0b1222"/>
+<rect x="150" y="522" width="700" height="54" rx="8" fill="rgba(124,45,18,0.45)" stroke="#fb923c" stroke-width="1.6"/>
+<text x="500.0" y="545.5" class="name" text-anchor="middle">marola-devkit</text>
+<text x="500.0" y="564.5" class="sub" text-anchor="middle">ferramentas · git hooks · CI reutilizável, fixado por tag em todo repositório</text>
+<path d="M 50 600 H 84" stroke="#7dd3fc" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+<text x="94" y="604" class="leg" text-anchor="start">artefato publicado, fixado por quem consome</text>
+<path d="M 520 600 H 554" stroke="#c4b5fd" stroke-width="1.8" fill="none" stroke-dasharray="6,4" marker-end="url(#b)"/>
+<text x="564" y="604" class="leg" text-anchor="start">volta: um PR ou um contrato</text>
+</svg>
