@@ -120,11 +120,6 @@ docs:
     scripts/prepare-docs.sh
     DOCS_SRC=.tmp/docs-aggregated scripts/mkdocs.sh
 
-# Render docs/img/*.d2 to SVG beside them: the READMEs' diagrams, drawn in d2 because GitHub
-# renders no d2 and draws Mermaid plainly. Commit the .d2 and its .svg together.
-diagrams:
-    for f in docs/img/*.d2; do d2 --pad 24 "$f" "${f%.d2}.svg"; done
-
 # Serve the docs on http://localhost:8001/. The docs are baked into the image, so a doc edit needs
 # a restart — no live reload.
 docs-serve:

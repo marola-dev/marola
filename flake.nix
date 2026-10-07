@@ -49,9 +49,6 @@
           pkgs.jq
           pkgs.git
 
-          # `just diagrams`: the READMEs' d2 diagrams to SVG (GitHub renders no d2, and its Mermaid is plain).
-          pkgs.d2
-
           # The self-hosted Actions runner for marola-ml's marola-sea-publish.yml (`runs-on:
           # [self-hosted, marola-sea]`): gigabytes of weights, a training run and a Hugging Face
           # token do not belong on shared infrastructure. Register from ~/.marola-runner with config.sh
