@@ -146,8 +146,9 @@ Checked on 2026-10-05 with DuckDB 1.5.5 and `ducklake` 1.5.5, catalog and data i
 
 - An identical second load changes no row and creates **no snapshot**; a changed row creates one.
 - `SELECT … AT (VERSION => n)` returns the earlier rows; a rolled-back transaction leaves nothing.
-- `ALTER TABLE sample SET PARTITIONED BY (source_id, year(sampled_on))` writes
-  `sample/source_id=…/year=…/` directories.
+- `ALTER TABLE sample SET PARTITIONED BY (source_id)` writes `sample/source_id=…/` directories
+  (re-checked 2026-10-06 on marola-dev/marola-oods#22; a year partition was dropped there: a
+  source's whole history is a few MB, and per-file min/max on `sampled_on` prunes a date filter).
 - `ducklake_expire_snapshots`, `ducklake_cleanup_old_files` and `ducklake_merge_adjacent_files` run.
 - A `READ_ONLY` attach reads and refuses `INSERT`.
 - **`MERGE INTO` accepts one `UPDATE`/`DELETE` action** on a DuckLake table, so an upsert is three
@@ -206,16 +207,18 @@ Ember add a second client for no gain.
 
 | Piece | Repo | Path |
 |---|---|---|
-| `oods` module: store, loaders, adapters, `marola.oods.Main`, the SQL | marola-app | `oods/src/main/{resources/sql,scala/marola/oods}/` |
+| `oods` module: store, loaders, adapters, `marola.oods.Main` | marola-app | `oods/src/main/scala/marola/oods/` |
 | The two ETL workflows and their inputs | marola-oods | `.github/workflows/{beach,water-quality}-etl.yml`, `etl/areas.json`, `etl/sources.json`, `etl/water-positions.csv` |
-| The spec humans review, and its executable views and checks | marola-oods | `specs/001-beach-persistence/{spec.md,contracts/views.sql,contracts/checks.sql}` |
+| The spec humans review | marola-oods | `specs/001-beach-persistence/spec.md` |
+| The lake contract: migrations, views, checks | marola-oods | `lake/{migrations/NNNN_*.sql,views.sql,checks.sql}`, released by tag as `marola-oods-lake-<tag>.tar.gz` and pinned in marola-app's `lake-contract.version` |
 | The data | B2 | `s3://br-open-ocean-data-storage/` (§5.2) |
 | The download into the build | marola-site | `site.yml` |
 
 `marola.oods.Main` ships in the JVM image as a second main class, as the MCP server does; `cli`
 depends on `oods` so the one assembly carries it, and the workflows run it with
 `--entrypoint java`. marola-oods pulls the pinned image and never builds Scala (MIP-0070 §5.4).
-The SQL ships in the image, so the tests run the views and checks the bucket gets.
+The pinned contract ships in the image, so the tests run the migrations, views and checks the
+bucket gets.
 
 MIP-0056 §5.1 put `data/oods/` in git on marola-oods's `main`; this MIP puts the data in the bucket
 instead, so no workflow commits data to git and MIP-0056 §11's question about write access to
@@ -227,7 +230,7 @@ instead, so no workflow commits data to git and MIP-0056 §11's question about w
 s3://br-open-ocean-data-storage/
   catalog/oods.ducklake                        the DuckLake catalog (a DuckDB file): tables, files, snapshots
   lake/main/<table>/…/ducklake-<uuid>.parquet  every row; written and named by DuckLake, never by hand
-  lake/main/sample/source_id=<id>/year=YYYY/   sample's partitions
+  lake/main/sample/source_id=<id>/             sample's partitions
   exports/beaches/<BeachSnapshot.key>.json     BeachSnapshot v1, one per area (MAROLA_BEACHES_DIR)
   exports/water-quality/<source_id>.json       CachedWaterQualityClient v1, water positions joined (MAROLA_WATER_CACHE_DIR)
 ```
@@ -245,7 +248,7 @@ kept (§11).
 | `trail` | a named trail | `(area_id, trail_name)` | beach ETL |
 | `source` | an agency publication | `source_id` | water-quality ETL, mirrored from `etl/sources.json` |
 | `point` | a monitoring spot | `(source_id, point_key)` | water-quality ETL |
-| `sample` | a result at a point on a date from a channel; partitioned by `source_id`, `year(sampled_on)` | `(source_id, point_key, sampled_on, sampled_at, channel)` | water-quality ETL |
+| `sample` | a result at a point on a date from a channel; partitioned by `source_id` | `(source_id, point_key, sampled_on, sampled_at, channel)` | water-quality ETL |
 | `water_position` | marola's in-water position | `(source_id, point_key)` | mirrored from `etl/water-positions.csv` |
 | `fetch_partition` | one unit of fetch work (an IMA/SC beach-year) with its content hash and `immutable` flag | `(source_id, partition_key)` | water-quality ETL |
 | `fetch_run` | one execution of one area or source: mode, outcome, requests, rows changed, snapshot id, error, key name | `(job, started_at)` | both ETLs, always |
@@ -320,14 +323,14 @@ DuckLake has no keys or checks, so they live in two places:
   seven digits; `[a-z-]+`; inside Brazil's box), and every persisted enum with `label`/`fromLabel`,
   so a bad row fails first in an adapter's unit test.
 - **`oods check`**: before a batch commits, it refuses a duplicate key or a value outside its
-  vocabulary (`contracts/checks.sql`). A batch that fails is not written.
+  vocabulary (`lake/checks.sql`). A batch that fails is not written.
 
 No OSM id is kept: `Beach` has none, and `BeachFinder` already merges node, way and relation by
 name. Water positions are not authored in the lake: the ETL's key can write anything there, so they
 live in `etl/water-positions.csv` (one reviewed PR each; all three set or none, inside Brazil's
 box, checked by that repo's CI) and each run copies them into `water_position`.
 
-The views are DuckDB SQL stored in the catalog (`contracts/views.sql`):
+The views are DuckDB SQL stored in the catalog (`lake/views.sql`):
 
 | View | One row per | Use |
 |---|---|---|
@@ -366,6 +369,16 @@ COMMIT;
 ```
 
 Samples are never deleted by a load, and points only move `last_seen`.
+
+The schema comes from the pinned contract: on attach, `DuckLakeStore` applies every
+`lake/migrations/NNNN_*.sql` whose version is not in `schema_migration`, each in one transaction
+with its row and the file's md5, then `views.sql` when its md5 differs from the version-0 row. A
+duplicate version or an applied file whose md5 changed stops the run before anything is written.
+So the first `oods-lake` job creates the catalog, a schema change reaches the bucket inside the
+concurrency group, and a current catalog gets no snapshot. marola-oods's `lake-migrate.sh` applies
+the same rules to a local lake. The row case classes `derive` `kyo-schema`'s `Schema`, and a test
+compares `Structure.of[Row]` with the migrated tables' columns, because neither `kyo-schema` nor
+`kyo-sql` (1.0.0-RC7) generates DDL, and types alone cannot produce a migration history.
 
 ```scala
 trait OodsStore:                       // DuckLakeStore behind it; a local lake in tests, MinIO in IT
@@ -483,7 +496,7 @@ rule still decides when a stored bulletin stops counting. `proper_ratio` is show
 
 ## 7. Verification plan
 
-- **Contract** (`contracts/checks.sql` with `views.sql`, plain DuckDB and inside a local DuckLake,
+- **Contract** (`lake/checks.sql` with `views.sql`, plain DuckDB and inside a local DuckLake,
   in marola-oods's CI): every assertion passes on the fixtures, and the check fails when
   `point_fitness` is broken to count unknowns (`US3.1: expected 3/4 of 5 = 0.75, got 3/4 of 5 =
   0.6`, run 2026-10-05).
@@ -562,7 +575,7 @@ rule still decides when a stored bulletin stops counting. `proper_ratio` is show
   `SamplingPointCoordinates`, `build.sbt` (2026-10-02); `BeachFinder`, `BeachSnapshot`,
   `OverpassAccessibilityClient`, `TrailFinder` on `main` (2026-10-05).
 - DuckDB 1.5.5 with `ducklake` 1.5.5 and `httpfs` 1.5.5 from their PyPI wheels (2026-10-05): every
-  fact in §4.4's list, on a local catalog and data directory; `contracts/views.sql` and
+  fact in §4.4's list, on a local catalog and data directory; `lake/views.sql` and
   `checks.sql` inside the lake, and on DuckDB 1.5.6 plain.
 - Maven Central (2026-10-04): every version in §4.5's table; the `duckdb_jdbc` 1.5.6.0 jar's native
   libraries and `DuckDBAppender`; no proxy class in `kyo-http` 1.0.0-RC7.
