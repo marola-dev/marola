@@ -1,0 +1,99 @@
+{
+  "skill_name": "citation-cff",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a CITATION.cff for this Node.js project. The repo has a package.json with name 'my-cli-tool', version '2.1.0', author 'Jane Smith <jane@example.com>', license 'MIT', and description 'A command-line tool for data processing'. Use --dry-run mode.",
+      "expected_output": "A valid CFF 1.2.0 CITATION.cff file displayed in dry-run mode with all required fields populated from the package.json metadata.",
+      "files": [],
+      "expectations": [
+        "Output contains 'cff-version: 1.2.0' as the schema version",
+        "Output contains 'type: software' as the CFF type",
+        "Output contains 'title: \"my-cli-tool\"' or 'title: my-cli-tool' matching the package name",
+        "Output contains 'version: \"2.1.0\"' or 'version: 2.1.0' matching the package version",
+        "Author entry splits 'Jane Smith' into family-names: 'Smith' and given-names: 'Jane'",
+        "Output contains 'license: MIT' or 'license: \"MIT\"' as a valid SPDX identifier"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create a CITATION.cff for this Python project. It has a pyproject.toml with [project] name = 'dataflow', version = '0.9.3', description = 'Streaming data pipeline framework', license = {text = 'Apache-2.0'}, and authors = [{name = 'Carlos Ruiz', email = 'carlos@example.org'}, {name = 'Wei Zhang'}]. Use --dry-run.",
+      "expected_output": "A valid CFF 1.2.0 CITATION.cff displayed in dry-run mode with metadata extracted from pyproject.toml, including both authors properly formatted.",
+      "files": [],
+      "expectations": [
+        "Output contains 'cff-version: 1.2.0'",
+        "Output contains 'title: \"dataflow\"' or 'title: dataflow'",
+        "Output contains 'version: \"0.9.3\"' or 'version: 0.9.3'",
+        "Output lists two authors with correct family-names/given-names splits: Ruiz/Carlos and Zhang/Wei",
+        "Output contains 'license: Apache-2.0' or 'license: \"Apache-2.0\"'",
+        "Output includes a 'date-released' field in YYYY-MM-DD format"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Validate this CITATION.cff file:\n\ncff-version: 1.2.0\nmessage: \"Please cite this software.\"\ntitle: \"broken-project\"\ntype: software\nauthors:\n  - given-names: \"Alice\"\ndate-released: \"2024-1-5\"\nversion: 3.0\ndoi: \"not-a-doi\"",
+      "expected_output": "A validation report identifying multiple errors: the author entry is missing family-names, date-released has an invalid format, version should be a string not a number, and the DOI does not match the expected pattern.",
+      "files": [],
+      "expectations": [
+        "Report identifies that the author entry is missing 'family-names' (each author must have family-names + given-names OR name)",
+        "Report identifies that 'date-released' value '2024-1-5' is invalid and should be '2024-01-05' (YYYY-MM-DD with zero-padding)",
+        "Report identifies that 'version' value 3.0 is a number and should be a quoted string",
+        "Report identifies that 'doi' value 'not-a-doi' does not match the DOI pattern 10.XXXX/...",
+        "Report ends with a Result line showing FAIL and a count of errors"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Export the citation as BibTeX format from this CITATION.cff:\n\ncff-version: 1.2.0\nmessage: \"If you use this software, please cite it as below.\"\ntitle: \"fast-parser\"\ntype: software\nauthors:\n  - family-names: \"Kim\"\n    given-names: \"Soo-Jin\"\n  - family-names: \"Okafor\"\n    given-names: \"Emeka\"\nversion: \"4.2.1\"\ndate-released: \"2025-08-10\"\nurl: \"https://github.com/example/fast-parser\"\nlicense: \"BSD-3-Clause\"\ndoi: \"10.5281/zenodo.9876543\"",
+      "expected_output": "A BibTeX @software entry with correct field mappings, including both authors in 'Family, Given' format, the DOI, version, date, URL, and a properly formed BibTeX key.",
+      "files": [],
+      "expectations": [
+        "Output contains '@software{' indicating the correct BibTeX entry type",
+        "Output contains 'author' field with both authors in 'Family, Given' format: 'Kim, Soo-Jin' and 'Okafor, Emeka'",
+        "BibTeX key includes 'kim' (first author family name lowercase) and '2025' (year)",
+        "Output contains 'doi = {10.5281/zenodo.9876543}' or equivalent DOI field",
+        "Output contains 'version = {4.2.1}' or equivalent version field",
+        "Output contains 'license = {BSD-3-Clause}' or equivalent license field"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Export this CITATION.cff as APA format:\n\ncff-version: 1.2.0\nmessage: \"If you use this software, please cite it as below.\"\ntitle: \"neural-toolkit\"\ntype: software\nauthors:\n  - family-names: \"Patel\"\n    given-names: \"Anita\"\n  - family-names: \"Johansson\"\n    given-names: \"Erik\"\n  - family-names: \"Costa\"\n    given-names: \"Maria\"\nversion: \"1.5.0\"\ndate-released: \"2025-03-22\"\ndoi: \"10.5281/zenodo.1111111\"",
+      "expected_output": "An APA-formatted citation string with authors in 'Family, Initial.' format, an ampersand before the last author, year in parentheses, title, version, [Computer software] designator, and DOI URL.",
+      "files": [],
+      "expectations": [
+        "Output contains authors formatted as 'Patel, A.' and 'Johansson, E.' and 'Costa, M.' with initials (not full given names)",
+        "Output uses '&' or 'and' before the last author (Costa, M.) per APA style",
+        "Output contains '(2025)' as the year in parentheses",
+        "Output contains '(Version 1.5.0)' after the title",
+        "Output contains '[Computer software]' type designator",
+        "Output contains the DOI as a URL: 'https://doi.org/10.5281/zenodo.1111111'"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Sync the version in my CITATION.cff from the package manifest. My CITATION.cff has version '1.0.0' and date-released '2024-06-01', but my package.json has version '1.3.0'. Use --dry-run to show what would change.",
+      "expected_output": "A diff/comparison showing the version update from 1.0.0 to 1.3.0 and the date-released update to today's date, displayed in dry-run mode without writing.",
+      "files": [],
+      "expectations": [
+        "Output shows the version changing from '1.0.0' to '1.3.0'",
+        "Output shows the date-released being updated to today's date (or a current date in YYYY-MM-DD format)",
+        "Output explicitly states this is a dry-run and changes have NOT been written to disk",
+        "Output presents changes in a diff or comparison table format showing old vs new values"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Validate this CITATION.cff file and confirm it is correct:\n\ncff-version: 1.2.0\nmessage: \"If you use this software, please cite it as below.\"\ntitle: \"good-project\"\ntype: software\nauthors:\n  - family-names: \"Mueller\"\n    given-names: \"Hans\"\n    orcid: \"https://orcid.org/0000-0002-1234-5678\"\nversion: \"2.0.0\"\ndate-released: \"2025-01-15\"\nurl: \"https://github.com/example/good-project\"\nrepository-code: \"https://github.com/example/good-project\"\nlicense: \"MIT\"\nkeywords:\n  - testing\n  - validation",
+      "expected_output": "A validation report with zero errors, confirming the file is valid CFF 1.2.0. May include informational notes about DOI not being set.",
+      "files": [],
+      "expectations": [
+        "Report result is PASS (not FAIL) with 0 errors",
+        "Report does not flag any required fields as missing",
+        "Report correctly identifies that 1 author is listed",
+        "Report notes that ORCID is present and valid for the author (format matches https://orcid.org/XXXX-XXXX-XXXX-XXXX)",
+        "Report identifies license 'MIT' as a valid SPDX identifier"
+      ]
+    }
+  ]
+}
