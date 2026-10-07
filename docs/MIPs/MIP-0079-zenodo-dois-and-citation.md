@@ -138,13 +138,12 @@ proves the tooling before it moves to the devkit.
 
 ### 5.3 Authors and contributors
 
-Creators (cited authors) are **Santos, Matheus Hoffmann Fernandes** (ORCID 0009-0009-1056-7661,
-Escola Politécnica, UFRJ; the form ww3-gpu uses) and **Valério, Bruno** (full name, ORCID and
-affiliation pending, §11). A later person is added with
-`just contributor-add "Family, Given" [--orcid ID] [--affiliation TEXT] [--type ProjectMember]`,
-which lists them under Zenodo's `contributors` with a role, or with `--author` as a cited creator
-(and so in the CFF). An edit reaches Zenodo only with the next release, because Zenodo reads the
-tagged commit.
+Creators (cited authors) are **Hoffmann, Matheus** (ORCID 0009-0009-1056-7661, Escola Politécnica,
+UFRJ; his chosen citation name, which ww3-gpu's record moves to too) and **Valério, Bruno** (full
+name, ORCID and affiliation pending, §11). A later person is added with `just contributor-add
+"Family, Given" [--orcid ID] [--affiliation TEXT] [--type ProjectMember]`, which lists them under
+Zenodo's `contributors` with a role, or with `--author` as a cited creator (and so in the CFF). An
+edit reaches Zenodo only with the next release, because Zenodo reads the tagged commit.
 
 ### 5.4 Citing the other repos and related work
 
