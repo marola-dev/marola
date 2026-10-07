@@ -120,17 +120,21 @@ proves the tooling before it moves to the devkit.
   `publication_date` or `doi`: Zenodo takes the version from the tag, the date from the release,
   and mints the DOI.
 - `CITATION.cff`: generated, with a header line saying so; valid against the CFF 1.2.0 schema.
-- `scripts/citation.py`: validates (`--check` also fails on a stale CFF), regenerates, `add`s a
-  person, and has a `--self-test`. It checks required fields, the relation and contributor-type
-  vocabularies, "Family, Given" names, ORCID iDs with their ISO 7064 checksum, bare DOIs and
-  https URLs, and that no Zenodo-owned field is set.
+- `scripts/citation.py`: validates (`--check` also fails on stale generated text), regenerates the
+  CFF and the READMEs' BibTeX, APA and ABNT references (between `<!-- citation:start/end -->`),
+  `add`s a person, and has a `--self-test`. It checks required fields, the relation and
+  contributor-type vocabularies, "Family, Given" names, ORCID iDs with their ISO 7064 checksum, bare
+  DOIs and https URLs, and that no Zenodo-owned field is set.
 - `scripts/release.sh` (`just release X.Y.Z [--dry-run]`): refuses unless `main` is checked out,
   clean and level with `origin/main`, the tag is new `vMAJOR.MINOR.PATCH`, and
-  `citation.py --check` passes; then tags and pushes. `just releases` lists past tags.
-- `.github/workflows/release.yml`: a `v*` tag becomes a published release with generated notes.
+  `citation.py --check` and the pointer guard (§5.8) pass; then tags and pushes. `--dry-run` runs
+  every check and tags nothing; it replaces a release candidate, since every archived release is a
+  permanent DOI. `just releases` lists past tags.
+- `.github/workflows/release.yml`: a `v*` tag reruns the citation check and the guard, then becomes
+  a published release with generated notes.
 - `.github/workflows/citation.yml`: on a change to either file or the script, `--check` and the
   CFF project's `cffconvert --validate`. `just quality` runs the check and both self-tests.
-- README and README.pt-BR: a "How to cite" / "Como citar" section.
+- README and README.pt-BR: a "How to cite" / "Como citar" section with the generated references.
 
 ### 5.3 Authors and contributors
 
@@ -169,7 +173,8 @@ flowchart LR
 
 The "How to cite" section then mirrors ww3-gpu's: the concept DOI for the project, the release's
 DOI for the exact code, then BibTeX (`@software`, `publisher = {Zenodo}`, the concept `doi`),
-APA and ABNT, in both READMEs.
+APA and ABNT, in both READMEs; setting `CONCEPT_DOI` and running `just citation` rewrites the
+references.
 
 ### 5.6 The code and data repos
 
@@ -188,6 +193,18 @@ API with a `ZENODO_DEPOSIT_TOKEN` secret, tested against `sandbox.zenodo.org` fi
 dataset record with its own concept DOI, `isPartOf` the umbrella. Not a task until MIP-0075
 publishes data.
 
+### 5.8 Hard rule: a pointer move is not a release
+
+The umbrella's `chore/pointer-sync` PR moves submodule pointers daily. A release made of nothing
+but those would mint a Zenodo version whose archive differs from the last one only in gitlink
+hashes, which cites nothing new. So **a submodule pointer move never makes a release or a Zenodo
+version**: `scripts/release.sh --guard <ref>` diffs the ref against the previous `v*` tag
+(`git diff --raw`, dropping mode-160000 lines) and refuses when nothing else changed. `just
+release` runs it before tagging, and `release.yml` runs it again before publishing, so a tag
+pushed by hand also gets no release and Zenodo sees nothing. A submodule's own changes reach
+Zenodo through that repo's record (§5.6), not the umbrella's. The rule is in `AGENTS.md`
+(Submodule mechanics) and the `zenodo-release` skill.
+
 ## 6. Scoring / safety impact
 
 None.
@@ -198,6 +215,8 @@ None.
   quality`; `citation.py --check` in `just quality` and `citation.yml`; `cffconvert --validate`
   in `citation.yml`; the generated CFF validated against the CFF 1.2.0 JSON schema once by hand.
 - `just release 0.2.0 --dry-run` on a clean, level main prints the tag and push.
+- The guard's self-test, and on a scratch repo: a tag whose only change is a pointer is refused;
+  a doc change, or the first tag, passes.
 - The first release: a record with the description, both creators, the keywords, licence MIT and
   the related works as listed in §3, the tag as its version; both DOIs resolve.
 - The badge PR: the badge renders and links to the record; GitHub's BibTeX shows the `doi`.
@@ -213,6 +232,8 @@ None.
 - **What is archived.** Zenodo stores the release's source archive; whether release assets (the
   ml-resources and corpus tarballs) are archived too was not checked. The umbrella's archive is
   docs and scripts, not the submodules' code, which their own records hold.
+- **Pointer-only tags.** A tag pushed by hand that the guard refuses stays a bare tag with no
+  release; delete it rather than leave it.
 - **Not a peer review.** A DOI makes the work citable; it says nothing about its quality.
 
 ## 9. Alternatives considered
