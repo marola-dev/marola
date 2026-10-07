@@ -1,0 +1,92 @@
+{
+  "title": "marola: an open, local-first guide to the sea near you, from public ocean and bathing-water data",
+  "upload_type": "software",
+  "description": "<p>marola tells you whether and when to swim at a nearby beach, and why. It ranks the OpenStreetMap beaches around Florianópolis, Rio de Janeiro and Salvador by the hour from Open-Meteo sea, weather and tide forecasts and the official bathing-water bulletins of IMA/SC, INEA and INEMA, with a 0-100 swimability score whose safety veto is plain code, never a model's output. A local LLM (Ollama) only explains the result in words, and a second pass reviews it.</p><p>This record archives the marola umbrella: the design proposals (MIPs), the ways of working, the aggregated documentation and the pinned versions of every repository. The code and data live in the repositories listed under related works: marola-app (the Scala 3 pipeline), marola-site (the map at marola.dev), marola-oods (the Open Ocean Data Store), marola-ml (prompt compilation, fine-tuning and the benchmark gate), marola-corpus (the sourced knowledge corpus) and marola-devkit (the shared development harness).</p>",
+  "creators": [
+    {
+      "name": "Hoffmann, Matheus",
+      "affiliation": "Escola Politécnica, Universidade Federal do Rio de Janeiro",
+      "orcid": "0009-0009-1056-7661"
+    },
+    {
+      "name": "Valério, Bruno"
+    }
+  ],
+  "license": "mit",
+  "access_right": "open",
+  "language": "eng",
+  "keywords": [
+    "ocean",
+    "coastal",
+    "beaches",
+    "bathing water quality",
+    "balneabilidade",
+    "swimming safety",
+    "wave forecasting",
+    "sea surface temperature",
+    "open data",
+    "OpenStreetMap",
+    "Open-Meteo",
+    "Brazil",
+    "citizen science",
+    "local-first",
+    "large language models",
+    "retrieval-augmented generation",
+    "research software"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/marola-dev/marola",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://docs.marola.dev/",
+      "relation": "isDocumentedBy",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://github.com/marola-dev/marola-app",
+      "relation": "hasPart",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/marola-dev/marola-site",
+      "relation": "hasPart",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/marola-dev/marola-oods",
+      "relation": "hasPart",
+      "scheme": "url",
+      "resource_type": "dataset"
+    },
+    {
+      "identifier": "https://github.com/marola-dev/marola-ml",
+      "relation": "hasPart",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/marola-dev/marola-corpus",
+      "relation": "hasPart",
+      "scheme": "url",
+      "resource_type": "dataset"
+    },
+    {
+      "identifier": "https://github.com/marola-dev/marola-devkit",
+      "relation": "hasPart",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "10.5281/zenodo.23221352",
+      "relation": "references",
+      "scheme": "doi",
+      "resource_type": "software"
+    }
+  ],
+  "notes": "Related work: WW3 GPU Lab (doi:10.5281/zenodo.23221352), a C++/Kokkos port of WAVEWATCH III kernels by the same author, is the groundwork for running a spectral wave model inside marola in the future (MIP-0052). Each repository listed under related works is MIT-licensed and will carry its own DOI once it is archived."
+}

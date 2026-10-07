@@ -211,6 +211,39 @@ asked, reviews fork pull requests without pushing to them, and never edits `.git
 calls the devkit's [`gemini-review`](https://github.com/marola-dev/marola-devkit/blob/main/docs/4-reference_workflows.md#gemini-review)
 workflow.
 
+## How to cite
+
+Each release of this repo (`just release X.Y.Z`) is archived on [Zenodo](https://zenodo.org/),
+which gives it a DOI. The record lists every marola repository as a part of it, and the WW3 GPU
+Lab ([10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352)) as related work. Until
+the first archived release, use GitHub's **Cite this repository** button (right sidebar), which
+exports APA and BibTeX from [`CITATION.cff`](./CITATION.cff). That file is generated from
+[`.zenodo.json`](./.zenodo.json) by `just citation`, and `just contributor-add` adds a person to
+both (MIP-0079).
+
+<!-- citation:start -->
+
+BibTeX:
+
+```bibtex
+@software{hoffmann_2026_marola,
+  author    = {Hoffmann, Matheus and Valério, Bruno},
+  title     = {{marola: an open, local-first guide to the sea near you, from public ocean and bathing-water data}},
+  year      = {2026},
+  url       = {https://github.com/marola-dev/marola}
+}
+```
+
+APA:
+
+> Hoffmann, M., & Valério, B. (2026). *marola: an open, local-first guide to the sea near you, from public ocean and bathing-water data* [Computer software]. https://github.com/marola-dev/marola
+
+ABNT (NBR 6023):
+
+> HOFFMANN, Matheus; VALÉRIO, Bruno. **marola**: an open, local-first guide to the sea near you, from public ocean and bathing-water data. [S. l.]: GitHub, 2026. Disponível em: https://github.com/marola-dev/marola.
+
+<!-- citation:end -->
+
 ## Thanks
 
 marola stands on other people's work. Five it could not exist without, alphabetically:
