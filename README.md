@@ -139,18 +139,7 @@ CI and issues. This repo, `marola-dev/marola`, is the **umbrella** that ties the
 design docs (MIPs), the phase list, the ways of working, the docs site, and every code repo as a
 git submodule pinned at a commit.
 
-```mermaid
-flowchart LR
-  corpus["marola-corpus<br/>sourced ocean notes"] -- "release tarball" --> app
-  corpus -- "release tarball" --> ml
-  app["marola-app<br/>Scala 3 + Kyo pipeline"] -- "container image" --> site["marola-site<br/>marola.dev map"]
-  app -- "image + resources tarball" --> ml["marola-ml<br/>prompts, benchmark, model"]
-  ml -- "compiled prompts (PR)" --> app
-  app -- "ETL jobs write" --> oods["marola-oods<br/>open ocean data lake"]
-  oods -- "lake contract tarball" --> app
-  devkit["marola-devkit<br/>tools, hooks, CI"] -. "pinned by every repo" .-> app & site & ml & corpus & oods
-  umbrella["marola (umbrella)<br/>MIPs, phases, docs.marola.dev"] -. "submodule pointers" .-> app & site & ml & corpus & oods
-```
+<p align="center"><img src="./docs/img/umbrella.svg" alt="How the marola repos depend on each other: marola-corpus ships notes to marola-app and marola-ml, marola-app's image builds marola-site's map and runs marola-ml's benchmark, marola-ml returns compiled prompts, marola-app's ETL writes marola-oods' lake and pins its contract; marola-devkit is pinned by every repo" width="860" /></p>
 
 - **Contracts, not shared code.** A repo never reads another repo's tree. A consumer pins a
   producer's published artifact (a release tarball, an image digest) and moves to a new version by

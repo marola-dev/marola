@@ -1,0 +1,77 @@
+# README.pt-BR.md's umbrella diagram, translated from umbrella.d2. `just diagrams` renders both.
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 0
+  }
+}
+direction: right
+
+classes: {
+  repo: {
+    shape: rectangle
+    style: {
+      fill: "#ffffff"
+      stroke: "#0b6e99"
+      stroke-width: 2
+      border-radius: 10
+      font-color: "#0c2b3a"
+      font-size: 17
+      shadow: true
+    }
+  }
+  contract: {
+    style: {
+      stroke: "#0b6e99"
+      stroke-width: 2
+      font-color: "#3d5a68"
+      font-size: 16
+    }
+  }
+  back: {
+    style: {
+      stroke: "#0b6e99"
+      stroke-width: 2
+      stroke-dash: 3
+      font-color: "#3d5a68"
+      font-size: 16
+    }
+  }
+}
+
+umbrella: "marola · o guarda-chuva\nMIPs · lista de fases · docs.marola.dev · cada repositório como submódulo" {
+  style: {
+    fill: "#eef7fa"
+    stroke: "#0b6e99"
+    stroke-dash: 4
+    border-radius: 16
+    font-color: "#0b6e99"
+    font-size: 22
+    bold: true
+  }
+
+  corpus: "marola-corpus\nnotas sobre o mar, com fonte" {class: repo}
+  app: "marola-app\npipeline em Scala 3 + Kyo,\nnota, CLI, imagem" {class: repo; style.fill: "#d9eff7"}
+  site: "marola-site\no mapa do marola.dev" {class: repo}
+  ml: "marola-ml\nprompts, benchmark,\nmarola-sea" {class: repo}
+  oods: "marola-oods\nlago de dados aberto\n(DuckLake no B2)" {class: repo}
+
+  corpus -> app: "tarball de release" {class: contract}
+  corpus -> ml: "tarball de release" {class: contract}
+  app -> site: "digest da imagem" {class: contract}
+  app -> ml: "imagem + recursos" {class: contract}
+  ml -> app: "prompts compilados (PR)" {class: back}
+  app -> oods: "jobs de ETL gravam" {class: contract}
+  oods -> app: "contrato do lago" {class: back}
+}
+
+devkit: "marola-devkit · ferramentas, git hooks e CI reutilizável, fixado por tag em todo repositório" {
+  near: bottom-center
+  class: repo
+  width: 760
+  style: {
+    fill: "#fff6e5"
+    stroke: "#c07a00"
+    font-color: "#5c3b00"
+  }
+}

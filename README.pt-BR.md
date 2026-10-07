@@ -130,18 +130,7 @@ função, o seu próprio `AGENTS.md`, documentação, CI e issues. Este aqui, `m
 Ele não tem código: guarda os documentos de projeto (MIPs), a lista de fases, o jeito de trabalhar,
 o site de documentação e cada repositório de código como um submódulo git, fixado num commit.
 
-```mermaid
-flowchart LR
-  corpus["marola-corpus<br/>notas sobre o mar, com fonte"] -- "tarball de release" --> app
-  corpus -- "tarball de release" --> ml
-  app["marola-app<br/>pipeline em Scala 3 + Kyo"] -- "imagem de contêiner" --> site["marola-site<br/>mapa do marola.dev"]
-  app -- "imagem + tarball de recursos" --> ml["marola-ml<br/>prompts, benchmark, modelo"]
-  ml -- "prompts compilados (PR)" --> app
-  app -- "jobs de ETL gravam" --> oods["marola-oods<br/>lago de dados aberto"]
-  oods -- "tarball do contrato do lago" --> app
-  devkit["marola-devkit<br/>ferramentas, hooks, CI"] -. "fixado por todos" .-> app & site & ml & corpus & oods
-  umbrella["marola (guarda-chuva)<br/>MIPs, fases, docs.marola.dev"] -. "ponteiros dos submódulos" .-> app & site & ml & corpus & oods
-```
+<p align="center"><img src="./docs/img/umbrella.pt-BR.svg" alt="Como os repositórios do marola dependem uns dos outros: o marola-corpus entrega notas ao marola-app e ao marola-ml, a imagem do marola-app monta o mapa do marola-site e roda o benchmark do marola-ml, o marola-ml devolve prompts compilados, o ETL do marola-app grava o lago do marola-oods e fixa o contrato dele; o marola-devkit é fixado por todos" width="860" /></p>
 
 - **Contratos, não código compartilhado.** Um repositório nunca lê a árvore de outro. Quem consome
   fixa um artefato publicado por quem produz (um tarball de release, o digest de uma imagem) e
