@@ -219,7 +219,7 @@ Lab ([10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352)) as rela
 the first archived release, use GitHub's **Cite this repository** button (right sidebar), which
 exports APA and BibTeX from [`CITATION.cff`](./CITATION.cff). That file is generated from
 [`.zenodo.json`](./.zenodo.json) by `just citation`, and `just contributor-add` adds a person to
-both ([MIP-0079](./docs/MIPs/MIP-0079-zenodo-dois-and-citation.md)).
+both (MIP-0079).
 
 ## Thanks
 
