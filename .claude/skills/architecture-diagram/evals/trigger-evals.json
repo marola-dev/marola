@@ -1,0 +1,14 @@
+[
+  {"query": "the mermaid in the README renders poorly on github, make the repo diagram prettier", "should_trigger": true},
+  {"query": "draw an architecture diagram of how marola-app, the site and the lake connect for the README", "should_trigger": true},
+  {"query": "redraw docs/img/umbrella.svg with marola-oods' new ETL arrow", "should_trigger": true},
+  {"query": "I want a nice dark architecture picture of the services for marola-site's README", "should_trigger": true},
+  {"query": "faz um diagrama bonito dos repositórios para o README em português", "should_trigger": true},
+  {"query": "make an SVG of the data flow from INEA bulletins to the map for the README", "should_trigger": true},
+  {"query": "add a mermaid sequence diagram to docs/2-Building-marola/ARCHITECTURE.md", "should_trigger": false},
+  {"query": "sketch a wireframe of the alerts page", "should_trigger": false},
+  {"query": "explain like I'm five how the swimability score works, with a picture", "should_trigger": false},
+  {"query": "port the excalidraw diagram skill from coleam00 into marola", "should_trigger": false},
+  {"query": "chart the benchmark results table as a bar chart in the MIP", "should_trigger": false},
+  {"query": "the docs build fails on a d2 fence in DIAGRAMS.md", "should_trigger": false}
+]
