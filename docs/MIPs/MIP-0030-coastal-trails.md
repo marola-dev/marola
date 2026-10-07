@@ -1,4 +1,4 @@
-# MIP-0030: Trails on the map — OSM paths and hiking routes per state in the B2 lake, drawn near each beach and lake
+# MIP-0030: Trails on the map — OSM paths and hiking routes per state in the R2 lake, drawn near each beach and lake
 
 | | |
 |---|---|
@@ -7,11 +7,11 @@
 | **Created** | 2026-09-06 (revised 2026-10-06: provider review, route relations, the per-state lake ETL, the Mapbox layer) |
 | **Tasks** | [MIP-0030.tasks.md](./MIP-0030.tasks.md) |
 | **Phase** | 0 for the board and the map (tasks 1–3). The lake ETL is Phase 2 (`docs/PHASES.md`: a cloud store), under the same scoped exception MIP-0075 §11 asks for: free tier only, written by scheduled CI, read by the site build, never on a user's request path |
-| **Related** | `BeachFinder` (`core/src/main/scala/marola/beaches/BeachFinder.scala`); MIP-0021 (beach accessibility, the precedent: an OSM layer anchored on `BeachFinder`'s results, with "no data" never shown as "none"); MIP-0005/MIP-0009 (the map); MIP-0075 (the B2 DuckLake, its `oods` module, the `oods-lake` round trip, the area `trail` table its beach ETL writes); MIP-0070 §5.4 (where code, data and workflows live); `docs/2-Building-marola/ARCHITECTURE.md` §7 (Overpass fair use) |
+| **Related** | `BeachFinder` (`core/src/main/scala/marola/beaches/BeachFinder.scala`); MIP-0021 (beach accessibility, the precedent: an OSM layer anchored on `BeachFinder`'s results, with "no data" never shown as "none"); MIP-0005/MIP-0009 (the map); MIP-0075 (the R2 DuckLake, its `oods` module, the `oods-lake` round trip, the area `trail` table its beach ETL writes); MIP-0070 §5.4 (where code, data and workflows live); `docs/2-Building-marola/ARCHITECTURE.md` §7 (Overpass fair use) |
 | **Effort** | M — tasks 1–3 are S (one relation clause, two optional board fields, the toggle). The lake part is one migration and view, the `spatial` extension, `oods trails` in marola-app's `oods` module, one workflow and two input files in marola-oods, and a download in `site.yml` |
-| **Gain** | `user value` — "can I walk somewhere from here" next to "is the water clean", long hiking routes included, and it stays on the map through an Overpass outage; `infra/dev-loop` — a build makes no Overpass call for trails; `cost/ops` — one Geofabrik download per region per week, $0 inside B2's free tier |
+| **Gain** | `user value` — "can I walk somewhere from here" next to "is the water clean", long hiking routes included, and it stays on the map through an Overpass outage; `infra/dev-loop` — a build makes no Overpass call for trails; `cost/ops` — one Geofabrik download per region per week, $0 inside R2's free tier |
 | **Effort vs Gain** | `cheap win` for tasks 1–3, because the board already carries trails. `do when MIP-0075 lands` for the lake, whose store, round trip and export are MIP-0075 rows 1–6, 10 and 11, already filed |
-| **Depends on** | Tasks 1–3: nothing. The lake: MIP-0075 rows 1–6, 10, 11 and 22, and MIP-0075's people's gates (the Phase 2 exception, the bucket smoke test, marola-site's read-only key) |
+| **Depends on** | Tasks 1–3: nothing. The lake: MIP-0075 rows 1–6, 10, 11 and 22, and MIP-0075's people's gates (the Phase 2 exception, the bucket smoke test, marola-site's read-only token) |
 | **Blocked by** | none |
 | **Risk** | OSM's trail coverage varies with tagging, not geography: short local trails are named `highway=path`/`track` ways, and long waymarked trails are `route=hiking` relations, and a query for only one misses the other (§4.1). The Sudeste extract is 820 MB, so the job filters it with `osmium` before DuckDB sees anything |
 | **Cost so far** | n/a |
@@ -25,7 +25,7 @@ present, and its geometry. The board carries them as a `trails` array, and the m
 a line layer.
 
 The trails come from a weekly ETL that loads every named trail and hiking route of a state from
-Geofabrik's regional OSM extracts into MIP-0075's B2 DuckLake:
+Geofabrik's regional OSM extracts into MIP-0075's R2 DuckLake:
 
 - `trail_route` holds the trails, partitioned by state (`uf`).
 - `trail_source` records each provider with its licence. Only a provider whose licence was checked
@@ -51,7 +51,7 @@ marola-app's `oods` module and the workflow in marola-oods. marola-site only dow
   provider's licence lets a second open provider join without a schema change, and keeps out any
   provider without one.
 - **Where a per-state ETL lives** is already settled by MIP-0070 §5.4 and MIP-0075 §5.1. Code goes
-  in marola-app (the `oods` sbt module), data in B2, and the workflow and its inputs in marola-oods,
+  in marola-app (the `oods` sbt module), data in R2, and the workflow and its inputs in marola-oods,
   which holds no code of its own. marola-site is a static page with a build: an ETL there would
   make it read OSM extracts and write the lake, both of which it never does.
 
@@ -168,7 +168,7 @@ state only because each state is one slice of the same OSM data, not a separate 
 | `TrailLoad`, `oods trails`, the `trail_route` rows | marola-app | `oods/src/main/scala/marola/oods/trails/` |
 | The migration, `area_trail`, the checks | marola-oods (copied into marola-app by MIP-0075 row 4's byte-identity test) | `specs/001-beach-persistence/contracts/{migrations/0002_trails.sql,views.sql,checks.sql}` |
 | The workflow and its inputs | marola-oods | `.github/workflows/trail-etl.yml`, `etl/trail-states.json`, `etl/trail-sources.json`, `scripts/trail-extract.sh` |
-| The data | B2 | `lake/main/trail_route/uf=<UF>/`, `exports/trails/<BeachSnapshot.key>.json` |
+| The data | R2 | `lake/main/trail_route/uf=<UF>/`, `exports/trails/<BeachSnapshot.key>.json` |
 | The map and the download | marola-site | `site/static/{index,about}.html`, `app.js`'s `addTrailLayer()`, `site.yml` |
 
 ### 5.2 The board's trails
@@ -279,7 +279,7 @@ flowchart LR
 - **The export.** After the catalog upload succeeds, `oods export` also writes
   `exports/trails/<BeachSnapshot.key>.json` for every area in `etl/areas.json`, from `area_trail`.
 - **The build** (`site.yml`) downloads `exports/trails/` beside `exports/beaches/` with MIP-0075
-  §5.6's read-only key and sets `MAROLA_TRAILS_DIR`. The page never calls B2, Geofabrik or
+  §5.6's read-only token and sets `MAROLA_TRAILS_DIR`. The page never calls R2, Geofabrik or
   Overpass, so `script-src 'self'` and the about page's list of third parties stay as they are.
 
 ```scala

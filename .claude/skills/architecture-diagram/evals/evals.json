@@ -9,7 +9,7 @@
     },
     {
       "id": 2,
-      "prompt": "Add a diagram to marola-oods' README showing the lake: beach-etl and the water-quality ETL write Parquet to B2, the catalog file, and the site export.",
+      "prompt": "Add a diagram to marola-oods' README showing the lake: beach-etl and the water-quality ETL write Parquet to R2, the catalog file, and the site export.",
       "expected_output": "A hand-written docs/img/<name>.svg in the design system (store boxes violet, ETL jobs emerald), embedded with an <img> line in README.md, under ~12 boxes, legend below the boundary, labels fitting their gaps.",
       "files": []
     }
