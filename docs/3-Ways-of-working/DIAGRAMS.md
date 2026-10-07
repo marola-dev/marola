@@ -18,6 +18,10 @@ the rule below is also in `.claude/rules/docs.md`, which agents load for `docs/*
 - **Draw only what the prose beside it already says, and keep the prose.** The diagram is the
   summary; the text is the source of truth. A diagram that disagrees with its page is a bug in the
   diagram.
+- **A README diagram is a hand-written SVG.** GitHub renders no Kroki dialect and draws Mermaid
+  plainly, so a README shows `docs/img/<name>.svg`, written by the `architecture-diagram` skill
+  (`.claude/skills/architecture-diagram/`); the SVG is its own source. A diagram in both READMEs
+  is two files, `<name>.svg` and `<name>.pt-BR.svg`, edited together.
 - **Under about 15 nodes.** Split a diagram rather than grow it.
 - **`dbml`, `vegalite` and `excalidraw` fences take `{bg-dark=white}`.** Colours are injected into
   every other dialect in the table above for the slate theme; these three cannot be styled that

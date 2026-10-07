@@ -1,0 +1,17 @@
+{
+  "skill_name": "architecture-diagram",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The umbrella README's repo diagram looks poor on GitHub. Redraw docs/img/umbrella.svg and its pt-BR twin so marola-oods also shows the beach ETL writing to it.",
+      "expected_output": "docs/img/umbrella.svg and docs/img/umbrella.pt-BR.svg edited together with the same geometry; arrows drawn before boxes; boxes masked with #0b1222; no script, external font or image; a Chromium screenshot checked; just quality run.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Add a diagram to marola-oods' README showing the lake: beach-etl and the water-quality ETL write Parquet to B2, the catalog file, and the site export.",
+      "expected_output": "A hand-written docs/img/<name>.svg in the design system (store boxes violet, ETL jobs emerald), embedded with an <img> line in README.md, under ~12 boxes, legend below the boundary, labels fitting their gaps.",
+      "files": []
+    }
+  ]
+}
