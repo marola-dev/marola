@@ -123,7 +123,7 @@ def _repo(meta: dict) -> str:
     return next(
         r["identifier"]
         for r in meta["related_identifiers"]
-        if r["relation"] == "isSupplementTo" and r["scheme"] == "url"
+        if r["relation"] == "isSupplementTo" and r["identifier"].startswith("https://github.com/")
     )
 
 
