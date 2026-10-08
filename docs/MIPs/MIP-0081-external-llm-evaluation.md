@@ -15,6 +15,17 @@
 | **Risk** | A provider's number is published without the local check because the check is slow or inconvenient, and a misconfigured run (a generation-scored ARC, a missing chat template) ends up on the model card; §5.3 makes the check a gate on publishing, not a guideline |
 | **Cost so far** | — |
 
+### Readiness
+
+| | |
+|---|---|
+| **Manually reviewed** | no |
+| **Written by** | Hoffmann, with Claude Code |
+| **Tasks** | [`MIP-0081.tasks.md`](./MIP-0081.tasks.md) |
+| **Tests** | `backend.py --self-test` (`fake_backend_round_trips_model_ref`), `check.py --self-test` (`eval_check_refuses_out_of_stderr`, `eval_check_accepts_within_stderr`), `publish_hf.py --self-test` (`model_index_from_results`), `marola_ocean/utils.py --self-test` (`coverage_matches_ocean_benchmark`), `ci.yml`'s `runners` job (§7) |
+| **Spec-kit** | none |
+| **Issues** | marola-dev/marola-ml#26, #27, #28, #29, #30; marola-dev/marola-site#94; #706 |
+
 ## 1. Summary
 
 marola-sea is published to Hugging Face with no standard benchmark score, because running a
@@ -179,6 +190,11 @@ money per run, each started by a person with the cost stated first.
 ## 11. Open questions
 
 - Publish a full-precision `marola-sea-tiny` checkpoint and a `Q4_K_M` GGUF, so the quantisation
-  rows of the matrix exist? (A person's act: a Hugging Face upload cannot be taken back.)
-- Which partners page shape on marola.dev? A marola-site issue, filed by a person.
+  rows of the matrix exist? **Default:** no; the matrix sends the one published `Q8_0` file and
+  the bf16 base. Hoffmann decides, since a Hugging Face upload cannot be taken back.
+- Which partners page shape on marola.dev? **Default:** one static page listing each partner, what
+  it gave and a link to its results, linked from the about page (marola-dev/marola-site#94).
+  Hoffmann decides on that issue.
 - Does the first provider run the pt fork, or must its tasks be ported upstream first?
+  **Default:** the provider is asked (question 3 of the brief); until it answers, the pt-fork
+  tasks run locally only and the provider gets the upstream ones.
