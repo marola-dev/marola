@@ -35,6 +35,9 @@ authors:
   - family-names: "Soares da Silva Junior"
     given-names: "Rob Kler"
     orcid: "https://orcid.org/0009-0003-3102-4996"
+  - family-names: "Oliveira"
+    given-names: "Elisa"
+    orcid: "https://orcid.org/0009-0002-9844-7865"
 repository-code: "https://github.com/marola-dev/marola"
 url: "https://marola.dev"
 doi: 10.5281/zenodo.23224155
