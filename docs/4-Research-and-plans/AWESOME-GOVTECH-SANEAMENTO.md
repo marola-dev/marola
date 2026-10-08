@@ -12,15 +12,15 @@ encontramos presença no GitHub; "não encontrado" significa que procuramos e n�
 ## Contents
 
 - [Brasil: empresas e startups](#brasil-empresas-e-startups)
-- [Brasil: programas e políticas públicas](#brasil-programas-e-políticas-públicas)
+- [Brasil: programas e políticas públicas](#brasil-programas-e-politicas-publicas)
 - [Brasil: sociedade civil, jornalismo e projetos abertos](#brasil-sociedade-civil-jornalismo-e-projetos-abertos)
 - [Brasil: balneabilidade oficial](#brasil-balneabilidade-oficial)
 - [Internacional: software aberto](#internacional-software-aberto)
 - [Internacional: empresas](#internacional-empresas)
-- [Internacional: programas públicos e sociedade civil](#internacional-programas-públicos-e-sociedade-civil)
+- [Internacional: programas públicos e sociedade civil](#internacional-programas-publicos-e-sociedade-civil)
 - [Dados abertos e APIs](#dados-abertos-e-apis)
 - [Como foi verificado](#como-foi-verificado)
-- [Não verificado](#não-verificado)
+- [Não verificado](#nao-verificado)
 
 ## Brasil: empresas e startups
 
