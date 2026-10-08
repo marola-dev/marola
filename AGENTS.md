@@ -131,7 +131,8 @@ only statement that a human has decided what done means and what proves it; `jus
 adds it when the five-rule Definition of Ready passes. Read the queue with `just issue-queue` (it
 spans `org:marola-dev`), take one with `just issue-claim <n>`. An idea with no issue is not work
 yet, and **filing is a human's act**: the `/marola-devkit:triage` skill drafts, a person files
-(MIP-0063 §5.6).
+(MIP-0063 §5.6). The one exception: once a MIP is Accepted, the agent files one issue per row of
+its `.tasks.md` and lists them in the MIP's *Issues* row ([TEMPLATE](docs/MIPs/TEMPLATE.md)).
 
 ## Cost & deployment safety (hard rule)
 
