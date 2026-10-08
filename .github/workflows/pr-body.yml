@@ -16,6 +16,21 @@ permissions:
   pull-requests: write
 
 jobs:
+  # marola-devkit#53's `branch` job, inline until this repo's devkit pin includes it; then delete.
+  branch:
+    if: github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          DENY: "^claude/project-thread-"
+        run: |
+          if grep -Eq -- "$DENY" <<<"$HEAD_REF"; then
+            echo "::error::branch '$HEAD_REF' matches '$DENY': push the work to claude/<issue-number>-<short-kebab-slug> (git push -u origin HEAD:claude/<issue>-<slug>) and open the PR from it"
+            exit 1
+          fi
+
   fill:
     uses: marola-dev/marola-devkit/.github/workflows/pr-body.yml@v0.4.1
     with:
