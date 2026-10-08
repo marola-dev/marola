@@ -38,7 +38,7 @@ critical path, and every number stays reproducible without them.
 - **A provider asked first.** One offered a partnership and a free `arc_challenge` run on
   marola-sea-tiny, and asked which benchmarks on which models marola needs so it can estimate
   costs. That question needs an answer that is not tied to that provider: marola-ml's
-  external evaluation page (`docs/3-development_external-eval.md`, marola-dev/marola-ml#24) is it.
+  external evaluation page (`docs/3-development_external-eval.md`, marola-dev/marola-ml#25) is it.
 
 ## 3. User-visible change
 
