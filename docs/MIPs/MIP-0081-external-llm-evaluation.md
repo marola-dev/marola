@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft — `Tasks: docs/MIPs/MIP-0081.tasks.md` ([`MIP-0081.tasks.md`](./MIP-0081.tasks.md)) |
+| **Status** | Accepted — `Tasks: docs/MIPs/MIP-0081.tasks.md` ([`MIP-0081.tasks.md`](./MIP-0081.tasks.md)) |
 | **Author** | Claude, for M. Hoffmann, from marola-dev/marola-ml#22 and an evaluation provider's offer of a partnership and a free first run (2026-10-08) |
 | **Created** | 2026-10-08 |
 | **Phase** | None: offline ML tooling, off the app's request path. A provider-backed run is paid compute, so `AGENTS.md`'s cost rule applies per run (a person starts it, the cost goes in `Cost:`); no Phase 2 cloud backend is involved |
