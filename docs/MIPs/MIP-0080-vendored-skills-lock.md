@@ -1,4 +1,4 @@
-# MIP-0080: Vendored skills pinned in `skills.lock`, with a monthly reviewed update PR per repo
+# MIP-0080: Vendored skills pinned in `skills.lock`, with a weekly reviewed update PR per repo
 
 | | |
 |---|---|
@@ -12,7 +12,7 @@
 | **Effort vs Gain** | `cheap win` — the tool is a few hundred lines over `git hash-object` and the GitHub contents API, and the first lock files are written from what is already on disk |
 | **Depends on** | Nothing merges first. The devkit ships the tool and the reusable workflow in one release; each vendoring repo takes it with its next devkit bump. agent-skills' change is independent and can land in any order. No Phase 1 gate, no paid resource: the workflow runs on GitHub-hosted minutes in public repos |
 | **Blocked by** | none |
-| **Risk** | The monthly PRs are merged without reading the diff, which turns a reviewed update into the force-sync §9 rejects; the 14-day cooldown and the per-skill diff in the PR body are the only defences |
+| **Risk** | The weekly PRs are merged without reading the diff, which turns a reviewed update into the force-sync §9 rejects; the 14-day cooldown and the per-skill diff in the PR body are the only defences |
 | **Cost so far** | — |
 
 ## 1. Summary
@@ -21,7 +21,7 @@ Every byte-identical copy of a third-party Claude Code skill gets a row in a per
 `skills.lock`: the upstream repo, path and commit, a git blob sha per file, the licence, and an
 optional patch for a local edit. A devkit tool, `skills-vendor`, checks the copies against the lock
 offline (in `just quality`), reports upstream drift on request, and refetches one skill at a pinned
-commit. A reusable workflow opens one batched, labelled PR per repo each month with the updates
+commit. A reusable workflow opens one batched, labelled PR per repo each week with the updates
 that have sat upstream for at least 14 days. Nothing is ever force-synced: a human reads the
 SKILL.md diff and merges, or holds the skill.
 
@@ -67,7 +67,7 @@ $ just skills-update humanizer      # refetch at upstream HEAD (or --sha), rewri
 skills-update: humanizer -> blader/humanizer@225a6f3, 1 file changed, local_edits reapplied: none
 ```
 
-And once a month, a PR titled `chore(skills): update humanizer, ponytail-review` on
+And once a week, a PR titled `chore(skills): update humanizer, ponytail-review` on
 `chore/skills-update`, labelled `skills-update`, whose body carries each skill's SKILL.md diff.
 
 ## 4. Data sources and dependencies reviewed
@@ -88,7 +88,7 @@ And once a month, a PR titled `chore(skills): update humanizer, ponytail-review`
   against upstream with one tree call per repo, which is what `refresh.py` already relies on.
 - **The GitHub REST API** (`repos/{owner}/{repo}/commits?path=…`, `git/trees/{sha}?recursive=1`,
   `contents/{path}?ref=…`): unauthenticated reads are rate-limited to 60 an hour per IP; a
-  workflow's `GITHUB_TOKEN` gets 1,000. The monthly run touches about five upstream repos per
+  workflow's `GITHUB_TOKEN` gets 1,000. The weekly run touches about five upstream repos per
   vendoring repo.
 - **Upstream repos** (not reachable from this session, Appendix): the licences on disk are MIT or
   Apache-2.0; the `version:` front matter where present is the only upstream-side version.
@@ -130,7 +130,7 @@ a repo, `plugins/marola-devkit/skills/skills.lock` in the devkit. Schema version
   files (ww3-gpu's audience paragraph). The `files` shas are of the patched bytes.
   `skills-update` refetches upstream, reapplies the patch, and stops with the `.rej` in place if it
   does not apply.
-- `hold` is a one-line reason to skip this skill in the monthly PR (an upstream rename under
+- `hold` is a one-line reason to skip this skill in the weekly PR (an upstream rename under
   review, a change the maintainer declined). `skills-outdated` still shows it.
 
 ### 5.2 `skills-vendor` in marola-devkit
@@ -149,14 +149,14 @@ A first `skills-update --init <name> <owner/repo> <path>` writes a row from what
 `commit: null`, so adopting the lock changes no skill bytes. `sharingan` step 1 ends by calling it,
 so a newly ported skill is locked with its real commit from day one.
 
-### 5.3 The monthly workflow
+### 5.3 The weekly workflow
 
 `skills-update.yml` is a reusable workflow in the devkit, called by each vendoring repo on
-`schedule: '0 6 1 * *'` and `workflow_dispatch`, like `notify-umbrella.yml` is called today:
+`schedule: '0 6 * * 1'` and `workflow_dispatch`, like `notify-umbrella.yml` is called today:
 
 ```mermaid
 flowchart LR
-  cron["monthly cron / dispatch"] --> out["skills-outdated"]
+  cron["weekly cron / dispatch"] --> out["skills-outdated"]
   out --> f{"commit ≥ 14 days old\nand not held?"}
   f -- no --> skip["log, no PR"]
   f -- yes --> upd["skills-update each"]
@@ -190,7 +190,7 @@ flowchart LR
 4. Each repo's `AGENTS.md` names the lock in its vendored-skills sentence; the umbrella's
    `AGENT-SKILLS.md` §1 gets one line.
 
-The first lock files carry `commit: null` for every row. The first monthly run therefore opens
+The first lock files carry `commit: null` for every row. The first weekly run therefore opens
 no PR; a human runs `just skills-update <name>` once per skill, reviews the diff that closes
 marola-dev/marola-devkit#39 and #40, and from then on the cron does the fetching.
 

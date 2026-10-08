@@ -22,7 +22,7 @@ repo that has it, so start the agent in the repo you are changing.
 | superpowers, skill-creator | §2 and §2.2 | the umbrella's and marola-app's `.claude/settings.json` |
 
 Each repo's `AGENTS.md` says when its skills apply. A skill vendored byte for byte from another
-repository is to get a row in a per-repo `skills.lock` and a monthly reviewed update PR
+repository is to get a row in a per-repo `skills.lock` and a weekly reviewed update PR
 ([MIP-0080](../MIPs/MIP-0080-vendored-skills-lock.md), Draft). corpus's skill runs marola's recipes, so those
 steps need a marola-app checkout pointed at the corpus with `MAROLA_KNOWLEDGE_DIR`, as its
 `AGENTS.md` says.
