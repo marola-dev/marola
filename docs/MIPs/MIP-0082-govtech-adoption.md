@@ -19,7 +19,7 @@
 
 | | |
 |---|---|
-| **Manually reviewed** | no |
+| **Manually reviewed** | yes — Hoffmann, 2026-10-08 |
 | **Written by** | Hoffmann, com Claude Code |
 | **Tasks** | [`MIP-0082.tasks.md`](./MIP-0082.tasks.md) |
 | **Tests** | nenhum teste novo de código: `site_check.js` cobre a migração (§7), e o resto são verificações de página |
