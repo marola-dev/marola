@@ -103,6 +103,14 @@ portal, mas não diz se está no ar nem como se entra. O processo atual não foi
 A ASF (Apache) exige Apache-2.0 e diversidade de organizações; OSGeo e NumFOCUS cobrem software
 geoespacial e científico. Nenhuma foi consultada nesta sessão (Appendix).
 
+### 4.5 GovTech de saneamento, no Brasil e fora
+
+A lista [Awesome GovTech de saneamento](../4-Research-and-plans/AWESOME-GOVTECH-SANEAMENTO.md)
+reúne 27 entradas brasileiras e 23 internacionais (empresas, programas públicos, projetos abertos
+e bases de dados), cada uma com o link aberto e se tem presença no GitHub. Ela mostra quem já
+vende para operadoras e prefeituras, e quais dados de balneabilidade e saneamento um piloto pode
+usar.
+
 **Escolha:** pré-requisitos primeiro, ACT e DPGA em paralelo, CPSI ou fomento com o piloto em
 mãos, fundação só depois.
 
