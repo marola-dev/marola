@@ -1,4 +1,4 @@
-# MIP-0082: O marola como govtech — pré-requisitos, um piloto com um órgão e os caminhos de contratação
+# MIP-0082: O marola como GovTech — pré-requisitos, um piloto com um órgão e os caminhos de contratação
 
 | | |
 |---|---|
@@ -225,7 +225,7 @@ e por isso o painel continua determinístico e cita a fonte oficial com data (MI
 
 - Os requisitos da ASF, OSGeo e NumFOCUS, que vêm de conhecimento prévio.
 - O ACT e a ETEC no Marco Legal de CT&I (Lei 13.243/2016), também de conhecimento prévio.
-- Editais de fomento e programas de aceleração govtech abertos agora.
+- Editais de fomento e programas de aceleração GovTech abertos agora.
 - A lista de licenças aceitas pelo DPGA.
 - A compatibilidade do `flow.js` com a API de custom layer do MapLibre, que a migração confirma.
 </content>
