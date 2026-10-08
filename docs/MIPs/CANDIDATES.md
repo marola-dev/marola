@@ -33,6 +33,7 @@ each of its sections a verdict in its own heading; only its candidates are repea
 | Jail notes | [`FABLE_REVIEW.md`](https://github.com/marola-dev/marola/blob/70526c8d22ad785c7d895f9241e1f6839f215add/docs/4-Research-and-plans/FABLE_REVIEW.md) §3 (retired) | MIP-0011 task 5 |
 | A weekly post-planner and multi-platform exporter | [`SELF-DOCUMENTING.md`](../4-Research-and-plans/SELF-DOCUMENTING.md) | MIP-0018 (Draft) |
 | The awesome-list and its human-gated `scripts/awesome_agentic_digest.py` update routine | [`AWESOME-AGENTIC-ENGINEERING.md`](../4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md) | MIP-0043 (Implemented) |
+| Pinning the vendored third-party Claude Code skills (marola-site, the devkit plugin, the umbrella, ww3-gpu) and updating them through reviewed PRs | [`AGENT-SKILLS.md`](../3-Ways-of-working/AGENT-SKILLS.md) §1; marola-dev/agent-skills review R5–R6 | MIP-0080 (Draft) |
 
 ## Not MIP material
 
