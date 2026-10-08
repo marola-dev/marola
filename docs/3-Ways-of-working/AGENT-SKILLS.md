@@ -17,11 +17,15 @@ repo that has it, so start the agent in the repo you are changing.
 | marola-site | `site-frontend`, the entry point for anything a visitor sees, which orders the others: `ptbr-humanizer`, `citizen-science-site`, and vendored design, testing and `mapbox-*` skills | its `.claude/skills/` |
 | marola-corpus | `corpus-doc` (adding a document) | its `.claude/skills/` |
 | marola-app | no skills; the Scala and Kyo rules (`.claude/rules/scala.md`) and the `jar-verifier` agent | its `.claude/` |
-| the umbrella | `eli5` (explaining a sea or marola topic from zero; it reads the corpus and the app through the submodules); `architecture-diagram` (a README diagram as a hand-written SVG, adapted from Cocoon-AI/architecture-diagram-generator@4b9087d, MIT) | its `.claude/skills/` |
+| the umbrella | `eli5` (explaining a sea or marola topic from zero; it reads the corpus and the app through the submodules); `architecture-diagram` (a README diagram as a hand-written SVG, adapted from Cocoon-AI/architecture-diagram-generator@4b9087d, MIT); `zenodo-release` (cutting a citable release and keeping `.zenodo.json` right, MIP-0079, adapted from h0ffmann/ww3-gpu's `release`); `citation-cff` (exporting and checking the citation, vendored unchanged from zircote/github-social@4fa6579, MIT) | its `.claude/skills/` |
 | marola-ml, marola-oods | no skills of their own | — |
 | superpowers, skill-creator | §2 and §2.2 | the umbrella's and marola-app's `.claude/settings.json` |
 
-Each repo's `AGENTS.md` says when its skills apply. corpus's skill runs marola's recipes, so those
+Each repo's `AGENTS.md` says when its skills apply. A skill vendored byte for byte from another
+repository gets a row in a per-repo `.claude/skills/skills.lock` (`skills-vendor check` verifies
+the copy) and a weekly reviewed update PR from that repo's `skills.yml`
+([MIP-0080](../MIPs/MIP-0080-vendored-skills-lock.md), Draft; the umbrella's row is
+`citation-cff`). corpus's skill runs marola's recipes, so those
 steps need a marola-app checkout pointed at the corpus with `MAROLA_KNOWLEDGE_DIR`, as its
 `AGENTS.md` says.
 

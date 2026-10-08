@@ -67,6 +67,7 @@ SELF_TEST_SCRIPTS = (
     "scripts/arxiv_digest.py",
     "scripts/awesome_agentic_digest.py",
     "scripts/mip_graph.py",
+    "scripts/citation.py",
     "scripts/strip_external_scripts.py",
     "scripts/lib/doc_links.py",
     "scripts/site_links_check.py",

@@ -9,6 +9,7 @@
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fci.json" alt="CI steps green on the last main run" /></a>
 <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fpython-loc.json" alt="Python lines of code" />
 <a href="https://marola.dev/"><img src="https://img.shields.io/badge/live_map-marola.dev-0b6e99?logo=mapbox&logoColor=white" alt="live map" /></a>
+<a href="https://doi.org/10.5281/zenodo.23224155"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23224155-blue" alt="DOI" /></a>
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT" /></a>
 </p>
 
@@ -210,6 +211,41 @@ it is sure of. Request it again after new commits for a fresh review. It runs on
 asked, reviews fork pull requests without pushing to them, and never edits `.github/`. `.github/workflows/gemini.yml`
 calls the devkit's [`gemini-review`](https://github.com/marola-dev/marola-devkit/blob/main/docs/4-reference_workflows.md#gemini-review)
 workflow.
+
+## How to cite
+
+Each release of this repo (`just release X.Y.Z`) is archived on [Zenodo](https://zenodo.org/),
+which gives it a DOI. Cite the concept DOI, [10.5281/zenodo.23224155](https://doi.org/10.5281/zenodo.23224155), which always
+resolves to the latest version. The record lists every marola repository as a part of it, and the
+WW3 GPU Lab ([10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351)) as related work. GitHub's **Cite this repository**
+button (right sidebar) exports APA and BibTeX from [`CITATION.cff`](./CITATION.cff). That file is generated from
+[`.zenodo.json`](./.zenodo.json) by `just citation`, and `just contributor-add` adds a person to
+both (MIP-0079).
+
+<!-- citation:start -->
+
+BibTeX:
+
+```bibtex
+@software{hoffmann_2026_marola,
+  author    = {Hoffmann, Matheus and Valério, Bruno and Soares da Silva Junior, Rob Kler},
+  title     = {{marola: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data}},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.23224155},
+  url       = {https://github.com/marola-dev/marola}
+}
+```
+
+APA:
+
+> Hoffmann, M., Valério, B., & Soares da Silva Junior, R. K. (2026). *marola: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23224155
+
+ABNT (NBR 6023):
+
+> HOFFMANN, Matheus; VALÉRIO, Bruno; SOARES DA SILVA JUNIOR, Rob Kler. **marola**: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23224155.
+
+<!-- citation:end -->
 
 ## Thanks
 

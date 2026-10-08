@@ -187,6 +187,40 @@ o guia de [contribuição](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTIN
 agente de IA: leia primeiro o [`AGENTS.md`](./AGENTS.md), depois o `AGENTS.md` do repositório que
 vai mudar.
 
+## Como citar
+
+Cada release deste repositório (`just release X.Y.Z`) é arquivada no [Zenodo](https://zenodo.org/),
+que dá a ela um DOI. Cite o DOI conceitual, [10.5281/zenodo.23224155](https://doi.org/10.5281/zenodo.23224155), que sempre
+aponta para a versão mais recente. O registro lista cada repositório do marola como parte dele, e o
+WW3 GPU Lab ([10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351)) como trabalho relacionado. O botão **Cite this
+repository** do GitHub (barra lateral direita) exporta APA e BibTeX a partir do
+[`CITATION.cff`](./CITATION.cff).
+
+<!-- citation:start -->
+
+BibTeX:
+
+```bibtex
+@software{hoffmann_2026_marola,
+  author    = {Hoffmann, Matheus and Valério, Bruno and Soares da Silva Junior, Rob Kler},
+  title     = {{marola: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data}},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.23224155},
+  url       = {https://github.com/marola-dev/marola}
+}
+```
+
+APA:
+
+> Hoffmann, M., Valério, B., & Soares da Silva Junior, R. K. (2026). *marola: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23224155
+
+ABNT (NBR 6023):
+
+> HOFFMANN, Matheus; VALÉRIO, Bruno; SOARES DA SILVA JUNIOR, Rob Kler. **marola**: an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23224155.
+
+<!-- citation:end -->
+
 ## Agradecimentos
 
 O marola existe graças ao trabalho de muita gente: os colaboradores do
