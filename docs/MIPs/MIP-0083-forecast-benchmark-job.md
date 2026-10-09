@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (Hoffmann, 2026-10-09); amended 2026-10-09 (Hoffmann: GFS and other verifiable sources, §4.10–§4.11) — `Tasks: docs/MIPs/MIP-0083.tasks.md` ([`MIP-0083.tasks.md`](./MIP-0083.tasks.md)) |
+| **Status** | Accepted (Hoffmann, 2026-10-09); amended 2026-10-09 (Hoffmann: GFS and other verifiable sources, §4.10–§4.11; the job moves to a new repo, marola-eval, with its language open between Rust, Haskell and Scala, §5.11) — `Tasks: docs/MIPs/MIP-0083.tasks.md` ([`MIP-0083.tasks.md`](./MIP-0083.tasks.md)) |
 | **Author** | Hoffmann, from #724 and the design decisions recorded in #723 (2026-10-09) |
 | **Created** | 2026-10-09 |
 | **Phase** | None: R&D outside the phase list (#724). It provisions a GCS bucket, which is cloud infrastructure ahead of Phase 2; the owner decided it in #723 inside GCP's free tier, and the first `pulumi up` still waits for their confirmation with §5.9's cost table. Phase 1 (the Telegram bot) is not done, and nothing here moves it |
@@ -28,7 +28,7 @@
 
 ## 1. Summary
 
-A new marola-app module, `verify`, runs every 4 hours from a GitHub Actions cron. Each cycle saves
+A new repository, marola-eval (§5.11), runs every 4 hours from a GitHub Actions cron. Each cycle saves
 every model run it has not seen yet at a fixed list of coastal points (WeatherNext 2's 64 members,
 ECMWF IFS HRES and AIFS, NOAA GFS and AIGFS, and DWD ICON now, MONAN once #723 finds its data), lines up every saved forecast whose valid
 time has passed against the anemometer at that point, and keeps rolling bias, RMSE and CRPS per
@@ -189,6 +189,9 @@ owner asked, and it decides nothing.
 ## 5. Design
 
 ### 5.1 Where the code lives
+
+In marola-eval (§5.11). The files below are named as in the Scala option; Rust and Haskell keep
+the same split, one module per row.
 
 marola-app, a fourth sbt project beside `core`, `local` and `cli` (its ADR 0001 records the
 three-module split; this MIP adds an ADR row for the fourth):
@@ -419,6 +422,45 @@ task 5's PR and before the first `pulumi up`.
 
 Everything. No LLM touches the job, its scores or the export.
 
+### 5.11 Repository and language (amendment, 2026-10-09)
+
+The owner moved the job out of marola-app into a new repository, **marola-eval**, and asked for
+the whole module to be weighed in Rust, in Haskell, and in Scala with Besom, the first two with
+Terraform for the infrastructure (Pulumi has no Rust or Haskell SDK: v pulumi.com languages page,
+2026-10-09, lists TypeScript, JavaScript, Python, Go, .NET, Java, YAML and HCL; Besom is
+VirtusLab's Scala SDK).
+
+**What moving changes, whatever the language.** marola-eval cannot read marola-app's tree or build
+it (MIP-0070 §5.4), so §5.1's `dependsOn(core)` is gone: the HTTP client with fixture replay,
+the JSON reader and the MLflow `RunLedger` (about 640 lines in marola-app today) are rewritten or
+replaced by libraries in marola-eval. The WIF provider admits `marola-dev/marola-eval` on `main`.
+The job reads no marola-app artifact; it publishes §5.8's export to marola-site's `site-data` as
+before. Creating the repository and its settings is a person's act (NEW-REPO's checklist), and it
+does not exist yet.
+
+| | Rust | Haskell | Scala 3 + Besom |
+|---|---|---|---|
+| HTTP, JSON, fixtures | `reqwest`, `serde`; fixtures by a `Transport` trait as in marola-app | `http-client`, `aeson`; the same seam as a record of functions | rewritten from marola-app's 640 lines, or `sttp` and `jsoniter-scala` |
+| Typed rules (§5.4–§5.6) | enums and `match`, `Result` errors: the same shape as today | sum types and total functions: the strongest fit for the scorer | already written in marola-app#72 (`GroundTruth`), enums by label |
+| MLflow, GCS | REST by hand (no official client); `gcloud` in the workflow, as §5.7 already does | REST by hand; same | REST by hand, ported from `MlflowRunLedger` |
+| IaC | Terraform `google` provider; a second language (HCL) in the repo | Terraform; same | Besom, one language for job and infra; written in marola-app#72 |
+| CI in the devkit | no reusable `rust-ci` yet: a devkit PR and tag first | no `haskell-ci` yet: same | `scala-ci` exists |
+| Build and start in Actions | fast start, one static binary; first compile of the deps a few minutes, cached after ⚠ | slowest cold build of the three (GHC and dependency tree) ⚠ | JVM start in seconds; sbt cache as in marola-app |
+| Who can review it | new to marola's repos | new to marola's repos, the smallest contributor pool | the team's language; Kyo and the repo's `scala.md` rules carry over |
+| Reuse of marola-app#72 | none; its JSON and docs move as data | none; same | the loader, the tests, the Besom program and the docs move as they are |
+
+**Default: Scala 3 + Besom.** It is the only option that needs no devkit work before the first PR,
+keeps one language for the job and its infrastructure, and carries marola-app#72 over unchanged;
+the cost is rewriting the HTTP, JSON and MLflow helpers that `dependsOn(core)` gave for free.
+**Rust** is the runner-up if a small static binary and a fast cold start start to matter (they do
+not for a 4-hourly batch job). **Haskell** fits the scoring best and costs the most in tooling and
+reviewers. The pick is the owner's (§11); the rest of this MIP holds for all three.
+
+**marola-app#72.** Its task 1 and task 7 work moves to marola-eval as that repo's first PR (in
+Scala, as is; in Rust or Haskell, `ground-truth.json`, `docs/4-reference_ground-truth.md` and the
+test cases move and the code is rewritten). #72 is not merged into marola-app; it is closed once
+the port lands, and marola-app#63–#71 are transferred to marola-eval when it exists.
+
 ## 6. Scoring / safety impact
 
 None. `Swimability.score` and its notes do not read anything this job produces. Using the winning
@@ -512,6 +554,8 @@ index has no unexplained gap, the export is on `site-data`, and every #724 accep
 - **Is `min_n = 30` right?** **Default:** 30 matched pairs per row, calibrated in #723.
 - **Does the job add `verify` to the app image?** **Default:** no; the workflow builds the jar
   from the checkout, since nothing else runs it.
+- **Rust, Haskell or Scala for marola-eval?** **Default:** Scala 3 + Besom (§5.11), decided by
+  the owner before marola-eval's first PR.
 - **Do the ensembles of §4.10 join?** **Default:** not in v1; a second amendment once a year of
   deterministic scores shows which centres are worth the members.
 - **Is a one-off Isaias case study against US stations worth doing?** **Default:** no, not in this
@@ -533,6 +577,7 @@ index has no unexplained gap, the export is on `site-data`, and every #724 accep
   from 2024-03-14; WeatherNext not listed.
 - https://open-meteo.com/en/docs, 2026-10-09: `cell_selection` = `land` (default) / `sea` /
   `nearest`; response coordinates are the cell centre used.
+- https://www.pulumi.com/docs/iac/languages-sdks/, 2026-10-09: no Rust or Haskell SDK (§5.11).
 - https://open-meteo.com/en/docs, gfs-api, dwd-api, ukmo-api, ensemble-api, single-runs-api and
   /en/licence, 2026-10-09: §4.10's grids, steps, lengths, licences and single-run list (most models
   archived from 2026-04-02); ids from github.com/open-meteo/open-meteo-website at its 2026-10-09
