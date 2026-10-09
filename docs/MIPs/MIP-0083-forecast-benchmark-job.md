@@ -9,7 +9,7 @@
 | **Related** | #724 (the source issue), #723 (the study: points, protocol, paper), MIP-0075 (the OODS lake on B2 and its DuckDB store), MIP-0010 (MLflow and `RunLedger`), marola-dev/marola-site#99 (the page), h0ffmann/ww3-gpu#92 (the wind chapter), marola-dev/marola-app#72 (task 1, written before this redefinition) |
 | **Effort** | L — an sbt module with four forecast clients, two observation clients, a registry, a scorer, an MLflow ledger on B2 and lake tables; a scheduled workflow. Two new dependencies (`kyo-config`, `kyo-schema-json`, §4.9) plus MIP-0075's `duckdb_jdbc` |
 | **Gain** | `user value` — marola.dev can say which forecast has been right lately at a given coast; `community/outreach` — an open, continuously updated comparison of physics and AI models on the Brazilian coast through a strong El Niño |
-| **Effort vs Gain** | `do next` for tasks 1–8 (local and free, and a WeatherNext 2 run not sampled is lost); `do when X lands` for task 10, X = Google's approval of WeatherNext 3 access |
+| **Effort vs Gain** | `do next` for tasks 1–8 and 12 (local and free, and a WeatherNext 2 run not sampled is lost); `do when X lands` for task 10, X = Google's approval of WeatherNext 3 access |
 | **Depends on** | MIP-0075's bucket and key (exist since 2026-10-05) and its `OodsStore` (task 5 there, reused here); Google's approval for WeatherNext 3 (task 11, a person's act); #723 freezing the strong-wind thresholds before any score is published |
 | **Blocked by** | none |
 | **Risk** | A run is skipped or fetched twice and the record drifts from what each publisher actually issued, so every score answers a different question than it claims; §5.5 makes every expected run an explicit `sampled`, `backfilled` or `missing` row keyed by provider and run time |
@@ -22,7 +22,7 @@
 | **Manually reviewed** | no |
 | **Written by** | Hoffmann, with Claude Code |
 | **Tasks** | [`MIP-0083.tasks.md`](./MIP-0083.tasks.md) |
-| **Tests** | `GroundTruthSpec`, `SamplingRegistrySpec`, `ProtocolSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `ScoreMonoidSpec`, `MatcherSpec`, `LakeSamplesSpec`, `CycleSpec`, `ExportSpec` in marola-app's `experiment` module (§7) |
+| **Tests** | `GroundTruthSpec`, `SamplingRegistrySpec`, `ProtocolSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `ScoreMonoidSpec`, `MatcherSpec`, `BlendSpec`, `LakeSamplesSpec`, `CycleSpec`, `ExportSpec` in marola-app's `experiment` module (§7) |
 | **Spec-kit** | none |
 | **Issues** | not filed — Draft. marola-dev/marola-app#63–#71, filed for the superseded text, are closed or rewritten once this is Accepted |
 
@@ -34,7 +34,9 @@ and WeatherNext 3 once Google grants access, at a registry of sampling points. I
 matured forecast with what an instrument measured at that point, and keeps bias, RMSE and CRPS
 over a 90-day window. Each cycle is an MLflow run (params, metrics, artifacts); every forecast and
 observation sample is a row in MIP-0075's OODS lake on Backblaze B2. Nothing is published until
-the ground-truth step has frozen the points it scores against.
+the ground-truth step has frozen the points it scores against. marola also issues its own
+forecast, a bias-corrected inverse-MSE blend of the providers stacked from their trailing scores
+(§5.11), scored as one more provider.
 
 ## 2. Motivation
 
@@ -190,6 +192,9 @@ flowchart LR
   os --> m
   m --> sc[Scorer<br/>monoid accumulators]
   sc --> ml[(MLflow run<br/>per cycle)]
+  sc --> bl[marola blend<br/>stacked from past scores]
+  fs --> bl
+  bl --> fs
   sc --> gate{Points scored?<br/>ground truth frozen}
   gate -- yes --> ex[Export to site-data]
   gate -- no --> hold[Archive only]
@@ -197,7 +202,9 @@ flowchart LR
 
 The registry decides where to sample; clients write samples to the lake; the matcher and scorer
 read only the lake, so a score is always recomputable from stored samples (§5.5); MLflow records
-each cycle; the export waits for the ground-truth gate (§5.8).
+each cycle; the export waits for the ground-truth gate (§5.8). The blend (§5.11) reads the
+providers' latest samples and the scorer's trailing sums and writes its own forecast back to the
+lake as one more provider.
 
 ### 5.2 Category-theory principles, in Kyo
 
@@ -230,7 +237,8 @@ part of the registry (task 1).
 | `GroundTruth.scala` | the instruments and their lifecycle (from #72) |
 | `SamplingRegistry.scala` | sampling points (§5.4) |
 | `Protocol.scala` | providers, variables, leads, bins, window, cadence, `min_n` |
-| `Provider.scala` | `enum ProviderId(label)`: `IfsHres`, `Gfs`, `WeatherNext2`, `WeatherNext3` |
+| `Provider.scala` | `enum ProviderId(label)`: `IfsHres`, `Gfs`, `WeatherNext2`, `WeatherNext3`, `MarolaBlend` (§5.11) |
+| `Blend.scala` | §5.11: weights from the trailing score cells, the blended sample |
 | `ForecastSource.scala` | `trait ForecastSource { def latestRun: Maybe[Instant] < (Sync & Abort[FetchError]); def fetch(run: Instant, points: Chunk[SamplingPoint]): Chunk[ForecastSample] < (Sync & Abort[FetchError]) }` |
 | `OpenMeteoForecasts.scala`, `WeatherNext3Forecasts.scala` | the sources |
 | `Observations.scala` | `MetarClient`, `InmetClient` → `ObservationSample` |
@@ -315,7 +323,38 @@ export (§5.8). No cloud resource is created; no IaC is needed.
 
 ### 5.10 What is deterministic
 
-Everything. No LLM touches the experiment, its scores or the export.
+Everything, the blend included. No LLM touches the experiment, its scores or the export.
+
+### 5.11 marola's own forecast: a stacked blend (amended 2026-10-09)
+
+marola publishes a forecast of its own, `marola_blend`, stacked from the providers' forecasts.
+Each cycle it issues a forecast at every `station` point and headline lead from each provider's
+latest run, writes it to `forecast_sample` with `provider = marola_blend` and the runs it used,
+and the scorer then treats it as a fifth provider against the same observations. It enters the
+comparison like any other row, so it is published only if it earns it.
+
+- **Weights come from the score monoid.** For a cell (point, lead, variable) the trailing 30 days'
+  sums already give each provider's bias `Σe/n` and MSE `Σe²/n`. The blend is
+  `Σ wᵢ (fᵢ − biasᵢ)` with `wᵢ ∝ 1/MSEᵢ`, normalised to 1: bias-corrected, inverse-MSE stacking. No
+  new state is kept, and the weights are recomputable from the lake like every score.
+- **Causal by construction.** Weights at issue time t use only pairs whose valid time is before t,
+  so the blend is a forecast someone could have issued then. `BlendSpec` checks that a pair
+  maturing after t changes nothing.
+- **Cold start.** Below `min_n` pairs in a cell, the weights are equal and there is no bias
+  correction, and the sample carries `cold_start = true`.
+- **Wind is blended as a vector.** Speed is blended as a scalar and direction as a weighted mean
+  of unit vectors. Averaging u and v, then taking the speed, shrinks wind wherever the providers
+  disagree on direction.
+- **Members.** Ensemble members are not mixed in v1; the blend is scored on its mean (absolute
+  error, as for single runs). A weighted mixture of WeatherNext members for CRPS is a later
+  version.
+- **Coast points** carry no observations, so they get no blend until a transfer rule (the nearest
+  `station`'s weights) is justified by #723 ⚠.
+- **Later versions** go through MLflow as `blend_method`: non-negative least squares over the
+  trailing window (its normal equations `XᵀX`, `Xᵀy` are a monoid too), EMOS for a calibrated
+  spread, and anything learned (gradient boosting) in marola-ml, never in the cycle.
+- **MLflow.** Each run logs `blend_method` and `blend_window_days` as params and `weights.json` as an
+  artifact. A change of method or window starts a new experiment version (§5.6).
 
 ## 6. Scoring / safety impact
 
@@ -341,6 +380,9 @@ directory as MIP-0075 tests it:
 - `CycleSpec` with a recording `RunLedger`: `cycle_logs_params_and_artifacts`,
   `export_skipped_until_a_point_is_scored`, `failed_fetch_ends_run_failed`.
 - `ExportSpec`: `export_matches_schema`.
+- `BlendSpec`: `inverse_mse_weights_sum_to_one`, `bias_removed_before_blending`,
+  `later_pair_does_not_change_weights`, `cold_start_is_equal_weights`,
+  `opposite_directions_keep_speed` — values worked by hand.
 
 Live, after the workflow lands: two dispatches back to back (the second waits on `oods-lake`), and
 `just experiment-rescore` equal to the last cycle's `scores.json`. **Done** when 7 days of
@@ -355,6 +397,9 @@ unattended cycles show in MLflow with no unexplained gap in `run_index`.
   by instrument kind.
 - **GitHub drops scheduled runs under load**; a dropped cycle loses no WeatherNext 2 run unless
   three in a row are dropped (runs are 12 h apart).
+- **The blend can look better than it is.** A blend of correlated models beats its members by
+  little, and an in-sample weight beats them by a lot. Weights are strictly causal (§5.11), and
+  the blend is published under the same `min_n` and window as everyone else.
 - **The ensemble mean is not a forecast anyone issued**; CRPS is the fair comparison and the
   export shows both.
 - **WeatherNext 3 may never be granted**, or only its statistics; the experiment runs on three
@@ -372,6 +417,9 @@ unattended cycles show in MLflow with no unexplained gap in `run_index`.
 - **An always-on MLflow:** Phase 2 (MIP-0057).
 - **GRIB from the originals:** §4.1.
 - **`kyo-flow` for durability:** §4.9.
+- **A learned blend (gradient boosting, a neural post-processor) for marola's forecast:** more
+  parameters than 90 days of 6-hourly pairs per point support; it goes to marola-ml if the
+  linear blend leaves skill on the table (§5.11).
 
 ## 11. Open questions
 
@@ -385,6 +433,9 @@ unattended cycles show in MLflow with no unexplained gap in `run_index`.
 - **A B2 key scoped to the experiment, or MIP-0075's ETL key?** **Default:** a scoped application
   key, created by the owner.
 - **Is `min_n = 30` right?** **Default:** yes until #723 calibrates it.
+- **Is the blend shown on marola.dev, and under what name?** **Default:** not before it beats the
+  best single provider's 30-day RMSE at a `scored` point. When it does, it is shown as "marola
+  (blend of IFS, GFS, WeatherNext)" and marked experimental.
 
 ## Appendix
 
