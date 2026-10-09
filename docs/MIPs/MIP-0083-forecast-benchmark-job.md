@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (Hoffmann, 2026-10-09); amended 2026-10-09 (Hoffmann: GFS and other verifiable sources, §4.10–§4.11; the job moves to a new repo, marola-eval, with its language open between Rust, Haskell and Scala, §5.11) — `Tasks: docs/MIPs/MIP-0083.tasks.md` ([`MIP-0083.tasks.md`](./MIP-0083.tasks.md)) |
+| **Status** | Accepted (Hoffmann, 2026-10-09); amended 2026-10-09 (Hoffmann: GFS and other verifiable sources, §4.10–§4.11; the job moves to a new repo, marola-eval, in Scala 3 + Besom, picked by the owner over Rust and Haskell, §5.11) — `Tasks: docs/MIPs/MIP-0083.tasks.md` ([`MIP-0083.tasks.md`](./MIP-0083.tasks.md)) |
 | **Author** | Hoffmann, from #724 and the design decisions recorded in #723 (2026-10-09) |
 | **Created** | 2026-10-09 |
 | **Phase** | None: R&D outside the phase list (#724). It provisions a GCS bucket, which is cloud infrastructure ahead of Phase 2; the owner decided it in #723 inside GCP's free tier, and the first `pulumi up` still waits for their confirmation with §5.9's cost table. Phase 1 (the Telegram bot) is not done, and nothing here moves it |
@@ -190,8 +190,7 @@ owner asked, and it decides nothing.
 
 ### 5.1 Where the code lives
 
-In marola-eval (§5.11). The files below are named as in the Scala option; Rust and Haskell keep
-the same split, one module per row.
+In marola-eval (§5.11). The files below are its Scala sources.
 
 marola-app, a fourth sbt project beside `core`, `local` and `cli` (its ADR 0001 records the
 three-module split; this MIP adds an ADR row for the fourth):
@@ -449,12 +448,12 @@ does not exist yet.
 | Who can review it | new to marola's repos | new to marola's repos, the smallest contributor pool | the team's language; Kyo and the repo's `scala.md` rules carry over |
 | Reuse of marola-app#72 | none; its JSON and docs move as data | none; same | the loader, the tests, the Besom program and the docs move as they are |
 
-**Default: Scala 3 + Besom.** It is the only option that needs no devkit work before the first PR,
+**Picked: Scala 3 + Besom** (Hoffmann, 2026-10-09). It is the only option that needs no devkit work before the first PR,
 keeps one language for the job and its infrastructure, and carries marola-app#72 over unchanged;
 the cost is rewriting the HTTP, JSON and MLflow helpers that `dependsOn(core)` gave for free.
 **Rust** is the runner-up if a small static binary and a fast cold start start to matter (they do
 not for a 4-hourly batch job). **Haskell** fits the scoring best and costs the most in tooling and
-reviewers. The pick is the owner's (§11); the rest of this MIP holds for all three.
+reviewers. The rest of this MIP is written for it.
 
 **marola-app#72.** Its task 1 and task 7 work moves to marola-eval as that repo's first PR (in
 Scala, as is; in Rust or Haskell, `ground-truth.json`, `docs/4-reference_ground-truth.md` and the
@@ -554,8 +553,6 @@ index has no unexplained gap, the export is on `site-data`, and every #724 accep
 - **Is `min_n = 30` right?** **Default:** 30 matched pairs per row, calibrated in #723.
 - **Does the job add `verify` to the app image?** **Default:** no; the workflow builds the jar
   from the checkout, since nothing else runs it.
-- **Rust, Haskell or Scala for marola-eval?** **Default:** Scala 3 + Besom (§5.11), decided by
-  the owner before marola-eval's first PR.
 - **Do the ensembles of §4.10 join?** **Default:** not in v1; a second amendment once a year of
   deterministic scores shows which centres are worth the members.
 - **Is a one-off Isaias case study against US stations worth doing?** **Default:** no, not in this
