@@ -22,7 +22,7 @@
 | **Manually reviewed** | no |
 | **Written by** | Hoffmann, with Claude Code |
 | **Tasks** | [`MIP-0083.tasks.md`](./MIP-0083.tasks.md) |
-| **Tests** | `GroundTruthSpec`, `SamplingRegistrySpec`, `ProtocolSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `ScoreMonoidSpec`, `MatcherSpec`, `BlendSpec`, `LakeSamplesSpec`, `CycleSpec`, `ExportSpec` in marola-app's `experiment` module (§7) |
+| **Tests** | `GroundTruthSpec`, `SamplingRegistrySpec`, `ProtocolSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `ScoreMonoidSpec`, `MatcherSpec`, `AnalogSpec`, `LakeSamplesSpec`, `CycleSpec`, `ExportSpec` in marola-app's `experiment` module (§7) |
 | **Spec-kit** | none |
 | **Issues** | not filed — Draft. marola-dev/marola-app#63–#71, filed for the superseded text, are closed or rewritten once this is Accepted |
 
@@ -35,8 +35,9 @@ matured forecast with what an instrument measured at that point, and keeps bias,
 over a 90-day window. Each cycle is an MLflow run (params, metrics, artifacts); every forecast and
 observation sample is a row in MIP-0075's OODS lake on Backblaze B2. Nothing is published until
 the ground-truth step has frozen the points it scores against. marola also issues its own
-forecast, a bias-corrected inverse-MSE blend of the providers stacked from their trailing scores
-(§5.11), scored as one more provider.
+forecast, an analog ensemble built from the coast's own observations (§5.11), chosen so its errors
+track the providers' as little as a skilful forecast can; it is scored as one more provider, and
+every pair of providers' error correlation is measured.
 
 ## 2. Motivation
 
@@ -192,9 +193,9 @@ flowchart LR
   os --> m
   m --> sc[Scorer<br/>monoid accumulators]
   sc --> ml[(MLflow run<br/>per cycle)]
-  sc --> bl[marola blend<br/>stacked from past scores]
-  fs --> bl
-  bl --> fs
+  os --> an[marola analogs<br/>past observations]
+  fs --> an
+  an --> fs
   sc --> gate{Points scored?<br/>ground truth frozen}
   gate -- yes --> ex[Export to site-data]
   gate -- no --> hold[Archive only]
@@ -202,8 +203,8 @@ flowchart LR
 
 The registry decides where to sample; clients write samples to the lake; the matcher and scorer
 read only the lake, so a score is always recomputable from stored samples (§5.5); MLflow records
-each cycle; the export waits for the ground-truth gate (§5.8). The blend (§5.11) reads the
-providers' latest samples and the scorer's trailing sums and writes its own forecast back to the
+each cycle; the export waits for the ground-truth gate (§5.8). marola's analog model (§5.11) reads
+the observation history and today's large-scale forecast and writes its own forecast back to the
 lake as one more provider.
 
 ### 5.2 Category-theory principles, in Kyo
@@ -237,8 +238,8 @@ part of the registry (task 1).
 | `GroundTruth.scala` | the instruments and their lifecycle (from #72) |
 | `SamplingRegistry.scala` | sampling points (§5.4) |
 | `Protocol.scala` | providers, variables, leads, bins, window, cadence, `min_n` |
-| `Provider.scala` | `enum ProviderId(label)`: `IfsHres`, `Gfs`, `WeatherNext2`, `WeatherNext3`, `MarolaBlend` (§5.11) |
-| `Blend.scala` | §5.11: weights from the trailing score cells, the blended sample |
+| `Provider.scala` | `enum ProviderId(label)`: `IfsHres`, `Gfs`, `WeatherNext2`, `WeatherNext3`, `MarolaAnalog` (§5.11) |
+| `Analogs.scala` | §5.11: the analog library, the search and the analog members |
 | `ForecastSource.scala` | `trait ForecastSource { def latestRun: Maybe[Instant] < (Sync & Abort[FetchError]); def fetch(run: Instant, points: Chunk[SamplingPoint]): Chunk[ForecastSample] < (Sync & Abort[FetchError]) }` |
 | `OpenMeteoForecasts.scala`, `WeatherNext3Forecasts.scala` | the sources |
 | `Observations.scala` | `MetarClient`, `InmetClient` → `ObservationSample` |
@@ -272,6 +273,8 @@ status; the registry only says where forecasts are sampled.
 - **Scores:** bias, RMSE, CRPS (standard kernel form over members; equal to absolute error for a
   single run), direction MAE, `n`, `days`, `low_sample = n < min_n`; bins by observed wind (calm
   < 5.5, moderate 5.5–10.8, strong ≥ 10.8 m/s); windows 7, 30 and 90 days.
+- **Error correlation:** each cell also keeps `Σeᵢeⱼ` for every pair of providers on shared
+  pairs, so the error correlation matrix is read off any window like the other scores (§5.11).
 
 ### 5.6 What goes where: MLflow and the lake (points 6 and 7)
 
@@ -323,38 +326,54 @@ export (§5.8). No cloud resource is created; no IaC is needed.
 
 ### 5.10 What is deterministic
 
-Everything, the blend included. No LLM touches the experiment, its scores or the export.
+Everything, marola's analog model included. No LLM touches the experiment, its scores or the export.
 
-### 5.11 marola's own forecast: a stacked blend (amended 2026-10-09)
+### 5.11 marola's own forecast: an analog ensemble of local observations (amended 2026-10-09)
 
-marola publishes a forecast of its own, `marola_blend`, stacked from the providers' forecasts.
-Each cycle it issues a forecast at every `station` point and headline lead from each provider's
-latest run, writes it to `forecast_sample` with `provider = marola_blend` and the runs it used,
-and the scorer then treats it as a fifth provider against the same observations. It enters the
-comparison like any other row, so it is published only if it earns it.
+The owner asked for marola's own wind forecast with errors that are not highly correlated with
+the providers'. A blend of IFS, GFS and WeatherNext (the first version of this section) fails that
+by construction: it is a weighted average of the very errors it should avoid. Any skilful
+forecast correlates with the truth, so what can be lowered is the **error** correlation, and only
+with information the global models lack. At a coastal station that is the local wind climate:
+sea breeze, terrain channelling and the instrument's exposure, at scales a 9–25 km grid cannot
+resolve. The pick is an **analog ensemble** (AnEn; Delle Monache et al. 2013,
+doi:10.1175/MWR-D-12-00281.1 ⚠ not re-read for this amendment), `marola_analog`.
 
-- **Weights come from the score monoid.** For a cell (point, lead, variable) the trailing 30 days'
-  sums already give each provider's bias `Σe/n` and MSE `Σe²/n`. The blend is
-  `Σ wᵢ (fᵢ − biasᵢ)` with `wᵢ ∝ 1/MSEᵢ`, normalised to 1: bias-corrected, inverse-MSE stacking. No
-  new state is kept, and the weights are recomputable from the lake like every score.
-- **Causal by construction.** Weights at issue time t use only pairs whose valid time is before t,
-  so the blend is a forecast someone could have issued then. `BlendSpec` checks that a pair
-  maturing after t changes nothing.
-- **Cold start.** Below `min_n` pairs in a cell, the weights are equal and there is no bias
-  correction, and the sample carries `cold_start = true`.
-- **Wind is blended as a vector.** Speed is blended as a scalar and direction as a weighted mean
-  of unit vectors. Averaging u and v, then taking the speed, shrinks wind wherever the providers
-  disagree on direction.
-- **Members.** Ensemble members are not mixed in v1; the blend is scored on its mean (absolute
-  error, as for single runs). A weighted mixture of WeatherNext members for CRPS is a later
-  version.
-- **Coast points** carry no observations, so they get no blend until a transfer rule (the nearest
-  `station`'s weights) is justified by #723 ⚠.
-- **Later versions** go through MLflow as `blend_method`: non-negative least squares over the
-  trailing window (its normal equations `XᵀX`, `Xᵀy` are a monoid too), EMOS for a calibrated
-  spread, and anything learned (gradient boosting) in marola-ml, never in the cycle.
-- **MLflow.** Each run logs `blend_method` and `blend_window_days` as params and `weights.json` as an
-  artifact. A change of method or window starts a new experiment version (§5.6).
+- **How it forecasts.** For a station, lead and issue time, find the k = 20 past forecasts most
+  similar to today's in a few large-scale predictors, and issue the 20 wind and temperature
+  values **observed** at those analogs' valid times. The output is drawn from what the
+  instrument actually measured, so a bias, a missed sea breeze or a smoothed peak in the model
+  does not pass through.
+- **Predictors chosen to stay away from the providers' surface wind:** IFS mean sea-level
+  pressure gradient across the point, 850 hPa wind, 2 m land-sea temperature contrast, hour
+  of day and day of year; plus, up to 24 h lead, the latest observation. The 10 m wind is left out
+  on purpose: it is the field the providers get wrong locally, and matching on it would copy
+  their errors. Whether Open-Meteo's IFS single-run API serves 850 hPa wind and MSL pressure is ⚠
+  until task 12 records it.
+- **The library:** IFS single runs from 2024-03-14 (Open-Meteo's archive, §4.1) at each station,
+  paired with the Iowa Environmental Mesonet METAR archive (§11): about 2.5 years, roughly 3,600
+  runs per station and lead. The backfill is about 3,600 calls per station, spread over days to
+  stay inside Open-Meteo's daily limit.
+- **Search:** distance is the weighted sum of standardised predictor differences in a ±3 h window
+  around the lead (Delle Monache's metric), with weights fixed by #723 on the first year and then
+  frozen. With a few thousand candidates the search is a plain sort in Scala, with no index and
+  no ML library.
+- **Strictly causal.** The library holds only runs whose valid time is before the issue time, so
+  every member is something a forecaster could have known then. `AnalogSpec` checks that a later
+  observation changes nothing.
+- **An ensemble by construction:** 20 members, scored with CRPS against WeatherNext's 64, so
+  its spread is tested, not assumed.
+- **Measured, not claimed.** §5.5's error-correlation cells (`Σeᵢeⱼ` per pair of providers,
+  another monoid) give the correlation of `marola_analog`'s errors with each provider's per
+  station and lead, logged to MLflow and shown beside every score.
+- **What to expect.** Lower error correlation and a real chance to win at 0–48 h, where local
+  effects dominate. At 5–10 days its skill comes from IFS's large-scale fields, so the
+  correlation with IFS rises with lead; the export shows both curves.
+- **Wind direction** is the circular mean of the members' directions, never computed from
+  averaged u and v.
+- **Coast points** have no observations and get no analog forecast.
+- **MLflow:** each run logs `analog_k`, `analog_predictors`, `analog_weights_sha` and the library
+  size as params. A change to any of them starts a new experiment version (§5.6).
 
 ## 6. Scoring / safety impact
 
@@ -380,9 +399,10 @@ directory as MIP-0075 tests it:
 - `CycleSpec` with a recording `RunLedger`: `cycle_logs_params_and_artifacts`,
   `export_skipped_until_a_point_is_scored`, `failed_fetch_ends_run_failed`.
 - `ExportSpec`: `export_matches_schema`.
-- `BlendSpec`: `inverse_mse_weights_sum_to_one`, `bias_removed_before_blending`,
-  `later_pair_does_not_change_weights`, `cold_start_is_equal_weights`,
-  `opposite_directions_keep_speed` — values worked by hand.
+- `AnalogSpec`: `twenty_nearest_by_weighted_distance`, `members_are_observed_values`,
+  `later_observation_does_not_change_forecast`, `ten_m_wind_not_a_predictor`,
+  `direction_is_circular_mean` — on a hand-built library of 30 runs.
+- `ScoreMonoidSpec` also: `error_correlation_of_identical_errors_is_one`.
 
 Live, after the workflow lands: two dispatches back to back (the second waits on `oods-lake`), and
 `just experiment-rescore` equal to the last cycle's `scores.json`. **Done** when 7 days of
@@ -397,9 +417,15 @@ unattended cycles show in MLflow with no unexplained gap in `run_index`.
   by instrument kind.
 - **GitHub drops scheduled runs under load**; a dropped cycle loses no WeatherNext 2 run unless
   three in a row are dropped (runs are 12 h apart).
-- **The blend can look better than it is.** A blend of correlated models beats its members by
-  little, and an in-sample weight beats them by a lot. Weights are strictly causal (§5.11), and
-  the blend is published under the same `min_n` and window as everyone else.
+- **marola's analog model can look better than it is.** A library that peeks at the future, or
+  predictor weights tuned on the scored window, would flatter it. The library is strictly causal
+  and the weights are frozen on a year outside the window (§5.11).
+- **Its library is short.** About 2.5 years
+  holds few analogs for rare states; strong-wind members are sparse, and the strong bin's score
+  will say so.
+- **It is conditioned on IFS.** If IFS's archive or grid changes (a cycle upgrade), old analogs
+  stop matching new forecasts. The library restarts from the upgrade date, which the run index
+  records.
 - **The ensemble mean is not a forecast anyone issued**; CRPS is the fair comparison and the
   export shows both.
 - **WeatherNext 3 may never be granted**, or only its statistics; the experiment runs on three
@@ -417,9 +443,13 @@ unattended cycles show in MLflow with no unexplained gap in `run_index`.
 - **An always-on MLflow:** Phase 2 (MIP-0057).
 - **GRIB from the originals:** §4.1.
 - **`kyo-flow` for durability:** §4.9.
-- **A learned blend (gradient boosting, a neural post-processor) for marola's forecast:** more
-  parameters than 90 days of 6-hourly pairs per point support; it goes to marola-ml if the
-  linear blend leaves skill on the table (§5.11).
+- **A stacked blend of the providers for marola's forecast** (the first version of §5.11): its
+  errors are a weighted average of the providers', the opposite of what the owner asked for.
+- **A regional model of marola's own (WRF):** paid compute every cycle, and its boundary
+  conditions come from GFS or IFS, so its errors inherit theirs.
+- **A learned post-processor (gradient boosting, a neural net) on the providers' output:** more
+  parameters than 2.5 years of 6-hourly pairs support, and correlated with its inputs; marola-ml
+  if the analog model leaves skill on the table.
 
 ## 11. Open questions
 
@@ -433,9 +463,12 @@ unattended cycles show in MLflow with no unexplained gap in `run_index`.
 - **A B2 key scoped to the experiment, or MIP-0075's ETL key?** **Default:** a scoped application
   key, created by the owner.
 - **Is `min_n = 30` right?** **Default:** yes until #723 calibrates it.
-- **Is the blend shown on marola.dev, and under what name?** **Default:** not before it beats the
-  best single provider's 30-day RMSE at a `scored` point. When it does, it is shown as "marola
-  (blend of IFS, GFS, WeatherNext)" and marked experimental.
+- **Is marola's analog forecast shown on marola.dev, and under what name?** **Default:** not
+  before it beats the best single provider's 30-day CRPS at a `scored` point for some lead. Then
+  it is shown as "marola (from this station's own record)", marked experimental, with its error
+  correlation beside it.
+- **Which predictor weights?** **Default:** equal weights until #723 fits them on the first
+  library year, then frozen.
 
 ## Appendix
 
