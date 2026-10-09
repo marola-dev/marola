@@ -58,6 +58,7 @@ table. Each repo's own CI, releases and secrets:
 | `docs.yml` | `repository_dispatch: submodule-docs-updated`; push to `main` touching `docs/**`, `mkdocs/**`, `README.md`, `flake.lock` or the docs scripts; daily; dispatch | `ubuntu-latest` | Builds docs.marola.dev from every repo and, on `main`, **deploys** it to Pages (`github-pages` environment): [DOCS-SITE.md](DOCS-SITE.md) | `GITHUB_TOKEN` | `gh workflow run docs.yml`; `just docs` locally |
 | `pointer-sync.yml` | `repository_dispatch: submodule-updated` or `submodule-docs-updated`; daily; dispatch | `ubuntu-latest` | The only thing that moves submodule pointers (MIP-0070 §5.6): `scripts/pointer-sync.sh` runs `git submodule update --remote` and commits whatever moved onto `chore/pointer-sync`, force-pushed, with one open PR listing each submodule's old → new commit and a compare link; when `main` has caught up, that PR is closed. Pushed and opened with the PAT so the PR's CI runs | `MAROLA_CROSS_REPO_PAT` | `gh workflow run pointer-sync.yml` |
 | `profile-activity.yml` | PR merged into `main` | `ubuntu-latest` (reusable workflow's `runner:` input) | Pings `h0ffmann/h0ffmann` to refresh its activity list; without the token it only leaves a notice | `PROFILE_DISPATCH_TOKEN` | — |
+| `pointer-sync-merge.yml` | `CI` or `PR body` completed on `chore/pointer-sync`; hourly; dispatch | `ubuntu-latest` | Squash-merges the sync PR as the `marola-pointer-sync` App (#739) when every check and status on its head passed, the head is still the commit they ran on, and it changes only gitlinks and REPOS.md's wiring table; otherwise one PR comment says why and a person merges it. Each merge is one more push to `main`, so one more `ci.yml` run | `POINTER_SYNC_APP_ID` (variable), `POINTER_SYNC_APP_KEY` | `gh workflow run pointer-sync-merge.yml`; `scripts/pointer-sync-merge.sh --repo marola-dev/marola --dry-run` |
 
 `repo-stats` writes to marola-site's `site-data` through `scripts/site-data-push.sh`, which
 retries when two pushes race, and sends no dispatch: the map picks the stats up on its next build.
@@ -92,7 +93,7 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
   contributors". The two weaker levels stop asking once a user has had any commit merged.
 - **The desktop runner** carries the `marola-sea` label only, so no `runs-on: ubuntu-latest` job
   can land on it. It serves marola-ml's `marola-sea-publish.yml`.
-- **No `CI_RUNNER` variable.** The repo has no Actions variables at all.
+- **No `CI_RUNNER` variable.** The repo's only Actions variable is `POINTER_SYNC_APP_ID`.
 - **The app image is marola-app's package**, `ghcr.io/marola-dev/marola-app`. A package's first
   push creates it private:
   either make it public, so `docker pull ghcr.io/marola-dev/marola-app:jvm` works logged out, or
@@ -105,6 +106,13 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
   read and write on marola). marola-site and marola-ml use it for their notify-umbrella dispatch,
   and marola-ml to open compiled-prompt PRs in marola-app; every dispatch is in REPOS'
   [wiring table](../2-Building-marola/REPOS.md#artifacts-pins-and-dispatches).
+- **The `marola-pointer-sync` App** (#739): installed on marola only, with Contents and Pull
+  requests write and Checks, Statuses and Metadata read, and a pull-request-only bypass actor on
+  `main-rule`, so it can merge a PR without review but never push to `main`. Only
+  `pointer-sync-merge.yml` mints its token. Its id is the `POINTER_SYNC_APP_ID` variable and its
+  private key the `POINTER_SYNC_APP_KEY` secret; whoever holds that key can merge any PR into
+  marola's `main` unreviewed. To rotate it, generate a new key in the App's settings, run
+  `gh secret set POINTER_SYNC_APP_KEY -R marola-dev/marola < new-key.pem`, then delete the old key.
 - **Pages:** source "GitHub Actions", custom domain `docs.marola.dev` (a DNS `CNAME` to
   `marola-dev.github.io`). An Actions-deployed site ignores a `CNAME` file, so the domain lives
   only in this setting.
