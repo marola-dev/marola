@@ -1,0 +1,62 @@
+{
+  "read_on": "2026-10-09",
+  "read_with": "the session context and get_project_settings (from the project's coordinator session), get_session, list_environments, list_triggers and get_trigger; see README.md",
+  "project": {
+    "name": "Marola Agent",
+    "topic": "Build, design, maintain and implement marola.dev",
+    "visibility": "private",
+    "instructions": "Branch naming (Hoffmann, 2026-10-05): never push to a branch with a random or session suffix. Before the first push, name the branch `claude/<issue-number>-<short-kebab-slug>` after the GitHub issue it implements (for example `claude/657-remove-magic-nix-cache`), and push with `git push -u origin HEAD:claude/<issue-number>-<slug>`. Open the PR from that branch. If the push to that name is refused, say so in the thread rather than falling back silently to the suffixed branch.\n\nMIP work (Hoffmann, 2026-10-08): when the change writes or implements a MIP, name the branch after the MIP instead of the issue, following the umbrella's convention `docs/mip-NNNN-<short-kebab-slug>` (for example `docs/mip-0081-external-llm-evaluation`), using the same branch name in every repo the MIP touches. Branches named `claude/project-thread-*` are rejected by the devkit's PR branch check.",
+    "repositories": [
+      "https://github.com/marola-dev/marola-site",
+      "https://github.com/marola-dev/marola-oods",
+      "https://github.com/marola-dev/marola",
+      "https://github.com/marola-dev/marola-app",
+      "https://github.com/marola-dev/marola-devkit",
+      "https://github.com/marola-dev/awesome-ocean-science",
+      "https://github.com/marola-dev/marola-ml",
+      "https://github.com/marola-dev/marola-corpus",
+      "https://github.com/marola-dev/open-sustainable-technology",
+      "https://github.com/marola-dev/awesome-open-climate-science",
+      "https://github.com/marola-dev/.github",
+      "https://github.com/h0ffmann/ww3-gpu",
+      "https://github.com/marola-dev/agent-skills"
+    ],
+    "model": "set on the service; not recorded here, since no model id goes into a pushed file (read it with the tool in README.md)",
+    "effort": null,
+    "memory": "enabled in the project, off in the owner's account memory settings: nothing to read",
+    "tasks_enabled": false,
+    "min_routine_interval_minutes": 60,
+    "default_environment": null
+  },
+  "thread_sessions": {
+    "model": "set on the service; not recorded here, since no model id goes into a pushed file (read it with the tool in README.md)",
+    "effort": "medium",
+    "permission_mode": "auto"
+  },
+  "environment": {
+    "name": "Default",
+    "kind": "anthropic_cloud",
+    "network": "trusted network access",
+    "setup": "none on the service"
+  },
+  "routines": [
+    {
+      "name": "A2A inbox (para:marola)",
+      "trigger_id": "trig_01UE8yJCJTN2HD2WfTnxbBve",
+      "cron": "5 */3 * * *",
+      "timezone": "UTC (the cron sets no CRON_TZ)",
+      "persistent_session": true,
+      "prompt": "routines/a2a-inbox-marola.txt"
+    }
+  ],
+  "not_in_this_snapshot": [
+    "project memory",
+    "connectors and their sign-ins",
+    "environment secrets and variables",
+    "chat and thread history",
+    "published artifacts",
+    "project files under /mnt/project-files",
+    "one-shot reminders a session schedules for itself (PR check-ins)",
+    "routines on the same account that belong to Wave Forecaster (h0ffmann/ww3-gpu's .claude/project/)"
+  ]
+}
