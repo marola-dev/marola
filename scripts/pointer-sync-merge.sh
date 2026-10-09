@@ -6,7 +6,8 @@
 #   scripts/pointer-sync-merge.sh --self-test   # a fake gh on PATH and git fixtures, no network
 #
 # Merges only when every check run and status on the head finished success/skipped/neutral, the head
-# is still --sha, and the diff is submodule gitlinks plus REPOS.md inside its wiring markers. Pending
+# is still --sha, and the diff is submodule gitlinks (each on its marola-dev repo's default branch)
+# plus REPOS.md inside its wiring markers. Pending
 # exits quietly for a later trigger; any other refusal leaves the PR for a person with one comment.
 set -euo pipefail
 
@@ -39,6 +40,40 @@ scope_problem() {
     fi
   done < <(git diff -z --no-renames --name-only "$base" "$head")
   [ "${#outside[@]}" -eq 0 ] || echo "it changes more than submodule pointers: $(printf "\`%s\` " "${outside[@]}")"
+}
+
+# The App token is installation-scoped to marola, so the submodule repos are read with
+# GH_READ_TOKEN (github.token in CI); unset, gh falls back to its own login.
+read_gh() { GH_TOKEN="${GH_READ_TOKEN:-}" gh "$@" </dev/null; }
+
+# pointer_problem <base> <head>: why a moved gitlink is not on its marola-dev repo's default branch, or nothing.
+pointer_problem() {
+  local base="$1" head="$2" key path name url sub sha branch status
+  while read -r key path; do
+    ! git diff --quiet "$base" "$head" -- "$path" || continue
+    name="${key#submodule.}"
+    name="${name%.path}"
+    url="$(git config --blob "$base:.gitmodules" "submodule.$name.url")"
+    sub="$(sed -nE 's#^https://github\.com/(marola-dev/[A-Za-z0-9._-]+)$#\1#p' <<<"${url%.git}")"
+    if [ -z "$sub" ]; then
+      echo "\`$path\` points at \`$url\`, not a marola-dev repo"
+      return
+    fi
+    sha="$(git ls-tree "$head" -- "$path" | awk '{ print $3 }')"
+    # GitHub serves a fork's commits through its parent repo, so a SHA that resolves there can still
+    # be anyone's: only an ancestor of the default branch (behind/identical) is a real pointer move.
+    if ! branch="$(read_gh api "repos/$sub" | jq -er .default_branch)" ||
+      ! status="$(read_gh api "repos/$sub/compare/$sha...$branch" | jq -er .status)"; then
+      status="unreadable"
+    fi
+    case "$status" in
+      behind | identical) ;;
+      *)
+        echo "\`$path\` moves to \`${sha:0:7}\`, which is not on $sub's default branch (compare: $status)"
+        return
+        ;;
+    esac
+  done < <(git config --blob "$base:.gitmodules" --get-regexp '^submodule\..*\.path$' || true)
 }
 
 run() {
@@ -95,8 +130,10 @@ run() {
     refuse "the head moved while this run read it" "The new head's checks retry it"
     return 0
   fi
-  local why
-  why="$(scope_problem "$(git merge-base refs/remotes/origin/main "$head")" "$head")"
+  local base why
+  base="$(git merge-base refs/remotes/origin/main "$head")"
+  why="$(scope_problem "$base" "$head")"
+  [ -n "$why" ] || why="$(pointer_problem "$base" "$head")"
   if [ -n "$why" ]; then
     refuse "$why"
     return 0
@@ -137,40 +174,46 @@ case "$*" in
   "pr merge "*) echo "merge ${*:3}" >>"$d/calls" ;;
   "api "*/check-runs*) cat "$d/check-runs.json" ;;
   "api "*/status*) cat "$d/status.json" ;;
+  # Answered only with the read token: the App token cannot see the submodule repos.
+  "api repos/marola-dev/app/compare/"*) [ "$GH_TOKEN" = read ] && [ -s "$d/compare.json" ] && cat "$d/compare.json" ;;
+  "api repos/marola-dev/app") [ "$GH_TOKEN" = read ] && echo '{"default_branch":"trunk"}' ;;
   *) echo "fake gh: unexpected: $*" >&2; exit 1 ;;
 esac
 EOF
   chmod +x "$t/bin/gh"
-  export PATH="$t/bin:$PATH" FAKE_GH="$t/gh"
+  export PATH="$t/bin:$PATH" FAKE_GH="$t/gh" GH_TOKEN=app GH_READ_TOKEN=read
 
   local o="$t/origin" w="$t/work"
   git init -q -b main "$o"
   (
     cd "$o"
-    printf '[submodule "app"]\n\tpath = app\n\turl = https://github.com/x/app.git\n' >.gitmodules
+    printf '[submodule "app"]\n\tpath = app\n\turl = https://github.com/marola-dev/app.git\n' >.gitmodules
+    printf '[submodule "other"]\n\tpath = other\n\turl = https://github.com/someone/other\n' >>.gitmodules
     mkdir -p "$(dirname "$REPOS_MD")"
     printf 'intro\n<!-- wiring:start -->\n| a | b |\n<!-- wiring:end -->\noutro\n' >"$REPOS_MD"
     echo readme >README.md
     git add -A
     # An empty dir is an unpopulated submodule; without it, `commit -a` would delete the gitlink.
-    mkdir app
+    mkdir app other
     git update-index --add --cacheinfo "160000,$(printf '1%.0s' {1..40}),app"
+    git update-index --add --cacheinfo "160000,$(printf '1%.0s' {1..40}),other"
     git commit -q -m base
   )
-  # mkhead <name> <edit...>: a commit off main moving app's gitlink, plus the edit.
+  # mkhead <name> <gitlink> <edit...>: a commit off main moving that gitlink, plus the edit.
   mkhead() {
-    local name="$1"; shift
+    local name="$1" link="$2"; shift 2
     git -C "$o" checkout -q -b "$name" main
-    git -C "$o" update-index --cacheinfo "160000,$(printf '2%.0s' {1..40}),app"
+    git -C "$o" update-index --cacheinfo "160000,$(printf '2%.0s' {1..40}),$link"
     (cd "$o" && "$@")
     git -C "$o" commit -qam "$name"
     git -C "$o" rev-parse HEAD
     git -C "$o" checkout -q main
   }
-  local h_ok h_out h_md
-  h_ok="$(mkhead ok sed -i 's/| a | b |/| a | c |/' "$REPOS_MD")"
-  h_out="$(mkhead out sh -c 'echo more >>README.md')"
-  h_md="$(mkhead md sed -i 's/outro/outro, edited/' "$REPOS_MD")"
+  local h_ok h_out h_md h_other
+  h_ok="$(mkhead ok app sed -i 's/| a | b |/| a | c |/' "$REPOS_MD")"
+  h_out="$(mkhead out app sh -c 'echo more >>README.md')"
+  h_md="$(mkhead md app sed -i 's/outro/outro, edited/' "$REPOS_MD")"
+  h_other="$(mkhead other other true)"
   git clone -q "$o" "$w"
 
   # pr <head> <check-runs json>: open PR #7 at <head>, no statuses, no comments.
@@ -181,6 +224,7 @@ EOF
     # Zero statuses still reads "pending", as GitHub's combined status does.
     printf '{"state":"pending","statuses":[]}' >"$t/gh/status.json"
     printf '{"comments":[]}' >"$t/gh/comments.json"
+    printf '{"status":"behind"}' >"$t/gh/compare.json"
   }
   # go [args...]: the script in $w; calls() is what it did to the fake gh, plus a non-zero exit.
   go() {
@@ -235,6 +279,26 @@ EOF
   go --sha "$h_md"
   ok "$(calls)" "comment 7" "one comment, no merge"
   ok "$(grep -c wiring:start "$t/gh/last-comment" 2>/dev/null)" "1" "the comment names the markers"
+
+  echo "-- refuses_gitlink_not_on_default_branch --"
+  pr "$h_ok" "$green"
+  printf '{"status":"diverged"}' >"$t/gh/compare.json"
+  go --sha "$h_ok"
+  ok "$(calls)" "comment 7" "a fork commit (diverged): one comment, no merge"
+  ok "$(grep -cF "\`app\`" "$t/gh/last-comment" 2>/dev/null)" "1" "the comment names the gitlink"
+  pr "$h_ok" "$green"
+  : >"$t/gh/compare.json"
+  go --sha "$h_ok"
+  ok "$(calls)" "comment 7" "an unreadable compare fails closed"
+  pr "$h_other" "$green"
+  go --sha "$h_other"
+  ok "$(calls)" "comment 7" "a gitlink outside marola-dev is refused"
+
+  echo "-- merges_gitlink_on_default_branch --"
+  pr "$h_ok" "$green"
+  printf '{"status":"identical"}' >"$t/gh/compare.json"
+  go --sha "$h_ok"
+  ok "$(calls)" "merge 7 --squash --admin --match-head-commit $h_ok -R marola-dev/marola" "the default branch's tip merges"
 
   echo "-- no_open_pr_is_quiet --"
   printf '[]' >"$t/gh/prs.json"

@@ -49,6 +49,8 @@ jobs:
       - name: Merge the sync PR when green and in scope
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
+          # The App token sees marola only; this reads the submodule repos' default branches.
+          GH_READ_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           # Empty outside workflow_run: the script then judges whatever the head is now.
           SHA: ${{ github.event.workflow_run.head_sha }}
