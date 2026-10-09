@@ -22,7 +22,7 @@
 | **Manually reviewed** | no |
 | **Written by** | Hoffmann, with Claude Code |
 | **Tasks** | [`MIP-0083.tasks.md`](./MIP-0083.tasks.md) |
-| **Tests** | `SchemaSpec`, `GroundTruthSpec`, `SamplingRegistrySpec`, `ProtocolSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `ScoreMonoidSpec`, `MatcherSpec`, `AnalogSpec`, `LakeSamplesSpec`, `CycleSpec`, `ExportSpec` in marola-app's `experiment` module (§7) |
+| **Tests** | `SchemaSpec`, `FairnessSpec`, `GroundTruthSpec`, `SamplingRegistrySpec`, `ProtocolSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `ScoreMonoidSpec`, `MatcherSpec`, `AnalogSpec`, `LakeSamplesSpec`, `CycleSpec`, `ExportSpec` in marola-app's `experiment` module (§7) |
 | **Spec-kit** | none |
 | **Issues** | not filed — Draft. marola-dev/marola-app#63–#71, filed for the superseded text, are closed or rewritten once this is Accepted |
 
@@ -496,9 +496,9 @@ in. A schema change is a new version, never an edit.
 | `Instrument` | id, network (`inmet`, `metar`, `pnboia`, `simcosta`, `radiosonde`, `merge`), lat, lon, height, averaging, licence, status | `ground-truth.json` |
 | `SamplingPoint` | id, lat, lon, kind (`station`, `buoy`, `coast`, `upper_air`), instrument id, added_on, retired_on | `sampling-points.json` |
 | `Protocol` | version, variables, leads, scorecard days, window, cadence, K, `min_n`, bins | `protocol.json` |
-| `ForecastSample` | provider, run, point, valid time, lead, variable, member (or none), value, cell lat/lon, source URL | `forecast_sample` |
+| `ForecastSample` | provider, `run_init`, `fetched_at`, point, valid time, lead, variable, member (or none), value, cell lat/lon, source URL | `forecast_sample` |
 | `ObservationSample` | instrument, valid time, variable, value, averaging, QC flag | `observation_sample` |
-| `RunIndexRow` | provider, run, state (`sampled`, `backfilled`, `missing`), reason, fetched at | `run_index` |
+| `RunIndexRow` | provider, `run_init`, `available_at`, `content_sha`, state (`sampled`, `backfilled`, `missing`), reason, fetched at | `run_index` |
 | `ScoreCell` | provider, point, variable, lead, bin, day, n, Σe, Σe², Σ\|e\|, fair-CRPS sum, spread sum, Σeᵢeⱼ | `score_cell` |
 | `NavyWarning` | number, area, force, gust, valid from/to, issued at, raw text sha | `navy_warning` |
 | `Scorecard` | protocol version, window, rows per provider × variable × day, licences | `forecast-benchmark/latest.json` and its JSON Schema for marola-site |
@@ -528,6 +528,52 @@ below were checked in the RC7 source and are re-checked against the jar before u
 - **Outside Kyo:** the registry, protocol, matcher, score monoid, analogs and scorecard are pure
   and carry no Kyo effect.
 
+### 5.14 Fair comparison when runs are not fetched in the same window (amended 2026-10-09)
+
+Providers publish on different schedules: IFS and GFS run four times a day, WeatherNext 2 twice,
+and each becomes available hours after its start, at different delays. A cycle every 4 h fetches
+whatever is newest, so two providers' samples in one cycle can come from runs hours apart. When
+a forecast was fetched must never decide its score. These rules make the comparison fair:
+
+1. **Every sample is keyed by its run, not by its fetch.** A `ForecastSample` stores `run_init`
+   (the model's initialisation time, from the provider's metadata) and `fetched_at` separately.
+   `lead = valid_time − run_init`. A run fetched 20 minutes or 2 days after it appeared gives the
+   same rows.
+2. **A run's content is pinned.** The fetch asks for that run by its init time (Open-Meteo's
+   single-run API) and checks the response's init against it. A response from the "latest"
+   endpoint is accepted only if the metadata reports the same `last_run_initialisation_time`
+   before and after the call; otherwise it is discarded and retried, so a newer run is never
+   stored under an older run's time. Each run's rows carry a content hash. A `backfilled` run
+   matching an earlier `sampled` copy of the same run is checked hash-for-hash, and a mismatch is
+   a `RunIndexRow` with a reason. Whether Open-Meteo's archive is byte-identical to its live
+   output is ⚠ until task 4 records an overlap.
+3. **Head-to-head scores use the common set only.** Provider A beats B only over the (point,
+   `run_init`, lead, valid time) cells where both have a sample and an observation exists:
+   paired, pairwise intersection. A run one of them missed drops the cell for that pair, not for
+   the others. The scorecard's ranking uses the intersection across every ranked provider, as OWB
+   ranks on the 12Z cycle alone.
+4. **Same init cycles.** A provider that runs only at 00/12 UTC is compared on 00/12 inits. The
+   12Z ranking (§4.10) uses only 12Z runs from every provider. Valid times stay on the
+   00/06/12/18 grid, so hourly models are not judged on hours a 6-hourly model never forecasts.
+5. **Two views, both labelled.** The rules above give **model skill**: same init, same lead.
+   Users, though, act on whatever forecast exists when they ask. A second view, **issued skill**,
+   compares the latest run each provider had *made available* at a fixed issue time (00/06/12/18
+   UTC). Availability comes from `last_run_availability_time`. Lead is counted from the issue time,
+   so a slow publisher pays for its latency there. The scorecard shows model skill by default and
+   issued skill beside it.
+6. **Same window, same days.** A provider added later (§4.4) is ranked only over the days it
+   shares with the others. The scorecard prints each provider's first day, and `n` for each pair.
+7. **Same ensemble footing.** K = 16 strided members and fair CRPS (§5.5) for every ensemble. A
+   deterministic run is a one-member ensemble, so CRPS equals absolute error and nothing is
+   padded.
+8. **A win must beat chance.** Each head-to-head difference gets a 95% interval from a paired
+   block bootstrap over days, because errors on one day are correlated across leads and points.
+   A difference whose interval contains zero is shown as a tie. The day blocks keep the sums
+   monoid-friendly: per-day paired-difference cells are combined and then resampled.
+
+`run_init`, `available_at`, `fetched_at` and `content_sha` join §5.12's `ForecastSample` and
+`RunIndexRow`, so the schemas carry fairness from task 1.
+
 ## 6. Scoring / safety impact
 
 None. `Swimability.score` reads nothing this produces; using the winning model there is a later
@@ -550,6 +596,11 @@ directory as MIP-0075 tests it:
 - `ScoreMonoidSpec`: `combine_is_associative`, `empty_is_identity`, `combine_is_commutative`,
   `ninety_daily_cells_equal_one_window`, `crps_of_single_run_is_abs_error` — values worked by hand.
 - `MatcherSpec`: `pairs_only_same_point_and_valid_time`, `metar_outside_10_min_is_missing`.
+- `FairnessSpec` (§5.14): `lead_counts_from_run_init_not_fetch`, `late_fetch_gives_identical_rows`,
+  `run_changed_during_fetch_is_discarded`, `backfill_hash_mismatch_recorded`,
+  `head_to_head_uses_pairwise_intersection`, `twelve_z_ranking_uses_12z_inits_only`,
+  `issued_skill_charges_latency`, `late_provider_ranked_on_shared_days`,
+  `bootstrap_interval_containing_zero_is_tie` — on hand-built runs with staggered availability.
 - `LakeSamplesSpec`: `samples_round_trip_through_local_lake`, `rerun_cycle_writes_no_duplicates`.
 - `CycleSpec` with a recording `RunLedger`: `cycle_logs_params_and_artifacts`,
   `export_skipped_until_a_point_is_scored`, `failed_fetch_ends_run_failed`.
