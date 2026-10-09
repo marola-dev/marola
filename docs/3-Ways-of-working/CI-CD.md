@@ -27,7 +27,8 @@ flowchart LR
   app -- "coverage/ smoke/" --> sd
   app -. rebuild .-> site[marola-site site.yml]
   sd --> site
-  site --> pages[GitHub Pages<br/>marola.dev]
+  site --> cfw[Cloudflare Worker<br/>marola.dev]
+  site -. fallback .-> pages[GitHub Pages]
 ```
 
 Which repo produces each artifact, who reads it and what pins it is REPOS'
