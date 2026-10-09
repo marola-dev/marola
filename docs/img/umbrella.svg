@@ -60,7 +60,7 @@ text{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Li
 <rect x="720" y="352" width="230" height="80" rx="8" fill="rgba(76,29,149,0.5)" stroke="#a78bfa" stroke-width="1.6"/>
 <text x="835.0" y="380.0" class="name" text-anchor="middle">marola-oods</text>
 <text x="835.0" y="399.0" class="sub" text-anchor="middle">open ocean data lake</text>
-<text x="835.0" y="416.0" class="sub" text-anchor="middle">DuckLake on Backblaze B2</text>
+<text x="835.0" y="416.0" class="sub" text-anchor="middle">DuckLake on Cloudflare R2</text>
 <rect x="150" y="522" width="700" height="54" rx="8" fill="#0b1222"/>
 <rect x="150" y="522" width="700" height="54" rx="8" fill="rgba(124,45,18,0.45)" stroke="#fb923c" stroke-width="1.6"/>
 <text x="500.0" y="545.5" class="name" text-anchor="middle">marola-devkit</text>
