@@ -38,6 +38,12 @@ authors:
   - family-names: "Oliveira"
     given-names: "Elisa"
     orcid: "https://orcid.org/0009-0002-9844-7865"
+  - family-names: "Almeida"
+    given-names: "Leonardo Santos"
+    orcid: "https://orcid.org/0009-0004-8570-4601"
+  - family-names: "Ribeiro"
+    given-names: "Pablo"
+    orcid: "https://orcid.org/0009-0005-3553-8323"
 repository-code: "https://github.com/marola-dev/marola"
 url: "https://marola.dev"
 doi: 10.5281/zenodo.23224155
