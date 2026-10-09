@@ -163,7 +163,7 @@ jobs:
   python-ci:
     needs: changes
     if: needs.changes.outputs.python == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.7.0
+    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.8.0
     with:
       ruff-version: "0.16.5"
       self-test-commands: |
@@ -182,7 +182,7 @@ jobs:
   static-ci:
     needs: changes
     if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.7.0
+    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.8.0
     with:
       actionlint-version: "1.7.12"
       hadolint-version: "2.14.0"
@@ -195,9 +195,9 @@ jobs:
   agents-check:
     needs: changes
     if: needs.changes.outputs.agents == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.7.0
+    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.8.0
     with:
-      devkit-ref: v0.7.0
+      devkit-ref: v0.8.0
 
   # What needs this repo's own flake: the lock is current, the justfile parses, no workflow here
   # is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's),
