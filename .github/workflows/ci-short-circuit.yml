@@ -10,4 +10,4 @@ permissions:
 
 jobs:
   cancel:
-    uses: marola-dev/marola-devkit/.github/workflows/ci-short-circuit.yml@v0.4.1
+    uses: marola-dev/marola-devkit/.github/workflows/ci-short-circuit.yml@v0.7.0
