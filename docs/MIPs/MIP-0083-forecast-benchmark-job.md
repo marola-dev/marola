@@ -1,607 +1,415 @@
-# MIP-0083: A background forecast benchmark — every 4 hours, archive MONAN, WeatherNext, IFS, AIFS, GFS, AIGFS and ICON at fixed coastal points and score them side by side against what was measured
+# MIP-0083: A forecast experiment in marola-app — IFS, GFS and WeatherNext sampled every 4 hours at registered points, scored against ground truth, with runs in MLflow and samples in the OODS lake
 
 | | |
 |---|---|
-| **Status** | Accepted (Hoffmann, 2026-10-09); amended 2026-10-09 (Hoffmann: GFS and other verifiable sources, §4.10–§4.11; the job moves to a new repo, marola-eval, in Scala 3 + Besom, picked by the owner over Rust and Haskell, §5.11) — `Tasks: docs/MIPs/MIP-0083.tasks.md` ([`MIP-0083.tasks.md`](./MIP-0083.tasks.md)) |
-| **Author** | Hoffmann, from #724 and the design decisions recorded in #723 (2026-10-09) |
+| **Status** | Draft — redefined from scratch by the owner on 2026-10-09 (the earlier Accepted text, its two amendments and the marola-eval move are superseded; `git log` keeps them) |
+| **Author** | Hoffmann, from #724 and #723, redefined in the project thread on 2026-10-09 |
 | **Created** | 2026-10-09 |
-| **Phase** | None: R&D outside the phase list (#724). It provisions a GCS bucket, which is cloud infrastructure ahead of Phase 2; the owner decided it in #723 inside GCP's free tier, and the first `pulumi up` still waits for their confirmation with §5.9's cost table. Phase 1 (the Telegram bot) is not done, and nothing here moves it |
-| **Related** | #724 (the job, this MIP's source), #723 (the study it serves: points, protocol, paper), marola-dev/marola-site#99 (the page that draws §5.8's export), MIP-0010 (MLflow and `RunLedger`), MIP-0008 (the GraalVM native-image path, if start-up ever matters), MIP-0057 (an always-on MLflow, Phase 2), MIP-0079 (Zenodo DOIs), [GEMINI-CODE-ASSIST](../4-Research-and-plans/GEMINI-CODE-ASSIST.md) §4 (the Besom layout reused here), `CANDIDATES.md` (marola's first IaC) |
-| **Effort** | L — a new sbt module with three new clients, a matcher and a scorer; a scheduled workflow with WIF and a state protocol on GCS; a Besom program; an export schema. No new library dependency in Scala |
-| **Gain** | `user value` — marola.dev can say which forecast has been right lately at a given beach; `community/outreach` — an open, continuously updated comparison of a national model against a free ML model on the Brazilian coast, through a strong El Niño |
-| **Effort vs Gain** | `do next` for tasks 1 and 3–6 (local, free, and the archive of WeatherNext members is lost for every week it doesn't run); `do when X lands` for tasks 7–8, X = the owner's go-ahead on the cost table; MONAN when #723's step 1 resolves |
-| **Depends on** | #723's step 1 for MONAN (data access, unknown today); the owner's confirmation before the first `pulumi up`; a GCP project with a billing account (a person's act) |
+| **Phase** | None: R&D outside the phase list (#724). It writes to MIP-0075's B2 bucket, which already exists and is free; it provisions nothing. Phase 1 (the Telegram bot) is not done, and nothing here moves it |
+| **Related** | #724 (the source issue), #723 (the study: points, protocol, paper), MIP-0075 (the OODS lake on B2 and its DuckDB store), MIP-0010 (MLflow and `RunLedger`), marola-dev/marola-site#99 (the page), h0ffmann/ww3-gpu#92 (the wind chapter), marola-dev/marola-app#72 (task 1, written before this redefinition) |
+| **Effort** | L — an sbt module with four forecast clients, two observation clients, a registry, a scorer, an MLflow ledger on B2 and lake tables; a scheduled workflow. Two new dependencies (`kyo-config`, `kyo-schema-json`, §4.9) plus MIP-0075's `duckdb_jdbc` |
+| **Gain** | `user value` — marola.dev can say which forecast has been right lately at a given coast; `community/outreach` — an open, continuously updated comparison of physics and AI models on the Brazilian coast through a strong El Niño |
+| **Effort vs Gain** | `do next` for tasks 1–8 (local and free, and a WeatherNext 2 run not sampled is lost); `do when X lands` for task 10, X = Google's approval of WeatherNext 3 access |
+| **Depends on** | MIP-0075's bucket and key (exist since 2026-10-05) and its `OodsStore` (task 5 there, reused here); Google's approval for WeatherNext 3 (task 11, a person's act); #723 freezing the strong-wind thresholds before any score is published |
 | **Blocked by** | none |
-| **Risk** | A model's run is silently skipped or fetched twice and the archive drifts from what was actually published, so the scores answer a different question than they claim; §5.4 makes every run an explicit `archived`, `backfilled` or `missing` row, keyed by model and run time |
+| **Risk** | A run is skipped or fetched twice and the record drifts from what each publisher actually issued, so every score answers a different question than it claims; §5.5 makes every expected run an explicit `sampled`, `backfilled` or `missing` row keyed by provider and run time |
 | **Cost so far** | — |
 
 ### Readiness
 
 | | |
 |---|---|
-| **Manually reviewed** | yes — Hoffmann, 2026-10-09 (accepted in the project thread, with the ground-truth points moved to task 1) |
+| **Manually reviewed** | no |
 | **Written by** | Hoffmann, with Claude Code |
 | **Tasks** | [`MIP-0083.tasks.md`](./MIP-0083.tasks.md) |
-| **Tests** | `GroundTruthSpec`, `ScorerSpec`, `MatcherSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `CycleSpec`, `RescoreSpec`, `ExportSpec` in marola-app's `verify` module (§7) |
+| **Tests** | `GroundTruthSpec`, `SamplingRegistrySpec`, `ProtocolSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `ScoreMonoidSpec`, `MatcherSpec`, `LakeSamplesSpec`, `CycleSpec`, `ExportSpec` in marola-app's `experiment` module (§7) |
 | **Spec-kit** | none |
-| **Issues** | marola-dev/marola-app#63–#71 (rows 1–9), marola-dev/marola-site#99 (row 10), #726 (row 11) |
+| **Issues** | not filed — Draft. marola-dev/marola-app#63–#71, filed for the superseded text, are closed or rewritten once this is Accepted |
 
 ## 1. Summary
 
-A new repository, marola-eval (§5.11), runs every 4 hours from a GitHub Actions cron. Each cycle saves
-every model run it has not seen yet at a fixed list of coastal points (WeatherNext 2's 64 members,
-ECMWF IFS HRES and AIFS, NOAA GFS and AIGFS, and DWD ICON now, MONAN once #723 finds its data), lines up every saved forecast whose valid
-time has passed against the anemometer at that point, and keeps rolling bias, RMSE and CRPS per
-model, point, lead and observed wind bin. Results go to MLflow, whose SQLite file lives in a GCS
-bucket between runs, and to a small JSON export that marola.dev's wind page (marola-site#99)
-reads from the `site-data` branch. The bucket, its Workload Identity Federation and its budget
-alert are a Besom program, marola's first infrastructure as code.
+marola-app gains an `experiment` sbt module, written in Kyo, that every 4 hours (adjustable)
+samples 10 m wind and 2 m temperature forecasts from ECMWF IFS, NOAA GFS and Google WeatherNext 2,
+and WeatherNext 3 once Google grants access, at a registry of sampling points. It pairs every
+matured forecast with what an instrument measured at that point, and keeps bias, RMSE and CRPS
+over a 90-day window. Each cycle is an MLflow run (params, metrics, artifacts); every forecast and
+observation sample is a row in MIP-0075's OODS lake on Backblaze B2. Nothing is published until
+the ground-truth step has frozen the points it scores against.
 
 ## 2. Motivation
 
-#723 asks whether INPE's MONAN is worth its cost next to Google's free WeatherNext, and a one-off
-answer goes stale with every model upgrade. Two facts make the job urgent rather than nice to
-have:
+#723 asks whether a free AI model matches a physics model on this coast, and a one-off answer goes
+stale with every model upgrade. Two facts make it urgent:
 
-- **Open-Meteo serves only the latest WeatherNext run.** It has no single-run archive for
-  `google_weathernext2_ensemble` (v single-runs API page, 2026-10-09: the model is not listed),
-  so a member not saved by the cycle that saw it is gone.
-- **A strong El Niño is under way** (#723, Motivation, citing NOAA CPC's 2026-10-08 advisory). Its
-  peak, October 2026 to March 2027, is the most informative period of the study, and it is
-  passing now.
+- **Open-Meteo serves only the latest WeatherNext 2 run**, with no single-run archive (v Open-Meteo
+  single-runs page, 2026-10-09), so a run not sampled by the cycle that saw it is gone.
+- **A strong El Niño is under way** (#723, citing NOAA CPC's 2026-10-08 advisory); its peak,
+  October 2026 to March 2027, is the most informative window of the study.
 
-marola-app has the pieces already: an `Http` with fixture replay, a hand-rolled `JsonValue`, and
-`RunLedger` with an MLflow REST implementation (MIP-0010). What it lacks is a forecast client that
-takes `models=`, any observation client, and anything that runs on a schedule.
+marola-app already has an `Http` with fixture replay, a `JsonValue`, `RunLedger` with an MLflow
+REST implementation (MIP-0010), and, with MIP-0075, a DuckDB store on B2. What it lacks is a
+forecast client that takes `models=`, any observation client, and anything that runs on a schedule.
 
 ## 3. User-visible change
 
-Nothing changes in the CLI, the bot or the board. The new surfaces are:
-
-- **MLflow**, for whoever downloads `mlflow.db`: experiment `forecast-benchmark`, one run per
-  cycle, named `cycle-2026-10-09T04:17Z`, status `FINISHED` or `FAILED`.
-- **The export** on marola-site's `site-data` branch, `forecast-benchmark/latest.json`
-  (shape in §5.8), which marola-site#99 draws.
-- **A command** in a marola-app checkout that recomputes every score from the archive:
-
-```text
-# in a marola-app checkout
-$ just verify-rescore gs://<bucket> --until 2026-10-09T04:17Z
-rescored 1,284 matched pairs from 37 cycles; scores identical to cycle-2026-10-09T04:17Z
-```
-
-## 4. Data sources and dependencies reviewed
-
-### 4.1 Open-Meteo, ECMWF IFS HRES 9 km
-
-- `https://api.open-meteo.com/v1/forecast?models=ecmwf_ifs` (v Open-Meteo ECMWF docs,
-  2026-10-09: the example request uses `ecmwf_ifs`; 9 km, 4 runs a day, up to 15 days).
-- **Backfill exists:** `https://single-runs-api.open-meteo.com/v1/forecast?run=YYYY-MM-DDTHH:MM`
-  returns one named run; IFS HRES 9 km runs are kept from 2024-03-14 (v single-runs API page,
-  2026-10-09). A missed IFS cycle is therefore recovered, not lost.
-- Free for non-commercial use, about 10,000 calls a day (#723's cost table); no key.
-
-### 4.2 Open-Meteo, Google WeatherNext 2 ensemble
-
-- `https://ensemble-api.open-meteo.com/v1/ensemble?models=google_weathernext2_ensemble`, 64
-  members, 0.25°, **6-hourly native** (hourly output is interpolated; `temporal_resolution=native`
-  returns the 6-hour steps), 15 days (v Open-Meteo WeatherNext docs, 2026-10-09).
-- **Open-Meteo processes only the 00 and 12 UTC runs**; Google's 06 and 18 UTC runs are not used
-  (same page). 10 m wind speed and direction are available; gusts are not listed.
-- No single-run archive (§2). Licence for this model not stated on Open-Meteo's page ⚠; Google
-  states CC BY 4.0 for data older than 1 h (#723, v developers.google.com/weathernext).
-
-### 4.3 Open-Meteo metadata: which run is being served
-
-Each model has a metadata JSON whose `last_run_initialisation_time` is the run time (Unix
-seconds) and `last_run_availability_time` the time it reached the API; Open-Meteo advises waiting
-10 minutes after the latter (v model-updates page, 2026-10-09). The URL pattern was not in the
-fetched page ⚠: `https://api.open-meteo.com/data/<model>/static/meta.json` is the expected form,
-to confirm in task 2.
-
-### 4.4 Grid cell selection
-
-The forecast API's `cell_selection` takes `land` (default: a land cell at similar elevation),
-`sea` or `nearest`, and the response's `latitude`/`longitude` are the centre of the cell actually
-used, which "might be a few kilometres away" (v Open-Meteo forecast docs, 2026-10-09). For coastal
-points the default would pick different cells per model for reasons unrelated to skill.
-
-### 4.5 METAR, aviationweather.gov
-
-`https://aviationweather.gov/api/data/metar?ids=SBFL&format=json`; no key; 100 requests a minute,
-at most one a minute per thread, a custom User-Agent requested; **the database holds only the
-last 15 days** (v aviationweather.gov data API page, 2026-10-09). Enough for the 4-hourly cycle;
-not enough for #723's 5-year station screen, which needs another archive (§11).
-
-### 4.6 INMET automatic stations
-
-Hourly 10 m wind at catalogued stations; the API at `apitempo.inmet.gov.br` may need a token
-⚠ (not reachable from this session). Whether its wind is a 10-minute or hourly mean ⚠.
-
-### 4.7 NOAA CPC ENSO state
-
-The monthly Niño-3.4 anomaly and CPC's ENSO alert status, stored with every cycle (#723, ENSO).
-The data file (`https://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices`) ⚠ not fetched this
-session.
-
-### 4.8 MONAN
-
-Unknown (#723 step 1). The module has a seam for it (§5.2) and no client until the format is known.
-
-### 4.9 MLflow server with GCS artifacts
-
-marola pins `ghcr.io/mlflow/mlflow:v3.16.0` (marola-app `docker-compose.yml`). Proxied artifact
-access to `gs://` needs `google-cloud-storage` installed beside MLflow, which MLflow does not
-declare itself (v MLflow artifact-store docs, 2026-10-09). `MlflowRunLedger.artifact` already
-uploads through the server's `mlflow-artifacts` proxy (marola-app
-`local/src/main/scala/marola/ledger/MlflowRunLedger.scala:38`), so the Scala side needs no GCS
-client.
-
-### 4.10 More global models on Open-Meteo (amendment, 2026-10-09)
-
-The owner asked for GFS and for any other verifiable wind source, judged on publisher, integration
-cost, reputation and the recent US hurricane. Every candidate below is served by Open-Meteo, so its
-integration cost is one `ModelId` case and one recorded fixture: the same client, the same
-`cell_selection=nearest`, the same 6-hourly grid. Model ids are from Open-Meteo's website source
-(open-meteo/open-meteo-website at its 2026-10-09 tip) ⚠ until task 4 records a live response.
-
-| Candidate | Publisher, licence | Open-Meteo id | Grid, native step, length | Backfill | Pick |
-|---|---|---|---|---|---|
-| GFS | NOAA/NCEP, US public data | `ncep_gfs013` | 0.11°, hourly to 120 h then 3-hourly, 16 days | single-run, from 2026-04-02 | **add** (owner) |
-| AIGFS | NOAA/NCEP, operational since 2025-12-17; GraphCast fine-tuned on NOAA's GDAS | `ncep_aigfs025` | 0.25°, 6-hourly, 16 days | single-run, from 2026-04-02 | **add** |
-| AIFS Single | ECMWF, CC BY 4.0 | `ecmwf_aifs025_single` | 0.25°, 6-hourly, 15 days | single-run, from 2026-04-02 | **add** |
-| ICON Global | DWD, CC BY 4.0 | `dwd_icon_global` | 0.1°, hourly to 78 h then 3-hourly, 7.5 days | single-run, from 2026-04-02 | **add** |
-| UKMO Global 10 km | UK Met Office, CC BY-SA 4.0 | `ukmo_global_deterministic_10km` | 0.09°, 7 days | single-run | defer: share-alike would bind the export's licence |
-| GEM Global, CMA GRAPES, JMA GSM, ARPEGE, ACCESS-G | ECCC, CMA, JMA, Météo-France, BOM | `gem_global`, `cma_grapes_global`, `jma_gsm`, … | 11–55 km | single-run | defer: no reputation edge on the South Atlantic that would justify more columns |
-| GEFS, AIGEFS, ECMWF ENS, AIFS ENS | NOAA, ECMWF | `ncep_gefs025`, `ncep_aigefs025`, `ecmwf_ifs025_ensemble`, `ecmwf_aifs025_ensemble` | 0.25°, 31–51 members | not listed for single runs ⚠ | defer to a second amendment: the archive grows by the member count, and CRPS against WeatherNext 2 already covers an ensemble |
-| HAFS, HWRF, Google DeepMind's cyclone model | NOAA, Google | none | storm-following, active tropical cyclones only | – | out: nothing to score at a Brazilian point on an ordinary day |
-
-The added four pair each centre's physics model with its AI one (ECMWF IFS/AIFS, NOAA GFS/AIGFS)
-next to Google's WeatherNext 2, DWD's ICON and, later, INPE's MONAN, which is the comparison #723
-cares about: does a free AI model match a national physics model on this coast. They cost about 24
-more Open-Meteo calls a day (one multi-point call per model per cycle), far inside the free tier.
-
-### 4.11 Hurricane record, as reputation only
-
-None of the points sees a hurricane, so a storm's track and intensity skill says how a model
-handles a strong, compact wind system, not how it scores at SBFL. It is recorded here because the
-owner asked, and it decides nothing.
-
-- **2025 Atlantic season** (v NHC 2025 verification report, read 2026-10-09; homogeneous track
-  sample, n mi at 72/120 h): Google DeepMind's ensemble mean (GDMI) 66.5/173.1, best of all aids
-  from 12 to 72 h and the best intensity model; ECMWF (EMXI) 102.7/174.5, mid-pack early, the best
-  individual model over 2023–25, "little to no intensity skill"; CMC 126.1/179.9; GFS (GFSI)
-  128.6/362.3, the largest 120 h error in the table, "less competitive, especially for the longer
-  lead times". AIFS, AIGFS and ICON are not in the report. GDMI is DeepMind's cyclone ensemble,
-  related to but not the same product as WeatherNext 2 ⚠.
-- **AIGFS** (v NOAA's launch, via HPCwire 2025-12-17): better than GFS on large-scale features and
-  on long-lead tropical-cyclone track; weaker on intensity in v1.0.
-- **Hurricane Isaias** (October 2026, northern Gulf coast; landfall expected the night of
-  2026-10-09 per CBS News that morning): on 2026-10-07 the AI camp (DeepMind and "the Euro AI",
-  taken to be AIFS ⚠) put the track toward south Alabama and the western Florida panhandle with a
-  near-major peak, while ECMWF's physics model and ensemble showed a weaker, slower storm nearer
-  southeastern Louisiana; NHC sided with the AI track (v M. Lowry, *Eye on the Tropics*,
-  2026-10-07). Which camp was right is not known until landfall and NHC's best track ⚠; nothing
-  here should cite Isaias as a result before then.
-
-**Pick:** all of the above, with `cell_selection=nearest` for every Open-Meteo call (§5.3).
-
-## 5. Design
-
-### 5.1 Where the code lives
-
-In marola-eval (§5.11). The files below are its Scala sources.
-
-marola-app, a fourth sbt project beside `core`, `local` and `cli` (its ADR 0001 records the
-three-module split; this MIP adds an ADR row for the fourth):
-
-```scala
-lazy val verify = (project in file("verify"))
-  .dependsOn(core, local)
-  .settings(baseSettings)
-  .settings(name := "marola-verify", assembly / mainClass := Some("marola.verify.Main"))
-```
-
-`root` aggregates it. No new library dependency (#723's reuse table holds: `Http`, `JsonValue`,
-`RunLedger`, `MlflowRunLedger`, logback, munit). JVM only; Scala Native is rejected (#723).
-Retries and fan-out are hand-rolled from `map`/`flatMap`, as `Recommender.scala` does, because
-`kyo-combinators` is not verified against the pinned RC.
-
-| File (`verify/src/main/scala/marola/verify/`) | What |
-|---|---|
-| `GroundTruth.scala` | reads and validates `ground-truth.json` (§5.6): the instruments, their status, the thresholds, the deviation log |
-| `Protocol.scala` | reads `protocol.json` (§5.6): models, leads, bins, windows, `min_n` |
-| `ForecastSource.scala` | `trait ForecastSource { def latestRun: Option[Instant] < Sync; def fetch(run: Instant, points: Chunk[Point]): RunResult < Sync }` |
-| `OpenMeteoForecasts.scala` | the deterministic models of §5.2 (forecast and single-run APIs) and `google_weathernext2_ensemble` (ensemble API, native steps, all members) |
-| `Observations.scala` | `MetarClient`, `InmetClient`, both returning `Obs(pointId, validTime, speedMs, dirDeg, gustMs, source)` |
-| `Enso.scala` | CPC's Niño-3.4 anomaly and status |
-| `Archive.scala` | gzipped JSON Lines rows (§5.4), read and written |
-| `Matcher.scala` | forecast row × observation at the same point and valid time |
-| `Scorer.scala` | bias, RMSE, CRPS, direction error, `n`, per window, bin and lead |
-| `Cycle.scala` | one cycle, end to end, against a `RunLedger` |
-| `Export.scala` | §5.8's JSON |
-| `Main.scala` | `cycle`, `rescore`, `screen` |
-
-### 5.2 Models
-
-An enum, so a new source is a compile error until every match handles it:
-
-```scala
-enum ModelId(val openMeteo: Option[String]):
-  case IfsHres extends ModelId(Some("ecmwf_ifs"))
-  case Aifs extends ModelId(Some("ecmwf_aifs025_single"))
-  case Gfs extends ModelId(Some("ncep_gfs013"))
-  case Aigfs extends ModelId(Some("ncep_aigfs025"))
-  case Icon extends ModelId(Some("dwd_icon_global"))
-  case WeatherNext2 extends ModelId(Some("google_weathernext2_ensemble"))
-  case Monan extends ModelId(None) // #723 step 1
-```
-
-`protocol.json` lists which are active; MONAN is absent until it has a `ForecastSource`. WeatherNext
-3 is added the same way if Google grants access.
-
-### 5.3 What is compared, and how it is put at the point
-
-- **One grid rule for every model:** the nearest grid cell (`cell_selection=nearest` on
-  Open-Meteo; great-circle nearest on MONAN's native grid). No interpolation between cells. Each
-  row records the cell centre the source used, so the distance to the station and the grid spacing
-  (9 km, 0.11°, 0.1°, 0.25°) are reported beside every score, never hidden (#724 acceptance).
-- **One time grid:** valid times 00, 06, 12 and 18 UTC only, because WeatherNext 2's native step is
-  6 h; scoring IFS on its hourly steps would give it pairs the others cannot have.
-- **Leads:** every 6 h from 6 to 240 h are stored and scored; 24, 72, 120 and 240 h are the
-  headline leads (#723 step 4) that MLflow and the export carry. ICON stops at 180 h, so its
-  240 h cells stay empty rather than filled.
-- **Variables:** 10 m wind speed (m/s, `wind_speed_unit=ms`) and direction. Direction is scored
-  only when the observed speed is at least 2 m/s, as the smaller circular difference. Gusts, 2 m
-  temperature and precipitation are archived where offered, not scored in v1.
-- **Observation tolerance:** a METAR counts for a valid time if issued within ±10 min of it; an
-  INMET hourly record if its hour is the valid time. Anything else is a missing observation and the
-  pair is not formed.
-
-### 5.4 The archive, and missing runs
-
-Every row is one model run at one point. Fields: `model`, `openmeteo_model`, `run_time`,
-`fetch_time`, `point`, `cell_lat`, `cell_lon`, `status` (`archived`, `backfilled`, `missing`),
-`reason` (for `missing`), and for archived rows `steps` (`valid_time`, `lead_h`, `speed`, `dir`,
-`members`). A cycle:
-
-1. reads each active model's `last_run_initialisation_time` (§4.3), waiting the 10 minutes;
-2. archives that run if `(model, run_time)` is not in the run index yet;
-3. walks the expected run times since the last cycle (00/06/12/18 for every deterministic model,
-   00/12 for WeatherNext 2) and, for any not archived, tries the single-run API (every model but
-   WeatherNext 2, `status=backfilled`) or writes a
-   `missing` row with `reason` (`not_served`, `fetch_failed`, `superseded_before_fetch`).
-
-A missing run is a row, never a gap filled from a neighbouring run (#724 acceptance).
-
-### 5.5 Matching and scoring
-
-`Matcher` pairs an archived step with an observation at the same `point` and `valid_time`, and
-keeps `lead_h`. `Scorer` reads pairs and writes one row per (window, point, model, lead, bin):
-
-- `bias = mean(f − o)`, `rmse = sqrt(mean((f − o)²))` on speed; for WeatherNext 2 on the ensemble
-  mean.
-- `crps`: for the ensemble, `mean|xᵢ − o| − ½·mean|xᵢ − xⱼ|` over the 64 members (the standard
-  kernel form, not the "fair" one: §11). For a deterministic model CRPS equals the absolute error,
-  so the column exists for every model and is comparable.
-- `dir_mae` in degrees, `n` (matched pairs), `days` (distinct valid dates, the closer measure of
-  independent samples, #723 step 5), and `low_sample = n < min_n`.
-- **Windows:** 7, 30 and 90 days ending at the cycle. **Bins** by observed speed: `all`, calm
-  (< 5.5 m/s), moderate (5.5–10.8), strong (≥ 10.8) (#723 step 3).
-
-The paired Diebold-Mariano test, skill against IFS by ENSO phase, and the figures are the study's
-(#723), computed from the same pairs by its own script; the job does not publish them.
-
-### 5.6 Ground-truth points and the protocol file
-
-**Ground truth first (owner, 2026-10-09).** Every score is a forecast minus what an instrument
-measured, so the instruments are task 1, documented before any client exists.
-`verify/src/main/resources/forecast-benchmark/ground-truth.json` holds:
-
-- `thresholds`: #723's strong-wind rule (≥ 200 h a year at ≥ 10.8 m/s, ≥ 5 days a year at
-  ≥ 17.2 m/s, over 5 years), with `frozen` (a date, or `null` while they are placeholders ⚠);
-- `points`: one per instrument (`id`, `state`, `kind` `metar` or `inmet`, `station`, `lat`, `lon`,
-  `elevation_m`, `anemometer_m`, `exposure`, `status`, `checked`: what confirmed the coordinates,
-  with URL and date, or `null`);
-- `deviations`: dated entries, append-only once a point is `scored`.
-
-A point moves `candidate` → `qualified` or `rejected` (the screen, task 2) → `scored`, and
-`retired` if its anemometer is lost. The loader refuses a file that breaks #723's rules: a
-`qualified` or `scored` point without checked coordinates, any `qualified` or `scored` point while
-the thresholds are not frozen, more than one scored METAR or INMET station per state, a station
-code in the wrong format, a coordinate outside Brazil. marola-app's
-`docs/4-reference_ground-truth.md` documents the rules, every field and every candidate, with what
-was checked and what was not.
-
-Candidates are archived as soon as they are listed, including the at-risk ones (#723 step 3's
-table), and scored only once `scored`. Archiving a superset costs nothing and keeps the El Niño
-months for whichever points the screen picks; the choice still comes from observed history only,
-because no score exists for a point until it is chosen.
-
-`verify/src/main/resources/forecast-benchmark/protocol.json` holds models, leads, bins, windows
-and `min_n` (placeholder 30 ⚠, calibrated in #723). The git blob shas of both files are the
-`protocol` and `ground_truth` params of every MLflow run, so a change is visible in the record.
-
-### 5.7 One cycle on GitHub Actions
-
-`.github/workflows/forecast-benchmark.yml` in marola-app:
-
-```yaml
-on:
-  schedule: [{ cron: "17 */4 * * *" }]  # off minute 0: scheduled runs can be delayed or dropped
-  workflow_dispatch:
-concurrency: { group: forecast-benchmark, cancel-in-progress: false }
-permissions: { contents: read, id-token: write }
-```
-
-Steps: checkout; JDK 25; `sbt verify/assembly` (coursier cache); `google-github-actions/auth` with
-the repo variables `GCP_WIF_PROVIDER` and `GCP_SERVICE_ACCOUNT` (variables, not secrets: neither
-is a credential); then:
-
-1. `gcloud storage cp gs://$BUCKET/state/* .` and record each object's generation;
-2. `pip install mlflow==3.16.0 google-cloud-storage==<pin>`, then
-   `mlflow server --backend-store-uri sqlite:///mlflow.db --artifacts-destination gs://$BUCKET/artifacts --host 127.0.0.1 --port 5000 &`;
-3. `java -jar marola-verify.jar cycle --state . --tracking http://127.0.0.1:5000`;
-4. stop the server; upload `state/runs.jsonl.gz`, `state/pairs-*.jsonl.gz` and then `state/mlflow.db`,
-   each with `--if-generation-match=<recorded>` (a new object with `0`);
-5. push `export.json` to marola-site's `site-data` branch as `forecast-benchmark/latest.json`
-   with the token and the retrying push `ci.yml` already uses for `coverage/`, then send
-   `site-data-updated` so marola-site rebuilds.
-
-**State.** The only mutable objects are `mlflow.db`, the run index and the matched pairs (the
-last 100 days, monthly files). Raw forecasts and observations are MLflow artifacts under new names
-every cycle and are never rewritten. If an upload is refused or a step fails after the cycle
-started, the run ends `FAILED` and the next cycle compares the run index with the artifacts and
-re-matches what is missing; `rescore` rebuilds the pairs from the artifacts alone.
-
-**MLflow volume.** Logging every key every cycle would be about 40,000 metric rows a cycle and
-too big for a file downloaded six times a day. So every cycle logs params (`protocol`, `ground_truth`, `app_sha`,
-`nino34`, `enso_status`, `archived`, `backfilled`, `missing`) and its artifacts
-(`forecasts-<model>-<run>.jsonl.gz`, `observations.jsonl.gz`, `scores.json`, `export.json`); the
-first cycle after 00 UTC also logs the 30-day `all`-bin metrics at the four headline leads, keyed
-`<metric>.30d.<point>.<model>` with `step` = lead hours (about 900 rows a day with §4.10's models, under 60 MB a year
-⚠ to measure). `scores.json` keeps every window, bin and lead.
-
-**Failure is visible.** A thrown cycle ends its run `FAILED` when MLflow is up, the workflow fails
-(GitHub emails the owner), and the export's `last_cycle` lets the page show staleness
-(marola-site#99). A dropped schedule shows as a gap in the run names. A public repo's schedule is
-disabled after 60 days without repository activity (GitHub docs, #723); marola-app has commits
-weekly, and the gap would show on the page.
-
-### 5.8 The export
-
-```json
-{
-  "schema": 1,
-  "last_cycle": "2026-10-09T04:17Z",
-  "protocol": "<git blob sha>",
-  "enso": { "nino34": 2.1, "status": "El Niño Advisory" },
-  "points": [{ "id": "SBFL", "name": "Florianópolis", "lat": -27.67, "lon": -48.55 }],
-  "models": [{ "id": "ifs_hres", "label": "ECMWF IFS HRES 9 km", "grid_km": 9 }],
-  "runs": [{ "model": "weathernext2", "run_time": "2026-10-09T00:00Z", "status": "archived" }],
-  "scores": [{ "window": "30d", "point": "SBFL", "model": "ifs_hres", "lead_h": 72,
-               "bin": "strong", "bias": 0.4, "rmse": 2.1, "crps": 1.5, "n": 48, "days": 12,
-               "low_sample": false, "cell_km": 3.1 }],
-  "recent": [{ "point": "SBFL", "valid_time": "2026-10-08T18:00Z", "lead_h": 72,
-               "obs": 11.2, "forecasts": { "ifs_hres": 9.8, "weathernext2": 8.9 } }]
-}
-```
-
-The schema is `verify/src/main/resources/forecast-benchmark.schema.json`; marola-site vendors it
-the way it vendors `board.schema.json`, and #99's fixture validates against it. Only headline
-leads, and `recent` holds the last 7 days. The page computes nothing (#99).
-
-### 5.9 Infrastructure: Besom under `infra/forecast-benchmark/`
-
-A standalone scala-cli project (GEMINI-CODE-ASSIST §4's layout), not an sbt module, so
-`besom-gcp` never loads in the build. Pulumi state in a GCS bucket created once by hand. Resources:
-
-- the bucket in `us-central1`, versioned, with a lifecycle rule deleting noncurrent versions after
-  30 days;
-- a Workload Identity pool and an OIDC provider whose attribute condition admits only
-  `repository == "marola-dev/marola-app"` and `ref == "refs/heads/main"` (a PR cannot write the
-  bucket);
-- a service account with `roles/storage.objectAdmin` on that bucket only;
-- a billing budget alerting at US$1/month (needs billing-account permissions ⚠).
-
-**Bootstrap.** The program creates the identity that Actions would use to run it, so the first
-`pulumi up` is the owner's, locally, with their own `gcloud` login and §5.9's cost table attached
-(AGENTS.md cost rule). Afterwards `infra.yml` runs `pulumi preview` on PRs touching `infra/` and
-`pulumi up` only on `workflow_dispatch` behind a GitHub environment whose required reviewer is the
-owner. Versions `besom-core` 0.5.2, `besom-gcp` 9.0.0-core.0.5 ⚠ (re-check in task 5).
-
-**Cost.** #723's weekly table holds (≈ US$0.00/week inside the free tier, ≈ US$0.12/week without
-it) with one change: the per-run download is `mlflow.db` plus the state, about 35 MB ⚠, so
-egress is about 1.5 GB a week, inside the 100 GB/month free tier and about US$0.18/week without
-it. Raw artifacts per cycle are smaller than #723 assumed, because only runs not seen before are
-saved (a WeatherNext run at six points is about 0.15 MB compressed ⚠). The table is recomputed in
-task 5's PR and before the first `pulumi up`.
-
-### 5.10 What is deterministic
-
-Everything. No LLM touches the job, its scores or the export.
-
-### 5.11 Repository and language (amendment, 2026-10-09)
-
-The owner moved the job out of marola-app into a new repository, **marola-eval**, and asked for
-the whole module to be weighed in Rust, in Haskell, and in Scala with Besom, the first two with
-Terraform for the infrastructure (Pulumi has no Rust or Haskell SDK: v pulumi.com languages page,
-2026-10-09, lists TypeScript, JavaScript, Python, Go, .NET, Java, YAML and HCL; Besom is
-VirtusLab's Scala SDK).
-
-**What moving changes, whatever the language.** marola-eval cannot read marola-app's tree or build
-it (MIP-0070 §5.4), so §5.1's `dependsOn(core)` is gone: the HTTP client with fixture replay,
-the JSON reader and the MLflow `RunLedger` (about 640 lines in marola-app today) are rewritten or
-replaced by libraries in marola-eval. The WIF provider admits `marola-dev/marola-eval` on `main`.
-The job reads no marola-app artifact; it publishes §5.8's export to marola-site's `site-data` as
-before. Creating the repository and its settings is a person's act (NEW-REPO's checklist), and it
-does not exist yet.
-
-| | Rust | Haskell | Scala 3 + Besom |
-|---|---|---|---|
-| HTTP, JSON, fixtures | `reqwest`, `serde`; fixtures by a `Transport` trait as in marola-app | `http-client`, `aeson`; the same seam as a record of functions | rewritten from marola-app's 640 lines, or `sttp` and `jsoniter-scala` |
-| Typed rules (§5.4–§5.6) | enums and `match`, `Result` errors: the same shape as today | sum types and total functions: the strongest fit for the scorer | already written in marola-app#72 (`GroundTruth`), enums by label |
-| MLflow, GCS | REST by hand (no official client); `gcloud` in the workflow, as §5.7 already does | REST by hand; same | REST by hand, ported from `MlflowRunLedger` |
-| IaC | Terraform `google` provider; a second language (HCL) in the repo | Terraform; same | Besom, one language for job and infra; written in marola-app#72 |
-| CI in the devkit | no reusable `rust-ci` yet: a devkit PR and tag first | no `haskell-ci` yet: same | `scala-ci` exists |
-| Build and start in Actions | fast start, one static binary; first compile of the deps a few minutes, cached after ⚠ | slowest cold build of the three (GHC and dependency tree) ⚠ | JVM start in seconds; sbt cache as in marola-app |
-| Who can review it | new to marola's repos | new to marola's repos, the smallest contributor pool | the team's language; Kyo and the repo's `scala.md` rules carry over |
-| Reuse of marola-app#72 | none; its JSON and docs move as data | none; same | the loader, the tests, the Besom program and the docs move as they are |
-
-**Picked: Scala 3 + Besom** (Hoffmann, 2026-10-09). It is the only option that needs no devkit work before the first PR,
-keeps one language for the job and its infrastructure, and carries marola-app#72 over unchanged;
-the cost is rewriting the HTTP, JSON and MLflow helpers that `dependsOn(core)` gave for free.
-**Rust** is the runner-up if a small static binary and a fast cold start start to matter (they do
-not for a 4-hourly batch job). **Haskell** fits the scoring best and costs the most in tooling and
-reviewers. The rest of this MIP is written for it.
-
-**marola-app#72.** Its task 1 and task 7 work moves to marola-eval as that repo's first PR (in
-Scala, as is; in Rust or Haskell, `ground-truth.json`, `docs/4-reference_ground-truth.md` and the
-test cases move and the code is rewritten). #72 is not merged into marola-app; it is closed once
-the port lands, and marola-app#63–#71 are transferred to marola-eval when it exists.
-
-## 6. Scoring / safety impact
-
-None. `Swimability.score` and its notes do not read anything this job produces. Using the winning
-model in the score is a later decision, made with this data (#724, out of scope).
-
-## 7. Verification plan
-
-Tests in marola-app's `verify` module, munit, fixtures replayed through `Http.withTransport`:
-
-- `GroundTruthSpec`: `bundled_file_is_valid`, `duplicate_id_rejected`,
-  `station_code_format_per_kind`, `coordinates_outside_brazil_rejected`,
-  `qualified_needs_checked_coordinates`, `qualified_needs_frozen_thresholds`,
-  `one_scored_station_per_kind_and_state`.
-
-- `ScorerSpec`: `bias_and_rmse_match_hand_computed`, `crps_of_ensemble_matches_hand_computed`,
-  `crps_of_deterministic_is_abs_error`, `bins_split_by_observed_speed`,
-  `low_sample_flagged_below_min_n`, `direction_skipped_below_2ms` — a fixture of six pairs with the
-  values worked by hand in the spec's comment.
-- `MatcherSpec`: `pairs_only_same_point_and_valid_time`, `metar_outside_10_min_is_missing`,
-  `missing_run_forms_no_pair`.
-- `ForecastClientSpec`: `weathernext_native_steps_and_64_members_parsed`,
-  `ifs_run_time_from_metadata`, `cell_selection_nearest_sent_for_every_model`,
-  `ifs_gap_backfilled_from_single_run`, `weathernext_gap_recorded_missing`.
-- `ObservationClientSpec`: `metar_knots_to_ms`, `inmet_hour_parsed`.
-- `CycleSpec`, with a recording `RunLedger` stub: `cycle_logs_params_and_artifacts`,
-  `daily_metrics_only_on_first_cycle_after_00utc`, `already_archived_run_not_refetched`,
-  `failed_fetch_ends_run_failed`.
-- `RescoreSpec`: `rescore_from_artifacts_equals_logged_scores`.
-- `ExportSpec`: `export_matches_schema`.
-
-Workflow and infra: `actionlint`; `pulumi preview` green in `infra.yml` on the task 5 PR.
-
-Live checks, after the owner's `pulumi up`:
+Nothing changes in the CLI, the bot or the board. New surfaces:
 
 ```bash
 # in a marola-app checkout
-gh workflow run forecast-benchmark.yml   # twice, back to back: the second waits (concurrency)
-gcloud storage objects describe gs://$BUCKET/state/mlflow.db --format='value(generation)'
-just verify-rescore gs://$BUCKET         # identical to the last cycle's scores.json
+just experiment-cycle      # one cycle against a local MLflow and a local lake directory
+just experiment-rescore    # rebuild every score from the lake's samples alone
 ```
 
-Plus one forced conflict: upload a copy of `mlflow.db` by hand between a cycle's download and
-upload, and see the upload refused and the run marked `FAILED`.
+and, once points are `scored` (§5.8), `forecast-benchmark/latest.json` on marola-site's
+`site-data` for the wind page (marola-site#99).
 
-**Done** when the job has run unattended for 7 days with every cycle visible in MLflow, the run
-index has no unexplained gap, the export is on `site-data`, and every #724 acceptance box is ticked.
+## 4. Data sources and dependencies reviewed
+
+### 4.1 How wind forecasts are fetched (point 1)
+
+| Route | Providers | Fit |
+|---|---|---|
+| **Open-Meteo APIs** (forecast, ensemble, single-run) | IFS (`ecmwf_ifs`), GFS (`ncep_gfs013`), WeatherNext 2 (`google_weathernext2_ensemble`) | **taken**: one JSON client for three providers, `cell_selection=nearest` for every model, no key for non-commercial use, ~10,000 calls a day |
+| Google's WeatherNext 3 channels (BigQuery, Earth Engine, GCS Zarr) | WeatherNext 3 | **taken for WN3 only**: not on Open-Meteo (§4.3) |
+| The originals (ECMWF open data, NOAA NOMADS or AWS) | IFS, GFS | rejected as the main route: GRIB2 decoding on the JVM and a grid rule per provider; kept as #723 step 2's one-off cross-check of Open-Meteo's re-gridding |
+
+Open-Meteo facts (v its docs pages, 2026-10-09):
+
+- **IFS HRES 9 km**: 4 runs a day, hourly to 90 h, up to 15 days; single runs kept from 2024-03-14,
+  so a missed run is backfilled.
+- **GFS**: 0.11° for surface fields, hourly to 120 h then 3-hourly, 16 days, 4 runs a day; single
+  runs kept from 2026-04-02. The id `ncep_gfs013` is from Open-Meteo's website source ⚠ until a
+  live call records it.
+- **WeatherNext 2**: 64 members, 0.25°, 6-hourly native (`temporal_resolution=native`), 15 days;
+  Open-Meteo processes only the 00 and 12 UTC runs; no single-run archive.
+- Each model's metadata JSON gives `last_run_initialisation_time` and `last_run_availability_time`;
+  wait 10 minutes after the latter. The URL pattern is ⚠ until task 4 records it.
+
+### 4.2 How forecast temperature is fetched (point 2)
+
+The same requests carry `temperature_2m`: IFS, GFS and WeatherNext 2 all list it (v Open-Meteo
+docs, 2026-10-09; WeatherNext 2 also lists its ensemble spread). No second client is needed.
+WeatherNext 3's station-trained 2 m temperature comes at 0.05° (§4.3). Observed temperature comes
+from the same METAR and INMET records as the wind (§4.5).
+
+### 4.3 WeatherNext 3 (point 3)
+
+Announced 2026-09-03: 64 members, a run every UTC hour, 15 days for the 00/06/12/18 cycles and
+48 h for the others; 2 m temperature and dew point at 0.05°, surface wind at 0.1° (v WinBuzzer,
+2026-09-05). Access (v developers.google.com/weathernext access guide, 2026-10-09): a Data Request
+Form with a Google account, usually approved in 5–7 business days, one approval for Cloud
+Storage, BigQuery and Earth Engine; researchers and students qualify; no paid contract needed.
+BigQuery and Earth Engine carry the surface mean and percentiles, GCS the full ensemble as Zarr
+(Requester Pays). Data older than 1 h is CC BY 4.0; real-time data is under Google's experimental
+terms.
+
+**Outreach (TODO, a person's act):** apply through the form, preferably as UFRJ (Hoffmann's Poli
+account) and UFSC (LabECO, the ww3-gpu co-advisors), naming #723 and this MIP; record the answer
+here. Until then WeatherNext 3 is a `ProviderId` with no client. The client reads BigQuery's
+statistics (mean and percentiles) at the registry's points: CRPS needs members, so WN3 is scored
+on its mean until the Zarr route is costed ⚠.
+
+### 4.4 The initial provider list (point 5)
+
+| Provider | Publisher | Kind | Members | Runs sampled | Backfill |
+|---|---|---|---|---|---|
+| IFS HRES 9 km | ECMWF | physics | 1 | 00/06/12/18 | single-run API |
+| GFS | NOAA/NCEP | physics | 1 | 00/06/12/18 | single-run API |
+| WeatherNext 2 | Google DeepMind | AI | 64 | 00/12 | none: lost if not sampled |
+| WeatherNext 3 | Google DeepMind | AI | 64 (mean and percentiles via BigQuery) | 00/06/12/18 | Google's archive (backfill in progress ⚠) |
+
+AIFS, AIGFS, ICON, UKMO and MONAN are later rows: each is one `ProviderId` case (§5.3). The 2025
+NHC verification (GFS's 120 h track error 362.3 n mi, the largest; DeepMind's ensemble best to
+72 h) and Hurricane Isaias's split between AI and physics guidance (outcome pending) are context,
+not evidence for this coast (v NHC Verification_2025.pdf; M. Lowry, 2026-10-07).
+
+### 4.5 Ground truth
+
+- **METAR** (`https://aviationweather.gov/api/data/metar?ids=SBFL&format=json`): no key, 100
+  requests a minute, a custom User-Agent; **only the last 15 days** are kept (v aviationweather.gov
+  data API page, 2026-10-09). Wind in knots, temperature in °C.
+- **INMET automatic stations**: hourly 10 m wind and 2 m temperature; the API at
+  `apitempo.inmet.gov.br` may need a token ⚠; whether its wind is a 10-minute or hourly mean ⚠.
+- **NOAA CPC's Niño-3.4** anomaly and ENSO status, stored with every cycle (#723) ⚠ file not
+  fetched.
+
+### 4.6 MLflow on B2 (point 6)
+
+MLflow stores artifacts on Backblaze B2 natively: `b2://<bucket>@s3.<region>.backblazeb2.com/<path>`
+with `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` from a B2 **application** key (the master key
+does not work with the S3 API), `AWS_DEFAULT_REGION=us-east-005`, and boto3 beside MLflow (v
+MLflow artifact-store docs, 2026-10-09). The tracking store stays a SQLite file, downloaded and
+uploaded per cycle as MIP-0075 does its catalog. marola pins MLflow 3.16.0.
+
+### 4.7 B2 from Scala (point 7)
+
+MIP-0075 §4.5 already settled it: `org.duckdb:duckdb_jdbc` 1.5.6.0 with the `httpfs` and
+`ducklake` extensions, an `OodsStore` trait, wrapped in Kyo at the boundary (`Sync.defer` per
+call, `Scope` for the connection), B2 reached as S3 at `s3.us-east-005.backblazeb2.com`, the secret
+built from the environment and never `PERSISTENT`. This MIP adds tables to that lake (§5.6) and no
+second S3 client. Compared: the AWS SDK v2 S3 client with an endpoint override (works, ~10 MB of
+jars, but writes objects, not tables); `kyo-sql` (no DuckDB dialect at RC7, MIP-0075 §4.5).
+
+### 4.8 Window, cadence and registry (point 9)
+
+The experiment window is **90 days**, the cadence **every 4 hours**; both are values in
+`protocol.json`, not code, so a change is a reviewed commit whose git sha every MLflow run
+records. The cron line is the one place the cadence also lives (§5.9).
+
+### 4.9 Kyo modules (point 8)
+
+Kyo 1.0.0-RC7, marola-app's pin. Its repository at tag `v1.0.0-RC7` (1d54c02, 2026-09-28) has 70
+modules; 62 are on Maven Central as `io.getkyo:<m>_3:1.0.0-RC7` (each `.pom` fetched 2026-10-09;
+`kyo-bench`, `kyo-compat`, `kyo-examples`, `kyo-scheduler-finagle`, `kyo-test`, two test kits and
+the website are not published).
+
+| Module | Use here | |
+|---|---|---|
+| `kyo-core`, `kyo-direct`, `kyo-combinators` | effects at the I/O boundary, direct style | already in marola-app |
+| `kyo-prelude`, `kyo-data` | `Abort`, `Env`, `Var`, `Emit`; `Chunk`, `Maybe`, `Result` | pulled in by `kyo-core` |
+| `kyo-config` | `StaticFlag` for the lake path, MLflow URI and dry-run switch | **add**; the protocol stays a file (§4.8) |
+| `kyo-schema`, `kyo-schema-json` | `derives Schema` codecs for the registry, protocol and export | **add**, replacing hand-written readers like task 1's; checked against the jar before use (`.claude/agents/jar-verifier.md`) |
+| `kyo-stats-registry`, `kyo-stats-otlp` | counters per cycle | later, if MLflow's metrics are not enough |
+| `kyo-http` | HTTP client | not now: marola's `Http` has the fixture seam every spec uses, and RC7's client has no proxy class (MIP-0075 §4.6) |
+| `kyo-flow` | durable workflows | rejected: a cycle is idempotent and re-run from the lake (§5.5), so a workflow engine's persistence buys nothing |
+| `kyo-sql`, `kyo-sql-sqlite` | SQL | not usable: no DuckDB dialect; MLflow's SQLite is MLflow's, read only through its REST API |
+| `kyo-stm`, `kyo-actor`, `kyo-reactive-streams` | concurrency | not needed: one cycle, one writer |
+| the rest (`kyo-ai`, `kyo-browser`, `kyo-mcp`, `kyo-pod`, `kyo-ui`, `kyo-zio`, …) | — | unrelated to this job |
+
+## 5. Design
+
+### 5.1 The flow
+
+```mermaid
+flowchart LR
+  reg[Sampling registry<br/>and protocol] --> fc[Forecast clients<br/>IFS · GFS · WN2 · WN3]
+  reg --> oc[Observation clients<br/>METAR · INMET]
+  fc --> fs[(forecast_sample<br/>OODS lake on B2)]
+  oc --> os[(observation_sample<br/>OODS lake on B2)]
+  fs --> m[Matcher<br/>same point, same valid time]
+  os --> m
+  m --> sc[Scorer<br/>monoid accumulators]
+  sc --> ml[(MLflow run<br/>per cycle)]
+  sc --> gate{Points scored?<br/>ground truth frozen}
+  gate -- yes --> ex[Export to site-data]
+  gate -- no --> hold[Archive only]
+```
+
+The registry decides where to sample; clients write samples to the lake; the matcher and scorer
+read only the lake, so a score is always recomputable from stored samples (§5.5); MLflow records
+each cycle; the export waits for the ground-truth gate (§5.8).
+
+### 5.2 Category-theory principles, in Kyo
+
+The module is written so that its laws are testable, not as theory for its own sake:
+
+- **Scores are commutative monoids.** A score cell (provider, point, lead, bin) keeps `n`, `Σe`,
+  `Σe²`, `Σ|e|` and the CRPS sums; `combine` adds them and `empty` is zeros. Bias, RMSE and mean
+  CRPS are read off at the end. Per-day partials then combine into any window in any order, so the
+  90-day score is a fold over 90 daily cells, `rescore` equals the logged score by construction,
+  and `ScoreMonoidSpec` checks associativity, identity and commutativity on fixed cases.
+- **Providers are natural transformations into one sample type.** Each client maps its native
+  payload into `ForecastSample` (provider, run, point, valid time, lead, variable, value, members);
+  unit conversion is a `map` on the value, and the laws `map(identity) == identity` and
+  `map(f andThen g) == map(f) andThen map(g)` hold by being plain case-class copies.
+- **Matching is a pullback.** Forecasts and observations are joined over the shared key
+  (point, valid time); nothing else may pair two samples.
+- **The cycle is Kleisli composition in Kyo.** `fetch: Point => Chunk[ForecastSample] < (Sync & Abort[FetchError])`,
+  `store`, `match`, `score` and `log` compose with `map`/`flatMap`; the effect row in each
+  signature is the only place I/O may happen. Pure parts (registry, matcher, scorer) carry no Kyo
+  effect at all (marola-app's `scala.md`).
+
+### 5.3 Where the code lives
+
+`experiment/` in marola-app, `dependsOn(core, local)` for `Http`, `JsonValue`, `RunLedger` and
+`OodsStore`. marola-app#72's `verify` project is renamed `experiment` and its `GroundTruth` becomes
+part of the registry (task 1).
+
+| File (`experiment/src/main/scala/marola/experiment/`) | What |
+|---|---|
+| `GroundTruth.scala` | the instruments and their lifecycle (from #72) |
+| `SamplingRegistry.scala` | sampling points (§5.4) |
+| `Protocol.scala` | providers, variables, leads, bins, window, cadence, `min_n` |
+| `Provider.scala` | `enum ProviderId(label)`: `IfsHres`, `Gfs`, `WeatherNext2`, `WeatherNext3` |
+| `ForecastSource.scala` | `trait ForecastSource { def latestRun: Maybe[Instant] < (Sync & Abort[FetchError]); def fetch(run: Instant, points: Chunk[SamplingPoint]): Chunk[ForecastSample] < (Sync & Abort[FetchError]) }` |
+| `OpenMeteoForecasts.scala`, `WeatherNext3Forecasts.scala` | the sources |
+| `Observations.scala` | `MetarClient`, `InmetClient` → `ObservationSample` |
+| `Score.scala` | the monoid (§5.2) |
+| `Matcher.scala`, `Scorer.scala` | §5.5 |
+| `LakeSamples.scala` | the lake tables over `OodsStore` (§5.6) |
+| `Cycle.scala`, `Export.scala`, `Main.scala` | `cycle`, `rescore`, `screen`, `export` |
+
+### 5.4 The sampling-point registry (point 9)
+
+`experiment/src/main/resources/experiment/sampling-points.json`, checked by `SamplingRegistrySpec`:
+every point has `id`, `lat`, `lon`, `kind` (`station`: tied to a ground-truth instrument and
+scorable; `coast`: a beach or offshore point, sampled and never scored), `ground_truth` (the
+instrument id, for `station`), `added_on` and `retired_on`. A point is sampled from `added_on`; a
+retired point keeps its rows. The ground-truth file (#72) stays the source of the instruments'
+status; the registry only says where forecasts are sampled.
+
+### 5.5 Sampling, matching and scoring
+
+- **Grid rule:** the nearest cell for every provider (`cell_selection=nearest`; nearest on WN3's
+  grid); the cell centre is stored with every sample, and the station-to-cell distance and grid
+  spacing are reported beside every score.
+- **Time grid:** valid times 00/06/12/18 UTC (WeatherNext 2's native step); leads every 6 h from 6
+  to 240 h; headline leads 24, 72, 120 and 240 h.
+- **Runs:** each cycle reads every provider's latest run time, samples a run not yet in the run
+  index, then walks the expected runs since the last cycle: a missed IFS or GFS run is
+  `backfilled` from the single-run API, a missed WeatherNext 2 run is `missing` with a reason.
+  A missing run is a row, never a gap filled from a neighbour.
+- **Pairs:** a METAR within ±10 min of the valid time, or the INMET record for that hour. Wind
+  speed (m/s) and direction (scored only when observed speed ≥ 2 m/s), 2 m temperature (°C).
+- **Scores:** bias, RMSE, CRPS (standard kernel form over members; equal to absolute error for a
+  single run), direction MAE, `n`, `days`, `low_sample = n < min_n`; bins by observed wind (calm
+  < 5.5, moderate 5.5–10.8, strong ≥ 10.8 m/s); windows 7, 30 and 90 days.
+
+### 5.6 What goes where: MLflow and the lake (points 6 and 7)
+
+| Store | Holds | Why there |
+|---|---|---|
+| OODS lake on B2, tables `experiment_point`, `forecast_sample`, `observation_sample`, `run_index` | every sample, partitioned by provider and month | the record the paper and `rescore` read; queryable with DuckDB by anyone with read access |
+| MLflow (SQLite file and artifacts under `b2://…/mlflow/`) | one run per cycle: params, the cycle's daily score cells as metrics, the export | the comparison UI and lineage of each cycle |
+
+The lake writes go through MIP-0075's `OodsStore` and share its `oods-lake` concurrency group, so
+there is one writer for the lake and MLflow's file alike.
+
+```mermaid
+flowchart TB
+  exp[Experiment: forecast-benchmark-v1<br/>tags: protocol sha, registry sha] --> r1[Run: cycle 2026-10-09T04:17Z]
+  exp --> r2[Run: cycle 2026-10-09T08:17Z]
+  r1 --> p[Params<br/>providers, cadence, window,<br/>app_sha, nino34, enso_status,<br/>sampled, backfilled, missing]
+  r1 --> mt[Metrics<br/>rmse.wind.90d.SBFL.gfs, step = lead h<br/>first cycle after 00 UTC only]
+  r1 --> a[Artifacts<br/>scores.json, export.json,<br/>run_index delta]
+```
+
+One experiment per protocol version: a change to the protocol or the registry starts
+`forecast-benchmark-v2`, so no run mixes two protocols. Metrics are logged once a day (about 900
+rows a day at four providers, two variables and four headline leads ⚠ to measure); `scores.json`
+keeps every window, bin and lead.
+
+### 5.7 Ground truth first
+
+marola-app#72's `ground-truth.json` and `docs/4-reference_ground-truth.md` stay as written: the
+candidate instruments, #723's strong-wind thresholds (placeholders until frozen) and the rules the
+loader enforces. Every candidate is sampled from day one; none is scored until `scored`.
+
+### 5.8 Publishing (point 4)
+
+The export (`forecast-benchmark/latest.json` on marola-site's `site-data`, the schema vendored by
+marola-site#99) is written only when at least one point is `scored`, which needs #723's frozen
+thresholds and the screen (task 2). Before that, cycles sample, store and log, and the export
+step is skipped with a logged reason. Each later protocol version's results are also published as
+a dated Zenodo dataset by the study (#723, MIP-0079), not by this job.
+
+### 5.9 One cycle on GitHub Actions
+
+`.github/workflows/experiment.yml` in marola-app: `schedule: cron "17 */4 * * *"` (off minute 0),
+`workflow_dispatch`, `concurrency: oods-lake` (MIP-0075's group), secrets `B2_KEY_ID` and
+`B2_APPLICATION_KEY` (MIP-0075's ETL key, or a key scoped to the experiment's prefixes ⚠). Steps:
+JDK 25, `sbt experiment/assembly`, download `mlflow.db` and the lake catalog with their versions,
+`pip install mlflow==3.16.0 boto3`, start `mlflow server` on localhost with
+`--artifacts-destination b2://…`, run `cycle`, upload `mlflow.db` and the catalog back, then the
+export (§5.8). No cloud resource is created; no IaC is needed.
+
+### 5.10 What is deterministic
+
+Everything. No LLM touches the experiment, its scores or the export.
+
+## 6. Scoring / safety impact
+
+None. `Swimability.score` reads nothing this produces; using the winning model there is a later
+decision made with this data (#724).
+
+## 7. Verification plan
+
+munit specs in `experiment/`, fixtures replayed through `Http.withTransport`, the lake on a local
+directory as MIP-0075 tests it:
+
+- `GroundTruthSpec` (#72's eight cases).
+- `SamplingRegistrySpec`: `station_point_needs_ground_truth`, `coast_point_never_scored`,
+  `retired_point_keeps_rows`.
+- `ProtocolSpec`: `cadence_and_window_read_from_file`, `unknown_provider_is_malformed`.
+- `ForecastClientSpec`: `ifs_gfs_wind_and_temperature_parsed`, `weathernext2_native_steps_and_64_members`,
+  `cell_selection_nearest_sent`, `gfs_gap_backfilled_from_single_run`, `weathernext2_gap_recorded_missing`.
+- `ObservationClientSpec`: `metar_knots_to_ms_and_temperature`, `inmet_hour_parsed`.
+- `ScoreMonoidSpec`: `combine_is_associative`, `empty_is_identity`, `combine_is_commutative`,
+  `ninety_daily_cells_equal_one_window`, `crps_of_single_run_is_abs_error` — values worked by hand.
+- `MatcherSpec`: `pairs_only_same_point_and_valid_time`, `metar_outside_10_min_is_missing`.
+- `LakeSamplesSpec`: `samples_round_trip_through_local_lake`, `rerun_cycle_writes_no_duplicates`.
+- `CycleSpec` with a recording `RunLedger`: `cycle_logs_params_and_artifacts`,
+  `export_skipped_until_a_point_is_scored`, `failed_fetch_ends_run_failed`.
+- `ExportSpec`: `export_matches_schema`.
+
+Live, after the workflow lands: two dispatches back to back (the second waits on `oods-lake`), and
+`just experiment-rescore` equal to the last cycle's `scores.json`. **Done** when 7 days of
+unattended cycles show in MLflow with no unexplained gap in `run_index`.
 
 ## 8. Risks, limitations, and honest caveats
 
-- **Open-Meteo is a redistributor.** It re-grids the originals; #723 step 2's one-off cross-check
-  against ECMWF open data and Google's store stays a task of the study.
-- **Point verification of gridded models favours the finer grid** near a coast. Nearest-cell plus
-  the reported cell distance makes this visible; it does not remove it.
-- **Observations measure different things.** A METAR wind is a 10-minute mean; INMET's hourly wind
-  ⚠ may not be. Scores are reported per station source as well as per point.
-- **GitHub drops scheduled runs under load.** A dropped cycle loses only WeatherNext runs that are
-  replaced before the next cycle (12 h apart, so one dropped cycle loses none; three in a row can).
-- **One writer is enforced twice,** by `concurrency` and by generation preconditions; a manual
-  `gcloud storage cp` by a person bypasses the first and is caught by the second.
-- **More models, more chances of a lucky winner.** Seven columns at four leads and four bins give
-  many comparisons; the study's Diebold-Mariano tests (#723) correct for it, the page does not.
-- **A hurricane record is not coastal skill** (§4.11). It is reputation, cited for context.
-- **The ensemble mean is not a forecast anyone issued.** Bias and RMSE on it favour it against a
-  single deterministic run; CRPS is the fair comparison and the export shows both.
+- **Open-Meteo re-grids the originals**; #723 step 2's cross-check stays a task of the study.
+- **Point verification favours the finer grid** near a coast; the cell distance is reported, not
+  removed.
+- **METAR and INMET measure differently** (10-minute mean vs possibly hourly ⚠); scores are split
+  by instrument kind.
+- **GitHub drops scheduled runs under load**; a dropped cycle loses no WeatherNext 2 run unless
+  three in a row are dropped (runs are 12 h apart).
+- **The ensemble mean is not a forecast anyone issued**; CRPS is the fair comparison and the
+  export shows both.
+- **WeatherNext 3 may never be granted**, or only its statistics; the experiment runs on three
+  providers meanwhile.
+- **Sharing the lake's writer group** makes the experiment wait behind a long ETL; at 4-hour
+  cadence that costs minutes.
 
 ## 9. Alternatives considered
 
-- **Do nothing / a one-off study (#723 alone):** stale at the next model upgrade, and the El Niño
-  WeatherNext members are lost.
-- **An always-on MLflow (Cloud Run plus Cloud SQL):** about US$7.70/month for the database
-  (#723); Phase 2, MIP-0057.
-- **Keep everything in git (like marola-oods):** a 2.6 GB archive in git history over 24 months,
-  and MLflow's UI is what the study's figures are explored with.
-- **One MLflow run per point and model per cycle:** 24 runs a cycle, about 52,000 a year in
-  SQLite, for nothing a metric key cannot carry.
-- **Interpolating bilinearly to the station:** a different rule per grid type (MONAN's native grid
-  is not a lat-lon raster ⚠), against #724's "the same for every model".
-- **Scala Native / scala-cli for the job:** rejected by the owner (#723).
-- **Every Open-Meteo model, ensembles included:** §4.10's deferred rows; each is one `ModelId`
-  case later, with this MIP's machinery unchanged.
+- **Do nothing / #723 alone:** stale at the next model upgrade, and the El Niño WeatherNext 2
+  members are lost.
+- **A new repo (marola-eval) in Scala, Rust or Haskell:** proposed earlier on 2026-10-09 and
+  withdrawn by the owner; the app keeps its HTTP, JSON and ledger code by staying here.
+- **GCS for MLflow, with WIF and Besom:** a second cloud for the one bucket B2 already provides.
+- **An always-on MLflow:** Phase 2 (MIP-0057).
+- **GRIB from the originals:** §4.1.
+- **`kyo-flow` for durability:** §4.9.
 
 ## 11. Open questions
 
 - **Which 5-year archive does the strong-wind screen read, given METAR keeps 15 days?**
-  **Default:** the Iowa Environmental Mesonet METAR archive ⚠ and INMET's historical files ⚠, both
-  checked in task 7; the screen's thresholds are #723's to freeze.
-- **Does INMET's API need a token?** **Default:** if yes, a GitHub Actions secret
-  `INMET_TOKEN`, requested by the owner; METAR-only points run meanwhile.
-- **Fair CRPS or standard?** **Default:** standard, as in §5.5; the fair form changes it by
-  `mean|xᵢ − xⱼ|/(2m)`, under 1 % at 64 members, and the study may report both.
-- **Is `min_n = 30` right?** **Default:** 30 matched pairs per row, calibrated in #723.
-- **Does the job add `verify` to the app image?** **Default:** no; the workflow builds the jar
-  from the checkout, since nothing else runs it.
-- **Do the ensembles of §4.10 join?** **Default:** not in v1; a second amendment once a year of
-  deterministic scores shows which centres are worth the members.
-- **Is a one-off Isaias case study against US stations worth doing?** **Default:** no, not in this
-  job; it would be #723's or a paper's, after NHC's best track.
-- **Does marola-app need its own Zenodo DOI before the first cycle?** **Default:** no; #723 Goal 5
-  and MIP-0079 handle it, and `app_sha` in every run ties the data to the code meanwhile.
+  **Default:** the Iowa Environmental Mesonet METAR archive and INMET's historical files ⚠,
+  checked in task 2; #723 freezes the thresholds.
+- **Does INMET's API need a token?** **Default:** if yes, an Actions secret `INMET_TOKEN` the owner
+  requests; METAR-only points run meanwhile.
+- **WeatherNext 3: statistics or full ensemble?** **Default:** BigQuery statistics (mean and
+  percentiles) until the Zarr route's Requester Pays cost is stated and confirmed by the owner.
+- **A B2 key scoped to the experiment, or MIP-0075's ETL key?** **Default:** a scoped application
+  key, created by the owner.
+- **Is `min_n = 30` right?** **Default:** yes until #723 calibrates it.
 
 ## Appendix
 
 ### Checked live
 
-- https://open-meteo.com/en/docs/ecmwf-api, 2026-10-09: `models=ecmwf_ifs` in the example; 9 km,
-  every 6 h, up to 15 days.
-- https://open-meteo.com/en/docs/google-weathernext-api, 2026-10-09: `google_weathernext2_ensemble`,
-  64 members, 0.25°, 6-hourly native, 00/12 UTC runs only, 10 m speed and direction, no gusts.
-- https://open-meteo.com/en/docs/model-updates, 2026-10-09: `last_run_initialisation_time`,
-  `last_run_availability_time`, wait 10 minutes.
-- https://open-meteo.com/en/docs/single-runs-api, 2026-10-09: `run=` parameter; IFS HRES 9 km
-  from 2024-03-14; WeatherNext not listed.
-- https://open-meteo.com/en/docs, 2026-10-09: `cell_selection` = `land` (default) / `sea` /
-  `nearest`; response coordinates are the cell centre used.
-- https://www.pulumi.com/docs/iac/languages-sdks/, 2026-10-09: no Rust or Haskell SDK (§5.11).
-- https://open-meteo.com/en/docs, gfs-api, dwd-api, ukmo-api, ensemble-api, single-runs-api and
-  /en/licence, 2026-10-09: §4.10's grids, steps, lengths, licences and single-run list (most models
-  archived from 2026-04-02); ids from github.com/open-meteo/open-meteo-website at its 2026-10-09
-  tip.
-- https://www.nhc.noaa.gov/verification/pdfs/Verification_2025.pdf, 2026-10-09: §4.11's track
-  errors and quotes.
-- https://michaelrlowry.substack.com/p/isaias-to-rapidly-strengthen-to-a (2026-10-07) and
-  https://www.cbsnews.com/news/hurricane-isaias-first-storm-2026-atlantic-season-record/
-  (2026-10-09), read 2026-10-09: Isaias guidance and status.
-- https://www.hpcwire.com/aiwire/2025/12/17/noaa-deploys-new-generation-of-ai-driven-global-weather-models/,
-  2026-10-09: AIGFS's origin and claims.
-- https://aviationweather.gov/data/api/, 2026-10-09: METAR endpoint, no key, rate limits, 15 days
-  of history.
-- https://mlflow.org/docs/latest/self-hosting/architecture/artifact-store/, 2026-10-09:
-  `google-cloud-storage` needed on client and server for GCS.
-- marola-app `main` at 0c1e050: `build.sbt` modules and `baseSettings`; `RunLedger.scala`;
-  `MlflowRunLedger.scala:38` (artifact upload through the proxy); `docker-compose.yml:89`
-  (MLflow 3.16.0); `ci.yml` (`site-data` push of `coverage/`).
+- https://open-meteo.com/en/docs and its ecmwf, gfs, google-weathernext, single-runs and licence
+  pages, 2026-10-09: ids, grids, steps, runs, `temperature_2m`, backfill dates; ids also read from
+  github.com/open-meteo/open-meteo-website at its 2026-10-09 tip.
+- https://developers.google.com/weathernext/guides/access-forecast, 2026-10-09: WeatherNext 3
+  access, channels, licence. https://winbuzzer.com/2026/09/05/google-weathernext-3-hourly-runs-finer-local-forecasts-xcxwbn/,
+  2026-10-09: WN3's runs and grids.
+- https://mlflow.org/docs/latest/self-hosting/architecture/artifact-store/, 2026-10-09: `b2://`
+  URIs, application key, `AWS_DEFAULT_REGION`.
+- github.com/getkyo/kyo at `v1.0.0-RC7` (1d54c02) and each module's `.pom` on Maven Central,
+  2026-10-09: the module list of §4.9.
+- https://aviationweather.gov/data/api/, 2026-10-09: METAR endpoint, limits, 15 days.
+- https://www.nhc.noaa.gov/verification/pdfs/Verification_2025.pdf and M. Lowry's 2026-10-07
+  post, 2026-10-09: §4.4's context.
+- MIP-0075 §4.3–§4.5 (B2, DuckLake, DuckDB from Scala) at marola `main`, 2026-10-09.
 
 ### Not checked
 
-- The Open-Meteo metadata URL pattern; Open-Meteo's licence for WeatherNext 2.
-- §4.10's model ids against the live API, and whether "the Euro AI" in Lowry's post is AIFS.
-- Isaias's outcome: landfall had not happened when this was written.
-- INMET's API, token and the meaning of its wind field; CPC's index file; MONAN's format.
-- The network calls themselves: this session's egress proxy refused Open-Meteo, aviationweather.gov
-  and INMET, so no payload was fetched; task 2 records the first fixtures.
-- Besom and `besom-gcp` versions; whether MLflow's GCS proxy picks up the credentials file that
-  `google-github-actions/auth` writes.
-- The size of `mlflow.db` and of the state after a year.
+- Any live call to Open-Meteo, aviationweather.gov or INMET (this session's proxy refused them);
+  task 4 records the first fixtures.
+- `kyo-config` and `kyo-schema-json` against their jars; whether MLflow 3.16.0's server needs
+  `boto3` alone for `b2://`.
+- INMET's token and wind averaging; CPC's file; the Open-Meteo metadata URL.
+- WeatherNext 3's BigQuery schema and cost per query.
