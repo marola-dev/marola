@@ -1,16 +1,16 @@
-# MIP-0083: A forecast experiment in marola-app — IFS, GFS and WeatherNext sampled every 4 hours at registered points, scored against ground truth, with runs in MLflow and samples in the OODS lake
+# MIP-0083: A forecast experiment in marola-app — IFS, GFS and later providers sampled every 4 hours at registered points, scored against ground truth, with runs in MLflow and samples in the OODS lake
 
 | | |
 |---|---|
-| **Status** | Draft — redefined from scratch by the owner on 2026-10-09 (the earlier Accepted text, its two amendments and the marola-eval move are superseded; `git log` keeps them) |
+| **Status** | Accepted (Hoffmann, 2026-10-09: "check if this MIP is solid enough for implementation phase, create all tasks in marola-app") — redefined from scratch the same day; the earlier Accepted text, its amendments and the marola-eval move are superseded (`git log` keeps them) |
 | **Author** | Hoffmann, from #724 and #723, redefined in the project thread on 2026-10-09 |
 | **Created** | 2026-10-09 |
 | **Phase** | None: R&D outside the phase list (#724). It writes to MIP-0075's B2 bucket, which already exists and is free; it provisions nothing. Phase 1 (the Telegram bot) is not done, and nothing here moves it |
 | **Related** | #724 (the source issue), #723 (the study: points, protocol, paper), MIP-0075 (the OODS lake on B2 and its DuckDB store), MIP-0010 (MLflow and `RunLedger`), marola-dev/marola-site#99 (the page), h0ffmann/ww3-gpu#92 (the wind chapter), marola-dev/marola-app#72 (task 1, written before this redefinition) |
 | **Effort** | XL — the OWB-South scope of §4.10 on top of: an sbt module with four forecast clients, two observation clients, a registry, a scorer, an MLflow ledger on B2 and lake tables; a scheduled workflow. Two new dependencies (`kyo-config`, `kyo-schema-json`, §4.9) plus MIP-0075's `duckdb_jdbc` |
 | **Gain** | `user value` — marola.dev can say which forecast has been right lately at a given coast; `community/outreach` — an open, continuously updated comparison of physics and AI models on the Brazilian coast through a strong El Niño |
-| **Effort vs Gain** | `do next` for v0, tasks 1–9 (schemas, two providers, stations, scorer, lake, MLflow, the cycle: local and free); `do later` for the OWB-South rows 10–16; `do when X lands` for 19 (X = WeatherNext 3 access) and 20 (X = MONAN output) |
-| **Depends on** | MIP-0075's bucket and key (exist since 2026-10-05) and its `OodsStore` (task 5 there, reused here); Google's approval for WeatherNext 3 (task 17, a person's act; not needed for v0); #723 freezing the strong-wind thresholds before any score is published |
+| **Effort vs Gain** | `do next` for v0, tasks 1–8 (schemas, two providers, stations, scorer, lake, MLflow, the cycle: local and free); `do later` for rows 9–16; `do when X lands` for 19 (X = WeatherNext 3 access) and 20 (X = MONAN output) |
+| **Depends on** | MIP-0075's bucket and key (exist since 2026-10-05) for the B2 run, and its `OodsStore` (task 5 there) for the B2 lake; v0 runs on a local lake meanwhile (§5.6); Google's approval for WeatherNext 3 (task 17, a person's act; not needed for v0); #723 freezing the strong-wind thresholds before any score is published |
 | **Blocked by** | none |
 | **Risk** | A run is skipped or fetched twice and the record drifts from what each publisher actually issued, so every score answers a different question than it claims; §5.5 makes every expected run an explicit `sampled`, `backfilled` or `missing` row keyed by provider and run time |
 | **Cost so far** | — |
@@ -24,7 +24,7 @@
 | **Tasks** | [`MIP-0083.tasks.md`](./MIP-0083.tasks.md) |
 | **Tests** | `SchemaSpec`, `FairnessSpec`, `GroundTruthSpec`, `SamplingRegistrySpec`, `ProtocolSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `ScoreMonoidSpec`, `MatcherSpec`, `AnalogSpec`, `LakeSamplesSpec`, `CycleSpec`, `ExportSpec` in marola-app's `experiment` module (§7) |
 | **Spec-kit** | none |
-| **Issues** | not filed — Draft. marola-dev/marola-app#63–#71, filed for the superseded text, are closed or rewritten once this is Accepted |
+| **Issues** | v0: marola-dev/marola-app#63–#70 (rewritten from the superseded text's issues; #71 closed). Rows 9–21 are filed when v0 is done |
 
 ## 1. Summary
 
@@ -289,7 +289,7 @@ The Brazilian sources it can draw on:
 
 ```mermaid
 flowchart LR
-  reg[Sampling registry<br/>and protocol] --> fc[Forecast clients<br/>IFS · GFS · WN2 · WN3]
+  reg[Sampling registry,<br/>providers, protocol] --> fc[Forecast routes<br/>v0: IFS · GFS]
   reg --> oc[Observation clients<br/>METAR · INMET]
   fc --> fs[(forecast_sample<br/>OODS lake on B2)]
   oc --> os[(observation_sample<br/>OODS lake on B2)]
@@ -359,7 +359,8 @@ every point has `id`, `lat`, `lon`, `kind` (`station`: tied to a ground-truth in
 scorable; `coast`: a beach or offshore point, sampled and never scored), `ground_truth` (the
 instrument id, for `station`), `added_on` and `retired_on`. A point is sampled from `added_on`; a
 retired point keeps its rows. The ground-truth file (#72) stays the source of the instruments'
-status; the registry only says where forecasts are sampled.
+status; the registry only says where forecasts are sampled. v0's registry is #72's nine
+candidate stations, one `station` point each, and no `coast` point.
 
 ### 5.5 Sampling, matching and scoring
 
@@ -377,8 +378,7 @@ status; the registry only says where forecasts are sampled.
   A missing run is a row, never a gap filled from a neighbour.
 - **Pairs:** a METAR within ±10 min of the valid time, or the INMET record for that hour. Wind
   speed (m/s) and direction (scored only when observed speed ≥ 2 m/s), 2 m temperature (°C).
-- **Scores:** bias, RMSE, CRPS (standard kernel form over members; equal to absolute error for a
-  single run), direction MAE, `n`, `days`, `low_sample = n < min_n`; bins by observed wind (calm
+- **Scores:** bias, RMSE, fair CRPS (equal to absolute error for a single run), direction MAE, `n`, `days`, `low_sample = n < min_n`; bins by observed wind (calm
   < 5.5, moderate 5.5–10.8, strong ≥ 10.8 m/s); windows 7, 30 and 90 days.
 - **Error correlation:** each cell also keeps `Σeᵢeⱼ` for every pair of providers on shared
   pairs, so the error correlation matrix is read off any window like the other scores (§5.11).
@@ -390,8 +390,11 @@ status; the registry only says where forecasts are sampled.
 | OODS lake on B2, tables `experiment_point`, `forecast_sample`, `observation_sample`, `run_index` | every sample, partitioned by provider and month | the record the paper and `rescore` read; queryable with DuckDB by anyone with read access |
 | MLflow (SQLite file and artifacts under `b2://…/mlflow/`) | one run per cycle: params, the cycle's daily score cells as metrics, the export | the comparison UI and lineage of each cycle |
 
-The lake writes go through MIP-0075's `OodsStore` and share its `oods-lake` concurrency group, so
-there is one writer for the lake and MLflow's file alike.
+The lake writes go through a `SampleStore` trait. v0's implementation is a local DuckLake
+directory over `duckdb_jdbc` (MIP-0075 §4.5's engine and extensions), so v0 does not wait for
+MIP-0075, which is still a Draft. When MIP-0075's `OodsStore` lands, a second `SampleStore` writes
+the same tables to the B2 lake and shares its `oods-lake` concurrency group, so there is one
+writer for the lake and MLflow's file alike.
 
 ```mermaid
 flowchart TB
@@ -417,7 +420,7 @@ loader enforces. Every candidate is sampled from day one; none is scored until `
 
 The export (`forecast-benchmark/latest.json` on marola-site's `site-data`, the schema vendored by
 marola-site#99) is written only when at least one point is `scored`, which needs #723's frozen
-thresholds and the screen (task 6). Before that, cycles sample, store and log, and the export
+thresholds and the screen (task 9). Before that, cycles sample, store and log, and the export
 step is skipped with a logged reason. Each later protocol version's results are also published as
 a dated Zenodo dataset by the study (#723, MIP-0079), not by this job.
 
@@ -430,6 +433,11 @@ JDK 25, `sbt experiment/assembly`, download `mlflow.db` and the lake catalog wit
 `pip install mlflow==3.16.0 boto3`, start `mlflow server` on localhost with
 `--artifacts-destination b2://…`, run `cycle`, upload `mlflow.db` and the catalog back, then the
 export (§5.8). No cloud resource is created; no IaC is needed.
+
+Until the B2 lake lands (§5.6), v0's workflow keeps its local lake directory and `mlflow.db` in
+the Actions cache, restored and saved each cycle under one key. That is a stopgap: the cache is
+evicted after 7 days unused and capped at 10 GB per repo ⚠, so v0's record is only durable once
+the B2 `SampleStore` replaces it.
 
 ### 5.10 What is deterministic
 
@@ -487,8 +495,9 @@ doi:10.1175/MWR-D-12-00281.1 ⚠ not re-read for this amendment), `marola_analog
 Every later task writes or reads one of these, so they land first as task 1, with no client and
 no scorer. Each is a Scala 3 case class or enum in `experiment/.../schema/` with `derives Schema`
 (`kyo-schema`). The JSON form goes through `kyo-schema-json`'s `Json.encode` and `Json.decode`,
-and the lake form is a DuckLake table whose DDL is generated from the same `Schema` and checked
-in. A schema change is a new version, never an edit.
+and the lake form is a table whose DDL is written by hand and checked in; `SchemaSpec` checks that
+its columns are the `Schema`'s fields (RC7's `Json.jsonSchema` generates the JSON Schema, but
+nothing generates SQL). A schema change is a new version, never an edit.
 
 | Schema | Fields (abridged) | Stored as |
 |---|---|---|
@@ -499,12 +508,13 @@ in. A schema change is a new version, never an edit.
 | `ForecastSample` | provider, `run_init`, `fetched_at`, point, valid time, lead, variable, member (or none), value, cell lat/lon, source URL | `forecast_sample` |
 | `ObservationSample` | instrument, valid time, variable, value, averaging, QC flag | `observation_sample` |
 | `RunIndexRow` | provider, `run_init`, `available_at`, `content_sha`, state (`sampled`, `backfilled`, `missing`), reason, fetched at | `run_index` |
-| `ScoreCell` | provider, point, variable, lead, bin, day, n, Σe, Σe², Σ\|e\|, fair-CRPS sum, spread sum, Σeᵢeⱼ | `score_cell` |
+| `ScoreCell` | provider, point, variable, lead, bin, day, n, Σe, Σe², Σ\|e\|, fair-CRPS sum, spread sum | `score_cell` |
+| `PairCell` | provider a, provider b, point, variable, lead, day, n, Σ(eₐ − e_b), Σ(eₐ − e_b)², Σeₐe_b, Σeₐ², Σe_b² (§5.5, §5.14) | `pair_cell` |
 | `NavyWarning` | number, area, force, gust, valid from/to, issued at, raw text sha | `navy_warning` |
 | `Scorecard` | protocol version, window, rows per provider × variable × day, licences | `forecast-benchmark/latest.json` and its JSON Schema for marola-site |
 
-`SchemaSpec` round-trips one fixture of each and checks the generated JSON Schema and DDL
-against the checked-in files.
+`SchemaSpec` round-trips one fixture of each, checks the generated JSON Schema against the
+checked-in file and the DDL's columns against each `Schema`.
 
 ### 5.13 Kyo at its current release
 
@@ -585,13 +595,14 @@ munit specs in `experiment/`, fixtures replayed through `Http.withTransport`, th
 directory as MIP-0075 tests it:
 
 - `SchemaSpec`: `every_schema_round_trips`, `json_schema_matches_checked_in`,
-  `ddl_matches_checked_in`, `unknown_label_is_malformed`.
+  `ddl_columns_match_schema_fields`, `unknown_label_is_malformed`.
 - `GroundTruthSpec` (#72's eight cases).
 - `SamplingRegistrySpec`: `station_point_needs_ground_truth`, `coast_point_never_scored`,
   `retired_point_keeps_rows`.
 - `ProtocolSpec`: `cadence_and_window_read_from_file`, `unknown_provider_is_malformed`.
-- `ForecastClientSpec`: `ifs_gfs_wind_and_temperature_parsed`, `weathernext2_native_steps_and_64_members`,
-  `cell_selection_nearest_sent`, `gfs_gap_backfilled_from_single_run`, `weathernext2_gap_recorded_missing`.
+- `ForecastClientSpec`: `ifs_gfs_wind_and_temperature_parsed`, `request_built_from_providers_row`,
+  `cell_selection_nearest_sent`, `gfs_gap_backfilled_from_single_run`, `rate_limit_429_retried`;
+  with task 11, `ensemble_members_strided_to_16` and `no_archive_gap_recorded_missing`.
 - `ObservationClientSpec`: `metar_knots_to_ms_and_temperature`, `inmet_hour_parsed`.
 - `ScoreMonoidSpec`: `combine_is_associative`, `empty_is_identity`, `combine_is_commutative`,
   `ninety_daily_cells_equal_one_window`, `crps_of_single_run_is_abs_error` — values worked by hand.
@@ -668,7 +679,7 @@ unattended cycles show in MLflow with no unexplained gap in `run_index`.
 
 - **Which 5-year archive does the strong-wind screen read, given METAR keeps 15 days?**
   **Default:** the Iowa Environmental Mesonet METAR archive and INMET's historical files ⚠,
-  checked in task 6; #723 freezes the thresholds.
+  checked in task 9; #723 freezes the thresholds.
 - **Does INMET's API need a token?** **Default:** if yes, an Actions secret `INMET_TOKEN` the owner
   requests; METAR-only points run meanwhile.
 - **WeatherNext 3: statistics or full ensemble?** **Default:** BigQuery statistics (mean and
@@ -713,8 +724,8 @@ unattended cycles show in MLflow with no unexplained gap in `run_index`.
 
 ### Not checked
 
-- Any live call to Open-Meteo, aviationweather.gov or INMET (this session's proxy refused them);
-  task 4 records the first fixtures.
+- Any live call to Open-Meteo, aviationweather.gov or INMET (this session's proxy refused them;
+  the project's environment now allows all hosts, so tasks 4 and 5 record the first fixtures).
 - `kyo-config` and `kyo-schema-json` against their jars; whether MLflow 3.16.0's server needs
   `boto3` alone for `b2://`.
 - INMET's token and wind averaging; CPC's file; the Open-Meteo metadata URL.
