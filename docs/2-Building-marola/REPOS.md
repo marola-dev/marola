@@ -60,26 +60,48 @@ flowchart LR
   oods -.->|"export tag (planned)"| app
 ```
 
+A contract change follows the producer: it merges and releases first, each consumer bumps its pin
+in its own PR, and the umbrella's pointers move last, through the sync PR.
+
 ### Artifacts, pins and dispatches
+
+`just wiring` (marola-devkit's `wiring`,
+[MIP-0076](../MIPs/MIP-0076-agent-routing-tooling.md)) generates these tables from every repo's
+workflows, pin files and scripts at the pinned commits, and `wiring --check` fails when they are
+stale. An edit between the markers is overwritten.
 
 <!-- wiring:start -->
 
-| Artifact | Produced by | Read by | Pinned by |
+| Artifact | Published by | Pinned in | Read by |
 |---|---|---|---|
-| The app image, `ghcr.io/marola-dev/marola-app:<tag>@<digest>` | marola-app `docker.yml`, on a push to `main` | marola-site `site.yml` (the boards, data only), marola-ml `docker-local.yml` (the benchmark), marola-oods `oods-check.yml` | `marola-image` in each consumer, tag and digest |
-| `marola-corpus-<tag>.tar.gz` | marola-corpus `release.yml`, on a `v*` tag | marola-app (unpacked into `.tmp/knowledge`; the image ships `/app/knowledge`), marola-ml | `corpus.version` in each consumer |
-| `ml-resources-<tag>.tar.gz` (the app's prompt and fixture resources) | marola-app `release.yml`, on a `v*` tag | marola-ml's fine-tune dataset and benchmark gate | `resources.version` |
-| Each repo's `api-docs` branch: one force-pushed commit of generated API docs | marola-app and marola-ml `api-docs.yml` (the devkit's reusable workflow), on a push to `main` | The umbrella's `prepare-docs.sh`, under `5-Repos/<name>/api-docs/` | None: the latest `main` |
-| Compiled-prompt PRs (`recommendation_prompt.json`, `review_prompt.json`) | marola-ml `compile-prompt.yml`, run by hand | marola-app's resources, once the PR merges | The file in marola-app |
-| The `site-data` branch: `coverage/`, `smoke/`, `stats/` | marola-app `ci.yml` and `docker-smoke.yml` (each then sends a `site-data-updated` dispatch); the umbrella's `ci.yml` writes `stats/` with no dispatch | marola-site `site.yml` | None: the branch's content |
-| OODS ingest commits and export | marola-app's ingest workflow (MIP-0056, not built) | marola-oods; the export back to marola-app | An export tag and its env var (planned) |
-| `notify-umbrella` dispatches (`submodule-docs-updated`) | Every repo's `notify-umbrella.yml`, on a push to `main` touching `README.md` or `docs/` | The umbrella's `docs.yml` and `pointer-sync.yml` | The gitlinks, moved by the sync PR |
-| A devkit tag | marola-devkit | Every repo | `flake.lock`, `@v…`/`devkit-ref:`, the marketplace `ref` |
-| The ml image, `ghcr.io/marola-dev/marola-ml:local` (candidates `:local-<sha>`) | marola-ml `docker-local.yml`, on a push to `main`, promoted after the benchmark gate | Nothing yet | Nothing |
+| `ghcr.io/marola-dev/marola-app` image | marola-app `docker.yml` (on a push to `main` touching 11 paths) | marola-site `marola-image`, marola-ml `marola-image`, marola-oods `marola-image` | marola-site `scripts/board-schema.sh`, marola-ml `scripts/app-image.sh`, marola-app `docker-compose.yml`, marola-oods `scripts/app-image.sh` |
+| `ghcr.io/marola-dev/marola-ml` image | marola-ml `docker-local.yml` (on a push to `main` touching 10 paths) | — | marola-app `docker-compose.yml` |
+| `marola-corpus-<tag>.tar.gz` release asset | marola-corpus `release.yml` (on a `v*` tag) | marola-ml `corpus.version`, marola-app `corpus.version` | marola-ml `scripts/corpus-fetch.sh`, marola-app `build.sbt`, marola-app `scripts/corpus-fetch.sh` |
+| `ml-resources-<tag>.tar.gz` release asset | marola-app `release.yml` (on a `v*` tag) | marola-ml `resources.version` | marola-ml `scripts/resources-fetch.sh` |
+| `api-docs` branch | marola-ml `api-docs.yml` (`api-docs.yml@v0.4.1`, on a push to `main`), marola-app `api-docs.yml` (`api-docs.yml@v0.4.1`, on a push to `main`) | — | marola `scripts/fetch-api-docs.sh` |
+| `site-data` branch of marola-site | marola `ci.yml` (on a push to `main`), marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | — | marola-site `site.yml` |
+| PRs into each repo in `.github/consumers.txt` | marola-devkit `bump-consumers.yml` | — | marola, marola-app, marola-site, marola-ml, marola-corpus, marola-oods |
+| PRs into marola-app: `recommendation_prompt.json`, `review_prompt.json` | marola-ml `compile-prompt.yml` (by hand) | — | marola-app |
+| a marola-devkit tag | marola-devkit | marola `flake.lock` v0.7.0, marketplace v0.4.1; marola-site `flake.nix` v0.3.1, marketplace v0.3.1; marola-corpus `flake.nix` v0.4.1, marketplace v0.4.1; marola-ml `flake.nix` v0.4.1, marketplace v0.4.1; marola-app `flake.lock` v0.4.1, marketplace v0.4.1; marola-oods `flake.nix` v0.5.0, marketplace v0.5.0 | `agents-check.yml` v0.3.1 (marola-site), v0.4.1 (marola-corpus marola-ml marola-app), v0.5.0 (marola-oods), v0.7.0 (marola); `api-docs.yml` v0.4.1 (marola-ml marola-app); `ci-short-circuit.yml` v0.3.1 (marola-site), v0.4.1 (marola-corpus marola-ml marola-app), v0.5.0 (marola-oods), v0.7.0 (marola); `gemini-review.yml` v0.5.0 (marola-site marola-corpus marola-ml marola-app marola-oods), v0.7.0 (marola); `labels-sync.yml` v0.3.1 (marola-site), v0.4.1 (marola-corpus marola-ml marola-app), v0.5.0 (marola-oods), v0.7.0 (marola); `notify-umbrella.yml` v0.3.1 (marola-site), v0.4.1 (marola-corpus marola-ml marola-app), v0.5.0 (marola-oods); `pr-body.yml` v0.3.1 (marola-site), v0.4.1 (marola-corpus marola-ml marola-app), v0.5.0 (marola-oods), v0.7.0 (marola); `python-ci.yml` v0.3.1 (marola-site), v0.4.1 (marola-ml marola-app), v0.7.0 (marola); `scala-ci.yml` v0.4.1 (marola-app); `skills-update.yml` v0.6.0 (marola-site), v0.7.0 (marola); `static-ci.yml` v0.3.1 (marola-site), v0.4.1 (marola-corpus marola-ml marola-app), v0.5.0 (marola-oods), v0.7.0 (marola) |
+
+| Dispatch | Sent by | Triggers |
+|---|---|---|
+| `site-data-updated` | marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | marola-site `site.yml` |
+| `submodule-docs-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.3.1`, on a push to `main` touching `README.md`, `docs/**`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.4.1`, on a push to `main` touching `README.md`, `docs/**`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.4.1`, on a push to `main` touching `README.md`, `docs/**`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.4.1`, on a push to `main` touching `README.md`, `docs/**`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.5.0`, on a push to `main` touching `README.md`, `docs/**`) | marola `docs.yml`, marola `pointer-sync.yml` |
+| `submodule-updated` | — | marola `pointer-sync.yml` |
+
+| Pin bump | Workflow |
+|---|---|
+| marola `flake.lock` | marola `docs.yml` |
+| marola-app `corpus.version` | marola-app `docker.yml` |
+| marola-ml `marola-image` | marola-ml `docker-local.yml` |
+| marola-ml `resources.version` | marola-ml `docker-local.yml` |
+| marola-oods `marola-image` | marola-oods `oods-check.yml` |
+| marola-site `marola-image` | marola-site `board-schema.yml`, marola-site `site.yml` |
+
+| Deploy | Site |
+|---|---|
+| marola `docs.yml` | docs.marola.dev |
+| marola-site `site.yml` | marola.dev |
 
 <!-- wiring:end -->
-
-The site reads each repo's `api-docs` branch, not a release asset.
-
-A contract change follows the producer: it merges and releases first, each consumer bumps its pin
-in its own PR, and the umbrella's pointers move last, through the sync PR.
