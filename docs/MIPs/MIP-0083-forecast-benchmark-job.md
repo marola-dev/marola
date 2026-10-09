@@ -2,14 +2,14 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted (Hoffmann, 2026-10-09) — `Tasks: docs/MIPs/MIP-0083.tasks.md` ([`MIP-0083.tasks.md`](./MIP-0083.tasks.md)) |
 | **Author** | Hoffmann, from #724 and the design decisions recorded in #723 (2026-10-09) |
 | **Created** | 2026-10-09 |
 | **Phase** | None: R&D outside the phase list (#724). It provisions a GCS bucket, which is cloud infrastructure ahead of Phase 2; the owner decided it in #723 inside GCP's free tier, and the first `pulumi up` still waits for their confirmation with §5.9's cost table. Phase 1 (the Telegram bot) is not done, and nothing here moves it |
 | **Related** | #724 (the job, this MIP's source), #723 (the study it serves: points, protocol, paper), marola-dev/marola-site#99 (the page that draws §5.8's export), MIP-0010 (MLflow and `RunLedger`), MIP-0008 (the GraalVM native-image path, if start-up ever matters), MIP-0057 (an always-on MLflow, Phase 2), MIP-0079 (Zenodo DOIs), [GEMINI-CODE-ASSIST](../4-Research-and-plans/GEMINI-CODE-ASSIST.md) §4 (the Besom layout reused here), `CANDIDATES.md` (marola's first IaC) |
 | **Effort** | L — a new sbt module with three new clients, a matcher and a scorer; a scheduled workflow with WIF and a state protocol on GCS; a Besom program; an export schema. No new library dependency in Scala |
 | **Gain** | `user value` — marola.dev can say which forecast has been right lately at a given beach; `community/outreach` — an open, continuously updated comparison of a national model against a free ML model on the Brazilian coast, through a strong El Niño |
-| **Effort vs Gain** | `do next` for tasks 1–4 (local, free, and the archive of WeatherNext members is lost for every week it doesn't run); `do when X lands` for tasks 5–6, X = the owner's go-ahead on the cost table; MONAN when #723's step 1 resolves |
+| **Effort vs Gain** | `do next` for tasks 1 and 3–6 (local, free, and the archive of WeatherNext members is lost for every week it doesn't run); `do when X lands` for tasks 7–8, X = the owner's go-ahead on the cost table; MONAN when #723's step 1 resolves |
 | **Depends on** | #723's step 1 for MONAN (data access, unknown today); the owner's confirmation before the first `pulumi up`; a GCP project with a billing account (a person's act) |
 | **Blocked by** | none |
 | **Risk** | A model's run is silently skipped or fetched twice and the archive drifts from what was actually published, so the scores answer a different question than they claim; §5.4 makes every run an explicit `archived`, `backfilled` or `missing` row, keyed by model and run time |
@@ -19,12 +19,12 @@
 
 | | |
 |---|---|
-| **Manually reviewed** | no |
+| **Manually reviewed** | yes — Hoffmann, 2026-10-09 (accepted in the project thread, with the ground-truth points moved to task 1) |
 | **Written by** | Hoffmann, with Claude Code |
 | **Tasks** | [`MIP-0083.tasks.md`](./MIP-0083.tasks.md) |
-| **Tests** | `ScorerSpec`, `MatcherSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `CycleSpec`, `RescoreSpec`, `ExportSpec` in marola-app's `verify` module (§7) |
+| **Tests** | `GroundTruthSpec`, `ScorerSpec`, `MatcherSpec`, `ForecastClientSpec`, `ObservationClientSpec`, `CycleSpec`, `RescoreSpec`, `ExportSpec` in marola-app's `verify` module (§7) |
 | **Spec-kit** | none |
-| **Issues** | not filed — Draft |
+| **Issues** | marola-dev/marola-app#63–#71 (rows 1–9), marola-dev/marola-site#99 (row 10), #726 (row 11) |
 
 ## 1. Summary
 
@@ -160,7 +160,8 @@ Retries and fan-out are hand-rolled from `map`/`flatMap`, as `Recommender.scala`
 
 | File (`verify/src/main/scala/marola/verify/`) | What |
 |---|---|
-| `Protocol.scala` | reads `protocol.json` (§5.6): points, models, leads, bins, windows, `min_n` |
+| `GroundTruth.scala` | reads and validates `ground-truth.json` (§5.6): the instruments, their status, the thresholds, the deviation log |
+| `Protocol.scala` | reads `protocol.json` (§5.6): models, leads, bins, windows, `min_n` |
 | `ForecastSource.scala` | `trait ForecastSource { def latestRun: Option[Instant] < Sync; def fetch(run: Instant, points: Chunk[Point]): RunResult < Sync }` |
 | `OpenMeteoForecasts.scala` | `ecmwf_ifs` (forecast and single-run APIs) and `google_weathernext2_ensemble` (ensemble API, native steps, all members) |
 | `Observations.scala` | `MetarClient`, `InmetClient`, both returning `Obs(pointId, validTime, speedMs, dirDeg, gustMs, source)` |
@@ -236,17 +237,35 @@ keeps `lead_h`. `Scorer` reads pairs and writes one row per (window, point, mode
 The paired Diebold-Mariano test, skill against IFS by ENSO phase, and the figures are the study's
 (#723), computed from the same pairs by its own script; the job does not publish them.
 
-### 5.6 The protocol file
+### 5.6 Ground-truth points and the protocol file
 
-`verify/src/main/resources/forecast-benchmark/protocol.json` holds points (`id`, `name`, `lat`,
-`lon`, `station` ids, `anemometer_m`, `scored`), models, leads, bins, windows and `min_n`
-(placeholder 30 ⚠, calibrated in #723). Its git blob sha is the `protocol` param of every MLflow
-run, so a change is visible in the record and is #723's deviation log entry.
+**Ground truth first (owner, 2026-10-09).** Every score is a forecast minus what an instrument
+measured, so the instruments are task 1, documented before any client exists.
+`verify/src/main/resources/forecast-benchmark/ground-truth.json` holds:
 
-Points are archived as soon as they are candidates, including the at-risk ones (#723 step 3's
-table), and scored only once `scored: true`. Archiving a superset costs nothing and keeps the El
-Niño months for whichever points the strong-wind screen picks; the choice still comes from
-observed history only, because no score exists for a point until it is chosen.
+- `thresholds`: #723's strong-wind rule (≥ 200 h a year at ≥ 10.8 m/s, ≥ 5 days a year at
+  ≥ 17.2 m/s, over 5 years), with `frozen` (a date, or `null` while they are placeholders ⚠);
+- `points`: one per instrument (`id`, `state`, `kind` `metar` or `inmet`, `station`, `lat`, `lon`,
+  `elevation_m`, `anemometer_m`, `exposure`, `status`, `checked`: what confirmed the coordinates,
+  with URL and date, or `null`);
+- `deviations`: dated entries, append-only once a point is `scored`.
+
+A point moves `candidate` → `qualified` or `rejected` (the screen, task 2) → `scored`, and
+`retired` if its anemometer is lost. The loader refuses a file that breaks #723's rules: a
+`qualified` or `scored` point without checked coordinates, any `qualified` or `scored` point while
+the thresholds are not frozen, more than one scored METAR or INMET station per state, a station
+code in the wrong format, a coordinate outside Brazil. marola-app's
+`docs/4-reference_ground-truth.md` documents the rules, every field and every candidate, with what
+was checked and what was not.
+
+Candidates are archived as soon as they are listed, including the at-risk ones (#723 step 3's
+table), and scored only once `scored`. Archiving a superset costs nothing and keeps the El Niño
+months for whichever points the screen picks; the choice still comes from observed history only,
+because no score exists for a point until it is chosen.
+
+`verify/src/main/resources/forecast-benchmark/protocol.json` holds models, leads, bins, windows
+and `min_n` (placeholder 30 ⚠, calibrated in #723). The git blob shas of both files are the
+`protocol` and `ground_truth` params of every MLflow run, so a change is visible in the record.
 
 ### 5.7 One cycle on GitHub Actions
 
@@ -281,7 +300,7 @@ started, the run ends `FAILED` and the next cycle compares the run index with th
 re-matches what is missing; `rescore` rebuilds the pairs from the artifacts alone.
 
 **MLflow volume.** Logging every key every cycle would be about 40,000 metric rows a cycle and
-too big for a file downloaded six times a day. So every cycle logs params (`protocol`, `app_sha`,
+too big for a file downloaded six times a day. So every cycle logs params (`protocol`, `ground_truth`, `app_sha`,
 `nino34`, `enso_status`, `archived`, `backfilled`, `missing`) and its artifacts
 (`forecasts-<model>-<run>.jsonl.gz`, `observations.jsonl.gz`, `scores.json`, `export.json`); the
 first cycle after 00 UTC also logs the 30-day `all`-bin metrics at the four headline leads, keyed
@@ -355,6 +374,11 @@ model in the score is a later decision, made with this data (#724, out of scope)
 ## 7. Verification plan
 
 Tests in marola-app's `verify` module, munit, fixtures replayed through `Http.withTransport`:
+
+- `GroundTruthSpec`: `bundled_file_is_valid`, `duplicate_id_rejected`,
+  `station_code_format_per_kind`, `coordinates_outside_brazil_rejected`,
+  `qualified_needs_checked_coordinates`, `qualified_needs_frozen_thresholds`,
+  `one_scored_station_per_kind_and_state`.
 
 - `ScorerSpec`: `bias_and_rmse_match_hand_computed`, `crps_of_ensemble_matches_hand_computed`,
   `crps_of_deterministic_is_abs_error`, `bins_split_by_observed_speed`,
