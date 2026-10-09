@@ -1,8 +1,8 @@
-# MIP-0083: A background forecast benchmark — every 4 hours, archive MONAN, WeatherNext and IFS at fixed coastal points and score them side by side against what was measured
+# MIP-0083: A background forecast benchmark — every 4 hours, archive MONAN, WeatherNext, IFS, AIFS, GFS, AIGFS and ICON at fixed coastal points and score them side by side against what was measured
 
 | | |
 |---|---|
-| **Status** | Accepted (Hoffmann, 2026-10-09) — `Tasks: docs/MIPs/MIP-0083.tasks.md` ([`MIP-0083.tasks.md`](./MIP-0083.tasks.md)) |
+| **Status** | Accepted (Hoffmann, 2026-10-09); amended 2026-10-09 (Hoffmann: GFS and other verifiable sources, §4.10–§4.11) — `Tasks: docs/MIPs/MIP-0083.tasks.md` ([`MIP-0083.tasks.md`](./MIP-0083.tasks.md)) |
 | **Author** | Hoffmann, from #724 and the design decisions recorded in #723 (2026-10-09) |
 | **Created** | 2026-10-09 |
 | **Phase** | None: R&D outside the phase list (#724). It provisions a GCS bucket, which is cloud infrastructure ahead of Phase 2; the owner decided it in #723 inside GCP's free tier, and the first `pulumi up` still waits for their confirmation with §5.9's cost table. Phase 1 (the Telegram bot) is not done, and nothing here moves it |
@@ -29,8 +29,8 @@
 ## 1. Summary
 
 A new marola-app module, `verify`, runs every 4 hours from a GitHub Actions cron. Each cycle saves
-every model run it has not seen yet at a fixed list of coastal points (WeatherNext 2's 64 members
-and ECMWF IFS HRES now, MONAN once #723 finds its data), lines up every saved forecast whose valid
+every model run it has not seen yet at a fixed list of coastal points (WeatherNext 2's 64 members,
+ECMWF IFS HRES and AIFS, NOAA GFS and AIGFS, and DWD ICON now, MONAN once #723 finds its data), lines up every saved forecast whose valid
 time has passed against the anemometer at that point, and keeps rolling bias, RMSE and CRPS per
 model, point, lead and observed wind bin. Results go to MLflow, whose SQLite file lives in a GCS
 bucket between runs, and to a small JSON export that marola.dev's wind page (marola-site#99)
@@ -137,6 +137,53 @@ uploads through the server's `mlflow-artifacts` proxy (marola-app
 `local/src/main/scala/marola/ledger/MlflowRunLedger.scala:38`), so the Scala side needs no GCS
 client.
 
+### 4.10 More global models on Open-Meteo (amendment, 2026-10-09)
+
+The owner asked for GFS and for any other verifiable wind source, judged on publisher, integration
+cost, reputation and the recent US hurricane. Every candidate below is served by Open-Meteo, so its
+integration cost is one `ModelId` case and one recorded fixture: the same client, the same
+`cell_selection=nearest`, the same 6-hourly grid. Model ids are from Open-Meteo's website source
+(open-meteo/open-meteo-website at its 2026-10-09 tip) ⚠ until task 4 records a live response.
+
+| Candidate | Publisher, licence | Open-Meteo id | Grid, native step, length | Backfill | Pick |
+|---|---|---|---|---|---|
+| GFS | NOAA/NCEP, US public data | `ncep_gfs013` | 0.11°, hourly to 120 h then 3-hourly, 16 days | single-run, from 2026-04-02 | **add** (owner) |
+| AIGFS | NOAA/NCEP, operational since 2025-12-17; GraphCast fine-tuned on NOAA's GDAS | `ncep_aigfs025` | 0.25°, 6-hourly, 16 days | single-run, from 2026-04-02 | **add** |
+| AIFS Single | ECMWF, CC BY 4.0 | `ecmwf_aifs025_single` | 0.25°, 6-hourly, 15 days | single-run, from 2026-04-02 | **add** |
+| ICON Global | DWD, CC BY 4.0 | `dwd_icon_global` | 0.1°, hourly to 78 h then 3-hourly, 7.5 days | single-run, from 2026-04-02 | **add** |
+| UKMO Global 10 km | UK Met Office, CC BY-SA 4.0 | `ukmo_global_deterministic_10km` | 0.09°, 7 days | single-run | defer: share-alike would bind the export's licence |
+| GEM Global, CMA GRAPES, JMA GSM, ARPEGE, ACCESS-G | ECCC, CMA, JMA, Météo-France, BOM | `gem_global`, `cma_grapes_global`, `jma_gsm`, … | 11–55 km | single-run | defer: no reputation edge on the South Atlantic that would justify more columns |
+| GEFS, AIGEFS, ECMWF ENS, AIFS ENS | NOAA, ECMWF | `ncep_gefs025`, `ncep_aigefs025`, `ecmwf_ifs025_ensemble`, `ecmwf_aifs025_ensemble` | 0.25°, 31–51 members | not listed for single runs ⚠ | defer to a second amendment: the archive grows by the member count, and CRPS against WeatherNext 2 already covers an ensemble |
+| HAFS, HWRF, Google DeepMind's cyclone model | NOAA, Google | none | storm-following, active tropical cyclones only | – | out: nothing to score at a Brazilian point on an ordinary day |
+
+The added four pair each centre's physics model with its AI one (ECMWF IFS/AIFS, NOAA GFS/AIGFS)
+next to Google's WeatherNext 2, DWD's ICON and, later, INPE's MONAN, which is the comparison #723
+cares about: does a free AI model match a national physics model on this coast. They cost about 24
+more Open-Meteo calls a day (one multi-point call per model per cycle), far inside the free tier.
+
+### 4.11 Hurricane record, as reputation only
+
+None of the points sees a hurricane, so a storm's track and intensity skill says how a model
+handles a strong, compact wind system, not how it scores at SBFL. It is recorded here because the
+owner asked, and it decides nothing.
+
+- **2025 Atlantic season** (v NHC 2025 verification report, read 2026-10-09; homogeneous track
+  sample, n mi at 72/120 h): Google DeepMind's ensemble mean (GDMI) 66.5/173.1, best of all aids
+  from 12 to 72 h and the best intensity model; ECMWF (EMXI) 102.7/174.5, mid-pack early, the best
+  individual model over 2023–25, "little to no intensity skill"; CMC 126.1/179.9; GFS (GFSI)
+  128.6/362.3, the largest 120 h error in the table, "less competitive, especially for the longer
+  lead times". AIFS, AIGFS and ICON are not in the report. GDMI is DeepMind's cyclone ensemble,
+  related to but not the same product as WeatherNext 2 ⚠.
+- **AIGFS** (v NOAA's launch, via HPCwire 2025-12-17): better than GFS on large-scale features and
+  on long-lead tropical-cyclone track; weaker on intensity in v1.0.
+- **Hurricane Isaias** (October 2026, northern Gulf coast; landfall expected the night of
+  2026-10-09 per CBS News that morning): on 2026-10-07 the AI camp (DeepMind and "the Euro AI",
+  taken to be AIFS ⚠) put the track toward south Alabama and the western Florida panhandle with a
+  near-major peak, while ECMWF's physics model and ensemble showed a weaker, slower storm nearer
+  southeastern Louisiana; NHC sided with the AI track (v M. Lowry, *Eye on the Tropics*,
+  2026-10-07). Which camp was right is not known until landfall and NHC's best track ⚠; nothing
+  here should cite Isaias as a result before then.
+
 **Pick:** all of the above, with `cell_selection=nearest` for every Open-Meteo call (§5.3).
 
 ## 5. Design
@@ -163,7 +210,7 @@ Retries and fan-out are hand-rolled from `map`/`flatMap`, as `Recommender.scala`
 | `GroundTruth.scala` | reads and validates `ground-truth.json` (§5.6): the instruments, their status, the thresholds, the deviation log |
 | `Protocol.scala` | reads `protocol.json` (§5.6): models, leads, bins, windows, `min_n` |
 | `ForecastSource.scala` | `trait ForecastSource { def latestRun: Option[Instant] < Sync; def fetch(run: Instant, points: Chunk[Point]): RunResult < Sync }` |
-| `OpenMeteoForecasts.scala` | `ecmwf_ifs` (forecast and single-run APIs) and `google_weathernext2_ensemble` (ensemble API, native steps, all members) |
+| `OpenMeteoForecasts.scala` | the deterministic models of §5.2 (forecast and single-run APIs) and `google_weathernext2_ensemble` (ensemble API, native steps, all members) |
 | `Observations.scala` | `MetarClient`, `InmetClient`, both returning `Obs(pointId, validTime, speedMs, dirDeg, gustMs, source)` |
 | `Enso.scala` | CPC's Niño-3.4 anomaly and status |
 | `Archive.scala` | gzipped JSON Lines rows (§5.4), read and written |
@@ -180,6 +227,10 @@ An enum, so a new source is a compile error until every match handles it:
 ```scala
 enum ModelId(val openMeteo: Option[String]):
   case IfsHres extends ModelId(Some("ecmwf_ifs"))
+  case Aifs extends ModelId(Some("ecmwf_aifs025_single"))
+  case Gfs extends ModelId(Some("ncep_gfs013"))
+  case Aigfs extends ModelId(Some("ncep_aigfs025"))
+  case Icon extends ModelId(Some("dwd_icon_global"))
   case WeatherNext2 extends ModelId(Some("google_weathernext2_ensemble"))
   case Monan extends ModelId(None) // #723 step 1
 ```
@@ -192,11 +243,12 @@ enum ModelId(val openMeteo: Option[String]):
 - **One grid rule for every model:** the nearest grid cell (`cell_selection=nearest` on
   Open-Meteo; great-circle nearest on MONAN's native grid). No interpolation between cells. Each
   row records the cell centre the source used, so the distance to the station and the grid spacing
-  (9 km, 0.25°, about 10 km) are reported beside every score, never hidden (#724 acceptance).
+  (9 km, 0.11°, 0.1°, 0.25°) are reported beside every score, never hidden (#724 acceptance).
 - **One time grid:** valid times 00, 06, 12 and 18 UTC only, because WeatherNext 2's native step is
   6 h; scoring IFS on its hourly steps would give it pairs the others cannot have.
 - **Leads:** every 6 h from 6 to 240 h are stored and scored; 24, 72, 120 and 240 h are the
-  headline leads (#723 step 4) that MLflow and the export carry.
+  headline leads (#723 step 4) that MLflow and the export carry. ICON stops at 180 h, so its
+  240 h cells stay empty rather than filled.
 - **Variables:** 10 m wind speed (m/s, `wind_speed_unit=ms`) and direction. Direction is scored
   only when the observed speed is at least 2 m/s, as the smaller circular difference. Gusts, 2 m
   temperature and precipitation are archived where offered, not scored in v1.
@@ -213,8 +265,9 @@ Every row is one model run at one point. Fields: `model`, `openmeteo_model`, `ru
 
 1. reads each active model's `last_run_initialisation_time` (§4.3), waiting the 10 minutes;
 2. archives that run if `(model, run_time)` is not in the run index yet;
-3. walks the expected run times since the last cycle (IFS 00/06/12/18, WeatherNext 2 00/12) and,
-   for any not archived, tries the single-run API (IFS only, `status=backfilled`) or writes a
+3. walks the expected run times since the last cycle (00/06/12/18 for every deterministic model,
+   00/12 for WeatherNext 2) and, for any not archived, tries the single-run API (every model but
+   WeatherNext 2, `status=backfilled`) or writes a
    `missing` row with `reason` (`not_served`, `fetch_failed`, `superseded_before_fetch`).
 
 A missing run is a row, never a gap filled from a neighbouring run (#724 acceptance).
@@ -304,7 +357,7 @@ too big for a file downloaded six times a day. So every cycle logs params (`prot
 `nino34`, `enso_status`, `archived`, `backfilled`, `missing`) and its artifacts
 (`forecasts-<model>-<run>.jsonl.gz`, `observations.jsonl.gz`, `scores.json`, `export.json`); the
 first cycle after 00 UTC also logs the 30-day `all`-bin metrics at the four headline leads, keyed
-`<metric>.30d.<point>.<model>` with `step` = lead hours (about 300 rows a day, under 20 MB a year
+`<metric>.30d.<point>.<model>` with `step` = lead hours (about 900 rows a day with §4.10's models, under 60 MB a year
 ⚠ to measure). `scores.json` keeps every window, bin and lead.
 
 **Failure is visible.** A thrown cycle ends its run `FAILED` when MLflow is up, the workflow fails
@@ -425,6 +478,9 @@ index has no unexplained gap, the export is on `site-data`, and every #724 accep
   replaced before the next cycle (12 h apart, so one dropped cycle loses none; three in a row can).
 - **One writer is enforced twice,** by `concurrency` and by generation preconditions; a manual
   `gcloud storage cp` by a person bypasses the first and is caught by the second.
+- **More models, more chances of a lucky winner.** Seven columns at four leads and four bins give
+  many comparisons; the study's Diebold-Mariano tests (#723) correct for it, the page does not.
+- **A hurricane record is not coastal skill** (§4.11). It is reputation, cited for context.
 - **The ensemble mean is not a forecast anyone issued.** Bias and RMSE on it favour it against a
   single deterministic run; CRPS is the fair comparison and the export shows both.
 
@@ -441,6 +497,8 @@ index has no unexplained gap, the export is on `site-data`, and every #724 accep
 - **Interpolating bilinearly to the station:** a different rule per grid type (MONAN's native grid
   is not a lat-lon raster ⚠), against #724's "the same for every model".
 - **Scala Native / scala-cli for the job:** rejected by the owner (#723).
+- **Every Open-Meteo model, ensembles included:** §4.10's deferred rows; each is one `ModelId`
+  case later, with this MIP's machinery unchanged.
 
 ## 11. Open questions
 
@@ -454,6 +512,10 @@ index has no unexplained gap, the export is on `site-data`, and every #724 accep
 - **Is `min_n = 30` right?** **Default:** 30 matched pairs per row, calibrated in #723.
 - **Does the job add `verify` to the app image?** **Default:** no; the workflow builds the jar
   from the checkout, since nothing else runs it.
+- **Do the ensembles of §4.10 join?** **Default:** not in v1; a second amendment once a year of
+  deterministic scores shows which centres are worth the members.
+- **Is a one-off Isaias case study against US stations worth doing?** **Default:** no, not in this
+  job; it would be #723's or a paper's, after NHC's best track.
 - **Does marola-app need its own Zenodo DOI before the first cycle?** **Default:** no; #723 Goal 5
   and MIP-0079 handle it, and `app_sha` in every run ties the data to the code meanwhile.
 
@@ -471,6 +533,17 @@ index has no unexplained gap, the export is on `site-data`, and every #724 accep
   from 2024-03-14; WeatherNext not listed.
 - https://open-meteo.com/en/docs, 2026-10-09: `cell_selection` = `land` (default) / `sea` /
   `nearest`; response coordinates are the cell centre used.
+- https://open-meteo.com/en/docs, gfs-api, dwd-api, ukmo-api, ensemble-api, single-runs-api and
+  /en/licence, 2026-10-09: §4.10's grids, steps, lengths, licences and single-run list (most models
+  archived from 2026-04-02); ids from github.com/open-meteo/open-meteo-website at its 2026-10-09
+  tip.
+- https://www.nhc.noaa.gov/verification/pdfs/Verification_2025.pdf, 2026-10-09: §4.11's track
+  errors and quotes.
+- https://michaelrlowry.substack.com/p/isaias-to-rapidly-strengthen-to-a (2026-10-07) and
+  https://www.cbsnews.com/news/hurricane-isaias-first-storm-2026-atlantic-season-record/
+  (2026-10-09), read 2026-10-09: Isaias guidance and status.
+- https://www.hpcwire.com/aiwire/2025/12/17/noaa-deploys-new-generation-of-ai-driven-global-weather-models/,
+  2026-10-09: AIGFS's origin and claims.
 - https://aviationweather.gov/data/api/, 2026-10-09: METAR endpoint, no key, rate limits, 15 days
   of history.
 - https://mlflow.org/docs/latest/self-hosting/architecture/artifact-store/, 2026-10-09:
@@ -482,6 +555,8 @@ index has no unexplained gap, the export is on `site-data`, and every #724 accep
 ### Not checked
 
 - The Open-Meteo metadata URL pattern; Open-Meteo's licence for WeatherNext 2.
+- §4.10's model ids against the live API, and whether "the Euro AI" in Lowry's post is AIFS.
+- Isaias's outcome: landfall had not happened when this was written.
 - INMET's API, token and the meaning of its wind field; CPC's index file; MONAN's format.
 - The network calls themselves: this session's egress proxy refused Open-Meteo, aviationweather.gov
   and INMET, so no payload was fetched; task 2 records the first fixtures.
