@@ -58,17 +58,20 @@ checkout marker.
 14. **`MAROLA_CROSS_REPO_PAT`**: grant the fine-grained token Contents read and write on the new
     repo, and add the repo to the org secret's repository access
     ([CI/CD](CI-CD.md#the-maintainers-manual-settings)).
-15. **Org Project**: the repo's issues land on
+15. **Devkit bumps**: add `marola-dev/marola-<name>` to the devkit's `.github/consumers.txt`, in
+    a marola-devkit PR, so `bump-consumers` opens its pin-bump PR after each release. Nothing to
+    grant: `MAROLA_BUMP_PAT` reaches every org repo, and only marola-devkit may read it.
+16. **Org Project**: the repo's issues land on
     [Project 1](https://github.com/orgs/marola-dev/projects/1) (its auto-add workflow, or `just
     board-sync`).
 
 ## In the umbrella
 
-16. **`.gitmodules`** and the gitlink: `git submodule add
+17. **`.gitmodules`** and the gitlink: `git submodule add
     https://github.com/marola-dev/marola-<name>.git marola-<name>`, in a PR. Adding a submodule is
     the one pointer an umbrella PR commits; `pointer-sync.yml` moves it from then on.
-17. **`mkdocs/repos.yml`**: a `- name: marola-<name>` entry, so the site mounts it at
+18. **`mkdocs/repos.yml`**: a `- name: marola-<name>` entry, so the site mounts it at
     `5-Repos/marola-<name>/`.
-18. **`docs/2-Building-marola/REPOS.md`**: a routing-table row, and a row in the artifacts, pins
+19. **`docs/2-Building-marola/REPOS.md`**: a routing-table row, and a row in the artifacts, pins
     and dispatches table for each artifact it produces or reads.
-19. **`README.md`**: a row in the repo table, linking its `5-Repos/` page.
+20. **`README.md`**: a row in the repo table, linking its `5-Repos/` page.
