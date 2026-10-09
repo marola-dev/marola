@@ -14,6 +14,18 @@
     {
       "name": "Soares da Silva Junior, Rob Kler",
       "orcid": "0009-0003-3102-4996"
+    },
+    {
+      "name": "Oliveira, Elisa",
+      "orcid": "0009-0002-9844-7865"
+    },
+    {
+      "name": "Almeida, Leonardo Ramos",
+      "orcid": "0009-0004-8570-4601"
+    },
+    {
+      "name": "Ribeiro, Pablo",
+      "orcid": "0009-0005-3553-8323"
     }
   ],
   "license": "mit",
@@ -21,18 +33,27 @@
   "language": "eng",
   "keywords": [
     "ocean",
-    "coastal",
-    "beaches",
-    "bathing water quality",
-    "balneabilidade",
-    "swimming safety",
+    "coastal oceanography",
+    "marine forecasting",
     "wave forecasting",
     "sea surface temperature",
+    "bathing water quality",
+    "recreational water quality",
+    "balneabilidade",
+    "enterococci",
+    "beach safety",
+    "swimming safety",
+    "sanitation",
+    "Brazil",
+    "Santa Catarina",
+    "Rio de Janeiro",
+    "Bahia",
     "open data",
+    "open science",
+    "citizen science",
+    "decision support",
     "OpenStreetMap",
     "Open-Meteo",
-    "Brazil",
-    "citizen science",
     "large language models",
     "retrieval-augmented generation",
     "research software"
@@ -94,7 +115,43 @@
       "relation": "references",
       "scheme": "doi",
       "resource_type": "software"
+    },
+    {
+      "identifier": "10.5281/zenodo.7970649",
+      "relation": "references",
+      "scheme": "doi",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://www.openstreetmap.org",
+      "relation": "references",
+      "scheme": "url",
+      "resource_type": "dataset"
+    },
+    {
+      "identifier": "https://balneabilidade.ima.sc.gov.br/",
+      "relation": "references",
+      "scheme": "url",
+      "resource_type": "dataset"
+    },
+    {
+      "identifier": "https://www.inea.rj.gov.br/ar-agua-e-solo/balneabilidade-das-praias/",
+      "relation": "references",
+      "scheme": "url",
+      "resource_type": "dataset"
+    },
+    {
+      "identifier": "https://github.com/getkyo/kyo",
+      "relation": "requires",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/ollama/ollama",
+      "relation": "requires",
+      "scheme": "url",
+      "resource_type": "software"
     }
   ],
-  "notes": "Related work: WW3 GPU Lab (doi:10.5281/zenodo.23221351), a C++/Kokkos port of WAVEWATCH III kernels by the same author, is the groundwork for running a spectral wave model inside marola in the future (MIP-0052). Each repository listed under related works is MIT-licensed and will carry its own DOI once it is archived."
+  "notes": "Related work: WW3 GPU Lab (doi:10.5281/zenodo.23221351), a C++/Kokkos port of WAVEWATCH III kernels by the same author, is the groundwork for running a spectral wave model inside marola in the future (MIP-0052). Data sources: beaches from OpenStreetMap (ODbL); sea and weather forecasts from the Open-Meteo Weather API (doi:10.5281/zenodo.7970649); bathing-water bulletins from IMA/SC (Santa Catarina), INEA (Rio de Janeiro) and INEMA (Bahia, http://balneabilidade.inema.ba.gov.br/), assessed against CONAMA Resolution 274/2000. Each repository listed under related works is MIT-licensed and will carry its own DOI once it is archived."
 }
