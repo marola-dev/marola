@@ -115,7 +115,7 @@ flowchart TD
   M0074["MIP-0074"]:::draft
   M0076["MIP-0076"]:::implemented
   M0084["MIP-0084"]:::accepted
-  M0085["MIP-0085"]:::draft
+  M0085["MIP-0085"]:::accepted
   M0025 --> M0048
   M0033 --> M0036
   M0034 --> M0044
