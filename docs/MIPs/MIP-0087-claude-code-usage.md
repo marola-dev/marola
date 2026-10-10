@@ -213,7 +213,17 @@ A page in the umbrella, H1 "Claude Code: CLI or Project", under 150 lines:
 5. **Per repository**: the §3.1 table, so a contributor (or the coordinator) knows before
    starting whether a thread can finish the job.
 6. **graphify**: §5.5's setup for both surfaces and three example queries.
-7. **Re-verify**: the commands of §7, with the date this page was last checked.
+7. **Reading and writing**: two habits the page recommends by name.
+   - *Reading a repo you do not know*: ask `eli5` (the umbrella's skill) for the part of marola
+     you need, after a `graph query` (§5.5) has pointed it at the right files; `eli5` reads the
+     checkout before it explains, and graphify keeps it from reading the wrong tree.
+   - *Writing anything a person will read* (a doc, a news post, a PR body, a MIP): run
+     `humanizer` on English and `humanizar` on Portuguese before it ships; marola-site's
+     `ptbr-humanizer` for the site's visitor copy. Today `humanizer` comes from the devkit plugin
+     (CLI only) and `humanizar` only from ww3-gpu's `.claude/skills/`, so a CLI session in a marola
+     repo has no Portuguese filter at all; a Project thread has both, because it clones ww3-gpu.
+     A marola-voiced `humanizar` in the devkit plugin is marola-dev/marola-devkit#102.
+8. **Re-verify**: the commands of §7, with the date this page was last checked.
 
 ### 5.2 `AGENT-SKILLS.md` and `DEV-FLOW.md`
 
@@ -281,6 +291,8 @@ devkit) compares the inventory with each repo's `.claude/settings.json`, `.mcp.j
 | Subagents | marola-site `news-fact-check`, `news-copy-review`; marola-app `jar-verifier`; devkit `mip-reviewer`, `mip-claims-auditor` | `.claude/agents/`, the plugin | **required** where AGENTS.md names them (a news post's two reviews, a Kyo API check) | yes | repo agents yes; the plugin's two no |
 | MCP | marola-site `playwright`, `figma`; marola-app `marola` (its own tool server), `context7` | `.mcp.json` | recommended | yes (Figma signs in with OAuth) | no; use Playwright from Node |
 | Rules | umbrella `docs.md`, marola-app `scala.md` | `.claude/rules/` | **required** (path-scoped) | yes | loaded as `CLAUDE.md` context (inferred) |
+| Writing | `humanizer` (en, devkit plugin), `humanizar` (pt-BR, ww3-gpu only today; marola-dev/marola-devkit#102), `ptbr-humanizer` (marola-site) | plugin, `.claude/skills/` | **required** before publishing prose | `humanizer` everywhere, `humanizar` only in ww3-gpu | all three |
+| Reading | `eli5` with a `graph query` first | umbrella `.claude/skills/` | recommended for an unfamiliar repo | in the umbrella | yes |
 | Built-in | `code-review` (`/code-review ultra` = ultrareview), `simplify`, `security-review`, `loop` | Claude Code | on request | yes | `code-review` locally, no ultra |
 | Tooling | graphify (`graph`), `wiring`, `route` (MIP-0084) | the devkit | recommended | `nix develop` | §5.5's venv until the bundle |
 | Settings | `attribution`, the permission allowlist and deny list, `statusLine` | each repo's `.claude/settings.json` | **required** | yes | no: write the three trailers by hand |
@@ -330,6 +342,10 @@ None.
 - Should the account carry marola-devkit's skills at all before MIP-0084 lands? **Default:** keep
   `mip` and `mip-tasks`, refreshed from the devkit tag, because threads write MIPs often; drop them
   when the vendored copies arrive. Hoffmann decides.
+- Is a "Claude" page on the website worth it, since Claude Code is the coding agent marola is
+  most often built with? **Default:** not on marola.dev, whose readers are swimmers and
+  volunteers; `CLAUDE-CODE.md` on docs.marola.dev is the contributor-facing page, and a short
+  "how marola is built" paragraph on `about.html` can link to it. To be discussed; Hoffmann decides.
 - Is a paid ultrareview part of any gate? **Default:** no, on request only, like the Gemini review
   (MIP-0072).
 
