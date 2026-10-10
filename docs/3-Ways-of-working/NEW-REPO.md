@@ -86,8 +86,8 @@ checkout marker.
     other side in the same change: otherwise `wiring --check` turns every umbrella PR red.
 20. **`README.md`**: a row in the repo table, linking its `5-Repos/` page.
 21. **`.graphifyignore`**: the new repo's vendored or generated paths, under `marola-<name>/`
-    unless `**/vendor/**` already matches them. marola-site's vendored mapbox-gl alone was 6,949
-    of 13,192 nodes.
+    unless a `**/` line already matches them (vendored code and skills, tests, fixtures, JSON).
+    marola-site's vendored mapbox-gl alone was 6,949 of 13,192 nodes.
 22. **Check once**, in a `--recurse-submodules` checkout inside `nix develop`:
     `just wiring docs/2-Building-marola/REPOS.md` leaves no diff,
     `wiring --check docs/2-Building-marola/REPOS.md` passes, `just graph build` lists the repo in

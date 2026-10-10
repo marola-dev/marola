@@ -163,6 +163,11 @@ Every repo gets it with its next devkit bump.
 - Never: graphify's installers or hooks; committing any of its output; reading `GRAPH_REPORT.md`
   (about 21k tokens) into context.
 
+> **Revised (2026-10-10):** `graph build` is code-only and pruned (marola-dev/marola-devkit#82): no
+> `update .` Markdown pass, and nodes without a source file and self-loops are dropped. The umbrella
+> also ignores vendored skills, tests, fixtures and JSON (#767). On 8 symbol questions: 6,441 nodes,
+> 1/8 right first, 53% noise before; 1,598 nodes, 3/8, 0% after. Queries need the code's identifiers.
+
 ### 5.3 The plugin skill
 
 `plugins/marola-devkit/skills/routing/SKILL.md`, a routing rule rather than a tutorial:
