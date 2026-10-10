@@ -19,7 +19,7 @@
 
 | | |
 |---|---|
-| **Manually reviewed** | no |
+| **Manually reviewed** | yes — Bruno Guilhermo de Barros Valério, 2026-10-10 |
 | **Written by** | Bruno Guilhermo de Barros Valério, with Claude Code (Opus 5.5) |
 | **Tasks** | `MIP-0085.tasks.md` |
 | **Tests** | `doc_code --self-test`, `decisions --self-test`, `route_test.py`'s new names, the 30-question `route bench`, the §5.6 spike report |
