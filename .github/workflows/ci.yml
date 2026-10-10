@@ -29,6 +29,7 @@ jobs:
       nix: ${{ steps.filter.outputs.nix }}
       agents: ${{ steps.filter.outputs.agents }}
       wiring: ${{ steps.filter.outputs.wiring }}
+      graph: ${{ steps.filter.outputs.graph }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -62,6 +63,11 @@ jobs:
               - 'wiring.allow'
               - 'scripts/**'
               - '.claude/settings.json'
+            graph:                   # the gitlinks, the devkit pin and graphify's ignore list
+              - &submodules [marola-site, marola-corpus, marola-ml, marola-app, marola-oods]
+              - 'flake.lock'
+              - '.graphifyignore'
+              - '.github/workflows/ci.yml'
             docs:
               - 'docs/**'
               - 'mkdocs/**'
@@ -74,11 +80,7 @@ jobs:
               - 'scripts/site_links_check.py'
               - 'scripts/mkdocs.sh'
               - '.gitmodules'
-              - 'marola-site'
-              - 'marola-corpus'
-              - 'marola-ml'
-              - 'marola-app'
-              - 'marola-oods'
+              - *submodules
 
   # README badges: this run's green steps, plus the Scala and Python line counts, counted in the
   # checked-out submodules (MIP-0070 §5.4: the umbrella runs repo_stats.py over every repo).
@@ -161,6 +163,40 @@ jobs:
             echo "::warning::no live sitemap fetched; the dropped-URL check is skipped"
             python3 scripts/site_links_check.py mkdocs/generated-docs
           fi
+
+  # MIP-0076 §5.4: a smoke test of each pointer move and devkit/graphify bump, and the graph as an
+  # artifact for a session without Nix. Never committed, never deployed.
+  graph:
+    needs: changes
+    if: needs.changes.outputs.graph == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
+      - uses: DeterminateSystems/nix-installer-action@v23
+      # MIP-0076 §8's open item; without it graph.sh runs with no network isolation.
+      - name: Does unshare -rn work on this runner?
+        run: |
+          if unshare -rn true; then echo "unshare -rn: available"; else echo "unshare -rn: not permitted"; fi
+      # `graph`, not `just graph`: that recipe is in .devkit/devkit.just, a link only the default shell makes.
+      - name: graph build on the pinned submodule commits
+        env:
+          XDG_CACHE_HOME: ${{ runner.temp }}/graph-cache
+        run: nix develop .#lint --command graph build
+      # graph.sh writes to $XDG_CACHE_HOME/marola-graph/<checkout dir name>, the repo's name here.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: graph
+          path: |
+            ${{ runner.temp }}/graph-cache/marola-graph/${{ github.event.repository.name }}/graph.json
+            ${{ runner.temp }}/graph-cache/marola-graph/${{ github.event.repository.name }}/build.json
+          retention-days: 7
+          if-no-files-found: error
 
   # Free, fast, and independent of the JVM build — the same gates as `just quality-other`, split
   # across the devkit's reusable workflows plus the nix-only checks below. The tool versions are
