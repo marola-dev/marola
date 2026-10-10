@@ -24,7 +24,7 @@
 | **Tasks** | `MIP-0084.tasks.md` |
 | **Tests** | `route_test.py` (§7), `session-check.sh --self-test`, `route bench` in the bundle job |
 | **Spec-kit** | none |
-| **Issues** | not filed — Draft |
+| **Issues** | parent #776; marola-dev/marola-devkit#87, marola-dev/marola-devkit#88, marola-dev/marola-devkit#89, marola-dev/marola-devkit#90 (1–4), #777, #778 (5, 6), marola-dev/marola-app#94, marola-dev/marola-site#110, marola-dev/marola-corpus#15, marola-dev/marola-ml#39, marola-dev/marola-oods#33 (7–11), #779 (12) |
 
 ## 1. Summary
 
