@@ -69,6 +69,7 @@ quality-other:
     scripts/gh-billing.sh --self-test
     scripts/site-data-push.sh --self-test
     scripts/pointer-sync.sh --self-test
+    scripts/pointer-sync-merge.sh --self-test
     python3 scripts/mip_graph.py --self-test
     python3 scripts/citation.py --self-test
     scripts/release.sh --self-test

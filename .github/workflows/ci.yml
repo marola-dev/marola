@@ -171,6 +171,7 @@ jobs:
         scripts/gh-billing.sh --self-test
         scripts/site-data-push.sh --self-test
         scripts/pointer-sync.sh --self-test
+        scripts/pointer-sync-merge.sh --self-test
         scripts/prepare-docs.sh --self-test
         scripts/fetch-api-docs.sh --self-test
         node scripts/docs_redirect_check.js

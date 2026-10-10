@@ -1,0 +1,57 @@
+# pointer-sync-merge — squash-merge pointer-sync.yml's rolling PR once it is green and in scope (#739),
+# as the marola-pointer-sync App: main-rule's pull-request-only bypass actor, so no review is needed.
+name: pointer sync merge
+
+on:
+  workflow_run:
+    # By `name:`, every workflow that runs on the sync PR. The script waits until all of their
+    # checks are done, so whichever finishes last merges.
+    workflows: [CI, PR body]
+    types: [completed]
+    branches: [chore/pointer-sync]
+  schedule:
+    - cron: "50 * * * *" # catches a missed trigger, e.g. gemini.yml finishing last; off :00 (CI-CD.md)
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pointer-sync-merge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      # main's script, never the PR's: the script only fetches the PR's objects to diff them.
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/create-github-app-token@v3
+        id: app
+        with:
+          app-id: ${{ vars.POINTER_SYNC_APP_ID }}
+          private-key: ${{ secrets.POINTER_SYNC_APP_KEY }}
+          # A literal: a schedule event has no github.event.repository, and with owner set an empty
+          # list would mean every repo the App is installed on.
+          owner: marola-dev
+          repositories: marola
+          permission-contents: write
+          permission-pull-requests: write
+          permission-checks: read
+          permission-statuses: read
+
+      - name: Merge the sync PR when green and in scope
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          # The App token sees marola only; this reads the submodule repos' default branches.
+          GH_READ_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          # Empty outside workflow_run: the script then judges whatever the head is now.
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: scripts/pointer-sync-merge.sh --repo "$REPO" --sha "$SHA"

@@ -67,6 +67,8 @@ which checkout each recipe needs.
   default branch's tip and keeps one rolling PR open on `chore/pointer-sync` (daily, and on a
   `submodule-updated` or `submodule-docs-updated` dispatch). Never commit a pointer change by hand,
   and never commit inside a submodule from the umbrella's own branch.
+  `pointer-sync-merge.yml` merges that PR itself once it is green and changes only gitlinks and
+  REPOS.md's wiring table (#739); anything else waits for a person.
 - **A pointer move never makes a release or a Zenodo version** (hard rule, MIP-0079). A release
   needs a change outside the gitlinks since the previous `v*` tag; `scripts/release.sh --guard`
   enforces it in `just release` and again in `release.yml`.
