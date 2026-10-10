@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted (2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session) |
 | **Author** | Bruno Guilhermo de Barros Valério |
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev-loop tooling, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
