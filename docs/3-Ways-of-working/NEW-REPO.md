@@ -30,8 +30,9 @@ the repo on GitHub, and every setting under "GitHub settings", is a human's act.
      `agents-check`;
    - `pr.yml`: `pr-body` and `ci-short-circuit`;
    - `labels.yml`: `labels-sync`, on dispatch;
-   - `notify-umbrella.yml`: on a push to `main` touching `README.md` or `docs/**`, with the
-     `MAROLA_CROSS_REPO_PAT` secret.
+   - `notify-umbrella.yml`: on every push to `main`, no `paths:`, with the `MAROLA_CROSS_REPO_PAT`
+     secret; it sends `submodule-updated`, plus `submodule-docs-updated` when `README.md` or
+     `docs/**` changed.
 8. **`.github/ISSUE_TEMPLATE/`** and **`.github/PULL_REQUEST_TEMPLATE.md`**: copied from the
    devkit at the pinned tag.
 9. **`README.md`**, the landing: what the repo is with a status line, try it, the repo map, its
