@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (2026-10-03, maintainer review on #635) — `Tasks: docs/MIPs/MIP-0076.tasks.md` ([`MIP-0076.tasks.md`](./MIP-0076.tasks.md)) |
+| **Status** | Implemented (2026-10-10) — all 18 rows of [`MIP-0076.tasks.md`](./MIP-0076.tasks.md) merged (#660): marola-dev/marola-devkit#33 and marola-dev/marola-devkit#58 (1), marola-dev/marola-devkit#59 (2), marola-dev/marola-devkit#32 (3), marola-dev/marola-devkit#60 (4, v0.7.0), #737 (5), marola-dev/marola-app#76, marola-dev/marola-site#105, marola-dev/marola-corpus#10, marola-dev/marola-ml#33, marola-dev/marola-oods#28 (6–10), #738 (11), marola-dev/marola-devkit#61 (12), marola-dev/marola-devkit#62 (13), marola-dev/marola-devkit#67 (14, v0.8.0), #750 (15), #753 (16), #755 (17), the PR closing #666 (18). Found and fixed on the way: marola-dev/marola-devkit#64 (`MAROLA_BUMP_PAT`), marola-dev/marola-devkit#66 (a multi-line marketplace ref), marola-dev/marola-devkit#70 and marola-dev/marola-devkit#71 (array-built dispatch types, v0.8.1). Docs for a new repo and for a graphify update: #757, marola-dev/marola-devkit#73. Accepted 2026-10-03, maintainer review on #635 |
 | **Author** | Claude (Opus 5.5), from the maintainer's graphify question and two offline spikes (2026-10-02, 2026-10-03) |
 | **Created** | 2026-10-03 |
 | **Phase** | None: dev-loop tooling, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
@@ -13,7 +13,7 @@
 | **Depends on** | MIP-0074: `REPOS.md` (task 27) and the restructured docs. Uses the devkit's existing nixpkgs lock, which already carries `graphify` 0.9.66. No Phase 1 gate. Creates no paid resource, and §5.2 rules out a model call on the tool's own path |
 | **Blocked by** | 0074 |
 | **Risk** | The graph half goes unused: it answers only symbol questions, 3 of 8 in both spikes, and loses to `git grep` whenever the agent knows the keyword. The wiring table carries most of the value |
-| **Cost so far** | — |
+| **Cost so far** | ~$151 est. across 24 PRs: each commit's `Cost:` trailer counted once (a stacked PR's commit list repeats the rows below it), nearly all `cost-split --estimate-commit` diff-size estimates |
 
 ## 1. Summary
 
