@@ -24,7 +24,7 @@
 | **Tasks** | [`MIP-0086.tasks.md`](./MIP-0086.tasks.md) |
 | **Tests** | `bot-token`'s live self-test, `merge-key-check --self-test`, `ruleset-sync --self-test` (org-wide extra), the leak drill (§7) |
 | **Spec-kit** | none |
-| **Issues** | not filed yet. Rows reuse the open issues named in the tasks file; only rows 1, 3, 10 and 12 are new |
+| **Issues** | not filed yet. Rows reuse the open issues named in the tasks file; only rows 1, 3, 10, 12 and 16 are new |
 
 ## 1. Summary
 
@@ -136,22 +136,27 @@ in a job that runs only `main`'s script.
 *Installed on* says which repos a token can act on; *readable by* says which repos' workflows can
 mint one. They are independent: `MERGE_BOT_KEY` in marola mints a token for marola-ml because the
 App is installed there, so #740's central job merges in any pip repo without the key leaving marola.
-**A key may be readable by a repo only if its App is already installed on that repo**; then a leak
-from that repo reaches nothing a leak from any other would not. `marola-pr-bot` meets this
-everywhere; `marola-merge-bot` is kept to the two repos that run merge jobs.
+**A key may be readable by every repo only if its App is installed on every repo**; then a leak
+from any one reaches nothing a leak from another would not. Otherwise only the repos that run its
+jobs read it: `marola-pr-bot` is readable everywhere, `marola-merge-bot` by marola and
+marola-devkit alone, although it is installed on neither marola-devkit nor any non-consumer.
 
 ### 5.4 Minting: the devkit's `bot-token` action
 
 `marola-dev/marola-devkit/.github/actions/bot-token@vX.Y.Z`, a composite action over
 `actions/create-github-app-token`:
 
-- inputs `bot: pr | merge`, `repositories:` (required, never defaulted: with `owner:` set and no
-  list, the token covers every repo the App is installed on) and `permission-*`;
+- inputs `app-id` and `private-key` (a composite action cannot read secrets, so the caller passes
+  the bot's), `repositories:` (required, never defaulted: with `owner:` set and no list, the token
+  covers every repo the App is installed on) and `permission-*`;
 - sets `git config user.name "<slug>[bot]"` and `user.email "<user-id>+<slug>[bot]@users.noreply.github.com"`,
   the user id read from `GET /users/<slug>[bot]`;
-- outputs `token`.
+- outputs `token`, `app-slug`, `installation-id`, `user-name`, `user-email`.
 
-Every migrated workflow uses it, so a pin, key name or identity change is one devkit release.
+Every migrated workflow uses it, so a pin, key name or identity change is one devkit release;
+`release.py --consumer` moves its `@v` pin like a reusable workflow's. The two reusable workflows
+(`gemini-review`, `notify-umbrella`) call `create-github-app-token` directly: a reusable workflow's
+local `./.github/actions/…` would resolve in the caller's checkout.
 
 ### 5.5 A token never carries more than its job needs
 
@@ -161,15 +166,20 @@ Only `bump-consumers` and `bump-merge` mint with Workflows write.
 
 ### 5.6 `MERGE_BOT_KEY` appears only in allowlisted jobs
 
-A job that reads it checks out `main` and runs checked-in scripts only: no `nix develop`, no package
-install, no LLM. The devkit's `merge-key-check` (run by `static-ci`) fails when `MERGE_BOT_KEY` is
-referenced in a workflow file outside its allowlist (`pointer-sync-merge.yml`, the deps-merge
-workflow, `bump-consumers.yml`, the bump-merge workflow).
+A job that reads it checks out the repo and runs checked-in scripts only: no `nix`, no package
+install, no download-and-run, no LLM, and no action beyond checkout, artifact download and the
+token mint. The devkit's `merge-key-check` (`scripts/merge_key_check.py`, run by each repo's
+quality gate) fails when a workflow outside `.github/merge-key-allowlist` names `MERGE_BOT_KEY`, or
+when a job that names it breaks those rules. So `bump-consumers.yml` splits in two: a `prepare` job
+with no key clones each consumer, moves the pins, runs `nix flake update` and `wiring`, and uploads
+one patch per repo; a `publish` job with the key applies each patch, pushes and opens the PR.
 
 ### 5.7 Bypass
 
-`ruleset-sync`'s manifest gains `marola-merge-bot` as an org-wide pull-request-only bypass actor
-for every consumer, replacing marola's per-repo extra from marola-dev/marola-devkit#74.
+`bypass-extras.json` gains an `@consumers` key, applied by `ruleset-sync` to every repo in
+`consumers.txt`, holding `marola-merge-bot` as a pull-request-only bypass actor; it replaces
+marola's per-repo extra from marola-dev/marola-devkit#74. A new consumer needs no ruleset entry of
+its own.
 `marola-pr-bot` is never a bypass actor.
 
 ### 5.8 One kill switch
@@ -204,13 +214,18 @@ Automation commits keep the org's trailers (`Cost: n/a (automation)`), now autho
 
 ### 5.12 Files touched
 
-- marola-devkit: `.github/actions/bot-token/action.yml`, `bin/merge-key-check`,
-  `ruleset-sync`'s manifest, `.github/workflows/{gemini-review,notify-umbrella,bump-consumers}.yml`
-- marola: `.github/workflows/{pointer-sync,pointer-sync-merge,ci}.yml`,
+- marola-devkit: `.github/actions/bot-token/action.yml`, `.github/workflows/bot-token-test.yml`,
+  `scripts/merge_key_check.py`, `.github/merge-key-allowlist`, `scripts/release.py` (the action's
+  pin), `scripts/ruleset-sync.sh` and `.github/rulesets/bypass-extras.json` (an `@consumers` key),
+  `scripts/bump-consumers.sh`, `.github/workflows/{gemini-review,notify-umbrella,bump-consumers,release}.yml`
+- marola: `.github/workflows/{pointer-sync,pointer-sync-merge,ci}.yml`, `scripts/pointer-sync-merge.sh`
+  (the `hold` label), `.github/merge-key-allowlist`, `justfile` (`quality-other` runs `merge-key-check`),
   `docs/3-Ways-of-working/{CI-CD,NEW-REPO}.md`, `AGENTS.md` (the devkit paragraph)
 - marola-app: `.github/workflows/{ci,docker-smoke,scala-steward}.yml`
 - marola-ml: `.github/workflows/compile-prompt.yml`
-- agent-skills: `.github/workflows/refresh.yml`
+- agent-skills: `.github/workflows/{refresh,ci}.yml`
+- every `notify-umbrella` caller (marola-app, marola-site, marola-corpus, marola-ml, marola-oods,
+  marola-devkit): `.github/workflows/notify-umbrella.yml` passes `pr_bot_key` instead of the PAT
 
 ## 6. Scoring / safety impact
 
