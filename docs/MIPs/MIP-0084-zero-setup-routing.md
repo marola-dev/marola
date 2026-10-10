@@ -19,7 +19,7 @@
 
 | | |
 |---|---|
-| **Manually reviewed** | no |
+| **Manually reviewed** | yes — Bruno Guilhermo de Barros Valério, 2026-10-10 |
 | **Written by** | Bruno Guilhermo de Barros Valério, with Claude Code (Opus 5.5) |
 | **Tasks** | `MIP-0084.tasks.md` |
 | **Tests** | `route_test.py` (§7), `session-check.sh --self-test`, `route bench` in the bundle job |
@@ -277,10 +277,12 @@ None. No code path in marola-app changes.
   marker becomes `"enabledPlugins": {"marola-devkit@marola-devkit": false}` in user settings, read by
   the hook from the file.
 - Do project hooks run before the folder-trust dialog is accepted? The docs disagree with each other.
-  **Default:** verify live; the hook is read-only either way.
+  **Decided 2026-10-10:** either answer is fine. Someone who has not trusted the folder may be asked
+  later or never; the hook is read-only either way, so nothing is verified for this.
 - Can a claude.ai/code session started on marola-app fetch the umbrella's branch through its git
-  proxy? **Default:** verify live in task 6; if not, a session on a submodule answers from wiring in
-  its own checkout and says the bundle is unreachable.
+  proxy? **Decided 2026-10-10:** nice to have, not a blocker: the umbrella is the workspace most
+  sessions start in. Task 6 tries it once; if it fails, `route` says the bundle is unreachable and
+  points at `git grep`.
 - Which `--scope` should the install command use? **Default:** the person's user scope (the
   default), since the project scope writes the committed settings file.
 - `AGENT-SKILLS.md` §2 says a declared plugin is installed for whoever accepts the trust dialog. That
@@ -309,8 +311,8 @@ None. No code path in marola-app changes.
 
 ### Not checked
 
-- Whether hooks see user-settings `env`, the trust-dialog ordering, and the cloud git proxy's reach
-  (§11).
+- Whether hooks see user-settings `env`, the trust-dialog ordering (decided not to matter), and the
+  cloud git proxy's reach (§11).
 - A ruleset whose bypass list holds only the GitHub Actions app: assumed from GitHub's rulesets
   feature, not tried on this org.
 - That Zenodo would mint a version for a published release made by CI: MIP-0079's rule stands
