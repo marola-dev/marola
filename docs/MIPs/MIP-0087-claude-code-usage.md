@@ -6,7 +6,7 @@
 | **Author** | Hoffmann |
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev-loop guidance, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
-| **Related** | MIP-0011 (the Claude Code practices this repo enforces through `.claude/settings.json`), MIP-0080 (`skills.lock`), MIP-0084 (vendoring the `routing` skill so sessions without the plugin reach it), `docs/3-Ways-of-working/AGENT-SKILLS.md` §2 (superpowers), `DEV-FLOW.md`, #731/#732 (the project snapshot) |
+| **Related** | MIP-0076 (graphify and `graph.sh`), MIP-0011 (the Claude Code practices this repo enforces through `.claude/settings.json`), MIP-0080 (`skills.lock`), MIP-0084 (vendoring the `routing` skill so sessions without the plugin reach it), `docs/3-Ways-of-working/AGENT-SKILLS.md` §2 (superpowers), `DEV-FLOW.md`, #731/#732 (the project snapshot) |
 | **Effort** | S — one new ways-of-working page, a correction to `AGENT-SKILLS.md`, and three settings a person changes on claude.ai |
 | **Gain** | `infra/dev-loop` — contributors stop assuming a Project thread has the plugins, hooks and attribution the CLI has, and pick the surface that fits the job |
 | **Effort vs Gain** | `cheap win` — the facts are already checked (§4); the work is writing them down where a contributor looks |
@@ -21,7 +21,7 @@
 |---|---|
 | **Manually reviewed** | no |
 | **Written by** | Hoffmann, with Claude Code (a Claude Project thread) |
-| **Tasks** | none needed — three rows in §5.4, each one PR or one setting |
+| **Tasks** | none needed — four rows in §5.4, each one PR or one setting |
 | **Tests** | none — a docs page; `just quality`'s `docs-lint` and the strict docs build cover it |
 | **Spec-kit** | none |
 | **Issues** | not filed — Draft |
@@ -34,8 +34,9 @@ coordinator that starts one cloud thread per task, every marola repo cloned side
 not load the same things. A Project thread loads every repo's `CLAUDE.md` and `.claude/skills/`, but
 not the plugins, hooks, permissions or attribution that each repo's `.claude/settings.json`
 declares, and it cannot run `/ultrareview`. This MIP writes that down as
-`docs/3-Ways-of-working/CLAUDE-CODE.md`, corrects `AGENT-SKILLS.md`, and turns on the account-level
-plugins a Project can actually use.
+`docs/3-Ways-of-working/CLAUDE-CODE.md`, with which repo's work a thread can finish (most of
+marola-site and the umbrella; none of marola-app's builds) and how to run graphify in each surface,
+corrects `AGENT-SKILLS.md`, and turns on the account-level plugins a Project can actually use.
 
 ## 2. Motivation
 
@@ -83,6 +84,27 @@ core is this table (every row checked in §4; "inferred" marks the ones that wer
 | **Recurring work** | `/loop`, cron on the host | routines (triggers) |
 | **Cost accounting (`cost-split`)** | reads `~/.claude/projects` on the machine | the logs live in a container that is reclaimed; `Cost:` is an estimate (inferred) |
 | **Shared files and outputs** | the checkout | `/mnt/project-files`, artifacts, the thread |
+| **graphify** (`graph build`/`query`, MIP-0076) | from `nix develop` (nixpkgs 0.9.66), cache under `~/.cache` | not on `PATH`, and no `nix develop`; a scratchpad venv with PyPI `graphifyy` runs the devkit's `graph.sh` (§5.5) |
+| **Docker, GHCR, the app image** | yes | the daemon starts by hand, but GHCR answers `unauthorized` and Docker Hub 429: no pinned image |
+| **Live data (Open-Meteo, Overpass, agencies)** | yes | Open-Meteo fails TLS at the proxy; treat every live data path as CLI work |
+
+### 3.1 Per repository
+
+What a Project thread can finish on its own, from the checks in §4.4. "Gates" means the gates ran
+in a thread; CI still runs the full set on the PR.
+
+| Repo | Good fit for a Project thread | Needs the CLI | Gates that run in a thread |
+|---|---|---|---|
+| marola-site | **most work**: copy, i18n catalogs, news posts, `style.css`, `app.js`/`flow.js` changes, the chat widget, `about`/`support`/`news` pages, the before/after screenshots its AGENTS.md requires (Playwright's Chromium is installed; the map on a stand-in style, as AGENTS.md allows). The `marola-site-*` folders in the project files are earlier threads' screenshots | `just site-build` (Docker and the pinned image), the Brazilian proxy node (`ops/br-proxy/`), anything that needs a real Mapbox token | `node scripts/site_check.js` (ok), `python3 scripts/i18n_bundle.py --check`, `python3 scripts/news_build.py --check` (all ok) |
+| marola (umbrella) | **most work**: MIPs and `.tasks.md`, ways-of-working docs, research, issue drafting, pointer-sync review, cross-repo plans; the submodules initialise in seconds | `just release`, `just docs-serve` previews | `docs_lint.py` from the devkit checkout, `mip_graph.py --check` (ok); the strict docs build in CI |
+| marola-corpus | adding or fixing a document (the `corpus-doc` skill): fetch the source, write the Markdown, update `docs/4-reference.md` | trying a document with the app (`just ask`, which needs marola-app and Ollama) | `scripts/corpus-check.sh` (ok) |
+| marola-oods | docs and the tree check; data lands only from marola-app's ingest | nothing an agent should run here | `scripts/oods-tree-check.sh` (ok) |
+| marola-devkit | scripts and their `--self-test`, plugin skills, reusable workflows, docs | anything that needs `nix build` or a self-hosted runner | `bash tests/self-tests.sh` (all ok); `shellcheck` is missing |
+| agent-skills | the audit pages, `data/*.json`, reviewing the queue | `just refresh` with a `GH_TOKEN` of its own | `refresh.py --self-test` (ok) |
+| marola-ml | `--self-test` changes, docs, the benchmark gate's logic | training, `just benchmark`, `compile-prompt` (Ollama, GPU, paid calls, the app image) | `benchmark_gate.py --self-test` (ok) |
+| marola-app | **reading and design only**: tracing code (graphify, `git grep`), a MIP's §5, review answers, docs pages; small Scala edits only if CI is the test | anything that compiles: the thread has JDK 21 (Kyo needs 25), no `sbt`, Maven Central answers 429, no Ollama | none locally; CI |
+| awesome-ocean-science, awesome-open-climate-science, open-sustainable-technology, `.github` | **all of it**: list entries, issue forms, org profile | nothing | their CI |
+| ww3-gpu | the Wave Forecaster project's repo; here only for `[A2A]` messages | Fortran, Kokkos, CUDA, the regtests | — |
 
 ## 4. Data sources and dependencies reviewed
 
@@ -136,6 +158,28 @@ core is this table (every row checked in §4; "inferred" marks the ones that wer
   `docs/ARCHITECTURE.md` and Azure rules; the repo's `docs/MIPs/TEMPLATE.md` says "this file is the
   shape, and it wins", which is what this MIP followed.
 
+### 4.4 Toolchains and network in a Project thread (2026-10-10, 20:45–20:50 UTC)
+
+- `java -version`: OpenJDK 21.0.12; no `sbt` on `PATH`; `https://repo1.maven.org/maven2/` → 429.
+- `dockerd` starts when run by hand; `docker pull` of marola-site's pinned
+  `ghcr.io/marola-dev/marola-app:jvm-0c1e050@sha256:3ddf…` → `unauthorized`; `alpine:3` from
+  Docker Hub → 429.
+- `curl` to `api.open-meteo.com` → TLS `SSL_ERROR_SYSCALL`; `api.mapbox.com` and `huggingface.co` → 200.
+- Node 22, Python 3 and Playwright's Chromium (`/opt/pw-browsers`) are installed.
+- Ran and passed: marola-site `node scripts/site_check.js`, `i18n_bundle.py --check`, `news_build.py --check`; marola-corpus `scripts/corpus-check.sh`;
+  marola-oods `scripts/oods-tree-check.sh`; marola-devkit `bash tests/self-tests.sh`; agent-skills
+  `scripts/refresh.py --self-test`; marola-ml `scripts/benchmark_gate.py --self-test`.
+- graphify: `python3 -m venv` + `pip install graphifyy` → 0.9.84 (PyPI is reachable). The devkit's
+  `scripts/graph.sh build` on marola-site took 30 s (7,294 nodes, most of them the vendored Mapbox
+  GL JS); `graph query "where are the wind particles drawn on the map"` found `particles()` at
+  `site/static/flow.js:206`. In the umbrella, `graph build` first refused (`uninitialised
+  submodule(s)`); after `git submodule update --init` (7 s) it built in 6 s (1,760 nodes) and
+  `graph query "where is the swimability score computed"` found `Swimability.score` in
+  `marola-app/core/…/scoring/Swimability.scala:216`.
+- After the container resumed at 20:45, `skill-creator:skill-creator` appeared in the skill list and
+  under `~/.claude/plugins/cache/claude-plugins-official/`, while `ListPlugins` still returned
+  nothing and superpowers did not appear. What installed it was not established.
+
 **Pick:** no new dependency. Superpowers comes from the claude.ai directory for Projects and from
 `claude-plugins-official` for the CLI, the same upstream (`obra/superpowers`).
 
@@ -164,7 +208,10 @@ A page in the umbrella, H1 "Claude Code: CLI or Project", under 150 lines:
    `/mnt/project-files`; use worktrees and `/loop` instead.
 4. **Ultrareview**: when it is worth $5 to $25 (a MIP's whole stack before Accepted→Implemented, a
    safety-relevant scoring change), and that MIP-0011 used one free run.
-5. **Re-verify**: the commands of §7, with the date this page was last checked.
+5. **Per repository**: the §3.1 table, so a contributor (or the coordinator) knows before
+   starting whether a thread can finish the job.
+6. **graphify**: §5.5's setup for both surfaces and three example queries.
+7. **Re-verify**: the commands of §7, with the date this page was last checked.
 
 ### 5.2 `AGENT-SKILLS.md` and `DEV-FLOW.md`
 
@@ -182,7 +229,29 @@ Everything; there is no code. Which surface loads what is a fact from §4, re-ch
 |---|---|---|---|
 | 1 | `CLAUDE-CODE.md` as §5.1, linked from `CONTRIBUTING.md` and `AGENT-SKILLS.md` | umbrella | agent |
 | 2 | the §5.2 corrections | umbrella | agent |
-| 3 | enable Superpowers (and skill-creator, if listed) on the claude.ai account; replace the account's stale `mip` and `mip-tasks` skills with the devkit tag's copies, or remove them once MIP-0084 vendors the devkit skills | claude.ai settings | Hoffmann |
+| 3 | the §3.1 table and §5.5 in `CLAUDE-CODE.md`; once MIP-0084's bundle lands, replace §5.5's Project recipe with `route` | umbrella | agent |
+| 4 | enable Superpowers (and skill-creator, if listed) on the claude.ai account; replace the account's stale `mip` and `mip-tasks` skills with the devkit tag's copies, or remove them once MIP-0084 vendors the devkit skills | claude.ai settings | Hoffmann |
+
+### 5.5 graphify in each surface
+
+graphify answers "where is X" in code an agent has not read (MIP-0076); MIP-0084 will put a
+prebuilt graph on a `routing-bundle` branch so no session needs it installed. Until then:
+
+- **CLI**: `nix develop` in the repo (or the umbrella), `graph build` once, then
+  `graph query "<question>"`, `graph path <a> <b>`, `graph explain <name>`. The cache lives under
+  `~/.cache/marola-graph/<repo>`, never in the checkout. Rebuild after a large pull.
+- **Project thread**: no Nix shell, so
+  `python3 -m venv "$SCRATCH/g" && "$SCRATCH/g/bin/pip" install graphifyy`, then
+  `PATH="$SCRATCH/g/bin:$PATH" XDG_CACHE_HOME="$SCRATCH/cache" bash ../marola-devkit/scripts/graph.sh build`
+  from the repo's directory. In the umbrella, run `git submodule update --init` first. The
+  container is reclaimed, so the graph is rebuilt per thread (30 s for marola-site, 6 s for the
+  umbrella).
+- **Concerns**: the PyPI version is unpinned (0.9.84 here, nixpkgs has 0.9.66, upstream releases
+  about daily), which is why MIP-0076 chose nixpkgs and MIP-0084 a CI-built bundle; use the venv
+  only for reading code, never in a gate. Vendored code dominates small repos (marola-site's graph is
+  mostly Mapbox GL JS), so ask by the name of your own file or function. The default 400-token
+  budget truncates broad questions; narrow the question or pass `--budget`. Results are a starting
+  point to read from, not an answer; `git grep` stays first for a known keyword.
 
 ## 6. Scoring / safety impact
 
@@ -249,3 +318,7 @@ None.
 - Whether adding the flake inputs' repos to the Project (or a Nix binary cache) makes `nix develop`
   work in a thread.
 - Team and Enterprise terms for ultrareview.
+- Building marola-app in a thread after installing JDK 25 and sbt by hand (Maven Central's 429 makes
+  it unlikely to work).
+- Whether the GHCR `unauthorized` goes away with the Project's GitHub credentials passed to
+  `docker login`.
