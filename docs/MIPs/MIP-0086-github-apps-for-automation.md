@@ -24,7 +24,7 @@
 | **Tasks** | [`MIP-0086.tasks.md`](./MIP-0086.tasks.md) |
 | **Tests** | `bot-token`'s live self-test, `merge-key-check --self-test`, `ruleset-sync --self-test` (org-wide extra), the leak drill (§7) |
 | **Spec-kit** | none |
-| **Issues** | not filed yet. Rows reuse the open issues named in the tasks file; only rows 1, 3, 10, 12 and 16 are new |
+| **Issues** | parent marola-dev/marola#787; rows 1: marola-dev/marola#784, 2: marola-dev/marola-devkit#79, 3: marola-dev/marola-devkit#100, 4: marola-dev/marola#766, 5: marola-dev/marola-app#91, 6: marola-dev/marola-app#92, 7: marola-dev/marola-ml#37, 8: marola-dev/marola-devkit#80, 9: marola-dev/agent-skills#14, 10: marola-dev/marola#785, 11: marola-dev/marola#765, 12: marola-dev/marola-devkit#101, 13: marola-dev/marola#740, 14: marola-dev/marola#762, 15: marola-dev/marola#786, 16: marola-dev/marola-app#95, 16: marola-dev/marola-corpus#16, 16: marola-dev/marola-ml#40, 16: marola-dev/marola-oods#34, 16: marola-dev/marola-site#111 |
 
 ## 1. Summary
 
