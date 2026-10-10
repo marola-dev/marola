@@ -12,7 +12,7 @@ permissions:
 jobs:
   gemini:
     if: github.event.requested_team.slug == 'gemini'
-    uses: marola-dev/marola-devkit/.github/workflows/gemini-review.yml@v0.7.0
+    uses: marola-dev/marola-devkit/.github/workflows/gemini-review.yml@v0.8.1
     secrets: inherit
     with:
-      devkit-ref: v0.7.0
+      devkit-ref: v0.8.1
