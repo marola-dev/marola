@@ -72,6 +72,6 @@ checkout marker.
     the one pointer an umbrella PR commits; `pointer-sync.yml` moves it from then on.
 18. **`mkdocs/repos.yml`**: a `- name: marola-<name>` entry, so the site mounts it at
     `5-Repos/marola-<name>/`.
-19. **`docs/2-Building-marola/REPOS.md`**: a routing-table row, and a row in the artifacts, pins
-    and dispatches table for each artifact it produces or reads.
+19. **`docs/2-Building-marola/REPOS.md`**: a routing-table row, and `just wiring` to regenerate
+    the artifacts, pins and dispatches tables from its workflows and pins.
 20. **`README.md`**: a row in the repo table, linking its `5-Repos/` page.

@@ -1,0 +1,1 @@
+# `<artifact>: <reason>` per line: an artifact in REPOS.md's wiring block that `wiring --check` may find unread (MIP-0076).
