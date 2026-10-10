@@ -1,0 +1,3 @@
+# Read by `just graph` (MIP-0076 §5.2). marola-app owns board.schema.json; marola-site vendors a copy.
+**/vendor/**
+marola-site/site/board.schema.json
