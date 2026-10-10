@@ -7,7 +7,7 @@
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev-loop guidance, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
 | **Related** | MIP-0076 (graphify and `graph.sh`), MIP-0011 (the Claude Code practices this repo enforces through `.claude/settings.json`), MIP-0080 (`skills.lock`), MIP-0084 (vendoring the `routing` skill so sessions without the plugin reach it), `docs/3-Ways-of-working/AGENT-SKILLS.md` §2 (superpowers), `DEV-FLOW.md`, #731/#732 (the project snapshot) |
-| **Effort** | S — one new ways-of-working page, a correction to `AGENT-SKILLS.md`, and three settings a person changes on claude.ai |
+| **Effort** | M — one ways-of-working page, one vendored skill with a drift check and a devkit bump, a correction to `AGENT-SKILLS.md`, and settings a person changes on claude.ai |
 | **Gain** | `infra/dev-loop` — contributors stop assuming a Project thread has the plugins, hooks and attribution the CLI has, and pick the surface that fits the job |
 | **Effort vs Gain** | `cheap win` — the facts are already checked (§4); the work is writing them down where a contributor looks |
 | **Depends on** | none. Task 3 is a person's act on claude.ai |
@@ -21,7 +21,7 @@
 |---|---|
 | **Manually reviewed** | no |
 | **Written by** | Hoffmann, with Claude Code (a Claude Project thread) |
-| **Tasks** | none needed — four rows in §5.4, each one PR or one setting |
+| **Tasks** | none needed — five rows in §5.4, each one PR or one setting |
 | **Tests** | none — a docs page; `just quality`'s `docs-lint` and the strict docs build cover it |
 | **Spec-kit** | none |
 | **Issues** | not filed — Draft |
@@ -35,8 +35,8 @@ not load the same things. A Project thread loads every repo's `CLAUDE.md` and `.
 not the plugins, hooks, permissions or attribution that each repo's `.claude/settings.json`
 declares, and it cannot run `/ultrareview`. This MIP writes that down as
 `docs/3-Ways-of-working/CLAUDE-CODE.md`, with which repo's work a thread can finish (most of
-marola-site and the umbrella; none of marola-app's builds) and how to run graphify in each surface,
-corrects `AGENT-SKILLS.md`, and turns on the account-level plugins a Project can actually use.
+marola-site and the umbrella; none of marola-app's builds) and how to run graphify in each surface; packs the same facts into a `claude-usage` skill that
+lists every required skill, agent, plugin, MCP server and setting; corrects `AGENT-SKILLS.md`, and turns on the account-level plugins a Project can actually use.
 
 ## 2. Motivation
 
@@ -75,6 +75,8 @@ core is this table (every row checked in §4; "inferred" marks the ones that wer
 | **Repo skills (`.claude/skills/`)** | the repo's | every repo's; on a name clash (`eli5` in the umbrella and ww3-gpu) one wins, unstated which |
 | **Plugins from `.claude/settings.json`** (superpowers, skill-creator, marola-devkit) | yes, after the trust dialog and `claude plugin install` | **no** |
 | **Plugins and skills enabled on the claude.ai account** | no | yes (synced into the container) |
+| **Repo subagents (`.claude/agents/`)** | the repo's | every repo's (verified: `jar-verifier`, `news-fact-check`, `news-copy-review`, `revisor-proposta` are in a thread's agent list) |
+| **MCP servers from `.mcp.json`** (Playwright and Figma in marola-site, marola and Context7 in marola-app) | yes | **no**: none of the four is in a thread's tool list, because no repo is the working directory; Playwright still works as a library from Node |
 | **Hooks, permissions, `attribution` from the repo** | yes | **no** (cwd is not a repo; hooks also need a single-repo session) |
 | **`nix develop`, `just`, devkit tools** | yes | **no**: Nix is installed, but `nix develop` fails fetching flake inputs (the proxy answers 403 for GitHub repos not in the Project); run a gate's script directly (`python3 <devkit>/scripts/docs_lint.py`) |
 | **ultrareview** (`/code-review ultra`) | yes, signed in with claude.ai; 3 free runs on Pro/Max, then usage credits | **no** slash command to type; the built-in `code-review` skill at `max` runs a local review instead (inferred: cloud fallback not tried) |
@@ -231,6 +233,7 @@ Everything; there is no code. Which surface loads what is a fact from §4, re-ch
 | 2 | the §5.2 corrections | umbrella | agent |
 | 3 | the §3.1 table and §5.5 in `CLAUDE-CODE.md`; once MIP-0084's bundle lands, replace §5.5's Project recipe with `route` | umbrella | agent |
 | 4 | enable Superpowers (and skill-creator, if listed) on the claude.ai account; replace the account's stale `mip` and `mip-tasks` skills with the devkit tag's copies, or remove them once MIP-0084 vendors the devkit skills | claude.ai settings | Hoffmann |
+| 5 | the `claude-usage` skill (§5.6) in the devkit plugin, vendored into the umbrella with its `skills.lock` row, and its drift check; a devkit version bump | marola-devkit, umbrella | agent |
 
 ### 5.5 graphify in each surface
 
@@ -252,6 +255,35 @@ prebuilt graph on a `routing-bundle` branch so no session needs it installed. Un
   mostly Mapbox GL JS), so ask by the name of your own file or function. The default 400-token
   budget truncates broad questions; narrow the question or pass `--budget`. Results are a starting
   point to read from, not an answer; `git grep` stays first for a known keyword.
+
+### 5.6 The `claude-usage` skill
+
+The page is for people; agents need the same facts where they look. A `claude-usage` skill,
+written in the devkit plugin (`plugins/marola-devkit/skills/claude-usage/`, beside `routing`) and
+vendored byte for byte into the umbrella's `.claude/skills/` with a `skills.lock` row (MIP-0080),
+reaches both surfaces: a CLI session through the plugin, a Project thread through the umbrella's
+clone (repo skills load there; plugin skills do not). Description: *"Which Claude Code skills,
+agents, plugins, MCP servers and hooks marola expects, which surface has each, and what to do when
+one is missing. Use at the start of a session that will change a repo, when a skill, plugin or
+agent named in AGENTS.md or DEV-FLOW.md is not available, or when asked which to install."*
+
+Its body is the inventory below, the §3 table's rows for "what this surface lacks", and §5.1's
+"what to do instead". `just quality`'s `agents-check` (or a new `claude-usage --check` in the
+devkit) compares the inventory with each repo's `.claude/settings.json`, `.mcp.json`,
+`.claude/agents/` and `.claude/skills/` so it cannot drift.
+
+| Kind | What | Where declared | Required? | CLI | Project thread |
+|---|---|---|---|---|---|
+| Plugin | **marola-devkit** (`mip`, `mip-tasks`, `mip-solve-perpetual`, `triage`, `routing`, `humanizer`, `ponytail*`, `sharingan`, `voice-*`, `obsidian-vault`; agents `mip-reviewer`, `mip-claims-auditor`; SessionStart, PostToolUse, Stop hooks) | every repo's settings except the devkit's own and the lists, at `v0.8.3` | **required** | installed per repo | not loaded; `mip`/`mip-tasks` only as stale account skills; `routing` arrives with MIP-0084 |
+| Plugin | **superpowers** (brainstorming, writing-plans, executing-plans, TDD, systematic-debugging, verification-before-completion, code review, worktrees, …) | umbrella, marola-app | **required** where declared; `DEV-FLOW.md` leans on it | installed per repo | only if enabled on the claude.ai account (row 4) |
+| Plugin | **skill-creator** | umbrella, marola-app | recommended (writing or changing a skill) | installed per repo | seen once after a container resume (§4.4); also an account skill |
+| Repo skills | umbrella: `eli5`, `architecture-diagram`, `zenodo-release`, `citation-cff`; marola-site: `site-frontend` and the 17 it orders; marola-corpus: `corpus-doc` | `.claude/skills/` | **required** for that repo's work (its AGENTS.md says when) | the repo's own | all of them |
+| Subagents | marola-site `news-fact-check`, `news-copy-review`; marola-app `jar-verifier`; devkit `mip-reviewer`, `mip-claims-auditor` | `.claude/agents/`, the plugin | **required** where AGENTS.md names them (a news post's two reviews, a Kyo API check) | yes | repo agents yes; the plugin's two no |
+| MCP | marola-site `playwright`, `figma`; marola-app `marola` (its own tool server), `context7` | `.mcp.json` | recommended | yes (Figma signs in with OAuth) | no; use Playwright from Node |
+| Rules | umbrella `docs.md`, marola-app `scala.md` | `.claude/rules/` | **required** (path-scoped) | yes | loaded as `CLAUDE.md` context (inferred) |
+| Built-in | `code-review` (`/code-review ultra` = ultrareview), `simplify`, `security-review`, `loop` | Claude Code | on request | yes | `code-review` locally, no ultra |
+| Tooling | graphify (`graph`), `wiring`, `route` (MIP-0084) | the devkit | recommended | `nix develop` | §5.5's venv until the bundle |
+| Settings | `attribution`, the permission allowlist and deny list, `statusLine` | each repo's `.claude/settings.json` | **required** | yes | no: write the three trailers by hand |
 
 ## 6. Scoring / safety impact
 
