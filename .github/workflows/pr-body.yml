@@ -32,6 +32,6 @@ jobs:
           fi
 
   fill:
-    uses: marola-dev/marola-devkit/.github/workflows/pr-body.yml@v0.8.2
+    uses: marola-dev/marola-devkit/.github/workflows/pr-body.yml@v0.8.3
     with:
-      devkit-ref: v0.8.2
+      devkit-ref: v0.8.3
