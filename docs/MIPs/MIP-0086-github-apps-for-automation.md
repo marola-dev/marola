@@ -224,8 +224,8 @@ Automation commits keep the org's trailers (`Cost: n/a (automation)`), now autho
 - marola-app: `.github/workflows/{ci,docker-smoke,scala-steward}.yml`
 - marola-ml: `.github/workflows/compile-prompt.yml`
 - agent-skills: `.github/workflows/{refresh,ci}.yml`
-- every `notify-umbrella` caller (marola-app, marola-site, marola-corpus, marola-ml, marola-oods,
-  marola-devkit): `.github/workflows/notify-umbrella.yml` passes `pr_bot_key` instead of the PAT
+- every `notify-umbrella` caller (marola-app, marola-site, marola-corpus, marola-ml, marola-oods):
+  `.github/workflows/notify-umbrella.yml` passes `pr_bot_key` instead of the PAT
 
 ## 6. Scoring / safety impact
 
