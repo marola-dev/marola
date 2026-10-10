@@ -47,6 +47,7 @@ jobs:
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
               - '.github/workflows/ci.yml'  # the self-test list below
               - 'AGENTS.md'          # agents_repos_check.sh reads it
+              - '.claude/project/**'  # claude_project_check.py reads it
             workflows:
               - '.github/workflows/**'
             docker:
@@ -220,6 +221,8 @@ jobs:
         python3 scripts/site_links_check.py --self-test
         scripts/agents_repos_check.sh --self-test
         scripts/agents_repos_check.sh
+        python3 scripts/claude_project_check.py --self-test
+        python3 scripts/claude_project_check.py
 
   static-ci:
     needs: changes
