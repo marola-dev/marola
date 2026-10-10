@@ -61,13 +61,14 @@ pointer_problem() {
     fi
     sha="$(git ls-tree "$head" -- "$path" | awk '{ print $3 }')"
     # GitHub serves a fork's commits through its parent repo, so a SHA that resolves there can still
-    # be anyone's: only an ancestor of the default branch (behind/identical) is a real pointer move.
+    # be anyone's: only an ancestor of the default branch is a real pointer move. compare/<sha>...<branch>
+    # describes the branch, so an ancestor is `ahead`; `behind` is a commit on top of it, never merged.
     if ! branch="$(read_gh api "repos/$sub" | jq -er .default_branch)" ||
       ! status="$(read_gh api "repos/$sub/compare/$sha...$branch" | jq -er .status)"; then
       status="unreadable"
     fi
     case "$status" in
-      behind | identical) ;;
+      ahead | identical) ;;
       *)
         echo "\`$path\` moves to \`${sha:0:7}\`, which is not on $sub's default branch (compare: $status)"
         return
@@ -224,7 +225,7 @@ EOF
     # Zero statuses still reads "pending", as GitHub's combined status does.
     printf '{"state":"pending","statuses":[]}' >"$t/gh/status.json"
     printf '{"comments":[]}' >"$t/gh/comments.json"
-    printf '{"status":"behind"}' >"$t/gh/compare.json"
+    printf '{"status":"ahead"}' >"$t/gh/compare.json"
   }
   # go [args...]: the script in $w; calls() is what it did to the fake gh, plus a non-zero exit.
   go() {
@@ -293,6 +294,12 @@ EOF
   pr "$h_other" "$green"
   go --sha "$h_other"
   ok "$(calls)" "comment 7" "a gitlink outside marola-dev is refused"
+
+  echo "-- refuses_commit_built_on_default_branch --"
+  pr "$h_ok" "$green"
+  printf '{"status":"behind"}' >"$t/gh/compare.json"
+  go --sha "$h_ok"
+  ok "$(calls)" "comment 7" "a commit on top of the default branch, never merged into it: refused"
 
   echo "-- merges_gitlink_on_default_branch --"
   pr "$h_ok" "$green"
