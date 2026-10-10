@@ -161,5 +161,6 @@ preview a submodule's change, check its branch out under the umbrella first.
 
 `docs.yml` builds and deploys to GitHub Pages on a push to `main` touching `docs/**`, `mkdocs/**`,
 `README.md`, `flake.lock` or the docs scripts; on a `submodule-docs-updated` dispatch, which each
-repo's `notify-umbrella.yml` sends when its docs change; daily; and by hand. No code is built: API
+repo's `notify-umbrella.yml` sends (with the `submodule-updated` it sends on every push to `main`)
+when the push touched `README.md` or `docs/**`; daily; and by hand. No code is built: API
 docs come from the `api-docs` branches.

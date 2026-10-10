@@ -28,6 +28,7 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       nix: ${{ steps.filter.outputs.nix }}
       agents: ${{ steps.filter.outputs.agents }}
+      wiring: ${{ steps.filter.outputs.wiring }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -57,6 +58,10 @@ jobs:
             agents:
               - 'AGENTS.md'
               - '.github/workflows/ci.yml'  # its devkit-ref pins the invariants block compared against
+            wiring:                  # what `wiring --check` reads, beyond the workflows and the docs filter
+              - 'wiring.allow'
+              - 'scripts/**'
+              - '.claude/settings.json'
             docs:
               - 'docs/**'
               - 'mkdocs/**'
@@ -202,14 +207,17 @@ jobs:
 
   # What needs this repo's own flake: the lock is current, the justfile parses, no workflow here
   # is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's),
-  # and docs-lint passes at the devkit flake.lock pins (MIP-0074 §7).
+  # docs-lint passes at the devkit flake.lock pins (MIP-0074 §7), and REPOS.md's wiring block matches
+  # every pinned repo (MIP-0076 §5.4).
   quality-other:
     needs: changes
-    if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true' || needs.changes.outputs.docs == 'true'
+    if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.wiring == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
       # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
       - uses: DeterminateSystems/nix-installer-action@v23
       - name: nix flake lock (adds a new input's pin, changes nothing else)
@@ -232,7 +240,7 @@ jobs:
       - name: lint shell tools from nix develop .#lint
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which just workflow-runners docs-lint \
+          nix develop .#lint --command which just workflow-runners docs-lint wiring \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
       - name: just --list (the justfile parses)
@@ -241,3 +249,6 @@ jobs:
         run: workflow-runners
       - name: docs-lint — no stale paths, recipes or links in README.md and docs/
         run: docs-lint
+      # No .devkit link outside the default shell: wiring fetches each devkit ref it reads from GitHub.
+      - name: wiring --check — REPOS.md's block is current, no orphan dispatch or unread artifact
+        run: wiring --check docs/2-Building-marola/REPOS.md
