@@ -24,7 +24,7 @@
 | **Tasks** | `MIP-0085.tasks.md` |
 | **Tests** | `doc_code --self-test`, `decisions --self-test`, `route_test.py`'s new names, the 30-question `route bench`, the §5.6 spike report |
 | **Spec-kit** | none |
-| **Issues** | not filed — Draft |
+| **Issues** | parent #780; #781 (1), marola-dev/marola-devkit#91, marola-dev/marola-devkit#92, marola-dev/marola-devkit#93, marola-dev/marola-devkit#94, marola-dev/marola-devkit#95, marola-dev/marola-devkit#96, marola-dev/marola-devkit#97, marola-dev/marola-devkit#98 (2–9), #782 (10), #783 (11) |
 
 ## 1. Summary
 
