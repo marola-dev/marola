@@ -39,6 +39,13 @@ changing anything in it; it says what it overrides. What each repo owns, publish
 tree, in CI or in tests, and no consumer builds its producer from source: a consumer moves to a new
 producer version by bumping its pin in a PR.
 
+To find something outside the tree you are in, pick the cheapest source first (the devkit plugin's
+`routing` skill): what produces, consumes, pins or triggers an artifact, a dispatch or a workflow
+is in REPOS.md's [generated wiring block](docs/2-Building-marola/REPOS.md#artifacts-pins-and-dispatches)
+(`just wiring`); where a symbol lives, when the keyword or the repo is unfamiliar, is
+`just graph query "<question>"` (MIP-0076), whose `just graph build` writes under `~/.cache`,
+never into the checkout or a commit; a known keyword is `git grep --recurse-submodules`.
+
 ## Where a change belongs
 
 - **One repo**: work in that repo, under its `AGENTS.md`, and run its gates there. Code, its docs,
