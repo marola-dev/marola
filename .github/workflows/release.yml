@@ -27,3 +27,8 @@ jobs:
       - env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --title "marola $GITHUB_REF_NAME"
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tar -czf "marola-docs-$GITHUB_REF_NAME.tar.gz" docs
+          gh release upload "$GITHUB_REF_NAME" "marola-docs-$GITHUB_REF_NAME.tar.gz" --repo "$GITHUB_REPOSITORY"
