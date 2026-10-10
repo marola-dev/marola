@@ -4,7 +4,7 @@ name: pointer sync
 
 on:
   repository_dispatch:
-    types: [submodule-updated, submodule-docs-updated]
+    types: [submodule-updated, submodule-docs-updated, submodule-released]
   schedule:
     - cron: "40 5 * * *" # after docs.yml's 05:20, off the hour other workflows use (CI-CD.md)
   workflow_dispatch:

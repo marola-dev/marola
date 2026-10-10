@@ -88,6 +88,7 @@ stale. An edit between the markers is overwritten.
 |---|---|---|
 | `site-data-updated` | marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | marola-site `site.yml` |
 | `submodule-docs-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.1`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.1`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.1`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.1`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.1`, on a push to `main`) | marola `docs.yml`, marola `pointer-sync.yml` |
+| `submodule-released` | — | marola `pointer-sync.yml` |
 | `submodule-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.1`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.1`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.1`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.1`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.1`, on a push to `main`) | marola `pointer-sync.yml` |
 
 | Pin bump | Workflow |
