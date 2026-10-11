@@ -201,6 +201,26 @@ the Claude Code CLI (MIP-0087 §5.1), or builds a project of their own from this
    GitHub App on them, and open the PRs from the fork to marola-dev. A fork PR's Actions wait for
    a maintainer's approval, and the workflows that need a secret (the PR-body fill, Gemini's fix
    push) skip forks.
+
+   A contributor working from forks adds their forks to §1's repositories, with `<your-user>`
+   replaced by their GitHub user and only the repositories they will change. §1's marola-dev
+   repositories stay in the list: the umbrella's submodules point at them, and a thread's GitHub
+   scope refuses a repository its project does not list.
+
+   ```text
+   https://github.com/<your-user>/marola
+   https://github.com/<your-user>/marola-site
+   https://github.com/<your-user>/marola-app
+   https://github.com/<your-user>/marola-devkit
+   https://github.com/<your-user>/marola-ml
+   https://github.com/<your-user>/marola-corpus
+   https://github.com/<your-user>/marola-oods
+   https://github.com/<your-user>/marola-skills
+   ```
+
+   Before each task, sync the fork with marola-dev, with GitHub's "Sync fork" button or
+   `git pull https://github.com/marola-dev/<repo> main`. A thread opening a PR from a fork to
+   marola-dev has not been tried yet.
 2. Create a cloud environment with §2's setup script. App builds, the pinned app image and model
    training still need the CLI on their own machine.
 3. Follow §6, putting their own name in the routines that mention Hoffmann, and keep only the
