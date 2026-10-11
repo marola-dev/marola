@@ -1,6 +1,6 @@
 # Repos
 
-marola is nine repos: the umbrella, the devkit, five code or data repos, the skills catalogue and the agents inventory. This page says which
+marola is ten repos: the umbrella, the devkit, five code or data repos, the skills catalogue, the agents inventory and science. This page says which
 repo owns what, what each publishes, and how a consumer pins it. How the product works end to end
 is [Architecture](ARCHITECTURE.md); why the code was split this way is [The split](SPLIT.md).
 
@@ -35,6 +35,7 @@ artifact moves is in [Artifacts, pins and dispatches](#artifacts-pins-and-dispat
 | [marola-oods](https://github.com/marola-dev/marola-oods) | The Open Ocean Data Store's data only (`data/oods/`, MIP-0056); empty for now | The dataset; an export tag (planned, MIP-0056 §5.5) | app | The app's ingest workflow (with MIP-0056); `oods-check.yml` |
 | [marola-skills](https://github.com/marola-dev/marola-skills) | The catalogue of every Claude Code skill and subagent in the marola-dev repos, ww3-gpu and their upstreams: where each lives, its pin, what was tested; no skill is copied here | Its docs (`docs/4-reference_index.md`, `data/index.json`, regenerated daily) | Readers; the umbrella's docs | `refresh.yml` (daily, one rolling PR) |
 | [marola-agents](https://github.com/marola-dev/marola-agents) | The inventory of every agent marola uses or plans: Claude Code subagents, the Claude Projects and their routines, the product's LLM roles, the agents CI calls; no agent is defined here | Its docs | Readers; the umbrella's docs | A PR that adds or changes an agent in any repo |
+| [marola-research](https://github.com/marola-dev/marola-research) | Science | — | Readers | — |
 
 Each repo's README is its landing page on this site, under 5 Repos.
 

@@ -70,6 +70,10 @@ text{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Li
 <rect x="30" y="614" width="570" height="54" rx="8" fill="rgba(124,45,18,0.45)" stroke="#fb923c" stroke-width="1.6"/>
 <text x="315.0" y="637.5" class="name" text-anchor="middle">marola-devkit</text>
 <text x="315.0" y="656.5" class="sub" text-anchor="middle">tools · git hooks · reusable CI, pinned by tag in every repo</text>
+<rect x="30" y="496" width="220" height="54" rx="8" fill="#0b1222"/>
+<rect x="30" y="496" width="220" height="54" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="140.0" y="519.5" class="name" text-anchor="middle">marola-research</text>
+<text x="140.0" y="538.5" class="sub" text-anchor="middle">science</text>
 <rect x="280" y="496" width="320" height="54" rx="8" fill="#0b1222"/>
 <rect x="280" y="496" width="320" height="54" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
 <text x="440.0" y="519.5" class="name" text-anchor="middle">marola-agents</text>
