@@ -88,7 +88,7 @@ The tiers, the Definition of Ready and the board are [ISSUE-FLOW](ISSUE-FLOW.md)
 
 | Recipes | Run in |
 |---|---|
-| the devkit's: `just pr`, `uprd`, `stack`, `issue-queue`, `issue-claim`, `cost-split`, `labels-sync`, … | any repo |
+| the devkit's: `just pr`, `uprd`, `stack`, `issue-queue`, `issue-claim`, `trailer-fill`, `labels-sync`, … | any repo |
 | `just quality`, `precommit`, `prepush` | every repo, each running its own gates |
 | `just docs`, `docs-serve`, `context-mips`, `context-mip`, `worktree`, `jail-claude` | the umbrella |
 | `just build`, `test`, `run`, `ask`, `e2e` | in a marola-app checkout |

@@ -137,9 +137,9 @@ states explicitly which axis(es) it matches and why.
    pipeline occupies (see `docs/4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY.md` §1.2 and MIP-0012).
 8. **[ryoppippi/ccusage](https://github.com/ryoppippi/ccusage)** (~18.4k★): a CLI that parses
    local Claude Code/Codex/OpenCode session logs into daily/weekly/session cost and token reports.
-   **Philosophy axis**: matches marola's `Cost:` git-trailer discipline and `just cost-split`/
-   `cost-fill` tooling; both are explicit, tool-enforced attempts to make AI-agent development
-   spend visible and attributable per unit of work rather than left implicit.
+   **Philosophy axis**: makes AI-agent spend visible and attributable per unit of work. marola
+   tried the same with a `Cost:` commit trailer and dropped it (marola-dev/marola-devkit#103);
+   `just claude-cost` still wraps ccusage for a one-off look.
 9. **[madaan/self-refine](https://github.com/madaan/self-refine)** (~820★): the reference
    implementation of the "Self-Refine" paper: an LLM generates output, produces feedback/critique
    on its own output, then revises. **Architecture axis**: the closest published academic match to

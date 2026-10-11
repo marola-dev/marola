@@ -11,7 +11,7 @@ Non-negotiable in every marola repo; a repo may make these stricter, never loose
 - **Cost and deployment safety**: never provision or deploy a paid cloud resource without explicit human confirmation first ([AGENTS.md](AGENTS.md#cost--deployment-safety-hard-rule)).
 - **No secrets in code**: never hardcode a key/connection string/secret; `.env.example` holds placeholders only ([AGENTS.md](AGENTS.md#cost--deployment-safety-hard-rule)).
 - **The agent-ready gate**: an agent may only begin implementation on an issue carrying `agent-ready` ([AGENTS.md](AGENTS.md#issue-tracking-hard-rule)).
-- **The three commit trailers**: commits carry three trailers and nothing else — `Tested:`, `Cost:`, and `Co-Authored-By: Claude <noreply@anthropic.com>` ([AGENTS.md](AGENTS.md#attribution-and-cost-accounting-hard-rule)).
+- **The two commit trailers**: commits carry two trailers and nothing else — `Tested:` and `Co-Authored-By: Claude <noreply@anthropic.com>` ([AGENTS.md](AGENTS.md#attribution-hard-rule)).
 - **Phase discipline**: work one phase at a time; never start a later phase before the current one is done ([AGENTS.md](AGENTS.md#phase-discipline-hard-rule)).
 <!-- invariants:end -->
 
@@ -114,7 +114,7 @@ what is MIP material; `.claude/rules/docs.md` has the MIP status vocabulary, and
 [DOCS-SITE](docs/3-Ways-of-working/DOCS-SITE.md) how the site is built.
 
 The harness is [marola-devkit](https://github.com/marola-dev/marola-devkit), a flake input pinned
-to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `cost-split`, `cost-fill`,
+to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `trailer-fill`,
 `agents-check`, …), their recipes (`import? '.devkit/devkit.just'`), the git hooks, the reusable
 workflows and the `marola-devkit` plugin (`/marola-devkit:mip` and the other generic skills). Bump
 the flake input, every `@v…`/`devkit-ref` in `.github/workflows/` and the marketplace `ref` in
@@ -178,19 +178,17 @@ Propose the change, state the expected cost, wait for a go-ahead. Never hardcode
 string/secret; `.env.example` holds placeholders only. ai-jail limits what a session can reach, but
 it does not replace this rule.
 
-## Attribution and cost accounting (hard rule)
+## Attribution (hard rule)
 
-- **Commits carry three trailers and nothing else:** `Tested:`, `Cost:` and
+- **Commits carry two trailers and nothing else:** `Tested:` and
   `Co-Authored-By: Claude <noreply@anthropic.com>`. No session links, no "Generated with" banners,
   no PR-body attribution; `.claude/settings.json` enforces this for Claude Code. Automation commits
-  carry them too (`pointer-sync.yml`: `Cost: n/a (automation)`).
-- **The PR workflow is one command.** Write the commit (a body plus `Tested:`/`Cost:`), then
-  `just pr`: it fills a missing trailer (`just cost-fill`), pushes, and writes the PR from the
-  template (`just uprd`, or `stack pr` on a `mip-NNNN/k-*` branch). `Cost:` prefers
-  `just cost-split`'s measured figure over `cost-split --estimate`'s diff-size fallback (`est.`).
-- **One feature, one session.** Start a feature with `/clear` and `/rename` it to the branch name
-  so the usage logs map to one PR. For a MIP stack, `just cost-split MIP-NNNN` attributes usage to
-  each commit by time, across repos, and `just uprds MIP-NNNN` refreshes each PR's Cost section.
+  carry them too (`pointer-sync.yml`).
+- **The PR workflow is one command.** Write the commit (a body plus `Tested:`), then `just pr`: it
+  fills a missing `Tested:` and a task's `Closes #N` (`just trailer-fill`), pushes, and writes the PR
+  from the template (`just uprd`, or `stack pr` on a `mip-NNNN/k-*` branch).
+- **One feature, one session.** Start a feature with `/clear` and `/rename` it to the branch name,
+  so a session's context holds one PR's work and nothing from the last one.
 
 ## Code style
 

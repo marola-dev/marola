@@ -197,7 +197,7 @@ repo you're changing.
 ## Contributing
 
 Small PRs, one topic each, in the repo the change belongs to; non-trivial changes start as a MIP
-under `docs/MIPs/` here; every commit carries `Tested:`, `Cost:` and
+under `docs/MIPs/` here; every commit carries `Tested:` and
 `Co-Authored-By: Claude <noreply@anthropic.com>` trailers. AI agents are first-class contributors here and follow `AGENTS.md` like anyone else.
 Full guide: [Contributing](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTING/). Please also read the
 [Code of Conduct](https://github.com/marola-dev/.github/blob/main/CODE_OF_CONDUCT.md) and, for a vulnerability, the [security policy](https://github.com/marola-dev/.github/blob/main/SECURITY.md).

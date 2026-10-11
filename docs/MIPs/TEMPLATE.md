@@ -9,7 +9,7 @@ Before the first push:
   `docs/MIPs/MIP-NNNN-*.md`. An agent picks it; two drafts never share one.
 - **Branch**: `docs/mip-NNNN-<slug>`, the same name in every repo the MIP touches.
 - **Commits**: made by the agent through the flow (`just pr`, `just uprds` for a stack), with the
-  three trailers; nothing committed by hand.
+  two trailers; nothing committed by hand.
 - **Draft until done**: the PR stays a draft until every row of the *Readiness* table below is
   filled and the gates pass. Ready for review means the author has nothing left to do.
 
@@ -31,7 +31,6 @@ Every section is required: write "None" rather than deleting a heading. §10 is 
 | **Depends on** | prose: other MIPs, the Phase 1 gate, a paid resource |
 | **Blocked by** | MIP numbers that must merge first, comma-separated, or `none` (read by `mip_graph.py`) |
 | **Risk** | the one thing most likely to make this not worth it |
-| **Cost so far** | summed `Cost:` trailers of its merged PRs, or `—` |
 
 ### Readiness
 

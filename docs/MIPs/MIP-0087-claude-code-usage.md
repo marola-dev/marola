@@ -54,7 +54,7 @@ repos, so no repo's `.claude/settings.json` is the project settings file:
   memory of `AGENTS.md`.
 - The repo's `attribution` block (`Co-Authored-By: Claude <noreply@anthropic.com>`, no session link)
   is replaced by the harness's own, which adds a model name and a `Claude-Session:` URL. The org
-  invariant allows three trailers and nothing else.
+  invariant allows two trailers and nothing else.
 - The account-level `mip` skill the Project syncs is an old copy: it points at `docs/mips/`,
   `ARCHITECTURE.md` and Azure, none of which exist after MIP-0070 (§4.3).
 
@@ -212,7 +212,7 @@ A page in the umbrella, H1 "Claude Code: CLI or Project", under 150 lines:
    - no repo hooks or permissions, and no `nix develop`: run the gates' scripts directly before a
      push (`python3 ../marola-devkit/scripts/docs_lint.py`, `python3 scripts/mip_graph.py --check`),
      and say in `Tested:` which gates could not run;
-   - no repo `attribution`: write the three trailers the org requires; the harness's
+   - no repo `attribution`: write the two trailers the org requires; the harness's
      `Claude-Session:` line stays out (the same rule `AGENTS.md` states);
    - no repo plugins: superpowers and skill-creator come from the account (task 3); marola-devkit's
      skills come through MIP-0084's vendoring, or as account skills kept at the devkit tag;
@@ -311,7 +311,7 @@ devkit) compares the inventory with each repo's `.claude/settings.json`, `.mcp.j
 | Reading | `eli5` with a `graph query` first | umbrella `.claude/skills/` | recommended for an unfamiliar repo | in the umbrella | yes |
 | Built-in | `code-review` (`/code-review ultra` = ultrareview), `simplify`, `security-review`, `loop` | Claude Code | on request | yes | `code-review` locally, no ultra |
 | Tooling | graphify (`graph`), `wiring`, `route` (MIP-0084) | the devkit | recommended | `nix develop` | §5.5's venv until the bundle |
-| Settings | `attribution`, the permission allowlist and deny list, `statusLine` | each repo's `.claude/settings.json` | **required** | yes | no: write the three trailers by hand |
+| Settings | `attribution`, the permission allowlist and deny list, `statusLine` | each repo's `.claude/settings.json` | **required** | yes | no: write the two trailers by hand |
 
 ### 5.7 `CLAUDE_PROJECT.config.md`
 

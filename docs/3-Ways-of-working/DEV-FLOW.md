@@ -15,7 +15,7 @@ This page is the one place the whole loop is written down, and it holds in every
 live in the `/marola-devkit:mip` and `/marola-devkit:mip-tasks` skills, `AGENTS.md` (the hard
 rules), [AGENT-SKILLS](AGENT-SKILLS.md) (which skill does what) and the devkit's
 [tools](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_tools/) (`stack`, `uprd`,
-`issues`, `cost-split`, …, on `PATH` inside `nix develop`). MIPs and their task files live in the
+`issues`, `trailer-fill`, …, on `PATH` inside `nix develop`). MIPs and their task files live in the
 umbrella's `docs/MIPs/`; the code they change lives in the repo each task names. A change that
 spans repos also follows [WORKING-ACROSS-REPOS](WORKING-ACROSS-REPOS.md).
 
@@ -42,7 +42,7 @@ to PRs.
    listed. Add the index row. Link it from [FUTURE-WORK](../4-Research-and-plans/FUTURE-WORK.md) if
    it closes something.
 4. **Open it as its own PR**, status **Draft**. A MIP is never built in the same change (`mip`
-   skill, step 8). The PR body ends with a `Cost:` line like any other.
+   skill, step 8).
 
 ### Voice notes into MIPs in a browser session
 
@@ -119,8 +119,8 @@ submodule, branch from that repo's `origin/main`
 stack start MIP-NNNN <k> <slug>        # branch mip-nnnn/k-slug off the nearest lower task branch in this repo, else origin/main
 # red → green → refactor  (superpowers test-driven-development; systematic-debugging when green won't come)
 just quality                                       # the repo's gates (its AGENTS.md names them) + a live check whenever a data path changed (superpowers verification-before-completion: evidence, then the claim)
-git commit                                         # message ends with Tested: and Cost: trailers (AGENTS.md) — the PR's Tested/Cost sections come from them
-just pr                                            # fills any missing trailer and a task's Closes line (just cost-fill), pushes, opens/updates the PR — stack pr's base logic on a mip-NNNN/k-* branch
+git commit                                         # message ends with a Tested: trailer (AGENTS.md); the PR's Tested section comes from it
+just pr                                            # fills a missing Tested: and a task's Closes line (just trailer-fill), pushes, opens/updates the PR; stack pr's base logic on a mip-NNNN/k-* branch
 ```
 
 The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:
@@ -139,7 +139,7 @@ gitGraph
   cherry-pick id: "task 2" tag: "restack (rebase --onto)"
 ```
 
-`just pr --dry-run` prints every step (the trailers `cost-fill` would add, the body `uprd` would
+`just pr --dry-run` prints every step (the lines `trailer-fill` would add, the body `uprd` would
 write) without pushing or touching `gh`. It refuses the same way the real run would (on `main`, or a
 dirty tree) so the preview matches what actually happens.
 
@@ -151,7 +151,7 @@ not found red in CI after the merge; `git push --no-verify` skips the hook, CI d
 Or, once every branch of the stack is pushed, all PRs at once with their shared "Stack" section:
 
 ```bash
-just uprds MIP-NNNN         # regenerate every PR body (What changed + Cost + Stack), create the missing PRs on the right base
+just uprds MIP-NNNN         # regenerate every PR body (What changed + Stack), create the missing PRs on the right base
 just stack-link MIP-NNNN    # link the open PRs into a GitHub Stack (gh stack link) — the "Preview stack" box in the PR UI, from the CLI
 just stack-view             # the stack as GitHub sees it; just stack status MIP-NNNN for the local view
 ```
@@ -159,7 +159,7 @@ just stack-view             # the stack as GitHub sees it; just stack status MIP
 What GitHub shows: a stacked PR is a PR whose base is the previous branch; its page says "into
 `mip-nnnn/1-…` from `mip-nnnn/2-…`" and its diff is that task alone. The Stack (native GitHub
 feature, `gh stack`) adds the ordered list at the top of each PR; `just uprds` writes the same list
-at the end of each body, with the summed Cost, for readers without the feature.
+at the end of each body, for readers without the feature.
 
 A PR opened any other way (the GitHub UI's "Compare & pull request", a bare `gh pr create`) gets
 the same body without anyone running `just uprd`: `.github/workflows/pr-body.yml` runs
@@ -169,20 +169,11 @@ hand-written body is left alone; delete the marker line to stop regeneration). I
 title that is still the branch name with the first commit's subject. Forks and bot PRs are skipped.
 
 The generated body follows `.github/PULL_REQUEST_TEMPLATE.md`'s shape: bold labels, a compact
-MIP/Tested/Cost table, no `#` headings, one screen for a typical two-commit PR; the PR title is the
+MIP/Tested table, no `#` headings, one screen for a typical two-commit PR; the PR title is the
 first commit's subject on the branch, capped at 70 characters (the devkit's
 [`scripts/lib/uprd_title.sh`](https://github.com/marola-dev/marola-devkit/blob/v0.4.1/scripts/lib/uprd_title.sh))
 so it stays skimmable. `just uprd`/`just uprds` print a warning when a title had to be cut, worth a
 manual retitle if the cut reads awkwardly.
-
-Cost: a measured figure is always preferred over an estimate. One session per task → `/usage` or
-`just claude-cost` (umbrella). One session for several tasks → `just cost-split MIP-NNNN` splits the
-session log by commit time (subagent transcripts included: `<session>/subagents/*.jsonl`) and prints
-the trailer per branch; amend with `GIT_COMMITTER_DATE` preserved so the split stays stable,
-re-stack, force-push with lease, `just uprds`. Nothing logged at all for a commit (a subagent whose
-worktree session never re-attached, a commit from another machine) → `just cost-fill` (or plain
-`just pr`) adds `cost-split --estimate`'s diff-size estimate instead, always labelled `est.` so it
-reads differently from a measured number at a glance.
 
 ## 5. Final review — only when asked
 
@@ -213,9 +204,9 @@ bottom of the stack first, because that is the diff a reviewer sees.
    goes to Google's Gemini API.
 
 Author side: superpowers `receiving-code-review`: verify each finding before implementing it,
-push back with reasoning when it is wrong, then fix → commit (`Cost:` trailer) → push → `just
-uprds MIP-NNNN`. Pre-review checklist (superpowers `requesting-code-review` + this repo): Cost
-line present and measured; docs updated in the same PR; the test named in the tasks row exists and
+push back with reasoning when it is wrong, then fix → commit (`Tested:` trailer) → push → `just
+uprds MIP-NNNN`. Pre-review checklist (superpowers `requesting-code-review` + this repo): docs
+updated in the same PR; the test named in the tasks row exists and
 is green; MIP status right.
 
 ## 6. Merge, restack, finish
@@ -228,7 +219,7 @@ is green; MIP status right.
   `stack restack` on the next branch, or `just stack-sync MIP-NNNN` for the whole
   stack (it adopts the stack from GitHub first; `gh stack link` keeps no local state).
 - A task branch's own commit carries `Closes #N` for the issue its `MIP-NNNN.tasks.md` row links
-  (`cost-fill`, run by `stack pr` — itself run by `just pr`, or directly per step 2 of
+  (`trailer-fill`, run by `stack pr` — itself run by `just pr`, or directly per step 2 of
   `/marola-devkit:mip-tasks` — writes it above the trailers), so the squash-merge commit on `main`
   closes the issue and the board moves it to Done. The PR body carries the same line too (`uprd`
   copies it there so the link shows on GitHub), but the body-only line does not close the issue; the

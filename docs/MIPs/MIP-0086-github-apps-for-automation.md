@@ -200,7 +200,7 @@ read it leaves the org. A downloaded `.pem` is set as the secret and deleted, ne
 
 ### 5.10 Commits
 
-Automation commits keep the org's trailers (`Cost: n/a (automation)`), now authored by the bot.
+Automation commits keep the org's trailers, now authored by the bot.
 
 ### 5.11 Migration: add, move, remove
 

@@ -7,7 +7,7 @@ reconstructing "what happened this week" from scratch each time. This doc is the
 proposal for what to actually build is [MIP-0018](../MIPs/MIP-0018-self-documentation-and-media-exporter.md).
 
 Nothing here is marola-the-product. It's dev-tooling for the person building marola, same
-category as `docs/3-Ways-of-working/DEV-FLOW.md` and `AGENTS.md`'s "Attribution and cost accounting" section.
+category as `docs/3-Ways-of-working/DEV-FLOW.md` and `AGENTS.md`'s "Attribution" section.
 
 ## 1. What marola already produces that's (almost) pre-written narrative
 
@@ -18,16 +18,16 @@ anything new being built:
   template) are structurally a post's "why before what": a MIP's Motivation section is close to a
   post's opening paragraph, and its Alternatives-considered section is the "here's what I rejected
   and why" beat a plain changelog never has.
-- **`Cost:`/`Tested:` commit trailers** (`AGENTS.md` "Attribution and cost accounting") give a real
-  number and a verification story for free, per PR.
+- **`Tested:` commit trailers** (`AGENTS.md` "Attribution") give a verification story for free,
+  per PR.
 - **`GH_POST_MORTEM.md`** (introduced 2026-09-06, `.gitignore`d, operator-only) is a running log of
   what a session pushed and why `gh` couldn't finish the loop itself, a session-level "what
   happened, in order" record, close to a stand-up note.
-- **`docs/MIPs/README.md`** already tracks Status/Effort/Gain/Verdict/Cost per MIP: a queryable
-  "what shipped, at what cost" index without any new tooling.
+- **`docs/MIPs/README.md`** already tracks Status/Effort/Gain/Verdict per MIP: a queryable
+  "what shipped" index without any new tooling.
 
 None of this was built *for* storytelling. It's a happy accident of the repo's existing
-cost-accounting and design-review discipline. The gap is turning "the raw material exists" into
+design-review discipline. The gap is turning "the raw material exists" into
 "a human can produce a post in under 30 minutes a week," which is what MIP-0018 proposes.
 
 ## 2. Session → narrative: Claude Code transcript tooling

@@ -10,7 +10,6 @@ set -euo pipefail
 
 trailers() {
   printf 'Tested: pointer bump only; each submodule'"'"'s own CI gates its main\n'
-  printf 'Cost: n/a (automation)\n'
   printf 'Co-Authored-By: Claude <noreply@anthropic.com>\n'
 }
 
@@ -131,7 +130,7 @@ EOF
   ok "$(cut -f1-3 "$t/out1/moved.tsv")" "$(printf 'app\t%s\t%s' "$app1" "$app3")" "moved.tsv lists only app, old and new"
   ok "$(git -C "$t/umbrella" log -1 --format=%s)" "chore: move submodule pointers (app)" "commit subject names what moved"
   ok "$(git -C "$t/umbrella" log -1 --format='%(trailers:only,unfold)' | sed '/^$/d' | cut -d: -f1 | paste -sd' ' -)" \
-    "Tested Cost Co-Authored-By" "the three trailers, nothing else"
+    "Tested Co-Authored-By" "the two trailers, nothing else"
   ok "$(grep -c "| \`app\` | \`${app1:0:7}\` | \`${app3:0:7}\` |" "$t/out1/pr-body.md")" "1" "PR body row with old -> new"
   ok "$(git -C "$t/umbrella" status --porcelain)" "" "worktree clean after the commit"
 
