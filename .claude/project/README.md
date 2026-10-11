@@ -10,6 +10,8 @@ records why and what is left out; the same reasoning holds here.
 |---|---|---|
 | [`project.json`](project.json) | name, topic, visibility, instructions, repositories, memory and routine settings, what a thread session runs with, the cloud environment, the routines | `get_project_settings`, `get_session`, `list_environments`, `list_triggers` |
 | [`routines/a2a-inbox-marola.txt`](routines/a2a-inbox-marola.txt) | the stored prompt of the A2A inbox routine (`para:marola`), verbatim | `get_trigger trig_01UE8yJCJTN2HD2WfTnxbBve` |
+| [`routines/linkedin-prep.txt`](routines/linkedin-prep.txt) | the LinkedIn prep reminder, the day before each post, verbatim | `get_trigger trig_01SGy8M3xZFctNvPa54faAtq` |
+| [`routines/linkedin-post.txt`](routines/linkedin-post.txt) | the LinkedIn post reminder, verbatim | `get_trigger trig_01J1n5zw4noc5eypq9AGeA2Y` |
 
 Nothing here is read by Claude Code as configuration: it loads `CLAUDE.md`, `settings.json`,
 `skills/`, `agents/`, `commands/` and `rules/` under `.claude/`, never this folder. The project's
@@ -30,7 +32,12 @@ no default. Memory is on for the project but off in the owner's account settings
 nothing to read. The decisions the work follows are in the project instructions or already in git
 (`AGENTS.md`, the MIPs); thread history is not copied.
 
-The routine's cron has no `CRON_TZ`, so it runs at minute 5 of every third hour UTC. The account's
+The A2A routine's cron has no `CRON_TZ`, so it runs at minute 5 of every third hour UTC. The two
+LinkedIn reminders, added on 2026-10-11 (`read_on` moved with them, the rest was not re-read),
+run at 9:52 in `America/Sao_Paulo`: the post reminder Tuesday to Thursday, inside the 10h to 13h
+weekday window LinkedIn studies point to, and the prep reminder 24 hours before each. They post in
+the thread that created them, and their prompts read `/mnt/project-files/news/`, which is not
+copied here. The account's
 Wave Forecaster routines and the one-shot PR check-ins sessions schedule for themselves are left
 out: the first are that project's, the second are not settings.
 
