@@ -6,7 +6,7 @@
 | **Author** | Hoffmann |
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev-loop guidance, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
-| **Related** | MIP-0076 (graphify and `graph.sh`), MIP-0011 (the Claude Code practices this repo enforces through `.claude/settings.json`), MIP-0080 (`skills.lock`), MIP-0084 (vendoring the `routing` skill so sessions without the plugin reach it), `docs/3-Ways-of-working/AGENT-SKILLS.md` §2 (superpowers), `DEV-FLOW.md`, #732 (`CLAUDE_PROJECT_CONFIG.md`, the Project's own settings, §5.7) |
+| **Related** | MIP-0076 (graphify and `graph.sh`), MIP-0011 (the Claude Code practices this repo enforces through `.claude/settings.json`), MIP-0080 (`skills.lock`), MIP-0084 (vendoring the `routing` skill so sessions without the plugin reach it), `docs/3-Ways-of-working/AGENT-SKILLS.md` §2 (superpowers), `DEV-FLOW.md`, #732 (`CLAUDE_PROJECT.config.md`, the Project's own settings, §5.7) |
 | **Effort** | M — one ways-of-working page, one vendored skill with a drift check and a devkit bump, a correction to `AGENT-SKILLS.md`, and settings a person changes on claude.ai |
 | **Gain** | `infra/dev-loop` — contributors stop assuming a Project thread has the plugins, hooks and attribution the CLI has, and pick the surface that fits the job |
 | **Effort vs Gain** | `cheap win` — the facts are already checked (§4); the work is writing them down where a contributor looks |
@@ -258,8 +258,8 @@ Everything; there is no code. Which surface loads what is a fact from §4, re-ch
 | 3 | the §3.1 table and §5.5 in `CLAUDE-CODE.md`; once MIP-0084's bundle lands, replace §5.5's Project recipe with `route` | umbrella | agent |
 | 4 | enable Superpowers (and skill-creator, if listed) on the claude.ai account; replace the account's stale `mip` and `mip-tasks` skills with the devkit tag's copies, or remove them once MIP-0084 vendors the devkit skills | claude.ai settings | Hoffmann |
 | 5 | the `claude-usage` skill (§5.6) in the devkit plugin, vendored into the umbrella with its `skills.lock` row, and its drift check; a devkit version bump | marola-devkit, umbrella | agent |
-| 6 | paste `CLAUDE_PROJECT_CONFIG.md` §2's setup script into the "Marola cloud" environment | claude.ai settings | Hoffmann |
-| 7 | `CLAUDE_PROJECT_CONFIG.md` and its check (§5.7), kept current when a project setting changes | umbrella | agent |
+| 6 | paste `CLAUDE_PROJECT.config.md` §2's setup script into the "Marola cloud" environment | claude.ai settings | Hoffmann |
+| 7 | `CLAUDE_PROJECT.config.md` and its check (§5.7), kept current when a project setting changes | umbrella | agent |
 
 ### 5.5 graphify in each surface
 
@@ -313,7 +313,7 @@ devkit) compares the inventory with each repo's `.claude/settings.json`, `.mcp.j
 | Tooling | graphify (`graph`), `wiring`, `route` (MIP-0084) | the devkit | recommended | `nix develop` | §5.5's venv until the bundle |
 | Settings | `attribution`, the permission allowlist and deny list, `statusLine` | each repo's `.claude/settings.json` | **required** | yes | no: write the three trailers by hand |
 
-### 5.7 `CLAUDE_PROJECT_CONFIG.md`
+### 5.7 `CLAUDE_PROJECT.config.md`
 
 The Project's own settings (instructions, repositories, environment and its setup script,
 plugins, connectors, routines with their prompts verbatim) are one Markdown file at the umbrella's
@@ -355,7 +355,7 @@ None.
   were not exercised in this session; the page keeps the mark until someone runs them.
 - Enabling superpowers on the account loads its `SessionStart` hook and fifteen skills into every
   Project thread and every claude.ai/code session of that account, also for non-marola work.
-- `CLAUDE_PROJECT_CONFIG.md` is a copy of settings that live on the service; it is only as fresh
+- `CLAUDE_PROJECT.config.md` is a copy of settings that live on the service; it is only as fresh
   as the last PR that touched it, and its date says when that was.
 - Account skills are a second copy of the devkit's; they drift (the `mip` skill already has). The
   lasting fix is MIP-0084's vendoring, not this page.

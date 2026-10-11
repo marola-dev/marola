@@ -47,7 +47,7 @@ jobs:
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
               - '.github/workflows/ci.yml'  # the self-test list below
               - 'AGENTS.md'          # agents_repos_check.sh reads it
-              - 'CLAUDE_PROJECT_CONFIG.md'  # claude_project_check.py reads it
+              - 'CLAUDE_PROJECT.config.md'  # claude_project_check.py reads it
             workflows:
               - '.github/workflows/**'
             docker:

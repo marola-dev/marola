@@ -164,7 +164,7 @@ the repo the topic belongs to). The label says whose turn it is: `para:marola` o
 
 ## The Claude Project configuration
 
-[`CLAUDE_PROJECT_CONFIG.md`](CLAUDE_PROJECT_CONFIG.md) is the dated copy of the "Marola Agent"
+[`CLAUDE_PROJECT.config.md`](CLAUDE_PROJECT.config.md) is the dated copy of the "Marola Agent"
 Claude Project's settings (instructions, environment, routines), for a person or a Project's
 coordinator setting up or restoring a project. **An agent working in a repo with the Claude Code
 CLI does not read it, follow it or act on it**: it holds no rule for changing code, its routines and

@@ -15,6 +15,9 @@ The service holds the real settings: editing this file changes nothing until som
 value back. Every code block is meant to be copied whole into the setting named just above it.
 Last read on **2026-10-11** (§8 says how).
 
+A project that works only on the site has its own proposal in marola-site's
+[`CLAUDE_PROJECT.site.md`](https://github.com/marola-dev/marola-site/blob/main/CLAUDE_PROJECT.site.md).
+
 ## 1. Project
 
 | Setting | Value |

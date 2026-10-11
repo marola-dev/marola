@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""claude_project_check — CLAUDE_PROJECT_CONFIG.md has its sections and routines, and leaks no id.
+"""claude_project_check — CLAUDE_PROJECT.config.md has its sections and routines, and leaks no id.
 
-scripts/claude_project_check.py              # check CLAUDE_PROJECT_CONFIG.md
+scripts/claude_project_check.py              # check CLAUDE_PROJECT.config.md
 scripts/claude_project_check.py --self-test
 """
 
@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CONFIG = ROOT / "CLAUDE_PROJECT_CONFIG.md"
+CONFIG = ROOT / "CLAUDE_PROJECT.config.md"
 
 SECTIONS = (
     "1. Project",
