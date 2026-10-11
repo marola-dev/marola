@@ -78,6 +78,22 @@ set -euo pipefail
 # Nix comes with the image. Its nixpkgs is the registry's, not each repo's flake.lock, so a tool can
 # be a release ahead of CI's.
 nix profile install nixpkgs#just nixpkgs#shellcheck nixpkgs#actionlint nixpkgs#hadolint >&2
+
+# graphify for `graph query` (MIP-0076), pinned to nixpkgs' version: PyPI releases about daily.
+# Installed here because a thread's own permission check refuses a PyPI install as untrusted code.
+uv tool install 'graphifyy==0.9.66' >&2
+```
+
+The `nix profile` line was run in a thread on 2026-10-11 and installed all four tools. The
+`uv tool install` line was not run (the thread was refused); `0.9.66` exists on PyPI.
+
+### Proposed addition to the project instructions
+
+Not in the project yet: once the setup script installs graphify, paste this after §1's
+instructions so every thread knows how to find code it has not read:
+
+```text
+Finding code (Hoffmann, 2026-10-11): for a known keyword, use `git grep` (add --recurse-submodules in the umbrella). For "where is X" in a repo you have not read, run from that repo's directory `bash ../marola-devkit/scripts/graph.sh build` once per thread (in the umbrella, `git submodule update --init` first), then `bash ../marola-devkit/scripts/graph.sh query "<question>"`; `path <a> <b>` and `explain <name>` work too. Ask by your own file or function name, since vendored code (Mapbox GL JS in marola-site) fills small graphs; narrow a broad question or pass --budget. Treat the answer as where to start reading, then read the files, or ask the eli5 skill to explain them. Never use graphify's output in a gate or a commit. If `graphify` is not on PATH, say so and fall back to git grep.
 ```
 
 ### What a thread finds (2026-10-11)
