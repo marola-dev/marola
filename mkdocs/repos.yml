@@ -8,5 +8,6 @@
 - name: marola-app
 - name: marola-oods
 - name: marola-skills
+- name: marola-agents
 - name: marola-devkit
   source: flake-lock

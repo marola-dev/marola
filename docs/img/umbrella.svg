@@ -41,6 +41,8 @@ text{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Li
 <text x="327" y="597" class="edge" text-anchor="start">pinned</text>
 <path d="M 795 466 V 494" stroke="#94a3b8" stroke-width="1.8" fill="none" stroke-dasharray="6,4" marker-end="url(#g)"/>
 <text x="807" y="484" class="edge" text-anchor="start">reads every SKILL.md</text>
+<path d="M 440 466 V 494" stroke="#94a3b8" stroke-width="1.8" fill="none" stroke-dasharray="6,4" marker-end="url(#g)"/>
+<text x="452" y="484" class="edge" text-anchor="start">indexes every agent</text>
 <rect x="30" y="236" width="164" height="66" rx="8" fill="#0b1222"/>
 <rect x="30" y="236" width="164" height="66" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
 <text x="112.0" y="265.5" class="name" text-anchor="middle">marola-corpus</text>
@@ -68,6 +70,10 @@ text{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Li
 <rect x="30" y="614" width="570" height="54" rx="8" fill="rgba(124,45,18,0.45)" stroke="#fb923c" stroke-width="1.6"/>
 <text x="315.0" y="637.5" class="name" text-anchor="middle">marola-devkit</text>
 <text x="315.0" y="656.5" class="sub" text-anchor="middle">tools · git hooks · reusable CI, pinned by tag in every repo</text>
+<rect x="280" y="496" width="320" height="54" rx="8" fill="#0b1222"/>
+<rect x="280" y="496" width="320" height="54" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="440.0" y="519.5" class="name" text-anchor="middle">marola-agents</text>
+<text x="440.0" y="538.5" class="sub" text-anchor="middle">inventory of every agent</text>
 <rect x="630" y="496" width="330" height="54" rx="8" fill="#0b1222"/>
 <rect x="630" y="496" width="330" height="54" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
 <text x="795.0" y="519.5" class="name" text-anchor="middle">marola-skills</text>

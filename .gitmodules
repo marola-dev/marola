@@ -16,3 +16,6 @@
 [submodule "marola-skills"]
 	path = marola-skills
 	url = https://github.com/marola-dev/marola-skills.git
+[submodule "marola-agents"]
+	path = marola-agents
+	url = https://github.com/marola-dev/marola-agents.git

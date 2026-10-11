@@ -1,6 +1,6 @@
 # Repos
 
-marola is eight repos: the umbrella, the devkit, five code or data repos and the skills catalogue. This page says which
+marola is nine repos: the umbrella, the devkit, five code or data repos, the skills catalogue and the agents inventory. This page says which
 repo owns what, what each publishes, and how a consumer pins it. How the product works end to end
 is [Architecture](ARCHITECTURE.md); why the code was split this way is [The split](SPLIT.md).
 
@@ -34,6 +34,7 @@ artifact moves is in [Artifacts, pins and dispatches](#artifacts-pins-and-dispat
 | [marola-ml](https://github.com/marola-dev/marola-ml) | Offline Python: the DSPy prompt compile, the marola-sea fine-tune, the benchmark gate and its kept runs | Compiled-prompt PRs; marola-sea on Hugging Face; the image `ghcr.io/marola-dev/marola-ml` (Ollama with the fine-tuned model, `:local` once the benchmark gate passes); pdoc on its `api-docs` branch | app; the umbrella's docs | `compile-prompt.yml`, `marola-sea-publish.yml`, `docker-local.yml`, `api-docs.yml` |
 | [marola-oods](https://github.com/marola-dev/marola-oods) | The Open Ocean Data Store's data only (`data/oods/`, MIP-0056); empty for now | The dataset; an export tag (planned, MIP-0056 §5.5) | app | The app's ingest workflow (with MIP-0056); `oods-check.yml` |
 | [marola-skills](https://github.com/marola-dev/marola-skills) | The catalogue of every Claude Code skill and subagent in the marola-dev repos, ww3-gpu and their upstreams: where each lives, its pin, what was tested; no skill is copied here | Its docs (`docs/4-reference_index.md`, `data/index.json`, regenerated daily) | Readers; the umbrella's docs | `refresh.yml` (daily, one rolling PR) |
+| [marola-agents](https://github.com/marola-dev/marola-agents) | The inventory of every agent marola uses or plans: Claude Code subagents, the Claude Projects and their routines, the product's LLM roles, the agents CI calls; no agent is defined here | Its docs | Readers; the umbrella's docs | A PR that adds or changes an agent in any repo |
 
 Each repo's README is its landing page on this site, under 5 Repos.
 
@@ -60,6 +61,7 @@ flowchart LR
   app -.->|"ingest commits (planned)"| oods
   oods -.->|"export tag (planned)"| app
   every -.->|"skills, read daily"| skills[marola-skills]
+  every -.->|"agents, indexed"| agents[marola-agents]
 ```
 
 A contract change follows the producer: it merges and releases first, each consumer bumps its pin
