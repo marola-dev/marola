@@ -41,7 +41,7 @@ Last read on **2026-10-11** (§8 says how).
 - https://github.com/marola-dev/awesome-open-climate-science
 - https://github.com/marola-dev/.github
 - https://github.com/h0ffmann/ww3-gpu
-- https://github.com/marola-dev/marola-skills (renamed from agent-skills; update the project's repository list when GitHub has the new name)
+- https://github.com/marola-dev/marola-skills (renamed from agent-skills on 2026-10-11)
 
 ### Project instructions
 
