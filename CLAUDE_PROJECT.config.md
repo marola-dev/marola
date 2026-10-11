@@ -193,8 +193,14 @@ this file does not copy.
 The project is private, so no one else can join it. A new member works in the repositories with
 the Claude Code CLI (MIP-0087 §5.1), or builds a project of their own from this file:
 
-1. Connect GitHub to claude.ai and install the Claude GitHub App on the repositories they will
-   change. A thread reaches only the repositories its project lists.
+1. Connect GitHub to claude.ai. A thread reaches only the repositories its project lists, and it
+   can push only where its owner's GitHub account can. Write access is per repository: only the
+   collaborators a repository's settings list with write, maintain or admin have it (on
+   2026-10-11, seven on marola and three on marola-site). Anyone else contributes through a fork:
+   fork each repository they will change, attach the forks to the project, install the Claude
+   GitHub App on them, and open the PRs from the fork to marola-dev. A fork PR's Actions wait for
+   a maintainer's approval, and the workflows that need a secret (the PR-body fill, Gemini's fix
+   push) skip forks.
 2. Create a cloud environment with §2's setup script. App builds, the pinned app image and model
    training still need the CLI on their own machine.
 3. Follow §6, putting their own name in the routines that mention Hoffmann, and keep only the

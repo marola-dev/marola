@@ -78,6 +78,12 @@ scoring, a data source, or what a user sees goes through one first.
 - **The PR body is generated from those commits** by `just pr` (`.github/PULL_REQUEST_TEMPLATE.md`
   has the shape): the summary from the first commit's body, the Tested and Cost rows from the
   trailers. Write the commit right and there is nothing to fill.
+- **Without write access, fork.** Only the collaborators a repository's settings list with write,
+  maintain or admin can push branches to it, and the list differs per repository. Everyone else
+  forks it and opens the PR from the fork. Actions on a fork PR wait for a maintainer's approval
+  ([CI-CD](CI-CD.md#the-maintainers-manual-settings)), and the workflows that need a secret, such
+  as the PR-body fill and Gemini's fix push, skip forks, so write the body with `just uprd`
+  locally.
 - **The repo's gates** must be green before a PR is opened; its `AGENTS.md` names them, and they
   are the gates its `ci.yml` runs.
 - **Dependency updates.** dependabot watches GitHub Actions in the umbrella and marola-app, and
