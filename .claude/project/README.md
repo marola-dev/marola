@@ -8,7 +8,8 @@ records why and what is left out; the same reasoning holds here.
 
 | File | What it holds | Read with |
 |---|---|---|
-| [`project.json`](project.json) | name, topic, visibility, instructions, repositories, memory and routine settings, what a thread session runs with, the cloud environment, the routines | `get_project_settings`, `get_session`, `list_environments`, `list_triggers` |
+| [`project.json`](project.json) | name, topic, visibility, instructions, repositories, memory and routine settings, what a thread session runs with, the cloud environments and the toolchain a thread finds, the account's plugins and connectors, the routines | `get_project_settings`, `get_session`, `list_environments`, `ListPlugins`, `ListConnectors`, `list_triggers` |
+| [`environment/setup.sh`](environment/setup.sh) | the setup script proposed for the "Marola cloud" environment; the service's current one cannot be read from a session | run it in a thread |
 | [`routines/a2a-inbox-marola.txt`](routines/a2a-inbox-marola.txt) | the stored prompt of the A2A inbox routine (`para:marola`), verbatim | `get_trigger trig_01UE8yJCJTN2HD2WfTnxbBve` |
 | [`routines/linkedin-prep.txt`](routines/linkedin-prep.txt) | the LinkedIn prep reminder, the day before each post, verbatim | `get_trigger trig_01SGy8M3xZFctNvPa54faAtq` |
 | [`routines/linkedin-post.txt`](routines/linkedin-post.txt) | the LinkedIn post reminder, verbatim | `get_trigger trig_01J1n5zw4noc5eypq9AGeA2Y` |
@@ -27,8 +28,9 @@ All values were read on 2026-10-09: the `project` block with `get_project_settin
 the project's coordinator session has, and the rest from a thread session. The model ids are not
 written down, since no model id goes into a file pushed to a repository; the tools in the table
 read them back. The project sets no effort default, so `thread_sessions.effort` is what the service
-gave the session that wrote this file. The environment is the account's only one; the project names
-no default. Memory is on for the project but off in the owner's account settings, so there was
+gave the session that wrote this file. The account has two environments; the project names no
+default, and its sessions ran on "Marola cloud" on 2026-10-11. `environment` and `account` were
+read that day. Memory is on for the project but off in the owner's account settings, so there was
 nothing to read. The decisions the work follows are in the project instructions or already in git
 (`AGENTS.md`, the MIPs); thread history is not copied.
 
@@ -41,6 +43,21 @@ copied here. The account's
 Wave Forecaster routines and the one-shot PR check-ins sessions schedule for themselves are left
 out: the first are that project's, the second are not settings.
 
+## Joining as a new member
+
+The project is private: only its owner is in it, and nobody else can be added. A new member works
+in the repositories with Claude Code directly, or builds a project of their own from this folder:
+
+1. Connect GitHub to claude.ai and install the Claude GitHub App on the repositories they will
+   change; a thread reaches only the repositories its project lists.
+2. Create a cloud environment and paste [`environment/setup.sh`](environment/setup.sh) as its setup
+   script, so `just quality` runs in a thread. App builds, the pinned app image and model training
+   still need the CLI on their own machine (MIP-0087 §3.1).
+3. Follow "Restoring the project" below with their own name on the routines that mention Hoffmann,
+   and keep only the routines they want; the A2A inbox belongs to one project at a time.
+4. For CLI work, run `nix develop` in each repository and accept the plugins its
+   `.claude/settings.json` declares; MIP-0087 §5.6 lists what each surface loads.
+
 ## Restoring the project
 
 1. Create a private project named as in `project.json`, with its topic, and attach its
@@ -48,8 +65,9 @@ out: the first are that project's, the second are not settings.
 2. Pick the default model, and paste `instructions` into the project instructions.
 3. Create each routine with its `cron` and the text of its `prompt` file, inside the project, so it
    wakes a session with this project's repositories.
-4. Reconnect the connectors the work needs and re-enter any environment secret by hand; neither is
-   recorded here.
+4. Create the environment with [`environment/setup.sh`](environment/setup.sh), reconnect the
+   connectors `account.connectors` names, and re-enter any environment secret by hand; sign-ins and
+   secrets are not recorded here.
 
 ## Keeping it current
 

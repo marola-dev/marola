@@ -1,6 +1,6 @@
 {
   "read_on": "2026-10-11",
-  "read_with": "the session context and get_project_settings (from the project's coordinator session), get_session, list_environments, list_triggers and get_trigger; see README.md",
+  "read_with": "the session context and get_project_settings (from the project's coordinator session), get_session, list_environments, ListPlugins, ListConnectors, list_triggers and get_trigger; see README.md",
   "project": {
     "name": "Marola Agent",
     "topic": "Build, design, maintain and implement marola.dev",
@@ -34,10 +34,47 @@
     "permission_mode": "auto"
   },
   "environment": {
-    "name": "Default",
-    "kind": "anthropic_cloud",
-    "network": "trusted network access",
-    "setup": "none on the service"
+    "used_by_project_sessions": "Marola cloud",
+    "environments": [
+      {
+        "name": "Marola cloud",
+        "kind": "anthropic_cloud",
+        "created": "2026-10-09",
+        "setup": "not readable from a session; environment/setup.sh is the proposed script"
+      },
+      {
+        "name": "Default",
+        "kind": "anthropic_cloud",
+        "created": "2026-09-06",
+        "network": "trusted network access"
+      }
+    ],
+    "toolchain_seen_2026-10-11": {
+      "present": [
+        "nix 2.34",
+        "node 22",
+        "python 3.13",
+        "ruff 0.16",
+        "uv 0.11",
+        "docker 29",
+        "gh 2.89",
+        "Playwright Chromium in /opt/pw-browsers",
+        "JDK 21"
+      ],
+      "missing": [
+        "just",
+        "shellcheck",
+        "actionlint",
+        "hadolint",
+        "sbt",
+        "JDK 25 (Kyo needs it)"
+      ],
+      "blocked": [
+        "nix develop: flake inputs outside the project's repositories answer 403",
+        "ghcr.io app image pull: unauthorized",
+        "Maven Central and Docker Hub: 429"
+      ]
+    }
   },
   "routines": [
     {
@@ -67,12 +104,26 @@
   ],
   "not_in_this_snapshot": [
     "project memory",
-    "connectors and their sign-ins",
-    "environment secrets and variables",
     "chat and thread history",
     "published artifacts",
     "project files under /mnt/project-files",
     "one-shot reminders a session schedules for itself (PR check-ins)",
-    "routines on the same account that belong to Wave Forecaster (h0ffmann/ww3-gpu's .claude/project/)"
-  ]
+    "routines on the same account that belong to Wave Forecaster (h0ffmann/ww3-gpu's .claude/project/)",
+    "connector sign-ins (only which connectors are on is recorded)",
+    "the environment's own setup script, variables and secrets, which no session can read"
+  ],
+  "account": {
+    "plugins": [],
+    "connectors": {
+      "connected": [
+        "Gmail",
+        "Google Calendar",
+        "Google Drive"
+      ],
+      "incomplete": [
+        "Notion"
+      ]
+    },
+    "repo_plugins": "declared in each repo's .claude/settings.json (marola-devkit, superpowers, skill-creator); a Project thread does not load them. MIP-0087 §5.6 is the inventory"
+  }
 }
