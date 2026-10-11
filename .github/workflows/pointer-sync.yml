@@ -4,8 +4,6 @@ name: pointer sync
 
 on:
   repository_dispatch:
-    # submodule-docs-updated is what each repo's notify-umbrella sends today; submodule-updated is
-    # the every-push event (CI-CD.md). The daily run moves pointers without either.
     types: [submodule-updated, submodule-docs-updated]
   schedule:
     - cron: "40 5 * * *" # after docs.yml's 05:20, off the hour other workflows use (CI-CD.md)
@@ -22,7 +20,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     env:
       BRANCH: chore/pointer-sync
     steps:
@@ -40,6 +38,14 @@ jobs:
           ref: main
           submodules: true
           token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+
+      # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
+      - uses: DeterminateSystems/nix-installer-action@v23
+      # pointer-sync.sh regenerates REPOS.md's wiring block (MIP-0076 §5.4). Outside the default
+      # shell there is no .devkit link, so wiring fetches each devkit ref it reads from GitHub.
+      - name: wiring from nix develop .#lint
+        shell: bash -eo pipefail {0}
+        run: nix develop .#lint --command which wiring | xargs -n1 dirname >> "$GITHUB_PATH"
 
       - name: Move every submodule to its default branch's tip
         id: bump

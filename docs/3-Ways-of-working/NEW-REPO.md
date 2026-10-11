@@ -11,7 +11,9 @@ the repo on GitHub, and every setting under "GitHub settings", is a human's act.
    (`github:marola-dev/marola-devkit/vX.Y.Z`, `inputs.nixpkgs.follows = "nixpkgs"`); the dev shell
    takes `marola-devkit.lib.${system}.tools` and its `shellHook`, plus
    `git config core.hooksPath .devkit/.githooks`. Commit **`flake.lock`**.
-2. **`.gitignore`**: `.devkit`, `.tmp/`, `.claude/settings.local.json`.
+2. **`.gitignore`**: `.devkit`, `.tmp/`, `.claude/settings.local.json`. A
+   **`.graphifyignore`** for vendored or generated code, which `just graph` would otherwise
+   index ([DEV-FLOW](DEV-FLOW.md#the-code-graph-in-one-repo)).
 3. **`justfile`**: `set allow-duplicate-recipes`, `import? '.devkit/devkit.just'`, and the three
    recipes the devkit's hooks call: `quality` (every gate CI runs, including `agents-check` and
    `docs-lint`), `precommit` (seconds) and `prepush` (the gates a push would fail on).
@@ -30,8 +32,9 @@ the repo on GitHub, and every setting under "GitHub settings", is a human's act.
      `agents-check`;
    - `pr.yml`: `pr-body` and `ci-short-circuit`;
    - `labels.yml`: `labels-sync`, on dispatch;
-   - `notify-umbrella.yml`: on a push to `main` touching `README.md` or `docs/**`, with the
-     `MAROLA_CROSS_REPO_PAT` secret.
+   - `notify-umbrella.yml`: on every push to `main`, no `paths:`, with the `MAROLA_CROSS_REPO_PAT`
+     secret; it sends `submodule-updated`, plus `submodule-docs-updated` when `README.md` or
+     `docs/**` changed.
 8. **`.github/ISSUE_TEMPLATE/`** and **`.github/PULL_REQUEST_TEMPLATE.md`**: copied from the
    devkit at the pinned tag.
 9. **`README.md`**, the landing: what the repo is with a status line, try it, the repo map, its
@@ -58,17 +61,35 @@ checkout marker.
 14. **`MAROLA_CROSS_REPO_PAT`**: grant the fine-grained token Contents read and write on the new
     repo, and add the repo to the org secret's repository access
     ([CI/CD](CI-CD.md#the-maintainers-manual-settings)).
-15. **Org Project**: the repo's issues land on
+15. **Devkit bumps**: add `marola-dev/marola-<name>` to the devkit's `.github/consumers.txt`, in
+    a marola-devkit PR, so `bump-consumers` opens its pin-bump PR after each release. Nothing to
+    grant: `MAROLA_BUMP_PAT` reaches every org repo, and only marola-devkit may read it.
+16. **Org Project**: the repo's issues land on
     [Project 1](https://github.com/orgs/marola-dev/projects/1) (its auto-add workflow, or `just
     board-sync`).
 
 ## In the umbrella
 
-16. **`.gitmodules`** and the gitlink: `git submodule add
+17. **`.gitmodules`** and the gitlink: `git submodule add
     https://github.com/marola-dev/marola-<name>.git marola-<name>`, in a PR. Adding a submodule is
-    the one pointer an umbrella PR commits; `pointer-sync.yml` moves it from then on.
-17. **`mkdocs/repos.yml`**: a `- name: marola-<name>` entry, so the site mounts it at
+    the one pointer an umbrella PR commits; `pointer-sync.yml` moves it from then on. Add the
+    name to the `&submodules` anchor in `ci.yml`'s `changes` job too: the `docs` and `graph`
+    filters read it, and a repo left out is never docs-built or graphed on a pointer move, silently
+    ([CI/CD](CI-CD.md#the-workflows)).
+18. **`mkdocs/repos.yml`**: a `- name: marola-<name>` entry, so the site mounts it at
     `5-Repos/marola-<name>/`.
-18. **`docs/2-Building-marola/REPOS.md`**: a routing-table row, and a row in the artifacts, pins
-    and dispatches table for each artifact it produces or reads.
-19. **`README.md`**: a row in the repo table, linking its `5-Repos/` page.
+19. **`docs/2-Building-marola/REPOS.md`**: a routing-table row, and
+    `just wiring docs/2-Building-marola/REPOS.md` to regenerate the
+    [wiring block](../2-Building-marola/REPOS.md#artifacts-pins-and-dispatches) from its workflows
+    and pins. An artifact it publishes that nothing reads yet needs a `<artifact>: <reason>` line
+    in **`wiring.allow`** until the reader lands, and a dispatch it sends or listens for needs its
+    other side in the same change: otherwise `wiring --check` turns every umbrella PR red.
+20. **`README.md`**: a row in the repo table, linking its `5-Repos/` page.
+21. **`.graphifyignore`**: the new repo's vendored or generated paths, under `marola-<name>/`
+    unless a `**/` line already matches them (vendored code and skills, tests, fixtures, JSON).
+    marola-site's vendored mapbox-gl alone was 6,949 of 13,192 nodes.
+22. **Check once**, in a `--recurse-submodules` checkout inside `nix develop`:
+    `just wiring docs/2-Building-marola/REPOS.md` leaves no diff,
+    `wiring --check docs/2-Building-marola/REPOS.md` passes, `just graph build` lists the repo in
+    its `build.json`, and `just graph query "<one of its symbols>"` finds it
+    ([graph](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_tools/#code-graph)).

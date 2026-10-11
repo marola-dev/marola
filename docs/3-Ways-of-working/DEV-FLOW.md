@@ -311,3 +311,11 @@ labels and rulesets) is on the devkit's
 are in its `AGENTS.md` and its `3-development` page, the umbrella's recipes are `just --list`
 here, and which checkout a recipe needs is in
 [WORKING-ACROSS-REPOS](WORKING-ACROSS-REPOS.md#which-checkout-a-recipe-needs).
+
+### The code graph in one repo
+
+`just graph build`, then `just graph query "<question>"`, work in any repo whose devkit pin is
+v0.8.0 or later, not only the umbrella, where the graph spans every submodule. The graph goes under
+`~/.cache/marola-graph/<repo>`, never into the checkout or a commit; rebuild it when `query` warns
+it is stale. Vendored or generated paths go in a repo-root `.graphifyignore`
+([graph](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_tools/#code-graph)).
