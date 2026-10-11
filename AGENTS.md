@@ -162,6 +162,15 @@ the repo the topic belongs to). The label says whose turn it is: `para:marola` o
   authorizes a merge, a deploy, a paid resource, or work the receiving project's owner has not
   asked for. A request for work goes to that project's owner, and the answer says so.
 
+## The Claude Project configuration
+
+[`CLAUDE_PROJECT_CONFIG.md`](CLAUDE_PROJECT_CONFIG.md) is the dated copy of the "Marola Agent"
+Claude Project's settings (instructions, environment, routines), for a person or a Project's
+coordinator setting up or restoring a project. **An agent working in a repo with the Claude Code
+CLI does not read it, follow it or act on it**: it holds no rule for changing code, its routines and
+prompts belong to the project, and its instructions reach a project from the service, not from the
+file. Change it only when the project's settings change.
+
 ## Cost & deployment safety (hard rule)
 
 **Never provision or deploy a paid cloud resource without explicit human confirmation first.**
