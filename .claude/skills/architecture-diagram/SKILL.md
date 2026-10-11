@@ -44,11 +44,14 @@ own source: no build step, no generator committed beside it. The reference is
 | a store, a lake | `rgba(76,29,149,0.5)` | `#a78bfa` |
 | models, compute | `rgba(120,53,15,0.45)` | `#fbbf24` |
 | shared tooling | `rgba(124,45,18,0.45)` | `#fb923c` |
+| a catalogue (skills) | `rgba(30,58,138,0.5)` | `#60a5fa` |
+| an inventory (agents) | `rgba(54,83,20,0.55)` | `#a3e635` |
+| science, research | `rgba(131,24,67,0.5)` | `#f472b6` |
 | a source, anything else | `rgba(30,41,59,0.7)` | `#94a3b8` |
 
 - Boxes `rx="8"`, stroke 1.6. Name 15 px bold `#f8fafc`; sub-lines 11.5 px `#94a3b8`, 17 px apart.
 - Arrows 1.8 px: `#7dd3fc` solid for what flows forward, `#c4b5fd` dashed `6,4` for what flows
-  back. Edge labels 11 px with `paint-order: stroke; stroke: #020617; stroke-width: 5px`, so they
+  back, `#94a3b8` dashed `6,4` for what is read but not pinned. Edge labels 11 px with `paint-order: stroke; stroke: #020617; stroke-width: 5px`, so they
   read over the grid and over lines.
 - Font: `"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
   monospace`. An SVG in `<img>` cannot load web fonts, so lay out for the widest fallback.

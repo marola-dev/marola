@@ -71,15 +71,15 @@ text{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Li
 <text x="315.0" y="637.5" class="name" text-anchor="middle">marola-devkit</text>
 <text x="315.0" y="656.5" class="sub" text-anchor="middle">tools · git hooks · reusable CI, pinned by tag in every repo</text>
 <rect x="30" y="496" width="220" height="54" rx="8" fill="#0b1222"/>
-<rect x="30" y="496" width="220" height="54" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
+<rect x="30" y="496" width="220" height="54" rx="8" fill="rgba(131,24,67,0.5)" stroke="#f472b6" stroke-width="1.6"/>
 <text x="140.0" y="519.5" class="name" text-anchor="middle">marola-research</text>
 <text x="140.0" y="538.5" class="sub" text-anchor="middle">science</text>
 <rect x="280" y="496" width="320" height="54" rx="8" fill="#0b1222"/>
-<rect x="280" y="496" width="320" height="54" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
+<rect x="280" y="496" width="320" height="54" rx="8" fill="rgba(54,83,20,0.55)" stroke="#a3e635" stroke-width="1.6"/>
 <text x="440.0" y="519.5" class="name" text-anchor="middle">marola-agents</text>
 <text x="440.0" y="538.5" class="sub" text-anchor="middle">inventory of every agent</text>
 <rect x="630" y="496" width="330" height="54" rx="8" fill="#0b1222"/>
-<rect x="630" y="496" width="330" height="54" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
+<rect x="630" y="496" width="330" height="54" rx="8" fill="rgba(30,58,138,0.5)" stroke="#60a5fa" stroke-width="1.6"/>
 <text x="795.0" y="519.5" class="name" text-anchor="middle">marola-skills</text>
 <text x="795.0" y="538.5" class="sub" text-anchor="middle">catalogue of every skill and agent</text>
 <path d="M 30 692 H 64" stroke="#7dd3fc" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
