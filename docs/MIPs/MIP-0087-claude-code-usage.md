@@ -6,7 +6,7 @@
 | **Author** | Hoffmann |
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev-loop guidance, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
-| **Related** | MIP-0076 (graphify and `graph.sh`), MIP-0011 (the Claude Code practices this repo enforces through `.claude/settings.json`), MIP-0080 (`skills.lock`), MIP-0084 (vendoring the `routing` skill so sessions without the plugin reach it), `docs/3-Ways-of-working/AGENT-SKILLS.md` §2 (superpowers), `DEV-FLOW.md`, #731/#732 (the project snapshot) |
+| **Related** | MIP-0076 (graphify and `graph.sh`), MIP-0011 (the Claude Code practices this repo enforces through `.claude/settings.json`), MIP-0080 (`skills.lock`), MIP-0084 (vendoring the `routing` skill so sessions without the plugin reach it), `docs/3-Ways-of-working/AGENT-SKILLS.md` §2 (superpowers), `DEV-FLOW.md`, #732 (`CLAUDE_PROJECT_CONFIG.md`, the Project's own settings, §5.7) |
 | **Effort** | M — one ways-of-working page, one vendored skill with a drift check and a devkit bump, a correction to `AGENT-SKILLS.md`, and settings a person changes on claude.ai |
 | **Gain** | `infra/dev-loop` — contributors stop assuming a Project thread has the plugins, hooks and attribution the CLI has, and pick the surface that fits the job |
 | **Effort vs Gain** | `cheap win` — the facts are already checked (§4); the work is writing them down where a contributor looks |
@@ -21,7 +21,7 @@
 |---|---|
 | **Manually reviewed** | no |
 | **Written by** | Hoffmann, with Claude Code (a Claude Project thread) |
-| **Tasks** | none needed — five rows in §5.4, each one PR or one setting |
+| **Tasks** | none needed — seven rows in §5.4, each one PR or one setting |
 | **Tests** | none — a docs page; `just quality`'s `docs-lint` and the strict docs build cover it |
 | **Spec-kit** | none |
 | **Issues** | not filed — Draft |
@@ -78,7 +78,7 @@ core is this table (every row checked in §4; "inferred" marks the ones that wer
 | **Repo subagents (`.claude/agents/`)** | the repo's | every repo's (verified: `jar-verifier`, `news-fact-check`, `news-copy-review`, `revisor-proposta` are in a thread's agent list) |
 | **MCP servers from `.mcp.json`** (Playwright and Figma in marola-site, marola and Context7 in marola-app) | yes | **no**: none of the four is in a thread's tool list, because no repo is the working directory; Playwright still works as a library from Node |
 | **Hooks, permissions, `attribution` from the repo** | yes | **no** (cwd is not a repo; hooks also need a single-repo session) |
-| **`nix develop`, `just`, devkit tools** | yes | **no**: Nix is installed, but `nix develop` fails fetching flake inputs (the proxy answers 403 for GitHub repos not in the Project); run a gate's script directly (`python3 <devkit>/scripts/docs_lint.py`) |
+| **`nix develop`, `just`, devkit tools** | yes | **no**: Nix is installed, but `nix develop` fails fetching flake inputs (the proxy answers 403 for GitHub repos not in the Project); run a gate's script directly (`python3 <devkit>/scripts/docs_lint.py`). `just`, `shellcheck`, `actionlint` and `hadolint` install from nixpkgs in a thread (§4.5), so the environment's setup script can provide them |
 | **ultrareview** (`/code-review ultra`) | yes, signed in with claude.ai; 3 free runs on Pro/Max, then usage credits | **no** slash command to type; the built-in `code-review` skill at `max` runs a local review instead (inferred: cloud fallback not tried) |
 | **`/clear`, `/rename`, `/plugin`, `/resume`** | yes | no: a new thread replaces `/clear` |
 | **Parallel work** | worktrees, one session each | one thread per task, started by the coordinator |
@@ -101,7 +101,7 @@ in a thread; CI still runs the full set on the PR.
 | marola (umbrella) | **most work**: MIPs and `.tasks.md`, ways-of-working docs, research, issue drafting, pointer-sync review, cross-repo plans; the submodules initialise in seconds | `just release`, `just docs-serve` previews | `docs_lint.py` from the devkit checkout, `mip_graph.py --check` (ok); the strict docs build in CI |
 | marola-corpus | adding or fixing a document (the `corpus-doc` skill): fetch the source, write the Markdown, update `docs/4-reference.md` | trying a document with the app (`just ask`, which needs marola-app and Ollama) | `scripts/corpus-check.sh` (ok) |
 | marola-oods | docs and the tree check; data lands only from marola-app's ingest | nothing an agent should run here | `scripts/oods-tree-check.sh` (ok) |
-| marola-devkit | scripts and their `--self-test`, plugin skills, reusable workflows, docs | anything that needs `nix build` or a self-hosted runner | `bash tests/self-tests.sh` (all ok); `shellcheck` is missing |
+| marola-devkit | scripts and their `--self-test`, plugin skills, reusable workflows, docs | anything that needs `nix build` or a self-hosted runner | `bash tests/self-tests.sh` (all ok); `shellcheck` only with the setup script (§4.5) |
 | agent-skills | the audit pages, `data/*.json`, reviewing the queue | `just refresh` with a `GH_TOKEN` of its own | `refresh.py --self-test` (ok) |
 | marola-ml | `--self-test` changes, docs, the benchmark gate's logic | training, `just benchmark`, `compile-prompt` (Ollama, GPU, paid calls, the app image) | `benchmark_gate.py --self-test` (ok) |
 | marola-app | **reading and design only**: tracing code (graphify, `git grep`), a MIP's §5, review answers, docs pages; small Scala edits only if CI is the test | anything that compiles: the thread has JDK 21 (Kyo needs 25), no `sbt`, Maven Central answers 429, no Ollama | none locally; CI |
@@ -182,6 +182,20 @@ in a thread; CI still runs the full set on the PR.
   under `~/.claude/plugins/cache/claude-plugins-official/`, while `ListPlugins` still returned
   nothing and superpowers did not appear. What installed it was not established.
 
+### 4.5 The project's environment and settings (2026-10-11)
+
+- `list_environments`: two `anthropic_cloud` environments, "Marola cloud" (created 2026-10-09,
+  the one this project's threads run on) and "Default"; a session cannot read an environment's
+  setup script, variables or secrets (verified).
+- `nix profile install nixpkgs#just nixpkgs#shellcheck nixpkgs#actionlint nixpkgs#hadolint` in a
+  thread: all four from `cache.nixos.org`, `just --list` works in the umbrella (verified). Without
+  `.devkit`, `just quality` still stops at `agents-check`, which comes from `nix develop`.
+- `pip`/`uv` installing `graphifyy` from PyPI was refused in a thread by the auto-mode permission
+  check as untrusted code, so §5.5's Project recipe needs the person's approval in that session
+  (verified once; it had run on 2026-10-10).
+- `ListPlugins`: still none; `ListConnectors`: Gmail, Google Calendar and Google Drive connected,
+  Notion unfinished (verified).
+
 **Pick:** no new dependency. Superpowers comes from the claude.ai directory for Projects and from
 `claude-plugins-official` for the CLI, the same upstream (`obra/superpowers`).
 
@@ -244,6 +258,8 @@ Everything; there is no code. Which surface loads what is a fact from §4, re-ch
 | 3 | the §3.1 table and §5.5 in `CLAUDE-CODE.md`; once MIP-0084's bundle lands, replace §5.5's Project recipe with `route` | umbrella | agent |
 | 4 | enable Superpowers (and skill-creator, if listed) on the claude.ai account; replace the account's stale `mip` and `mip-tasks` skills with the devkit tag's copies, or remove them once MIP-0084 vendors the devkit skills | claude.ai settings | Hoffmann |
 | 5 | the `claude-usage` skill (§5.6) in the devkit plugin, vendored into the umbrella with its `skills.lock` row, and its drift check; a devkit version bump | marola-devkit, umbrella | agent |
+| 6 | paste `CLAUDE_PROJECT_CONFIG.md` §2's setup script into the "Marola cloud" environment | claude.ai settings | Hoffmann |
+| 7 | `CLAUDE_PROJECT_CONFIG.md` and its check (§5.7), kept current when a project setting changes | umbrella | agent |
 
 ### 5.5 graphify in each surface
 
@@ -297,6 +313,26 @@ devkit) compares the inventory with each repo's `.claude/settings.json`, `.mcp.j
 | Tooling | graphify (`graph`), `wiring`, `route` (MIP-0084) | the devkit | recommended | `nix develop` | §5.5's venv until the bundle |
 | Settings | `attribution`, the permission allowlist and deny list, `statusLine` | each repo's `.claude/settings.json` | **required** | yes | no: write the three trailers by hand |
 
+### 5.7 `CLAUDE_PROJECT_CONFIG.md`
+
+The Project's own settings (instructions, repositories, environment and its setup script,
+plugins, connectors, routines with their prompts verbatim) are one Markdown file at the umbrella's
+root, so any Claude Project, or a person, reads them without tools: to restore the project, to
+build a new member's own project from it (a private Project takes no other members), or to see
+what changed in a diff. It replaces the `.claude/project/` JSON folder the snapshot started as.
+
+- **Not for the CLI.** Its banner and `AGENTS.md` ("The Claude Project configuration") say an
+  agent working in a repo with the Claude Code CLI does not read it, follow it or act on it. It
+  holds no rule for changing code, and its routine prompts are written for the project's threads
+  (they post "in this thread" and read `/mnt/project-files`), which a CLI session would misread as
+  its own task. Claude Code never loads it as configuration.
+- **Check.** `scripts/claude_project_check.py` (in `just quality` and CI) fails when a section, the
+  banner, a routine's cron or prompt block is missing, or an e-mail, account id or session id
+  appears. Nothing can compare the file with the service outside a Claude session, so a change to
+  a setting lands with the file's date updated, in the same PR.
+- **This page and that file split the facts**: CLAUDE-CODE.md says what each surface loads and
+  which to use; the config file says what this one project is set to. Neither restates the other.
+
 ## 6. Scoring / safety impact
 
 None.
@@ -319,6 +355,8 @@ None.
   were not exercised in this session; the page keeps the mark until someone runs them.
 - Enabling superpowers on the account loads its `SessionStart` hook and fifteen skills into every
   Project thread and every claude.ai/code session of that account, also for non-marola work.
+- `CLAUDE_PROJECT_CONFIG.md` is a copy of settings that live on the service; it is only as fresh
+  as the last PR that touched it, and its date says when that was.
 - Account skills are a second copy of the devkit's; they drift (the `mip` skill already has). The
   lasting fix is MIP-0084's vendoring, not this page.
 
