@@ -6,11 +6,11 @@
 | **Author** | Claude (Fable 5.1), from the maintainer's "Draft MIP" go-ahead on the vendored-skill drift research (2026-10-08) |
 | **Created** | 2026-10-08 |
 | **Phase** | None: dev-loop tooling, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
-| **Related** | MIP-0070 §5.4 (contracts are pinned artifacts, never another tree) and §9 (the rejected devkit sync bot, which this is not), MIP-0011 §5 item 8 (skills as repo files), MIP-0013 (why skills are plain files under `.claude/skills/`), MIP-0063 §5.6 (filing is a human's act), the devkit's `sharingan` skill (how a skill gets vendored today), marola-dev/agent-skills (the daily drift report), marola-dev/marola-devkit#39 and #40 (the drift this would have caught) |
-| **Effort** | M — one stdlib Python tool in the devkit with a self-test, one reusable workflow, one lock file and one caller workflow per vendoring repo, a small change to agent-skills' `refresh.py`; no Scala |
+| **Related** | MIP-0070 §5.4 (contracts are pinned artifacts, never another tree) and §9 (the rejected devkit sync bot, which this is not), MIP-0011 §5 item 8 (skills as repo files), MIP-0013 (why skills are plain files under `.claude/skills/`), MIP-0063 §5.6 (filing is a human's act), the devkit's `sharingan` skill (how a skill gets vendored today), marola-dev/marola-skills (the daily drift report), marola-dev/marola-devkit#39 and #40 (the drift this would have caught) |
+| **Effort** | M — one stdlib Python tool in the devkit with a self-test, one reusable workflow, one lock file and one caller workflow per vendoring repo, a small change to marola-skills' `refresh.py`; no Scala |
 | **Gain** | `infra/dev-loop` — every vendored skill names the commit it came from, a stale copy fails `just quality` instead of being discovered by a daily report nobody reads, and an upstream change arrives as a diff to review, not as a surprise |
 | **Effort vs Gain** | `cheap win` — the tool is a few hundred lines over `git hash-object` and the GitHub contents API, and the first lock files are written from what is already on disk |
-| **Depends on** | Nothing merges first. The devkit ships the tool and the reusable workflow in one release; each vendoring repo takes it with its next devkit bump. agent-skills' change is independent and can land in any order. No Phase 1 gate, no paid resource: the workflow runs on GitHub-hosted minutes in public repos |
+| **Depends on** | Nothing merges first. The devkit ships the tool and the reusable workflow in one release; each vendoring repo takes it with its next devkit bump. marola-skills' change is independent and can land in any order. No Phase 1 gate, no paid resource: the workflow runs on GitHub-hosted minutes in public repos |
 | **Blocked by** | none |
 | **Risk** | The weekly PRs are merged without reading the diff, which turns a reviewed update into the force-sync §9 rejects; the 14-day cooldown and the per-skill diff in the PR body are the only defences |
 | **Cost so far** | — |
@@ -40,11 +40,11 @@ paragraph.
 No repo records the upstream commit. `sharingan` step 1 pins the commit while porting, but the pin
 lives in the agent's scratchpad and dies with the session; the only trace on disk is a `version:`
 field some upstreams keep in their front matter. So drift is invisible from inside a repo, and is
-seen only by marola-dev/agent-skills' daily `refresh.py`, which matches a copy to a watched repo by
+seen only by marola-dev/marola-skills' daily `refresh.py`, which matches a copy to a watched repo by
 skill *name* and compares the `SKILL.md` blob sha. That report found, and the repos did not:
 
 - `humanizer` at 3.0.0 in the devkit and ww3-gpu while upstream is 3.1.0 (`225a6f3`), which adds a
-  tell and fixes a section reference (agent-skills review R5, marola-dev/marola-devkit#39);
+  tell and fixes a section reference (marola-skills review R5, marola-dev/marola-devkit#39);
 - `ponytail-review` and `ponytail-audit` behind `552acd5`, which numbers findings and adds the
   `reuse:` tag (R6, marola-dev/marola-devkit#40).
 
@@ -79,7 +79,7 @@ And once a week, a PR titled `chore(skills): update humanizer, ponytail-review` 
   `examples/`, `references/`); ww3-gpu's four, with the audience paragraph under the front matter.
   Adapted skills that are rewritten rather than copied (`eli5`, `architecture-diagram`, the devkit's
   own) are out of scope: a lock row means "this is upstream's bytes, plus at most one patch".
-- **agent-skills' `refresh.py`** (read 2026-10-08): stdlib only; a copy is `identical to` or
+- **marola-skills' `refresh.py`** (read 2026-10-08): stdlib only; a copy is `identical to` or
   `differs from` the first watched skill of the same name, by the `SKILL.md` blob sha alone, with
   `SKIP_DIRS` excluding `vendor/`, `fixtures/` and the like. It cannot tell a local edit from
   drift, matches the wrong upstream when two watched repos share a name, and sees only one file.
@@ -183,7 +183,7 @@ flowchart LR
 2. **marola-site, marola, ww3-gpu**: devkit bump; `.claude/skills/skills.lock`; `skills-check` in
    `just quality`; the caller workflow. The umbrella's row is `citation-cff`; ww3-gpu's four rows
    carry `local_edits`.
-3. **marola-dev/agent-skills**: `refresh.py` reads each watched marola-dev repo's `skills.lock`
+3. **marola-dev/marola-skills**: `refresh.py` reads each watched marola-dev repo's `skills.lock`
    (and ww3-gpu's) and takes `upstream`, `path` and `commit` from it, comparing every locked
    file rather than `SKILL.md` alone; name matching stays as the fallback for a copy with no
    lock row. `upstream_of` becomes exact, and the report gains "pinned at … / upstream at …".
@@ -221,7 +221,7 @@ None. No code path in marola-app changes; this is dev tooling.
 - **`actionlint`** on the workflow; a `workflow_dispatch` run on a scratch branch of marola-site
   with one row's `commit` set 30 days back opens a PR with that skill's diff and no other (run
   and PR links in the devkit PR).
-- **agent-skills**: `refresh.py --self-test` adds `upstream_from_lock` and
+- **marola-skills**: `refresh.py --self-test` adds `upstream_from_lock` and
   `name_match_fallback_without_lock`; a refresh run after step 2 shows the devkit's `humanizer`
   as "pinned at <null→sha> / upstream at 225a6f3".
 - Done means `just quality` runs `skills-check` in the devkit, marola-site, the umbrella and
@@ -255,9 +255,9 @@ None. No code path in marola-app changes; this is dev tooling.
   project-enabled external plugins; a plugin renames its skills (`/mapbox:…`), so `site-frontend`'s
   ordering breaks; the pin is set by the marketplace author, not by us; and not every upstream
   publishes one (not checked against each upstream, Appendix).
-- **agent-skills as an umbrella submodule holding the copies**: Claude Code loads project skills
+- **marola-skills as an umbrella submodule holding the copies**: Claude Code loads project skills
   only from the started repo's `.claude/skills/` and its parents, and `AGENTS.md` says to start in
-  the repo being changed; agent-skills holds no copies by design, and a repo reading another's
+  the repo being changed; marola-skills holds no copies by design, and a repo reading another's
   tree is what MIP-0070 §5.4 forbids.
 - **`git subtree`**: it pins a commit, but splits history across every vendoring repo, cannot
   carry a local patch cleanly, and `git subtree pull` is the force-sync §5.3 avoids.
@@ -288,7 +288,7 @@ Nothing outside this workspace was reachable from this session: the GitHub API a
 - The skill directories and licence files listed in §4, read 2026-10-08 in marola-site, the devkit,
   the umbrella and ww3-gpu; `humanizer`'s `version: "3.0.0"` front matter; ww3-gpu's audience
   paragraph in each of its four copies.
-- marola-dev/agent-skills `scripts/refresh.py` and `docs/4-reference_review.md` R5–R6, read
+- marola-dev/marola-skills `scripts/refresh.py` and `docs/4-reference_review.md` R5–R6, read
   2026-10-08: the name-based match, the `SKILL.md`-only blob comparison, and the upstream shas
   `225a6f3` (humanizer 3.1.0) and `552acd5` (ponytail).
 - MIP-0070 §5.4 and §9, the `sharingan` skill's steps 1–2 and its licence table, MIP-0076 §5.2's
@@ -296,7 +296,7 @@ Nothing outside this workspace was reachable from this session: the GitHub API a
 
 ### Not checked
 
-- The upstream shas, dates and version numbers are repeated from agent-skills' review, not fetched
+- The upstream shas, dates and version numbers are repeated from marola-skills' review, not fetched
   here. The `commit` values in the first lock files are `null` for that reason.
 - That cloud sessions do not install project-enabled external plugins, and that a plugin prefixes
   its skills (`/mapbox:…`): taken from the research that preceded this MIP, not re-tested.

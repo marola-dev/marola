@@ -102,7 +102,7 @@ in a thread; CI still runs the full set on the PR.
 | marola-corpus | adding or fixing a document (the `corpus-doc` skill): fetch the source, write the Markdown, update `docs/4-reference.md` | trying a document with the app (`just ask`, which needs marola-app and Ollama) | `scripts/corpus-check.sh` (ok) |
 | marola-oods | docs and the tree check; data lands only from marola-app's ingest | nothing an agent should run here | `scripts/oods-tree-check.sh` (ok) |
 | marola-devkit | scripts and their `--self-test`, plugin skills, reusable workflows, docs | anything that needs `nix build` or a self-hosted runner | `bash tests/self-tests.sh` (all ok); `shellcheck` is missing |
-| agent-skills | the audit pages, `data/*.json`, reviewing the queue | `just refresh` with a `GH_TOKEN` of its own | `refresh.py --self-test` (ok) |
+| marola-skills | the audit pages, `data/*.json`, reviewing the queue | `just refresh` with a `GH_TOKEN` of its own | `refresh.py --self-test` (ok) |
 | marola-ml | `--self-test` changes, docs, the benchmark gate's logic | training, `just benchmark`, `compile-prompt` (Ollama, GPU, paid calls, the app image) | `benchmark_gate.py --self-test` (ok) |
 | marola-app | **reading and design only**: tracing code (graphify, `git grep`), a MIP's §5, review answers, docs pages; small Scala edits only if CI is the test | anything that compiles: the thread has JDK 21 (Kyo needs 25), no `sbt`, Maven Central answers 429, no Ollama | none locally; CI |
 | awesome-ocean-science, awesome-open-climate-science, open-sustainable-technology, `.github` | **all of it**: list entries, issue forms, org profile | nothing | their CI |
@@ -169,7 +169,7 @@ in a thread; CI still runs the full set on the PR.
 - `curl` to `api.open-meteo.com` → TLS `SSL_ERROR_SYSCALL`; `api.mapbox.com` and `huggingface.co` → 200.
 - Node 22, Python 3 and Playwright's Chromium (`/opt/pw-browsers`) are installed.
 - Ran and passed: marola-site `node scripts/site_check.js`, `i18n_bundle.py --check`, `news_build.py --check`; marola-corpus `scripts/corpus-check.sh`;
-  marola-oods `scripts/oods-tree-check.sh`; marola-devkit `bash tests/self-tests.sh`; agent-skills
+  marola-oods `scripts/oods-tree-check.sh`; marola-devkit `bash tests/self-tests.sh`; marola-skills
   `scripts/refresh.py --self-test`; marola-ml `scripts/benchmark_gate.py --self-test`.
 - graphify: `python3 -m venv` + `pip install graphifyy` → 0.9.84 (PyPI is reachable). The devkit's
   `scripts/graph.sh build` on marola-site took 30 s (7,294 nodes, most of them the vendored Mapbox
