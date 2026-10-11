@@ -221,6 +221,25 @@ never inside the jail. `JAIL_CLIPBOARD=1` opts into a write-only clipboard bridg
 any client on it can read other windows). On Ubuntu 24.04, `bwrap: setting up uid map: Permission
 denied` means unprivileged user namespaces are blocked: fix it with a scoped AppArmor profile.
 
+## Reading and writing (hard rule)
+
+Every repo and every Claude surface (CLI, Claude Project, cloud session) uses the same skills for
+reading code and writing prose. A skill that is not loaded is named in the PR body or the thread
+as not run; it is never skipped silently.
+
+- **Reading a repo you do not know**: `graph query` (MIP-0076) to find the files, then `eli5`
+  (this umbrella's `.claude/skills/`) to explain them.
+- **Prose a person reads** (docs, READMEs, MIPs, news posts, PR bodies, outreach): `humanizer` on
+  English (the devkit plugin), `humanizar` on Portuguese (ww3-gpu's copy until
+  marola-dev/marola-devkit#102 settles a marola one), and marola-site's `ptbr-humanizer` on the
+  site's visitor copy.
+- **Formal technical English**: the Writing Skills plugin's `asd-ste100` (ASD Simplified Technical
+  English) for procedures and reference pages, `google-dev-docs` for developer docs,
+  `plain-language` for public copy. Its character voices (`yoda`, `shrek`, …) are never used.
+- **Scientific writing**: every claim names what checked it (a source fetched while writing, a
+  command, `file:line`) or says it was not checked, and every number comes with its unit and the
+  command or source that produces it, as ww3-gpu's `(v)`/`⚠` convention does.
+
 ## Before implementing a feature
 
 Check `docs/MIPs/` and `docs/4-Research-and-plans/FUTURE-WORK.md` first: the idea may already be

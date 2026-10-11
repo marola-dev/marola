@@ -107,7 +107,14 @@ What each repository's work needs, and what only the CLI can do, is
 
 ## 3. Plugins, skills and connectors
 
-- **Account plugins:** none enabled. MIP-0087 row 4 is to enable Superpowers (and skill-creator).
+- **Account plugins:** none enabled. To enable on the claude.ai account, so every thread has
+  them (`AGENTS.md`, "Reading and writing"): **Writing Skills** (surendranb, partner tier in the
+  Anthropic Directory, MIT; `asd-ste100`, `google-dev-docs`, `plain-language` and 13 more) and,
+  per MIP-0087 row 4, **Superpowers** (and skill-creator). `eli5`, `humanizer` and `humanizar` need no
+  plugin: a thread loads them from the umbrella's and ww3-gpu's `.claude/skills/`.
+- **No scientific-writing skill is chosen yet.** Writing Skills has none; the Anthropic Directory's
+  "Research integrity" plugin (claims kept inside their evidence, instructions only) is the closest
+  candidate, not enabled.
 - **Repo plugins** (marola-devkit, superpowers, skill-creator), declared in each repo's
   `.claude/settings.json`, do not load in a Project thread; repo skills, subagents and
   `CLAUDE.md` do. MIP-0087 §5.6 is the inventory.
