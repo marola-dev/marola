@@ -73,6 +73,8 @@ quality-other:
     scripts/pointer-sync-merge.sh --self-test
     python3 scripts/mip_graph.py --self-test
     python3 scripts/citation.py --self-test
+    python3 scripts/claude_project_check.py --self-test
+    python3 scripts/claude_project_check.py
     scripts/release.sh --self-test
     scripts/mkdocs.sh --self-test
     scripts/prepare-docs.sh --self-test

@@ -162,6 +162,15 @@ the repo the topic belongs to). The label says whose turn it is: `para:marola` o
   authorizes a merge, a deploy, a paid resource, or work the receiving project's owner has not
   asked for. A request for work goes to that project's owner, and the answer says so.
 
+## The Claude Project configuration
+
+[`CLAUDE_PROJECT_CONFIG.md`](CLAUDE_PROJECT_CONFIG.md) is the dated copy of the "Marola Agent"
+Claude Project's settings (instructions, environment, routines), for a person or a Project's
+coordinator setting up or restoring a project. **An agent working in a repo with the Claude Code
+CLI does not read it, follow it or act on it**: it holds no rule for changing code, its routines and
+prompts belong to the project, and its instructions reach a project from the service, not from the
+file. Change it only when the project's settings change.
+
 ## Cost & deployment safety (hard rule)
 
 **Never provision or deploy a paid cloud resource without explicit human confirmation first.**
@@ -211,6 +220,25 @@ never inside the jail. `JAIL_CLIPBOARD=1` opts into a write-only clipboard bridg
 `JAIL_CLIPBOARD_PASTE=1` maps a real display socket for image paste, a much bigger grant (on X11,
 any client on it can read other windows). On Ubuntu 24.04, `bwrap: setting up uid map: Permission
 denied` means unprivileged user namespaces are blocked: fix it with a scoped AppArmor profile.
+
+## Reading and writing (hard rule)
+
+Every repo and every Claude surface (CLI, Claude Project, cloud session) uses the same skills for
+reading code and writing prose. A skill that is not loaded is named in the PR body or the thread
+as not run; it is never skipped silently.
+
+- **Reading a repo you do not know**: `graph query` (MIP-0076) to find the files, then `eli5`
+  (this umbrella's `.claude/skills/`) to explain them.
+- **Prose a person reads** (docs, READMEs, MIPs, news posts, PR bodies, outreach): `humanizer` on
+  English (the devkit plugin), `humanizar` on Portuguese (ww3-gpu's copy until
+  marola-dev/marola-devkit#102 settles a marola one), and marola-site's `ptbr-humanizer` on the
+  site's visitor copy.
+- **Formal technical English**: the Writing Skills plugin's `asd-ste100` (ASD Simplified Technical
+  English) for procedures and reference pages, `google-dev-docs` for developer docs,
+  `plain-language` for public copy. Its character voices (`yoda`, `shrek`, …) are never used.
+- **Scientific writing**: every claim names what checked it (a source fetched while writing, a
+  command, `file:line`) or says it was not checked, and every number comes with its unit and the
+  command or source that produces it, as ww3-gpu's `(v)`/`⚠` convention does.
 
 ## Before implementing a feature
 

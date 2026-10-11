@@ -11,12 +11,20 @@
         "repo": "marola-dev/marola-devkit",
         "ref": "v0.8.3"
       }
+    },
+    "writing-skills": {
+      "source": {
+        "source": "github",
+        "repo": "surendranb/writing-skills",
+        "ref": "2e692b8d78a4fb41f7e99724d1410d01adf071d0"
+      }
     }
   },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
-    "marola-devkit@marola-devkit": true
+    "marola-devkit@marola-devkit": true,
+    "writing-skills@writing-skills": true
   },
   "statusLine": {
     "type": "command",
