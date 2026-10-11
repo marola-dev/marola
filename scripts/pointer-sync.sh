@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# pointer-sync — move every submodule's pointer to its default branch's tip and commit the bump,
-# for pointer-sync.yml's one rolling PR (MIP-0070 §5.6: pointers move only through that PR).
+# pointer-sync — move every submodule's pointer to its default branch's tip and commit the bump with
+# REPOS.md's wiring block regenerated, for pointer-sync.yml's one rolling PR (MIP-0070 §5.6: pointers
+# move only through that PR).
 #
 #   scripts/pointer-sync.sh --out DIR   # in the umbrella checkout; writes DIR/moved.tsv (empty when
 #                                       # nothing moved), and DIR/pr-body.md + one commit when it did
@@ -21,7 +22,8 @@ compare_url() {
 }
 
 bump() {
-  local out="$1" name path url old new moved="$1/moved.tsv"
+  local out="$1" name path url old new moved="$1/moved.tsv" repos_md=docs/2-Building-marola/REPOS.md
+  command -v wiring >/dev/null || { echo "pointer-sync: wiring (marola-devkit) is not on PATH" >&2; exit 1; }
   mkdir -p "$out"
   : >"$moved"
   while read -r key path; do
@@ -41,6 +43,9 @@ bump() {
     echo "pointer-sync: every submodule is already at its default branch's tip"
     return 0
   fi
+  # The block is read from the submodules' trees, so it is regenerated only now (MIP-0076 §5.4).
+  wiring "$repos_md"
+  git add -- "$repos_md"
   local names link
   names="$(cut -f1 "$moved" | paste -sd, - | sed 's/,/, /g')"
   {
@@ -83,11 +88,26 @@ self_test() {
     git init -q -b trunk "$t/$r"
     git -C "$t/$r" commit -q --allow-empty -m "$r 1"
   done
+  # A fake wiring rewrites REPOS.md's block with app's checked-out commit: a block that names the
+  # new tip proves it ran after the submodules moved.
+  mkdir -p "$t/bin" "$t/none"
+  cat >"$t/bin/wiring" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+sed "s/^app at .*/app at $(git -C app rev-parse HEAD)/" "$1" >"$1.new"
+mv "$1.new" "$1"
+EOF
+  chmod +x "$t/bin/wiring"
+  export PATH="$t/bin:$PATH"
   git init -q -b main "$t/umbrella"
   (
     cd "$t/umbrella"
     git submodule add -q "$t/app" app
     git submodule add -q "$t/site" site
+    mkdir -p docs/2-Building-marola
+    printf '<!-- wiring:start -->\napp at %s\n<!-- wiring:end -->\n' "$(git -C app rev-parse HEAD)" \
+      >docs/2-Building-marola/REPOS.md
+    git add docs
     git commit -q -m "two submodules"
   )
   local base app1
@@ -121,6 +141,30 @@ self_test() {
   (cd "$t/umbrella" && bump "$t/out2") >/dev/null
   ok "$(git -C "$t/umbrella" log -1 --format=%s)" "chore: move submodule pointers (app, site)" "both named"
   ok "$(wc -l <"$t/out2/moved.tsv" | tr -d ' ')" "2" "two moved rows"
+
+  echo "-- wiring_block_regenerated_with_pointers: the pointer commit carries the block --"
+  git -C "$t/app" commit -q --allow-empty -m "app 5"
+  local app5 before
+  app5="$(git -C "$t/app" rev-parse HEAD)"
+  before="$(git -C "$t/umbrella" rev-parse HEAD)"
+  (cd "$t/umbrella" && bump "$t/out3") >/dev/null
+  ok "$(git -C "$t/umbrella" rev-list --count "$before..HEAD")" "1" "one commit"
+  ok "$(git -C "$t/umbrella" diff-tree --no-commit-id --name-only -r HEAD | paste -sd' ' -)" \
+    "app docs/2-Building-marola/REPOS.md" "the commit carries the gitlink and the block"
+  ok "$(git -C "$t/umbrella" show HEAD:docs/2-Building-marola/REPOS.md | sed -n 's/^app at //p')" "$app5" \
+    "the block was generated from app's new tip"
+  ok "$(git -C "$t/umbrella" status --porcelain)" "" "worktree clean"
+
+  echo "-- no_block_change_no_commit: nothing moved, the block as it was --"
+  before="$(git -C "$t/umbrella" rev-parse HEAD)"
+  (cd "$t/umbrella" && bump "$t/out4") >/dev/null
+  ok "$(git -C "$t/umbrella" rev-parse HEAD)" "$before" "no commit"
+  ok "$(git -C "$t/umbrella" status --porcelain)" "" "REPOS.md untouched"
+
+  echo "-- wiring missing from PATH: fails before moving anything --"
+  local rc=0
+  (cd "$t/umbrella" && PATH="$t/none" bump "$t/out5") >/dev/null 2>&1 || rc=$?
+  ok "$rc" "1" "exit 1"
 
   echo "-- compare links --"
   ok "$(compare_url https://github.com/marola-dev/marola-app.git aaa bbb)" \

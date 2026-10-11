@@ -39,6 +39,13 @@ changing anything in it; it says what it overrides. What each repo owns, publish
 tree, in CI or in tests, and no consumer builds its producer from source: a consumer moves to a new
 producer version by bumping its pin in a PR.
 
+To find something outside the tree you are in, pick the cheapest source first (the devkit plugin's
+`routing` skill): what produces, consumes, pins or triggers an artifact, a dispatch or a workflow
+is in REPOS.md's [generated wiring block](docs/2-Building-marola/REPOS.md#artifacts-pins-and-dispatches)
+(`just wiring`); where a symbol lives, when the keyword or the repo is unfamiliar, is
+`just graph query "<question>"` (MIP-0076), whose `just graph build` writes under `~/.cache`,
+never into the checkout or a commit; a known keyword is `git grep --recurse-submodules`.
+
 ## Where a change belongs
 
 - **One repo**: work in that repo, under its `AGENTS.md`, and run its gates there. Code, its docs,
@@ -67,6 +74,8 @@ which checkout each recipe needs.
   default branch's tip and keeps one rolling PR open on `chore/pointer-sync` (daily, and on a
   `submodule-updated` or `submodule-docs-updated` dispatch). Never commit a pointer change by hand,
   and never commit inside a submodule from the umbrella's own branch.
+  `pointer-sync-merge.yml` merges that PR itself once it is green and changes only gitlinks and
+  REPOS.md's wiring table (#739); anything else waits for a person.
 - **A pointer move never makes a release or a Zenodo version** (hard rule, MIP-0079). A release
   needs a change outside the gitlinks since the previous `v*` tag; `scripts/release.sh --guard`
   enforces it in `just release` and again in `release.yml`.
