@@ -13,6 +13,7 @@ text{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Li
 <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.6"/></pattern>
 <marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#7dd3fc"/></marker>
 <marker id="b" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#c4b5fd"/></marker>
+<marker id="g" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#94a3b8"/></marker>
 <marker id="o" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0,10 4,0 8" fill="#fb923c"/></marker>
 </defs>
 <rect width="1000" height="620" rx="18" fill="#020617"/>
@@ -36,8 +37,10 @@ text{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Li
 <text x="600" y="375" class="edge" text-anchor="middle">jobs de ETL gravam</text>
 <path d="M 718 412 H 410 V 324" stroke="#c4b5fd" stroke-width="1.8" fill="none" stroke-dasharray="6,4" marker-end="url(#b)"/>
 <text x="600" y="405" class="edge" text-anchor="middle">contrato do lago</text>
-<path d="M 500 520 V 482" stroke="#fb923c" stroke-width="1.8" fill="none" stroke-dasharray="4,4" marker-end="url(#o)"/>
-<text x="512" y="503" class="edge" text-anchor="start">fixado</text>
+<path d="M 315 520 V 482" stroke="#fb923c" stroke-width="1.8" fill="none" stroke-dasharray="4,4" marker-end="url(#o)"/>
+<text x="327" y="503" class="edge" text-anchor="start">fixado</text>
+<path d="M 800 482 V 520" stroke="#94a3b8" stroke-width="1.8" fill="none" stroke-dasharray="6,4" marker-end="url(#g)"/>
+<text x="812" y="503" class="edge" text-anchor="start">lê cada SKILL.md</text>
 <rect x="30" y="236" width="164" height="66" rx="8" fill="#0b1222"/>
 <rect x="30" y="236" width="164" height="66" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
 <text x="112.0" y="265.5" class="name" text-anchor="middle">marola-corpus</text>
@@ -61,12 +64,18 @@ text{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Li
 <text x="835.0" y="380.0" class="name" text-anchor="middle">marola-oods</text>
 <text x="835.0" y="399.0" class="sub" text-anchor="middle">lago de dados aberto</text>
 <text x="835.0" y="416.0" class="sub" text-anchor="middle">DuckLake no Cloudflare R2</text>
-<rect x="150" y="522" width="700" height="54" rx="8" fill="#0b1222"/>
-<rect x="150" y="522" width="700" height="54" rx="8" fill="rgba(124,45,18,0.45)" stroke="#fb923c" stroke-width="1.6"/>
-<text x="500.0" y="545.5" class="name" text-anchor="middle">marola-devkit</text>
-<text x="500.0" y="564.5" class="sub" text-anchor="middle">ferramentas · git hooks · CI reutilizável, fixado por tag em todo repositório</text>
-<path d="M 50 600 H 84" stroke="#7dd3fc" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
-<text x="94" y="604" class="leg" text-anchor="start">artefato publicado, fixado por quem consome</text>
-<path d="M 520 600 H 554" stroke="#c4b5fd" stroke-width="1.8" fill="none" stroke-dasharray="6,4" marker-end="url(#b)"/>
-<text x="564" y="604" class="leg" text-anchor="start">volta: um PR ou um contrato</text>
+<rect x="30" y="522" width="570" height="54" rx="8" fill="#0b1222"/>
+<rect x="30" y="522" width="570" height="54" rx="8" fill="rgba(124,45,18,0.45)" stroke="#fb923c" stroke-width="1.6"/>
+<text x="315.0" y="545.5" class="name" text-anchor="middle">marola-devkit</text>
+<text x="315.0" y="564.5" class="sub" text-anchor="middle">ferramentas · git hooks · CI reutilizável, fixado por tag em todo repositório</text>
+<rect x="630" y="522" width="340" height="54" rx="8" fill="#0b1222"/>
+<rect x="630" y="522" width="340" height="54" rx="8" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="800.0" y="545.5" class="name" text-anchor="middle">marola-skills</text>
+<text x="800.0" y="564.5" class="sub" text-anchor="middle">catálogo de toda skill e subagente</text>
+<path d="M 30 600 H 64" stroke="#7dd3fc" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+<text x="74" y="604" class="leg" text-anchor="start">artefato publicado, fixado por quem consome</text>
+<path d="M 390 600 H 424" stroke="#c4b5fd" stroke-width="1.8" fill="none" stroke-dasharray="6,4" marker-end="url(#b)"/>
+<text x="434" y="604" class="leg" text-anchor="start">volta: um PR ou um contrato</text>
+<path d="M 680 600 H 714" stroke="#94a3b8" stroke-width="1.8" fill="none" stroke-dasharray="6,4" marker-end="url(#g)"/>
+<text x="724" y="604" class="leg" text-anchor="start">lido, não fixado</text>
 </svg>

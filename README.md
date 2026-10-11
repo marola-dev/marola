@@ -140,7 +140,7 @@ CI and issues. This repo, `marola-dev/marola`, is the **umbrella** that ties the
 design docs (MIPs), the phase list, the ways of working, the docs site, and every code repo as a
 git submodule pinned at a commit.
 
-<p align="center"><img src="./docs/img/umbrella.svg" alt="How the marola repos depend on each other: marola-corpus ships notes to marola-app and marola-ml, marola-app's image builds marola-site's map and runs marola-ml's benchmark, marola-ml returns compiled prompts, marola-app's ETL writes marola-oods' lake and pins its contract; marola-devkit is pinned by every repo" width="860" /></p>
+<p align="center"><img src="./docs/img/umbrella.svg" alt="How the marola repos depend on each other: marola-corpus ships notes to marola-app and marola-ml, marola-app's image builds marola-site's map and runs marola-ml's benchmark, marola-ml returns compiled prompts, marola-app's ETL writes marola-oods' lake and pins its contract; marola-devkit is pinned by every repo, and marola-skills reads every repo's skills into one catalogue" width="860" /></p>
 
 - **Contracts, not shared code.** A repo never reads another repo's tree. A consumer pins a
   producer's published artifact (a release tarball, an image digest) and moves to a new version by
@@ -167,6 +167,7 @@ Status as of October 2026; the linked issues and PRs are the live view.
 | [marola-ml](https://github.com/marola-dev/marola-ml) | Offline Python: DSPy prompt compile, benchmark gate, [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF) | No open PRs; GPU runners ([#2](https://github.com/marola-dev/marola-ml/issues/2)), a RAG retrieval regression ([#4](https://github.com/marola-dev/marola-ml/issues/4)), can water quality be forecast? ([#23](https://github.com/marola-dev/marola-ml/issues/23)) |
 | [marola-corpus](https://github.com/marola-dev/marola-corpus) | The sourced ocean knowledge marola answers from | Stable; new documents welcome · [issues](https://github.com/marola-dev/marola-corpus/issues) |
 | [marola-devkit](https://github.com/marola-dev/marola-devkit) | The dev harness every repo pins (a Nix flake input, not a submodule): tools, hooks, Claude Code skills, reusable CI such as the Gemini review | Cross-repo wiring tables (MIP-0076, [#32](https://github.com/marola-dev/marola-devkit/pull/32), [#33](https://github.com/marola-dev/marola-devkit/pull/33)) · [issues](https://github.com/marola-dev/marola-devkit/issues) |
+| [marola-skills](https://github.com/marola-dev/marola-skills) | The catalogue of every Claude Code skill and subagent across the repos: where each lives, where it came from, what was tested. Reads them through the GitHub API daily; not a submodule yet | Joining the umbrella as a submodule and on the docs site ([#761](https://github.com/marola-dev/marola/issues/761)) · [issues](https://github.com/marola-dev/marola-skills/issues) |
 
 Three more repos are curated lists, not part of the product:
 [awesome-ocean-science](https://github.com/marola-dev/awesome-ocean-science) is marola's own list

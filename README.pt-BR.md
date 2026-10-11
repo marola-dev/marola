@@ -130,7 +130,7 @@ função, o seu próprio `AGENTS.md`, documentação, CI e issues. Este aqui, `m
 Ele não tem código: guarda os documentos de projeto (MIPs), a lista de fases, o jeito de trabalhar,
 o site de documentação e cada repositório de código como um submódulo git, fixado num commit.
 
-<p align="center"><img src="./docs/img/umbrella.pt-BR.svg" alt="Como os repositórios do marola dependem uns dos outros: o marola-corpus entrega notas ao marola-app e ao marola-ml, a imagem do marola-app monta o mapa do marola-site e roda o benchmark do marola-ml, o marola-ml devolve prompts compilados, o ETL do marola-app grava o lago do marola-oods e fixa o contrato dele; o marola-devkit é fixado por todos" width="860" /></p>
+<p align="center"><img src="./docs/img/umbrella.pt-BR.svg" alt="Como os repositórios do marola dependem uns dos outros: o marola-corpus entrega notas ao marola-app e ao marola-ml, a imagem do marola-app monta o mapa do marola-site e roda o benchmark do marola-ml, o marola-ml devolve prompts compilados, o ETL do marola-app grava o lago do marola-oods e fixa o contrato dele; o marola-devkit é fixado por todos, e o marola-skills lê as skills de cada repositório num catálogo só" width="860" /></p>
 
 - **Contratos, não código compartilhado.** Um repositório nunca lê a árvore de outro. Quem consome
   fixa um artefato publicado por quem produz (um tarball de release, o digest de uma imagem) e
@@ -159,6 +159,7 @@ Situação em outubro de 2026; as issues e os PRs linkados mostram o estado de a
 | [marola-ml](https://github.com/marola-dev/marola-ml) | Python offline: compilação de prompts com DSPy, portão de benchmark, [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF) | Nenhum PR aberto; runners de GPU ([#2](https://github.com/marola-dev/marola-ml/issues/2)), uma regressão na busca do RAG ([#4](https://github.com/marola-dev/marola-ml/issues/4)), dá para prever a balneabilidade? ([#23](https://github.com/marola-dev/marola-ml/issues/23)) |
 | [marola-corpus](https://github.com/marola-dev/marola-corpus) | O conhecimento sobre o mar, com fontes, de onde o marola tira as respostas | Estável; documentos novos são bem-vindos · [issues](https://github.com/marola-dev/marola-corpus/issues) |
 | [marola-devkit](https://github.com/marola-dev/marola-devkit) | As ferramentas de desenvolvimento que todo repositório fixa (entra como input do flake Nix, não como submódulo): scripts, hooks, skills do Claude Code, CI reutilizável, como a revisão do Gemini | Tabelas da ligação entre repositórios (MIP-0076, [#32](https://github.com/marola-dev/marola-devkit/pull/32), [#33](https://github.com/marola-dev/marola-devkit/pull/33)) · [issues](https://github.com/marola-dev/marola-devkit/issues) |
+| [marola-skills](https://github.com/marola-dev/marola-skills) | O catálogo de todas as skills e subagentes do Claude Code nos repositórios: onde cada um mora, de onde veio, o que foi testado. Lê tudo pela API do GitHub uma vez por dia; ainda não é submódulo | Entrando no guarda-chuva como submódulo e no site de docs ([#761](https://github.com/marola-dev/marola/issues/761)) · [issues](https://github.com/marola-dev/marola-skills/issues) |
 
 Outros três repositórios são listas curadas, fora do produto: o
 [awesome-ocean-science](https://github.com/marola-dev/awesome-ocean-science) é a lista do próprio
