@@ -57,8 +57,7 @@
       "Bash(javap*)",
       "Bash(jar tf*)",
       "Bash(unzip -l*)",
-      "Bash(command -v *)",
-      "Bash(cost-split *)"
+      "Bash(command -v *)"
     ],
     "deny": [
       "Read(.env)",

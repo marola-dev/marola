@@ -7,12 +7,12 @@ it for Claude Code; tools that read this file as plain text must open AGENTS.md 
 ## Claude Code-specific additions (MIP-0011 §5 item 10)
 
 - **`/clear` between features, `/rename` to the branch name.** Restated from `AGENTS.md`'s
-  "One feature, one session" rule because it's a session-hygiene habit, not just a cost-tracking
-  one: a fresh context per feature keeps a reviewer subagent's read of `git diff` uncontaminated
-  by an earlier, unrelated task's reasoning still sitting in the transcript.
-- **On compaction, preserve: which files were modified, which test commands were run (and their
-  result), and the `Cost:` figure so far.** These three are exactly what a resumed session needs
-  to avoid re-deriving state or re-running gates that already passed. Everything else (the
+  "One feature, one session" rule because it's a session-hygiene habit: a fresh context per
+  feature keeps a reviewer subagent's read of `git diff` uncontaminated by an earlier, unrelated
+  task's reasoning still sitting in the transcript.
+- **On compaction, preserve: which files were modified and which test commands were run (and their
+  result).** These two are exactly what a resumed session needs to avoid re-deriving state or
+  re-running gates that already passed. Everything else (the
   back-and-forth that got there) is fine to lose.
 - **Start Claude Code in the repo you are changing.** A submodule has its own `CLAUDE.md`,
   `.claude/settings.json` and repo-only skills; started from the umbrella, its `CLAUDE.md` loads

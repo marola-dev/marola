@@ -140,7 +140,7 @@ CI and issues. This repo, `marola-dev/marola`, is the **umbrella** that ties the
 design docs (MIPs), the phase list, the ways of working, the docs site, and every code repo as a
 git submodule pinned at a commit.
 
-<p align="center"><img src="./docs/img/umbrella.svg" alt="How the marola repos depend on each other: marola-corpus ships notes to marola-app and marola-ml, marola-app's image builds marola-site's map and runs marola-ml's benchmark, marola-ml returns compiled prompts, marola-app's ETL writes marola-oods' lake and pins its contract; marola-devkit is pinned by every repo" width="860" /></p>
+<p align="center"><img src="./docs/img/umbrella.svg" alt="How the marola repos depend on each other: marola-corpus ships notes to marola-app and marola-ml, marola-app's image builds marola-site's map and runs marola-ml's benchmark, marola-ml returns compiled prompts, marola-app's ETL writes marola-oods' lake and pins its contract; marola-devkit is pinned by every repo, and marola-skills and marola-agents read every repo's skills and agents into one catalogue each" width="860" /></p>
 
 - **Contracts, not shared code.** A repo never reads another repo's tree. A consumer pins a
   producer's published artifact (a release tarball, an image digest) and moves to a new version by
@@ -167,6 +167,9 @@ Status as of October 2026; the linked issues and PRs are the live view.
 | [marola-ml](https://github.com/marola-dev/marola-ml) | Offline Python: DSPy prompt compile, benchmark gate, [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF) | No open PRs; GPU runners ([#2](https://github.com/marola-dev/marola-ml/issues/2)), a RAG retrieval regression ([#4](https://github.com/marola-dev/marola-ml/issues/4)), can water quality be forecast? ([#23](https://github.com/marola-dev/marola-ml/issues/23)) |
 | [marola-corpus](https://github.com/marola-dev/marola-corpus) | The sourced ocean knowledge marola answers from | Stable; new documents welcome · [issues](https://github.com/marola-dev/marola-corpus/issues) |
 | [marola-devkit](https://github.com/marola-dev/marola-devkit) | The dev harness every repo pins (a Nix flake input, not a submodule): tools, hooks, Claude Code skills, reusable CI such as the Gemini review | Cross-repo wiring tables (MIP-0076, [#32](https://github.com/marola-dev/marola-devkit/pull/32), [#33](https://github.com/marola-dev/marola-devkit/pull/33)) · [issues](https://github.com/marola-dev/marola-devkit/issues) |
+| [marola-skills](https://github.com/marola-dev/marola-skills) | The catalogue of every Claude Code skill and subagent across the repos: where each lives, where it came from, what was tested. Reads them through the GitHub API daily | Joins the umbrella as a submodule and on [the docs site](https://docs.marola.dev/5-Repos/marola-skills/) ([#761](https://github.com/marola-dev/marola/issues/761)) · [issues](https://github.com/marola-dev/marola-skills/issues) |
+| [marola-agents](https://github.com/marola-dev/marola-agents) | The inventory of every agent marola uses or plans: Claude Code subagents, the Claude Projects and their routines, the app's LLM roles, the agents CI calls | Its first README and inventory · [issues](https://github.com/marola-dev/marola-agents/issues) |
+| [marola-research](https://github.com/marola-dev/marola-research) | Science | [issues](https://github.com/marola-dev/marola-research/issues) |
 
 Three more repos are curated lists, not part of the product:
 [awesome-ocean-science](https://github.com/marola-dev/awesome-ocean-science) is marola's own list
@@ -197,7 +200,7 @@ repo you're changing.
 ## Contributing
 
 Small PRs, one topic each, in the repo the change belongs to; non-trivial changes start as a MIP
-under `docs/MIPs/` here; every commit carries `Tested:`, `Cost:` and
+under `docs/MIPs/` here; every commit carries `Tested:` and
 `Co-Authored-By: Claude <noreply@anthropic.com>` trailers. AI agents are first-class contributors here and follow `AGENTS.md` like anyone else.
 Full guide: [Contributing](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTING/). Please also read the
 [Code of Conduct](https://github.com/marola-dev/.github/blob/main/CODE_OF_CONDUCT.md) and, for a vulnerability, the [security policy](https://github.com/marola-dev/.github/blob/main/SECURITY.md).

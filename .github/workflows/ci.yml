@@ -65,7 +65,7 @@ jobs:
               - 'scripts/**'
               - '.claude/settings.json'
             graph:                   # the gitlinks, the devkit pin and graphify's ignore list
-              - &submodules [marola-site, marola-corpus, marola-ml, marola-app, marola-oods]
+              - &submodules [marola-site, marola-corpus, marola-ml, marola-app, marola-oods, marola-skills, marola-agents, marola-research]
               - 'flake.lock'
               - '.graphifyignore'
               - '.github/workflows/ci.yml'

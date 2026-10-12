@@ -138,8 +138,8 @@ policy change must not block a release. Revisit after a backend has a track reco
 A provider-backed run is a `workflow_dispatch` (`eval-external.yml`), started by a person, never
 reachable from a pull request (`ci.yml`'s `runners` job enforces it, as for
 `marola-sea-publish.yml`). The provider's key is a repository secret or a local environment
-variable, never a file; a coupon or a free-run link is treated the same. Credits spent go in the
-commit's `Cost:` line. Only public models are sent.
+variable, never a file; a coupon or a free-run link is treated the same. Credits spent are stated in
+the PR body. Only public models are sent.
 
 ### 5.8 Provider policy
 

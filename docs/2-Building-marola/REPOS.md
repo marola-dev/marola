@@ -1,6 +1,6 @@
 # Repos
 
-marola is seven repos: the umbrella, the devkit and five code or data repos. This page says which
+marola is ten repos: the umbrella, the devkit, five code or data repos, the skills catalogue, the agents inventory and science. This page says which
 repo owns what, what each publishes, and how a consumer pins it. How the product works end to end
 is [Architecture](ARCHITECTURE.md); why the code was split this way is [The split](SPLIT.md).
 
@@ -33,6 +33,9 @@ artifact moves is in [Artifacts, pins and dispatches](#artifacts-pins-and-dispat
 | [marola-corpus](https://github.com/marola-dev/marola-corpus) | The sourced ocean knowledge (Markdown under `knowledge`), the `corpus-doc` skill | `marola-corpus-<tag>.tar.gz` | app, ml | `release.yml` (a `v*` tag) |
 | [marola-ml](https://github.com/marola-dev/marola-ml) | Offline Python: the DSPy prompt compile, the marola-sea fine-tune, the benchmark gate and its kept runs | Compiled-prompt PRs; marola-sea on Hugging Face; the image `ghcr.io/marola-dev/marola-ml` (Ollama with the fine-tuned model, `:local` once the benchmark gate passes); pdoc on its `api-docs` branch | app; the umbrella's docs | `compile-prompt.yml`, `marola-sea-publish.yml`, `docker-local.yml`, `api-docs.yml` |
 | [marola-oods](https://github.com/marola-dev/marola-oods) | The Open Ocean Data Store's data only (`data/oods/`, MIP-0056); empty for now | The dataset; an export tag (planned, MIP-0056 §5.5) | app | The app's ingest workflow (with MIP-0056); `oods-check.yml` |
+| [marola-skills](https://github.com/marola-dev/marola-skills) | The catalogue of every Claude Code skill and subagent in the marola-dev repos, ww3-gpu and their upstreams: where each lives, its pin, what was tested; no skill is copied here | Its docs (`docs/4-reference_index.md`, `data/index.json`, regenerated daily) | Readers; the umbrella's docs | `refresh.yml` (daily, one rolling PR) |
+| [marola-agents](https://github.com/marola-dev/marola-agents) | The inventory of every agent marola uses or plans: Claude Code subagents, the Claude Projects and their routines, the product's LLM roles, the agents CI calls; no agent is defined here | Its docs | Readers; the umbrella's docs | A PR that adds or changes an agent in any repo |
+| [marola-research](https://github.com/marola-dev/marola-research) | Science | — | Readers | — |
 
 Each repo's README is its landing page on this site, under 5 Repos.
 
@@ -58,6 +61,8 @@ flowchart LR
   ml -->|"api-docs branch"| umbrella
   app -.->|"ingest commits (planned)"| oods
   oods -.->|"export tag (planned)"| app
+  every -.->|"skills, read daily"| skills[marola-skills]
+  every -.->|"agents, indexed"| agents[marola-agents]
 ```
 
 A contract change follows the producer: it merges and releases first, each consumer bumps its pin
@@ -82,13 +87,13 @@ stale. An edit between the markers is overwritten.
 | `site-data` branch of marola-site | marola `ci.yml` (on a push to `main`), marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | — | marola-site `site.yml` |
 | PRs into each repo in `.github/consumers.txt` | marola-devkit `bump-consumers.yml` | — | marola, marola-app, marola-site, marola-ml, marola-corpus, marola-oods |
 | PRs into marola-app: `recommendation_prompt.json`, `review_prompt.json` | marola-ml `compile-prompt.yml` (by hand) | — | marola-app |
-| a marola-devkit tag | marola-devkit | marola `flake.lock` v0.8.3, marketplace v0.8.3; marola-site `flake.nix` v0.8.3, marketplace v0.8.3; marola-corpus `flake.nix` v0.8.3, marketplace v0.8.3; marola-ml `flake.nix` v0.8.3, marketplace v0.8.3; marola-app `flake.lock` v0.8.3, marketplace v0.8.3; marola-oods `flake.nix` v0.8.3, marketplace v0.8.3 | `agents-check.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods); `api-docs.yml` v0.8.3 (marola-ml marola-app); `ci-short-circuit.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods); `gemini-review.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods); `labels-sync.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods); `notify-umbrella.yml` v0.8.3 (marola-site marola-corpus marola-ml marola-app marola-oods); `pr-body.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods); `python-ci.yml` v0.8.3 (marola marola-site marola-ml marola-app); `scala-ci.yml` v0.8.3 (marola-app); `skills-update.yml` v0.8.3 (marola marola-site); `static-ci.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods) |
+| a marola-devkit tag | marola-devkit | marola `flake.lock` v0.8.3, marketplace v0.8.3; marola-site `flake.nix` v0.8.3, marketplace v0.8.3; marola-corpus `flake.nix` v0.8.3, marketplace v0.8.3; marola-ml `flake.nix` v0.8.3, marketplace v0.8.3; marola-app `flake.lock` v0.8.3, marketplace v0.8.3; marola-oods `flake.nix` v0.8.3, marketplace v0.8.3; marola-skills `flake.lock` v0.8.3, marketplace v0.8.3 | `agents-check.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `api-docs.yml` v0.8.3 (marola-ml marola-app); `ci-short-circuit.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `gemini-review.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods); `labels-sync.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `notify-umbrella.yml` v0.8.3 (marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `pr-body.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `python-ci.yml` v0.8.3 (marola marola-site marola-ml marola-app marola-skills); `scala-ci.yml` v0.8.3 (marola-app); `skills-update.yml` v0.8.3 (marola marola-site); `static-ci.yml` v0.8.3 (marola marola-site marola-corpus marola-ml marola-app marola-oods) |
 
 | Dispatch | Sent by | Triggers |
 |---|---|---|
 | `site-data-updated` | marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | marola-site `site.yml` |
-| `submodule-docs-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`) | marola `docs.yml`, marola `pointer-sync.yml` |
-| `submodule-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`) | marola `pointer-sync.yml` |
+| `submodule-docs-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-skills `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`) | marola `docs.yml`, marola `pointer-sync.yml` |
+| `submodule-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`), marola-skills `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`) | marola `pointer-sync.yml` |
 
 | Pin bump | Workflow |
 |---|---|

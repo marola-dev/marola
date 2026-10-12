@@ -249,11 +249,11 @@ stack-merge *args:
     gh stack merge {{ args }}
 
 # ---------------------------------------------------------------------
-# Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"
+# Usage and billing
 # ---------------------------------------------------------------------
 
 # What Claude Code sessions consumed, from the local session logs (~/.claude/projects), priced
-# at list rates — the quota proxy to paste into a PR's "Cost" line.
+# at list rates.
 claude-cost *args="session":
     npx --yes ccusage@latest {{ args }}
 

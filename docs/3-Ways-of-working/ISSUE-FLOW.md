@@ -70,14 +70,14 @@ add it.
 **A merged task PR closes its issue.** The closing keyword that works here is the one in the
 squash-merge commit that lands on `main`. In this repo a PR-body-only line did not close anything:
 #514–#519 carried one and their issues #502–#507 stayed open past merge and were closed by hand,
-while #511/#512 closed on a commit-body `Closes #N` (cause unknown, #524). `cost-fill`,
+while #511/#512 closed on a commit-body `Closes #N` (cause unknown, #524). `trailer-fill`,
 run by `stack pr` (itself run by `just pr`, or directly per
 `/marola-devkit:mip-tasks`'s step 2), writes `Closes #N` into the branch's own commit body,
-above the `Tested:`/`Cost:`/`Co-Authored-By:` trailers, for the issue that row `k` of
+above the `Tested:`/`Co-Authored-By:` trailers, for the issue that row `k` of
 `MIP-NNNN.tasks.md` links; the merge into `main` then closes it, and that clears rule 5 for every
 task blocked by it. `uprd` still copies the same line into the PR body so the link is visible on
 GitHub, but that copy closes nothing by itself. Set `TASK_PARTIAL=1` before `just pr` for a task
-that only delivers part of its row — cost-fill then writes no `Closes #N` at all, since the
+that only delivers part of its row; trailer-fill then writes no `Closes #N` at all, since the
 `task-partial` label a PR would otherwise carry doesn't exist yet at first push; the issue stays
 open. Once a `Closes #N` line is written, a later `task-partial` label does not stop the close:
 amend the commit to remove the line. GitHub's built-in board workflow then moves a closed issue's
