@@ -13,7 +13,6 @@
 | **Depends on** | MIP-0034 shares the CAP parsing; this MIP builds the parser (the CAP half of MIP-0034 task 1) and the backfill (its task 6), so neither waits for the other. Only the page task waits for MIP-0054 task 1 (#536). #535 does not block: the ingest is its own workflow and the render reads only `site-data`, which `site.yml` already fetches; only the redeploy-on-new-alert trigger waits for it (§5.6). MIP-0044: the page is hand-written until its §5.1 generator exists. No Phase 1 gate. No paid resource: GitHub-hosted runners on a public repository |
 | **Blocked by** | none |
 | **Risk** | An archive that looks complete and isn't. An alert marola cannot route to a state, or an id INMET no longer serves, drops out of "every RJ alert for September" without a trace while the page reads as authoritative. The unrouted file (§5.3), the coverage manifest (§5.4) and the page's per-month coverage line are there so a gap shows |
-| **Cost so far** | — |
 
 ## 1. Summary
 
