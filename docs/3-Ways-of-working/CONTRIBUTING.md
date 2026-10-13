@@ -100,5 +100,6 @@ only what the code cannot.
 
 ## License
 
-Every repo carries an MIT `LICENSE`. By contributing you agree your changes are licensed under
-it.
+Every repo carries its own `LICENSE`: MIT, except this umbrella, where the docs are CC BY 4.0 and
+the code is AGPL-3.0-only ([`REUSE.toml`](../../REUSE.toml) says which file is which). By contributing
+you agree your changes are licensed under the licence of the files you change.

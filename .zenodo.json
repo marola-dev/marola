@@ -29,7 +29,7 @@
       "orcid": "0009-0005-3553-8323"
     }
   ],
-  "license": "mit",
+  "license": "cc-by-4.0",
   "access_right": "open",
   "language": "eng",
   "keywords": [
@@ -154,5 +154,5 @@
       "resource_type": "software"
     }
   ],
-  "notes": "Related work: WW3 GPU Lab (doi:10.5281/zenodo.23221351), a C++/Kokkos port of WAVEWATCH III kernels by the same author, is the groundwork for running a spectral wave model inside marola in the future (MIP-0052). Data sources: beaches from OpenStreetMap (ODbL); sea and weather forecasts from the Open-Meteo Weather API (doi:10.5281/zenodo.7970649); bathing-water bulletins from IMA/SC (Santa Catarina), INEA (Rio de Janeiro) and INEMA (Bahia, http://balneabilidade.inema.ba.gov.br/), assessed against CONAMA Resolution 274/2000. Each repository listed under related works is MIT-licensed and will carry its own DOI once it is archived."
+  "notes": "Related work: WW3 GPU Lab (doi:10.5281/zenodo.23221351), a C++/Kokkos port of WAVEWATCH III kernels by the same author, is the groundwork for running a spectral wave model inside marola in the future (MIP-0052). Data sources: beaches from OpenStreetMap (ODbL); sea and weather forecasts from the Open-Meteo Weather API (doi:10.5281/zenodo.7970649); bathing-water bulletins from IMA/SC (Santa Catarina), INEA (Rio de Janeiro) and INEMA (Bahia, http://balneabilidade.inema.ba.gov.br/), assessed against CONAMA Resolution 274/2000. Licence: documentation CC BY 4.0, code (scripts, workflows, build files) AGPL-3.0-only; versions up to v0.2.2 were published under MIT and stay MIT. Each repository listed under related works is MIT-licensed and will carry its own DOI once it is archived."
 }
