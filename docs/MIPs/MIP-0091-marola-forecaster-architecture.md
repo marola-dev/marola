@@ -1,7 +1,5 @@
 # MIP-0091: The Marola forecaster's architecture — the evaluation goes first, no new repo, and the design requirements from Read, Evaluate, Adopt on Operational WeatherBench
 
-<!-- style: mip+ste100 -->
-
 | | |
 |---|---|
 | **Status** | Accepted (2026-10-13, initial review by Hoffmann; needs refinement before its task list is written) |

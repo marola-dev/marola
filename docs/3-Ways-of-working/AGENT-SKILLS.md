@@ -5,9 +5,9 @@ loaded skill costs context on every turn, so adopt the ones that map to a real s
 workflow and skip the rest.
 
 A repo's own skills are plain `SKILL.md` files under its `.claude/skills/`, which OpenCode also
-discovers; plugins (marola-devkit, superpowers, skill-creator and the pinned ones in §2.3) are
-Claude Code only ([MIP-0013](../MIPs/MIP-0013-opencode-tryout.md)). A skill loads only in a
-session started in the repo that has it, so start the agent in the repo you are changing.
+discovers; plugins (marola-devkit, superpowers, skill-creator) are Claude Code only
+([MIP-0013](../MIPs/MIP-0013-opencode-tryout.md)). A skill loads only in a session started in the
+repo that has it, so start the agent in the repo you are changing.
 
 ## 1. Skills across the org
 
@@ -17,10 +17,9 @@ session started in the repo that has it, so start the agent in the repo you are 
 | marola-site | `site-frontend`, the entry point for anything a visitor sees, which orders the others: `ptbr-humanizer`, `citizen-science-site`, and vendored design, testing and `mapbox-*` skills | its `.claude/skills/` |
 | marola-corpus | `corpus-doc` (adding a document) | its `.claude/skills/` |
 | marola-app | no skills; the Scala and Kyo rules (`.claude/rules/scala.md`) and the `jar-verifier` agent | its `.claude/` |
-| the umbrella | `eli5` (explaining a sea or marola topic from zero; it reads the corpus and the app through the submodules); `architecture-diagram` (a README diagram as a hand-written SVG, adapted from Cocoon-AI/architecture-diagram-generator@4b9087d, MIT); `zenodo-release` (cutting a citable release and keeping `.zenodo.json` right, MIP-0079, adapted from h0ffmann/ww3-gpu's `release`); `citation-cff` (exporting and checking the citation, vendored unchanged from zircote/github-social@4fa6579, MIT); `marola-writing` (resolving a document's writing style and its rules, ASD-STE100 among them); `marola-humanizar` (humanizing pt-BR prose and writing a MIP's `*.easy.pt-BR.md` plain-language version); `marola-sharingan` (Read-Evaluate-Adopt from another repo, with a licence scan) | its `.claude/skills/` |
+| the umbrella | `eli5` (explaining a sea or marola topic from zero; it reads the corpus and the app through the submodules); `architecture-diagram` (a README diagram as a hand-written SVG, adapted from Cocoon-AI/architecture-diagram-generator@4b9087d, MIT); `zenodo-release` (cutting a citable release and keeping `.zenodo.json` right, MIP-0079, adapted from h0ffmann/ww3-gpu's `release`); `citation-cff` (exporting and checking the citation, vendored unchanged from zircote/github-social@4fa6579, MIT) | its `.claude/skills/` |
 | marola-ml, marola-oods | no skills of their own | — |
 | superpowers, skill-creator | §2 and §2.2 | the umbrella's and marola-app's `.claude/settings.json` |
-| writing-skills and the `marola-pins` plugins | §2.3 | the umbrella's `.claude/settings.json` |
 
 Each repo's `AGENTS.md` says when its skills apply. A skill vendored byte for byte from another
 repository gets a row in a per-repo `.claude/skills/skills.lock` (`skills-vendor check` verifies
@@ -123,45 +122,8 @@ here would drift. Use it for the parts of skill work `writing-skills` leaves to 
   `scripts/quick_validate.py` checks frontmatter against the portable spec only, so it flags
   Claude Code's own keys (`model`, `effort`, `argument-hint`, …) — expected.
 - **Description tuning** — its trigger-rate loop, when a skill fires too often or never.
-- **A new skill from scratch.** Porting one from another repo is `marola-sharingan` here and the
-  devkit's `sharingan` elsewhere, which hands off to skill-creator for the evals step when it is
-  installed.
-
-## 2.3 Skills from outside marola
-
-Every skill set the umbrella takes from another repository. None is copied into the tree: Claude
-Code fetches each one at the pin, so no row needs `skills.lock`
-([MIP-0080](../MIPs/MIP-0080-vendored-skills-lock.md) covers the copied ones).
-
-| Skill or plugin | Upstream | Pin | Licence | `settings.json` | For |
-|---|---|---|---|---|---|
-| `superpowers` | [obra/superpowers](https://github.com/obra/superpowers) | unpinned (official marketplace) | MIT | declared | the workflow skills of §2 |
-| `skill-creator` | [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) | unpinned (official marketplace) | Apache-2.0 | declared | skill evals and description tuning (§2.2) |
-| `marola-devkit` | [marola-dev/marola-devkit](https://github.com/marola-dev/marola-devkit) | `v0.8.3` | MIT | declared | the plugin skills of §1.1 |
-| `writing-skills` (16 skills) | [surendranb/writing-skills](https://github.com/surendranb/writing-skills) | `v0.6.0` (`2e692b8`) | MIT | declared | `asd-ste100`, `google-dev-docs`, `plain-language` |
-| `doc-coauthoring` | [anthropics/skills](https://github.com/anthropics/skills) | `dbd4588` | none in the skill; the README says "many skills" are Apache-2.0 | declared | drafting a MIP or a doc in three stages, the last a test by a reader with no context |
-| `andrej-karpathy-skills` (`karpathy-guidelines`) | [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) | `2c60614` | MIT (README and `plugin.json`; no `LICENSE` file) | declared | small, surgical changes with stated assumptions |
-| `emil-design-eng`, `review-animations` | [emilkowalski/skill](https://github.com/emilkowalski/skill) | `2d22863` | MIT | declared | UI polish and an animation review, for the docs site and what marola-site shows |
-| `grill-me`, `grill-with-docs`, `grilling`, `domain-modeling` | [mattpocock/skills](https://github.com/mattpocock/skills) | `49dd158` | MIT | declared | an interview that settles a plan before the MIP, and the glossary and ADRs it produces |
-| `writing-for-agents` | mattpocock/skills | `49dd158` | MIT | declared | editing `AGENTS.md`, `CLAUDE.md` and skills |
-| `fact-check` | [ArchieSA/skills](https://github.com/ArchieSA/skills) | `71c4b63` | MIT | declared | each technical claim in a text against a primary source or a command, with a verdict and the source per claim, and the unverified ones named |
-| `scientific-writing` | [K-Dense-AI/claude-scientific-skills](https://github.com/K-Dense-AI/claude-scientific-skills) | `a1043ef` | MIT | declared | a paper's structure with every claim and number tied to a source record, and local checks of numbers and references |
-| `mattpocock-skills` (all 27) | mattpocock/skills | `c55ee46`, set by the official marketplace | MIT | listed | `/plugin install mattpocock-skills@claude-plugins-official` |
-| `example-skills` (12, with `internal-comms` and `brand-guidelines`) | anthropics/skills | none | Apache-2.0 in 11 of the 12 | listed | `/plugin marketplace add anthropics/skills`, then `/plugin install example-skills@anthropic-agent-skills` |
-| `engineering`, `marketing`, `product-management` (8 to 10 skills each) | [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) | none | Apache-2.0 | listed | `/plugin marketplace add anthropics/knowledge-work-plugins`, then `/plugin install engineering@knowledge-work-plugins` |
-
-The pinned rows are one inline marketplace, `marola-pins`, in `.claude/settings.json`: each skill
-is a plugin of its own, a `git-subdir` source with the commit in `sha`, so a session loads those
-eleven descriptions (about 640 tokens) and not every skill their repositories hold. A
-skill is then `/<plugin>:<skill>`, for example `/grill-me:grill-me`. A marketplace `ref` takes a
-branch or a tag, not a commit: pin a commit in a plugin's `sha`. To move a pin, change the `sha`
-and this table together. A cloud session does not install a project's plugins (MIP-0080 §9).
-
-`AGENTS.md` wins where a pinned skill differs from it. `scientific-writing` tells the agent to
-add K-Dense's own paper to a manuscript's references: do that only when an author asks. Its
-reporting guidelines are biomedical (CONSORT, PRISMA, STROBE); an ocean-forecasting paper uses
-its claim and number records, not those checklists. `fact-check` checks any text; the devkit's
-`mip-claims-auditor` stays the audit of a MIP's §4, with its limit of three fetches.
+- **A new skill from scratch.** Porting one from another repo is the devkit's `sharingan`
+  instead, which hands off to skill-creator for the evals step when it is installed.
 
 ## 3. Skills still to write (candidates for `writing-skills`)
 
@@ -184,23 +146,3 @@ would live in the repo whose code it touches.
 
 - Any skill that generates safety text or marine facts: violates the "no unsourced text reaches a
   user" rule (`/marola-devkit:mip`).
-- Pocock's `tdd` and `diagnosing-bugs`: superpowers' `test-driven-development` and
-  `systematic-debugging` already hold those steps (§2), and two skills on one trigger compete.
-  `to-spec`, `to-tickets` and `triage` overlap the devkit's `mip`, `mip-tasks` and `triage`.
-- Anthropic's `internal-comms` (company status formats), `brand-guidelines` (Anthropic's own
-  brand) and `document-skills` (`docx`, `pdf`, `pptx`, `xlsx`: source-available, not open source,
-  and no marola document is in those formats).
-- Anthropic's knowledge-work plugins: one writing skill in each (`documentation`, `draft-content`,
-  `write-spec`) beside seven to nine that no marola step uses, and `writing-skills`, `news-post`
-  and `mip` already cover them.
-- The rest of Emil Kowalski's set (animation building, Swift, Expo): marola-site vendors the ones
-  it uses.
-- Other fact-check skills: `mronkko/claude-academic-research`'s checks citations against Zotero
-  and needs its whole plugin, API keys and two more skills; `petar-nauka/fact-check-skill` and
-  `cellear/claude-fact-check-skill` are for news and social-media claims;
-  `FuturizeRush/fact-check-skill` does the same work as the one adopted in four times the text.
-- Other scientific-writing skills: `dvdsosa/scientific-writing-skills` has oceanography examples,
-  but its `sciwrite-manuscript` needs `sciwrite-prose` for its checks and does not tie a claim to
-  a source; Orchestra-Research's `ml-paper-writing` is for ML conferences and its citation step
-  needs network packages. K-Dense's `citation-management` calls outside search services, and
-  `scientific-writing` does not need it.

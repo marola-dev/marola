@@ -16,116 +16,7 @@
       "source": {
         "source": "github",
         "repo": "surendranb/writing-skills",
-        "ref": "v0.6.0"
-      }
-    },
-    "marola-pins": {
-      "source": {
-        "source": "settings",
-        "name": "marola-pins",
-        "owner": {
-          "name": "marola-dev"
-        },
-        "plugins": [
-          {
-            "name": "andrej-karpathy-skills",
-            "source": {
-              "source": "github",
-              "repo": "forrestchang/andrej-karpathy-skills",
-              "sha": "2c606141936f1eeef17fa3043a72095b4765b9c2"
-            }
-          },
-          {
-            "name": "doc-coauthoring",
-            "source": {
-              "source": "git-subdir",
-              "url": "anthropics/skills",
-              "path": "skills/doc-coauthoring",
-              "sha": "dbd4588f9e1033efb41dad4bef2f7947c8993d44"
-            }
-          },
-          {
-            "name": "emil-design-eng",
-            "source": {
-              "source": "git-subdir",
-              "url": "emilkowalski/skill",
-              "path": "skills/emil-design-eng",
-              "sha": "2d228630ba1446365f614a108cb8252f1feda202"
-            }
-          },
-          {
-            "name": "review-animations",
-            "source": {
-              "source": "git-subdir",
-              "url": "emilkowalski/skill",
-              "path": "skills/review-animations",
-              "sha": "2d228630ba1446365f614a108cb8252f1feda202"
-            }
-          },
-          {
-            "name": "grill-me",
-            "source": {
-              "source": "git-subdir",
-              "url": "mattpocock/skills",
-              "path": "skills/productivity/grill-me",
-              "sha": "49dd158d1076134a641b33efb035946536778336"
-            }
-          },
-          {
-            "name": "grilling",
-            "source": {
-              "source": "git-subdir",
-              "url": "mattpocock/skills",
-              "path": "skills/productivity/grilling",
-              "sha": "49dd158d1076134a641b33efb035946536778336"
-            }
-          },
-          {
-            "name": "grill-with-docs",
-            "source": {
-              "source": "git-subdir",
-              "url": "mattpocock/skills",
-              "path": "skills/engineering/grill-with-docs",
-              "sha": "49dd158d1076134a641b33efb035946536778336"
-            }
-          },
-          {
-            "name": "domain-modeling",
-            "source": {
-              "source": "git-subdir",
-              "url": "mattpocock/skills",
-              "path": "skills/engineering/domain-modeling",
-              "sha": "49dd158d1076134a641b33efb035946536778336"
-            }
-          },
-          {
-            "name": "writing-for-agents",
-            "source": {
-              "source": "git-subdir",
-              "url": "mattpocock/skills",
-              "path": "skills/productivity/writing-for-agents",
-              "sha": "49dd158d1076134a641b33efb035946536778336"
-            }
-          },
-          {
-            "name": "fact-check",
-            "source": {
-              "source": "git-subdir",
-              "url": "ArchieSA/skills",
-              "path": "fact-check",
-              "sha": "71c4b6375cd5ebdb56f7de0dda77928cd7b4c5fc"
-            }
-          },
-          {
-            "name": "scientific-writing",
-            "source": {
-              "source": "git-subdir",
-              "url": "K-Dense-AI/claude-scientific-skills",
-              "path": "skills/scientific-writing",
-              "sha": "a1043ef544e3a100c28e70a736b6cf32554d0677"
-            }
-          }
-        ]
+        "ref": "2e692b8d78a4fb41f7e99724d1410d01adf071d0"
       }
     }
   },
@@ -133,18 +24,7 @@
     "superpowers@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "marola-devkit@marola-devkit": true,
-    "writing-skills@writing-skills": true,
-    "andrej-karpathy-skills@marola-pins": true,
-    "doc-coauthoring@marola-pins": true,
-    "emil-design-eng@marola-pins": true,
-    "review-animations@marola-pins": true,
-    "grill-me@marola-pins": true,
-    "grilling@marola-pins": true,
-    "grill-with-docs@marola-pins": true,
-    "domain-modeling@marola-pins": true,
-    "writing-for-agents@marola-pins": true,
-    "fact-check@marola-pins": true,
-    "scientific-writing@marola-pins": true
+    "writing-skills@writing-skills": true
   },
   "statusLine": {
     "type": "command",
