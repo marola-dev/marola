@@ -1,0 +1,156 @@
+# graphify stats
+
+version: graphify 0.9.74
+invocation: (cd <copy> && env -i PATH=… HOME=<out> GRAPHIFY_OUT=<out> GRAPHIFY_NO_AUTO_REFRESH=1 OLLAMA_BASE_URL=http://127.0.0.1:9 PYTHONHASHSEED=0 graphify update .)
+neighbour MIPs copied: 0083 0070 0075 0051 0038 0052 0062 0053
+directories left out of the copy: evals
+
+## graphify's own summary (GRAPH_REPORT.md)
+- 600 nodes · 662 edges · 31 communities
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.93)
+- Token cost: 0 input · 0 output
+
+## graphify's log
+Re-extracting code files in . (no LLM needed)...
+[graphify watch] 5 file(s) not classified (no supported extension or shebang), skipped: LICENSE, LICENSE.humanizar, LICENSE.marola-devkit, skills.lock
+[graphify watch] Rebuilt: 600 nodes, 662 edges, 31 communities
+[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /tmp/claude-1000/-home-hoffmann-code-marola3/ecd79556-50c5-4364-af7b-3d52068a95ed/scratchpad/graphify/out/after-work/out
+Code graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.
+Tip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.
+
+## Totals (graph.json)
+nodes: 600  edges: 662  communities: 31
+nodes by kind: code:code=55, code:concept=17, code:rationale=11, heading=487, page=30
+edges by relation: calls[EXTRACTED]=63, contains[EXTRACTED]=535, imports[EXTRACTED]=23, imports_from[EXTRACTED]=6, indirect_call[INFERRED]=1, rationale_for[EXTRACTED]=11, references[EXTRACTED]=18, references[INFERRED]=5
+edges between two different files: 6
+nodes with no source file (library names such as `Path`): 20
+
+subset MIP-0091 files: 2 files, 40 nodes
+subset other MIPs: 8 files, 196 nodes
+subset .claude/skills: 23 files, 344 nodes
+
+## Nodes per file (Markdown: 1 page node + its headings)
+   20  (no source file)
+    5  .claude/skills/architecture-diagram/SKILL.md
+   47  .claude/skills/citation-cff/SKILL.md
+    6  .claude/skills/citation-cff/examples/cff-application.md
+    6  .claude/skills/citation-cff/examples/cff-library.md
+   15  .claude/skills/citation-cff/references/cff-schema.md
+   29  .claude/skills/citation-cff/references/format-templates.md
+   10  .claude/skills/citation-cff/references/validation-rules.md
+    9  .claude/skills/eli5/SKILL.md
+    9  .claude/skills/marola-humanizar/SKILL.md
+   46  .claude/skills/marola-humanizar/references/catalogo-pt-br.md
+   15  .claude/skills/marola-humanizar/references/versao-facil.md
+   15  .claude/skills/marola-humanizar/references/voz-marola.md
+    4  .claude/skills/marola-sharingan/READINESS.md
+    9  .claude/skills/marola-sharingan/SKILL.md
+    9  .claude/skills/marola-sharingan/references/licences.md
+    8  .claude/skills/marola-sharingan/references/porting.md
+   19  .claude/skills/marola-sharingan/scripts/bench.py
+   30  .claude/skills/marola-sharingan/scripts/licence_scan.py
+    9  .claude/skills/marola-writing/SKILL.md
+    8  .claude/skills/marola-writing/references/ste100.md
+   17  .claude/skills/marola-writing/references/styles.md
+   14  .claude/skills/marola-writing/scripts/ste_check.py
+    5  .claude/skills/zenodo-release/SKILL.md
+   18  docs/MIPs/MIP-0038-forecast-model-spread.md
+   24  docs/MIPs/MIP-0051-wave-model-ensemble.md
+   22  docs/MIPs/MIP-0052-wave-model-compute.md
+   24  docs/MIPs/MIP-0053-learned-local-correction.md
+   17  docs/MIPs/MIP-0062-ressaca-hazard.md
+   24  docs/MIPs/MIP-0070-umbrella-and-polyrepo-split.md
+   27  docs/MIPs/MIP-0075-water-quality-store-r2.md
+   40  docs/MIPs/MIP-0083-forecast-benchmark-job.md
+   28  docs/MIPs/MIP-0091-marola-forecaster-architecture.md
+   12  docs/MIPs/MIP-0091.easy.pt-BR.md
+
+## Files in the copy that produced no node
+       .claude/skills/architecture-diagram/LICENSE
+       .claude/skills/citation-cff/LICENSE
+       .claude/skills/citation-cff/examples/cff-with-paper.md
+       .claude/skills/marola-humanizar/LICENSE.humanizar
+       .claude/skills/marola-sharingan/LICENSE.marola-devkit
+       .claude/skills/skills.lock
+
+## Communities (graphify names each after its hub heading; no model call)
+   47    0  CITATION.cff Manager
+   46    1  Catálogo: sinais de texto de máquina em português do Brasil
+   40    2  5. Design
+   40    3  MIP-0091: The Marola forecaster's architecture — the evaluation goes first, no new repo, …
+   34    4  licence_scan.py
+   32    5  bench.py
+   29    6  APA (7th Edition)
+   28    7  ste_check.py
+   27    8  MIP-0075: An open ocean data lake on Cloudflare R2, beaches first, so a build stops calli…
+   24    9  MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the …
+   24   10  MIP-0053: A learned local correction, not another model — statistical downscaling of the …
+   23   11  MIP-0070: Split marola into single-purpose repos under an umbrella
+   22   12  MIP-0052: Should marola ever run its own wave model, and in what language? — a costed sur…
+   18   13  MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking…
+   17   14  MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per…
+   16   15  2. Rules for each style
+   15   16  CFF 1.2.0 Schema Reference
+   15   17  Versão fácil: o contrato de um `*.easy.pt-BR.md`
+   15   18  As regras
+   10   19  CITATION.cff Validation Rules
+    9   20  eli5
+    9   21  marola-humanizar
+    9   22  Licences: what may come in, and how
+    9   23  marola-sharingan
+    8   24  Porting a skill, workflow or pattern into marola
+    8   25  STE100 in marola: what the plugin skill does not say
+    6   26  Example: Application CITATION.cff
+    6   27  Example: Library/Package CITATION.cff
+    5   28  architecture-diagram
+    5   29  zenodo-release
+    4   30  marola-sharingan: provenance and what is still unproven
+
+## Views
+full: 600 nodes, 662 graphify edges
+mip0091: 40 nodes, 39 graphify edges
+skills: 344 nodes, 388 graphify edges
+files-mentions: 33 nodes, 1 graphify edges, 37 mention edges (not graphify)
+
+## Plain-text mentions between files (run.sh's text scan, NOT graphify; `files-mentions` view only)
+37 file-to-file pairs, 244 mentions
+    2  marola-humanizar/SKILL.md -> marola-writing/SKILL.md
+    2  marola-humanizar/references/catalogo-pt-br.md -> MIP-0083
+    1  marola-humanizar/references/catalogo-pt-br.md -> MIP-0091
+    2  marola-humanizar/references/versao-facil.md -> MIP-0038
+    3  marola-humanizar/references/versao-facil.md -> MIP-0062
+    4  marola-humanizar/references/versao-facil.md -> MIP-0091
+    1  marola-humanizar/references/voz-marola.md -> MIP-0062
+    1  marola-writing/SKILL.md -> architecture-diagram/SKILL.md
+    1  marola-writing/SKILL.md -> eli5/SKILL.md
+    1  marola-writing/SKILL.md -> marola-humanizar/SKILL.md
+    1  marola-writing/SKILL.md -> marola-sharingan/SKILL.md
+    1  marola-writing/SKILL.md -> zenodo-release/SKILL.md
+    1  marola-writing/SKILL.md -> MIP-0091
+    1  marola-writing/references/styles.md -> marola-humanizar/SKILL.md
+    2  zenodo-release/SKILL.md -> citation-cff/SKILL.md
+    1  MIP-0051 -> MIP-0038
+    4  MIP-0051 -> MIP-0052
+   15  MIP-0052 -> MIP-0051
+   22  MIP-0053 -> MIP-0051
+    7  MIP-0053 -> MIP-0052
+    1  MIP-0070 -> eli5/SKILL.md
+    3  MIP-0075 -> MIP-0070
+   18  MIP-0083 -> MIP-0075
+   12  MIP-0091 -> MIP-0038
+    5  MIP-0091 -> MIP-0051
+    3  MIP-0091 -> MIP-0052
+    3  MIP-0091 -> MIP-0053
+    7  MIP-0091 -> MIP-0062
+    8  MIP-0091 -> MIP-0070
+   10  MIP-0091 -> MIP-0075
+   35  MIP-0091 -> MIP-0083
+    4  docs/MIPs/MIP-0091.easy.pt-BR.md -> MIP-0038
+    4  docs/MIPs/MIP-0091.easy.pt-BR.md -> MIP-0062
+    3  docs/MIPs/MIP-0091.easy.pt-BR.md -> MIP-0070
+    6  docs/MIPs/MIP-0091.easy.pt-BR.md -> MIP-0075
+   10  docs/MIPs/MIP-0091.easy.pt-BR.md -> MIP-0083
+   39  docs/MIPs/MIP-0091.easy.pt-BR.md -> MIP-0091
+
+## Timing
+graphify build 1.1 s, views and screenshots 12.2 s, total 13.3 s

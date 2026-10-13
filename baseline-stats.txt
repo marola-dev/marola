@@ -1,0 +1,108 @@
+# graphify stats
+
+version: graphify 0.9.74
+invocation: (cd <copy> && env -i PATH=… HOME=<out> GRAPHIFY_OUT=<out> GRAPHIFY_NO_AUTO_REFRESH=1 OLLAMA_BASE_URL=http://127.0.0.1:9 PYTHONHASHSEED=0 graphify update .)
+neighbour MIPs copied: 0083 0070 0075 0051 0038 0052 0062 0053
+directories left out of the copy: evals
+
+## graphify's own summary (GRAPH_REPORT.md)
+- 355 nodes · 337 edges · 21 communities
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
+- Token cost: 0 input · 0 output
+
+## graphify's log
+Re-extracting code files in . (no LLM needed)...
+[graphify watch] 3 file(s) not classified (no supported extension or shebang), skipped: LICENSE, skills.lock
+[graphify watch] Rebuilt: 355 nodes, 337 edges, 21 communities
+[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in /tmp/claude-1000/-home-hoffmann-code-marola3/ecd79556-50c5-4364-af7b-3d52068a95ed/scratchpad/graphify/out/baseline-work/out
+Code graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.
+Tip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.
+
+## Totals (graph.json)
+nodes: 355  edges: 337  communities: 21
+nodes by kind: heading=337, page=18
+edges by relation: contains[EXTRACTED]=337
+edges between two different files: 0
+nodes with no source file (library names such as `Path`): 0
+
+subset MIP-0091 files: 1 files, 27 nodes
+subset other MIPs: 8 files, 196 nodes
+subset .claude/skills: 9 files, 132 nodes
+
+## Nodes per file (Markdown: 1 page node + its headings)
+    5  .claude/skills/architecture-diagram/SKILL.md
+   47  .claude/skills/citation-cff/SKILL.md
+    6  .claude/skills/citation-cff/examples/cff-application.md
+    6  .claude/skills/citation-cff/examples/cff-library.md
+   15  .claude/skills/citation-cff/references/cff-schema.md
+   29  .claude/skills/citation-cff/references/format-templates.md
+   10  .claude/skills/citation-cff/references/validation-rules.md
+    9  .claude/skills/eli5/SKILL.md
+    5  .claude/skills/zenodo-release/SKILL.md
+   18  docs/MIPs/MIP-0038-forecast-model-spread.md
+   24  docs/MIPs/MIP-0051-wave-model-ensemble.md
+   22  docs/MIPs/MIP-0052-wave-model-compute.md
+   24  docs/MIPs/MIP-0053-learned-local-correction.md
+   17  docs/MIPs/MIP-0062-ressaca-hazard.md
+   24  docs/MIPs/MIP-0070-umbrella-and-polyrepo-split.md
+   27  docs/MIPs/MIP-0075-water-quality-store-r2.md
+   40  docs/MIPs/MIP-0083-forecast-benchmark-job.md
+   27  docs/MIPs/MIP-0091-marola-forecaster-architecture.md
+
+## Files in the copy that produced no node
+       .claude/skills/architecture-diagram/LICENSE
+       .claude/skills/citation-cff/LICENSE
+       .claude/skills/citation-cff/examples/cff-with-paper.md
+       .claude/skills/skills.lock
+
+## Communities (graphify names each after its hub heading; no model call)
+   35    0  CITATION.cff Manager
+   29    1  APA (7th Edition)
+   27    2  MIP-0075: An open ocean data lake on Cloudflare R2, beaches first, so a build stops calli…
+   27    3  MIP-0091: The Marola forecaster's architecture — the evaluation goes first, no new repo, …
+   25    4  MIP-0083: A forecast experiment in marola-app — IFS, GFS and later providers sampled ever…
+   24    5  MIP-0051: Which wave model is marola quoting? — a labelled multi-model ensemble, and the …
+   24    6  MIP-0053: A learned local correction, not another model — statistical downscaling of the …
+   24    7  MIP-0070: Split marola into single-purpose repos under an umbrella
+   22    8  MIP-0052: Should marola ever run its own wave model, and in what language? — a costed sur…
+   18    9  MIP-0038: Model spread — when the wave models disagree, marola says so instead of picking…
+   17   10  MIP-0062: Ressaca — a storm-surge hazard the score can veto on, and an erosion record per…
+   15   11  CFF 1.2.0 Schema Reference
+   15   12  5. Design
+   10   13  CITATION.cff Validation Rules
+    9   14  eli5
+    6   15  Example: Application CITATION.cff
+    6   16  Example: Library/Package CITATION.cff
+    6   17  Step 2: Create (`--init`)
+    6   18  Step 4: Update / Sync (`--sync`)
+    5   19  architecture-diagram
+    5   20  zenodo-release
+
+## Views
+full: 355 nodes, 337 graphify edges
+mip0091: 27 nodes, 26 graphify edges
+skills: 132 nodes, 123 graphify edges
+files-mentions: 18 nodes, 0 graphify edges, 17 mention edges (not graphify)
+
+## Plain-text mentions between files (run.sh's text scan, NOT graphify; `files-mentions` view only)
+17 file-to-file pairs, 142 mentions
+    2  zenodo-release/SKILL.md -> citation-cff/SKILL.md
+    1  MIP-0051 -> MIP-0038
+    4  MIP-0051 -> MIP-0052
+   15  MIP-0052 -> MIP-0051
+   22  MIP-0053 -> MIP-0051
+    7  MIP-0053 -> MIP-0052
+    1  MIP-0070 -> eli5/SKILL.md
+    3  MIP-0075 -> MIP-0070
+   18  MIP-0083 -> MIP-0075
+   10  MIP-0091 -> MIP-0038
+    4  MIP-0091 -> MIP-0051
+    2  MIP-0091 -> MIP-0052
+    2  MIP-0091 -> MIP-0053
+    5  MIP-0091 -> MIP-0062
+    6  MIP-0091 -> MIP-0070
+    7  MIP-0091 -> MIP-0075
+   33  MIP-0091 -> MIP-0083
+
+## Timing
+graphify build 0.5 s, views and screenshots 5.0 s, total 5.5 s
