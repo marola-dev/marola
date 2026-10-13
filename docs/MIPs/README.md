@@ -93,6 +93,7 @@ trailer was dropped (marola-dev/marola-devkit#103), no longer kept up.
 | [MIP-0085](./MIP-0085-routing-index-family.md) | The routing index family in MIP-0084's bundle: a sharpened symbol query (split identifiers, stop words, tagged entry points); wiring contracts linking schema copies; doc↔code from an exact backtick scan (2,126 matches in 123 of 131 umbrella docs, a third ambiguous and listed, not guessed), committed as `DOC-CODE.md`; `route impact` over reverse call edges plus contract readers, a stated lower bound; `DECISIONS.md` from every MIP's §1 and alternatives plus a `**Decided YYYY-MM-DD:**` convention; and a spike pitting BM25 against two MIT static-embedding models (7.6 and 30.2 MB), shipped only if it wins on a 30-question bench. [Tasks](./MIP-0085.tasks.md) | Accepted (2026-10-10) | 2026-10-10 | L — three stdlib generators, four `route` subcommands, a 30-question bench, two committed `--check`-gated files, a time-boxed spike | infra/dev-loop | do when MIP-0084 lands — every index is a file in its bundle and a subcommand of its `route` |
 | [MIP-0086](./MIP-0086-github-apps-for-automation.md) | GitHub Apps for automation: every automated write moves from the three PATs to two org Apps, `marola-pr-bot` (today's `marola-gemini-bot`: pushes, PRs, dispatches, reviews, never lands on `main`) and `marola-merge-bot` (today's `marola-pointer-sync`: every merge and the workflow-editing bump PRs, its key readable by marola and marola-devkit only); a devkit `bot-token` action, a merge-key allowlist check, one `AUTO_MERGE` kill switch and a leak runbook; the identity for #740 and #762. From #765. [Tasks](./MIP-0086.tasks.md) | Accepted | 2026-10-10 | L — a devkit action and check, a `ruleset-sync` change, six workflow migrations, two App renames | infra/dev-loop; cost/ops | do next |
 | [MIP-0087](./MIP-0087-claude-code-usage.md) | Claude Code usage: when to use the CLI and when a Claude Project, and what each loads. A Project thread loads every repo's `CLAUDE.md` and `.claude/skills/` but not the plugins (superpowers, skill-creator, marola-devkit), hooks, permissions or `attribution` that `.claude/settings.json` declares, and cannot run `/ultrareview`; a new `CLAUDE-CODE.md` page with the comparison table, which repo's work a thread can finish (most of marola-site and the umbrella, none of marola-app's builds), graphify in each surface, a `claude-usage` skill listing every required skill, agent, plugin and MCP server, a correction to `AGENT-SKILLS.md`, and superpowers enabled on the claude.ai account | Draft | 2026-10-10 | M — one ways-of-working page, a vendored `claude-usage` skill with a drift check, one correction, account settings | infra/dev-loop | cheap win — the facts are checked; the work is writing them down |
+| [MIP-0091](./MIP-0091-marola-forecaster-architecture.md) | The Marola forecaster's architecture: the evaluation (marola-eval, MIP-0083's `experiment` module, already in marola-app's `main`) goes first and the forecaster (a `forecaster` sbt module in marola-app) is built on its score cells; zero new repositories, with two named triggers for one; twenty design requirements from reading, evaluating and adopting Operational WeatherBench on Brazilian instruments (observation truth, waves, a climatology floor, a licence tier, two decision rules, propensity logs, a reviewed `published-forecaster.json`, a lake-drop contract for ww3-gpu's computed runs); five stages in order | Draft | 2026-10-13 | XL for the whole: a wave extension of `experiment` (L), a `forecaster` module with a replay (L), a lake-drop contract (M), a site panel and the product hook (M); stages 1 and 2 are L together | user value; community/outreach; infra/dev-loop | do next (stages 1 and 2); do when X lands (stage 3: an admitted computed arm; stage 4: the first gate pass); park (any new repo) |
 
 <!-- mip-graph:start -->
 ```mermaid
@@ -113,8 +114,10 @@ flowchart TD
   M0065["MIP-0065"]:::implemented
   M0074["MIP-0074"]:::draft
   M0076["MIP-0076"]:::implemented
+  M0083["MIP-0083"]:::accepted
   M0084["MIP-0084"]:::accepted
   M0085["MIP-0085"]:::accepted
+  M0091["MIP-0091"]:::draft
   M0025 --> M0048
   M0033 --> M0036
   M0034 --> M0044
@@ -122,8 +125,9 @@ flowchart TD
   M0064 --> M0065
   M0074 --> M0076
   M0076 --> M0084
+  M0083 --> M0091
   M0084 --> M0085
 ```
 
-_61 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052, MIP-0054, MIP-0055, MIP-0056, MIP-0057, MIP-0058, MIP-0059, MIP-0060, MIP-0062, MIP-0063, MIP-0066, MIP-0067, MIP-0068, MIP-0070, MIP-0072, MIP-0075, MIP-0080, MIP-0081, MIP-0083, MIP-0086, MIP-0087._
+_60 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052, MIP-0054, MIP-0055, MIP-0056, MIP-0057, MIP-0058, MIP-0059, MIP-0060, MIP-0062, MIP-0063, MIP-0066, MIP-0067, MIP-0068, MIP-0070, MIP-0072, MIP-0075, MIP-0080, MIP-0081, MIP-0086, MIP-0087._
 <!-- mip-graph:end -->
