@@ -81,9 +81,10 @@ stale. An edit between the markers is overwritten.
 |---|---|---|---|
 | `ghcr.io/marola-dev/marola-app` image | marola-app `docker.yml` (on a push to `main` touching 11 paths) | marola-site `marola-image`, marola-ml `marola-image`, marola-oods `marola-image` | marola-site `scripts/board-schema.sh`, marola-ml `scripts/app-image.sh`, marola-app `docker-compose.yml`, marola-oods `scripts/app-image.sh` |
 | `ghcr.io/marola-dev/marola-ml` image | marola-ml `docker-local.yml` (on a push to `main` touching 10 paths) | — | marola-app `docker-compose.yml` |
+| `<tag>-v<tag>.pdf` release asset | marola-research `release.yml` (on a `*-v[0-9]*.[0-9]*.[0-9]*` tag) | — | — |
 | `marola-corpus-<tag>.tar.gz` release asset | marola-corpus `release.yml` (on a `v*` tag) | marola-ml `corpus.version`, marola-app `corpus.version` | marola-ml `scripts/corpus-fetch.sh`, marola-app `build.sbt`, marola-app `scripts/corpus-fetch.sh` |
 | `ml-resources-<tag>.tar.gz` release asset | marola-app `release.yml` (on a `v*` tag) | marola-ml `resources.version` | marola-ml `scripts/resources-fetch.sh` |
-| `api-docs` branch | marola-ml `api-docs.yml` (`api-docs.yml@v0.9.0`, on a push to `main`), marola-app `api-docs.yml` (`api-docs.yml@v0.9.0`, on a push to `main`) | — | marola `scripts/fetch-api-docs.sh` |
+| `api-docs` branch | marola-ml `ci.yml` (`api-docs.yml@v0.9.0`, on a push to `main`), marola-app `ci.yml` (`api-docs.yml@v0.9.0`, on a push to `main`) | — | marola `scripts/fetch-api-docs.sh` |
 | `site-data` branch of marola-site | marola `ci.yml` (on a push to `main`), marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | — | marola-site `site.yml` |
 | PRs into each repo in `.github/consumers.txt` | marola-devkit `bump-consumers.yml` | — | marola, marola-app, marola-site, marola-ml, marola-corpus, marola-oods |
 | PRs into marola-app: `recommendation_prompt.json`, `review_prompt.json` | marola-ml `compile-prompt.yml` (by hand) | — | marola-app |
