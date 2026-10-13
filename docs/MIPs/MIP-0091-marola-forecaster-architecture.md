@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Accepted (2026-10-13, initial review by Hoffmann; needs refinement before its task list is written) |
 | **Author** | Hoffmann |
 | **Created** | 2026-10-13 |
 | **Phase** | None: R&D outside the phase list, as MIP-0083. Zero cloud spend; computed arms run on owned hardware; nothing here moves Phase 1 (the Telegram bot), which is not done |
@@ -18,12 +18,12 @@
 
 | | |
 |---|---|
-| **Manually reviewed** | no |
+| **Manually reviewed** | yes — Hoffmann, 2026-10-13 (initial review: Accepted, needs refinement) |
 | **Written by** | Hoffmann, with Claude Code |
-| **Tasks** | not yet: §5.6's stages become `MIP-0091.tasks.md` if this MIP is Accepted |
+| **Tasks** | not yet: the refinement comes first; §5.6's stages then become `MIP-0091.tasks.md` |
 | **Tests** | `WaveScoreSpec`, `LicenceTierSpec`, `LakeDropSpec`, `ContextSpec`, `RewardSpec`, `HedgeSpec`, `GateSpec`, `FallbackSpec`, `BudgetSpec`, `PropensityLogSpec`, `ReplaySpec`, `DoublyRobustSpec`, `PublishSpec` (§7), named here, not written |
 | **Spec-kit** | none |
-| **Issues** | not filed — Draft |
+| **Issues** | not filed — waits on the refinement and the task list |
 
 ## 1. Summary
 
