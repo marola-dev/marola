@@ -52,7 +52,7 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.23224155
     description: Concept DOI, resolves to the latest release
-license: MIT
+license: CC-BY-4.0
 keywords:
   - "ocean"
   - "coastal oceanography"

@@ -240,4 +240,10 @@ Vulnerabilidades vão pelo canal privado descrito na [política de segurança](h
 
 ## Licença
 
-[MIT](./LICENSE), © 2026 colaboradores do marola.
+- Documentação (os docs, as MIPs, os artigos, este README): [CC BY 4.0](./LICENSE).
+- Código (`scripts/`, `.github/`, `mkdocs/`, `justfile`, `flake.nix`): [AGPL-3.0-only](./LICENSES/AGPL-3.0-only.txt).
+- As skills de terceiros em `.claude/skills/` mantêm as próprias licenças.
+- Cada repositório do marola tem a sua própria `LICENSE`.
+- As versões até a v0.2.2 foram publicadas sob [MIT](./LICENSES/MIT.txt) e continuam sob MIT.
+
+A licença de cada arquivo está em [`REUSE.toml`](./REUSE.toml). © 2026 colaboradores do marola.

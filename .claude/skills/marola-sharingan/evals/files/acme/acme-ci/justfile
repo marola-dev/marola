@@ -1,0 +1,8 @@
+# list the recipes
+default:
+    @just --list
+
+# tag a release: just release v1.2.3
+release tag:
+    git tag -a {{ tag }} -m {{ tag }}
+    git push origin {{ tag }}

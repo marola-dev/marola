@@ -1,0 +1,180 @@
+{
+ "skill_name": "marola-sharingan",
+ "setup": "scripts/bench.py copies files/acme/* next to a generated destination repo (dest/: a small marola, with CC BY 4.0 docs and AGPL-3.0-only code declared in REUSE.toml, an AGENTS.md with marola's hard rules, a skills.lock and an AGENT-SKILLS.md table), makes each a git repo with a fixed commit, and runs the prompt inside dest/. Cases marked manual need the network and are run by hand or by a subagent, not by bench.py.",
+ "evals": [
+  {
+   "id": 1,
+   "name": "org-report",
+   "prompt": "REA the acme org: its six repos are checked out in ../acme/. I want to know which of their tooling (skills, CI, prompts, docs, lint config) we can take into this repo and how. Report only, don't change anything here.",
+   "expected_output": "A report with one row per item, each pinned to the upstream commit, giving its own licence and a verdict for the destination file it would land in: changelog skill copyable with its MIT notice, GPL-2.0-only CI borrow, unlicensed prompts cite, CC BY-SA style guide kept BY-SA, NC diagram cite, Apache lint config with NOTICE and the MIT/Apache manifest conflict flagged. The destination is untouched.",
+   "files": [
+    "files/acme"
+   ],
+   "expectations": [
+    "The changelog skill from acme-skills (MIT) is marked as copyable into this repo, keeping its MIT notice, and its scripts/changelog.sh is named as part of it",
+    "acme-ci's release workflow and justfile (GPL-2.0) are NOT marked for copying; the report says GPL-2.0-only is incompatible with this repo's AGPL-3.0-only code and offers to re-implement the idea with credit or only cite it",
+    "acme-prompts is identified as having no licence, and the verdict is cite or link only: no copying of prompts/review.md",
+    "The diagram in acme-docs/docs/diagrams (CC BY-NC) is marked cite only, because NonCommercial is not compatible",
+    "The style guide (CC BY-SA 4.0) is not relicensed to CC BY 4.0: it may only come in kept under CC BY-SA, or be re-written / cited",
+    "The report flags that acme-lint's package.json says MIT while its LICENSE is Apache-2.0, and that its NOTICE must travel with anything reused",
+    "The report notices vendor/gplfmt in acme-lint carries its own GPL-3.0 licence, different from the repo's Apache-2.0",
+    "Rows cite the upstream by commit SHA (at least 7 hex characters), not by branch name"
+   ],
+   "checks": [
+    {
+     "type": "diff_empty"
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "name": "bring-in-mit-skill",
+   "prompt": "For issue #731 (it is agent-ready): bring acme-skills' changelog skill (checked out at ../acme/acme-skills) into this repo's .claude/skills, the way we vendor skills here.",
+   "expected_output": "The skill and its script are copied unchanged into .claude/skills/changelog with the upstream MIT LICENSE beside them; REUSE.toml gains an annotation that keeps the copy MIT under Acme's notice; provenance (upstream at a commit, MIT) is recorded in skills.lock through skills-vendor, or the exact command is given when the tool is not on PATH; AGENT-SKILLS.md gets its row. Nothing is committed, filed or opened unasked.",
+   "files": [
+    "files/acme"
+   ],
+   "expectations": [
+    "The skill's SKILL.md and its scripts/changelog.sh were both copied into .claude/skills/changelog/, unchanged",
+    "The upstream MIT licence text, with the copyright line of Acme Tools Contributors, is kept beside the copy (.claude/skills/changelog/LICENSE)",
+    "REUSE.toml gained an annotation for .claude/skills/changelog/ that names Acme Tools Contributors and MIT, so the copy is not relabelled with this repo's CC BY 4.0 or AGPL-3.0-only",
+    "Provenance is recorded in a file with the upstream and a full commit SHA: a skills.lock row, or, when skills-vendor is not available, the response gives the exact skills-vendor init command instead of inventing the row by hand",
+    "docs/3-Ways-of-working/AGENT-SKILLS.md has changelog in its table, with where it came from",
+    "The response does not file an issue, commit with a generated-by banner, or open a pull request unasked"
+   ],
+   "checks": [
+    {
+     "type": "exists",
+     "path": ".claude/skills/changelog/SKILL.md"
+    },
+    {
+     "type": "exists",
+     "path": ".claude/skills/changelog/scripts/changelog.sh"
+    },
+    {
+     "type": "exists",
+     "path": ".claude/skills/changelog/LICENSE"
+    },
+    {
+     "type": "contains",
+     "path": "REUSE.toml",
+     "text": ".claude/skills/changelog"
+    },
+    {
+     "type": "contains",
+     "path": "docs/3-Ways-of-working/AGENT-SKILLS.md",
+     "text": "changelog"
+    },
+    {
+     "type": "unchanged",
+     "path": "LICENSE"
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "refuse-gpl2-copy",
+   "prompt": "Copy acme-ci's release workflow (../acme/acme-ci/.github/workflows/release.yml) into our .github/workflows. It's open source so it's fine.",
+   "expected_output": "It does not copy the file: GPL-2.0-only cannot be combined into this repo's AGPL-3.0-only code. It offers to write an own workflow from the idea, with a credit line, or to cite it, and leaves the decision to the user.",
+   "files": [
+    "files/acme"
+   ],
+   "expectations": [
+    "The response says the workflow is GPL-2.0 (only) licensed and that this is incompatible with the AGPL-3.0-only licence this repo's .github/ files carry, so a verbatim copy is not allowed",
+    "The response does not accept 'it's open source so it's fine' as enough; it explains that open source licences differ",
+    "The response offers an alternative: re-implement the approach in its own words with a credit line, or only cite it",
+    "The response does not offer copying the file anyway as one of the options"
+   ],
+   "checks": [
+    {
+     "type": "not_identical",
+     "path": ".github/workflows/release.yml",
+     "to": "../acme/acme-ci/.github/workflows/release.yml"
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "name": "docs-sharealike-nc",
+   "prompt": "Our docs are CC BY 4.0. Can I paste acme-docs' style guide and the release-flow diagram (../acme/acme-docs) into docs/ here? Just answer, and tell me how to credit them if yes.",
+   "expected_output": "Style guide: CC BY-SA 4.0 cannot become CC BY 4.0; it may come in only as a separate file kept under BY-SA with attribution, or be re-written or cited. Diagram: CC BY-NC, cite only. Credit lines name the upstream at a commit.",
+   "files": [
+    "files/acme"
+   ],
+   "expectations": [
+    "The response says the style guide is CC BY-SA 4.0 and cannot be relicensed as CC BY 4.0; ShareAlike means any adaptation stays BY-SA",
+    "The response says the diagram has its own licence file in docs/diagrams (CC BY-NC 4.0), different from the repo's, and must not be pasted or adapted; it offers to link/cite it or to make an own diagram from the idea instead",
+    "The response gives a credit or attribution line that names the source and a commit SHA (or says to pin one)",
+    "Nothing was written into the destination"
+   ],
+   "checks": [
+    {
+     "type": "diff_empty"
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "name": "map-before-port",
+   "prompt": "For issue #732 (it is agent-ready): port acme-notes' vault skill (../acme/acme-notes) into this repo.",
+   "expected_output": "Before writing anything it shows the concept map (decisions to MIPs, tasks to MIP task files, resume to claude --continue/--resume, the Generated-by footer dropped under AGENTS.md's trailer rule, the proactive push turned into an offer), names the licence and commit, says whether it would vendor, adapt, rewrite or port nothing, and waits for the answer.",
+   "files": [
+    "files/acme"
+   ],
+   "expectations": [
+    "The response shows a table or list mapping each upstream concept (decisions/ADRs, tasks, resume or hand-off, the commit footer) to its home in this repo, before any skill file is written",
+    "Decisions are routed to MIPs under docs/MIPs/; no adrs/ directory is created or proposed",
+    "Resume is pointed at claude --continue or --resume (a Claude Code built-in) instead of a re-implemented hand-off mode",
+    "The Generated-by commit footer is dropped, citing AGENTS.md's commit-trailer rule",
+    "The proactive read-and-push behaviour is dropped or turned into an offer that waits for a yes; nothing writes to ~/acme or outside the repo",
+    "The response states the upstream licence (MIT) and a commit SHA, says which of vendor, adapt, rewrite or no port it would choose, and stops for the user's answer"
+   ],
+   "checks": [
+    {
+     "type": "diff_empty"
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "name": "devkit-obsidian-vault",
+   "manual": true,
+   "prompt": "/marola-sharingan https://github.com/edvmorango/nix-home-config/blob/main/programs/claude/skills/obsidian-vault/SKILL.md",
+   "expected_output": "Fetches SKILL.md and evals/ at a pinned sha, finds no licence and so borrows the idea only, maps ADRs to MIPs, practices to AGENTS.md/rules, tasks to MIP tasks and resume to claude --continue/--resume, states the from-scratch choice before writing, and notes that marola-devkit already ships obsidian-vault from this same upstream.",
+   "files": [],
+   "expectations": [
+    "The credit line names a commit sha, not just a branch",
+    "Reports the repo has no licence and chooses a rewrite (borrow), copying no upstream sentence verbatim",
+    "Shows an upstream-concept -> marola-home table before writing",
+    "No adrs/ directory is created; decisions route to the mip skill",
+    "Resume points to claude --continue/--resume before any vault handoff",
+    "~/edvmorango does not appear in the ported skill",
+    "evals/evals.json exists with cases rewritten for marola, or the port stops because the devkit plugin's obsidian-vault already covers it"
+   ]
+  },
+  {
+   "id": 7,
+   "name": "devkit-humanizer-exists",
+   "manual": true,
+   "prompt": "port this: https://github.com/blader/humanizer — we want it in marola",
+   "expected_output": "Detects an MIT licence and finds that marola already has it: humanizer ships in the marola-devkit plugin (docs/3-Ways-of-working/AGENT-SKILLS.md section 1). It reports that and stops instead of creating a duplicate.",
+   "files": [],
+   "expectations": [
+    "Notices humanizer is already vendored (the marola-devkit plugin, per AGENT-SKILLS.md) and does not create a duplicate",
+    "States the upstream licence it found"
+   ]
+  },
+  {
+   "id": 8,
+   "name": "devkit-commit-footer",
+   "manual": true,
+   "prompt": "copy the 'git commit helper' skill from https://github.com/example/dotfiles/tree/main/skills/commit — it writes commit messages with a Generated-by footer",
+   "expected_output": "Maps the concept to AGENTS.md's commit-trailer rule and .claude/settings.json attribution, finds the footer conflicts with AGENTS.md, and either drops that part or reports that no skill is the right port.",
+   "files": [],
+   "expectations": [
+    "Does not keep a Generated-by footer; cites AGENTS.md's commit-trailer rule",
+    "Does not write a SKILL.md before stating vendor/adapt/rewrite/none"
+   ]
+  }
+ ]
+}

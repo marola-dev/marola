@@ -1,0 +1,22 @@
+[
+  {"query": "convert MIP-0091 to STE100", "should_trigger": true},
+  {"query": "rewrite docs/1-Using-marola/RUN-LOCALLY.md in simplified technical english", "should_trigger": true},
+  {"query": "tighten the prose in docs/3-Ways-of-working/CONTRIBUTING.md, the sentences are too long", "should_trigger": true},
+  {"query": "update the README and README.pt-BR.md intro to mention the forecaster", "should_trigger": true},
+  {"query": "which writing style does a .tasks.md file follow here?", "should_trigger": true},
+  {"query": "can I run the humanizer on AGENTS.md?", "should_trigger": true},
+  {"query": "write a new rules file under .claude/rules for the papers folder", "should_trigger": true},
+  {"query": "faz uma versão fácil de ler do MIP-0083 em português", "should_trigger": true},
+  {"query": "revise the abstract of papers/politica-previsor-marola-ptbr.md", "should_trigger": true},
+  {"query": "reword this commit message before I push", "should_trigger": true},
+  {"query": "write up a design for caching the tide tables, as a MIP", "should_trigger": true},
+  {"query": "fix the failing ruff check in scripts/citation.py", "should_trigger": false},
+  {"query": "redraw docs/img/umbrella.svg with the new repo", "should_trigger": false},
+  {"query": "tag v0.4.0 and update the DOI badge", "should_trigger": false},
+  {"query": "explain a rip current like I'm five", "should_trigger": false},
+  {"query": "bump the marola-devkit flake input to v0.8.4", "should_trigger": false},
+  {"query": "why does pointer-sync.yml fail on the docs build?", "should_trigger": false},
+  {"query": "port the release skill from h0ffmann/ww3-gpu into this repo", "should_trigger": false},
+  {"query": "add a mermaid sequence diagram to ARCHITECTURE.md", "should_trigger": false},
+  {"query": "what is the status of MIP-0083's task 5?", "should_trigger": false}
+]

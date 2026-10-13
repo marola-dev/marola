@@ -227,13 +227,17 @@ as not run; it is never skipped silently.
 
 - **Reading a repo you do not know**: `graph query` (MIP-0076) to find the files, then `eli5`
   (this umbrella's `.claude/skills/`) to explain them.
+- **Before writing or revising prose**: `marola-writing` (this umbrella's `.claude/skills/`). It
+  gives the document's style from its path, the rules of that style, and the skills below that
+  apply to it.
 - **Prose a person reads** (docs, READMEs, MIPs, news posts, PR bodies, outreach): `humanizer` on
-  English (the devkit plugin), `humanizar` on Portuguese (ww3-gpu's copy until
-  marola-dev/marola-devkit#102 settles a marola one), and marola-site's `ptbr-humanizer` on the
-  site's visitor copy.
+  English (the devkit plugin), `marola-humanizar` on Portuguese (this umbrella's), and
+  marola-site's `ptbr-humanizer` on the site's visitor copy. A humanizer pass runs last, and never
+  on agent-facing files, task lists, procedures, reference pages or a document in ASD-STE100.
 - **Formal technical English**: the Writing Skills plugin's `asd-ste100` (ASD Simplified Technical
   English) for procedures and reference pages, `google-dev-docs` for developer docs,
   `plain-language` for public copy. Its character voices (`yoda`, `shrek`, …) are never used.
+  Where `asd-ste100` and `marola-writing`'s `references/ste100.md` differ, the second wins.
 - **Scientific writing**: every claim names what checked it (a source fetched while writing, a
   command, `file:line`) or says it was not checked, and every number comes with its unit and the
   command or source that produces it, as ww3-gpu's `(v)`/`⚠` convention does.

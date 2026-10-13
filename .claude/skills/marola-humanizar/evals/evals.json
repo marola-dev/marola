@@ -1,0 +1,81 @@
+{
+  "skill_name": "marola-humanizar",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Humaniza este parágrafo do README.pt-BR.md, tá com cara de IA:\n\n\"É importante notar que o marola não é apenas um mapa de praias — é uma verdadeira jornada pelo oceano. A plataforma desempenha um papel crucial ao alavancar dados robustos e abrangentes do Open-Meteo, do OpenStreetMap, e do IMA/SC, garantindo mais segurança para os banhistas. Cada praia recebe uma nota de 0 a 100 para hoje e para amanhã. Em última análise, é isso que faz a diferença.\"",
+      "expected_output": "Um parágrafo em pt-BR sem os avisos de importância, sem a fórmula 'não é apenas X, é Y', sem travessão, sem o gerúndio de arremate e sem o fecho inflado; mantém 'nota de 0 a 100', 'hoje' e 'amanhã' e as três fontes pelo nome; escreve 'o marola'; não acrescenta fato nenhum; termina com uma lista curta do tipo de mudança feita.",
+      "assertions": [
+        "O resultado contém 'de 0 a 100' sem alteração",
+        "O resultado nomeia Open-Meteo, OpenStreetMap e IMA/SC",
+        "O resultado não contém 'É importante notar', 'desempenha um papel', 'jornada', 'robustos', 'abrangentes', 'alavancar' nem 'Em última análise'",
+        "O resultado não contém travessão (—)",
+        "O resultado não tem vírgula antes do 'e' final da enumeração",
+        "O resultado não afirma nada que o original não afirma (nenhuma cidade, número ou fonte nova)",
+        "A afirmação vaga sobre segurança foi cortada ou marcada com [FALTA DADO: …], não trocada por um fato inventado",
+        "O nome aparece como 'o marola', em minúsculas"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Escreve a versão fácil em português de docs/MIPs/MIP-0091-marola-forecaster-architecture.md.",
+      "expected_output": "Um arquivo docs/MIPs/MIP-0091.easy.pt-BR.md, ao lado do original, com título 'Versão fácil: …', o cabeçalho obrigatório em citação (link para o original, 'vale o original', status Accepted com a data, commit do original, para quem é, o que ficou de fora, escrita por), as seções do roteiro com 'E a segurança?', de 900 a 1.500 palavras, toda decisão e todo número com unidade do original preservados, termos de arte em português com o inglês em itálico entre parênteses uma vez, ponteiros para as seções do original, e a conferência final relatada.",
+      "assertions": [
+        "O arquivo criado se chama MIP-0091.easy.pt-BR.md e fica em docs/MIPs/",
+        "A primeira linha começa com '# Versão fácil:' e não com '# MIP-0091:'",
+        "O cabeçalho é um bloco de citação que liga para MIP-0091-marola-forecaster-architecture.md e diz que o original em inglês é a fonte da verdade",
+        "O cabeçalho traz o status 'Accepted' com a data 2026-10-13 e não tem linha '| **Status** |'",
+        "O texto diz que a avaliação vem antes do previsor e que não haverá repositório novo",
+        "O texto diz que nada do que a MIP cria é lido pela nota de banho nem pelo veto de ressaca (MIP-0062)",
+        "O texto diz que nada disso está construído ainda (a MIP é Accepted, não Implemented)",
+        "Todo número com unidade do arquivo existe, igual, no original",
+        "Cada termo de arte aparece uma vez com o inglês em itálico entre parênteses e depois só em português, com a mesma palavra",
+        "Há pelo menos um ponteiro para uma seção do original onde um trecho foi encurtado",
+        "O original em inglês não foi modificado",
+        "O arquivo tem entre 900 e 1.500 palavras, ou o relatório explica por que passou"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Deixa mais natural este trecho de papers/politica-previsor-marola-ptbr.md, sem mudar o conteúdo:\n\n\"- **Peso de perigo.** Para um banhista, errar na cauda perigosa importa mais do que errar em mar calmo. O termo de Hs usa um CRPS ponderado por limiar [@gneiting_ranjan_2011] que pesa os desfechos acima de 2,5 m [@marola_mip0062]. O peso se fixa antes do primeiro dia avaliado.\n- A recompensa só existe onde há observação. Observação ausente é linha `missing`, nunca valor imputado.\"",
+      "expected_output": "O trecho volta praticamente igual: já é direto e não tem sinais acumulados. As chaves de citação, '2,5 m', 'Hs', 'CRPS' e `missing` ficam idênticos, e 'nunca valor imputado' fica com a mesma força. O relatório diz que quase nada foi mudado e por quê.",
+      "assertions": [
+        "As chaves [@gneiting_ranjan_2011] e [@marola_mip0062] aparecem idênticas",
+        "'2,5 m' aparece idêntico, com vírgula decimal e espaço",
+        "`missing` continua em código e sem tradução",
+        "'nunca valor imputado' mantém o sentido e a força (nenhum 'geralmente', 'em princípio' ou 'tende a')",
+        "O resultado não acrescenta explicação, exemplo ou adjetivo",
+        "O relatório declara que o texto já estava bom ou que poucas mudanças foram feitas"
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Passa o humanizador no AGENTS.md e no .claude/skills/eli5/SKILL.md, quero que fiquem mais gostosos de ler em português.",
+      "expected_output": "A skill recusa: os dois arquivos são para agentes (e estão em inglês), e um humanizador não roda em texto agent-facing. Explica o motivo em uma ou duas frases, cita marola-writing como quem decide o estilo de cada documento e não edita nenhum dos dois arquivos.",
+      "assertions": [
+        "Nenhum dos dois arquivos foi editado",
+        "A resposta diz que AGENTS.md e SKILL.md são arquivos para agentes e ficam fora do humanizador",
+        "A resposta menciona marola-writing",
+        "A resposta não traduz os arquivos para o português"
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Tira a cara de tradução deste texto de divulgação para voluntários:\n\n\"Vamos estar realizando, no âmbito do projeto, a coleta de relatos de quem está na praia. Eventualmente, isso vai suportar a validação das previsões. Estudos mostram que a ciência cidadã é extremamente poderosa. Conte O Que Você Vê Na Água: Água-Viva, Baleia, Ou Uma Praia Que Está Faltando!\"",
+      "expected_output": "Texto em pt-BR, em registro de conversa com 'você', sem gerundismo, sem 'no âmbito de', com 'eventualmente' e 'suportar' corrigidos pelo sentido, sem maiúsculas de título, sem vírgula antes do 'ou'. A frase 'Estudos mostram…' é cortada ou marcada com [FALTA DADO: …]; nenhum estudo é citado. Os três exemplos do original (água-viva, baleia, praia que está faltando) ficam.",
+      "assertions": [
+        "O resultado não contém 'Vamos estar realizando' nem 'no âmbito'",
+        "O resultado não usa 'suportar' no sentido de 'apoiar' nem 'eventualmente' no sentido de 'com o tempo'",
+        "O resultado não cita estudo, autor ou número que o original não tem",
+        "A frase de autoridade vaga foi cortada ou marcada com [FALTA DADO: …]",
+        "A última frase está em caixa baixa, com água-viva, baleia e praia que está faltando",
+        "O resultado não tem mais de um ponto de exclamação e não acrescenta emoji"
+      ],
+      "files": []
+    }
+  ]
+}

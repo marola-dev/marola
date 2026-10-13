@@ -10,7 +10,7 @@
 <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fpython-loc.json" alt="Python lines of code" />
 <a href="https://marola.dev/"><img src="https://img.shields.io/badge/live_map-marola.dev-0b6e99?logo=mapbox&logoColor=white" alt="live map" /></a>
 <a href="https://doi.org/10.5281/zenodo.23224155"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23224155-blue" alt="DOI" /></a>
-<a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT" /></a>
+<a href="./LICENSE"><img src="https://img.shields.io/badge/license-CC_BY_4.0_%2B_AGPL--3.0-green" alt="CC BY 4.0 for the docs, AGPL-3.0-only for the code" /></a>
 </p>
 
 <p align="center"><b>A friendly guide to the sea near you, built in the open, as citizen science.</b></p>
@@ -278,5 +278,11 @@ Vulnerabilities go through the private channel in the [security policy](https://
 
 ## License
 
-[MIT](./LICENSE), © 2026 marola contributors.
+- Documentation (the docs, the MIPs, the papers, this README): [CC BY 4.0](./LICENSE).
+- Code (`scripts/`, `.github/`, `mkdocs/`, `justfile`, `flake.nix`): [AGPL-3.0-only](./LICENSES/AGPL-3.0-only.txt).
+- Third-party skills under `.claude/skills/` keep their own licences.
+- Each repo above is its own repository, with its own `LICENSE`.
+- Releases up to v0.2.2 were published under [MIT](./LICENSES/MIT.txt) and stay MIT.
+
+Each file's licence is recorded in [`REUSE.toml`](./REUSE.toml). © 2026 marola contributors.
 </content>
