@@ -291,3 +291,20 @@ jobs:
       # No .devkit link outside the default shell: wiring fetches each devkit ref it reads from GitHub.
       - name: wiring --check — REPOS.md's block is current, no orphan dispatch or unread artifact
         run: wiring --check docs/2-Building-marola/REPOS.md
+
+  # The one check ci-rule requires in every marola repo (marola-dev/marola#813); it must report on
+  # every run, so it needs every other job and passes on skipped ones.
+  ci-ok:
+    if: always()
+    needs: [changes, repo-stats, docs-build, graph, python-ci, static-ci, agents-check, quality-other]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: every needed job passed or was skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) echo "::error::a needed job ended $r"; exit 1 ;; esac
+          done
