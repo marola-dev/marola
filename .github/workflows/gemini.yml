@@ -13,6 +13,8 @@ jobs:
   gemini:
     if: github.event.requested_team.slug == 'gemini'
     uses: marola-dev/marola-devkit/.github/workflows/gemini-review.yml@v0.10.1
-    secrets: inherit
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      PR_BOT_KEY: ${{ secrets.PR_BOT_KEY }}
     with:
       devkit-ref: v0.10.1

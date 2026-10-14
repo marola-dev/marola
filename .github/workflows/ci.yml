@@ -50,6 +50,7 @@ jobs:
               - 'CLAUDE_PROJECT.config.md'  # claude_project_check.py reads it
             workflows:
               - '.github/workflows/**'
+              - '.github/merge-key-allowlist'  # merge-key-check reads it
             docker:
               - 'mkdocs/**'          # its Dockerfile and compose stack are linted below
             justfile:
@@ -114,18 +115,23 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: python3 scripts/repo_stats.py write --out-dir stats --repo "$REPO" --run-id "$RUN_ID" --exclude-job repo-stats
 
+      - id: bot
+        uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.10.1
+        with:
+          app-id: ${{ vars.PR_BOT_APP_ID }}
+          private-key: ${{ secrets.PR_BOT_KEY }}
+          repositories: marola-site
+          permission-contents: write
       - uses: actions/checkout@v7
         with:
           repository: marola-dev/marola-site
           ref: site-data
           path: site-data
-          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+          token: ${{ steps.bot.outputs.token }}
       - name: Publish the stats JSONs to marola-site's site-data branch
         run: |
           mkdir -p site-data/stats
           cp stats/*.json site-data/stats/
-          git -C site-data config user.name "github-actions[bot]"
-          git -C site-data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git -C site-data add stats
           if git -C site-data diff --cached --quiet; then
             echo "stats unchanged — nothing to push"
@@ -246,6 +252,7 @@ jobs:
 
   # What needs this repo's own flake: the lock is current, the justfile parses, no workflow here
   # is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's),
+  # only allowlisted workflows name the merge bot's key (merge-key-check),
   # docs-lint passes at the devkit flake.lock pins (MIP-0074 §7), and REPOS.md's wiring block matches
   # every pinned repo (MIP-0076 §5.4).
   quality-other:
@@ -279,13 +286,15 @@ jobs:
       - name: lint shell tools from nix develop .#lint
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which just workflow-runners docs-lint wiring \
+          nix develop .#lint --command which just workflow-runners docs-lint wiring merge-key-check \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
       - name: just --list (the justfile parses)
         run: just --list >/dev/null
       - name: workflow-runners — no self-hosted workflow here (MIP-0065)
         run: workflow-runners
+      - name: merge-key-check — only allowlisted workflows name the merge bot's key (MIP-0086 §5.6)
+        run: merge-key-check .
       - name: docs-lint — no stale paths, recipes or links in README.md and docs/
         run: docs-lint
       # No .devkit link outside the default shell: wiring fetches each devkit ref it reads from GitHub.

@@ -1,5 +1,5 @@
 # pointer-sync-merge — squash-merge pointer-sync.yml's rolling PR once it is green and in scope (#739),
-# as the marola-pointer-sync App: main-rule's pull-request-only bypass actor, so no review is needed.
+# as marola-merge-bot: main-rule's pull-request-only bypass actor (MIP-0086), so no review is needed.
 name: pointer sync merge
 
 on:
@@ -21,6 +21,7 @@ concurrency:
 
 jobs:
   merge:
+    if: vars.AUTO_MERGE != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -32,14 +33,11 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - uses: actions/create-github-app-token@v3
+      - uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.10.1
         id: app
         with:
-          app-id: ${{ vars.POINTER_SYNC_APP_ID }}
-          private-key: ${{ secrets.POINTER_SYNC_APP_KEY }}
-          # A literal: a schedule event has no github.event.repository, and with owner set an empty
-          # list would mean every repo the App is installed on.
-          owner: marola-dev
+          app-id: ${{ vars.MERGE_BOT_APP_ID }}
+          private-key: ${{ secrets.MERGE_BOT_KEY }}
           repositories: marola
           permission-contents: write
           permission-pull-requests: write

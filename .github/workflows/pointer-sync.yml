@@ -9,8 +9,8 @@ on:
     - cron: "40 5 * * *" # after docs.yml's 05:20, off the hour other workflows use (CI-CD.md)
   workflow_dispatch:
 
-# Every write goes through MAROLA_CROSS_REPO_PAT: a branch pushed or a PR opened with GITHUB_TOKEN
-# triggers no workflow, so the sync PR's CI would never run.
+# Writes as marola-pr-bot (MIP-0086): a branch pushed or a PR opened with GITHUB_TOKEN triggers no
+# workflow, so the sync PR's CI would never run.
 permissions: {}
 
 concurrency:
@@ -24,20 +24,20 @@ jobs:
     env:
       BRANCH: chore/pointer-sync
     steps:
-      - name: MAROLA_CROSS_REPO_PAT is set
-        env:
-          PAT: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
-        run: |
-          if [ -z "$PAT" ]; then
-            echo "::error::MAROLA_CROSS_REPO_PAT is not set: it pushes $BRANCH and opens its PR (Contents and Pull requests: write on marola-dev/marola; CI-CD.md)"
-            exit 1
-          fi
+      - id: bot
+        uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.10.1
+        with:
+          app-id: ${{ vars.PR_BOT_APP_ID }}
+          private-key: ${{ secrets.PR_BOT_KEY }}
+          repositories: marola
+          permission-contents: write
+          permission-pull-requests: write
 
       - uses: actions/checkout@v7
         with:
           ref: main
           submodules: true
-          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+          token: ${{ steps.bot.outputs.token }}
 
       # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
       - uses: DeterminateSystems/nix-installer-action@v23
@@ -50,8 +50,6 @@ jobs:
       - name: Move every submodule to its default branch's tip
         id: bump
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
           scripts/pointer-sync.sh --out "$RUNNER_TEMP/pointer-sync"
           if [ -s "$RUNNER_TEMP/pointer-sync/moved.tsv" ]; then echo "moved=true" >>"$GITHUB_OUTPUT"; fi
@@ -59,7 +57,7 @@ jobs:
       - name: Force-update the rolling branch and open or update its PR
         if: steps.bump.outputs.moved == 'true'
         env:
-          GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
         run: |
           # Same pointers as the rolling branch already carries: skip the push, so CI doesn't re-run and
           # approvals aren't dismissed for a daily no-op.
@@ -79,7 +77,7 @@ jobs:
       - name: Close a sync PR that main has caught up with
         if: steps.bump.outputs.moved != 'true'
         env:
-          GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
         run: |
           pr="$(gh pr list --head "$BRANCH" --base main --state open --json number -q '.[0].number // empty')"
           if [ -n "$pr" ]; then

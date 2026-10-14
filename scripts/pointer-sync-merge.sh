@@ -5,10 +5,11 @@
 #       in a full clone of the default branch; --sha is the commit the triggering checks ran on
 #   scripts/pointer-sync-merge.sh --self-test   # a fake gh on PATH and git fixtures, no network
 #
-# Merges only when every check run and status on the head finished success/skipped/neutral, the head
-# is still --sha, and the diff is submodule gitlinks (each on its marola-dev repo's default branch)
-# plus REPOS.md inside its wiring markers. Pending
-# exits quietly for a later trigger; any other refusal leaves the PR for a person with one comment.
+# Skips a PR labelled `hold`. Merges only when ci-ok (from GitHub Actions) and every other check run
+# and status on the head finished success/skipped/neutral, the head is still --sha, and the diff is
+# submodule gitlinks (each on its marola-dev repo's default branch) plus REPOS.md inside its wiring
+# markers. Pending, or no ci-ok yet, exits quietly for a later trigger; any other refusal leaves the
+# PR for a person with one comment.
 set -euo pipefail
 
 BRANCH=chore/pointer-sync
@@ -78,13 +79,17 @@ pointer_problem() {
 }
 
 run() {
-  local repo="$1" want="$2" dry="$3" n="" head=""
+  local repo="$1" want="$2" dry="$3" n="" head="" held=""
   # A fork's PR can carry the same branch name; only this repo's own branch is pointer-sync's.
-  read -r n head < <(gh pr list -R "$repo" --head "$BRANCH" --base main --state open \
-    --json number,headRefOid,isCrossRepository |
-    jq -r '[.[] | select(.isCrossRepository | not)][0] // empty | "\(.number) \(.headRefOid)"') || true
+  read -r n head held < <(gh pr list -R "$repo" --head "$BRANCH" --base main --state open \
+    --json number,headRefOid,isCrossRepository,labels |
+    jq -r '[.[] | select(.isCrossRepository | not)][0] // empty | "\(.number) \(.headRefOid) \(any(.labels[]?; .name == "hold"))"') || true
   if [ -z "$n" ]; then
     echo "pointer-sync-merge: no open $BRANCH PR"
+    return 0
+  fi
+  if [ "$held" = true ]; then
+    echo "pointer-sync-merge: #$n carries hold; left for a person"
     return 0
   fi
 
@@ -107,10 +112,10 @@ run() {
 
   # check-runs is filter=latest by default, so a re-run replaces its failed attempt. The combined
   # status's own .state reads "pending" when there are no statuses at all, so only .statuses counts.
-  local checks pending failed
+  local runs checks pending failed ci_ok
+  runs="$(gh api --paginate "repos/$repo/commits/$head/check-runs?per_page=100")"
   checks="$(
-    gh api --paginate "repos/$repo/commits/$head/check-runs?per_page=100" |
-      jq -r '.check_runs[] | [.name, .status, (.conclusion // "")] | @tsv'
+    jq -r '.check_runs[] | [.name, .status, (.conclusion // "")] | @tsv' <<<"$runs"
     gh api --paginate "repos/$repo/commits/$head/status?per_page=100" |
       jq -r '.statuses[] | [.context, (if .state == "pending" then "pending" else "completed" end), .state] | @tsv'
   )"
@@ -120,8 +125,11 @@ run() {
     refuse "not every check passed: $failed"
     return 0
   fi
-  if [ -z "$checks" ] || [ -n "$pending" ]; then
-    echo "::notice::#$n waits for ${pending:-its checks to start}; a later run retries"
+  # The PR-body checks can finish before CI has created a single check run (#815 merged that way),
+  # so "every run so far passed" is not "CI passed": wait for ci.yml's aggregate job, from Actions.
+  ci_ok="$(jq -r '[.check_runs[] | select(.name == "ci-ok" and .app.id == 15368 and .status == "completed")][0].conclusion // empty' <<<"$runs")"
+  if [ -z "$checks" ] || [ -n "$pending" ] || [ "$ci_ok" != success ]; then
+    echo "::notice::#$n waits for ${pending:-ci-ok}; a later run retries"
     return 0
   fi
 
@@ -217,10 +225,10 @@ EOF
   h_other="$(mkhead other other true)"
   git clone -q "$o" "$w"
 
-  # pr <head> <check-runs json>: open PR #7 at <head>, no statuses, no comments.
+  # pr <head> <check-runs json> [labels json]: open PR #7 at <head>, no statuses, no comments.
   pr() {
     git -C "$o" update-ref refs/pull/7/head "$1"
-    printf '[{"number":7,"headRefOid":"%s","isCrossRepository":false}]' "$1" >"$t/gh/prs.json"
+    printf '[{"number":7,"headRefOid":"%s","isCrossRepository":false,"labels":%s}]' "$1" "${3:-[]}" >"$t/gh/prs.json"
     printf '%s' "$2" >"$t/gh/check-runs.json"
     # Zero statuses still reads "pending", as GitHub's combined status does.
     printf '{"state":"pending","statuses":[]}' >"$t/gh/status.json"
@@ -234,9 +242,13 @@ EOF
     (cd "$w" && "$SELF" --repo marola-dev/marola "$@") >"$t/out" 2>&1 || echo "exit $?" >>"$t/gh/calls"
   }
   calls() { cat "$t/gh/calls"; }
-  local green failed
-  green='{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"python-ci","status":"completed","conclusion":"skipped"},{"name":"gemini","status":"completed","conclusion":"neutral"}]}'
+  local green failed no_ci_ok other_app ci_ok_failed
+  # ci-ok is ci.yml's aggregate job; app 15368 is GitHub Actions.
+  green='{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"python-ci","status":"completed","conclusion":"skipped"},{"name":"gemini","status":"completed","conclusion":"neutral"},{"name":"ci-ok","status":"completed","conclusion":"success","app":{"id":15368}}]}'
   failed='{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"docs-build","status":"completed","conclusion":"failure"}]}'
+  no_ci_ok='{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"PR body","status":"completed","conclusion":"success","app":{"id":15368}}]}'
+  other_app='{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"ci-ok","status":"completed","conclusion":"success","app":{"id":99}}]}'
+  ci_ok_failed='{"check_runs":[{"name":"ci-ok","status":"completed","conclusion":"failure","app":{"id":15368}}]}'
 
   echo "-- merges_green_in_scope --"
   pr "$h_ok" "$green"
@@ -247,7 +259,7 @@ EOF
   ok "$(grep -c "merge 7 --squash" "$t/out")" "1" "--dry-run prints the merge command"
 
   echo "-- refuses_pending_check --"
-  pr "$h_ok" '{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"docs-build","status":"in_progress","conclusion":null}]}'
+  pr "$h_ok" '{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"docs-build","status":"in_progress","conclusion":null},{"name":"ci-ok","status":"completed","conclusion":"success","app":{"id":15368}}]}'
   go --sha "$h_ok"
   ok "$(calls)" "" "no merge, no comment"
 
@@ -306,6 +318,31 @@ EOF
   printf '{"status":"identical"}' >"$t/gh/compare.json"
   go --sha "$h_ok"
   ok "$(calls)" "merge 7 --squash --admin --match-head-commit $h_ok -R marola-dev/marola" "the default branch's tip merges"
+
+  echo "-- skips_held_pr --"
+  pr "$h_ok" "$green" '[{"name":"hold"}]'
+  printf '{"status":"identical"}' >"$t/gh/compare.json"
+  go --sha "$h_ok"
+  ok "$(calls)" "" "a held PR: no merge, no comment"
+  ok "$(grep -c hold "$t/out")" "1" "it says why"
+
+  echo "-- waits_for_ci_ok --"
+  pr "$h_ok" "$no_ci_ok"
+  go --sha "$h_ok"
+  ok "$(calls)" "" "every check present is green but ci-ok has not reported: no merge, no comment"
+  pr "$h_ok" '{"check_runs":[{"name":"ci-ok","status":"in_progress","conclusion":null,"app":{"id":15368}}]}'
+  go --sha "$h_ok"
+  ok "$(calls)" "" "ci-ok still running: no merge, no comment"
+
+  echo "-- ignores_ci_ok_from_other_app --"
+  pr "$h_ok" "$other_app"
+  go --sha "$h_ok"
+  ok "$(calls)" "" "a ci-ok from another app is no ci-ok: no merge, no comment"
+
+  echo "-- refuses_failed_ci_ok --"
+  pr "$h_ok" "$ci_ok_failed"
+  go --sha "$h_ok"
+  ok "$(calls)" "comment 7" "a failed ci-ok: one comment, no merge"
 
   echo "-- no_open_pr_is_quiet --"
   printf '[]' >"$t/gh/prs.json"
