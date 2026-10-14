@@ -12,9 +12,9 @@ permissions:
 jobs:
   gemini:
     if: github.event.requested_team.slug == 'gemini'
-    uses: marola-dev/marola-devkit/.github/workflows/gemini-review.yml@v0.10.1
+    uses: marola-dev/marola-devkit/.github/workflows/gemini-review.yml@v0.11.0
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       PR_BOT_KEY: ${{ secrets.PR_BOT_KEY }}
     with:
-      devkit-ref: v0.10.1
+      devkit-ref: v0.11.0

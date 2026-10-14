@@ -33,7 +33,7 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.10.1
+      - uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.11.0
         id: app
         with:
           app-id: ${{ vars.MERGE_BOT_APP_ID }}
