@@ -22,7 +22,7 @@ Cache layout, under .tmp/arxiv_cache/ (gitignored — fetched data, not source):
                                            relevance_score, fetched_at) — rewritten each run from
                                            the current papers/ contents, so it never drifts from them
 
-Network is stdlib-only (`urllib.request`), matching marola-devkit's cost-split.
+Network is stdlib-only (`urllib.request`).
 """
 
 import argparse

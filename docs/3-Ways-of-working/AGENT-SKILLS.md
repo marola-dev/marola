@@ -17,11 +17,15 @@ repo that has it, so start the agent in the repo you are changing.
 | marola-site | `site-frontend`, the entry point for anything a visitor sees, which orders the others: `ptbr-humanizer`, `citizen-science-site`, and vendored design, testing and `mapbox-*` skills | its `.claude/skills/` |
 | marola-corpus | `corpus-doc` (adding a document) | its `.claude/skills/` |
 | marola-app | no skills; the Scala and Kyo rules (`.claude/rules/scala.md`) and the `jar-verifier` agent | its `.claude/` |
-| the umbrella | `eli5` (explaining a sea or marola topic from zero; it reads the corpus and the app through the submodules) | its `.claude/skills/` |
+| the umbrella | `eli5` (explaining a sea or marola topic from zero; it reads the corpus and the app through the submodules); `architecture-diagram` (a README diagram as a hand-written SVG, adapted from Cocoon-AI/architecture-diagram-generator@4b9087d, MIT); `zenodo-release` (cutting a citable release and keeping `.zenodo.json` right, MIP-0079, adapted from h0ffmann/ww3-gpu's `release`); `citation-cff` (exporting and checking the citation, vendored unchanged from zircote/github-social@4fa6579, MIT) | its `.claude/skills/` |
 | marola-ml, marola-oods | no skills of their own | — |
 | superpowers, skill-creator | §2 and §2.2 | the umbrella's and marola-app's `.claude/settings.json` |
 
-Each repo's `AGENTS.md` says when its skills apply. corpus's skill runs marola's recipes, so those
+Each repo's `AGENTS.md` says when its skills apply. A skill vendored byte for byte from another
+repository gets a row in a per-repo `.claude/skills/skills.lock` (`skills-vendor check` verifies
+the copy) and a weekly reviewed update PR from that repo's `skills.yml`
+([MIP-0080](../MIPs/MIP-0080-vendored-skills-lock.md), Draft; the umbrella's row is
+`citation-cff`). corpus's skill runs marola's recipes, so those
 steps need a marola-app checkout pointed at the corpus with `MAROLA_KNOWLEDGE_DIR`, as its
 `AGENTS.md` says.
 
@@ -50,8 +54,8 @@ workflow is ours:
 | **executing-plans** | Yes — the execute session | Run an accepted MIP's tasks in a fresh session (`/clear`, `/rename <branch>`), with the human checkpoints at: after the first failing test, before any paid cloud resource, before a push. |
 | **test-driven-development** | Yes — the testing rule already | `AGENTS.md` asks for a failing test before a fix; marola-app's golden fixture suite and scripted-LLM specs are the harness. Red-green-refactor maps 1:1. |
 | **systematic-debugging** | Yes | Especially for the effect/typing errors Kyo produces and for "works live, fails offline" fixture drift. Phase 1 of it (reproduce) = a golden test. |
-| **verification-before-completion** | Yes — hard rule | Matches "report outcomes faithfully": the repo's gates, then a live run when data paths changed, then the `Cost:` line. |
-| **requesting-code-review** / **receiving-code-review** | Yes — the final review, **on request only** | Reviewer subagent per PR of a stack (BASE = the PR's base branch, HEAD = the task branch, plan = the task row); author verifies findings before acting. Pre-PR checklist = the `Cost:` line, docs updated in the same change, MIP status flipped. [DEV-FLOW §5](DEV-FLOW.md#5-final-review-only-when-asked). |
+| **verification-before-completion** | Yes — hard rule | Matches "report outcomes faithfully": the repo's gates, then a live run when data paths changed, then the `Tested:` line. |
+| **requesting-code-review** / **receiving-code-review** | Yes — the final review, **on request only** | Reviewer subagent per PR of a stack (BASE = the PR's base branch, HEAD = the task branch, plan = the task row); author verifies findings before acting. Pre-PR checklist = docs updated in the same change, MIP status flipped. [DEV-FLOW §5](DEV-FLOW.md#5-final-review-only-when-asked). |
 | **using-git-worktrees** | Yes, for parallel work | One worktree per MIP implementation; pairs with "one feature, one session". The ai-jail sandbox maps the repo directory, so worktrees must live *inside* it or be mapped. |
 | **finishing-a-development-branch** | Yes | Squash-merge is the habit; rebuild follow-ups on `origin/main` via cherry-pick rather than stacking. |
 | **dispatching-parallel-agents** / **subagent-driven-development** | Selectively | Subagents are where Fable's cost is saved: research, doc review, fixture recording on Sonnet/Haiku. Not for the core scoring/safety code, which the human and the main session should read. |
@@ -79,7 +83,7 @@ flowchart LR
     b1["/rename +<br/>stack start"]
     b2["executing-plans<br/>(task row = plan)"]
     b3["TDD -><br/>debugging -><br/>verification"]
-    b4["commit (Cost:) -><br/>stack pr"]
+    b4["commit (Tested:) -><br/>stack pr"]
     b5["requesting-code-review<br/>(self-checklist) -> /clear"]
     b1 --> b2 --> b3 --> b4 --> b5
   end

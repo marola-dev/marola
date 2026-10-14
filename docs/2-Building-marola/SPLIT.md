@@ -35,7 +35,7 @@ checked out with submodules, the whole workspace is one directory again.
 | Repo | Took |
 |---|---|
 | umbrella | `AGENTS.md`, `CLAUDE.md`, the READMEs, `PHILOSOPHY.md` and the health files, rewritten for the workspace; `docs/3-*`, `docs/4-*`, `docs/MIPs/`; `mkdocs/`; the docs aggregator and pointer sync; `repo_stats`, `arxiv_digest`, `awesome_agentic_digest`, `mip_graph`, `gh-billing` |
-| marola-devkit | The dev-flow scripts (`stack`, `uprd`, `pr`, `cost-split`, `issues`, the label tools) and `scripts/lib/`; the git hooks and Claude Code hooks; the generic skills and agents; the PR template, labels and issue forms; the runner scripts; the base flake and `just` module |
+| marola-devkit | The dev-flow scripts (`stack`, `uprd`, `pr`, `trailer-fill`, `issues`, the label tools) and `scripts/lib/`; the git hooks and Claude Code hooks; the generic skills and agents; the PR template, labels and issue forms; the runner scripts; the base flake and `just` module |
 | marola-app | The sbt build and its sources, the OODS module and its ingest workflow, the Dockerfile and compose file, the Scala CI, `docker.yml`, `docker-smoke.yml`, `marola-e2e.yml`, Scala Steward, the Scaladoc job, `docs/1-*` and `docs/2-*` (since split again by MIP-0074) |
 | marola-site | The static map, `site.yml`, `site-health.yml`, the `site-data` branch, the site checks, the `site-frontend` skill |
 | marola-corpus | The knowledge documents, the `corpus-doc` and `eli5` skills |

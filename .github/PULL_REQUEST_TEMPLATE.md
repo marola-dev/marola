@@ -6,7 +6,6 @@
 |---|---|
 | **MIP** | <!-- fill: MIP-NNNN link, or: none — not MIP-scoped --> |
 | **Tested** | ⬜ gates · ⬜ e2e · ⬜ live · ⬜ ci-only: <!-- fill: note from the `Tested:` trailer(s) --> |
-| **Cost** | <!-- fill: `Cost:` trailer(s) from the commits --> |
 
 **What changed**
 - <!-- fill: one bullet per commit -->

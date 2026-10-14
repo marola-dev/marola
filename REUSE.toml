@@ -1,0 +1,56 @@
+version = 1
+
+# Licence and copyright for every file of the umbrella, in one place, as h0ffmann/closed-source and
+# the ouroboric-dev repositories do: no per-file headers. Documentation is CC BY 4.0 (LICENSE), code
+# is AGPL-3.0-only. Releases up to v0.2.2 were published under MIT and stay MIT; that notice is
+# LICENSES/MIT.txt. Submodules are their own repositories with their own licences. When several
+# blocks match a file, the last one wins. Check with `reuse lint`.
+
+[[annotations]]
+path = ["**"]
+precedence = "closest"
+SPDX-FileCopyrightText = ["2026 Matheus Hoffmann", "2026 Bruno Guilhermo de Barros Valério", "2026 William Macedo", "2026 Pablo Ribeiro", "2026 Rôb Klér Soares da Silva Júnior", "2026 marola contributors"]
+SPDX-License-Identifier = "CC-BY-4.0"
+
+[[annotations]]
+path = ["scripts/**", ".github/**", "mkdocs/**", "justfile", "flake.nix", "flake.lock", "ruff.toml", ".shellcheckrc", ".envrc", "docs/assets/marola.css"]
+precedence = "closest"
+SPDX-FileCopyrightText = ["2026 Matheus Hoffmann", "2026 Bruno Guilhermo de Barros Valério", "2026 William Macedo", "2026 Pablo Ribeiro", "2026 Rôb Klér Soares da Silva Júnior", "2026 marola contributors"]
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+# Shared with marola-devkit (MIT), which every marola repo copies them from (NEW-REPO, step 8).
+[[annotations]]
+path = [".github/ISSUE_TEMPLATE/**", ".github/PULL_REQUEST_TEMPLATE.md"]
+precedence = "closest"
+SPDX-FileCopyrightText = ["2026 marola.dev", "2026 Matheus Hoffmann", "2026 Bruno Guilhermo de Barros Valério", "2026 William Macedo", "2026 Pablo Ribeiro", "2026 Rôb Klér Soares da Silva Júnior", "2026 marola contributors"]
+SPDX-License-Identifier = "MIT"
+
+# The page states CC0 1.0 for its own curation text.
+[[annotations]]
+path = ["docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md"]
+precedence = "closest"
+SPDX-FileCopyrightText = ["2026 Matheus Hoffmann", "2026 Bruno Guilhermo de Barros Valério", "2026 William Macedo", "2026 Pablo Ribeiro", "2026 Rôb Klér Soares da Silva Júnior", "2026 marola contributors"]
+SPDX-License-Identifier = "CC0-1.0"
+
+# Third-party skills keep their own licence and notice.
+
+# Vendored byte for byte from zircote/github-social, pinned in .claude/skills/skills.lock.
+[[annotations]]
+path = [".claude/skills/citation-cff/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "2025 zircote"
+SPDX-License-Identifier = "MIT"
+
+# Adapted from Cocoon-AI/architecture-diagram-generator@4b9087d; its LICENSE is beside the skill.
+[[annotations]]
+path = [".claude/skills/architecture-diagram/**"]
+precedence = "override"
+SPDX-FileCopyrightText = ["2025 Cocoon AI", "2026 Matheus Hoffmann"]
+SPDX-License-Identifier = "MIT"
+
+# Adapted from the eli5 plugin in anthropics/claude-plugins-community (plugin.json: MIT).
+[[annotations]]
+path = [".claude/skills/eli5/**"]
+precedence = "override"
+SPDX-FileCopyrightText = ["Thariq Shihipar", "2026 Matheus Hoffmann"]
+SPDX-License-Identifier = "MIT"

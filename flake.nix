@@ -13,11 +13,11 @@
       url = "github:h0ffmann/nix-config/labs/agentic?dir=labs/agentic";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # The shared dev-flow harness (MIP-0070 §5.1): stack, uprd, issues, cost-split, … on PATH, the
+    # The shared dev-flow harness (MIP-0070 §5.1): stack, uprd, issues, trailer-fill, … on PATH, the
     # git hooks and the just module under .devkit. Bumped by hand, together with every `@v…` and
     # `devkit-ref:` in .github/workflows/ (dependabot ignores marola-devkit for that reason).
     marola-devkit = {
-      url = "github:marola-dev/marola-devkit/v0.4.1";
+      url = "github:marola-dev/marola-devkit/v0.10.0";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.lint.follows = "lint";
       inputs.agentic.follows = "agentic";

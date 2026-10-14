@@ -31,6 +31,9 @@ prose or box-drawing in a bare fence (MIP-0068; examples in
 | a chart from a results table | `vegalite {bg-dark=white}` |
 | a sketch or wireframe | `excalidraw {bg-dark=white}` with `@from_file:assets/diagrams/<name>.excalidraw` |
 
+A README diagram is the exception: GitHub renders no Kroki dialect, so it is a hand-written
+`docs/img/<name>.svg` (and `<name>.pt-BR.svg`), drawn with the `architecture-diagram` skill.
+
 Draw only what the prose beside it already says, and keep the prose: the text is the source of
 truth. Keep a diagram under about 15 nodes; split it rather than grow it. Plain ` ```mermaid `,
 never ` ```kroki-mermaid ` (`fence_prefix: ""`). `bpmn` and `diagramsnet` are off (their fences stay

@@ -28,6 +28,8 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       nix: ${{ steps.filter.outputs.nix }}
       agents: ${{ steps.filter.outputs.agents }}
+      wiring: ${{ steps.filter.outputs.wiring }}
+      graph: ${{ steps.filter.outputs.graph }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -45,6 +47,7 @@ jobs:
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
               - '.github/workflows/ci.yml'  # the self-test list below
               - 'AGENTS.md'          # agents_repos_check.sh reads it
+              - 'CLAUDE_PROJECT.config.md'  # claude_project_check.py reads it
             workflows:
               - '.github/workflows/**'
             docker:
@@ -57,6 +60,15 @@ jobs:
             agents:
               - 'AGENTS.md'
               - '.github/workflows/ci.yml'  # its devkit-ref pins the invariants block compared against
+            wiring:                  # what `wiring --check` reads, beyond the workflows and the docs filter
+              - 'wiring.allow'
+              - 'scripts/**'
+              - '.claude/settings.json'
+            graph:                   # the gitlinks, the devkit pin and graphify's ignore list
+              - &submodules [marola-site, marola-corpus, marola-ml, marola-app, marola-oods, marola-skills, marola-agents, marola-research]
+              - 'flake.lock'
+              - '.graphifyignore'
+              - '.github/workflows/ci.yml'
             docs:
               - 'docs/**'
               - 'mkdocs/**'
@@ -69,11 +81,7 @@ jobs:
               - 'scripts/site_links_check.py'
               - 'scripts/mkdocs.sh'
               - '.gitmodules'
-              - 'marola-site'
-              - 'marola-corpus'
-              - 'marola-ml'
-              - 'marola-app'
-              - 'marola-oods'
+              - *submodules
 
   # README badges: this run's green steps, plus the Scala and Python line counts, counted in the
   # checked-out submodules (MIP-0070 §5.4: the umbrella runs repo_stats.py over every repo).
@@ -157,13 +165,47 @@ jobs:
             python3 scripts/site_links_check.py mkdocs/generated-docs
           fi
 
+  # MIP-0076 §5.4: a smoke test of each pointer move and devkit/graphify bump, and the graph as an
+  # artifact for a session without Nix. Never committed, never deployed.
+  graph:
+    needs: changes
+    if: needs.changes.outputs.graph == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
+      - uses: DeterminateSystems/nix-installer-action@v23
+      # MIP-0076 §8's open item; without it graph.sh runs with no network isolation.
+      - name: Does unshare -rn work on this runner?
+        run: |
+          if unshare -rn true; then echo "unshare -rn: available"; else echo "unshare -rn: not permitted"; fi
+      # `graph`, not `just graph`: that recipe is in .devkit/devkit.just, a link only the default shell makes.
+      - name: graph build on the pinned submodule commits
+        env:
+          XDG_CACHE_HOME: ${{ runner.temp }}/graph-cache
+        run: nix develop .#lint --command graph build
+      # graph.sh writes to $XDG_CACHE_HOME/marola-graph/<checkout dir name>, the repo's name here.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: graph
+          path: |
+            ${{ runner.temp }}/graph-cache/marola-graph/${{ github.event.repository.name }}/graph.json
+            ${{ runner.temp }}/graph-cache/marola-graph/${{ github.event.repository.name }}/build.json
+          retention-days: 7
+          if-no-files-found: error
+
   # Free, fast, and independent of the JVM build — the same gates as `just quality-other`, split
   # across the devkit's reusable workflows plus the nix-only checks below. The tool versions are
   # what flake.lock's nixpkgs builds for labs/lint (0968519): move them with `nix flake update`.
   python-ci:
     needs: changes
     if: needs.changes.outputs.python == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.4.1
+    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.10.0
     with:
       ruff-version: "0.16.5"
       self-test-commands: |
@@ -171,6 +213,7 @@ jobs:
         scripts/gh-billing.sh --self-test
         scripts/site-data-push.sh --self-test
         scripts/pointer-sync.sh --self-test
+        scripts/pointer-sync-merge.sh --self-test
         scripts/prepare-docs.sh --self-test
         scripts/fetch-api-docs.sh --self-test
         node scripts/docs_redirect_check.js
@@ -178,11 +221,13 @@ jobs:
         python3 scripts/site_links_check.py --self-test
         scripts/agents_repos_check.sh --self-test
         scripts/agents_repos_check.sh
+        python3 scripts/claude_project_check.py --self-test
+        python3 scripts/claude_project_check.py
 
   static-ci:
     needs: changes
     if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.4.1
+    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.10.0
     with:
       actionlint-version: "1.7.12"
       hadolint-version: "2.14.0"
@@ -195,20 +240,23 @@ jobs:
   agents-check:
     needs: changes
     if: needs.changes.outputs.agents == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.4.1
+    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.10.0
     with:
-      devkit-ref: v0.4.1
+      devkit-ref: v0.10.0
 
   # What needs this repo's own flake: the lock is current, the justfile parses, no workflow here
   # is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's),
-  # and docs-lint passes at the devkit flake.lock pins (MIP-0074 §7).
+  # docs-lint passes at the devkit flake.lock pins (MIP-0074 §7), and REPOS.md's wiring block matches
+  # every pinned repo (MIP-0076 §5.4).
   quality-other:
     needs: changes
-    if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true' || needs.changes.outputs.docs == 'true'
+    if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.wiring == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true
       # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
       - uses: DeterminateSystems/nix-installer-action@v23
       - name: nix flake lock (adds a new input's pin, changes nothing else)
@@ -231,7 +279,7 @@ jobs:
       - name: lint shell tools from nix develop .#lint
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which just workflow-runners docs-lint \
+          nix develop .#lint --command which just workflow-runners docs-lint wiring \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
       - name: just --list (the justfile parses)
@@ -240,3 +288,23 @@ jobs:
         run: workflow-runners
       - name: docs-lint — no stale paths, recipes or links in README.md and docs/
         run: docs-lint
+      # No .devkit link outside the default shell: wiring fetches each devkit ref it reads from GitHub.
+      - name: wiring --check — REPOS.md's block is current, no orphan dispatch or unread artifact
+        run: wiring --check docs/2-Building-marola/REPOS.md
+
+  # The one check ci-rule requires in every marola repo (marola-dev/marola#813); it must report on
+  # every run, so it needs every other job and passes on skipped ones.
+  ci-ok:
+    if: always()
+    needs: [changes, repo-stats, docs-build, graph, python-ci, static-ci, agents-check, quality-other]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: every needed job passed or was skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) echo "::error::a needed job ended $r"; exit 1 ;; esac
+          done

@@ -16,7 +16,7 @@ each of its sections a verdict in its own heading; only its candidates are repea
 | A catastrophe/hazard detection agent, competing with public alerts | [`FUTURE-WORK.md`](../4-Research-and-plans/FUTURE-WORK.md) §9.2; `ROADMAP.md` §5 | Candidate, gated by a human-confirmation design for proactive alerts: write that gate first |
 | marola as actors: escalation, digest and answer agents on Pekko, each also an MCP tool | [`AGENT-FRAMEWORKS-SURVEY.md`](../4-Research-and-plans/AGENT-FRAMEWORKS-SURVEY.md) §2–§3; `ROADMAP.md` §5 | Candidate once MIP-0002 and MIP-0004 exist to orchestrate |
 | "Ask marola about marola": a Q&A agent on the existing RAG (`ask_project_question` MCP tool) | [`AGENT-STACK-SURVEY.md`](../4-Research-and-plans/AGENT-STACK-SURVEY.md) §5 | Candidate, v0 on the existing RAG |
-| The Gemini Code Assist GCP side as Besom under `infra/gemini/`, state in GCS, `preview` on PR and `up` on dispatch on marola's runners | [`GEMINI-CODE-ASSIST.md`](../4-Research-and-plans/GEMINI-CODE-ASSIST.md) §4–§6 | Candidate, the repo's first IaC; verify §4's connection-label question first. The hosted counterpart of MIP-0060's parked local route |
+| The Gemini Code Assist GCP side as Besom under `infra/gemini/`, state in GCS, `preview` on PR and `up` on dispatch on marola's runners | [`GEMINI-CODE-ASSIST.md`](../4-Research-and-plans/GEMINI-CODE-ASSIST.md) §4–§6 | Candidate; MIP-0083 §5.9 would be marola's first IaC, in the same layout; verify §4's connection-label question first. The hosted counterpart of MIP-0060's parked local route |
 | Garmin data: FIT-file import first | [`FUTURE-WORK.md`](../4-Research-and-plans/FUTURE-WORK.md) §11 | Candidate (Phase 4, personalisation); the shape is decided (files, never the unofficial API) |
 | The bot's continuous deployment | [MIP-0065](MIP-0065-ci-cd-on-github-hosted-runners.md) §5.7 | Candidate, Phase 2: a follow-up MIP after Phase 1 |
 | Ten external candidates (Kimi, 2026-09-06), triaged, with a provider-query checklist | `ROADMAP.md` §7 | MIP-0021 and MIP-0022 were drafted from it; verify the checklist before any other becomes a MIP |
@@ -33,6 +33,7 @@ each of its sections a verdict in its own heading; only its candidates are repea
 | Jail notes | [`FABLE_REVIEW.md`](https://github.com/marola-dev/marola/blob/70526c8d22ad785c7d895f9241e1f6839f215add/docs/4-Research-and-plans/FABLE_REVIEW.md) §3 (retired) | MIP-0011 task 5 |
 | A weekly post-planner and multi-platform exporter | [`SELF-DOCUMENTING.md`](../4-Research-and-plans/SELF-DOCUMENTING.md) | MIP-0018 (Draft) |
 | The awesome-list and its human-gated `scripts/awesome_agentic_digest.py` update routine | [`AWESOME-AGENTIC-ENGINEERING.md`](../4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md) | MIP-0043 (Implemented) |
+| Pinning the vendored third-party Claude Code skills (marola-site, the devkit plugin, the umbrella, ww3-gpu) and updating them through reviewed PRs | [`AGENT-SKILLS.md`](../3-Ways-of-working/AGENT-SKILLS.md) §1; marola-dev/marola-skills review R5–R6 | MIP-0080 (Draft) |
 
 ## Not MIP material
 

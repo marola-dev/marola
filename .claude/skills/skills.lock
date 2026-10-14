@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "skills": {
+    "citation-cff": {
+      "upstream": "zircote/github-social",
+      "path": "skills/citation-cff",
+      "commit": "bff9bcecfa275018f102a767093ada98d1e85add",
+      "files": {
+        "LICENSE": "d37cd561477dcfccbe5064eba4f210aee90eb24e",
+        "SKILL.md": "5737231a8181d58172e47a3d82aa2d0aca527bce",
+        "evals/evals.json": "9f78be45739d6e15f26f4d355a31caa9728b31d9",
+        "examples/cff-application.md": "5b61798f4ff380b705a4e3161ef074d3f1227019",
+        "examples/cff-library.md": "54dd02e766340084ba388b56dcd93afbfcb47bf4",
+        "examples/cff-with-paper.md": "f2baf72694d1e031a71f5e155771859389a1d8fb",
+        "references/cff-schema.md": "062e3ea7dcb13a0274a859b2f4e1137ecc71a1ba",
+        "references/format-templates.md": "eef42272727073a20ad3ef46fc5cb16147b505ce",
+        "references/validation-rules.md": "5147543c196a245db8d0e366d91b8954765dba18"
+      },
+      "license": "MIT",
+      "local_edits": null,
+      "hold": null,
+      "paths": {
+        "LICENSE": "LICENSE"
+      }
+    }
+  }
+}

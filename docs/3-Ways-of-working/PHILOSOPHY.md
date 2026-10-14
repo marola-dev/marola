@@ -35,8 +35,7 @@ rather than one vendor's config format; MIP-0011 (Implemented, ultrareview-verif
 rules that must not be optional into things the harness enforces: hooks, a shared permission
 allowlist, path-scoped rules, subagents, skills; [DEV-FLOW](DEV-FLOW.md) is the loop from idea to
 merged PR. "Open to other coders" is not a wish either: MIP-0013 (Draft) is a bounded OpenCode
-tryout that states what replacing Claude Code would actually cost, down to the one hard dependency
-(marola-devkit's `cost-split` reads Claude Code's own session logs). This file and the MIP
+tryout that states what replacing Claude Code would actually cost. This file and the MIP
 discipline around it are the pillar's output, not a description of it.
 
 **Pillar 2: models reasoning over open water, with the deterministic parts kept deterministic.**
@@ -145,7 +144,7 @@ the laptop run the same shell.
 
 ## Why a `justfile`
 
-Recipes are the agent's vocabulary. `just quality`, `just docs`, `just uprd`, `just cost-split`
+Recipes are the agent's vocabulary. `just quality`, `just docs`, `just uprd`, `just pr`
 here, and build, test, benchmark and e2e recipes in the repos that have them: each is a short,
 discoverable name for a command that would otherwise be reconstructed from memory, slightly
 differently each time. `just --list` is documentation that cannot go stale, and a recipe is where
@@ -162,14 +161,12 @@ cannot touch the machine outside the repository. It does not replace the rules t
 (no unattended deploy, every paid resource behind a human go-ahead), and it does not stop bad
 code or spent budget. It is the same idea one layer down: give the mistake a wall to hit.
 
-## Why design docs before code, and a cost line on every PR
+## Why design docs before code
 
 A Marola Improvement Proposal (`docs/MIPs/`) is written before a non-trivial change is built, with
 every external claim fetched and dated and every unverified one parked in "Open questions". The
 agent is a fast writer of plausible designs; the MIP template forces the plausible to become the
-checked. The `Cost:` trailer on every commit and PR (`AGENTS.md`) exists for the same reason at the
-meta level: an agent's work is cheap to ask for and not free to run, and a repository that records
-what a feature cost in tokens learns what to ask for next. [DEV-FLOW](DEV-FLOW.md) is the loop end
+checked. [DEV-FLOW](DEV-FLOW.md) is the loop end
 to end: idea → MIP → acceptance → tasks → small stacked PRs, each green on the same gates CI runs →
 review only when asked → merge.
 

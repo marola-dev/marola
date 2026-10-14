@@ -71,13 +71,18 @@ scoring, a data source, or what a user sees goes through one first.
 
 - **Small PRs, one topic.** `stack` and `just uprds` exist so a MIP ships as several reviewable PRs
   instead of one large one.
-- **Every commit ends with three trailers and nothing else:** `Tested: gates, e2e — <not run,
-  why>`, `Cost: ~$… · … tokens · …` (from `just cost-split`) and
-  `Co-Authored-By: Claude <noreply@anthropic.com>`; no session links, no "Generated with"
+- **Every commit ends with two trailers and nothing else:** `Tested: gates, e2e — <not run,
+  why>` and `Co-Authored-By: Claude <noreply@anthropic.com>`; no session links, no "Generated with"
   banners.
 - **The PR body is generated from those commits** by `just pr` (`.github/PULL_REQUEST_TEMPLATE.md`
-  has the shape): the summary from the first commit's body, the Tested and Cost rows from the
-  trailers. Write the commit right and there is nothing to fill.
+  has the shape): the summary from the first commit's body, the Tested row from the
+  trailer. Write the commit right and there is nothing to fill.
+- **Without write access, fork.** Only the collaborators a repository's settings list with write,
+  maintain or admin can push branches to it, and the list differs per repository. Everyone else
+  forks it and opens the PR from the fork. Actions on a fork PR wait for a maintainer's approval
+  ([CI-CD](CI-CD.md#the-maintainers-manual-settings)), and the workflows that need a secret, such
+  as the PR-body fill and Gemini's fix push, skip forks, so write the body with `just uprd`
+  locally.
 - **The repo's gates** must be green before a PR is opened; its `AGENTS.md` names them, and they
   are the gates its `ci.yml` runs.
 - **Dependency updates.** dependabot watches GitHub Actions in the umbrella and marola-app, and
@@ -95,5 +100,6 @@ only what the code cannot.
 
 ## License
 
-Every repo carries an MIT `LICENSE`. By contributing you agree your changes are licensed under
-it.
+Every repo carries its own `LICENSE`: MIT, except this umbrella, where the docs are CC BY 4.0 and
+the code is AGPL-3.0-only ([`REUSE.toml`](../../REUSE.toml) says which file is which). By contributing
+you agree your changes are licensed under the licence of the files you change.

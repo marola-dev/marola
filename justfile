@@ -50,13 +50,14 @@ coverage-python:
 # app's gates are marola-app's own (`cd marola-app && just quality`).
 quality: quality-other
 
-# Ruff, the script self-tests, actionlint, hadolint, docs-lint. A missing tool fails, never skips.
+# Ruff, the script self-tests, actionlint, hadolint, docs-lint, `wiring --check` (needs the
+# submodules checked out). A missing tool fails, never skips.
 # The devkit's own scripts are self-tested in its CI; here only marola's run.
 quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
     [ -e .devkit/devkit.just ] || echo "quality-other: no .devkit here — the devkit's recipes (pr, stack, issue-*) are missing; run 'nix develop', or 'just devkit-link'" >&2
-    for tool in ruff actionlint hadolint agents-check workflow-runners docs-lint; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
+    for tool in ruff actionlint hadolint agents-check workflow-runners docs-lint wiring; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
     # Not `just --fmt --check`: its --unstable style differed between this machine and the CI
     # runner on the same file and version. --list only checks that the file parses.
     just --list >/dev/null
@@ -69,7 +70,12 @@ quality-other:
     scripts/gh-billing.sh --self-test
     scripts/site-data-push.sh --self-test
     scripts/pointer-sync.sh --self-test
+    scripts/pointer-sync-merge.sh --self-test
     python3 scripts/mip_graph.py --self-test
+    python3 scripts/citation.py --self-test
+    python3 scripts/claude_project_check.py --self-test
+    python3 scripts/claude_project_check.py
+    scripts/release.sh --self-test
     scripts/mkdocs.sh --self-test
     scripts/prepare-docs.sh --self-test
     scripts/fetch-api-docs.sh --self-test
@@ -79,8 +85,10 @@ quality-other:
     python3 scripts/site_links_check.py --self-test
     scripts/agents_repos_check.sh --self-test
     scripts/agents_repos_check.sh
+    wiring --check docs/2-Building-marola/REPOS.md
     workflow-runners
     python3 scripts/mip_graph.py --check
+    python3 scripts/citation.py --check
     agents-check
     docs-lint
     actionlint
@@ -241,11 +249,11 @@ stack-merge *args:
     gh stack merge {{ args }}
 
 # ---------------------------------------------------------------------
-# Claude Code cost accounting — AGENTS.md "Attribution and cost accounting"
+# Usage and billing
 # ---------------------------------------------------------------------
 
 # What Claude Code sessions consumed, from the local session logs (~/.claude/projects), priced
-# at list rates — the quota proxy to paste into a PR's "Cost" line.
+# at list rates.
 claude-cost *args="session":
     npx --yes ccusage@latest {{ args }}
 
@@ -353,6 +361,24 @@ opencode-cost *args="session":
 # Push stdin (or --text "…") to the clipboard — write-only.
 clip *args:
     clip {{ args }}
+
+# Tag main as vX.Y.Z and push it; release.yml publishes the release and Zenodo mints its DOI
+# (MIP-0079). Refuses unless main is clean, level with origin and the citation metadata is valid.
+release *args:
+    scripts/release.sh {{ args }}
+
+# List the release tags, newest first.
+releases:
+    git fetch -q --tags origin && git tag -l 'v*' --sort=-v:refname --format='%(refname:short)  %(creatordate:short)  %(subject)'
+
+# Validate .zenodo.json and regenerate CITATION.cff from it; `--check` only checks.
+citation *args:
+    python3 scripts/citation.py {{ args }}
+
+# Add a person to the citation metadata: a contributor on Zenodo, or with --author a cited author.
+#   just contributor-add "Family, Given" --orcid 0000-0000-0000-0000 --affiliation "…" --type Researcher
+contributor-add name *args:
+    python3 scripts/citation.py add --name "{{ name }}" {{ args }}
 
 # Fetch origin and fast-forward local `main` when it is checked out and clean.
 sync-main:
