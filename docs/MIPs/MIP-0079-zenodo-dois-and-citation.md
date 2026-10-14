@@ -2,7 +2,8 @@
 
 | | |
 |---|---|
-| **Status** | Draft. Issue #682. `Tasks: docs/MIPs/MIP-0079.tasks.md` |
+| **Status** | Accepted (2026-10-14). Implemented for the umbrella: tasks 1, H1, H2 and 2 (#696, #699; releases v0.2.0, v0.2.1 and v0.2.2 are on Zenodo). Tasks 3–7 (the devkit tools, marola-app, marola-ml, marola-corpus, and their DOIs back in the umbrella) are open. Issue #682. `Tasks: docs/MIPs/MIP-0079.tasks.md` |
+| **DOI** | Concept DOI, every version, resolves to the latest: [10.5281/zenodo.23224155](https://doi.org/10.5281/zenodo.23224155). Versions: v0.2.0 [10.5281/zenodo.23224156](https://doi.org/10.5281/zenodo.23224156), v0.2.1 [10.5281/zenodo.23252216](https://doi.org/10.5281/zenodo.23252216), v0.2.2 [10.5281/zenodo.23266642](https://doi.org/10.5281/zenodo.23266642) (DataCite, read 2026-10-14) |
 | **Author** | Claude, for M. Hoffmann |
 | **Created** | 2026-10-06; revised 2026-10-07 (umbrella first, `.zenodo.json` as the source, `just release`) |
 | **Phase** | None: publishing metadata, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
@@ -245,6 +246,84 @@ None.
 - **The devkit first.** A tool, a tag and a pin bump before one record exists; the umbrella proves
   the shape first.
 - **Software Heritage alone.** It archives code but gives no DOI; Zenodo deposits there anyway.
+
+## 10. How to release with Zenodo (as built)
+
+This section describes the chain that is on `main` today. §5 is the design, and this section is
+the manual. If the two disagree, the files on `main` win, and the next PR corrects this section.
+
+### 10.1 What happens on a release
+
+```mermaid
+flowchart LR
+  A[just release X.Y.Z] --> B[tag vX.Y.Z pushed]
+  B --> C[release.yml: citation --check, --guard]
+  C --> D[GitHub release published]
+  D --> E[Zenodo webhook archives it]
+  E --> F[new version DOI under 10.5281/zenodo.23224155]
+```
+
+1. `just release X.Y.Z` runs `scripts/release.sh`. It tags `main` as `vX.Y.Z` and pushes the tag.
+2. `.github/workflows/release.yml` runs on the tag. It runs `scripts/citation.py --check` and
+   `scripts/release.sh --guard` again, then it publishes a GitHub release with generated notes.
+   It uses `GITHUB_TOKEN`. No secret is necessary.
+3. Zenodo's webhook archives the release with the `.zenodo.json` of the tagged commit. A few
+   minutes later, it mints a version DOI under the concept DOI.
+
+### 10.2 Before you release
+
+- Only the maintainer releases. An agent prepares the metadata PR and gives the command. A DOI
+  cannot be deleted.
+- Edit `.zenodo.json` only. Then run `just citation`, which writes `CITATION.cff` and the
+  BibTeX, APA and ABNT blocks of both READMEs. `just citation --check` fails when they drift.
+- Add a person with `just contributor-add "Family, Given" [--orcid ID] [--affiliation TEXT]
+  [--type T]`. Add `--author` for a cited creator. A supervisor is a contributor, never a creator.
+- Merge the metadata PR first. Zenodo reads `.zenodo.json` at the tagged commit, so an edit
+  reaches the record only with the next release.
+- Choose the version with SemVer: PATCH for fixes and docs, MINOR for new MIPs, tools or repos,
+  MAJOR only when the maintainer says so. `just releases` lists the earlier tags.
+
+### 10.3 The commands
+
+```bash
+git switch main && git pull --ff-only   # clean, and level with origin/main
+just release 0.2.3 --dry-run            # every check; prints the tag and the push, tags nothing
+just release 0.2.3                      # tags v0.2.3 and pushes it
+```
+
+`just release` stops when one of these is true:
+
+- the branch is not `main`;
+- the working tree is dirty;
+- `main` is not level with `origin/main`;
+- the version is not `MAJOR.MINOR.PATCH`;
+- the tag exists already;
+- `citation.py --check` fails;
+- the pointer guard (§5.8) fails, because only submodule pointers changed since the previous `v*`
+  tag.
+
+The dry run is the release candidate. There are no `-rc` tags, because each archived release is
+a permanent DOI.
+
+### 10.4 After the release
+
+- Look at the release on GitHub (`gh release view vX.Y.Z`). Then look at the record on zenodo.org,
+  or on DataCite (`https://api.datacite.org/dois/10.5281/zenodo.23224155`, `HasVersion`) when
+  zenodo.org refuses a script.
+- The concept DOI does not change: `CONCEPT_DOI` in `scripts/citation.py`, the README badge and
+  the "How to cite" blocks stay the same. Cite the version DOI only to pin exact code.
+- If a tag was pushed by hand and the guard refused it, it has no release and no DOI. Delete the
+  tag (`git push origin :refs/tags/vX.Y.Z`); do not leave it.
+
+### 10.5 What changed after the design
+
+- The licence is `cc-by-4.0` for the record, with code AGPL-3.0-only (MIP-0091, #806). §5.2 says
+  `mit`, which was right up to v0.2.2.
+- The record has six creators, not two (#698, #712, #714, #722, #730).
+- The WW3 GPU Lab is cited by its concept DOI, 10.5281/zenodo.23221351. §5.4 names its v0.1.0
+  DOI.
+- The badge is a shields.io image, because zenodo.org's badge URL answers 403 to the runner
+  (`zenodo-release` skill).
 
 ## 11. Open questions
 
