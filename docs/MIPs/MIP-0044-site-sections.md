@@ -562,9 +562,9 @@ missing; the generated API tree contains zero third-party script tags; `just qua
   jail `--exec` fix), which is also exactly what MIP-0018's planner produces.
 - **Should `/dev/docs/` render every `docs/*.md` or a curated subset?** `FABLE_REVIEW.md` is
   internal-facing; publishing all 17 unfiltered is a decision, not a default.
-- **Which interim items survive the switch to §3's set?** (added at acceptance) `Alerts` has no page
-  in any MIP: MIP-0034 §5.2's INMET warnings are a banner on the map, not a section. Proposed: drop
-  `Alerts` when tasks 3–4 land, fold `Contact` into `/about/#contact` and `Donate` into `/support/`
+- **Which interim items survive the switch to §3's set?** (added at acceptance) `Alerts` stays: it
+  is a page, MIP-0034 §5.2a's archive of INMET alerts (decided 2026-10-05). Proposed: keep `Alerts`
+  when tasks 3–4 land, fold `Contact` into `/about/#contact` and `Donate` into `/support/`
   as §5.2 already says, and keep `Docs` as a sixth item since `/docs/` is real today.
 - **The chat toggle moves into the menu** (§5.7). That changes MIP-0033 §5.2's floating placement;
   the maintainer decides in the acceptance PR.
