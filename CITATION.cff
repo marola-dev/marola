@@ -45,6 +45,8 @@ authors:
   - family-names: "Ribeiro"
     given-names: "Pablo"
     orcid: "https://orcid.org/0009-0005-3553-8323"
+  - family-names: "Barbosa"
+    given-names: "William"
 repository-code: "https://github.com/marola-dev/marola"
 url: "https://marola.dev"
 doi: 10.5281/zenodo.23224155
