@@ -13,6 +13,6 @@ permissions:
 
 jobs:
   update:
-    uses: marola-dev/marola-devkit/.github/workflows/skills-update.yml@v0.11.0
+    uses: marola-dev/marola-devkit/.github/workflows/skills-update.yml@v0.11.1
     with:
-      devkit-ref: v0.11.0
+      devkit-ref: v0.11.1
