@@ -1,0 +1,2 @@
+# Workflows whose jobs may name MERGE_BOT_KEY (MIP-0086 §5.6; the devkit's merge-key-check).
+.github/workflows/pointer-sync-merge.yml

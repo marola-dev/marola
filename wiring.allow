@@ -1,1 +1,2 @@
 # `<artifact>: <reason>` per line: an artifact in REPOS.md's wiring block that `wiring --check` may find unread (MIP-0076).
+<tag>-v<tag>.pdf release asset: marola-research's release.yml attaches one research's PDF to its GitHub release for readers and Zenodo; no repo reads it

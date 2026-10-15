@@ -50,6 +50,7 @@ jobs:
               - 'CLAUDE_PROJECT.config.md'  # claude_project_check.py reads it
             workflows:
               - '.github/workflows/**'
+              - '.github/merge-key-allowlist'  # merge-key-check reads it
             docker:
               - 'mkdocs/**'          # its Dockerfile and compose stack are linted below
             justfile:
@@ -114,18 +115,23 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: python3 scripts/repo_stats.py write --out-dir stats --repo "$REPO" --run-id "$RUN_ID" --exclude-job repo-stats
 
+      - id: bot
+        uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.11.1
+        with:
+          app-id: ${{ vars.PR_BOT_APP_ID }}
+          private-key: ${{ secrets.PR_BOT_KEY }}
+          repositories: marola-site
+          permission-contents: write
       - uses: actions/checkout@v7
         with:
           repository: marola-dev/marola-site
           ref: site-data
           path: site-data
-          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+          token: ${{ steps.bot.outputs.token }}
       - name: Publish the stats JSONs to marola-site's site-data branch
         run: |
           mkdir -p site-data/stats
           cp stats/*.json site-data/stats/
-          git -C site-data config user.name "github-actions[bot]"
-          git -C site-data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git -C site-data add stats
           if git -C site-data diff --cached --quiet; then
             echo "stats unchanged — nothing to push"
@@ -205,7 +211,7 @@ jobs:
   python-ci:
     needs: changes
     if: needs.changes.outputs.python == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.8.3
+    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.11.1
     with:
       ruff-version: "0.16.5"
       self-test-commands: |
@@ -227,7 +233,7 @@ jobs:
   static-ci:
     needs: changes
     if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.8.3
+    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.11.1
     with:
       actionlint-version: "1.7.12"
       hadolint-version: "2.14.0"
@@ -240,12 +246,13 @@ jobs:
   agents-check:
     needs: changes
     if: needs.changes.outputs.agents == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.8.3
+    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.11.1
     with:
-      devkit-ref: v0.8.3
+      devkit-ref: v0.11.1
 
   # What needs this repo's own flake: the lock is current, the justfile parses, no workflow here
   # is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's),
+  # only allowlisted workflows name the merge bot's key (merge-key-check),
   # docs-lint passes at the devkit flake.lock pins (MIP-0074 §7), and REPOS.md's wiring block matches
   # every pinned repo (MIP-0076 §5.4).
   quality-other:
@@ -279,15 +286,34 @@ jobs:
       - name: lint shell tools from nix develop .#lint
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which just workflow-runners docs-lint wiring \
+          nix develop .#lint --command which just workflow-runners docs-lint wiring merge-key-check \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
       - name: just --list (the justfile parses)
         run: just --list >/dev/null
       - name: workflow-runners — no self-hosted workflow here (MIP-0065)
         run: workflow-runners
+      - name: merge-key-check — only allowlisted workflows name the merge bot's key (MIP-0086 §5.6)
+        run: merge-key-check .
       - name: docs-lint — no stale paths, recipes or links in README.md and docs/
         run: docs-lint
       # No .devkit link outside the default shell: wiring fetches each devkit ref it reads from GitHub.
       - name: wiring --check — REPOS.md's block is current, no orphan dispatch or unread artifact
         run: wiring --check docs/2-Building-marola/REPOS.md
+
+  # The one check ci-rule requires in every marola repo (marola-dev/marola#813); it must report on
+  # every run, so it needs every other job and passes on skipped ones.
+  ci-ok:
+    if: always()
+    needs: [changes, repo-stats, docs-build, graph, python-ci, static-ci, agents-check, quality-other]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: every needed job passed or was skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for r in $RESULTS; do
+            case "$r" in success|skipped) ;; *) echo "::error::a needed job ended $r"; exit 1 ;; esac
+          done
