@@ -79,7 +79,7 @@ stale. An edit between the markers is overwritten.
 
 | Artifact | Published by | Pinned in | Read by |
 |---|---|---|---|
-| `ghcr.io/marola-dev/marola-app` image | marola-app `docker.yml` (on a push to `main` touching 11 paths) | marola-site `marola-image`, marola-ml `marola-image`, marola-oods `marola-image` | marola-site `scripts/board-schema.sh`, marola-ml `scripts/app-image.sh`, marola-app `docker-compose.yml`, marola-oods `scripts/app-image.sh` |
+| `ghcr.io/marola-dev/marola-app` image | marola-app `ci.yml` (on a push to `main`) | marola-site `marola-image`, marola-ml `marola-image`, marola-oods `marola-image` | marola-site `scripts/board-schema.sh`, marola-ml `scripts/app-image.sh`, marola-app `docker-compose.yml`, marola-oods `scripts/app-image.sh` |
 | `ghcr.io/marola-dev/marola-ml` image | marola-ml `docker-local.yml` (on a push to `main` touching 10 paths) | — | marola-app `docker-compose.yml` |
 | `<tag>-v<tag>.pdf` release asset | marola-research `release.yml` (on a `*-v[0-9]*.[0-9]*.[0-9]*` tag) | — | — |
 | `marola-corpus-<tag>.tar.gz` release asset | marola-corpus `release.yml` (on a `v*` tag) | marola-ml `corpus.version`, marola-app `corpus.version` | marola-ml `scripts/corpus-fetch.sh`, marola-app `build.sbt`, marola-app `scripts/corpus-fetch.sh` |
@@ -99,7 +99,6 @@ stale. An edit between the markers is overwritten.
 | Pin bump | Workflow |
 |---|---|
 | marola `flake.lock` | marola `docs.yml` |
-| marola-app `corpus.version` | marola-app `docker.yml` |
 | marola-ml `marola-image` | marola-ml `docker-local.yml` |
 | marola-ml `resources.version` | marola-ml `docker-local.yml` |
 | marola-oods `marola-image` | marola-oods `oods-check.yml` |
