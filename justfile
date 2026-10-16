@@ -1,4 +1,5 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
+set allow-duplicate-recipes
 
 # marola-devkit's shared recipes (uprd, pr, stack, issue-*, cost-*, runner-*, …), from the tree the
 # flake's shellHook links at .devkit. Optional so the file still parses outside `nix develop`.
