@@ -100,22 +100,32 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
   push creates it private:
   either make it public, so `docker pull ghcr.io/marola-dev/marola-app:jvm` works logged out, or
   grant marola-site, marola-ml and marola-oods read access under its "Manage Actions access".
-- **Secrets:** `HF_TOKEN` is marola-ml's and `STEWARD_GH_TOKEN` marola-app's (their
-  `3-development` pages). Here: optionally `PROFILE_DISPATCH_TOKEN`. `MAROLA_CROSS_REPO_PAT` is still an
-  org secret: a fine-grained token with Contents read and write on marola (and on each new repo as it
-  is created), used only by the code repos' `notify-umbrella.yml` dispatches; every dispatch is in
-  REPOS' [wiring table](../2-Building-marola/REPOS.md#artifacts-pins-and-dispatches).
-- **marola-pr-bot and marola-merge-bot** (MIP-0086): marola-pr-bot pushes `chore/pointer-sync`, opens its
-  PR and pushes marola-site's `site-data`, so those runs trigger CI; its id is the org variable
-  `PR_BOT_APP_ID` and its key the org secret `PR_BOT_KEY`. marola-merge-bot is a pull-request-only
-  bypass actor on `main-rule`, so it can merge a PR without review but never push to `main`. Only
-  `pointer-sync-merge.yml` (the one entry in `.github/merge-key-allowlist`) names its key, the
-  `MERGE_BOT_KEY` secret, with `MERGE_BOT_APP_ID` the variable; whoever holds that key can merge any PR
-  into marola's `main` unreviewed. It merges only when `ci-ok` has succeeded and every moved pointer is
-  on its repo's default branch, never a fork's commit that GitHub also serves through the parent repo.
-  A `hold` label on the sync PR, or `AUTO_MERGE=false` (the job's `if:`), stops it. To rotate the key,
-  generate a new one in the App's settings, run
-  `gh secret set MERGE_BOT_KEY -R marola-dev/marola < new-key.pem`, then delete the old key.
+- **Secrets:** `HF_TOKEN` is marola-ml's (its `3-development` page). Here: optionally
+  `PROFILE_DISPATCH_TOKEN`, a PAT outside MIP-0086's scope. Every dispatch is in REPOS'
+  [wiring table](../2-Building-marola/REPOS.md#artifacts-pins-and-dispatches).
+- **Automation identity** (MIP-0086): two GitHub Apps, no PAT.
+  - **marola-pr-bot** pushes `chore/pointer-sync`, opens its PR, sends the code repos' `notify-umbrella.yml`
+    dispatches and pushes marola-site's `site-data`, so those runs trigger CI. It is installed on every repo
+    and is never a bypass actor. Its id is the org variable `PR_BOT_APP_ID`, its key the org secret
+    `PR_BOT_KEY`, visible to all repos.
+  - **marola-merge-bot** is installed on marola and the devkit's consumers (a "selected" installation). It
+    holds a `pull_request` bypass on each consumer's `main-rule` (the devkit's `@consumers` extra), so it can
+    merge a PR without review but never push to `main`. `MERGE_BOT_KEY` and the repo variable
+    `MERGE_BOT_APP_ID` exist only in marola and marola-devkit. Only the jobs listed in a repo's
+    `.github/merge-key-allowlist` may name the key, and `merge-key-check` enforces that they run only
+    checked-in steps (no nix, npm, pip or curl). In marola that is `pointer-sync-merge.yml`; in the devkit,
+    `bump-consumers`, `release` and the leak drill. Whoever holds the key can land a PR on every consumer's
+    `main`. `pointer-sync-merge.yml` merges only when `ci-ok` has succeeded and every moved pointer is on its
+    repo's default branch, never a fork's commit that GitHub also serves through the parent repo.
+  - **Pausing:** the org variable `AUTO_MERGE` set to `false` stops every auto-merge. It must have visibility
+    "all repositories": `gh variable set AUTO_MERGE --org marola-dev --body <true|false> --visibility all`
+    (the default reaches private repos only, so public marola would never see it). A `hold` label stops one PR.
+  - **After a suspected leak** (MIP-0086 §5.9): suspend the App's installation (org settings → GitHub Apps →
+    Configure → Suspend). Tokens already minted stop within seconds (marola-dev/marola-devkit#101's drill:
+    first refusal 8 s after the suspension, HTTP 403). Generate a new key and `gh secret set` it
+    (`--org marola-dev` for `PR_BOT_KEY`; `-R marola-dev/marola` and `-R marola-dev/marola-devkit` for
+    `MERGE_BOT_KEY`), delete the old key in the App's settings, read the audit log for the bot's pushes and
+    merges since the suspected time, then unsuspend. There is no scheduled rotation.
 - **Pages:** source "GitHub Actions", custom domain `docs.marola.dev` (a DNS `CNAME` to
   `marola-dev.github.io`). An Actions-deployed site ignores a `CNAME` file, so the domain lives
   only in this setting.
