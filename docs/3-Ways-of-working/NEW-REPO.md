@@ -29,7 +29,9 @@ the repo on GitHub, and every setting under "GitHub settings", is a human's act.
 7. **`.github/workflows/`**, each calling the devkit's reusable workflow at the same tag
    ([reference](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_workflows/)):
    - `ci.yml`: `scala-ci`, `python-ci` or `static-ci` for the repo's gates and `docs-lint`, and
-     `agents-check`;
+     `agents-check`; plus a `ci-ok` job that `needs:` every other job, runs `if: always()`, and
+     passes when each one succeeded or was skipped. Step 13's `ci-rule` requires that check with no
+     bypass, so the repo must post it on every PR before the ruleset lands, or no PR there merges;
    - `pr.yml`: `pr-body` and `ci-short-circuit`;
    - `labels.yml`: `labels-sync`, on dispatch;
    - `notify-umbrella.yml`: on every push to `main`, no `paths:`, with the `MAROLA_CROSS_REPO_PAT`
@@ -56,8 +58,9 @@ checkout marker.
 
 12. **Labels**: run `labels.yml` (or `just labels-sync`), which applies the devkit's
     `.github/labels.yml`.
-13. **Branch ruleset**: `just rulesets-apply marola-dev/marola-<name>` creates `main-rule` from the
-    devkit's `.github/rulesets/main-rule.json`; `just rulesets-check` diffs it later.
+13. **Branch rulesets**: `just rulesets-apply marola-dev/marola-<name>` creates `main-rule` and
+    `ci-rule` from the devkit's `.github/rulesets/`; `just rulesets-check` diffs them later. Only
+    after step 7's `ci-ok` job has posted on a PR: `ci-rule` blocks every merge without it.
 14. **`MAROLA_CROSS_REPO_PAT`**: grant the fine-grained token Contents read and write on the new
     repo, and add the repo to the org secret's repository access
     ([CI/CD](CI-CD.md#the-maintainers-manual-settings)).
