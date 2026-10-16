@@ -14,7 +14,7 @@ Esse amigo é o marola. Você já pode usar hoje em **[marola.dev](https://marol
 das praias de Florianópolis, do Rio de Janeiro e de Salvador, cada uma com uma nota para hoje e
 para amanhã.
 
-<p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view.png" alt="marola.dev no Rio de Janeiro: Ipanema e Copacabana com a nota do melhor horário, as gotas de balneabilidade do INEA e o cartão da Praia do Forte com mar, maré, água-viva e baleias" width="860" /></a></p>
+<p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view-rio.png" alt="marola.dev no Rio de Janeiro: Ipanema e Copacabana com a nota do melhor horário, as gotas de balneabilidade do INEA e o cartão da Praia do Forte com mar, maré, água-viva e baleias" width="860" /></a></p>
 
 Algumas promessas que o marola cumpre:
 
