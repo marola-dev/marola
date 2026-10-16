@@ -70,7 +70,8 @@ checkout marker.
     grant beyond step 14: `bump-consumers` opens the bump PR as marola-merge-bot. Once that
     devkit PR merges, run `just rulesets-apply marola-dev/marola-<name>` again, which adds the
     merge bot's `pull_request` bypass to `main-rule` (the `@consumers` extra reaches only repos
-    listed in `consumers.txt`).
+    listed in `consumers.txt`). Being listed also means the repo's bump PRs merge themselves
+    (the devkit's `bump-merge`), which is why that bypass matters.
 16. **Org Project**: the repo's issues land on
     [Project 1](https://github.com/orgs/marola-dev/projects/1) (its auto-add workflow, or `just
     board-sync`).
