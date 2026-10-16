@@ -172,6 +172,7 @@ self_test() {
   ok "$([ "$(image_tag /a/b/c)" = "$(image_tag /a/b/d)" ] && echo same || echo different)" "different" \
      "two checkouts get different image tags, so a build in one cannot retag the other's image"
   ok "$(image_tag /a/b/c | grep -cE '^marola/mkdocs:[0-9]+$')" "1" "and it is a well-formed image tag"
+  # shellcheck disable=SC2016 # the compose file's literal ${MKDOCS_IMAGE...}, not this shell's
   ok "$(grep -c 'image: \${MKDOCS_IMAGE:-marola/mkdocs}' "$repo_root/mkdocs/docker-compose.yml")" "1" \
      "compose receives the per-checkout image via MKDOCS_IMAGE, defaulting to the shared tag"
 

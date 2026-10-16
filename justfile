@@ -50,14 +50,14 @@ coverage-python:
 # app's gates are marola-app's own (`cd marola-app && just quality`).
 quality: quality-other
 
-# Ruff, merge-key-check, the script self-tests, actionlint, hadolint, docs-lint, `wiring --check` (needs the
+# Ruff, shellcheck, merge-key-check, the script self-tests, actionlint, hadolint, docs-lint, `wiring --check` (needs the
 # submodules checked out). A missing tool fails, never skips.
 # The devkit's own scripts are self-tested in its CI; here only marola's run.
 quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
     [ -e .devkit/devkit.just ] || echo "quality-other: no .devkit here — the devkit's recipes (pr, stack, issue-*) are missing; run 'nix develop', or 'just devkit-link'" >&2
-    for tool in ruff actionlint hadolint agents-check workflow-runners docs-lint wiring merge-key-check; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
+    for tool in ruff shellcheck actionlint hadolint agents-check workflow-runners docs-lint wiring merge-key-check; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
     # Not `just --fmt --check`: its --unstable style differed between this machine and the CI
     # runner on the same file and version. --list only checks that the file parses.
     just --list >/dev/null
@@ -65,6 +65,7 @@ quality-other:
     ruff check .
     ruff format --check .
     merge-key-check .
+    shellcheck scripts/*.sh scripts/lib/*.sh
     python3 scripts/repo_stats.py --self-test
     python3 scripts/arxiv_digest.py --self-test
     python3 scripts/awesome_agentic_digest.py --self-test
