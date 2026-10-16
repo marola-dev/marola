@@ -75,7 +75,9 @@ which checkout each recipe needs.
   `submodule-updated` or `submodule-docs-updated` dispatch). Never commit a pointer change by hand,
   and never commit inside a submodule from the umbrella's own branch.
   `pointer-sync-merge.yml` merges that PR itself once it is green and changes only gitlinks and
-  REPOS.md's wiring table (#739); anything else waits for a person.
+  REPOS.md's wiring table (#739); anything else waits for a person. Automation pushes and opens
+  PRs as `marola-pr-bot`, and only `marola-merge-bot` merges without a person (MIP-0086); neither
+  is a PAT.
 - **A pointer move never makes a release or a Zenodo version** (hard rule, MIP-0079). A release
   needs a change outside the gitlinks since the previous `v*` tag; `scripts/release.sh --guard`
   enforces it in `just release` and again in `release.yml`.

@@ -34,9 +34,9 @@ the repo on GitHub, and every setting under "GitHub settings", is a human's act.
      bypass, so the repo must post it on every PR before the ruleset lands, or no PR there merges;
    - `pr.yml`: `pr-body` and `ci-short-circuit`;
    - `labels.yml`: `labels-sync`, on dispatch;
-   - `notify-umbrella.yml`: on every push to `main`, no `paths:`, with the `MAROLA_CROSS_REPO_PAT`
-     secret; it sends `submodule-updated`, plus `submodule-docs-updated` when `README.md` or
-     `docs/**` changed.
+   - `notify-umbrella.yml`: on every push to `main`, no `paths:`, with
+     `pr_bot_key: ${{ secrets.PR_BOT_KEY }}`; it sends `submodule-updated`, plus
+     `submodule-docs-updated` when `README.md` or `docs/**` changed.
 8. **`.github/ISSUE_TEMPLATE/`** and **`.github/PULL_REQUEST_TEMPLATE.md`**: copied from the
    devkit at the pinned tag.
 9. **`README.md`**, the landing: what the repo is with a status line, try it, the repo map, its
@@ -61,12 +61,16 @@ checkout marker.
 13. **Branch rulesets**: `just rulesets-apply marola-dev/marola-<name>` creates `main-rule` and
     `ci-rule` from the devkit's `.github/rulesets/`; `just rulesets-check` diffs them later. Only
     after step 7's `ci-ok` job has posted on a PR: `ci-rule` blocks every merge without it.
-14. **`MAROLA_CROSS_REPO_PAT`**: grant the fine-grained token Contents read and write on the new
-    repo, and add the repo to the org secret's repository access
-    ([CI/CD](CI-CD.md#the-maintainers-manual-settings)).
+14. **Apps**: nothing for marola-pr-bot (installed on every repo, its key readable by every
+    repo). A devkit consumer also needs marola-merge-bot: add the repo to its installation (org
+    settings → GitHub Apps → marola-merge-bot → Configure) before step 15, or the next release's
+    bump cannot reach the repo ([CI/CD](CI-CD.md#the-maintainers-manual-settings)).
 15. **Devkit bumps**: add `marola-dev/marola-<name>` to the devkit's `.github/consumers.txt`, in
     a marola-devkit PR, so `bump-consumers` opens its pin-bump PR after each release. Nothing to
-    grant: `MAROLA_BUMP_PAT` reaches every org repo, and only marola-devkit may read it.
+    grant beyond step 14: `bump-consumers` opens the bump PR as marola-merge-bot. Once that
+    devkit PR merges, run `just rulesets-apply marola-dev/marola-<name>` again, which adds the
+    merge bot's `pull_request` bypass to `main-rule` (the `@consumers` extra reaches only repos
+    listed in `consumers.txt`).
 16. **Org Project**: the repo's issues land on
     [Project 1](https://github.com/orgs/marola-dev/projects/1) (its auto-add workflow, or `just
     board-sync`).
