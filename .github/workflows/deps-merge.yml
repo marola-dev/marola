@@ -1,0 +1,52 @@
+# deps-merge — squash-merge Dependabot's green pip PRs as marola-merge-bot (#740, MIP-0086 §5.5).
+# The rules are deps-merge --unattended's (the devkit's docs/4-reference_tools.md); a person merges
+# everything it refuses, GitHub Actions bumps included (`just deps-merge`).
+name: deps merge
+
+on:
+  schedule:
+    - cron: "15 7 * * *" # daily, off the hour other workflows use (CI-CD.md)
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: deps-merge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: vars.AUTO_MERGE != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: {}
+    env:
+      # Every repo with a pip Dependabot ecosystem; the token covers these and nothing else.
+      REPOS: marola-ml
+    steps:
+      # A clone, not actions/checkout: bump-consumers moves this `-b v…` pin with the others.
+      - run: git -c advice.detachedHead=false clone -q --depth 1 -b v0.18.0 https://github.com/marola-dev/marola-devkit "$RUNNER_TEMP/devkit"
+
+      # No permission-workflows: GitHub then refuses a merge that touches .github/workflows/.
+      - uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.18.0
+        id: app
+        with:
+          app-id: ${{ vars.MERGE_BOT_APP_ID }}
+          private-key: ${{ secrets.MERGE_BOT_KEY }}
+          repositories: ${{ env.REPOS }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-checks: read
+          permission-statuses: read
+
+      - name: Merge what is ready, report the rest
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          rc=0
+          for repo in ${REPOS//,/ }; do
+            echo "::group::marola-dev/$repo"
+            bash "$RUNNER_TEMP/devkit/scripts/deps-merge.sh" --repo "marola-dev/$repo" --unattended || rc=1
+            echo "::endgroup::"
+          done
+          exit "$rc"
