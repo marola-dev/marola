@@ -1,0 +1,22 @@
+# Tells the devkit this repo's devkit-bump CI is green, so bump-merge runs within minutes (marola-dev/marola#859).
+# Also runs on main after a bump lands, so the canary step starts at once.
+name: bump ready
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: ['chore/devkit-v*', main]
+
+permissions: {}
+
+jobs:
+  notify:
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.head_repository.full_name == github.repository
+      && (github.event.workflow_run.head_branch != 'main'
+          || startsWith(github.event.workflow_run.head_commit.message, 'chore: marola-devkit v'))
+    uses: marola-dev/marola-devkit/.github/workflows/notify-devkit.yml@v0.15.1
+    secrets:
+      pr_bot_key: ${{ secrets.PR_BOT_KEY }}
