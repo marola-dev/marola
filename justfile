@@ -62,6 +62,8 @@ quality-other:
     # runner on the same file and version. --list only checks that the file parses.
     just --list >/dev/null
     # One command per line: `set -e` exempts the left side of `a && b`.
+    python3 scripts/ruff_exclude_check.py --self-test
+    python3 scripts/ruff_exclude_check.py
     ruff check .
     ruff format --check .
     merge-key-check .
