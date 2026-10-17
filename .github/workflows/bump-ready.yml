@@ -17,6 +17,6 @@ jobs:
       && github.event.workflow_run.head_repository.full_name == github.repository
       && (github.event.workflow_run.head_branch != 'main'
           || startsWith(github.event.workflow_run.head_commit.message, 'chore: marola-devkit v'))
-    uses: marola-dev/marola-devkit/.github/workflows/notify-devkit.yml@v0.16.0
+    uses: marola-dev/marola-devkit/.github/workflows/notify-devkit.yml@v0.17.0
     secrets:
       pr_bot_key: ${{ secrets.PR_BOT_KEY }}
