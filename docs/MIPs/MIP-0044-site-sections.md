@@ -566,6 +566,9 @@ missing; the generated API tree contains zero third-party script tags; `just qua
   in any MIP: MIP-0034 §5.2's INMET warnings are a banner on the map, not a section. Proposed: drop
   `Alerts` when tasks 3–4 land, fold `Contact` into `/about/#contact` and `Donate` into `/support/`
   as §5.2 already says, and keep `Docs` as a sixth item since `/docs/` is real today.
+  **Reversed for `Alerts` (2026-09-30):** the maintainer wants a real alerts page (#540).
+  [MIP-0071](./MIP-0071-official-alerts-per-state.md) designs it, and `Alerts` stays in the nav as a
+  link to `alerts.html`.
 - **The chat toggle moves into the menu** (§5.7). That changes MIP-0033 §5.2's floating placement;
   the maintainer decides in the acceptance PR.
 - **Follow-up MIP:** the site currently has no way to say "this page is stale". Every generated page
