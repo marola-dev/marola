@@ -72,6 +72,7 @@ SELF_TEST_SCRIPTS = (
     "scripts/lib/doc_links.py",
     "scripts/site_links_check.py",
     "scripts/claude_project_check.py",
+    "scripts/ruff_exclude_check.py",
 )
 COVERAGE_SOURCE = "scripts"
 
