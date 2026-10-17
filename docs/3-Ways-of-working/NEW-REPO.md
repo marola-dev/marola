@@ -40,7 +40,9 @@ the repo on GitHub, and every setting under "GitHub settings", is a human's act.
    - `bump-ready.yml`: the `notify-devkit` caller, on the repo's CI ending green on `chore/devkit-v*`,
      with `pr_bot_key: ${{ secrets.PR_BOT_KEY }}`; it wakes the devkit's `bump-merge`.
 8. **`.github/ISSUE_TEMPLATE/`** and **`.github/PULL_REQUEST_TEMPLATE.md`**: copied from the
-   devkit at the pinned tag.
+   devkit at the pinned tag. A **`.github/dependabot.yml`**, if the repo has dependencies, sets
+   `cooldown` (`default-days: 7`) on every ecosystem and ignores `marola-dev/marola-devkit*`,
+   whose pins move together ([DEV-FLOW](DEV-FLOW.md#dependency-prs)).
 9. **`README.md`**, the landing: what the repo is with a status line, try it, the repo map, its
    contracts (consumes, publishes, pinned by), the docs and `AGENTS.md` links.
 10. **`docs/`**: numbered pages, at least `3-development.md`; no `docs/index.md`
@@ -99,7 +101,11 @@ checkout marker.
 21. **`.graphifyignore`**: the new repo's vendored or generated paths, under `marola-<name>/`
     unless a `**/` line already matches them (vendored code and skills, tests, fixtures, JSON).
     marola-site's vendored mapbox-gl alone was 6,949 of 13,192 nodes.
-22. **Check once**, in a `--recurse-submodules` checkout inside `nix develop`:
+22. **`.github/workflows/deps-merge.yml`**, if the repo's `dependabot.yml` has a `pip` ecosystem:
+    append `,marola-<name>` to its `REPOS:` list, so Dependabot's green pip PRs there merge
+    themselves ([DEV-FLOW](DEV-FLOW.md#dependency-prs)). Steps 14 and 15 already gave
+    marola-merge-bot its installation and its bypass on the repo.
+23. **Check once**, in a `--recurse-submodules` checkout inside `nix develop`:
     `just wiring docs/2-Building-marola/REPOS.md` leaves no diff,
     `wiring --check docs/2-Building-marola/REPOS.md` passes, `just graph build` lists the repo in
     its `build.json`, and `just graph query "<one of its symbols>"` finds it
