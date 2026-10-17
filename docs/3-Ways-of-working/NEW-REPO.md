@@ -36,7 +36,9 @@ the repo on GitHub, and every setting under "GitHub settings", is a human's act.
    - `labels.yml`: `labels-sync`, on dispatch;
    - `notify-umbrella.yml`: on every push to `main`, no `paths:`, with
      `pr_bot_key: ${{ secrets.PR_BOT_KEY }}`; it sends `submodule-updated`, plus
-     `submodule-docs-updated` when `README.md` or `docs/**` changed.
+     `submodule-docs-updated` when `README.md` or `docs/**` changed;
+   - `bump-ready.yml`: the `notify-devkit` caller, on the repo's CI ending green on `chore/devkit-v*`,
+     with `pr_bot_key: ${{ secrets.PR_BOT_KEY }}`; it wakes the devkit's `bump-merge`.
 8. **`.github/ISSUE_TEMPLATE/`** and **`.github/PULL_REQUEST_TEMPLATE.md`**: copied from the
    devkit at the pinned tag.
 9. **`README.md`**, the landing: what the repo is with a status line, try it, the repo map, its
