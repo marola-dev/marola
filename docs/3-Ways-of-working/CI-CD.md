@@ -114,12 +114,20 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
     `MERGE_BOT_APP_ID` exist only in marola and marola-devkit. Only the jobs listed in a repo's
     `.github/merge-key-allowlist` may name the key, and `merge-key-check` enforces that they run only
     checked-in steps (no nix, npm, pip or curl). In marola that is `pointer-sync-merge.yml`; in the devkit,
-    `bump-consumers`, `release` and the leak drill. Whoever holds the key can land a PR on every consumer's
-    `main`. `pointer-sync-merge.yml` merges only when `ci-ok` has succeeded and every moved pointer is on its
-    repo's default branch, never a fork's commit that GitHub also serves through the parent repo.
+    `bump-consumers`, `bump-merge`, `release` and the leak drill. Whoever holds the key can land a PR on
+    every consumer's `main`. `pointer-sync-merge.yml` merges only when `ci-ok` has succeeded and every
+    moved pointer is on its repo's default branch, never a fork's commit that GitHub also serves through
+    the parent repo.
   - **Pausing:** the org variable `AUTO_MERGE` set to `false` stops every auto-merge. It must have visibility
     "all repositories": `gh variable set AUTO_MERGE --org marola-dev --body <true|false> --visibility all`
     (the default reaches private repos only, so public marola would never see it). A `hold` label stops one PR.
+  - **Devkit bumps:** the devkit's hourly `bump-merge` job squash-merges each consumer's
+    `chore/devkit-vX.Y.Z` PR, newest release only, once it is green. The devkit's variables
+    `BUMP_SOAK_HOURS` (a wait after the release) and `BUMP_CANARY_HOURS` (marola first, the rest that
+    many hours after its bump merged) are 0 by default. A major, a red check, a PR not opened by the
+    merge bot or a change outside the devkit pins is left for a person, with one comment
+    ([rules](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_workflows/#bump-merge-not-reusable)).
+    **Pausing** and the `hold` label stop it too.
   - **After a suspected leak** (MIP-0086 §5.9): suspend the App's installation (org settings → GitHub Apps →
     Configure → Suspend). Tokens already minted stop within seconds (marola-dev/marola-devkit#101's drill:
     first refusal 8 s after the suspension, HTTP 403). Generate a new key and `gh secret set` it

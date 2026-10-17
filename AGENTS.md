@@ -120,10 +120,12 @@ to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `trailer-fi
 `agents-check`, …), their recipes (`import? '.devkit/devkit.just'`), the git hooks, the reusable
 workflows and the `marola-devkit` plugin (`/marola-devkit:mip` and the other generic skills). Bump
 the flake input, every `@v…`/`devkit-ref` in `.github/workflows/` and the marketplace `ref` in
-`.claude/settings.json` together. The shellHook links this worktree's `.devkit` and points
-`core.hooksPath` at it; a worktree made outside `nix develop` and `just worktree` needs
-`just devkit-link` once. OpenCode does not load Claude Code plugins: the skills are plain
-`SKILL.md` files under `.devkit/plugins/marola-devkit/skills/`.
+`.claude/settings.json` together. The bump PRs that `bump-consumers` opens for a release that is not
+a major merge themselves once they are green (the devkit's `bump-merge`); an agent never hand-merges
+a bump PR that carries `hold` or that `bump-merge` refused. The shellHook links this worktree's
+`.devkit` and points `core.hooksPath` at it; a worktree made outside `nix develop` and `just
+worktree` needs `just devkit-link` once. OpenCode does not load Claude Code plugins: the skills are
+plain `SKILL.md` files under `.devkit/plugins/marola-devkit/skills/`.
 
 `just context-mips` packs what a browser session needs to draft a MIP from voice notes, and
 `just context-mip MIP-NNNN` packs one MIP for a reviewer outside this project's coding agent.
