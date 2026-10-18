@@ -2,7 +2,7 @@
 """repo_stats — the README's CI-health, LOC and Python-coverage badges, as shields.io endpoint JSON.
 
     scripts/repo_stats.py write --out-dir stats \
-        --repo marola-dev/marola --run-id 123 --exclude-job repo-stats
+        --run-id 123 --exclude-job repo-stats    # --repo owner/name, else this checkout's
     scripts/repo_stats.py write --out-dir stats     # LOC + Python coverage (no --run-id: no CI badge)
     scripts/repo_stats.py write --out-dir stats --no-python-coverage   # skip coverage.py
     scripts/repo_stats.py python-coverage           # just print the measured % (no files written)
@@ -160,6 +160,26 @@ def coverage_run_argv(exe: list[str], script: str, data_file: Path) -> list[str]
 # The two effectful sources: this run's jobs (GitHub API, via `gh`) and `cloc`.
 
 
+def resolve_repo(repo: str | None, run=subprocess.run) -> str:
+    """--repo, else this checkout's owner/name the way the devkit's issues.sh asks gh for it."""
+    if repo:
+        return repo
+    try:
+        out = run(
+            ["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise SystemExit(
+            f"repo_stats: gh could not name this checkout's repo ({exc}); pass --repo"
+        ) from exc
+    if not out:
+        raise SystemExit("repo_stats: gh named no repo for this checkout; pass --repo")
+    return out
+
+
 def fetch_jobs(repo: str, run_id: str) -> list[dict]:
     """Every job of one workflow run, steps included. Needs `actions: read` on the token."""
     jobs: list[dict] = []
@@ -286,7 +306,7 @@ def collect(args) -> dict[str, dict]:
         ),
     }
     if args.run_id:
-        green, ran = count_steps(fetch_jobs(args.repo, args.run_id), args.exclude_job)
+        green, ran = count_steps(fetch_jobs(resolve_repo(args.repo), args.run_id), args.exclude_job)
         badges["ci.json"] = ci_badge(green, ran)
     if not args.no_python_coverage:
         badges["python-coverage.json"] = coverage_badge(python_coverage(root))
@@ -445,8 +465,24 @@ def self_test() -> int:
         write(out, {"ci.json": ci_badge(1, 2)})
         assert json.loads((out / "ci.json").read_text())["message"] == "1/2 green"
 
-    write_args = build_parser().parse_args(["write", "--out-dir", "x"])
-    assert write_args.repo == "marola-dev/marola", write_args.repo
+    def gh_says(stdout: str):
+        return lambda argv, **_: subprocess.CompletedProcess(argv, 0, stdout=stdout)
+
+    def gh_fails(argv, **_):
+        raise subprocess.CalledProcessError(1, argv)
+
+    def no_gh(argv, **_):
+        raise FileNotFoundError("gh")
+
+    assert build_parser().parse_args(["write", "--out-dir", "x"]).repo is None
+    assert resolve_repo(None, run=gh_says("o/n\n")) == "o/n"
+    assert resolve_repo("a/b", run=gh_fails) == "a/b", "--repo wins without asking gh"
+    for stub in (gh_fails, no_gh, gh_says("")):
+        try:
+            resolve_repo(None, run=stub)
+            raise AssertionError("an unresolved repo must fail, not reach the API path empty")
+        except SystemExit as exc:
+            assert "--repo" in str(exc), str(exc)
 
     print(
         "repo_stats self-test: ok (step counting, badge shaping, cloc/coverage parsing, "
@@ -466,7 +502,7 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_argument("--out-dir", required=True, type=Path)
     w.add_argument("--root", default=".", help="repo root the LOC paths are relative to")
     w.add_argument(
-        "--repo", default="marola-dev/marola", help="owner/name, for the CI-health badge"
+        "--repo", help="owner/name, for the CI-health badge (default: this checkout's, via gh)"
     )
     w.add_argument("--run-id", help="workflow run to report on; omitted = LOC badges only")
     w.add_argument("--exclude-job", help="job name to leave out (the reporting job itself)")
