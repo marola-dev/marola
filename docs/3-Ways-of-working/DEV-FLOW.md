@@ -261,6 +261,20 @@ script with the branch left mid-cherry-pick in that worktree and prints the exac
 stack merge <stack#> --squash` merges it bottom-up in one CI run instead of one-per-bump, and `just
 deps-stack clean` deletes the chain branches (and the worktree) once every stacked PR shows MERGED.
 
+**Green pip updates merge themselves.** The umbrella's `deps-merge.yml` runs daily at 07:15 UTC
+and squash-merges, as marola-merge-bot, each Dependabot PR in the repos its `REPOS:` list names
+(marola-ml today) that changes only Python manifests, moves every version by a patch or minor,
+has every check green and carries no `hold` label. The full rules are `deps-merge --unattended`'s
+([devkit tools](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_tools/#pull-requests-and-stacks)).
+marola-ml's Dependabot proposes a release only 7 days after it is published (`cooldown`), so a
+hijacked release that is yanked within that week never reaches `main`. A person still merges the
+rest, with `just deps-merge` or `just deps-stack` as above: GitHub Actions bumps (marola-ml's
+grouped PR too, whenever it also bumps an action); a major, a 0.x minor included; anything red or
+held. The job leaves each refused PR's reason in its run log, not on the PR. Actions stay manual
+on purpose: the job's token has no Workflows permission, so GitHub refuses any merge through it
+that touches `.github/workflows/`, and a leaked key cannot change a workflow. The job's identity and how
+to pause it are in [CI/CD](CI-CD.md#the-maintainers-manual-settings).
+
 ### MIP draft PRs
 
 Drafts pile up the same way bumps do: one `docs/mip-NNNN-*` branch per proposal, each open for days,
