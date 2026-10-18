@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (Bruno Valério, 2026-10-10: "its approved, open the pr and write the implementation plan") |
+| **Status** | Implemented (2026-10-18) — all 16 rows of [`MIP-0086.tasks.md`](./MIP-0086.tasks.md) done (#773): a person (1, #784), marola-dev/marola-devkit#110 (2, v0.9.0), marola-dev/marola-devkit#109 (3, v0.9.0) and a person's `ruleset-sync apply`, #827 (4), marola-dev/marola-app#112 (5), marola-dev/marola-app#108 (6), marola-dev/marola-ml#49 (7), marola-dev/marola-devkit#119 (8, v0.11.0), marola-dev/marola-skills#15 (9), #856 (10), a person (11, #765), marola-dev/marola-devkit#147 and its drill run (12, marola-dev/marola-devkit#101), marola-dev/marola-ml#88, marola-dev/marola-devkit#176 (v0.18.0), #878 and #879 (13), marola-dev/marola-devkit#151, marola-dev/marola-devkit#152 (v0.14.0), marola-dev/marola-devkit#157 and #857 (14), the PR closing #786 (15), marola-dev/marola-app#118, marola-dev/marola-site#149, marola-dev/marola-corpus#27, marola-dev/marola-ml#73 and marola-dev/marola-oods#47 (16). Row 13's live auto-merge proof is still open on #740. The follow-ups, `ci-rule` (#813) among them, are listed on #787. Accepted 2026-10-10 (Bruno Valério: "its approved, open the pr and write the implementation plan") |
 | **Author** | Bruno Valério, from #765, #740 and #762 |
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev tooling outside the phase list. It provisions nothing paid; Phase 1 is untouched |
