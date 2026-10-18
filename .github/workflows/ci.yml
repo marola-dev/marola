@@ -289,7 +289,7 @@ jobs:
       - name: lint shell tools from nix develop .#lint
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which just workflow-runners docs-lint wiring merge-key-check \
+          nix develop .#lint --command which just shellcheck workflow-runners docs-lint wiring merge-key-check \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
       - name: just --list (the justfile parses)
@@ -298,6 +298,9 @@ jobs:
         run: workflow-runners
       - name: merge-key-check — only allowlisted workflows name the merge bot's key (MIP-0086 §5.6)
         run: merge-key-check .
+      # The wiring filter covers scripts/**, so a shell change reaches this job.
+      - name: shellcheck — scripts/*.sh and scripts/lib/*.sh
+        run: shellcheck scripts/*.sh scripts/lib/*.sh
       - name: docs-lint — no stale paths, recipes or links in README.md and docs/
         run: docs-lint
       # No .devkit link outside the default shell: wiring fetches each devkit ref it reads from GitHub.
