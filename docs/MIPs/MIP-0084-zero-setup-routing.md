@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session) |
+| **Status** | Accepted (2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session). **Amended 2026-10-19 (#776):** §5.1 names the three repos that joined since and stay out; §5.3's ruleset is a committed manifest and the publish step leaves a PR's `ci-ok` as it was; §7 checks a Claude Project thread apart from a cloud session; §11's first question is answered |
 | **Author** | Bruno Guilhermo de Barros Valério |
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev-loop tooling, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
@@ -94,6 +94,9 @@ ghcr.io/marola-dev/marola-app  published by marola-app docker.yml · pinned in m
   skills, `CLAUDE.md`, rules and hooks but no plugins, have no Nix, can run a setup script, and
   reach github.com and PyPI by default; `CLAUDE_CODE_REMOTE=true` marks a cloud session; no env var
   reports whether a plugin is installed, but `installed_plugins.json` does.
+- **A Claude Project thread is a different surface** (MIP-0087 §3 and §4.2, added 2026-10-19). It
+  starts in `/home/user` above every clone, so it loads every repo's `.claude/skills/` but runs no
+  repo's hooks; a `SessionStart` hook runs only in a session with one repository.
 - **ai-jail** (the umbrella's `.ai-jail`): read-write maps are `~/.claude` and `~/.claude.json`
   only. `~/.cache` and `~/.config` are not persistent inside a jail, which rules out a cache or an
   opt-out marker there.
@@ -129,7 +132,13 @@ marola-devkit, so the plugin no longer carries it and no session sees two copies
 `skills.lock` row whose upstream is `marola-dev/marola-devkit`. The directory holds `SKILL.md`,
 `scripts/route.py` and `scripts/session-check.sh`, so the tool is wherever the skill is. The skill
 text keeps MIP-0076 §5.3's rules and names `route` instead of `just graph`; `just route` is a thin
-devkit recipe for those inside `nix develop`.
+devkit recipe for those inside `nix develop`. `route` reads the bundle through the repo it runs in,
+so the skill tells an agent in a Project thread to run it from inside the umbrella's clone.
+
+marola-skills, marola-agents and marola-research joined the umbrella after this MIP (#793) and do
+not vendor the skill. They hold inventories and papers, with no code a "where is it" question
+lands in, and only marola-skills pins the devkit. Task 12's `route-usage` findings decide whether
+that changes.
 
 ### 5.2 `route.py`
 
@@ -168,7 +177,12 @@ submodule SHAs, graphify version, bench score), `manifest.json` (schema version,
   never makes a release" a hard rule. Publishing per pointer move would mint a DOI version several
   times a day, and a Zenodo version cannot be deleted.
 - **A ruleset** restricts updates to `routing-bundle` to the GitHub Actions app, so changing the
-  bundle means changing a reviewed workflow on `main`. Git object hashes cover integrity.
+  bundle means changing a reviewed workflow on `main`. Git object hashes cover integrity. It is
+  committed as `.github/rulesets/routing-bundle.json` and applied with the devkit's `ruleset-sync
+  apply --manifest` (MIP-0086), so it is reviewed like the org's `main-rule` and `ci-rule`, which
+  match only the default branch and do not touch this one.
+- **A PR's `ci-ok` stays as it is.** `ci-ok` needs every other job (#814). The publish step runs only
+  on `push` to `main` and on `schedule`, so on a PR the `graph` job does what it did before.
 - **The bench gates**: the job fails, and keeps the previous bundle, if the right-first score drops
   below the last published `build.json`'s. A graphify bump that silently worsens answers stops here.
 - **Size**: ~2 MB compressed today; every plain clone fetches it. Past 10 MB the large files move to
@@ -193,8 +207,10 @@ The opt-in instruction tells the agent: if `AskUserQuestion` is available, ask b
 person's request, in one question, what the plugin runs on their machine and from which ref, with
 three answers. **Install**: the person runs `! claude plugin install marola-devkit@marola-devkit`.
 **Not now**: nothing; asked again next session. **Never**: the agent adds
-`"env": {"MAROLA_PLUGIN_OPTOUT": "1"}` to the person's `~/.claude/settings.json`, after showing the
-edit. Then it carries on with the request. With no way to ask (headless, a subagent), it says nothing.
+`"env": {"MAROLA_PLUGIN_OPTOUT": "1"}` to the person's `~/.claude/settings.json` (to
+`$CLAUDE_CONFIG_DIR/settings.json` when that is set; the line names the file the hook reads), after
+showing the edit. Then it carries on with the request. With no way to ask (headless, a subagent), it
+says nothing.
 
 `~/.claude/settings.json` is the marker's home because it is per machine (one answer covers six repos
 and every worktree), reversible in `/config`, and the only one of the candidate places an ai-jail
@@ -230,7 +246,9 @@ None. No code path in marola-app changes.
 - **Live, done means**: on fresh clones in three setups (a bare WSL shell with no Nix, `nix develop`,
   a claude.ai/code session on the umbrella and on marola-app), the skill is listed, the hook prints
   its lines, the opt-in is asked exactly once per machine where it applies, and `route` answers at
-  least 7 of MIP-0076's 8 questions right first with no Nix and no graphify on the machine.
+  least 7 of MIP-0076's 8 questions right first with no Nix and no graphify on the machine. In a
+  Claude Project thread, which runs no repo hook (§4), only the skill and `route` are checked, run
+  from the umbrella's clone.
 - **Adoption**, reported two weeks after rollout, not a gate: `just route-usage` across the
   maintainers' machines.
 
@@ -273,9 +291,10 @@ None. No code path in marola-app changes.
 
 ## 11. Open questions
 
-- Does a project hook see `env` set in user settings? **Default:** verify live in task 2; if not, the
-  marker becomes `"enabledPlugins": {"marola-devkit@marola-devkit": false}` in user settings, read by
-  the hook from the file.
+- Does a project hook see `env` set in user settings? **Answered 2026-10-19 (task 2):** yes. On Claude
+  Code 2.1.296, a project `SessionStart` hook run headless with an empty `CLAUDE_CONFIG_DIR` printed a
+  value set only in that directory's `settings.json` `env`. The marker stays `MAROLA_PLUGIN_OPTOUT`;
+  the hook also reads the file, for versions not checked.
 - Do project hooks run before the folder-trust dialog is accepted? The docs disagree with each other.
   **Decided 2026-10-10:** either answer is fine. Someone who has not trusted the folder may be asked
   later or never; the hook is read-only either way, so nothing is verified for this.
@@ -308,11 +327,13 @@ None. No code path in marola-app changes.
   over, setup scripts, installed tools without Nix, default allowed domains),
   `/docs/en/permissions` (the two passages on hooks before trust that disagree).
 - `~/.cache/marola-graph/marola-clean/graph.json`, 2026-10-10: 1,598 nodes, 3,166 edges, 1.6 MB.
+- A project `SessionStart` hook and user-settings `env`, Claude Code 2.1.296, 2026-10-19 (§11).
+- marola-devkit's `.github/rulesets/main-rule.json` and `ci-rule.json`, 2026-10-19: both match
+  `~DEFAULT_BRANCH` only.
 
 ### Not checked
 
-- Whether hooks see user-settings `env`, the trust-dialog ordering (decided not to matter), and the
-  cloud git proxy's reach (§11).
+- The trust-dialog ordering (decided not to matter) and the cloud git proxy's reach (§11).
 - A ruleset whose bypass list holds only the GitHub Actions app: assumed from GitHub's rulesets
   feature, not tried on this org.
 - That Zenodo would mint a version for a published release made by CI: MIP-0079's rule stands
