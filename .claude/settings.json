@@ -30,6 +30,19 @@
     "type": "command",
     "command": "bash \"$(git rev-parse --show-toplevel)/.devkit/.claude/statusline.sh\""
   },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/skills/routing/scripts/session-check.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(gh auth status:*)",

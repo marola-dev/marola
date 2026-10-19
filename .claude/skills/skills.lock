@@ -22,6 +22,23 @@
       "paths": {
         "LICENSE": "LICENSE"
       }
+    },
+    "routing": {
+      "upstream": "marola-dev/marola-devkit",
+      "path": "skills/routing",
+      "commit": "beeb5a95091960e50bf09cb7ea7bc14d3fa2a90f",
+      "files": {
+        "LICENSE": "c0c439ca1fde442052c22ef68e380f8dbd5a18c8",
+        "SKILL.md": "242f703b88082a6f48965414974fdb6a09e7de75",
+        "scripts/route.py": "0b4210c6dd448ffabed864cda5bdb2a638944dd1",
+        "scripts/session-check.sh": "40c5f727f9b1424f2c186ede5f3ab0ffee2c93d0"
+      },
+      "license": "MIT",
+      "local_edits": null,
+      "hold": null,
+      "paths": {
+        "LICENSE": "LICENSE"
+      }
     }
   }
 }

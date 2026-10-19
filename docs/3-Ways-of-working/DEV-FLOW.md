@@ -324,3 +324,24 @@ v0.8.0 or later, not only the umbrella, where the graph spans every submodule. T
 `~/.cache/marola-graph/<repo>`, never into the checkout or a commit; rebuild it when `query` warns
 it is stale. Vendored or generated paths go in a repo-root `.graphifyignore`
 ([graph](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_tools/#code-graph)).
+
+### Routing with no setup
+
+`python3 .claude/skills/routing/scripts/route.py` answers the same questions with no Nix and no
+graphify (MIP-0084): `query`, `explain`, `path`, `wiring`. It reads the umbrella's `routing-bundle`
+branch, which `ci.yml` publishes from `main` on every push and daily; `route fetch` brings it into
+a clone that lacks it, and `route status` says how old it is. A local `just graph build` whose
+`HEAD` matches answers instead.
+
+Every session started in the umbrella runs `session-check.sh` from the same skill. It prints at most
+three lines: the bundle's age, the submodules not checked out, and, when the marola-devkit plugin is
+not installed, an instruction to ask you once whether to install it. Answering "Never" adds
+`"env": {"MAROLA_PLUGIN_OPTOUT": "1"}` to your user `settings.json`, which covers every repo and
+worktree on the machine.
+
+A claude.ai/code session needs nothing extra for `route`. For local reads of the submodules, give
+its environment this setup script:
+
+```bash
+git submodule update --init --depth 1
+```

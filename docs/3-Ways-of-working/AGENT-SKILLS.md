@@ -17,15 +17,15 @@ repo that has it, so start the agent in the repo you are changing.
 | marola-site | `site-frontend`, the entry point for anything a visitor sees, which orders the others: `ptbr-humanizer`, `citizen-science-site`, and vendored design, testing and `mapbox-*` skills | its `.claude/skills/` |
 | marola-corpus | `corpus-doc` (adding a document) | its `.claude/skills/` |
 | marola-app | no skills; the Scala and Kyo rules (`.claude/rules/scala.md`) and the `jar-verifier` agent | its `.claude/` |
-| the umbrella | `eli5` (explaining a sea or marola topic from zero; it reads the corpus and the app through the submodules); `architecture-diagram` (a README diagram as a hand-written SVG, adapted from Cocoon-AI/architecture-diagram-generator@4b9087d, MIT); `zenodo-release` (cutting a citable release and keeping `.zenodo.json` right, MIP-0079, adapted from h0ffmann/ww3-gpu's `release`); `citation-cff` (exporting and checking the citation, vendored unchanged from zircote/github-social@4fa6579, MIT) | its `.claude/skills/` |
+| the umbrella | `eli5` (explaining a sea or marola topic from zero; it reads the corpus and the app through the submodules); `architecture-diagram` (a README diagram as a hand-written SVG, adapted from Cocoon-AI/architecture-diagram-generator@4b9087d, MIT); `zenodo-release` (cutting a citable release and keeping `.zenodo.json` right, MIP-0079, adapted from h0ffmann/ww3-gpu's `release`); `citation-cff` (exporting and checking the citation, vendored unchanged from zircote/github-social@4fa6579, MIT); `routing` (where something lives: `route` over the CI-built bundle, vendored unchanged from marola-devkit's `skills/routing`, MIT, MIP-0084) | its `.claude/skills/` |
 | marola-ml, marola-oods | no skills of their own | — |
 | superpowers, skill-creator | §2 and §2.2 | the umbrella's and marola-app's `.claude/settings.json` |
 
 Each repo's `AGENTS.md` says when its skills apply. A skill vendored byte for byte from another
 repository gets a row in a per-repo `.claude/skills/skills.lock` (`skills-vendor check` verifies
 the copy) and a weekly reviewed update PR from that repo's `skills.yml`
-([MIP-0080](../MIPs/MIP-0080-vendored-skills-lock.md), Draft; the umbrella's row is
-`citation-cff`). corpus's skill runs marola's recipes, so those
+([MIP-0080](../MIPs/MIP-0080-vendored-skills-lock.md), Draft; the umbrella's rows are
+`citation-cff` and `routing`). corpus's skill runs marola's recipes, so those
 steps need a marola-app checkout pointed at the corpus with `MAROLA_KNOWLEDGE_DIR`, as its
 `AGENTS.md` says.
 
@@ -38,11 +38,13 @@ skill disagrees with a repo's `AGENTS.md`, `AGENTS.md` wins.
 ## 2. superpowers — what fits, what doesn't
 
 The plugin (Jesse Vincent, `obra/superpowers`) ships workflow skills that activate from context. It
-is **declared in the repo**, not installed by hand: `.claude/settings.json` has `"enabledPlugins":
-{"superpowers@claude-plugins-official": true}`, so Claude Code installs and enables it for whoever
-opens the umbrella or marola-app and accepts the trust dialog: the nearest thing to `nix develop`
-for plugins (plugin code is cached under `~/.claude/plugins`, not vendored; it is not pinned to a
-version). Opt out on one machine with the same key set to `false` in `.claude/settings.local.json`.
+is **declared in the repo**: `.claude/settings.json` has `"enabledPlugins":
+{"superpowers@claude-plugins-official": true}`. A declared plugin is turned on, not always
+downloaded: Claude Code does not fetch one enabled only in project settings from an external
+marketplace. marola-devkit stays under `/plugin`'s Errors tab as "enabled in project settings but
+isn't installed here" until someone runs `claude plugin install marola-devkit@marola-devkit`, which
+the `routing` skill's session hook asks about once (MIP-0084 §2, §5.4). Plugin code is cached under
+`~/.claude/plugins`, not vendored, and is not pinned to a version. Opt out on one machine with the same key set to `false` in `.claude/settings.local.json`.
 Verify with `/plugin` → installed list. Manual install elsewhere: `/plugin install
 superpowers@claude-plugins-official`. As of 2026-09-05 it lists these; the mapping to marola's
 workflow is ours:
