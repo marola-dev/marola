@@ -75,6 +75,7 @@ quality-other:
     scripts/pointer-sync.sh --self-test
     scripts/pointer-sync-merge.sh --self-test
     python3 scripts/mip_graph.py --self-test
+    python3 scripts/routing_bundle.py --self-test
     python3 scripts/citation.py --self-test
     python3 scripts/claude_project_check.py --self-test
     python3 scripts/claude_project_check.py
