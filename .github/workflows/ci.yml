@@ -232,7 +232,7 @@ jobs:
           graphify=$(grep -oE 'graphifyy?-[0-9][0-9.]*[0-9]' "$graph_bin" | head -1)
           if git fetch -q --depth 1 origin routing-bundle; then git show FETCH_HEAD:build.json > "$RUNNER_TEMP/previous.json"; fi
           python3 scripts/routing_bundle.py --graph-dir "$GRAPH_DIR" --out "$RUNNER_TEMP/bundle" \
-            --bench "$(tail -1 "$RUNNER_TEMP/bench.txt")" --previous "$RUNNER_TEMP/previous.json" --graphify "${graphify#*-}"
+            --bench "$RUNNER_TEMP/bench.txt" --questions routing-bench.yaml --previous "$RUNNER_TEMP/previous.json" --graphify "${graphify#*-}"
       - uses: actions/upload-artifact@v7
         with:
           name: routing-bundle

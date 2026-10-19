@@ -63,6 +63,250 @@
    "expect": [
     "conditions/OpenMeteoClient.scala"
    ]
+  },
+  {
+   "id": 9,
+   "type": "symbol",
+   "via": "query",
+   "ask": "particles",
+   "expect": [
+    "marola-site/site/static/flow.js"
+   ]
+  },
+  {
+   "id": 10,
+   "type": "symbol",
+   "via": "query",
+   "ask": "train_lora",
+   "expect": [
+    "marola-ml/finetune/train_lora.py"
+   ]
+  },
+  {
+   "id": 11,
+   "type": "symbol",
+   "via": "query",
+   "ask": "corpus_check",
+   "expect": [
+    "marola-corpus/scripts/corpus-check.sh"
+   ]
+  },
+  {
+   "id": 12,
+   "type": "wiring",
+   "via": "wiring",
+   "ask": "site-data",
+   "expect": [
+    "site.yml"
+   ]
+  },
+  {
+   "id": 13,
+   "type": "wiring",
+   "via": "wiring",
+   "ask": "api-docs",
+   "expect": [
+    "fetch-api-docs.sh"
+   ]
+  },
+  {
+   "id": 14,
+   "type": "doc-code",
+   "via": "docs",
+   "ask": "board-schema.sh",
+   "expect": [
+    "marola-site/docs/4-reference.md",
+    "marola-site/AGENTS.md"
+   ]
+  },
+  {
+   "id": 15,
+   "type": "doc-code",
+   "via": "docs",
+   "ask": "pointer-sync.sh",
+   "expect": [
+    "MIP-0076"
+   ]
+  },
+  {
+   "id": 16,
+   "type": "doc-code",
+   "via": "docs",
+   "ask": "WaterQualityClient",
+   "expect": [
+    "MIP-0001",
+    "MIP-0031"
+   ]
+  },
+  {
+   "id": 17,
+   "type": "doc-code",
+   "via": "code",
+   "ask": "MIP-0079",
+   "expect": [
+    "scripts/release.sh",
+    "scripts/citation.py"
+   ]
+  },
+  {
+   "id": 18,
+   "type": "doc-code",
+   "via": "code",
+   "ask": "MIP-0031",
+   "expect": [
+    "water/WaterQualityMatcher.scala"
+   ]
+  },
+  {
+   "id": 19,
+   "type": "doc-code",
+   "via": "code",
+   "ask": "MIP-0039",
+   "expect": [
+    "llm/Reviewer.scala"
+   ]
+  },
+  {
+   "id": 20,
+   "type": "impact",
+   "via": "impact",
+   "ask": "board.schema.json",
+   "expect": [
+    "board-schema.sh",
+    "marola-site/site/board.schema.json"
+   ]
+  },
+  {
+   "id": 21,
+   "type": "impact",
+   "via": "impact",
+   "ask": "Coordinates",
+   "expect": [
+    "AppConfig.scala",
+    "cli/src/main/scala/marola/Main.scala",
+    "SwimConditionsMcpServer.scala"
+   ]
+  },
+  {
+   "id": 22,
+   "type": "impact",
+   "via": "impact",
+   "ask": "WaterSample",
+   "expect": [
+    "CachedWaterQualityClient.scala",
+    "ImaScPdfWaterQualityClient.scala",
+    "ImaScWaterQualityClient.scala"
+   ]
+  },
+  {
+   "id": 23,
+   "type": "impact",
+   "via": "impact",
+   "ask": "preset_for",
+   "expect": [
+    "finetune/merge_export.py",
+    "finetune/preflight.py",
+    "finetune/train_dpo.py"
+   ]
+  },
+  {
+   "id": 24,
+   "type": "impact",
+   "via": "impact",
+   "ask": "corpus.version",
+   "expect": [
+    "corpus-fetch.sh"
+   ]
+  },
+  {
+   "id": 25,
+   "type": "decision",
+   "via": "why",
+   "ask": "graphify LLM pass",
+   "expect": [
+    "MIP-0076"
+   ]
+  },
+  {
+   "id": 26,
+   "type": "decision",
+   "via": "why",
+   "ask": "Ollama embeddings",
+   "expect": [
+    "MIP-0085"
+   ]
+  },
+  {
+   "id": 27,
+   "type": "decision",
+   "via": "why",
+   "ask": "routing bundle as a release asset",
+   "expect": [
+    "MIP-0084"
+   ]
+  },
+  {
+   "id": 28,
+   "type": "decision",
+   "via": "why",
+   "ask": "a pointer move making a release",
+   "expect": [
+    "MIP-0079"
+   ]
+  },
+  {
+   "id": 29,
+   "type": "decision",
+   "via": "why",
+   "ask": "a PAT for cross-repo automation",
+   "expect": [
+    "MIP-0086"
+   ]
+  },
+  {
+   "id": 30,
+   "type": "meaning",
+   "via": "meaning",
+   "ask": "where is the safety veto applied",
+   "expect": [
+    "scoring/Swimability.scala"
+   ]
+  },
+  {
+   "id": 31,
+   "type": "meaning",
+   "via": "meaning",
+   "ask": "how are the wind particles drawn on the map",
+   "expect": [
+    "site/static/flow.js"
+   ]
+  },
+  {
+   "id": 32,
+   "type": "meaning",
+   "via": "meaning",
+   "ask": "which hours tomorrow are best for a swim",
+   "expect": [
+    "marola/Recommender.scala"
+   ]
+  },
+  {
+   "id": 33,
+   "type": "meaning",
+   "via": "meaning",
+   "ask": "where are the nearby beaches found",
+   "expect": [
+    "beaches/BeachFinder.scala"
+   ]
+  },
+  {
+   "id": 34,
+   "type": "meaning",
+   "via": "meaning",
+   "ask": "what checks the summary the language model wrote",
+   "expect": [
+    "llm/Reviewer.scala"
+   ]
   }
  ]
 }
