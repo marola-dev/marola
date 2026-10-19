@@ -18,7 +18,9 @@ PLUGIN="marola-devkit@marola-devkit"
 
 optin_line() {
   local ref settings=${1/#"$HOME"/\~}
-  ref=$(grep -o '"repo": *"marola-dev/marola-devkit"[^}]*"ref": *"[^"]*"' .claude/settings.json 2>/dev/null |
+  # Joined first: some repos spread the marketplace entry over several lines.
+  ref=$(tr '\n' ' ' <.claude/settings.json 2>/dev/null |
+    grep -o '"repo": *"marola-dev/marola-devkit"[^}]*"ref": *"[^"]*"' |
     sed 's/.*"ref": *"//; s/"$//' || true)
   echo "▸ marola-devkit plugin not installed. Before starting the person's request, if AskUserQuestion is available, ask once: \"This repo offers the marola-devkit plugin. If installed it runs, on your machine, from marola-dev/marola-devkit@${ref:-its pinned tag}: a formatter after each edit, a gate when a turn ends, and a session-start summary; and it adds the MIP, triage and review skills. Routing works either way.\" Options: Install (they run \`! claude plugin install ${PLUGIN}\`), Not now (nothing; asked again next session), Never (show them the edit, then add \"env\": {\"MAROLA_PLUGIN_OPTOUT\": \"1\"} to $settings). Then carry on with the request. With no way to ask, say nothing about it."
 }
@@ -100,6 +102,10 @@ self_test() {
   has "names the plugin and the ref it runs from" "$out" "marola-dev/marola-devkit@v0.9.1"
   has "three answers" "$out" "Install"
   has "the bundle line comes first" "$(head -1 <<<"$out")" "▸ routing: no bundle yet; route fetch"
+  cp "$repo/.claude/settings.json" "$tmp/settings.one-line"
+  printf '{\n  "extraKnownMarketplaces": {\n    "marola-devkit": {\n      "source": {\n        "source": "github",\n        "repo": "marola-dev/marola-devkit",\n        "ref": "v0.9.1"\n      }\n    }\n  }\n}\n' >"$repo/.claude/settings.json"
+  has "and the ref when the entry spans lines" "$(run)" "marola-dev/marola-devkit@v0.9.1"
+  cp "$tmp/settings.one-line" "$repo/.claude/settings.json"
   has "Never writes the settings file it reads" "$(CLAUDE_CONFIG_DIR="$tmp/cfg" run)" "to $tmp/cfg/settings.json"
 
   echo "plugin_installed_silent"
