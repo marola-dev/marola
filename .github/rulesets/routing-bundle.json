@@ -1,0 +1,31 @@
+{
+  "bypass_actors": [
+    {
+      "actor_id": 5387703,
+      "actor_type": "Integration",
+      "bypass_mode": "always"
+    }
+  ],
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": [
+        "refs/heads/routing-bundle"
+      ]
+    }
+  },
+  "enforcement": "active",
+  "name": "routing-bundle-rule",
+  "rules": [
+    {
+      "type": "creation"
+    },
+    {
+      "type": "update"
+    },
+    {
+      "type": "deletion"
+    }
+  ],
+  "target": "branch"
+}

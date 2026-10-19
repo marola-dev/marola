@@ -1,0 +1,68 @@
+{
+ "questions": [
+  {
+   "id": 1,
+   "via": "query",
+   "ask": "Swimability score",
+   "expect": [
+    "scoring/Swimability.scala"
+   ]
+  },
+  {
+   "id": 2,
+   "via": "wiring",
+   "ask": "marola-image",
+   "expect": [
+    "board-schema.sh"
+   ]
+  },
+  {
+   "id": 3,
+   "via": "wiring",
+   "ask": "corpus",
+   "expect": [
+    "corpus.version"
+   ]
+  },
+  {
+   "id": 4,
+   "via": "wiring",
+   "ask": "ml-resources",
+   "expect": [
+    "resources-fetch"
+   ]
+  },
+  {
+   "id": 5,
+   "via": "wiring",
+   "ask": "submodule-updated",
+   "expect": [
+    "pointer-sync.yml"
+   ]
+  },
+  {
+   "id": 6,
+   "via": "query",
+   "ask": "Main KyoApp",
+   "expect": [
+    "cli/src/main/scala/marola/Main.scala"
+   ]
+  },
+  {
+   "id": 7,
+   "via": "wiring",
+   "ask": "submodule-docs-updated",
+   "expect": [
+    "docs.yml"
+   ]
+  },
+  {
+   "id": 8,
+   "via": "query",
+   "ask": "OpenMeteoClient",
+   "expect": [
+    "conditions/OpenMeteoClient.scala"
+   ]
+  }
+ ]
+}

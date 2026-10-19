@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session). **Amended 2026-10-19 (#776):** §5.1 names the three repos that joined since and stay out; §5.3's ruleset is a committed manifest and the publish step leaves a PR's `ci-ok` as it was; §7 checks a Claude Project thread apart from a cloud session; §11's first question is answered |
+| **Status** | Accepted (2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session). **Amended 2026-10-19 (#776):** §5.1 names the three repos that joined since and stay out; §5.3's ruleset is a committed manifest and the publish step leaves a PR's `ci-ok` as it was; §7 checks a Claude Project thread apart from a cloud session; §11's first question is answered. **Amended 2026-10-20 (#885, §5.3):** GitHub refused GitHub Actions as the ruleset's bypass actor and deploy keys are disabled on marola, so a third App, marola-bundle-bot, writes the branch from a separate `bundle-publish` job |
 | **Author** | Bruno Guilhermo de Barros Valério |
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev-loop tooling, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
@@ -167,22 +167,28 @@ Python 3.10+ stdlib only. graphify never runs on a contributor's machine.
 
 ### 5.3 The bundle
 
-The umbrella's `graph` job in `ci.yml` gains a publish step on `push` to `main` (pointer-sync merges
-included) and a daily `schedule`. It runs `graph build`, `wiring --json`, `route bench` against the
+The umbrella's `graph` job in `ci.yml` also runs on `push` to `main` (pointer-sync merges
+included) and on a daily `schedule`. It runs `graph build`, `wiring --json`, `route bench` against the
 committed `routing-bench.yaml`, and writes `graph.json`, `wiring.json`, `build.json` (umbrella HEAD,
 submodule SHAs, graphify version, bench score), `manifest.json` (schema version, file sizes) and
-`routing-digest.md` to an orphan commit force-pushed to `routing-bundle`.
+`routing-digest.md` as an artifact. A separate `bundle-publish` job force-pushes them to
+`routing-bundle` as one orphan commit.
 
 - **Not a release asset.** The umbrella's releases feed Zenodo, and MIP-0079 makes "a pointer move
   never makes a release" a hard rule. Publishing per pointer move would mint a DOI version several
   times a day, and a Zenodo version cannot be deleted.
-- **A ruleset** restricts updates to `routing-bundle` to the GitHub Actions app, so changing the
-  bundle means changing a reviewed workflow on `main`. Git object hashes cover integrity. It is
+- **A ruleset** restricts updates to `routing-bundle` to marola-bundle-bot, an App with Contents:
+  write installed on marola alone, whose key only `bundle-publish` receives, so changing the bundle
+  means changing a reviewed workflow on `main`. Amended 2026-10-20: GitHub refuses GitHub Actions as a
+  repository ruleset's bypass actor (HTTP 422, "must be part of the ruleset source or owner
+  organization"), and deploy keys are disabled on marola. `bundle-publish` checks out nothing and
+  runs no Nix, as MIP-0086 keeps the merge key's jobs. Git object hashes cover integrity. It is
   committed as `.github/rulesets/routing-bundle.json` and applied with the devkit's `ruleset-sync
   apply --manifest` (MIP-0086), so it is reviewed like the org's `main-rule` and `ci-rule`, which
   match only the default branch and do not touch this one.
-- **A PR's `ci-ok` stays as it is.** `ci-ok` needs every other job (#814). The publish step runs only
-  on `push` to `main` and on `schedule`, so on a PR the `graph` job does what it did before.
+- **A PR's `ci-ok` still passes on what it did before.** `ci-ok` needs every other job (#814), so
+  it gains `bundle-publish`, which runs only on `push` to `main` and on `schedule` and is skipped on a
+  PR. On a PR the `graph` job also assembles the bundle and runs the bench, without publishing.
 - **The bench gates**: the job fails, and keeps the previous bundle, if the right-first score drops
   below the last published `build.json`'s. A graphify bump that silently worsens answers stops here.
 - **Size**: ~2 MB compressed today; every plain clone fetches it. Past 10 MB the large files move to
@@ -330,11 +336,12 @@ None. No code path in marola-app changes.
 - A project `SessionStart` hook and user-settings `env`, Claude Code 2.1.296, 2026-10-19 (§11).
 - marola-devkit's `.github/rulesets/main-rule.json` and `ci-rule.json`, 2026-10-19: both match
   `~DEFAULT_BRANCH` only.
+- A repository ruleset with GitHub Actions (integration 15368) as its only bypass actor, 2026-10-20:
+  refused with HTTP 422 on marola-dev/marola (§5.3). Adding a deploy key the same day: refused,
+  "Deploy keys are disabled for this repository".
 
 ### Not checked
 
 - The trust-dialog ordering (decided not to matter) and the cloud git proxy's reach (§11).
-- A ruleset whose bypass list holds only the GitHub Actions app: assumed from GitHub's rulesets
-  feature, not tried on this org.
 - That Zenodo would mint a version for a published release made by CI: MIP-0079's rule stands
   regardless.

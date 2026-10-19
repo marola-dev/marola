@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The routing bundle only (MIP-0084 §5.3): `changes` is skipped, and every job behind it with it.
+  schedule:
+    - cron: '41 4 * * *'
 
 # dorny/paths-filter lists a PR's changed files through the API, which needs pull-requests: read;
 # the repo's default GITHUB_TOKEN is contents-only ("Resource not accessible by integration").
@@ -18,6 +21,7 @@ concurrency:
 jobs:
   # Decide what actually changed so the expensive job only runs when it can matter.
   changes:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -71,6 +75,8 @@ jobs:
               - 'flake.lock'
               - '.graphifyignore'
               - '.github/workflows/ci.yml'
+              - 'routing-bench.yaml'
+              - 'scripts/routing_bundle.py'
             docs:
               - 'docs/**'
               - 'mkdocs/**'
@@ -173,10 +179,11 @@ jobs:
           fi
 
   # MIP-0076 §5.4: a smoke test of each pointer move and devkit/graphify bump, and the graph as an
-  # artifact for a session without Nix. Never committed, never deployed.
+  # artifact for a session without Nix. MIP-0084 §5.3: on every push to main and daily, the graph,
+  # the wiring and the bench score go to the routing-bundle branch, which `route` reads.
   graph:
     needs: changes
-    if: needs.changes.outputs.graph == 'true'
+    if: ${{ !cancelled() && (needs.changes.outputs.graph == 'true' || github.event_name != 'pull_request') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -205,6 +212,66 @@ jobs:
             ${{ runner.temp }}/graph-cache/marola-graph/${{ github.event.repository.name }}/build.json
           retention-days: 7
           if-no-files-found: error
+      # On a PR too, so a graphify or devkit bump that answers worse fails here, before main.
+      - name: wiring, route bench and the bundle's files
+        env:
+          XDG_CACHE_HOME: ${{ runner.temp }}/graph-cache
+          GRAPH_DIR: ${{ runner.temp }}/graph-cache/marola-graph/${{ github.event.repository.name }}
+        run: |
+          nix develop .#lint --command wiring --json > "$GRAPH_DIR/wiring.json"
+          # route reads the wiring from a bundle ref, never a local graph: stage this run's files as
+          # that ref, so the bench scores what would be published.
+          stage="$RUNNER_TEMP/stage"
+          mkdir -p "$stage" && cp "$GRAPH_DIR"/{graph,build,wiring}.json "$stage"/
+          git -C "$stage" init -q && git -C "$stage" add -A
+          git -C "$stage" -c user.name=ci -c user.email=ci@localhost commit -qm stage
+          git fetch -q "$stage" +HEAD:refs/marola/routing-bundle
+          nix develop .#lint --command route bench routing-bench.yaml | tee "$RUNNER_TEMP/bench.txt"
+          # graphify is on the graph wrapper's PATH, not the shell's; its store path names the version.
+          graph_bin=$(nix develop .#lint --command bash -c "command -v graph")
+          graphify=$(grep -oE 'graphifyy?-[0-9][0-9.]*[0-9]' "$graph_bin" | head -1)
+          if git fetch -q --depth 1 origin routing-bundle; then git show FETCH_HEAD:build.json > "$RUNNER_TEMP/previous.json"; fi
+          python3 scripts/routing_bundle.py --graph-dir "$GRAPH_DIR" --out "$RUNNER_TEMP/bundle" \
+            --bench "$(tail -1 "$RUNNER_TEMP/bench.txt")" --previous "$RUNNER_TEMP/previous.json" --graphify "${graphify#*-}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: routing-bundle
+          path: ${{ runner.temp }}/bundle/
+          retention-days: 7
+          if-no-files-found: error
+
+  # One orphan commit, force-pushed: the branch holds no history. Only marola-bundle-bot may write
+  # the branch (routing-bundle-rule, .github/rulesets/routing-bundle.json), so the job holding its key
+  # checks out nothing and runs no Nix (MIP-0084 §5.3).
+  bundle-publish:
+    needs: graph
+    if: ${{ !cancelled() && needs.graph.result == 'success' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: routing-bundle
+          path: bundle
+      - uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.19.0
+        id: app
+        with:
+          app-id: ${{ vars.BUNDLE_BOT_APP_ID }}
+          private-key: ${{ secrets.BUNDLE_BOT_KEY }}
+          repositories: marola
+          permission-contents: write
+      - name: push routing-bundle as marola-bundle-bot
+        working-directory: bundle
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          score=$(jq -r '"right first: \(.bench.right)/\(.bench.total)"' build.json)
+          git init -q -b routing-bundle
+          git add -A
+          git commit -qm "routing-bundle: main@${GITHUB_SHA::7}" \
+            -m "Tested: $score (route bench)" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/routing-bundle
 
   # Free, fast, and independent of the JVM build — the same gates as `just quality-other`, split
   # across the devkit's reusable workflows plus the nix-only checks below. The tool versions are
@@ -232,6 +299,7 @@ jobs:
         python3 scripts/claude_project_check.py
         python3 scripts/ruff_exclude_check.py --self-test
         python3 scripts/ruff_exclude_check.py
+        python3 scripts/routing_bundle.py --self-test
 
   static-ci:
     needs: changes
@@ -308,7 +376,7 @@ jobs:
   # every run, so it needs every other job and passes on skipped ones.
   ci-ok:
     if: always()
-    needs: [changes, repo-stats, docs-build, graph, python-ci, static-ci, agents-check, quality-other]
+    needs: [changes, repo-stats, docs-build, graph, bundle-publish, python-ci, static-ci, agents-check, quality-other]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}

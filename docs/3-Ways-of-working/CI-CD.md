@@ -52,8 +52,9 @@ table. Each repo's own CI, releases and secrets:
 
 | Workflow | Trigger | Runner | Gates or deploys | Secrets and variables | By hand |
 |---|---|---|---|---|---|
-| `ci.yml` | PR; push to `main` | `ubuntu-latest` | The merge gates, each run only when `dorny/paths-filter` says its inputs changed: `python-ci` (devkit: ruff and marola's `scripts/*` self-tests), `static-ci` (devkit: actionlint, hadolint and `docker compose config` on the mkdocs stack), `agents-check` (devkit: the AGENTS.md invariants block), `quality-other` (nix, with submodules: `flake.lock` is current, `just --list`, `workflow-runners`, `docs-lint`, `wiring --check` on `REPOS.md`'s wiring block), `docs-build` (`docs.yml`'s aggregated `mkdocs --strict`, on the PR's pinned submodule commits). On `main` only: `repo-stats` publishes the stats, Scala lines counted in the marola-app submodule, to marola-site's `site-data` | `GITHUB_TOKEN`, `PR_BOT_APP_ID` / `PR_BOT_KEY` (marola-pr-bot) | `just quality` locally; re-run from the Actions tab |
-| `ci.yml`'s `graph` job | PR or push to `main` changing a gitlink, `flake.lock`, `.graphifyignore` or `ci.yml` | `ubuntu-latest` | `graph build` from `nix develop .#lint` on the pinned submodule commits (MIP-0076 §5.4); uploads `graph.json` and `build.json` as the `graph` artifact for 7 days and logs whether `unshare -rn` works. Nothing committed or deployed | `GITHUB_TOKEN` | `just graph build` locally |
+| `ci.yml` | PR; push to `main`; daily (the `graph` job only) | `ubuntu-latest` | The merge gates, each run only when `dorny/paths-filter` says its inputs changed: `python-ci` (devkit: ruff and marola's `scripts/*` self-tests), `static-ci` (devkit: actionlint, hadolint and `docker compose config` on the mkdocs stack), `agents-check` (devkit: the AGENTS.md invariants block), `quality-other` (nix, with submodules: `flake.lock` is current, `just --list`, `workflow-runners`, `docs-lint`, `wiring --check` on `REPOS.md`'s wiring block), `docs-build` (`docs.yml`'s aggregated `mkdocs --strict`, on the PR's pinned submodule commits). On `main` only: `repo-stats` publishes the stats, Scala lines counted in the marola-app submodule, to marola-site's `site-data` | `GITHUB_TOKEN`, `PR_BOT_APP_ID` / `PR_BOT_KEY` (marola-pr-bot) | `just quality` locally; re-run from the Actions tab |
+| `ci.yml`'s `graph` job | PR changing a gitlink, `flake.lock`, `.graphifyignore`, `ci.yml`, `routing-bench.yaml` or `scripts/routing_bundle.py`; every push to `main`; daily at 04:41 UTC | `ubuntu-latest` | `graph build` from `nix develop .#lint` on the pinned submodule commits (MIP-0076 §5.4); uploads `graph.json` and `build.json` as the `graph` artifact for 7 days and logs whether `unshare -rn` works. Then `wiring --json`, `route bench routing-bench.yaml` against this run's files staged as `refs/marola/routing-bundle`, and `scripts/routing_bundle.py`, which fails the job when the score is below the published `build.json`'s; the five bundle files are the `routing-bundle` artifact | `GITHUB_TOKEN` (read) | `just graph build` locally; `route bench` on a fetched bundle |
+| `ci.yml`'s `bundle-publish` job | after `graph`, on a push to `main` or the daily run | `ubuntu-latest` | Force-pushes the `routing-bundle` artifact to the `routing-bundle` branch as one orphan commit, as marola-bundle-bot (MIP-0084 §5.3). No checkout, no Nix | `BUNDLE_BOT_APP_ID`, `BUNDLE_BOT_KEY` (marola-bundle-bot, the only actor `routing-bundle-rule` lets write the branch) | — |
 | `ci-short-circuit.yml` | PR closed | `ubuntu-latest` | Devkit `ci-short-circuit`: cancels the closed PR's in-flight runs, which the concurrency group can't see | `GITHUB_TOKEN` | — |
 | `pr-body.yml` | PR opened, reopened, ready, pushed | `ubuntu-latest` | Devkit `pr-body`: fills the description from the commits (`uprd`); skips forks and bot branches | `GITHUB_TOKEN` | `just uprd` |
 | `labels.yml` | dispatch only | `ubuntu-latest` | Devkit `labels-sync`: applies the devkit's label manifest to this repo | `GITHUB_TOKEN` | `gh workflow run labels.yml`; `just labels-sync` locally |
@@ -105,7 +106,14 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
 - **Secrets:** `HF_TOKEN` is marola-ml's (its `3-development` page). Here: optionally
   `PROFILE_DISPATCH_TOKEN`, a PAT outside MIP-0086's scope. Every dispatch is in REPOS'
   [wiring table](../2-Building-marola/REPOS.md#artifacts-pins-and-dispatches).
-- **Automation identity** (MIP-0086): two GitHub Apps, no PAT.
+- **The `routing-bundle` ruleset** (`routing-bundle-rule`, MIP-0084 §5.3): only marola-bundle-bot may
+  create, update or delete the branch, so the bundle changes only through `ci.yml`'s `bundle-publish`
+  on `main`. GitHub refuses GitHub Actions as a repository ruleset's bypass actor (HTTP 422), and
+  deploy keys are disabled on marola. Apply the manifest once, and again after changing it, from a
+  marola checkout:
+  `ruleset-sync --manifest .github/rulesets/routing-bundle.json --extras .github/rulesets/routing-bundle.extras.json apply marola-dev/marola`.
+  The empty extras file keeps the devkit's `@consumers` bypass off this ruleset.
+- **Automation identity** (MIP-0086): three GitHub Apps, no PAT.
   - **marola-pr-bot** pushes `chore/pointer-sync`, opens its PR, sends the code repos' `notify-umbrella.yml`
     dispatches and pushes marola-site's `site-data`, so those runs trigger CI. It is installed on every repo
     and is never a bypass actor. Its id is the org variable `PR_BOT_APP_ID`, its key the org secret
@@ -121,6 +129,10 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
     every consumer's `main`. `pointer-sync-merge.yml` merges only when `ci-ok` has succeeded and every
     moved pointer is on its repo's default branch, never a fork's commit that GitHub also serves through
     the parent repo.
+  - **marola-bundle-bot** (MIP-0084 §5.3) holds Contents: write and is installed on marola alone.
+    It is `routing-bundle-rule`'s only bypass actor, so it is the one identity that can write
+    `routing-bundle`, and it writes nothing else. Its id is the repo variable `BUNDLE_BOT_APP_ID`, its key
+    the repo secret `BUNDLE_BOT_KEY`, both in marola only, used only by `ci.yml`'s `bundle-publish`.
   - **Pausing:** the org variable `AUTO_MERGE` set to `false` stops every auto-merge. It must have visibility
     "all repositories": `gh variable set AUTO_MERGE --org marola-dev --body <true|false> --visibility all`
     (the default reaches private repos only, so public marola would never see it). A `hold` label stops one PR.
