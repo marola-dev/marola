@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """routing_bundle — assemble the files ci.yml's graph job publishes to `routing-bundle` (MIP-0084 §5.3).
 
-    scripts/routing_bundle.py --graph-dir DIR --out OUT --bench "right first: 8/8" \
-        [--previous build.json] [--graphify VERSION] [--repos-md docs/2-Building-marola/REPOS.md]
+    scripts/routing_bundle.py --graph-dir DIR --out OUT --bench BENCH_OUTPUT \
+        [--questions routing-bench.yaml] [--previous build.json] [--graphify VERSION] \
+        [--repos-md docs/2-Building-marola/REPOS.md]
     scripts/routing_bundle.py --self-test
 
 DIR is `graph build`'s output with `wiring.json` beside it. OUT gets graph.json, wiring.json,
-build.json (DIR's, plus the graphify version and the bench score), manifest.json and
-routing-digest.md. Exit 1, writing nothing, when the score is below --previous's: the job then keeps
-the last bundle.
+build.json (DIR's, plus the graphify version and the bench score, in total and per question type),
+manifest.json and routing-digest.md. Exit 1, writing nothing, when any type scores below --previous's
+(MIP-0085 §5.1), or the total does when --previous has no types: the job then keeps the last bundle.
 """
 
 import argparse
@@ -27,11 +28,33 @@ DIGEST_CHARS = 100_000  # §5.3's 25k-token cap, at about 4 characters a token
 START, END = "<!-- wiring:start -->", "<!-- wiring:end -->"
 
 
-def score(line: str) -> tuple[int, int]:
-    m = re.search(r"right first: (\d+)/(\d+)", line)
-    if not m:
-        raise SystemExit(f"routing_bundle: no 'right first: N/T' in {line!r}")
-    return int(m.group(1)), int(m.group(2))
+def scores(bench: str, questions: Path) -> tuple[int, int, dict[str, dict[str, int]]]:
+    """`route bench`'s output: the total and, by each question's type, right first of total."""
+    if not re.search(r"^right first: \d+/\d+$", bench, re.M):
+        raise SystemExit("routing_bundle: no 'right first: N/T' line in the bench output")
+    qs = json.loads(questions.read_text(encoding="utf-8")) if questions.is_file() else []
+    qs = qs.get("questions", []) if isinstance(qs, dict) else qs
+    # A question without a type is one of MIP-0084's eight: wiring, or a symbol query.
+    kind = {
+        str(q.get("id")): q.get("type") or ("wiring" if q.get("via") == "wiring" else "symbol")
+        for q in qs
+    }
+    by: dict[str, dict[str, int]] = {}
+    for verdict, qid in re.findall(r"^(right|MISS)\s+(?!first:)(\S+)\s", bench, re.M):
+        t = by.setdefault(kind.get(qid, "symbol"), {"right": 0, "total": 0})
+        t["total"] += 1
+        t["right"] += verdict == "right"
+    return sum(t["right"] for t in by.values()), sum(t["total"] for t in by.values()), by
+
+
+def drops(current: dict, previous: dict) -> list[str]:
+    if "by_type" not in previous:
+        return [] if current["right"] >= previous.get("right", 0) else ["total"]
+    return [
+        f"{t} {current['by_type'].get(t, {}).get('right', 0)} < {p['right']}"
+        for t, p in sorted(previous["by_type"].items())
+        if current["by_type"].get(t, {}).get("right", 0) < p["right"]
+    ]
 
 
 def repo_of(source_file: str) -> str:
@@ -70,13 +93,12 @@ def wiring_block(repos_md: Path) -> str:
 
 def assemble(args) -> int:
     src, out = Path(args.graph_dir), Path(args.out)
-    right, total = score(args.bench)
+    right, total, by_type = scores(Path(args.bench).read_text(), Path(args.questions))
+    bench = {"right": right, "total": total, "by_type": by_type}
     if args.previous and Path(args.previous).is_file():
-        prev = (json.loads(Path(args.previous).read_text()).get("bench") or {}).get("right", 0)
-        if right < prev:
-            print(
-                f"routing_bundle: bench {right}/{total} is below the published {prev}; keeping it"
-            )
+        prev = json.loads(Path(args.previous).read_text()).get("bench") or {}
+        if lower := drops(bench, prev):
+            print(f"routing_bundle: bench below the published one ({', '.join(lower)}); keeping it")
             return 1
     for name in ("graph.json", "wiring.json", "build.json"):
         p = src / name
@@ -94,7 +116,7 @@ def assemble(args) -> int:
     shutil.copyfile(src / "graph.json", out / "graph.json")
     shutil.copyfile(src / "wiring.json", out / "wiring.json")
     build = json.loads((src / "build.json").read_text())
-    build |= {"graphify": args.graphify, "bench": {"right": right, "total": total}}
+    build |= {"graphify": args.graphify, "bench": bench}
     (out / "build.json").write_text(json.dumps(build, indent=1) + "\n")
     graph = json.loads((src / "graph.json").read_text())
     (out / "routing-digest.md").write_text(digest(graph, wiring_block(Path(args.repos_md))))
@@ -150,23 +172,61 @@ def self_test() -> None:
         (src / "build.json").write_text(json.dumps(build))
         (d / "REPOS.md").write_text(f"intro\n{START}\n| artifact | by |\n{END}\nrest\n")
         prev = d / "prev.json"
-        prev.write_text(json.dumps({"bench": {"right": 8, "total": 8}}))
+        prev.write_text(json.dumps({"bench": {"right": 3, "total": 4}}))
+        questions = d / "bench.yaml"
+        questions.write_text(
+            json.dumps(
+                {
+                    "questions": [
+                        {"id": 1, "via": "query", "ask": "A", "expect": ["a"]},
+                        {"id": 2, "via": "query", "ask": "B", "expect": ["b"]},
+                        {"id": 3, "via": "wiring", "ask": "C", "expect": ["c"]},
+                        {"id": 4, "type": "decision", "via": "why", "ask": "D", "expect": ["d"]},
+                    ]
+                }
+            )
+        )
 
-        def run(bench: str, previous: Path | None = None) -> int:
+        def bench_out(*results: str) -> Path:
+            lines = ["answers from main@abc (bundle)"]
+            lines += [f"{r:<5}  {i}  q 'x'" for i, r in enumerate(results, 1)]
+            right = sum(r == "right" for r in results)
+            lines.append(f"right first: {right}/{len(results)}")
+            f = d / "bench.txt"
+            f.write_text("\n".join(lines) + "\n")
+            return f
+
+        def run(bench: Path, previous: Path | None = None) -> int:
             ns = argparse.Namespace(
                 graph_dir=str(src),
                 out=str(out),
-                bench=bench,
+                bench=str(bench),
+                questions=str(questions),
                 graphify="0.9.84",
                 previous=str(previous) if previous else None,
                 repos_md=str(d / "REPOS.md"),
             )
             return assemble(ns)
 
-        assert run("right first: 7/8", prev) == 1 and not out.exists(), "lower_score_keeps_previous"
-        assert run("right first: 8/8", prev) == 0, "equal_score_publishes"
+        r, t, by = scores(bench_out("right", "MISS", "right", "right").read_text(), questions)
+        assert (r, t) == (3, 4) and by == {
+            "symbol": {"right": 1, "total": 2},
+            "wiring": {"right": 1, "total": 1},
+            "decision": {"right": 1, "total": 1},
+        }, f"scores_per_type: {by}"
+        assert run(bench_out("right", "MISS", "MISS", "right"), prev) == 1 and not out.exists(), (
+            "lower_score_keeps_previous"
+        )
+        assert run(bench_out("right", "MISS", "right", "right"), prev) == 0, "equal_score_publishes"
         b = json.loads((out / "build.json").read_text())
-        assert b["head"] == "a" * 40 and b["bench"] == {"right": 8, "total": 8}, f"build_json: {b}"
+        assert b["head"] == "a" * 40 and b["bench"]["right"] == 3, f"build_json: {b}"
+        assert b["bench"]["by_type"]["symbol"] == {"right": 1, "total": 2}, "build_json_by_type"
+        prev.write_text((out / "build.json").read_text())
+        assert run(bench_out("MISS", "right", "right", "right"), prev) == 0, (
+            "same_per_type_publishes"
+        )
+        # The total holds at 3, symbol rises to 2 and wiring falls to 0: one type cannot pay for another.
+        assert run(bench_out("right", "right", "MISS", "right"), prev) == 1, "a_type_drop_fails"
         assert b["graphify"] == "0.9.84", "build_json_graphify"
         # session-check.sh reads build.json with grep, not a JSON parser.
         raw = (out / "build.json").read_text()
@@ -190,7 +250,9 @@ def self_test() -> None:
         assert "Overview" not in dg and "Swimability.scala`: Swimability.scala" not in dg, (
             "digest_code_only"
         )
-        assert run("right first: 8/8", d / "absent.json") == 0, "first_publish_has_no_previous"
+        assert run(bench_out("right", "right", "right", "right"), d / "absent.json") == 0, (
+            "first_publish_has_no_previous"
+        )
         m = json.loads((out / "manifest.json").read_text())
         assert "manifest.json" not in m["files"], f"manifest_never_lists_itself: {m}"
         big = {
@@ -201,7 +263,7 @@ def self_test() -> None:
         }
         assert len(digest(big, "")) <= DIGEST_CHARS + 100, "digest_capped"
         try:
-            score("no score")
+            scores("no score\n", questions)
         except SystemExit:
             pass
         else:
@@ -216,7 +278,8 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--graph-dir", required=True)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--bench", required=True)
+    ap.add_argument("--bench", required=True, help="route bench's output, a file")
+    ap.add_argument("--questions", default="routing-bench.yaml")
     ap.add_argument("--previous")
     ap.add_argument("--graphify", default="")
     ap.add_argument("--repos-md", default="docs/2-Building-marola/REPOS.md")
