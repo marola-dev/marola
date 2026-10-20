@@ -321,9 +321,9 @@ restates and `agents-check` enforces.
 
 ## 11. Open questions
 
-- **Decided in #522**: a fine-grained PAT; the names `marola-app` and `marola-site`, as proposed
-  (`marola-backend`/`marola-frontend` were weighed and dropped by the team); issues per repo on the
-  org Project.
+- **Decided 2026-09-30:** in #522, a fine-grained PAT; the names `marola-app` and `marola-site`, as
+  proposed (`marola-backend`/`marola-frontend` were weighed and dropped by the team); issues per repo
+  on the org Project.
 - The PAT's owner (a person or a machine user) and its expiry.
 - `stats/`: should the umbrella's `repo_stats.py` roll every repo into one panel or show a panel per
   repo?
