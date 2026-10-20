@@ -328,10 +328,15 @@ it is stale. Vendored or generated paths go in a repo-root `.graphifyignore`
 ### Routing with no setup
 
 `python3 .claude/skills/routing/scripts/route.py` answers the same questions with no Nix and no
-graphify (MIP-0084): `query`, `explain`, `path`, `wiring`. It reads the umbrella's `routing-bundle`
-branch, which `ci.yml` publishes from `main` on every push and daily; `route fetch` brings it into
-a clone that lacks it, and `route status` says how old it is. A local `just graph build` whose
-`HEAD` matches answers instead.
+graphify (MIP-0084): `query`, `explain`, `path`, `wiring`, and MIP-0085's `impact` (what a change
+would reach), `docs` and `code` (which docs name a piece of code, and which code a doc names), `why`
+(the MIPs' decisions) and `query --meaning` (code ranked by its names and comments). It reads the
+umbrella's `routing-bundle` branch, which `ci.yml` publishes from `main` on every push and daily;
+`route fetch` brings it into a clone that lacks it, and `route status` says how old it is. A local
+`just graph build` whose `HEAD` matches answers instead.
+
+[`docs/MIPs/DECISIONS.md`](../MIPs/DECISIONS.md) is the readable copy of what `route why` ranks.
+It is generated: after editing a MIP, run `just decisions`, or `quality-other` fails.
 
 Every session started in the umbrella runs `session-check.sh` from the same skill. It prints at most
 three lines: the bundle's age, the submodules not checked out, and, when the marola-devkit plugin is
