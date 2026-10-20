@@ -229,24 +229,6 @@ ghas *args:
 mip-graph *args:
     python3 scripts/mip_graph.py {{ args }}
 
-# GitHub's native Stacks (the "Preview stack" box on a PR) via the official `gh stack` extension.
-stack-setup:
-    gh auth status >/dev/null 2>&1 || { echo "gh is not logged in — run: gh auth login" >&2; exit 1; }
-    gh extension list | grep -q 'github/gh-stack' || gh extension install github/gh-stack
-    gh skill install github/gh-stack || echo "gh skill install failed (older gh?) — the extension works without the skill"
-
-# The stack as GitHub sees it (PR numbers, states, bases) — MIP-0005.
-stack-view *args:
-    gh stack view {{ args }}
-
-# Restack after a bottom PR was squash-merged. MIP-0005.
-stack-sync mip="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    bottom="$(stack branches {{ mip }} | head -1)"
-    gh stack checkout "$bottom"
-    gh stack sync
-
 # Merge a whole stack (or everything up to one PR) in a single all-or-nothing operation — no
 # restack between merges.
 stack-merge *args:
