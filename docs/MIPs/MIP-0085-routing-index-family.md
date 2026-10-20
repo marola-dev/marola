@@ -234,8 +234,13 @@ None. No code path in marola-app changes.
   the graph to the umbrella's tree, and the devkit's tools are documented on its own docs page.
 - Who writes the 22 new bench questions? **Default:** the agent drafts them from real sessions and
   MIPs, and a person approves the file in task 1's PR.
-- Does `potion-base-2M`'s tokenizer need anything beyond WordPiece? **Default:** the spike checks
-  `tokenizer.json`'s model type first; a tokenizer the stdlib cannot reproduce rules embeddings out.
+- ~~Does `potion-base-2M`'s tokenizer need anything beyond WordPiece?~~ **Resolved 2026-10-20:**
+  no. Both potion models ship the same `tokenizer.json`: a `BertNormalizer` (lowercase, accents
+  stripped, CJK padded, control characters cleaned), a `BertPreTokenizer` and a `WordPiece` model
+  (`##` prefix, `[UNK]`, 100 characters per word). The spike rebuilt all three in an 82-line
+  stdlib class. It gave the same token ids as Hugging Face `tokenizers` on all 1,766 node texts, and a
+  query vector within 1.1e-13 cosine of model2vec's on 50 strings, so the tokenizer does not rule
+  embeddings out ([Meaning spike](#meaning-spike-task-7-2026-10-20)).
 
 ## Appendix
 
@@ -253,6 +258,148 @@ None. No code path in marola-app changes.
 
 ### Not checked
 
-- The potion tokenizer's model type and whether a stdlib reimplementation matches it (§11).
-- How well any candidate does on meaning questions: that is the spike.
 - The submodules' own docs in the doc↔code counts.
+- What the meaning spike did not check is listed at the end of its section below.
+
+### Meaning spike (task 7), 2026-10-20
+
+**Verdict: none.** Under §5.7's rule, no embedding beats BM25 by 3, and BM25 does not beat the
+plain `route query` on the bench's five meaning questions (3 of 5 each). Task 8 (`meaning-ship`)
+therefore has nothing to ship. The rule is applied in [Rule applied](#rule-applied) below.
+
+**Setup.** The code is throwaway, on marola-dev/marola-devkit branch `mip-0085/7-meaning-spike`
+(`4f83fe9`, `spike/meaning/`).
+
+- **Graph**: the live bundle's `graph.json` (`origin/routing-bundle` at `32043a5`). It graphs umbrella
+  `ccffd08` with the submodules at the commits in its `build.json`, and has 1,766 nodes in 183 files.
+  The source text was read from a checkout at those same commits.
+- **Text per node** (§5.7, `nodetext.py`): the label split into words, the docstring and leading
+  comment at the node's line, and the file path split into words. 735 of the 1,766 nodes have a
+  docstring or comment; the other 1,031 have only the label and the path. Every candidate got the same
+  text, 293,968 B as JSON.
+- **Questions**: the bench's meaning questions, ids 30–34, plus 15 extra plain-language
+  questions (x1–x15, `questions.json`), each checked against the expected file's own doc comment.
+  They were written before any candidate ran. They are **not part of the rule**; they are there
+  because 5 questions cannot separate candidates whose scores differ by 1.
+- **Right first**: `route bench`'s rule. An expected string must be in the file of one of the first
+  three NODE lines. Counting the first three distinct files instead changes one cell (potion-8M on
+  the extras, 10 to 11) and no verdict.
+- **Candidates**:
+  - *pinned*: `route query` as the umbrella vendors it today (devkit `c7ecce0`). This is the
+    version that scored the live bundle's meaning type at 2 of 5 in `build.json`.
+  - *plain*: `route query` on devkit `main` (`c5df0fb`), with task 2's identifier splitting and stop
+    words.
+  - *BM25*: k1 1.2, b 0.75, `route`'s tokens and stop list, no stemming. This is the only setting
+    run; nothing was tuned.
+  - *potion-2M* and *potion-8M*: node vectors from model2vec 0.9.0. Queries go through the stdlib
+    path: `tokenizer.json`, then `model.safetensors` rows read with `struct`, then a mean, an L2
+    norm and a cosine.
+- **Model pins**: `minishlab/potion-base-2M` at revision `389b9f64be5a`, `model.safetensors`
+  sha256 `f95ffde02ad0…`. `minishlab/potion-base-8M` at revision `bf8b056651a2`, sha256
+  `f65d0f325faa…`. Both use the same `tokenizer.json`, sha256 `e67e803f624f…`. Both model hashes
+  match the Hugging Face API's LFS sha256. The only weights downloaded were `model.safetensors`
+  (plus `config.json` and `tokenizer.json`); no `.bin`, `.pt` or `.onnx`.
+
+**Parity** (`parity.py`, run under model2vec 0.9.0, tokenizers 0.23.3 and numpy 2.5.4):
+
+| Model | Strings | Worst 1 − cos, stdlib vs model2vec | Token-id mismatches | Node texts, token-id mismatches |
+|---|---|---|---|---|
+| potion-2M | 50 | 7.9e-14 | 0 | 0 of 1,766 |
+| potion-8M | 50 | 1.1e-13 | 0 | 0 of 1,766 |
+
+The 50 strings are the 20 questions, 13 edge cases and 17 node texts. The edge cases cover
+Portuguese with accents, CJK, emoji, control characters and NUL, a 101-character word, code and a
+URL, and the empty string.
+
+**Results** (`bench.py`). Right first counts answers out of 5 bench questions and out of 15 extras.
+Bytes added are the files the bundle would gain: raw, then zlib level 6 (a git object before
+deltas). Latency is in ms. Warm is the median over the 20 questions of the median of 5 runs, in one
+process. Cold is the median of 5 fresh `python3 -I` processes that each answer question 30, and it
+includes Python's own start, 18.6 ms for `python3 -I -c pass`.
+
+| Candidate | Bench meaning | Extras | Bytes added | Warm query | Cold process | Build (CI) |
+|---|---|---|---|---|---|---|
+| pinned `route query` | 2/5 | 7/15 | 0 | 12.4 ms | 63.9 ms | — |
+| plain `route query` (devkit main) | 3/5 | 7/15 | 0 | 14.5 ms | 66.9 ms | — |
+| BM25 | 3/5 | 12/15 | 293,968 B / 79,128 B (node texts) | 0.67 ms | 74.6 ms | node text 37–43 ms; the index is built at query time (47 ms) |
+| potion-2M | 3/5 | 9/15 | 8,695,018 B / 7,634,275 B | 6.9 ms | 59.8 ms | node text, then model2vec import 78–94 ms, load 106–114 ms, encode 34–35 ms |
+| potion-8M | 4/5 | 10/15 | 32,728,810 B / 29,992,434 B | 22.5 ms | 73.4 ms | node text, then model2vec import 81–110 ms, load 121–126 ms, encode 39–40 ms |
+
+The embeddings' bytes break down as follows. potion-2M: `model.safetensors` 7,559,256 B,
+`tokenizer.json` 683,666 B and the vectors 452,096 B (1,766 × 64 float32). potion-8M:
+`model.safetensors` 30,236,760 B, the same `tokenizer.json` and the vectors 1,808,384 B
+(1,766 × 256). Rebuilding potion-2M's vectors gave the same sha256 a second time.
+
+The embeddings also cost CI a model2vec install: 3.79 s with `uv` and no cache, for a 94 MB venv.
+Downloading the model took 1.5 s (2M) and 3.4 s (8M) on this connection. The build times are 3
+runs each.
+
+All timings come from one machine: an AMD Ryzen 7 7800X3D under WSL2. Queries ran on Python 3.14.6
+and model2vec on 3.13.14, with the page cache warm. The baselines read `graph.json` from a file,
+where `route` reads it through `git show`.
+
+Per question, the rank of the first node line in an expected file ("–" means not in the first 50):
+
+| Id | Question | pinned | plain | BM25 | 2M | 8M |
+|---|---|---|---|---|---|---|
+| 30 | where is the safety veto applied | – | – | 12 | 16 | 13 |
+| 31 | how are the wind particles drawn on the map | 1 | 1 | 1 | 1 | 1 |
+| 32 | which hours tomorrow are best for a swim | 5 | 1 | 1 | 1 | 1 |
+| 33 | where are the nearby beaches found | 3 | 2 | 1 | 1 | 1 |
+| 34 | what checks the summary the language model wrote | – | – | – | 4 | 3 |
+| x1 | how are high and low tide times worked out | 3 | 3 | 1 | 1 | 1 |
+| x2 | how does the app guess where I am when no coordinates are given | – | – | 1 | 12 | 4 |
+| x3 | how are walking paths near a beach found | – | – | 16 | 1 | 1 |
+| x4 | what emergency note is added to an answer about safety | 3 | 3 | 1 | 1 | 1 |
+| x5 | how does the bot answer an ocean question only from retrieved passages | 2 | 2 | 1 | 1 | 1 |
+| x6 | where are reported animal sightings saved | 1 | 1 | 1 | 1 | 1 |
+| x7 | where does the fun fact about the sea at the end of a reply come from | – | – | 1 | – | 30 |
+| x8 | how is the training data for fine-tuning the model assembled | 1 | 1 | 1 | 2 | 1 |
+| x9 | where are the team members' photos downloaded for the website | – | – | 1 | 3 | 1 |
+| x10 | how do requests to Brazilian government sites get past the timeouts in CI | – | – | 18 | – | 12 |
+| x11 | which check stops a worse model image from being promoted | – | – | – | – | – |
+| x12 | how much GitHub Actions usage is this account billed for | 1 | 1 | 1 | 1 | 1 |
+| x13 | which sampling point belongs to which beach | – | – | 3 | 14 | 6 |
+| x14 | where are the news posts on the website rendered | – | – | 1 | 7 | 1 |
+| x15 | where are code review comments posted on a pull request | 1 | 1 | 1 | 1 | 1 |
+
+The embeddings win where the question and the code use different words. For example, "walking
+paths" finds `TrailFinder` (x3), and "checks the summary" finds `Reviewer` (34). BM25 wins where
+the doc comment uses the question's own words: "at the end of a reply" for the sea fact (x7), and
+"where am I" with "is given" for the location guess (x2). No candidate puts the veto question (30)
+in the first three. For BM25, "safety" lifts `SafetyFooter`'s nodes to the top, and `WaterVerdict`,
+whose comment says "veto", ranks 12th.
+
+#### Rule applied
+
+1. **An embedding ships only if it beats BM25 by at least 3** on the 5 meaning questions.
+   potion-2M scores 3 − 3 = 0 and potion-8M scores 4 − 3 = 1, so neither ships.
+   potion-8M would also fail the 30 MB limit on raw bytes (32.7 MB, 31.2 MiB). Its zlib size,
+   29.99 MB, is just under the limit, but the first test has already decided.
+2. **Otherwise BM25 ships if it beats the plain query.** BM25 scores 3 of 5, and the plain query on
+   devkit main also scores 3 of 5. A tie is not a win, so **nothing ships**.
+
+This reading takes the plain query to be devkit main's (`c5df0fb`), because that is the
+`route query` a `--meaning` flag would ship beside, and task 2 already merged it. Against the
+vendored copy that scored the live bundle (`c7ecce0`, 2 of 5), BM25 would win by one question and
+ship. The maintainer should confirm which baseline the rule means.
+
+These numbers are outside the rule, but they are what a later change would start from. On the
+extras, BM25 answers 12 of 15 right first and the plain query 7. The embeddings answer 9 (2M) and
+10 (8M). BM25's warm query takes 0.67 ms and adds 79 KB compressed to the bundle. Five meaning
+questions are too few for a one-question margin to mean much in either direction.
+
+#### What the spike did not check
+
+- Any BM25 setting other than k1 1.2 and b 0.75 without stemming. Also any hybrid, such as BM25
+  as a fallback when the plain query matches nothing, or BM25 combined with an embedding.
+- Whether the extras flatter BM25: they were written after reading the expected files' doc
+  comments, which are what BM25 matches on: §8's "the bench is ours" risk again.
+- `refs/marola/routing-bundle-large`, `route fetch --meaning` and the CI job. Nothing ships, so
+  none was built.
+- Git's pack size with deltas (only zlib was measured), and the MB versus MiB reading of §5.7's
+  30 MB.
+- Latency on any other machine, on macOS, or on Python 3.12 (the devkit's ruff target), and with
+  `route`'s `git show` read in the loop.
+- The node-text heuristics beyond spot checks. One example: a Scala file node takes the file's
+  first comment, which can belong to the first class in the file.
