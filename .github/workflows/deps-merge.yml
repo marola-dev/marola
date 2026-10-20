@@ -25,10 +25,10 @@ jobs:
       REPOS: marola-ml
     steps:
       # A clone, not actions/checkout: bump-consumers moves this `-b v…` pin with the others.
-      - run: git -c advice.detachedHead=false clone -q --depth 1 -b v0.19.0 https://github.com/marola-dev/marola-devkit "$RUNNER_TEMP/devkit"
+      - run: git -c advice.detachedHead=false clone -q --depth 1 -b v0.20.1 https://github.com/marola-dev/marola-devkit "$RUNNER_TEMP/devkit"
 
       # No permission-workflows: GitHub then refuses a merge that touches .github/workflows/.
-      - uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.19.0
+      - uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.20.1
         id: app
         with:
           app-id: ${{ vars.MERGE_BOT_APP_ID }}
