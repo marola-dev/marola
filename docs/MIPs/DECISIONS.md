@@ -442,18 +442,18 @@ this file; `route why "<words>"` ranks these rows.
 | [MIP-0084](MIP-0084-zero-setup-routing.md) | 9 | Implemented | alternative | graphify's MCP server for cloud sessions (rejected): plugins and their MCP servers do not load there |
 | [MIP-0084](MIP-0084-zero-setup-routing.md) | 11 | Implemented | decided | Decided 2026-10-10: either answer is fine. |
 | [MIP-0084](MIP-0084-zero-setup-routing.md) | 11 | Implemented | decided | Decided 2026-10-10: nice to have, not a blocker: the umbrella is the workspace most sessions start in. |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 1 | Partially implemented | summary | MIP-0084 gives every session a bundle and a `route` tool, holding only the code graph and the wiring. |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 5.4 | Partially implemented | decided | Decided 2026-10-20: no committed `DOC-CODE.md`, since committing it meant `pointer-sync.sh` building the code graph on every pointer move, a `--check` against a bundle graph already behind the pointers, and one more file merged unread (§8). |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 5.7 | Partially implemented | decided | Decided 2026-10-20: BM25 ships, inside the bundle; no embedding (the [meaning spike](MIP-0085-routing-index-family.md#meaning-spike-task-7-2026-10-20)). |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Partially implemented | alternative | Do nothing (rejected): `route` answers symbols and wiring |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Partially implemented | alternative | graphify's Markdown pass for doc↔code (rejected): tried |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Partially implemented | alternative | graphify's LLM pass (rejected): about 0.6–0.7M input tokens per run |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Partially implemented | alternative | Ollama embeddings (rejected): a daemon and a ~300 MB pull per machine |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Partially implemented | alternative | A full embedding model through ONNX Runtime (rejected): better vectors, but a large native dependency on every machine that queries |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Partially implemented | alternative | mkdocs' search index (already built for docs.marola.dev) (rejected): full-text over docs only |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Partially implemented | alternative | One combined graph (rejected): docs in the code graph was exactly what MIP-0076's revision undid |
-| [MIP-0085](MIP-0085-routing-index-family.md) | 11 | Partially implemented | decided | Decided 2026-10-20: bundle only (§5.4), the maintainer's call in task 10, once committing it turned out to need a graph build in every pointer-sync run. |
-| [MIP-0085](MIP-0085-routing-index-family.md) | Meaning spike (task 7), 2026-10-20 | Partially implemented | decided | Decided 2026-10-20: BM25 ships as `route query --meaning`, and no embedding does. |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 1 | Implemented | summary | MIP-0084 gives every session a bundle and a `route` tool, holding only the code graph and the wiring. |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 5.4 | Implemented | decided | Decided 2026-10-20: no committed `DOC-CODE.md`, since committing it meant `pointer-sync.sh` building the code graph on every pointer move, a `--check` against a bundle graph already behind the pointers, and one more file merged unread (§8). |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 5.7 | Implemented | decided | Decided 2026-10-20: BM25 ships, inside the bundle; no embedding (the [meaning spike](MIP-0085-routing-index-family.md#meaning-spike-task-7-2026-10-20)). |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Implemented | alternative | Do nothing (rejected): `route` answers symbols and wiring |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Implemented | alternative | graphify's Markdown pass for doc↔code (rejected): tried |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Implemented | alternative | graphify's LLM pass (rejected): about 0.6–0.7M input tokens per run |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Implemented | alternative | Ollama embeddings (rejected): a daemon and a ~300 MB pull per machine |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Implemented | alternative | A full embedding model through ONNX Runtime (rejected): better vectors, but a large native dependency on every machine that queries |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Implemented | alternative | mkdocs' search index (already built for docs.marola.dev) (rejected): full-text over docs only |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 9 | Implemented | alternative | One combined graph (rejected): docs in the code graph was exactly what MIP-0076's revision undid |
+| [MIP-0085](MIP-0085-routing-index-family.md) | 11 | Implemented | decided | Decided 2026-10-20: bundle only (§5.4), the maintainer's call in task 10, once committing it turned out to need a graph build in every pointer-sync run. |
+| [MIP-0085](MIP-0085-routing-index-family.md) | Meaning spike (task 7), 2026-10-20 | Implemented | decided | Decided 2026-10-20: BM25 ships as `route query --meaning`, and no embedding does. |
 | [MIP-0086](MIP-0086-github-apps-for-automation.md) | 1 | Implemented | summary | Every GitHub write the org's automation makes moves to one of two org-owned GitHub Apps. |
 | [MIP-0086](MIP-0086-github-apps-for-automation.md) | 9 | Implemented | alternative | One App per need (#765's seven plus #740's) (rejected): smallest reach per key |
 | [MIP-0086](MIP-0086-github-apps-for-automation.md) | 9 | Implemented | alternative | Three Apps, `marola-bump` kept apart (rejected): the Workflows key would sit in marola-devkit only |

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Partially implemented (tasks 1–10 of 11 — #889 marola-dev/marola-devkit#185 marola-dev/marola-devkit#186 marola-dev/marola-devkit#187 marola-dev/marola-devkit#190 marola-dev/marola-devkit#188 #890 marola-dev/marola-devkit#192 marola-dev/marola-devkit#193 #903); Accepted 2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session |
+| **Status** | Implemented (2026-10-20, #783) — all 11 rows of [`MIP-0085.tasks.md`](./MIP-0085.tasks.md) done; on the bundle published from main@4148d45 the bench is 30/34 and §7's "Done means" holds ([live close](#live-close-task-11-2026-10-20)). Accepted 2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session. **Amended 2026-10-20 (#903, §5.4):** `DOC-CODE.md` is not committed; doc↔code lives in the bundle only |
 | **Author** | Bruno Guilhermo de Barros Valério |
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev-loop tooling, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
@@ -411,3 +411,25 @@ questions are too few for a one-question margin to mean much in either direction
   `route`'s `git show` read in the loop.
 - The node-text heuristics beyond spot checks. One example: a Scala file node takes the file's
   first comment, which can belong to the first class in the file.
+
+### Live close (task 11), 2026-10-20
+
+`route fetch`, then `route bench routing-bench.yaml`, in a fresh worktree with no Nix, against the
+bundle `bundle-publish` pushed from main@4148d45 (#903). The bundle holds `doc_code.json`,
+`decisions.json` and `meaning.json` beside MIP-0084's files; its `build.json` records the same
+score. MIP-0084's column is the same bench on main@2b78684's bundle, before this MIP's tasks (#889).
+
+| Type | MIP-0084 | Now |
+|---|---|---|
+| symbol | 6/6 | 6/6 |
+| wiring | 7/7 | 7/7 |
+| doc-code | 0/6 | 5/6 |
+| impact | 2/5 | 5/5 |
+| decision | 0/5 | 4/5 |
+| meaning | 2/5 | 3/5 |
+| total | 17/34 | 30/34 |
+
+Every type but meaning is at least 4 of 5 right first, and none is below its MIP-0084 score. Meaning
+follows §5.7's rule: BM25 beats the plain query, 3 against 2. `quality-other` passed with
+`decisions --check` on #903 and on its push to `main`. The misses: `route code MIP-0031` (18),
+`route why "a PAT for cross-repo automation"` (29), and two meaning questions (30, 34).
