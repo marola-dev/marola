@@ -2,12 +2,12 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session) |
+| **Status** | Partially implemented (tasks 1–10 of 11 — #889 marola-dev/marola-devkit#185 marola-dev/marola-devkit#186 marola-dev/marola-devkit#187 marola-dev/marola-devkit#190 marola-dev/marola-devkit#188 #890 marola-dev/marola-devkit#192 marola-dev/marola-devkit#193 #903); Accepted 2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session |
 | **Author** | Bruno Guilhermo de Barros Valério |
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev-loop tooling, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
 | **Related** | MIP-0084 (the bundle and `route` these plug into), MIP-0076 (the code graph and the wiring block; §5.2's revision dropped the Markdown pass), MIP-0080 (`skills.lock`) |
-| **Effort** | L — three stdlib generators, four `route` subcommands, a 30-question bench, two committed generated files with `--check` gates, and a time-boxed embedding spike |
+| **Effort** | L — three stdlib generators, four `route` subcommands, a 30-question bench, one committed generated file with a `--check` gate, and a time-boxed embedding spike |
 | **Gain** | `infra/dev-loop` — an agent can ask which MIP explains a file, what a change would break, and why something was decided, each in one bounded call instead of reading MIPs and trees |
 | **Effort vs Gain** | `do when MIP-0084 lands` — every index here is a file in MIP-0084's bundle and a subcommand of its `route` |
 | **Depends on** | MIP-0084: the `routing-bundle` branch, `route.py`, `routing-bench.yaml` and the bench gate. No Phase 1 gate, no paid resource; the embedding model is MIT, downloaded in CI only |
@@ -118,7 +118,7 @@ score for another's.
 explicit `contract` lines in `wiring.allow` for copies that drift on purpose. Emitted in
 `wiring.json` and as a fifth table in REPOS.md's block.
 
-### 5.4 Doc↔code (`route docs`, `route code`; committed `DOC-CODE.md`)
+### 5.4 Doc↔code (`route docs`, `route code`; bundle only)
 
 `doc_code.py` scans `docs/**/*.md` and every README in the umbrella and its submodules for
 backticked tokens. A token links when it equals a graph node's label (last segment, at least 4
@@ -127,11 +127,11 @@ characters) or a file's path or basename.
 - **Ambiguity** (33% today): a name defined in several files links only if the same paragraph names
   the repo or a path segment of exactly one candidate; otherwise it is kept as `ambiguous` with every
   candidate listed, never guessed.
-- **Committed**: `docs/2-Building-marola/DOC-CODE.md`, file level, grouped by MIP and page (doc →
-  files it names). `doc_code --check` gates it in `quality-other`. Code moves with pointer moves, so
-  `pointer-sync.sh` regenerates it in the pointer commit, as it does the wiring block, and
-  `pointer-sync-merge.yml`'s allow list grows by exactly this file.
-- **Bundle**: symbol-level edges, both directions, in `doc_code.json`.
+- **Bundle only**: symbol-level edges, both directions, in `doc_code.json`, built by the bundle job
+  from the graph it has just built. **Decided 2026-10-20:** no committed `DOC-CODE.md`, since
+  committing it meant `pointer-sync.sh` building the code graph on every pointer move, a `--check`
+  against a bundle graph already behind the pointers, and one more file merged unread (§8).
+  `doc-code --md` still writes the file-level table, grouped by MIP and page, for a local read.
 
 ### 5.5 Impact (`route impact X [--depth 2]`)
 
@@ -189,17 +189,17 @@ None. No code path in marola-app changes.
 - **The spike** (if an embedding ships): `query_vector_parity`, the pure-Python query vector within
   1e-5 cosine of model2vec's for 50 strings.
 - **Done means**: on the 30-question bench, every type at least 4 of 5 right first except meaning,
-  which follows §5.7's rule, and no type below its MIP-0084 score; `quality-other` green with both
-  `--check` gates; one pointer-sync PR merged automatically with a regenerated `DOC-CODE.md`.
+  which follows §5.7's rule, and no type below its MIP-0084 score; `quality-other` green with
+  `decisions --check`; the bundle published from `main` carries `doc_code.json`, `decisions.json`
+  and `meaning.json`.
 
 ## 8. Risks, limitations, and honest caveats
 
-- **Auto-merge grows.** Adding `DOC-CODE.md` to `pointer-sync-merge.yml`'s allow list means one more
-  file changes on `main` with no person reading it. If `doc_code.py` had a bug that emptied the file,
-  every pointer move would merge that loss, and agents in every repo would lose doc↔code answers at
-  once. The `--check` gate cannot catch it, because it compares against the same generator. So the
-  generator refuses to write a file under 50% of the previous one's rows, which fails the sync PR
-  and leaves it for a person.
+- **No auto-merge growth, and no table in the tree.** With `DOC-CODE.md` out of the commit (§5.4),
+  `pointer-sync-merge.yml`'s allow list is unchanged. An agent asks `route docs` or `route code`; a
+  person reading on GitHub has no doc↔code table, only `doc-code --md` run locally. A generator bug
+  that emptied `doc_code.json` would fail the bench's doc-code questions, and the per-type gate
+  (§5.1) would keep the previous bundle.
 - **Ambiguity is a third of the links.** The paragraph rule resolves some; the rest are listed, not
   guessed, so an agent sees two or three candidates instead of one wrong one.
 - **Impact is a lower bound**, and says so on every answer.
@@ -232,7 +232,8 @@ None. No code path in marola-app changes.
 
 - Should `DOC-CODE.md` be committed at all, given the auto-merge growth in §8? **Default:** yes, as
   agreed in design review on 2026-10-10, with the shrink guard; the maintainer may move it to the
-  bundle only.
+  bundle only. **Decided 2026-10-20:** bundle only (§5.4), the maintainer's call in task 10, once
+  committing it turned out to need a graph build in every pointer-sync run.
 - Should the bundle job also graph marola-devkit at its locked rev? **Default:** no; MIP-0076 scoped
   the graph to the umbrella's tree, and the devkit's tools are documented on its own docs page.
 - Who writes the 22 new bench questions? **Default:** the agent drafts them from real sessions and

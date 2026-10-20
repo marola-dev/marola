@@ -213,16 +213,20 @@ jobs:
           retention-days: 7
           if-no-files-found: error
       # On a PR too, so a graphify or devkit bump that answers worse fails here, before main.
-      - name: wiring, route bench and the bundle's files
+      - name: wiring, the indexes, route bench and the bundle's files
         env:
           XDG_CACHE_HOME: ${{ runner.temp }}/graph-cache
           GRAPH_DIR: ${{ runner.temp }}/graph-cache/marola-graph/${{ github.event.repository.name }}
         run: |
           nix develop .#lint --command wiring --json > "$GRAPH_DIR/wiring.json"
+          # MIP-0085's indexes live only in the bundle (§5.4): DOC-CODE.md is not committed.
+          nix develop .#lint --command doc-code --root . --graph "$GRAPH_DIR/graph.json" --json "$GRAPH_DIR/doc_code.json"
+          nix develop .#lint --command decisions --mips docs/MIPs --json "$GRAPH_DIR/decisions.json"
+          nix develop .#lint --command meaning-text --root . --graph "$GRAPH_DIR/graph.json" --out "$GRAPH_DIR/meaning.json"
           # route reads the wiring from a bundle ref, never a local graph: stage this run's files as
           # that ref, so the bench scores what would be published.
           stage="$RUNNER_TEMP/stage"
-          mkdir -p "$stage" && cp "$GRAPH_DIR"/{graph,build,wiring}.json "$stage"/
+          mkdir -p "$stage" && cp "$GRAPH_DIR"/{graph,build,wiring,doc_code,decisions,meaning}.json "$stage"/
           git -C "$stage" init -q && git -C "$stage" add -A
           git -C "$stage" -c user.name=ci -c user.email=ci@localhost commit -qm stage
           git fetch -q "$stage" +HEAD:refs/marola/routing-bundle
@@ -324,8 +328,8 @@ jobs:
   # What needs this repo's own flake: the lock is current, the justfile parses, no workflow here
   # is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's),
   # only allowlisted workflows name the merge bot's key (merge-key-check),
-  # docs-lint passes at the devkit flake.lock pins (MIP-0074 §7), and REPOS.md's wiring block matches
-  # every pinned repo (MIP-0076 §5.4).
+  # docs-lint passes at the devkit flake.lock pins (MIP-0074 §7), REPOS.md's wiring block matches
+  # every pinned repo (MIP-0076 §5.4), and DECISIONS.md matches the MIPs (MIP-0085 §5.6).
   quality-other:
     needs: changes
     if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.wiring == 'true'
@@ -357,7 +361,7 @@ jobs:
       - name: lint shell tools from nix develop .#lint
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which just workflow-runners docs-lint wiring merge-key-check \
+          nix develop .#lint --command which just workflow-runners docs-lint wiring decisions merge-key-check \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
       - name: just --list (the justfile parses)
@@ -371,6 +375,8 @@ jobs:
       # No .devkit link outside the default shell: wiring fetches each devkit ref it reads from GitHub.
       - name: wiring --check — REPOS.md's block is current, no orphan dispatch or unread artifact
         run: wiring --check docs/2-Building-marola/REPOS.md
+      - name: decisions --check — DECISIONS.md is current with the MIPs (MIP-0085 §5.6)
+        run: decisions --mips docs/MIPs --check
 
   # The one check ci-rule requires in every marola repo (marola-dev/marola#813); it must report on
   # every run, so it needs every other job and passes on skipped ones.

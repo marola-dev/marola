@@ -51,13 +51,13 @@ coverage-python:
 quality: quality-other
 
 # Ruff, merge-key-check, the script self-tests, actionlint, hadolint, docs-lint, `wiring --check` (needs the
-# submodules checked out). A missing tool fails, never skips.
+# submodules checked out), `decisions --check`. A missing tool fails, never skips.
 # The devkit's own scripts are self-tested in its CI; here only marola's run.
 quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
     [ -e .devkit/devkit.just ] || echo "quality-other: no .devkit here — the devkit's recipes (pr, stack, issue-*) are missing; run 'nix develop', or 'just devkit-link'" >&2
-    for tool in ruff actionlint hadolint agents-check workflow-runners docs-lint wiring merge-key-check; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
+    for tool in ruff actionlint hadolint agents-check workflow-runners docs-lint wiring decisions merge-key-check; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
     # Not `just --fmt --check`: its --unstable style differed between this machine and the CI
     # runner on the same file and version. --list only checks that the file parses.
     just --list >/dev/null
@@ -90,6 +90,7 @@ quality-other:
     scripts/agents_repos_check.sh --self-test
     scripts/agents_repos_check.sh
     wiring --check docs/2-Building-marola/REPOS.md
+    decisions --mips docs/MIPs --check
     workflow-runners
     python3 scripts/mip_graph.py --check
     python3 scripts/citation.py --check

@@ -19,9 +19,18 @@ every clone, run it from inside the umbrella's clone.
   files it names. Ask with the code's own words, a class, file or function name ("Telegram Main",
   "Recommender"), not a description: the graph matches symbol names, not meanings. `route explain
   <node>` lists a node's neighbours, `route path <a> <b>` the shortest path between two.
-- **A concept or behaviour ("where is the safety veto applied?"), or a known keyword.** `git grep`
-  the concept word first, with `--recurse-submodules` in the umbrella; query the graph with the
-  identifiers it turns up.
+- **Which doc explains this code, or which code does a MIP touch?** `route docs <symbol|file>`
+  lists the docs that name it, `route code <MIP-NNNN|doc>` the files a MIP or a doc names. A name
+  defined in several files is shown as `ambiguous` with its candidates, not guessed.
+- **What would changing X reach?** `route impact <symbol|file>` lists what calls it, nearest file
+  first, then, for a file the wiring knows, its copies in other repos with their readers, or an
+  artifact's readers and pins. It is a lower bound: calls are resolved by name only.
+- **Why was something decided, or rejected?** `route why "<words>"` ranks the MIPs' summaries,
+  rejected alternatives and `**Decided …**` lines; read the MIP section it names.
+- **A concept or behaviour ("where is the safety veto applied?"), or a known keyword.**
+  `route query --meaning "<question>"` ranks code by the words in its names, docstrings and
+  leading comments, so it takes plain words; or `git grep` the concept word, with
+  `--recurse-submodules` in the umbrella. Then query the graph with the identifiers either turns up.
 - The bundle reflects `main`, not your branch. A local `graph build` whose `HEAD` matches wins over
   it, and `route status` says which one answers.
 - Never read `graph.json`, `GRAPH_REPORT.md` or a bundle file whole.

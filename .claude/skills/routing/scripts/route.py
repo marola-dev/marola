@@ -3,8 +3,12 @@
 tables the umbrella's CI publishes on its `routing-bundle` branch (MIP-0084 §5.2).
 
 route query "<identifiers>" [--budget 400]   label-matched start nodes, a breadth-first walk
+route query --meaning "<question>"           nodes ranked by BM25 over their text (MIP-0085 §5.7)
 route explain <node>  |  route path <a> <b>  a node's neighbours / the shortest path
 route wiring <term>                          the wiring rows that mention <term>
+route impact <node|file> [--depth 2]         what calls it, by file; its contract copies and readers
+route why "<words>"                          the MIPs' decision rows, ranked by BM25 (MIP-0085 §5.6)
+route docs <symbol|path>  |  route code <MIP-NNNN|doc>   the docs naming it / the code it names
 route fetch                                  the bundle into refs/marola/routing-bundle
 route status [--line]                        the bundle's commit and age, and which graph answers
 route bench [file]                           right-first per question (JSON, a YAML subset)
@@ -36,9 +40,10 @@ EXACT, PREFIX, SUBSTR, SOURCE = 1000.0, 100.0, 1.0, 0.5
 STOP = frozenset(
     "how what why when where which who does did is are was were be been can could should would "
     "will has have had the and but not for from with into that this these those there here its "
-    "their them they about any all some work works working a an of in on to by it do "
+    "their them they about any all some work works working a an of in on to by it do entry point "
     "qual quais quando onde como por para uma não são tem".split()
 )
+ENTRY_WORDS = frozenset({"entry", "entrypoint", "start", "starts", "main"})
 CTRL = re.compile(r"[\x00-\x1f\x7f]")
 
 
@@ -67,9 +72,11 @@ def git(*args: str, cwd: str | None = None, timeout: float = 30) -> str | None:
 
 
 def tokens(text: str) -> list[str]:
+    """Words, with identifiers split on case: `OpenMeteoClient` → open, meteo, client (§5.2)."""
     s = unicodedata.normalize("NFKD", str(text))
-    s = "".join(c for c in s if not unicodedata.combining(c)).lower()
-    return re.findall(r"[^\W_]+", s)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    s = re.sub(r"([a-z0-9])([A-Z])|([A-Z])([A-Z][a-z])", r"\1\3 \2\4", s)
+    return re.findall(r"[^\W_]+", s.lower())
 
 
 def norm(label: str) -> str:
@@ -216,11 +223,13 @@ class Graph:
             return [], {}
         joined = " ".join(terms)
         jw = max(self.idf(t) for t in terms)
+        wants_entry = bool(ENTRY_WORDS & set(raw))
         scored, best = [], {}
         for nid, d in self.nodes.items():
             nl = norm(d.get("label") or "")
             bare = nl.rstrip("()")
-            lt = " ".join(tokens(d.get("label") or ""))
+            ltoks = tokens(d.get("label") or "")
+            lt = " ".join(ltoks)
             src = str(d.get("source_file") or "").lower()
             score = 0.0
             if joined in (nl, bare, lt, nid.lower()):
@@ -233,7 +242,7 @@ class Graph:
                 tier = sub = 0.0
                 if t in (nl, bare):
                     tier = EXACT * w
-                elif nl.startswith(t) or bare.startswith(t):
+                elif nl.startswith(t) or bare.startswith(t) or t in ltoks:
                     tier = PREFIX * w
                 elif t in nl:
                     sub = SUBSTR * w
@@ -253,6 +262,9 @@ class Graph:
                         best[t] = (key, nid)
             if tiered:
                 score += tiered * (matched / len(terms)) ** 2
+            # Tagged at build (graph.sh); only among nodes the question already matched.
+            if score > 0 and wants_entry and d.get("entry"):
+                score += PREFIX * 10 * jw
             if score > 0:
                 scored.append((score, nid))
         scored.sort(key=lambda s: (-s[0], len(self.lab(s[1])), s[1]))
@@ -405,12 +417,355 @@ def wiring_rows(w: dict) -> list[str]:
         rows.append(f"deploy {wf}  → {site}")
     for repo, pins in sorted(w.get("devkit", {}).items()):
         rows.append(f"marola-devkit pin in {repo}  {cell(pins)}")
+    for c, v in sorted(w.get("contracts", {}).items()):
+        rows.append(f"contract {c}  copied to {cell(v.get('copies'))} · {v.get('note', '')}")
     return [clean(r) for r in rows]
 
 
 def match_rows(w: dict, term: str) -> list[str]:
     words = [t.lower() for t in term.split()]
     return [r for r in wiring_rows(w) if all(x in r.lower() for x in words)]
+
+
+# ---------------------------------------------------------------- impact (MIP-0085 §5.5)
+
+# `references` too: graphify ≥0.9.74 keeps one edge per pair, often the type use over the call.
+IMPACT_RELS = frozenset({"calls", "imports", "indirect_call", "references"})
+LOWER_BOUND = "(lower bound: name-resolved calls only)"
+FILEISH = re.compile(r"[/.][A-Za-z0-9_-]+$")
+
+
+def impact_row(kind: str, value: str) -> str:
+    return clean(f"  {kind:<12}  {value}")
+
+
+def cell_path(e: str) -> tuple[str, str]:
+    """A wiring cell `marola-ml `scripts/x.sh` (…)` → (repo, path)."""
+    m = re.match(r"(\S+) `([^`]+)`", e)
+    return (m[1], m[2]) if m else (e.split(" ", 1)[0], "")
+
+
+def names_entry(name: str, e: str) -> bool:
+    repo, path = cell_path(e)
+    full = f"{repo}/{path}"
+    # A workflow cell says `ci.yml`, the file is .github/workflows/ci.yml.
+    return bool(path) and (
+        name == full
+        or full.endswith("/" + name)
+        or (name.startswith(repo + "/") and name.endswith("/" + path))
+    )
+
+
+def reverse_walk(g: Graph, start: list[str], depth: int) -> dict[str, int]:
+    callers: dict[str, list[str]] = {}
+    for e in g.edges.values():
+        if e.get("relation") in IMPACT_RELS:
+            callers.setdefault(e["target"], []).append(e["source"])
+    dist = {n: 0 for n in start}
+    frontier = list(start)
+    for hop in range(1, depth + 1):
+        nxt = []
+        for n in frontier:
+            for m in callers.get(n, []):
+                if m not in dist:
+                    dist[m] = hop
+                    nxt.append(m)
+        frontier = nxt
+    return dist
+
+
+def code_impact(g: Graph, start: list[str], depth: int) -> list[str]:
+    own = {g.nodes[n].get("source_file") for n in start}
+    files: dict[str, list[tuple[int, str]]] = {}
+    for n, d in reverse_walk(g, start, depth).items():
+        if d:
+            files.setdefault(str(g.nodes[n].get("source_file") or "?"), []).append((d, g.lab(n)))
+    if not files:
+        return ["(nothing reaches it by calls, imports, indirect_call or references)"]
+    out = []
+    for f, hits in sorted(
+        files.items(), key=lambda x: (min(x[1])[0], x[0] in own, -len(x[1]), x[0])
+    ):
+        labs = [lab for _, lab in sorted(hits)]
+        more = f" +{len(labs) - 4} more" if len(labs) > 4 else ""
+        out.append(clean(f"  {min(hits)[0]}  {f}  {', '.join(labs[:4])}{more}"))
+    return out
+
+
+def wiring_impact(w: dict, names: list[str]) -> list[str]:
+    out, arts = [], w.get("artifacts") or {}
+    for c, v in sorted((w.get("contracts") or {}).items()):
+        copies = v.get("copies") or []
+        if not any(p == n or p.endswith("/" + n) for p in [c, *copies] for n in names):
+            continue
+        out.append(clean(f"contract  {c}"))
+        out += [impact_row("copied to", p) for p in copies]
+        # A copy reaches its repo through an artifact of the canonical's repo that the copy's repo
+        # reads; the wiring cannot say which reader takes this file, so one named after it leads.
+        home = c.split("/", 1)[0]
+        there = {p.split("/", 1)[0] for p in copies} - {home}
+        stem = set(tokens(Path(c).stem))
+        readers, pins = [], []
+        for key, a in sorted(arts.items()):
+            if home not in (a.get("repos") or []):
+                continue
+            readers += [(e, key) for e in a.get("read") or [] if cell_path(e)[0] in there]
+            pins += [e for e in a.get("pin") or [] if cell_path(e)[0] in there]
+        readers.sort(key=lambda r: -len(stem & set(tokens(r[0]))))
+        out += [impact_row("read by", f"{e} (wiring: reads {key})") for e, key in readers]
+        out += [impact_row("pinned in", e) for e in pins]
+    for key, a in sorted(arts.items()):
+        hit = [
+            e
+            for e in (a.get("pin") or []) + (a.get("pub") or [])
+            if any(names_entry(n, e) for n in names)
+        ]
+        if not hit:
+            continue
+        out.append(clean(f"artifact  {key}"))
+        out += [impact_row("read by", e) for e in a.get("read") or []]
+        out += [impact_row("pinned in", e) for e in a.get("pin") or []]
+        out += [impact_row("published by", e) for e in a.get("pub") or []]
+        out += [impact_row("bumped by", b) for e in hit for b in (w.get("bumps") or {}).get(e, [])]
+    return out
+
+
+def render_impact(g: Graph | None, w: dict, x: str, depth: int = 2) -> str:
+    """Reverse calls, imports, indirect_call and references from a node or every node of a file, grouped by file,
+    then the wiring: a contract's copies and readers, an artifact's readers and pins."""
+    out, start, names = [], [], [x]
+    if g:
+        files = sorted(
+            {
+                str(sf)
+                for d in g.nodes.values()
+                if (sf := d.get("source_file")) and (sf == x or str(sf).endswith("/" + x))
+            }
+        )
+        if files:
+            start = [n for n, d in g.nodes.items() if d.get("source_file") in files]
+            names = files
+            out.append(clean(f"impact of {', '.join(files)} · {len(start)} nodes · depth {depth}"))
+        elif not FILEISH.search(x) and not wiring_impact(w, names) and (n := g.find(x)):
+            start = [n]
+            names = [str(g.nodes[n].get("source_file") or x)]
+            sf = g.nodes[n].get("source_file", "")
+            out.append(clean(f"impact of {g.lab(n)}  {sf} · depth {depth}"))
+    if start:
+        out += code_impact(g, start, depth)
+    out += wiring_impact(w, names)
+    if not out:
+        out.append(clean(f"no graph node or wiring row names {x}"))
+    return "\n".join([*out, LOWER_BOUND])
+
+
+# ---------------------------------------------------------------- decisions (MIP-0085 §5.6)
+
+
+def bm25(docs: list[list[str]], query: list[str], k1: float = 1.5, b: float = 0.75) -> list[float]:
+    n = len(docs)
+    avg = sum(map(len, docs)) / n if n else 1.0
+    df: dict[str, int] = {}
+    for d in docs:
+        for t in set(d):
+            df[t] = df.get(t, 0) + 1
+    scores = []
+    for d in docs:
+        tf: dict[str, int] = {}
+        for t in d:
+            tf[t] = tf.get(t, 0) + 1
+        s = 0.0
+        for t in set(query) & set(tf):
+            idf = math.log(1 + (n - df[t] + 0.5) / (df[t] + 0.5))
+            s += idf * tf[t] * (k1 + 1) / (tf[t] + k1 * (1 - b + b * len(d) / (avg or 1.0)))
+        scores.append(s)
+    return scores
+
+
+def why_lines(data: dict | None, question: str, k: int = 5) -> list[str]:
+    rows = data.get("rows") if isinstance(data, dict) else None
+    rows = [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
+    raw = tokens(question)
+    q = [t for t in raw if t not in STOP] or raw
+    docs = [tokens(f"{r.get('mip', '')} {r.get('text', '')}") for r in rows]
+    ranked = sorted((-s, i) for i, s in enumerate(bm25(docs, q)) if s > 0)
+    return [
+        clean(
+            f"{r.get('mip', '?')} §{r.get('section', '?')}  {r.get('text', '')} [{r.get('status', '?')}]"
+        )
+        for r in (rows[i] for _, i in ranked[:k])
+    ]
+
+
+# ---------------------------------------------------------------- doc↔code (MIP-0085 §5.4)
+
+DOC_CODE = "doc_code.json"
+DOC_CODE_MAX = 20
+_doc_code: dict[int, dict] = {}
+
+
+def bare(s: str) -> str:
+    return str(s).strip().strip("`").lstrip(".").removesuffix("()")
+
+
+def names_it(link: dict, file: str, want: str) -> bool:
+    base = file.rsplit("/", 1)[-1]
+    return (
+        want in (file, base, base.rsplit(".", 1)[0], bare(link.get("token", "")))
+        or file.endswith("/" + want)
+        or (link.get("symbol") is not None and bare(link["symbol"]) == bare(want))
+    )
+
+
+def ranked(groups: dict[str, list[dict]], key=None) -> list[str]:
+    return sorted(groups, key=key or (lambda k: (-len(groups[k]), k)))
+
+
+def uniq(xs) -> list[str]:
+    return list(dict.fromkeys(x for x in xs if x))
+
+
+def more(lines: list[str], n: int, what: str) -> list[str]:
+    return lines if n <= DOC_CODE_MAX else [*lines, f"… and {n - DOC_CODE_MAX} more {what}"]
+
+
+def docs_lines(data: dict, arg: str) -> list[str]:
+    """`route docs`: the docs that name a symbol or a file, the most mentions first and, among
+    equals, a doc in the file's own repo."""
+    want = arg.strip().strip("`").removeprefix("./")
+    subs = set(data.get("repos", []))
+
+    def repo(p: str) -> str:
+        head = p.split("/", 1)[0]
+        return head if head in subs else ""
+
+    def same(tok: str) -> bool:
+        tail = bare(want).rsplit("/", 1)[-1]
+        return bare(tok) == bare(want) or any(w.rsplit("/", 1)[-1] == tail for w in tok.split())
+
+    hits: dict[str, list[dict]] = {}
+    amb: dict[str, list[dict]] = {}
+    for doc, d in data.get("docs", {}).items():
+        for x in d.get("links", []):
+            if names_it(x, str(x.get("file", "")), want):
+                hits.setdefault(doc, []).append(x)
+        for x in d.get("ambiguous", []):
+            if same(str(x.get("token", ""))):
+                amb.setdefault(doc, []).append(x)
+
+    def own(doc: str) -> bool:
+        return any(repo(doc) == repo(str(x.get("file", ""))) for x in hits[doc])
+
+    out = []
+    for doc in ranked(hits, lambda k: (-len(hits[k]), not own(k), k))[:DOC_CODE_MAX]:
+        secs = " ".join(uniq(x.get("section") for x in hits[doc])[:3])
+        toks = ", ".join(f"`{t}`" for t in uniq(x.get("token") for x in hits[doc])[:3])
+        out.append(clean(f"{doc} {secs}  {toks}" if secs else f"{doc}  {toks}"))
+    out = more(out, len(hits), "docs")
+    for doc in ranked(amb)[:DOC_CODE_MAX]:
+        x = amb[doc][0]
+        cands = ", ".join(x.get("candidates", []))
+        out.append(clean(f"{doc} {x.get('section', '')}  `{x.get('token')}` ambiguous: {cands}"))
+    return out or [f"no doc names {arg!r}"]
+
+
+def code_lines(data: dict, arg: str) -> list[str]:
+    """`route code`: the files a MIP (all its docs) or one doc names, by tf·idf, so a file every
+    doc names (`AppConfig`, `Main`) ranks below the ones this doc is about."""
+    want = arg.strip().strip("`").removeprefix("./")
+    alld = data.get("docs", {})
+    docs = [
+        d
+        for doc, d in alld.items()
+        if (d.get("mip") or "").upper() == want.upper()
+        or want in (doc, doc.rsplit("/", 1)[-1])
+        or doc.endswith("/" + want)
+    ]
+    if not docs:
+        return [f"no doc matches {arg!r}"]
+    files: dict[str, list[dict]] = {}
+    for d in docs:
+        for x in d.get("links", []):
+            files.setdefault(str(x.get("file", "")), []).append(x)
+    code = data.get("code", {})
+
+    def weight(f: str) -> float:
+        df = len({x.get("doc") for x in code.get(f, [])}) or 1
+        return (1 + math.log(len(files[f]))) * math.log(1 + len(alld) / df)
+
+    out = []
+    for f in ranked(files, lambda k: (-weight(k), k))[:DOC_CODE_MAX]:
+        toks = ", ".join(f"`{t}`" for t in uniq(x.get("token") for x in files[f])[:3])
+        out.append(clean(f"{f} · {toks}"))
+    out = more(out, len(files), "files")
+    amb: dict[tuple, str] = {}
+    for d in docs:
+        for x in d.get("ambiguous", []):
+            cands = tuple(x.get("candidates", []))
+            amb.setdefault(cands, f"ambiguous `{x.get('token')}`: {', '.join(cands)}")
+    out += [clean(a) for a in list(amb.values())[:DOC_CODE_MAX]]
+    return out or [f"{arg} names no code file"]
+
+
+def doc_code_answer(src: Source | None, verb: str, arg: str) -> list[str]:
+    if src is None:
+        return []
+    if id(src) not in _doc_code:
+        _doc_code[id(src)] = src.read(DOC_CODE) or {}
+    data = _doc_code[id(src)]
+    return (docs_lines if verb == "docs" else code_lines)(data, arg) if data else []
+
+
+# ---------------------------------------------------------------- meaning (MIP-0085 §5.7)
+
+MEANING_K1 = 1.2  # the one setting the meaning spike ran; nothing was tuned (MIP-0085 Appendix)
+NO_MEANING = "the bundle has no meaning.json yet; ask `route query` without --meaning, with the code's identifiers, or git grep"
+
+
+def meaning_index(*srcs: Source | None) -> tuple[Source, dict, Graph | None] | None:
+    """The first source with a meaning.json, and that source's graph: the ids are that graph's."""
+    seen = set()
+    for s in srcs:
+        if s is None or (s.kind, s.where) in seen:
+            continue
+        seen.add((s.kind, s.where))
+        data = s.read("meaning.json")
+        if isinstance(data, dict) and isinstance(data.get("nodes"), dict):
+            return s, data, load_graph(s)
+    return None
+
+
+def meaning_lines(data: dict, g: Graph | None, question: str, k: int = 10) -> list[str]:
+    """The nodes whose text (meaning_text.py's label, docstring or comment, and path) ranks top by
+    BM25, as NODE lines."""
+    ids = list(data["nodes"])
+    raw = tokens(question)
+    q = [t for t in raw if t not in STOP] or raw
+    docs = [tokens(data["nodes"][n]) for n in ids]
+    ranked = sorted((-s, i) for i, s in enumerate(bm25(docs, q, k1=MEANING_K1)) if s > 0)
+    return [
+        g.node_line(ids[i]) if g and ids[i] in g.nodes else clean(f"NODE {ids[i]}")
+        for _, i in ranked[:k]
+    ]
+
+
+def cmd_meaning(cwd: str | None, question: str) -> int:
+    gs, ws = pick(cwd), pick(cwd, graph=False)
+    if gs is None and ws is None:
+        print(NO_BUNDLE)
+        return 0
+    found = meaning_index(gs, ws)
+    print((found[0] if found else gs or ws).label())
+    if found is None:
+        print(NO_MEANING)
+        return 0
+    lines = meaning_lines(found[1], found[2], question)
+    print(
+        "\n".join(lines)
+        if lines
+        else f"no node's text matches {question!r}; try `route query` without --meaning, or git grep"
+    )
+    return 0
 
 
 # ---------------------------------------------------------------- commands
@@ -477,9 +832,25 @@ def bench(
     g = load_graph(src_graph) if src_graph else None
     w = (src_wiring.read("wiring.json") if src_wiring else None) or {}
     right, lines = 0, []
-    for q in qs.get("questions", qs) if isinstance(qs, dict) else qs:
+    items = qs.get("questions", qs) if isinstance(qs, dict) else qs
+    meaning = any(q.get("via") == "meaning" for q in items) and meaning_index(src_graph, src_wiring)
+    for q in items:
         if q.get("via") == "wiring":
             got = "\n".join(match_rows(w, q["ask"]))
+        elif q.get("via") == "impact":
+            # Right first: an expected path in the first three rows under impact's headers (a file
+            # reached, a copy, a reader, a pin), never in the header naming the asked-about X.
+            got = render_impact(g, w, q["ask"])
+            got = "\n".join([x for x in got.splitlines() if x.startswith("  ")][:3])
+        elif q.get("via") == "why":
+            # Right first: an expected MIP in the first three answer lines.
+            dec = src_wiring.read("decisions.json") if src_wiring else None
+            got = "\n".join(why_lines(dec, q["ask"])[:3])
+        elif q.get("via") in ("docs", "code"):
+            got = "\n".join(doc_code_answer(src_wiring, q["via"], q["ask"])[:3])
+        elif q.get("via") == "meaning" and meaning:
+            # Right first as for a query; with no meaning.json, the query below answers it.
+            got = "\n".join(meaning_lines(meaning[1], meaning[2], q["ask"])[:3])
         else:
             got = render_query(g, q["ask"], 400) if g else ""
             # Right first: an expected file in the first three NODE lines' src=.
@@ -560,16 +931,79 @@ def main(argv: list[str]) -> int:
             rows = match_rows(data, " ".join(rest))
             print("\n".join(rows) if rows else f"no wiring row mentions {' '.join(rest)!r}")
             return 0
+        if verb == "impact":
+            depth = 2
+            if "--depth" in rest:
+                i = rest.index("--depth")
+                if i + 1 >= len(rest) or not rest[i + 1].isdigit():
+                    print("usage: route impact <node|file> [--depth N]")
+                    return 2
+                depth = int(rest[i + 1])
+                rest = rest[:i] + rest[i + 2 :]
+            if not rest:
+                print("usage: route impact <node|file> [--depth N]")
+                return 2
+            gs, ws = pick(cwd), pick(cwd, graph=False)
+            if gs is None and ws is None:
+                print(NO_BUNDLE)
+                return 0
+            g = load_graph(gs) if gs else None
+            w = (ws.read("wiring.json") if ws else None) or {}
+            label = (gs or ws).label()
+            if gs and ws and gs.kind != ws.kind:
+                label += f"; the wiring {ws.label()}"
+            print(label)
+            print(render_impact(g, w, " ".join(rest), depth))
+            return 0
+        if verb == "why":
+            if not rest:
+                print('usage: route why "<words>"')
+                return 2
+            src = pick(cwd, graph=False)
+            if src is None:
+                print(NO_BUNDLE)
+                return 0
+            data = src.read("decisions.json")
+            print(src.label())
+            if not data:
+                print(
+                    "the bundle has no decisions.json yet; read docs/MIPs/DECISIONS.md or git grep"
+                )
+                return 0
+            lines = why_lines(data, " ".join(rest))
+            print("\n".join(lines) if lines else f"no decision row matches {' '.join(rest)!r}")
+            return 0
+        if verb in ("docs", "code"):
+            if not rest:
+                print(
+                    f"usage: route {verb} "
+                    + ("<symbol|path>" if verb == "docs" else "<MIP-NNNN|doc>")
+                )
+                return 2
+            src = pick(cwd, graph=False)
+            if src is None:
+                print(NO_BUNDLE)
+                return 0
+            if not src.read(DOC_CODE):
+                print(f"route: the bundle has no {DOC_CODE} yet (MIP-0085 §5.4); use `git grep`")
+                return 0
+            print(src.label())
+            print("\n".join(doc_code_answer(src, verb, " ".join(rest))))
+            return 0
         if verb in ("query", "explain", "path"):
             budget = 400
             if "--budget" in rest:
                 i = rest.index("--budget")
                 budget = int(rest[i + 1])
                 rest = rest[:i] + rest[i + 2 :]
+            meaning = verb == "query" and "--meaning" in rest
+            rest = [x for x in rest if not meaning or x != "--meaning"]
             need = 2 if verb == "path" else 1
             if len(rest) < need:
                 print(f"usage: route {verb} " + ("<a> <b>" if verb == "path" else "<identifiers>"))
                 return 2
+            if meaning:
+                return cmd_meaning(cwd, " ".join(rest))
             src = pick(cwd)
             g = load_graph(src) if src else None
             if g is None:

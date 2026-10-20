@@ -8,7 +8,8 @@
 
 DIR is `graph build`'s output with `wiring.json` beside it. OUT gets graph.json, wiring.json,
 build.json (DIR's, plus the graphify version and the bench score, in total and per question type),
-manifest.json and routing-digest.md. Exit 1, writing nothing, when any type scores below --previous's
+manifest.json, routing-digest.md, and whichever of DIR's doc_code.json, decisions.json and
+meaning.json exist. Exit 1, writing nothing, when any type scores below --previous's
 (MIP-0085 §5.1), or the total does when --previous has no types: the job then keeps the last bundle.
 """
 
@@ -26,6 +27,8 @@ MAX_BYTES = 20 * 2**20  # route refuses a bundle file over this
 WARN_BYTES = 10 * 2**20  # §5.3: past this the large files move out of refs/heads/
 DIGEST_CHARS = 100_000  # §5.3's 25k-token cap, at about 4 characters a token
 START, END = "<!-- wiring:start -->", "<!-- wiring:end -->"
+# MIP-0085's indexes: route says a missing one is missing, so each is published only when built.
+INDEXES = ("doc_code.json", "decisions.json", "meaning.json")
 
 
 def scores(bench: str, questions: Path) -> tuple[int, int, dict[str, dict[str, int]]]:
@@ -100,7 +103,8 @@ def assemble(args) -> int:
         if lower := drops(bench, prev):
             print(f"routing_bundle: bench below the published one ({', '.join(lower)}); keeping it")
             return 1
-    for name in ("graph.json", "wiring.json", "build.json"):
+    indexes = [n for n in INDEXES if (src / n).is_file()]
+    for name in ("graph.json", "wiring.json", "build.json", *indexes):
         p = src / name
         if not p.is_file():
             raise SystemExit(f"routing_bundle: {p} is missing")
@@ -113,8 +117,8 @@ def assemble(args) -> int:
                 f"::warning::{name} is over {WARN_BYTES // 2**20} MB: time to move it out of refs/heads/ (§5.3)"
             )
     out.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(src / "graph.json", out / "graph.json")
-    shutil.copyfile(src / "wiring.json", out / "wiring.json")
+    for name in ("graph.json", "wiring.json", *indexes):
+        shutil.copyfile(src / name, out / name)
     build = json.loads((src / "build.json").read_text())
     build |= {"graphify": args.graphify, "bench": bench}
     (out / "build.json").write_text(json.dumps(build, indent=1) + "\n")
@@ -255,6 +259,12 @@ def self_test() -> None:
         )
         m = json.loads((out / "manifest.json").read_text())
         assert "manifest.json" not in m["files"], f"manifest_never_lists_itself: {m}"
+        (src / "decisions.json").write_text('{"rows": []}')
+        assert run(bench_out("right", "right", "right", "right")) == 0
+        m = json.loads((out / "manifest.json").read_text())
+        assert "decisions.json" in m["files"], f"index_present_is_published: {m}"
+        assert (out / "decisions.json").read_text() == '{"rows": []}', "index_copied_as_is"
+        assert "meaning.json" not in m["files"], f"index_absent_is_skipped: {m}"
         big = {
             "nodes": [
                 {"label": f"s{i}", "source_file": f"f{i}.py", "file_type": "code"}
