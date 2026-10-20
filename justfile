@@ -340,6 +340,32 @@ specify *args:
     fi
     uvx --from specify-cli specify "${args[@]:-}"
 
+# Needs: nix, an NVIDIA driver, a 24 GB GPU (16 GB weights + 4.5 GB q8_0 KV at 128k), 16 GB RAM, 17 GB disk for
+# the one-time download into ~/.cache/huggingface; the first run may compile CUDA. Defaults fit an RTX 4090
+# (22.9 GB used; 160k loads with 0.4 GB spare, 192k does not): opencode.json's limit.context must not exceed
+# CTX_SIZE. Override with llama-server's LLAMA_ARG_* env. Needs opencode.json (llamacpp/qwen3.6-27b) in the cwd.
+# OpenCode on Qwen3.6-27B (unsloth Q4_K_M), served by llama.cpp + CUDA from the nixpkgs flake.lock pins.
+opencode-qwen *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export LLAMA_ARG_HF_REPO="${LLAMA_ARG_HF_REPO:-unsloth/Qwen3.6-27B-GGUF:Q4_K_M}"
+    export LLAMA_ARG_CTX_SIZE="${LLAMA_ARG_CTX_SIZE:-131072}" LLAMA_ARG_N_GPU_LAYERS="${LLAMA_ARG_N_GPU_LAYERS:-99}"
+    export LLAMA_ARG_CACHE_TYPE_K="${LLAMA_ARG_CACHE_TYPE_K:-q8_0}" LLAMA_ARG_CACHE_TYPE_V="${LLAMA_ARG_CACHE_TYPE_V:-q8_0}"
+    export LLAMA_ARG_FLASH_ATTN=on LLAMA_ARG_JINJA=1 LLAMA_ARG_THREADS="${LLAMA_ARG_THREADS:-16}"
+    export LLAMA_ARG_NO_MMPROJ=1 LLAMA_ARG_N_PARALLEL=1 LLAMA_ARG_ALIAS=qwen3.6-27b LLAMA_ARG_HOST=127.0.0.1 LLAMA_ARG_PORT=8080
+    srv=$(NIXPKGS_ALLOW_UNFREE=1 nix build --impure --no-link --print-out-paths --expr '
+      let p = import (builtins.getFlake (toString ./.)).inputs.nixpkgs {
+        system = builtins.currentSystem; config = { allowUnfree = true; cudaSupport = true; };
+      }; in p.llama-cpp')/bin/llama-server
+    # nix's CUDA build finds no GPU without the host's libcuda (Ubuntu path, then NixOS's)
+    LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/run/opengl-driver/lib" "$srv" &
+    trap 'kill $!' EXIT
+    until curl -sf http://127.0.0.1:8080/health >/dev/null; do
+        kill -0 $! 2>/dev/null || { echo "llama-server exited" >&2; exit 1; }
+        sleep 2
+    done
+    opencode -m llamacpp/qwen3.6-27b {{ args }}
+
 # What OpenCode sessions consumed, priced at list rates. MIP-0013.
 opencode-cost *args="session":
     npx --yes ccusage@latest opencode {{ args }}
