@@ -433,3 +433,27 @@ Every type but meaning is at least 4 of 5 right first, and none is below its MIP
 follows §5.7's rule: BM25 beats the plain query, 3 against 2. `quality-other` passed with
 `decisions --check` on #903 and on its push to `main`. The misses: `route code MIP-0031` (18),
 `route why "a PAT for cross-repo automation"` (29), and two meaning questions (30, 34).
+
+### The misses left, 2026-10-20 (#907)
+
+Two of the live close's four misses were the inputs, not `route`. Question 18 expected only
+`WaterQualityMatcher.scala`, which MIP-0031 names once; it now also accepts the INEA and INEMA
+clients the MIP adds, and `route code MIP-0031` lists the INEA client first. Question 29 found
+MIP-0070's PAT decision first because nothing in MIP-0070 said MIP-0086 had replaced it; its §11 now
+says so in a `**Decided 2026-10-10:**` line, which `route why` ranks first.
+
+The two meaning misses stay. Questions 30 ("where is the safety veto applied") and 34 ("what checks
+the summary the language model wrote") use words that are not in the expected nodes' names or
+leading comments. Three changes to `meaning.json` or the ranking, each run on all 34 questions
+against main@4148d45's bundle, gained nothing:
+
+| Change | Meaning right first | Total |
+|---|---|---|
+| none (the live close) | 3/5 | 30/34 |
+| plurals folded (`PATs` → `pat`) in both BM25 rankers | 3/5 | 30/34 |
+| each MIP's whole §1 paragraph in its summary row | 3/5 | 30/34 |
+| identifiers from each node's body, capped at 10 / 40 / 100 | 3/5 / 2/5 / 3/5 | 30 / 29 / 30 |
+
+At cap 100 the body identifiers fix question 30 but lose question 33 ("where are the nearby beaches
+found") to nodes that merely use a beach type; at cap 40 they lose 33 and fix nothing. What these two need is a match on meaning, not
+on words, and §5.7's spike found no embedding that beats BM25 by 3 here.

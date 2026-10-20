@@ -154,6 +154,8 @@
    "via": "code",
    "ask": "MIP-0031",
    "expect": [
+    "water/IneaRjWaterQualityClient.scala",
+    "water/InemaBaWaterQualityClient.scala",
     "water/WaterQualityMatcher.scala"
    ]
   },

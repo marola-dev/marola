@@ -324,7 +324,9 @@ restates and `agents-check` enforces.
 - **Decided 2026-09-30:** in #522, a fine-grained PAT; the names `marola-app` and `marola-site`, as
   proposed (`marola-backend`/`marola-frontend` were weighed and dropped by the team); issues per repo
   on the org Project.
-- The PAT's owner (a person or a machine user) and its expiry.
+- The PAT's owner (a person or a machine user) and its expiry. **Decided 2026-10-10:** no PAT for
+  cross-repo automation: MIP-0086 replaced it with two org-owned GitHub Apps, `marola-pr-bot` and
+  `marola-merge-bot`, so no owner or expiry is left to choose.
 - `stats/`: should the umbrella's `repo_stats.py` roll every repo into one panel or show a panel per
   repo?
 - **Follow-up MIP:** moving the umbrella (and possibly the org) to IBRAMAR/IBAMAR once the split is
