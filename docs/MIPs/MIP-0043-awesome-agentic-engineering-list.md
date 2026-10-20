@@ -210,9 +210,9 @@ None. No change to `Swimability.score`, thresholds, or any user-facing recommend
 
 ## 11. Open questions
 
-- Should `docs/index.md`'s doc-index table get a row for this new file? (Decided in this MIP's own
-  implementation: yes, it's a `docs/*.md` file like any other, and the doc index is meant to be
-  complete. Kind: *reference*, no MIP material inside beyond this MIP itself.)
+- Should `docs/index.md`'s doc-index table get a row for this new file? **Decided 2026-09-28:**
+  yes, in this MIP's own implementation: it's a `docs/*.md` file like any other, and the doc index is
+  meant to be complete. Kind: *reference*, no MIP material inside beyond this MIP itself.
 - Whether to eventually submit `docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md` to the real
   `sindresorhus/awesome` master list once it has enough content and has matured per their own 30-day
   guidance (§4.1), not decided here, a future call once the list has grown past its initial seed.

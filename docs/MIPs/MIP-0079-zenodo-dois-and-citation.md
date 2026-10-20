@@ -205,6 +205,8 @@ pushed by hand also gets no release and Zenodo sees nothing. A submodule's own c
 Zenodo through that repo's record (§5.6), not the umbrella's. The rule is in `AGENTS.md`
 (Submodule mechanics) and the `zenodo-release` skill.
 
+**Decided 2026-10-14:** a submodule pointer move never makes a release or a Zenodo version.
+
 ## 6. Scoring / safety impact
 
 None.

@@ -276,8 +276,8 @@ None.
 
 ## 11. Open questions
 
-- Delete the `Dockerfile` `dev` target once task 5 ships, or keep it for plain `docker run`? Decided
-  in task 5.
+- Delete the `Dockerfile` `dev` target once task 5 ships, or keep it for plain `docker run`? Task 5
+  settles it.
 - Does JetBrains Gateway's devcontainer support pick up the direnv environment for its Scala plugin?
   Checked in task 2; if not, the guide says VS Code is the supported editor.
 - **Follow-up issue:** `docs/1-Using-marola/RUN-LOCALLY.md` still says the repo is private and images come from
