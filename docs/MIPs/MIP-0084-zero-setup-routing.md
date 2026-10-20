@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session). **Amended 2026-10-19 (#776):** §5.1 names the three repos that joined since and stay out; §5.3's ruleset is a committed manifest and the publish step leaves a PR's `ci-ok` as it was; §7 checks a Claude Project thread apart from a cloud session; §11's first question is answered. **Amended 2026-10-20 (#885, §5.3):** GitHub refused GitHub Actions as the ruleset's bypass actor and deploy keys are disabled on marola, so a third App, marola-bundle-bot, writes the branch from a separate `bundle-publish` job |
+| **Status** | Implemented (2026-10-20, #779) — all 12 rows of [`MIP-0084.tasks.md`](./MIP-0084.tasks.md) done; §7's live checks run in every setup (see #779). Accepted (2026-10-10, review by Bruno Guilhermo de Barros Valério in the design session). **Amended 2026-10-19 (#776):** §5.1 names the three repos that joined since and stay out; §5.3's ruleset is a committed manifest and the publish step leaves a PR's `ci-ok` as it was; §7 checks a Claude Project thread apart from a cloud session; §11's first question is answered. **Amended 2026-10-20 (#885, §5.3):** GitHub refused GitHub Actions as the ruleset's bypass actor and deploy keys are disabled on marola, so a third App, marola-bundle-bot, writes the branch from a separate `bundle-publish` job |
 | **Author** | Bruno Guilhermo de Barros Valério |
 | **Created** | 2026-10-10 |
 | **Phase** | None: dev-loop tooling, outside `docs/PHASES.md`'s sequence. No Phase 1 prerequisite, no paid resource |
@@ -307,7 +307,8 @@ None. No code path in marola-app changes.
 - Can a claude.ai/code session started on marola-app fetch the umbrella's branch through its git
   proxy? **Decided 2026-10-10:** nice to have, not a blocker: the umbrella is the workspace most
   sessions start in. Task 6 tries it once; if it fails, `route` says the bundle is unreachable and
-  points at `git grep`.
+  points at `git grep`. **Answered 2026-10-20 (task 12):** yes. In a claude.ai/code session on marola-app
+  (6e8c020), `route fetch` exited 0 with "fetched the routing bundle".
 - Which `--scope` should the install command use? **Default:** the person's user scope (the
   default), since the project scope writes the committed settings file.
 - `AGENT-SKILLS.md` §2 says a declared plugin is installed for whoever accepts the trust dialog. That
