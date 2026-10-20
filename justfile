@@ -357,11 +357,14 @@ opencode-qwen *args:
       let p = import (builtins.getFlake (toString ./.)).inputs.nixpkgs {
         system = builtins.currentSystem; config = { allowUnfree = true; cudaSupport = true; };
       }; in p.llama-cpp')/bin/llama-server
+    # its logs would paint over OpenCode's TUI, so they go to a file
+    log="${TMPDIR:-/tmp}/llama-server.log"
+    echo "llama-server log: $log"
     # nix's CUDA build finds no GPU without the host's libcuda (Ubuntu path, then NixOS's)
-    LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/run/opengl-driver/lib" "$srv" &
+    LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/run/opengl-driver/lib" "$srv" >"$log" 2>&1 &
     trap 'kill $!' EXIT
     until curl -sf http://127.0.0.1:8080/health >/dev/null; do
-        kill -0 $! 2>/dev/null || { echo "llama-server exited" >&2; exit 1; }
+        kill -0 $! 2>/dev/null || { tail -n 20 "$log" >&2; echo "llama-server exited" >&2; exit 1; }
         sleep 2
     done
     opencode -m llamacpp/qwen3.6-27b {{ args }}
