@@ -167,6 +167,9 @@ the vectors go in `refs/marola/routing-bundle-large`, outside `refs/heads/`, so 
 not fetch them (MIP-0084 §5.3's 10 MB rule), and `route fetch --meaning` pulls them on demand. The
 spike's code is throwaway; its report goes in this MIP's appendix.
 
+**Decided 2026-10-20:** BM25 ships, inside the bundle; no embedding (the
+[meaning spike](#meaning-spike-task-7-2026-10-20)).
+
 ## 6. Scoring / safety impact
 
 None. No code path in marola-app changes.
@@ -263,9 +266,13 @@ None. No code path in marola-app changes.
 
 ### Meaning spike (task 7), 2026-10-20
 
-**Verdict: none.** Under §5.7's rule, no embedding beats BM25 by 3, and BM25 does not beat the
-plain `route query` on the bench's five meaning questions (3 of 5 each). Task 8 (`meaning-ship`)
-therefore has nothing to ship. The rule is applied in [Rule applied](#rule-applied) below.
+**Decided 2026-10-20:** BM25 ships as `route query --meaning`, and no embedding does. The
+maintainer's call on this spike: read against devkit main's query, §5.7's rule gives "none", since
+BM25 ties it at 3 of 5; read against the query that scored the live bundle (2 of 5), BM25 wins by
+one; and it leads 12 to 7 on the extras below. Its index is 294 KB (79 KB compressed), well inside
+MIP-0084 §5.3's 10 MB rule, so it goes in the bundle itself: no model, no
+`refs/marola/routing-bundle-large` and no `route fetch --meaning`. No embedding beats BM25 by 3, so
+none ships. The rule is applied in [Rule applied](#rule-applied) below.
 
 **Setup.** The code is throwaway, on marola-dev/marola-devkit branch `mip-0085/7-meaning-spike`
 (`4f83fe9`, `spike/meaning/`).
@@ -382,7 +389,7 @@ whose comment says "veto", ranks 12th.
 This reading takes the plain query to be devkit main's (`c5df0fb`), because that is the
 `route query` a `--meaning` flag would ship beside, and task 2 already merged it. Against the
 vendored copy that scored the live bundle (`c7ecce0`, 2 of 5), BM25 would win by one question and
-ship. The maintainer should confirm which baseline the rule means.
+ship. The maintainer chose to ship it (the decision at the top of this section).
 
 These numbers are outside the rule, but they are what a later change would start from. On the
 extras, BM25 answers 12 of 15 right first and the plain query 7. The embeddings answer 9 (2M) and
