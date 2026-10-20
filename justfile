@@ -369,6 +369,51 @@ opencode-qwen *args:
     done
     opencode -m llamacpp/qwen3.6-27b {{ args }}
 
+# Check whether the llama-server started by `just opencode-qwen` is healthy on 127.0.0.1:8080.
+opencode-qwen-status:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if curl -sf http://127.0.0.1:8080/health >/dev/null; then
+        echo "llama-server: healthy (127.0.0.1:8080)"
+        curl -sf http://127.0.0.1:8080/v1/models | python3 -m json.tool 2>/dev/null || true
+    else
+        echo "llama-server: not reachable at 127.0.0.1:8080" >&2
+        exit 1
+    fi
+
+# Stop any llama-server listening on port 8080 (the one `opencode-qwen` starts).
+opencode-qwen-stop:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pid="$(lsof -ti:8080 2>/dev/null || ss -ltnp 2>/dev/null | grep -m1 ':8080' | grep -oP 'pid=\K[0-9]+' || true)"
+    if [ -z "$pid" ]; then echo "no process on port 8080"; exit 0; fi
+    echo "stopping llama-server pid $pid"
+    kill "$pid" || true
+
+# Tail the llama-server log written by `just opencode-qwen`. Pass `-n N` to change the line count.
+opencode-qwen-logs *args="-n 40":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    log="${TMPDIR:-/tmp}/llama-server.log"
+    [ -f "$log" ] || { echo "no log at $log" >&2; exit 1; }
+    tail {{ args }} "$log"
+
+# Write an example opencode.json for llamacpp/qwen3.6-27b, matching `just opencode-qwen` defaults.
+opencode-qwen-config *args="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python3 -c 'import json, sys; force="--force" in sys.argv[1:]; exist=__import__("os").path.exists("opencode.json"); (not force and exist and print("opencode.json already exists; pass --force to overwrite") and sys.exit(0)); json.dump({"provider":"llamacpp","model":"qwen3.6-27b","api_base":"http://127.0.0.1:8080/v1","limit":{"context":131072}}, open("opencode.json","w"), indent=2); open("opencode.json","a").write("\n"); print("wrote opencode.json")' {{ args }}
+
+# Validate flake.nix and flake.lock without building anything.
+nix-check:
+    nix flake check --no-build
+    nix flake metadata --json >/dev/null
+    echo "nix flake check: ok"
+
+# Update flake.lock. Review the diff before committing.
+nix-update *args="":
+    nix flake update {{ args }}
+
 # What OpenCode sessions consumed, priced at list rates. MIP-0013.
 opencode-cost *args="session":
     npx --yes ccusage@latest opencode {{ args }}
