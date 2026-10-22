@@ -93,7 +93,7 @@ stale. An edit between the markers is overwritten.
 | Dispatch | Sent by | Triggers |
 |---|---|---|
 | `bump-ready` | marola `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-site `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-corpus `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-ml `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-app `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-oods `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-skills `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-devkit `notify-devkit-test.yml` (`notify-devkit.yml@v0.20.4`, by hand) | marola-devkit `bump-merge.yml` |
-| `site-data-updated` | marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | marola-site `site.yml` |
+| `site-data-updated` | marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | — |
 | `submodule-docs-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-skills `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`) | marola `docs.yml`, marola `pointer-sync.yml` |
 | `submodule-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-skills `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`) | marola `pointer-sync.yml` |
 
@@ -104,7 +104,7 @@ stale. An edit between the markers is overwritten.
 | marola-ml `marola-image` | marola-ml `docker-local.yml` |
 | marola-ml `resources.version` | marola-ml `docker-local.yml` |
 | marola-oods `marola-image` | marola-oods `oods-check.yml` |
-| marola-site `marola-image` | marola-site `board-schema.yml`, marola-site `site.yml` |
+| marola-site `marola-image` | marola-site `board-schema.yml` |
 
 | Deploy | Site |
 |---|---|
