@@ -1,0 +1,12 @@
+{
+ "schema": 1,
+ "files": {
+  "build.json": 1025,
+  "decisions.json": 131859,
+  "doc_code.json": 1264460,
+  "graph.json": 1804229,
+  "meaning.json": 398158,
+  "routing-digest.md": 34629,
+  "wiring.json": 8598
+ }
+}

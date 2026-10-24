@@ -1,0 +1,395 @@
+{
+ "artifacts": {
+  "PRs into each repo in `.github/consumers.txt`": {
+   "match": "",
+   "pin": [],
+   "pub": [
+    "marola-devkit `bump-consumers.yml`",
+    "marola-devkit `bump-merge.yml` (on a schedule)"
+   ],
+   "read": [
+    "marola",
+    "marola-app",
+    "marola-site",
+    "marola-ml",
+    "marola-corpus",
+    "marola-oods",
+    "marola-skills"
+   ],
+   "repos": [
+    "marola-devkit"
+   ]
+  },
+  "PRs into marola-app: `recommendation_prompt.json`, `review_prompt.json`": {
+   "match": "",
+   "pin": [],
+   "pub": [
+    "marola-ml `compile-prompt.yml` (by hand)"
+   ],
+   "read": [
+    "marola-app"
+   ],
+   "repos": [
+    "marola-app"
+   ]
+  },
+  "`<tag>-v<tag>.pdf` release asset": {
+   "match": "",
+   "pin": [],
+   "pub": [
+    "marola-research `release.yml` (on a `*-v[0-9]*.[0-9]*.[0-9]*` tag)"
+   ],
+   "read": [],
+   "repos": [
+    "marola-research"
+   ]
+  },
+  "`api-docs` branch": {
+   "match": "api-docs",
+   "pin": [],
+   "pub": [
+    "marola-ml `ci.yml` (`api-docs.yml@v0.20.4`, on a push to `main`)",
+    "marola-app `ci.yml` (`api-docs.yml@v0.20.4`, on a push to `main`)"
+   ],
+   "read": [
+    "marola `scripts/fetch-api-docs.sh`"
+   ],
+   "repos": [
+    "marola-app",
+    "marola-ml"
+   ]
+  },
+  "`ghcr.io/marola-dev/marola-app` image": {
+   "match": "ghcr.io/marola-dev/marola-app",
+   "pin": [
+    "marola-site `marola-image`",
+    "marola-ml `marola-image`",
+    "marola-oods `marola-image`"
+   ],
+   "pub": [
+    "marola-app `ci.yml` (on a push to `main`)"
+   ],
+   "read": [
+    "marola-site `scripts/board-schema.sh`",
+    "marola-ml `scripts/app-image.sh`",
+    "marola-app `docker-compose.yml`",
+    "marola-oods `scripts/app-image.sh`"
+   ],
+   "repos": [
+    "marola-app"
+   ]
+  },
+  "`ghcr.io/marola-dev/marola-ml` image": {
+   "match": "ghcr.io/marola-dev/marola-ml",
+   "pin": [],
+   "pub": [
+    "marola-ml `docker-local.yml` (on a push to `main` touching 10 paths)"
+   ],
+   "read": [
+    "marola-app `docker-compose.yml`"
+   ],
+   "repos": [
+    "marola-ml"
+   ]
+  },
+  "`marola-corpus-<tag>.tar.gz` release asset": {
+   "match": "",
+   "pin": [
+    "marola-ml `corpus.version`",
+    "marola-app `corpus.version`"
+   ],
+   "pub": [
+    "marola-corpus `release.yml` (on a `v*` tag)"
+   ],
+   "read": [
+    "marola-ml `scripts/corpus-fetch.sh`",
+    "marola-app `build.sbt`",
+    "marola-app `scripts/corpus-fetch.sh`"
+   ],
+   "repos": [
+    "marola-corpus"
+   ]
+  },
+  "`ml-resources-<tag>.tar.gz` release asset": {
+   "match": "",
+   "pin": [
+    "marola-ml `resources.version`"
+   ],
+   "pub": [
+    "marola-app `release.yml` (on a `v*` tag)"
+   ],
+   "read": [
+    "marola-ml `scripts/resources-fetch.sh`"
+   ],
+   "repos": [
+    "marola-app"
+   ]
+  },
+  "`site-data` branch of marola-site": {
+   "match": "site-data",
+   "pin": [],
+   "pub": [
+    "marola `ci.yml` (on a push to `main`)",
+    "marola-app `ci.yml` (on a push to `main`)",
+    "marola-app `docker-smoke.yml` (on a schedule)"
+   ],
+   "read": [
+    "marola-site `site.yml`"
+   ],
+   "repos": [
+    "marola-site"
+   ]
+  }
+ },
+ "bumps": {
+  "marola `flake.lock`": [
+   "marola `ci.yml`",
+   "marola `docs.yml`"
+  ],
+  "marola-app `corpus.version`": [
+   "marola-app `ci.yml`"
+  ],
+  "marola-ml `marola-image`": [
+   "marola-ml `docker-local.yml`"
+  ],
+  "marola-ml `resources.version`": [
+   "marola-ml `docker-local.yml`"
+  ],
+  "marola-oods `marola-image`": [
+   "marola-oods `oods-check.yml`"
+  ],
+  "marola-site `marola-image`": [
+   "marola-site `board-schema.yml`",
+   "marola-site `site.yml`"
+  ]
+ },
+ "calls": {
+  "agents-check.yml": {
+   "v0.20.4": [
+    "marola",
+    "marola-site",
+    "marola-corpus",
+    "marola-ml",
+    "marola-app",
+    "marola-oods",
+    "marola-skills"
+   ]
+  },
+  "api-docs.yml": {
+   "v0.20.4": [
+    "marola-ml",
+    "marola-app"
+   ]
+  },
+  "ci-short-circuit.yml": {
+   "v0.20.4": [
+    "marola",
+    "marola-site",
+    "marola-corpus",
+    "marola-ml",
+    "marola-app",
+    "marola-oods",
+    "marola-skills"
+   ]
+  },
+  "gemini-review.yml": {
+   "v0.20.4": [
+    "marola",
+    "marola-site",
+    "marola-corpus",
+    "marola-ml",
+    "marola-app",
+    "marola-oods"
+   ]
+  },
+  "labels-sync.yml": {
+   "v0.20.4": [
+    "marola",
+    "marola-site",
+    "marola-corpus",
+    "marola-ml",
+    "marola-app",
+    "marola-oods",
+    "marola-skills"
+   ]
+  },
+  "notify-devkit.yml": {
+   "v0.20.4": [
+    "marola",
+    "marola-site",
+    "marola-corpus",
+    "marola-ml",
+    "marola-app",
+    "marola-oods",
+    "marola-skills",
+    "marola-devkit"
+   ]
+  },
+  "notify-umbrella.yml": {
+   "v0.20.4": [
+    "marola-site",
+    "marola-corpus",
+    "marola-ml",
+    "marola-app",
+    "marola-oods",
+    "marola-skills"
+   ]
+  },
+  "pr-body.yml": {
+   "v0.20.4": [
+    "marola",
+    "marola-site",
+    "marola-corpus",
+    "marola-ml",
+    "marola-app",
+    "marola-oods",
+    "marola-skills"
+   ]
+  },
+  "python-ci.yml": {
+   "v0.20.4": [
+    "marola",
+    "marola-site",
+    "marola-ml",
+    "marola-app",
+    "marola-skills"
+   ]
+  },
+  "scala-ci.yml": {
+   "v0.20.4": [
+    "marola-app"
+   ]
+  },
+  "skills-update.yml": {
+   "v0.20.4": [
+    "marola",
+    "marola-site",
+    "marola-corpus",
+    "marola-ml",
+    "marola-app",
+    "marola-oods"
+   ]
+  },
+  "static-ci.yml": {
+   "v0.20.4": [
+    "marola",
+    "marola-site",
+    "marola-corpus",
+    "marola-ml",
+    "marola-app",
+    "marola-oods"
+   ]
+  }
+ },
+ "contracts": {
+  "marola-app/cli/src/main/resources/board.schema.json": {
+   "copies": [
+    "marola-site/site/board.schema.json"
+   ],
+   "note": "identical"
+  },
+  "marola-site/site/areas.json": {
+   "copies": [
+    "marola-app/cli/src/test/resources/site/areas.json"
+   ],
+   "note": "identical"
+  }
+ },
+ "deploys": [
+  [
+   "marola `docs.yml`",
+   "docs.marola.dev"
+  ],
+  [
+   "marola-site `site.yml`",
+   "marola.dev"
+  ],
+  [
+   "marola-research `site.yml`",
+   "?"
+  ]
+ ],
+ "devkit": {
+  "marola": [
+   "`flake.lock` v0.20.4",
+   "marketplace v0.20.4"
+  ],
+  "marola-app": [
+   "`flake.lock` v0.20.4",
+   "marketplace v0.20.4"
+  ],
+  "marola-corpus": [
+   "`flake.nix` v0.20.4",
+   "marketplace v0.20.4"
+  ],
+  "marola-ml": [
+   "`flake.nix` v0.20.4",
+   "marketplace v0.20.4"
+  ],
+  "marola-oods": [
+   "`flake.nix` v0.20.4",
+   "marketplace v0.20.4"
+  ],
+  "marola-site": [
+   "`flake.nix` v0.20.4",
+   "marketplace v0.20.4"
+  ],
+  "marola-skills": [
+   "`flake.lock` v0.20.4",
+   "marketplace v0.20.4"
+  ]
+ },
+ "dispatch": {
+  "bump-ready": {
+   "listen": [
+    "marola-devkit `bump-merge.yml`"
+   ],
+   "sent": [
+    "marola `bump-ready.yml` (`notify-devkit.yml@v0.20.4`)",
+    "marola-site `bump-ready.yml` (`notify-devkit.yml@v0.20.4`)",
+    "marola-corpus `bump-ready.yml` (`notify-devkit.yml@v0.20.4`)",
+    "marola-ml `bump-ready.yml` (`notify-devkit.yml@v0.20.4`)",
+    "marola-app `bump-ready.yml` (`notify-devkit.yml@v0.20.4`)",
+    "marola-oods `bump-ready.yml` (`notify-devkit.yml@v0.20.4`)",
+    "marola-skills `bump-ready.yml` (`notify-devkit.yml@v0.20.4`)",
+    "marola-devkit `notify-devkit-test.yml` (`notify-devkit.yml@v0.20.4`, by hand)"
+   ]
+  },
+  "site-data-updated": {
+   "listen": [
+    "marola-site `site.yml`"
+   ],
+   "sent": [
+    "marola-app `ci.yml` (on a push to `main`)",
+    "marola-app `docker-smoke.yml` (on a schedule)"
+   ]
+  },
+  "submodule-docs-updated": {
+   "listen": [
+    "marola `docs.yml`",
+    "marola `pointer-sync.yml`"
+   ],
+   "sent": [
+    "marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)",
+    "marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)",
+    "marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)",
+    "marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)",
+    "marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)",
+    "marola-skills `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)"
+   ]
+  },
+  "submodule-updated": {
+   "listen": [
+    "marola `pointer-sync.yml`"
+   ],
+   "sent": [
+    "marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)",
+    "marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)",
+    "marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)",
+    "marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)",
+    "marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)",
+    "marola-skills `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`)"
+   ]
+  }
+ }
+}

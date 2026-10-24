@@ -1,0 +1,35 @@
+{
+ "head": "1f46fae94af984c98ad2afab73065ef7e5f3b28b",
+ "submodules": " 9cf178ad7fee4bdd392ac2d51f6b84ee2f2e47dd marola-agents (heads/main)\n 7061a08e643c5fe05485cb2917be405f5b1ab8c4 marola-app (heads/main)\n 1137cd4745b30313bb0bc6b843e3711db67d8097 marola-corpus (heads/main)\n e63f0ad6520eb241fd9158041ce79c95888aa6cd marola-ml (heads/main)\n 3db811386ae42a98cd52e990231dcc7d5b6cfac9 marola-oods (heads/main)\n 2103b7faafaf59c1f01dad86a8bff71c0b94e308 marola-research (heads/main)\n 4f636b9b2d91320185739f443a7269c5f489bee0 marola-site (4f636b9)\n 638a189f27be5739101476ad3eb2e6b83ab2f7b9 marola-skills (heads/main)",
+ "graphify": "0.9.53",
+ "bench": {
+  "right": 32,
+  "total": 34,
+  "by_type": {
+   "symbol": {
+    "right": 6,
+    "total": 6
+   },
+   "wiring": {
+    "right": 7,
+    "total": 7
+   },
+   "doc-code": {
+    "right": 6,
+    "total": 6
+   },
+   "impact": {
+    "right": 5,
+    "total": 5
+   },
+   "decision": {
+    "right": 5,
+    "total": 5
+   },
+   "meaning": {
+    "right": 3,
+    "total": 5
+   }
+  }
+ }
+}
