@@ -1,5 +1,5 @@
 site_name: marola.dev docs
-site_description: The ocean intelligence layer for a stretch of coast — guides and design proposals.
+site_description: The water super app for a stretch of coast — guides and design proposals.
 # Load-bearing, not cosmetic: with no site_url the privacy plugin force-adds Mermaid.js to every
 # page (its own special case, plugins/privacy/plugin.py — Material normally injects it on demand,
 # and it cannot tell on demand without a canonical URL). Kroki already renders the diagrams to SVG

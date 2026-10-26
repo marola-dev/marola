@@ -17,7 +17,7 @@ Non-negotiable in every marola repo; a repo may make these stricter, never loose
 
 ## What this umbrella is
 
-**marola** is the ocean intelligence layer for a stretch of coast: real nearby beaches
+**marola** is the water super app for a stretch of coast: real nearby beaches
 (OpenStreetMap), live sea and weather (Open-Meteo), official bathing-water quality, a 0–100
 swimability score with a deterministic safety veto, and an LLM summary reviewed by a second pass,
 all runnable locally with a free Ollama model. GCP (MIP-0057) is the opt-in cloud path.

@@ -1,6 +1,6 @@
 <h1 align="center">🌊 marola</h1>
 
-<p align="center"><b>Um guia amigável para o mar perto de você, feito em código aberto, como ciência cidadã.</b></p>
+<p align="center"><b>O super app da água: tudo sobre o mar perto de você, feito em código aberto, como ciência cidadã.</b></p>
 
 <p align="center">
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
@@ -88,7 +88,7 @@ perto?"* Isso já funciona: as praias vêm do OpenStreetMap, a previsão do mar 
 Open-Meteo, e a balneabilidade oficial vem dos órgãos ambientais estaduais (IMA/SC, INEA e
 INEMA). Tudo vira uma nota de 0 a 100, com os motivos explicados.
 
-**A ambição maior: a camada de inteligência do oceano para o litoral.** Nadar é só a primeira
+**A ambição maior: o super app da água.** Nadar é só a primeira
 pergunta. Os mesmos dados, e muitos outros, podem ajudar a proteger pessoas e lugares:
 
 - 🌊 **Alertas de risco costeiro.** Começando pela *ressaca*, que erode as praias do Brasil, com

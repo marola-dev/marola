@@ -14,7 +14,7 @@
 <a href="https://github.com/h0ffmann/ptbr-writer"><img src="https://img.shields.io/badge/built_with-ptbr--writer-1682D4?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWQzZmQwIiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48dGl0bGU+dW1hIHBlbmEgZGUgZXNjcmV2ZXIsIG51bWEgbGluaGEgc8OzPC90aXRsZT48cGF0aCBkPSJNMTAgNTZjOC0zIDE0LTkgMjAtMTZNMzAgNDBjLTQtMTAgMC0yNCAyMi0zMi0yIDE0LTggMjYtMjIgMzJ6TTMwIDQwbDEwLTE2TTE4IDU0YzEwIDIgMjIgMCAzNC00Ii8+PC9zdmc+Cg==" alt="built with ptbr-writer" /></a>
 </p>
 
-<p align="center"><b>A friendly guide to the sea near you, built in the open, as citizen science.</b></p>
+<p align="center"><b>The water super app: everything about the sea near you, built in the open, as citizen science.</b></p>
 
 <p align="center"><a href="./README.md">🇧🇷 Leia em português (the full version)</a> · <a href="https://marola.dev/">🗺️ Open the live map</a></p>
 
@@ -81,7 +81,7 @@ rules and every design decision.
 
 ## Where it is going
 
-Swimming is the first question. Next come warnings for *ressaca* (the storm surf that eats Brazil's
+The goal is a water super app, and swimming is the first question. Next come warnings for *ressaca* (the storm surf that eats Brazil's
 beaches), wave forecasts from several models side by side, an open archive of Brazil's beach water
 tests, and reports from people at the beach. There is also an idea to compute the score with open decision models,
 served by [Ollaya](https://github.com/h0ffmann/ptbr-writer#ollaya). It is only an idea for now, with
