@@ -13,7 +13,7 @@
 <a href="https://github.com/marola-dev/marola/tree/main/tools"><img src="https://img.shields.io/badge/tooling-100%25_Rust-DEA584?logo=rust&logoColor=white" alt="the umbrella's tooling is 100% Rust (tools/, marola-tools)" /></a>
 <a href="https://marola.dev/"><img src="https://img.shields.io/badge/live_map-marola.dev-0b6e99?logo=mapbox&logoColor=white" alt="live map" /></a>
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-CC_BY_4.0_%2B_AGPL--3.0-green" alt="CC BY 4.0 for the docs, AGPL-3.0-only for the code" /></a>
-<a href="#tempo-de-leitura"><img src="https://img.shields.io/badge/tempo%20de%20leitura-~11%20min-1682D4" alt="tempo de leitura: ~11 min" /></a>
+<a href="#tempo-de-leitura"><img src="https://img.shields.io/badge/tempo%20de%20leitura-~10%20min-1682D4" alt="tempo de leitura: ~10 min" /></a>
 <a href="https://github.com/marola-dev/marola/tree/main/docs/assets/logo-v2"><img src="https://img.shields.io/badge/built_with-Desmos-2F72DC?logo=desmos&logoColor=white" alt="logo feito com Desmos" /></a>
 <a href="https://github.com/h0ffmann/ptbr-writer"><img src="https://img.shields.io/badge/built_with-ptbr--writer-1682D4?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWQzZmQwIiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48dGl0bGU+dW1hIHBlbmEgZGUgZXNjcmV2ZXIsIG51bWEgbGluaGEgc8OzPC90aXRsZT48cGF0aCBkPSJNMTAgNTZjOC0zIDE0LTkgMjAtMTZNMzAgNDBjLTQtMTAgMC0yNCAyMi0zMi0yIDE0LTggMjYtMjIgMzJ6TTMwIDQwbDEwLTE2TTE4IDU0YzEwIDIgMjIgMCAzNC00Ii8+PC9zdmc+Cg==" alt="built with ptbr-writer" /></a>
 <a href="https://github.com/h0ffmann/ptbr-writer#ollaya"><img src="https://img.shields.io/badge/modelo%20de%20decis%C3%A3o%3A%20Ollaya-planned-lightgrey?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzE3MTcxNyIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEuNiAxLjQpIHNjYWxlKC45KSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNiA1LjUgMTAuNSA5LjVRMTYgNy41IDIxLjUgOS41TDI2IDUuNVYxOVEyNiAyNy41IDE2IDI3LjVUNiAxOVoiLz48Y2lyY2xlIGN4PSIxMS41IiBjeT0iMTUuNSIgcj0iMy4yNSIvPjxjaXJjbGUgY3g9IjIwLjUiIGN5PSIxNS41IiByPSIzLjI1Ii8+PGNpcmNsZSBjeD0iMTEuNSIgY3k9IjE1LjUiIHI9IjEuMiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSJub25lIi8+PGNpcmNsZSBjeD0iMjAuNSIgY3k9IjE1LjUiIHI9IjEuMiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSJub25lIi8+PHBhdGggZD0iTTE0Ljc1IDIxIDE2IDIzbDEuMjUtMiIvPjwvZz48L3N2Zz4K" alt="modelo de decisão: Ollaya, planned" /></a>
@@ -33,7 +33,7 @@ para amanhã.
 
 <p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view.png" alt="marola.dev no Rio de Janeiro: Ipanema e Copacabana com a nota do melhor horário, as gotas de balneabilidade do INEA e o cartão da Praia do Forte com mar, maré, água-viva e baleias" width="860" /></a></p>
 
-Algumas promessas que o marola cumpre:
+Promessas do marola:
 
 - **Ele nunca inventa.** Todo número vem de dados reais e públicos. Tudo o que pode te colocar em
   risco (água imprópria, mar agitado) é decidido por regras simples que qualquer pessoa pode ler,
@@ -235,15 +235,14 @@ ABNT (NBR 6023):
 
 ## Agradecimentos
 
-O marola existe graças ao trabalho de muita gente: os colaboradores do
+O marola existe graças a muita gente: os colaboradores do
 [OpenStreetMap](https://www.openstreetmap.org/copyright) (cada praia do mapa é deles, sob a ODbL),
 o [Open-Meteo](https://open-meteo.com/) (as previsões do mar e do tempo), o
 [Mapbox GL JS](https://github.com/mapbox/mapbox-gl-js) (o mapa), o [Ollama](https://ollama.com/) e o
 [Kyo](https://getkyo.io/). Os dados de balneabilidade vêm dos boletins do INEA (Rio de Janeiro), do
 INEMA (Bahia) e do IMA/SC (Santa Catarina).
 
-As organizações parceiras do marola, como o [Leave No Trace](https://lnt.org/), estão em
-[PARTNERS](./PARTNERS.md).
+Nossos parceiros estão em [PARTNERS](./PARTNERS.md).
 
 ## Contato
 
