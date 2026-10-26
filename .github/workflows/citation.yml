@@ -1,14 +1,14 @@
 # The citation metadata Zenodo and GitHub read (MIP-0079): .zenodo.json valid against Zenodo's
-# vocabularies, CITATION.cff and the READMEs' references generated from it (scripts/citation.py),
+# vocabularies, CITATION.cff and the READMEs' references generated from it (scripts/marola-tools citation, tools/src/citation.rs),
 # then the CFF checked by the Citation File Format project's own validator.
 name: citation
 
 on:
   pull_request:
-    paths: [CITATION.cff, .zenodo.json, scripts/citation.py, README.md, README.en.md]
+    paths: [CITATION.cff, .zenodo.json, tools/**, scripts/marola-tools, README.md, README.en.md]
   push:
     branches: [main]
-    paths: [CITATION.cff, .zenodo.json, scripts/citation.py, README.md, README.en.md]
+    paths: [CITATION.cff, .zenodo.json, tools/**, scripts/marola-tools, README.md, README.en.md]
 
 permissions:
   contents: read
@@ -19,7 +19,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - run: python3 scripts/citation.py --check
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools
+      - run: scripts/marola-tools citation --check
       - uses: citation-file-format/cffconvert-github-action@2.0.0
         with:
           args: --validate

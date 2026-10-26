@@ -1,5 +1,7 @@
 # MIP index
 
+<a href="../../README.en.md#reading-time"><img src="https://img.shields.io/badge/reading%20time-~26%20min-1682D4" alt="reading time: ~26 min" /></a>
+
 Design docs for non-trivial changes, written before they're built. The process lives in the
 `/marola-devkit:mip` skill, the shape in [`TEMPLATE.md`](./TEMPLATE.md); this file is the index. Statuses: Draft →
 Accepted → Implemented (or Rejected / Superseded). A MIP built in stages before every task lands

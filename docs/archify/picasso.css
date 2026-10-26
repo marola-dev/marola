@@ -1,0 +1,19 @@
+/* picasso's look (site/static/style.css of h0ffmann/picasso): dark palette, orange accent, Fjalla One and Inter.
+   Set over Archify's page by `just figure`; only the drawing stays, fitted to the window. */
+html,body{background:radial-gradient(60rem 20rem at 10% -40%,color-mix(in srgb,#FF4F00 22%,transparent),transparent 70%),#0B0D12!important}
+body *{visibility:hidden!important}
+.diagram-container svg,.diagram-container svg *{visibility:visible!important}
+.diagram-container svg [data-legend],.diagram-container svg [data-legend] *,
+.diagram-container svg .semantic-sigil,.diagram-container svg .semantic-sigil *{visibility:hidden!important}
+.diagram-container svg [fill="url(#grid)"]{display:none}
+.diagram-container svg [data-detail]{opacity:1!important}
+.diagram-container svg{position:fixed!important;left:0;top:0;width:100vw!important;height:100vh!important;background:none!important}
+.diagram-container svg rect.c-mask{fill:#0B0D12!important}
+.diagram-container svg rect[class^=c-]:not(.c-mask){fill:#14171F!important;stroke:#2A303C!important;rx:6px}
+.diagram-container svg rect.c-lane{fill:none!important;stroke:#2A303C!important}
+.diagram-container svg rect.c-external:not(.c-mask){stroke:#FF4F00!important}
+.diagram-container svg text.t-primary{font:400 17px 'Fjalla One',sans-serif!important;fill:#EDEFF3!important}
+.diagram-container svg text.t-muted{font:400 10px Inter,sans-serif!important;fill:#9AA3B2!important}
+.diagram-container svg text{font-family:Inter,sans-serif}
+.diagram-container svg text.t-edge-default{font:400 10px Inter,sans-serif!important;fill:#9AA3B2!important}
+.diagram-container svg text.t-dim{font:600 11px Inter,sans-serif!important;fill:#9AA3B2!important}

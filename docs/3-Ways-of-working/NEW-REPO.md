@@ -87,8 +87,8 @@ checkout marker.
     the one pointer an umbrella PR commits; `pointer-sync.yml` moves it from then on. Add the
     name to the `&submodules` anchor in `ci.yml`'s `changes` job too: the `docs` and `graph`
     filters read it, and a repo left out is never docs-built or graphed on a pointer move, silently
-    ([CI/CD](CI-CD.md#the-workflows)). Add its path to `ruff.toml`'s `extend-exclude`
-    as well, or `ruff` lints its files here (`scripts/ruff_exclude_check.py` fails the gate).
+    ([CI/CD](CI-CD.md#the-workflows)). (The umbrella holds no Python, so there is no lint
+    exclude list to extend.)
 18. **`mkdocs/repos.yml`**: a `- name: marola-<name>` entry, so the site mounts it at
     `5-Repos/marola-<name>/`.
 19. **`docs/2-Building-marola/REPOS.md`**: a routing-table row, and

@@ -1,0 +1,6 @@
+# marola-tools (tools/): one Rust for CI and every laptop, so rustfmt and clippy agree everywhere.
+# At the root because rustup reads it from the working directory, and the recipes run cargo from here.
+[toolchain]
+channel = "1.97.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

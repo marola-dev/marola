@@ -35,9 +35,11 @@
         projectTools = [
           pkgs.just
 
-          (pkgs.python3.withPackages (ps: with ps; [ pip ]))
-          # `uvx` runs GitHub's spec-kit ephemerally (`just specify`); spec-kit is PyPI-only.
-          pkgs.uv
+          # tools/ (marola-tools): the umbrella's own tooling is Rust, never Python (AGENTS.md).
+          pkgs.cargo
+          pkgs.rustc
+          pkgs.rustfmt
+          pkgs.clippy
 
           # `just context-mips`: repomix packs docs for a browser session, wl-copy/xclip copy them.
           pkgs.repomix

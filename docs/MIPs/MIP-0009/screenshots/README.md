@@ -1,5 +1,7 @@
 # MIP-0009 — screenshots of the wave markers and the hover aspects
 
+<a href="../../../../README.en.md#reading-time"><img src="https://img.shields.io/badge/reading%20time-~2%20min-1682D4" alt="reading time: ~2 min" /></a>
+
 The manual check MIP-0009 §7 / tasks decision #5 asks for, done on 2026-09-06 with headless
 Chrome against the `site/dist` build of 2026-09-05 (80 Florianópolis beaches) plus this branch's
 `index.html`/`app.js`/`style.css`. Two things were patched in a scratch copy, never in the repo:

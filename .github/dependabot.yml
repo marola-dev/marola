@@ -24,3 +24,8 @@ updates:
     # would leave behind, and deps-merge auto-merges a green PR.
     ignore:
       - dependency-name: "marola-dev/marola-devkit*"
+  # marola-tools (tools/), the umbrella's own Rust tooling: Cargo.lock moves with the crates.
+  - package-ecosystem: "cargo"
+    directory: "/tools"
+    patterns: ["*"]
+    multi-ecosystem-group: "marola-deps"

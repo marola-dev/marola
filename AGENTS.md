@@ -26,9 +26,10 @@ This repo, `marola-dev/marola`, is the **umbrella** (MIP-0070): the team layer, 
 repo as a git submodule. It holds this file, the ways of working (`docs/3-Ways-of-working/`),
 research and plans (`docs/4-Research-and-plans/`), the MIPs and their `.tasks.md`, the phase list
 (`docs/PHASES.md`), MIP and cross-repo parent issues, the aggregated docs site at
-<https://docs.marola.dev/>, and the submodule pointers. **It holds no code**: no build, no app
-gates. [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md) holds the reasons behind the rules
-here, and [CONTRIBUTING](docs/3-Ways-of-working/CONTRIBUTING.md) is the guide for every repo.
+<https://docs.marola.dev/>, and the submodule pointers. **It holds no product code**: no app and no
+app gates; its only code is its own tooling, `tools/` (marola-tools, in Rust: see
+[No Python](#no-python-hard-rule)). [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md) holds the
+reasons behind the rules here, and [CONTRIBUTING](docs/3-Ways-of-working/CONTRIBUTING.md) is the guide for every repo.
 
 ## The repos
 
@@ -93,7 +94,7 @@ which checkout each recipe needs.
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola
-nix develop      # just, python3, ruff, gh, hadolint, actionlint (flake.nix); Docker is the host's
+nix develop      # just, cargo, gh, hadolint, actionlint (flake.nix); Docker is the host's
 just             # list the recipes
 just quality     # this repo's gates
 just docs        # the aggregated docs (docs/ + every submodule's) into mkdocs/generated-docs
@@ -101,7 +102,8 @@ just docs-serve  # preview on http://localhost:8001/
 ```
 
 Run the gates of the repo you changed before calling a change done: here `just quality`
-(`quality-other`: ruff, actionlint, hadolint, `docs-lint` and the `scripts/*` self-tests, the
+(`quality-other`: rustfmt, clippy and `cargo test` on `tools/`, actionlint, hadolint, `docs-lint`,
+the reading-time and figure checks and the `scripts/*` self-tests, the
 gates `ci.yml` runs, at the versions `flake.lock` pins; a missing tool fails rather than skips, so
 use `nix develop`); in a submodule, its own `AGENTS.md` names them. The pre-push hook runs
 `just prepush`; `git push --no-verify` bypasses it, CI does not.
@@ -203,6 +205,21 @@ it does not replace this rule.
 - **One feature, one session.** Start a feature with `/clear` and `/rename` it to the branch name,
   so a session's context holds one PR's work and nothing from the last one.
 
+## No Python (hard rule)
+
+**The umbrella holds no Python.** Its own tooling is Rust: one crate in `tools/`, one binary,
+`scripts/marola-tools <command>` (`citation`, `mip-graph`, `doc-links`, `reading-time`,
+`graph-svg`, …), with `cargo test` as every command's test suite and rustfmt and
+`clippy -D warnings` as its gates. Shell stays for glue that only calls other tools. Gleam is
+allowed where it is clearly easier than Rust; nothing else. No `.py` file, no `pyproject.toml`, no
+`ruff.toml`, no `pip` or `uv` step in this repo's own code or CI.
+
+Two exceptions, both not ours to change here: the vendored `routing` skill
+(`.claude/skills/routing/scripts/route.py`, marola-devkit's, moved by `skills.yml`), and the
+third-party tools CI runs in their own images or actions (mkdocs-material's Docker image, the
+CFF validator, graphify in `nix develop .#lint`). A submodule follows its own `AGENTS.md`
+(marola-ml is a Python repo).
+
 ## Code style
 
 Every repo's style rules are its own (marola-app's Scala and Kyo rules are its
@@ -247,6 +264,11 @@ as not run; it is never skipped silently.
 - **This repo's READMEs**: `README.md` is in Portuguese, the full version and the docs site's
   landing. `README.en.md` is the English one, written ELI5: short sentences, no jargon, a link
   for the detail. A change to one reaches the other in the same PR.
+- **Every README shows its reading time** (`marola-tools reading-time`, at Brysbaert's 181 words
+  per minute for Portuguese and 238 for English): after editing one, run `just reading-time`;
+  `rust-ci` fails on a stale badge. A figure in a README comes from a source in the repo, never a
+  hand-drawn image: Archify JSON under `docs/archify/` (`just figure`, in pt-BR and en, checked by
+  `just figure-check`) or the code graph (`just graphify-figure`).
 - **Formal technical English**: the Writing Skills plugin's `asd-ste100` (ASD Simplified Technical
   English) for procedures and reference pages, `google-dev-docs` for developer docs,
   `plain-language` for public copy. Its character voices (`yoda`, `shrek`, …) are never used.

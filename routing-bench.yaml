@@ -145,7 +145,7 @@
    "ask": "MIP-0079",
    "expect": [
     "scripts/release.sh",
-    "scripts/citation.py"
+    "tools/src/citation.rs"
    ]
   },
   {

@@ -13,7 +13,7 @@ SPDX-FileCopyrightText = ["2026 Matheus Hoffmann", "2026 Bruno Guilhermo de Barr
 SPDX-License-Identifier = "CC-BY-4.0"
 
 [[annotations]]
-path = ["scripts/**", ".github/**", "mkdocs/**", "justfile", "flake.nix", "flake.lock", "ruff.toml", ".shellcheckrc", ".envrc", "docs/assets/marola.css"]
+path = ["tools/**", "rust-toolchain.toml", "scripts/**", ".github/**", "mkdocs/**", "justfile", "flake.nix", "flake.lock", ".shellcheckrc", ".envrc", "docs/assets/marola.css"]
 precedence = "closest"
 SPDX-FileCopyrightText = ["2026 Matheus Hoffmann", "2026 Bruno Guilhermo de Barros Valério", "2026 William Macedo", "2026 Pablo Ribeiro", "2026 Rôb Klér Soares da Silva Júnior", "2026 marola contributors"]
 SPDX-License-Identifier = "AGPL-3.0-only"

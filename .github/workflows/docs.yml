@@ -17,7 +17,8 @@ on:
       - 'scripts/prepare-docs.sh'
       - 'scripts/fetch-api-docs.sh'
       - 'scripts/lib/repos_manifest.sh'
-      - 'scripts/lib/doc_links.py'
+      - 'scripts/marola-tools'
+      - 'tools/**' # marola-tools: doc-links, mermaid-font, the site checks
   schedule:
     - cron: "20 5 * * *" # once a day, off the hour other workflows use (CI-CD.md)
   workflow_dispatch:
@@ -54,6 +55,11 @@ jobs:
 
       # Builds .tmp/docs-aggregated, api-docs branches included; the tracked docs/ tree is never
       # written to (ruling T10-8).
+      # prepare-docs.sh and mkdocs.sh run marola-tools (tools/, Rust), built here once.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools
+
       - name: Build the aggregated docs tree
         run: scripts/prepare-docs.sh
 
@@ -64,15 +70,15 @@ jobs:
         run: scripts/mkdocs.sh
 
       - name: The published tree keeps script-src 'self'
-        run: python3 scripts/strip_external_scripts.py --check mkdocs/generated-docs
+        run: scripts/marola-tools strip-external-scripts --check mkdocs/generated-docs
 
       - name: Every docs.marola.dev link resolves, and no old sitemap URL was dropped
         run: |
           if [ -s old-sitemap.xml ]; then
-            python3 scripts/site_links_check.py mkdocs/generated-docs --old-sitemap old-sitemap.xml
+            scripts/marola-tools site-links-check mkdocs/generated-docs --old-sitemap old-sitemap.xml
           else
             echo "::warning::no live sitemap fetched; the dropped-URL check is skipped"
-            python3 scripts/site_links_check.py mkdocs/generated-docs
+            scripts/marola-tools site-links-check mkdocs/generated-docs
           fi
 
       - uses: actions/upload-pages-artifact@v5
