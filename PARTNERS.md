@@ -2,8 +2,8 @@
 
 <p><a href="./PARTNERS.en.md">🇬🇧 Read in English</a></p>
 
-O marola é feito em código aberto, como ciência cidadã, e não anda sozinho. Estas são as
-organizações que caminham com ele.
+O marola é feito em código aberto, como ciência cidadã, e não anda sozinho. Estes são os
+parceiros que caminham com ele.
 
 ## Leave No Trace
 
@@ -16,18 +16,10 @@ deixar rastro, com sete princípios simples para quem está ao ar livre. O marol
 O selo acima é marca do Leave No Trace e não está sob a licença do marola (veja o
 [`REUSE.toml`](./REUSE.toml)).
 
-## ouroboric.dev
+## No GitHub
 
-A [ouroboric.dev](https://github.com/ouroboric-dev) faz **fábricas abertas que melhoram a si
-mesmas**: fábricas de software e de empresas, onde agentes fazem o trabalho, pessoas dão a direção,
-e cada execução deixa a fábrica um pouco melhor. O marola segue o mesmo jeito de cuidar do
-licenciamento dos repositórios dela, num `REUSE.toml` só.
-
-## piabrota
-
-A [piabrota](https://github.com/piabrota) ([piabrota.art](https://piabrota.art)) é uma organização
-brasileira que se apresenta como "aqueles caras". É dela o
-[`ihoje`](https://github.com/piabrota/ihoje), um raspador de eventos em Rust.
+- [@ouroboric-dev](https://github.com/ouroboric-dev)
+- [@piabrota](https://github.com/piabrota)
 
 ## Quer ser parceiro?
 

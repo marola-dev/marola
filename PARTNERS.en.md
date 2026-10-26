@@ -3,7 +3,7 @@
 <p><a href="./PARTNERS.md">🇧🇷 Leia em português</a></p>
 
 marola is built in the open, as citizen science, and it does not go alone. These are the
-organizations that walk with it.
+partners that walk with it.
 
 ## Leave No Trace
 
@@ -16,18 +16,10 @@ Proud Partner: whoever goes to the sea should leave it as they found it.
 The mark above belongs to Leave No Trace and is not under marola's licence (see
 [`REUSE.toml`](./REUSE.toml)).
 
-## ouroboric.dev
+## On GitHub
 
-[ouroboric.dev](https://github.com/ouroboric-dev) builds **open factories that improve
-themselves**: factories for software and companies, where agents do the work, people set the
-direction, and each run leaves the factory a little better. marola licenses its files the way
-ouroboric.dev's repositories do, in a single `REUSE.toml`.
-
-## piabrota
-
-[piabrota](https://github.com/piabrota) ([piabrota.art](https://piabrota.art)) is a Brazilian
-organization that calls itself "aqueles caras" ("those guys"). It makes
-[`ihoje`](https://github.com/piabrota/ihoje), an event scraper in Rust.
+- [@ouroboric-dev](https://github.com/ouroboric-dev)
+- [@piabrota](https://github.com/piabrota)
 
 ## Want to partner?
 
