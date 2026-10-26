@@ -268,7 +268,8 @@ as not run; it is never skipped silently.
   per minute for Portuguese and 238 for English): after editing one, run `just reading-time`;
   `rust-ci` fails on a stale badge. A figure in a README comes from a source in the repo, never a
   hand-drawn image: Archify JSON under `docs/archify/` (`just figure`, in pt-BR and en, checked by
-  `just figure-check`) or the code graph (`just graphify-figure`).- **Formal technical English**: the Writing Skills plugin's `asd-ste100` (ASD Simplified Technical
+  `just figure-check`) or the code graph (`just graphify-figure`).
+- **Formal technical English**: the Writing Skills plugin's `asd-ste100` (ASD Simplified Technical
   English) for procedures and reference pages, `google-dev-docs` for developer docs,
   `plain-language` for public copy. Its character voices (`yoda`, `shrek`, …) are never used.
 - **Scientific writing**: every claim names what checked it (a source fetched while writing, a
