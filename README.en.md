@@ -215,6 +215,9 @@ forecasts), [Mapbox GL JS](https://github.com/mapbox/mapbox-gl-js) (the map),
 [Ollama](https://ollama.com/) (the models on your computer) and [Kyo](https://getkyo.io/). The
 water tests come from INEA (Rio de Janeiro), INEMA (Bahia) and IMA/SC (Santa Catarina).
 
+marola's partner organizations, such as [Leave No Trace](https://lnt.org/), are listed in
+[PARTNERS](./PARTNERS.en.md).
+
 ## Contact
 
 Write to [admin@marola.dev](mailto:admin@marola.dev). Report a security problem through the

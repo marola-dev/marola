@@ -33,7 +33,7 @@ para amanhã.
 
 <p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view.png" alt="marola.dev no Rio de Janeiro: Ipanema e Copacabana com a nota do melhor horário, as gotas de balneabilidade do INEA e o cartão da Praia do Forte com mar, maré, água-viva e baleias" width="860" /></a></p>
 
-Algumas promessas que o marola cumpre:
+Promessas do marola:
 
 - **Ele nunca inventa.** Todo número vem de dados reais e públicos. Tudo o que pode te colocar em
   risco (água imprópria, mar agitado) é decidido por regras simples que qualquer pessoa pode ler,
@@ -235,12 +235,14 @@ ABNT (NBR 6023):
 
 ## Agradecimentos
 
-O marola existe graças ao trabalho de muita gente: os colaboradores do
+O marola existe graças a muita gente: os colaboradores do
 [OpenStreetMap](https://www.openstreetmap.org/copyright) (cada praia do mapa é deles, sob a ODbL),
 o [Open-Meteo](https://open-meteo.com/) (as previsões do mar e do tempo), o
 [Mapbox GL JS](https://github.com/mapbox/mapbox-gl-js) (o mapa), o [Ollama](https://ollama.com/) e o
 [Kyo](https://getkyo.io/). Os dados de balneabilidade vêm dos boletins do INEA (Rio de Janeiro), do
 INEMA (Bahia) e do IMA/SC (Santa Catarina).
+
+Nossos parceiros estão em [PARTNERS](./PARTNERS.md).
 
 ## Contato
 
