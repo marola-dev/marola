@@ -28,6 +28,10 @@ Algumas promessas que o marola cumpre:
 
 ## O mapa: o que já está no ar e o que vem aí
 
+> ⚠️ **Frontend v2 em andamento.** A versão v2 do frontend do mapa está sendo escrita com
+> [MapLibre](https://maplibre.org/) e Rust, e deve ficar pronta antes de 2027. A página que está
+> hoje no marola.dev é a v1, com Mapbox GL JS.
+
 O [marola.dev](https://marola.dev/) tem uma barra de camadas no canto superior direito. Duas
 camadas já estão no ar; as outras aparecem na barra, apagadas, como "em breve", ou estão escritas
 como MIP, e cada uma só é ligada depois que os dados dela são conferidos no ar.

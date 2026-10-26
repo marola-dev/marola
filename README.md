@@ -47,6 +47,10 @@ A few promises marola keeps:
 
 ## The map: what's live and what's next
 
+> ⚠️ **Frontend v2 in progress.** The map's frontend v2 is being written with
+> [MapLibre](https://maplibre.org/) and Rust, and it should be ready before 2027. The page on
+> marola.dev today is v1, on Mapbox GL JS.
+
 [marola.dev](https://marola.dev/) has a layer rail at the top right. Two layers are live today;
 the rest sit on the rail greyed out as "em breve" (coming soon), or are written up as a MIP, and
 each one is switched on once its data is checked live.
