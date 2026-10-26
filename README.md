@@ -11,6 +11,7 @@
 <a href="https://marola.dev/"><img src="https://img.shields.io/badge/live_map-marola.dev-0b6e99?logo=mapbox&logoColor=white" alt="live map" /></a>
 <a href="https://doi.org/10.5281/zenodo.23224155"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23224155-blue" alt="DOI" /></a>
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-CC_BY_4.0_%2B_AGPL--3.0-green" alt="CC BY 4.0 for the docs, AGPL-3.0-only for the code" /></a>
+<a href="https://github.com/h0ffmann/ptbr-writer"><img src="https://img.shields.io/badge/built_with-ptbr--writer-1682D4?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWQzZmQwIiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48dGl0bGU+dW1hIHBlbmEgZGUgZXNjcmV2ZXIsIG51bWEgbGluaGEgc8OzPC90aXRsZT48cGF0aCBkPSJNMTAgNTZjOC0zIDE0LTkgMjAtMTZNMzAgNDBjLTQtMTAgMC0yNCAyMi0zMi0yIDE0LTggMjYtMjIgMzJ6TTMwIDQwbDEwLTE2TTE4IDU0YzEwIDIgMjIgMCAzNC00Ii8+PC9zdmc+Cg==" alt="built with ptbr-writer" /></a>
 </p>
 
 <p align="center"><b>A friendly guide to the sea near you, built in the open, as citizen science.</b></p>
@@ -202,6 +203,9 @@ repo you're changing.
 Small PRs, one topic each, in the repo the change belongs to; non-trivial changes start as a MIP
 under `docs/MIPs/` here; every commit carries `Tested:` and
 `Co-Authored-By: Claude <noreply@anthropic.com>` trailers. AI agents are first-class contributors here and follow `AGENTS.md` like anyone else.
+PR descriptions come out bilingual, pt-BR first, from the `bipr` skill of
+[ptbr-writer](https://github.com/h0ffmann/ptbr-writer), the maintainer's plugin for technical
+writing in Brazilian Portuguese (`/ptbr-writer:bipr`, enabled in `.claude/settings.json`).
 Full guide: [Contributing](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTING/). Please also read the
 [Code of Conduct](https://github.com/marola-dev/.github/blob/main/CODE_OF_CONDUCT.md) and, for a vulnerability, the [security policy](https://github.com/marola-dev/.github/blob/main/SECURITY.md).
 
