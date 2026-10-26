@@ -1,15 +1,6 @@
 # Development flow
 
-```mermaid
-flowchart TD
-  issue([Issue]) --> mip["MIP (Draft)"]
-  mip --> acceptance[acceptance]
-  acceptance --> tasks["task list"]
-  tasks --> prs["stacked PRs<br/>(one per task, verified, costed)"]
-  prs --> review["review, when asked"]
-  review --> merge["merge bottom-up, restack"]
-  merge --> finish["finish<br/>(MIP → Implemented)"]
-```
+![The development flow, from an idea to a merged PR](../img/archify/dev-flow.png)
 
 This page is the one place the whole loop is written down, and it holds in every repo. The pieces
 live in the `/marola-devkit:mip` and `/marola-devkit:mip-tasks` skills, `AGENTS.md` (the hard
@@ -78,18 +69,7 @@ status to `Accepted` and links the tasks file.
 
 The status row's own lifecycle:
 
-```mermaid
-stateDiagram-v2
-  state "Superseded by MIP-NNNN" as Superseded
-  [*] --> Draft: opened as its own PR
-  Draft --> Accepted: acceptance decision
-  Draft --> Rejected: acceptance decision
-  Draft --> Superseded: acceptance decision
-  Accepted --> Implemented: last merge
-  Rejected --> [*]
-  Superseded --> [*]
-  Implemented --> [*]
-```
+![MIP status, from Draft to Implemented, Rejected or Superseded](../img/archify/dev-flow-mip-status.png)
 
 ## 3. The task list
 
@@ -125,19 +105,7 @@ just pr                                            # fills a missing Tested: and
 
 The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:
 
-```mermaid
-%%{init: {"themeVariables": {"git0": "#1ac5da", "git1": "#3ecf6e", "git2": "#f0a030", "git3": "#c678dd", "commitLabelColor": "#ffffff", "commitLabelBackground": "#082f45"}}}%%
-gitGraph
-  commit id: "main"
-  branch mip-nnnn/1
-  commit id: "task 1"
-  branch mip-nnnn/2
-  commit id: "task 2"
-  checkout main
-  commit id: "squash #1"
-  branch mip-nnnn/2-restacked
-  cherry-pick id: "task 2" tag: "restack (rebase --onto)"
-```
+![Restacking task 2 onto main after task 1 squash-merges](../img/archify/dev-flow-restack.png)
 
 `just pr --dry-run` prints every step (the lines `trailer-fill` would add, the body `uprd` would
 write) without pushing or touching `gh`. It refuses the same way the real run would (on `main`, or a

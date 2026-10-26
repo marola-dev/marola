@@ -1,16 +1,19 @@
 # Diagrams
 
-The docs build renders diagram fences to SVG through a self-hosted
-[Kroki](https://kroki.io) (`mkdocs/docker-compose.yml`), so a diagram's source lives in the page
-beside the prose it summarises. The design is [MIP-0068](../MIPs/MIP-0068-diagrams-in-docs.md);
+A flow, a sequence, a lifecycle or an architecture is drawn with
+[Archify](https://github.com/tt-a1i/archify): its source is a JSON file under
+`docs/archify/docs/`, and `just figure` draws it to `docs/img/archify/<slug>.png` in picasso's look,
+the same register as the README's figures. Schemas, charts, sketches and nested containers stay
+diagram fences, rendered to SVG through a self-hosted [Kroki](https://kroki.io)
+(`mkdocs/docker-compose.yml`). The design is [MIP-0068](../MIPs/MIP-0068-diagrams-in-docs.md);
 the rule below is also in `.claude/rules/docs.md`, which agents load for `docs/**`.
 
 ## Which fence
 
 | Picture | Fence | Why this one |
 |---|---|---|
-| flow, decision tree, DAG, lifecycle, sequence, ER, class, gantt, git history | `mermaid` | covers most pictures, and also renders on GitHub |
-| layered or zoned architecture, the module map | `d2` or `c4plantuml` | nested containers without Mermaid's subgraph crowding |
+| flow, decision tree, DAG, lifecycle, sequence, architecture | Archify: `docs/archify/docs/<slug>.json`, shown as `![alt](…/img/archify/<slug>.png)` | one look across the README and the site, and the PNG also shows on GitHub |
+| layered or zoned architecture, the module map | `d2` or `c4plantuml` | nested containers, which Archify does not draw |
 | a schema from DDL | `dbml` | reads like the SQL it mirrors |
 | a chart from a results table | `vegalite` | a real axis and scale, not a table of numbers |
 | a sketch or wireframe | `excalidraw` with `@from_file:assets/diagrams/<name>.excalidraw` | hand-drawn is the honest register for a mock, and the scene opens in the Excalidraw app as a whiteboard and comes back as the same file |
@@ -18,10 +21,12 @@ the rule below is also in `.claude/rules/docs.md`, which agents load for `docs/*
 - **Draw only what the prose beside it already says, and keep the prose.** The diagram is the
   summary; the text is the source of truth. A diagram that disagrees with its page is a bug in the
   diagram.
-- **A README diagram is a hand-written SVG.** GitHub renders no Kroki dialect and draws Mermaid
-  plainly, so a README shows `docs/img/<name>.svg`, written by the `architecture-diagram` skill
-  (`.claude/skills/architecture-diagram/`); the SVG is its own source. A diagram in both READMEs
-  is two files, `<name>.svg` and `<name>.pt-BR.svg`, edited together.
+- **A README figure is Archify too**, in two languages: `docs/archify/<slug>.json` and
+  `docs/archify/en/<slug>.json`, drawn to `docs/img/<slug>.png` and `docs/img/en/<slug>.png`
+  (AGENTS.md).
+- **No `mermaid` fence in this repo.** `just figure-check` fails on one. The Kroki mermaid stack
+  (`kroki-mermaid`, `marola-tools mermaid-font`) stays only for the submodules' pages, which still
+  carry mermaid.
 - **Under about 15 nodes.** Split a diagram rather than grow it.
 - **`dbml`, `vegalite` and `excalidraw` fences take `{bg-dark=white}`.** Colours are injected into
   every other dialect in the table above for the slate theme; these three cannot be styled that
@@ -30,17 +35,8 @@ the rule below is also in `.claude/rules/docs.md`, which agents load for `docs/*
 - **`c4plantuml` needs one line after its `!include`**:
   `UpdateRelStyle($textColor="#ffffff", $lineColor="#1ac5da")`. C4 draws relationships in its own
   grey, which injection does not reach.
-- **Two Mermaid types need their own first line**, merged over the injected theme. `gitGraph`
-  otherwise draws black branches:
-  `%%{init: {"themeVariables": {"git0": "#1ac5da", "git1": "#3ecf6e", "git2": "#f0a030", "git3": "#c678dd", "commitLabelColor": "#ffffff", "commitLabelBackground": "#082f45"}}}%%`.
-  `gantt` needs a short `axisFormat %d %b`, or its dates overlap.
-- **Every `mermaid` fence's font is pinned for you.** `marola-tools mermaid-font`, run by
-  `scripts/mkdocs.sh` on the staged copy before the kroki plugin sees it, prepends
-  `%%{init: {"fontFamily": "\"Open Sans\", ..."}}%%` to each one,
-  so Kroki always measures label width in a font it actually has (`kroki-mermaid:0.32.1` ships
-  only Fira Sans, Open Sans and Noto CJK) instead of silently falling back to something narrower
-  than what a reader's browser draws — the cause of a clipped last glyph (#511). Nothing to add
-  to a fence for this.
+- **A submodule page's `mermaid` fence has its font pinned for it** (`marola-tools mermaid-font`,
+  run by `scripts/mkdocs.sh`, #511), so Kroki measures labels in a font it has.
 - **A broken diagram fails the build**, naming the page (`fail_fast`). `bpmn` and `diagramsnet`
   are off, so those fences stay code blocks.
 - **`excalidraw` is not a default register.** Reach for it only where a hand-drawn sketch is
@@ -48,39 +44,17 @@ the rule below is also in `.claude/rules/docs.md`, which agents load for `docs/*
   the dialects above. Its companion (`kroki-excalidraw`, `mkdocs/docker-compose.yml`) adds a 612 MB
   pull to the docs build, so it earns its place per scene, not once for the dialect.
 
-The rest of this page is one working example per dialect. Each one's source is under it.
+The rest of this page is one working example per register. Each one's source is under it.
 
-## mermaid
+## Archify
 
 The rule above, as a decision tree:
 
-```mermaid
-flowchart TD
-  q{What is the picture?}
-  q -- "steps, states, messages,<br/>entities, history" --> m[mermaid]
-  q -- "containers inside containers" --> z{Code or system?}
-  z -- "modules, services" --> d2[d2]
-  z -- "people and systems" --> c4[c4plantuml]
-  q -- "tables and keys" --> db[dbml]
-  q -- "numbers on an axis" --> vl[vegalite]
-  q -- "a sketch or wireframe" --> ex[excalidraw]
-```
+![Which kind of figure to draw, as a decision tree](../img/archify/diagrams-decision.png)
 
-??? note "Source"
-
-    ````markdown
-    ```mermaid
-    flowchart TD
-      q{What is the picture?}
-      q -- "steps, states, messages,<br/>entities, history" --> m[mermaid]
-      q -- "containers inside containers" --> z{Code or system?}
-      z -- "modules, services" --> d2[d2]
-      z -- "people and systems" --> c4[c4plantuml]
-      q -- "tables and keys" --> db[dbml]
-      q -- "numbers on an axis" --> vl[vegalite]
-      q -- "a sketch or wireframe" --> ex[excalidraw]
-    ```
-    ````
+Its source is [`docs/archify/docs/diagrams-decision.json`](https://github.com/marola-dev/marola/blob/main/docs/archify/docs/diagrams-decision.json):
+`components` are the boxes, at `pos` with `size`, and `connections` the arrows. Run `just figure`
+after editing a source; `just figure-check` fails while a PNG is missing or older than its source.
 
 ## d2
 

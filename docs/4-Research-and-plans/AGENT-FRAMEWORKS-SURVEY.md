@@ -64,24 +64,7 @@ fan-out inside one request (the [Scala 3 and JDK review](https://docs.marola.dev
 
 Sketch (a natural MIP-0005):
 
-```mermaid
-flowchart LR
-  subgraph bot["bot/"]
-    Chat["ChatActor(chatId)<br/>last location, bounded window, language; TTL 24h"]
-    Sum["RoleActor(summarizer)<br/>pure step fn over a DSPy-compiled prompt"]
-    Rev["RoleActor(reviewer)<br/>pure step fn; can rewrite"]
-    Esc["RoleActor(escalation)<br/>trend/anomaly over forecast; gated by a human"]
-    Board["TaskBoard<br/>event-sourced task list; enforces budgets"]
-    Digest["DigestScheduler"]
-    Mcp["MCP server (unchanged)<br/>shared with Claude Desktop"]
-  end
-  Boards["boards (MIP-0003)"]
-  Board -- "handoff" --- Sum
-  Board -- "handoff" --- Rev
-  Board -- "handoff" --- Esc
-  Digest -->|timers| Boards
-  Boards -->|ChatActor.send| Chat
-```
+![Where Pekko fits marola and where it does not](../img/archify/agent-frameworks-pekko.png)
 
 Pekko Typed's `Behavior` API keeps actors pure and testable with `BehaviorTestKit`, which fits
 this repo's "logic outside the effect boundary" rule; Kyo effects run inside message handlers via

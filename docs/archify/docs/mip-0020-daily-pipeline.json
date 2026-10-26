@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sequence of the gated daily Instagram pipeline",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0020-daily-pipeline.html",
+    "column_fit": "spread",
+    "viewBox": [
+      1150,
+      529
+    ]
+  },
+  "participants": [
+    {
+      "id": "Render",
+      "type": "backend",
+      "label": "render job"
+    },
+    {
+      "id": "SiteData",
+      "type": "backend",
+      "label": "site-data"
+    },
+    {
+      "id": "Human",
+      "type": "external",
+      "label": "Human"
+    },
+    {
+      "id": "Publish",
+      "type": "backend",
+      "label": "publish job"
+    },
+    {
+      "id": "IG",
+      "type": "backend",
+      "label": "IG"
+    }
+  ],
+  "segments": [
+    {
+      "from": 283,
+      "to": 375,
+      "label": "if approved before timer expires"
+    },
+    {
+      "from": 399,
+      "to": 433,
+      "label": "else nobody approves: wait timer expires, nothing posted"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "Render",
+      "to": "SiteData",
+      "y": 175,
+      "label": "push PNG",
+      "note": "cron trigger, fetch board, build caption + stat card"
+    },
+    {
+      "id": "m2",
+      "from": "Render",
+      "to": "Publish",
+      "y": 215,
+      "label": "needs: render"
+    },
+    {
+      "id": "m3",
+      "from": "Publish",
+      "to": "Human",
+      "y": 255,
+      "label": "pause for Approve"
+    },
+    {
+      "id": "m4",
+      "from": "Human",
+      "to": "Publish",
+      "y": 321,
+      "label": "Approve",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "Publish",
+      "to": "IG",
+      "y": 361,
+      "label": "publish"
+    }
+  ]
+}

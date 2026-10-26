@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Contracts as pinned artifacts instead of paths",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0070-contracts.html"
+  },
+  "components": [
+    {
+      "id": "devkit",
+      "type": "backend",
+      "label": "marola-devkit",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "corpus",
+      "type": "backend",
+      "label": "marola-corpus",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "marola-app",
+      "pos": [
+        360,
+        240
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ml",
+      "type": "backend",
+      "label": "marola-ml",
+      "pos": [
+        360,
+        460
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "site",
+      "type": "backend",
+      "label": "marola-site",
+      "pos": [
+        720,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "oods",
+      "type": "backend",
+      "label": "marola-oods",
+      "pos": [
+        720,
+        240
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "devkit",
+      "to": "app",
+      "label": "flake, plugin, workflows",
+      "variant": "dashed"
+    },
+    {
+      "id": "e2",
+      "from": "devkit",
+      "to": "corpus",
+      "variant": "dashed"
+    },
+    {
+      "id": "e3",
+      "from": "devkit",
+      "to": "site",
+      "variant": "dashed"
+    },
+    {
+      "id": "e5",
+      "from": "corpus",
+      "to": "app",
+      "label": "tagged tarball",
+      "labelAt": [
+        254,
+        318
+      ]
+    },
+    {
+      "id": "e6",
+      "from": "corpus",
+      "to": "ml",
+      "label": "tagged tarball"
+    },
+    {
+      "id": "e7",
+      "from": "ml",
+      "to": "app",
+      "label": "compiled prompt, bump PR",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "e8",
+      "from": "app",
+      "to": "ml",
+      "label": "image + resources tarball",
+      "labelAt": [
+        455,
+        318
+      ]
+    },
+    {
+      "id": "e9",
+      "from": "app",
+      "to": "site",
+      "label": "image, boards, coverage, smoke"
+    },
+    {
+      "id": "e10",
+      "from": "app",
+      "to": "oods",
+      "label": "ingest commits",
+      "labelAt": [
+        640,
+        236
+      ]
+    },
+    {
+      "id": "e11",
+      "from": "oods",
+      "to": "app",
+      "label": "export tag",
+      "labelAt": [
+        640,
+        300
+      ]
+    }
+  ]
+}

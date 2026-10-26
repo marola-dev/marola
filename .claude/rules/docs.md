@@ -25,25 +25,22 @@ prose or box-drawing in a bare fence (MIP-0068; examples in
 
 | Picture | Fence |
 |---|---|
-| flow, decision tree, DAG, lifecycle, sequence, ER, class, gantt, git history | `mermaid` (also renders on GitHub) |
+| flow, decision tree, DAG, lifecycle, sequence, architecture | Archify: `docs/archify/docs/<slug>.json`, `just figure`, shown as `docs/img/archify/<slug>.png` |
 | layered or zoned architecture, the module map | `d2`, or `c4plantuml` with `UpdateRelStyle($textColor="#ffffff", $lineColor="#1ac5da")` after its `!include` |
 | a schema from DDL | `dbml {bg-dark=white}` |
 | a chart from a results table | `vegalite {bg-dark=white}` |
 | a sketch or wireframe | `excalidraw {bg-dark=white}` with `@from_file:assets/diagrams/<name>.excalidraw` |
 
-A README diagram is the exception: GitHub renders no Kroki dialect, so it is a hand-written
-`docs/img/<name>.svg` (and `<name>.pt-BR.svg`), drawn with the `architecture-diagram` skill.
+A README figure is Archify in two languages (`docs/archify/<slug>.json` and `en/<slug>.json`). No
+`mermaid` fence in this repo: `just figure-check` fails on one; Kroki's mermaid stays only for the
+submodules' pages.
 
 Draw only what the prose beside it already says, and keep the prose: the text is the source of
-truth. Keep a diagram under about 15 nodes; split it rather than grow it. Plain ` ```mermaid `,
-never ` ```kroki-mermaid ` (`fence_prefix: ""`). `bpmn` and `diagramsnet` are off (their fences stay
-code blocks). Other Kroki dialects are not colour-injected: stay inside the table. A `gitGraph` needs the
-`%%{init}%%` line from `DIAGRAMS.md` (black branches otherwise); a `gantt`, `axisFormat %d %b`.
+truth. Keep a diagram under about 15 nodes; split it rather than grow it. `bpmn` and `diagramsnet` are off (their fences stay
+code blocks). Other Kroki dialects are not colour-injected: stay inside the table.
 Reach for `excalidraw` only when a sketch is genuinely clearer than the ASCII/prose it would
 replace (MIP-0068 §5.3) — it is not a default register, and the scene lives out of the Markdown as
 a `.excalidraw` file, editable in the Excalidraw app.
-Every `mermaid` fence's font is pinned automatically (`marola-tools mermaid-font`, run by `scripts/mkdocs.sh`, #511) —
-nothing for an author to add.
 
 ## Everything else under `docs/`
 

@@ -137,27 +137,7 @@ As a sequence, following §6's mutual-consent rule (count only, a handle only af
 §3's mock reply shows handles immediately on match, which contradicts §6; not resolved here, see
 the MIP author):
 
-```mermaid
-sequenceDiagram
-  actor A as User A
-  participant Bot
-  participant Store as intents store
-  actor B as User B
-
-  A->>Bot: /swim Joaquina 10:00
-  Bot->>Store: upsert intent(A, beach, hour, expires_at)
-  Bot->>Store: query overlapping intents
-  Store-->>Bot: matches (B, ...)
-  Bot-->>A: "2 others near that beach/hour" [Yes, share handle] [No]
-  A->>Bot: Yes, share my @handle
-  Bot->>Store: record A's consent
-  alt B already consented
-    Bot-->>A: reveals @B
-    Bot-->>B: reveals @A
-  else B has not consented yet
-    Note over Bot: no handle revealed until both say yes
-  end
-```
+![Sequence of a swim match: two people consent before either handle is revealed](../img/archify/mip-0015-matching.png)
 
 ## 6. Scoring / safety impact
 

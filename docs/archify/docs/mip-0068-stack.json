@@ -1,0 +1,98 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "A stack of task branches: task 1 squash-merges, then task 2 restacks onto main",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0068-stack.html"
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "main"
+    },
+    {
+      "id": "b1",
+      "label": "mip-nnnn/1"
+    },
+    {
+      "id": "b2",
+      "label": "mip-nnnn/2"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "m0",
+      "lane": "main",
+      "col": 0,
+      "type": "database",
+      "label": "main",
+      "sublabel": "base commit"
+    },
+    {
+      "id": "t1",
+      "lane": "b1",
+      "col": 1,
+      "type": "backend",
+      "label": "task 1"
+    },
+    {
+      "id": "t2",
+      "lane": "b2",
+      "col": 2,
+      "type": "backend",
+      "label": "task 2"
+    },
+    {
+      "id": "sq",
+      "lane": "main",
+      "col": 3,
+      "type": "database",
+      "label": "squash #1",
+      "sublabel": "task 1 lands"
+    },
+    {
+      "id": "rs",
+      "lane": "b2",
+      "col": 4,
+      "type": "frontend",
+      "label": "restack",
+      "sublabel": "main merged in"
+    }
+  ],
+  "edges": [
+    {
+      "from": "m0",
+      "to": "t1",
+      "label": "branch"
+    },
+    {
+      "from": "t1",
+      "to": "t2",
+      "label": "branch"
+    },
+    {
+      "from": "t1",
+      "to": "sq",
+      "label": "squash merge"
+    },
+    {
+      "from": "m0",
+      "to": "sq"
+    },
+    {
+      "from": "t2",
+      "to": "rs"
+    },
+    {
+      "from": "sq",
+      "to": "rs",
+      "label": "merge main",
+      "variant": "dashed"
+    }
+  ]
+}

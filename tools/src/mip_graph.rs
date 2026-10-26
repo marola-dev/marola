@@ -1,16 +1,17 @@
-//! Generate a Mermaid dependency graph from every MIP's metadata table and write it into
-//! docs/MIPs/README.md between two HTML-comment markers. Reads only a machine-readable
+//! Generate the MIP dependency graph from every MIP's metadata table: an Archify source,
+//! docs/archify/docs/mip-graph.json (`just figure` draws its PNG), and the block in
+//! docs/MIPs/README.md between two HTML-comment markers that shows it. Reads only a machine-readable
 //! **Blocked by** row (comma-separated MIP numbers, or the literal `none`) — the human-readable
 //! **Depends on** field stays prose-only and is never parsed, because it legitimately carries four
 //! different relations (blocking, blocked-by, co-delivery, negation) in one cell that a regex cannot
 //! tell apart.
 //!
-//!     marola-tools mip-graph                    # regenerate the graph block in docs/MIPs/README.md
-//!     marola-tools mip-graph --check            # exit 1 if the checked-in block is stale or missing
+//!     marola-tools mip-graph                    # regenerate the figure source and the README block
+//!     marola-tools mip-graph --check            # exit 1 if either is stale or missing
 //!     marola-tools mip-graph --parallel 30 31   # can these two MIPs be worked in parallel?
 //!
-//! A MIP with no **Blocked by** row is drawn as an unconnected node. Nothing here invents an edge
-//! from prose.
+//! A MIP with no **Blocked by** edge is listed under the figure, not drawn. Nothing here invents
+//! an edge from prose.
 
 use crate::util::repo_root;
 use regex::Regex;
@@ -30,12 +31,17 @@ static MIP_NUM_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\b(\d{4})\b")
 static SOURCE_PATH_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"`((?:core|local|cli|site|scripts)/[A-Za-z0-9_./-]+)`").unwrap());
 
-const STATUS_CLASS: [(&str, &str); 5] = [
-    ("draft", "draft"),
-    ("accepted", "accepted"),
-    ("implemented", "implemented"),
-    ("rejected", "rejected"),
-    ("superseded", "rejected"),
+const FIGURE_ALT: &str = "MIP dependency graph: an arrow runs from a MIP to the MIP it blocks";
+const BAND_COLS: usize = 4;
+// The words a figure shows; a status row that starts with none of them (the template's own
+// "Proposed / Accepted / ..." included) is drawn as Draft.
+const STATUS_WORDS: [&str; 6] = [
+    "Partially implemented",
+    "Implemented",
+    "Accepted",
+    "Rejected",
+    "Superseded",
+    "Draft",
 ];
 
 const NO_EDGES_PLACEHOLDER: &str = "_No MIP currently declares a **Blocked by** relationship, so there is nothing to graph yet — add that field to a MIP's metadata table and run `just mip-graph` again._";
@@ -65,12 +71,12 @@ impl Mip {
         format!("M{:04}", self.num)
     }
 
-    fn status_class(&self) -> &'static str {
+    fn status_word(&self) -> &'static str {
         let s = self.status.to_lowercase();
-        STATUS_CLASS
-            .iter()
-            .find(|(key, _)| s.starts_with(key))
-            .map_or("draft", |(_, cls)| cls)
+        STATUS_WORDS
+            .into_iter()
+            .find(|w| s.starts_with(&w.to_lowercase()))
+            .unwrap_or("Draft")
     }
 }
 
@@ -140,66 +146,118 @@ pub fn load_mips(dir: &Path) -> BTreeMap<u32, Mip> {
     mips
 }
 
-pub fn render_mermaid(mips: &BTreeMap<u32, Mip>) -> String {
-    let edges: BTreeSet<(u32, u32)> = mips
-        .values()
+/// The README block: the figure (or the placeholder), then the MIPs left out of it.
+pub fn render_block(mips: &BTreeMap<u32, Mip>) -> String {
+    let connected = connected(mips);
+    let mut lines = vec![if connected.is_empty() {
+        NO_EDGES_PLACEHOLDER.to_string()
+    } else {
+        format!("![{FIGURE_ALT}](../img/archify/mip-graph.png)")
+    }];
+    let orphans: Vec<String> = mips
+        .keys()
+        .filter(|n| !connected.contains(n))
+        .map(|n| format!("MIP-{n:04}"))
+        .collect();
+    if !connected.is_empty() && !orphans.is_empty() {
+        lines.push(String::new());
+        lines.push(format!(
+            "_{} MIP(s) with no declared Blocked-by relationship, not graphed: {}._",
+            orphans.len(),
+            orphans.join(", ")
+        ));
+    }
+    lines.join("\n")
+}
+
+fn edges(mips: &BTreeMap<u32, Mip>) -> BTreeSet<(u32, u32)> {
+    mips.values()
         .flat_map(|m| {
             m.blocked_by
                 .iter()
                 .filter(|b| mips.contains_key(b))
                 .map(move |b| (*b, m.num))
         })
+        .collect()
+}
+
+// Only the MIPs in an edge are drawn: an orphan box says nothing the index table doesn't.
+fn connected(mips: &BTreeMap<u32, Mip>) -> BTreeSet<u32> {
+    edges(mips).iter().flat_map(|(a, b)| [*a, *b]).collect()
+}
+
+/// The Archify source of the figure (`just figure` draws it), or None when no MIP is blocked.
+/// Each connected group is its own column band, layered top-down by its longest blocking chain;
+/// bands wrap after BAND_COLS columns.
+pub fn render_archify(mips: &BTreeMap<u32, Mip>) -> Option<String> {
+    let edges = edges(mips);
+    let nodes = connected(mips);
+    if nodes.is_empty() {
+        return None;
+    }
+    let mut layer: BTreeMap<u32, usize> = nodes.iter().map(|n| (*n, 0)).collect();
+    for _ in 0..nodes.len() {
+        for (a, b) in &edges {
+            layer.insert(*b, layer[b].max(layer[a] + 1));
+        }
+    }
+    let mut group: BTreeMap<u32, u32> = nodes.iter().map(|n| (*n, *n)).collect();
+    for _ in 0..nodes.len() {
+        for (a, b) in &edges {
+            let g = group[a].min(group[b]);
+            group.insert(*a, g);
+            group.insert(*b, g);
+        }
+    }
+    let mut groups: BTreeMap<u32, Vec<u32>> = BTreeMap::new();
+    for n in &nodes {
+        groups.entry(group[n]).or_default().push(*n);
+    }
+    let (mut col0, mut row0, mut band_rows) = (0, 0, 0);
+    let mut components = Vec::new();
+    for members in groups.values() {
+        let mut by_layer: BTreeMap<usize, Vec<u32>> = BTreeMap::new();
+        for n in members {
+            by_layer.entry(layer[n]).or_default().push(*n);
+        }
+        let width = by_layer.values().map(Vec::len).max().unwrap_or(1);
+        if col0 > 0 && col0 + width > BAND_COLS {
+            (col0, row0, band_rows) = (0, row0 + band_rows, 0);
+        }
+        for (l, ns) in &by_layer {
+            for (i, n) in ns.iter().enumerate() {
+                components.push(serde_json::json!({
+                    "id": mips[n].node_id(),
+                    "type": "backend",
+                    "label": format!("MIP-{n:04}"),
+                    "sublabel": mips[n].status_word(),
+                    "pos": [40 + (col0 + i) * 260, 40 + (row0 + l) * 110],
+                    "size": [190, 64],
+                }));
+            }
+        }
+        col0 += width;
+        band_rows = band_rows.max(by_layer.len());
+    }
+    let connections: Vec<_> = edges
+        .iter()
+        .enumerate()
+        .map(|(i, (a, b))| {
+            serde_json::json!({"id": format!("e{}", i + 1), "from": mips[a].node_id(), "to": mips[b].node_id()})
+        })
         .collect();
-    if edges.is_empty() {
-        return NO_EDGES_PLACEHOLDER.into();
-    }
-    // Only the MIPs that actually participate in an edge get drawn — an orphan MIP adds a
-    // disconnected box that tells the reader nothing the index table above doesn't already say.
-    let connected: BTreeSet<u32> = edges.iter().flat_map(|(a, b)| [*a, *b]).collect();
-    let mut lines = vec![
-        "```mermaid".to_string(),
-        "flowchart TD".into(),
-        // Dark fills: the site is slate only and injects white label text (MIP-0068 §5.2).
-        "  classDef draft fill:#1e2129,stroke:#8fa3b0,stroke-dasharray:3 3;".into(),
-        "  classDef accepted fill:#0b4261,stroke:#1ac5da;".into(),
-        "  classDef implemented fill:#0f4a2e,stroke:#3ecf6e;".into(),
-        "  classDef rejected fill:#2a2d35,stroke:#666,color:#999;".into(),
-    ];
-    for num in &connected {
-        let mip = &mips[num];
-        // Bare "MIP-NNNN" only — the full title is already one line up in the index table.
-        lines.push(format!(
-            "  {}[\"MIP-{num:04}\"]:::{}",
-            mip.node_id(),
-            mip.status_class()
-        ));
-    }
-    for (a, b) in &edges {
-        lines.push(format!("  {} --> {}", mips[a].node_id(), mips[b].node_id()));
-    }
-    lines.push("```".into());
-    let orphans: Vec<u32> = mips
-        .keys()
-        .filter(|n| !connected.contains(n))
-        .copied()
-        .collect();
-    if !orphans.is_empty() {
-        let list = orphans
-            .iter()
-            .map(|n| format!("MIP-{n:04}"))
-            .collect::<Vec<_>>()
-            .join(", ");
-        lines.push(String::new());
-        lines.push(format!(
-            "_{} MIP(s) with no declared Blocked-by relationship, not graphed: {list}._",
-            orphans.len()
-        ));
-    }
-    lines.join("\n")
+    let doc = serde_json::json!({
+        "schema_version": 1,
+        "diagram_type": "architecture",
+        "meta": {"title": FIGURE_ALT, "locale": "en", "quality_profile": "standard", "legend": {"mode": "hidden"}, "output": "mip-graph.html"},
+        "components": components,
+        "connections": connections,
+    });
+    Some(serde_json::to_string_pretty(&doc).unwrap() + "\n")
 }
 
 pub fn graph_block(mips: &BTreeMap<u32, Mip>) -> String {
-    format!("{START_MARK}\n{}\n{END_MARK}", render_mermaid(mips))
+    format!("{START_MARK}\n{}\n{END_MARK}", render_block(mips))
 }
 
 /// Every MIP transitively blocking (or blocked by, if `blocked_direction` is false) `start`.
@@ -285,7 +343,7 @@ pub fn cmd_parallel(dir: &Path, a: u32, b: u32) -> i32 {
     1
 }
 
-pub fn cmd_generate(dir: &Path, readme: &Path, check: bool) -> i32 {
+pub fn cmd_generate(dir: &Path, readme: &Path, figure: &Path, check: bool) -> i32 {
     let Ok(text) = std::fs::read_to_string(readme) else {
         eprintln!("mip_graph: {} not found", readme.display());
         return 1;
@@ -302,15 +360,31 @@ pub fn cmd_generate(dir: &Path, readme: &Path, check: bool) -> i32 {
             format!("{text}{sep}\n{new_block}\n")
         }
     };
+    let new_figure = render_archify(&mips);
+    let old_figure = std::fs::read_to_string(figure).ok();
     if check {
-        if new_text != text {
+        if new_text != text || new_figure != old_figure {
             println!(
-                "mip_graph --check: docs/MIPs/README.md's graph block is stale or missing — run `just mip-graph` and commit the result"
+                "mip_graph --check: docs/MIPs/README.md's graph block or docs/archify/docs/mip-graph.json is stale or missing — run `just mip-graph` and `just figure`, and commit the result"
             );
             return 1;
         }
         println!("mip_graph --check: graph block is current");
         return 0;
+    }
+    if new_figure != old_figure {
+        let written = match &new_figure {
+            Some(json) => std::fs::write(figure, json),
+            None => std::fs::remove_file(figure),
+        };
+        if let Err(e) = written {
+            eprintln!("mip_graph: {}: {e}", figure.display());
+            return 1;
+        }
+        println!(
+            "mip_graph: wrote {}; run just figure for its PNG",
+            figure.display()
+        );
     }
     if new_text != text {
         if let Err(e) = std::fs::write(readme, &new_text) {
@@ -332,7 +406,12 @@ pub fn main(check: bool, parallel: Option<(u32, u32)>) -> i32 {
     let dir = repo_root().join("docs").join("MIPs");
     match parallel {
         Some((a, b)) => cmd_parallel(&dir, a, b),
-        None => cmd_generate(&dir, &dir.join("README.md"), check),
+        None => cmd_generate(
+            &dir,
+            &dir.join("README.md"),
+            &repo_root().join("docs/archify/docs/mip-graph.json"),
+            check,
+        ),
     }
 }
 
@@ -365,10 +444,21 @@ mod tests {
         ]);
         let block = graph_block(&mips);
         assert!(block.starts_with(START_MARK) && block.ends_with(END_MARK));
-        assert!(block.contains("M0010 --> M0032"));
-        assert!(block.contains(":::implemented") && block.contains(":::draft"));
-        assert!(block.contains("\"MIP-0010\""));
-        assert!(!block.contains("Ledger") && !block.contains("Benchmark"));
+        assert!(block.contains("](../img/archify/mip-graph.png)"));
+        let fig: serde_json::Value = serde_json::from_str(&render_archify(&mips).unwrap()).unwrap();
+        assert_eq!(fig["connections"][0]["from"], "M0010");
+        assert_eq!(fig["connections"][0]["to"], "M0032");
+        assert_eq!(fig["components"][0]["sublabel"], "Implemented");
+        assert_eq!(fig["components"][1]["sublabel"], "Draft");
+        let odd = Mip::new(
+            74,
+            "T",
+            "Proposed / Accepted / Superseded by ADR-NNNN",
+            vec![],
+        );
+        assert_eq!(odd.status_word(), "Draft");
+        assert_eq!(fig["components"][1]["pos"], serde_json::json!([40, 150]));
+        assert!(!fig.to_string().contains("Ledger"));
         assert_eq!(reachable(&mips, 32, true), BTreeSet::from([10]));
 
         let zero = BTreeMap::from([
@@ -376,12 +466,13 @@ mod tests {
             (2, Mip::new(2, "B", "Draft", vec![])),
         ]);
         let zero_block = graph_block(&zero);
-        assert!(!zero_block.contains("```mermaid") && zero_block.contains("nothing to graph yet"));
+        assert!(render_archify(&zero).is_none() && zero_block.contains("nothing to graph yet"));
 
         let mut orphans = mips.clone();
         orphans.insert(1, Mip::new(1, "Orphan", "Draft", vec![]));
         let ob = graph_block(&orphans);
-        assert!(!ob.contains("M0001") && ob.contains("MIP-0001"));
+        assert!(ob.contains("not graphed: MIP-0001."));
+        assert!(!render_archify(&orphans).unwrap().contains("M0001"));
     }
 
     #[test]
@@ -399,20 +490,27 @@ mod tests {
             "# MIP-0032: B\n| **Blocked by** | MIP-0010 |\n",
         )
         .unwrap();
-        assert_eq!(cmd_generate(d.path(), &readme, true), 1);
-        assert_eq!(cmd_generate(d.path(), &readme, false), 0);
-        assert_eq!(cmd_generate(d.path(), &readme, true), 0);
+        let figure = d.path().join("mip-graph.json");
+        assert_eq!(cmd_generate(d.path(), &readme, &figure, true), 1);
+        assert_eq!(cmd_generate(d.path(), &readme, &figure, false), 0);
+        assert_eq!(cmd_generate(d.path(), &readme, &figure, true), 0);
+        assert!(
+            std::fs::read_to_string(&figure)
+                .unwrap()
+                .contains("\"M0032\"")
+        );
         let text = std::fs::read_to_string(&readme).unwrap();
         assert!(
             text.starts_with("before\n")
                 && text.ends_with("after\n")
-                && text.contains("M0010 --> M0032")
+                && text.contains("mip-graph.png")
         );
     }
 
     #[test]
     fn the_committed_graph_is_current() {
         let dir = repo_root().join("docs/MIPs");
-        assert_eq!(cmd_generate(&dir, &dir.join("README.md"), true), 0);
+        let figure = repo_root().join("docs/archify/docs/mip-graph.json");
+        assert_eq!(cmd_generate(&dir, &dir.join("README.md"), &figure, true), 0);
     }
 }

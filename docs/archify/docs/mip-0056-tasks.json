@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MIP-0056 task dependency graph",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0056-tasks.html"
+  },
+  "components": [
+    {
+      "id": "t1",
+      "type": "backend",
+      "label": "1 oods-module",
+      "pos": [
+        170,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "backend",
+      "label": "2 ima-sc-adapter",
+      "pos": [
+        170,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "backend",
+      "label": "3 ingest-runner",
+      "pos": [
+        170,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t4",
+      "type": "backend",
+      "label": "4 parquet-build",
+      "pos": [
+        170,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t5",
+      "type": "backend",
+      "label": "5 ingest-workflow",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t7",
+      "type": "backend",
+      "label": "7 pdf-channel",
+      "pos": [
+        300,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t6",
+      "type": "backend",
+      "label": "6 backfill-sc",
+      "pos": [
+        170,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t8",
+      "type": "backend",
+      "label": "8 latest-export",
+      "pos": [
+        170,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t9",
+      "type": "backend",
+      "label": "9 docs-status",
+      "pos": [
+        170,
+        830
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "t1",
+      "to": "t2"
+    },
+    {
+      "id": "e2",
+      "from": "t2",
+      "to": "t3"
+    },
+    {
+      "id": "e3",
+      "from": "t3",
+      "to": "t4"
+    },
+    {
+      "id": "e4",
+      "from": "t4",
+      "to": "t5"
+    },
+    {
+      "id": "e5",
+      "from": "t4",
+      "to": "t7"
+    },
+    {
+      "id": "e6",
+      "from": "t5",
+      "to": "t6"
+    },
+    {
+      "id": "e7",
+      "from": "t6",
+      "to": "t8"
+    },
+    {
+      "id": "e8",
+      "from": "t7",
+      "to": "t9"
+    },
+    {
+      "id": "e9",
+      "from": "t8",
+      "to": "t9"
+    }
+  ]
+}

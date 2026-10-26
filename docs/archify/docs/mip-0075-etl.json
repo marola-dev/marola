@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The water-quality ETL into R2",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0075-etl.html"
+  },
+  "components": [
+    {
+      "id": "dl",
+      "type": "backend",
+      "label": "download",
+      "sublabel": "catalog/oods.ducklake",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "load",
+      "type": "backend",
+      "label": "oods beaches | oods load",
+      "sublabel": "fetch → rows → check → one transaction per area/partition",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        222,
+        64
+      ]
+    },
+    {
+      "id": "maintain",
+      "type": "backend",
+      "label": "oods maintain",
+      "sublabel": "expire snapshots > 30 d, clean files",
+      "pos": [
+        592,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "up",
+      "type": "backend",
+      "label": "upload the catalog",
+      "sublabel": "(always)",
+      "pos": [
+        852,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "exp",
+      "type": "backend",
+      "label": "oods export",
+      "sublabel": "exports/beaches, exports/water-quality",
+      "pos": [
+        1112,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "dl",
+      "to": "load"
+    },
+    {
+      "id": "e2",
+      "from": "load",
+      "to": "maintain"
+    },
+    {
+      "id": "e3",
+      "from": "maintain",
+      "to": "up"
+    },
+    {
+      "id": "e4",
+      "from": "up",
+      "to": "exp"
+    }
+  ]
+}

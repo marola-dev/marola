@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zero-setup routing: how a session reaches the graph and wiring CI publishes",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0084-routing.html"
+  },
+  "components": [
+    {
+      "id": "ci",
+      "type": "backend",
+      "label": "umbrella ci.yml graph job",
+      "sublabel": "(push to main, daily)",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "br",
+      "type": "backend",
+      "label": "routing-bundle branch",
+      "sublabel": "(one force-pushed commit)",
+      "pos": [
+        300,
+        115
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "backend",
+      "label": "route.py (stdlib)",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sk",
+      "type": "backend",
+      "label": "vendored routing skill",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "hk",
+      "type": "backend",
+      "label": "SessionStart: session-check.sh",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ag",
+      "type": "backend",
+      "label": "agent",
+      "pos": [
+        300,
+        225
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "p",
+      "type": "backend",
+      "label": "person: Install / Not now / Never",
+      "pos": [
+        560,
+        170
+      ],
+      "size": [
+        234,
+        64
+      ],
+      "sublabel": "asked once, by AskUserQuestion"
+    },
+    {
+      "id": "pj",
+      "type": "backend",
+      "label": "claude.ai Projects knowledge (manual upload)",
+      "pos": [
+        560,
+        280
+      ],
+      "size": [
+        306,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "ci",
+      "to": "br",
+      "label": "graphify + wiring.py + route bench",
+      "labelAt": [
+        265,
+        52
+      ]
+    },
+    {
+      "id": "e2",
+      "from": "br",
+      "to": "rt",
+      "label": "git fetch → refs/marola/routing-bundle",
+      "labelAt": [
+        525,
+        52
+      ]
+    },
+    {
+      "id": "e3",
+      "from": "sk",
+      "to": "rt"
+    },
+    {
+      "id": "e4",
+      "from": "hk",
+      "to": "ag",
+      "label": "context lines"
+    },
+    {
+      "id": "e5",
+      "from": "ag",
+      "to": "p"
+    },
+    {
+      "id": "e6",
+      "from": "br",
+      "to": "pj",
+      "label": "routing-digest.md",
+      "labelAt": [
+        536,
+        248
+      ]
+    }
+  ]
+}

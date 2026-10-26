@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sequence of a map plugin registering and drawing",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0035-plugin.html",
+    "column_fit": "spread",
+    "viewBox": [
+      936,
+      591
+    ]
+  },
+  "participants": [
+    {
+      "id": "App",
+      "type": "backend",
+      "label": "app.js"
+    },
+    {
+      "id": "Pre",
+      "type": "backend",
+      "label": "plugin",
+      "sublabel": "?plugin=, registered before board"
+    },
+    {
+      "id": "Manifest",
+      "type": "backend",
+      "label": "plugins.json"
+    },
+    {
+      "id": "Late",
+      "type": "backend",
+      "label": "plugin",
+      "sublabel": "fetched after board"
+    }
+  ],
+  "segments": [
+    {
+      "from": 403,
+      "to": 495,
+      "label": "loop every area/day change"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "App",
+      "to": "Pre",
+      "y": 175,
+      "label": "init(ctx)",
+      "note": "board loads, ctx = {map, L, board, onBoardUpdate}"
+    },
+    {
+      "id": "m2",
+      "from": "App",
+      "to": "Manifest",
+      "y": 215,
+      "label": "fetch plugins.json"
+    },
+    {
+      "id": "m3",
+      "from": "Manifest",
+      "to": "App",
+      "y": 255,
+      "label": "entries",
+      "variant": "return"
+    },
+    {
+      "id": "m4",
+      "from": "App",
+      "to": "Late",
+      "y": 295,
+      "label": "inject script src"
+    },
+    {
+      "id": "m5",
+      "from": "Late",
+      "to": "App",
+      "y": 335,
+      "label": "registerPlugin(plugin)"
+    },
+    {
+      "id": "m6",
+      "from": "App",
+      "to": "Late",
+      "y": 375,
+      "label": "init(ctx)",
+      "variant": "return"
+    },
+    {
+      "id": "m7",
+      "from": "App",
+      "to": "Pre",
+      "y": 441,
+      "label": "onBoardUpdate(ctx)"
+    },
+    {
+      "id": "m8",
+      "from": "App",
+      "to": "Late",
+      "y": 481,
+      "label": "onBoardUpdate(ctx)"
+    }
+  ]
+}

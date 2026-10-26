@@ -53,19 +53,7 @@ Ollama), and marola-site renders the boards the app's image builds every 3 hours
 in [Repos](REPOS.md#the-contracts), each step's code in marola-app's
 [pipeline](https://docs.marola.dev/5-Repos/marola-app/1-design/#the-pipeline).
 
-```mermaid
-flowchart LR
-  User(["a person"]) --> Entry["marola-app<br/>CLI, MCP or chat server"]
-  Entry --> Data["Overpass, Open-Meteo,<br/>agency bulletins"]
-  Data --> Score["Swimability<br/>score and safety veto"]
-  Score --> Summary["LLM summary<br/>(local Ollama)"]
-  Summary --> Review["Reviewer<br/>second LLM pass"]
-  Entry --> Ask["ocean questions<br/>(retrieval)"]
-  Corpus["marola-corpus<br/>knowledge tarball"] -.-> Ask
-  ML["marola-ml<br/>compiled prompts, marola-sea"] -.-> Summary
-  Score --> Boards["board JSON<br/>(no model)"]
-  Boards --> Site["marola-site<br/>the map"]
-```
+![The request pipeline across repos, from a person's question to the LLM summary and the map](../img/archify/architecture-pipeline.png)
 
 Dashed edges are pinned at build time, not called per request.
 
@@ -121,21 +109,7 @@ with its trait, local backend and status, are in marola-app's
 Phase 1 ([MIP-0002](../MIPs/MIP-0002-telegram-bot-phase-1.md)) puts a Telegram polling loop in
 front of the same pipeline:
 
-```mermaid
-flowchart TD
-    User["User shares location/photo<br/>(native Telegram UI)"] --> Bot["Telegram Bot API<br/><i>long polling, or a webhook once hosted</i>"]
-    Bot --> Service["marola service (Kyo, Scala)<br/>Telegram polling loop"]
-    Service --> Beaches["BeachFinder<br/>(Overpass, haversine)"]
-    Service --> Weather["OpenMeteoClient<br/>(Open-Meteo, free)"]
-    Service --> Vision["VisionClient<br/>on a submitted photo"]
-    Beaches --> Scoring["Swimability (pure)<br/>scores + jellyfish/whale heuristics"]
-    Weather --> Scoring
-    Scoring --> Llm["LlmClient + CompiledPrompt<br/>local Ollama"]
-    Vision --> Llm
-    Llm --> Reviewer["Reviewer<br/>second LLM pass: score + verdict + final_summary"]
-    Reviewer --> Reply["Reply sent back via Telegram Bot API"]
-    Vision -.-> Sightings["SightingStore<br/>local file"]
-```
+![Target architecture of the Telegram bot, from a shared location to the reviewed reply](../img/archify/architecture-telegram-bot.png)
 
 The MCP server is a parallel entry point to the same pipeline for any MCP client, not a stage in it.
 Tracing wraps the pipeline and each LLM call when configured. Rate limiting per Telegram user and a

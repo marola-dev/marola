@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sequence of a repo's docs reaching the umbrella's site",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0070-docs.html",
+    "column_fit": "spread",
+    "viewBox": [
+      920,
+      480
+    ]
+  },
+  "participants": [
+    {
+      "id": "R",
+      "type": "backend",
+      "label": "code repo (main)"
+    },
+    {
+      "id": "U",
+      "type": "backend",
+      "label": "umbrella"
+    },
+    {
+      "id": "P",
+      "type": "backend",
+      "label": "Pages",
+      "sublabel": "docs.marola.dev"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "R",
+      "to": "U",
+      "y": 175,
+      "label": "repository_dispatch submodule-docs-updated",
+      "note": "push touching README.md or docs/**; git submodule update --remote; aggregate + mkdocs build --strict"
+    },
+    {
+      "id": "m2",
+      "from": "U",
+      "to": "P",
+      "y": 259,
+      "label": "deploy"
+    }
+  ]
+}

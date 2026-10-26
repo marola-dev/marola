@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MIP-0060 task dependency graph",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0060-tasks.html"
+  },
+  "components": [
+    {
+      "id": "G",
+      "type": "backend",
+      "label": "G: go-no-go",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "N",
+      "type": "backend",
+      "label": "N: nix-config feat/agentic-ocr",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "T1",
+      "type": "backend",
+      "label": "1: ocr-post",
+      "pos": [
+        300,
+        115
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "T2",
+      "type": "backend",
+      "label": "2: ocr-tooling",
+      "pos": [
+        616,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "T3",
+      "type": "backend",
+      "label": "3: ocr-workflow",
+      "pos": [
+        876,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Wave 1 (parallel)",
+      "wraps": [
+        "G",
+        "N",
+        "T1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Wave 2 (serial, after N merges)",
+      "wraps": [
+        "T2",
+        "T3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "G",
+      "to": "T1",
+      "label": "fixture"
+    },
+    {
+      "id": "e2",
+      "from": "T1",
+      "to": "T2"
+    },
+    {
+      "id": "e3",
+      "from": "N",
+      "to": "T2",
+      "label": "merged"
+    },
+    {
+      "id": "e4",
+      "from": "T2",
+      "to": "T3"
+    }
+  ]
+}

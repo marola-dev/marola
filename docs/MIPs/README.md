@@ -99,38 +99,7 @@ trailer was dropped (marola-dev/marola-devkit#103), no longer kept up.
 | [MIP-0091](./MIP-0091-marola-forecaster-architecture.md) | The Marola forecaster's architecture: the evaluation (marola-eval, MIP-0083's `experiment` module, already in marola-app's `main`) goes first and the forecaster (a `forecaster` sbt module in marola-app) is built on its score cells; zero new repositories, with two named triggers for one; twenty design requirements from reading, evaluating and adopting Operational WeatherBench on Brazilian instruments (observation truth, waves, a climatology floor, a licence tier, two decision rules, propensity logs, a reviewed `published-forecaster.json`, a lake-drop contract for ww3-gpu's computed runs); five stages in order [Versão fácil (pt-BR)](./MIP-0091.easy.pt-BR.md) | Accepted (2026-10-13, needs refinement) | 2026-10-13 | XL for the whole: a wave extension of `experiment` (L), a `forecaster` module with a replay (L), a lake-drop contract (M), a site panel and the product hook (M); stages 1 and 2 are L together | user value; community/outreach; infra/dev-loop | do next (stages 1 and 2); do when X lands (stage 3: an admitted computed arm; stage 4: the first gate pass); park (any new repo) |
 
 <!-- mip-graph:start -->
-```mermaid
-flowchart TD
-  classDef draft fill:#1e2129,stroke:#8fa3b0,stroke-dasharray:3 3;
-  classDef accepted fill:#0b4261,stroke:#1ac5da;
-  classDef implemented fill:#0f4a2e,stroke:#3ecf6e;
-  classDef rejected fill:#2a2d35,stroke:#666,color:#999;
-  M0025["MIP-0025"]:::draft
-  M0033["MIP-0033"]:::draft
-  M0034["MIP-0034"]:::draft
-  M0036["MIP-0036"]:::draft
-  M0044["MIP-0044"]:::draft
-  M0048["MIP-0048"]:::draft
-  M0051["MIP-0051"]:::draft
-  M0053["MIP-0053"]:::draft
-  M0064["MIP-0064"]:::implemented
-  M0065["MIP-0065"]:::implemented
-  M0074["MIP-0074"]:::draft
-  M0076["MIP-0076"]:::implemented
-  M0083["MIP-0083"]:::accepted
-  M0084["MIP-0084"]:::implemented
-  M0085["MIP-0085"]:::implemented
-  M0091["MIP-0091"]:::accepted
-  M0025 --> M0048
-  M0033 --> M0036
-  M0034 --> M0044
-  M0051 --> M0053
-  M0064 --> M0065
-  M0074 --> M0076
-  M0076 --> M0084
-  M0083 --> M0091
-  M0084 --> M0085
-```
+![MIP dependency graph: an arrow runs from a MIP to the MIP it blocks](../img/archify/mip-graph.png)
 
 _61 MIP(s) with no declared Blocked-by relationship, not graphed: MIP-0001, MIP-0002, MIP-0003, MIP-0004, MIP-0005, MIP-0006, MIP-0007, MIP-0008, MIP-0009, MIP-0010, MIP-0011, MIP-0012, MIP-0013, MIP-0014, MIP-0015, MIP-0016, MIP-0017, MIP-0018, MIP-0019, MIP-0020, MIP-0021, MIP-0022, MIP-0023, MIP-0029, MIP-0030, MIP-0031, MIP-0032, MIP-0035, MIP-0037, MIP-0038, MIP-0039, MIP-0040, MIP-0041, MIP-0042, MIP-0043, MIP-0045, MIP-0046, MIP-0047, MIP-0049, MIP-0050, MIP-0052, MIP-0054, MIP-0055, MIP-0056, MIP-0057, MIP-0058, MIP-0059, MIP-0060, MIP-0062, MIP-0063, MIP-0066, MIP-0067, MIP-0068, MIP-0070, MIP-0072, MIP-0075, MIP-0079, MIP-0080, MIP-0081, MIP-0086, MIP-0087._
 <!-- mip-graph:end -->

@@ -8,17 +8,7 @@ does, with the same gates.
 
 ## How a build runs
 
-```mermaid
-flowchart LR
-  repos["mkdocs/repos.yml"] --> prep["prepare-docs.sh"]
-  umb["umbrella README + docs/"] --> prep
-  sub["each repo's README + docs/"] --> prep
-  api["each repo's api-docs branch"] --> prep
-  prep --> tree[".tmp/docs-aggregated<br/>+ build.json"]
-  tree --> mk["mkdocs.sh<br/>mkdocs --strict"]
-  mk --> check["marola-tools<br/>site-links-check"]
-  check --> pages["GitHub Pages<br/>docs.marola.dev"]
-```
+![How a docs.marola.dev build runs](../img/archify/docs-site-build.png)
 
 [`scripts/prepare-docs.sh`](../../scripts/prepare-docs.sh) writes the site's source tree into the
 gitignored `.tmp/docs-aggregated/`; the tracked `docs/` is never written to.

@@ -226,18 +226,7 @@ nothing withheld, then `block` once §7's false-positive budget is measured on r
 straight to `block` would risk suppressing good summaries before anyone has counted how often the
 rules misfire.
 
-```mermaid
-flowchart LR
-  mode{mode}
-  mode -- off --> unchanged[show text unchanged]
-  mode -- warn --> warnCheck{violation?}
-  warnCheck -- "yes, hard or soft" --> flaggedWarn[Flagged: text + flags]
-  warnCheck -- no --> cleanWarn[Clean: text only]
-  mode -- block --> blockCheck{severity}
-  blockCheck -- hard --> withheld[Withheld: hide text]
-  blockCheck -- soft --> flaggedBlock[Flagged: text + flags]
-  blockCheck -- none --> cleanBlock[Clean: text only]
-```
+![Where the deterministic fact guard sits, after the model](../img/archify/mip-0039-fact-guard.png)
 
 ### 5.3 What is explicitly a later experiment, not this MIP
 

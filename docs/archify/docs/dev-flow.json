@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The development flow, from an idea to a merged PR",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "dev-flow.html"
+  },
+  "components": [
+    {
+      "id": "issue",
+      "type": "external",
+      "label": "Issue",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "mip",
+      "type": "backend",
+      "label": "MIP (Draft)",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "acceptance",
+      "type": "backend",
+      "label": "acceptance",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "tasks",
+      "type": "backend",
+      "label": "task list",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "prs",
+      "type": "backend",
+      "label": "stacked PRs",
+      "sublabel": "(one per task, verified, costed)",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "review",
+      "type": "backend",
+      "label": "review, when asked",
+      "pos": [
+        40,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "merge",
+      "type": "backend",
+      "label": "merge bottom-up, restack",
+      "pos": [
+        40,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "finish",
+      "type": "backend",
+      "label": "finish",
+      "sublabel": "(MIP → Implemented)",
+      "pos": [
+        40,
+        830
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "issue",
+      "to": "mip"
+    },
+    {
+      "id": "e2",
+      "from": "mip",
+      "to": "acceptance"
+    },
+    {
+      "id": "e3",
+      "from": "acceptance",
+      "to": "tasks"
+    },
+    {
+      "id": "e4",
+      "from": "tasks",
+      "to": "prs"
+    },
+    {
+      "id": "e5",
+      "from": "prs",
+      "to": "review"
+    },
+    {
+      "id": "e6",
+      "from": "review",
+      "to": "merge"
+    },
+    {
+      "id": "e7",
+      "from": "merge",
+      "to": "finish"
+    }
+  ]
+}
