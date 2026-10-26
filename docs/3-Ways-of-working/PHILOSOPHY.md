@@ -1,9 +1,9 @@
 # Philosophy
 
 [`AGENTS.md`](../../AGENTS.md) holds the rules; this page holds the reasons, for every marola repo.
-It exists because the choices below look unrelated from the outside (a beach app, LLMs, a Scala 3
-build, Nix, a `justfile`, a sandbox for the coding agent, design docs before code), and they are one
-decision made six times.
+It exists because the choices below look unrelated from the outside (a beach app, LLMs, Nix, a
+`justfile`, a sandbox for the coding agent, design docs before code), and they are one decision
+made five times.
 
 ## The one decision
 
@@ -93,43 +93,6 @@ design; [LIMITATIONS](../1-Using-marola/LIMITATIONS.md)). A second, independentl
 pass grades the first model's sentence and can rewrite it. Lore shown to a user is a curated file
 with a source per entry, shown verbatim; the model never gets to invent a fact about the sea. The
 rule in the `/marola-devkit:mip` skill says it shortest: *no unsourced text reaches a user*.
-
-## Why Scala 3 on the JVM
-
-Because the compiler is the cheapest reviewer an agent will ever have, and Scala 3 lets that
-reviewer be strict without being verbose:
-
-- `-language:strictEquality`, `-Wvalue-discard`, `-Wnonunit-statement` promoted to errors
-  (marola-app's
-  [compiler flags](https://docs.marola.dev/5-Repos/marola-app/2-libraries_scala3-jdk/#27-compiler-and-tooling-flags)):
-  a comparison between unrelated types, a dropped result, a statement whose value was meant to be
-  used: all compile errors. An agent that writes such code finds out in seconds, not in production.
-- `enum` + exhaustive `match` for every expected failure mode; exceptions only for the genuinely
-  unexpected. A new case the model forgot to handle is a warning-as-error, not a runtime surprise.
-- Direct-style Kyo effects (`Sync`, `Abort`, `Async`) only at the I/O boundary, so the decision
-  logic is ordinary functions any test can call without a runtime
-  ([effects map](https://docs.marola.dev/5-Repos/marola-app/1-design_effects/)).
-- The JVM ecosystem underneath: one build tool, one dependency resolver with pinned versions,
-  `javap` on the actual jar when the docs and the code disagree (marola-app's "verify against the
-  jar" rule exists because Kyo is pre-1.0 and its docs drift), GraalVM native images, a container
-  that is a fat jar and nothing else.
-
-**The Python question.** Python is not short of types: gradual typing since 3.5, mypy and
-pyright, and typed code is the norm in modern libraries. The point is where the gate lives. In
-Python the annotations are optional and unenforced by the language: the `typing` module's own
-documentation opens with "The Python runtime does not enforce function and variable type
-annotations. They can be used by third party tools such as type checkers, IDEs, linters, etc."
-(docs.python.org, fetched 2026-09-05), so the check is there by discipline: every contributor,
-including the agent, installs the checker, configures it, and never reaches for `Any` to make it
-pass; a `match` has no exhaustiveness check; a wrong type surfaces when that line runs. On the JVM
-the gate is the build (there by construction) and Scala 3 makes it strict without ceremony
-(strict equality, warnings as errors, `enum` with exhaustive `match`, effects at the boundary).
-For a backend system that will live for years and be written largely by agents, that is the bet
-this repo makes: compile-time safety, one build tool with pinned resolution, and ergonomics that
-hold up as the codebase grows beat Python's faster start over the long term. Python keeps the
-places where its libraries are the only ones (the offline steps in
-[marola-ml](https://docs.marola.dev/5-Repos/marola-ml/): the prompt compile and the fine-tune) and
-stays out of the runtime path on purpose.
 
 ## Why Nix
 
