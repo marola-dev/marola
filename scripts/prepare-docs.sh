@@ -2,7 +2,7 @@
 # prepare-docs — build docs.marola.dev's source tree in a gitignored directory (MIP-0074 §5.3): the
 # umbrella at the root (README.md as index.md, docs/** beside it, docs/MIPs/ at 6-MIPs/) and every
 # repo in mkdocs/repos.yml at 5-Repos/<name>/ (its README.md as index.md, its docs/** beside it,
-# its api-docs branch under api-docs/). scripts/lib/doc_links.py rewrites the links (Appendix A)
+# its api-docs branch under api-docs/). `scripts/marola-tools doc-links` rewrites the links (Appendix A)
 # and generates each adr/index.md; build.json and a line on each landing record the commit each
 # repo was built from. A repo with no README.md, with both README.md and docs/index.md, or with a
 # hand-written docs/adr/index.md fails the run. scripts/mkdocs.sh builds from this directory
@@ -27,10 +27,10 @@ unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR
 export GIT_TERMINAL_PROMPT=0
 
 # fetch_flake_lock_source <root> <name> -> the path of <name> checked out at
-# flake.lock's nodes.<name>.locked.rev. python3, not nix: CI has no nix.
+# flake.lock's nodes.<name>.locked.rev. jq, not nix: CI has no nix.
 fetch_flake_lock_source() {
   local root="$1" name="$2" rev url dir
-  rev="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["nodes"][sys.argv[2]]["locked"]["rev"])' "$root/flake.lock" "$name")" ||
+  rev="$(jq -er --arg n "$name" '.nodes[$n].locked.rev' "$root/flake.lock")" ||
     { echo "prepare-docs: no nodes.$name.locked.rev in $root/flake.lock" >&2; return 1; }
   url="${DOCS_SOURCE_REMOTE//<repo>/$name}"
   dir="$root/.tmp/docs-sources/$name"
@@ -59,26 +59,26 @@ exclude_docs() {
   awk '/^exclude_docs:[ \t]*\|/ { on = 1; next } on && /^[^ \t]/ { on = 0 } on && NF && $1 !~ /^#/ { print $1 }' "$1"
 }
 
-# mount_repo <src> <name> <sha> <dest> [doc_links args...]
+# mount_repo <src> <name> <sha> <dest> [doc-links args...]
 mount_repo() {
   local src="$1" name="$2" sha="$3" dest="$4"; shift 4
   [ -f "$src/README.md" ] ||
     { echo "prepare-docs: $name has no README.md — it is the repo's landing page (MIP-0074 §5.2)" >&2; return 1; }
   [ ! -e "$src/docs/index.md" ] ||
     { echo "prepare-docs: $name has both README.md and docs/index.md — the README is the landing; remove docs/index.md (MIP-0074 D1)" >&2; return 1; }
-  python3 "$script_dir/lib/doc_links.py" --repo "$src" --name "$name" --sha "$sha" --out "$dest" "$@" || return 1
+  "$script_dir/marola-tools" doc-links --repo "$src" --name "$name" --sha "$sha" --out "$dest" "$@" || return 1
   printf '\n_Built from [marola-dev/%s@%s](https://github.com/marola-dev/%s/tree/%s)._\n' \
     "$name" "${sha:0:7}" "$name" "$sha" >>"$dest/index.md"
 }
 
 # check_links <build_dir> <file>... -> every relative link in each page resolves to a real file,
-# reported here rather than deep in a `mkdocs --strict` log. The links are doc_links.py's, so code
+# reported here rather than deep in a `mkdocs --strict` log. The links are doc-links's, so code
 # spans and fences are read the way the rewrite (and docs-lint) read them. --links leaves out any
-# URI with a scheme (data:, tel:, …); anchors and /… are skipped here (doc_links refuses /… already).
+# URI with a scheme (data:, tel:, …); anchors and /… are skipped here (doc-links refuses /… already).
 check_links() {
   local build_dir="$1"; shift
   local fails=0 f link target listed
-  listed="$(python3 "$script_dir/lib/doc_links.py" --links "$@")" || return 1
+  listed="$("$script_dir/marola-tools" doc-links --links "$@")" || return 1
   while IFS=$'\t' read -r f link; do
     case "$link" in
       ''|/*|'#'*) continue ;;
@@ -128,8 +128,8 @@ prepare() {
     mount_repo "${srcs[$i]}" "${names[$i]}" "${shas[$i]}" "$build_dir/5-Repos/${names[$i]}" "${excludes[@]}" || return 1
     "$script_dir/fetch-api-docs.sh" "${names[$i]}" "$build_dir/5-Repos/${names[$i]}/api-docs" || return 1
   done
-  python3 -c 'import json, sys; a = sys.argv[2:]; json.dump(dict(zip(a[::2], a[1::2])), open(sys.argv[1], "w"), indent=2)' \
-    "$build_dir/build.json" marola "$umbrella_sha" "${built[@]}" || return 1
+  jq -n '$ARGS.positional | [range(0; length; 2) as $i | {(.[$i]): .[$i + 1]}] | add' \
+    --args marola "$umbrella_sha" "${built[@]}" >"$build_dir/build.json" || return 1
 
   while IFS= read -r -d '' f; do pages+=("$f"); done < <(find "$build_dir" -name '*.md' -print0)
   check_links "$build_dir" "${pages[@]}"
@@ -206,7 +206,7 @@ and [a run]($blob/docs/benchmarks/run.md)." "README links: docs/ and ./docs/ dro
   ok "$rc" "0" "the build succeeds"
   app_sha="$(git -C "$t/root/fake-app" rev-parse HEAD)"
   local root_sha; root_sha="$(git -C "$t/root" rev-parse HEAD)"
-  ok "$(python3 -c 'import json, sys; d = json.load(open(sys.argv[1])); print(d["marola"], d["fake-app"])' "$t/build/build.json" 2>/dev/null)" "$root_sha $app_sha" "build.json maps each repo to its checkout's HEAD"
+  ok "$(jq -r '"\(.marola) \(.["fake-app"])"' "$t/build/build.json" 2>/dev/null)" "$root_sha $app_sha" "build.json maps each repo to its checkout's HEAD"
   ok "$(tail -1 "$t/build/5-Repos/fake-app/index.md")" "_Built from [marola-dev/fake-app@${app_sha:0:7}](https://github.com/marola-dev/fake-app/tree/$app_sha)._" "the repo landing's last line names its sha"
   ok "$(tail -1 "$t/build/index.md")" "_Built from [marola-dev/marola@${root_sha:0:7}](https://github.com/marola-dev/marola/tree/$root_sha)._" "...and so does the umbrella's"
   rm -rf "$t"
@@ -479,7 +479,7 @@ EOF
   ok "$(head -1 "$t/build/5-Repos/fake-devkit/index.md" 2>/dev/null)" "# locked, see [ref](ref.md)" "its README is the locked commit's, rewritten like a submodule's"
   ok "$([ -f "$t/build/5-Repos/fake-devkit/ref.md" ] && echo yes || echo no)" "yes" "...and its docs/** is copied beside it"
   ok "$(git -C "$t/root/.tmp/docs-sources/fake-devkit" rev-parse HEAD 2>/dev/null)" "$locked" "the fetch lands in .tmp/docs-sources/<name> at the locked rev"
-  ok "$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["fake-devkit"])' "$t/build/build.json" 2>/dev/null)" "$locked" "build.json records the locked rev"
+  ok "$(jq -r '.["fake-devkit"]' "$t/build/build.json" 2>/dev/null)" "$locked" "build.json records the locked rev"
   mkdir -p "$t/bin"
   # shellcheck disable=SC2016 # $a and "$@" belong to the stub git, not to this shell
   printf '#!/bin/sh\nfor a; do [ "$a" = checkout ] && exit 1; done\nexec %s "$@"\n' "$(command -v git)" >"$t/bin/git"

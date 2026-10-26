@@ -106,7 +106,7 @@ exist), is a few dozen lines and runs entirely on Ollama. It also belongs as a f
 
 **v1: llm4s agent with tools.** Once `MIP-0012`'s module exists, the same question can go to an
 llm4s agent that can also *act*: read a file, list MIPs by status from `docs/MIPs/README.md`, call
-`mip_graph.py`, or call marola's own MCP tools for a live "what's the swim forecast" answer. This is
+`marola-tools mip-graph`, or call marola's own MCP tools for a live "what's the swim forecast" answer. This is
 where the Ollama tool-message gap has to be solved first.
 
 **v2: ADK multi-agent, on GCP, only if `MIP-0057` goes ahead.** A router `LlmAgent` in front of two

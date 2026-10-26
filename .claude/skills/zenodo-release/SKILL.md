@@ -1,6 +1,6 @@
 ---
 name: zenodo-release
-description: "Cut a citable marola release and keep its Zenodo and citation metadata right. Use when asked to release or tag a version, mint or update a DOI, add an author or contributor, change .zenodo.json, CITATION.cff or the README's DOI badge and \"How to cite\". Use it before the vendored citation-cff skill, which it limits to exporting and checking."
+description: "Cut a citable marola release and keep its Zenodo and citation metadata right. Use when asked to release or tag a version, mint or update a DOI, add an author or contributor, change .zenodo.json, CITATION.cff or the READMEs' \"How to cite\". Use it before the vendored citation-cff skill, which it limits to exporting and checking."
 ---
 
 # zenodo-release
@@ -19,7 +19,7 @@ under one concept DOI. There are no secrets in it:
 
 1. `just release X.Y.Z` (`scripts/release.sh`) tags `main` as `vX.Y.Z` and pushes. It refuses
    unless `main` is clean and level with `origin/main`, the tag is new and
-   `scripts/citation.py --check` passes, and the pointer guard below. `--dry-run` runs every check
+   `scripts/marola-tools citation --check` passes, and the pointer guard below. `--dry-run` runs every check
    and tags nothing; it is the rehearsal (there are no `-rc` tags: each archived release is a
    permanent DOI). `just releases` lists past tags.
 2. `.github/workflows/release.yml` reruns the citation check and the guard, then turns the tag into
@@ -52,12 +52,9 @@ give him the `just release` command.
 - Related works use Zenodo's relation vocabulary (the check lists it): the six repos are
   `hasPart`, the WW3 GPU Lab `references`. A repo that gets its own concept DOI moves from its URL
   to that DOI.
-- Concept DOI (once it exists): `CONCEPT_DOI` in `scripts/citation.py` (then `just citation`
-  adds it to the CFF and the references) and the README badge. The badge and the concept DOI,
-  never a version DOI, as a shields.io image:
-  `[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.<n>-blue)](https://doi.org/<concept>)`.
-  zenodo.org's own badge URL answers 403 to the runner, and the docs build's privacy plugin then
-  fails on the missing download.
+- Concept DOI: `CONCEPT_DOI` in `tools/src/citation.rs` (then `just citation` adds it to the CFF
+  and the references). The READMEs carry no DOI badge (the maintainer's call): the DOI lives in
+  their "Como citar" / "How to cite" section, which `just citation` writes.
 - An edit reaches Zenodo only with the next release. A DOI cannot be deleted: confirm the version
   number with the maintainer before he tags. SemVer: PATCH for fixes and docs, MINOR for new
   MIPs, tools or repos, MAJOR only when he says so.

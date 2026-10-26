@@ -16,6 +16,11 @@
 | **Risk** | A wrong field in a released record stays there forever: a DOI cannot be deleted, only superseded by the next release. `scripts/citation.py --check` runs before every tag for that reason |
 | **Cost so far** | — |
 
+> **Note (2026-10-26).** `scripts/citation.py` is now [`tools/src/citation.rs`](../../tools/src/citation.rs), run as
+> `scripts/marola-tools citation` (`just citation`, `--check` unchanged): the umbrella holds no Python
+> (AGENTS.md). The READMEs dropped the DOI badge; the DOI stays in their "How to cite" section. The
+> text below keeps the names it was written with.
+
 ## 1. Summary
 
 Each GitHub release of the umbrella, and later of marola-app, marola-ml and marola-corpus, is

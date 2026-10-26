@@ -1,0 +1,31 @@
+[package]
+name = "marola-tools"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "AGPL-3.0-only"
+description = "The umbrella's repo tooling: citation metadata, the MIP graph, the docs-site link rewriter and checks, the routing bundle, badges and the research digests"
+
+[[bin]]
+name = "marola-tools"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+fancy-regex = "0.14"
+regex = "1"
+roxmltree = "0.20"
+serde_json = { version = "1", features = ["preserve_order"] }
+unicode-normalization = "0.1"
+percent-encoding = "2"
+walkdir = "2"
+ureq = "2"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+html-escape = "0.2"
+
+
+[profile.release]
+opt-level = 2
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# marola-tools — the umbrella's repo tooling (tools/, Rust). Builds the crate on first use, then
+# runs it: `scripts/marola-tools <command> [args]`, `scripts/marola-tools --help` for the list.
+# Needs cargo (nix develop has it; GitHub's hosted runners ship it).
+set -euo pipefail
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec cargo run --quiet --release --locked --manifest-path "$root/tools/Cargo.toml" -- "$@"

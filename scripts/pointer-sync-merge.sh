@@ -244,7 +244,7 @@ EOF
   calls() { cat "$t/gh/calls"; }
   local green failed no_ci_ok other_app ci_ok_failed
   # ci-ok is ci.yml's aggregate job; app 15368 is GitHub Actions.
-  green='{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"python-ci","status":"completed","conclusion":"skipped"},{"name":"gemini","status":"completed","conclusion":"neutral"},{"name":"ci-ok","status":"completed","conclusion":"success","app":{"id":15368}}]}'
+  green='{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"rust-ci","status":"completed","conclusion":"skipped"},{"name":"gemini","status":"completed","conclusion":"neutral"},{"name":"ci-ok","status":"completed","conclusion":"success","app":{"id":15368}}]}'
   failed='{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"docs-build","status":"completed","conclusion":"failure"}]}'
   no_ci_ok='{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"PR body","status":"completed","conclusion":"success","app":{"id":15368}}]}'
   other_app='{"check_runs":[{"name":"changes","status":"completed","conclusion":"success"},{"name":"ci-ok","status":"completed","conclusion":"success","app":{"id":99}}]}'

@@ -74,16 +74,14 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
 
-# A hooks: entry runs as a plugin. @event_priority puts it ahead of the kroki plugin below, so
-# every ```mermaid fence already carries a pinned font-family before Kroki measures it — #511.
-hooks:
-  - hooks/mermaid_font.py
+# No hooks: scripts/mkdocs.sh pins every ```mermaid fence's font-family in the staged copy
+# (`marola-tools mermaid-font`) before Kroki measures it — #511.
 
 plugins:
   - search
   # Downloads Material's webfont (and any other external asset) at build time and rewrites the
   # references to local copies, so the pages keep Roboto without asking fonts.googleapis.com for
-  # it on every visit. This is the only thing keeping that true — strip_external_scripts.py
+  # it on every visit. This is the only thing keeping that true — `marola-tools strip-external-scripts`
   # matches <script src>, and a webfont is a stylesheet <link>, so its check cannot see it.
   - privacy:
       # Mermaid.js is fetched but referenced by nothing: Kroki renders the diagrams to SVG at
