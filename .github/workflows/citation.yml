@@ -5,10 +5,10 @@ name: citation
 
 on:
   pull_request:
-    paths: [CITATION.cff, .zenodo.json, scripts/citation.py, README.md, README.pt-BR.md]
+    paths: [CITATION.cff, .zenodo.json, scripts/citation.py, README.md, README.en.md]
   push:
     branches: [main]
-    paths: [CITATION.cff, .zenodo.json, scripts/citation.py, README.md, README.pt-BR.md]
+    paths: [CITATION.cff, .zenodo.json, scripts/citation.py, README.md, README.en.md]
 
 permissions:
   contents: read

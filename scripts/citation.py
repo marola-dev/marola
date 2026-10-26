@@ -25,7 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ZENODO = ROOT / ".zenodo.json"
 CFF = ROOT / "CITATION.cff"
-READMES = (ROOT / "README.md", ROOT / "README.pt-BR.md")
+READMES = (ROOT / "README.md", ROOT / "README.en.md")
 START, END = "<!-- citation:start -->", "<!-- citation:end -->"
 
 # Filled in by the PR that follows the first archived release (MIP-0079 §5.5).

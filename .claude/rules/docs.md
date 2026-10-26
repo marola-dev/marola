@@ -51,6 +51,8 @@ The site is built from every repo (`docs/3-Ways-of-working/DOCS-SITE.md`; MIP-00
 
 - **Landing**: a repo's `README.md` is its landing page (this repo's is the site's root). There
   is no `docs/index.md` in any repo; the build refuses one.
+- **This repo's READMEs**: `README.md` in Portuguese, `README.en.md` the English ELI5 version
+  ([AGENTS.md](../../AGENTS.md#reading-and-writing-hard-rule)).
 - **Links**: relative inside a repo, written to work on GitHub; absolute
   `https://docs.marola.dev/…` across repos. A page that moves gets a `redirect_maps` entry in
   `mkdocs/mkdocs.yml` in the same change.
