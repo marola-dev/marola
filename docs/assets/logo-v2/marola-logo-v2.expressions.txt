@@ -1,0 +1,34 @@
+x^2+y^2\le100
+(x-5.4)^2+(y-5.3)^2\le2.2
+f_{1}(x)=-0.6+0.45\sin(0.9x+0.4)+0.15\sin(2.07x+0.68)
+f_{2}(x)=-3+0.9\sin(0.62x+2.2)+0.3\sin(1.426x+3.74)
+f_{3}(x)=-4.9+1\sin(0.55x+4.1)+0.3333\sin(1.265x+6.97)
+f_{4}(x)=-7.2+0.8\sin(0.7x+0.9)+0.2667\sin(1.61x+1.53)
+r_{o}(t)=6e^{-0.29t}
+r_{i}(t)=r_{o}(t)\left(1-0.5\left(1-\frac{t}{5.4978}\right)^{0.7}\right)
+S(a,t)=\left(-0.6+a\cos(t-0.05),2.3+a\sin(t-0.05)\right)
+U=\left[0,0.005,...,1\right]
+v(u)=-0.9+6.3978u
+P_{0}=(11,-4.2)
+P_{1}=(6.5925,-1.5999)
+Q(s)=(1-s)^2P_{0}+2s(1-s)P_{1}+s^2S\left(r_{o}(0),0\right)
+\operatorname{polygon}\left(\operatorname{join}\left(Q(U),S\left(r_{o}(5.4978U),5.4978U\right),S\left(r_{i}(v(1-U)),v(1-U)\right),\left[\left(1.4118,-7\right),\left(11,-7\right)\right]\right)\right)
+Q(t)\left\{0\le t\le1\right\}
+S\left(r_{o}(t),t\right)\left\{0\le t\le5.4978\right\}
+S\left(r_{i}(t),t\right)\left\{-0.9\le t\le5.4978\right\}
+y\le f_{1}(x)\left\{x^2+y^2\le100\right\}
+y=f_{1}(x)\left\{x^2+f_{1}(x)^2\le100\right\}
+(x-0.1411)^2+(y-6.5969)^2\le0.04
+(x+0.9533)^2+(y-6.7508)^2\le0.0169
+(x+1.8636)^2+(y-5.9986)^2\le0.0576
+(x+2.8552)^2+(y-5.7481)^2\le0.0196
+(x+3.1797)^2+(y-4.663)^2\le0.0441
+(x+3.8119)^2+(y-3.8184)^2\le0.0144
+(x+3.4982)^2+(y-2.7131)^2\le0.0289
+y\le f_{2}(x)\left\{x^2+y^2\le100\right\}
+y=f_{2}(x)\left\{x^2+f_{2}(x)^2\le100\right\}
+y\le f_{3}(x)\left\{x^2+y^2\le100\right\}
+y=f_{3}(x)\left\{x^2+f_{3}(x)^2\le100\right\}
+y\le f_{4}(x)\left\{x^2+y^2\le100\right\}
+y=f_{4}(x)\left\{x^2+f_{4}(x)^2\le100\right\}
+\left[(-1.15,2.25),(-0.45,1.55),(0.75,3.05)\right]

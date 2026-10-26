@@ -25,6 +25,21 @@ precedence = "closest"
 SPDX-FileCopyrightText = ["2026 marola.dev", "2026 Matheus Hoffmann", "2026 Bruno Guilhermo de Barros Valério", "2026 William Macedo", "2026 Pablo Ribeiro", "2026 Rôb Klér Soares da Silva Júnior", "2026 marola contributors"]
 SPDX-License-Identifier = "MIT"
 
+# Brand art sources (marola logo v2 in Desmos, the GitHub Sponsors cover): the images stay CC BY 4.0
+# under the first block, the scripts and HTML that draw them are code.
+[[annotations]]
+path = ["docs/assets/logo-v2/*.js", "docs/assets/sponsors/*.js", "docs/assets/sponsors/*.html"]
+precedence = "closest"
+SPDX-FileCopyrightText = ["2026 Matheus Hoffmann", "2026 marola contributors"]
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+# Leave No Trace's partner mark, not ours to licence.
+[[annotations]]
+path = ["docs/assets/sponsors/lnt-proud-partner.png"]
+precedence = "override"
+SPDX-FileCopyrightText = "Leave No Trace Center for Outdoor Ethics"
+SPDX-License-Identifier = "LicenseRef-LNT-Proud-Partner"
+
 # The page states CC0 1.0 for its own curation text.
 [[annotations]]
 path = ["docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md"]
