@@ -20,10 +20,12 @@ validation:
   anchors: warn
 
 # Built and reachable by URL, just not listed: the task files are execution bookkeeping for a MIP,
-# linked from the MIP that owns them; a MIP's screenshots README is not a section.
+# linked from the MIP that owns them; a MIP's screenshots README is not a section, nor is the README
+# beside a drawing's files in assets/.
 not_in_nav: |
   6-MIPs/*.tasks.md
   6-MIPs/*/screenshots/*
+  assets/*/README.md
 
 # Off the site entirely, not merely out of the sidebar: benchmarks/ is a ledger of kept runs, a
 # repo artefact rather than documentation. Links into it point at GitHub.
