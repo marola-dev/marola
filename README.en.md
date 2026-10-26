@@ -83,7 +83,9 @@ rules and every design decision.
 
 Swimming is the first question. Next come warnings for *ressaca* (the storm surf that eats Brazil's
 beaches), wave forecasts from several models side by side, an open archive of Brazil's beach water
-tests, and reports from people at the beach. Each idea is written down first as a public design
+tests, and reports from people at the beach. There is also an idea to compute the score with open decision models,
+served by [Ollaya](https://github.com/h0ffmann/ptbr-writer#ollaya). It is only an idea for now, with
+no MIP yet. Each idea is written down first as a public design
 doc, a "MIP", in [`docs/MIPs/`](./docs/MIPs/README.md).
 
 ## How you can help (no coding needed)

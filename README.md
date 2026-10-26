@@ -14,6 +14,7 @@
 <a href="https://doi.org/10.5281/zenodo.23224155"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23224155-blue" alt="DOI" /></a>
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-CC_BY_4.0_%2B_AGPL--3.0-green" alt="CC BY 4.0 for the docs, AGPL-3.0-only for the code" /></a>
 <a href="https://github.com/h0ffmann/ptbr-writer"><img src="https://img.shields.io/badge/built_with-ptbr--writer-1682D4?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWQzZmQwIiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48dGl0bGU+dW1hIHBlbmEgZGUgZXNjcmV2ZXIsIG51bWEgbGluaGEgc8OzPC90aXRsZT48cGF0aCBkPSJNMTAgNTZjOC0zIDE0LTkgMjAtMTZNMzAgNDBjLTQtMTAgMC0yNCAyMi0zMi0yIDE0LTggMjYtMjIgMzJ6TTMwIDQwbDEwLTE2TTE4IDU0YzEwIDIgMjIgMCAzNC00Ii8+PC9zdmc+Cg==" alt="built with ptbr-writer" /></a>
+<a href="https://github.com/h0ffmann/ptbr-writer#ollaya"><img src="https://img.shields.io/badge/modelo%20de%20decis%C3%A3o%3A%20Ollaya-planned-lightgrey?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzE3MTcxNyIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEuNiAxLjQpIHNjYWxlKC45KSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNiA1LjUgMTAuNSA5LjVRMTYgNy41IDIxLjUgOS41TDI2IDUuNVYxOVEyNiAyNy41IDE2IDI3LjVUNiAxOVoiLz48Y2lyY2xlIGN4PSIxMS41IiBjeT0iMTUuNSIgcj0iMy4yNSIvPjxjaXJjbGUgY3g9IjIwLjUiIGN5PSIxNS41IiByPSIzLjI1Ii8+PGNpcmNsZSBjeD0iMTEuNSIgY3k9IjE1LjUiIHI9IjEuMiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSJub25lIi8+PGNpcmNsZSBjeD0iMjAuNSIgY3k9IjE1LjUiIHI9IjEuMiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSJub25lIi8+PHBhdGggZD0iTTE0Ljc1IDIxIDE2IDIzbDEuMjUtMiIvPjwvZz48L3N2Zz4K" alt="modelo de decisão: Ollaya, planned" /></a>
 </p>
 
 <p align="center"><a href="./README.en.md">🇬🇧 Read in English (the simple version)</a> · <a href="https://marola.dev/">🗺️ Abrir o mapa ao vivo</a></p>
@@ -105,6 +106,9 @@ pergunta. Os mesmos dados, e muitos outros, podem ajudar a proteger pessoas e lu
 - 🪼 **Relatos de quem está na praia.** Água-viva, baleia e, mais adiante, fotos de como o mar
   está agora, para que observações reais confiram as previsões.
 - 🏄 **O resto do mar.** Surfe, mergulho e pesca, como novas perguntas sobre os mesmos dados.
+- 🧠 **A nota com modelos de decisão abertos.** Existe a ideia de calcular a nota com modelos de
+  decisão abertos, servidos pelo [Ollaya](https://github.com/h0ffmann/ptbr-writer#ollaya). É só uma
+  ideia por enquanto: ainda não tem MIP.
 
 Essas ideias estão em estágios diferentes. Cada uma é escrita antes como um documento público de
 projeto (uma "MIP"), para que você veja exatamente o que já está pronto e o que ainda é plano:
