@@ -18,13 +18,21 @@
         "repo": "surendranb/writing-skills",
         "ref": "2e692b8d78a4fb41f7e99724d1410d01adf071d0"
       }
+    },
+    "ptbr-writer": {
+      "source": {
+        "source": "github",
+        "repo": "h0ffmann/ptbr-writer",
+        "ref": "v0.3.0"
+      }
     }
   },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "marola-devkit@marola-devkit": true,
-    "writing-skills@writing-skills": true
+    "writing-skills@writing-skills": true,
+    "ptbr-writer@ptbr-writer": true
   },
   "statusLine": {
     "type": "command",
