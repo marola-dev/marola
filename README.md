@@ -47,6 +47,14 @@ A few promises marola keeps:
 
 ## The map: what's live and what's next
 
+> ⚠️ **Frontend v2 in progress.** The map's frontend v2 is being written with
+> [MapLibre](https://maplibre.org/) and Rust, and it should be ready before 2027. The page on
+> marola.dev today is v1, on Mapbox GL JS. The v2 seed lives in 🔒 `h0ffmann/smart-alerts`, a closed
+> repository for now, under MPL-2.0.
+>
+> <a href="https://github.com/h0ffmann/smart-alerts"><img src="https://img.shields.io/badge/h0ffmann%2Fsmart--alerts-private-555?logo=github&logoColor=white" alt="h0ffmann/smart-alerts: private repository" /></a>
+> <a href="https://www.mozilla.org/MPL/2.0/"><img src="https://img.shields.io/badge/license-MPL--2.0-1682D4?logo=mozilla&logoColor=white" alt="license: MPL-2.0" /></a>
+
 [marola.dev](https://marola.dev/) has a layer rail at the top right. Two layers are live today;
 the rest sit on the rail greyed out as "em breve" (coming soon), or are written up as a MIP, and
 each one is switched on once its data is checked live.

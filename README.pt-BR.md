@@ -28,6 +28,14 @@ Algumas promessas que o marola cumpre:
 
 ## O mapa: o que já está no ar e o que vem aí
 
+> ⚠️ **Frontend v2 em andamento.** A versão v2 do frontend do mapa está sendo escrita com
+> [MapLibre](https://maplibre.org/) e Rust, e deve ficar pronta antes de 2027. A página que está
+> hoje no marola.dev é a v1, com Mapbox GL JS. A semente da v2 fica em 🔒 `h0ffmann/smart-alerts`,
+> um repositório fechado por enquanto, sob a licença MPL-2.0.
+>
+> <a href="https://github.com/h0ffmann/smart-alerts"><img src="https://img.shields.io/badge/h0ffmann%2Fsmart--alerts-private-555?logo=github&logoColor=white" alt="h0ffmann/smart-alerts: private repository" /></a>
+> <a href="https://www.mozilla.org/MPL/2.0/"><img src="https://img.shields.io/badge/license-MPL--2.0-1682D4?logo=mozilla&logoColor=white" alt="license: MPL-2.0" /></a>
+
 O [marola.dev](https://marola.dev/) tem uma barra de camadas no canto superior direito. Duas
 camadas já estão no ar; as outras aparecem na barra, apagadas, como "em breve", ou estão escritas
 como MIP, e cada uma só é ligada depois que os dados dela são conferidos no ar.
