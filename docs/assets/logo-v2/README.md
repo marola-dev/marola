@@ -1,5 +1,7 @@
 # marola logo v2
 
+<a href="../../../README.md#tempo-de-leitura"><img src="https://img.shields.io/badge/tempo%20de%20leitura-~3%20min-1682D4" alt="tempo de leitura: ~3 min" /></a>
+
 O logo do marola desenhado como um gráfico do Desmos: uma onda quebrando dentro de um disco, com
 quatro faixas de mar e o check da qualidade da água dentro do tubo. A apresentação segue a do
 desenho do [h0ffmann/smart-alerts](https://github.com/h0ffmann/smart-alerts/tree/main/docs/drawings).
