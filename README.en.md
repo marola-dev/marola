@@ -109,6 +109,30 @@ PR descriptions here come out in two languages, Portuguese first, from the `bipr
 guide is [Contributing](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTING/). Please read the
 [Code of Conduct](https://github.com/marola-dev/.github/blob/main/CODE_OF_CONDUCT.md) too.
 
+## Every repo in the org
+
+The [marola-dev](https://github.com/marola-dev) org has 14 public repos, forks included. "Commits"
+counts the commits on each repo's default branch (`git rev-list --count HEAD`, counted on
+2026-10-26). A fork's count includes the history of the project it copies. One private repo is
+left out.
+
+| Repo | Kind | Commits | Last commit |
+|---|---|---:|---|
+| [marola](https://github.com/marola-dev/marola) | umbrella | 594 | 2026-10-26 |
+| [marola-devkit](https://github.com/marola-dev/marola-devkit) | code | 223 | 2026-10-20 |
+| [marola-app](https://github.com/marola-dev/marola-app) | code | 197 | 2026-10-20 |
+| [marola-site](https://github.com/marola-dev/marola-site) | code | 140 | 2026-10-26 |
+| [marola-ml](https://github.com/marola-dev/marola-ml) | code | 116 | 2026-10-20 |
+| [marola-skills](https://github.com/marola-dev/marola-skills) | catalogue | 48 | 2026-10-20 |
+| [marola-corpus](https://github.com/marola-dev/marola-corpus) | data | 45 | 2026-10-20 |
+| [marola-research](https://github.com/marola-dev/marola-research) | science | 42 | 2026-10-20 |
+| [marola-oods](https://github.com/marola-dev/marola-oods) | data | 34 | 2026-10-20 |
+| [.github](https://github.com/marola-dev/.github) | org profile | 15 | 2026-10-25 |
+| [marola-agents](https://github.com/marola-dev/marola-agents) | catalogue | 4 | 2026-10-10 |
+| [awesome-ocean-sciences](https://github.com/marola-dev/awesome-ocean-sciences) | list | 1 | 2026-10-19 |
+| [open-sustainable-technology](https://github.com/marola-dev/open-sustainable-technology) | list fork | 4089 | 2026-09-25 |
+| [awesome-open-climate-science](https://github.com/marola-dev/awesome-open-climate-science) | list fork | 77 | 2025-11-12 |
+
 ## How to cite
 
 Every release is kept on [Zenodo](https://zenodo.org/) with a DOI. Cite

@@ -186,11 +186,35 @@ Situação em outubro de 2026; as issues e os PRs linkados mostram o estado de a
 | [marola-research](https://github.com/marola-dev/marola-research) | Science | [issues](https://github.com/marola-dev/marola-research/issues) |
 
 Outros três repositórios são listas curadas, fora do produto: o
-[awesome-ocean-science](https://github.com/marola-dev/awesome-ocean-science) é a lista do próprio
+[awesome-ocean-sciences](https://github.com/marola-dev/awesome-ocean-sciences) é a lista do próprio
 marola com software, dados e ferramentas sobre o oceano; o
 [open-sustainable-technology](https://github.com/marola-dev/open-sustainable-technology) e o
 [awesome-open-climate-science](https://github.com/marola-dev/awesome-open-climate-science) são forks
 de listas da comunidade onde o marola ainda vai ser proposto.
+
+## Todos os repositórios da org
+
+A org [marola-dev](https://github.com/marola-dev) tem 14 repositórios públicos, forks incluídos.
+A coluna "Commits" conta os commits do branch padrão de cada um (`git rev-list --count HEAD`,
+contados em 2026-10-26). Num fork, essa conta inclui o histórico do projeto original. Um
+repositório privado fica fora da lista.
+
+| Repositório | Tipo | Commits | Último commit |
+|---|---|---:|---|
+| [marola](https://github.com/marola-dev/marola) | guarda-chuva | 594 | 2026-10-26 |
+| [marola-devkit](https://github.com/marola-dev/marola-devkit) | código | 223 | 2026-10-20 |
+| [marola-app](https://github.com/marola-dev/marola-app) | código | 197 | 2026-10-20 |
+| [marola-site](https://github.com/marola-dev/marola-site) | código | 140 | 2026-10-26 |
+| [marola-ml](https://github.com/marola-dev/marola-ml) | código | 116 | 2026-10-20 |
+| [marola-skills](https://github.com/marola-dev/marola-skills) | catálogo | 48 | 2026-10-20 |
+| [marola-corpus](https://github.com/marola-dev/marola-corpus) | dados | 45 | 2026-10-20 |
+| [marola-research](https://github.com/marola-dev/marola-research) | ciência | 42 | 2026-10-20 |
+| [marola-oods](https://github.com/marola-dev/marola-oods) | dados | 34 | 2026-10-20 |
+| [.github](https://github.com/marola-dev/.github) | perfil da org | 15 | 2026-10-25 |
+| [marola-agents](https://github.com/marola-dev/marola-agents) | catálogo | 4 | 2026-10-10 |
+| [awesome-ocean-sciences](https://github.com/marola-dev/awesome-ocean-sciences) | lista | 1 | 2026-10-19 |
+| [open-sustainable-technology](https://github.com/marola-dev/open-sustainable-technology) | fork de lista | 4089 | 2026-09-25 |
+| [awesome-open-climate-science](https://github.com/marola-dev/awesome-open-climate-science) | fork de lista | 77 | 2025-11-12 |
 
 ## Em andamento: o lago de dados aberto do oceano
 
