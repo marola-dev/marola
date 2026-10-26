@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The forecaster flow, from the arms to the published forecast",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0091-flow.html"
+  },
+  "components": [
+    {
+      "id": "cyc",
+      "type": "backend",
+      "label": "cycle, every 4 h",
+      "sublabel": "fetch · store · score",
+      "pos": [
+        467,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cells",
+      "type": "database",
+      "label": "score_cell, pair_cell",
+      "sublabel": "lake on B2",
+      "pos": [
+        467,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "dec",
+      "type": "backend",
+      "label": "decide, weekly",
+      "sublabel": "context · reward · Hedge weights",
+      "pos": [
+        467,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "gate",
+      "type": "security",
+      "label": "95 % interval above zero,",
+      "sublabel": "twice in a row?",
+      "pos": [
+        170,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pr",
+      "type": "backend",
+      "label": "bot PR",
+      "sublabel": "published-forecaster.json",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "inc",
+      "type": "backend",
+      "label": "incumbent stays, or the fallback",
+      "sublabel": "labelled model agreement",
+      "pos": [
+        300,
+        500
+      ],
+      "size": [
+        227,
+        64
+      ]
+    },
+    {
+      "id": "site",
+      "type": "backend",
+      "label": "marola.dev panel, CLI line",
+      "pos": [
+        300,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "plan",
+      "type": "backend",
+      "label": "plan",
+      "sublabel": "Thompson sampling under budget B",
+      "pos": [
+        467,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ww3",
+      "type": "backend",
+      "label": "ww3-gpu cycle",
+      "sublabel": "admitted arms only",
+      "pos": [
+        597,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "drop",
+      "type": "backend",
+      "label": "lake drop + manifest",
+      "pos": [
+        597,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "logp",
+      "type": "database",
+      "label": "policy_decision",
+      "sublabel": "propensities",
+      "pos": [
+        727,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ope",
+      "type": "backend",
+      "label": "replay and off-policy evaluation",
+      "sublabel": "before any policy change",
+      "pos": [
+        857,
+        500
+      ],
+      "size": [
+        227,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "cyc",
+      "to": "cells"
+    },
+    {
+      "id": "e2",
+      "from": "cells",
+      "to": "dec"
+    },
+    {
+      "id": "e3",
+      "from": "dec",
+      "to": "gate"
+    },
+    {
+      "id": "e4",
+      "from": "gate",
+      "to": "pr",
+      "label": "yes"
+    },
+    {
+      "id": "e5",
+      "from": "gate",
+      "to": "inc",
+      "label": "no"
+    },
+    {
+      "id": "e6",
+      "from": "pr",
+      "to": "site"
+    },
+    {
+      "id": "e7",
+      "from": "dec",
+      "to": "plan"
+    },
+    {
+      "id": "e8",
+      "from": "plan",
+      "to": "ww3"
+    },
+    {
+      "id": "e9",
+      "from": "ww3",
+      "to": "drop"
+    },
+    {
+      "id": "e10",
+      "from": "drop",
+      "to": "cyc"
+    },
+    {
+      "id": "e11",
+      "from": "dec",
+      "to": "logp"
+    },
+    {
+      "id": "e12",
+      "from": "logp",
+      "to": "ope"
+    }
+  ]
+}

@@ -113,18 +113,7 @@ commits there, and `oods-check` runs in `marola-oods` CI against the pinned app 
 
 ### 5.4 Contracts: pinned artifacts instead of paths
 
-```mermaid
-flowchart LR
-  devkit[marola-devkit] -. flake / plugin / workflows .-> app & site & corpus & ml
-  corpus[marola-corpus] -- tagged tarball --> app[marola-app]
-  corpus -- tagged tarball --> ml[marola-ml]
-  ml -- compiled prompt, bump PR --> app
-  app -- image + resources tarball --> ml
-  app -- image, data-only boards --> site[marola-site]
-  app -- coverage, smoke --> site
-  app -- ingest commits --> oods[marola-oods]
-  oods -- export tag --> app
-```
+![Contracts as pinned artifacts instead of paths](../img/archify/mip-0070-contracts.png)
 
 | Producer → consumer | Artifact | Pinned by |
 |---|---|---|
@@ -144,17 +133,7 @@ producer from source.
 
 Superseded for docs by [MIP-0074](./MIP-0074-docs-umbrella-landing-and-repo-docs.md).
 
-```mermaid
-sequenceDiagram
-  participant R as code repo (main)
-  participant U as umbrella
-  participant P as Pages (docs.marola.dev)
-  R->>R: push touching README.md or docs/**
-  R->>U: repository_dispatch submodule-docs-updated
-  U->>U: git submodule update --remote
-  U->>U: aggregate + mkdocs build --strict
-  U->>P: deploy
-```
+![Sequence of a repo's docs reaching the umbrella's site](../img/archify/mip-0070-docs.png)
 
 - **Each repo** has `README.md` + `docs/`, a small `mkdocs.yml` and `just docs-serve` (the
   devkit's `mkdocs.sh`), and builds `--strict` standalone. Links: relative inside `docs/`, GitHub

@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "What happens on a release, from the tag to Zenodo and back",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0079-release.html"
+  },
+  "components": [
+    {
+      "id": "A",
+      "type": "backend",
+      "label": "just release X.Y.Z",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "B",
+      "type": "backend",
+      "label": "tag vX.Y.Z pushed",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "C",
+      "type": "backend",
+      "label": "release.yml: citation --check, --guard",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        267,
+        64
+      ]
+    },
+    {
+      "id": "D",
+      "type": "backend",
+      "label": "GitHub release published",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "E",
+      "type": "backend",
+      "label": "Zenodo webhook archives it",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "F",
+      "type": "backend",
+      "label": "new version DOI under 10.5281/zenodo.23224155",
+      "pos": [
+        40,
+        610
+      ],
+      "size": [
+        313,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "A",
+      "to": "B"
+    },
+    {
+      "id": "e2",
+      "from": "B",
+      "to": "C"
+    },
+    {
+      "id": "e3",
+      "from": "C",
+      "to": "D"
+    },
+    {
+      "id": "e4",
+      "from": "D",
+      "to": "E"
+    },
+    {
+      "id": "e5",
+      "from": "E",
+      "to": "F"
+    }
+  ]
+}

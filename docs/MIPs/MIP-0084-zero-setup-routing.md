@@ -114,15 +114,7 @@ hook, `AGENTS.md`), and use the one that does (the plugin) only after the person
 
 ## 5. Design
 
-```mermaid
-flowchart LR
-  ci["umbrella ci.yml graph job<br/>(push to main, daily)"] -->|"graphify + wiring.py + route bench"| br["routing-bundle branch<br/>(one force-pushed commit)"]
-  br -->|"git fetch → refs/marola/routing-bundle"| rt["route.py (stdlib)"]
-  sk["vendored routing skill"] --> rt
-  hk["SessionStart: session-check.sh"] -->|"context lines"| ag["agent"]
-  ag -->|"AskUserQuestion, once"| p["person: Install / Not now / Never"]
-  br -->|"routing-digest.md"| pj["claude.ai Projects knowledge (manual upload)"]
-```
+![Zero-setup routing: how a session reaches the graph and wiring CI publishes](../img/archify/mip-0084-routing.png)
 
 ### 5.1 The skill, vendored
 

@@ -12,8 +12,8 @@ body *{visibility:hidden!important}
 .diagram-container svg rect[class^=c-]:not(.c-mask){fill:#14171F!important;stroke:#2A303C!important;rx:6px}
 .diagram-container svg rect.c-lane{fill:none!important;stroke:#2A303C!important}
 .diagram-container svg rect.c-external:not(.c-mask){stroke:#FF4F00!important}
-.diagram-container svg text.t-primary{font:400 17px 'Fjalla One',sans-serif!important;fill:#EDEFF3!important}
-.diagram-container svg text.t-muted{font:400 10px Inter,sans-serif!important;fill:#9AA3B2!important}
+.diagram-container svg text.t-primary{font-family:'Fjalla One',sans-serif!important;font-weight:400!important;fill:#EDEFF3!important}
+.diagram-container svg text.t-muted{font-family:Inter,sans-serif!important;fill:#9AA3B2!important}
 .diagram-container svg text{font-family:Inter,sans-serif}
 .diagram-container svg text.t-edge-default{font:400 10px Inter,sans-serif!important;fill:#9AA3B2!important}
 .diagram-container svg text.t-dim{font:600 11px Inter,sans-serif!important;fill:#9AA3B2!important}

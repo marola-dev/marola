@@ -250,13 +250,7 @@ stays as filed until the export exists. Tasks 11 and 12 then stop the beach ETL 
 
 ### 5.4 The ETL
 
-```mermaid
-flowchart LR
-  dl["download the region<br/>.osm.pbf + .md5"] --> filt["osmium tags-filter<br/>trails, routes, lakes, state boundaries"]
-  filt --> geo["osmium export<br/>geojsonseq"]
-  geo --> load["oods trails --state UF<br/>rows → check → one transaction per state"]
-  load --> rt["oods maintain → upload catalog → oods export"]
-```
+![The coastal-trails ETL](../img/archify/mip-0030-etl.png)
 
 - **What `osmium` keeps**: `w/highway=path,track` with a `name`, `r/route=hiking,foot` with their
   members (`--add-referenced`), named `wr/natural=water` with `water=lake,pond`, and

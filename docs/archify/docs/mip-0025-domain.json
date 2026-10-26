@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The marola-sea domain model",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0025-domain.html"
+  },
+  "components": [
+    {
+      "id": "l1",
+      "type": "backend",
+      "label": "Layer 1: Marine Corpus QLoRA",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "merge",
+      "type": "backend",
+      "label": "Merge",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l2",
+      "type": "backend",
+      "label": "Layer 2: MCP Tool-Call SFT",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "l3",
+      "type": "backend",
+      "label": "Layer 3: Safety DPO",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "gguf",
+      "type": "backend",
+      "label": "GGUF Q4_K_M",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "modelfile",
+      "type": "backend",
+      "label": "Modelfile.adapter",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "create",
+      "type": "backend",
+      "label": "ollama create marola-sea-1.0",
+      "pos": [
+        300,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "env",
+      "type": "backend",
+      "label": "MAROLA_LOCAL_LLM_MODEL=",
+      "sublabel": "marola-sea-1.0",
+      "pos": [
+        300,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "l1",
+      "to": "merge"
+    },
+    {
+      "id": "e2",
+      "from": "l2",
+      "to": "merge"
+    },
+    {
+      "id": "e3",
+      "from": "l3",
+      "to": "merge"
+    },
+    {
+      "id": "e4",
+      "from": "merge",
+      "to": "gguf"
+    },
+    {
+      "id": "e5",
+      "from": "gguf",
+      "to": "modelfile"
+    },
+    {
+      "id": "e6",
+      "from": "modelfile",
+      "to": "create"
+    },
+    {
+      "id": "e7",
+      "from": "create",
+      "to": "env"
+    }
+  ]
+}

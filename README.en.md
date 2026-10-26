@@ -1,4 +1,4 @@
-<p align="center"><img src="./docs/assets/logo-v2/marola-logo-v2.png" alt="The marola logo: a wave breaking over the sea, drawn only with equations in Desmos" width="200" /></p>
+<p align="center"><img src="./docs/assets/logo-v2/marola-logo-v2.svg" alt="The marola logo: a wave breaking over the sea, drawn only with equations in Desmos" width="200" /></p>
 
 <h1 align="center">marola</h1>
 
@@ -57,7 +57,7 @@ Two layers are live on the map today:
 
 More layers wait their turn: wind and waves, satellite pictures, sea heat, depth, coastal trails,
 storm warnings and live cameras. Each one goes on only after a person checks its data. The
-Portuguese [README](./README.md#o-mapa-o-que-já-está-no-ar-e-o-que-vem-aí) has the full list.
+Portuguese page [O marola hoje](./docs/1-Using-marola/O-MAROLA-HOJE.md) has the full list.
 
 ## Try it on your computer
 

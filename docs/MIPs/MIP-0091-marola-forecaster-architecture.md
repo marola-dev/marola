@@ -233,20 +233,7 @@ arrow goes from `product` to `decide` or `measure`.
 
 ### 5.2 The flow
 
-```mermaid
-flowchart LR
-  cyc[cycle, every 4 h<br/>fetch · store · score] --> cells[(score_cell, pair_cell<br/>lake on B2)]
-  cells --> dec[decide, weekly<br/>context · reward · Hedge weights]
-  dec --> gate{95 % interval above zero,<br/>twice in a row?}
-  gate -- yes --> pr[bot PR<br/>published-forecaster.json]
-  gate -- no --> inc[incumbent stays, or the fallback<br/>labelled model agreement]
-  pr --> site[marola.dev panel, CLI line]
-  dec --> plan[plan<br/>Thompson sampling under budget B]
-  plan --> ww3[ww3-gpu cycle<br/>admitted arms only]
-  ww3 --> drop[lake drop + manifest] --> cyc
-  dec --> logp[(policy_decision<br/>propensities)]
-  logp --> ope[replay and off-policy evaluation<br/>before any policy change]
-```
+![The forecaster flow, from the arms to the published forecast](../img/archify/mip-0091-flow.png)
 
 ### 5.3 marola-eval: what `experiment` gains
 

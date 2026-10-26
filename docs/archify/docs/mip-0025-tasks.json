@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MIP-0025 task dependency graph",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0025-tasks.html"
+  },
+  "components": [
+    {
+      "id": "t1",
+      "type": "backend",
+      "label": "1 tier2-baseline-evidence",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "backend",
+      "label": "2 dataset-scale-layer1",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "backend",
+      "label": "3 tool-call-sft-layer2",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t4",
+      "type": "backend",
+      "label": "4 dpo-preference-data-layer3",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t5",
+      "type": "backend",
+      "label": "5 dpo-training-layer3",
+      "pos": [
+        560,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t6",
+      "type": "backend",
+      "label": "6 hf-publish",
+      "pos": [
+        820,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "t1",
+      "to": "t2"
+    },
+    {
+      "id": "e2",
+      "from": "t1",
+      "to": "t3"
+    },
+    {
+      "id": "e3",
+      "from": "t1",
+      "to": "t4"
+    },
+    {
+      "id": "e4",
+      "from": "t2",
+      "to": "t5"
+    },
+    {
+      "id": "e5",
+      "from": "t3",
+      "to": "t5"
+    },
+    {
+      "id": "e6",
+      "from": "t4",
+      "to": "t5"
+    },
+    {
+      "id": "e7",
+      "from": "t5",
+      "to": "t6"
+    }
+  ]
+}

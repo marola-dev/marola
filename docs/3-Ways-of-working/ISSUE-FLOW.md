@@ -17,12 +17,7 @@ Milestones are named descriptively, carry no sequence, and order between them is
 A milestone and a MIP are **n:m** — one deliverable can span several MIPs, one MIP files its tasks
 into one milestone.
 
-```mermaid
-erDiagram
-  MILESTONE }o--o{ MIP : "n:m"
-  MILESTONE ||--o{ ISSUE : "spans"
-  ISSUE ||--o{ SUB_ISSUE : "splits into, only when it genuinely splits"
-```
+![Milestones, MIPs, issues and sub-issues, and how they relate](../img/archify/issue-flow-objects.png)
 
 ## The three tiers
 
@@ -102,20 +97,7 @@ the commands above. The mapping `board-sync` uses on a card's first contact with
 (MIP-0063 §5.2): an assigned issue goes to In progress, an issue carrying `agent-ready` goes to
 Ready, otherwise it goes to Triage.
 
-```mermaid
-stateDiagram-v2
-  state "In progress" as InProgress
-  state "In review" as InReview
-  [*] --> Triage: board-sync (otherwise)
-  [*] --> Ready: board-sync (agent-ready)
-  [*] --> InProgress: board-sync (assigned)
-  Triage --> Spec: someone's decision
-  Spec --> Ready: someone's decision
-  Ready --> InProgress: issue-claim
-  InProgress --> InReview: someone's decision
-  InProgress --> Done: issue closed (built-in workflow, or board-sync as fallback)
-  InReview --> Done: issue closed (built-in workflow, or board-sync as fallback)
-```
+![Issue status on the board, and what moves a card between columns](../img/archify/issue-flow-board.png)
 
 `board-sync` sets a new card's Status once, on first contact with the board, and never overwrites
 it again — except Done, which it sets whenever an issue is closed and its card isn't there already.

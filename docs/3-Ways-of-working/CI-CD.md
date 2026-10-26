@@ -9,27 +9,7 @@ the org secret and the settings no workflow can change; each repo's workflows ar
 
 ## How a change reaches marola.dev and docs.marola.dev
 
-```mermaid
-flowchart LR
-  pr([pull request]) --> ci[ci.yml]
-  pr --> body[pr-body.yml]
-  main([push to main]) --> ci
-  main --> docs[docs.yml]
-  cron([schedule]) --> docs
-  sub([notify]) --> docs
-  sub --> sync[pointer-sync.yml]
-  cron --> sync
-  sync -- "one rolling PR" --> pr
-  app[marola-app workflows] -- ":jvm :native" --> ghcr[(GHCR<br/>ghcr.io/marola-dev/marola-app)]
-  app -- "api-docs branch" --> docs
-  docs --> dpages[GitHub Pages<br/>docs.marola.dev]
-  ci -- "stats/" --> sd[(marola-site<br/>site-data branch)]
-  app -- "coverage/ smoke/" --> sd
-  app -. rebuild .-> site[marola-site site.yml]
-  sd --> site
-  site --> cfw[Cloudflare Worker<br/>marola.dev]
-  site -. fallback .-> pages[GitHub Pages]
-```
+![How a change reaches marola.dev and docs.marola.dev](../img/archify/ci-cd-flow.png)
 
 Which repo produces each artifact, who reads it and what pins it is REPOS'
 [artifacts, pins and dispatches](../2-Building-marola/REPOS.md#artifacts-pins-and-dispatches)
@@ -82,13 +62,7 @@ warns against in "Self-hosted runners should almost never be used for public rep
 Standard hosted runners are free for public repos; larger and GPU runners are always billed, so
 GPU training stays on the desktop, behind a manual dispatch.
 
-```mermaid
-flowchart LR
-  any["any workflow"] --> hosted["ubuntu-latest<br/>(free, public repo)"]
-  gpu["marola-ml's marola-sea-publish.yml<br/>workflow_dispatch only"] --> desk["[self-hosted, marola-sea]<br/>the maintainer's GPU desktop"]
-  fork(["fork PR"]) -. "approval, then" .-> hosted
-  fork -. "blocked by workflow-runners" .-x desk
-```
+![The self-hosted rule: which jobs may run on the GPU runner](../img/archify/ci-cd-self-hosted.png)
 
 ## The maintainer's manual settings
 

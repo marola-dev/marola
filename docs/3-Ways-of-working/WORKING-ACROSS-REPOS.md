@@ -50,11 +50,7 @@ REPOS' [artifacts, pins and dispatches](../2-Building-marola/REPOS.md#artifacts-
 table, its only copy. No repo reads another repo's tree, in CI or in tests, and no consumer builds
 its producer from source. A contract change lands in this order:
 
-```mermaid
-flowchart LR
-  p["producer PR<br/>merges, releases"] --> c["each consumer PR<br/>bumps its pin"]
-  c --> s["pointer-sync PR<br/>moves the gitlinks"]
-```
+![Producer first, consumers next, the umbrella's pointer last](../img/archify/across-repos-order.png)
 
 1. The producer merges and releases (a tag, an image, a branch).
 2. Each consumer bumps its pin in its own PR and runs its gates against the new version.

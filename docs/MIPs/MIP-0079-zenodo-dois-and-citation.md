@@ -168,13 +168,7 @@ The first release published after the switch creates the record, with two identi
   the badge, in `CITATION.cff` (`doi:` and an `identifiers` entry, via `CONCEPT_DOI` in
   `citation.py`) and first in the "How to cite" section.
 
-```mermaid
-flowchart LR
-  A[citation files merged] --> B[repo switched on in Zenodo]
-  B --> C[just release X.Y.Z]
-  C --> D[record: version DOI + concept DOI]
-  D --> E[PR: CONCEPT_DOI, badge, How to cite]
-```
+![The concept DOI, the version DOIs and the badge](../img/archify/mip-0079-dois.png)
 
 The "How to cite" section then mirrors ww3-gpu's: the concept DOI for the project, the release's
 DOI for the exact code, then BibTeX (`@software`, `publisher = {Zenodo}`, the concept `doi`),
@@ -261,14 +255,7 @@ the manual. If the two disagree, the files on `main` win, and the next PR correc
 
 ### 10.1 What happens on a release
 
-```mermaid
-flowchart LR
-  A[just release X.Y.Z] --> B[tag vX.Y.Z pushed]
-  B --> C[release.yml: citation --check, --guard]
-  C --> D[GitHub release published]
-  D --> E[Zenodo webhook archives it]
-  E --> F[new version DOI under 10.5281/zenodo.23224155]
-```
+![What happens on a release, from the tag to Zenodo and back](../img/archify/mip-0079-release.png)
 
 1. `just release X.Y.Z` runs `scripts/release.sh`. It tags `main` as `vX.Y.Z` and pushes the tag.
 2. `.github/workflows/release.yml` runs on the tag. It runs `scripts/citation.py --check` and
