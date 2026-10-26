@@ -1,5 +1,7 @@
 <h1 align="center">🌊 marola</h1>
 
+<p align="center"><b>O super app da água: tudo sobre o mar perto de você, feito em código aberto, como ciência cidadã.</b></p>
+
 <p align="center">
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 <a href="https://github.com/marola-dev/marola-site/actions/workflows/site.yml"><img src="https://github.com/marola-dev/marola-site/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
@@ -12,69 +14,123 @@
 <a href="https://doi.org/10.5281/zenodo.23224155"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23224155-blue" alt="DOI" /></a>
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-CC_BY_4.0_%2B_AGPL--3.0-green" alt="CC BY 4.0 for the docs, AGPL-3.0-only for the code" /></a>
 <a href="https://github.com/h0ffmann/ptbr-writer"><img src="https://img.shields.io/badge/built_with-ptbr--writer-1682D4?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWQzZmQwIiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48dGl0bGU+dW1hIHBlbmEgZGUgZXNjcmV2ZXIsIG51bWEgbGluaGEgc8OzPC90aXRsZT48cGF0aCBkPSJNMTAgNTZjOC0zIDE0LTkgMjAtMTZNMzAgNDBjLTQtMTAgMC0yNCAyMi0zMi0yIDE0LTggMjYtMjIgMzJ6TTMwIDQwbDEwLTE2TTE4IDU0YzEwIDIgMjIgMCAzNC00Ii8+PC9zdmc+Cg==" alt="built with ptbr-writer" /></a>
+<a href="https://github.com/h0ffmann/ptbr-writer#ollaya"><img src="https://img.shields.io/badge/modelo%20de%20decis%C3%A3o%3A%20Ollaya-planned-lightgrey?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzE3MTcxNyIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEuNiAxLjQpIHNjYWxlKC45KSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIuMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNiA1LjUgMTAuNSA5LjVRMTYgNy41IDIxLjUgOS41TDI2IDUuNVYxOVEyNiAyNy41IDE2IDI3LjVUNiAxOVoiLz48Y2lyY2xlIGN4PSIxMS41IiBjeT0iMTUuNSIgcj0iMy4yNSIvPjxjaXJjbGUgY3g9IjIwLjUiIGN5PSIxNS41IiByPSIzLjI1Ii8+PGNpcmNsZSBjeD0iMTEuNSIgY3k9IjE1LjUiIHI9IjEuMiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSJub25lIi8+PGNpcmNsZSBjeD0iMjAuNSIgY3k9IjE1LjUiIHI9IjEuMiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSJub25lIi8+PHBhdGggZD0iTTE0Ljc1IDIxIDE2IDIzbDEuMjUtMiIvPjwvZz48L3N2Zz4K" alt="modelo de decisão: Ollaya, planned" /></a>
 </p>
 
-<p align="center"><b>A friendly guide to the sea near you, built in the open, as citizen science.</b></p>
+<p align="center"><a href="./README.en.md">🇬🇧 Read in English (the simple version)</a> · <a href="https://marola.dev/">🗺️ Abrir o mapa ao vivo</a></p>
 
-<p align="center"><a href="./README.pt-BR.md">🇧🇷 Leia em português</a> · <a href="https://marola.dev/">🗺️ Open the live map</a></p>
+## O que é o marola?
 
-## What is marola?
+Imagine um amigo que conhece muito bem o mar. Você pergunta *"dá pra nadar amanhã? que horas?"*, e
+ele olha as ondas, o vento, a temperatura da água, se a água está própria para banho, a maré, e
+até se tem água-viva ou baleia por perto. Depois ele te diz qual é o melhor horário, e **por quê**.
 
-Imagine a friend who knows the sea really well. You ask *"can I swim tomorrow, and when?"*, and
-they look at the waves, the wind, the water temperature, whether the water is clean enough, the
-tide, even whether jellyfish or whales are around, and then they tell you the best hour, and
-**why**.
+Esse amigo é o marola. Você já pode usar hoje em **[marola.dev](https://marola.dev/)**: um mapa
+das praias de Florianópolis, do Rio de Janeiro e de Salvador, cada uma com uma nota para hoje e
+para amanhã.
 
-That friend is marola. You can see it today at **[marola.dev](https://marola.dev/)**: a map of the
-beaches around Florianópolis, Rio de Janeiro and Salvador, each one ranked for today and tomorrow.
+<p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view.png" alt="marola.dev no Rio de Janeiro: Ipanema e Copacabana com a nota do melhor horário, as gotas de balneabilidade do INEA e o cartão da Praia do Forte com mar, maré, água-viva e baleias" width="860" /></a></p>
 
-<p align="center"><a href="https://marola.dev/"><img src="./docs/img/marola-web-view.png" alt="marola.dev over Rio de Janeiro: Ipanema and Copacabana scored by best hour, water-quality drops from INEA, and Praia do Forte's card with sea, tide, jellyfish and whale odds" width="860" /></a></p>
+Algumas promessas que o marola cumpre:
 
-A few promises marola keeps:
+- **Ele nunca inventa.** Todo número vem de dados reais e públicos. Tudo o que pode te colocar em
+  risco (água imprópria, mar agitado) é decidido por regras simples que qualquer pessoa pode ler,
+  e não pelo palpite de uma IA. A IA só ajuda a explicar em palavras.
+- **É gratuito e roda no seu próprio computador.** Não precisa de conta nem de serviço pago.
+- **Ele avisa quando não sabe.** "Sem dados" aparece como "sem dados", nunca é escondido.
 
-- **It never makes things up.** Every number comes from real, public data, and anything that could
-  hurt you (dirty water, rough sea) is decided by plain rules a person can read, not by an AI's
-  guess. The AI only helps explain it in words.
-- **It's free, and it runs on your own computer.** No account, no paid service needed.
-- **It says when it doesn't know.** "No data" is shown as "no data", never hidden.
+## O mapa: o que já está no ar e o que vem aí
 
-## What you get
-
-- **Best hour tomorrow, per beach**: OpenStreetMap beaches, Open-Meteo sea/weather/tide forecasts, a 0-100 swimability score with the reasons, never at night.
-- **Official bathing-water quality, per sampling point**: IMA/SC, INEA and INEMA bulletins; unfit water zeroes the score in code, not a prompt.
-- **Tides, swell, wind, UV, jellyfish and whale odds**, and a sourced "did you know?" about the sea in front of you.
-- **Ask the ocean**: local RAG with `[n]` citations; off-corpus questions get an "unsourced" label instead of a refusal.
-
-## The map: what's live and what's next
-
-> ⚠️ **Frontend v2 in progress.** The map's frontend v2 is being written with
-> [MapLibre](https://maplibre.org/) and Rust, and it should be ready before 2027. The page on
-> marola.dev today is v1, on Mapbox GL JS. The v2 seed lives in 🔒 `h0ffmann/smart-alerts`, a closed
-> repository for now, under MPL-2.0.
+> ⚠️ **Frontend v2 em andamento.** A versão v2 do frontend do mapa está sendo escrita com
+> [MapLibre](https://maplibre.org/) e Rust, e deve ficar pronta antes de 2027. A página que está
+> hoje no marola.dev é a v1, com Mapbox GL JS. A semente da v2 fica em 🔒 `h0ffmann/smart-alerts`,
+> um repositório fechado por enquanto, sob a licença MPL-2.0.
 >
 > <a href="https://github.com/h0ffmann/smart-alerts"><img src="https://img.shields.io/badge/h0ffmann%2Fsmart--alerts-private-555?logo=github&logoColor=white" alt="h0ffmann/smart-alerts: private repository" /></a>
 > <a href="https://www.mozilla.org/MPL/2.0/"><img src="https://img.shields.io/badge/license-MPL--2.0-1682D4?logo=mozilla&logoColor=white" alt="license: MPL-2.0" /></a>
 
-[marola.dev](https://marola.dev/) has a layer rail at the top right. Two layers are live today;
-the rest sit on the rail greyed out as "em breve" (coming soon), or are written up as a MIP, and
-each one is switched on once its data is checked live.
+O [marola.dev](https://marola.dev/) tem uma barra de camadas no canto superior direito. Duas
+camadas já estão no ar; as outras aparecem na barra, apagadas, como "em breve", ou estão escritas
+como MIP, e cada uma só é ligada depois que os dados dela são conferidos no ar.
 
-| Layer | Status | What it shows | Where it's designed |
+| Camada | Situação | O que mostra | Onde está o projeto |
 |---|---|---|---|
-| 🏖️ Beaches | **Live** | Every OpenStreetMap beach around Florianópolis, Rio de Janeiro and Salvador, ranked for today and tomorrow with the best hour | [MIP-0005](./docs/MIPs/MIP-0005-map-and-static-site.md) |
-| 💧 Water quality (*balneabilidade*) | **Live** | The official sampling points of IMA/SC, INEA (RJ) and INEMA (BA), coloured by their last bulletin | [MIP-0016](./docs/MIPs/MIP-0016-water-quality-map-markers.md), [MIP-0031](./docs/MIPs/MIP-0031-water-quality-inea-inema.md) |
-| 🥾 Coastal trails | Planned | OSM trails near the coast, long routes like the Transcarioca included | [MIP-0030](./docs/MIPs/MIP-0030-coastal-trails.md) |
-| 🌬️ Wind and 🌊 waves | Built, switched off | Windy-like animated particles (`flow.js`), today interpolated from the beaches' own readings; a real field beyond the beaches comes next | [marola-site#45](https://github.com/marola-dev/marola-site/issues/45) |
-| 🛰️ Satellite | Built, switched off | NASA GIBS true-colour imagery, public and keyless, on once its tiles are checked live | [marola-site#45](https://github.com/marola-dev/marola-site/issues/45) |
-| 🌡️ Sea heat | Built, switched off | Sea-surface temperature, its anomalies (marine heatwaves) and an El Niño view, from NASA GIBS | [marola-site#45](https://github.com/marola-dev/marola-site/issues/45) |
-| ⛰️ Depth | Planned | Bathymetry (*batimetria*) | [marola-site#45](https://github.com/marola-dev/marola-site/issues/45) |
-| ⚠️ Hazards and disasters | Planned | Official alerts per state (INMET, the Navy) and *ressaca*, the storm surf | [MIP-0062](./docs/MIPs/MIP-0062-ressaca-hazard.md), [MIP-0034](./docs/MIPs/MIP-0034-rss-feeds-and-content-syndication.md), [marola#542](https://github.com/marola-dev/marola/pull/542), [marola-site#10](https://github.com/marola-dev/marola-site/issues/10) |
-| 📷 Live cameras | Later | "How does it look right now?", from cameras people share | [MIP-0006](./docs/MIPs/MIP-0006-live-look-user-cameras.md) |
+| 🏖️ Praias | **No ar** | Todas as praias do OpenStreetMap em Florianópolis, no Rio de Janeiro e em Salvador, com nota para hoje e amanhã e o melhor horário | [MIP-0005](./docs/MIPs/MIP-0005-map-and-static-site.md) |
+| 💧 Balneabilidade | **No ar** | Os pontos de coleta oficiais do IMA/SC, do INEA (RJ) e do INEMA (BA), com a cor do último boletim | [MIP-0016](./docs/MIPs/MIP-0016-water-quality-map-markers.md), [MIP-0031](./docs/MIPs/MIP-0031-water-quality-inea-inema.md) |
+| 🥾 Trilhas perto da costa | Planejada | Trilhas do OSM perto do mar, inclusive as longas, como a Transcarioca | [MIP-0030](./docs/MIPs/MIP-0030-coastal-trails.md) |
+| 🌬️ Vento e 🌊 ondas | Pronta, desligada | Partículas animadas, no estilo do Windy (`flow.js`), hoje interpoladas das leituras de cada praia; o próximo passo é um campo de verdade, além das praias | [marola-site#45](https://github.com/marola-dev/marola-site/issues/45) |
+| 🛰️ Satélite | Pronta, desligada | Imagem de satélite em cor real da NASA GIBS, pública e sem chave; liga quando os tiles forem conferidos no ar | [marola-site#45](https://github.com/marola-dev/marola-site/issues/45) |
+| 🌡️ Calor do mar | Pronta, desligada | Temperatura da superfície do mar, as anomalias (ondas de calor marinhas) e uma visão do El Niño, da NASA GIBS | [marola-site#45](https://github.com/marola-dev/marola-site/issues/45) |
+| ⛰️ Profundidade | Planejada | Batimetria | [marola-site#45](https://github.com/marola-dev/marola-site/issues/45) |
+| ⚠️ Riscos e desastres | Planejada | Alertas oficiais por estado (INMET, Marinha) e a *ressaca* | [MIP-0062](./docs/MIPs/MIP-0062-ressaca-hazard.md), [MIP-0034](./docs/MIPs/MIP-0034-rss-feeds-and-content-syndication.md), [marola#542](https://github.com/marola-dev/marola/pull/542), [marola-site#10](https://github.com/marola-dev/marola-site/issues/10) |
+| 📷 Câmeras ao vivo | Mais adiante | "Como está o mar agora?", a partir de câmeras que as pessoas compartilham | [MIP-0006](./docs/MIPs/MIP-0006-live-look-user-cameras.md) |
 
-## Run it in five minutes
+## Por que é código aberto: ciência cidadã 🔬
 
-marola is a set of single-purpose repos; this one, the umbrella, ties them together as git
-submodules. The app you run is [marola-app](https://github.com/marola-dev/marola-app):
+O marola é um projeto de **ciência cidadã**. O mar é de todos, e o conhecimento sobre ele também
+deveria ser.
+
+Os órgãos públicos já medem muita coisa: balneabilidade, ondas, vento, tempo. Só que esses dados
+estão espalhados em sites e boletins diferentes, são técnicos e difíceis de usar na hora de ir à
+praia. O marola junta essas informações, confere, explica em linguagem simples e devolve tudo ao
+público.
+
+E o caminho também é de volta: quem nada, surfa, pesca e mergulha todo dia vê coisas que nenhum
+satélite vê. Essas observações podem conferir e melhorar as previsões.
+
+Por isso tudo aqui é aberto: o código, as fontes de dados, as regras e cada decisão de projeto.
+Qualquer pessoa pode ler, conferir e ajudar a melhorar.
+
+## Onde começa, e aonde quer chegar
+
+**Primeiro caso de uso: o agente de natação.** *"Qual o melhor horário amanhã para nadar aqui
+perto?"* Isso já funciona: as praias vêm do OpenStreetMap, a previsão do mar e do tempo vem do
+Open-Meteo, e a balneabilidade oficial vem dos órgãos ambientais estaduais (IMA/SC, INEA e
+INEMA). Tudo vira uma nota de 0 a 100, com os motivos explicados.
+
+**A ambição maior: o super app da água.** Nadar é só a primeira
+pergunta. Os mesmos dados, e muitos outros, podem ajudar a proteger pessoas e lugares:
+
+- 🌊 **Alertas de risco costeiro.** Começando pela *ressaca*, que erode as praias do Brasil, com
+  um "não entre" firme quando o mar fica perigoso
+  ([MIP-0062](./docs/MIPs/MIP-0062-ressaca-hazard.md)).
+- 🛰️ **Previsão de desastres com os mesmos modelos das grandes agências.** Os dados de ondas do
+  marola já incluem o **WAVEWATCH III**, o modelo de ondas da NOAA (a agência americana de
+  oceanos e atmosfera), através do GFS-Wave do NCEP. O plano é mostrar vários modelos lado a lado,
+  dizer abertamente quando eles discordam e, um dia, rodar um modelo de ondas detalhado para as
+  nossas próprias baías ([MIP-0051](./docs/MIPs/MIP-0051-wave-model-ensemble.md),
+  [MIP-0038](./docs/MIPs/MIP-0038-forecast-model-spread.md),
+  [MIP-0052](./docs/MIPs/MIP-0052-wave-model-compute.md)).
+- 🧪 **Um arquivo aberto da balneabilidade das praias brasileiras**, versionado para que qualquer
+  pessoa possa estudar ([MIP-0056](./docs/MIPs/MIP-0056-oods-open-ocean-data-store.md)).
+- 🪼 **Relatos de quem está na praia.** Água-viva, baleia e, mais adiante, fotos de como o mar
+  está agora, para que observações reais confiram as previsões.
+- 🏄 **O resto do mar.** Surfe, mergulho e pesca, como novas perguntas sobre os mesmos dados.
+- 🧠 **A nota com modelos de decisão abertos.** Existe a ideia de calcular a nota com modelos de
+  decisão abertos, servidos pelo [Ollaya](https://github.com/h0ffmann/ptbr-writer#ollaya). É só uma
+  ideia por enquanto: ainda não tem MIP.
+
+Essas ideias estão em estágios diferentes. Cada uma é escrita antes como um documento público de
+projeto (uma "MIP"), para que você veja exatamente o que já está pronto e o que ainda é plano:
+[`docs/MIPs/`](./docs/MIPs/README.md) (em inglês).
+
+## Como você pode ajudar (sem programar)
+
+- **Use o mapa** em [marola.dev](https://marola.dev/) e conte quando ele errar. Isso é um dado
+  valioso.
+- **Conte o que você vê na água**, como água-viva ou baleia, ou uma praia que está faltando.
+- **Compartilhe conhecimento local**: segurança no mar, vida marinha, condições da sua praia. Tudo
+  o que o marola explica vem de uma nota com fonte em [marola-corpus](https://github.com/marola-dev/marola-corpus).
+- **Abra uma issue**, em português ou em inglês:
+  [github.com/marola-dev/marola/issues](https://github.com/marola-dev/marola/issues).
+
+---
+
+## Para rodar em cinco minutos
+
+O marola é um conjunto de repositórios de propósito único; este aqui, o repositório guarda-chuva
+(*umbrella*), junta todos como submódulos git. O app que você roda é o
+[marola-app](https://github.com/marola-dev/marola-app):
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
@@ -82,160 +138,132 @@ git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola
 
 ```bash
 # in a marola-app checkout
-nix develop                                                        # JDK 25, sbt, just, ollama — see its flake.nix
-just run -- --brief --lat -27.6733 --lon -48.4700                  # fastest path: ranked list, no LLM
-just ollama-up                                                     # starts `ollama serve`, pulls llama3.2 if missing
-just run -- --summarize --lat -27.6733 --lon -48.4700              # ranked list + top-pick block + LLM summary + review
-just ask "what should I do if I get caught in a rip current?"      # grounded answer with sources
+nix develop                                                        # JDK 25, sbt, just, ollama (veja o flake.nix dele)
+just run -- --brief --lat -27.6733 --lon -48.4700                  # caminho mais rápido: lista em ordem, sem LLM
+just ollama-up                                                     # inicia o `ollama serve` e baixa o llama3.2
+just run -- --summarize --lat -27.6733 --lon -48.4700              # lista + resumo do LLM + revisão
+just ask "o que fazer se eu for pego por uma corrente de retorno?" # resposta com fontes
 ```
 
-No cloud account, no API key needed for any of the above. Full walkthrough with real output:
+Sem conta na nuvem, sem chave de API. Passo a passo com saída real (em inglês):
 [RUN-LOCALLY](https://docs.marola.dev/1-Using-marola/RUN-LOCALLY/).
 
-## Why it's open source: citizen science 🔬
+## Como funciona o repositório guarda-chuva
 
-marola is a **citizen-science** project. The sea belongs to everyone, and so should
-the knowledge about it. Public agencies already measure a lot (water quality, waves, weather), but
-that data is scattered, technical and hard to use at the beach. marola gathers it, checks it,
-explains it in plain language, and gives it back to the public. And the people who swim, surf,
-fish and dive every day can give something back too: what they see in the water. That's why
-everything here is open: the code, the data sources, the rules, and every design decision.
-Anyone can read it, check it, and help improve it.
+O marola não é um repositório só, e sim uma família de repositórios pequenos, cada um com uma
+função, o seu próprio `AGENTS.md`, documentação, CI e issues. Este aqui, `marola-dev/marola`, é o
+**guarda-chuva** (*umbrella*) que junta todos ([MIP-0070](./docs/MIPs/MIP-0070-umbrella-and-polyrepo-split.md)).
+Ele não tem código: guarda os documentos de projeto (MIPs), a lista de fases, o jeito de trabalhar,
+o site de documentação e cada repositório de código como um submódulo git, fixado num commit.
 
-## Where it starts, and where it's going
+<p align="center"><img src="./docs/img/umbrella.pt-BR.svg" alt="Como os repositórios do marola dependem uns dos outros: o marola-corpus entrega notas ao marola-app e ao marola-ml, a imagem do marola-app monta o mapa do marola-site e roda o benchmark do marola-ml, o marola-ml devolve prompts compilados, o ETL do marola-app grava o lago do marola-oods e fixa o contrato dele; o marola-devkit é fixado por todos, e o marola-skills e o marola-agents leem as skills e os agentes de cada repositório, cada um num catálogo" width="860" /></p>
 
-**First use case: the swim agent.** *"What's the best hour tomorrow to swim nearby?"* It already
-works: beaches from OpenStreetMap, sea and weather forecasts from Open-Meteo, official
-bathing-water quality from the state environmental agencies, all turned into a score from 0 to
-100 with the reasons spelled out.
+- **Contratos, não código compartilhado.** Um repositório nunca lê a árvore de outro. Quem consome
+  fixa um artefato publicado por quem produz (um tarball de release, o digest de uma imagem) e
+  passa para uma versão nova trocando esse pino num PR. Quem publica e quem fixa o quê:
+  [REPOS](docs/2-Building-marola/REPOS.md) (em inglês).
+- **A mudança vai no repositório a que pertence.** Um PR por repositório; uma mudança que cruza
+  repositórios usa o mesmo nome de branch em todos, o produtor faz merge primeiro e depois cada
+  consumidor atualiza o pino.
+- **Os ponteiros do guarda-chuva só andam por um PR automático** (`pointer-sync.yml`), nunca à mão.
+- **Um site de documentação só.** O [docs.marola.dev](https://docs.marola.dev/) é montado com o
+  `docs/` deste repositório mais o `README.md` e o `docs/` de cada um dos outros.
+- **Primeiro o projeto, depois o código.** Tudo o que não é trivial começa como uma MIP em
+  [`docs/MIPs/`](./docs/MIPs/README.md); as tarefas viram issues, e um agente só pega issues que
+  uma pessoa marcou como `agent-ready`.
 
-**The bigger ambition: the ocean intelligence layer for the coast.** Swimming is just the first
-question. The same data, and much more, can help protect people and places:
+## Os repositórios, e o que está acontecendo em cada um
 
-- 🌊 **Coastal hazard warnings.** Starting with *ressaca* (storm surf that erodes Brazil's
-  beaches), with a hard "don't go in" when the sea gets dangerous
-  ([MIP-0062](./docs/MIPs/MIP-0062-ressaca-hazard.md)).
-- 🛰️ **Disaster forecasting with the same models the big agencies use.** marola's wave data
-  already includes NOAA's **WAVEWATCH III** model (through NCEP's GFS-Wave). The plan is to show
-  several models side by side, say openly when they disagree, and one day run a detailed wave
-  model for our own bays ([MIP-0051](./docs/MIPs/MIP-0051-wave-model-ensemble.md),
-  [MIP-0038](./docs/MIPs/MIP-0038-forecast-model-spread.md),
-  [MIP-0052](./docs/MIPs/MIP-0052-wave-model-compute.md)).
-- 🧪 **An open archive of Brazil's beach water quality**, versioned so anyone can study it
-  ([MIP-0056](./docs/MIPs/MIP-0056-oods-open-ocean-data-store.md)).
-- 🪼 **Reports from people at the beach.** Jellyfish, whales, and later photos of how the sea
-  looks right now, so real observations can check and improve the forecasts.
-- 🏄 **The rest of the sea.** Surfing, diving and fishing, as new questions over the same data.
+Situação em outubro de 2026; as issues e os PRs linkados mostram o estado de agora.
 
-These are ideas at different stages. Each one is written up as a public design doc (a "MIP") before
-it's built, so you can see exactly what is done and what is still a plan: [`docs/MIPs/`](./docs/MIPs/README.md).
-
-## How you can help (no coding needed)
-
-- **Use the map** at [marola.dev](https://marola.dev/) and tell us when it's wrong. That's
-  valuable data.
-- **Tell us what you see in the water**, like jellyfish or whales, or a beach that's missing.
-- **Share local knowledge**: sea safety, marine life, local conditions. Every fact marola explains
-  comes from a sourced note in [marola-corpus](https://github.com/marola-dev/marola-corpus).
-- **Open an issue**, in English or Portuguese: [github.com/marola-dev/marola/issues](https://github.com/marola-dev/marola/issues).
-
----
-
-## How the umbrella works
-
-marola is not one repo but a family of small ones, each with one job, its own `AGENTS.md`, docs,
-CI and issues. This repo, `marola-dev/marola`, is the **umbrella** that ties them together
-([MIP-0070](./docs/MIPs/MIP-0070-umbrella-and-polyrepo-split.md)). It holds no code: it holds the
-design docs (MIPs), the phase list, the ways of working, the docs site, and every code repo as a
-git submodule pinned at a commit.
-
-<p align="center"><img src="./docs/img/umbrella.svg" alt="How the marola repos depend on each other: marola-corpus ships notes to marola-app and marola-ml, marola-app's image builds marola-site's map and runs marola-ml's benchmark, marola-ml returns compiled prompts, marola-app's ETL writes marola-oods' lake and pins its contract; marola-devkit is pinned by every repo, and marola-skills and marola-agents read every repo's skills and agents into one catalogue each" width="860" /></p>
-
-- **Contracts, not shared code.** A repo never reads another repo's tree. A consumer pins a
-  producer's published artifact (a release tarball, an image digest) and moves to a new version by
-  bumping that pin in a PR. Who publishes and pins what:
-  [REPOS](docs/2-Building-marola/REPOS.md).
-- **Change in the repo the change belongs to.** One PR per repo; a change across repos uses the
-  same branch name everywhere, the producer merges first, then each consumer bumps its pin.
-- **The umbrella's pointers move only through one bot PR** (`pointer-sync.yml`), never by hand.
-- **One docs site.** [docs.marola.dev](https://docs.marola.dev/) is built from this repo's `docs/`
-  plus every repo's `README.md` and `docs/`.
-- **Design before code.** Anything non-trivial starts as a MIP in [`docs/MIPs/`](./docs/MIPs/README.md);
-  its tasks become issues, and an agent picks up only issues a person marked `agent-ready`.
-
-## The repos, and what's happening in each
-
-Status as of October 2026; the linked issues and PRs are the live view.
-
-| Repo | What it is | In flight now |
+| Repositório | O que é | Em andamento |
 |---|---|---|
-| [marola](https://github.com/marola-dev/marola) (this one) | The umbrella: MIPs, phase list, ways of working, [docs.marola.dev](https://docs.marola.dev/) | Design PRs for the lake contract (MIP-0075, [#686](https://github.com/marola-dev/marola/pull/686)), Zenodo DOIs ([#683](https://github.com/marola-dev/marola/pull/683)), local artists ([#681](https://github.com/marola-dev/marola/pull/681)), official alerts ([#542](https://github.com/marola-dev/marola/pull/542), [#669](https://github.com/marola-dev/marola/pull/669)) · [PRs](https://github.com/marola-dev/marola/pulls) |
-| [marola-app](https://github.com/marola-dev/marola-app) | The product, in Scala 3 with [Kyo](https://getkyo.io/) on the JVM: pipeline, score and safety veto, CLI, MCP server, the image that builds the map's boards | Salvador's INEMA bulletins ([#62](https://github.com/marola-dev/marola-app/pull/62)), the lake's `oods` module ([#54](https://github.com/marola-dev/marola-app/pull/54)), Kyo 1.0.0-RC7 review ([#56](https://github.com/marola-dev/marola-app/pull/56)), Overpass timeouts saved as beach lists ([#60](https://github.com/marola-dev/marola-app/issues/60)) · [issues](https://github.com/marola-dev/marola-app/issues) |
-| [marola-site](https://github.com/marola-dev/marola-site) | The map at [marola.dev](https://marola.dev/): Mapbox GL, no server, rebuilt every 3 hours from the app's image; Rio and Salvador's agencies reached through a Brazilian proxy | Florianópolis showing 13 beaches ([#73](https://github.com/marola-dev/marola-site/issues/73)), local artists in the footer ([#69](https://github.com/marola-dev/marola-site/pull/69)), alerts page spec ([#58](https://github.com/marola-dev/marola-site/pull/58)), news page ([#54](https://github.com/marola-dev/marola-site/pull/54)), SEO ([#31](https://github.com/marola-dev/marola-site/issues/31)) · [issues](https://github.com/marola-dev/marola-site/issues) |
-| [marola-oods](https://github.com/marola-dev/marola-oods) | The Open Ocean Data Store: an open data lake of beaches and bathing-water samples, DuckLake on Cloudflare R2 (no data yet) | Lake schema as migrations ([#22](https://github.com/marola-dev/marola-oods/pull/22)), spec 001 ([#3](https://github.com/marola-dev/marola-oods/pull/3)), MIP-0075 tasks [#9](https://github.com/marola-dev/marola-oods/issues/9)–[#19](https://github.com/marola-dev/marola-oods/issues/19) |
-| [marola-ml](https://github.com/marola-dev/marola-ml) | Offline Python: DSPy prompt compile, benchmark gate, [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF) | No open PRs; GPU runners ([#2](https://github.com/marola-dev/marola-ml/issues/2)), a RAG retrieval regression ([#4](https://github.com/marola-dev/marola-ml/issues/4)), can water quality be forecast? ([#23](https://github.com/marola-dev/marola-ml/issues/23)) |
-| [marola-corpus](https://github.com/marola-dev/marola-corpus) | The sourced ocean knowledge marola answers from | Stable; new documents welcome · [issues](https://github.com/marola-dev/marola-corpus/issues) |
-| [marola-devkit](https://github.com/marola-dev/marola-devkit) | The dev harness every repo pins (a Nix flake input, not a submodule): tools, hooks, Claude Code skills, reusable CI such as the Gemini review | Cross-repo wiring tables (MIP-0076, [#32](https://github.com/marola-dev/marola-devkit/pull/32), [#33](https://github.com/marola-dev/marola-devkit/pull/33)) · [issues](https://github.com/marola-dev/marola-devkit/issues) |
-| [marola-skills](https://github.com/marola-dev/marola-skills) | The catalogue of every Claude Code skill and subagent across the repos: where each lives, where it came from, what was tested. Reads them through the GitHub API daily | Joins the umbrella as a submodule and on [the docs site](https://docs.marola.dev/5-Repos/marola-skills/) ([#761](https://github.com/marola-dev/marola/issues/761)) · [issues](https://github.com/marola-dev/marola-skills/issues) |
-| [marola-agents](https://github.com/marola-dev/marola-agents) | The inventory of every agent marola uses or plans: Claude Code subagents, the Claude Projects and their routines, the app's LLM roles, the agents CI calls | Its first README and inventory · [issues](https://github.com/marola-dev/marola-agents/issues) |
+| [marola](https://github.com/marola-dev/marola) (este) | O guarda-chuva: MIPs, lista de fases, jeito de trabalhar, [docs.marola.dev](https://docs.marola.dev/) | PRs de projeto para o contrato do lago (MIP-0075, [#686](https://github.com/marola-dev/marola/pull/686)), DOIs no Zenodo ([#683](https://github.com/marola-dev/marola/pull/683)), artistas locais ([#681](https://github.com/marola-dev/marola/pull/681)), alertas oficiais ([#542](https://github.com/marola-dev/marola/pull/542), [#669](https://github.com/marola-dev/marola/pull/669)) · [PRs](https://github.com/marola-dev/marola/pulls) |
+| [marola-app](https://github.com/marola-dev/marola-app) | O produto, em Scala 3 com [Kyo](https://getkyo.io/) na JVM: pipeline, nota e veto de segurança, linha de comando, servidor MCP, a imagem que monta os dados do mapa | Boletins do INEMA para Salvador ([#62](https://github.com/marola-dev/marola-app/pull/62)), o módulo `oods` do lago ([#54](https://github.com/marola-dev/marola-app/pull/54)), revisão do Kyo 1.0.0-RC7 ([#56](https://github.com/marola-dev/marola-app/pull/56)), respostas do Overpass que expiram e viram lista de praias ([#60](https://github.com/marola-dev/marola-app/issues/60)) · [issues](https://github.com/marola-dev/marola-app/issues) |
+| [marola-site](https://github.com/marola-dev/marola-site) | O mapa em [marola.dev](https://marola.dev/): Mapbox GL, sem servidor, refeito a cada 3 horas a partir da imagem do app; os órgãos do Rio e da Bahia são acessados por um proxy no Brasil | Florianópolis mostrando só 13 praias ([#73](https://github.com/marola-dev/marola-site/issues/73)), artistas locais no rodapé ([#69](https://github.com/marola-dev/marola-site/pull/69)), spec da página de alertas ([#58](https://github.com/marola-dev/marola-site/pull/58)), página de notícias ([#54](https://github.com/marola-dev/marola-site/pull/54)), SEO ([#31](https://github.com/marola-dev/marola-site/issues/31)) · [issues](https://github.com/marola-dev/marola-site/issues) |
+| [marola-oods](https://github.com/marola-dev/marola-oods) | O Open Ocean Data Store: um lago de dados aberto com as praias e as amostras de balneabilidade, um DuckLake no Cloudflare R2 (ainda sem dados) | Esquema do lago como migrations ([#22](https://github.com/marola-dev/marola-oods/pull/22)), spec 001 ([#3](https://github.com/marola-dev/marola-oods/pull/3)), tarefas da MIP-0075 [#9](https://github.com/marola-dev/marola-oods/issues/9)–[#19](https://github.com/marola-dev/marola-oods/issues/19) |
+| [marola-ml](https://github.com/marola-dev/marola-ml) | Python offline: compilação de prompts com DSPy, portão de benchmark, [marola-sea](https://huggingface.co/h0ffmann/marola-sea-tiny-GGUF) | Nenhum PR aberto; runners de GPU ([#2](https://github.com/marola-dev/marola-ml/issues/2)), uma regressão na busca do RAG ([#4](https://github.com/marola-dev/marola-ml/issues/4)), dá para prever a balneabilidade? ([#23](https://github.com/marola-dev/marola-ml/issues/23)) |
+| [marola-corpus](https://github.com/marola-dev/marola-corpus) | O conhecimento sobre o mar, com fontes, de onde o marola tira as respostas | Estável; documentos novos são bem-vindos · [issues](https://github.com/marola-dev/marola-corpus/issues) |
+| [marola-devkit](https://github.com/marola-dev/marola-devkit) | As ferramentas de desenvolvimento que todo repositório fixa (entra como input do flake Nix, não como submódulo): scripts, hooks, skills do Claude Code, CI reutilizável, como a revisão do Gemini | Tabelas da ligação entre repositórios (MIP-0076, [#32](https://github.com/marola-dev/marola-devkit/pull/32), [#33](https://github.com/marola-dev/marola-devkit/pull/33)) · [issues](https://github.com/marola-dev/marola-devkit/issues) |
+| [marola-skills](https://github.com/marola-dev/marola-skills) | O catálogo de todas as skills e subagentes do Claude Code nos repositórios: onde cada um mora, de onde veio, o que foi testado. Lê tudo pela API do GitHub uma vez por dia | Entra no guarda-chuva como submódulo e no [site de docs](https://docs.marola.dev/5-Repos/marola-skills/) ([#761](https://github.com/marola-dev/marola/issues/761)) · [issues](https://github.com/marola-dev/marola-skills/issues) |
+| [marola-agents](https://github.com/marola-dev/marola-agents) | O inventário de todos os agentes que o marola usa ou planeja: subagentes do Claude Code, os Claude Projects e suas rotinas, os papéis de LLM do app, os agentes que o CI chama | O primeiro README e o inventário · [issues](https://github.com/marola-dev/marola-agents/issues) |
 | [marola-research](https://github.com/marola-dev/marola-research) | Science | [issues](https://github.com/marola-dev/marola-research/issues) |
 
-Three more repos are curated lists, not part of the product:
-[awesome-ocean-science](https://github.com/marola-dev/awesome-ocean-science) is marola's own list
-of ocean software, data and tools; [open-sustainable-technology](https://github.com/marola-dev/open-sustainable-technology)
-and [awesome-open-climate-science](https://github.com/marola-dev/awesome-open-climate-science) are
-forks of community lists marola will be proposed to.
+Outros três repositórios são listas curadas, fora do produto: o
+[awesome-ocean-sciences](https://github.com/marola-dev/awesome-ocean-sciences) é a lista do próprio
+marola com software, dados e ferramentas sobre o oceano; o
+[open-sustainable-technology](https://github.com/marola-dev/open-sustainable-technology) e o
+[awesome-open-climate-science](https://github.com/marola-dev/awesome-open-climate-science) são forks
+de listas da comunidade onde o marola ainda vai ser proposto.
 
-## In progress: the open ocean data lake
+## Todos os repositórios da org
 
-**[MIP-0075](./docs/MIPs/MIP-0075-water-quality-store-r2.md), in progress.** Today every map
-build fetches beaches and water quality from scratch, and history is lost. MIP-0075 keeps them in
-an open data lake: a [DuckLake](https://ducklake.select/) (Parquet plus a DuckDB catalog) in a
-Cloudflare R2 bucket, written by scheduled ETL jobs in marola-app's `oods` module, with
-marola-oods owning the schema. Beaches go first, then Santa Catarina's water quality, then Rio and
-Bahia. Where it stands: the lake contract revision ([marola#686](https://github.com/marola-dev/marola/pull/686)),
-the schema migrations ([marola-oods#22](https://github.com/marola-dev/marola-oods/pull/22)), the
-spec ([marola-oods#3](https://github.com/marola-dev/marola-oods/pull/3)) and the task issues
+A org [marola-dev](https://github.com/marola-dev) tem 14 repositórios públicos, forks incluídos.
+A coluna "Commits" conta os commits do branch padrão de cada um (`git rev-list --count HEAD`,
+contados em 2026-10-26). Num fork, essa conta inclui o histórico do projeto original. Um
+repositório privado fica fora da lista.
+
+| Repositório | Tipo | Commits | Último commit |
+|---|---|---:|---|
+| [marola](https://github.com/marola-dev/marola) | guarda-chuva | 594 | 2026-10-26 |
+| [marola-devkit](https://github.com/marola-dev/marola-devkit) | código | 223 | 2026-10-20 |
+| [marola-app](https://github.com/marola-dev/marola-app) | código | 197 | 2026-10-20 |
+| [marola-site](https://github.com/marola-dev/marola-site) | código | 140 | 2026-10-26 |
+| [marola-ml](https://github.com/marola-dev/marola-ml) | código | 116 | 2026-10-20 |
+| [marola-skills](https://github.com/marola-dev/marola-skills) | catálogo | 48 | 2026-10-20 |
+| [marola-corpus](https://github.com/marola-dev/marola-corpus) | dados | 45 | 2026-10-20 |
+| [marola-research](https://github.com/marola-dev/marola-research) | ciência | 42 | 2026-10-20 |
+| [marola-oods](https://github.com/marola-dev/marola-oods) | dados | 34 | 2026-10-20 |
+| [.github](https://github.com/marola-dev/.github) | perfil da org | 15 | 2026-10-25 |
+| [marola-agents](https://github.com/marola-dev/marola-agents) | catálogo | 4 | 2026-10-10 |
+| [awesome-ocean-sciences](https://github.com/marola-dev/awesome-ocean-sciences) | lista | 1 | 2026-10-19 |
+| [open-sustainable-technology](https://github.com/marola-dev/open-sustainable-technology) | fork de lista | 4089 | 2026-09-25 |
+| [awesome-open-climate-science](https://github.com/marola-dev/awesome-open-climate-science) | fork de lista | 77 | 2025-11-12 |
+
+## Em andamento: o lago de dados aberto do oceano
+
+**[MIP-0075](./docs/MIPs/MIP-0075-water-quality-store-r2.md), em andamento.** Hoje cada build do
+mapa busca praias e balneabilidade do zero, e o histórico se perde. A MIP-0075 guarda tudo num lago
+de dados aberto: um [DuckLake](https://ducklake.select/) (Parquet mais um catálogo DuckDB) num
+bucket do Cloudflare R2, gravado por jobs de ETL agendados no módulo `oods` do marola-app, com o
+esquema sob responsabilidade do marola-oods. Primeiro vêm as praias, depois a balneabilidade de
+Santa Catarina, depois Rio e Bahia. Onde está: a revisão do contrato do lago
+([marola#686](https://github.com/marola-dev/marola/pull/686)), as migrations do esquema
+([marola-oods#22](https://github.com/marola-dev/marola-oods/pull/22)), a spec
+([marola-oods#3](https://github.com/marola-dev/marola-oods/pull/3)) e as issues de tarefa
 [marola-oods#9](https://github.com/marola-dev/marola-oods/issues/9)–[#19](https://github.com/marola-dev/marola-oods/issues/19).
 
-The score and its safety veto are deterministic Scala; the model only interprets and phrases, and
-never overturns a veto. Why it's built this way: [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md).
-How it works: [ARCHITECTURE](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/). Everything
-else, from every repo, is searchable at **[docs.marola.dev](https://docs.marola.dev/)**.
+A nota e o veto de segurança são Scala determinístico; o modelo apenas interpreta e redige, e nunca
+derruba um veto. Toda a documentação técnica, de todos os repositórios, está em inglês em
+**[docs.marola.dev](https://docs.marola.dev/)**; veja também o [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md),
+o guia de [contribuição](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTING/) e o [Código de Conduta](https://github.com/marola-dev/.github/blob/main/CODE_OF_CONDUCT.md). Se você é um
+agente de IA: leia primeiro o [`AGENTS.md`](./AGENTS.md), depois o `AGENTS.md` do repositório que
+vai mudar.
 
-If you're an AI coding agent: read [`AGENTS.md`](./AGENTS.md) first, then the `AGENTS.md` of the
-repo you're changing.
+## Como contribuir
 
-## Contributing
+PRs pequenos, um assunto por PR, no repositório a que a mudança pertence. Uma mudança que não é
+trivial começa como uma MIP em `docs/MIPs/`, aqui. Todo commit leva os trailers `Tested:` e
+`Co-Authored-By: Claude <noreply@anthropic.com>`. Agentes de IA contribuem aqui como qualquer
+pessoa e seguem o `AGENTS.md`. As descrições dos PRs saem bilíngues, primeiro em pt-BR, pela skill
+`bipr` do [ptbr-writer](https://github.com/h0ffmann/ptbr-writer), o plugin do mantenedor para
+escrita técnica em português (`/ptbr-writer:bipr`, ativado no `.claude/settings.json`).
 
-Small PRs, one topic each, in the repo the change belongs to; non-trivial changes start as a MIP
-under `docs/MIPs/` here; every commit carries `Tested:` and
-`Co-Authored-By: Claude <noreply@anthropic.com>` trailers. AI agents are first-class contributors here and follow `AGENTS.md` like anyone else.
-PR descriptions come out bilingual, pt-BR first, from the `bipr` skill of
-[ptbr-writer](https://github.com/h0ffmann/ptbr-writer), the maintainer's plugin for technical
-writing in Brazilian Portuguese (`/ptbr-writer:bipr`, enabled in `.claude/settings.json`).
-Full guide: [Contributing](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTING/). Please also read the
-[Code of Conduct](https://github.com/marola-dev/.github/blob/main/CODE_OF_CONDUCT.md) and, for a vulnerability, the [security policy](https://github.com/marola-dev/.github/blob/main/SECURITY.md).
+Para uma revisão do Gemini, peça o revisor `marola-dev/gemini` no PR (barra lateral → Reviewers,
+ou `gh pr edit <N> --add-reviewer marola-dev/gemini`). O `marola-pr-bot` posta uma revisão com até
+10 comentários marcados `[high]`/`[medium]`/`[low]` e depois empurra um commit com as correções de
+que tem certeza. O `.github/workflows/gemini.yml` chama o workflow
+[`gemini-review`](https://github.com/marola-dev/marola-devkit/blob/main/docs/4-reference_workflows.md#gemini-review)
+do devkit.
 
-## Gemini review
+## Como citar
 
-Request the reviewer `marola-dev/gemini` on a pull request (sidebar → Reviewers, or
-`gh pr edit <N> --add-reviewer marola-dev/gemini`). `marola-pr-bot` posts one review with at
-most 10 inline comments tagged `[high]`/`[medium]`/`[low]`, then pushes one commit with the fixes
-it is sure of. Request it again after new commits for a fresh review. It runs only when
-asked, reviews fork pull requests without pushing to them, and never edits `.github/`. `.github/workflows/gemini.yml`
-calls the devkit's [`gemini-review`](https://github.com/marola-dev/marola-devkit/blob/main/docs/4-reference_workflows.md#gemini-review)
-workflow.
-
-## How to cite
-
-Each release of this repo (`just release X.Y.Z`) is archived on [Zenodo](https://zenodo.org/),
-which gives it a DOI. Cite the concept DOI, [10.5281/zenodo.23224155](https://doi.org/10.5281/zenodo.23224155), which always
-resolves to the latest version. The record lists every marola repository as a part of it, and the
-WW3 GPU Lab ([10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351)) as related work. GitHub's **Cite this repository**
-button (right sidebar) exports APA and BibTeX from [`CITATION.cff`](./CITATION.cff). That file is generated from
-[`.zenodo.json`](./.zenodo.json) by `just citation`, and `just contributor-add` adds a person to
-both (MIP-0079).
+Cada release deste repositório (`just release X.Y.Z`) é arquivada no [Zenodo](https://zenodo.org/),
+que dá a ela um DOI. Cite o DOI conceitual, [10.5281/zenodo.23224155](https://doi.org/10.5281/zenodo.23224155), que sempre
+aponta para a versão mais recente. O registro lista cada repositório do marola como parte dele, e o
+WW3 GPU Lab ([10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351)) como trabalho relacionado. O botão **Cite this
+repository** do GitHub (barra lateral direita) exporta APA e BibTeX a partir do
+[`CITATION.cff`](./CITATION.cff).
 
 <!-- citation:start -->
 
@@ -262,39 +290,26 @@ ABNT (NBR 6023):
 
 <!-- citation:end -->
 
-## Thanks
+## Agradecimentos
 
-marola stands on other people's work. Five it could not exist without, alphabetically:
+O marola existe graças ao trabalho de muita gente: os colaboradores do
+[OpenStreetMap](https://www.openstreetmap.org/copyright) (cada praia do mapa é deles, sob a ODbL),
+o [Open-Meteo](https://open-meteo.com/) (as previsões do mar e do tempo), o
+[Mapbox GL JS](https://github.com/mapbox/mapbox-gl-js) (o mapa), o [Ollama](https://ollama.com/) e o
+[Kyo](https://getkyo.io/). Os dados de balneabilidade vêm dos boletins do INEA (Rio de Janeiro), do
+INEMA (Bahia) e do IMA/SC (Santa Catarina).
 
-- **[Kyo](https://getkyo.io/)**: the effect system the entire Scala side is written in. Its
-  direct-style `.now`/`defer` is what lets the pipeline read like ordinary code while keeping
-  effects visible in the types.
-- **[Mapbox GL JS](https://github.com/mapbox/mapbox-gl-js)**: draws the map at marola.dev, inside Mapbox's
-  free map-load tier.
-- **[Ollama](https://ollama.com/)**: runs the models locally, which is what makes marola usable
-  with no cloud account and no API key.
-- **[Open-Meteo](https://open-meteo.com/)**: the sea temperature, wind and wave forecasts every
-  score is computed from, free and keyless.
-- **[OpenStreetMap](https://www.openstreetmap.org/copyright)** contributors: every beach, trail
-  and facility on the map is theirs, under ODbL.
+## Contato
 
-Also relied on daily: Scala 3, MUnit, sbt, Nix, just, DSPy, Hugging Face (`transformers`, `peft`,
-`trl`) and SmolLM2, llama.cpp, PDFBox, OpenTelemetry, MLflow, the Model Context Protocol SDK, and
-[ai-jail](https://github.com/akitaonrails/ai-jail). The map's water quality comes from bulletins
-published by INEA (Rio de Janeiro), INEMA (Bahia) and IMA/SC (Santa Catarina).
+Para qualquer pedido sobre o marola, escreva para [admin@marola.dev](mailto:admin@marola.dev).
+Vulnerabilidades vão pelo canal privado descrito na [política de segurança](https://github.com/marola-dev/.github/blob/main/SECURITY.md).
 
-## Contact
+## Licença
 
-For any request about marola, write to [admin@marola.dev](mailto:admin@marola.dev).
-Vulnerabilities go through the private channel in the [security policy](https://github.com/marola-dev/.github/blob/main/SECURITY.md).
+- Documentação (os docs, as MIPs, os artigos, este README): [CC BY 4.0](./LICENSE).
+- Código (`scripts/`, `.github/`, `mkdocs/`, `justfile`, `flake.nix`): [AGPL-3.0-only](./LICENSES/AGPL-3.0-only.txt).
+- As skills de terceiros em `.claude/skills/` mantêm as próprias licenças.
+- Cada repositório do marola tem a sua própria `LICENSE`.
+- As versões até a v0.2.2 foram publicadas sob [MIT](./LICENSES/MIT.txt) e continuam sob MIT.
 
-## License
-
-- Documentation (the docs, the MIPs, the papers, this README): [CC BY 4.0](./LICENSE).
-- Code (`scripts/`, `.github/`, `mkdocs/`, `justfile`, `flake.nix`): [AGPL-3.0-only](./LICENSES/AGPL-3.0-only.txt).
-- Third-party skills under `.claude/skills/` keep their own licences.
-- Each repo above is its own repository, with its own `LICENSE`.
-- Releases up to v0.2.2 were published under [MIT](./LICENSES/MIT.txt) and stay MIT.
-
-Each file's licence is recorded in [`REUSE.toml`](./REUSE.toml). © 2026 marola contributors.
-</content>
+A licença de cada arquivo está em [`REUSE.toml`](./REUSE.toml). © 2026 colaboradores do marola.

@@ -17,7 +17,7 @@ Non-negotiable in every marola repo; a repo may make these stricter, never loose
 
 ## What this umbrella is
 
-**marola** is the ocean intelligence layer for a stretch of coast: real nearby beaches
+**marola** is the water super app for a stretch of coast: real nearby beaches
 (OpenStreetMap), live sea and weather (Open-Meteo), official bathing-water quality, a 0–100
 swimability score with a deterministic safety veto, and an LLM summary reviewed by a second pass,
 all runnable locally with a free Ollama model. GCP (MIP-0057) is the opt-in cloud path.
@@ -244,6 +244,9 @@ as not run; it is never skipped silently.
   English (the devkit plugin), `humanizar` on Portuguese (ww3-gpu's copy until
   marola-dev/marola-devkit#102 settles a marola one), and marola-site's `ptbr-humanizer` on the
   site's visitor copy.
+- **This repo's READMEs**: `README.md` is in Portuguese, the full version and the docs site's
+  landing. `README.en.md` is the English one, written ELI5: short sentences, no jargon, a link
+  for the detail. A change to one reaches the other in the same PR.
 - **Formal technical English**: the Writing Skills plugin's `asd-ste100` (ASD Simplified Technical
   English) for procedures and reference pages, `google-dev-docs` for developer docs,
   `plain-language` for public copy. Its character voices (`yoda`, `shrek`, …) are never used.
