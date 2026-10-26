@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The weekly vendored-skills workflow",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0080-weekly.html"
+  },
+  "components": [
+    {
+      "id": "cron",
+      "type": "backend",
+      "label": "weekly cron / dispatch",
+      "pos": [
+        170,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "out",
+      "type": "backend",
+      "label": "skills-outdated",
+      "pos": [
+        170,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "f",
+      "type": "security",
+      "label": "commit ≥ 14 days old",
+      "sublabel": "and not held?",
+      "pos": [
+        170,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "skip",
+      "type": "backend",
+      "label": "log, no PR",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "upd",
+      "type": "backend",
+      "label": "skills-update each",
+      "pos": [
+        337,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pr",
+      "type": "backend",
+      "label": "one PR on chore/skills-update",
+      "sublabel": "label skills-update, SKILL.md diff per skill",
+      "pos": [
+        170,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "rev",
+      "type": "backend",
+      "label": "human reads, merges or sets hold",
+      "pos": [
+        170,
+        610
+      ],
+      "size": [
+        227,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "cron",
+      "to": "out"
+    },
+    {
+      "id": "e2",
+      "from": "out",
+      "to": "f"
+    },
+    {
+      "id": "e3",
+      "from": "f",
+      "to": "skip",
+      "label": "no"
+    },
+    {
+      "id": "e4",
+      "from": "f",
+      "to": "upd",
+      "label": "yes"
+    },
+    {
+      "id": "e5",
+      "from": "upd",
+      "to": "pr"
+    },
+    {
+      "id": "e6",
+      "from": "pr",
+      "to": "rev"
+    }
+  ]
+}

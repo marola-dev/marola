@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MIP-0065 task dependency graph",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0065-tasks.html"
+  },
+  "components": [
+    {
+      "id": "t0",
+      "type": "backend",
+      "label": "0064-T4",
+      "pos": [
+        40,
+        115
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t1",
+      "type": "backend",
+      "label": "1 hosted-runners",
+      "pos": [
+        300,
+        115
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "backend",
+      "label": "2 docker-on",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "backend",
+      "label": "3 workflow-fixes",
+      "pos": [
+        560,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t4",
+      "type": "backend",
+      "label": "4 ci-cd-doc",
+      "pos": [
+        820,
+        115
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "t0",
+      "to": "t1"
+    },
+    {
+      "id": "e2",
+      "from": "t1",
+      "to": "t2"
+    },
+    {
+      "id": "e3",
+      "from": "t1",
+      "to": "t3"
+    },
+    {
+      "id": "e4",
+      "from": "t2",
+      "to": "t4"
+    },
+    {
+      "id": "e5",
+      "from": "t3",
+      "to": "t4"
+    }
+  ]
+}

@@ -285,21 +285,7 @@ moves — and the board must be able to catch up afterwards without undoing anyt
 | `issues.sh claim` | removes | sets **In progress** |
 | `issues.sh board sync` | — | sets from the issue's own state (assigned → In progress, `agent-ready` → Ready, otherwise Triage) on an item with **no Status**, or with **`Backlog`** and only `Backlog`. Also moves a **closed** issue's card to **Done** whenever it isn't already — the fallback for the built-in "Item closed" workflow (§4.4) |
 
-```mermaid
-stateDiagram-v2
-  state "In progress" as InProgress
-  state "In review" as InReview
-  [*] --> Backlog: auto-add workflow
-  Backlog --> Triage: board sync, no signal
-  Backlog --> Ready: board sync, agent-ready label
-  Backlog --> InProgress: board sync, assigned
-  Triage --> Spec: maintainer, manual
-  Spec --> Ready: maintainer, manual
-  Ready --> InProgress: claim
-  InProgress --> InReview: maintainer, manual
-  InProgress --> Done: issue closed (built-in workflow, or board sync as fallback)
-  InReview --> Done: issue closed (built-in workflow, or board sync as fallback)
-```
+![Issue status on the board, and what moves a card between columns](../img/archify/mip-0063-board.png)
 
 So **the label is authoritative and the board follows it**, once, when an issue first reaches the
 board. After that the Status belongs to whoever moves the card: `sync` never overwrites a Status a
@@ -427,11 +413,7 @@ after that, issues own status and the file owns the plan.** One-way, re-runnable
 ai-jail with no token can still read the whole plan from disk — which is why the file is not
 replaced by the issues.
 
-```mermaid
-flowchart LR
-  mt["mip-tasks skill"] -- authors --> tasks["tasks.md<br/>(owns the plan)"]
-  tasks -- "tasks-to-issues<br/>(projects, re-runnable)" --> issues["GitHub issues<br/>(own status)"]
-```
+![The issue command surface](../img/archify/mip-0063-commands.png)
 
 ### 5.6 Forms and skills
 

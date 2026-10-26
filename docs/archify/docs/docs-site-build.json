@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How a docs.marola.dev build runs",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "docs-site-build.html"
+  },
+  "components": [
+    {
+      "id": "repos",
+      "type": "backend",
+      "label": "mkdocs/repos.yml",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "prep",
+      "type": "backend",
+      "label": "prepare-docs.sh",
+      "pos": [
+        430,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "umb",
+      "type": "backend",
+      "label": "umbrella README + docs/",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sub",
+      "type": "backend",
+      "label": "each repo's README + docs/",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "each repo's api-docs branch",
+      "pos": [
+        820,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "tree",
+      "type": "backend",
+      "label": ".tmp/docs-aggregated",
+      "sublabel": "+ build.json",
+      "pos": [
+        430,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "mk",
+      "type": "backend",
+      "label": "mkdocs.sh",
+      "sublabel": "mkdocs --strict",
+      "pos": [
+        430,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "check",
+      "type": "backend",
+      "label": "marola-tools",
+      "sublabel": "site-links-check",
+      "pos": [
+        430,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pages",
+      "type": "backend",
+      "label": "GitHub Pages",
+      "sublabel": "docs.marola.dev",
+      "pos": [
+        430,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "repos",
+      "to": "prep"
+    },
+    {
+      "id": "e2",
+      "from": "umb",
+      "to": "prep"
+    },
+    {
+      "id": "e3",
+      "from": "sub",
+      "to": "prep"
+    },
+    {
+      "id": "e4",
+      "from": "api",
+      "to": "prep"
+    },
+    {
+      "id": "e5",
+      "from": "prep",
+      "to": "tree"
+    },
+    {
+      "id": "e6",
+      "from": "tree",
+      "to": "mk"
+    },
+    {
+      "id": "e7",
+      "from": "mk",
+      "to": "check"
+    },
+    {
+      "id": "e8",
+      "from": "check",
+      "to": "pages"
+    }
+  ]
+}

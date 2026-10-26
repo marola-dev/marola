@@ -113,19 +113,7 @@ marola-skills' `refresh.yml` PR moves to `github.token` plus a `workflow_dispatc
 
 ### 5.2 Open versus merge
 
-```mermaid
-flowchart LR
-  subgraph any["any repo's workflow"]
-    J1["pointer-sync, site-data,<br/>compile-prompt, steward,<br/>notify, gemini"]
-  end
-  subgraph two["marola / marola-devkit only"]
-    J2["pointer-sync-merge,<br/>deps-merge, bump-consumers,<br/>bump-merge"]
-  end
-  J1 -- "PR_BOT_KEY" --> PR["marola-pr-bot:<br/>push a branch, open a PR"]
-  J2 -- "MERGE_BOT_KEY" --> MB["marola-merge-bot:<br/>merge through main-rule"]
-  PR --> PRs[(PRs in any repo)]
-  MB --> PRs
-```
+![Which GitHub App opens a PR and which one merges it](../img/archify/mip-0086-apps.png)
 
 A job either proposes or lands; no job does both with one key. `pointer-sync.yml` opens the sync PR
 as the PR bot in the job that runs `nix develop`; `pointer-sync-merge.yml` merges it as the merge bot

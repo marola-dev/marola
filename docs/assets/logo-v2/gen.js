@@ -20,12 +20,12 @@ const N=(v)=>(+v.toFixed(4)).toString();
 const E=[];let id=0;
 const add=(o)=>E.push({id:String(++id),...o});
 add({note:'marola logo v2: tudo dentro do disco x^2+y^2 <= 100'});
-add({latex:'x^2+y^2\\le100',js:{type:'ineq',f:'(x,y)=>x*x+y*y<=100'},color:C.sky,fill:1,line:0});
-add({latex:'(x-5.4)^2+(y-5.3)^2\\le2.2',js:{type:'ineq',f:'(x,y)=>(x-5.4)**2+(y-5.3)**2<=2.2'},color:'#b9f1f8',fill:1,line:0});
+add({latex:'x^2+y^2\\le100',js:{type:'ineq',f:'(x,y)=>x*x+y*y<=100'},color:C.sky,fill:1,line:0,svg:{circle:[0,0,10]}});
+add({latex:'(x-5.4)^2+(y-5.3)^2\\le2.2',js:{type:'ineq',f:'(x,y)=>(x-5.4)**2+(y-5.3)**2<=2.2'},color:'#b9f1f8',fill:1,line:0,svg:{circle:[5.4,5.3,Math.sqrt(2.2)]}});
 // band 1 (horizonte) atrás da onda
 for(const b of bands){add({latex:`f_{${b.n}}(x)=${N(b.c)}+${N(b.a)}\\sin(${N(b.w)}x+${N(b.p)})+${N(b.a/3)}\\sin(${N(2.3*b.w)}x+${N(1.7*b.p)})`,hidden:true});}
 const fs_=b=>`(x=>${b.c}+${b.a}*Math.sin(${b.w}*x+${b.p})+${b.a/3}*Math.sin(${2.3*b.w}*x+${1.7*b.p}))`;
-const bandExpr=b=>{const f=fs_(b);add({latex:`y\\le f_{${b.n}}(x)\\left\\{x^2+y^2\\le100\\right\\}`,js:{type:'ineq',f:`(x,y)=>y<=${f}(x)&&x*x+y*y<=100`},color:b.col,fill:1,line:0});
+const bandExpr=b=>{const f=fs_(b);const fx=eval(f);const top=[];for(let x=-10;x<=10.001;x+=0.05)top.push([x,fx(x)]);add({latex:`y\\le f_{${b.n}}(x)\\left\\{x^2+y^2\\le100\\right\\}`,js:{type:'ineq',f:`(x,y)=>y<=${f}(x)&&x*x+y*y<=100`},color:b.col,fill:1,line:0,svg:{area:top}});
  add({latex:`y=f_{${b.n}}(x)\\left\\{x^2+f_{${b.n}}(x)^2\\le100\\right\\}`,js:{type:'curve',f},color:C.w,width:7});};
 // wave body + curl
 add({latex:`r_{o}(t)=${N(R0)}e^{-${N(B)}t}`,hidden:true});
@@ -46,7 +46,7 @@ add({latex:`S\\left(r_{i}(t),t\\right)\\left\\{${N(T0)}\\le t\\le${N(T)}\\right\
 bandExpr(bands[0]);
 {const ts=[1.45,1.7,1.95,2.2,2.45,2.75,3.05],ds=[0.42,0.8,0.5,0.95,0.55,0.85,0.45],rs=[0.2,0.13,0.24,0.14,0.21,0.12,0.17];
  ts.forEach((t,i)=>{const r=ro(t)+ds[i],x=h+r*Math.cos(t+A0),y=k+r*Math.sin(t+A0);
- add({latex:`(x${x<0?'+'+N(-x):'-'+N(x)})^2+(y${y<0?'+'+N(-y):'-'+N(y)})^2\\le${N(rs[i]**2)}`,js:{type:'ineq',f:`(x,y)=>(x-(${x}))**2+(y-(${y}))**2<=${rs[i]**2}`},color:C.cb,fill:1,line:0});});}
+ add({latex:`(x${x<0?'+'+N(-x):'-'+N(x)})^2+(y${y<0?'+'+N(-y):'-'+N(y)})^2\\le${N(rs[i]**2)}`,js:{type:'ineq',f:`(x,y)=>(x-(${x}))**2+(y-(${y}))**2<=${rs[i]**2}`},color:C.cb,fill:1,line:0,svg:{circle:[x,y,rs[i]]}});});}
 for(const b of bands.slice(1))bandExpr(b);
 // check
 const ck=[[h-0.55,k-0.05],[h+0.15,k-0.75],[h+1.35,k+0.75]];
@@ -65,6 +65,16 @@ const state={version:11,randomSeed:'marola',graph:{viewport:{xmin:-12,xmax:12,ym
 fs.writeFileSync(out('marola-logo-v2.desmos.json'),JSON.stringify(state,null,1)+'\n');
 fs.writeFileSync(out('colar-no-console.js'),'// desmos.com/calculator, F12, cole no Console e dê Enter\nCalc.setState('+JSON.stringify(state)+');\n');
 fs.writeFileSync(out('marola-logo-v2.expressions.txt'),E.filter(e=>e.latex&&!(e.width===0)).map(e=>e.latex).join('\n')+'\n');
+// SVG: the same drawing as vectors, with no background: the sky disk is left out
+{const F=v=>+v.toFixed(3);const pts=a=>a.map(q=>F(q[0])+','+F(-q[1])).join(' ');const out_=[];
+ for(const e of E){const j=e.js,v=e.svg;if(!j||e.color===C.sky)continue;const c=e.color;
+  if(v&&v.circle)out_.push(`<circle cx="${F(v.circle[0])}" cy="${F(-v.circle[1])}" r="${F(v.circle[2])}" fill="${c}"/>`);
+  else if(v&&v.area)out_.push(`<polygon clip-path="url(#d)" points="${pts([...v.area,[10,-10],[-10,-10]])}" fill="${c}"/>`);
+  else if(j.type==='curve'){const a=[];for(let x=-10;x<=10.001;x+=0.05)a.push([x,eval(j.f)(x)]);out_.push(`<polyline clip-path="url(#d)" points="${pts(a)}" fill="none" stroke="${c}" stroke-width="${F(e.width/40)}" stroke-linecap="round"/>`);}
+  else if(j.type==='param')out_.push(`<polyline clip-path="url(#d)" points="${pts(j.pts)}" fill="none" stroke="${c}" stroke-width="${F(e.width/40)}" stroke-linecap="round"/>`);
+  else if(j.type==='poly'&&j.open)out_.push(`<polyline points="${pts(j.pts)}" fill="none" stroke="${c}" stroke-width="${F(e.width/40)}" stroke-linecap="round" stroke-linejoin="round"/>`);
+  else if(j.type==='poly')out_.push(`<polygon clip-path="url(#d)" points="${pts(j.pts)}" fill="${c}"/>`);}
+ fs.writeFileSync(out('marola-logo-v2.svg'),`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10.2 -10.2 20.4 20.4" role="img" aria-label="marola: uma onda quebrando dentro de um disco">\n<defs><clipPath id="d"><circle r="10"/></clipPath></defs>\n${out_.join('\n')}\n</svg>\n`);}
 // render
 const draw=(grid)=>`(()=>{const S=${grid?1200:1000},L=-12,H=12,sc=S/(H-L);const cv=document.createElement('canvas');cv.width=cv.height=S;document.body.appendChild(cv);const g=cv.getContext('2d');
 const px=x=>(x-L)*sc,py=y=>(H-y)*sc;g.fillStyle='#fff';g.fillRect(0,0,S,S);

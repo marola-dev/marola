@@ -46,24 +46,7 @@ source.** A producer publishes a versioned artifact; a consumer pins it and move
 bumping the pin in a PR. Inside an umbrella checkout the submodules sit side by side, but that is a
 convenience for people and agents, never a build input.
 
-```mermaid
-flowchart LR
-  devkit[marola-devkit] -.->|"tag"| every[every repo]
-  corpus[marola-corpus] -->|"tarball"| app[marola-app]
-  corpus -->|"tarball"| ml[marola-ml]
-  app -->|"image"| site[marola-site]
-  app -->|"image, resources tarball"| ml
-  app -->|"image"| oods[marola-oods]
-  ml -->|"compiled-prompt PR"| app
-  app -->|"coverage, smoke"| site
-  umbrella[marola umbrella] -->|"stats"| site
-  app -->|"api-docs branch"| umbrella
-  ml -->|"api-docs branch"| umbrella
-  app -.->|"ingest commits (planned)"| oods
-  oods -.->|"export tag (planned)"| app
-  every -.->|"skills, read daily"| skills[marola-skills]
-  every -.->|"agents, indexed"| agents[marola-agents]
-```
+![The contracts between repos: which repo hands which artifact to which](../img/archify/repos-contracts.png)
 
 A contract change follows the producer: it merges and releases first, each consumer bumps its pin
 in its own PR, and the umbrella's pointers move last, through the sync PR.

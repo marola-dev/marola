@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The self-hosted rule: which jobs may run on the GPU runner",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "ci-cd-self-hosted.html"
+  },
+  "components": [
+    {
+      "id": "any",
+      "type": "backend",
+      "label": "any workflow",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "hosted",
+      "type": "backend",
+      "label": "ubuntu-latest",
+      "sublabel": "(free, public repo)",
+      "pos": [
+        350,
+        115
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "gpu",
+      "type": "backend",
+      "label": "marola-ml's marola-sea-publish.yml",
+      "sublabel": "workflow_dispatch only",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "desk",
+      "type": "backend",
+      "label": "[self-hosted, marola-sea]",
+      "sublabel": "the maintainer's GPU desktop",
+      "pos": [
+        350,
+        225
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fork",
+      "type": "external",
+      "label": "fork PR",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "any",
+      "to": "hosted"
+    },
+    {
+      "id": "e2",
+      "from": "gpu",
+      "to": "desk"
+    },
+    {
+      "id": "e3",
+      "from": "fork",
+      "to": "hosted",
+      "label": "approval, then",
+      "variant": "dashed"
+    }
+  ]
+}

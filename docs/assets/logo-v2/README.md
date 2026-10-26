@@ -6,15 +6,16 @@ O logo do marola desenhado como um gráfico do Desmos: uma onda quebrando dentro
 quatro faixas de mar e o check da qualidade da água dentro do tubo. A apresentação segue a do
 desenho do [h0ffmann/smart-alerts](https://github.com/h0ffmann/smart-alerts/tree/main/docs/drawings).
 
-<img src="marola-logo-v2.png" width="320" alt="marola logo v2: uma onda quebrando dentro de um disco, com faixas de mar e um check no tubo"/>
+<img src="marola-logo-v2.svg" width="320" alt="marola logo v2: uma onda quebrando dentro de um disco, com faixas de mar e um check no tubo"/>
 
 O script `gen.js` escreve todos os arquivos a partir de uma geometria só. Cada elemento leva o LaTeX
-do Desmos e a função JS equivalente, e o PNG é desenhado com as funções, sem depender do Desmos.
+do Desmos e a função JS equivalente, e o PNG e o SVG são desenhados com as funções, sem depender do Desmos.
 `node docs/assets/logo-v2/gen.js` precisa do playwright e reescreve:
 
 | Arquivo | O que é |
 |---|---|
-| [`marola-logo-v2.png`](marola-logo-v2.png) | O logo, 1000 x 1000 px |
+| [`marola-logo-v2.svg`](marola-logo-v2.svg) | O logo em vetor, sem fundo: é o que os READMEs mostram |
+| [`marola-logo-v2.png`](marola-logo-v2.png) | O logo, 1000 x 1000 px, com o céu claro no disco |
 | [`marola-logo-v2-grid.png`](marola-logo-v2-grid.png) | O mesmo desenho sobre a grade e os eixos do Desmos |
 | [`marola-logo-v2.desmos.json`](marola-logo-v2.desmos.json) | O estado do gráfico do Desmos (`version` 11), com cores e espessuras |
 | [`marola-logo-v2.expressions.txt`](marola-logo-v2.expressions.txt) | As 34 expressões em LaTeX, uma por linha |

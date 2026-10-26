@@ -241,38 +241,32 @@ figure-init:
     fi
     echo "figure-init: $(git -C "$d" rev-parse --short HEAD)"
 
-# Draw every docs/archify/<slug>.json to docs/img/<slug>.png, and its English twin docs/archify/en/<slug>.json
-# to docs/img/en/<slug>.png: Archify validates and checks it (finalize), picasso's look
-# (docs/archify/picasso.css) goes over it, headless Chrome takes the picture. Needs node, Chrome
-# (CHROME names another) and the Google Fonts; writes docs/archify/figures.lock.
+# Draw every Archify source with scripts/figure.sh, which validates it, lays picasso's look
+# (docs/archify/picasso.css) over it and crops headless Chrome's picture to the drawing:
+# docs/archify/<slug>.json and en/<slug>.json (the README's, in two languages) to docs/img/, and
+# docs/archify/docs/<slug>.json (the docs' diagrams, MIP-0068) to docs/img/archify/. Needs node,
+# jq, Chrome (CHROME names another) and the Google Fonts; writes docs/archify/figures.lock.
 figure: figure-init
     #!/usr/bin/env bash
     set -euo pipefail
-    mkdir -p .tmp/figure docs/img/en
     for src in docs/archify/*.json docs/archify/en/*.json; do
-        slug="${src#docs/archify/}"; slug="${slug%.json}"; out=".tmp/figure/$slug"
-        rm -rf "$out"; mkdir -p "$out"
-        ARCHIFY_UPDATE_CHECK_DISABLED=1 node .tmp/archify/archify/bin/archify.mjs finalize "$(jq -r .diagram_type "$src")" "$src" "$out/page.html" --out-dir "$out/receipts" --quality showcase
-        read -r w h < <(grep -o '<svg viewBox="[^"]*"' "$out/page.html" | head -1 | sed -E 's/.*0 0 ([0-9.]+) ([0-9.]+)"/\1 \2/')
-        crop="$(awk -F'\t' -v s="$(basename "$slug")" '$1==s {print $2}' docs/archify/crop.tsv)"; h="${crop:-$h}"
-        FONTS='<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fjalla+One&family=Inter:wght@400;600&display=block">' CSS="$(cat docs/archify/picasso.css)" W="$w" H="$h" \
-            perl -0pe 's|</head>|$ENV{FONTS}<style>$ENV{CSS}</style></head>|; s|<svg viewBox="0 0 [0-9.]+ [0-9.]+"|<svg viewBox="0 0 $ENV{W} $ENV{H}"|' "$out/page.html" > "$out/frame.html"
-        "${CHROME:-google-chrome}" --headless --disable-gpu --hide-scrollbars --force-dark-mode --force-device-scale-factor=2 --user-data-dir="$PWD/$out/profile" --window-size="$w,$h" --virtual-time-budget=3000 --screenshot="$PWD/docs/img/$slug.png" "file://$PWD/$out/frame.html" 2>/dev/null
-        echo "figure: docs/img/$slug.png"
+        slug="${src#docs/archify/}"; scripts/figure.sh "$src" "docs/img/${slug%.json}.png"
     done
+    for src in docs/archify/docs/*.json; do scripts/figure.sh "$src" "docs/img/archify/$(basename "$src" .json).png"; done
     just _figure-lock > docs/archify/figures.lock
 
-# One line per figure: a hash of its source, the look and the crops, then the Archify pin.
+# One line per figure: a hash of its source, the look and the script, then the Archify pin.
 _figure-lock:
     #!/usr/bin/env bash
     set -euo pipefail
-    for src in docs/archify/*.json docs/archify/en/*.json; do
+    for src in docs/archify/*.json docs/archify/en/*.json docs/archify/docs/*.json; do
         slug="${src#docs/archify/}"
-        printf '%s\t%s\n' "${slug%.json}" "$(cat "$src" docs/archify/picasso.css docs/archify/crop.tsv | sha256sum | cut -c1-16)-$(cut -c1-7 <<<"{{ archify_rev }}")"
+        printf '%s\t%s\n' "${slug%.json}" "$(cat "$src" docs/archify/picasso.css scripts/figure.sh | sha256sum | cut -c1-16)-$(cut -c1-7 <<<"{{ archify_rev }}")"
     done
 
 # Every figure has its PNG and an English twin that is the same drawing, each README shows its own
-# language's PNG, and no source changed since the PNGs were drawn. No Chrome needed: CI runs it.
+# language's PNG, every docs figure has its PNG, no doc has a mermaid block, and no source changed
+# since the PNGs were drawn. No Chrome needed: CI runs it.
 figure-check:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -288,6 +282,11 @@ figure-check:
         ! grep -qF "docs/img/$s.png" README.md || grep -qF "docs/img/en/$s.png" README.en.md || { echo "figure-check: README.md shows $s but README.en.md does not show docs/img/en/$s.png" >&2; exit 1; }
     done
     for en in docs/archify/en/*.json; do test -s "docs/archify/$(basename "$en")" || { echo "figure-check: $en has no pt-BR source" >&2; exit 1; }; done
+    for src in docs/archify/docs/*.json; do
+        test -s "docs/img/archify/$(basename "$src" .json).png" || { echo "figure-check: no PNG for $src; run just figure" >&2; exit 1; }
+    done
+    # The umbrella draws its diagrams in Archify (MIP-0068); Kroki's mermaid stays for the submodules' pages.
+    ! git grep -n '^```mermaid' -- '*.md' || { echo "figure-check: a mermaid block above; draw it as docs/archify/docs/<slug>.json" >&2; exit 1; }
     just _figure-lock | cmp -s - docs/archify/figures.lock || { echo "figure-check: a source, the look or the Archify pin changed since the PNG; run just figure" >&2; exit 1; }
     echo "figure-check: ok"
 

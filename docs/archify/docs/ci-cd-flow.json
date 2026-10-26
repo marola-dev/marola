@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How a change reaches marola.dev and docs.marola.dev",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "ci-cd-flow.html"
+  },
+  "components": [
+    {
+      "id": "pr",
+      "type": "external",
+      "label": "pull request",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ci",
+      "type": "backend",
+      "label": "ci.yml",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "body",
+      "type": "backend",
+      "label": "pr-body.yml",
+      "pos": [
+        560,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "main",
+      "type": "external",
+      "label": "push to main",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "docs",
+      "type": "backend",
+      "label": "docs.yml",
+      "pos": [
+        170,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cron",
+      "type": "external",
+      "label": "schedule",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sub",
+      "type": "external",
+      "label": "notify",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sync",
+      "type": "backend",
+      "label": "pointer-sync.yml",
+      "pos": [
+        430,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "marola-app workflows",
+      "pos": [
+        820,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ghcr",
+      "type": "database",
+      "label": "GHCR",
+      "sublabel": "ghcr.io/marola-dev/marola-app",
+      "pos": [
+        690,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "dpages",
+      "type": "backend",
+      "label": "GitHub Pages",
+      "sublabel": "docs.marola.dev",
+      "pos": [
+        560,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sd",
+      "type": "database",
+      "label": "marola-site",
+      "sublabel": "site-data branch",
+      "pos": [
+        430,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "site",
+      "type": "backend",
+      "label": "marola-site site.yml",
+      "pos": [
+        430,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cfw",
+      "type": "backend",
+      "label": "Cloudflare Worker",
+      "sublabel": "marola.dev",
+      "pos": [
+        300,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pages",
+      "type": "backend",
+      "label": "GitHub Pages",
+      "pos": [
+        560,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "pr",
+      "to": "ci"
+    },
+    {
+      "id": "e2",
+      "from": "pr",
+      "to": "body"
+    },
+    {
+      "id": "e3",
+      "from": "main",
+      "to": "ci"
+    },
+    {
+      "id": "e4",
+      "from": "main",
+      "to": "docs"
+    },
+    {
+      "id": "e5",
+      "from": "cron",
+      "to": "docs"
+    },
+    {
+      "id": "e6",
+      "from": "sub",
+      "to": "docs"
+    },
+    {
+      "id": "e7",
+      "from": "sub",
+      "to": "sync"
+    },
+    {
+      "id": "e8",
+      "from": "cron",
+      "to": "sync"
+    },
+    {
+      "id": "e9",
+      "from": "sync",
+      "to": "pr",
+      "label": "one rolling PR",
+      "labelAt": [
+        395,
+        248
+      ]
+    },
+    {
+      "id": "e10",
+      "from": "app",
+      "to": "ghcr",
+      "label": ":jvm :native"
+    },
+    {
+      "id": "e11",
+      "from": "app",
+      "to": "docs",
+      "label": "api-docs branch",
+      "labelAt": [
+        753,
+        138
+      ]
+    },
+    {
+      "id": "e12",
+      "from": "docs",
+      "to": "dpages"
+    },
+    {
+      "id": "e13",
+      "from": "ci",
+      "to": "sd",
+      "label": "stats/"
+    },
+    {
+      "id": "e14",
+      "from": "app",
+      "to": "sd",
+      "label": "coverage/ smoke/"
+    },
+    {
+      "id": "e15",
+      "from": "app",
+      "to": "site",
+      "label": "rebuild",
+      "variant": "dashed"
+    },
+    {
+      "id": "e16",
+      "from": "sd",
+      "to": "site"
+    },
+    {
+      "id": "e17",
+      "from": "site",
+      "to": "cfw"
+    },
+    {
+      "id": "e18",
+      "from": "site",
+      "to": "pages",
+      "label": "fallback",
+      "variant": "dashed"
+    }
+  ]
+}

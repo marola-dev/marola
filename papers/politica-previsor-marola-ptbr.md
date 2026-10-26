@@ -378,23 +378,7 @@ $$
 O enquadramento como bandit precisa respeitar a estrutura de informação. Os braços do marola são
 de dois tipos e pedem algoritmos diferentes [@lattimore_szepesvari_2020].
 
-```mermaid
-flowchart LR
-  ctx[Contexto x<br/>ENSO, região, horizonte,<br/>regime, estação] --> L2
-  subgraph L2[Camada 2: quais braços calculados rodam]
-    bwk[Thompson sampling<br/>contextual com orçamento]
-  end
-  L2 --> runs[Rodadas deste ciclo<br/>A1, A2, A3, A4, A5]
-  fetched[Braços baixados A0] --> pool[Conjunto de previsões]
-  runs --> pool
-  pool --> L1[Camada 1: qual previsão se publica<br/>pesos Hedge + portão de significância]
-  L1 --> pub[Previsão publicada]
-  pool --> score[Verificação<br/>contra observações]
-  score --> L1
-  score --> L2
-  safety[Regras determinísticas de segurança<br/>veto de ressaca, índice de banho] --> site[marola.dev]
-  pub --> site
-```
+![A política em duas camadas: quais braços rodam e qual previsão se publica](../docs/img/archify/politica-duas-camadas.png)
 
 #### 4.5.1 Camada 1: braços baixados são especialistas com informação completa
 
@@ -590,16 +574,7 @@ e nenhum provisionamento sem aval humano [@marola_phases; @marola_agents].
 A nota segue o processo público de MIPs do marola [@marola_mip_readme]. Cada etapa tem um portão
 e um responsável.
 
-```mermaid
-flowchart LR
-  n[Nota<br/>este repositório] --> p[PDF<br/>build de CI]
-  p --> z[Registro no Zenodo<br/>DOI]
-  z --> pr[PR público<br/>marola-dev/marola docs/MIPs]
-  pr --> mip[MIP aceito<br/>tarefas e issues]
-  mip --> web[Divulgado no marola.dev<br/>página de pesquisa]
-  web --> wk[Relatório semanal público<br/>marola.dev/research]
-  wk --> n
-```
+![Processo e cadeia de publicação da previsão](../docs/img/archify/politica-publicacao.png)
 
 | Etapa | Portão | Quem age |
 |---|---|---|

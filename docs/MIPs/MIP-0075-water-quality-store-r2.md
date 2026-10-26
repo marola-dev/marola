@@ -351,13 +351,7 @@ the bug marola-app#15 fixed in `Swimability`. A view, so it is never stale.
 
 ### 5.4 The ETL
 
-```mermaid
-flowchart LR
-  dl["download<br/>catalog/oods.ducklake"] --> load["oods beaches | oods load<br/>fetch → rows → check → one transaction per area/partition"]
-  load --> maintain["oods maintain<br/>expire snapshots > 30 d, clean files"]
-  maintain --> up["upload the catalog<br/>(always)"]
-  up --> exp["oods export<br/>exports/beaches, exports/water-quality"]
-```
+![The water-quality ETL into R2](../img/archify/mip-0075-etl.png)
 
 Each area, and each partition batch of a source, is one transaction:
 

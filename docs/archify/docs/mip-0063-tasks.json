@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MIP-0063 task dependency graph",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0063-tasks.html"
+  },
+  "components": [
+    {
+      "id": "t1",
+      "type": "backend",
+      "label": "1 taxonomy",
+      "pos": [
+        170,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "backend",
+      "label": "2 id-resolve-and-probe",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "backend",
+      "label": "3 forms-and-intake",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t4",
+      "type": "backend",
+      "label": "4 dor-check",
+      "pos": [
+        170,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t5",
+      "type": "backend",
+      "label": "5 tasks-to-issues",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t6",
+      "type": "backend",
+      "label": "6 board-and-claim",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t7",
+      "type": "backend",
+      "label": "7 docs-and-skills",
+      "pos": [
+        170,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t8",
+      "type": "backend",
+      "label": "8 first-real-use",
+      "pos": [
+        170,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "t1",
+      "to": "t2"
+    },
+    {
+      "id": "e2",
+      "from": "t1",
+      "to": "t3"
+    },
+    {
+      "id": "e3",
+      "from": "t2",
+      "to": "t4"
+    },
+    {
+      "id": "e4",
+      "from": "t3",
+      "to": "t4"
+    },
+    {
+      "id": "e5",
+      "from": "t2",
+      "to": "t5"
+    },
+    {
+      "id": "e6",
+      "from": "t4",
+      "to": "t5"
+    },
+    {
+      "id": "e7",
+      "from": "t4",
+      "to": "t6"
+    },
+    {
+      "id": "e8",
+      "from": "t5",
+      "to": "t7"
+    },
+    {
+      "id": "e9",
+      "from": "t6",
+      "to": "t7"
+    },
+    {
+      "id": "e10",
+      "from": "t7",
+      "to": "t8"
+    }
+  ]
+}

@@ -69,40 +69,7 @@ workflow is ours:
 Superpowers activates from context, so mostly you just work; but here is the explicit sequence
 for a MIP, with which skill does what and which session it runs in:
 
-```mermaid
-%%{init: {"flowchart": {"nodeSpacing": 15, "rankSpacing": 25}}}%%
-flowchart LR
-  subgraph sessionA["Session A (plan, Fable)"]
-    direction TB
-    a1["/brainstorming<br/>(until §1-§3<br/>have answers)"]
-    a2["/marola-devkit:mip: write<br/>MIP-NNNN-*.md<br/>(writing-plans skipped)"]
-    a3["mip-tasks step 1:<br/>MIP-NNNN.tasks.md"]
-    a4["/clear"]
-    a1 --> a2 --> a3 --> a4
-  end
-  subgraph sessionBN["Session B..N (execute, one per task, Sonnet)"]
-    direction TB
-    b1["/rename +<br/>stack start"]
-    b2["executing-plans<br/>(task row = plan)"]
-    b3["TDD -><br/>debugging -><br/>verification"]
-    b4["commit (Tested:) -><br/>stack pr"]
-    b5["requesting-code-review<br/>(self-checklist) -> /clear"]
-    b1 --> b2 --> b3 --> b4 --> b5
-  end
-  subgraph reviewSession["Review (on request)"]
-    direction TB
-    r1["requesting-code-review:<br/>reviewer subagent,<br/>bottom-up"]
-    r2["receiving-code-review:<br/>verify -> fix -><br/>commit -> push -> uprds"]
-    r1 --> r2
-  end
-  subgraph afterMerge["After each merge"]
-    direction TB
-    m1["stack restack"]
-    m2["finishing-a-<br/>development-branch"]
-    m1 --> m2
-  end
-  sessionA --> sessionBN --> reviewSession --> afterMerge
-```
+![One MIP from start to finish with the superpowers skills, session by session](../img/archify/agent-skills-mip.png)
 
 The whole loop (including how a MIP gets *accepted* and what GitHub shows for a stack) is
 written once in [DEV-FLOW](DEV-FLOW.md); this section is the skill-by-skill view of it.

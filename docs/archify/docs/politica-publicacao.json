@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Processo e cadeia de publicação da previsão",
+    "locale": "pt-BR",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "politica-publicacao.html"
+  },
+  "components": [
+    {
+      "id": "n",
+      "type": "backend",
+      "label": "Nota",
+      "sublabel": "este repositório",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "p",
+      "type": "backend",
+      "label": "PDF",
+      "sublabel": "build de CI",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "z",
+      "type": "backend",
+      "label": "Registro no Zenodo",
+      "sublabel": "DOI",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pr",
+      "type": "backend",
+      "label": "PR público",
+      "sublabel": "marola-dev/marola docs/MIPs",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "mip",
+      "type": "backend",
+      "label": "MIP aceito",
+      "sublabel": "tarefas e issues",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "web",
+      "type": "backend",
+      "label": "Divulgado no marola.dev",
+      "sublabel": "página de pesquisa",
+      "pos": [
+        40,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "wk",
+      "type": "backend",
+      "label": "Relatório semanal público",
+      "sublabel": "marola.dev/research",
+      "pos": [
+        40,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "n",
+      "to": "p"
+    },
+    {
+      "id": "e2",
+      "from": "p",
+      "to": "z"
+    },
+    {
+      "id": "e3",
+      "from": "z",
+      "to": "pr"
+    },
+    {
+      "id": "e4",
+      "from": "pr",
+      "to": "mip"
+    },
+    {
+      "id": "e5",
+      "from": "mip",
+      "to": "web"
+    },
+    {
+      "id": "e6",
+      "from": "web",
+      "to": "wk"
+    },
+    {
+      "id": "e7",
+      "from": "wk",
+      "to": "n"
+    }
+  ]
+}

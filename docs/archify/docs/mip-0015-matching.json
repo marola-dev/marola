@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sequence of a swim match: two people consent before either handle is revealed",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0015-matching.html",
+    "column_fit": "spread",
+    "viewBox": [
+      936,
+      689
+    ]
+  },
+  "participants": [
+    {
+      "id": "A",
+      "type": "external",
+      "label": "User A"
+    },
+    {
+      "id": "Bot",
+      "type": "backend",
+      "label": "Bot"
+    },
+    {
+      "id": "Store",
+      "type": "backend",
+      "label": "intents store"
+    },
+    {
+      "id": "B",
+      "type": "external",
+      "label": "User B"
+    }
+  ],
+  "segments": [
+    {
+      "from": 443,
+      "to": 535,
+      "label": "if B already consented"
+    },
+    {
+      "from": 559,
+      "to": 593,
+      "label": "else B has not consented yet: no handle revealed until both say yes"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "A",
+      "to": "Bot",
+      "y": 175,
+      "label": "/swim Joaquina 10:00"
+    },
+    {
+      "id": "m2",
+      "from": "Bot",
+      "to": "Store",
+      "y": 215,
+      "label": "upsert intent(A, beach, hour, expires_at)"
+    },
+    {
+      "id": "m3",
+      "from": "Bot",
+      "to": "Store",
+      "y": 255,
+      "label": "query overlapping intents"
+    },
+    {
+      "id": "m4",
+      "from": "Store",
+      "to": "Bot",
+      "y": 295,
+      "label": "matches (B, ...)",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "Bot",
+      "to": "A",
+      "y": 335,
+      "label": "2 others near that beach/hour [Yes, share handle] [No]",
+      "variant": "return"
+    },
+    {
+      "id": "m6",
+      "from": "A",
+      "to": "Bot",
+      "y": 375,
+      "label": "Yes, share my @handle"
+    },
+    {
+      "id": "m7",
+      "from": "Bot",
+      "to": "Store",
+      "y": 415,
+      "label": "record A's consent"
+    },
+    {
+      "id": "m8",
+      "from": "Bot",
+      "to": "A",
+      "y": 481,
+      "label": "reveals @B",
+      "variant": "return"
+    },
+    {
+      "id": "m9",
+      "from": "Bot",
+      "to": "B",
+      "y": 521,
+      "label": "reveals @A",
+      "variant": "return"
+    }
+  ]
+}

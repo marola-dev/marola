@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The concept DOI, the version DOIs and the badge",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0079-dois.html"
+  },
+  "components": [
+    {
+      "id": "A",
+      "type": "backend",
+      "label": "citation files merged",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "B",
+      "type": "backend",
+      "label": "repo switched on in Zenodo",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "C",
+      "type": "backend",
+      "label": "just release X.Y.Z",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "D",
+      "type": "backend",
+      "label": "record: version DOI + concept DOI",
+      "pos": [
+        820,
+        60
+      ],
+      "size": [
+        234,
+        64
+      ]
+    },
+    {
+      "id": "E",
+      "type": "backend",
+      "label": "PR: CONCEPT_DOI, badge, How to cite",
+      "pos": [
+        1124,
+        60
+      ],
+      "size": [
+        247,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "A",
+      "to": "B"
+    },
+    {
+      "id": "e2",
+      "from": "B",
+      "to": "C"
+    },
+    {
+      "id": "e3",
+      "from": "C",
+      "to": "D"
+    },
+    {
+      "id": "e4",
+      "from": "D",
+      "to": "E"
+    }
+  ]
+}
