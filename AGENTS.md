@@ -199,6 +199,9 @@ it does not replace this rule.
   `Co-Authored-By: Claude <noreply@anthropic.com>`. No session links, no "Generated with" banners,
   no PR-body attribution; `.claude/settings.json` enforces this for Claude Code. Automation commits
   carry them too (`pointer-sync.yml`).
+- **English only in pull requests** (the owner, 3 November 2026). A PR title, a PR description and
+  every commit message are in English, even when the request or a doc is in Portuguese. A doc that
+  this repo keeps in two languages still changes in both files.
 - **The PR workflow is one command.** Write the commit (a body plus `Tested:`), then `just pr`: it
   fills a missing `Tested:` and a task's `Closes #N` (`just trailer-fill`), pushes, and writes the PR
   from the template (`just uprd`, or `stack pr` on a `mip-NNNN/k-*` branch).
