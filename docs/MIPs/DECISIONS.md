@@ -476,3 +476,10 @@ this file; `route why "<words>"` ranks these rows.
 | [MIP-0091](MIP-0091-marola-forecaster-architecture.md) | 9 | Accepted | alternative | A blend of the arms (rejected): A blend averages the errors of the arms and hides which arm is quoted (MIP-0083 §9, §5.11) |
 | [MIP-0091](MIP-0091-marola-forecaster-architecture.md) | 9 | Accepted | alternative | One bandit over every arm (rejected): This alternative discards the losses of fetched arms that marola observes in all cases (policy note §4.5.1) |
 | [MIP-0091](MIP-0091-marola-forecaster-architecture.md) | 9 | Accepted | alternative | Live epsilon-greedy (rejected): This alternative shows swimmers a forecast selected at random (R11) |
+| [MIP-0092](MIP-0092-code-factory-front-back.md) | 1 | Draft | summary | A generic OpenRig rig, `code-factory`, with four roles (LEAD, DESIGN, DEV, REVIEW), lives as a template in piabrota/nix-os and runs on piabrota2. |
+| [MIP-0092](MIP-0092-code-factory-front-back.md) | 9 | Draft | alternative | Do nothing (rejected): marola-site keeps growing by hand-made PRs |
+| [MIP-0092](MIP-0092-code-factory-front-back.md) | 9 | Draft | alternative | The upstream factory as it is (rejected): 7 seats do not fit the box (2 today) |
+| [MIP-0092](MIP-0092-code-factory-front-back.md) | 9 | Draft | alternative | One repository for front and back (rejected): Simpler CI, but the two cannot deploy or version apart |
+| [MIP-0092](MIP-0092-code-factory-front-back.md) | 9 | Draft | alternative | A single-page app with a client-side language switch (rejected): One address per page |
+| [MIP-0092](MIP-0092-code-factory-front-back.md) | 9 | Draft | alternative | React on Vite (MIP-0088) (rejected): Parked by its author |
+| [MIP-0092](MIP-0092-code-factory-front-back.md) | 9 | Draft | alternative | Keep Mapbox (rejected): No port, but the bill and the token stay |
