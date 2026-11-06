@@ -82,20 +82,19 @@ One pod, four seats. It is simpler than the upstream factory in four ways: no ad
 shapes the issue, and `agent-ready` is the gate), no QA (DEV runs the gates, CI runs the
 end-to-end tests), one reviewer instead of two, and one pod instead of three.
 
-```mermaid
-flowchart LR
-  P1[Person: writes the issue, adds agent-ready] --> H1[Hermes: starts the rig, sends the task]
-  subgraph rig [code-factory on piabrota2]
-    L[LEAD: plans, routes; never edits code] --> D[DESIGN: UX flow or openapi.yaml first]
-    D --> V[DEV: builds, runs just quality, commits]
-    V -- diff --> R[REVIEW, omp: reads by evidence]
-    R -- reject, at most twice --> V
-    R -- approve --> L
-  end
-  H1 --> L
-  L -- outbox: branch, diff, Tested, verdict --> H2[Hermes: pushes hermes/*, opens the PR]
-  H2 --> C[CI: gates, oasdiff, Playwright] --> P2[Person: reads and merges] --> X[Deploy: front on Cloudflare, back by a nix-os pin]
-```
+One issue goes through it in eight steps; only steps 1 and 7 are a person's:
+
+1. A person writes the issue in the target repository and adds `agent-ready`.
+2. Hermes starts the rig and sends the task to LEAD.
+3. LEAD plans the slice and routes it to DESIGN, which writes the UX flow or the `openapi.yaml`
+   change before any code.
+4. DEV builds in its clone, runs `just quality`, and commits.
+5. REVIEW (on `omp`) reads the diff by evidence: it rejects back to DEV at most twice, or approves
+   to LEAD.
+6. LEAD writes the outbox (branch, diff, `Tested:`, verdict); Hermes pushes `hermes/*` and opens
+   the PR, and CI runs the gates, `oasdiff` and Playwright.
+7. A person reads and merges.
+8. The merge deploys: the front on Cloudflare, the back through a nix-os pin bump.
 
 The rig spec, `openrig/specs/rigs/code-factory/rig.yaml` in piabrota/nix-os:
 
