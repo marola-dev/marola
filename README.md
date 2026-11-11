@@ -12,6 +12,8 @@
 <a href="https://github.com/marola-dev/marola/tree/main/tools"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Frust-loc.json" alt="Rust lines of code in tools/" /></a>
 <a href="https://github.com/marola-dev/marola/tree/main/tools"><img src="https://img.shields.io/badge/tooling-100%25_Rust-DEA584?logo=rust&logoColor=white" alt="the umbrella's tooling is 100% Rust (tools/, marola-tools)" /></a>
 <a href="https://marola.dev/"><img src="https://img.shields.io/badge/live_map-marola.dev-0b6e99?logo=mapbox&logoColor=white" alt="live map" /></a>
+<a href="https://github.com/protontypes/open-sustainable-technology#coastal-and-reefs"><img src="https://img.shields.io/badge/Open_Sustainable_Technology-listed-009485" alt="listado no Open Sustainable Technology, em Coastal and Reefs" /></a>
+<a href="https://github.com/marola-dev/marola/stargazers"><img src="https://img.shields.io/github/stars/marola-dev/marola?style=flat&logo=github&label=stars" alt="estrelas do marola-dev/marola no GitHub" /></a>
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-CC_BY_4.0_%2B_AGPL--3.0-green" alt="CC BY 4.0 for the docs, AGPL-3.0-only for the code" /></a>
 <a href="#tempo-de-leitura"><img src="https://img.shields.io/badge/tempo%20de%20leitura-~10%20min-1682D4" alt="tempo de leitura: ~10 min" /></a>
 <a href="https://github.com/marola-dev/marola/tree/main/docs/assets/logo-v2"><img src="https://img.shields.io/badge/built_with-Desmos-2F72DC?logo=desmos&logoColor=white" alt="logo feito com Desmos" /></a>
