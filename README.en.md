@@ -5,17 +5,18 @@
 <p align="center">
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 <a href="https://github.com/marola-dev/marola-site/actions/workflows/site.yml"><img src="https://github.com/marola-dev/marola-site/actions/workflows/site.yml/badge.svg" alt="site (build + deploy)" /></a>
-<!-- ci.yml's repo-stats job (scripts/marola-tools repo-stats) writes these two as shields.io endpoint JSON to marola-site's site-data branch, which marola.dev serves: how many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line count for tools/, the umbrella's Rust tooling. The Scala badges are marola-app's README's. -->
-<a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Fci.json" alt="CI steps green on the last main run" /></a>
-<a href="https://github.com/marola-dev/marola/tree/main/tools"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmarola.dev%2Fstats%2Frust-loc.json" alt="Rust lines of code in tools/" /></a>
+<!-- ci.yml's repo-stats job (scripts/marola-tools repo-stats) writes these two as shields.io endpoint JSON to marola-site's site-data branch, read from there by raw.githubusercontent.com (marola.dev serves a copy only after the next site deploy): how many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line count for tools/, the umbrella's Rust tooling. The Scala badges are marola-app's README's. -->
+<a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmarola-dev%2Fmarola-site%2Fsite-data%2Fstats%2Fci.json" alt="CI steps green on the last main run" /></a>
+<a href="https://github.com/marola-dev/marola/tree/main/tools"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmarola-dev%2Fmarola-site%2Fsite-data%2Fstats%2Frust-loc.json" alt="Rust lines of code in tools/" /></a>
 <a href="https://github.com/marola-dev/marola/tree/main/tools"><img src="https://img.shields.io/badge/tooling-100%25_Rust-DEA584?logo=rust&logoColor=white" alt="the umbrella's tooling is 100% Rust (tools/, marola-tools)" /></a>
 <a href="https://marola.dev/"><img src="https://img.shields.io/badge/live_map-marola.dev-0b6e99?logo=mapbox&logoColor=white" alt="live map" /></a>
 <a href="https://github.com/protontypes/open-sustainable-technology#coastal-and-reefs"><img src="https://img.shields.io/badge/Open_Sustainable_Technology-listed-009485" alt="listed in Open Sustainable Technology, under Coastal and Reefs" /></a>
-<a href="https://github.com/marola-dev/marola/stargazers"><img src="https://img.shields.io/github/stars/marola-dev/marola?style=flat&logo=github&label=stars" alt="GitHub stars of marola-dev/marola" /></a>
+<a href="./PARTNERS.en.md"><img src="https://img.shields.io/badge/Leave_No_Trace-Proud_Partner-4A7A2B" alt="Leave No Trace Proud Partner" /></a>
+<a href="https://github.com/marola-dev/marola/stargazers"><img src="https://img.shields.io/github/stars/marola-dev/marola?style=flat&logo=github&label=stars&color=1682D4" alt="GitHub stars of marola-dev/marola" /></a>
 <a href="./LICENSE"><img src="https://img.shields.io/badge/license-CC_BY_4.0_%2B_AGPL--3.0-green" alt="CC BY 4.0 for the docs, AGPL-3.0-only for the code" /></a>
 <a href="#reading-time"><img src="https://img.shields.io/badge/reading%20time-~7%20min-1682D4" alt="reading time: ~7 min" /></a>
 <a href="https://github.com/marola-dev/marola/tree/main/docs/assets/logo-v2"><img src="https://img.shields.io/badge/built_with-Desmos-2F72DC?logo=desmos&logoColor=white" alt="logo built with Desmos" /></a>
-<a href="https://github.com/h0ffmann/ptbr-writer"><img src="https://img.shields.io/badge/built_with-ptbr--writer-1682D4?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWQzZmQwIiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48dGl0bGU+dW1hIHBlbmEgZGUgZXNjcmV2ZXIsIG51bWEgbGluaGEgc8OzPC90aXRsZT48cGF0aCBkPSJNMTAgNTZjOC0zIDE0LTkgMjAtMTZNMzAgNDBjLTQtMTAgMC0yNCAyMi0zMi0yIDE0LTggMjYtMjIgMzJ6TTMwIDQwbDEwLTE2TTE4IDU0YzEwIDIgMjIgMCAzNC00Ii8+PC9zdmc+Cg==" alt="built with ptbr-writer" /></a>
+<a href="https://github.com/piabrota/gramatico"><img src="https://img.shields.io/badge/built_with-gramatico-1682D4?logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWQzZmQwIiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48dGl0bGU+dW1hIHBlbmEgZGUgZXNjcmV2ZXIsIG51bWEgbGluaGEgc8OzPC90aXRsZT48cGF0aCBkPSJNMTAgNTZjOC0zIDE0LTkgMjAtMTZNMzAgNDBjLTQtMTAgMC0yNCAyMi0zMi0yIDE0LTggMjYtMjIgMzJ6TTMwIDQwbDEwLTE2TTE4IDU0YzEwIDIgMjIgMCAzNC00Ii8+PC9zdmc+Cg==" alt="built with gramatico" /></a>
 </p>
 
 <p align="center"><b>The water super app: everything about the sea near you, built in the open, as citizen science.</b></p>
@@ -88,7 +89,7 @@ rules and every design decision.
 The goal is a water super app, and swimming is the first question. Next come warnings for *ressaca* (the storm surf that eats Brazil's
 beaches), wave forecasts from several models side by side, an open archive of Brazil's beach water
 tests, and reports from people at the beach. There is also an idea to compute the score with open decision models,
-served by [Ollaya](https://github.com/h0ffmann/ptbr-writer#ollaya). It is only an idea for now, with
+served by [Ollaya](https://github.com/piabrota/gramatico#ollaya). It is only an idea for now, with
 no MIP yet. Each idea is written down first as a public design
 doc, a "MIP", in [`docs/MIPs/`](./docs/MIPs/README.md).
 
@@ -111,7 +112,7 @@ submodule. It holds no product code, only its own Rust tooling, `marola-tools` i
 first.
 
 PR descriptions here come out in two languages, Portuguese first, from the `bipr` skill of
-[ptbr-writer](https://github.com/h0ffmann/ptbr-writer), the maintainer's writing plugin. The full
+[gramatico](https://github.com/piabrota/gramatico) (formerly ptbr-writer), the maintainer's writing plugin. The full
 guide is [Contributing](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTING/). Please read the
 [Code of Conduct](https://github.com/marola-dev/.github/blob/main/CODE_OF_CONDUCT.md) too.
 
