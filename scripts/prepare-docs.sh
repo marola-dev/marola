@@ -123,6 +123,8 @@ prepare() {
   umbrella_sha="$(checkout_sha "$root")" || { echo "prepare-docs: $root is not a git checkout" >&2; return 1; }
 
   mount_repo "$root" marola "$umbrella_sha" "$build_dir" --umbrella "${excludes[@]}" "${submodules[@]}" || return 1
+  # llmstxt.org: served at the site root, docs.marola.dev/llms.txt.
+  if [ -f "$root/llms.txt" ]; then cp "$root/llms.txt" "$build_dir/llms.txt" || return 1; fi
   local i
   for i in "${!names[@]}"; do
     mount_repo "${srcs[$i]}" "${names[$i]}" "${shas[$i]}" "$build_dir/5-Repos/${names[$i]}" "${excludes[@]}" || return 1
@@ -173,10 +175,12 @@ EOF
   t="$(mktemp -d)"
   umbrella "$t/root" $'- name: fake-app\n'
   app "$t/root/fake-app"
+  printf '# umbrella\n\n> a summary\n' >"$t/root/llms.txt"
   commit_all "$t/root"
   rc=0
   out="$(prepare "$t/root" "$t/build" 2>&1)" || rc=$?
   ok "$rc" "0" "a README-landing umbrella and submodule build"
+  ok "$(cmp -s "$t/root/llms.txt" "$t/build/llms.txt" && echo same || echo differs)" "same" "the umbrella's llms.txt is copied to the site root unchanged"
   ok "$(sed -n 3p "$t/build/index.md" 2>/dev/null)" "See [a MIP](6-MIPs/MIP-0001.md) and [the app](5-Repos/fake-app/index.md)." "the README is index.md, its links rewritten for the root"
   ok "$([ -f "$t/build/6-MIPs/MIP-0001.md" ] && echo yes || echo no)" "yes" "docs/MIPs/ lands at 6-MIPs/"
   ok "$([ -e "$t/build/MIPs" ] && echo yes || echo no)" "no" "...and not at MIPs/"
@@ -204,6 +208,7 @@ and [a run]($blob/docs/benchmarks/run.md)." "README links: docs/ and ./docs/ dro
   rc=0
   out="$(prepare "$t/root" "$t/build" 2>&1)" || rc=$?
   ok "$rc" "0" "the build succeeds"
+  ok "$([ -e "$t/build/llms.txt" ] && echo yes || echo no)" "no" "an umbrella with no llms.txt publishes none"
   app_sha="$(git -C "$t/root/fake-app" rev-parse HEAD)"
   local root_sha; root_sha="$(git -C "$t/root" rev-parse HEAD)"
   ok "$(jq -r '"\(.marola) \(.["fake-app"])"' "$t/build/build.json" 2>/dev/null)" "$root_sha $app_sha" "build.json maps each repo to its checkout's HEAD"

@@ -13,6 +13,7 @@ on:
       - 'docs/**'
       - 'mkdocs/**'
       - 'README.md'
+      - 'llms.txt' # prepare-docs.sh copies it to the site root
       - 'flake.lock' # marola-devkit mounts at its locked rev
       - 'scripts/prepare-docs.sh'
       - 'scripts/fetch-api-docs.sh'

@@ -1,0 +1,64 @@
+# marola
+
+> marola is an open-source water super app for the Brazilian coast, built as citizen science. It ranks nearby beaches by the best hour to swim today and tomorrow, from OpenStreetMap beaches, Open-Meteo sea and weather data, and the state agencies' official bathing-water reports. A 0–100 score carries a deterministic safety veto, and an LLM only puts the answer into words, with a second pass that reviews it. Everything runs locally with a free Ollama model; no cloud account is needed.
+
+The live map is https://marola.dev/ (Florianópolis, Rio de Janeiro and Salvador). The docs are https://docs.marola.dev/, built from this repository and every repo it holds.
+
+This repository, `marola-dev/marola`, is the umbrella. It holds no product code: it has the ways of working, the MIPs (Marola Improvement Proposals, the numbered design documents), the phase list, the aggregated docs site and one git submodule per code repo. Its own tooling is Rust (`tools/`). The rules for agents are in `AGENTS.md`.
+
+Things to know before answering from these pages:
+
+- A score is an estimate. The official water report wins over it, and a safety veto is not advice to swim.
+- "No data" means the source returned nothing, not that the water is clean.
+- The work goes one phase at a time (`docs/PHASES.md`). The Telegram bot (Phase 1) is designed but not built, and no paid cloud resource is in use.
+- The main README is in Portuguese (pt-BR); `README.en.md` is a short English version. Most docs are in English.
+- Docs are CC BY 4.0 and the umbrella's code is AGPL-3.0-only. Each submodule has its own licence.
+
+## Start here
+
+- [README (pt-BR)](https://github.com/marola-dev/marola/blob/main/README.md): what marola is, the map, how to run it, citizen science, the team
+- [README (English)](https://github.com/marola-dev/marola/blob/main/README.en.md): the same, short and plain
+- [AGENTS.md](https://github.com/marola-dev/marola/blob/main/AGENTS.md): the org invariants and the rules every coding agent follows in every repo
+- [Architecture](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/): how a request crosses the repos and the pattern every integration follows
+- [Repos](https://docs.marola.dev/2-Building-marola/REPOS/): which repo owns what, what each publishes, and how consumers pin it
+- [Phases](https://docs.marola.dev/PHASES/): the development phases and where each one stands
+
+## Using marola
+
+- [The live map](https://marola.dev/): every beach in an area with its best hour, water quality and conditions
+- [O marola hoje](https://docs.marola.dev/1-Using-marola/O-MAROLA-HOJE/): what works today and the map layers still waiting (pt-BR)
+- [Run it locally](https://docs.marola.dev/1-Using-marola/RUN-LOCALLY/): the CLI with Nix and Ollama, no API key
+- [Chat and MCP](https://docs.marola.dev/1-Using-marola/CHAT-AND-MCP/): the chat server and the MCP tool server
+- [Limitations](https://docs.marola.dev/1-Using-marola/LIMITATIONS/): what marola cannot tell you
+
+## Repos
+
+- [marola-app](https://docs.marola.dev/5-Repos/marola-app/): the product, in Scala 3 and Kyo on JDK 25: the pipeline, the CLI, the MCP and chat servers, the board writer for the map
+- [marola-site](https://docs.marola.dev/5-Repos/marola-site/): the static map at marola.dev, with no server and no LLM
+- [marola-corpus](https://docs.marola.dev/5-Repos/marola-corpus/): the sourced ocean knowledge notes the app answers questions from
+- [marola-ml](https://docs.marola.dev/5-Repos/marola-ml/): offline Python: the DSPy prompt compile, the fine-tune, the benchmark gate
+- [marola-oods](https://docs.marola.dev/5-Repos/marola-oods/): the Open Ocean Data Store of Brazilian bathing-water samples (empty until the first ingest)
+- [marola-devkit](https://docs.marola.dev/5-Repos/marola-devkit/): the shared dev-flow tools, git hooks, Claude Code plugin and reusable workflows
+- [marola-skills](https://docs.marola.dev/5-Repos/marola-skills/): the catalogue of the Claude Code skills and subagents in the marola repos
+- [marola-agents](https://docs.marola.dev/5-Repos/marola-agents/): the inventory of every agent marola uses or plans
+
+## Design (MIPs)
+
+- [MIP index](https://docs.marola.dev/6-MIPs/): every MIP with its status, effort, gain and verdict
+- [MIP template](https://docs.marola.dev/6-MIPs/TEMPLATE/): the shape of a MIP
+- [Decisions](https://docs.marola.dev/6-MIPs/DECISIONS/): the decisions the MIPs record
+- [MIP-0005](https://docs.marola.dev/6-MIPs/MIP-0005-map-and-static-site/): the map and the static site, implemented
+
+## Ways of working
+
+- [Contributing](https://docs.marola.dev/3-Ways-of-working/CONTRIBUTING/): the guide for every repo
+- [Philosophy](https://docs.marola.dev/3-Ways-of-working/PHILOSOPHY/): the reasons behind the rules
+- [Issue flow](https://docs.marola.dev/3-Ways-of-working/ISSUE-FLOW/): issue tiers, the Definition of Ready and the `agent-ready` label
+- [Working across repos](https://docs.marola.dev/3-Ways-of-working/WORKING-ACROSS-REPOS/): contracts, pins and the order changes land in
+
+## Optional
+
+- [Future work](https://docs.marola.dev/4-Research-and-plans/FUTURE-WORK/): ideas not yet designed
+- [MIP candidates](https://docs.marola.dev/6-MIPs/CANDIDATES/): what is MIP material
+- [How to cite](https://doi.org/10.5281/zenodo.23224155): the Zenodo concept DOI, which resolves to the latest release
+- [Source code](https://github.com/marola-dev): every marola repo on GitHub
