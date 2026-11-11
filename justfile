@@ -376,7 +376,7 @@ worktree dir=".tmp/wt-main":
 worktree-prune:
     git worktree prune -v
 
-# Claude Code in the jail — labs/agentic's jail-run (h0ffmann/nix-config). MAROLA_JAIL_CLIPBOARD*
+# Claude Code in the jail — labs/agentic's jail-run (h0ffmann/picasso). MAROLA_JAIL_CLIPBOARD*
 # still work for one release; the lab's names are JAIL_CLIPBOARD / JAIL_CLIPBOARD_PASTE.
 jail-claude *args:
     JAIL_CLIPBOARD="${JAIL_CLIPBOARD:-${MAROLA_JAIL_CLIPBOARD:-0}}" JAIL_CLIPBOARD_PASTE="${JAIL_CLIPBOARD_PASTE:-${MAROLA_JAIL_CLIPBOARD_PASTE:-0}}" jail-run claude {{ args }}
