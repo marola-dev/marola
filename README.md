@@ -2,7 +2,7 @@
 
 <h1 align="center">marola</h1>
 
-<p align="center"><b>O super app da água: tudo sobre o mar perto de você, feito em código aberto, como ciência cidadã.</b></p>
+<p align="center"><b>O P E N  W A T E R</b></p>
 
 <p align="center">
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
