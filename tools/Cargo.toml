@@ -12,16 +12,16 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
-fancy-regex = "0.14"
+fancy-regex = "0.20"
 regex = "1"
-roxmltree = "0.20"
+roxmltree = "0.21"
 serde_json = { version = "1", features = ["preserve_order"] }
 unicode-normalization = "0.1"
 percent-encoding = "2"
 walkdir = "2"
-ureq = "2"
+ureq = "3"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
-html-escape = "0.2"
+html-escape = "0.3"
 
 
 [profile.release]
