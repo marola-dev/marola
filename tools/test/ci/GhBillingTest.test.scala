@@ -173,6 +173,9 @@ class GhBillingTest extends munit.FunSuite:
     )
     assertEquals(classifyError("boom"), None)
 
+  private def config(noScopeCheck: Boolean, env: Map[String, String]) =
+    BillingConfig(BillingPeriod("2026", "8"), BillingSource.Live, noScopeCheck, env, os.pwd)
+
   /** A fake `gh`: answers by its arguments, records every call. */
   private class FakeGh(answers: PartialFunction[Seq[String], GhResult])
       extends (Seq[String] => GhResult):
@@ -190,7 +193,7 @@ class GhBillingTest extends munit.FunSuite:
 
   test("live: the report, with the plan's minutes"):
     val gh = loggedIn(GhResult(0, fixture, ""))
-    val outcome = live(BillingPeriod("2026", "8"), noScopeCheck = false, Map.empty, gh)
+    val outcome = live(config(noScopeCheck = false, Map.empty), gh)
     assertEquals(outcome.code, 0)
     assert(
       outcome.out.startsWith("GitHub billing usage — monalisa, 2026-08\n\nPRODUCT"),
@@ -206,7 +209,7 @@ class GhBillingTest extends munit.FunSuite:
   test("live: a set token stops before gh is asked anything"):
     val gh = loggedIn(GhResult(0, fixture, ""))
     val outcome =
-      live(BillingPeriod("2026", "8"), noScopeCheck = true, Map("GITHUB_TOKEN" -> "x"), gh)
+      live(config(noScopeCheck = true, Map("GITHUB_TOKEN" -> "x")), gh)
     assertEquals(outcome.code, 1)
     assert(outcome.err.contains("GITHUB_TOKEN is set"))
     assertEquals(gh.calls.toSeq, Nil)
@@ -222,9 +225,9 @@ class GhBillingTest extends munit.FunSuite:
           "gh: Not Found (HTTP 404)\ngh: This API operation needs the \"user\" scope.\n"
         )
     }
-    val stopped = live(BillingPeriod("2026", "8"), noScopeCheck = false, Map.empty, noScope)
+    val stopped = live(config(noScopeCheck = false, Map.empty), noScope)
     assertEquals(stopped, Outcome("", s"$ScopeFix\n(gh auth status reports: repo, read:org)\n", 1))
-    val called = live(BillingPeriod("2026", "8"), noScopeCheck = true, Map.empty, noScope)
+    val called = live(config(noScopeCheck = true, Map.empty), noScope)
     assertEquals(called.code, 1)
     assertEquals(
       called.err,
@@ -233,9 +236,7 @@ class GhBillingTest extends munit.FunSuite:
 
   test("live: not logged in"):
     val outcome = live(
-      BillingPeriod("2026", "8"),
-      noScopeCheck = false,
-      Map.empty,
+      config(noScopeCheck = false, Map.empty),
       FakeGh { case Seq("auth", "status") => GhResult(1, "", "no\n") }
     )
     assert(outcome.err.startsWith("gh is not logged in"))
@@ -245,3 +246,25 @@ class GhBillingTest extends munit.FunSuite:
       plannedCall(BillingPeriod("2026", "8"), FakeGh(PartialFunction.empty)).out,
       "gh-billing --dry-run: would call:\n  gh api \"/users/{username}/settings/billing/usage?year=2026&month=8\"\n"
     )
+
+  test("the source decides what a run reads"):
+    val base = config(noScopeCheck = false, Map.empty)
+    val noGh = FakeGh(PartialFunction.empty)
+    assertEquals(
+      execute(base.copy(source = BillingSource.Stdin), noGh, () => fixture),
+      Outcome("GitHub billing usage — from stdin\n\n" + fixtureTable, "", 0)
+    )
+    assertEquals(
+      execute(base.copy(source = BillingSource.File("no-such.json")), noGh, () => ""),
+      Outcome("", "gh-billing: file not found: no-such.json\n", 1)
+    )
+    val dir = os.temp.dir()
+    os.write(dir / "u.json", fixture)
+    assertEquals(
+      execute(base.copy(source = BillingSource.File("u.json"), cwd = dir), noGh, () => "").out,
+      "GitHub billing usage — from u.json\n\n" + fixtureTable
+    )
+    assert(
+      execute(base.copy(source = BillingSource.DryRun), noGh, () => "").out.contains("{username}")
+    )
+    assertEquals(noGh.calls.toSeq, Seq(Seq("api", "user", "--jq", ".login")))

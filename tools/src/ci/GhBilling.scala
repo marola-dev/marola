@@ -39,29 +39,33 @@ object GhBilling:
 
   /** The scope list of the first "Token scopes:" line. */
   def scopes(text: String): TokenScopes =
-    text.split("\n", -1).find(_.contains("Token scopes:")) match
+    text.split("\n", -1).find(_.contains(TokenScopes.Prefix)) match
       case None       => TokenScopes.Absent
       case Some(line) =>
         val list = stripChars(
-          line.substring(line.indexOf("Token scopes:") + "Token scopes:".length).replace("\r", ""),
+          line
+            .substring(line.indexOf(TokenScopes.Prefix) + TokenScopes.Prefix.length)
+            .replace("\r", ""),
           isBlank
         )
         val items = list.split(",", -1).map(stripChars(_, c => isBlank(c) || c == '\'')).toSeq
-        if list == "none" then TokenScopes.NoScopes
+        if list == TokenScopes.NoneWord then TokenScopes.NoScopes
         else if items.mkString(", ").isEmpty then TokenScopes.Absent
         else TokenScopes.Listed(items)
 
   def hasUserScope(authStatus: String): Boolean =
-    scopes(hostBlock(authStatus, "github.com")).has("user")
+    githubScopes(authStatus).has(BillingNames.Scope)
 
   /** What the parser read for github.com, so the failure shows it rather than only a verdict. */
-  def foundScopes(authStatus: String): String = scopes(hostBlock(authStatus, "github.com")).shown
+  def foundScopes(authStatus: String): String = githubScopes(authStatus).shown
+
+  private def githubScopes(authStatus: String) = scopes(hostBlock(authStatus, GitHubNames.Host))
 
   /** No scope line at all means a token type (fine-grained PAT, installation token) that no
     * `gh auth refresh` can fix; a scope list without `user` is a refresh away.
     */
   def missingUserScopeMessage(authStatus: String): String =
-    scopes(hostBlock(authStatus, "github.com")) match
+    githubScopes(authStatus) match
       case TokenScopes.Absent =>
         "gh-billing: gh auth status printed no \"Token scopes:\" line for github.com at all — that means a token type this endpoint never accepts regardless of scope (a fine-grained PAT or an installation/server-to-server token; see https://docs.github.com/en/billing/tutorials/automate-usage-reporting). Re-authenticate with a classic PAT or gh's own OAuth token: gh auth login, then gh auth refresh -h github.com -s user"
       case found @ (TokenScopes.NoScopes | TokenScopes.Listed(_)) =>
@@ -71,7 +75,7 @@ object GhBilling:
     * the keyring, so a set variable is a dead end whatever its scopes.
     */
   def envTokenMessage(env: Map[String, String]): Option[String] =
-    Seq("GH_TOKEN", "GITHUB_TOKEN").find(v => env.get(v).exists(_.nonEmpty)).map { v =>
+    BillingNames.TokenEnvVars.find(v => env.get(v).exists(_.nonEmpty)).map { v =>
       s"gh-billing: $v is set (a fine-grained PAT cannot call the billing endpoint) — run this with the env var unset: `env -u $v just gh-billing`, using your `gh auth login` token, which needs the `user` scope (`gh auth refresh -h github.com -s user`)"
     }
 
@@ -126,18 +130,22 @@ object GhBilling:
 
   val realGh: Gh = args =>
     try
-      val result = os.proc("gh" +: args).call(check = false, stderr = os.Pipe)
+      val result = os.proc(GitHubNames.Cli +: args).call(check = false, stderr = os.Pipe)
       GhResult(result.exitCode, result.out.text(), result.err.text())
     catch case _: java.io.IOException => GhResult(127, "", "gh: command not found\n")
 
   /** What one run printed and its exit code. */
   case class Outcome(out: String, err: String, code: Int)
 
+  private val AuthStatus = Seq("auth", "status")
+  private val Login = Seq("api", "user", "--jq", ".login")
+  private val PlanName = Seq("api", "user", "--jq", ".plan.name // empty")
+
   def plannedCall(period: BillingPeriod, gh: Gh): Outcome =
-    val user = gh(Seq("api", "user", "--jq", ".login"))
-    val login = if user.exitCode == 0 then user.text else "{username}"
+    val user = gh(Login)
+    val login = if user.exitCode == 0 then user.text else BillingNames.LoginPlaceholder
     Outcome(
-      s"gh-billing --dry-run: would call:\n  gh api \"/users/$login/settings/billing/usage?${period.query}\"\n",
+      s"gh-billing --dry-run: would call:\n  gh api \"${period.usagePath(login)}\"\n",
       "",
       0
     )
@@ -147,17 +155,13 @@ object GhBilling:
       case Left(error)  => Outcome(header, error + "\n", 5)
       case Right(usage) => Outcome(header + usage.render(plan), "", 0)
 
-  def live(
-      period: BillingPeriod,
-      noScopeCheck: Boolean,
-      env: Map[String, String],
-      gh: Gh
-  ): Outcome =
+  def live(config: BillingConfig, gh: Gh): Outcome =
+    val BillingConfig(period, _, noScopeCheck, env, _) = config
     def fail(message: String) = Outcome("", message + "\n", 1)
     envTokenMessage(env) match
       case Some(message) => fail(message)
       case None          =>
-        val status = gh(Seq("auth", "status"))
+        val status = gh(AuthStatus)
         val authStatus = status.copy(out = status.out + status.err).text
         if status.exitCode != 0 then
           fail(
@@ -166,15 +170,15 @@ object GhBilling:
         else if !noScopeCheck && !hasUserScope(authStatus) then
           fail(missingUserScopeMessage(authStatus))
         else
-          val user = gh(Seq("api", "user", "--jq", ".login"))
+          val user = gh(Login)
           if user.exitCode != 0 then Outcome("", user.err, user.exitCode)
           else
             val login = user.text
-            val planCall = gh(Seq("api", "user", "--jq", ".plan.name // empty"))
+            val planCall = gh(PlanName)
             val plan =
               Option.when(planCall.exitCode == 0)(planCall.text).filter(_.nonEmpty).map(Plan.parse)
             val header = s"GitHub billing usage — $login, ${period.shown}\n\n"
-            val usage = gh(Seq("api", s"/users/$login/settings/billing/usage?${period.query}"))
+            val usage = gh(Seq("api", period.usagePath(login)))
             if usage.exitCode != 0 then
               val diagnosis = classifyError(usage.err).map(_ + "\n").getOrElse("")
               Outcome(
@@ -215,26 +219,36 @@ run from the host. --from-file/--json-stdin/--dry-run need neither a gh login no
       ) noScopeCheck: Flag
   ): Int =
     val today = java.time.LocalDate.now()
-    val period = BillingPeriod(
-      year.getOrElse(today.getYear.toString),
-      month.getOrElse(today.getMonthValue.toString)
-    )
-    val outcome =
-      if dryRun.value then plannedCall(period, realGh)
+    val source =
+      if dryRun.value then BillingSource.DryRun
       else
         fromFile match
-          case Some(file) if !os.isFile(os.Path(file, os.pwd)) =>
-            Outcome("", s"gh-billing: file not found: $file\n", 1)
-          case Some(file) =>
-            fromText(s"GitHub billing usage — from $file\n\n", os.read(os.Path(file, os.pwd)))
-          case None if jsonStdin.value =>
-            fromText(
-              "GitHub billing usage — from stdin\n\n",
-              String(System.in.readAllBytes(), "UTF-8")
-            )
-          case None => live(period, noScopeCheck.value, sys.env, realGh)
+          case Some(file)              => BillingSource.File(file)
+          case None if jsonStdin.value => BillingSource.Stdin
+          case None                    => BillingSource.Live
+    val config = BillingConfig(
+      period = BillingPeriod(
+        year.getOrElse(today.getYear.toString),
+        month.getOrElse(today.getMonthValue.toString)
+      ),
+      source = source,
+      noScopeCheck = noScopeCheck.value,
+      env = sys.env,
+      cwd = os.pwd
+    )
+    val outcome = execute(config, realGh, () => String(System.in.readAllBytes(), "UTF-8"))
     print(outcome.out)
     System.err.print(outcome.err)
     outcome.code
+
+  def execute(config: BillingConfig, gh: Gh, stdin: () => String): Outcome =
+    config.source match
+      case BillingSource.DryRun => plannedCall(config.period, gh)
+      case BillingSource.File(file) if !os.isFile(os.Path(file, config.cwd)) =>
+        Outcome("", s"gh-billing: file not found: $file\n", 1)
+      case BillingSource.File(file) =>
+        fromText(s"GitHub billing usage — from $file\n\n", os.read(os.Path(file, config.cwd)))
+      case BillingSource.Stdin => fromText("GitHub billing usage — from stdin\n\n", stdin())
+      case BillingSource.Live  => live(config, gh)
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "gh-billing", args)

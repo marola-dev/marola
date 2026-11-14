@@ -18,40 +18,14 @@ import org.w3c.dom.{Element, Node}
 //     marola-tools arxiv-digest [--max-results 5] [--json]
 //     marola-tools awesome-agentic-digest [--max-results 5] [--json]
 object Digest:
-  private val AtomNs = "http://www.w3.org/2005/Atom"
-  private val ArxivApi = "https://export.arxiv.org/api/query"
-  private val GithubApi = "https://api.github.com/search/repositories"
+  import DigestSources.*
 
-  // Verified against the live API on 2026-09-06; cross-domain noise is scored down, not filtered
-  // out, per MIP-0019's honesty about query precision.
-  val ArxivQueries = Seq(
-    Query("ocean-physics", "cat:physics.ao-ph AND abs:ocean", 1),
-    Query("sst-forecast", """abs:"sea surface temperature" AND abs:forecast""", 2),
-    Query("llm-ocean", """abs:"large language model" AND abs:ocean""", 3),
-    Query(
-      "llm-weather-forecast",
-      """abs:"large language model" AND abs:"weather forecasting"""",
-      3
-    ),
-    Query("jellyfish-prediction", "abs:jellyfish AND abs:prediction", 2),
-    Query("marine-heatwave", """abs:"marine heatwave"""", 2),
-    Query("ao-ph-ml", """cat:physics.ao-ph AND abs:"machine learning"""", 1)
-  )
-
-  // Verified live on 2026-09-07 (MIP-0043 §4.2). Two sort orders per label feed one cache.
-  val GithubQueries = Seq(
-    Query("agents", "topic:agents", 1),
-    Query("llm-agents", "topic:llm-agents", 2),
-    Query("ai-agents", "topic:ai-agents", 1),
-    Query("mcp", "topic:mcp", 2),
-    Query("multi-agent-systems", "topic:multi-agent-systems", 2)
-  )
-  private val Sorts = Seq("stars", "updated")
+  private val StargazersCount = "stargazers_count" // the Search API's name for the stars
 
   /** One kind of cache: where it lives, what its items are called, which fields its index keeps. */
   final case class Store(dir: os.Path, items: String, indexFields: Seq[String]):
     def itemsDir: os.Path = dir / items
-    def indexPath: os.Path = dir / "index.jsonl"
+    def indexPath: os.Path = dir / DigestKind.IndexFile
 
     def init(): Unit = os.makeDir.all(itemsDir)
 
@@ -76,7 +50,9 @@ object Digest:
         found =>
           def number(row: ujson.Obj, key: String) =
             row.value.get(key).flatMap(_.numOpt).getOrElse(0.0)
-          val sorted = found.sortBy(row => (-number(row, "relevance_score"), -number(row, "stars")))
+          val sorted = found.sortBy(row =>
+            (-number(row, RecordField.RelevanceScore), -number(row, RecordField.Stars))
+          )
           os.write.over(
             indexPath,
             sorted.map(row => Util.dumps(row, ensureAscii = false) + "\n").mkString
@@ -89,28 +65,21 @@ object Digest:
       val fresh = found.filterNot(hit => already(hit.id))
       for hit <- fresh do
         val record = ujson.Obj.from(hit.item.value)
-        record("matched_queries") = hit.matched.map(_.label)
-        record("relevance_score") = hit.relevanceScore
-        record("fetched_at") = now()
+        record(RecordField.MatchedQueries) = hit.matched.map(_.label)
+        record(RecordField.RelevanceScore) = hit.relevanceScore
+        record(RecordField.FetchedAt) = now()
         os.write.over(
           itemsDir / s"${hit.id}.json",
           Util.dumps(record, indent = Some(2), ensureAscii = false)
         )
       writeIndex().map(_ => fresh.length)
 
-  def arxivStore(root: os.Path): Store =
-    Store(
-      root / ".tmp" / "arxiv_cache",
-      "papers",
-      Seq("arxiv_id", "title", "published", "relevance_score", "fetched_at")
-    )
+  /** The cache of one kind of digest under the repo root. */
+  def storeOf(kind: DigestKind, root: os.Path): Store =
+    Store(root / DigestKind.CacheRoot / kind.cacheDir, kind.itemsDir, kind.indexFields)
 
-  def awesomeStore(root: os.Path): Store =
-    Store(
-      root / ".tmp" / "awesome_agentic_cache",
-      "repos",
-      Seq("full_name", "html_url", "stars", "description", "relevance_score", "fetched_at")
-    )
+  def arxivStore(root: os.Path): Store = storeOf(DigestKind.Papers, root)
+  def awesomeStore(root: os.Path): Store = storeOf(DigestKind.Repos, root)
 
   private val IsoMicros =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'+00:00'").withZone(ZoneOffset.UTC)
@@ -186,15 +155,16 @@ object Digest:
         def str(item: ujson.Value, key: String) = Util.field(item, key).flatMap(_.strOpt)
         for
           item <- items.toSeq
-          fullName = str(item, "full_name").getOrElse("")
+          fullName = str(item, RecordField.FullName).getOrElse("")
           if fullName.nonEmpty
         yield RepoCandidate(
           fullName = fullName,
-          htmlUrl = str(item, "html_url").getOrElse(s"https://github.com/$fullName"),
-          description = Util.trimUnicode(str(item, "description").getOrElse("")),
-          stars = Util.field(item, "stargazers_count").flatMap(_.numOpt).fold(0L)(_.toLong),
-          pushedAt = str(item, "pushed_at").getOrElse(""),
-          topics = Util.field(item, "topics").flatMap(_.arrOpt).toSeq.flatten.flatMap(_.strOpt)
+          htmlUrl = str(item, RecordField.HtmlUrl).getOrElse(s"${GitHubNames.Web}/$fullName"),
+          description = Util.trimUnicode(str(item, RecordField.Description).getOrElse("")),
+          stars = Util.field(item, StargazersCount).flatMap(_.numOpt).fold(0L)(_.toLong),
+          pushedAt = str(item, RecordField.PushedAt).getOrElse(""),
+          topics =
+            Util.field(item, RecordField.Topics).flatMap(_.arrOpt).toSeq.flatten.flatMap(_.strOpt)
         )
       }
 
@@ -245,8 +215,9 @@ object Digest:
       store.indexPath.toString
     )
 
-  def arxiv(maxResults: Int, asJson: Boolean): Either[String, Unit] =
-    val store = arxivStore(Util.repoRoot)
+  def arxiv(config: DigestConfig): Either[String, Unit] =
+    val DigestConfig(root, maxResults, asJson) = config
+    val store = arxivStore(root)
     store.init()
     val fetched = ArxivQueries.map { q =>
       val params = Util.urlencode(
@@ -258,7 +229,7 @@ object Digest:
           "sortOrder" -> "descending"
         )
       )
-      q -> get(s"$ArxivApi?$params", "marola-arxiv-digest/1", None).left.map(e => s"${q.label}: $e")
+      q -> get(s"$ArxivApi?$params", ArxivUserAgent, None).left.map(e => s"${q.label}: $e")
     }
     val errors = fetched.collect { case (_, Left(e)) => e }
     val parsed = fetched.collect { case (q, Right(xml)) =>
@@ -273,28 +244,29 @@ object Digest:
       summary(DigestKind.Papers, store, ArxivQueries.length, errors, fresh).render(asJson)
     )
 
-  def awesome(maxResults: Int, asJson: Boolean): Either[String, Unit] =
-    val store = awesomeStore(Util.repoRoot)
+  def awesome(config: DigestConfig): Either[String, Unit] =
+    val DigestConfig(root, maxResults, asJson) = config
+    val store = awesomeStore(root)
     store.init()
     val fetched =
       for
         q <- GithubQueries
-        sort <- Sorts
+        sort <- GithubSorts
       yield
         val params = Util.urlencode(
           Seq("q" -> q.query, "sort" -> sort, "order" -> "desc", "per_page" -> maxResults.toString)
         )
         val text = get(
-          s"$GithubApi?$params",
-          "marola-awesome-agentic-digest/1",
-          Some("application/vnd.github+json")
+          s"$GithubSearchApi?$params",
+          GithubUserAgent,
+          Some(GitHubNames.JsonMediaType)
         )
         q -> text.left.map(e => s"${q.label} ($sort): $e")
     val errors = fetched.collect { case (_, Left(e)) => e }
     val parsed = fetched.collect { case (q, Right(text)) =>
       parseSearchResponse(text).map(_.map(r => Match(r.id, r, q)))
     }
-    val total = GithubQueries.length * Sorts.length
+    val total = GithubQueries.length * GithubSorts.length
     for
       repos <- parsed
         .collectFirst { case Left(e) => e }
@@ -305,18 +277,18 @@ object Digest:
   object ArxivCommand:
     @main(doc = "Cache arXiv papers relevant to marola's forecasting domain (MIP-0019)")
     def run(
-        @arg(doc = "Papers per query") maxResults: Int = 5,
+        @arg(doc = "Papers per query") maxResults: Int = DefaultMaxResults,
         @arg(doc = "Print the summary as JSON") json: Flag
     ): Int =
-      Cli.report(arxiv(maxResults, json.value))
+      Cli.report(arxiv(DigestConfig(Util.repoRoot, maxResults, json.value)))
 
   object AwesomeCommand:
     @main(doc = "Cache GitHub repo candidates for AWESOME-AGENTIC-ENGINEERING.md (MIP-0043)")
     def run(
-        @arg(doc = "Repos per query and sort") maxResults: Int = 5,
+        @arg(doc = "Repos per query and sort") maxResults: Int = DefaultMaxResults,
         @arg(doc = "Print the summary as JSON") json: Flag
     ): Int =
-      Cli.report(awesome(maxResults, json.value))
+      Cli.report(awesome(DigestConfig(Util.repoRoot, maxResults, json.value)))
 
   def arxivCli(args: Seq[String]): Int =
     Cli.run(ParserForMethods(ArxivCommand), "arxiv-digest", args)

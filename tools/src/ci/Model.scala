@@ -10,10 +10,19 @@ import java.math.{BigDecimal as JBigDecimal, RoundingMode}
 
 // ---- workflow runs and badges ---------------------------------------------------------------
 
-/** A job's or a step's conclusion, as the Actions API names it. */
+/** A job's or a step's conclusion, under the name the Actions API gives it. */
 enum Conclusion:
   case Success, Failure, Cancelled, TimedOut, Skipped, Neutral
   case Unknown(raw: String)
+
+  def wire: String = this match
+    case Success      => "success"
+    case Failure      => "failure"
+    case Cancelled    => "cancelled"
+    case TimedOut     => "timed_out"
+    case Skipped      => "skipped"
+    case Neutral      => "neutral"
+    case Unknown(raw) => raw
 
   /** A step that reached one of these actually executed; the rest are not evidence either way. */
   def ran: Boolean = this match
@@ -21,14 +30,9 @@ enum Conclusion:
     case Skipped | Neutral | Unknown(_)           => false
 
 object Conclusion:
-  def parse(raw: String): Conclusion = raw match
-    case "success"   => Success
-    case "failure"   => Failure
-    case "cancelled" => Cancelled
-    case "timed_out" => TimedOut
-    case "skipped"   => Skipped
-    case "neutral"   => Neutral
-    case other       => Unknown(other)
+  private val known = Seq(Success, Failure, Cancelled, TimedOut, Skipped, Neutral)
+
+  def parse(raw: String): Conclusion = known.find(_.wire == raw).getOrElse(Unknown(raw))
 
 /** A null conclusion is a step still queued or running. */
 final case class Step(conclusion: Option[Conclusion])
@@ -51,35 +55,61 @@ object StepTally:
       yield conclusion
     StepTally(ran.count(_ == Conclusion.Success), ran.length)
 
+object BadgeLabel:
+  val CiSteps = "ci steps"
+  val Tests = "tests"
+  val Scala = "scala"
+  val ScalaLoc = "scala LOC"
+  val Jdk = "jdk"
+
+object BadgeColor:
+  val Green = "brightgreen"
+  val Yellow = "yellow"
+  val Red = "red"
+  val Grey = "lightgrey"
+  val Scala = "DC322F" // = marola-app's README's hand-written Scala badge
+  val Jdk = "007396"
+
+/** The file each badge is published under on `site-data`; the README links these names. */
+object BadgeFileName:
+  val Ci = "ci.json"
+  val Tests = "tests.json"
+  val ScalaLoc = "scala-loc.json"
+  val ToolingLoc = "tooling-loc.json"
+  val ScalaVersion = "scala-version.json"
+  val JdkVersion = "jdk-version.json"
+
 /** One shields.io endpoint document (https://shields.io/badges/endpoint-badge). */
 final case class Badge(label: String, message: String, color: String):
   def toJson: ujson.Obj =
     ujson.Obj("schemaVersion" -> 1, "label" -> label, "message" -> message, "color" -> color)
 
 object Badge:
-  val ScalaColor = "DC322F" // = marola-app's README's hand-written Scala badge
+  val NoData = "no data"
+  val Passing = "passing"
+  val Failing = "failing"
 
-  def noData(label: String): Badge = Badge(label, "no data", "lightgrey")
+  def noData(label: String): Badge = Badge(label, NoData, BadgeColor.Grey)
 
   /** Green only when every step that ran passed: a single red step is not a rounding error. */
   def ci(tally: StepTally): Badge =
     val StepTally(green, ran) = tally
-    if ran == 0 then noData("ci steps")
+    if ran == 0 then noData(BadgeLabel.CiSteps)
     else
       val color =
-        if green == ran then "brightgreen"
-        else if green.toDouble >= 0.9 * ran then "yellow"
-        else "red"
-      Badge("ci steps", s"$green/$ran green", color)
+        if green == ran then BadgeColor.Green
+        else if green.toDouble >= 0.9 * ran then BadgeColor.Yellow
+        else BadgeColor.Red
+      Badge(BadgeLabel.CiSteps, s"$green/$ran green", color)
 
   /** The munit job's verdict: passing only on success; a skipped or missing job is no data. */
   def tests(jobs: Seq[Job], job: String): Badge =
     jobs.find(_.name.contains(job)).flatMap(_.conclusion) match
-      case Some(Conclusion.Success) => Badge("tests", "passing", "brightgreen")
+      case Some(Conclusion.Success) => Badge(BadgeLabel.Tests, Passing, BadgeColor.Green)
       case Some(Conclusion.Failure | Conclusion.Cancelled | Conclusion.TimedOut) =>
-        Badge("tests", "failing", "red")
+        Badge(BadgeLabel.Tests, Failing, BadgeColor.Red)
       case Some(Conclusion.Skipped | Conclusion.Neutral | Conclusion.Unknown(_)) | None =>
-        noData("tests")
+        noData(BadgeLabel.Tests)
 
   def loc(label: String, code: Long, color: String): Badge =
     Badge(label, s"${thousands(code)} LOC", color)
@@ -90,9 +120,10 @@ object Badge:
   /** The Scala and JDK versions a scala-cli project file pins. */
   def versions(project: String): Seq[BadgeFile] =
     Seq(
-      ("scala-version.json", "scala", ProjectFile.directive(project, "scala"), ScalaColor),
-      ("jdk-version.json", "jdk", ProjectFile.directive(project, "jvm"), "007396")
-    ).map { (name, label, value, color) =>
+      (BadgeFileName.ScalaVersion, BadgeLabel.Scala, ProjectFile.ScalaKey, BadgeColor.Scala),
+      (BadgeFileName.JdkVersion, BadgeLabel.Jdk, ProjectFile.JvmKey, BadgeColor.Jdk)
+    ).map { (name, label, key, color) =>
+      val value = ProjectFile.directive(project, key)
       BadgeFile(name, value.fold(noData(label))(Badge(label, _, color)))
     }
 
@@ -103,11 +134,47 @@ final case class BadgeFile(name: String, badge: Badge):
     if outDir.endsWith("/") then outDir + name else s"$outDir/$name"
 
 object ProjectFile:
+  /** Where the umbrella's scala-cli project file sits, from the repo root. */
+  val Path = Seq("tools", "project.scala")
+  val ScalaKey = "scala"
+  val JvmKey = "jvm"
+
   private val Using = raw"//> using\s+(\S+)\s+(\S+)\s*".r
 
   /** `//> using <key> <value>` in a scala-cli project file; the first one wins. */
   def directive(project: String, key: String): Option[String] =
     project.linesIterator.collectFirst { case Using(`key`, value) => value }
+
+/** What repo-stats counts and reads. */
+object RepoStatsSettings:
+  // The app is the marola-app submodule (MIP-0070 task 15); ci.yml checks it out for the count.
+  val ScalaPaths = Seq("marola-app/core", "marola-app/local", "marola-app/cli")
+  // The umbrella's own tooling (#942).
+  val ToolingPaths = Seq("tools/src")
+  val ExcludeDirs = Seq("target", "node_modules")
+  val Cloc = "cloc"
+  val Language = "Scala" // cloc's name for it
+  val TestsJob = "tools-ci" // ci.yml's munit job
+  val DefaultRepo = "marola-dev/marola"
+  val DefaultRoot = "."
+
+/** One `repo-stats write` run, as the command line gave it. */
+final case class RepoStatsConfig(
+    outDir: String, // as given, for the printed paths
+    outPath: os.Path,
+    root: os.Path,
+    cwd: os.Path, // where gh runs
+    repo: String,
+    runId: Option[String],
+    excludeJob: Option[String]
+)
+
+/** The GitHub names the commands use: the REST media type, the web host and its URL. */
+object GitHubNames:
+  val Cli = "gh"
+  val JsonMediaType = "application/vnd.github+json"
+  val Host = "github.com"
+  val Web = s"https://$Host"
 
 // ---- billing usage --------------------------------------------------------------------------
 
@@ -171,8 +238,8 @@ enum Plan:
   case Other(raw: String)
 
   def name: String = this match
-    case Free       => "free"
-    case Pro        => "pro"
+    case Free       => Plan.FreeName
+    case Pro        => Plan.ProName
     case Other(raw) => raw
 
   // Personal-account plans only: the billing API does not expose them, so they are GitHub's
@@ -183,14 +250,43 @@ enum Plan:
     case Other(_) => None
 
 object Plan:
-  def parse(name: String): Plan = name match
-    case "free" => Free
-    case "pro"  => Pro
-    case other  => Other(other)
+  val FreeName = "free"
+  val ProName = "pro"
+
+  def parse(name: String): Plan = Seq(Free, Pro).find(_.name == name).getOrElse(Other(name))
+
+/** The names gh-billing looks for in gh's answers and in the environment. */
+object BillingNames:
+  val ActionsProduct = "actions"
+  val MinutesUnit = "minutes"
+  val Scope = "user" // the scope the billing endpoint needs
+  val LoginPlaceholder = "{username}"
+
+  // gh prefers either over its keyring, first match first.
+  val TokenEnvVars = Seq("GH_TOKEN", "GITHUB_TOKEN")
+
+/** Where a report comes from: a saved response, stdin, the live API, or nowhere (--dry-run). */
+enum BillingSource:
+  case DryRun
+  case File(path: String)
+  case Stdin
+  case Live
+
+/** One gh-billing run, its defaults and environment already read. */
+final case class BillingConfig(
+    period: BillingPeriod,
+    source: BillingSource,
+    noScopeCheck: Boolean,
+    env: Map[String, String],
+    cwd: os.Path // what a relative --from-file is read against
+)
 
 /** The month a report covers, as the command line gave it. */
 final case class BillingPeriod(year: String, month: String):
   def query: String = s"year=$year&month=$month"
+
+  /** The consolidated usage endpoint for this period. */
+  def usagePath(login: String): String = s"/users/$login/settings/billing/usage?$query"
 
   /** The month zero-padded when it is a number. */
   def shown: String = s"$year-${month.toIntOption.map(m => f"$m%02d").getOrElse(month)}"
@@ -223,7 +319,8 @@ enum Usage:
         val minutes = Jq.number(
           rows
             .filter(r =>
-              r.product == JqValue(ujson.Str("actions")) && r.unit.tsv.toLowerCase == "minutes"
+              r.product == JqValue(ujson.Str(BillingNames.ActionsProduct)) &&
+                r.unit.tsv.toLowerCase == BillingNames.MinutesUnit
             )
             .map(_.quantity)
             .sum
@@ -289,8 +386,12 @@ enum TokenScopes:
   /** The list as the failure shows it: "a, b", "none", or "" when gh printed none. */
   def shown: String = this match
     case Absent         => ""
-    case NoScopes       => "none"
+    case NoScopes       => TokenScopes.NoneWord
     case Listed(scopes) => scopes.mkString(", ")
+
+object TokenScopes:
+  val Prefix = "Token scopes:"
+  val NoneWord = "none"
 
 /** Numbers as jq 1.7 computes and prints them. */
 object Jq:
@@ -341,13 +442,13 @@ final case class Paper(
 ) extends Candidate:
   def id: String = arxivId
   def toJson: ujson.Obj = ujson.Obj(
-    "arxiv_id" -> arxivId,
-    "abs_url" -> absUrl,
-    "title" -> title,
-    "summary" -> summary,
-    "authors" -> authors,
-    "categories" -> categories,
-    "published" -> published
+    RecordField.ArxivId -> arxivId,
+    RecordField.AbsUrl -> absUrl,
+    RecordField.Title -> title,
+    RecordField.Summary -> summary,
+    RecordField.Authors -> authors,
+    RecordField.Categories -> categories,
+    RecordField.Published -> published
   )
 
 object Paper:
@@ -369,17 +470,36 @@ final case class RepoCandidate(
 ) extends Candidate:
   def id: String = RepoCandidate.key(fullName)
   def toJson: ujson.Obj = ujson.Obj(
-    "full_name" -> fullName,
-    "html_url" -> htmlUrl,
-    "description" -> description,
-    "stars" -> ujson.Num(stars.toDouble),
-    "pushed_at" -> pushedAt,
-    "topics" -> topics
+    RecordField.FullName -> fullName,
+    RecordField.HtmlUrl -> htmlUrl,
+    RecordField.Description -> description,
+    RecordField.Stars -> ujson.Num(stars.toDouble),
+    RecordField.PushedAt -> pushedAt,
+    RecordField.Topics -> topics
   )
 
 object RepoCandidate:
   /** 'owner/repo' -> 'owner__repo', safe as a filename. */
   def key(fullName: String): String = fullName.replace("/", "__")
+
+/** The keys of a cached record and of its index row; readers grep the published files for them. */
+object RecordField:
+  val ArxivId = "arxiv_id"
+  val AbsUrl = "abs_url"
+  val Title = "title"
+  val Summary = "summary"
+  val Authors = "authors"
+  val Categories = "categories"
+  val Published = "published"
+  val FullName = "full_name"
+  val HtmlUrl = "html_url"
+  val Description = "description"
+  val Stars = "stars"
+  val PushedAt = "pushed_at"
+  val Topics = "topics"
+  val MatchedQueries = "matched_queries"
+  val RelevanceScore = "relevance_score"
+  val FetchedAt = "fetched_at"
 
 /** One query's answer: the item it returned under its id. */
 final case class Match[+A](id: String, item: A, query: Query)
@@ -398,10 +518,88 @@ object Hit:
       Hit(id, group.head.item, group.map(_.query))
     }
 
-/** What a digest caches, and the key and words its summary uses for the new items. */
-enum DigestKind(val newKey: String, val newLabel: String):
-  case Papers extends DigestKind("new_papers", "new papers cached")
-  case Repos extends DigestKind("new_candidates", "new candidates cached")
+/** What a digest caches: its cache directory under `.tmp/`, its items' directory, the fields its
+  * index keeps, and the key and words its summary uses for the new items.
+  */
+enum DigestKind(
+    val cacheDir: String,
+    val itemsDir: String,
+    val indexFields: Seq[String],
+    val newKey: String,
+    val newLabel: String
+):
+  case Papers
+      extends DigestKind(
+        "arxiv_cache",
+        "papers",
+        Seq(
+          RecordField.ArxivId,
+          RecordField.Title,
+          RecordField.Published,
+          RecordField.RelevanceScore,
+          RecordField.FetchedAt
+        ),
+        "new_papers",
+        "new papers cached"
+      )
+  case Repos
+      extends DigestKind(
+        "awesome_agentic_cache",
+        "repos",
+        Seq(
+          RecordField.FullName,
+          RecordField.HtmlUrl,
+          RecordField.Stars,
+          RecordField.Description,
+          RecordField.RelevanceScore,
+          RecordField.FetchedAt
+        ),
+        "new_candidates",
+        "new candidates cached"
+      )
+
+object DigestKind:
+  val CacheRoot = ".tmp"
+  val IndexFile = "index.jsonl"
+
+/** The services the digests ask, and how they introduce themselves. */
+object DigestSources:
+  val AtomNs = "http://www.w3.org/2005/Atom"
+  val ArxivApi = "https://export.arxiv.org/api/query"
+  val GithubSearchApi = "https://api.github.com/search/repositories"
+  val ArxivUserAgent = "marola-arxiv-digest/1"
+  val GithubUserAgent = "marola-awesome-agentic-digest/1"
+
+  // Verified against the live API on 2026-09-06; cross-domain noise is scored down, not filtered
+  // out, per MIP-0019's honesty about query precision.
+  val ArxivQueries = Seq(
+    Query("ocean-physics", "cat:physics.ao-ph AND abs:ocean", 1),
+    Query("sst-forecast", """abs:"sea surface temperature" AND abs:forecast""", 2),
+    Query("llm-ocean", """abs:"large language model" AND abs:ocean""", 3),
+    Query(
+      "llm-weather-forecast",
+      """abs:"large language model" AND abs:"weather forecasting"""",
+      3
+    ),
+    Query("jellyfish-prediction", "abs:jellyfish AND abs:prediction", 2),
+    Query("marine-heatwave", """abs:"marine heatwave"""", 2),
+    Query("ao-ph-ml", """cat:physics.ao-ph AND abs:"machine learning"""", 1)
+  )
+
+  // Verified live on 2026-09-07 (MIP-0043 §4.2). Two sort orders per label feed one cache.
+  val GithubQueries = Seq(
+    Query("agents", "topic:agents", 1),
+    Query("llm-agents", "topic:llm-agents", 2),
+    Query("ai-agents", "topic:ai-agents", 1),
+    Query("mcp", "topic:mcp", 2),
+    Query("multi-agent-systems", "topic:multi-agent-systems", 2)
+  )
+  val GithubSorts = Seq("stars", "updated")
+
+  val DefaultMaxResults = 5
+
+/** One digest run: the repo root its cache lives under, and the command line. */
+final case class DigestConfig(root: os.Path, maxResults: Int, asJson: Boolean)
 
 /** One digest run, as it reports itself. */
 final case class DigestSummary(

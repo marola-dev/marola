@@ -9,6 +9,8 @@ class ModelTest extends munit.FunSuite:
     assert(!notRan.exists(_.ran))
     assertEquals(Conclusion.parse("timed_out"), Conclusion.TimedOut)
     assertEquals(Conclusion.parse("stale"), Conclusion.Unknown("stale"))
+    for c <- Seq(Conclusion.Success, Conclusion.Neutral, Conclusion.Unknown("x")) do
+      assertEquals(Conclusion.parse(c.wire), c)
 
   test("the step tally leaves out the reporting job and unfinished steps"):
     val jobs = Seq(
@@ -42,6 +44,10 @@ class ModelTest extends munit.FunSuite:
     assertEquals(BillingPeriod("2026", "8").shown, "2026-08")
     assertEquals(BillingPeriod("2026", "12").shown, "2026-12")
     assertEquals(BillingPeriod("2026", "x").shown, "2026-x")
+    assertEquals(
+      BillingPeriod("2026", "8").usagePath("m"),
+      "/users/m/settings/billing/usage?year=2026&month=8"
+    )
 
   test("token scopes"):
     assertEquals(TokenScopes.Listed(Seq("repo", "user")).shown, "repo, user")
@@ -107,3 +113,15 @@ class ModelTest extends munit.FunSuite:
       "queries run: 10/10\nnew candidates cached: 0\ntotal cached: 3\nindex: /i\n"
     )
     assertEquals(s.toJson.value.keys.toSeq(2), "new_candidates")
+
+  test("each digest kind keeps its own cache and index fields"):
+    val root = os.temp.dir()
+    assertEquals(
+      Digest.storeOf(DigestKind.Papers, root).itemsDir,
+      root / ".tmp" / "arxiv_cache" / "papers"
+    )
+    assertEquals(
+      Digest.storeOf(DigestKind.Repos, root).indexPath,
+      root / ".tmp" / "awesome_agentic_cache" / "index.jsonl"
+    )
+    assert(DigestKind.values.forall(_.indexFields.contains(RecordField.RelevanceScore)))

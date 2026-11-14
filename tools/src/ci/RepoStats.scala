@@ -12,12 +12,7 @@ import Util.field
 //
 //     marola-tools repo-stats write --out-dir stats [--repo marola-dev/marola --run-id 123 --exclude-job repo-stats]
 object RepoStats:
-  // The app is the marola-app submodule (MIP-0070 task 15); ci.yml checks it out for the count.
-  val ScalaPaths = Seq("marola-app/core", "marola-app/local", "marola-app/cli")
-  // The umbrella's own tooling (#942).
-  val ToolingPaths = Seq("tools/src")
-  val TestsJob = "tools-ci" // ci.yml's munit job
-  private val ExcludeDirs = Seq("target", "node_modules")
+  import RepoStatsSettings.*
 
   /** One job of the Actions API's jobs list; a field of the wrong type reads as absent. */
   def decodeJob(json: ujson.Value): Job =
@@ -35,24 +30,24 @@ object RepoStats:
     }
 
   /** Every job of one workflow run, steps included. Needs `actions: read` on the token. */
-  private def fetchJobs(repo: String, runId: String): Either[String, Seq[Job]] =
+  private def fetchJobs(repo: String, runId: String, cwd: os.Path): Either[String, Seq[Job]] =
     def fetchFrom(page: Int): Either[String, Seq[Job]] =
       val url = s"repos/$repo/actions/runs/$runId/jobs?per_page=100&page=$page"
-      call(Seq("gh", "api", "-H", "Accept: application/vnd.github+json", url), os.pwd).flatMap {
-        result =>
+      call(Seq(GitHubNames.Cli, "api", "-H", s"Accept: ${GitHubNames.JsonMediaType}", url), cwd)
+        .flatMap { result =>
           if result.exitCode != 0 then Left(s"repo_stats: gh api $url: ${result.err.text()}")
           else
             Util.readJson(result.out.text()).flatMap { json =>
               val batch = field(json, "jobs").flatMap(_.arrOpt).toSeq.flatten.map(decodeJob)
               if batch.length < 100 then Right(batch) else fetchFrom(page + 1).map(batch ++ _)
             }
-      }
+        }
     fetchFrom(1)
 
   private def call(command: Seq[String], cwd: os.Path): Either[String, os.CommandResult] =
     try Right(os.proc(command).call(cwd = cwd, check = false, stderr = os.Pipe))
     catch
-      case _: java.io.IOException if command.head == "cloc" =>
+      case _: java.io.IOException if command.head == Cloc =>
         Left(
           "repo_stats: `cloc` is not on PATH (nix develop has it, and ci.yml takes it from nix develop .#lint)"
         )
@@ -64,7 +59,7 @@ object RepoStats:
     if present.isEmpty then Right(0)
     else
       val excluded = s"--exclude-dir=${ExcludeDirs.mkString(",")}"
-      call(Seq("cloc", "--json", "--quiet", excluded, s"--include-lang=$language") ++ present, root)
+      call(Seq(Cloc, "--json", "--quiet", excluded, s"--include-lang=$language") ++ present, root)
         .flatMap { result =>
           val text = result.out.text()
           if result.exitCode != 0 then Left(s"repo_stats: cloc: ${result.err.text()}")
@@ -79,46 +74,61 @@ object RepoStats:
       os.write.over(outDir / file.name, Util.dumps(file.badge.toJson) + "\n")
       outDir / file.name
 
+  /** Every badge for one run, or the first failure. */
+  def badges(config: RepoStatsConfig): Either[String, Seq[BadgeFile]] =
+    for
+      app <- clocCode(ScalaPaths, Language, config.root)
+      tooling <- clocCode(ToolingPaths, Language, config.root)
+      ci <- config.runId match
+        case None     => Right(Nil)
+        case Some(id) =>
+          fetchJobs(config.repo, id, config.cwd).map(jobs =>
+            Seq(
+              BadgeFile(BadgeFileName.Ci, Badge.ci(StepTally.of(jobs, config.excludeJob))),
+              BadgeFile(BadgeFileName.Tests, Badge.tests(jobs, TestsJob))
+            )
+          )
+      project = config.root / os.RelPath(ProjectFile.Path.mkString("/"))
+      versions = if os.isFile(project) then Badge.versions(os.read(project)) else Nil
+    yield Seq(
+      BadgeFile(BadgeFileName.ScalaLoc, Badge.loc(BadgeLabel.Scala, app, BadgeColor.Scala)),
+      BadgeFile(BadgeFileName.ToolingLoc, Badge.loc(BadgeLabel.ScalaLoc, tooling, BadgeColor.Scala))
+    ) ++ ci ++ versions
+
+  def run(config: RepoStatsConfig): Int =
+    badges(config) match
+      case Left(error) =>
+        System.err.println(error)
+        1
+      case Right(docs) =>
+        val written = write(config.outPath, docs)
+        for (file, path) <- docs.zip(written) do
+          println(s"${file.shownIn(config.outDir)}: ${os.read(path).trim}")
+        0
+
   object Write:
     @main(doc = "Write the badge JSONs into --out-dir")
     def run(
         @arg(doc = "Directory the badge JSONs go to") outDir: String,
-        @arg(doc = "Repo root the LOC paths are relative to") root: String = ".",
-        @arg(doc = "owner/name, for the CI-health badge") repo: String = "marola-dev/marola",
+        @arg(doc = "Repo root the LOC paths are relative to") root: String = DefaultRoot,
+        @arg(doc = "owner/name, for the CI-health badge") repo: String = DefaultRepo,
         @arg(doc = "Workflow run to report on; omitted = LOC badges only") runId: Option[String] =
           None,
         @arg(doc = "Job name to leave out (the reporting job itself)") excludeJob: Option[String] =
           None
     ): Int =
-      val rootPath = os.Path(root, os.pwd)
-      val badges =
-        for
-          app <- clocCode(ScalaPaths, "Scala", rootPath)
-          tooling <- clocCode(ToolingPaths, "Scala", rootPath)
-          ci <- runId match
-            case None     => Right(Nil)
-            case Some(id) =>
-              fetchJobs(repo, id).map(jobs =>
-                Seq(
-                  BadgeFile("ci.json", Badge.ci(StepTally.of(jobs, excludeJob))),
-                  BadgeFile("tests.json", Badge.tests(jobs, TestsJob))
-                )
-              )
-          project = rootPath / "tools" / "project.scala"
-          versions = if os.isFile(project) then Badge.versions(os.read(project)) else Nil
-        yield Seq(
-          BadgeFile("scala-loc.json", Badge.loc("scala", app, Badge.ScalaColor)),
-          BadgeFile("tooling-loc.json", Badge.loc("scala LOC", tooling, Badge.ScalaColor))
-        ) ++ ci ++ versions
-      badges match
-        case Left(error) =>
-          System.err.println(error)
-          1
-        case Right(docs) =>
-          val written = write(os.Path(outDir, os.pwd), docs)
-          for (file, path) <- docs.zip(written) do
-            println(s"${file.shownIn(outDir)}: ${os.read(path).trim}")
-          0
+      val cwd = os.pwd
+      RepoStats.run(
+        RepoStatsConfig(
+          outDir = outDir,
+          outPath = os.Path(outDir, cwd),
+          root = os.Path(root, cwd),
+          cwd = cwd,
+          repo = repo,
+          runId = runId,
+          excludeJob = excludeJob
+        )
+      )
 
   def cli(args: Seq[String]): Int = args match
     case "write" +: rest           => Cli.run(ParserForMethods(Write), "repo-stats write", rest)

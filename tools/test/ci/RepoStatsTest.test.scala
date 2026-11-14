@@ -54,9 +54,9 @@ class RepoStatsTest extends munit.FunSuite:
         """{"schemaVersion": 1, "label": "ci steps", "message": "no data", "color": "lightgrey"}"""
       )
     )
-    assertEquals(Badge.loc("scala", 6865, Badge.ScalaColor).message, "6,865 LOC")
-    assertEquals(Badge.loc("scala", 1234567, Badge.ScalaColor).message, "1,234,567 LOC")
-    assertEquals(Badge.loc("scala", 0, Badge.ScalaColor).message, "0 LOC")
+    assertEquals(Badge.loc("scala", 6865, BadgeColor.Scala).message, "6,865 LOC")
+    assertEquals(Badge.loc("scala", 1234567, BadgeColor.Scala).message, "1,234,567 LOC")
+    assertEquals(Badge.loc("scala", 0, BadgeColor.Scala).message, "0 LOC")
     val cloc =
       """{"header": {"cloc_version": "2.10"}, "Scala": {"nFiles": 84, "blank": 1050, "comment": 1673, "code": 6865}}"""
     assertEquals(parseCloc(cloc, "Scala"), Right(6865L))
