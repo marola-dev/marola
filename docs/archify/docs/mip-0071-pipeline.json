@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The official-alerts pipeline: fetch per source, route per UF, render from the store",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0071-pipeline.html"
+  },
+  "components": [
+    {
+      "id": "inmet",
+      "type": "external",
+      "label": "INMET RSS and CAP",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "later",
+      "type": "external",
+      "label": "later: state sources",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fetch",
+      "type": "backend",
+      "label": "fetch job",
+      "pos": [
+        170,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sublabel": "alerts-ingest.yml, one per source"
+    },
+    {
+      "id": "raw",
+      "type": "database",
+      "label": "site-data: alerts/raw",
+      "pos": [
+        170,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "route",
+      "type": "backend",
+      "label": "route job",
+      "pos": [
+        170,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sublabel": "every UF in its own error boundary"
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "site-data",
+      "pos": [
+        170,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sublabel": "alerts/UF/YYYY-MM.jsonl"
+    },
+    {
+      "id": "render",
+      "type": "backend",
+      "label": "alerts render",
+      "pos": [
+        170,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sublabel": "site.yml, no network"
+    },
+    {
+      "id": "manual",
+      "type": "database",
+      "label": "main",
+      "pos": [
+        430,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sublabel": "site/alerts/manual"
+    },
+    {
+      "id": "dist",
+      "type": "backend",
+      "label": "site/dist/data/alerts",
+      "pos": [
+        170,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "page",
+      "type": "backend",
+      "label": "alerts.html and alerts.js",
+      "pos": [
+        170,
+        830
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "inmet",
+      "to": "fetch"
+    },
+    {
+      "id": "e2",
+      "from": "later",
+      "to": "fetch"
+    },
+    {
+      "id": "e3",
+      "from": "fetch",
+      "to": "raw"
+    },
+    {
+      "id": "e4",
+      "from": "raw",
+      "to": "route"
+    },
+    {
+      "id": "e5",
+      "from": "route",
+      "to": "store"
+    },
+    {
+      "id": "e6",
+      "from": "store",
+      "to": "render"
+    },
+    {
+      "id": "e7",
+      "from": "manual",
+      "to": "render"
+    },
+    {
+      "id": "e8",
+      "from": "render",
+      "to": "dist"
+    },
+    {
+      "id": "e9",
+      "from": "dist",
+      "to": "page"
+    }
+  ]
+}
