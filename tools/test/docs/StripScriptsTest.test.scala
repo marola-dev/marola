@@ -2,6 +2,7 @@ package marola.tools.docs
 
 class StripScriptsTest extends munit.FunSuite:
   import StripScripts.*
+  import SiteModel.*
 
   test("strips"):
     val page =
@@ -9,7 +10,7 @@ class StripScriptsTest extends munit.FunSuite:
         """<script src="https://scastie.scala-lang.org/embedded.js"></script>""" +
         """<script src="scripts/ux.js"></script></head>""" +
         """<body class="theme"><script>var pathToRoot = "../";</script>hi</body></html>"""
-    val (out, removed) = strip(page)
+    val Stripped(out, removed) = ApiDocsPage.strip(page)
     assertEquals(removed, 2, "both third-party scripts are removed")
     assert(!out.contains("d3js.org"), "no https:// script src survives")
     assert(out.contains("""src="scripts/ux.js""""), "the doc's own scripts are kept")
@@ -17,8 +18,8 @@ class StripScriptsTest extends munit.FunSuite:
     assert(out.contains("""data-path-to-root="../""""), "pathToRoot is kept as data")
     assert(out.contains("""class="theme""""), "existing body attributes survive")
     assertEquals("path-to-root.js".r.findAllIn(out).length, 1, "the shim is linked once")
-    assertEquals(strip("<html><body>plain</body></html>")._2, 0)
-    assertEquals(strip("""<script src="http://x.example/a.js"></script>""")._2, 1)
+    assertEquals(ApiDocsPage.strip("<html><body>plain</body></html>").removed, 0)
+    assertEquals(ApiDocsPage.strip("""<script src="http://x.example/a.js"></script>""").removed, 1)
 
   test("check tree"):
     val dir = os.temp.dir()

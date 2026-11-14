@@ -22,9 +22,10 @@ object FetchApiDocsTest:
 
 class FetchApiDocsTest extends munit.FunSuite:
   import FetchApiDocs.*
+  import SiteModel.*
 
   private val remote = os.temp.dir(prefix = "api-docs-remote")
-  private val env = gitEnv(sys.env) ++ Map(
+  private val env = isolatedGitEnv(sys.env) ++ Map(
     "GIT_CONFIG_GLOBAL" -> "/dev/null",
     "GIT_CONFIG_NOSYSTEM" -> "1",
     "API_DOCS_REMOTE" -> s"$remote/<repo>.git"
@@ -40,7 +41,7 @@ class FetchApiDocsTest extends munit.FunSuite:
   ): (Int, String) =
     val buffer = java.io.ByteArrayOutputStream()
     val stream = java.io.PrintStream(buffer, true, "UTF-8")
-    val code = Console.withOut(stream)(fetch(repo, dest, env ++ extra))
+    val code = Console.withOut(stream)(fetch(repo, dest, ApiDocsConfig.from(env ++ extra)))
     (code, buffer.toString("UTF-8"))
 
   test("a present api-docs branch is unpacked, its notice naming the commit"):
@@ -69,11 +70,11 @@ class FetchApiDocsTest extends munit.FunSuite:
 
   test("the remote template replaces <repo>"):
     assertEquals(
-      FetchApiDocs.remote(Map.empty, "marola-app"),
+      ApiDocsConfig.from(Map.empty).remote.url("marola-app"),
       "https://github.com/marola-dev/marola-app"
     )
     assertEquals(
-      FetchApiDocs.remote(Map("API_DOCS_REMOTE" -> ""), "x"),
+      ApiDocsConfig.from(Map("API_DOCS_REMOTE" -> "")).remote.url("x"),
       "https://github.com/marola-dev/x"
     )
 

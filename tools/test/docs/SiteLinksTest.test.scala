@@ -4,6 +4,7 @@ import marola.tools.shared.Util
 
 class SiteLinksTest extends munit.FunSuite:
   import SiteLinks.*
+  import SiteModel.*
 
   private def write(path: os.Path, text: String) = os.write(path, text, createFolders = true)
 
@@ -11,8 +12,8 @@ class SiteLinksTest extends munit.FunSuite:
     val html =
       "<script>\nvar moves = [\n  ['/repos/marola-ml/api/', '/5-Repos/marola-ml/api-docs/python/'],\n  ['/repos/', '/5-Repos/'],\n  ['/MIPs/', '/6-MIPs/'],\n  ['/api/', '/5-Repos/marola-app/api-docs/']\n].sort(function (a, b) { return b[0].length - a[0].length; });\n</script>"
     val pairs = forwardPrefixes(html)
-    assertEquals(pairs.map(_._1), Vector("/repos/marola-ml/api/", "/repos/", "/MIPs/", "/api/"))
-    assertEquals(pairs.find(_._1 == "/MIPs/").map(_._2), Some("/6-MIPs/"))
+    assertEquals(pairs.map(_.from), Vector("/repos/marola-ml/api/", "/repos/", "/MIPs/", "/api/"))
+    assertEquals(pairs.find(_.from == "/MIPs/").map(_.to), Some("/6-MIPs/"))
     val real = os.read(Util.repoRoot / "mkdocs" / "overrides" / "404.html")
     assert(forwardPrefixes(real).nonEmpty, "the committed 404.html still parses")
 
@@ -40,7 +41,7 @@ class SiteLinksTest extends munit.FunSuite:
         """<a href="https://docs.marola.dev.example/evil/">not this site</a>""" +
         """<a href="https://example.com/other/">other</a></html>"""
     )
-    val (total, broken) = checkHrefs(site)
+    val LinkCheck(total, broken) = checkHrefs(site)
     assertEquals(total, 3, "the lookalike host is not this site")
     assertEquals(broken.length, 1)
     assert(broken.head.contains("gone"))
@@ -62,7 +63,7 @@ class SiteLinksTest extends munit.FunSuite:
       "<url><loc>https://docs.marola.dev/gone/</loc></url>",
       "</urlset>"
     ).mkString
-    val (total, dropped) = checkOldSitemap(site, xml, Seq("/repos/" -> "/5-Repos/"))
+    val LinkCheck(total, dropped) = checkOldSitemap(site, xml, Seq(Move("/repos/", "/5-Repos/")))
     assertEquals(total, 5)
     assertEquals(
       dropped,

@@ -2,12 +2,13 @@ package marola.tools.docs
 
 class DocLinksTest extends munit.FunSuite:
   import DocLinks.*
+  import SiteModel.*
 
   private def refused(source: String, link: String, reason: String) = Vector(
     s"$source: $link: $reason"
   )
-  private def ok(s: String) = (s, Vector.empty[String])
-  private def bad(s: String, errors: Vector[String]) = (s, errors)
+  private def ok(s: String) = Rewrite(s, Vector.empty)
+  private def bad(s: String, errors: Vector[String]) = Rewrite(s, errors)
 
   private def touch(root: os.Path, files: String*): Unit =
     for f <- files do os.write.over(root / os.RelPath(f), "# t\n", createFolders = true)
@@ -128,7 +129,7 @@ class DocLinksTest extends munit.FunSuite:
       ok(s"`[a](docs/x.md)` [`b`](x.md) ``[c](/abs)``\n$fencedText")
     )
     val stray = "Type ` to start.\n\n[a](docs/x.md) and [b](/abs)\n\nlater ` here\n"
-    val (text, errors) = readme(stray)
+    val Rewrite(text, errors) = readme(stray)
     assertEquals(text, stray.replace("(docs/x.md)", "(x.md)"))
     assertEquals(errors.length, 1)
     // docs-lint closes a fence only on a bare fence line; ```bash inside it is still code.
@@ -295,7 +296,7 @@ class DocLinksTest extends munit.FunSuite:
     touch(repo, "README.md", "AGENTS.md")
     val ctx = Context("r", "a" * 40)
     val l = "https://github.com/marola-dev/r/blob/main/AGENTS.md/"
-    assertEquals(rewrite(s"[a]($l)", "README.md", repo, ctx)._2.length, 1)
+    assertEquals(rewrite(s"[a]($l)", "README.md", repo, ctx).errors.length, 1)
 
   test("a lone [ before a long paragraph does not overflow the stack"):
     val text = "[ " + "word " * 40000 + "\n[a](x.md)\n"

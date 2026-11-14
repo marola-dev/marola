@@ -8,8 +8,7 @@ import java.text.Normalizer
 import java.util.Locale
 import java.util.regex.{MatchResult, Pattern}
 import mainargs.{arg, main, Flag, ParserForMethods}
-import scala.collection.mutable
-import Util.posix
+import SiteModel.*
 
 // Rewrite one repo's README and docs/** links for its mount on the docs site (MIP-0074 Appendix A).
 //
@@ -25,7 +24,7 @@ object DocLinks:
 
   // Fences as docs-lint (marola-devkit scripts/docs_lint.py) sees them, so the two never disagree
   // on what is code: any indent, and only a bare fence line closes.
-  private val Fence = regex(raw"^\s*(`{3,}|~{3,})")
+  private val FenceOpen = regex(raw"^\s*(`{3,}|~{3,})")
   // A code span may wrap lines but never crosses a blank line (CommonMark), so a lone ` can't mask
   // later paragraphs.
   private val CodeSpan = regex(raw"(?s)(?<!`)(`+)(?!`)(?:(?!\n[ \t]*\n).)*?(?<!`)\1(?!`)")
@@ -50,25 +49,6 @@ object DocLinks:
   // A GitHub permalink sha (7-40 hex, abbreviated or full) or a version tag: already pinned, so
   // left exactly as written, #L anchors included, with no existence check against ctx.sha.
   private val PinnedRef = regex(raw"^(?:[0-9a-f]{7,40}|v\d[\w.\-]*)\z")
-  private val AdrFile = regex(raw"^(\d{4})-[^/]+\.md\z")
-  private val AdrStatus = regex(raw"(?m)^\|\s*\*\*Status\*\*\s*\|\s*(.*?)\s*\|\s*$$")
-  private val Whitespace = regex(raw"\s")
-
-  private val ImageSuffixes = Set(".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".avif", ".ico")
-  private val ImageOutsideDocs = "an image outside docs/; move it under docs/"
-
-  /** The mounted repo: `repo` is checked out at `sha`. */
-  case class Context(
-      name: String,
-      sha: String,
-      umbrella: Boolean = false,
-      // mkdocs.yml's patterns are relative to the site root; matched against the repo's docs/
-      // they agree only while unanchored (benchmarks/), which is all mkdocs.yml has.
-      excludeDocs: Seq[String] = Nil,
-      // Umbrella only; each submodule must be checked out at its sha under repo/<name>, where the
-      // existence checks read it.
-      submoduleShas: Map[String, String] = Map.empty
-  )
 
   // ---- regex helpers --------------------------------------------------------------------------
 
@@ -83,16 +63,22 @@ object DocLinks:
     val matcher = pattern.matcher(text)
     Option.when(matcher.find())(matcher.toMatchResult)
 
-  /** `re.sub(pattern, replace, text)`, the replacement taken literally. */
+  /** `re.sub(pattern, replace, text)`, each replacement (given its match and its index) taken
+    * literally, the replacements' errors in match order.
+    */
+  private def subRewrite(pattern: Pattern, text: String)(
+      replace: (MatchResult, Int) => Rewrite
+  ): Rewrite =
+    val matches = allMatches(pattern, text)
+    val replaced = matches.zipWithIndex.map(replace.tupled)
+    val starts = 0 +: matches.map(_.end)
+    val pieces = matches.zip(replaced).zip(starts).flatMap { case ((m, r), from) =>
+      Vector(Rewrite.clean(text.substring(from, m.start)), r)
+    }
+    Rewrite.concat(pieces :+ Rewrite.clean(text.substring(starts.last)))
+
   private def sub(pattern: Pattern, text: String)(replace: MatchResult => String): String =
-    val out = StringBuilder()
-    var last = 0
-    for m <- allMatches(pattern, text) do
-      out ++= text.substring(last, m.start)
-      out ++= replace(m)
-      last = m.end
-    out ++= text.substring(last)
-    out.toString
+    subRewrite(pattern, text)((m, _) => Rewrite.clean(replace(m))).text
 
   // ---- files ---------------------------------------------------------------------------------
 
@@ -104,9 +90,11 @@ object DocLinks:
     catch case _: InvalidPathException => None
 
   private def existsAt(base: os.Path, rel: String) = onDisk(base, rel).exists(Files.exists(_))
-  private def isDirAt(base: os.Path, rel: String) = onDisk(base, rel).exists(Files.isDirectory(_))
-  private def isFileAt(base: os.Path, rel: String) =
-    onDisk(base, rel).exists(Files.isRegularFile(_))
+
+  private def onDiskTree(repo: os.Path) = RepoTree(
+    isDir = rel => onDisk(repo, rel).exists(Files.isDirectory(_)),
+    isFile = rel => onDisk(repo, rel).exists(Files.isRegularFile(_))
+  )
 
   /** A file as strict UTF-8; bad UTF-8 is thrown as an IOException, like a read error. */
   private def readUtf8(path: os.Path): String =
@@ -123,116 +111,76 @@ object DocLinks:
 
   // ---- fences and anchors ---------------------------------------------------------------------
 
-  enum Chunk:
-    case Prose(text: String)
-    case Code(text: String)
-
   def fenced(text: String): Vector[Chunk] =
-    val out = Vector.newBuilder[Chunk]
-    val prose = StringBuilder()
-    var fence: Option[(Char, Int)] = None
-    for line <- Util.splitlinesKeepends(text) do
-      fence match
-        case Some((char, length)) =>
-          out += Chunk.Code(line)
-          if closes(line, char, length) then fence = None
-        case None =>
-          firstMatch(Fence, line) match
+    // The chunks so far, the prose lines not yet closed into a chunk, and the open fence.
+    type Reading = (Vector[Chunk], Vector[String], Option[Fence])
+    def prose(lines: Vector[String]) = Chunk.Prose(lines.mkString)
+    val (done, open, _) =
+      Util.splitlinesKeepends(text).foldLeft[Reading]((Vector.empty, Vector.empty, None)) {
+        case ((done, lines, Some(fence)), line) =>
+          (done :+ Chunk.Code(line), lines, Option.unless(fence.closedBy(line))(fence))
+        case ((done, lines, None), line) =>
+          firstMatch(FenceOpen, line) match
             case Some(m) =>
-              out += Chunk.Prose(prose.toString)
-              prose.clear()
-              fence = Some((m.group(1).head, m.group(1).length))
-              out += Chunk.Code(line)
-            case None => prose ++= line
-    out += Chunk.Prose(prose.toString)
-    out.result()
+              val fence = Fence(m.group(1).head, m.group(1).length)
+              (done :+ prose(lines) :+ Chunk.Code(line), Vector.empty, Some(fence))
+            case None => (done, lines :+ line, None)
+      }
+    done :+ prose(open)
 
-  private def isWhitespace(c: Char) = Whitespace.matcher(c.toString).matches()
-
-  /** `^\s*{c}{n,}\s*$`: a bare fence line of at least the opening's length. */
-  private def closes(line: String, char: Char, length: Int): Boolean =
-    val rest = line.dropWhile(isWhitespace)
-    val run = rest.takeWhile(_ == char).length
-    run >= length && rest.drop(run).forall(isWhitespace)
-
-  private def unique(slug: String, seen: mutable.Map[String, Int], separator: String): String =
+  /** The heading's slug made unique against `seen`, as GitHub and toc number repeats. */
+  private def unique(slug: String, seen: Map[String, Int], separator: String) =
     val n = seen.getOrElse(slug, 0)
-    seen(slug) = n + 1
-    if n > 0 then s"$slug$separator$n" else slug
+    (if n > 0 then s"$slug$separator$n" else slug, seen.updated(slug, n + 1))
 
   /** GitHub's anchor (and toc's own, for links already written for the site) -> toc's anchor. */
   def readmeAnchors(readme: String): Map[String, String] =
-    val anchors = mutable.Map.empty[String, String]
-    val githubSeen = mutable.Map.empty[String, Int]
-    val tocSeen = mutable.Map.empty[String, Int]
-    for
+    val titles = for
       case Chunk.Prose(text) <- fenced(readme)
       line <- Util.splitlines(text)
       heading <- firstMatch(Heading, line)
-    do
-      val linkless = HeadingLink.matcher(heading.text(1)).replaceAll("$1")
-      val title = HeadingMarkup.matcher(linkless).replaceAll("")
-      val github =
-        GithubDrop.matcher(title.toLowerCase(Locale.ROOT)).replaceAll("").replace(' ', '-')
-      // Python-Markdown toc's default slugify, which mkdocs uses (mkdocs.yml sets none).
-      val ascii = Normalizer.normalize(title, Normalizer.Form.NFKD).filter(_ < 0x80)
-      val dropped = TocDrop.matcher(ascii).replaceAll("")
-      val slug = TocDash.matcher(dropped.trim.toLowerCase(Locale.ROOT)).replaceAll("-")
-      val toc = unique(slug, tocSeen, "_")
-      anchors(unique(github, githubSeen, "-")) = toc
-      if !anchors.contains(toc) then anchors(toc) = toc
-    anchors.toMap
-
-  // ---- where a file lands ---------------------------------------------------------------------
-
-  private def trimSlashes(s: String) = s.dropWhile(_ == '/').reverse.dropWhile(_ == '/').reverse
-
-  /** A gitignore-style subset: `*` globs, a trailing / for directories, a / inside anchors. */
-  def excluded(rel: String, patterns: Seq[String], isDir: Boolean): Boolean =
-    val parts = rel.split("/", -1).toVector
-    patterns.exists { written =>
-      val anchored = written.reverse.dropWhile(_ == '/').reverse.contains('/')
-      val dirOnly = written.endsWith("/")
-      val pattern = trimSlashes(written)
-      (1 to parts.length).exists { i =>
-        val skip = pattern.isEmpty || (dirOnly && i == parts.length && !isDir)
-        val candidate = if anchored then parts.take(i).mkString("/") else parts(i - 1)
-        !skip && Util.fnmatchcase(candidate, pattern)
-      }
+    yield HeadingMarkup
+      .matcher(HeadingLink.matcher(heading.text(1)).replaceAll("$1"))
+      .replaceAll("")
+    val none = Map.empty[String, Int]
+    val (anchors, _, _) = titles.foldLeft((Map.empty[String, String], none, none)) {
+      case ((anchors, githubSeen, tocSeen), title) =>
+        val github =
+          GithubDrop.matcher(title.toLowerCase(Locale.ROOT)).replaceAll("").replace(' ', '-')
+        // Python-Markdown toc's default slugify, which mkdocs uses (mkdocs.yml sets none).
+        val ascii = Normalizer.normalize(title, Normalizer.Form.NFKD).filter(_ < 0x80)
+        val dropped = TocDrop.matcher(ascii).replaceAll("")
+        val slug = TocDash.matcher(dropped.trim.toLowerCase(Locale.ROOT)).replaceAll("-")
+        val (toc, tocNext) = unique(slug, tocSeen, "_")
+        val (anchor, githubNext) = unique(github, githubSeen, "-")
+        val withGithub = anchors.updated(anchor, toc)
+        (withGithub.updatedWith(toc)(_.orElse(Some(toc))), githubNext, tocNext)
     }
-
-  /** Where docs/<rel> lands, relative to the mount. */
-  private def docsMount(rel: String, ctx: Context): String =
-    if ctx.umbrella && (rel == "MIPs" || rel.startsWith("MIPs/")) then s"6-$rel" else rel
-
-  private def outPath(source: String, ctx: Context): String =
-    if source == "README.md" then "index.md" else docsMount(source.stripPrefix("docs/"), ctx)
+    anchors
 
   // ---- the rewrite ----------------------------------------------------------------------------
 
   private class Rewriter(source: String, repo: os.Path, ctx: Context):
-    val errors = mutable.ArrayBuffer.empty[String]
     private val ownGithub = regex(
-      raw"^https://github\.com/marola-dev/" + Pattern.quote(ctx.name) +
+      "^" + Pattern.quote(s"$GitHub/${ctx.name}") +
         raw"/(?:blob|tree)/([^?#]+)(.*)\z"
     )
 
     private lazy val anchors: Map[String, String] =
-      val readme = repo / "README.md"
+      val readme = repo / Names.Readme
       try if os.isFile(readme) then readmeAnchors(readUtf8(readme)) else Map.empty
       catch case _: java.io.IOException => Map.empty
 
-    private def fail(link: String, reason: String): String =
-      errors += s"$source: $link: $reason"
-      link
+    private val tree = onDiskTree(repo)
+
+    private def fail(link: String, error: LinkError): Rewrite =
+      Rewrite(link, Vector(error.line(source, link)))
 
     /** The site's anchor for a README heading; a missing one is an error and kept as written. */
-    private def readmeAnchor(link: String, anchor: String): String =
+    private def readmeAnchor(link: String, anchor: String): Rewrite =
       anchors.get(anchor) match
-        case Some(toc) => toc
-        case None      =>
-          errors += s"$source: $link: no README heading has the anchor #$anchor"
-          anchor
+        case Some(toc) => Rewrite.clean(toc)
+        case None => Rewrite(anchor, Vector(LinkError.NoReadmeAnchor(anchor).line(source, link)))
 
     private def github(
         link: String,
@@ -241,24 +189,24 @@ object DocLinks:
         checkout: os.Path,
         path: String,
         suffix: String
-    ): String =
+    ): Rewrite =
       onDisk(checkout, Util.unquote(path)).filter(Files.exists(_)) match
-        case None       => fail(link, s"missing at $sha")
+        case None       => fail(link, LinkError.MissingAt(sha))
         case Some(full) =>
           val kind = if Files.isDirectory(full) then "tree" else "blob"
-          s"https://github.com/marola-dev/$name/$kind/$sha/$path$suffix"
+          Rewrite.clean(s"$GitHub/$name/$kind/$sha/$path$suffix")
 
-    def target(link: String, image: Boolean): String =
-      if link.isEmpty then ""
+    def target(link: String, image: Boolean): Rewrite =
+      if link.isEmpty then Rewrite.clean("")
       else if firstMatch(Scheme, link).isDefined then pinOwnGithub(link)
       else relative(link, image)
 
     /** A link to this repo on a branch is pinned to ctx.sha; any other absolute link is kept. */
-    private def pinOwnGithub(link: String): String = firstMatch(ownGithub, link) match
-      case None    => link
+    private def pinOwnGithub(link: String): Rewrite = firstMatch(ownGithub, link) match
+      case None    => Rewrite.clean(link)
       case Some(m) =>
         val parts = m.group(1).split("/", -1).toVector
-        if firstMatch(PinnedRef, parts.head).isDefined then link
+        if firstMatch(PinnedRef, parts.head).isDefined then Rewrite.clean(link)
         else
           // A branch may hold slashes (mip-NNNN/k-*): like GitHub, take the shortest ref whose
           // remaining path exists. A slashed ref with no path at all is refused as ambiguous.
@@ -269,110 +217,56 @@ object DocLinks:
           refParts match
             case Some(i) =>
               val ref = parts.take(i).mkString("/")
-              link.substring(0, m.start(1)) + ctx.sha + link.substring(m.start(1) + ref.length)
-            case None => fail(link, s"missing at ${ctx.sha}")
+              Rewrite.clean(
+                link.substring(0, m.start(1)) + ctx.sha + link.substring(m.start(1) + ref.length)
+              )
+            case None => fail(link, LinkError.MissingAt(ctx.sha))
 
-    private def relative(link: String, image: Boolean): String =
-      val (beforeHash, hash, anchor) = link.indexOf('#') match
-        case -1 => (link, "", "")
-        case i  => (link.substring(0, i), "#", link.substring(i + 1))
-      val (path, query) = beforeHash.indexOf('?') match
-        case -1 => (beforeHash, "")
-        case i  => (beforeHash.substring(0, i), beforeHash.substring(i))
-      if path.startsWith("/") then fail(link, "root-absolute; link the page relatively")
-      else if path.isEmpty then
-        val siteAnchor =
-          if hash.nonEmpty && source == "README.md" then readmeAnchor(link, anchor) else anchor
-        s"$query$hash$siteAnchor"
-      else
-        val resolved = posix.normpath(posix.join(posix.dirname(source), path))
-        if resolved == ".." || resolved.startsWith("../") then fail(link, "leaves the repo")
-        else resolvedTarget(link, resolved, path.endsWith("/"), image, query, hash, anchor)
+    private def relative(written: String, image: Boolean): Rewrite =
+      val link = Link.parse(written)
+      def anchor(readme: Boolean) =
+        if readme then readmeAnchor(written, link.anchor) else Rewrite.clean(link.anchor)
+      LinkTarget.of(link, source, image, ctx, tree) match
+        case LinkTarget.Fragment(readme)    => anchor(readme).map(link.after)
+        case LinkTarget.Site(mount, readme) =>
+          anchor(readme).map(ctx.siteHref(source, mount) + link.after(_))
+        case LinkTarget.GitHub(name, sha, submodule, path) =>
+          github(written, name, sha, submodule.fold(repo)(repo / _), path, link.suffix)
+        case LinkTarget.Refused(error) => fail(written, error)
 
-    private def resolvedTarget(
-        link: String,
-        resolved: String,
-        endsWithSlash: Boolean,
-        image: Boolean,
-        query: String,
-        hash: String,
-        anchor: String
-    ): String =
-      val isDir = endsWithSlash || isDirAt(repo, Util.unquote(resolved))
-      val isImage =
-        image || ImageSuffixes.contains(posix.extension(resolved).toLowerCase(Locale.ROOT))
-      val suffix = s"$query$hash$anchor"
-      val (head, rest) = resolved.indexOf('/') match
-        case -1 => (resolved, "")
-        case i  => (resolved.substring(0, i), resolved.substring(i + 1))
-
-      def onSite(mount: String, siteAnchor: String = anchor): String =
-        val start = posix.dirname(outPath(source, ctx)) match
-          case ""  => "."
-          case dir => dir
-        s"${posix.relpath(mount, start)}$query$hash$siteAnchor"
-
-      def onGithub(): String = github(link, ctx.name, ctx.sha, repo, resolved, suffix)
-
-      if ctx.umbrella && ctx.submoduleShas.contains(head) then
-        val published =
-          rest == "" || rest == "README.md" || rest == "docs" || rest.startsWith("docs/")
-        if !published then
-          if isImage then fail(link, ImageOutsideDocs)
-          else github(link, head, ctx.submoduleShas(head), repo / head, rest, suffix)
-        else
-          val rel = (if rest == "README.md" then "" else rest.stripPrefix("docs")).stripPrefix("/")
-          val page = if rel.isEmpty then "index.md" else if isDir then s"$rel/index.md" else rel
-          onSite(s"5-Repos/$head/$page")
-      else if resolved != "docs" && !resolved.startsWith("docs/") then
-        if isImage then fail(link, ImageOutsideDocs)
-        else if resolved != "README.md" then onGithub()
-        else onSite("index.md", if hash.nonEmpty then readmeAnchor(link, anchor) else anchor)
-      else
-        val rel = resolved.stripPrefix("docs").stripPrefix("/")
-        if rel.nonEmpty && excluded(rel, ctx.excludeDocs, isDir) then
-          if isImage then
-            fail(link, "an image under exclude_docs; move it to a published docs/ path")
-          else onGithub()
-        else if rel == "index.md" then
-          fail(link, "docs/index.md is banned (MIP-0074 D1); link docs/ for the landing")
-        else if rel.isEmpty then onSite("index.md")
-        else if isDir then
-          // adr/index.md is generated by prepare-docs, so it never exists in the repo.
-          if rel != "adr" && !isFileAt(repo, s"$resolved/index.md") then
-            fail(link, "a directory with no index.md")
-          else onSite(s"${docsMount(rel, ctx)}/index.md")
-        else onSite(docsMount(rel, ctx))
-    end resolvedTarget
-
-    private def bracketed(link: String, image: Boolean): String =
+    private def bracketed(link: String, image: Boolean): Rewrite =
       if link.length >= 2 && link.startsWith("<") && link.endsWith(">") then
-        s"<${target(link.substring(1, link.length - 1), image)}>"
+        target(link.substring(1, link.length - 1), image).map(t => s"<$t>")
       else target(link, image)
 
-    private def inlineLinks(text: String): String =
-      sub(Inline, text) { m =>
+    private def inlineLinks(text: String): Rewrite =
+      subRewrite(Inline, text) { (m, _) =>
         val bang = m.text(1)
-        val label = inlineLinks(m.text(2))
-        s"$bang[$label](${bracketed(m.text(3), bang.nonEmpty)}${m.text(4)})"
+        for
+          label <- inlineLinks(m.text(2))
+          dest <- bracketed(m.text(3), bang.nonEmpty)
+        yield s"$bang[$label]($dest${m.text(4)})"
       }
 
-    def prose(chunk: String): String =
-      // Masked, not split out: a code span can be a link's label, as in [`AGENTS.md`](…).
-      val spans = mutable.ArrayBuffer.empty[String]
-      val masked = sub(CodeSpan, chunk) { m =>
-        spans += m.group
-        s"\u0000${spans.length - 1}\u0000"
-      }
-      val refsDone = sub(RefDef, masked)(m => m.text(1) + bracketed(m.text(2), image = false))
-      val linksDone = inlineLinks(refsDone)
-      val htmlDone = sub(HtmlTag, linksDone) { tag =>
-        sub(HtmlAttr, tag.group) { a =>
+    private def htmlLinks(text: String): Rewrite =
+      subRewrite(HtmlTag, text) { (tag, _) =>
+        subRewrite(HtmlAttr, tag.group) { (a, _) =>
           val (name, equals, quote) = (a.text(1), a.text(2), a.text(3))
-          s"$name$equals$quote${target(a.text(4), name.equalsIgnoreCase("src"))}$quote"
+          target(a.text(4), name.equalsIgnoreCase("src")).map(t => s"$name$equals$quote$t$quote")
         }
       }
-      sub(Mask, htmlDone)(m => spans(m.group(1).toInt))
+
+    def prose(chunk: String): Rewrite =
+      // Masked, not split out: a code span can be a link's label, as in [`AGENTS.md`](…).
+      val spans = allMatches(CodeSpan, chunk).map(_.group)
+      val masked = subRewrite(CodeSpan, chunk)((_, i) => Rewrite.clean(s"\u0000$i\u0000")).text
+      for
+        refsDone <- subRewrite(RefDef, masked) { (m, _) =>
+          bracketed(m.text(2), image = false).map(m.text(1) + _)
+        }
+        linksDone <- inlineLinks(refsDone)
+        htmlDone <- htmlLinks(linksDone)
+      yield sub(Mask, htmlDone)(m => spans(m.group(1).toInt))
   end Rewriter
 
   /** Rewrite `text`, the repo-relative file `source` (README.md or a page under docs/), for the
@@ -381,13 +275,12 @@ object DocLinks:
     * `repo` is the checkout at `ctx.sha`. Returns the new text and one error per link Appendix A
     * refuses; a refused link is left as written.
     */
-  def rewrite(text: String, source: String, repo: os.Path, ctx: Context): (String, Vector[String]) =
+  def rewrite(text: String, source: String, repo: os.Path, ctx: Context): Rewrite =
     val rewriter = Rewriter(source, repo, ctx)
-    val out = fenced(text).map {
-      case Chunk.Code(code)   => code
+    Rewrite.concat(fenced(text).map {
+      case Chunk.Code(code)   => Rewrite.clean(code)
       case Chunk.Prose(prose) => rewriter.prose(prose)
-    }
-    (out.mkString, rewriter.errors.toVector)
+    })
 
   private def stripAngles(s: String): String = s.stripPrefix("<").stripSuffix(">")
 
@@ -412,65 +305,53 @@ object DocLinks:
     * the errors.
     */
   def mount(repo: os.Path, out: os.Path, ctx: Context): Vector[String] =
-    val docsDir = repo / "docs"
+    val docsDir = repo / Names.Docs
+    val adrDir = docsDir / Names.Adr
     val docs =
       if !os.isDir(docsDir) then Vector.empty
       else os.walk(docsDir).filter(os.isFile(_)).map(_.relativeTo(repo).toString).sorted.toVector
-    val published =
-      docs.filterNot(d => excluded(d.stripPrefix("docs/"), ctx.excludeDocs, isDir = false))
-    val errors = Vector.newBuilder[String]
-    for source <- "README.md" +: published do
-      val from = repo / os.RelPath(source)
-      val dest = out / os.RelPath(outPath(source, ctx))
-      os.makeDir.all(dest / os.up)
-      if source.endsWith(".md") then
-        val (text, refused) = rewrite(readUtf8(from), source, repo, ctx)
-        os.write.over(dest, text)
-        errors ++= refused
-      else
-        os.copy.over(from, dest)
-        os.perms.set(dest, os.perms(from))
-    if os.isDir(docsDir / "adr") then
-      errors ++= adrIndex(docsDir / "adr", out / os.RelPath(docsMount("adr", ctx)), ctx.excludeDocs)
-    errors.result()
+    val published = docs.filterNot { d =>
+      excluded(d.stripPrefix(s"${Names.Docs}/"), ctx.excludeDocs, isDir = false)
+    }
+    val pageErrors = (Names.Readme +: published).flatMap(publish(repo, out, ctx))
+    val adrErrors =
+      if !os.isDir(adrDir) then Vector.empty
+      else adrIndex(adrDir, out / os.RelPath(ctx.docsMount(Names.Adr)), ctx.excludeDocs)
+    pageErrors ++ adrErrors
+
+  /** Write one repo file at its place in the mount, a page rewritten; its errors. */
+  private def publish(repo: os.Path, out: os.Path, ctx: Context)(source: String): Vector[String] =
+    val from = repo / os.RelPath(source)
+    val dest = out / os.RelPath(ctx.outPath(source))
+    os.makeDir.all(dest / os.up)
+    if source.endsWith(".md") then
+      val rewritten = rewrite(readUtf8(from), source, repo, ctx)
+      os.write.over(dest, rewritten.text)
+      rewritten.errors
+    else
+      os.copy.over(from, dest)
+      os.perms.set(dest, os.perms(from))
+      Vector.empty
 
   /** Write out/index.md from the published ADRs' rewritten copies in out (their links are the
     * site's).
     */
   def adrIndex(src: os.Path, out: os.Path, excludeDocs: Seq[String]): Vector[String] =
-    val errors = Vector.newBuilder[String]
-    for name <- Seq("index.md", "README.md") if os.exists(src / name) do
-      errors += s"docs/adr/$name: hand-written; prepare-docs generates adr/index.md"
+    val reserved = Seq(Names.Index, Names.Readme)
+    val handWritten = reserved.filter(name => os.exists(src / name)).map(AdrRow.handWritten)
     val pages = os.list(src).map(_.last).filter(_.endsWith(".md")).sorted.filterNot { page =>
-      page == "index.md" || page == "README.md" || excluded(
-        s"adr/$page",
-        excludeDocs,
-        isDir = false
-      )
+      reserved.contains(page) || excluded(s"${Names.Adr}/$page", excludeDocs, isDir = false)
     }
-    val rows = Vector.newBuilder[String]
-    for page <- pages do
-      firstMatch(AdrFile, page) match
-        case None    => errors += s"docs/adr/$page: not NNNN-<slug>.md"
-        case Some(m) =>
-          val n = m.group(1)
-          val text = readUtf8(out / page)
-          val titleLine = regex(raw"(?m)^# ADR-" + n + raw":[ \t]*(\S.*?)[ \t]*$$")
-          val title = firstMatch(titleLine, text).map(_.group(1))
-          val status = firstMatch(AdrStatus, text).map(_.group(1))
-          if title.isEmpty then errors += s"docs/adr/$page: no \"# ADR-$n: <decision>\" heading"
-          if status.isEmpty then errors += s"docs/adr/$page: no | **Status** | row"
-          for t <- title; s <- status do rows += s"| [$n]($page) | ${t.replace("|", "\\|")} | $s |"
-    val table = rows.result()
-    val body =
-      if table.isEmpty then Vector("_None yet._")
-      else Vector("| ADR | Decision | Status |", "|---|---|---|") ++ table
+    val read = pages.map { page =>
+      AdrRow
+        .number(page)
+        .left
+        .map(Vector(_))
+        .flatMap(n => AdrRow.read(page, n, readUtf8(out / page)))
+    }
     os.makeDir.all(out)
-    os.write.over(
-      out / "index.md",
-      (Vector("# Architecture decisions", "") ++ body).mkString("\n") + "\n"
-    )
-    errors.result()
+    os.write.over(out / Names.Index, adrIndexPage(read.collect { case Right(row) => row }))
+    (handWritten ++ read.collect { case Left(errors) => errors }.flatten).toVector
 
   // ---- the command ----------------------------------------------------------------------------
 

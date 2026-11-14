@@ -6,6 +6,7 @@ import marola.tools.shared.Util
 import java.nio.file.{Files, InvalidPathException}
 import java.util.regex.{MatchResult, Pattern}
 import mainargs.{arg, main, ParserForMethods}
+import SiteModel.*
 
 // Every docs.marola.dev link in a built site resolves, and the previous live sitemap's URLs still
 // land somewhere, so a page move can't silently drop a URL (MIP-0074 §5.3, §7). No network: the
@@ -13,8 +14,6 @@ import mainargs.{arg, main, ParserForMethods}
 //
 //     marola-tools site-links-check mkdocs/generated-docs [--old-sitemap old-sitemap.xml]
 object SiteLinks:
-  val Site = "https://docs.marola.dev"
-
   // Unicode classes, and only \n ends a line.
   private def regex(pattern: String): Pattern =
     Pattern.compile(pattern, Pattern.UNICODE_CHARACTER_CLASS | Pattern.UNIX_LINES)
@@ -37,14 +36,10 @@ object SiteLinks:
     val matcher = pattern.matcher(text)
     Iterator.continually(matcher).takeWhile(_.find()).map(_.toMatchResult).toVector
 
-  /** The old->new URL pairs overrides/404.html forwards, longest old first: the tie-break its own
-    * inline script uses, so a path under two prefixes matches the narrower one.
-    */
-  def forwardPrefixes(html: String): Vector[(String, String)] =
+  /** The moves overrides/404.html forwards, longest old prefix first. */
+  def forwardPrefixes(html: String): Vector[Move] =
     val body = allMatches(MovesBlock, html).headOption.map(_.group(1)).getOrElse("")
-    allMatches(MovePair, body)
-      .map(m => (m.group(2), m.group(4)))
-      .sortBy((old, _) => -old.codePointCount(0, old.length))
+    Move.longestFirst(allMatches(MovePair, body).map(m => Move(m.group(2), m.group(4))))
 
   /** The file in `siteDir` that `urlPath` (directory-url style) serves, if any. */
   def resolve(urlPath: String, siteDir: os.Path): Option[java.nio.file.Path] =
@@ -54,8 +49,8 @@ object SiteLinks:
       try
         val dir = siteDir.toNIO.resolve(rel)
         val candidates =
-          if rel.isEmpty || rel.endsWith("/") then Seq(dir.resolve("index.html"))
-          else Seq(dir, dir.resolve("index.html"))
+          if rel.isEmpty || rel.endsWith("/") then Seq(dir.resolve(Names.IndexHtml))
+          else Seq(dir, dir.resolve(Names.IndexHtml))
         candidates.find(Files.isRegularFile(_))
       catch case _: InvalidPathException => None
 
@@ -69,8 +64,8 @@ object SiteLinks:
     try Some(Util.readLossy(path))
     catch case _: java.io.IOException => None
 
-  /** (how many docs.marola.dev hrefs are under `siteDir`, which of them don't resolve in it). */
-  def checkHrefs(siteDir: os.Path): (Int, Vector[String]) =
+  /** The docs.marola.dev hrefs under `siteDir`, failed by the ones that don't resolve in it. */
+  def checkHrefs(siteDir: os.Path): LinkCheck =
     val hrefs = for
       page <- htmlPages(siteDir)
       html <- readOrEmpty(page).toVector
@@ -80,26 +75,20 @@ object SiteLinks:
       case (page, url) if resolve(Util.unquote(Util.urlPath(url)), siteDir).isEmpty =>
         s"${page.relativeTo(siteDir)}: $url"
     }
-    (hrefs.length, broken)
+    LinkCheck(hrefs.length, broken)
 
-  /** (how many <loc> the old sitemap had, which of them are now dropped: not a page, a redirect
-    * stub, nor forwarded by a 404-forward prefix to a page that still exists). The count is the
-    * caller's signal that the sitemap was real: zero must never read as "nothing dropped".
+  /** The old sitemap's <loc>s, failed by the ones now dropped: not a page, a redirect stub, nor
+    * forwarded by a 404-forward prefix to a page that still exists.
     */
-  def checkOldSitemap(
-      siteDir: os.Path,
-      xml: String,
-      moves: Seq[(String, String)]
-  ): (Int, Vector[String]) =
+  def checkOldSitemap(siteDir: os.Path, xml: String, moves: Seq[Move]): LinkCheck =
     val locs = allMatches(Loc, xml).map(_.group(1))
     val dropped = locs.filter { loc =>
       val path = Util.unquote(Util.urlPath(loc))
-      def forwarded = moves
-        .find((old, _) => path.startsWith(old))
-        .flatMap((old, replacement) => resolve(replacement + path.substring(old.length), siteDir))
+      def forwarded =
+        moves.iterator.flatMap(_.forward(path)).nextOption().flatMap(resolve(_, siteDir))
       resolve(path, siteDir).isEmpty && forwarded.isEmpty
     }
-    (locs.length, dropped)
+    LinkCheck(locs.length, dropped)
 
   @main(doc =
     "Every docs.marola.dev link in a built site resolves, and no old sitemap URL was dropped"
@@ -113,31 +102,18 @@ object SiteLinks:
       System.err.println(s"site_links_check: no such directory: $siteDir")
       1
     else
-      val (hrefTotal, broken) = checkHrefs(site)
-      val (oldTotal, dropped) = oldSitemap match
-        case None          => (0, Vector.empty)
-        case Some(sitemap) =>
-          val overrides = Util.repoRoot / "mkdocs" / "overrides" / "404.html"
-          val moves = readOrEmpty(overrides).map(forwardPrefixes).getOrElse(Vector.empty)
-          val xml = readOrEmpty(os.Path(sitemap, os.pwd)).getOrElse("")
-          checkOldSitemap(site, xml, moves)
-      broken.foreach(b => System.err.println(s"broken href: $b"))
-      dropped.foreach(d => System.err.println(s"dropped url: $d"))
-      val sitemapEmpty = oldSitemap.isDefined && oldTotal == 0
-      oldSitemap.filter(_ => sitemapEmpty).foreach { sitemap =>
-        System.err.println(
-          s"site_links_check: $sitemap has no <loc> at all — an empty fetch, an error page, or a sitemap format this check doesn't parse; not a clean sitemap"
-        )
+      val hrefs = checkHrefs(site)
+      val sitemap = oldSitemap.map { sitemap =>
+        val overrides = Util.repoRoot / Names.Mkdocs / Names.Overrides / Names.NotFoundPage
+        val moves = readOrEmpty(overrides).map(forwardPrefixes).getOrElse(Vector.empty)
+        val xml = readOrEmpty(os.Path(sitemap, os.pwd)).getOrElse("")
+        OldSitemap(sitemap, checkOldSitemap(site, xml, moves))
       }
-      if broken.nonEmpty || dropped.nonEmpty || sitemapEmpty then
-        System.err.println(
-          s"site_links_check: ${broken.length} broken href(s), ${dropped.length} dropped url(s)"
-        )
-        1
-      else
-        if oldSitemap.isDefined then
-          println(s"site_links_check: ok ($hrefTotal href(s), $oldTotal old url(s) checked)")
-        else println(s"site_links_check: ok ($hrefTotal href(s) checked)")
+      val verdict = SiteLinksVerdict(hrefs, sitemap)
+      verdict.errors.foreach(System.err.println)
+      if verdict.ok then
+        println(verdict.summary)
         0
+      else 1
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "site-links-check", args)

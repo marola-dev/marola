@@ -4,6 +4,7 @@ import marola.tools.shared.Util
 
 class MkdocsTest extends munit.FunSuite:
   import Mkdocs.*
+  import SiteModel.*
 
   private def stub(dir: os.Path, name: String, exit: Int): Unit =
     os.write.over(dir / name, s"#!/bin/sh\nexit $exit\n", createFolders = true, perms = "rwxr-xr-x")
@@ -12,23 +13,27 @@ class MkdocsTest extends munit.FunSuite:
     val bin = os.temp.dir()
     def path(extra: (String, String)*) = Map("PATH" -> bin.toString) ++ extra
     stub(bin, "podman", 0)
-    assertEquals(pickRuntime(path()), Some("podman"))
+    assertEquals(pickRuntime(MkdocsConfig.from(path())), Some("podman"))
     stub(bin, "docker", 0)
     assertEquals(
-      pickRuntime(path("CONTAINER_RUNTIME" -> "docker")),
+      pickRuntime(MkdocsConfig.from(path("CONTAINER_RUNTIME" -> "docker"))),
       Some("docker"),
       "CONTAINER_RUNTIME=docker skips a live podman"
     )
     stub(bin, "podman", 1)
     assertEquals(
-      pickRuntime(path()),
+      pickRuntime(MkdocsConfig.from(path())),
       Some("docker"),
       "a podman whose daemon does not answer is skipped"
     )
     stub(bin, "docker", 1)
-    assertEquals(pickRuntime(path()), None, "two installed-but-dead runtimes fail")
     assertEquals(
-      pickRuntime(Map("PATH" -> (bin / "empty").toString)),
+      pickRuntime(MkdocsConfig.from(path())),
+      None,
+      "two installed-but-dead runtimes fail"
+    )
+    assertEquals(
+      pickRuntime(MkdocsConfig.from(Map("PATH" -> (bin / "empty").toString))),
       None,
       "neither installed fails too"
     )
@@ -198,7 +203,7 @@ class MkdocsTest extends munit.FunSuite:
     "a build runs the stack, reads the container's exit code back, copies the site out, then downs it"
   ):
     withFakeRuntime("0") { (root, env, log) =>
-      assertEquals(runMode(Mode.Build, root, env), 0)
+      assertEquals(runMode(Mode.Build, root, MkdocsConfig.from(env)), 0)
       val compose =
         s"docker compose -p ${projectName(root.toString)} -f docker-compose.yml -f docker-compose.build.yml"
       val suffix = s" | cwd=mkdocs image=${imageTag(root.toString)}"
@@ -225,7 +230,7 @@ class MkdocsTest extends munit.FunSuite:
 
   test("a failed build exits with the container's code, and still downs the stack"):
     withFakeRuntime("3") { (root, env, log) =>
-      assertEquals(runMode(Mode.Build, root, env), 3)
+      assertEquals(runMode(Mode.Build, root, MkdocsConfig.from(env)), 3)
       assert(
         os.read.lines(log).last.contains("compose") && os.read.lines(log).last.contains(" down ")
       )
@@ -234,5 +239,12 @@ class MkdocsTest extends munit.FunSuite:
 
   test("no reachable runtime is exit 1"):
     withFakeRuntime("0") { (root, env, _) =>
-      assertEquals(runMode(Mode.Build, root, env + ("CONTAINER_RUNTIME" -> "no-such-runtime")), 1)
+      assertEquals(
+        runMode(
+          Mode.Build,
+          root,
+          MkdocsConfig.from(env + ("CONTAINER_RUNTIME" -> "no-such-runtime"))
+        ),
+        1
+      )
     }

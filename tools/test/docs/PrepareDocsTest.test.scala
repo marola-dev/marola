@@ -4,11 +4,12 @@ import marola.tools.shared.Proc
 
 class PrepareDocsTest extends munit.FunSuite:
   import PrepareDocs.*
+  import SiteModel.*
 
   // No network: every api-docs and flake-lock fetch goes to an empty local directory unless a
   // test says otherwise.
   private val noRemote = os.temp.dir(prefix = "no-remote")
-  private val env = FetchApiDocs.gitEnv(sys.env) ++ Map(
+  private val env = isolatedGitEnv(sys.env) ++ Map(
     "GIT_CONFIG_GLOBAL" -> "/dev/null",
     "GIT_CONFIG_NOSYSTEM" -> "1",
     "API_DOCS_REMOTE" -> s"$noRemote/<repo>.git",
@@ -86,8 +87,10 @@ class PrepareDocsTest extends munit.FunSuite:
     System.setErr(stream)
     try
       val result =
-        Console.withOut(stream)(Console.withErr(stream)(prepare(root, build, env ++ extra)))
-      (result.isRight, buffer.toString("UTF-8") + result.left.getOrElse(""))
+        Console.withOut(stream)(
+          Console.withErr(stream)(prepare(root, build, PrepareConfig.from(env ++ extra)))
+        )
+      (result.isRight, buffer.toString("UTF-8") + result.left.map(_.message).left.getOrElse(""))
     finally
       System.setOut(savedOut)
       System.setErr(savedErr)
@@ -369,8 +372,8 @@ class PrepareDocsTest extends munit.FunSuite:
         .parseText("- name: fake-devkit\n  source: flake-lock\n- name: fake-app\n", "m.yml"),
       Right(
         Vector(
-          ReposManifest.Repo("fake-devkit", ReposManifest.Source.FlakeLock),
-          ReposManifest.Repo("fake-app", ReposManifest.Source.Submodule)
+          Repo("fake-devkit", RepoSource.FlakeLock),
+          Repo("fake-app", RepoSource.Submodule)
         )
       )
     )
