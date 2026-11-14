@@ -267,9 +267,11 @@ as not run; it is never skipped silently.
   English (the devkit plugin), `humanizar` on Portuguese (ww3-gpu's copy until
   marola-dev/marola-devkit#102 settles a marola one), and marola-site's `ptbr-humanizer` on the
   site's visitor copy.
-- **This repo's READMEs**: `README.md` is in Portuguese, the full version and the docs site's
-  landing. `README.en.md` is the English one, written ELI5: short sentences, no jargon, a link
-  for the detail. A change to one reaches the other in the same PR.
+- **This repo's READMEs**: `README.md` is in Portuguese and the docs site's landing;
+  `README.en.md` is its English mirror. Both stay short (what marola is, how to run it, this repo,
+  how to cite), with only the DOI, version, CI, tests, Scala, JDK, Scala LOC and reading-time
+  badges (the owner, 2026-11-14); the detail lives on docs.marola.dev. A change to one reaches the
+  other in the same PR.
 - **Every README shows its reading time** (`marola-tools reading-time`, at Brysbaert's 181 words
   per minute for Portuguese and 238 for English): after editing one, run `just reading-time`;
   `tools-ci` fails on a stale badge. A figure in a README comes from a source in the repo, never a
