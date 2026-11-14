@@ -4,7 +4,7 @@
 
 <p align="center">
 <!-- tests, scala, jdk and scala LOC: shields.io endpoint JSON that ci.yml's repo-stats job writes to marola-site's site-data branch from each main run (tools-ci's verdict, the directives of tools/project.scala, cloc of tools/src). -->
-<a href="https://doi.org/10.5281/zenodo.23224155"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.23224155.svg" alt="DOI 10.5281/zenodo.23224155" /></a>
+<a href="https://doi.org/10.5281/zenodo.23224155"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23224155-1682D4" alt="DOI 10.5281/zenodo.23224155" /></a>
 <a href="https://github.com/marola-dev/marola/releases"><img src="https://img.shields.io/github/v/release/marola-dev/marola?label=version" alt="version" /></a>
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmarola-dev%2Fmarola-site%2Fsite-data%2Fstats%2Ftests.json" alt="tests" /></a>
