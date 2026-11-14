@@ -17,7 +17,7 @@ ORCID, and related work by DOI.
 Every published GitHub release of this repo is archived by Zenodo, which mints a version DOI
 under one concept DOI. There are no secrets in it:
 
-1. `just release X.Y.Z` (`scripts/release.sh`) tags `main` as `vX.Y.Z` and pushes. It refuses
+1. `just release X.Y.Z` (`marola-tools release`) tags `main` as `vX.Y.Z` and pushes. It refuses
    unless `main` is clean and level with `origin/main`, the tag is new and
    `scripts/marola-tools citation --check` passes, and the pointer guard below. `--dry-run` runs every check
    and tags nothing; it is the rehearsal (there are no `-rc` tags: each archived release is a
@@ -29,7 +29,7 @@ under one concept DOI. There are no secrets in it:
 
 **Hard rule: a submodule pointer move never makes a Zenodo version.** The umbrella's daily
 `chore/pointer-sync` PR moves gitlinks; if that were all that changed since the previous `v*` tag,
-`scripts/release.sh --guard` refuses, in both step 1 and step 2, so a tag pushed by hand is caught
+`marola-tools release --guard` refuses, in both step 1 and step 2, so a tag pushed by hand is caught
 too. Never suggest a release whose only change is pointers, and never weaken the guard.
 
 An agent does not tag or release: that is the maintainer's act. Prepare the metadata PR, then

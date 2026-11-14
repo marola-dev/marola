@@ -7,10 +7,10 @@
 <p align="center">
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://github.com/marola-dev/marola/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 <a href="https://github.com/marola-dev/marola-site/actions/workflows/site-health.yml"><img src="https://github.com/marola-dev/marola-site/actions/workflows/site-health.yml/badge.svg" alt="site (live check)" /></a>
-<!-- ci.yml's repo-stats job (scripts/marola-tools repo-stats) writes these two as shields.io endpoint JSON to marola-site's site-data branch, read from there by raw.githubusercontent.com (marola.dev serves a copy only after the next site deploy): how many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line count for tools/, the umbrella's Rust tooling. The Scala badges are marola-app's README's. -->
+<!-- ci.yml's repo-stats job (scripts/marola-tools repo-stats) writes these two as shields.io endpoint JSON to marola-site's site-data branch, read from there by raw.githubusercontent.com (marola.dev serves a copy only after the next site deploy): how many of the last main run's steps went green out of the steps that actually ran (skipped ones excluded), and cloc's code-line count for tools/src, the umbrella's Scala 3 tooling. The Scala badges are marola-app's README's. -->
 <a href="https://github.com/marola-dev/marola/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmarola-dev%2Fmarola-site%2Fsite-data%2Fstats%2Fci.json" alt="CI steps green on the last main run" /></a>
-<a href="https://github.com/marola-dev/marola/tree/main/tools"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmarola-dev%2Fmarola-site%2Fsite-data%2Fstats%2Frust-loc.json" alt="Rust lines of code in tools/" /></a>
-<a href="https://github.com/marola-dev/marola/tree/main/tools"><img src="https://img.shields.io/badge/tooling-100%25_Rust-DEA584?logo=rust&logoColor=white" alt="the umbrella's tooling is 100% Rust (tools/, marola-tools)" /></a>
+<a href="https://github.com/marola-dev/marola/tree/main/tools"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmarola-dev%2Fmarola-site%2Fsite-data%2Fstats%2Ftooling-loc.json" alt="Scala lines of code in tools/" /></a>
+<a href="https://github.com/marola-dev/marola/tree/main/tools"><img src="https://img.shields.io/badge/tooling-100%25_Scala_3-DC322F?logo=scala&logoColor=white" alt="the umbrella's tooling is 100% Scala 3 (tools/, marola-tools)" /></a>
 <a href="https://marola.dev/"><img src="https://img.shields.io/badge/live_map-marola.dev-0b6e99?logo=mapbox&logoColor=white" alt="live map" /></a>
 <a href="https://github.com/protontypes/open-sustainable-technology#coastal-and-reefs"><img src="https://img.shields.io/badge/Open_Sustainable_Technology-listed-009485" alt="listado no Open Sustainable Technology, em Coastal and Reefs" /></a>
 <a href="./PARTNERS.md"><img src="https://img.shields.io/badge/Leave_No_Trace-Proud_Partner-4A7A2B" alt="Leave No Trace, parceiro (Proud Partner)" /></a>
@@ -99,9 +99,8 @@ plano: [`docs/MIPs/`](./docs/MIPs/README.md).
 
 ## Para rodar em cinco minutos
 
-O marola é um conjunto de repositórios de propósito único; este aqui, o repositório guarda-chuva
-(*umbrella*), junta todos como submódulos git. O app que você roda é o
-[marola-app](https://github.com/marola-dev/marola-app):
+O app que você roda é o [marola-app](https://github.com/marola-dev/marola-app), um submódulo
+deste repositório:
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola && cd marola/marola-app
@@ -125,8 +124,7 @@ O marola não é um repositório só, e sim uma família de repositórios pequen
 função, o seu próprio `AGENTS.md`, documentação, CI e issues. Este aqui, `marola-dev/marola`, é o
 **guarda-chuva** (*umbrella*) que junta todos ([MIP-0070](./docs/MIPs/MIP-0070-umbrella-and-polyrepo-split.md)).
 Ele não tem código de produto: guarda os documentos de projeto (MIPs), a lista de fases, o jeito de
-trabalhar, o site de documentação, a ferramenta dele mesmo (o `marola-tools`, em Rust, em `tools/`)
-e cada repositório de código como um submódulo git, fixado num commit.
+trabalhar, o site de documentação, as ferramentas dele mesmo (em `tools/`) e cada repositório de código como um submódulo git, fixado num commit.
 
 <p align="center"><img src="./docs/img/umbrella.pt-BR.svg" alt="Como os repositórios do marola dependem uns dos outros: o marola-corpus entrega notas ao marola-app e ao marola-ml, a imagem do marola-app monta o mapa do marola-site e roda o benchmark do marola-ml, o marola-ml devolve prompts compilados, o ETL do marola-app grava o lago do marola-oods e fixa o contrato dele; o marola-devkit é fixado por todos, e o marola-skills e o marola-agents leem as skills e os agentes de cada repositório, cada um num catálogo" width="860" /></p>
 
@@ -144,9 +142,15 @@ e cada repositório de código como um submódulo git, fixado num commit.
   [`docs/MIPs/`](./docs/MIPs/README.md); as tarefas viram issues, e um agente só pega issues que
   uma pessoa marcou como `agent-ready`.
 
+### As ferramentas: marola-tools, em Scala 3
+
+Cada automação deste repositório é um comando do `marola-tools`, em Scala 3 com o
+[scala-cli](https://scala-cli.virtuslab.org/): um arquivo por comando em `tools/src/`.
+`scripts/marola-tools --help` lista todos.
+
 ### O repositório inteiro em duas figuras
 
-![Os repositórios do marola em três faixas: no produto, o marola-corpus entrega um tarball ao marola-app, cuja imagem monta o marola-site, que vira o mapa do marola.dev; nos modelos, dados e ferramentas, o marola-ml lê o corpus e devolve um prompt compilado ao app, e o marola-oods guarda os dados abertos do oceano; no guarda-chuva, o marola-devkit é fixado por tag, e este repositório, com as MIPs e o marola-tools em Rust, gera o docs.marola.dev.](docs/img/repos.png)
+![Os repositórios do marola em três faixas: no produto, o marola-corpus entrega um tarball ao marola-app, cuja imagem monta o marola-site, que vira o mapa do marola.dev; nos modelos, dados e ferramentas, o marola-ml lê o corpus e devolve um prompt compilado ao app, e o marola-oods guarda os dados abertos do oceano; no guarda-chuva, o marola-devkit é fixado por tag, e este repositório, com as MIPs e o marola-tools em Scala 3, gera o docs.marola.dev.](docs/img/repos.png)
 
 <details>
 <summary>Como ler esta figura</summary>

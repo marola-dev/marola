@@ -23,7 +23,7 @@ jobs:
   merge:
     if: vars.AUTO_MERGE != 'false'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -33,6 +33,11 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@v1
+        with:
+          jvm: temurin:21
       - uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.20.4
         id: app
         with:
@@ -52,4 +57,4 @@ jobs:
           REPO: ${{ github.repository }}
           # Empty outside workflow_run: the script then judges whatever the head is now.
           SHA: ${{ github.event.workflow_run.head_sha }}
-        run: scripts/pointer-sync-merge.sh --repo "$REPO" --sha "$SHA"
+        run: scripts/marola-tools pointer-sync-merge --repo "$REPO" --sha "$SHA"

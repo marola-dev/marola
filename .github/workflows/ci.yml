@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      rust: ${{ steps.filter.outputs.rust }}
+      tools: ${{ steps.filter.outputs.tools }}
       workflows: ${{ steps.filter.outputs.workflows }}
       docker: ${{ steps.filter.outputs.docker }}
       justfile: ${{ steps.filter.outputs.justfile }}
@@ -40,14 +40,13 @@ jobs:
         id: filter
         with:
           filters: |
-            rust:
-              - 'tools/**'          # marola-tools: rustfmt, clippy, cargo test
-              - 'rust-toolchain.toml'
-              - 'scripts/**'        # the shell self-tests live in the same rust-ci job
+            tools:
+              - 'tools/**'          # marola-tools: scalafmt, the -Werror compile, the munit suite
+              - 'scripts/**'        # the wrapper and docs_redirect_check.js run in the same tools-ci job
               - 'docs/MIPs/**'      # mip-graph's test regenerates the graph from every MIP
-              - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
-              - '.github/workflows/ci.yml'  # the self-test list below
-              - 'AGENTS.md'          # agents_repos_check.sh reads it
+              - 'mkdocs/**'          # the mkdocs tests assert on mkdocs.yml's kroki keys; the redirect check reads 404.html
+              - '.github/workflows/ci.yml'  # the job below
+              - 'AGENTS.md'          # agents-repos-check reads it
               - 'CLAUDE_PROJECT.config.md'  # claude-project-check reads it
               - '.zenodo.json'       # citation's test checks the generated files are current
               - 'CITATION.cff'
@@ -76,26 +75,22 @@ jobs:
               - '.graphifyignore'
               - '.github/workflows/ci.yml'
               - 'routing-bench.yaml'
-              - 'tools/src/routing_bundle.rs'
+              - 'tools/src/RoutingBundle.scala'
             docs:
               - 'docs/**'
               - 'mkdocs/**'
               - 'README.md'
               - 'llms.txt'
               - 'flake.lock'         # marola-devkit mounts at its locked rev
-              - 'scripts/prepare-docs.sh'
-              - 'scripts/fetch-api-docs.sh'
-              - 'scripts/lib/repos_manifest.sh'
-              - 'tools/**'          # doc-links and site-links-check
+              - 'tools/**'          # prepare-docs, doc-links, mkdocs and site-links-check
               - 'scripts/marola-tools'
-              - 'scripts/mkdocs.sh'
               - '.gitmodules'
               - *submodules
 
   # README badges: this run's green steps, plus marola-app's Scala line count, counted in the
   # checked-out submodule (MIP-0070 §5.4: the umbrella runs repo-stats over every repo).
   repo-stats:
-    needs: [changes, rust-ci, static-ci, agents-check, quality-other]
+    needs: [changes, tools-ci, static-ci, agents-check, quality-other]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -114,10 +109,12 @@ jobs:
         run: |
           nix develop .#lint --command which cloc | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
 
-      - uses: Swatinem/rust-cache@v2
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@v1
         with:
-          workspaces: tools
-      - name: Badge JSONs — CI health (steps green/ran), Rust and Scala LOC
+          jvm: temurin:21
+      - name: Badge JSONs — CI health (steps green/ran), the tooling's and marola-app's Scala LOC
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -146,7 +143,7 @@ jobs:
             echo "stats unchanged — nothing to push"
           else
             git -C site-data commit -q -m "stats: ${{ github.sha }}"
-            scripts/site-data-push.sh site-data
+            scripts/marola-tools site-data-push site-data
           fi
           # No dispatch: marola-site's scheduled build picks these up without an Overpass query.
 
@@ -165,15 +162,17 @@ jobs:
       - name: Save the live sitemap
         continue-on-error: true
         run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml || { rm -f old-sitemap.xml; exit 1; }
-      - uses: Swatinem/rust-cache@v2
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@v1
         with:
-          workspaces: tools
-      - run: scripts/prepare-docs.sh
+          jvm: temurin:21
+      - run: scripts/marola-tools prepare-docs
       - name: mkdocs --strict, in the Kroki container stack
         env:
           CONTAINER_RUNTIME: docker
           DOCS_SRC: .tmp/docs-aggregated
-        run: scripts/mkdocs.sh
+        run: scripts/marola-tools mkdocs
       - name: Every docs.marola.dev link resolves, and no old sitemap URL was dropped
         run: |
           if [ -s old-sitemap.xml ]; then
@@ -199,9 +198,11 @@ jobs:
           submodules: true
       # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
       - uses: DeterminateSystems/nix-installer-action@v23
-      - uses: Swatinem/rust-cache@v2
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@v1
         with:
-          workspaces: tools
+          jvm: temurin:21
       # MIP-0076 §8's open item; without it graph.sh runs with no network isolation.
       - name: Does unshare -rn work on this runner?
         run: |
@@ -285,41 +286,35 @@ jobs:
             -m "Tested: $score (route bench)" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
           git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/routing-bundle
 
-  # Free, fast, and independent of the JVM build — the same gates as `just quality-other`, split
-  # across rust-ci, the devkit's reusable workflows and the nix-only checks below. The tool versions are
-  # what flake.lock's nixpkgs builds for labs/lint (0968519): move them with `nix flake update`.
-  # rust-ci is marola-tools (tools/) plus the shell self-tests; it replaced python-ci when the
-  # scripts moved to Rust (AGENTS.md: no Python in the umbrella).
-  rust-ci:
+  # Free and fast: the same gates as `just quality-other`, split across tools-ci, the devkit's
+  # reusable workflows and the nix-only checks below. The lint tool versions are what flake.lock's
+  # nixpkgs builds for labs/lint (0968519): move them with `nix flake update`. tools-ci is
+  # marola-tools (tools/, Scala 3; AGENTS.md: no Python and no Rust in the umbrella), whose munit
+  # suite also holds what were the shell scripts' self-tests.
+  tools-ci:
     needs: changes
-    if: needs.changes.outputs.rust == 'true'
+    if: needs.changes.outputs.tools == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: Swatinem/rust-cache@v2
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@v1
         with:
-          workspaces: tools
-      - name: rustfmt
-        run: cargo fmt --manifest-path tools/Cargo.toml --check
-      - name: clippy
-        run: cargo clippy --manifest-path tools/Cargo.toml --locked --all-targets -- -D warnings
-      - name: cargo test (every marola-tools command, plus mip-graph, citation and claude-project-check against the committed files)
-        run: cargo test --manifest-path tools/Cargo.toml --locked
-      - name: shell self-tests
+          jvm: temurin:21
+      - name: scalafmt
+        run: scala-cli fmt --check tools
+      - name: munit (every marola-tools command, plus mip-graph, citation and claude-project-check against the committed files; -Werror)
+        run: scala-cli test tools
+      - name: the committed files are current
         run: |
           set -euo pipefail
-          scripts/gh-billing.sh --self-test
-          scripts/site-data-push.sh --self-test
-          scripts/pointer-sync.sh --self-test
-          scripts/pointer-sync-merge.sh --self-test
-          scripts/prepare-docs.sh --self-test
-          scripts/fetch-api-docs.sh --self-test
-          scripts/mkdocs.sh --self-test
-          scripts/release.sh --self-test
+          scripts/marola-tools claude-project-check
+          scripts/marola-tools agents-repos-check
+          scripts/marola-tools mip-graph --check
+          scripts/marola-tools citation --check
           node scripts/docs_redirect_check.js
-          scripts/agents_repos_check.sh --self-test
-          scripts/agents_repos_check.sh
       - name: every README carries its current reading time (AGENTS.md)
         run: scripts/marola-tools reading-time --check
 
@@ -402,7 +397,7 @@ jobs:
   # every run, so it needs every other job and passes on skipped ones.
   ci-ok:
     if: always()
-    needs: [changes, repo-stats, docs-build, graph, bundle-publish, rust-ci, static-ci, agents-check, quality-other]
+    needs: [changes, repo-stats, docs-build, graph, bundle-publish, tools-ci, static-ci, agents-check, quality-other]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}

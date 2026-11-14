@@ -41,11 +41,10 @@
         projectTools = [
           pkgs.just
 
-          # tools/ (marola-tools): the umbrella's own tooling is Rust, never Python (AGENTS.md).
-          pkgs.cargo
-          pkgs.rustc
-          pkgs.rustfmt
-          pkgs.clippy
+          # tools/ (marola-tools): the umbrella's own tooling is Scala 3, run by scala-cli on a
+          # JDK 21 (AGENTS.md). scala-cli fetches the compiler, the libraries and scalafmt itself.
+          pkgs.scala-cli
+          pkgs.jdk21_headless
 
           # `just context-mips`: repomix packs docs for a browser session, wl-copy/xclip copy them.
           pkgs.repomix

@@ -4,7 +4,7 @@
 # No `container_name:` on any of these. A container name is global to the daemon, and compose's
 # project name defaults to this directory's, which is `mkdocs` in every checkout — so two builds
 # on one host (two worktrees, or two CI jobs on the self-hosted runner) shared names and each
-# `down` tore the other's stack out from under it. scripts/mkdocs.sh gives compose a project name
+# `down` tore the other's stack out from under it. `marola-tools mkdocs` gives compose a project name
 # derived from the checkout path instead, and asks it for the container id rather than assuming.
 #
 # Neither kroki port is published: only the mkdocs container talks to them, over this network.
@@ -48,7 +48,7 @@ services:
       start_period: 30s
 
   mkdocs:
-    # scripts/mkdocs.sh sets MKDOCS_IMAGE to a per-checkout tag (#526), for the same reason the
+    # `marola-tools mkdocs` sets MKDOCS_IMAGE to a per-checkout tag (#526), for the same reason the
     # project name above is per checkout. The default here only matters for a bare `compose config`.
     image: ${MKDOCS_IMAGE:-marola/mkdocs}
     build:
