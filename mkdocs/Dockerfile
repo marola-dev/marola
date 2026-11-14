@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir \
 WORKDIR /mkdocs
 
 # The docs are baked in, not bind-mounted: a mount only works where the daemon can see the host
-# path, which rules out every VM-backed runtime (podman machine, Docker Desktop). scripts/mkdocs.sh
+# path, which rules out every VM-backed runtime (podman machine, Docker Desktop). `marola-tools mkdocs`
 # copies the output back out afterwards. The compose files supply the command.
 COPY . /mkdocs
 

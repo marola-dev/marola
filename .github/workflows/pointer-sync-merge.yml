@@ -20,12 +20,23 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  merge:
+  # Keyless: reads and decides. scala-cli and its downloads never run beside MERGE_BOT_KEY
+  # (MIP-0086 §5.6, the devkit's merge-key-check), so the merge or the comment is the next job's.
+  decide:
     if: vars.AUTO_MERGE != 'false'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       contents: read
+      pull-requests: read
+      issues: read
+      checks: read
+      statuses: read
+    outputs:
+      action: ${{ steps.plan.outputs.action }}
+      pr: ${{ steps.plan.outputs.pr }}
+      head: ${{ steps.plan.outputs.head }}
+      body: ${{ steps.plan.outputs.body }}
     steps:
       # main's script, never the PR's: the script only fetches the PR's objects to diff them.
       - uses: actions/checkout@v7
@@ -33,6 +44,29 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@v1
+        with:
+          jvm: temurin:25
+
+      - name: Decide whether the sync PR merges
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_READ_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          # Empty outside workflow_run: the script then judges whatever the head is now.
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: scripts/marola-tools pointer-sync-merge --repo "$REPO" --sha "$SHA" --plan "$GITHUB_OUTPUT"
+
+  merge:
+    needs: decide
+    if: needs.decide.outputs.action != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
       - uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.20.4
         id: app
         with:
@@ -41,15 +75,23 @@ jobs:
           repositories: marola
           permission-contents: write
           permission-pull-requests: write
-          permission-checks: read
-          permission-statuses: read
 
-      - name: Merge the sync PR when green and in scope
+      # --admin only skips gh's client-side refusal of a BLOCKED PR; GitHub still decides, and lets
+      # this App through as main-rule's pull-request-only bypass actor. --match-head-commit aborts
+      # the merge if anything was pushed since the decide job read the head.
+      - name: Merge or comment
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
-          # The App token sees marola only; this reads the submodule repos' default branches.
-          GH_READ_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          # Empty outside workflow_run: the script then judges whatever the head is now.
-          SHA: ${{ github.event.workflow_run.head_sha }}
-        run: scripts/pointer-sync-merge.sh --repo "$REPO" --sha "$SHA"
+          ACTION: ${{ needs.decide.outputs.action }}
+          PR: ${{ needs.decide.outputs.pr }}
+          HEAD: ${{ needs.decide.outputs.head }}
+          BODY: ${{ needs.decide.outputs.body }}
+        run: |
+          case "$ACTION" in
+            merge)
+              gh pr merge "$PR" --squash --admin --match-head-commit "$HEAD" -R "$REPO"
+              echo "pointer-sync-merge: merged #$PR at ${HEAD:0:7}" ;;
+            comment) gh pr comment "$PR" -R "$REPO" --body "$BODY" ;;
+            *) echo "::error::unknown action '$ACTION'"; exit 1 ;;
+          esac

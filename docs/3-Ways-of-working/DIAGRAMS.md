@@ -36,7 +36,7 @@ the rule below is also in `.claude/rules/docs.md`, which agents load for `docs/*
   `UpdateRelStyle($textColor="#ffffff", $lineColor="#1ac5da")`. C4 draws relationships in its own
   grey, which injection does not reach.
 - **A submodule page's `mermaid` fence has its font pinned for it** (`marola-tools mermaid-font`,
-  run by `scripts/mkdocs.sh`, #511), so Kroki measures labels in a font it has.
+  run by `marola-tools mkdocs`, #511), so Kroki measures labels in a font it has.
 - **A broken diagram fails the build**, naming the page (`fail_fast`). `bpmn` and `diagramsnet`
   are off, so those fences stay code blocks.
 - **`excalidraw` is not a default register.** Reach for it only where a hand-drawn sketch is
@@ -58,12 +58,12 @@ after editing a source; `just figure-check` fails while a PNG is missing or olde
 
 ## d2
 
-The docs build itself: `scripts/mkdocs.sh` stages `docs/` into a compose stack and copies the site
+The docs build itself: `marola-tools mkdocs` stages `docs/` into a compose stack and copies the site
 back out.
 
 ```d2
 direction: down
-host: "scripts/mkdocs.sh" {
+host: "marola-tools mkdocs" {
   docs: "docs/"
   out: "mkdocs/generated-docs/"
 }
@@ -83,7 +83,7 @@ stack.mkdocs -> host.out: "copied out"
     ````markdown
     ```d2
     direction: down
-    host: "scripts/mkdocs.sh" {
+    host: "marola-tools mkdocs" {
       docs: "docs/"
       out: "mkdocs/generated-docs/"
     }

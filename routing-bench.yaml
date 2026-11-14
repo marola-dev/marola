@@ -106,7 +106,7 @@
    "via": "wiring",
    "ask": "api-docs",
    "expect": [
-    "fetch-api-docs.sh"
+    "api-docs.yml"
    ]
   },
   {
@@ -123,7 +123,7 @@
    "id": 15,
    "type": "doc-code",
    "via": "docs",
-   "ask": "pointer-sync.sh",
+   "ask": "corpus-fetch.sh",
    "expect": [
     "MIP-0076"
    ]
