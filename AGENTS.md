@@ -211,9 +211,17 @@ it does not replace this rule.
 2026-11-14, #942). Its tooling is one scala-cli project in `tools/` (versions and compiler options
 in `tools/project.scala`), run as `scripts/marola-tools <command>` (`citation`, `mip-graph`,
 `doc-links`, `prepare-docs`, `pointer-sync`, `release`, `reading-time`, …; `--help` lists them).
-Every command is an object in `tools/src/` with its munit suite in `tools/test/`; `scala-cli test
-tools` (compiled with `-Werror`) and `scala-cli fmt --check tools` are its gates. Write it plain:
-direct style on os-lib, upickle and mainargs, no effect system, an `Either` for an expected failure.
+It is laid out by bounded context (the owner, 2026-11-14): `tools/src/shared/` is the shared
+kernel (`Sha`, `RepoSlug`, `Conclusion`, `Jq`, `Invocation`, `Proc`, …), and each context
+(`ci`, `docs`, `publishing`, `routing`, `submodules`) has a model file with its domain types and
+pure logic (no IO), adapters that decode gh, git and files into the model, and one command object
+per command, with its munit suite at the same path under `tools/test/`; `scala-cli test tools`
+(compiled with `-Werror`) and `scala-cli fmt --check tools` are its gates. Simplicity,
+composition and FP come first: immutable values, small pure functions composed over `Either` and
+`Option`, no `var` or `return` in logic, IO only at the edge. No magic strings (a name is a constant
+or an enum case), no implicit configuration (env, defaults, cwd and the clock are read once at the
+`@main` edge into a config case class), no private constructors. Direct style on os-lib, upickle
+and mainargs, no effect system.
 Shell stays only for one-line glue (a workflow `run:`, a justfile recipe, the `scripts/marola-tools`
 wrapper). `scripts/docs_redirect_check.js` stays JavaScript: it runs the browser script of
 `mkdocs/overrides/404.html`, which only a JavaScript engine can. No `.py` or `.rs` file, no
