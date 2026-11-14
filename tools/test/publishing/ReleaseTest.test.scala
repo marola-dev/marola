@@ -6,8 +6,30 @@ class ReleaseTest extends munit.FunSuite:
   import Release.*
 
   test("tags are vMAJOR.MINOR.PATCH"):
-    for tag <- Seq("v0.2.0", "v10.0.12") do assert(validTag(tag), tag)
-    for tag <- Seq("v0.2", "0.2.0", "v0.2.0-rc1") do assert(!validTag(tag), tag)
+    for tag <- Seq("v0.2.0", "v10.0.12") do assert(SemVer.validTag(tag), tag)
+    for tag <- Seq("v0.2", "0.2.0", "v0.2.0-rc1") do assert(!SemVer.validTag(tag), tag)
+
+  test("a version is read with or without its v"):
+    assertEquals(SemVer.parse("0.2.0").map(_.tag), Right("v0.2.0"))
+    assertEquals(SemVer.parse("v0.2.0").map(_.tag), Right("v0.2.0"))
+    assertEquals(SemVer.parse("0.2").map(_.tag), Left("'0.2' is not MAJOR.MINOR.PATCH"))
+    assert(SemVer.parse("vv0.2.0").isLeft)
+
+  test("the guard's verdict"):
+    assert(RawDiffEntry.parse(":160000 100644 a b T\tsub").touchesGitlink)
+    assert(!RawDiffEntry.parse(":100644 100644 a b M\tREADME.md").touchesGitlink)
+    assertEquals(
+      GuardVerdict.compared("v0.1.0", "HEAD", 0),
+      GuardVerdict.PointersOnly("v0.1.0", "HEAD")
+    )
+    assertEquals(GuardVerdict.compared("v0.1.0", "HEAD", 2), GuardVerdict.Content("v0.1.0", 2))
+    assertEquals(GuardVerdict.PointersOnly("v0.1.0", "HEAD").exitCode, 1)
+    assertEquals(GuardVerdict.Content("v0.1.0", 2).exitCode, 0)
+    assertEquals(GuardVerdict.NoBase("HEAD").exitCode, 0)
+    assertEquals(
+      GuardVerdict.Content("v0.1.0", 2).message,
+      "2 file(s) changed outside the submodule pointers since v0.1.0"
+    )
 
   test("pointer moves are not content"):
     val pointers =

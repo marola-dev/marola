@@ -12,18 +12,11 @@ import marola.tools.shared.Proc
 // Hard rule: a submodule pointer move never makes a Zenodo version. release.yml runs the same
 // --guard, so a tag pushed by hand around this command still gets no release.
 object Release:
-  private val Gitlink = "160000"
-
-  def validTag(tag: String): Boolean = tag.matches(raw"v[0-9]+\.[0-9]+\.[0-9]+")
+  import ReleaseRepo.*
 
   /** The `git diff --raw` lines that are not a gitlink (mode 160000) on either side. */
   def contentLines(diffRaw: String): Vector[String] =
-    Proc.lines(diffRaw).filter { line =>
-      val fields = line.trim.split("\\s+")
-      val source = fields.head.drop(1)
-      val destination = fields.lift(1).getOrElse("")
-      source != Gitlink && destination != Gitlink
-    }
+    Proc.lines(diffRaw).filterNot(RawDiffEntry.parse(_).touchesGitlink)
 
   /** The newest v* tag that is an ancestor of `ref` (other than `ref`'s own) is the base. */
   def guard(ref: String, cwd: os.Path, proc: Proc): Int = Proc.exitCode {
@@ -31,24 +24,15 @@ object Release:
       case Proc.Result(0, tag) => tag
       case _                   => "none"
     val describe =
-      Seq("git", "describe", "--tags", "--abbrev=0", "--match", "v*", "--exclude", own, ref)
+      Seq("git", "describe", "--tags", "--abbrev=0", "--match", TagGlob, "--exclude", own, ref)
     val base = proc.captureQuiet(cwd, describe*).out
-    if base.isEmpty then
-      Proc.err(s"release: no earlier v* tag before $ref; nothing to compare")
-      0
-    else
-      val changes =
-        contentLines(proc.mustCapture(cwd, "git", "diff", "--raw", "--no-renames", base, ref))
-      if changes.isEmpty then
-        Proc.err(
-          s"release: $base..$ref only moves submodule pointers; a pointer move never makes a Zenodo version"
-        )
-        1
+    val verdict =
+      if base.isEmpty then GuardVerdict.NoBase(ref)
       else
-        Proc.err(
-          s"release: ${changes.length} file(s) changed outside the submodule pointers since $base"
-        )
-        0
+        val diff = proc.mustCapture(cwd, "git", "diff", "--raw", "--no-renames", base, ref)
+        GuardVerdict.compared(base, ref, contentLines(diff).length)
+    Proc.err(s"release: ${verdict.message}")
+    verdict.exitCode
   }
 
   private def refuse(message: String): Int =
@@ -57,37 +41,40 @@ object Release:
 
   /** Tag and push `version`, from `cwd`; with `dryRun`, print the two commands instead. */
   def release(version: String, dryRun: Boolean, cwd: os.Path, proc: Proc): Int = Proc.exitCode {
-    val tag = "v" + version.stripPrefix("v")
     if version.isEmpty then refuse("usage: just release <X.Y.Z> [--dry-run]")
-    else if !validTag(tag) then refuse(s"'$version' is not MAJOR.MINOR.PATCH")
     else
-      val top = proc.toplevel(cwd)
-      def git(args: String*) = proc.capture(top, "git" +: args*).out
-      if git("branch", "--show-current") != "main" then refuse("check out main first")
-      else if git(
-          "status",
-          "--porcelain",
-          "--untracked-files=no",
-          "--ignore-submodules=all"
-        ).nonEmpty
-      then refuse("the working tree is dirty; commit or stash first")
-      else
-        proc.must(top, "git", "fetch", "-q", "--tags", "origin", "main")
-        if git("rev-parse", "HEAD") != git("rev-parse", "origin/main") then
-          refuse("main is not level with origin/main; pull or push first")
-        else if proc
-            .capture(top, "git", "rev-parse", "-q", "--verify", s"refs/tags/$tag")
-            .exitCode == 0
-        then refuse(s"tag $tag already exists")
-        else
-          proc.must(top, "scripts/marola-tools", "citation", "--check")
-          val guarded = guard("HEAD", top, proc)
-          if guarded != 0 then guarded else tagAndPush(tag, dryRun, top, proc)
+      SemVer.parse(version) match
+        case Left(error)   => refuse(error)
+        case Right(semver) => checkAndTag(semver.tag, dryRun, cwd, proc)
   }
+
+  private def checkAndTag(tag: String, dryRun: Boolean, cwd: os.Path, proc: Proc): Int =
+    val top = proc.toplevel(cwd)
+    def git(args: String*) = proc.capture(top, "git" +: args*).out
+    if git("branch", "--show-current") != Branch then refuse(s"check out $Branch first")
+    else if git(
+        "status",
+        "--porcelain",
+        "--untracked-files=no",
+        "--ignore-submodules=all"
+      ).nonEmpty
+    then refuse("the working tree is dirty; commit or stash first")
+    else
+      proc.must(top, "git", "fetch", "-q", "--tags", Remote, Branch)
+      if git("rev-parse", "HEAD") != git("rev-parse", s"$Remote/$Branch") then
+        refuse(s"$Branch is not level with $Remote/$Branch; pull or push first")
+      else if proc
+          .capture(top, "git", "rev-parse", "-q", "--verify", s"refs/tags/$tag")
+          .exitCode == 0
+      then refuse(s"tag $tag already exists")
+      else
+        proc.must(top, CitationCheck*)
+        val guarded = guard("HEAD", top, proc)
+        if guarded != 0 then guarded else tagAndPush(tag, dryRun, top, proc)
 
   private def tagAndPush(tag: String, dryRun: Boolean, top: os.Path, proc: Proc): Int =
     val previous =
-      Proc.lines(proc.capture(top, "git", "tag", "-l", "v*", "--sort=-v:refname").out).headOption
+      Proc.lines(proc.capture(top, "git", "tag", "-l", TagGlob, "--sort=-v:refname").out).headOption
     val head = proc.capture(top, "git", "log", "-1", "--format=%h %s").out
     Proc.err(s"release: $tag at $head (previous: ${previous.filter(_.nonEmpty).getOrElse("none")})")
     if dryRun then
@@ -95,7 +82,7 @@ object Release:
       Proc.err(s"+ git push origin $tag")
     else
       proc.must(top, "git", "tag", "-a", tag, "-m", s"marola $tag")
-      proc.must(top, "git", "push", "origin", tag)
+      proc.must(top, "git", "push", Remote, tag)
       Proc.err(
         s"release: pushed $tag; release.yml publishes it and Zenodo mints the DOI a few minutes later."
       )
