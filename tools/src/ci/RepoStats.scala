@@ -14,70 +14,19 @@ import Util.field
 object RepoStats:
   // The app is the marola-app submodule (MIP-0070 task 15); ci.yml checks it out for the count.
   val ScalaPaths = Seq("marola-app/core", "marola-app/local", "marola-app/cli")
-  val ScalaColor = "DC322F" // = marola-app's README's hand-written Scala badge
   // The umbrella's own tooling (#942).
   val ToolingPaths = Seq("tools/src")
   val TestsJob = "tools-ci" // ci.yml's munit job
   private val ExcludeDirs = Seq("target", "node_modules")
 
-  // A step that reached one of these actually executed; `skipped`, `neutral` or a null conclusion
-  // (a step still queued or running) is not evidence either way and is not counted.
-  private val Ran = Set("success", "failure", "cancelled", "timed_out")
-
-  /** One shields.io endpoint document (https://shields.io/badges/endpoint-badge). */
-  def badge(label: String, message: String, color: String): ujson.Obj =
-    ujson.Obj("schemaVersion" -> 1, "label" -> label, "message" -> message, "color" -> color)
-
-  /** (green, ran) over every step of every job of one run. */
-  def countSteps(jobs: Seq[ujson.Value], excludeJob: Option[String]): (Int, Int) =
-    val conclusions =
-      for
-        job <- jobs
-        if !excludeJob.exists(name => field(job, "name").flatMap(_.strOpt).contains(name))
-        steps <- field(job, "steps").flatMap(_.arrOpt).toSeq
-        step <- steps
-        conclusion <- field(step, "conclusion").flatMap(_.strOpt)
-        if Ran(conclusion)
-      yield conclusion
-    (conclusions.count(_ == "success"), conclusions.length)
-
-  /** Green only when every step that ran passed: a single red step is not a rounding error. */
-  def ciBadge(green: Int, ran: Int): ujson.Obj =
-    if ran == 0 then badge("ci steps", "no data", "lightgrey")
-    else
-      val color =
-        if green == ran then "brightgreen"
-        else if green.toDouble >= 0.9 * ran then "yellow"
-        else "red"
-      badge("ci steps", s"$green/$ran green", color)
-
-  /** The munit job's verdict: passing only on success; a skipped or missing job is no data. */
-  def testsBadge(jobs: Seq[ujson.Value], job: String): ujson.Obj =
-    jobs
-      .find(j => field(j, "name").flatMap(_.strOpt).contains(job))
-      .flatMap(j => field(j, "conclusion").flatMap(_.strOpt)) match
-      case Some("success")                             => badge("tests", "passing", "brightgreen")
-      case Some("failure" | "cancelled" | "timed_out") => badge("tests", "failing", "red")
-      case _                                           => badge("tests", "no data", "lightgrey")
-
-  /** `//> using <key> <value>` in a scala-cli project file; the first one wins. */
-  def directive(project: String, key: String): Option[String] =
-    val Using = raw"//> using\s+(\S+)\s+(\S+)\s*".r
-    project.linesIterator.collectFirst { case Using(`key`, value) => value }
-
-  def versionBadges(project: String): Seq[(String, ujson.Obj)] =
-    Seq(
-      "scala-version.json" -> ("scala", directive(project, "scala"), ScalaColor),
-      "jdk-version.json" -> ("jdk", directive(project, "jvm"), "007396")
-    ).map { case (name, (label, value, color)) =>
-      name -> value.fold(badge(label, "no data", "lightgrey"))(badge(label, _, color))
-    }
-
-  def locBadge(label: String, code: Long, color: String): ujson.Obj =
-    badge(label, s"${thousands(code)} LOC", color)
-
-  private def thousands(n: Long): String =
-    n.toString.reverse.grouped(3).mkString(",").reverse
+  /** One job of the Actions API's jobs list; a field of the wrong type reads as absent. */
+  def decodeJob(json: ujson.Value): Job =
+    def conclusion(v: ujson.Value) = field(v, "conclusion").flatMap(_.strOpt).map(Conclusion.parse)
+    Job(
+      name = field(json, "name").flatMap(_.strOpt),
+      conclusion = conclusion(json),
+      steps = field(json, "steps").flatMap(_.arrOpt).toSeq.flatten.map(s => Step(conclusion(s)))
+    )
 
   /** Code lines for one language out of `cloc --json`; 0 when it found none of that language. */
   def parseCloc(payload: String, language: String): Either[String, Long] =
@@ -86,15 +35,15 @@ object RepoStats:
     }
 
   /** Every job of one workflow run, steps included. Needs `actions: read` on the token. */
-  private def fetchJobs(repo: String, runId: String): Either[String, Seq[ujson.Value]] =
-    def fetchFrom(page: Int): Either[String, Seq[ujson.Value]] =
+  private def fetchJobs(repo: String, runId: String): Either[String, Seq[Job]] =
+    def fetchFrom(page: Int): Either[String, Seq[Job]] =
       val url = s"repos/$repo/actions/runs/$runId/jobs?per_page=100&page=$page"
       call(Seq("gh", "api", "-H", "Accept: application/vnd.github+json", url), os.pwd).flatMap {
         result =>
           if result.exitCode != 0 then Left(s"repo_stats: gh api $url: ${result.err.text()}")
           else
             Util.readJson(result.out.text()).flatMap { json =>
-              val batch = field(json, "jobs").flatMap(_.arrOpt).toSeq.flatten
+              val batch = field(json, "jobs").flatMap(_.arrOpt).toSeq.flatten.map(decodeJob)
               if batch.length < 100 then Right(batch) else fetchFrom(page + 1).map(batch ++ _)
             }
       }
@@ -124,15 +73,11 @@ object RepoStats:
           else parseCloc(text, language)
         }
 
-  /** A written file's path as the command prints it: the --out-dir as given, then the name. */
-  def shownPath(outDir: String, name: String): String =
-    if outDir.endsWith("/") then outDir + name else s"$outDir/$name"
-
-  def write(outDir: os.Path, badges: Seq[(String, ujson.Value)]): Seq[os.Path] =
+  def write(outDir: os.Path, badges: Seq[BadgeFile]): Seq[os.Path] =
     os.makeDir.all(outDir)
-    for (name, doc) <- badges yield
-      os.write.over(outDir / name, Util.dumps(doc) + "\n")
-      outDir / name
+    for file <- badges yield
+      os.write.over(outDir / file.name, Util.dumps(file.badge.toJson) + "\n")
+      outDir / file.name
 
   object Write:
     @main(doc = "Write the badge JSONs into --out-dir")
@@ -155,15 +100,15 @@ object RepoStats:
             case Some(id) =>
               fetchJobs(repo, id).map(jobs =>
                 Seq(
-                  "ci.json" -> ciBadge.tupled(countSteps(jobs, excludeJob)),
-                  "tests.json" -> testsBadge(jobs, TestsJob)
+                  BadgeFile("ci.json", Badge.ci(StepTally.of(jobs, excludeJob))),
+                  BadgeFile("tests.json", Badge.tests(jobs, TestsJob))
                 )
               )
           project = rootPath / "tools" / "project.scala"
-          versions = if os.isFile(project) then versionBadges(os.read(project)) else Nil
+          versions = if os.isFile(project) then Badge.versions(os.read(project)) else Nil
         yield Seq(
-          "scala-loc.json" -> locBadge("scala", app, ScalaColor),
-          "tooling-loc.json" -> locBadge("scala LOC", tooling, ScalaColor)
+          BadgeFile("scala-loc.json", Badge.loc("scala", app, Badge.ScalaColor)),
+          BadgeFile("tooling-loc.json", Badge.loc("scala LOC", tooling, Badge.ScalaColor))
         ) ++ ci ++ versions
       badges match
         case Left(error) =>
@@ -171,8 +116,8 @@ object RepoStats:
           1
         case Right(docs) =>
           val written = write(os.Path(outDir, os.pwd), docs)
-          for ((name, _), path) <- docs.zip(written) do
-            println(s"${shownPath(outDir, name)}: ${os.read(path).trim}")
+          for (file, path) <- docs.zip(written) do
+            println(s"${file.shownIn(outDir)}: ${os.read(path).trim}")
           0
 
   def cli(args: Seq[String]): Int = args match

@@ -33,17 +33,17 @@ class DigestTest extends munit.FunSuite:
   test("parses atom"):
     val entries = parseAtom(Atom).toOption.get
     assertEquals(entries.length, 2)
-    assertEquals(entries(0)("arxiv_id").str, "2609.03658")
+    assertEquals(entries(0).arxivId, "2609.03658")
     assertEquals(
-      entries(0)("title").str,
+      entries(0).title,
       "A Deep Learning Model for Forecasting Sea Surface Temperature"
     )
-    assertEquals(entries(0)("authors"), ujson.Arr("Ada Lovelace", "Grace Hopper"))
-    assertEquals(entries(0)("categories"), ujson.Arr("physics.ao-ph"))
-    assertEquals(entries(1)("arxiv_id").str, "2601.00001")
+    assertEquals(entries(0).toJson("authors"), ujson.Arr("Ada Lovelace", "Grace Hopper"))
+    assertEquals(entries(0).toJson("categories"), ujson.Arr("physics.ao-ph"))
+    assertEquals(entries(1).arxivId, "2601.00001")
     assert(parseAtom("<not-xml").isLeft, "malformed XML is an error, not zero results")
-    assertEquals(relevanceScore(Seq(Query("ocean-physics", "", 1))), 1)
-    assertEquals(relevanceScore(Seq(Query("ocean-physics", "", 1), sst)), 3)
+    assertEquals(Query.relevanceScore(Seq(Query("ocean-physics", "", 1))), 1)
+    assertEquals(Query.relevanceScore(Seq(Query("ocean-physics", "", 1), sst)), 3)
 
   test("parses search"):
     val fixture = """{"total_count": 2, "incomplete_results": false, "items": [
@@ -55,9 +55,9 @@ class DigestTest extends munit.FunSuite:
        "pushed_at": "2026-08-15T00:00:00Z", "topics": ["ai-agents"]}]}"""
     val repos = parseSearchResponse(fixture).toOption.get
     assertEquals(repos.length, 2)
-    assertEquals(repos(0)("full_name").str, "example-org/agent-critic")
-    assertEquals(repos(0)("stars").num, 4200.0)
-    assertEquals(repoKey("example-org/agent-critic"), "example-org__agent-critic")
+    assertEquals(repos(0).fullName, "example-org/agent-critic")
+    assertEquals(repos(0).toJson("stars").num, 4200.0)
+    assertEquals(RepoCandidate.key("example-org/agent-critic"), "example-org__agent-critic")
     assert(parseSearchResponse("{not json").isLeft)
     assert(parseSearchResponse("""{"total_count": 0}""").isLeft)
 
@@ -66,7 +66,7 @@ class DigestTest extends munit.FunSuite:
       """{"items": [{"full_name": "a/b", "description": "  x  ", "topics": []}, {"full_name": ""}]}"""
     )
     assertEquals(
-      repo.map(_.map(Util.dumps(_))),
+      repo.map(_.map(r => Util.dumps(r.toJson))),
       Right(
         Seq(
           """{"full_name": "a/b", "html_url": "https://github.com/a/b", "description": "x", "stars": 0, "pushed_at": "", "topics": []}"""
@@ -79,7 +79,7 @@ class DigestTest extends munit.FunSuite:
     val store = arxivStore(root)
     store.init()
     assertEquals(store.cachedIds, Set.empty[String])
-    val found = parseAtom(Atom).toOption.get.map(p => Hit(p("arxiv_id").str, p, Seq(sst)))
+    val found = parseAtom(Atom).toOption.get.map(p => Hit(p.arxivId, p.toJson, Seq(sst)))
     assertEquals(store.store(found), Right(2))
     assertEquals(store.cachedIds, Set("2609.03658", "2601.00001"))
     assertEquals(os.read.lines(root / ".tmp" / "arxiv_cache" / "index.jsonl").length, 2)
@@ -90,7 +90,7 @@ class DigestTest extends munit.FunSuite:
     val fixture =
       """{"items": [{"full_name": "a/low", "stargazers_count": 1}, {"full_name": "b/high", "stargazers_count": 9}]}"""
     val hits = parseSearchResponse(fixture).toOption.get.map(r =>
-      Hit(repoKey(r("full_name").str), r, Seq(Query("mcp", "", 2)))
+      Hit(RepoCandidate.key(r.fullName), r.toJson, Seq(Query("mcp", "", 2)))
     )
     assertEquals(repos.store(hits), Right(2))
     val index = os.read.lines(root / ".tmp" / "awesome_agentic_cache" / "index.jsonl")
@@ -121,29 +121,31 @@ class DigestTest extends munit.FunSuite:
     val q1 = Query("q1", "", 1)
     val q2 = Query("q2", "", 2)
     assertEquals(
-      collect(Seq(("b", b, q1), ("a", a, q1), ("b", b, q2))),
+      Hit.collect(Seq(Match("b", b, q1), Match("a", a, q1), Match("b", b, q2))),
       Seq(Hit("b", b, Seq(q1, q2)), Hit("a", a, Seq(q1)))
     )
 
   test("renders the summary"):
-    val s = ujson.Obj(
-      "queries_run" -> 6,
-      "queries_failed" -> Seq("x: boom"),
-      "new_papers" -> 2,
-      "total_cached" -> 9,
-      "index_path" -> "/i"
+    val s = DigestSummary(
+      DigestKind.Papers,
+      queriesRun = 6,
+      queriesTotal = 7,
+      queriesFailed = Seq("x: boom"),
+      fresh = 2,
+      totalCached = 9,
+      indexPath = "/i"
     )
     assertEquals(
-      render(s, asJson = false, 7, "new_papers", "new papers cached"),
+      s.render(asJson = false),
       "queries run: 6/7\nqueries failed: [\"x: boom\"]\nnew papers cached: 2\ntotal cached: 9\nindex: /i\n"
     )
     assertEquals(
-      render(s, asJson = true, 7, "new_papers", "new papers cached"),
+      s.render(asJson = true),
       "{\n  \"queries_run\": 6,\n  \"queries_failed\": [\n    \"x: boom\"\n  ],\n  \"new_papers\": 2,\n  \"total_cached\": 9,\n  \"index_path\": \"/i\"\n}\n"
     )
 
   test("ids and timestamps"):
-    assertEquals(arxivIdFromUrl("http://arxiv.org/abs/2609.03658v12"), "2609.03658")
-    assertEquals(arxivIdFromUrl("http://arxiv.org/abs/2609.03658"), "2609.03658")
+    assertEquals(Paper.idFromUrl("http://arxiv.org/abs/2609.03658v12"), "2609.03658")
+    assertEquals(Paper.idFromUrl("http://arxiv.org/abs/2609.03658"), "2609.03658")
     assert(nowIso().endsWith("+00:00"))
     assert(nowIso().matches("""\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}\+00:00"""))

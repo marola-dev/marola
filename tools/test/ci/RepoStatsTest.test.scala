@@ -19,43 +19,44 @@ class RepoStatsTest extends munit.FunSuite:
       ujson.read("""{"name": "repo-stats", "steps": [
         {"name": "checkout", "conclusion": "success"},
         {"name": "badges", "conclusion": null}]}""")
-    )
-    assertEquals(countSteps(jobs, Some("repo-stats")), (3, 4))
-    assertEquals(countSteps(jobs, None), (4, 5))
+    ).map(decodeJob)
+    assertEquals(StepTally.of(jobs, Some("repo-stats")), StepTally(3, 4))
+    assertEquals(StepTally.of(jobs, None), StepTally(4, 5))
     assertEquals(
-      countSteps(
-        Seq(ujson.read("""{"name": "changes"}"""), ujson.read("""{"name": "x", "steps": null}""")),
+      StepTally.of(
+        Seq(ujson.read("""{"name": "changes"}"""), ujson.read("""{"name": "x", "steps": null}"""))
+          .map(decodeJob),
         None
       ),
-      (0, 0)
+      StepTally(0, 0)
     )
     val steps = Seq.fill(2)(ujson.Obj("conclusion" -> "success")) ++ Seq.fill(7)(
       ujson.Obj("conclusion" -> "skipped")
     )
     assertEquals(
-      countSteps(Seq(ujson.Obj("name" -> "quality-other", "steps" -> steps)), None),
-      (2, 2)
+      StepTally.of(Seq(decodeJob(ujson.Obj("name" -> "quality-other", "steps" -> steps))), None),
+      StepTally(2, 2)
     )
-    assertEquals(ciBadge(2, 2)("message").str, "2/2 green")
+    assertEquals(Badge.ci(StepTally(2, 2)).message, "2/2 green")
 
   test("shapes badges"):
     assertEquals(
-      ciBadge(20, 20): ujson.Value,
+      Badge.ci(StepTally(20, 20)).toJson: ujson.Value,
       ujson.read(
         """{"schemaVersion": 1, "label": "ci steps", "message": "20/20 green", "color": "brightgreen"}"""
       )
     )
-    assertEquals(ciBadge(19, 20)("color").str, "yellow")
-    assertEquals(ciBadge(17, 20)("color").str, "red")
+    assertEquals(Badge.ci(StepTally(19, 20)).color, "yellow")
+    assertEquals(Badge.ci(StepTally(17, 20)).color, "red")
     assertEquals(
-      ciBadge(0, 0): ujson.Value,
+      Badge.ci(StepTally(0, 0)).toJson: ujson.Value,
       ujson.read(
         """{"schemaVersion": 1, "label": "ci steps", "message": "no data", "color": "lightgrey"}"""
       )
     )
-    assertEquals(locBadge("scala", 6865, ScalaColor)("message").str, "6,865 LOC")
-    assertEquals(locBadge("scala", 1234567, ScalaColor)("message").str, "1,234,567 LOC")
-    assertEquals(locBadge("scala", 0, ScalaColor)("message").str, "0 LOC")
+    assertEquals(Badge.loc("scala", 6865, Badge.ScalaColor).message, "6,865 LOC")
+    assertEquals(Badge.loc("scala", 1234567, Badge.ScalaColor).message, "1,234,567 LOC")
+    assertEquals(Badge.loc("scala", 0, Badge.ScalaColor).message, "0 LOC")
     val cloc =
       """{"header": {"cloc_version": "2.10"}, "Scala": {"nFiles": 84, "blank": 1050, "comment": 1673, "code": 6865}}"""
     assertEquals(parseCloc(cloc, "Scala"), Right(6865L))
@@ -63,43 +64,52 @@ class RepoStatsTest extends munit.FunSuite:
 
   test("reads the tests job"):
     def jobs(conclusion: String) =
-      Seq(ujson.read(s"""{"name": "tools-ci", "conclusion": $conclusion}"""))
-    assertEquals(testsBadge(jobs("\"success\""), "tools-ci")("message").str, "passing")
-    assertEquals(testsBadge(jobs("\"failure\""), "tools-ci")("color").str, "red")
-    assertEquals(testsBadge(jobs("\"skipped\""), "tools-ci")("message").str, "no data")
-    assertEquals(testsBadge(jobs("null"), "tools-ci")("message").str, "no data")
-    assertEquals(testsBadge(Nil, "tools-ci")("message").str, "no data")
+      Seq(decodeJob(ujson.read(s"""{"name": "tools-ci", "conclusion": $conclusion}""")))
+    assertEquals(Badge.tests(jobs("\"success\""), "tools-ci").message, "passing")
+    assertEquals(Badge.tests(jobs("\"failure\""), "tools-ci").color, "red")
+    assertEquals(Badge.tests(jobs("\"skipped\""), "tools-ci").message, "no data")
+    assertEquals(Badge.tests(jobs("null"), "tools-ci").message, "no data")
+    assertEquals(Badge.tests(Nil, "tools-ci").message, "no data")
 
   test("reads the pinned versions"):
     val project =
       "//> using scala 3.9.0\n//> using jvm 21\n//> using dep com.lihaoyi::os-lib:0.11.10\n"
-    assertEquals(directive(project, "scala"), Some("3.9.0"))
-    assertEquals(directive(project, "jvm"), Some("21"))
-    assertEquals(directive(project, "options"), None)
-    val badges = versionBadges(project).toMap
-    assertEquals(badges("scala-version.json")("message").str, "3.9.0")
-    assertEquals(badges("jdk-version.json")("message").str, "21")
-    assertEquals(versionBadges("").toMap.apply("jdk-version.json")("message").str, "no data")
+    assertEquals(ProjectFile.directive(project, "scala"), Some("3.9.0"))
+    assertEquals(ProjectFile.directive(project, "jvm"), Some("21"))
+    assertEquals(ProjectFile.directive(project, "options"), None)
+    val badges = Badge.versions(project).map(f => f.name -> f.badge).toMap
+    assertEquals(badges("scala-version.json").message, "3.9.0")
+    assertEquals(badges("jdk-version.json").message, "21")
+    assertEquals(
+      Badge.versions("").find(_.name == "jdk-version.json").map(_.badge.message),
+      Some("no data")
+    )
     val pinned = os.read(Util.repoRoot / "tools" / "project.scala")
     assert(
-      directive(pinned, "scala").exists(_.startsWith("3.")),
+      ProjectFile.directive(pinned, "scala").exists(_.startsWith("3.")),
       "tools/project.scala pins Scala 3"
     )
-    assert(directive(pinned, "jvm").nonEmpty, "tools/project.scala pins a JDK")
+    assert(ProjectFile.directive(pinned, "jvm").nonEmpty, "tools/project.scala pins a JDK")
 
   test("writes whole documents"):
     val out = os.temp.dir() / "stats"
     val paths =
-      write(out, Seq("ci.json" -> ciBadge(20, 20), "scala-loc.json" -> locBadge("s", 1, "x")))
+      write(
+        out,
+        Seq(
+          BadgeFile("ci.json", Badge.ci(StepTally(20, 20))),
+          BadgeFile("scala-loc.json", Badge.loc("s", 1, "x"))
+        )
+      )
     assertEquals(paths.length, 2)
     assertEquals(
       os.read(out / "ci.json"),
       "{\"schemaVersion\": 1, \"label\": \"ci steps\", \"message\": \"20/20 green\", \"color\": \"brightgreen\"}\n"
     )
-    write(out, Seq("ci.json" -> ciBadge(1, 2)))
+    write(out, Seq(BadgeFile("ci.json", Badge.ci(StepTally(1, 2)))))
     assert(os.read(out / "ci.json").contains("1/2 green"))
 
   test("prints the --out-dir as given"):
-    assertEquals(shownPath("stats", "ci.json"), "stats/ci.json")
-    assertEquals(shownPath("stats/", "ci.json"), "stats/ci.json")
-    assertEquals(shownPath("./a/b", "ci.json"), "./a/b/ci.json")
+    assertEquals(BadgeFile("ci.json", Badge.noData("x")).shownIn("stats"), "stats/ci.json")
+    assertEquals(BadgeFile("ci.json", Badge.noData("x")).shownIn("stats/"), "stats/ci.json")
+    assertEquals(BadgeFile("ci.json", Badge.noData("x")).shownIn("./a/b"), "./a/b/ci.json")

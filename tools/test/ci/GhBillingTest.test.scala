@@ -23,60 +23,66 @@ class GhBillingTest extends munit.FunSuite:
     val usage = shape(fixture).toOption.get
     usage match
       case Usage.Report(rows, total) =>
-        assertEquals(money(total), "4.75")
+        assertEquals(Jq.money(total), "4.75")
         assertEquals(rows.length, 3)
       case Usage.Empty => fail("the fixture has usage")
-    assertEquals(render(usage, None), fixtureTable)
+    assertEquals(usage.render(None), fixtureTable)
     assertEquals(fromText("H\n\n", fixture), Outcome("H\n\n" + fixtureTable, "", 0))
 
   test("the plan's included minutes"):
     val usage = shape(fixture).toOption.get
     assert(
-      render(usage, Some("free")).contains(
-        "Actions minutes: 2000 of 2000 included this month (100%, plan: free) — Linux-minute"
-      )
+      usage
+        .render(Some(Plan.parse("free")))
+        .contains(
+          "Actions minutes: 2000 of 2000 included this month (100%, plan: free) — Linux-minute"
+        )
     )
     assert(
-      render(usage, Some("pro")).contains(
-        "Actions minutes: 2000 of 3000 included this month (67%, plan: pro)"
-      )
+      usage
+        .render(Some(Plan.parse("pro")))
+        .contains(
+          "Actions minutes: 2000 of 3000 included this month (67%, plan: pro)"
+        )
     )
     assert(
-      render(usage, Some("team")).contains(
-        "Actions minutes used: 2000 (plan 'team' isn't in this script's known table"
-      )
+      usage
+        .render(Some(Plan.parse("team")))
+        .contains(
+          "Actions minutes used: 2000 (plan 'team' isn't in this script's known table"
+        )
     )
 
   test("an empty month"):
     assertEquals(
-      shape("""{"usageItems": []}""").map(render(_, Some("pro"))),
+      shape("""{"usageItems": []}""").map(_.render(Some(Plan.Pro))),
       Right("no usage recorded for this period yet\n")
     )
     assertEquals(shape("{}"), Right(Usage.Empty))
     assertEquals(fromText("H\n", "{bad").code, 5)
 
   test("numbers as jq prints them"):
-    assertEquals(jqNumber(2000), "2000")
-    assertEquals(jqNumber(0.1 + 0.2), "0.30000000000000004")
-    assertEquals(jqNumber(1e-5), "1e-05")
-    assertEquals(jqNumber(0.0001), "0.0001")
-    assertEquals(jqNumber(1e15), "1000000000000000")
-    assertEquals(jqNumber(1e16), "1e+16")
-    assertEquals(jqNumber(1.5e20), "1.5e+20")
-    assertEquals(jqNumber(2.5e-7), "2.5e-07")
-    assertEquals(jqNumber(123456789012345678.0), "123456789012345680")
-    assertEquals(money(1.005), "1")
-    assertEquals(money(2.675), "2.68")
-    assertEquals(money(-1.5), "-1.5")
-    assertEquals(money(0.125), "0.13")
+    assertEquals(Jq.number(2000), "2000")
+    assertEquals(Jq.number(0.1 + 0.2), "0.30000000000000004")
+    assertEquals(Jq.number(1e-5), "1e-05")
+    assertEquals(Jq.number(0.0001), "0.0001")
+    assertEquals(Jq.number(1e15), "1000000000000000")
+    assertEquals(Jq.number(1e16), "1e+16")
+    assertEquals(Jq.number(1.5e20), "1.5e+20")
+    assertEquals(Jq.number(2.5e-7), "2.5e-07")
+    assertEquals(Jq.number(123456789012345678.0), "123456789012345680")
+    assertEquals(Jq.money(1.005), "1")
+    assertEquals(Jq.money(2.675), "2.68")
+    assertEquals(Jq.money(-1.5), "-1.5")
+    assertEquals(Jq.money(0.125), "0.13")
 
   test("column -t keeps empty cells and pads all but the last column"):
     assertEquals(
-      columns(Seq(Seq("a", "", "c"), Seq("xx", "yyy", "z"))),
+      Usage.columns(Seq(Seq("a", "", "c"), Seq("xx", "yyy", "z"))),
       Seq("a        c", "xx  yyy  z")
     )
     assertEquals(
-      columns(Seq(Seq("a", "b", ""), Seq("xx", "yyy", "z"))),
+      Usage.columns(Seq(Seq("a", "b", ""), Seq("xx", "yyy", "z"))),
       Seq("a   b    ", "xx  yyy  z")
     )
 
@@ -184,7 +190,7 @@ class GhBillingTest extends munit.FunSuite:
 
   test("live: the report, with the plan's minutes"):
     val gh = loggedIn(GhResult(0, fixture, ""))
-    val outcome = live("2026", "8", noScopeCheck = false, Map.empty, gh)
+    val outcome = live(BillingPeriod("2026", "8"), noScopeCheck = false, Map.empty, gh)
     assertEquals(outcome.code, 0)
     assert(
       outcome.out.startsWith("GitHub billing usage — monalisa, 2026-08\n\nPRODUCT"),
@@ -199,7 +205,8 @@ class GhBillingTest extends munit.FunSuite:
 
   test("live: a set token stops before gh is asked anything"):
     val gh = loggedIn(GhResult(0, fixture, ""))
-    val outcome = live("2026", "8", noScopeCheck = true, Map("GITHUB_TOKEN" -> "x"), gh)
+    val outcome =
+      live(BillingPeriod("2026", "8"), noScopeCheck = true, Map("GITHUB_TOKEN" -> "x"), gh)
     assertEquals(outcome.code, 1)
     assert(outcome.err.contains("GITHUB_TOKEN is set"))
     assertEquals(gh.calls.toSeq, Nil)
@@ -215,9 +222,9 @@ class GhBillingTest extends munit.FunSuite:
           "gh: Not Found (HTTP 404)\ngh: This API operation needs the \"user\" scope.\n"
         )
     }
-    val stopped = live("2026", "8", noScopeCheck = false, Map.empty, noScope)
+    val stopped = live(BillingPeriod("2026", "8"), noScopeCheck = false, Map.empty, noScope)
     assertEquals(stopped, Outcome("", s"$ScopeFix\n(gh auth status reports: repo, read:org)\n", 1))
-    val called = live("2026", "8", noScopeCheck = true, Map.empty, noScope)
+    val called = live(BillingPeriod("2026", "8"), noScopeCheck = true, Map.empty, noScope)
     assertEquals(called.code, 1)
     assertEquals(
       called.err,
@@ -226,8 +233,7 @@ class GhBillingTest extends munit.FunSuite:
 
   test("live: not logged in"):
     val outcome = live(
-      "2026",
-      "8",
+      BillingPeriod("2026", "8"),
       noScopeCheck = false,
       Map.empty,
       FakeGh { case Seq("auth", "status") => GhResult(1, "", "no\n") }
@@ -236,6 +242,6 @@ class GhBillingTest extends munit.FunSuite:
 
   test("dry run falls back to a placeholder login"):
     assertEquals(
-      plannedCall("2026", "8", FakeGh(PartialFunction.empty)).out,
+      plannedCall(BillingPeriod("2026", "8"), FakeGh(PartialFunction.empty)).out,
       "gh-billing --dry-run: would call:\n  gh api \"/users/{username}/settings/billing/usage?year=2026&month=8\"\n"
     )

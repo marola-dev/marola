@@ -5,8 +5,6 @@ import marola.tools.shared.Util
 
 import mainargs.{arg, main, Flag, ParserForMethods}
 
-import java.math.{BigDecimal as JBigDecimal, RoundingMode}
-
 // This GitHub account's metered usage (Actions minutes, Packages storage and transfer, Copilot)
 // from GET /users/{username}/settings/billing/usage, grouped per product and SKU.
 //
@@ -39,39 +37,35 @@ object GhBilling:
     val lines = block.result()
     if lines.nonEmpty then lines.mkString("\n") else text
 
-  /** The scope list of the first "Token scopes:" line: "a, b", "none", or "" when there is none. */
-  def scopeLine(text: String): String =
+  /** The scope list of the first "Token scopes:" line. */
+  def scopes(text: String): TokenScopes =
     text.split("\n", -1).find(_.contains("Token scopes:")) match
-      case None       => ""
+      case None       => TokenScopes.Absent
       case Some(line) =>
         val list = stripChars(
           line.substring(line.indexOf("Token scopes:") + "Token scopes:".length).replace("\r", ""),
           isBlank
         )
-        if list == "none" then "none"
-        else list.split(",", -1).map(stripChars(_, c => isBlank(c) || c == '\'')).mkString(", ")
-
-  def hasScope(text: String, want: String): Boolean =
-    val scopes = scopeLine(text)
-    scopes.nonEmpty && scopes != "none" && scopes
-      .split(",", -1)
-      .map(stripChars(_, c => isBlank(c) || c == '\''))
-      .contains(want)
+        val items = list.split(",", -1).map(stripChars(_, c => isBlank(c) || c == '\'')).toSeq
+        if list == "none" then TokenScopes.NoScopes
+        else if items.mkString(", ").isEmpty then TokenScopes.Absent
+        else TokenScopes.Listed(items)
 
   def hasUserScope(authStatus: String): Boolean =
-    hasScope(hostBlock(authStatus, "github.com"), "user")
+    scopes(hostBlock(authStatus, "github.com")).has("user")
 
   /** What the parser read for github.com, so the failure shows it rather than only a verdict. */
-  def foundScopes(authStatus: String): String = scopeLine(hostBlock(authStatus, "github.com"))
+  def foundScopes(authStatus: String): String = scopes(hostBlock(authStatus, "github.com")).shown
 
   /** No scope line at all means a token type (fine-grained PAT, installation token) that no
     * `gh auth refresh` can fix; a scope list without `user` is a refresh away.
     */
   def missingUserScopeMessage(authStatus: String): String =
-    foundScopes(authStatus) match
-      case "" =>
+    scopes(hostBlock(authStatus, "github.com")) match
+      case TokenScopes.Absent =>
         "gh-billing: gh auth status printed no \"Token scopes:\" line for github.com at all — that means a token type this endpoint never accepts regardless of scope (a fine-grained PAT or an installation/server-to-server token; see https://docs.github.com/en/billing/tutorials/automate-usage-reporting). Re-authenticate with a classic PAT or gh's own OAuth token: gh auth login, then gh auth refresh -h github.com -s user"
-      case found => s"$ScopeFix\n(gh auth status reports: $found)"
+      case found @ (TokenScopes.NoScopes | TokenScopes.Listed(_)) =>
+        s"$ScopeFix\n(gh auth status reports: ${found.shown})"
 
   /** gh always prefers GH_TOKEN/GITHUB_TOKEN over the keyring, and `gh auth refresh` only rewrites
     * the keyring, so a set variable is a dead end whatever its scopes.
@@ -98,155 +92,28 @@ object GhBilling:
 
   // ---- the usage report ----------------------------------------------------------------------
 
-  /** One product+SKU: a month has several items per SKU (one per repository), summed here. */
-  case class Row(
-      product: ujson.Value,
-      sku: ujson.Value,
-      unit: ujson.Value,
-      quantity: Double,
-      gross: Double,
-      discount: Double,
-      net: Double
-  )
+  private def decodeItem(item: ujson.Value): UsageItem =
+    def number(key: String) = Util.field(item, key).flatMap(_.numOpt).getOrElse(0.0)
+    def value(key: String) = Util.field(item, key).map(JqValue(_)).getOrElse(JqValue.Null)
+    UsageItem(
+      value("product"),
+      value("sku"),
+      value("unitType"),
+      number("quantity"),
+      number("grossAmount"),
+      number("discountAmount"),
+      number("netAmount")
+    )
 
-  enum Usage:
-    case Empty
-    case Report(rows: Seq[Row], total: Double)
-
-  private def number(item: ujson.Value, key: String): Double =
-    item.objOpt.flatMap(_.get(key)).flatMap(_.numOpt).getOrElse(0.0)
-
-  private def value(item: ujson.Value, key: String): ujson.Value =
-    item.objOpt.flatMap(_.get(key)).getOrElse(ujson.Null)
-
-  /** The API's response grouped by product+SKU (in jq's `group_by` order), net descending. */
+  /** The API's response as the usage it reports. */
   def shape(raw: String): Either[String, Usage] =
     Util.readJson(raw).left.map(e => s"gh-billing: not JSON: $e").flatMap { json =>
       json.objOpt.map(_.get("usageItems")) match
         case None => Left("gh-billing: the usage report is not a JSON object")
-        case Some(None) | Some(Some(ujson.Null))           => Right(Usage.Empty)
-        case Some(Some(ujson.Arr(items))) if items.isEmpty => Right(Usage.Empty)
-        case Some(Some(ujson.Arr(items)))                  =>
-          val groups = items.toSeq.groupBy(i => (value(i, "product"), value(i, "sku"))).toSeq
-          val rows = groups.sortWith((a, b) => jqCompare(a._1, b._1) < 0).map {
-            case ((product, sku), group) =>
-              Row(
-                product,
-                sku,
-                value(group.head, "unitType"),
-                group.map(number(_, "quantity")).sum,
-                group.map(number(_, "grossAmount")).sum,
-                group.map(number(_, "discountAmount")).sum,
-                group.map(number(_, "netAmount")).sum
-              )
-          }
-          Right(Usage.Report(rows.sortBy(-_.net), items.map(number(_, "netAmount")).sum))
-        case Some(Some(_)) => Left("gh-billing: usageItems is not an array")
+        case Some(None) | Some(Some(ujson.Null)) => Right(Usage.Empty)
+        case Some(Some(ujson.Arr(items)))        => Right(Usage.of(items.toSeq.map(decodeItem)))
+        case Some(Some(_))                       => Left("gh-billing: usageItems is not an array")
     }
-
-  // Included Actions minutes per month, personal-account plans only: the billing API does not
-  // expose them, so they are GitHub's published allowances.
-  val ActionsIncludedMinutes = Map("free" -> 2000, "pro" -> 3000)
-
-  /** The table, its columns aligned as `column -t` aligns them, and its total. */
-  def render(usage: Usage, plan: Option[String]): String = usage match
-    case Usage.Empty               => "no usage recorded for this period yet\n"
-    case Usage.Report(rows, total) =>
-      val header = Seq("PRODUCT", "SKU", "QUANTITY", "UNIT", "GROSS_USD", "DISCOUNT_USD", "NET_USD")
-      val cells = rows.map { r =>
-        Seq(
-          cell(r.product),
-          cell(r.sku),
-          jqNumber(r.quantity),
-          cell(r.unit),
-          money(r.gross),
-          money(r.discount),
-          money(r.net)
-        )
-      }
-      val lines = Seq.newBuilder[String]
-      lines ++= columns(header +: cells)
-      lines += ""
-      lines += s"total: $$${money(total)} net (gross minus any plan-included allowance already applied — a $$0.00 row means the SKU is fully covered by the plan, not free by nature)"
-      for name <- plan do
-        val minutes = jqNumber(
-          rows
-            .filter(r => r.product == ujson.Str("actions") && cell(r.unit).toLowerCase == "minutes")
-            .map(_.quantity)
-            .sum
-        )
-        ActionsIncludedMinutes.get(name) match
-          case Some(included) =>
-            val percent = JBigDecimal(minutes.toDouble / included * 100)
-              .setScale(0, RoundingMode.HALF_EVEN)
-              .toPlainString
-            lines += s"Actions minutes: $minutes of $included included this month ($percent%, plan: $name) — Linux-minute equivalents; github.com/settings/billing is the live authority"
-          case None =>
-            lines += s"Actions minutes used: $minutes (plan '$name' isn't in this script's known table — see github.com/settings/billing for your included allowance)"
-      lines += "GHCR storage: public packages are free, so nothing prunes old -<sha> tags (MIP-0065 §4.4; docs/1-Using-marola/DOCKER.md)."
-      lines.result().map(_ + "\n").mkString
-
-  /** `column -t`: every column but the last padded to its widest cell, two spaces between. */
-  def columns(table: Seq[Seq[String]]): Seq[String] =
-    def width(cell: String) = cell.codePointCount(0, cell.length)
-    val widths = table.transpose.map(_.map(width).max)
-    table.map { row =>
-      row.zipWithIndex
-        .map { (cell, i) =>
-          if i == row.length - 1 then cell else cell + " " * (widths(i) - width(cell))
-        }
-        .mkString("  ")
-    }
-
-  /** jq's `@tsv` of one value. */
-  private def cell(v: ujson.Value): String = v match
-    case ujson.Str(s) =>
-      s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
-    case ujson.Null    => ""
-    case ujson.Num(n)  => jqNumber(n)
-    case ujson.Bool(b) => b.toString
-    case other         => other.render()
-
-  /** jq's `.*100|round/100|tostring`: round half away from zero, as C's round. */
-  def money(amount: Double): String =
-    jqNumber(JBigDecimal(amount * 100).setScale(0, RoundingMode.HALF_UP).doubleValue / 100)
-
-  /** A computed number as jq 1.7 prints it: shortest digits, exponent past 17 digits or below 1e-4.
-    */
-  def jqNumber(n: Double): String =
-    if n == 0 then (if 1 / n < 0 then "-0" else "0")
-    else
-      val exact = JBigDecimal(java.lang.Double.toString(math.abs(n))).stripTrailingZeros
-      val digits = exact.unscaledValue.toString
-      val pointAt = digits.length - exact.scale // digits before the decimal point
-      val sign = if n < 0 then "-" else ""
-      if pointAt <= -4 || pointAt > digits.length + 15 then
-        val mantissa = if digits.length == 1 then digits else s"${digits.head}.${digits.tail}"
-        val exponent = pointAt - 1
-        sign + mantissa + f"e${if exponent < 0 then "-" else "+"}${math.abs(exponent)}%02d"
-      else if pointAt <= 0 then s"${sign}0.${"0" * -pointAt}$digits"
-      else if pointAt >= digits.length then sign + digits + "0" * (pointAt - digits.length)
-      else s"$sign${digits.take(pointAt)}.${digits.drop(pointAt)}"
-
-  /** jq's sort order: null < false < true < numbers < strings < arrays < objects. */
-  private def jqCompare(a: (ujson.Value, ujson.Value), b: (ujson.Value, ujson.Value)): Int =
-    val first = jqCompare(a._1, b._1)
-    if first != 0 then first else jqCompare(a._2, b._2)
-
-  private def jqCompare(a: ujson.Value, b: ujson.Value): Int =
-    def rank(v: ujson.Value) = v match
-      case ujson.Null   => 0
-      case ujson.False  => 1
-      case ujson.True   => 2
-      case _: ujson.Num => 3
-      case _: ujson.Str => 4
-      case _: ujson.Arr => 5
-      case _: ujson.Obj => 6
-    (a, b) match
-      case (ujson.Num(x), ujson.Num(y)) => x.compare(y)
-      case (ujson.Str(x), ujson.Str(y)) => x.compareTo(y)
-      case _ if rank(a) != rank(b)      => rank(a).compare(rank(b))
-      case _                            => a.render().compareTo(b.render())
 
   // ---- the command ---------------------------------------------------------------------------
 
@@ -266,23 +133,22 @@ object GhBilling:
   /** What one run printed and its exit code. */
   case class Outcome(out: String, err: String, code: Int)
 
-  def plannedCall(year: String, month: String, gh: Gh): Outcome =
+  def plannedCall(period: BillingPeriod, gh: Gh): Outcome =
     val user = gh(Seq("api", "user", "--jq", ".login"))
     val login = if user.exitCode == 0 then user.text else "{username}"
     Outcome(
-      s"gh-billing --dry-run: would call:\n  gh api \"/users/$login/settings/billing/usage?year=$year&month=$month\"\n",
+      s"gh-billing --dry-run: would call:\n  gh api \"/users/$login/settings/billing/usage?${period.query}\"\n",
       "",
       0
     )
 
-  def fromText(header: String, raw: String, plan: Option[String] = None): Outcome =
+  def fromText(header: String, raw: String, plan: Option[Plan] = None): Outcome =
     shape(raw) match
       case Left(error)  => Outcome(header, error + "\n", 5)
-      case Right(usage) => Outcome(header + render(usage, plan), "", 0)
+      case Right(usage) => Outcome(header + usage.render(plan), "", 0)
 
   def live(
-      year: String,
-      month: String,
+      period: BillingPeriod,
       noScopeCheck: Boolean,
       env: Map[String, String],
       gh: Gh
@@ -305,12 +171,10 @@ object GhBilling:
           else
             val login = user.text
             val planCall = gh(Seq("api", "user", "--jq", ".plan.name // empty"))
-            val plan = Option.when(planCall.exitCode == 0)(planCall.text).filter(_.nonEmpty)
-            val shownMonth = month.toIntOption.map(m => f"$m%02d").getOrElse(month)
-            val header = s"GitHub billing usage — $login, $year-$shownMonth\n\n"
-            val usage = gh(
-              Seq("api", s"/users/$login/settings/billing/usage?year=$year&month=$month")
-            )
+            val plan =
+              Option.when(planCall.exitCode == 0)(planCall.text).filter(_.nonEmpty).map(Plan.parse)
+            val header = s"GitHub billing usage — $login, ${period.shown}\n\n"
+            val usage = gh(Seq("api", s"/users/$login/settings/billing/usage?${period.query}"))
             if usage.exitCode != 0 then
               val diagnosis = classifyError(usage.err).map(_ + "\n").getOrElse("")
               Outcome(
@@ -351,10 +215,12 @@ run from the host. --from-file/--json-stdin/--dry-run need neither a gh login no
       ) noScopeCheck: Flag
   ): Int =
     val today = java.time.LocalDate.now()
-    val y = year.getOrElse(today.getYear.toString)
-    val m = month.getOrElse(today.getMonthValue.toString)
+    val period = BillingPeriod(
+      year.getOrElse(today.getYear.toString),
+      month.getOrElse(today.getMonthValue.toString)
+    )
     val outcome =
-      if dryRun.value then plannedCall(y, m, realGh)
+      if dryRun.value then plannedCall(period, realGh)
       else
         fromFile match
           case Some(file) if !os.isFile(os.Path(file, os.pwd)) =>
@@ -366,7 +232,7 @@ run from the host. --from-file/--json-stdin/--dry-run need neither a gh login no
               "GitHub billing usage — from stdin\n\n",
               String(System.in.readAllBytes(), "UTF-8")
             )
-          case None => live(y, m, noScopeCheck.value, sys.env, realGh)
+          case None => live(period, noScopeCheck.value, sys.env, realGh)
     print(outcome.out)
     System.err.print(outcome.err)
     outcome.code
