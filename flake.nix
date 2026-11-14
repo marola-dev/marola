@@ -42,9 +42,9 @@
           pkgs.just
 
           # tools/ (marola-tools): the umbrella's own tooling is Scala 3, run by scala-cli on a
-          # JDK 21 (AGENTS.md). scala-cli fetches the compiler, the libraries and scalafmt itself.
+          # JDK 25, as marola-app (AGENTS.md). scala-cli fetches the compiler, the libraries and scalafmt itself.
           pkgs.scala-cli
-          pkgs.jdk21_headless
+          pkgs.jdk25_headless
 
           # `just context-mips`: repomix packs docs for a browser session, wl-copy/xclip copy them.
           pkgs.repomix

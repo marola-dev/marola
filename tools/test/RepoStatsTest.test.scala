@@ -57,6 +57,32 @@ class RepoStatsTest extends munit.FunSuite:
     assertEquals(parseCloc(cloc, "Scala"), Right(6865L))
     assertEquals(parseCloc(cloc, "Rust"), Right(0L))
 
+  test("reads the tests job"):
+    def jobs(conclusion: String) =
+      Seq(ujson.read(s"""{"name": "tools-ci", "conclusion": $conclusion}"""))
+    assertEquals(testsBadge(jobs("\"success\""), "tools-ci")("message").str, "passing")
+    assertEquals(testsBadge(jobs("\"failure\""), "tools-ci")("color").str, "red")
+    assertEquals(testsBadge(jobs("\"skipped\""), "tools-ci")("message").str, "no data")
+    assertEquals(testsBadge(jobs("null"), "tools-ci")("message").str, "no data")
+    assertEquals(testsBadge(Nil, "tools-ci")("message").str, "no data")
+
+  test("reads the pinned versions"):
+    val project =
+      "//> using scala 3.9.0\n//> using jvm 21\n//> using dep com.lihaoyi::os-lib:0.11.10\n"
+    assertEquals(directive(project, "scala"), Some("3.9.0"))
+    assertEquals(directive(project, "jvm"), Some("21"))
+    assertEquals(directive(project, "options"), None)
+    val badges = versionBadges(project).toMap
+    assertEquals(badges("scala-version.json")("message").str, "3.9.0")
+    assertEquals(badges("jdk-version.json")("message").str, "21")
+    assertEquals(versionBadges("").toMap.apply("jdk-version.json")("message").str, "no data")
+    val pinned = os.read(Util.repoRoot / "tools" / "project.scala")
+    assert(
+      directive(pinned, "scala").exists(_.startsWith("3.")),
+      "tools/project.scala pins Scala 3"
+    )
+    assert(directive(pinned, "jvm").nonEmpty, "tools/project.scala pins a JDK")
+
   test("writes whole documents"):
     val out = os.temp.dir() / "stats"
     val paths =

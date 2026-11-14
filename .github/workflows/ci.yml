@@ -109,11 +109,11 @@ jobs:
         run: |
           nix develop .#lint --command which cloc | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
 
-      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
       - uses: coursier/cache-action@v6
       - uses: VirtusLab/scala-cli-setup@v1
         with:
-          jvm: temurin:21
+          jvm: temurin:25
       - name: Badge JSONs — CI health (steps green/ran), the tooling's and marola-app's Scala LOC
         env:
           GH_TOKEN: ${{ github.token }}
@@ -162,11 +162,11 @@ jobs:
       - name: Save the live sitemap
         continue-on-error: true
         run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml || { rm -f old-sitemap.xml; exit 1; }
-      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
       - uses: coursier/cache-action@v6
       - uses: VirtusLab/scala-cli-setup@v1
         with:
-          jvm: temurin:21
+          jvm: temurin:25
       - run: scripts/marola-tools prepare-docs
       - name: mkdocs --strict, in the Kroki container stack
         env:
@@ -198,11 +198,11 @@ jobs:
           submodules: true
       # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
       - uses: DeterminateSystems/nix-installer-action@v23
-      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
       - uses: coursier/cache-action@v6
       - uses: VirtusLab/scala-cli-setup@v1
         with:
-          jvm: temurin:21
+          jvm: temurin:25
       # MIP-0076 §8's open item; without it graph.sh runs with no network isolation.
       - name: Does unshare -rn work on this runner?
         run: |
@@ -298,11 +298,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
       - uses: coursier/cache-action@v6
       - uses: VirtusLab/scala-cli-setup@v1
         with:
-          jvm: temurin:21
+          jvm: temurin:25
       - name: scalafmt
         run: scala-cli fmt --check tools
       - name: munit (every marola-tools command, plus mip-graph, citation and claude-project-check against the committed files; -Werror)

@@ -53,11 +53,11 @@ jobs:
 
       # Builds .tmp/docs-aggregated, api-docs branches included; the tracked docs/ tree is never
       # written to (ruling T10-8).
-      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
       - uses: coursier/cache-action@v6
       - uses: VirtusLab/scala-cli-setup@v1
         with:
-          jvm: temurin:21
+          jvm: temurin:25
 
       - name: Build the aggregated docs tree
         run: scripts/marola-tools prepare-docs

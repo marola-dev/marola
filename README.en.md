@@ -125,7 +125,7 @@ scripts with logic in them. Each command is one file in `tools/src/`, with its t
 `tools/test/`.
 
 ```bash
-nix develop                         # scala-cli, JDK 21, just and the lint tools
+nix develop                         # scala-cli, JDK 25, just and the lint tools
 scripts/marola-tools --help         # the list of commands
 scripts/marola-tools reading-time   # each README's reading time
 just quality                        # the same gates as CI, the tools/ tests included

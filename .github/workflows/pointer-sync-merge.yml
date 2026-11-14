@@ -44,11 +44,11 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
       - uses: coursier/cache-action@v6
       - uses: VirtusLab/scala-cli-setup@v1
         with:
-          jvm: temurin:21
+          jvm: temurin:25
 
       - name: Decide whether the sync PR merges
         id: plan

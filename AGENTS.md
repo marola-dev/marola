@@ -94,7 +94,7 @@ which checkout each recipe needs.
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola
-nix develop      # just, scala-cli, a JDK 21, gh, hadolint, actionlint (flake.nix); Docker is the host's
+nix develop      # just, scala-cli, a JDK 25, gh, hadolint, actionlint (flake.nix); Docker is the host's
 just             # list the recipes
 just quality     # this repo's gates
 just docs        # the aggregated docs (docs/ + every submodule's) into mkdocs/generated-docs

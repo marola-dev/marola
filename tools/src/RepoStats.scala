@@ -1,8 +1,9 @@
 import mainargs.{arg, main, ParserForMethods}
 import Util.field
 
-// The README's CI-health badge and the Scala LOC badges (marola-app's and this repo's tooling), as
-// shields.io endpoint JSON, published to marola-site's `site-data` branch.
+// The README's badges as shields.io endpoint JSON, published to marola-site's `site-data` branch:
+// CI health, the tests (tools-ci), the Scala and JDK versions tools/project.scala pins, and the
+// Scala LOC of marola-app and of this repo's tooling.
 //
 //     marola-tools repo-stats write --out-dir stats [--repo marola-dev/marola --run-id 123 --exclude-job repo-stats]
 object RepoStats:
@@ -11,6 +12,7 @@ object RepoStats:
   val ScalaColor = "DC322F" // = marola-app's README's hand-written Scala badge
   // The umbrella's own tooling (#942).
   val ToolingPaths = Seq("tools/src")
+  val TestsJob = "tools-ci" // ci.yml's munit job
   private val ExcludeDirs = Seq("target", "node_modules")
 
   // A step that reached one of these actually executed; `skipped`, `neutral` or a null conclusion
@@ -43,6 +45,28 @@ object RepoStats:
         else if green.toDouble >= 0.9 * ran then "yellow"
         else "red"
       badge("ci steps", s"$green/$ran green", color)
+
+  /** The munit job's verdict: passing only on success; a skipped or missing job is no data. */
+  def testsBadge(jobs: Seq[ujson.Value], job: String): ujson.Obj =
+    jobs
+      .find(j => field(j, "name").flatMap(_.strOpt).contains(job))
+      .flatMap(j => field(j, "conclusion").flatMap(_.strOpt)) match
+      case Some("success")                             => badge("tests", "passing", "brightgreen")
+      case Some("failure" | "cancelled" | "timed_out") => badge("tests", "failing", "red")
+      case _                                           => badge("tests", "no data", "lightgrey")
+
+  /** `//> using <key> <value>` in a scala-cli project file; the first one wins. */
+  def directive(project: String, key: String): Option[String] =
+    val Using = raw"//> using\s+(\S+)\s+(\S+)\s*".r
+    project.linesIterator.collectFirst { case Using(`key`, value) => value }
+
+  def versionBadges(project: String): Seq[(String, ujson.Obj)] =
+    Seq(
+      "scala-version.json" -> ("scala", directive(project, "scala"), ScalaColor),
+      "jdk-version.json" -> ("jdk", directive(project, "jvm"), "007396")
+    ).map { case (name, (label, value, color)) =>
+      name -> value.fold(badge(label, "no data", "lightgrey"))(badge(label, _, color))
+    }
 
   def locBadge(label: String, code: Long, color: String): ujson.Obj =
     badge(label, s"${thousands(code)} LOC", color)
@@ -125,12 +149,17 @@ object RepoStats:
             case None     => Right(Nil)
             case Some(id) =>
               fetchJobs(repo, id).map(jobs =>
-                Seq("ci.json" -> ciBadge.tupled(countSteps(jobs, excludeJob)))
+                Seq(
+                  "ci.json" -> ciBadge.tupled(countSteps(jobs, excludeJob)),
+                  "tests.json" -> testsBadge(jobs, TestsJob)
+                )
               )
+          project = rootPath / "tools" / "project.scala"
+          versions = if os.isFile(project) then versionBadges(os.read(project)) else Nil
         yield Seq(
           "scala-loc.json" -> locBadge("scala", app, ScalaColor),
-          "tooling-loc.json" -> locBadge("tooling", tooling, ScalaColor)
-        ) ++ ci
+          "tooling-loc.json" -> locBadge("scala LOC", tooling, ScalaColor)
+        ) ++ ci ++ versions
       badges match
         case Left(error) =>
           System.err.println(error)

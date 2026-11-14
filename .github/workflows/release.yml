@@ -22,11 +22,11 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
-      # marola-tools (tools/, Scala 3): scala-cli on a JDK 21, its downloads cached by coursier.
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
       - uses: coursier/cache-action@v6
       - uses: VirtusLab/scala-cli-setup@v1
         with:
-          jvm: temurin:21
+          jvm: temurin:25
       - run: scripts/marola-tools citation --check
       - run: scripts/marola-tools release --guard "$GITHUB_REF_NAME"
       - env:
