@@ -369,6 +369,14 @@ this file; `route why "<words>"` ranks these rows.
 | [MIP-0070](MIP-0070-umbrella-and-polyrepo-split.md) | 9 | Implemented | alternative | The umbrella owns `marola.dev` and pulls in the site's `dist/` (rejected): URLs would be unchanged |
 | [MIP-0070](MIP-0070-umbrella-and-polyrepo-split.md) | 11 | Implemented | decided | Decided 2026-09-30: in #522, a fine-grained PAT; the names `marola-app` and `marola-site`, as proposed (`marola-backend`/`marola-frontend` were weighed and dropped by the team); issues per repo on the org Project. |
 | [MIP-0070](MIP-0070-umbrella-and-polyrepo-split.md) | 11 | Implemented | decided | Decided 2026-10-10: no PAT for cross-repo automation: MIP-0086 replaced it with two org-owned GitHub Apps, `marola-pr-bot` and `marola-merge-bot`, so no owner or expiry is left to choose. |
+| [MIP-0071](MIP-0071-official-alerts-per-state.md) | 1 | Draft | summary | marola.dev gets `alerts.html`: official warnings for every Brazilian state, INMET's first, active ones on top and a dated archive by state and month, each in the issuer's words with a link to the issuer. |
+| [MIP-0071](MIP-0071-official-alerts-per-state.md) | 9 | Draft | alternative | Do nothing and drop the nav item (MIP-0044 §11) (rejected) |
+| [MIP-0071](MIP-0071-official-alerts-per-state.md) | 9 | Draft | alternative | Amend MIP-0034 (rejected) |
+| [MIP-0071](MIP-0071-official-alerts-per-state.md) | 9 | Draft | alternative | The site build reads INMET's RSS (requirement 1's RSS option) (rejected) |
+| [MIP-0071](MIP-0071-official-alerts-per-state.md) | 9 | Draft | alternative | SQLite, CSV or one file per alert (rejected) |
+| [MIP-0071](MIP-0071-official-alerts-per-state.md) | 9 | Draft | alternative | The store on `main` (rejected) |
+| [MIP-0071](MIP-0071-official-alerts-per-state.md) | 9 | Draft | alternative | One ingest job per UF (rejected) |
+| [MIP-0071](MIP-0071-official-alerts-per-state.md) | 9 | Draft | alternative | An orphan `alerts-data` branch would keep the archive out of `api-docs.yml`'s churn (rejected) |
 | [MIP-0072](MIP-0072-gemini-review-on-request.md) | 1 | Partially implemented | summary | Requesting the empty, visible org team `marola-dev/gemini` as a reviewer on any marola pull request starts a Gemini review. |
 | [MIP-0072](MIP-0072-gemini-review-on-request.md) | 9 | Partially implemented | alternative | Gemini Code Assist on GitHub (this MIP's first draft) (rejected): needs a GCP project with billing since the consumer app's shutdown |
 | [MIP-0072](MIP-0072-gemini-review-on-request.md) | 9 | Partially implemented | alternative | An agent loop (`run-gemini-cli`) (rejected): spent the day's quota on a single PR |

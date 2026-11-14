@@ -134,18 +134,7 @@ Pick: INMET for all 27 UFs from the first delivery; every other issuer waits for
 
 ### 5.1 The pipeline
 
-```mermaid
-flowchart LR
-  inmet["INMET RSS and CAP"] --> fetch["alerts-ingest.yml: fetch job, one per source"]
-  later["later: state sources"] --> fetch
-  fetch --> raw[("site-data: alerts/raw")]
-  raw --> route["route job: every UF in its own error boundary"]
-  route --> store[("site-data: alerts/UF/YYYY-MM.jsonl")]
-  manual["main: site/alerts/manual"] --> render
-  store --> render["site.yml: alerts render, no network"]
-  render --> dist["site/dist/data/alerts"]
-  dist --> page["alerts.html and alerts.js"]
-```
+![The official-alerts pipeline: fetch per source, route per UF, render from the store](../img/archify/mip-0071-pipeline.png)
 
 ### 5.2 The record
 
