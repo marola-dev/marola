@@ -118,13 +118,13 @@ esac
     var out = ""
 
     /** One run in the clone: what it did to the fake gh, plus a non-zero exit. */
-    def go(sha: String = "", dryRun: Boolean = false): String =
+    def go(sha: String = "", dryRun: Boolean = false, plan: Option[os.Path] = None): String =
       os.write.over(gh / "calls", "")
       os.remove(gh / "last-comment")
       val bytes = ByteArrayOutputStream()
       val saved = System.out
       System.setOut(PrintStream(bytes, true))
-      val code = try runIn("marola-dev/marola", sha, dryRun, work, proc)
+      val code = try runIn("marola-dev/marola", sha, dryRun, work, proc, plan)
       finally System.setOut(saved)
       out = bytes.toString
       val calls = os.read(gh / "calls").stripLineEnd
@@ -146,6 +146,29 @@ esac
       1,
       "--dry-run prints the merge command"
     )
+
+  fixture.test("--plan writes the merge and calls nothing"): f =>
+    f.pr(f.ok, green)
+    val plan = f.t / "plan"
+    assertEquals(f.go(f.ok, plan = Some(plan)), "", "--plan calls nothing")
+    assertEquals(os.read(plan), s"action=merge\npr=7\nhead=${f.ok}\n")
+
+  fixture.test("--plan writes a refusal as a comment"): f =>
+    f.pr(f.ok, failedRun)
+    val plan = f.t / "plan"
+    assertEquals(f.go(f.ok, plan = Some(plan)), "", "--plan calls nothing")
+    val lines = os.read.lines(plan)
+    assertEquals(lines.take(3), Seq("action=comment", "pr=7", s"head=${f.ok}"))
+    assert(lines(3).startsWith("body=") && lines(3).contains("docs-build"), lines(3))
+
+  fixture.test("--plan writes nothing while a check is pending"): f =>
+    f.pr(
+      f.ok,
+      """{"check_runs":[{"name":"docs-build","status":"in_progress","conclusion":null},{"name":"ci-ok","status":"completed","conclusion":"success","app":{"id":15368}}]}"""
+    )
+    val plan = f.t / "plan"
+    assertEquals(f.go(f.ok, plan = Some(plan)), "")
+    assert(!os.exists(plan), "no action")
 
   fixture.test("refuses a pending check"): f =>
     f.pr(

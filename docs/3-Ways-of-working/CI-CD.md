@@ -102,7 +102,8 @@ Repository settings that no workflow or agent can change. MIP-0065 depends on th
     Whoever holds the key can land a PR on
     every consumer's `main`. `pointer-sync-merge.yml` merges only when `ci-ok` has succeeded and every
     moved pointer is on its repo's default branch, never a fork's commit that GitHub also serves through
-    the parent repo.
+    the parent repo. Its keyless `decide` job runs marola-tools (scala-cli) with `--plan`; the keyed
+    `merge` job only runs `gh pr merge` or `gh pr comment` on that plan.
   - **marola-bundle-bot** (MIP-0084 §5.3) holds Contents: write and is installed on marola alone.
     It is `routing-bundle-rule`'s only bypass actor, so it is the one identity that can write
     `routing-bundle`, and it writes nothing else. Its id is the repo variable `BUNDLE_BOT_APP_ID`, its key

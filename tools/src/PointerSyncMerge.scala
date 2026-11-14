@@ -2,8 +2,9 @@ import mainargs.{arg, main, Flag, ParserForMethods}
 
 // Squash-merge pointer-sync.yml's rolling PR once it is green and in scope (#739).
 //
-//     marola-tools pointer-sync-merge --repo OWNER/NAME [--sha SHA] [--dry-run]
-//         in a full clone of the default branch; --sha is the commit the triggering checks ran on
+//     marola-tools pointer-sync-merge --repo OWNER/NAME [--sha SHA] [--dry-run] [--plan FILE]
+//         in a full clone of the default branch; --sha is the commit the triggering checks ran on;
+//         --plan writes the merge or the comment to FILE for pointer-sync-merge.yml's keyed job
 //
 // Skips a PR labelled `hold`. Merges only when ci-ok (from GitHub Actions) and every other check run
 // and status on the head finished success/skipped/neutral, the head is still --sha, and the diff is
@@ -182,7 +183,14 @@ object PointerSyncMerge:
   // ---- the run ---------------------------------------------------------------------------------
 
   /** One pass over the rolling PR, from the clone `cwd`. The exit code. */
-  def runIn(repo: String, want: String, dryRun: Boolean, cwd: os.Path, proc: Proc): Int =
+  def runIn(
+      repo: String,
+      want: String,
+      dryRun: Boolean,
+      cwd: os.Path,
+      proc: Proc,
+      plan: Option[os.Path] = None
+  ): Int =
     Proc.exitCode {
       val prList = proc
         .call(
@@ -212,19 +220,33 @@ object PointerSyncMerge:
         case Some(pr) if pr.held =>
           Proc.say(s"pointer-sync-merge: #${pr.number} carries hold; left for a person")
           0
-        case Some(pr) => Merge(repo, pr, dryRun, cwd, proc).checkAndMerge(want)
+        case Some(pr) => Merge(repo, pr, dryRun, cwd, proc, plan).checkAndMerge(want)
     }
 
-  private final case class Merge(repo: String, pr: Pr, dryRun: Boolean, cwd: os.Path, proc: Proc):
+  private final case class Merge(
+      repo: String,
+      pr: Pr,
+      dryRun: Boolean,
+      cwd: os.Path,
+      proc: Proc,
+      plan: Option[os.Path]
+  ):
     private val n = pr.number
     private val head = pr.head
+
+    // --plan: the keyless job decides and the keyed job only acts, so no third-party action or
+    // download ever runs beside MERGE_BOT_KEY (MIP-0086 §5.6, the devkit's merge-key-check).
+    private def writePlan(out: os.Path, fields: (String, String)*): Unit =
+      os.write.append(out, fields.map((k, v) => s"$k=${v.replace('\n', ' ')}\n").mkString)
 
     def refuse(why: String, next: String = "Left for a person"): Int =
       val body = refusal(head, why, next)
       Proc.say(s"::warning::#$n $body")
       if alreadySaid(body) then Proc.say(s"pointer-sync-merge: #$n already says so")
-      else if dryRun then Proc.say(s"+ gh pr comment $n -R $repo --body '$body'")
-      else proc.must(cwd, "gh", "pr", "comment", n, "-R", repo, "--body", body)
+      else
+        plan.foreach(writePlan(_, "action" -> "comment", "pr" -> n, "head" -> head, "body" -> body))
+        if dryRun || plan.isDefined then Proc.say(s"+ gh pr comment $n -R $repo --body '$body'")
+        else proc.must(cwd, "gh", "pr", "comment", n, "-R", repo, "--body", body)
       0
 
     private def alreadySaid(body: String): Boolean =
@@ -307,7 +329,8 @@ object PointerSyncMerge:
     private def merge(): Int =
       val command =
         Seq("gh", "pr", "merge", n, "--squash", "--admin", "--match-head-commit", head, "-R", repo)
-      if dryRun then Proc.say(s"+ ${command.mkString(" ")}")
+      plan.foreach(writePlan(_, "action" -> "merge", "pr" -> n, "head" -> head))
+      if dryRun || plan.isDefined then Proc.say(s"+ ${command.mkString(" ")}")
       else
         proc.must(cwd, command*)
         Proc.say(s"pointer-sync-merge: merged #$n at ${head.take(7)}")
@@ -317,13 +340,19 @@ object PointerSyncMerge:
   def run(
       @arg(doc = "OWNER/NAME") repo: Option[String] = None,
       @arg(doc = "the commit the triggering checks ran on") sha: Option[String] = None,
-      @arg(doc = "print the comment and merge commands instead of running them") dryRun: Flag
+      @arg(doc = "print the comment and merge commands instead of running them") dryRun: Flag,
+      @arg(doc = "append action, pr, head and body to this file ($GITHUB_OUTPUT) instead of acting")
+      plan: Option[String] = None
   ): Int =
     repo.filter(_.nonEmpty) match
       case None =>
-        Proc.err("usage: marola-tools pointer-sync-merge --repo OWNER/NAME [--sha SHA] [--dry-run]")
+        Proc.err(
+          "usage: marola-tools pointer-sync-merge --repo OWNER/NAME [--sha SHA] [--dry-run] [--plan FILE]"
+        )
         2
-      case Some(name) => runIn(name, sha.getOrElse(""), dryRun.value, os.pwd, Proc())
+      case Some(name) =>
+        val out = plan.filter(_.nonEmpty).map(os.Path(_, os.pwd))
+        runIn(name, sha.getOrElse(""), dryRun.value, os.pwd, Proc(), out)
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "pointer-sync-merge", args)
 
