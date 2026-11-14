@@ -28,10 +28,10 @@ artifact moves is in [Artifacts, pins and dispatches](#artifacts-pins-and-dispat
 |---|---|---|---|---|
 | [marola](https://github.com/marola-dev/marola) (umbrella) | Ways of working, MIPs, research, `PHASES.md`, the docs site, the submodule pointers, the `eli5` skill | [docs.marola.dev](https://docs.marola.dev/); `stats/` on marola-site's `site-data` | Readers; marola-site's stats panel | `docs.yml`, `pointer-sync.yml`, `ci.yml` |
 | [marola-devkit](https://github.com/marola-dev/marola-devkit) (not a submodule) | Dev-flow tools, git hooks, the `marola-devkit` plugin, reusable workflows, the invariants block | A tag: flake input, plugin marketplace, `uses:` workflows | Every repo | A tag |
-| [marola-app](https://github.com/marola-dev/marola-app) | The Scala 3 + Kyo product on JDK 25 (sbt modules `core`, `local`, `cli`): the pipeline, CLI, MCP and chat servers, the benchmark runner; the OODS ingest code with MIP-0056 | The image `ghcr.io/marola-dev/marola-app`; `ml-resources-<tag>.tar.gz`; Scaladoc on its `api-docs` branch; `coverage/` and `smoke/` on `site-data` | site, ml, oods; the umbrella's docs | `docker.yml`, `release.yml` (a `v*` tag), `api-docs.yml`, `ci.yml`, `docker-smoke.yml` |
+| [marola-app](https://github.com/marola-dev/marola-app) | The Scala 3 + Kyo product on JDK 25 (sbt modules `core`, `local`, `cli`): the pipeline, CLI, MCP and chat servers, the benchmark runner; the OODS ingest code with MIP-0056 | The image `ghcr.io/marola-dev/marola-app`; `ml-resources-<tag>.tar.gz`; Scaladoc on its `api-docs` branch; `coverage/` and `smoke/` on `site-data` | site, ml, oods; the umbrella's docs | `ci.yml` (a push to `main`), `release.yml` (a `v*` tag), `docker-smoke.yml` |
 | [marola-site](https://github.com/marola-dev/marola-site) | The map: the static page, `areas.json`, live checks, the `site-data` branch | [marola.dev](https://marola.dev/) on a Cloudflare Worker, GitHub Pages as fallback | Visitors | `site.yml`: every 3 h, on an image bump or a site-data dispatch |
 | [marola-corpus](https://github.com/marola-dev/marola-corpus) | The sourced ocean knowledge (Markdown under `knowledge`), the `corpus-doc` skill | `marola-corpus-<tag>.tar.gz` | app, ml | `release.yml` (a `v*` tag) |
-| [marola-ml](https://github.com/marola-dev/marola-ml) | Offline Python: the DSPy prompt compile, the marola-sea fine-tune, the benchmark gate and its kept runs | Compiled-prompt PRs; marola-sea on Hugging Face; the image `ghcr.io/marola-dev/marola-ml` (Ollama with the fine-tuned model, `:local` once the benchmark gate passes); pdoc on its `api-docs` branch | app; the umbrella's docs | `compile-prompt.yml`, `marola-sea-publish.yml`, `docker-local.yml`, `api-docs.yml` |
+| [marola-ml](https://github.com/marola-dev/marola-ml) | Offline Python: the DSPy prompt compile, the marola-sea fine-tune, the benchmark gate and its kept runs | Compiled-prompt PRs; marola-gpt on Hugging Face; the image `ghcr.io/marola-dev/marola-ml` (Ollama with the fine-tuned model, `:local` once the benchmark gate passes); pdoc on its `api-docs` branch | app; the umbrella's docs | `compile-prompt.yml`, `marola-gpt-publish.yml` (a `marola-gpt-v*` tag), `docker-local.yml`, `ci.yml` |
 | [marola-oods](https://github.com/marola-dev/marola-oods) | The Open Ocean Data Store's data only (`data/oods/`, MIP-0056); empty for now | The dataset; an export tag (planned, MIP-0056 §5.5) | app | The app's ingest workflow (with MIP-0056); `oods-check.yml` |
 | [marola-skills](https://github.com/marola-dev/marola-skills) | The catalogue of every Claude Code skill and subagent in the marola-dev repos, ww3-gpu and their upstreams: where each lives, its pin, what was tested; no skill is copied here | Its docs (`docs/4-reference_index.md`, `data/index.json`, regenerated daily) | Readers; the umbrella's docs | `refresh.yml` (daily, one rolling PR) |
 | [marola-agents](https://github.com/marola-dev/marola-agents) | The inventory of every agent marola uses or plans: Claude Code subagents, the Claude Projects and their routines, the product's LLM roles, the agents CI calls; no agent is defined here | Its docs | Readers; the umbrella's docs | A PR that adds or changes an agent in any repo |
@@ -46,24 +46,7 @@ source.** A producer publishes a versioned artifact; a consumer pins it and move
 bumping the pin in a PR. Inside an umbrella checkout the submodules sit side by side, but that is a
 convenience for people and agents, never a build input.
 
-```mermaid
-flowchart LR
-  devkit[marola-devkit] -.->|"tag"| every[every repo]
-  corpus[marola-corpus] -->|"tarball"| app[marola-app]
-  corpus -->|"tarball"| ml[marola-ml]
-  app -->|"image"| site[marola-site]
-  app -->|"image, resources tarball"| ml
-  app -->|"image"| oods[marola-oods]
-  ml -->|"compiled-prompt PR"| app
-  app -->|"coverage, smoke"| site
-  umbrella[marola umbrella] -->|"stats"| site
-  app -->|"api-docs branch"| umbrella
-  ml -->|"api-docs branch"| umbrella
-  app -.->|"ingest commits (planned)"| oods
-  oods -.->|"export tag (planned)"| app
-  every -.->|"skills, read daily"| skills[marola-skills]
-  every -.->|"agents, indexed"| agents[marola-agents]
-```
+![The contracts between repos: which repo hands which artifact to which](../img/archify/repos-contracts.png)
 
 A contract change follows the producer: it merges and releases first, each consumer bumps its pin
 in its own PR, and the umbrella's pointers move last, through the sync PR.
@@ -79,27 +62,28 @@ stale. An edit between the markers is overwritten.
 
 | Artifact | Published by | Pinned in | Read by |
 |---|---|---|---|
-| `ghcr.io/marola-dev/marola-app` image | marola-app `docker.yml` (on a push to `main` touching 11 paths) | marola-site `marola-image`, marola-ml `marola-image`, marola-oods `marola-image` | marola-site `scripts/board-schema.sh`, marola-ml `scripts/app-image.sh`, marola-app `docker-compose.yml`, marola-oods `scripts/app-image.sh` |
+| `ghcr.io/marola-dev/marola-app` image | marola-app `ci.yml` (on a push to `main`) | marola-site `marola-image`, marola-ml `marola-image`, marola-oods `marola-image` | marola-site `scripts/board-schema.sh`, marola-ml `scripts/app-image.sh`, marola-app `docker-compose.yml`, marola-oods `scripts/app-image.sh` |
 | `ghcr.io/marola-dev/marola-ml` image | marola-ml `docker-local.yml` (on a push to `main` touching 10 paths) | — | marola-app `docker-compose.yml` |
 | `<tag>-v<tag>.pdf` release asset | marola-research `release.yml` (on a `*-v[0-9]*.[0-9]*.[0-9]*` tag) | — | — |
 | `marola-corpus-<tag>.tar.gz` release asset | marola-corpus `release.yml` (on a `v*` tag) | marola-ml `corpus.version`, marola-app `corpus.version` | marola-ml `scripts/corpus-fetch.sh`, marola-app `build.sbt`, marola-app `scripts/corpus-fetch.sh` |
 | `ml-resources-<tag>.tar.gz` release asset | marola-app `release.yml` (on a `v*` tag) | marola-ml `resources.version` | marola-ml `scripts/resources-fetch.sh` |
-| `api-docs` branch | marola-ml `ci.yml` (`api-docs.yml@v0.10.1`, on a push to `main`), marola-app `ci.yml` (`api-docs.yml@v0.10.1`, on a push to `main`) | — | marola `scripts/fetch-api-docs.sh` |
+| `api-docs` branch | marola-ml `ci.yml` (`api-docs.yml@v0.20.4`, on a push to `main`), marola-app `ci.yml` (`api-docs.yml@v0.20.4`, on a push to `main`) | — | marola `scripts/fetch-api-docs.sh` |
 | `site-data` branch of marola-site | marola `ci.yml` (on a push to `main`), marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | — | marola-site `site.yml` |
-| PRs into each repo in `.github/consumers.txt` | marola-devkit `bump-consumers.yml` | — | marola, marola-app, marola-site, marola-ml, marola-corpus, marola-oods |
+| PRs into each repo in `.github/consumers.txt` | marola-devkit `bump-consumers.yml`, marola-devkit `bump-merge.yml` (on a schedule) | — | marola, marola-app, marola-site, marola-ml, marola-corpus, marola-oods, marola-skills |
 | PRs into marola-app: `recommendation_prompt.json`, `review_prompt.json` | marola-ml `compile-prompt.yml` (by hand) | — | marola-app |
-| a marola-devkit tag | marola-devkit | marola `flake.lock` v0.11.1, marketplace v0.11.1; marola-site `flake.nix` v0.10.1, marketplace v0.10.1; marola-corpus `flake.nix` v0.10.1, marketplace v0.10.1; marola-ml `flake.nix` v0.10.1, marketplace v0.10.1; marola-app `flake.lock` v0.10.1, marketplace v0.10.1; marola-oods `flake.nix` v0.10.1, marketplace v0.10.1; marola-skills `flake.lock` v0.8.3, marketplace v0.8.3 | `agents-check.yml` v0.10.1 (marola-site marola-corpus marola-ml marola-app marola-oods), v0.11.1 (marola), v0.8.3 (marola-skills); `api-docs.yml` v0.10.1 (marola-ml marola-app); `ci-short-circuit.yml` v0.10.1 (marola-site marola-corpus marola-ml marola-app marola-oods), v0.11.1 (marola), v0.8.3 (marola-skills); `gemini-review.yml` v0.10.1 (marola-site marola-corpus marola-ml marola-app marola-oods), v0.11.1 (marola); `labels-sync.yml` v0.10.1 (marola-site marola-corpus marola-ml marola-app marola-oods), v0.11.1 (marola), v0.8.3 (marola-skills); `notify-umbrella.yml` v0.10.1 (marola-site marola-corpus marola-ml marola-app marola-oods), v0.8.3 (marola-skills); `pr-body.yml` v0.10.1 (marola-site marola-corpus marola-ml marola-app marola-oods), v0.11.1 (marola), v0.8.3 (marola-skills); `python-ci.yml` v0.10.1 (marola-site marola-ml marola-app), v0.11.1 (marola), v0.8.3 (marola-skills); `scala-ci.yml` v0.10.1 (marola-app); `skills-update.yml` v0.10.1 (marola-site), v0.11.1 (marola); `static-ci.yml` v0.10.1 (marola-site marola-corpus marola-ml marola-app marola-oods), v0.11.1 (marola) |
+| a marola-devkit tag | marola-devkit | marola `flake.lock` v0.20.4, marketplace v0.20.4; marola-site `flake.nix` v0.20.4, marketplace v0.20.4; marola-corpus `flake.nix` v0.20.4, marketplace v0.20.4; marola-ml `flake.nix` v0.20.4, marketplace v0.20.4; marola-app `flake.lock` v0.20.4, marketplace v0.20.4; marola-oods `flake.nix` v0.20.4, marketplace v0.20.4; marola-skills `flake.lock` v0.20.4, marketplace v0.20.4 | `agents-check.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `api-docs.yml` v0.20.4 (marola-ml marola-app); `ci-short-circuit.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `gemini-review.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods); `labels-sync.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `notify-devkit.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills marola-devkit); `notify-umbrella.yml` v0.20.4 (marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `pr-body.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `python-ci.yml` v0.20.4 (marola-site marola-ml marola-app marola-skills); `scala-ci.yml` v0.20.4 (marola-app); `skills-update.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods); `static-ci.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods) |
 
 | Dispatch | Sent by | Triggers |
 |---|---|---|
+| `bump-ready` | marola `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-site `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-corpus `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-ml `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-app `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-oods `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-skills `bump-ready.yml` (`notify-devkit.yml@v0.20.4`), marola-devkit `notify-devkit-test.yml` (`notify-devkit.yml@v0.20.4`, by hand) | marola-devkit `bump-merge.yml` |
 | `site-data-updated` | marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | marola-site `site.yml` |
-| `submodule-docs-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.10.1`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.10.1`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.10.1`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.10.1`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.10.1`, on a push to `main`), marola-skills `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`) | marola `docs.yml`, marola `pointer-sync.yml` |
-| `submodule-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.10.1`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.10.1`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.10.1`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.10.1`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.10.1`, on a push to `main`), marola-skills `notify-umbrella.yml` (`notify-umbrella.yml@v0.8.3`, on a push to `main`) | marola `pointer-sync.yml` |
+| `submodule-docs-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-skills `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`) | marola `docs.yml`, marola `pointer-sync.yml` |
+| `submodule-updated` | marola-site `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-corpus `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-ml `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-app `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-oods `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`), marola-skills `notify-umbrella.yml` (`notify-umbrella.yml@v0.20.4`, on a push to `main`) | marola `pointer-sync.yml` |
 
 | Pin bump | Workflow |
 |---|---|
-| marola `flake.lock` | marola `docs.yml` |
-| marola-app `corpus.version` | marola-app `docker.yml` |
+| marola `flake.lock` | marola `ci.yml`, marola `docs.yml` |
+| marola-app `corpus.version` | marola-app `ci.yml` |
 | marola-ml `marola-image` | marola-ml `docker-local.yml` |
 | marola-ml `resources.version` | marola-ml `docker-local.yml` |
 | marola-oods `marola-image` | marola-oods `oods-check.yml` |
@@ -110,5 +94,10 @@ stale. An edit between the markers is overwritten.
 | marola `docs.yml` | docs.marola.dev |
 | marola-site `site.yml` | marola.dev |
 | marola-research `site.yml` | ? |
+
+| Contract | Copied to | Kept |
+|---|---|---|
+| marola-app `cli/src/main/resources/board.schema.json` | marola-site `site/board.schema.json` | identical |
+| marola-site `site/areas.json` | marola-app `cli/src/test/resources/site/areas.json` | identical |
 
 <!-- wiring:end -->

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The issue command surface",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0063-commands.html"
+  },
+  "components": [
+    {
+      "id": "mt",
+      "type": "backend",
+      "label": "mip-tasks skill",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "tasks",
+      "type": "backend",
+      "label": "tasks.md",
+      "sublabel": "(owns the plan)",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "issues",
+      "type": "backend",
+      "label": "GitHub issues",
+      "sublabel": "(own status)",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "mt",
+      "to": "tasks",
+      "label": "authors"
+    },
+    {
+      "id": "e2",
+      "from": "tasks",
+      "to": "issues",
+      "label": "tasks-to-issues (projects, re-runnable)",
+      "labelAt": [
+        525,
+        138
+      ]
+    }
+  ]
+}

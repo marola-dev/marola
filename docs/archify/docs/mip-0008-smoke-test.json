@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sequence of the smoke test reaching the map, and how the view refreshes",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0008-smoke-test.html",
+    "column_fit": "spread",
+    "viewBox": [
+      1150,
+      569
+    ]
+  },
+  "participants": [
+    {
+      "id": "Smoke",
+      "type": "backend",
+      "label": "smoke workflow"
+    },
+    {
+      "id": "SiteData",
+      "type": "backend",
+      "label": "site-data",
+      "sublabel": "orphan branch"
+    },
+    {
+      "id": "SiteYml",
+      "type": "backend",
+      "label": "site.yml"
+    },
+    {
+      "id": "Pages",
+      "type": "backend",
+      "label": "site/dist"
+    },
+    {
+      "id": "Browser",
+      "type": "backend",
+      "label": "app.js"
+    }
+  ],
+  "segments": [
+    {
+      "from": 203,
+      "to": 255,
+      "label": "if trigger succeeds"
+    },
+    {
+      "from": 279,
+      "to": 313,
+      "label": "else trigger fails: next scheduled build (<=3h) picks it up anyway"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "Smoke",
+      "to": "SiteData",
+      "y": 175,
+      "label": "commit smoke JSON"
+    },
+    {
+      "id": "m2",
+      "from": "Smoke",
+      "to": "SiteYml",
+      "y": 241,
+      "label": "workflow_dispatch or workflow_run"
+    },
+    {
+      "id": "m3",
+      "from": "SiteYml",
+      "to": "SiteData",
+      "y": 349,
+      "label": "checkout site-data"
+    },
+    {
+      "id": "m4",
+      "from": "SiteYml",
+      "to": "Pages",
+      "y": 389,
+      "label": "copy smoke/ in"
+    },
+    {
+      "id": "m5",
+      "from": "Browser",
+      "to": "Pages",
+      "y": 429,
+      "label": "fetch smoke/latest.json"
+    },
+    {
+      "id": "m6",
+      "from": "Pages",
+      "to": "Browser",
+      "y": 469,
+      "label": "panel + marker + history",
+      "variant": "return"
+    }
+  ]
+}

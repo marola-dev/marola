@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The OODS pipeline: Scala fetchers, the SQL transform and one planner",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0056-pipeline.html"
+  },
+  "components": [
+    {
+      "id": "plan",
+      "type": "backend",
+      "label": "Plan",
+      "pos": [
+        170,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "partitions",
+      "type": "backend",
+      "label": "adapter.partitions",
+      "pos": [
+        170,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "check",
+      "type": "security",
+      "label": "in manifest,",
+      "sublabel": "immutable?",
+      "pos": [
+        170,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "skip",
+      "type": "backend",
+      "label": "skip, no request",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fetch",
+      "type": "backend",
+      "label": "adapter.fetch",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "raw",
+      "type": "database",
+      "label": "raw file",
+      "pos": [
+        40,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "manifest",
+      "type": "database",
+      "label": "manifest",
+      "pos": [
+        300,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "rows",
+      "type": "backend",
+      "label": "adapter.rows",
+      "pos": [
+        170,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sample",
+      "type": "backend",
+      "label": "List of SampleRow",
+      "pos": [
+        170,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "plan",
+      "to": "partitions"
+    },
+    {
+      "id": "e2",
+      "from": "partitions",
+      "to": "check"
+    },
+    {
+      "id": "e3",
+      "from": "check",
+      "to": "skip",
+      "label": "yes"
+    },
+    {
+      "id": "e4",
+      "from": "check",
+      "to": "fetch",
+      "label": "no"
+    },
+    {
+      "id": "e5",
+      "from": "fetch",
+      "to": "raw"
+    },
+    {
+      "id": "e6",
+      "from": "fetch",
+      "to": "manifest"
+    },
+    {
+      "id": "e7",
+      "from": "raw",
+      "to": "rows"
+    },
+    {
+      "id": "e8",
+      "from": "rows",
+      "to": "sample"
+    }
+  ]
+}

@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MIP dependency graph: an arrow runs from a MIP to the MIP it blocks",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-graph.html"
+  },
+  "components": [
+    {
+      "id": "M0025",
+      "type": "backend",
+      "label": "MIP-0025",
+      "sublabel": "Partially implemented",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0048",
+      "type": "backend",
+      "label": "MIP-0048",
+      "sublabel": "Draft",
+      "pos": [
+        40,
+        150
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0033",
+      "type": "backend",
+      "label": "MIP-0033",
+      "sublabel": "Partially implemented",
+      "pos": [
+        300,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0036",
+      "type": "backend",
+      "label": "MIP-0036",
+      "sublabel": "Draft",
+      "pos": [
+        300,
+        150
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0034",
+      "type": "backend",
+      "label": "MIP-0034",
+      "sublabel": "Draft",
+      "pos": [
+        560,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0044",
+      "type": "backend",
+      "label": "MIP-0044",
+      "sublabel": "Partially implemented",
+      "pos": [
+        560,
+        150
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0051",
+      "type": "backend",
+      "label": "MIP-0051",
+      "sublabel": "Draft",
+      "pos": [
+        820,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0053",
+      "type": "backend",
+      "label": "MIP-0053",
+      "sublabel": "Draft",
+      "pos": [
+        820,
+        150
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0064",
+      "type": "backend",
+      "label": "MIP-0064",
+      "sublabel": "Implemented",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0065",
+      "type": "backend",
+      "label": "MIP-0065",
+      "sublabel": "Implemented",
+      "pos": [
+        40,
+        370
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0074",
+      "type": "backend",
+      "label": "MIP-0074",
+      "sublabel": "Draft",
+      "pos": [
+        300,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0076",
+      "type": "backend",
+      "label": "MIP-0076",
+      "sublabel": "Implemented",
+      "pos": [
+        300,
+        370
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0084",
+      "type": "backend",
+      "label": "MIP-0084",
+      "sublabel": "Implemented",
+      "pos": [
+        300,
+        480
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0085",
+      "type": "backend",
+      "label": "MIP-0085",
+      "sublabel": "Implemented",
+      "pos": [
+        300,
+        590
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0083",
+      "type": "backend",
+      "label": "MIP-0083",
+      "sublabel": "Accepted",
+      "pos": [
+        560,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "M0091",
+      "type": "backend",
+      "label": "MIP-0091",
+      "sublabel": "Accepted",
+      "pos": [
+        560,
+        370
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "M0025",
+      "to": "M0048"
+    },
+    {
+      "id": "e2",
+      "from": "M0033",
+      "to": "M0036"
+    },
+    {
+      "id": "e3",
+      "from": "M0034",
+      "to": "M0044"
+    },
+    {
+      "id": "e4",
+      "from": "M0051",
+      "to": "M0053"
+    },
+    {
+      "id": "e5",
+      "from": "M0064",
+      "to": "M0065"
+    },
+    {
+      "id": "e6",
+      "from": "M0074",
+      "to": "M0076"
+    },
+    {
+      "id": "e7",
+      "from": "M0076",
+      "to": "M0084"
+    },
+    {
+      "id": "e8",
+      "from": "M0083",
+      "to": "M0091"
+    },
+    {
+      "id": "e9",
+      "from": "M0084",
+      "to": "M0085"
+    }
+  ]
+}

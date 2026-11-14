@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MIP-0079 task dependency graph",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0079-tasks.html"
+  },
+  "components": [
+    {
+      "id": "t1",
+      "type": "backend",
+      "label": "1 umbrella-citation",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "H1",
+      "type": "backend",
+      "label": "H1 umbrella-switch",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "H2",
+      "type": "backend",
+      "label": "H2 umbrella-release",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "backend",
+      "label": "2 umbrella-badge",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "backend",
+      "label": "3 devkit-tools",
+      "pos": [
+        300,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t4",
+      "type": "backend",
+      "label": "4 app",
+      "pos": [
+        40,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t5",
+      "type": "backend",
+      "label": "5 ml",
+      "pos": [
+        300,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t6",
+      "type": "backend",
+      "label": "6 corpus",
+      "pos": [
+        560,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "H3",
+      "type": "backend",
+      "label": "H3 repos-switch",
+      "pos": [
+        300,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t7",
+      "type": "backend",
+      "label": "7 dois-back",
+      "pos": [
+        300,
+        830
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "t1",
+      "to": "H1"
+    },
+    {
+      "id": "e2",
+      "from": "H1",
+      "to": "H2"
+    },
+    {
+      "id": "e3",
+      "from": "H2",
+      "to": "t2"
+    },
+    {
+      "id": "e4",
+      "from": "t2",
+      "to": "t3"
+    },
+    {
+      "id": "e5",
+      "from": "t3",
+      "to": "t4"
+    },
+    {
+      "id": "e6",
+      "from": "t3",
+      "to": "t5"
+    },
+    {
+      "id": "e7",
+      "from": "t3",
+      "to": "t6"
+    },
+    {
+      "id": "e8",
+      "from": "t4",
+      "to": "H3"
+    },
+    {
+      "id": "e9",
+      "from": "t5",
+      "to": "H3"
+    },
+    {
+      "id": "e10",
+      "from": "t6",
+      "to": "H3"
+    },
+    {
+      "id": "e11",
+      "from": "H3",
+      "to": "t7"
+    }
+  ]
+}

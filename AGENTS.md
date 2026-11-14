@@ -17,7 +17,7 @@ Non-negotiable in every marola repo; a repo may make these stricter, never loose
 
 ## What this umbrella is
 
-**marola** is the ocean intelligence layer for a stretch of coast: real nearby beaches
+**marola** is the water super app for a stretch of coast: real nearby beaches
 (OpenStreetMap), live sea and weather (Open-Meteo), official bathing-water quality, a 0–100
 swimability score with a deterministic safety veto, and an LLM summary reviewed by a second pass,
 all runnable locally with a free Ollama model. GCP (MIP-0057) is the opt-in cloud path.
@@ -26,9 +26,10 @@ This repo, `marola-dev/marola`, is the **umbrella** (MIP-0070): the team layer, 
 repo as a git submodule. It holds this file, the ways of working (`docs/3-Ways-of-working/`),
 research and plans (`docs/4-Research-and-plans/`), the MIPs and their `.tasks.md`, the phase list
 (`docs/PHASES.md`), MIP and cross-repo parent issues, the aggregated docs site at
-<https://docs.marola.dev/>, and the submodule pointers. **It holds no code**: no build, no app
-gates. [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md) holds the reasons behind the rules
-here, and [CONTRIBUTING](docs/3-Ways-of-working/CONTRIBUTING.md) is the guide for every repo.
+<https://docs.marola.dev/>, and the submodule pointers. **It holds no product code**: no app and no
+app gates; its only code is its own tooling, `tools/` (marola-tools, in Rust: see
+[No Python](#no-python-hard-rule)). [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md) holds the
+reasons behind the rules here, and [CONTRIBUTING](docs/3-Ways-of-working/CONTRIBUTING.md) is the guide for every repo.
 
 ## The repos
 
@@ -39,12 +40,16 @@ changing anything in it; it says what it overrides. What each repo owns, publish
 tree, in CI or in tests, and no consumer builds its producer from source: a consumer moves to a new
 producer version by bumping its pin in a PR.
 
-To find something outside the tree you are in, pick the cheapest source first (the devkit plugin's
-`routing` skill): what produces, consumes, pins or triggers an artifact, a dispatch or a workflow
-is in REPOS.md's [generated wiring block](docs/2-Building-marola/REPOS.md#artifacts-pins-and-dispatches)
+To find something outside the tree you are in, pick the cheapest source first (the `routing`
+skill in `.claude/skills/`). `route` below is `python3 .claude/skills/routing/scripts/route.py`: it
+needs no Nix and reads the code graph and wiring CI publishes from `main` on the `routing-bundle`
+branch (MIP-0084). What produces, consumes, pins or triggers an artifact, a dispatch or a workflow
+is `route wiring <term>`, or REPOS.md's
+[generated wiring block](docs/2-Building-marola/REPOS.md#artifacts-pins-and-dispatches)
 (`just wiring`); where a symbol lives, when the keyword or the repo is unfamiliar, is
-`just graph query "<question>"` (MIP-0076), whose `just graph build` writes under `~/.cache`,
-never into the checkout or a commit; a known keyword is `git grep --recurse-submodules`.
+`route query "<identifiers>"`, or `just graph query` inside `nix develop` (MIP-0076), whose
+`just graph build` writes under `~/.cache`, never into the checkout or a commit; a known keyword is
+`git grep --recurse-submodules`.
 
 ## Where a change belongs
 
@@ -75,7 +80,9 @@ which checkout each recipe needs.
   `submodule-updated` or `submodule-docs-updated` dispatch). Never commit a pointer change by hand,
   and never commit inside a submodule from the umbrella's own branch.
   `pointer-sync-merge.yml` merges that PR itself once it is green and changes only gitlinks and
-  REPOS.md's wiring table (#739); anything else waits for a person.
+  REPOS.md's wiring table (#739); anything else waits for a person. Automation pushes and opens
+  PRs as `marola-pr-bot`, and only `marola-merge-bot` merges without a person (MIP-0086); neither
+  is a PAT.
 - **A pointer move never makes a release or a Zenodo version** (hard rule, MIP-0079). A release
   needs a change outside the gitlinks since the previous `v*` tag; `scripts/release.sh --guard`
   enforces it in `just release` and again in `release.yml`.
@@ -87,7 +94,7 @@ which checkout each recipe needs.
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola
-nix develop      # just, python3, ruff, gh, hadolint, actionlint (flake.nix); Docker is the host's
+nix develop      # just, cargo, gh, hadolint, actionlint (flake.nix); Docker is the host's
 just             # list the recipes
 just quality     # this repo's gates
 just docs        # the aggregated docs (docs/ + every submodule's) into mkdocs/generated-docs
@@ -95,7 +102,8 @@ just docs-serve  # preview on http://localhost:8001/
 ```
 
 Run the gates of the repo you changed before calling a change done: here `just quality`
-(`quality-other`: ruff, actionlint, hadolint, `docs-lint` and the `scripts/*` self-tests, the
+(`quality-other`: rustfmt, clippy and `cargo test` on `tools/`, actionlint, hadolint, `docs-lint`,
+the reading-time and figure checks and the `scripts/*` self-tests, the
 gates `ci.yml` runs, at the versions `flake.lock` pins; a missing tool fails rather than skips, so
 use `nix develop`); in a submodule, its own `AGENTS.md` names them. The pre-push hook runs
 `just prepush`; `git push --no-verify` bypasses it, CI does not.
@@ -118,10 +126,17 @@ to a tag: its tools on `PATH` (`stack`, `uprd`, `pr-flow`, `issues`, `trailer-fi
 `agents-check`, …), their recipes (`import? '.devkit/devkit.just'`), the git hooks, the reusable
 workflows and the `marola-devkit` plugin (`/marola-devkit:mip` and the other generic skills). Bump
 the flake input, every `@v…`/`devkit-ref` in `.github/workflows/` and the marketplace `ref` in
-`.claude/settings.json` together. The shellHook links this worktree's `.devkit` and points
-`core.hooksPath` at it; a worktree made outside `nix develop` and `just worktree` needs
-`just devkit-link` once. OpenCode does not load Claude Code plugins: the skills are plain
-`SKILL.md` files under `.devkit/plugins/marola-devkit/skills/`.
+`.claude/settings.json` together. The bump PRs that `bump-consumers` opens for a release that is not
+a major merge themselves once they are green (the devkit's `bump-merge`); an agent never hand-merges
+a bump PR that carries `hold` or that `bump-merge` refused. Dependabot's green patch and minor pip
+PRs merge themselves too (`deps-merge.yml`;
+[DEV-FLOW](docs/3-Ways-of-working/DEV-FLOW.md#dependency-prs),
+[CI/CD](docs/3-Ways-of-working/CI-CD.md#the-maintainers-manual-settings)): an agent never
+hand-merges or re-approves a dependency PR that `deps-merge` refused or that carries `hold`, and
+never adds an auto-merge of its own. The shellHook links this worktree's
+`.devkit` and points `core.hooksPath` at it; a worktree made outside `nix develop` and `just
+worktree` needs `just devkit-link` once. OpenCode does not load Claude Code plugins: the skills are
+plain `SKILL.md` files under `.devkit/plugins/marola-devkit/skills/`.
 
 `just context-mips` packs what a browser session needs to draft a MIP from voice notes, and
 `just context-mip MIP-NNNN` packs one MIP for a reviewer outside this project's coding agent.
@@ -190,6 +205,21 @@ it does not replace this rule.
 - **One feature, one session.** Start a feature with `/clear` and `/rename` it to the branch name,
   so a session's context holds one PR's work and nothing from the last one.
 
+## No Python (hard rule)
+
+**The umbrella holds no Python.** Its own tooling is Rust: one crate in `tools/`, one binary,
+`scripts/marola-tools <command>` (`citation`, `mip-graph`, `doc-links`, `reading-time`,
+`graph-svg`, …), with `cargo test` as every command's test suite and rustfmt and
+`clippy -D warnings` as its gates. Shell stays for glue that only calls other tools. Gleam is
+allowed where it is clearly easier than Rust; nothing else. No `.py` file, no `pyproject.toml`, no
+`ruff.toml`, no `pip` or `uv` step in this repo's own code or CI.
+
+Two exceptions, both not ours to change here: the vendored `routing` skill
+(`.claude/skills/routing/scripts/route.py`, marola-devkit's, moved by `skills.yml`), and the
+third-party tools CI runs in their own images or actions (mkdocs-material's Docker image, the
+CFF validator, graphify in `nix develop .#lint`). A submodule follows its own `AGENTS.md`
+(marola-ml is a Python repo).
+
 ## Code style
 
 Every repo's style rules are its own (marola-app's Scala and Kyo rules are its
@@ -231,6 +261,14 @@ as not run; it is never skipped silently.
   English (the devkit plugin), `humanizar` on Portuguese (ww3-gpu's copy until
   marola-dev/marola-devkit#102 settles a marola one), and marola-site's `ptbr-humanizer` on the
   site's visitor copy.
+- **This repo's READMEs**: `README.md` is in Portuguese, the full version and the docs site's
+  landing. `README.en.md` is the English one, written ELI5: short sentences, no jargon, a link
+  for the detail. A change to one reaches the other in the same PR.
+- **Every README shows its reading time** (`marola-tools reading-time`, at Brysbaert's 181 words
+  per minute for Portuguese and 238 for English): after editing one, run `just reading-time`;
+  `rust-ci` fails on a stale badge. A figure in a README comes from a source in the repo, never a
+  hand-drawn image: Archify JSON under `docs/archify/` (`just figure`, in pt-BR and en, checked by
+  `just figure-check`) or the code graph (`just graphify-figure`).
 - **Formal technical English**: the Writing Skills plugin's `asd-ste100` (ASD Simplified Technical
   English) for procedures and reference pages, `google-dev-docs` for developer docs,
   `plain-language` for public copy. Its character voices (`yoda`, `shrek`, …) are never used.

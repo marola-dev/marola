@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "What goes to MLflow and what goes to the lake",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0083-mlflow.html"
+  },
+  "components": [
+    {
+      "id": "exp",
+      "type": "backend",
+      "label": "Experiment: forecast-benchmark-v1",
+      "sublabel": "tags: protocol sha, registry sha",
+      "pos": [
+        436,
+        60
+      ],
+      "size": [
+        234,
+        64
+      ]
+    },
+    {
+      "id": "r1",
+      "type": "backend",
+      "label": "Run: cycle 2026-10-09T04:17Z",
+      "pos": [
+        306,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "backend",
+      "label": "Run: cycle 2026-10-09T08:17Z",
+      "pos": [
+        678,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "p",
+      "type": "backend",
+      "label": "Params",
+      "sublabel": "providers, cadence, window, app_sha, nino34, enso_status, sampled, backfilled, missing",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        326,
+        64
+      ]
+    },
+    {
+      "id": "mt",
+      "type": "backend",
+      "label": "Metrics",
+      "sublabel": "rmse.wind.90d.SBFL.gfs, step = lead h first cycle after 00 UTC only",
+      "pos": [
+        436,
+        280
+      ],
+      "size": [
+        258,
+        64
+      ]
+    },
+    {
+      "id": "a",
+      "type": "backend",
+      "label": "Artifacts",
+      "sublabel": "scores.json, export.json, run_index delta",
+      "pos": [
+        808,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "exp",
+      "to": "r1"
+    },
+    {
+      "id": "e2",
+      "from": "exp",
+      "to": "r2"
+    },
+    {
+      "id": "e3",
+      "from": "r1",
+      "to": "p"
+    },
+    {
+      "id": "e4",
+      "from": "r1",
+      "to": "mt"
+    },
+    {
+      "id": "e5",
+      "from": "r1",
+      "to": "a"
+    }
+  ]
+}

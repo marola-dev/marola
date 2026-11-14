@@ -126,13 +126,7 @@ It writes four tables, between `<!-- wiring:start -->`/`<!-- wiring:end -->` mar
   in `fetch-api-docs.sh`, and `ghcr.io/marola-dev/marola-ml`, which the maintainer keeps (decided
   2026-10-03) although no workflow or script in the org reads it.
 
-```mermaid
-flowchart LR
-  wf["workflows, pin files, scripts (all repos)"] --> w["wiring.py"]
-  w -->|"just wiring"| blk["REPOS.md wiring block"]
-  w -->|"--check"| q["quality-other: stale block, orphan dispatch, unread artifact"]
-  blk --> sk["graph skill: cross-repo questions"]
-```
+![The wiring extractor and the generated block in REPOS.md](../img/archify/mip-0076-wiring.png)
 
 **Decided 2026-10-03: the wiring lives as a generated block inside `REPOS.md`.** REPOS.md's per-repo
 rows (what each repo owns, MIP-0074 §5.1) stay hand-written. The artifact and dispatch facts become

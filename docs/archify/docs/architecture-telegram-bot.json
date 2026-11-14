@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Target architecture of the Telegram bot, from a shared location to the reviewed reply",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "architecture-telegram-bot.html"
+  },
+  "components": [
+    {
+      "id": "User",
+      "type": "backend",
+      "label": "User shares location/photo",
+      "sublabel": "(native Telegram UI)",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Bot",
+      "type": "backend",
+      "label": "Telegram Bot API",
+      "sublabel": "long polling, or a webhook once hosted",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Service",
+      "type": "backend",
+      "label": "marola service (Kyo, Scala)",
+      "sublabel": "Telegram polling loop",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Beaches",
+      "type": "backend",
+      "label": "BeachFinder",
+      "sublabel": "(Overpass, haversine)",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Weather",
+      "type": "backend",
+      "label": "OpenMeteoClient",
+      "sublabel": "(Open-Meteo, free)",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Vision",
+      "type": "backend",
+      "label": "VisionClient",
+      "sublabel": "on a submitted photo",
+      "pos": [
+        624,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Scoring",
+      "type": "backend",
+      "label": "Swimability (pure)",
+      "sublabel": "scores + jellyfish/whale heuristics",
+      "pos": [
+        170,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Llm",
+      "type": "backend",
+      "label": "LlmClient + CompiledPrompt",
+      "sublabel": "local Ollama",
+      "pos": [
+        300,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Reviewer",
+      "type": "backend",
+      "label": "Reviewer",
+      "sublabel": "second LLM pass: score + verdict + final_summary",
+      "pos": [
+        300,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Reply",
+      "type": "backend",
+      "label": "Reply sent back via Telegram Bot API",
+      "pos": [
+        300,
+        830
+      ],
+      "size": [
+        254,
+        64
+      ]
+    },
+    {
+      "id": "Sightings",
+      "type": "backend",
+      "label": "SightingStore",
+      "sublabel": "local file",
+      "pos": [
+        494,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "User",
+      "to": "Bot"
+    },
+    {
+      "id": "e2",
+      "from": "Bot",
+      "to": "Service"
+    },
+    {
+      "id": "e3",
+      "from": "Service",
+      "to": "Beaches"
+    },
+    {
+      "id": "e4",
+      "from": "Service",
+      "to": "Weather"
+    },
+    {
+      "id": "e5",
+      "from": "Service",
+      "to": "Vision"
+    },
+    {
+      "id": "e6",
+      "from": "Beaches",
+      "to": "Scoring"
+    },
+    {
+      "id": "e7",
+      "from": "Weather",
+      "to": "Scoring"
+    },
+    {
+      "id": "e8",
+      "from": "Scoring",
+      "to": "Llm"
+    },
+    {
+      "id": "e9",
+      "from": "Vision",
+      "to": "Llm"
+    },
+    {
+      "id": "e10",
+      "from": "Llm",
+      "to": "Reviewer"
+    },
+    {
+      "id": "e11",
+      "from": "Reviewer",
+      "to": "Reply"
+    },
+    {
+      "id": "e12",
+      "from": "Vision",
+      "to": "Sightings",
+      "variant": "dashed"
+    }
+  ]
+}

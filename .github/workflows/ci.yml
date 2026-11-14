@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The routing bundle only (MIP-0084 §5.3): `changes` is skipped, and every job behind it with it.
+  schedule:
+    - cron: '41 4 * * *'
 
 # dorny/paths-filter lists a PR's changed files through the API, which needs pull-requests: read;
 # the repo's default GITHUB_TOKEN is contents-only ("Resource not accessible by integration").
@@ -18,10 +21,11 @@ concurrency:
 jobs:
   # Decide what actually changed so the expensive job only runs when it can matter.
   changes:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      python: ${{ steps.filter.outputs.python }}
+      rust: ${{ steps.filter.outputs.rust }}
       workflows: ${{ steps.filter.outputs.workflows }}
       docker: ${{ steps.filter.outputs.docker }}
       justfile: ${{ steps.filter.outputs.justfile }}
@@ -36,18 +40,19 @@ jobs:
         id: filter
         with:
           filters: |
-            python:
-              - 'scripts/*.py'
-              - '**/*.py'           # ruff lints the whole repo, so any .py anywhere counts
-              - 'scripts/*.sh'      # gh-billing.sh's self-test lives in the same python-ci job
-              - 'scripts/*.js'      # docs_redirect_check.js too
-              - 'scripts/fixtures/**'
-              - 'ruff.toml'
-              - 'docs/MIPs/*.tasks.md'        # mip_graph.py --check regenerates the graph from all of them
+            rust:
+              - 'tools/**'          # marola-tools: rustfmt, clippy, cargo test
+              - 'rust-toolchain.toml'
+              - 'scripts/**'        # the shell self-tests live in the same rust-ci job
+              - 'docs/MIPs/**'      # mip-graph's test regenerates the graph from every MIP
               - 'mkdocs/**'          # mkdocs.sh --self-test asserts on mkdocs.yml's kroki keys
               - '.github/workflows/ci.yml'  # the self-test list below
               - 'AGENTS.md'          # agents_repos_check.sh reads it
-              - 'CLAUDE_PROJECT.config.md'  # claude_project_check.py reads it
+              - 'CLAUDE_PROJECT.config.md'  # claude-project-check reads it
+              - '.zenodo.json'       # citation's test checks the generated files are current
+              - 'CITATION.cff'
+              - 'README.md'
+              - 'README.en.md'
             workflows:
               - '.github/workflows/**'
               - '.github/merge-key-allowlist'  # merge-key-check reads it
@@ -70,24 +75,27 @@ jobs:
               - 'flake.lock'
               - '.graphifyignore'
               - '.github/workflows/ci.yml'
+              - 'routing-bench.yaml'
+              - 'tools/src/routing_bundle.rs'
             docs:
               - 'docs/**'
               - 'mkdocs/**'
               - 'README.md'
+              - 'llms.txt'
               - 'flake.lock'         # marola-devkit mounts at its locked rev
               - 'scripts/prepare-docs.sh'
               - 'scripts/fetch-api-docs.sh'
               - 'scripts/lib/repos_manifest.sh'
-              - 'scripts/lib/doc_links.py'
-              - 'scripts/site_links_check.py'
+              - 'tools/**'          # doc-links and site-links-check
+              - 'scripts/marola-tools'
               - 'scripts/mkdocs.sh'
               - '.gitmodules'
               - *submodules
 
-  # README badges: this run's green steps, plus the Scala and Python line counts, counted in the
-  # checked-out submodules (MIP-0070 §5.4: the umbrella runs repo_stats.py over every repo).
+  # README badges: this run's green steps, plus marola-app's Scala line count, counted in the
+  # checked-out submodule (MIP-0070 §5.4: the umbrella runs repo-stats over every repo).
   repo-stats:
-    needs: [changes, python-ci, static-ci, agents-check, quality-other]
+    needs: [changes, rust-ci, static-ci, agents-check, quality-other]
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -101,22 +109,23 @@ jobs:
 
       # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
       - uses: DeterminateSystems/nix-installer-action@v23
-      - name: cloc + coverage.py from the lint shell
+      - name: cloc from the lint shell
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which cloc coverage | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
+          nix develop .#lint --command which cloc | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
 
-      # The Python-coverage part re-runs every `scripts/**/*.py --self-test` under coverage.py —
-      # seconds, no network — and reports statement % over scripts/ only.
-      - name: Badge JSONs — CI health (steps green/ran), Scala/Python LOC, Python coverage
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools
+      - name: Badge JSONs — CI health (steps green/ran), Rust and Scala LOC
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
-        run: python3 scripts/repo_stats.py write --out-dir stats --repo "$REPO" --run-id "$RUN_ID" --exclude-job repo-stats
+        run: scripts/marola-tools repo-stats write --out-dir stats --repo "$REPO" --run-id "$RUN_ID" --exclude-job repo-stats
 
       - id: bot
-        uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.11.1
+        uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.20.4
         with:
           app-id: ${{ vars.PR_BOT_APP_ID }}
           private-key: ${{ secrets.PR_BOT_KEY }}
@@ -156,6 +165,9 @@ jobs:
       - name: Save the live sitemap
         continue-on-error: true
         run: curl -sS -f --retry 3 --retry-all-errors --max-time 30 -o old-sitemap.xml https://docs.marola.dev/sitemap.xml || { rm -f old-sitemap.xml; exit 1; }
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools
       - run: scripts/prepare-docs.sh
       - name: mkdocs --strict, in the Kroki container stack
         env:
@@ -165,17 +177,18 @@ jobs:
       - name: Every docs.marola.dev link resolves, and no old sitemap URL was dropped
         run: |
           if [ -s old-sitemap.xml ]; then
-            python3 scripts/site_links_check.py mkdocs/generated-docs --old-sitemap old-sitemap.xml
+            scripts/marola-tools site-links-check mkdocs/generated-docs --old-sitemap old-sitemap.xml
           else
             echo "::warning::no live sitemap fetched; the dropped-URL check is skipped"
-            python3 scripts/site_links_check.py mkdocs/generated-docs
+            scripts/marola-tools site-links-check mkdocs/generated-docs
           fi
 
   # MIP-0076 §5.4: a smoke test of each pointer move and devkit/graphify bump, and the graph as an
-  # artifact for a session without Nix. Never committed, never deployed.
+  # artifact for a session without Nix. MIP-0084 §5.3: on every push to main and daily, the graph,
+  # the wiring and the bench score go to the routing-bundle branch, which `route` reads.
   graph:
     needs: changes
-    if: needs.changes.outputs.graph == 'true'
+    if: ${{ !cancelled() && (needs.changes.outputs.graph == 'true' || github.event_name != 'pull_request') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -186,6 +199,9 @@ jobs:
           submodules: true
       # No magic-nix-cache: its post-step upload took 3–5 min and saved nothing (#657).
       - uses: DeterminateSystems/nix-installer-action@v23
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools
       # MIP-0076 §8's open item; without it graph.sh runs with no network isolation.
       - name: Does unshare -rn work on this runner?
         run: |
@@ -204,36 +220,113 @@ jobs:
             ${{ runner.temp }}/graph-cache/marola-graph/${{ github.event.repository.name }}/build.json
           retention-days: 7
           if-no-files-found: error
+      # On a PR too, so a graphify or devkit bump that answers worse fails here, before main.
+      - name: wiring, the indexes, route bench and the bundle's files
+        env:
+          XDG_CACHE_HOME: ${{ runner.temp }}/graph-cache
+          GRAPH_DIR: ${{ runner.temp }}/graph-cache/marola-graph/${{ github.event.repository.name }}
+        run: |
+          nix develop .#lint --command wiring --json > "$GRAPH_DIR/wiring.json"
+          # MIP-0085's indexes live only in the bundle (§5.4): DOC-CODE.md is not committed.
+          nix develop .#lint --command doc-code --root . --graph "$GRAPH_DIR/graph.json" --json "$GRAPH_DIR/doc_code.json"
+          nix develop .#lint --command decisions --mips docs/MIPs --json "$GRAPH_DIR/decisions.json"
+          nix develop .#lint --command meaning-text --root . --graph "$GRAPH_DIR/graph.json" --out "$GRAPH_DIR/meaning.json"
+          # route reads the wiring from a bundle ref, never a local graph: stage this run's files as
+          # that ref, so the bench scores what would be published.
+          stage="$RUNNER_TEMP/stage"
+          mkdir -p "$stage" && cp "$GRAPH_DIR"/{graph,build,wiring,doc_code,decisions,meaning}.json "$stage"/
+          git -C "$stage" init -q && git -C "$stage" add -A
+          git -C "$stage" -c user.name=ci -c user.email=ci@localhost commit -qm stage
+          git fetch -q "$stage" +HEAD:refs/marola/routing-bundle
+          nix develop .#lint --command route bench routing-bench.yaml | tee "$RUNNER_TEMP/bench.txt"
+          # graphify is on the graph wrapper's PATH, not the shell's; its store path names the version.
+          graph_bin=$(nix develop .#lint --command bash -c "command -v graph")
+          graphify=$(grep -oE 'graphifyy?-[0-9][0-9.]*[0-9]' "$graph_bin" | head -1)
+          if git fetch -q --depth 1 origin routing-bundle; then git show FETCH_HEAD:build.json > "$RUNNER_TEMP/previous.json"; fi
+          scripts/marola-tools routing-bundle --graph-dir "$GRAPH_DIR" --out "$RUNNER_TEMP/bundle" \
+            --bench "$RUNNER_TEMP/bench.txt" --questions routing-bench.yaml --previous "$RUNNER_TEMP/previous.json" --graphify "${graphify#*-}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: routing-bundle
+          path: ${{ runner.temp }}/bundle/
+          retention-days: 7
+          if-no-files-found: error
+
+  # One orphan commit, force-pushed: the branch holds no history. Only marola-bundle-bot may write
+  # the branch (routing-bundle-rule, .github/rulesets/routing-bundle.json), so the job holding its key
+  # checks out nothing and runs no Nix (MIP-0084 §5.3).
+  bundle-publish:
+    needs: graph
+    if: ${{ !cancelled() && needs.graph.result == 'success' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: routing-bundle
+          path: bundle
+      - uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.20.4
+        id: app
+        with:
+          app-id: ${{ vars.BUNDLE_BOT_APP_ID }}
+          private-key: ${{ secrets.BUNDLE_BOT_KEY }}
+          repositories: marola
+          permission-contents: write
+      - name: push routing-bundle as marola-bundle-bot
+        working-directory: bundle
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          score=$(jq -r '"right first: \(.bench.right)/\(.bench.total)"' build.json)
+          git init -q -b routing-bundle
+          git add -A
+          git commit -qm "routing-bundle: main@${GITHUB_SHA::7}" \
+            -m "Tested: $score (route bench)" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/routing-bundle
 
   # Free, fast, and independent of the JVM build — the same gates as `just quality-other`, split
-  # across the devkit's reusable workflows plus the nix-only checks below. The tool versions are
+  # across rust-ci, the devkit's reusable workflows and the nix-only checks below. The tool versions are
   # what flake.lock's nixpkgs builds for labs/lint (0968519): move them with `nix flake update`.
-  python-ci:
+  # rust-ci is marola-tools (tools/) plus the shell self-tests; it replaced python-ci when the
+  # scripts moved to Rust (AGENTS.md: no Python in the umbrella).
+  rust-ci:
     needs: changes
-    if: needs.changes.outputs.python == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.11.1
-    with:
-      ruff-version: "0.16.5"
-      self-test-commands: |
-        python3 scripts/repo_stats.py --self-test
-        scripts/gh-billing.sh --self-test
-        scripts/site-data-push.sh --self-test
-        scripts/pointer-sync.sh --self-test
-        scripts/pointer-sync-merge.sh --self-test
-        scripts/prepare-docs.sh --self-test
-        scripts/fetch-api-docs.sh --self-test
-        node scripts/docs_redirect_check.js
-        python3 scripts/lib/doc_links.py --self-test
-        python3 scripts/site_links_check.py --self-test
-        scripts/agents_repos_check.sh --self-test
-        scripts/agents_repos_check.sh
-        python3 scripts/claude_project_check.py --self-test
-        python3 scripts/claude_project_check.py
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools
+      - name: rustfmt
+        run: cargo fmt --manifest-path tools/Cargo.toml --check
+      - name: clippy
+        run: cargo clippy --manifest-path tools/Cargo.toml --locked --all-targets -- -D warnings
+      - name: cargo test (every marola-tools command, plus mip-graph, citation and claude-project-check against the committed files)
+        run: cargo test --manifest-path tools/Cargo.toml --locked
+      - name: shell self-tests
+        run: |
+          set -euo pipefail
+          scripts/gh-billing.sh --self-test
+          scripts/site-data-push.sh --self-test
+          scripts/pointer-sync.sh --self-test
+          scripts/pointer-sync-merge.sh --self-test
+          scripts/prepare-docs.sh --self-test
+          scripts/fetch-api-docs.sh --self-test
+          scripts/mkdocs.sh --self-test
+          scripts/release.sh --self-test
+          node scripts/docs_redirect_check.js
+          scripts/agents_repos_check.sh --self-test
+          scripts/agents_repos_check.sh
+      - name: every README carries its current reading time (AGENTS.md)
+        run: scripts/marola-tools reading-time --check
 
   static-ci:
     needs: changes
     if: needs.changes.outputs.workflows == 'true' || needs.changes.outputs.docker == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.11.1
+    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.20.4
     with:
       actionlint-version: "1.7.12"
       hadolint-version: "2.14.0"
@@ -246,15 +339,15 @@ jobs:
   agents-check:
     needs: changes
     if: needs.changes.outputs.agents == 'true'
-    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.11.1
+    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.20.4
     with:
-      devkit-ref: v0.11.1
+      devkit-ref: v0.20.4
 
   # What needs this repo's own flake: the lock is current, the justfile parses, no workflow here
   # is self-hosted (MIP-0065; the devkit's workflow-runners; marola-sea-publish.yml is marola-ml's),
   # only allowlisted workflows name the merge bot's key (merge-key-check),
-  # docs-lint passes at the devkit flake.lock pins (MIP-0074 §7), and REPOS.md's wiring block matches
-  # every pinned repo (MIP-0076 §5.4).
+  # docs-lint passes at the devkit flake.lock pins (MIP-0074 §7), REPOS.md's wiring block matches
+  # every pinned repo (MIP-0076 §5.4), and DECISIONS.md matches the MIPs (MIP-0085 §5.6).
   quality-other:
     needs: changes
     if: needs.changes.outputs.nix == 'true' || needs.changes.outputs.workflows == 'true' || needs.changes.outputs.justfile == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.wiring == 'true'
@@ -286,11 +379,13 @@ jobs:
       - name: lint shell tools from nix develop .#lint
         shell: bash -eo pipefail {0}
         run: |
-          nix develop .#lint --command which just workflow-runners docs-lint wiring merge-key-check \
+          nix develop .#lint --command which just workflow-runners docs-lint wiring decisions merge-key-check \
             | xargs -n1 dirname | sort -u >> "$GITHUB_PATH"
       # No opinion on style: `just --fmt --check` differed between a laptop and this runner.
       - name: just --list (the justfile parses)
         run: just --list >/dev/null
+      - name: figure-check — each Archify figure has its PNG, its English twin and a current figures.lock
+        run: just figure-check
       - name: workflow-runners — no self-hosted workflow here (MIP-0065)
         run: workflow-runners
       - name: merge-key-check — only allowlisted workflows name the merge bot's key (MIP-0086 §5.6)
@@ -300,12 +395,14 @@ jobs:
       # No .devkit link outside the default shell: wiring fetches each devkit ref it reads from GitHub.
       - name: wiring --check — REPOS.md's block is current, no orphan dispatch or unread artifact
         run: wiring --check docs/2-Building-marola/REPOS.md
+      - name: decisions --check — DECISIONS.md is current with the MIPs (MIP-0085 §5.6)
+        run: decisions --mips docs/MIPs --check
 
   # The one check ci-rule requires in every marola repo (marola-dev/marola#813); it must report on
   # every run, so it needs every other job and passes on skipped ones.
   ci-ok:
     if: always()
-    needs: [changes, repo-stats, docs-build, graph, python-ci, static-ci, agents-check, quality-other]
+    needs: [changes, repo-stats, docs-build, graph, bundle-publish, rust-ci, static-ci, agents-check, quality-other]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}

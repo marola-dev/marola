@@ -8,17 +8,7 @@ does, with the same gates.
 
 ## How a build runs
 
-```mermaid
-flowchart LR
-  repos["mkdocs/repos.yml"] --> prep["prepare-docs.sh"]
-  umb["umbrella README + docs/"] --> prep
-  sub["each repo's README + docs/"] --> prep
-  api["each repo's api-docs branch"] --> prep
-  prep --> tree[".tmp/docs-aggregated<br/>+ build.json"]
-  tree --> mk["mkdocs.sh<br/>mkdocs --strict"]
-  mk --> check["site_links_check.py"]
-  check --> pages["GitHub Pages<br/>docs.marola.dev"]
-```
+![How a docs.marola.dev build runs](../img/archify/docs-site-build.png)
 
 [`scripts/prepare-docs.sh`](../../scripts/prepare-docs.sh) writes the site's source tree into the
 gitignored `.tmp/docs-aggregated/`; the tracked `docs/` is never written to.
@@ -143,11 +133,11 @@ prefix first, keeping path, query and hash; `node scripts/docs_redirect_check.js
 |---|---|---|
 | `prepare-docs.sh` | every build | the landing rule, refused links, a broken relative link (Markdown or HTML `href`/`src`), a hand-written ADR index |
 | `mkdocs --strict` | every build | an unresolved page link; anchors are warnings |
-| `strip_external_scripts.py --check` | `docs.yml` | a third-party script in the output |
-| [`site_links_check.py`](../../scripts/site_links_check.py) | `docs-build` on a PR, and `docs.yml` before deploy | a `https://docs.marola.dev/…` link that resolves to nothing, and a URL of the live sitemap (fetched before the build) that is now neither a page, a redirect nor a forward |
+| `marola-tools strip-external-scripts --check` | `docs.yml` | a third-party script in the output |
+| [`marola-tools site-links-check`](../../tools/src/site_links.rs) | `docs-build` on a PR, and `docs.yml` before deploy | a `https://docs.marola.dev/…` link that resolves to nothing, and a URL of the live sitemap (fetched before the build) that is now neither a page, a redirect nor a forward |
 | `docs-lint` (devkit) | each repo's `quality-other`, once its tree passes | a foreign recipe without the checkout marker, another repo's paths, `docs/index.md`, a link leaving the repo |
 
-`--self-test` covers each script; `just quality` runs them.
+`--self-test` covers each shell script and `cargo test` each `marola-tools` command; `just quality` runs them.
 
 ## Preview
 

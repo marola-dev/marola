@@ -199,17 +199,7 @@ final case class Plan(sources: Set[String], states: Set[String], cities: Set[Str
 enum Mode derives CanEqual: case Incremental, Backfill
 ```
 
-```mermaid
-flowchart TD
-  plan[Plan] --> partitions[adapter.partitions]
-  partitions --> check{in manifest,<br/>immutable?}
-  check -- yes --> skip[skip, no request]
-  check -- no --> fetch[adapter.fetch]
-  fetch --> raw[(raw file)]
-  fetch --> manifest[(manifest)]
-  raw --> rows[adapter.rows]
-  rows --> sample[List of SampleRow]
-```
+![The OODS pipeline: Scala fetchers, the SQL transform and one planner](../img/archify/mip-0056-pipeline.png)
 
 Rules the planner (`Ingest.plan`, pure, tested) enforces, the same for every adapter:
 

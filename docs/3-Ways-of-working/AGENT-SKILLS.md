@@ -17,15 +17,15 @@ repo that has it, so start the agent in the repo you are changing.
 | marola-site | `site-frontend`, the entry point for anything a visitor sees, which orders the others: `ptbr-humanizer`, `citizen-science-site`, and vendored design, testing and `mapbox-*` skills | its `.claude/skills/` |
 | marola-corpus | `corpus-doc` (adding a document) | its `.claude/skills/` |
 | marola-app | no skills; the Scala and Kyo rules (`.claude/rules/scala.md`) and the `jar-verifier` agent | its `.claude/` |
-| the umbrella | `eli5` (explaining a sea or marola topic from zero; it reads the corpus and the app through the submodules); `architecture-diagram` (a README diagram as a hand-written SVG, adapted from Cocoon-AI/architecture-diagram-generator@4b9087d, MIT); `zenodo-release` (cutting a citable release and keeping `.zenodo.json` right, MIP-0079, adapted from h0ffmann/ww3-gpu's `release`); `citation-cff` (exporting and checking the citation, vendored unchanged from zircote/github-social@4fa6579, MIT) | its `.claude/skills/` |
+| the umbrella | `eli5` (explaining a sea or marola topic from zero; it reads the corpus and the app through the submodules); `architecture-diagram` (a README diagram as a hand-written SVG, adapted from Cocoon-AI/architecture-diagram-generator@4b9087d, MIT); `zenodo-release` (cutting a citable release and keeping `.zenodo.json` right, MIP-0079, adapted from h0ffmann/ww3-gpu's `release`); `citation-cff` (exporting and checking the citation, vendored unchanged from zircote/github-social@4fa6579, MIT); `routing` (where something lives: `route` over the CI-built bundle, vendored unchanged from marola-devkit's `skills/routing`, MIT, MIP-0084) | its `.claude/skills/` |
 | marola-ml, marola-oods | no skills of their own | — |
 | superpowers, skill-creator | §2 and §2.2 | the umbrella's and marola-app's `.claude/settings.json` |
 
 Each repo's `AGENTS.md` says when its skills apply. A skill vendored byte for byte from another
 repository gets a row in a per-repo `.claude/skills/skills.lock` (`skills-vendor check` verifies
 the copy) and a weekly reviewed update PR from that repo's `skills.yml`
-([MIP-0080](../MIPs/MIP-0080-vendored-skills-lock.md), Draft; the umbrella's row is
-`citation-cff`). corpus's skill runs marola's recipes, so those
+([MIP-0080](../MIPs/MIP-0080-vendored-skills-lock.md), Draft; the umbrella's rows are
+`citation-cff` and `routing`). corpus's skill runs marola's recipes, so those
 steps need a marola-app checkout pointed at the corpus with `MAROLA_KNOWLEDGE_DIR`, as its
 `AGENTS.md` says.
 
@@ -38,11 +38,13 @@ skill disagrees with a repo's `AGENTS.md`, `AGENTS.md` wins.
 ## 2. superpowers — what fits, what doesn't
 
 The plugin (Jesse Vincent, `obra/superpowers`) ships workflow skills that activate from context. It
-is **declared in the repo**, not installed by hand: `.claude/settings.json` has `"enabledPlugins":
-{"superpowers@claude-plugins-official": true}`, so Claude Code installs and enables it for whoever
-opens the umbrella or marola-app and accepts the trust dialog: the nearest thing to `nix develop`
-for plugins (plugin code is cached under `~/.claude/plugins`, not vendored; it is not pinned to a
-version). Opt out on one machine with the same key set to `false` in `.claude/settings.local.json`.
+is **declared in the repo**: `.claude/settings.json` has `"enabledPlugins":
+{"superpowers@claude-plugins-official": true}`. A declared plugin is turned on, not always
+downloaded: Claude Code does not fetch one enabled only in project settings from an external
+marketplace. marola-devkit stays under `/plugin`'s Errors tab as "enabled in project settings but
+isn't installed here" until someone runs `claude plugin install marola-devkit@marola-devkit`, which
+the `routing` skill's session hook asks about once (MIP-0084 §2, §5.4). Plugin code is cached under
+`~/.claude/plugins`, not vendored, and is not pinned to a version. Opt out on one machine with the same key set to `false` in `.claude/settings.local.json`.
 Verify with `/plugin` → installed list. Manual install elsewhere: `/plugin install
 superpowers@claude-plugins-official`. As of 2026-09-05 it lists these; the mapping to marola's
 workflow is ours:
@@ -67,40 +69,7 @@ workflow is ours:
 Superpowers activates from context, so mostly you just work; but here is the explicit sequence
 for a MIP, with which skill does what and which session it runs in:
 
-```mermaid
-%%{init: {"flowchart": {"nodeSpacing": 15, "rankSpacing": 25}}}%%
-flowchart LR
-  subgraph sessionA["Session A (plan, Fable)"]
-    direction TB
-    a1["/brainstorming<br/>(until §1-§3<br/>have answers)"]
-    a2["/marola-devkit:mip: write<br/>MIP-NNNN-*.md<br/>(writing-plans skipped)"]
-    a3["mip-tasks step 1:<br/>MIP-NNNN.tasks.md"]
-    a4["/clear"]
-    a1 --> a2 --> a3 --> a4
-  end
-  subgraph sessionBN["Session B..N (execute, one per task, Sonnet)"]
-    direction TB
-    b1["/rename +<br/>stack start"]
-    b2["executing-plans<br/>(task row = plan)"]
-    b3["TDD -><br/>debugging -><br/>verification"]
-    b4["commit (Tested:) -><br/>stack pr"]
-    b5["requesting-code-review<br/>(self-checklist) -> /clear"]
-    b1 --> b2 --> b3 --> b4 --> b5
-  end
-  subgraph reviewSession["Review (on request)"]
-    direction TB
-    r1["requesting-code-review:<br/>reviewer subagent,<br/>bottom-up"]
-    r2["receiving-code-review:<br/>verify -> fix -><br/>commit -> push -> uprds"]
-    r1 --> r2
-  end
-  subgraph afterMerge["After each merge"]
-    direction TB
-    m1["stack restack"]
-    m2["finishing-a-<br/>development-branch"]
-    m1 --> m2
-  end
-  sessionA --> sessionBN --> reviewSession --> afterMerge
-```
+![One MIP from start to finish with the superpowers skills, session by session](../img/archify/agent-skills-mip.png)
 
 The whole loop (including how a MIP gets *accepted* and what GitHub shows for a stack) is
 written once in [DEV-FLOW](DEV-FLOW.md); this section is the skill-by-skill view of it.

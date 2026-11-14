@@ -1,0 +1,158 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "MIP-0036 launch sequence by phase, from prerequisites to the hand-off to MIP-0018",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0036-launch.html"
+  },
+  "lanes": [
+    {
+      "id": "prep",
+      "label": "preparation"
+    },
+    {
+      "id": "owned",
+      "label": "owned channels"
+    },
+    {
+      "id": "social",
+      "label": "earned: social"
+    },
+    {
+      "id": "news",
+      "label": "earned: newsletter"
+    },
+    {
+      "id": "growth",
+      "label": "growth"
+    }
+  ],
+  "phases": [
+    {
+      "id": "p0",
+      "label": "0 Prerequisites, before T-7",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "p1",
+      "label": "1 Assets, T-7..T-1",
+      "fromCol": 1,
+      "toCol": 1
+    },
+    {
+      "id": "p2",
+      "label": "2 Launch day, T+0",
+      "fromCol": 2,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "p3",
+      "label": "3 Earned, T+1..T+7",
+      "fromCol": 3,
+      "toCol": 4
+    },
+    {
+      "id": "p4",
+      "label": "4 After week one",
+      "fromCol": 5,
+      "toCol": 5
+    }
+  ],
+  "nodes": [
+    {
+      "id": "prereq",
+      "lane": "prep",
+      "col": 0,
+      "type": "backend",
+      "label": "Repo public",
+      "sublabel": "HF model, releases"
+    },
+    {
+      "id": "assets",
+      "lane": "prep",
+      "col": 1,
+      "type": "backend",
+      "label": "Assets",
+      "sublabel": "accounts, demo, copy"
+    },
+    {
+      "id": "launch",
+      "lane": "owned",
+      "col": 2,
+      "type": "frontend",
+      "label": "Launch posts",
+      "sublabel": "Medium, YouTube, LinkedIn",
+      "width": 120
+    },
+    {
+      "id": "insta",
+      "lane": "social",
+      "col": 3,
+      "type": "external",
+      "label": "Instagram",
+      "sublabel": "T+1, MIP-0020 v1"
+    },
+    {
+      "id": "reddit",
+      "lane": "social",
+      "col": 4,
+      "type": "external",
+      "label": "Reddit",
+      "sublabel": "posts at T+2, T+4"
+    },
+    {
+      "id": "substack",
+      "lane": "news",
+      "col": 4,
+      "type": "external",
+      "label": "Substack issue",
+      "sublabel": "T+6, conditional"
+    },
+    {
+      "id": "handoff",
+      "lane": "growth",
+      "col": 5,
+      "type": "security",
+      "label": "Hand off",
+      "sublabel": "to MIP-0018, T+8"
+    }
+  ],
+  "edges": [
+    {
+      "from": "prereq",
+      "to": "assets"
+    },
+    {
+      "from": "assets",
+      "to": "launch"
+    },
+    {
+      "from": "launch",
+      "to": "insta"
+    },
+    {
+      "from": "insta",
+      "to": "reddit"
+    },
+    {
+      "from": "launch",
+      "to": "substack",
+      "variant": "dashed"
+    },
+    {
+      "from": "reddit",
+      "to": "handoff"
+    },
+    {
+      "from": "substack",
+      "to": "handoff"
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MIP-0072 task dependency graph",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0072-tasks.html"
+  },
+  "components": [
+    {
+      "id": "t1",
+      "type": "backend",
+      "label": "1 reusable-workflow",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "backend",
+      "label": "2 fork-review",
+      "pos": [
+        300,
+        115
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "backend",
+      "label": "3 callers",
+      "pos": [
+        560,
+        115
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "H",
+      "type": "backend",
+      "label": "H org-settings",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "t1",
+      "to": "t2"
+    },
+    {
+      "id": "e2",
+      "from": "t2",
+      "to": "t3"
+    },
+    {
+      "id": "e3",
+      "from": "H",
+      "to": "t3"
+    }
+  ]
+}

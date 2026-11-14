@@ -161,7 +161,7 @@ domain match); no public GitHub repo was found combining "marine-jellyfish detec
 
 ## How this list is kept updated
 
-`scripts/awesome_agentic_digest.py` queries the real GitHub Search API
+`scripts/marola-tools awesome-agentic-digest` ([`tools/src/digest.rs`](../../tools/src/digest.rs)) queries the real GitHub Search API
 (`api.github.com/search/repositories`, no auth needed for reasonable unauthenticated use) across
 verified agentic-engineering topics (`topic:agents`, `topic:llm-agents`, `topic:ai-agents`,
 `topic:mcp`, `topic:multi-agent-systems`), sorted by stars and by recent activity, and caches
@@ -173,16 +173,16 @@ relevant, and hand-write an entry in the matching section above, in this doc's o
 `docs/MIPs/MIP-0043-awesome-agentic-engineering-list.md` for the full design and verification.
 
 ```
-python3 scripts/awesome_agentic_digest.py            # fetch, cache, print a human-readable summary
-python3 scripts/awesome_agentic_digest.py --json      # machine-readable summary
-python3 scripts/awesome_agentic_digest.py --self-test # no network, run via `just quality-other`
+scripts/marola-tools awesome-agentic-digest          # fetch, cache, print a human-readable summary
+scripts/marola-tools awesome-agentic-digest --json   # machine-readable summary
+cargo test --manifest-path tools/Cargo.toml digest   # no network, run via `just quality-other`
 ```
 
 ## Contributing
 
 This list is maintained inside the [marola](https://github.com/marola-dev/marola) umbrella
 repository. To
-propose an addition: run `scripts/awesome_agentic_digest.py` (above) to find candidates, or suggest
+propose an addition: run `scripts/marola-tools awesome-agentic-digest` (above) to find candidates, or suggest
 one you already know of directly: either way, a human confirms the repo genuinely exists and fits
 a category before it's added, following the [`sindresorhus/awesome`](https://github.com/sindresorhus/awesome)
 entry format: `- [Title](URL) - Description.`, description starting uppercase and ending with a

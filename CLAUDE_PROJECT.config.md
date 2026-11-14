@@ -248,7 +248,7 @@ These stay out of this file:
 - routines on the same account that belong to Wave Forecaster (h0ffmann/ww3-gpu's .claude/project/)
 - connector sign-ins (only which connectors are on is recorded)
 - the environment's own setup script, variables and secrets, which no session can read
-- model ids, e-mail addresses, account ids and session ids (scripts/claude_project_check.py refuses them)
+- model ids, e-mail addresses, account ids and session ids (`marola-tools claude-project-check` refuses them)
 
 ## 8. Keeping it current
 
@@ -257,7 +257,7 @@ the top updated, in the same PR as anything that depends on it. These tools read
 session context and get_project_settings (from the project's coordinator session), get_session,
 list_environments, ListPlugins, ListConnectors, list_triggers and get_trigger.
 
-`scripts/claude_project_check.py` runs in `just quality` and CI. It checks that every section is
+`scripts/marola-tools claude-project-check` runs in `just quality` and CI. It checks that every section is
 here, that every routine has a cron and a prompt block, and that no e-mail address, account id or
 session id has slipped in. No CI job can compare this file with the service, because only a Claude
 session can read the project.

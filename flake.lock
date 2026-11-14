@@ -2,25 +2,27 @@
   "nodes": {
     "agentic": {
       "inputs": {
-        "ai-jail": "ai-jail",
+        "ai-jail": [
+          "ai-jail"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
         "dir": "labs/agentic",
-        "lastModified": 1789347868,
-        "narHash": "sha256-YsYmh9TrMVNtCDUgT5QX/X4JlEOMFN3ZW8GEWEJ+oS4=",
+        "lastModified": 1789351585,
+        "narHash": "sha256-XTJL9iczRE2cjycVxHAnoXghZJCZIU9v9tibjXbk+6k=",
         "owner": "h0ffmann",
-        "repo": "nix-config",
-        "rev": "d42ff99dde4d7617de1ba8887a3d879a791f46d7",
+        "repo": "picasso",
+        "rev": "ce920368cae3d977bbc41a444a3e0616a30b4f7d",
         "type": "github"
       },
       "original": {
         "dir": "labs/agentic",
         "owner": "h0ffmann",
         "ref": "labs/agentic",
-        "repo": "nix-config",
+        "repo": "picasso",
         "type": "github"
       }
     },
@@ -28,7 +30,6 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": [
-          "agentic",
           "nixpkgs"
         ],
         "pre-commit-hooks": "pre-commit-hooks",
@@ -36,15 +37,16 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1789258709,
-        "narHash": "sha256-NT+UHiP5rpXastHpKhhhUJXW8rvPk7AXkiN+DoBPOmw=",
+        "lastModified": 1794273839,
+        "narHash": "sha256-DskH7vF03iyNIE+XUanfHIyIF8dkB7tP6EHsdbjR8Ps=",
         "owner": "akitaonrails",
         "repo": "ai-jail",
-        "rev": "126a67e2788652f7c554072b401824719b6a2987",
+        "rev": "c2f73f699374f9023f89d77960d6a9a85c2c9019",
         "type": "github"
       },
       "original": {
         "owner": "akitaonrails",
+        "ref": "v3.3.1",
         "repo": "ai-jail",
         "type": "github"
       }
@@ -122,7 +124,6 @@
     "gitignore": {
       "inputs": {
         "nixpkgs": [
-          "agentic",
           "ai-jail",
           "pre-commit-hooks",
           "nixpkgs"
@@ -150,17 +151,17 @@
       },
       "locked": {
         "dir": "labs/lint",
-        "lastModified": 1789349635,
-        "narHash": "sha256-cGZRGYaBzNMblT9S5nCkefuwy49wmoEvsOSsUAIKRdg=",
+        "lastModified": 1792654222,
+        "narHash": "sha256-rcX3Olq8me3GKHcvtM6dMlJTeg0epHDB87xAp/gBIz0=",
         "owner": "h0ffmann",
-        "repo": "nix-config",
-        "rev": "642195111d6b9ac4c5aea24dbd5f242160b397b0",
+        "repo": "picasso",
+        "rev": "5da5237ba6f3fc51de0a10bc746a1ce0ad89e33e",
         "type": "github"
       },
       "original": {
         "dir": "labs/lint",
         "owner": "h0ffmann",
-        "repo": "nix-config",
+        "repo": "picasso",
         "type": "github"
       }
     },
@@ -178,16 +179,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1792016370,
-        "narHash": "sha256-Xpv5B9kdcLI95JtEudiBteYF5l+hfxddrY7H/dZAllo=",
+        "lastModified": 1792531060,
+        "narHash": "sha256-Ph5OssvpmC6tc+No5VnIoxu6C0KARYds6W29wfEmBRM=",
         "owner": "marola-dev",
         "repo": "marola-devkit",
-        "rev": "10414c65a82d9b11b06090ef760e262dc9b96af1",
+        "rev": "2d49d22212997581039acacd191465221d8bbf1e",
         "type": "github"
       },
       "original": {
         "owner": "marola-dev",
-        "ref": "v0.11.1",
+        "ref": "v0.20.4",
         "repo": "marola-devkit",
         "type": "github"
       }
@@ -213,7 +214,6 @@
         "flake-compat": "flake-compat",
         "gitignore": "gitignore",
         "nixpkgs": [
-          "agentic",
           "ai-jail",
           "nixpkgs"
         ]
@@ -235,6 +235,7 @@
     "root": {
       "inputs": {
         "agentic": "agentic",
+        "ai-jail": "ai-jail",
         "flake-utils": "flake-utils_2",
         "lint": "lint",
         "marola-devkit": "marola-devkit",
@@ -244,7 +245,6 @@
     "rust-overlay": {
       "inputs": {
         "nixpkgs": [
-          "agentic",
           "ai-jail",
           "nixpkgs"
         ]
@@ -311,7 +311,6 @@
     "treefmt-nix": {
       "inputs": {
         "nixpkgs": [
-          "agentic",
           "ai-jail",
           "nixpkgs"
         ]

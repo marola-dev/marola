@@ -16,6 +16,11 @@
 | **Risk** | A wrong field in a released record stays there forever: a DOI cannot be deleted, only superseded by the next release. `scripts/citation.py --check` runs before every tag for that reason |
 | **Cost so far** | — |
 
+> **Note (2026-10-26).** `scripts/citation.py` is now [`tools/src/citation.rs`](../../tools/src/citation.rs), run as
+> `scripts/marola-tools citation` (`just citation`, `--check` unchanged): the umbrella holds no Python
+> (AGENTS.md). The READMEs dropped the DOI badge; the DOI stays in their "How to cite" section. The
+> text below keeps the names it was written with.
+
 ## 1. Summary
 
 Each GitHub release of the umbrella, and later of marola-app, marola-ml and marola-corpus, is
@@ -163,13 +168,7 @@ The first release published after the switch creates the record, with two identi
   the badge, in `CITATION.cff` (`doi:` and an `identifiers` entry, via `CONCEPT_DOI` in
   `citation.py`) and first in the "How to cite" section.
 
-```mermaid
-flowchart LR
-  A[citation files merged] --> B[repo switched on in Zenodo]
-  B --> C[just release X.Y.Z]
-  C --> D[record: version DOI + concept DOI]
-  D --> E[PR: CONCEPT_DOI, badge, How to cite]
-```
+![The concept DOI, the version DOIs and the badge](../img/archify/mip-0079-dois.png)
 
 The "How to cite" section then mirrors ww3-gpu's: the concept DOI for the project, the release's
 DOI for the exact code, then BibTeX (`@software`, `publisher = {Zenodo}`, the concept `doi`),
@@ -204,6 +203,8 @@ release` runs it before tagging, and `release.yml` runs it again before publishi
 pushed by hand also gets no release and Zenodo sees nothing. A submodule's own changes reach
 Zenodo through that repo's record (§5.6), not the umbrella's. The rule is in `AGENTS.md`
 (Submodule mechanics) and the `zenodo-release` skill.
+
+**Decided 2026-10-14:** a submodule pointer move never makes a release or a Zenodo version.
 
 ## 6. Scoring / safety impact
 
@@ -254,14 +255,7 @@ the manual. If the two disagree, the files on `main` win, and the next PR correc
 
 ### 10.1 What happens on a release
 
-```mermaid
-flowchart LR
-  A[just release X.Y.Z] --> B[tag vX.Y.Z pushed]
-  B --> C[release.yml: citation --check, --guard]
-  C --> D[GitHub release published]
-  D --> E[Zenodo webhook archives it]
-  E --> F[new version DOI under 10.5281/zenodo.23224155]
-```
+![What happens on a release, from the tag to Zenodo and back](../img/archify/mip-0079-release.png)
 
 1. `just release X.Y.Z` runs `scripts/release.sh`. It tags `main` as `vX.Y.Z` and pushes the tag.
 2. `.github/workflows/release.yml` runs on the tag. It runs `scripts/citation.py --check` and

@@ -88,8 +88,9 @@ scoring, a data source, or what a user sees goes through one first.
 - **Dependency updates.** dependabot watches GitHub Actions in the umbrella and marola-app, and
   GitHub Actions and pip in marola-ml, each as one grouped PR on Mondays and Fridays at 09:00
   America/Sao_Paulo; scala-steward opens marola-app's Scala and sbt bumps weekly. The devkit's
-  pins are bumped by hand, since they move together. `just deps-stack` chains bumps that arrive
-  separately ([DEV-FLOW](DEV-FLOW.md#dependency-prs)).
+  pins move together in the devkit's own bump PR (`bump-consumers`), so dependabot ignores them.
+  A green patch or minor pip update merges itself a week after its release, and `just deps-stack`
+  chains the bumps that arrive separately ([DEV-FLOW](DEV-FLOW.md#dependency-prs)).
 
 ## Code style
 

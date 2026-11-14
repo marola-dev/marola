@@ -154,15 +154,7 @@ so a newly ported skill is locked with its real commit from day one.
 `skills-update.yml` is a reusable workflow in the devkit, called by each vendoring repo on
 `schedule: '0 6 * * 1'` and `workflow_dispatch`, like `notify-umbrella.yml` is called today:
 
-```mermaid
-flowchart LR
-  cron["weekly cron / dispatch"] --> out["skills-outdated"]
-  out --> f{"commit ≥ 14 days old\nand not held?"}
-  f -- no --> skip["log, no PR"]
-  f -- yes --> upd["skills-update each"]
-  upd --> pr["one PR on chore/skills-update\nlabel skills-update, SKILL.md diff per skill"]
-  pr --> rev["human reads, merges or sets hold"]
-```
+![The weekly vendored-skills workflow](../img/archify/mip-0080-weekly.png)
 
 - It applies only updates whose upstream commit is at least 14 days old, so a push that upstream
   reverts within two weeks never reaches a PR, and skips every `hold`.

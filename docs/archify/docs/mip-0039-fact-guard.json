@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Where the deterministic fact guard sits, after the model",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0039-fact-guard.html"
+  },
+  "components": [
+    {
+      "id": "mode",
+      "type": "security",
+      "label": "mode",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "unchanged",
+      "type": "backend",
+      "label": "show text unchanged",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "warnCheck",
+      "type": "security",
+      "label": "violation?",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "flaggedWarn",
+      "type": "backend",
+      "label": "Flagged: text + flags",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cleanWarn",
+      "type": "backend",
+      "label": "Clean: text only",
+      "pos": [
+        560,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "blockCheck",
+      "type": "security",
+      "label": "severity",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "withheld",
+      "type": "backend",
+      "label": "Withheld: hide text",
+      "pos": [
+        560,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "flaggedBlock",
+      "type": "backend",
+      "label": "Flagged: text + flags",
+      "pos": [
+        560,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "cleanBlock",
+      "type": "backend",
+      "label": "Clean: text only",
+      "pos": [
+        560,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "mode",
+      "to": "unchanged",
+      "label": "off"
+    },
+    {
+      "id": "e2",
+      "from": "mode",
+      "to": "warnCheck",
+      "label": "warn"
+    },
+    {
+      "id": "e3",
+      "from": "warnCheck",
+      "to": "flaggedWarn",
+      "label": "yes (hard or soft)",
+      "labelAt": [
+        525,
+        44
+      ]
+    },
+    {
+      "id": "e4",
+      "from": "warnCheck",
+      "to": "cleanWarn",
+      "label": "no",
+      "labelAt": [
+        535,
+        154
+      ]
+    },
+    {
+      "id": "e5",
+      "from": "mode",
+      "to": "blockCheck",
+      "label": "block"
+    },
+    {
+      "id": "e6",
+      "from": "blockCheck",
+      "to": "withheld",
+      "label": "hard"
+    },
+    {
+      "id": "e7",
+      "from": "blockCheck",
+      "to": "flaggedBlock",
+      "label": "soft"
+    },
+    {
+      "id": "e8",
+      "from": "blockCheck",
+      "to": "cleanBlock",
+      "label": "none"
+    }
+  ]
+}

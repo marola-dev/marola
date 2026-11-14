@@ -1,5 +1,5 @@
 site_name: marola.dev docs
-site_description: The ocean intelligence layer for a stretch of coast — guides and design proposals.
+site_description: The water super app for a stretch of coast — guides and design proposals.
 # Load-bearing, not cosmetic: with no site_url the privacy plugin force-adds Mermaid.js to every
 # page (its own special case, plugins/privacy/plugin.py — Material normally injects it on demand,
 # and it cannot tell on demand without a canonical URL). Kroki already renders the diagrams to SVG
@@ -20,10 +20,12 @@ validation:
   anchors: warn
 
 # Built and reachable by URL, just not listed: the task files are execution bookkeeping for a MIP,
-# linked from the MIP that owns them; a MIP's screenshots README is not a section.
+# linked from the MIP that owns them; a MIP's screenshots README is not a section, nor is the README
+# beside a drawing's files in assets/.
 not_in_nav: |
   6-MIPs/*.tasks.md
   6-MIPs/*/screenshots/*
+  assets/*/README.md
 
 # Off the site entirely, not merely out of the sidebar: benchmarks/ is a ledger of kept runs, a
 # repo artefact rather than documentation. Links into it point at GitHub.
@@ -74,16 +76,14 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
 
-# A hooks: entry runs as a plugin. @event_priority puts it ahead of the kroki plugin below, so
-# every ```mermaid fence already carries a pinned font-family before Kroki measures it — #511.
-hooks:
-  - hooks/mermaid_font.py
+# No hooks: scripts/mkdocs.sh pins every ```mermaid fence's font-family in the staged copy
+# (`marola-tools mermaid-font`) before Kroki measures it — #511.
 
 plugins:
   - search
   # Downloads Material's webfont (and any other external asset) at build time and rewrites the
   # references to local copies, so the pages keep Roboto without asking fonts.googleapis.com for
-  # it on every visit. This is the only thing keeping that true — strip_external_scripts.py
+  # it on every visit. This is the only thing keeping that true — `marola-tools strip-external-scripts`
   # matches <script src>, and a webfont is a stylesheet <link>, so its check cannot see it.
   - privacy:
       # Mermaid.js is fetched but referenced by nothing: Kroki renders the diagrams to SVG at

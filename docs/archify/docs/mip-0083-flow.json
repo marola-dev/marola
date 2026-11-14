@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The forecast benchmark job flow",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0083-flow.html"
+  },
+  "components": [
+    {
+      "id": "reg",
+      "type": "backend",
+      "label": "Sampling registry,",
+      "sublabel": "providers, protocol",
+      "pos": [
+        170,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fc",
+      "type": "backend",
+      "label": "Forecast routes",
+      "sublabel": "v0: IFS · GFS",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "oc",
+      "type": "backend",
+      "label": "Observation clients",
+      "sublabel": "METAR · INMET",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fs",
+      "type": "database",
+      "label": "forecast_sample",
+      "sublabel": "OODS lake on B2",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "os",
+      "type": "database",
+      "label": "observation_sample",
+      "sublabel": "OODS lake on B2",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "m",
+      "type": "backend",
+      "label": "Matcher",
+      "sublabel": "same point, same valid time",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sc",
+      "type": "backend",
+      "label": "Scorer",
+      "sublabel": "monoid accumulators",
+      "pos": [
+        170,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ml",
+      "type": "database",
+      "label": "MLflow run",
+      "sublabel": "per cycle",
+      "pos": [
+        40,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "an",
+      "type": "backend",
+      "label": "marola analogs",
+      "sublabel": "past observations",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "gate",
+      "type": "security",
+      "label": "Points scored?",
+      "sublabel": "ground truth frozen",
+      "pos": [
+        300,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ex",
+      "type": "backend",
+      "label": "Export to site-data",
+      "pos": [
+        40,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "hold",
+      "type": "backend",
+      "label": "Archive only",
+      "pos": [
+        300,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "reg",
+      "to": "fc"
+    },
+    {
+      "id": "e2",
+      "from": "reg",
+      "to": "oc"
+    },
+    {
+      "id": "e3",
+      "from": "fc",
+      "to": "fs"
+    },
+    {
+      "id": "e4",
+      "from": "oc",
+      "to": "os"
+    },
+    {
+      "id": "e5",
+      "from": "fs",
+      "to": "m"
+    },
+    {
+      "id": "e6",
+      "from": "os",
+      "to": "m"
+    },
+    {
+      "id": "e7",
+      "from": "m",
+      "to": "sc"
+    },
+    {
+      "id": "e8",
+      "from": "sc",
+      "to": "ml"
+    },
+    {
+      "id": "e9",
+      "from": "os",
+      "to": "an"
+    },
+    {
+      "id": "e10",
+      "from": "fs",
+      "to": "an"
+    },
+    {
+      "id": "e11",
+      "from": "an",
+      "to": "fs"
+    },
+    {
+      "id": "e12",
+      "from": "sc",
+      "to": "gate"
+    },
+    {
+      "id": "e13",
+      "from": "gate",
+      "to": "ex",
+      "label": "yes"
+    },
+    {
+      "id": "e14",
+      "from": "gate",
+      "to": "hold",
+      "label": "no",
+      "labelAt": [
+        395,
+        688
+      ]
+    }
+  ]
+}

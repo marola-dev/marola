@@ -1,0 +1,130 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Issue status on the board, and what moves a card between columns",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "issue-flow-board.html"
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "delivery"
+    },
+    {
+      "id": "side",
+      "label": "needs a decision"
+    }
+  ],
+  "states": [
+    {
+      "id": "start",
+      "type": "start",
+      "label": "new issue",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "Triage",
+      "type": "waiting",
+      "label": "Triage",
+      "lane": "side",
+      "col": 1
+    },
+    {
+      "id": "Spec",
+      "type": "waiting",
+      "label": "Spec",
+      "lane": "side",
+      "col": 2
+    },
+    {
+      "id": "Ready",
+      "type": "active",
+      "label": "Ready",
+      "lane": "main",
+      "col": 2
+    },
+    {
+      "id": "InProgress",
+      "type": "active",
+      "label": "In progress",
+      "lane": "main",
+      "col": 3
+    },
+    {
+      "id": "InReview",
+      "type": "waiting",
+      "label": "In review",
+      "lane": "side",
+      "col": 3
+    },
+    {
+      "id": "Done",
+      "type": "success",
+      "label": "Done",
+      "lane": "main",
+      "col": 4
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t1",
+      "from": "start",
+      "to": "Triage",
+      "label": "otherwise"
+    },
+    {
+      "id": "t2",
+      "from": "start",
+      "to": "Ready",
+      "label": "agent-ready"
+    },
+    {
+      "id": "t3",
+      "from": "start",
+      "to": "InProgress",
+      "label": "assigned"
+    },
+    {
+      "id": "t4",
+      "from": "Triage",
+      "to": "Spec",
+      "label": "someone decides"
+    },
+    {
+      "id": "t5",
+      "from": "Spec",
+      "to": "Ready",
+      "label": "someone decides"
+    },
+    {
+      "id": "t6",
+      "from": "Ready",
+      "to": "InProgress",
+      "label": "issue-claim"
+    },
+    {
+      "id": "t7",
+      "from": "InProgress",
+      "to": "InReview",
+      "label": "someone decides"
+    },
+    {
+      "id": "t8",
+      "from": "InProgress",
+      "to": "Done",
+      "label": "issue closed"
+    },
+    {
+      "id": "t9",
+      "from": "InReview",
+      "to": "Done",
+      "label": "issue closed"
+    }
+  ]
+}

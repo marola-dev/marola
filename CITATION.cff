@@ -1,4 +1,4 @@
-# Generated from .zenodo.json by scripts/citation.py; edit that file, then `just citation`.
+# Generated from .zenodo.json by scripts/marola-tools citation; edit that file, then `just citation`.
 cff-version: 1.2.0
 message: "If you use marola, please cite it using the metadata below."
 type: software

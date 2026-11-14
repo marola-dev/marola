@@ -113,18 +113,7 @@ commits there, and `oods-check` runs in `marola-oods` CI against the pinned app 
 
 ### 5.4 Contracts: pinned artifacts instead of paths
 
-```mermaid
-flowchart LR
-  devkit[marola-devkit] -. flake / plugin / workflows .-> app & site & corpus & ml
-  corpus[marola-corpus] -- tagged tarball --> app[marola-app]
-  corpus -- tagged tarball --> ml[marola-ml]
-  ml -- compiled prompt, bump PR --> app
-  app -- image + resources tarball --> ml
-  app -- image, data-only boards --> site[marola-site]
-  app -- coverage, smoke --> site
-  app -- ingest commits --> oods[marola-oods]
-  oods -- export tag --> app
-```
+![Contracts as pinned artifacts instead of paths](../img/archify/mip-0070-contracts.png)
 
 | Producer → consumer | Artifact | Pinned by |
 |---|---|---|
@@ -144,17 +133,7 @@ producer from source.
 
 Superseded for docs by [MIP-0074](./MIP-0074-docs-umbrella-landing-and-repo-docs.md).
 
-```mermaid
-sequenceDiagram
-  participant R as code repo (main)
-  participant U as umbrella
-  participant P as Pages (docs.marola.dev)
-  R->>R: push touching README.md or docs/**
-  R->>U: repository_dispatch submodule-docs-updated
-  U->>U: git submodule update --remote
-  U->>U: aggregate + mkdocs build --strict
-  U->>P: deploy
-```
+![Sequence of a repo's docs reaching the umbrella's site](../img/archify/mip-0070-docs.png)
 
 - **Each repo** has `README.md` + `docs/`, a small `mkdocs.yml` and `just docs-serve` (the
   devkit's `mkdocs.sh`), and builds `--strict` standalone. Links: relative inside `docs/`, GitHub
@@ -321,10 +300,12 @@ restates and `agents-check` enforces.
 
 ## 11. Open questions
 
-- **Decided in #522**: a fine-grained PAT; the names `marola-app` and `marola-site`, as proposed
-  (`marola-backend`/`marola-frontend` were weighed and dropped by the team); issues per repo on the
-  org Project.
-- The PAT's owner (a person or a machine user) and its expiry.
+- **Decided 2026-09-30:** in #522, a fine-grained PAT; the names `marola-app` and `marola-site`, as
+  proposed (`marola-backend`/`marola-frontend` were weighed and dropped by the team); issues per repo
+  on the org Project.
+- The PAT's owner (a person or a machine user) and its expiry. **Decided 2026-10-10:** no PAT for
+  cross-repo automation: MIP-0086 replaced it with two org-owned GitHub Apps, `marola-pr-bot` and
+  `marola-merge-bot`, so no owner or expiry is left to choose.
 - `stats/`: should the umbrella's `repo_stats.py` roll every repo into one panel or show a panel per
   repo?
 - **Follow-up MIP:** moving the umbrella (and possibly the org) to IBRAMAR/IBAMAR once the split is

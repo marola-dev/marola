@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Which runner a workflow gets: ubuntu-latest by default, the self-hosted GPU only for marola-sea-publish",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0065-runners.html"
+  },
+  "components": [
+    {
+      "id": "b1",
+      "type": "backend",
+      "label": "PR from a fork",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "backend",
+      "label": "CI job queued on [self-hosted]",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "b3",
+      "type": "backend",
+      "label": "runs on the maintainer's desktop",
+      "pos": [
+        678,
+        60
+      ],
+      "size": [
+        227,
+        64
+      ]
+    },
+    {
+      "id": "a1",
+      "type": "backend",
+      "label": "PR from a fork",
+      "pos": [
+        40,
+        225
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "a2",
+      "type": "backend",
+      "label": "waits for approval",
+      "pos": [
+        300,
+        225
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "a3",
+      "type": "backend",
+      "label": "runs on ubuntu-latest",
+      "pos": [
+        678,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "a4",
+      "type": "backend",
+      "label": "runs-on: self-hosted",
+      "sublabel": "anywhere but marola-sea-publish.yml",
+      "pos": [
+        40,
+        335
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "a5",
+      "type": "backend",
+      "label": "quality-other fails:",
+      "sublabel": "workflow_runners: ci.yml:21 targets self-hosted — only marola-sea-publish.yml may",
+      "pos": [
+        300,
+        335
+      ],
+      "size": [
+        308,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "before",
+      "wraps": [
+        "b1",
+        "b2",
+        "b3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "after",
+      "wraps": [
+        "a1",
+        "a2",
+        "a3",
+        "a4",
+        "a5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "to": "b2"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "to": "b3"
+    },
+    {
+      "id": "e3",
+      "from": "a1",
+      "to": "a2"
+    },
+    {
+      "id": "e4",
+      "from": "a2",
+      "to": "a3"
+    },
+    {
+      "id": "e5",
+      "from": "a4",
+      "to": "a5"
+    }
+  ]
+}

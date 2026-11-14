@@ -41,19 +41,7 @@ From the post-split review of all seven repos (2026-10-02; evidence in Checked l
 Before: `Start here` (MIP table) · `Development phases` · `marola-app` · `1 Using marola` ·
 `2 Building marola` · `3 Working on the repo` · `4 Research and plans` · `MIPs` · `Repos` (4 of 6).
 
-```mermaid
-flowchart TD
-  root["docs.marola.dev /"] --> idx["index = umbrella README"]
-  root --> ph["PHASES"]
-  root --> u1["1-Using-marola/<br/>run, ask, chat/MCP, Docker,<br/>Telegram, limitations"]
-  root --> u2["2-Building-marola/<br/>system architecture, repos, split"]
-  root --> u3["3-Ways-of-working/"]
-  root --> u4["4-Research-and-plans/"]
-  root --> repos["5-Repos/"]
-  root --> mips["6-MIPs/<br/>(source stays docs/MIPs/)"]
-  repos --> r1["marola-app/ · marola-site/<br/>marola-corpus/ · marola-ml/ · marola-oods/"]
-  repos --> r2["marola-devkit/<br/>(at flake.lock's commit)"]
-```
+![The docs site: the umbrella's landing page and each repo's docs](../img/archify/mip-0074-docs-site.png)
 
 ## 4. Data sources and dependencies reviewed
 

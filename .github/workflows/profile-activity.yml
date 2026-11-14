@@ -1,5 +1,5 @@
 # profile activity — a merged PR here pings h0ffmann/h0ffmann, which rebuilds its recent-activity list
-# right away (nix-config's reusable profile-ping.yml). Needs the PROFILE_DISPATCH_TOKEN secret; without
+# right away (picasso's reusable profile-ping.yml). Needs the PROFILE_DISPATCH_TOKEN secret; without
 # it the job only leaves a notice. The reusable workflow's `runs-on` comes from its `runner` input.
 name: profile activity
 
@@ -13,7 +13,7 @@ permissions: {}
 jobs:
   ping:
     if: github.event.pull_request.merged
-    uses: h0ffmann/nix-config/.github/workflows/profile-ping.yml@main
+    uses: h0ffmann/picasso/.github/workflows/profile-ping.yml@main
     with:
       runner: ubuntu-latest
     secrets:

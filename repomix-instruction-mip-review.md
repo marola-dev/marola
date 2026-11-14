@@ -23,7 +23,7 @@ codebase as expected, not as something to guess past.
   and deployment safety (never provision a paid resource without explicit human confirmation),
   attribution/commit conventions, code style, and testing discipline. A MIP that violates one of
   these rules without saying so, or without a stated plan to reconcile it, is a real finding.
-- **`docs/3-Ways-of-working/PHILOSOPHY.md`**: *why* the project is built the way it is (why Scala 3 on the JVM, why
+- **`docs/3-Ways-of-working/PHILOSOPHY.md`**: *why* the project is built the way it is (why
   Nix, why a design-doc-first process at all). A MIP whose design cuts against this document's
   stated reasoning, without acknowledging the tension, is worth flagging even if the code would
   technically work.

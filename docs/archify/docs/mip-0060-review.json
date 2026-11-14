@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sequence of the open code review when a PR is marked ready",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0060-review.html",
+    "column_fit": "spread",
+    "viewBox": [
+      1150,
+      559
+    ]
+  },
+  "participants": [
+    {
+      "id": "Human",
+      "type": "external",
+      "label": "Human"
+    },
+    {
+      "id": "Runner",
+      "type": "backend",
+      "label": "ocr-review.yml"
+    },
+    {
+      "id": "GH",
+      "type": "backend",
+      "label": "GitHub API"
+    },
+    {
+      "id": "Jail",
+      "type": "backend",
+      "label": "jail-run ocr review"
+    },
+    {
+      "id": "Post",
+      "type": "backend",
+      "label": "scripts/ocr-post.py"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "Human",
+      "to": "Runner",
+      "y": 175,
+      "label": "workflow_dispatch(pr)"
+    },
+    {
+      "id": "m2",
+      "from": "Runner",
+      "to": "GH",
+      "y": 215,
+      "label": "gh pr view (resolve PR)"
+    },
+    {
+      "id": "m3",
+      "from": "GH",
+      "to": "Runner",
+      "y": 255,
+      "label": "head, author, repo",
+      "variant": "return",
+      "note": "refuse fork or bot author; checkout, compute merge-base"
+    },
+    {
+      "id": "m4",
+      "from": "Runner",
+      "to": "Jail",
+      "y": 339,
+      "label": "review --from MB --to HEAD --output ocr.json"
+    },
+    {
+      "id": "m5",
+      "from": "Jail",
+      "to": "Runner",
+      "y": 379,
+      "label": "ocr.json (comment text only)",
+      "variant": "return"
+    },
+    {
+      "id": "m6",
+      "from": "Runner",
+      "to": "Post",
+      "y": 419,
+      "label": "ocr.json"
+    },
+    {
+      "id": "m7",
+      "from": "Post",
+      "to": "GH",
+      "y": 459,
+      "label": "one COMMENT review, upsert sticky summary"
+    }
+  ]
+}

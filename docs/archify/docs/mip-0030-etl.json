@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The coastal-trails ETL",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0030-etl.html"
+  },
+  "components": [
+    {
+      "id": "dl",
+      "type": "backend",
+      "label": "download the region",
+      "sublabel": ".osm.pbf + .md5",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "filt",
+      "type": "backend",
+      "label": "osmium tags-filter",
+      "sublabel": "trails, routes, lakes, state boundaries",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "geo",
+      "type": "backend",
+      "label": "osmium export",
+      "sublabel": "geojsonseq",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "load",
+      "type": "backend",
+      "label": "oods trails --state UF",
+      "sublabel": "rows → check → one transaction per state",
+      "pos": [
+        820,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "backend",
+      "label": "oods maintain → upload catalog → oods export",
+      "pos": [
+        1080,
+        60
+      ],
+      "size": [
+        306,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "dl",
+      "to": "filt"
+    },
+    {
+      "id": "e2",
+      "from": "filt",
+      "to": "geo"
+    },
+    {
+      "id": "e3",
+      "from": "geo",
+      "to": "load"
+    },
+    {
+      "id": "e4",
+      "from": "load",
+      "to": "rt"
+    }
+  ]
+}

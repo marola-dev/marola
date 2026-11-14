@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Which kind of figure to draw, as a decision tree",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "diagrams-decision.html"
+  },
+  "components": [
+    {
+      "id": "q",
+      "type": "security",
+      "label": "What is the picture?",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "m",
+      "type": "backend",
+      "label": "Archify",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sublabel": "docs/archify/docs/"
+    },
+    {
+      "id": "z",
+      "type": "security",
+      "label": "Code or system?",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "d2",
+      "type": "backend",
+      "label": "d2",
+      "pos": [
+        430,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "c4",
+      "type": "backend",
+      "label": "c4plantuml",
+      "pos": [
+        690,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "backend",
+      "label": "dbml",
+      "pos": [
+        560,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "vl",
+      "type": "backend",
+      "label": "vegalite",
+      "pos": [
+        820,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ex",
+      "type": "backend",
+      "label": "excalidraw",
+      "pos": [
+        1080,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "q",
+      "to": "m",
+      "label": "steps, states, messages, a lifecycle"
+    },
+    {
+      "id": "e2",
+      "from": "q",
+      "to": "z",
+      "label": "containers inside containers"
+    },
+    {
+      "id": "e3",
+      "from": "z",
+      "to": "d2",
+      "label": "modules, services",
+      "labelAt": [
+        413,
+        358
+      ]
+    },
+    {
+      "id": "e4",
+      "from": "z",
+      "to": "c4",
+      "label": "people and systems",
+      "labelAt": [
+        555,
+        248
+      ]
+    },
+    {
+      "id": "e5",
+      "from": "q",
+      "to": "db",
+      "label": "tables and keys",
+      "labelAt": [
+        655,
+        138
+      ]
+    },
+    {
+      "id": "e6",
+      "from": "q",
+      "to": "vl",
+      "label": "numbers on an axis"
+    },
+    {
+      "id": "e7",
+      "from": "q",
+      "to": "ex",
+      "label": "a sketch or wireframe",
+      "labelAt": [
+        774,
+        138
+      ]
+    }
+  ]
+}

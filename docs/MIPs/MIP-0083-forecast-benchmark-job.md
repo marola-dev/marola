@@ -287,23 +287,7 @@ The Brazilian sources it can draw on:
 
 ### 5.1 The flow
 
-```mermaid
-flowchart LR
-  reg[Sampling registry,<br/>providers, protocol] --> fc[Forecast routes<br/>v0: IFS · GFS]
-  reg --> oc[Observation clients<br/>METAR · INMET]
-  fc --> fs[(forecast_sample<br/>OODS lake on B2)]
-  oc --> os[(observation_sample<br/>OODS lake on B2)]
-  fs --> m[Matcher<br/>same point, same valid time]
-  os --> m
-  m --> sc[Scorer<br/>monoid accumulators]
-  sc --> ml[(MLflow run<br/>per cycle)]
-  os --> an[marola analogs<br/>past observations]
-  fs --> an
-  an --> fs
-  sc --> gate{Points scored?<br/>ground truth frozen}
-  gate -- yes --> ex[Export to site-data]
-  gate -- no --> hold[Archive only]
-```
+![The forecast benchmark job flow](../img/archify/mip-0083-flow.png)
 
 The registry decides where to sample; clients write samples to the lake; the matcher and scorer
 read only the lake, so a score is always recomputable from stored samples (§5.5); MLflow records
@@ -396,14 +380,7 @@ MIP-0075, which is still a Draft. When MIP-0075's `OodsStore` lands, a second `S
 the same tables to the B2 lake and shares its `oods-lake` concurrency group, so there is one
 writer for the lake and MLflow's file alike.
 
-```mermaid
-flowchart TB
-  exp[Experiment: forecast-benchmark-v1<br/>tags: protocol sha, registry sha] --> r1[Run: cycle 2026-10-09T04:17Z]
-  exp --> r2[Run: cycle 2026-10-09T08:17Z]
-  r1 --> p[Params<br/>providers, cadence, window,<br/>app_sha, nino34, enso_status,<br/>sampled, backfilled, missing]
-  r1 --> mt[Metrics<br/>rmse.wind.90d.SBFL.gfs, step = lead h<br/>first cycle after 00 UTC only]
-  r1 --> a[Artifacts<br/>scores.json, export.json,<br/>run_index delta]
-```
+![What goes to MLflow and what goes to the lake](../img/archify/mip-0083-mlflow.png)
 
 One experiment per protocol version: a change to the protocol or the registry starts
 `forecast-benchmark-v2`, so no run mixes two protocols. Metrics are logged once a day (about 900

@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Where Pekko fits marola and where it does not",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "agent-frameworks-pekko.html"
+  },
+  "components": [
+    {
+      "id": "Chat",
+      "type": "backend",
+      "label": "ChatActor(chatId)",
+      "sublabel": "last location, bounded window, language; TTL 24h",
+      "pos": [
+        560,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Sum",
+      "type": "backend",
+      "label": "RoleActor(summarizer)",
+      "sublabel": "pure step fn over a DSPy-compiled prompt",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Rev",
+      "type": "backend",
+      "label": "RoleActor(reviewer)",
+      "sublabel": "pure step fn; can rewrite",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Esc",
+      "type": "backend",
+      "label": "RoleActor(escalation)",
+      "sublabel": "trend/anomaly over forecast; gated by a human",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Board",
+      "type": "backend",
+      "label": "TaskBoard",
+      "sublabel": "event-sourced task list; enforces budgets",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Digest",
+      "type": "backend",
+      "label": "DigestScheduler",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Mcp",
+      "type": "backend",
+      "label": "MCP server (unchanged)",
+      "sublabel": "shared with Claude Desktop",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Boards",
+      "type": "backend",
+      "label": "boards (MIP-0003)",
+      "pos": [
+        300,
+        445
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "bot/",
+      "wraps": [
+        "Chat",
+        "Sum",
+        "Rev",
+        "Esc",
+        "Board",
+        "Digest",
+        "Mcp"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "Board",
+      "to": "Sum",
+      "label": "handoff"
+    },
+    {
+      "id": "e2",
+      "from": "Board",
+      "to": "Rev",
+      "label": "handoff"
+    },
+    {
+      "id": "e3",
+      "from": "Board",
+      "to": "Esc",
+      "label": "handoff"
+    },
+    {
+      "id": "e4",
+      "from": "Digest",
+      "to": "Boards",
+      "label": "timers"
+    },
+    {
+      "id": "e5",
+      "from": "Boards",
+      "to": "Chat",
+      "label": "ChatActor.send"
+    }
+  ]
+}

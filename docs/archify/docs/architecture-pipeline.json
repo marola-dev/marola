@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The request pipeline across repos, from a person's question to the LLM summary and the map",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "architecture-pipeline.html"
+  },
+  "components": [
+    {
+      "id": "User",
+      "type": "external",
+      "label": "a person",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Entry",
+      "type": "backend",
+      "label": "marola-app",
+      "sublabel": "CLI, MCP or chat server",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Data",
+      "type": "backend",
+      "label": "Overpass, Open-Meteo,",
+      "sublabel": "agency bulletins",
+      "pos": [
+        170,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Score",
+      "type": "backend",
+      "label": "Swimability",
+      "sublabel": "score and safety veto",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Summary",
+      "type": "backend",
+      "label": "LLM summary",
+      "sublabel": "(local Ollama)",
+      "pos": [
+        170,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Review",
+      "type": "backend",
+      "label": "Reviewer",
+      "sublabel": "second LLM pass",
+      "pos": [
+        170,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Ask",
+      "type": "backend",
+      "label": "ocean questions",
+      "sublabel": "(retrieval)",
+      "pos": [
+        430,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Corpus",
+      "type": "backend",
+      "label": "marola-corpus",
+      "sublabel": "knowledge tarball",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ML",
+      "type": "backend",
+      "label": "marola-ml",
+      "sublabel": "compiled prompts, marola-sea",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Boards",
+      "type": "backend",
+      "label": "board JSON",
+      "sublabel": "(no model)",
+      "pos": [
+        430,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "Site",
+      "type": "backend",
+      "label": "marola-site",
+      "sublabel": "the map",
+      "pos": [
+        430,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "User",
+      "to": "Entry"
+    },
+    {
+      "id": "e2",
+      "from": "Entry",
+      "to": "Data"
+    },
+    {
+      "id": "e3",
+      "from": "Data",
+      "to": "Score"
+    },
+    {
+      "id": "e4",
+      "from": "Score",
+      "to": "Summary"
+    },
+    {
+      "id": "e5",
+      "from": "Summary",
+      "to": "Review"
+    },
+    {
+      "id": "e6",
+      "from": "Entry",
+      "to": "Ask"
+    },
+    {
+      "id": "e7",
+      "from": "Corpus",
+      "to": "Ask",
+      "variant": "dashed"
+    },
+    {
+      "id": "e8",
+      "from": "ML",
+      "to": "Summary",
+      "variant": "dashed"
+    },
+    {
+      "id": "e9",
+      "from": "Score",
+      "to": "Boards"
+    },
+    {
+      "id": "e10",
+      "from": "Boards",
+      "to": "Site"
+    }
+  ]
+}

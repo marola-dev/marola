@@ -42,54 +42,45 @@ log n="10" *args="":
 # Build / test / lint
 # ---------------------------------------------------------------------
 
-# Statement % of scripts/**/*.py, measured while each script's own --self-test runs.
-coverage-python:
-    python3 scripts/repo_stats.py python-coverage
-
 # All free quality gates, same as ci.yml. `just quality-fix` applies the auto-fixable ones. The
 # app's gates are marola-app's own (`cd marola-app && just quality`).
 quality: quality-other
 
-# Ruff, merge-key-check, the script self-tests, actionlint, hadolint, docs-lint, `wiring --check` (needs the
-# submodules checked out). A missing tool fails, never skips.
+# rustfmt, clippy and the tests of tools/ (marola-tools), merge-key-check, the script self-tests, actionlint, hadolint, docs-lint, `wiring --check` (needs the
+# submodules checked out), `decisions --check`. A missing tool fails, never skips.
 # The devkit's own scripts are self-tested in its CI; here only marola's run.
 quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
     [ -e .devkit/devkit.just ] || echo "quality-other: no .devkit here — the devkit's recipes (pr, stack, issue-*) are missing; run 'nix develop', or 'just devkit-link'" >&2
-    for tool in ruff actionlint hadolint agents-check workflow-runners docs-lint wiring merge-key-check; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
+    for tool in cargo actionlint hadolint agents-check workflow-runners docs-lint wiring decisions merge-key-check; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
     # Not `just --fmt --check`: its --unstable style differed between this machine and the CI
     # runner on the same file and version. --list only checks that the file parses.
     just --list >/dev/null
     # One command per line: `set -e` exempts the left side of `a && b`.
-    ruff check .
-    ruff format --check .
+    cargo fmt --manifest-path tools/Cargo.toml --check
+    cargo clippy --manifest-path tools/Cargo.toml --locked --all-targets -- -D warnings
+    cargo test --manifest-path tools/Cargo.toml --locked
     merge-key-check .
-    python3 scripts/repo_stats.py --self-test
-    python3 scripts/arxiv_digest.py --self-test
-    python3 scripts/awesome_agentic_digest.py --self-test
     scripts/gh-billing.sh --self-test
     scripts/site-data-push.sh --self-test
     scripts/pointer-sync.sh --self-test
     scripts/pointer-sync-merge.sh --self-test
-    python3 scripts/mip_graph.py --self-test
-    python3 scripts/citation.py --self-test
-    python3 scripts/claude_project_check.py --self-test
-    python3 scripts/claude_project_check.py
+    scripts/marola-tools claude-project-check
     scripts/release.sh --self-test
     scripts/mkdocs.sh --self-test
     scripts/prepare-docs.sh --self-test
     scripts/fetch-api-docs.sh --self-test
-    python3 scripts/strip_external_scripts.py --self-test
     node scripts/docs_redirect_check.js
-    python3 scripts/lib/doc_links.py --self-test
-    python3 scripts/site_links_check.py --self-test
     scripts/agents_repos_check.sh --self-test
     scripts/agents_repos_check.sh
     wiring --check docs/2-Building-marola/REPOS.md
+    decisions --mips docs/MIPs --check
     workflow-runners
-    python3 scripts/mip_graph.py --check
-    python3 scripts/citation.py --check
+    scripts/marola-tools mip-graph --check
+    scripts/marola-tools citation --check
+    scripts/marola-tools reading-time --check
+    just figure-check
     agents-check
     docs-lint
     actionlint
@@ -97,7 +88,7 @@ quality-other:
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
 
 quality-fix:
-    ruff check --fix . && ruff format .
+    cargo fmt --manifest-path tools/Cargo.toml && cargo clippy --manifest-path tools/Cargo.toml --fix --allow-dirty --all-targets
 
 # Run by the devkit's pre-commit hook (.devkit/.githooks): staged workflows must pass actionlint.
 # The lint gates are prepush's.
@@ -224,30 +215,91 @@ ghas *args:
 
 # Regenerate docs/MIPs/README.md's dependency graph from each MIP's **Blocked by** row.
 mip-graph *args:
-    python3 scripts/mip_graph.py {{ args }}
-
-# GitHub's native Stacks (the "Preview stack" box on a PR) via the official `gh stack` extension.
-stack-setup:
-    gh auth status >/dev/null 2>&1 || { echo "gh is not logged in — run: gh auth login" >&2; exit 1; }
-    gh extension list | grep -q 'github/gh-stack' || gh extension install github/gh-stack
-    gh skill install github/gh-stack || echo "gh skill install failed (older gh?) — the extension works without the skill"
-
-# The stack as GitHub sees it (PR numbers, states, bases) — MIP-0005.
-stack-view *args:
-    gh stack view {{ args }}
-
-# Restack after a bottom PR was squash-merged. MIP-0005.
-stack-sync mip="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    bottom="$(stack branches {{ mip }} | head -1)"
-    gh stack checkout "$bottom"
-    gh stack sync
+    scripts/marola-tools mip-graph {{ args }}
 
 # Merge a whole stack (or everything up to one PR) in a single all-or-nothing operation — no
 # restack between merges.
 stack-merge *args:
     gh stack merge {{ args }}
+
+# ---------------------------------------------------------------------
+# The README's figures and reading time (AGENTS.md: figures from source, reading time computed)
+# ---------------------------------------------------------------------
+
+# The Archify that draws docs/archify/*.json, pinned (v3.0.1), the same one h0ffmann/ptbr-writer
+# vendors. Fetched into .tmp/, never a submodule: pointer-sync moves every gitlink.
+archify_rev := "2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c"
+
+figure-init:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    d=.tmp/archify
+    if [ "$(git -C "$d" rev-parse HEAD 2>/dev/null)" != "{{ archify_rev }}" ]; then
+        rm -rf "$d" && git init -q "$d"
+        git -C "$d" fetch -q --depth 1 https://github.com/tt-a1i/archify.git "{{ archify_rev }}"
+        git -C "$d" checkout -q FETCH_HEAD
+    fi
+    echo "figure-init: $(git -C "$d" rev-parse --short HEAD)"
+
+# Draw every Archify source with scripts/figure.sh, which validates it, lays picasso's look
+# (docs/archify/picasso.css) over it and crops headless Chrome's picture to the drawing:
+# docs/archify/<slug>.json and en/<slug>.json (the README's, in two languages) to docs/img/, and
+# docs/archify/docs/<slug>.json (the docs' diagrams, MIP-0068) to docs/img/archify/. Needs node,
+# jq, Chrome (CHROME names another) and the Google Fonts; writes docs/archify/figures.lock.
+figure: figure-init
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for src in docs/archify/*.json docs/archify/en/*.json; do
+        slug="${src#docs/archify/}"; scripts/figure.sh "$src" "docs/img/${slug%.json}.png"
+    done
+    for src in docs/archify/docs/*.json; do scripts/figure.sh "$src" "docs/img/archify/$(basename "$src" .json).png"; done
+    just _figure-lock > docs/archify/figures.lock
+
+# One line per figure: a hash of its source, the look and the script, then the Archify pin.
+_figure-lock:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for src in docs/archify/*.json docs/archify/en/*.json docs/archify/docs/*.json; do
+        slug="${src#docs/archify/}"
+        printf '%s\t%s\n' "${slug%.json}" "$(cat "$src" docs/archify/picasso.css scripts/figure.sh | sha256sum | cut -c1-16)-$(cut -c1-7 <<<"{{ archify_rev }}")"
+    done
+
+# Every figure has its PNG and an English twin that is the same drawing, each README shows its own
+# language's PNG, every docs figure has its PNG, no doc has a mermaid block, and no source changed
+# since the PNGs were drawn. No Chrome needed: CI runs it.
+figure-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    shape='{d: .diagram_type, l: [.lanes[].id], m: .mainPath, n: [.nodes[] | del(.label, .sublabel, .tag)], e: [.edges[] | del(.label)]}'
+    for src in docs/archify/*.json; do
+        s="$(basename "$src" .json)"; en="docs/archify/en/$s.json"
+        test -s "docs/img/$s.png" || { echo "figure-check: no PNG for $src; run just figure" >&2; exit 1; }
+        test -s "$en" && test -s "docs/img/en/$s.png" || { echo "figure-check: no English twin $en or its PNG; write it and run just figure" >&2; exit 1; }
+        test "$(jq -r .meta.locale "$en")" = en || { echo "figure-check: $en is not meta.locale en" >&2; exit 1; }
+        cmp -s <(jq -S "$shape" "$src") <(jq -S "$shape" "$en") || { echo "figure-check: $en is not the same drawing as $src (lanes, nodes or edges differ)" >&2; exit 1; }
+        ! grep -qF "docs/img/$s.png" README.en.md || { echo "figure-check: README.en.md embeds the pt-BR docs/img/$s.png; use docs/img/en/$s.png" >&2; exit 1; }
+        ! grep -qF "docs/img/en/$s.png" README.md || { echo "figure-check: README.md embeds the English docs/img/en/$s.png; use docs/img/$s.png" >&2; exit 1; }
+        ! grep -qF "docs/img/$s.png" README.md || grep -qF "docs/img/en/$s.png" README.en.md || { echo "figure-check: README.md shows $s but README.en.md does not show docs/img/en/$s.png" >&2; exit 1; }
+    done
+    for en in docs/archify/en/*.json; do test -s "docs/archify/$(basename "$en")" || { echo "figure-check: $en has no pt-BR source" >&2; exit 1; }; done
+    for src in docs/archify/docs/*.json; do
+        test -s "docs/img/archify/$(basename "$src" .json).png" || { echo "figure-check: no PNG for $src; run just figure" >&2; exit 1; }
+    done
+    # The umbrella draws its diagrams in Archify (MIP-0068); Kroki's mermaid stays for the submodules' pages.
+    ! git grep -n '^```mermaid' -- '*.md' || { echo "figure-check: a mermaid block above; draw it as docs/archify/docs/<slug>.json" >&2; exit 1; }
+    just _figure-lock | cmp -s - docs/archify/figures.lock || { echo "figure-check: a source, the look or the Archify pin changed since the PNG; run just figure" >&2; exit 1; }
+    echo "figure-check: ok"
+
+# The graphify figure, docs/img/graphify.svg: the code graph of the last main build (the
+# routing-bundle branch's graph.json, MIP-0084) drawn by marola-tools graph-svg.
+graphify-figure:
+    git fetch -q --depth 1 origin routing-bundle
+    git show FETCH_HEAD:graph.json > .tmp/graph.json
+    scripts/marola-tools graph-svg --graph .tmp/graph.json --out docs/img/graphify.svg
+
+# Write each README's reading-time badge (marola-tools reading-time); quality-other checks it.
+reading-time:
+    scripts/marola-tools reading-time --write
 
 # ---------------------------------------------------------------------
 # Usage and billing
@@ -324,7 +376,7 @@ worktree dir=".tmp/wt-main":
 worktree-prune:
     git worktree prune -v
 
-# Claude Code in the jail — labs/agentic's jail-run (h0ffmann/nix-config). MAROLA_JAIL_CLIPBOARD*
+# Claude Code in the jail — labs/agentic's jail-run (h0ffmann/picasso). MAROLA_JAIL_CLIPBOARD*
 # still work for one release; the lab's names are JAIL_CLIPBOARD / JAIL_CLIPBOARD_PASTE.
 jail-claude *args:
     JAIL_CLIPBOARD="${JAIL_CLIPBOARD:-${MAROLA_JAIL_CLIPBOARD:-0}}" JAIL_CLIPBOARD_PASTE="${JAIL_CLIPBOARD_PASTE:-${MAROLA_JAIL_CLIPBOARD_PASTE:-0}}" jail-run claude {{ args }}
@@ -345,16 +397,6 @@ jail-opencode *args:
 # jail-opencode, short alias.
 jo *args: (jail-opencode args)
 
-# GitHub's spec-kit (github.com/github/spec-kit) — a spec-driven-development CLI, `specify`.
-specify *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    args=({{ args }})
-    if [ "${args[0]:-}" = "init" ] && ! printf '%s\n' "${args[@]:-}" | grep -qx -- --integration; then
-        args+=(--integration claude)
-    fi
-    uvx --from specify-cli specify "${args[@]:-}"
-
 # What OpenCode sessions consumed, priced at list rates. MIP-0013.
 opencode-cost *args="session":
     npx --yes ccusage@latest opencode {{ args }}
@@ -374,12 +416,12 @@ releases:
 
 # Validate .zenodo.json and regenerate CITATION.cff from it; `--check` only checks.
 citation *args:
-    python3 scripts/citation.py {{ args }}
+    scripts/marola-tools citation {{ args }}
 
 # Add a person to the citation metadata: a contributor on Zenodo, or with --author a cited author.
 #   just contributor-add "Family, Given" --orcid 0000-0000-0000-0000 --affiliation "…" --type Researcher
 contributor-add name *args:
-    python3 scripts/citation.py add --name "{{ name }}" {{ args }}
+    scripts/marola-tools citation add --name "{{ name }}" {{ args }}
 
 # Fetch origin and fast-forward local `main` when it is checked out and clean.
 sync-main:

@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Milestones, MIPs, issues and sub-issues, and how they relate",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "issue-flow-objects.html"
+  },
+  "components": [
+    {
+      "id": "ms",
+      "type": "database",
+      "label": "Milestone",
+      "sublabel": "a delivery date",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "mip",
+      "type": "database",
+      "label": "MIP",
+      "sublabel": "a design decision",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "is",
+      "type": "database",
+      "label": "Issue",
+      "sublabel": "one PR",
+      "pos": [
+        400,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "sub",
+      "type": "database",
+      "label": "Sub-issue",
+      "sublabel": "only when it splits",
+      "pos": [
+        760,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "ms",
+      "to": "mip",
+      "label": "n:m",
+      "labelAt": [
+        135,
+        138
+      ]
+    },
+    {
+      "id": "e2",
+      "from": "ms",
+      "to": "is",
+      "label": "spans 0..n"
+    },
+    {
+      "id": "e3",
+      "from": "is",
+      "to": "sub",
+      "label": "splits into 0..n"
+    }
+  ]
+}

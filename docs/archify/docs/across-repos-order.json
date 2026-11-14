@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Producer first, consumers next, the umbrella's pointer last",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "across-repos-order.html"
+  },
+  "components": [
+    {
+      "id": "p",
+      "type": "backend",
+      "label": "producer PR",
+      "sublabel": "merges, releases",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "c",
+      "type": "backend",
+      "label": "each consumer PR",
+      "sublabel": "bumps its pin",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "s",
+      "type": "backend",
+      "label": "pointer-sync PR",
+      "sublabel": "moves the gitlinks",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "p",
+      "to": "c"
+    },
+    {
+      "id": "e2",
+      "from": "c",
+      "to": "s"
+    }
+  ]
+}

@@ -74,7 +74,7 @@ if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
   echo "release: tag $tag already exists" >&2
   exit 1
 fi
-python3 scripts/citation.py --check
+scripts/marola-tools citation --check
 guard HEAD
 
 prev="$(git tag -l 'v*' --sort=-v:refname | head -1)"

@@ -1,0 +1,98 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Restacking task 2 onto main after task 1 squash-merges",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "dev-flow-restack.html"
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "main"
+    },
+    {
+      "id": "b1",
+      "label": "mip-nnnn/1"
+    },
+    {
+      "id": "b2",
+      "label": "mip-nnnn/2"
+    },
+    {
+      "id": "b3",
+      "label": "mip-nnnn/2-restacked"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "m0",
+      "lane": "main",
+      "col": 0,
+      "type": "database",
+      "label": "main",
+      "sublabel": "base commit"
+    },
+    {
+      "id": "t1",
+      "lane": "b1",
+      "col": 1,
+      "type": "backend",
+      "label": "task 1"
+    },
+    {
+      "id": "t2",
+      "lane": "b2",
+      "col": 2,
+      "type": "backend",
+      "label": "task 2"
+    },
+    {
+      "id": "sq",
+      "lane": "main",
+      "col": 3,
+      "type": "database",
+      "label": "squash #1",
+      "sublabel": "task 1 lands"
+    },
+    {
+      "id": "t2r",
+      "lane": "b3",
+      "col": 4,
+      "type": "frontend",
+      "label": "task 2",
+      "sublabel": "replayed on main"
+    }
+  ],
+  "edges": [
+    {
+      "from": "m0",
+      "to": "t1",
+      "label": "branch"
+    },
+    {
+      "from": "t1",
+      "to": "t2",
+      "label": "branch"
+    },
+    {
+      "from": "m0",
+      "to": "sq"
+    },
+    {
+      "from": "sq",
+      "to": "t2r",
+      "label": "branch"
+    },
+    {
+      "from": "t2",
+      "to": "t2r",
+      "label": "rebase --onto",
+      "variant": "dashed"
+    }
+  ]
+}

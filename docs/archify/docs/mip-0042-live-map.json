@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sequence of the live half of the map in the browser",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0042-live-map.html",
+    "column_fit": "spread",
+    "viewBox": [
+      920,
+      575
+    ]
+  },
+  "participants": [
+    {
+      "id": "Browser",
+      "type": "backend",
+      "label": "site/v2/app.js"
+    },
+    {
+      "id": "Data",
+      "type": "backend",
+      "label": "data/area/latest.json"
+    },
+    {
+      "id": "Meteo",
+      "type": "backend",
+      "label": "Open-Meteo"
+    }
+  ],
+  "segments": [
+    {
+      "from": 283,
+      "to": 353,
+      "label": "if live fetch succeeds"
+    },
+    {
+      "from": 393,
+      "to": 463,
+      "label": "else live fetch fails"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "Browser",
+      "to": "Data",
+      "y": 175,
+      "label": "fetch shared board"
+    },
+    {
+      "id": "m2",
+      "from": "Data",
+      "to": "Browser",
+      "y": 215,
+      "label": "geography, water quality, tides",
+      "variant": "return"
+    },
+    {
+      "id": "m3",
+      "from": "Browser",
+      "to": "Meteo",
+      "y": 255,
+      "label": "batched hourly request (one call per area)"
+    },
+    {
+      "id": "m4",
+      "from": "Meteo",
+      "to": "Browser",
+      "y": 321,
+      "label": "hourly conditions",
+      "variant": "return",
+      "note": "score beach/hour (Swimability, cross-compiled); render live markers, tooltips, cards"
+    },
+    {
+      "id": "m5",
+      "from": "Meteo",
+      "to": "Browser",
+      "y": 431,
+      "label": "error or timeout",
+      "variant": "return",
+      "note": "render v1's board instead; showing the static board from HH:MM"
+    }
+  ]
+}

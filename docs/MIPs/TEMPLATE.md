@@ -76,6 +76,11 @@ Each question carries the author's answer for now, so nothing is left open by om
 
 - <question> **Default:** <what this MIP does until someone decides otherwise, and who decides>.
 
+A question once decided keeps its bullet and gains `**Decided YYYY-MM-DD:** <the answer>`; a decision
+made anywhere else in the MIP is marked the same way. `docs-lint` fails a §11 bullet that says
+decided without the marker, and `DECISIONS.md` and `route why` index every marked line (MIP-0085 §5.6).
+After editing a MIP, run `just decisions`: `quality-other` fails on a stale `DECISIONS.md`.
+
 ## Appendix
 ### Checked live
 One line per external fact fetched: URL, date, what it returned.

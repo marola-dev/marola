@@ -4,27 +4,33 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    # h0ffmann/nix-config labs, one nixpkgs closure via `follows`; bump with `nix flake update lint`.
+    # h0ffmann/picasso labs, one nixpkgs closure via `follows`; bump with `nix flake update lint agentic`.
     lint = {
-      url = "github:h0ffmann/nix-config?dir=labs/lint";
+      url = "github:h0ffmann/picasso?dir=labs/lint";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     agentic = {
-      url = "github:h0ffmann/nix-config/labs/agentic?dir=labs/agentic";
+      url = "github:h0ffmann/picasso/labs/agentic?dir=labs/agentic";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.ai-jail.follows = "ai-jail";
+    };
+    # Pinned to a release here, because labs/agentic tracks ai-jail's default branch.
+    ai-jail = {
+      url = "github:akitaonrails/ai-jail/v3.3.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # The shared dev-flow harness (MIP-0070 §5.1): stack, uprd, issues, trailer-fill, … on PATH, the
     # git hooks and the just module under .devkit. Bumped by hand, together with every `@v…` and
     # `devkit-ref:` in .github/workflows/ (dependabot ignores marola-devkit for that reason).
     marola-devkit = {
-      url = "github:marola-dev/marola-devkit/v0.11.1";
+      url = "github:marola-dev/marola-devkit/v0.20.4";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.lint.follows = "lint";
       inputs.agentic.follows = "agentic";
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, lint, agentic, marola-devkit }:
+  outputs = { self, nixpkgs, flake-utils, lint, agentic, marola-devkit, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -35,9 +41,11 @@
         projectTools = [
           pkgs.just
 
-          (pkgs.python3.withPackages (ps: with ps; [ pip ]))
-          # `uvx` runs GitHub's spec-kit ephemerally (`just specify`); spec-kit is PyPI-only.
-          pkgs.uv
+          # tools/ (marola-tools): the umbrella's own tooling is Rust, never Python (AGENTS.md).
+          pkgs.cargo
+          pkgs.rustc
+          pkgs.rustfmt
+          pkgs.clippy
 
           # `just context-mips`: repomix packs docs for a browser session, wl-copy/xclip copy them.
           pkgs.repomix

@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The contracts between repos: which repo hands which artifact to which",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "repos-contracts.html"
+  },
+  "components": [
+    {
+      "id": "devkit",
+      "type": "backend",
+      "label": "marola-devkit",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "every",
+      "type": "backend",
+      "label": "every repo",
+      "pos": [
+        360,
+        40
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "skills",
+      "type": "backend",
+      "label": "marola-skills",
+      "pos": [
+        700,
+        0
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "agents",
+      "type": "backend",
+      "label": "marola-agents",
+      "pos": [
+        700,
+        100
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "corpus",
+      "type": "backend",
+      "label": "marola-corpus",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "backend",
+      "label": "marola-app",
+      "pos": [
+        360,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "oods",
+      "type": "backend",
+      "label": "marola-oods",
+      "pos": [
+        720,
+        260
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "site",
+      "type": "backend",
+      "label": "marola-site",
+      "pos": [
+        1040,
+        480
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ml",
+      "type": "backend",
+      "label": "marola-ml",
+      "pos": [
+        360,
+        560
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "umbrella",
+      "type": "backend",
+      "label": "marola umbrella",
+      "pos": [
+        720,
+        560
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "devkit",
+      "to": "every",
+      "label": "tag",
+      "variant": "dashed"
+    },
+    {
+      "id": "e2",
+      "from": "every",
+      "to": "skills",
+      "label": "skills, read daily",
+      "variant": "dashed"
+    },
+    {
+      "id": "e3",
+      "from": "every",
+      "to": "agents",
+      "label": "agents, indexed",
+      "variant": "dashed"
+    },
+    {
+      "id": "e4",
+      "from": "corpus",
+      "to": "app",
+      "label": "tarball"
+    },
+    {
+      "id": "e5",
+      "from": "corpus",
+      "to": "ml",
+      "label": "tarball"
+    },
+    {
+      "id": "e6",
+      "from": "app",
+      "to": "ml",
+      "label": "image, resources tarball",
+      "labelAt": [
+        441,
+        338
+      ]
+    },
+    {
+      "id": "e7",
+      "from": "ml",
+      "to": "app",
+      "label": "compiled-prompt PR",
+      "fromSide": "left",
+      "toSide": "left"
+    },
+    {
+      "id": "e8",
+      "from": "app",
+      "to": "oods",
+      "label": "image"
+    },
+    {
+      "id": "e9",
+      "from": "app",
+      "to": "oods",
+      "label": "ingest commits (planned)",
+      "variant": "dashed"
+    },
+    {
+      "id": "e10",
+      "from": "oods",
+      "to": "app",
+      "label": "export tag (planned)",
+      "variant": "dashed"
+    },
+    {
+      "id": "e11",
+      "from": "app",
+      "to": "site",
+      "label": "image; coverage, smoke",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "e12",
+      "from": "app",
+      "to": "umbrella",
+      "label": "api-docs branch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e13",
+      "from": "ml",
+      "to": "umbrella",
+      "label": "api-docs branch"
+    },
+    {
+      "id": "e14",
+      "from": "umbrella",
+      "to": "site",
+      "label": "stats"
+    }
+  ]
+}

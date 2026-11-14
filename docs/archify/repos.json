@@ -1,0 +1,162 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Os repositórios do marola e o que um entrega ao outro",
+    "locale": "pt-BR",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "repos.html"
+  },
+  "lanes": [
+    {
+      "id": "produto",
+      "label": "Produto"
+    },
+    {
+      "id": "apoio",
+      "label": "Modelos, dados e ferramentas"
+    },
+    {
+      "id": "guarda",
+      "label": "Guarda-chuva"
+    }
+  ],
+  "mainPath": [
+    "corpus",
+    "app",
+    "site",
+    "mapa"
+  ],
+  "nodes": [
+    {
+      "id": "corpus",
+      "lane": "produto",
+      "col": 0,
+      "type": "database",
+      "label": "marola-corpus",
+      "sublabel": "conhecimento com fontes",
+      "width": 160
+    },
+    {
+      "id": "app",
+      "lane": "produto",
+      "col": 1,
+      "type": "backend",
+      "label": "marola-app",
+      "sublabel": "Scala 3: pipeline, CLI, MCP",
+      "width": 160
+    },
+    {
+      "id": "site",
+      "lane": "produto",
+      "col": 2,
+      "type": "frontend",
+      "label": "marola-site",
+      "sublabel": "o mapa das praias",
+      "width": 160
+    },
+    {
+      "id": "mapa",
+      "lane": "produto",
+      "col": 3,
+      "type": "external",
+      "label": "marola.dev",
+      "sublabel": "quem vai à praia",
+      "width": 160
+    },
+    {
+      "id": "devkit",
+      "lane": "apoio",
+      "col": 0,
+      "type": "backend",
+      "label": "marola-devkit",
+      "sublabel": "harness, hooks, workflows",
+      "width": 160
+    },
+    {
+      "id": "ml",
+      "lane": "apoio",
+      "col": 1,
+      "type": "backend",
+      "label": "marola-ml",
+      "sublabel": "prompts e marola-sea",
+      "width": 160
+    },
+    {
+      "id": "oods",
+      "lane": "apoio",
+      "col": 2,
+      "type": "database",
+      "label": "marola-oods",
+      "sublabel": "dados abertos do oceano",
+      "width": 160
+    },
+    {
+      "id": "umbrella",
+      "lane": "guarda",
+      "col": 1,
+      "type": "backend",
+      "label": "marola",
+      "sublabel": "docs, MIPs, marola-tools (Rust)",
+      "width": 160
+    },
+    {
+      "id": "docs",
+      "lane": "guarda",
+      "col": 3,
+      "type": "external",
+      "label": "docs.marola.dev",
+      "sublabel": "quem lê e contribui",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "corpus",
+      "to": "app",
+      "label": "tarball"
+    },
+    {
+      "id": "e2",
+      "from": "app",
+      "to": "site",
+      "label": "imagem"
+    },
+    {
+      "id": "e3",
+      "from": "site",
+      "to": "mapa"
+    },
+    {
+      "id": "e4",
+      "from": "corpus",
+      "to": "ml",
+      "label": "tarball",
+      "role": "branch"
+    },
+    {
+      "id": "e5",
+      "from": "ml",
+      "to": "app",
+      "label": "prompt compilado",
+      "role": "branch"
+    },
+    {
+      "id": "e7",
+      "from": "devkit",
+      "to": "umbrella",
+      "label": "tag",
+      "role": "branch"
+    },
+    {
+      "id": "e8",
+      "from": "umbrella",
+      "to": "docs",
+      "label": "mkdocs"
+    }
+  ]
+}

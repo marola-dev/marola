@@ -1,15 +1,6 @@
 # Development flow
 
-```mermaid
-flowchart TD
-  issue([Issue]) --> mip["MIP (Draft)"]
-  mip --> acceptance[acceptance]
-  acceptance --> tasks["task list"]
-  tasks --> prs["stacked PRs<br/>(one per task, verified, costed)"]
-  prs --> review["review, when asked"]
-  review --> merge["merge bottom-up, restack"]
-  merge --> finish["finish<br/>(MIP → Implemented)"]
-```
+![The development flow, from an idea to a merged PR](../img/archify/dev-flow.png)
 
 This page is the one place the whole loop is written down, and it holds in every repo. The pieces
 live in the `/marola-devkit:mip` and `/marola-devkit:mip-tasks` skills, `AGENTS.md` (the hard
@@ -78,18 +69,7 @@ status to `Accepted` and links the tasks file.
 
 The status row's own lifecycle:
 
-```mermaid
-stateDiagram-v2
-  state "Superseded by MIP-NNNN" as Superseded
-  [*] --> Draft: opened as its own PR
-  Draft --> Accepted: acceptance decision
-  Draft --> Rejected: acceptance decision
-  Draft --> Superseded: acceptance decision
-  Accepted --> Implemented: last merge
-  Rejected --> [*]
-  Superseded --> [*]
-  Implemented --> [*]
-```
+![MIP status, from Draft to Implemented, Rejected or Superseded](../img/archify/dev-flow-mip-status.png)
 
 ## 3. The task list
 
@@ -125,19 +105,7 @@ just pr                                            # fills a missing Tested: and
 
 The git history this produces — two stacked tasks, squash-merged bottom-up, then restacked:
 
-```mermaid
-%%{init: {"themeVariables": {"git0": "#1ac5da", "git1": "#3ecf6e", "git2": "#f0a030", "git3": "#c678dd", "commitLabelColor": "#ffffff", "commitLabelBackground": "#082f45"}}}%%
-gitGraph
-  commit id: "main"
-  branch mip-nnnn/1
-  commit id: "task 1"
-  branch mip-nnnn/2
-  commit id: "task 2"
-  checkout main
-  commit id: "squash #1"
-  branch mip-nnnn/2-restacked
-  cherry-pick id: "task 2" tag: "restack (rebase --onto)"
-```
+![Restacking task 2 onto main after task 1 squash-merges](../img/archify/dev-flow-restack.png)
 
 `just pr --dry-run` prints every step (the lines `trailer-fill` would add, the body `uprd` would
 write) without pushing or touching `gh`. It refuses the same way the real run would (on `main`, or a
@@ -261,6 +229,20 @@ script with the branch left mid-cherry-pick in that worktree and prints the exac
 stack merge <stack#> --squash` merges it bottom-up in one CI run instead of one-per-bump, and `just
 deps-stack clean` deletes the chain branches (and the worktree) once every stacked PR shows MERGED.
 
+**Green pip updates merge themselves.** The umbrella's `deps-merge.yml` runs daily at 07:15 UTC
+and squash-merges, as marola-merge-bot, each Dependabot PR in the repos its `REPOS:` list names
+(marola-ml today) that changes only Python manifests, moves every version by a patch or minor,
+has every check green and carries no `hold` label. The full rules are `deps-merge --unattended`'s
+([devkit tools](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_tools/#pull-requests-and-stacks)).
+marola-ml's Dependabot proposes a release only 7 days after it is published (`cooldown`), so a
+hijacked release that is yanked within that week never reaches `main`. A person still merges the
+rest, with `just deps-merge` or `just deps-stack` as above: GitHub Actions bumps (marola-ml's
+grouped PR too, whenever it also bumps an action); a major, a 0.x minor included; anything red or
+held. The job leaves each refused PR's reason in its run log, not on the PR. Actions stay manual
+on purpose: the job's token has no Workflows permission, so GitHub refuses any merge through it
+that touches `.github/workflows/`, and a leaked key cannot change a workflow. The job's identity and how
+to pause it are in [CI/CD](CI-CD.md#the-maintainers-manual-settings).
+
 ### MIP draft PRs
 
 Drafts pile up the same way bumps do: one `docs/mip-NNNN-*` branch per proposal, each open for days,
@@ -310,3 +292,29 @@ v0.8.0 or later, not only the umbrella, where the graph spans every submodule. T
 `~/.cache/marola-graph/<repo>`, never into the checkout or a commit; rebuild it when `query` warns
 it is stale. Vendored or generated paths go in a repo-root `.graphifyignore`
 ([graph](https://docs.marola.dev/5-Repos/marola-devkit/4-reference_tools/#code-graph)).
+
+### Routing with no setup
+
+`python3 .claude/skills/routing/scripts/route.py` answers the same questions with no Nix and no
+graphify (MIP-0084): `query`, `explain`, `path`, `wiring`, and MIP-0085's `impact` (what a change
+would reach), `docs` and `code` (which docs name a piece of code, and which code a doc names), `why`
+(the MIPs' decisions) and `query --meaning` (code ranked by its names and comments). It reads the
+umbrella's `routing-bundle` branch, which `ci.yml` publishes from `main` on every push and daily;
+`route fetch` brings it into a clone that lacks it, and `route status` says how old it is. A local
+`just graph build` whose `HEAD` matches answers instead.
+
+[`docs/MIPs/DECISIONS.md`](../MIPs/DECISIONS.md) is the readable copy of what `route why` ranks.
+It is generated: after editing a MIP, run `just decisions`, or `quality-other` fails.
+
+Every session started in the umbrella runs `session-check.sh` from the same skill. It prints at most
+three lines: the bundle's age, the submodules not checked out, and, when the marola-devkit plugin is
+not installed, an instruction to ask you once whether to install it. Answering "Never" adds
+`"env": {"MAROLA_PLUGIN_OPTOUT": "1"}` to your user `settings.json`, which covers every repo and
+worktree on the machine.
+
+A claude.ai/code session needs nothing extra for `route`. For local reads of the submodules, give
+its environment this setup script:
+
+```bash
+git submodule update --init --depth 1
+```

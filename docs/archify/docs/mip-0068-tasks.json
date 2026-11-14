@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "MIP-0068 task order",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0068-tasks.html"
+  },
+  "components": [
+    {
+      "id": "t1",
+      "type": "backend",
+      "label": "1 build hardening",
+      "sublabel": "+ DIAGRAMS.md + rule",
+      "pos": [
+        40,
+        335
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "backend",
+      "label": "2 ASCII → rendered",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "backend",
+      "label": "3 ARCHITECTURE.md",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t4",
+      "type": "backend",
+      "label": "4 DEV-FLOW / ISSUE-FLOW / ROADMAP",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        234,
+        64
+      ]
+    },
+    {
+      "id": "t5",
+      "type": "backend",
+      "label": "5 MIP flows, schemas, DAGs",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t6",
+      "type": "backend",
+      "label": "6 MIP sequence diagrams",
+      "pos": [
+        300,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "t7",
+      "type": "backend",
+      "label": "7 Excalidraw companion",
+      "sublabel": "+ sketches",
+      "pos": [
+        300,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "t1",
+      "to": "t2"
+    },
+    {
+      "id": "e2",
+      "from": "t1",
+      "to": "t3"
+    },
+    {
+      "id": "e3",
+      "from": "t1",
+      "to": "t4"
+    },
+    {
+      "id": "e4",
+      "from": "t1",
+      "to": "t5"
+    },
+    {
+      "id": "e5",
+      "from": "t1",
+      "to": "t6"
+    },
+    {
+      "id": "e6",
+      "from": "t1",
+      "to": "t7"
+    }
+  ]
+}

@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "A política em duas camadas: quais braços rodam e qual previsão se publica",
+    "locale": "pt-BR",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "politica-duas-camadas.html"
+  },
+  "components": [
+    {
+      "id": "ctx",
+      "type": "backend",
+      "label": "Contexto x",
+      "sublabel": "ENSO, região, horizonte, regime, estação",
+      "pos": [
+        430,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "bwk",
+      "type": "backend",
+      "label": "Thompson sampling",
+      "sublabel": "contextual com orçamento",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "runs",
+      "type": "backend",
+      "label": "Rodadas deste ciclo",
+      "sublabel": "A1, A2, A3, A4, A5",
+      "pos": [
+        690,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "fetched",
+      "type": "backend",
+      "label": "Braços baixados A0",
+      "pos": [
+        690,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "pool",
+      "type": "backend",
+      "label": "Conjunto de previsões",
+      "pos": [
+        690,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "L1",
+      "type": "backend",
+      "label": "Camada 1: qual previsão se publica",
+      "sublabel": "pesos Hedge + portão de significância",
+      "pos": [
+        690,
+        610
+      ],
+      "size": [
+        240,
+        64
+      ]
+    },
+    {
+      "id": "pub",
+      "type": "backend",
+      "label": "Previsão publicada",
+      "pos": [
+        690,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "score",
+      "type": "backend",
+      "label": "Verificação",
+      "sublabel": "contra observações",
+      "pos": [
+        690,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "safety",
+      "type": "backend",
+      "label": "Regras determinísticas de segurança",
+      "sublabel": "veto de ressaca, índice de banho",
+      "pos": [
+        1000,
+        60
+      ],
+      "size": [
+        247,
+        64
+      ]
+    },
+    {
+      "id": "site",
+      "type": "backend",
+      "label": "marola.dev",
+      "pos": [
+        690,
+        830
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Camada 2: quais braços calculados rodam",
+      "wraps": [
+        "bwk"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "ctx",
+      "to": "bwk"
+    },
+    {
+      "id": "e2",
+      "from": "bwk",
+      "to": "runs"
+    },
+    {
+      "id": "e3",
+      "from": "fetched",
+      "to": "pool"
+    },
+    {
+      "id": "e4",
+      "from": "runs",
+      "to": "pool"
+    },
+    {
+      "id": "e5",
+      "from": "pool",
+      "to": "L1"
+    },
+    {
+      "id": "e6",
+      "from": "L1",
+      "to": "pub"
+    },
+    {
+      "id": "e7",
+      "from": "pool",
+      "to": "score"
+    },
+    {
+      "id": "e8",
+      "from": "score",
+      "to": "L1"
+    },
+    {
+      "id": "e9",
+      "from": "score",
+      "to": "bwk"
+    },
+    {
+      "id": "e10",
+      "from": "safety",
+      "to": "site"
+    },
+    {
+      "id": "e11",
+      "from": "pub",
+      "to": "site"
+    }
+  ]
+}

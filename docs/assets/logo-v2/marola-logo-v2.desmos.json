@@ -1,0 +1,289 @@
+{
+ "version": 11,
+ "randomSeed": "marola",
+ "graph": {
+  "viewport": {
+   "xmin": -12,
+   "xmax": 12,
+   "ymin": -12,
+   "ymax": 12
+  },
+  "showGrid": true,
+  "showXAxis": true,
+  "showYAxis": true,
+  "squareAxes": true
+ },
+ "expressions": {
+  "list": [
+   {
+    "type": "text",
+    "id": "1",
+    "text": "marola logo v2: tudo dentro do disco x^2+y^2 <= 100"
+   },
+   {
+    "type": "expression",
+    "id": "2",
+    "latex": "x^2+y^2\\le100",
+    "color": "#eafafd",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "3",
+    "latex": "(x-5.4)^2+(y-5.3)^2\\le2.2",
+    "color": "#b9f1f8",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "4",
+    "latex": "f_{1}(x)=-0.6+0.45\\sin(0.9x+0.4)+0.15\\sin(2.07x+0.68)",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "5",
+    "latex": "f_{2}(x)=-3+0.9\\sin(0.62x+2.2)+0.3\\sin(1.426x+3.74)",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "6",
+    "latex": "f_{3}(x)=-4.9+1\\sin(0.55x+4.1)+0.3333\\sin(1.265x+6.97)",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "7",
+    "latex": "f_{4}(x)=-7.2+0.8\\sin(0.7x+0.9)+0.2667\\sin(1.61x+1.53)",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "8",
+    "latex": "r_{o}(t)=6e^{-0.29t}",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "9",
+    "latex": "r_{i}(t)=r_{o}(t)\\left(1-0.5\\left(1-\\frac{t}{5.4978}\\right)^{0.7}\\right)",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "10",
+    "latex": "S(a,t)=\\left(-0.6+a\\cos(t-0.05),2.3+a\\sin(t-0.05)\\right)",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "11",
+    "latex": "U=\\left[0,0.005,...,1\\right]",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "12",
+    "latex": "v(u)=-0.9+6.3978u",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "13",
+    "latex": "P_{0}=(11,-4.2)",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "14",
+    "latex": "P_{1}=(6.5925,-1.5999)",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "15",
+    "latex": "Q(s)=(1-s)^2P_{0}+2s(1-s)P_{1}+s^2S\\left(r_{o}(0),0\\right)",
+    "hidden": true
+   },
+   {
+    "type": "expression",
+    "id": "16",
+    "latex": "\\operatorname{polygon}\\left(\\operatorname{join}\\left(Q(U),S\\left(r_{o}(5.4978U),5.4978U\\right),S\\left(r_{i}(v(1-U)),v(1-U)\\right),\\left[\\left(1.4118,-7\\right),\\left(11,-7\\right)\\right]\\right)\\right)",
+    "color": "#19ddf0",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "17",
+    "latex": "Q(t)\\left\\{0\\le t\\le1\\right\\}",
+    "color": "#ffffff",
+    "lineWidth": "6",
+    "lineOpacity": "1"
+   },
+   {
+    "type": "expression",
+    "id": "18",
+    "latex": "S\\left(r_{o}(t),t\\right)\\left\\{0\\le t\\le5.4978\\right\\}",
+    "color": "#ffffff",
+    "lineWidth": "6",
+    "lineOpacity": "1"
+   },
+   {
+    "type": "expression",
+    "id": "19",
+    "latex": "S\\left(r_{i}(t),t\\right)\\left\\{-0.9\\le t\\le5.4978\\right\\}",
+    "color": "#ffffff",
+    "lineWidth": "4",
+    "lineOpacity": "1"
+   },
+   {
+    "type": "expression",
+    "id": "20",
+    "latex": "y\\le f_{1}(x)\\left\\{x^2+y^2\\le100\\right\\}",
+    "color": "#1ac5da",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "21",
+    "latex": "y=f_{1}(x)\\left\\{x^2+f_{1}(x)^2\\le100\\right\\}",
+    "color": "#ffffff",
+    "lineWidth": "7",
+    "lineOpacity": "1"
+   },
+   {
+    "type": "expression",
+    "id": "22",
+    "latex": "(x-0.1411)^2+(y-6.5969)^2\\le0.04",
+    "color": "#19ddf0",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "23",
+    "latex": "(x+0.9533)^2+(y-6.7508)^2\\le0.0169",
+    "color": "#19ddf0",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "24",
+    "latex": "(x+1.8636)^2+(y-5.9986)^2\\le0.0576",
+    "color": "#19ddf0",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "25",
+    "latex": "(x+2.8552)^2+(y-5.7481)^2\\le0.0196",
+    "color": "#19ddf0",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "26",
+    "latex": "(x+3.1797)^2+(y-4.663)^2\\le0.0441",
+    "color": "#19ddf0",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "27",
+    "latex": "(x+3.8119)^2+(y-3.8184)^2\\le0.0144",
+    "color": "#19ddf0",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "28",
+    "latex": "(x+3.4982)^2+(y-2.7131)^2\\le0.0289",
+    "color": "#19ddf0",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "29",
+    "latex": "y\\le f_{2}(x)\\left\\{x^2+y^2\\le100\\right\\}",
+    "color": "#1badc5",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "30",
+    "latex": "y=f_{2}(x)\\left\\{x^2+f_{2}(x)^2\\le100\\right\\}",
+    "color": "#ffffff",
+    "lineWidth": "7",
+    "lineOpacity": "1"
+   },
+   {
+    "type": "expression",
+    "id": "31",
+    "latex": "y\\le f_{3}(x)\\left\\{x^2+y^2\\le100\\right\\}",
+    "color": "#057b9e",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "32",
+    "latex": "y=f_{3}(x)\\left\\{x^2+f_{3}(x)^2\\le100\\right\\}",
+    "color": "#ffffff",
+    "lineWidth": "7",
+    "lineOpacity": "1"
+   },
+   {
+    "type": "expression",
+    "id": "33",
+    "latex": "y\\le f_{4}(x)\\left\\{x^2+y^2\\le100\\right\\}",
+    "color": "#0b4261",
+    "fillOpacity": "1",
+    "lineOpacity": "0",
+    "lineWidth": "0"
+   },
+   {
+    "type": "expression",
+    "id": "34",
+    "latex": "y=f_{4}(x)\\left\\{x^2+f_{4}(x)^2\\le100\\right\\}",
+    "color": "#ffffff",
+    "lineWidth": "7",
+    "lineOpacity": "1"
+   },
+   {
+    "type": "expression",
+    "id": "35",
+    "latex": "\\left[(-1.15,2.25),(-0.45,1.55),(0.75,3.05)\\right]",
+    "color": "#0b4261",
+    "lineWidth": "13",
+    "lineOpacity": "1",
+    "lines": true,
+    "points": false
+   }
+  ]
+ }
+}

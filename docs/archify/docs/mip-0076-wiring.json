@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The wiring extractor and the generated block in REPOS.md",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0076-wiring.html"
+  },
+  "components": [
+    {
+      "id": "wf",
+      "type": "backend",
+      "label": "workflows, pin files, scripts (all repos)",
+      "pos": [
+        40,
+        115
+      ],
+      "size": [
+        287,
+        64
+      ]
+    },
+    {
+      "id": "w",
+      "type": "backend",
+      "label": "wiring.py",
+      "pos": [
+        397,
+        115
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "blk",
+      "type": "backend",
+      "label": "REPOS.md wiring block",
+      "pos": [
+        657,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "q",
+      "type": "backend",
+      "label": "quality-other: stale block, orphan dispatch, unread artifact",
+      "pos": [
+        657,
+        170
+      ],
+      "size": [
+        412,
+        64
+      ]
+    },
+    {
+      "id": "sk",
+      "type": "backend",
+      "label": "graph skill: cross-repo questions",
+      "pos": [
+        1139,
+        115
+      ],
+      "size": [
+        234,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "wf",
+      "to": "w"
+    },
+    {
+      "id": "e2",
+      "from": "w",
+      "to": "blk",
+      "label": "just wiring"
+    },
+    {
+      "id": "e3",
+      "from": "w",
+      "to": "q",
+      "label": "--check"
+    },
+    {
+      "id": "e4",
+      "from": "blk",
+      "to": "sk"
+    }
+  ]
+}

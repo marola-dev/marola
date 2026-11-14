@@ -51,3 +51,6 @@ __pycache__/
 
 # marola-devkit's pinned tree, linked by the flake's shellHook (MIP-0070)
 /.devkit
+
+# tools/ (marola-tools) build output
+/tools/target/

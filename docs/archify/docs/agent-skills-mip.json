@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "One MIP from start to finish with the superpowers skills, session by session",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "agent-skills-mip.html"
+  },
+  "components": [
+    {
+      "id": "a1",
+      "type": "backend",
+      "label": "/brainstorming",
+      "sublabel": "(until §1-§3 have answers)",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "a2",
+      "type": "backend",
+      "label": "/marola-devkit:mip: write",
+      "sublabel": "MIP-NNNN-*.md (writing-plans skipped)",
+      "pos": [
+        40,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "a3",
+      "type": "backend",
+      "label": "mip-tasks step 1:",
+      "sublabel": "MIP-NNNN.tasks.md",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "a4",
+      "type": "backend",
+      "label": "/clear",
+      "pos": [
+        40,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "b1",
+      "type": "backend",
+      "label": "/rename +",
+      "sublabel": "stack start",
+      "pos": [
+        40,
+        556
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "b2",
+      "type": "backend",
+      "label": "executing-plans",
+      "sublabel": "(task row = plan)",
+      "pos": [
+        40,
+        666
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "b3",
+      "type": "backend",
+      "label": "TDD ->",
+      "sublabel": "debugging -> verification",
+      "pos": [
+        40,
+        776
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "b4",
+      "type": "backend",
+      "label": "commit (Tested:) ->",
+      "sublabel": "stack pr",
+      "pos": [
+        40,
+        886
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "b5",
+      "type": "backend",
+      "label": "requesting-code-review",
+      "sublabel": "(self-checklist) -> /clear",
+      "pos": [
+        40,
+        996
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r1",
+      "type": "backend",
+      "label": "requesting-code-review:",
+      "sublabel": "reviewer subagent, bottom-up",
+      "pos": [
+        40,
+        1162
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "backend",
+      "label": "receiving-code-review:",
+      "sublabel": "verify -> fix -> commit -> push -> uprds",
+      "pos": [
+        40,
+        1272
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "m1",
+      "type": "backend",
+      "label": "stack restack",
+      "pos": [
+        40,
+        1438
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "m2",
+      "type": "backend",
+      "label": "finishing-a-",
+      "sublabel": "development-branch",
+      "pos": [
+        40,
+        1548
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Session A (plan, Fable)",
+      "wraps": [
+        "a1",
+        "a2",
+        "a3",
+        "a4"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Session B..N (execute, one per task, Sonnet)",
+      "wraps": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Review (on request)",
+      "wraps": [
+        "r1",
+        "r2"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "After each merge",
+      "wraps": [
+        "m1",
+        "m2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "a1",
+      "to": "a2"
+    },
+    {
+      "id": "e2",
+      "from": "a2",
+      "to": "a3"
+    },
+    {
+      "id": "e3",
+      "from": "a3",
+      "to": "a4"
+    },
+    {
+      "id": "e4",
+      "from": "b1",
+      "to": "b2"
+    },
+    {
+      "id": "e5",
+      "from": "b2",
+      "to": "b3"
+    },
+    {
+      "id": "e6",
+      "from": "b3",
+      "to": "b4"
+    },
+    {
+      "id": "e7",
+      "from": "b4",
+      "to": "b5"
+    },
+    {
+      "id": "e8",
+      "from": "r1",
+      "to": "r2"
+    },
+    {
+      "id": "e9",
+      "from": "m1",
+      "to": "m2"
+    },
+    {
+      "id": "e10",
+      "from": "a4",
+      "to": "b1"
+    },
+    {
+      "id": "e11",
+      "from": "b5",
+      "to": "r1"
+    },
+    {
+      "id": "e12",
+      "from": "r2",
+      "to": "m1"
+    }
+  ]
+}

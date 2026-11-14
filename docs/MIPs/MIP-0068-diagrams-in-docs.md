@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Implemented — PRs #510 (task 1), #514–#519 (tasks 2–7, unstacked, all off task 1), #520 (#511, the Mermaid font pin found in task 1's review); merged 2026-09-30. Tasks: [`MIP-0068.tasks.md`](./MIP-0068.tasks.md). All seven §5.3 groups drawn; task 7's three sketches kept |
+| **Status** | Implemented — PRs #510 (task 1), #514–#519 (tasks 2–7, unstacked, all off task 1), #520 (#511, the Mermaid font pin found in task 1's review); merged 2026-09-30. Tasks: [`MIP-0068.tasks.md`](./MIP-0068.tasks.md). All seven §5.3 groups drawn; task 7's three sketches kept. Since #922 (2026-10-26) the umbrella draws its flows, sequences, lifecycles and architectures in Archify (`DIAGRAMS.md`); Kroki keeps the other dialects, and mermaid only for the submodules' pages |
 | **Author** | Claude (Opus 5.5), with Bruno |
 | **Created** | 2026-09-29 |
 | **Phase** | 3 — docs only, on the mkdocs/Kroki build MIP-0064 already shipped; no Phase 1 or Phase 2 prerequisite, no cloud spend |
@@ -65,19 +65,7 @@ Issue → MIP (Draft) → acceptance → task list → stacked PRs → review �
 
 After, the same page opens with a rendered flowchart, and its stacking section carries:
 
-```mermaid
-%%{init: {"themeVariables": {"git0": "#1ac5da", "git1": "#3ecf6e", "git2": "#f0a030", "git3": "#c678dd", "commitLabelColor": "#ffffff", "commitLabelBackground": "#082f45"}}}%%
-gitGraph
-  commit id: "main"
-  branch mip-nnnn/1
-  commit id: "task 1"
-  branch mip-nnnn/2
-  commit id: "task 2"
-  checkout main
-  merge mip-nnnn/1 id: "squash #1"
-  checkout mip-nnnn/2
-  merge main id: "restack"
-```
+![A stack of task branches: task 1 squash-merges, then task 2 restacks onto main](../img/archify/mip-0068-stack.png)
 
 A contributor writing a new page or MIP finds one short section on which fence to use, and
 `3-Working-on-the-repo/DIAGRAMS.md` shows one rendered example of every dialect the build
@@ -237,15 +225,7 @@ with a diagram, rather than waiting for a later conversion pass.
 
 ### 5.5 Task order
 
-```mermaid
-flowchart LR
-  t1["1 build hardening<br/>+ DIAGRAMS.md + rule"] --> t2["2 ASCII → rendered"]
-  t1 --> t3["3 ARCHITECTURE.md"]
-  t1 --> t4["4 DEV-FLOW / ISSUE-FLOW / ROADMAP"]
-  t1 --> t5["5 MIP flows, schemas, DAGs"]
-  t1 --> t6["6 MIP sequence diagrams"]
-  t1 --> t7["7 Excalidraw companion<br/>+ sketches"]
-```
+![MIP-0068 task order](../img/archify/mip-0068-tasks.png)
 
 Nothing in 2–7 shares a file with another task, so after task 1 they can go in parallel.
 

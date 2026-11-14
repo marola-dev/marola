@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sequence of a user photo through the live-look checks",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0006-flow.html",
+    "column_fit": "spread",
+    "viewBox": [
+      1150,
+      599
+    ]
+  },
+  "participants": [
+    {
+      "id": "User",
+      "type": "external",
+      "label": "User"
+    },
+    {
+      "id": "Intake",
+      "type": "backend",
+      "label": "LookIntake"
+    },
+    {
+      "id": "Vision",
+      "type": "backend",
+      "label": "VisionClient"
+    },
+    {
+      "id": "Store",
+      "type": "backend",
+      "label": "LookStore"
+    },
+    {
+      "id": "Sighting",
+      "type": "backend",
+      "label": "SightingStore"
+    }
+  ],
+  "segments": [
+    {
+      "from": 429,
+      "to": 481,
+      "label": "if manOWarVisible or jellyfishVisible or (foam and waterColour == Brown)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "User",
+      "to": "Intake",
+      "y": 175,
+      "label": "sends photo",
+      "note": "rate limit (3 photos/chat/hour); size cap (5 MB); face check (§5.4)"
+    },
+    {
+      "id": "m2",
+      "from": "Intake",
+      "to": "Vision",
+      "y": 281,
+      "label": "observe(imageBytes)"
+    },
+    {
+      "id": "m3",
+      "from": "Vision",
+      "to": "Intake",
+      "y": 321,
+      "label": "Observation",
+      "variant": "return"
+    },
+    {
+      "id": "m4",
+      "from": "Intake",
+      "to": "Store",
+      "y": 361,
+      "label": "store Look (expiresAt = takenAt + 6h)"
+    },
+    {
+      "id": "m5",
+      "from": "Intake",
+      "to": "User",
+      "y": 401,
+      "label": "reply",
+      "variant": "return"
+    },
+    {
+      "id": "m6",
+      "from": "Intake",
+      "to": "Sighting",
+      "y": 467,
+      "label": "record",
+      "note": "board build (MIP-0005) later reads looks[] still within expiresAt"
+    }
+  ]
+}

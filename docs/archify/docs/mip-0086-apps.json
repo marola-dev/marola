@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Which GitHub App opens a PR and which one merges it",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0086-apps.html"
+  },
+  "components": [
+    {
+      "id": "J1",
+      "type": "backend",
+      "label": "pointer-sync, site-data,",
+      "sublabel": "compile-prompt, steward, notify, gemini",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "J2",
+      "type": "backend",
+      "label": "pointer-sync-merge,",
+      "sublabel": "deps-merge, bump-consumers, bump-merge",
+      "pos": [
+        40,
+        335
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "PR",
+      "type": "backend",
+      "label": "marola-pr-bot:",
+      "sublabel": "push a branch, open a PR",
+      "pos": [
+        356,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "MB",
+      "type": "backend",
+      "label": "marola-merge-bot:",
+      "sublabel": "merge through main-rule",
+      "pos": [
+        356,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "PRs",
+      "type": "database",
+      "label": "PRs in any repo",
+      "pos": [
+        616,
+        115
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "any repo's workflow",
+      "wraps": [
+        "J1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "marola / marola-devkit only",
+      "wraps": [
+        "J2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "J1",
+      "to": "PR",
+      "label": "PR_BOT_KEY"
+    },
+    {
+      "id": "e2",
+      "from": "J2",
+      "to": "MB",
+      "label": "MERGE_BOT_KEY"
+    },
+    {
+      "id": "e3",
+      "from": "PR",
+      "to": "PRs"
+    },
+    {
+      "id": "e4",
+      "from": "MB",
+      "to": "PRs"
+    }
+  ]
+}

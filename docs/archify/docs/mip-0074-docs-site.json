@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "The docs site: the umbrella's landing page and each repo's docs",
+    "locale": "en",
+    "quality_profile": "standard",
+    "legend": {
+      "mode": "hidden"
+    },
+    "output": "mip-0074-docs-site.html"
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "backend",
+      "label": "docs.marola.dev /",
+      "pos": [
+        40,
+        445
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "idx",
+      "type": "backend",
+      "label": "index = umbrella README",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "ph",
+      "type": "backend",
+      "label": "PHASES",
+      "pos": [
+        300,
+        170
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "u1",
+      "type": "backend",
+      "label": "1-Using-marola/",
+      "sublabel": "run, ask, chat/MCP, Docker, Telegram, limitations",
+      "pos": [
+        300,
+        280
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "u2",
+      "type": "backend",
+      "label": "2-Building-marola/",
+      "sublabel": "system architecture, repos, split",
+      "pos": [
+        300,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "u3",
+      "type": "backend",
+      "label": "3-Ways-of-working/",
+      "pos": [
+        300,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "u4",
+      "type": "backend",
+      "label": "4-Research-and-plans/",
+      "pos": [
+        300,
+        610
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "repos",
+      "type": "backend",
+      "label": "5-Repos/",
+      "pos": [
+        300,
+        720
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "mips",
+      "type": "backend",
+      "label": "6-MIPs/",
+      "sublabel": "(source stays docs/MIPs/)",
+      "pos": [
+        300,
+        830
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r1",
+      "type": "backend",
+      "label": "marola-app/ · marola-site/",
+      "sublabel": "marola-corpus/ · marola-ml/ · marola-oods/",
+      "pos": [
+        560,
+        390
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "backend",
+      "label": "marola-devkit/",
+      "sublabel": "(at flake.lock's commit)",
+      "pos": [
+        560,
+        500
+      ],
+      "size": [
+        190,
+        64
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "from": "root",
+      "to": "idx"
+    },
+    {
+      "id": "e2",
+      "from": "root",
+      "to": "ph"
+    },
+    {
+      "id": "e3",
+      "from": "root",
+      "to": "u1"
+    },
+    {
+      "id": "e4",
+      "from": "root",
+      "to": "u2"
+    },
+    {
+      "id": "e5",
+      "from": "root",
+      "to": "u3"
+    },
+    {
+      "id": "e6",
+      "from": "root",
+      "to": "u4"
+    },
+    {
+      "id": "e7",
+      "from": "root",
+      "to": "repos"
+    },
+    {
+      "id": "e8",
+      "from": "root",
+      "to": "mips"
+    },
+    {
+      "id": "e9",
+      "from": "repos",
+      "to": "r1"
+    },
+    {
+      "id": "e10",
+      "from": "repos",
+      "to": "r2"
+    }
+  ]
+}

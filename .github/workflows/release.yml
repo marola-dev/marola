@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
-      - run: python3 scripts/citation.py --check
+      - run: scripts/marola-tools citation --check
       - run: scripts/release.sh --guard "$GITHUB_REF_NAME"
       - env:
           GH_TOKEN: ${{ github.token }}

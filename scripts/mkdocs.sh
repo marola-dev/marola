@@ -68,6 +68,13 @@ stage_docs() {
   cp -R "$src/." "$dest/"
 }
 
+# #511: every top-level ```mermaid fence in the staged copy is pinned to a font Kroki actually
+# has, before the kroki plugin reads it, so it never measures label width in a fallback the
+# plugin's own styles injection cannot reach (_inject_mermaid ignores text.font-family).
+pin_mermaid_font() {
+  "$repo_root/scripts/marola-tools" mermaid-font "$1"
+}
+
 # strict does not cover this: a tree with no index.md builds green with no landing page, which
 # reaches docs.marola.dev as a 404.
 check_index() {
@@ -102,6 +109,7 @@ run() {
   "${compose[@]}" "${files[@]}" down >/dev/null 2>&1 || true
   rm -rf generated-docs
   stage_docs "$docs_src" docs
+  pin_mermaid_font docs
   "$rt" build --tag "$image" --rm .
 
   # -d then `logs -f`, not a foreground `up`: podman-compose does not enforce depends_on health
@@ -218,13 +226,9 @@ self_test() {
   ok "$(check_index "$tmp" && echo pass || echo fail)" "pass" "...and one with index.md passes"
   rm -rf "$tmp"
 
-  # #511: mkdocs/hooks/mermaid_font.py runs before the kroki plugin (event_priority) and pins
-  # every top-level ```mermaid fence to a font Kroki actually has, so it never measures label
-  # width in a fallback the plugin's own styles injection cannot reach (_inject_mermaid ignores
-  # text.font-family). Exercised with plain python3, outside the container the hook normally
-  # runs in — the hook module guards its `mkdocs.plugins` import for exactly this reason.
-  ok "$(grep -c '^ *hooks:' "$cfg")" "1" "mkdocs.yml registers the hooks: key"
-  ok "$(grep -c 'hooks/mermaid_font.py' "$cfg")" "1" "...pointing at the font-pin hook"
+  # #511: the staged copy is pinned before mkdocs sees it (pin_mermaid_font), so mkdocs.yml needs
+  # no hook — and a Python one would be the only Python left in the repo.
+  ok "$(grep -c '^ *hooks:' "$cfg")" "0" "mkdocs.yml registers no hooks: the font pin runs on the staged copy"
   tmp="$(mktemp -d)"
   cat >"$tmp/sample.md" <<'SAMPLE'
 # Sample
@@ -247,12 +251,8 @@ gitGraph
   commit
 ```
 SAMPLE
-  out="$(python3 -c "
-import sys
-sys.path.insert(0, '$repo_root/mkdocs/hooks')
-import mermaid_font
-print(mermaid_font.pin_mermaid_font(open('$tmp/sample.md').read()), end='')
-")"
+  pin_mermaid_font "$tmp" >/dev/null
+  out="$(cat "$tmp/sample.md")"
   ok "$(printf '%s' "$out" | grep -c fontFamily)" "2" \
      "a mermaid fence is given the pinned font (once per real fence, not the nested Source example)"
   ok "$(printf '%s' "$out" | grep -c '^```$')" "3" \
