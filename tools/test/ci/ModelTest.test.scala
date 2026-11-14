@@ -1,5 +1,7 @@
 package marola.tools.ci
 
+import marola.tools.shared.Conclusion
+
 class ModelTest extends munit.FunSuite:
 
   test("a conclusion counts as run only when the step executed"):

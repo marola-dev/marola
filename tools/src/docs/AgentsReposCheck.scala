@@ -1,7 +1,6 @@
 package marola.tools.docs
 
-import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{Cli, Invocation, Util}
 
 import mainargs.{arg, main, Leftover, ParserForMethods}
 
@@ -14,9 +13,10 @@ object AgentsReposCheck:
   def findings(file: String, text: String): Seq[String] =
     AgentsFinding.of(text).map(_.render(file))
 
-  /** 0 clean, 1 with findings (printed on stdout), 2 when the file is missing. */
-  def check(file: String): Int =
-    val path = os.Path(file, os.pwd)
+  /** 0 clean, 1 with findings (printed on stdout), 2 when the file is missing; `file` is how the
+    * command line named `path`.
+    */
+  def check(path: os.Path, file: String): Int =
     if !os.isFile(path) then
       System.err.println(s"agents_repos_check: $file not found")
       2
@@ -29,11 +29,14 @@ object AgentsReposCheck:
   def run(
       @arg(doc = "The file to check (default: the repo root's AGENTS.md)") file: Leftover[String]
   ): Int =
+    val invocation = Invocation.current()
     file.value.headOption match
       case Some(flag) if flag.startsWith("-") =>
         System.err.println(s"agents_repos_check: unknown argument '$flag' (try --help)")
         2
-      case Some(path) => check(path)
-      case None       => check((Util.repoRoot / "AGENTS.md").toString)
+      case Some(path) => check(invocation.path(path), path)
+      case None       =>
+        val path = invocation.repoRoot / AgentsFinding.File
+        check(path, path.toString)
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "agents-repos-check", args)

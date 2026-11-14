@@ -80,10 +80,14 @@ class DigestTest extends munit.FunSuite:
     store.init()
     assertEquals(store.cachedIds, Set.empty[String])
     val found = parseAtom(Atom).toOption.get.map(p => Hit(p.arxivId, p.toJson, Seq(sst)))
-    assertEquals(store.store(found), Right(2))
+    assertEquals(store.store(found, () => "T"), Right(2))
     assertEquals(store.cachedIds, Set("2609.03658", "2601.00001"))
     assertEquals(os.read.lines(root / ".tmp" / "arxiv_cache" / "index.jsonl").length, 2)
-    assertEquals(store.store(found), Right(0), "an already-cached id is skipped on refetch")
+    assertEquals(
+      store.store(found, () => "T"),
+      Right(0),
+      "an already-cached id is skipped on refetch"
+    )
 
     val repos = awesomeStore(root)
     repos.init()
@@ -92,7 +96,7 @@ class DigestTest extends munit.FunSuite:
     val hits = parseSearchResponse(fixture).toOption.get.map(r =>
       Hit(RepoCandidate.key(r.fullName), r.toJson, Seq(Query("mcp", "", 2)))
     )
-    assertEquals(repos.store(hits), Right(2))
+    assertEquals(repos.store(hits, () => "T"), Right(2))
     val index = os.read.lines(root / ".tmp" / "awesome_agentic_cache" / "index.jsonl")
     assert(index.head.contains("b/high"), "equal score: more stars first")
 
@@ -147,5 +151,8 @@ class DigestTest extends munit.FunSuite:
   test("ids and timestamps"):
     assertEquals(Paper.idFromUrl("http://arxiv.org/abs/2609.03658v12"), "2609.03658")
     assertEquals(Paper.idFromUrl("http://arxiv.org/abs/2609.03658"), "2609.03658")
-    assert(nowIso().endsWith("+00:00"))
-    assert(nowIso().matches("""\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}\+00:00"""))
+    val fixed = java.time.Clock
+      .fixed(java.time.Instant.parse("2026-09-06T01:02:03.000004Z"), java.time.ZoneOffset.UTC)
+    assertEquals(DigestConfig(os.pwd, 1, false, fixed).now(), "2026-09-06T01:02:03.000004+00:00")
+    val now = DigestConfig(os.pwd, 1, false, java.time.Clock.systemUTC()).now()
+    assert(now.matches("""\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}\+00:00"""))

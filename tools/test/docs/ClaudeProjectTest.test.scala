@@ -1,6 +1,6 @@
 package marola.tools.docs
 
-import marola.tools.shared.Util
+import marola.tools.shared.Invocation
 
 class ClaudeProjectTest extends munit.FunSuite:
   import ClaudeProject.*
@@ -51,4 +51,7 @@ class ClaudeProjectTest extends munit.FunSuite:
     )
 
   test("the committed file passes"):
-    assertEquals(check(os.read(Util.repoRoot / "CLAUDE_PROJECT.config.md")), Vector.empty)
+    assertEquals(
+      check(os.read(Invocation.current().repoRoot / "CLAUDE_PROJECT.config.md")),
+      Vector.empty
+    )

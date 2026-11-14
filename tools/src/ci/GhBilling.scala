@@ -1,7 +1,7 @@
 package marola.tools.ci
 
 import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{GitHubNames, Invocation, Util}
 
 import mainargs.{arg, main, Flag, ParserForMethods}
 
@@ -27,14 +27,12 @@ object GhBilling:
     * first; the first unindented or blank line ends the block, so only the active account is read.
     */
   def hostBlock(text: String, host: String): String =
-    val block = Vector.newBuilder[String]
-    var grab = false
-    for line <- text.split("\n", -1) do
-      if line == host then grab = true
-      else
-        if grab && !line.headOption.exists(isBlank) then grab = false
-        if grab then block += line
-    val lines = block.result()
+    val (lines, _) = text.split("\n", -1).foldLeft((Vector.empty[String], false)) {
+      case ((block, _), line) if line == host => (block, true)
+      case ((block, inBlock), line)           =>
+        val stillIn = inBlock && line.headOption.exists(isBlank)
+        (if stillIn then block :+ line else block, stillIn)
+    }
     if lines.nonEmpty then lines.mkString("\n") else text
 
   /** The scope list of the first "Token scopes:" line. */
@@ -218,6 +216,7 @@ run from the host. --from-file/--json-stdin/--dry-run need neither a gh login no
         "skip the local `gh auth status` scope check and call the API directly"
       ) noScopeCheck: Flag
   ): Int =
+    val invocation = Invocation.current()
     val today = java.time.LocalDate.now()
     val source =
       if dryRun.value then BillingSource.DryRun
@@ -233,8 +232,8 @@ run from the host. --from-file/--json-stdin/--dry-run need neither a gh login no
       ),
       source = source,
       noScopeCheck = noScopeCheck.value,
-      env = sys.env,
-      cwd = os.pwd
+      env = invocation.env,
+      cwd = invocation.cwd
     )
     val outcome = execute(config, realGh, () => String(System.in.readAllBytes(), "UTF-8"))
     print(outcome.out)

@@ -1,7 +1,7 @@
 package marola.tools.publishing
 
 import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{Invocation, Util}
 
 import mainargs.{arg, main, Flag, ParserForMethods}
 
@@ -148,7 +148,7 @@ object Citation:
   def cli(args: Seq[String]): Int =
     val (citationArgs, addArgs) = args.span(_ != "add")
     Cli.run(
-      ParserForMethods(Command(Config.in(Util.repoRoot), addArgs)),
+      ParserForMethods(Command(Config.in(Invocation.current().repoRoot), addArgs)),
       "citation",
       citationArgs
     )

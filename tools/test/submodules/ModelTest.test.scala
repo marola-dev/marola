@@ -1,5 +1,7 @@
 package marola.tools.submodules
 
+import marola.tools.shared.{Conclusion, RepoSlug, Sha, Submodule}
+
 class ModelTest extends munit.FunSuite:
   private val head = Sha("abcdef0123456789")
 
@@ -40,7 +42,7 @@ class ModelTest extends munit.FunSuite:
       Seq(true, true, true, false, false)
     )
     assertEquals(
-      Seq("success", "skipped", "neutral", "cancelled").map(c => Conclusion.parse(c).render),
+      Seq("success", "skipped", "neutral", "cancelled").map(c => Conclusion.parse(c).wire),
       Seq("success", "skipped", "neutral", "cancelled")
     )
     assertEquals(CheckStatus.parse("completed"), CheckStatus.Completed)

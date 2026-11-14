@@ -1,7 +1,7 @@
 package marola.tools.docs
 
 import marola.tools.shared.Cli
-import marola.tools.shared.Proc
+import marola.tools.shared.{Invocation, Jq, Proc}
 
 import mainargs.{arg, main, ParserForMethods}
 
@@ -23,6 +23,10 @@ object Figure:
     """<script>addEventListener("load",async()=>{await document.fonts.ready;const s=document.querySelector(".diagram-container svg"),m=s.getScreenCTM().inverse();let a=[1e9,1e9,-1e9,-1e9];for(const e of s.querySelectorAll("rect,text,path,line,polyline,polygon,circle,ellipse,image")){if(e.closest("defs")||getComputedStyle(e).visibility!=="visible")continue;const r=e.getBoundingClientRect();if(r.width<1&&r.height<1||r.width>=innerWidth*.98&&r.height>=innerHeight*.98)continue;const p=new DOMPoint(r.left,r.top).matrixTransform(m),q=new DOMPoint(r.right,r.bottom).matrixTransform(m);a=[Math.min(a[0],p.x),Math.min(a[1],p.y),Math.max(a[2],q.x),Math.max(a[3],q.y)]}document.title="BBOX "+a.map(Math.round).join(" ")})</script>"""
 
   val Pad = 24
+
+  /** picasso's look, put over Archify's page. */
+  val Look = "docs/archify/picasso.css"
+  private val NoUpdateCheck = "ARCHIFY_UPDATE_CHECK_DISABLED"
 
   def sizeStyle(width: String, height: String): String =
     s"<style>.diagram-container svg{width:${width}px!important;height:${height}px!important;left:0!important;top:0!important;margin:0!important;transform:none!important}</style>"
@@ -72,19 +76,14 @@ object Figure:
   def deliverReport(json: String): Option[DeliverReport] =
     def raw(value: ujson.Value) = value.strOpt.getOrElse(ujson.write(value, indent = 2))
     scala.util.Try(ujson.read(json)).toOption.map { result =>
-      val diagnostics = result.objOpt.flatMap(_.get("diagnostics")).toSeq.flatMap {
-        case ujson.Arr(items) => items.toSeq
-        case ujson.Obj(items) => items.values.toSeq
-        case _                => Nil
-      }
-      val messages = diagnostics.flatMap(_.objOpt).flatMap(_.get("message")).filter(truthy).map(raw)
-      DeliverReport(messages, raw(result.objOpt.flatMap(_.get("error")).getOrElse(ujson.Null)))
+      val diagnostics = Jq.items(Jq.field(result, "diagnostics"))
+      val messages =
+        diagnostics.flatMap(_.objOpt).flatMap(_.get("message")).filter(Jq.truthy).map(raw)
+      DeliverReport(messages, raw(Jq.field(result, "error")))
     }
 
   /** What deliver.json says went wrong: each diagnostic's message, or else its `error`. */
   def deliverErrors(json: String): Seq[String] = deliverReport(json).toSeq.flatMap(_.errors)
-
-  private def truthy(value: ujson.Value) = value != ujson.Null && value != ujson.False
 
   /** The source's `diagram_type`, empty when the source is not JSON. */
   def archifySource(json: String): ArchifySource =
@@ -129,7 +128,7 @@ object Figure:
 
     val source = archifySource(scala.util.Try(os.read(os.Path(src, cwd))).getOrElse(""))
     val deliver = Proc
-      .exact(env + ("ARCHIFY_UPDATE_CHECK_DISABLED" -> "1"))
+      .exact(env + (NoUpdateCheck -> "1"))
       .call(
         cwd,
         Seq(
@@ -138,27 +137,27 @@ object Figure:
           "deliver",
           source.diagramType,
           src,
-          s"$outRel/page.html",
+          s"$outRel/${FigureWork.Page}",
           "--quality",
           "standard",
           "--json"
         ),
-        stdout = out / "deliver.json"
+        stdout = out / FigureWork.Deliver
       )
     if deliver.exitCode != 0 then
-      val report = out / "deliver.json"
+      val report = out / FigureWork.Deliver
       if os.exists(report) then deliverErrors(os.read(report)).foreach(System.err.println)
       1
     else
-      val page = os.read(out / "page.html")
-      val css = Proc.chomp(os.read(cwd / "docs" / "archify" / "picasso.css"))
+      val page = os.read(out / FigureWork.Page)
+      val css = Proc.chomp(os.read(cwd / os.RelPath(Look)))
       viewBoxSize(page) match
         case None =>
-          System.err.println(s"figure: no <svg viewBox=\"0 0 W H\"> in $outRel/page.html")
+          System.err.println(s"figure: no <svg viewBox=\"0 0 W H\"> in $outRel/${FigureWork.Page}")
           1
         case Some(DrawingSize(w, h)) =>
           os.write(
-            out / "measure.html",
+            out / FigureWork.Measure,
             frame(page, css, s"0 0 $w $h", sizeStyle(whole(w), whole(h)) + Measure)
           )
           val dom = shoot(
@@ -166,7 +165,7 @@ object Figure:
             whole(h),
             os.Pipe,
             "--dump-dom",
-            s"file://$cwd/$outRel/measure.html"
+            s"file://$cwd/$outRel/${FigureWork.Measure}"
           ).out
           bbox(dom) match
             case None      => 1
@@ -174,7 +173,7 @@ object Figure:
               val cropped = crop(box)
               val (width, height) = (cropped.width, cropped.height)
               os.write(
-                out / "frame.html",
+                out / FigureWork.Frame,
                 frame(page, css, cropped.viewBox, sizeStyle(s"$width", s"$height"))
               )
               val shot = shoot(
@@ -182,7 +181,7 @@ object Figure:
                 s"$height",
                 os.Inherit,
                 s"--screenshot=${realpath(os.Path(png, cwd))}",
-                s"file://$cwd/$outRel/frame.html"
+                s"file://$cwd/$outRel/${FigureWork.Frame}"
               )
               if shot.exitCode != 0 then shot.exitCode
               else
@@ -193,6 +192,8 @@ object Figure:
   def run(
       @arg(positional = true, doc = "the Archify source, docs/archify/<slug>.json") src: String,
       @arg(positional = true, doc = "the PNG to write") png: String
-  ): Int = draw(src, png, sys.env, os.pwd)
+  ): Int =
+    val invocation = Invocation.current()
+    draw(src, png, invocation.env, invocation.cwd)
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "figure", args)

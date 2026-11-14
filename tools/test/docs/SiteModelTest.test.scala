@@ -1,17 +1,12 @@
 package marola.tools.docs
 
+import marola.tools.shared.Sha
+
 class SiteModelTest extends munit.FunSuite:
   import SiteModel.*
 
   private val sha = "a" * 40
-  private def commit(hex: String) = CommitSha.parse(hex).fold(fail(_), identity)
-
-  test("CommitSha takes a full SHA-1 or SHA-256 name and nothing shorter or uppercase"):
-    assertEquals(CommitSha.parse(sha).map(_.hex), Right(sha))
-    assertEquals(CommitSha.parse("b" * 64).map(_.short), Right("bbbbbbb"))
-    assertEquals(CommitSha.parse("abc1234"), Left("not a full commit sha: abc1234"))
-    assert(CommitSha.parse("A" * 40).isLeft)
-    assert(CommitSha.parse("").isLeft)
+  private def commit(hex: String) = Sha.parse(hex).fold(fail(_), identity)
 
   test("a remote template replaces <repo>, an empty variable takes the default"):
     assertEquals(RemoteTemplate.MarolaDev.url("x"), "https://github.com/marola-dev/x")
@@ -36,13 +31,13 @@ class SiteModelTest extends munit.FunSuite:
     assertEquals(prepare.apiDocs.remote.url("r"), "/a/r")
     assert(!prepare.gitEnv.contains("GIT_DIR"))
     assertEquals(ApiDocsConfig.from(Map.empty).remote.url("r"), "https://github.com/marola-dev/r")
-    assertEquals(MkdocsConfig.from(Map.empty).runtimes, Vector("podman", "docker"))
+    assertEquals(MkdocsConfig.from(Map.empty, os.pwd).runtimes, Vector("podman", "docker"))
     assertEquals(
-      MkdocsConfig.from(Map("CONTAINER_RUNTIME" -> " docker ")).runtimes,
+      MkdocsConfig.from(Map("CONTAINER_RUNTIME" -> " docker "), os.pwd).runtimes,
       Vector("docker")
     )
-    assertEquals(MkdocsConfig.from(Map("DOCS_SRC" -> "")).docsSrc, None)
-    assertEquals(MkdocsConfig.from(Map("DOCS_SRC" -> ".tmp/d")).docsSrc, Some(".tmp/d"))
+    assertEquals(MkdocsConfig.from(Map("DOCS_SRC" -> ""), os.pwd).docsSrc, None)
+    assertEquals(MkdocsConfig.from(Map("DOCS_SRC" -> ".tmp/d"), os.pwd).docsSrc, Some(".tmp/d"))
 
   test("a failure that a tool already reported says nothing"):
     assertEquals(Failure.Reported.message, "")

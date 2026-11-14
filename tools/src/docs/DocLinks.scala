@@ -1,7 +1,7 @@
 package marola.tools.docs
 
 import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{GitHubNames, Invocation, Util}
 
 import java.nio.file.{AccessDeniedException, Files, InvalidPathException, NoSuchFileException}
 import java.text.Normalizer
@@ -162,7 +162,7 @@ object DocLinks:
 
   private class Rewriter(source: String, repo: os.Path, ctx: Context):
     private val ownGithub = regex(
-      "^" + Pattern.quote(s"$GitHub/${ctx.name}") +
+      "^" + Pattern.quote(s"${GitHubNames.OrgWeb}/${ctx.name}") +
         raw"/(?:blob|tree)/([^?#]+)(.*)\z"
     )
 
@@ -194,7 +194,7 @@ object DocLinks:
         case None       => fail(link, LinkError.MissingAt(sha))
         case Some(full) =>
           val kind = if Files.isDirectory(full) then "tree" else "blob"
-          Rewrite.clean(s"$GitHub/$name/$kind/$sha/$path$suffix")
+          Rewrite.clean(s"${GitHubNames.OrgWeb}/$name/$kind/$sha/$path$suffix")
 
     def target(link: String, image: Boolean): Rewrite =
       if link.isEmpty then Rewrite.clean("")
@@ -369,8 +369,9 @@ object DocLinks:
       @arg(doc = "Print FILE<TAB>link for every relative link outside code") links: Seq[String] =
         Nil
   ): Int =
+    val cwd = Invocation.current().cwd
     (repo, name, sha, out) match
-      case _ if links.nonEmpty                            => printLinks(links)
+      case _ if links.nonEmpty                            => printLinks(links, cwd)
       case (Some(repo), Some(name), Some(sha), Some(out)) =>
         val submodules = submodule.map { s =>
           s.indexOf('=') match
@@ -379,7 +380,7 @@ object DocLinks:
         }
         val ctx = Context(name, sha, umbrella.value, exclude, submodules.toMap)
         try
-          val errors = mount(os.Path(repo, os.pwd), os.Path(out, os.pwd), ctx)
+          val errors = mount(os.Path(repo, cwd), os.Path(out, cwd), ctx)
           errors.foreach(e => System.err.println(s"doc_links: $name: $e"))
           if errors.isEmpty then 0 else 1
         catch
@@ -393,11 +394,11 @@ object DocLinks:
         2
 
   /** Each file's relative links outside code; stops at the first file it cannot read. */
-  private def printLinks(files: Seq[String]): Int =
+  private def printLinks(files: Seq[String], cwd: os.Path): Int =
     val unreadable = files.iterator
       .map { file =>
         try
-          for link <- links(readUtf8(os.Path(file, os.pwd))) if firstMatch(Scheme, link).isEmpty do
+          for link <- links(readUtf8(os.Path(file, cwd))) if firstMatch(Scheme, link).isEmpty do
             println(s"$file\t$link")
           None
         catch case e: java.io.IOException => Some(s"doc_links: $file: ${ioMessage(e)}")

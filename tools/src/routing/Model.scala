@@ -1,6 +1,6 @@
 package marola.tools.routing
 
-import marola.tools.shared.Util
+import marola.tools.shared.{ReposDoc, Util}
 
 import java.math.{BigDecimal, RoundingMode}
 import scala.collection.immutable.SortedMap
@@ -64,11 +64,12 @@ object Bench:
   /** A line whose id is not a known question counts as a symbol query. */
   def tally(lines: Seq[BenchLine], questions: Seq[Question]): Bench =
     val kind = questions.map(q => q.id -> q.questionType).toMap
-    val byType = scala.collection.mutable.LinkedHashMap.empty[QuestionType, Score]
-    for line <- lines do
+    val scores = lines.foldLeft(Vector.empty[TypeScore]) { (scores, line) =>
       val t = kind.getOrElse(line.questionId, QuestionType.Symbol)
-      byType(t) = byType.getOrElse(t, Score(0, 0)).add(line.verdict)
-    val scores = byType.toSeq.map(TypeScore(_, _))
+      scores.indexWhere(_.questionType == t) match
+        case -1 => scores :+ TypeScore(t, Score(0, 0).add(line.verdict))
+        case i  => scores.updated(i, TypeScore(t, scores(i).score.add(line.verdict)))
+    }
     Bench(scores.map(_.score.right).sum, scores.map(_.score.total).sum, scores)
 
 /** The bench build.json last published, read loosely: a missing or malformed count is 0. */
@@ -170,8 +171,8 @@ object Digest:
       s"${text.substring(0, cut)}\n\n_Cut at the 25k-token cap: `route query` has the rest._"
 
 object WiringBlock:
-  val Start = "<!-- wiring:start -->"
-  val End = "<!-- wiring:end -->"
+  val Start = ReposDoc.WiringStart
+  val End = ReposDoc.WiringEnd
 
   /** What REPOS.md holds between the markers. */
   def extract(reposMd: String): String =
@@ -201,6 +202,8 @@ final case class Given(shown: String):
     if shown.isEmpty || shown.endsWith("/") then shown + name else s"$shown/$name"
   )
 
+/** One routing-bundle run: the paths as the command line gave them, and what they are relative to.
+  */
 final case class Args(
     graphDir: Given,
     out: Given,
@@ -208,8 +211,28 @@ final case class Args(
     questions: Given,
     previous: Option[Given],
     graphify: String,
-    reposMd: Given
-)
+    reposMd: Given,
+    cwd: os.Path
+):
+  def path(file: Given): os.Path = os.Path(file.shown, cwd)
+
+/** The files of the bundle, as `route` reads them. */
+object BundleFile:
+  val Graph = "graph.json"
+  val Wiring = "wiring.json"
+  val Build = "build.json"
+  val Digest = "routing-digest.md"
+  val Manifest = "manifest.json"
+
+  /** What must be there before anything is written, and what is copied as it is. */
+  val Checked = Seq(Graph, Wiring, Build)
+  val Copied = Seq(Graph, Wiring)
+
+  // MIP-0085's indexes: route says a missing one is missing, so each is published only when built.
+  val Indexes = Seq("doc_code.json", "decisions.json", "meaning.json")
+
+  /** The bench's questions, at the repo root. */
+  val Questions = "routing-bench.yaml"
 
 // ---- the graphify figure ----------------------------------------------------------------------
 
@@ -288,7 +311,8 @@ object Figure:
     Point(W / 2.0 + W * 0.3 * math.cos(a), H / 2.0 + H * 0.3 * math.sin(a))
 
   // Trap: keep every operation in its order. Floating point is not associative, so a reordered sum
-  // moves a coordinate's last digit, and the published SVG is compared byte for byte.
+  // moves a coordinate's last digit, and the published SVG is compared byte for byte. Arrays, not
+  // vectors: the n² pass runs 300 times, and the mutation never leaves this method.
   def layout(nodes: Vector[Node], links: Vector[Edge]): Vector[Point] =
     val n = nodes.length
     val k = math.sqrt(W * H / n.max(1).toDouble) * 0.6
@@ -358,48 +382,46 @@ object Figure:
     val ox = side + ((W - 2.0 * side) - (x1 - x0) * s) / 2.0
     def px(p: Point) = Point((p.x - x0) * s + ox, (p.y - y0) * s + top)
 
-    val out = StringBuilder()
-    def line(text: String): Unit =
-      out ++= text
-      out += '\n'
     val (w, h) = (plain(W), plain(H))
-    line(
-      s"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $w $h" width="$w" height="$h" font-family="Inter, Helvetica, Arial, sans-serif">"""
+    val head = Vector(
+      s"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 $w $h" width="$w" height="$h" font-family="Inter, Helvetica, Arial, sans-serif">""",
+      s"<title>${escapeText(caption)}</title>",
+      s"""<rect width="$w" height="$h" fill="#0F1117"/>""",
+      s"""<text x="${plain(
+          side
+        )}" y="34" fill="#E6E6E6" font-size="20" font-weight="600">${escapeText(caption)}</text>"""
     )
-    line(s"<title>${escapeText(caption)}</title>")
-    line(s"""<rect width="$w" height="$h" fill="#0F1117"/>""")
-    line(s"""<text x="${plain(
-        side
-      )}" y="34" fill="#E6E6E6" font-size="20" font-weight="600">${escapeText(caption)}</text>""")
-    line("""<g stroke="#8A94A6" stroke-opacity="0.32" stroke-width="0.7">""")
-    for Edge(a, b) <- links do
+    val lines = links.map { case Edge(a, b) =>
       val (pa, pb) = (px(pos(a)), px(pos(b)))
-      line(
-        s"""<line x1="${fixed1(pa.x)}" y1="${fixed1(pa.y)}" x2="${fixed1(pb.x)}" y2="${fixed1(
-            pb.y
-          )}"/>"""
-      )
-    line("</g>")
+      s"""<line x1="${fixed1(pa.x)}" y1="${fixed1(pa.y)}" x2="${fixed1(pb.x)}" y2="${fixed1(
+          pb.y
+        )}"/>"""
+    }
+    val edges =
+      """<g stroke="#8A94A6" stroke-opacity="0.32" stroke-width="0.7">""" +: lines :+ "</g>"
     // The groups go in the order of the repos' names, the legend in the palette's.
     val byRepo = nodes.indices.groupBy(i => nodes(i).repo).toSeq.sortBy(_._1.slug)
-    for (repo, members) <- byRepo do
-      line(s"""<g fill="${repo.colour}">""")
-      for i <- members do
+    val dots = byRepo.toVector.flatMap { (repo, members) =>
+      val circles = members.map { i =>
         val c = px(pos(i))
-        line(s"""<circle cx="${fixed1(c.x)}" cy="${fixed1(c.y)}" r="2.4"/>""")
-      line("</g>")
-    var legendX = side
+        s"""<circle cx="${fixed1(c.x)}" cy="${fixed1(c.y)}" r="2.4"/>"""
+      }
+      s"""<g fill="${repo.colour}">""" +: circles.toVector :+ "</g>"
+    }
     val legendY = H - side
     val counts = byRepo.toMap
-    for repo <- Repo.values; members <- counts.get(repo) do
-      val label = s"${repo.slug} ${members.length}"
-      line(
-        s"""<circle cx="${fixed1(legendX + 6.0)}" cy="${fixed1(
-            legendY - 5.0
-          )}" r="6" fill="${repo.colour}"/><text x="${fixed1(legendX + 18.0)}" y="${fixed1(
-            legendY
-          )}" fill="#C9CED6" font-size="15">$label</text>"""
-      )
-      legendX += 18.0 + label.getBytes("UTF-8").length.toDouble * 8.2 + 24.0
-    line("</svg>")
-    out.toString
+    val labels = Repo.values.toVector.flatMap { repo =>
+      counts.get(repo).map(members => repo -> s"${repo.slug} ${members.length}")
+    }
+    // Each entry starts where the one before it ended, the sum kept in its original order.
+    val starts = labels.scanLeft(side) { case (x, (_, label)) =>
+      x + (18.0 + label.getBytes("UTF-8").length.toDouble * 8.2 + 24.0)
+    }
+    val legend = labels.zip(starts).map { case ((repo, label), legendX) =>
+      s"""<circle cx="${fixed1(legendX + 6.0)}" cy="${fixed1(
+          legendY - 5.0
+        )}" r="6" fill="${repo.colour}"/><text x="${fixed1(legendX + 18.0)}" y="${fixed1(
+          legendY
+        )}" fill="#C9CED6" font-size="15">$label</text>"""
+    }
+    (head ++ edges ++ dots ++ legend :+ "</svg>").map(_ + "\n").mkString

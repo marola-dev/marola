@@ -1,7 +1,7 @@
 package marola.tools.docs
 
 import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{Invocation, Util}
 
 import mainargs.{arg, main, Flag, Leftover, ParserForMethods}
 import SiteModel.*
@@ -13,11 +13,13 @@ import SiteModel.*
 //     marola-tools strip-external-scripts out/scala out/python
 //     marola-tools strip-external-scripts --check mkdocs/generated-docs
 object StripScripts:
+  private val Html = "html"
+
   /** Each html file under `dir`, named as walking the path dirArg on the command line names it. */
-  private def htmlFiles(dirArg: String): Vector[(os.Path, String)] =
-    val dir = os.Path(dirArg, os.pwd)
+  private def htmlFiles(cwd: os.Path)(dirArg: String): Vector[(os.Path, String)] =
+    val dir = os.Path(dirArg, cwd)
     os.walk(dir)
-      .filter(p => os.isFile(p) && Util.hasExtension(p, "html"))
+      .filter(p => os.isFile(p) && Util.hasExtension(p, Html))
       .map(p => (p, java.nio.file.Path.of(dirArg).resolve(p.relativeTo(dir).toString).toString))
       .toVector
 
@@ -29,8 +31,8 @@ object StripScripts:
     * for `src="http` also matches this tool's own documentation once rendered (escaped text about
     * script tags, not a script tag).
     */
-  def check(dirs: Seq[String]): Int =
-    val offenders = dirs.filter(d => os.isDir(os.Path(d, os.pwd))).flatMap(htmlFiles).collect {
+  def check(dirs: Seq[String], cwd: os.Path): Int =
+    val offenders = dirs.filter(d => os.isDir(os.Path(d, cwd))).flatMap(htmlFiles(cwd)).collect {
       case (file, shown) if readOrNone(file).exists(ApiDocsPage.hasExternalScript) => shown
     }
     offenders.take(5).foreach(f => System.err.println(s"external script src survives in $f"))
@@ -42,15 +44,15 @@ object StripScripts:
       0
 
   /** Strip every html file under one directory, or why it stopped. */
-  private def processDir(dirArg: String): Either[String, StripTally] =
-    val dir = os.Path(dirArg, os.pwd)
+  private def processDir(cwd: os.Path)(dirArg: String): Either[String, StripTally] =
+    val dir = os.Path(dirArg, cwd)
     val scripts = java.nio.file.Path.of(dirArg).resolve(ApiDocsPage.ShimDir)
     if !os.isDir(dir) then Left(s"strip_external_scripts: no such directory: $dirArg")
     else
       try
         os.makeDir.all(dir / ApiDocsPage.ShimDir)
         os.write.over(dir / ApiDocsPage.ShimDir / ApiDocsPage.ShimFile, ApiDocsPage.ShimJs)
-        val results = for (file, shown) <- htmlFiles(dirArg); html <- readOrNone(file) yield
+        val results = for (file, shown) <- htmlFiles(cwd)(dirArg); html <- readOrNone(file) yield
           val stripped = ApiDocsPage.strip(html)
           try
             if stripped.html != html then os.write.over(file, stripped.html)
@@ -61,9 +63,9 @@ object StripScripts:
           .toLeft(StripTally(results.length, results.collect { case Right(n) => n }.sum))
       catch case _: java.io.IOException => Left(s"strip_external_scripts: cannot write $scripts")
 
-  def process(dirs: Seq[String]): Int =
+  def process(dirs: Seq[String], cwd: os.Path): Int =
     val outcome = dirs.foldLeft[Either[String, StripTally]](Right(StripTally.Zero)) {
-      (sofar, dir) => for tally <- sofar; more <- processDir(dir) yield tally + more
+      (sofar, dir) => for tally <- sofar; more <- processDir(cwd)(dir) yield tally + more
     }
     outcome match
       case Left(error) =>
@@ -81,7 +83,7 @@ object StripScripts:
     if dirs.value.isEmpty then
       System.err.println("marola-tools strip-external-scripts: at least one DIR is required")
       2
-    else if check.value then this.check(dirs.value)
-    else process(dirs.value)
+    else if check.value then this.check(dirs.value, Invocation.current().cwd)
+    else process(dirs.value, Invocation.current().cwd)
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "strip-external-scripts", args)

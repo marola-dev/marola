@@ -1,7 +1,7 @@
 package marola.tools.docs
 
 import marola.tools.shared.Cli
-import marola.tools.shared.Proc
+import marola.tools.shared.{GitNames, Invocation, Proc}
 
 import mainargs.{arg, main, ParserForMethods}
 import SiteModel.*
@@ -24,21 +24,22 @@ object FetchApiDocs:
     val remote = config.remote.url(repo)
     try
       val fetched =
-        git.status(os.pwd, "git", "init", "-q", tmp.toString) == 0 &&
-          git.quiet(os.pwd, inTmp("fetch", "--depth", "1", "-q", remote, Names.ApiDocs)*) == 0
+        git.status(tmp, "git", "init", "-q", tmp.toString) == 0 &&
+          git.quiet(tmp, inTmp("fetch", "--depth", "1", "-q", remote, Names.ApiDocs)*) == 0
       if !fetched then ApiDocsFetch.NoBranch
       else
         os.makeDir.all(dest)
         val archive = tmp / s"${Names.ApiDocs}.tar"
         val steps = Seq(
-          inTmp("archive", "-o", archive.toString, "FETCH_HEAD"),
+          inTmp("archive", "-o", archive.toString, GitNames.FetchHead),
           Seq("tar", "-x", "-f", archive.toString, "-C", dest.toString)
         )
-        steps.iterator.map(git.status(os.pwd, _*)).find(_ != 0) match
+        steps.iterator.map(git.status(tmp, _*)).find(_ != 0) match
           case Some(code) => ApiDocsFetch.Failed(code)
           case None       =>
             // The subject is api-docs-push's `api-docs: <source sha>`.
-            val subject = git.capture(os.pwd, inTmp("log", "-1", "--format=%s", "FETCH_HEAD")*).out
+            val subject =
+              git.capture(tmp, inTmp("log", "-1", "--format=%s", GitNames.FetchHead)*).out
             ApiDocsFetch.Unpacked(dest, subject)
     finally os.remove.all(tmp)
 
@@ -46,6 +47,8 @@ object FetchApiDocs:
   def run(
       @arg(positional = true, doc = "the repo, e.g. marola-app") repo: String,
       @arg(positional = true, doc = "the directory to unpack into") dest: String
-  ): Int = fetch(repo, os.Path(dest, os.pwd), ApiDocsConfig.from(sys.env))
+  ): Int =
+    val invocation = Invocation.current()
+    fetch(repo, invocation.path(dest), ApiDocsConfig.from(invocation.env))
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "fetch-api-docs", args)

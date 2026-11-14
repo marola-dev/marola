@@ -2,7 +2,7 @@ package marola.tools.docs
 
 import marola.tools.shared.Cli
 import marola.tools.shared.Proc
-import marola.tools.shared.Util
+import marola.tools.shared.{GitNames, Invocation, Sha, Util}
 
 import mainargs.{arg, main, ParserForMethods}
 import SiteModel.*
@@ -34,7 +34,7 @@ object PrepareDocs:
     val dir = root / Names.Tmp / Names.DocsSources / name
     val url = config.sourceRemote.url(name)
     def git(args: String*) =
-      Proc.exact(config.gitEnv).call(os.pwd, "git" +: args, os.Pipe).exitCode == 0
+      Proc.exact(config.gitEnv).call(root, "git" +: args, os.Pipe).exitCode == 0
     def step(ok: => Boolean, failed: String): Step[Unit] = Either.cond(ok, (), said(failed))
     for
       rev <- lockedRev(root / Names.FlakeLock, name)
@@ -46,7 +46,15 @@ object PrepareDocs:
         s"prepare-docs: could not fetch $name at $rev from $url"
       )
       _ <- step(
-        git("-C", dir.toString, "-c", "advice.detachedHead=false", "checkout", "-q", "FETCH_HEAD"),
+        git(
+          "-C",
+          dir.toString,
+          "-c",
+          "advice.detachedHead=false",
+          "checkout",
+          "-q",
+          GitNames.FetchHead
+        ),
         s"prepare-docs: could not check out $name at $rev in $dir"
       )
     yield dir
@@ -65,20 +73,20 @@ object PrepareDocs:
   /** HEAD of the checkout at `dir`, never of a repo enclosing it (an uninitialised submodule is an
     * empty directory inside the umbrella).
     */
-  def checkoutSha(dir: os.Path, gitEnv: Map[String, String]): Option[CommitSha] =
+  def checkoutSha(dir: os.Path, gitEnv: Map[String, String]): Option[Sha] =
     val git = Proc.exact(gitEnv)
     def ownTop =
-      val top = git.captureQuiet(os.pwd, "git", "-C", dir.toString, "rev-parse", "--show-toplevel")
+      val top = git.captureQuiet(dir, "git", "-C", dir.toString, "rev-parse", "--show-toplevel")
       top.exitCode == 0 && top.out == dir.toNIO.toRealPath().toString
     def head =
-      val head = git.capture(os.pwd, "git", "-C", dir.toString, "rev-parse", "HEAD")
-      Option.when(head.exitCode == 0)(head.out).flatMap(CommitSha.parse(_).toOption)
+      val head = git.capture(dir, "git", "-C", dir.toString, "rev-parse", "HEAD")
+      Option.when(head.exitCode == 0)(head.out).flatMap(Sha.parse(_).toOption)
     Option.when(os.isDir(dir) && ownTop)(()).flatMap(_ => head)
 
   def mountRepo(
       src: os.Path,
       name: String,
-      sha: CommitSha,
+      sha: Sha,
       dest: os.Path,
       docLinksArgs: Seq[String]
   ): Step[Unit] =
@@ -90,7 +98,7 @@ object PrepareDocs:
       "--name",
       name,
       "--sha",
-      sha.hex,
+      sha.value,
       "--out",
       dest.toString
     ) ++ docLinksArgs
@@ -180,7 +188,7 @@ object PrepareDocs:
       // The devkit is fetched outside the umbrella, so umbrella links can't reach into it.
       submodules = checkouts
         .filter(_.repo.source == RepoSource.Submodule)
-        .flatMap(c => Seq("--submodule", s"${c.repo.name}=${c.sha.hex}"))
+        .flatMap(c => Seq("--submodule", s"${c.repo.name}=${c.sha.value}"))
       _ <- mountRepo(
         root,
         UmbrellaRepo,
@@ -202,10 +210,11 @@ object PrepareDocs:
       @arg(positional = true, doc = "default .tmp/docs-aggregated, rebuilt fresh every run")
       buildDir: Option[String] = None
   ): Int =
-    val root = Util.repoRoot
+    val invocation = Invocation.current()
+    val root = invocation.repoRoot
     val dir =
-      buildDir.map(os.Path(_, os.pwd)).getOrElse(root / Names.Tmp / Names.DocsAggregated)
-    prepare(root, dir, PrepareConfig.from(sys.env)) match
+      buildDir.map(invocation.path).getOrElse(root / Names.Tmp / Names.DocsAggregated)
+    prepare(root, dir, PrepareConfig.from(invocation.env)) match
       case Right(())                => 0
       case Left(Failure.Said(text)) => System.err.println(text); 1
       case Left(Failure.Reported)   => 1

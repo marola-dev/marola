@@ -1,6 +1,6 @@
 package marola.tools.submodules
 
-import marola.tools.shared.Proc
+import marola.tools.shared.{Proc, Sha}
 
 class PointerSyncTest extends munit.FunSuite:
   import PointerSync.*

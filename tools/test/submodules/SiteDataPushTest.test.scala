@@ -14,6 +14,10 @@ class SiteDataPushTest extends munit.FunSuite:
 
   private val noSleep: Int => Unit = _ => ()
 
+  // The variable read as the command's edge reads it, from the environment the run gets.
+  private def pushIn(dir: String, proc: Proc, sleep: Int => Unit): Int =
+    SiteDataPush.push(PushRun(dir, Tries.from(proc.variable(Tries.EnvVar)), os.pwd), proc, sleep)
+
   test("three writers race: the second is replayed onto the new tip, a failed rebase is an error"):
     val t = os.temp.dir()
     try
@@ -42,10 +46,10 @@ class SiteDataPushTest extends munit.FunSuite:
       git(t / "b", "config", "user.name", "t")
       git(t / "b", "config", "user.email", "t@t")
 
-      assertEquals(SiteDataPush.push((t / "a").toString, Proc(gitEnv), noSleep), 0, "first push")
+      assertEquals(pushIn((t / "a").toString, Proc(gitEnv), noSleep), 0, "first push")
       val retried = Proc(gitEnv + ("SITE_DATA_PUSH_TRIES" -> "3"))
       assertEquals(
-        SiteDataPush.push((t / "b").toString, retried, noSleep),
+        pushIn((t / "b").toString, retried, noSleep),
         0,
         "second push was not retried onto the new tip"
       )
@@ -65,7 +69,7 @@ class SiteDataPushTest extends munit.FunSuite:
         )
       )
       assertEquals(
-        SiteDataPush.push((t / "c").toString, noIdentity, noSleep),
+        pushIn((t / "c").toString, noIdentity, noSleep),
         1,
         "a failed rebase was reported as a successful push"
       )
@@ -86,8 +90,7 @@ class SiteDataPushTest extends munit.FunSuite:
     try
       git(t, "init", "-q", "-b", "site-data", "w")
       assertEquals(
-        SiteDataPush
-          .push((t / "w").toString, Proc(gitEnv + ("SITE_DATA_PUSH_TRIES" -> "0")), noSleep),
+        pushIn((t / "w").toString, Proc(gitEnv + ("SITE_DATA_PUSH_TRIES" -> "0")), noSleep),
         1
       )
     finally os.remove.all(t)

@@ -1,6 +1,6 @@
 package marola.tools.ci
 
-import marola.tools.shared.Util
+import marola.tools.shared.Invocation
 
 class RepoStatsTest extends munit.FunSuite:
   import RepoStats.*
@@ -84,7 +84,7 @@ class RepoStatsTest extends munit.FunSuite:
       Badge.versions("").find(_.name == "jdk-version.json").map(_.badge.message),
       Some("no data")
     )
-    val pinned = os.read(Util.repoRoot / "tools" / "project.scala")
+    val pinned = os.read(Invocation.current().repoRoot / "tools" / "project.scala")
     assert(
       ProjectFile.directive(pinned, "scala").exists(_.startsWith("3.")),
       "tools/project.scala pins Scala 3"

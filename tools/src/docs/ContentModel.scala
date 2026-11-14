@@ -1,9 +1,10 @@
 package marola.tools.docs
 
-import marola.tools.shared.Util
+import marola.tools.shared.{ReposDoc, Util}
 
 import java.util.Locale
 import java.util.regex.Pattern
+import scala.jdk.CollectionConverters.*
 
 // The content checks' domain: a README's reading time and its badge, an Archify figure's boxes,
 // the Mermaid font pin, and the findings of the AGENTS.md and CLAUDE_PROJECT.config.md checks.
@@ -98,26 +99,27 @@ object Prose:
 
   private def isFenceChar(c: Char) = c == '`' || c == '~'
 
+  /** The lines outside fenced code, the number of fences, and the fence still open. */
+  private type Scan = (Vector[String], Int, Option[String])
+
+  private def scan(state: Scan, line: String): Scan =
+    val (prose, blocks, fence) = state
+    val trimmed = LeadingSpace.replaceFirstIn(line, "")
+    val marker = trimmed.takeWhile(isFenceChar)
+    fence match
+      case Some(open) =>
+        val closes = trimmed
+          .startsWith(open) && TrailingSpace.replaceFirstIn(trimmed, "").forall(isFenceChar)
+        if closes then (prose, blocks, None) else state
+      case None if marker.length >= 3 && marker.forall(_ == marker.head) =>
+        (prose, blocks + 1, Some(marker))
+      case None => (prose :+ line, blocks, None)
+
   def of(markdown: String): Prose =
-    val out = StringBuilder()
-    var blocks = 0
-    var fence: Option[String] = None
-    for line <- ReadingText.lines(markdown) do
-      val trimmed = LeadingSpace.replaceFirstIn(line, "")
-      val marker = trimmed.takeWhile(isFenceChar)
-      fence match
-        case Some(open) =>
-          val closes = trimmed
-            .startsWith(open) && TrailingSpace.replaceFirstIn(trimmed, "").forall(isFenceChar)
-          if closes then fence = None
-        case None if marker.length >= 3 && marker.forall(_ == marker.head) =>
-          blocks += 1
-          fence = Some(marker)
-        case None =>
-          out ++= line
-          out += '\n'
+    val (prose, blocks, _) =
+      ReadingText.lines(markdown).foldLeft[Scan]((Vector.empty, 0, None))(scan)
     val stripped = Seq(Comment -> " ", Image -> " ", Link -> "$1", Tag -> " ", Url -> " ")
-      .foldLeft(out.toString)((text, rule) => rule._1.replaceAllIn(text, rule._2))
+      .foldLeft(prose.map(_ + "\n").mkString)((text, rule) => rule._1.replaceAllIn(text, rule._2))
     Prose(stripped, blocks)
 
 /** Words at the language's speed, plus 15 s per code block, rounded up. */
@@ -146,10 +148,12 @@ final case class ReadingBadge(path: String, lang: ReadingLang, minutes: Minutes)
       if dir.isEmpty && target.startsWith(path) then s"#${lang.anchor}"
       else s"${Util.posix.relpath(lang.file, dir)}#${lang.anchor}"
     val m = minutes.value
-    s"""<a href="$href"><img src="https://img.shields.io/badge/${lang.label}-~$m%20min-${ReadingBadge.Color}" alt="${lang.alt}: ~$m min" /></a>"""
+    s"""<a href="$href"><img src="https://${ReadingBadge.Shields}/${lang.label}-~$m%20min-${ReadingBadge.Color}" alt="${lang.alt}: ~$m min" /></a>"""
 
 object ReadingBadge:
+  private val Shields = "img.shields.io/badge"
   private val Color = "1682D4"
+  private val LicenseBadge = s"$Shields/license-"
   private val Existing =
     """^<a href="[^"]*"><img src="[^"]*" alt="(tempo de leitura|reading time): """.r
 
@@ -159,7 +163,7 @@ object ReadingBadge:
   def place(text: String, line: String): String =
     val current = ReadingText.lines(text)
     val existing = current.indexWhere(l => Existing.findPrefixOf(l).isDefined)
-    val license = current.indexWhere(_.contains("img.shields.io/badge/license-"))
+    val license = current.indexWhere(_.contains(LicenseBadge))
     val updated =
       if existing >= 0 then current.updated(existing, line)
       else if license >= 0 then current.patch(license + 1, Seq(line), 0)
@@ -202,18 +206,32 @@ final case class DeliverReport(messages: Seq[String], error: String):
 final case class FigureTools(archify: String, chrome: String, chromeFlags: Seq[String])
 
 object FigureTools:
+  val ArchifyEnvVar = "ARCHIFY"
+  val ChromeEnvVar = "CHROME"
+  val ChromeFlagsEnvVar = "CHROME_FLAGS"
+  val DefaultArchify = ".tmp/archify"
+  val DefaultChrome = "google-chrome"
+
   def from(env: Map[String, String]): FigureTools =
     FigureTools(
-      env.get("ARCHIFY").filter(_.nonEmpty).getOrElse(".tmp/archify"),
-      env.get("CHROME").filter(_.nonEmpty).getOrElse("google-chrome"),
-      env.get("CHROME_FLAGS").toSeq.flatMap(_.split("""\s+""")).filter(_.nonEmpty)
+      env.get(ArchifyEnvVar).filter(_.nonEmpty).getOrElse(DefaultArchify),
+      env.get(ChromeEnvVar).filter(_.nonEmpty).getOrElse(DefaultChrome),
+      env.get(ChromeFlagsEnvVar).toSeq.flatMap(_.split("""\s+""")).filter(_.nonEmpty)
     )
 
 /** The work directory of one PNG, named after it: `.tmp/figure/<name>`. */
 final case class FigureWork(name: String):
-  def dir: String = s".tmp/figure/$name"
+  def dir: String = s"${FigureWork.Root}/$name"
 
 object FigureWork:
+  val Root = ".tmp/figure"
+
+  /** The files a draw leaves in it. */
+  val Deliver = "deliver.json"
+  val Page = "page.html"
+  val Measure = "measure.html"
+  val Frame = "frame.html"
+
   /** `basename PNG .png`. */
   def of(png: String): FigureWork =
     val name = png.split('/').filter(_.nonEmpty).lastOption.getOrElse(png)
@@ -242,20 +260,17 @@ object MermaidFence:
 
   /** `markdown` with the init line prepended to every top-level ```mermaid fence. */
   def pin(markdown: String): String =
-    val out = StringBuilder()
-    val m = FenceRe.matcher(markdown)
-    var last = 0
-    while m.find() do
-      out ++= markdown.substring(last, m.start)
+    val fences = FenceRe.matcher(markdown).results().toList.asScala
+    val (pieces, last) = fences.foldLeft((Vector.empty[String], 0)) { case ((pieces, last), m) =>
       val fence = MermaidFence(m.group("indent"), m.group("lang"), m.group("code"))
-      if fence.needsPin then
-        out ++= markdown.substring(m.start, m.start("code"))
-        out ++= fence.pinnedCode
-        out ++= markdown.substring(m.end("code"), m.end)
-      else out ++= m.group
-      last = m.end
-    out ++= markdown.substring(last)
-    out.toString
+      val written =
+        if !fence.needsPin then m.group
+        else
+          markdown.substring(m.start, m.start("code")) + fence.pinnedCode +
+            markdown.substring(m.end("code"), m.end)
+      (pieces :+ markdown.substring(last, m.start) :+ written, m.end)
+    }
+    (pieces :+ markdown.substring(last)).mkString
 
 /** How many pages a pin run changed. */
 final case class PinnedPages(count: Int):
@@ -284,7 +299,8 @@ enum AgentsFinding:
       case NoReposLink => s"agents_repos_check: $file does not link $ReposPage"
 
 object AgentsFinding:
-  val ReposPage = "docs/2-Building-marola/REPOS.md"
+  val ReposPage = ReposDoc.Path
+  val File = "AGENTS.md"
 
   private val TableRow = """^\| \[?marola-(app|site|corpus|ml|oods|devkit)""".r
   private val PinFile = """marola-image|corpus\.version|resources\.version""".r
@@ -309,11 +325,14 @@ final case class ProjectRoutine(name: String, hasCron: Boolean, hasPrompt: Boole
       Option.when(!hasPrompt)(ProjectConfigError.NoPromptBlock(name))).toVector
 
 object ProjectRoutine:
+  private val CronField = "**Schedule (cron)**"
+  private val PromptFence = "```text\n"
+
   def of(block: String): ProjectRoutine =
     ProjectRoutine(
       block.linesIterator.nextOption().getOrElse(""),
-      block.contains("**Schedule (cron)**"),
-      block.contains("```text\n")
+      block.contains(CronField),
+      block.contains(PromptFence)
     )
 
 enum ProjectConfigError:
@@ -331,11 +350,16 @@ enum ProjectConfigError:
     case Leak(found)             => s"${Util.pyreprStr(found)} looks like an e-mail or an id"
 
 object ProjectConfig:
+  val File = "CLAUDE_PROJECT.config.md"
+  val Routines = "4. Routines"
+  private val AfterRoutines = "5."
+  private val RoutineHeading = "\n### "
+
   val Sections = Seq(
     "1. Project",
     "2. Cloud environment",
     "3. Plugins, skills and connectors",
-    "4. Routines",
+    Routines,
     "5. Joining as a new member",
     "6. Restoring the project",
     "7. Not in this file",
@@ -352,8 +376,8 @@ object ProjectConfig:
   ).mkString("|").r
 
   def routines(text: String): Vector[ProjectRoutine] =
-    val section = text.split("\n## 4. Routines\n", 2).last.split("\n## 5.", 2).head
-    section.split("\n### ").toVector.drop(1).map(ProjectRoutine.of)
+    val section = text.split(s"\n## $Routines\n", 2).last.split(s"\n## $AfterRoutines", 2).head
+    section.split(RoutineHeading).toVector.drop(1).map(ProjectRoutine.of)
 
   /** Banner, sections, routines, then the first leak. */
   def check(text: String): Vector[ProjectConfigError] =

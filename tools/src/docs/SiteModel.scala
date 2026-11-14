@@ -1,6 +1,6 @@
 package marola.tools.docs
 
-import marola.tools.shared.Util
+import marola.tools.shared.{GitHubNames, GitNames, RepoSlug, Sha, Util}
 
 import java.util.Locale
 import java.util.regex.{Matcher, Pattern}
@@ -55,11 +55,8 @@ object SiteModel:
     val GitTerminalPrompt = "GIT_TERMINAL_PROMPT"
 
     /** A hook's GIT_DIR would point every git call at the caller's repo. */
-    val GitRepoPointers =
-      Seq("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_PREFIX", "GIT_COMMON_DIR")
+    val GitRepoPointers = GitNames.RepoPointerEnvVars
 
-  val Org = "marola-dev"
-  val GitHub = s"https://github.com/$Org"
   val UmbrellaRepo = "marola"
 
   // ---- configuration --------------------------------------------------------------------------
@@ -69,7 +66,7 @@ object SiteModel:
 
   object RemoteTemplate:
     val Placeholder = "<repo>"
-    val MarolaDev: RemoteTemplate = s"$GitHub/$Placeholder"
+    val MarolaDev: RemoteTemplate = s"${GitHubNames.OrgWeb}/$Placeholder"
 
     /** The template a variable sets, or `default` when it is unset or empty. */
     def from(written: Option[String], default: RemoteTemplate): RemoteTemplate =
@@ -110,40 +107,27 @@ object SiteModel:
         ApiDocsConfig.from(gitEnv)
       )
 
-  /** The container runtimes mkdocs tries in order, its docs tree relative to the root, and the
-    * whole environment of the tools it runs.
+  /** The container runtimes mkdocs tries in order, its docs tree relative to the root, the whole
+    * environment of the tools it runs, and where a runtime is looked up and asked if it is up.
     */
   case class MkdocsConfig(
       runtimes: Vector[String],
       docsSrc: Option[String],
-      env: Map[String, String]
+      env: Map[String, String],
+      cwd: os.Path
   )
 
   object MkdocsConfig:
     val DefaultRuntimes = "podman docker"
 
-    def from(env: Map[String, String]): MkdocsConfig =
+    def from(env: Map[String, String], cwd: os.Path): MkdocsConfig =
       val runtimes = env.get(EnvVar.ContainerRuntime).filter(_.nonEmpty).getOrElse(DefaultRuntimes)
       MkdocsConfig(
         runtimes.split("""\s+""").filter(_.nonEmpty).toVector,
         env.get(EnvVar.DocsSrc).filter(_.nonEmpty),
-        env
+        env,
+        cwd
       )
-
-  // ---- commits --------------------------------------------------------------------------------
-
-  /** A full git object name, as `git rev-parse HEAD` prints it (SHA-1, or SHA-256). */
-  opaque type CommitSha = String
-
-  object CommitSha:
-    private val Hex = "[0-9a-f]{40}|[0-9a-f]{64}".r
-
-    def parse(written: String): Either[String, CommitSha] =
-      Either.cond(Hex.matches(written), written, s"not a full commit sha: $written")
-
-  extension (sha: CommitSha)
-    def hex: String = sha
-    def short: String = sha.take(7)
 
   // ---- mkdocs/repos.yml and the checkouts -----------------------------------------------------
 
@@ -157,7 +141,7 @@ object SiteModel:
 
   case class Repo(name: String, source: RepoSource)
 
-  case class Checkout(repo: Repo, dir: os.Path, sha: CommitSha)
+  case class Checkout(repo: Repo, dir: os.Path, sha: Sha)
 
   /** Why a step of the build stopped. */
   enum Failure:
@@ -184,13 +168,14 @@ object SiteModel:
       if !hasReadme then Some(NoReadme) else Option.when(hasDocsIndex)(DocsIndexToo)
 
   /** The line a mounted landing page ends with. */
-  def builtFrom(repo: String, sha: CommitSha): String =
-    s"\n_Built from [$Org/$repo@${sha.short}]($GitHub/$repo/tree/$sha)._\n"
+  def builtFrom(repo: String, sha: Sha): String =
+    val slug = RepoSlug.inOrg(repo)
+    s"\n_Built from [$slug@${sha.short}](${slug.web}/tree/$sha)._\n"
 
   /** build.json: the commit of the umbrella and of every mounted repo. */
-  def buildJson(umbrella: CommitSha, checkouts: Seq[Checkout]): String =
-    val shas = ujson.Obj.from((UmbrellaRepo -> umbrella.hex) +: checkouts.map { c =>
-      c.repo.name -> ujson.Str(c.sha.hex)
+  def buildJson(umbrella: Sha, checkouts: Seq[Checkout]): String =
+    val shas = ujson.Obj.from((UmbrellaRepo -> umbrella.value) +: checkouts.map { c =>
+      c.repo.name -> ujson.Str(c.sha.value)
     })
     Util.dumps(shas, indent = Some(2)) + "\n"
 

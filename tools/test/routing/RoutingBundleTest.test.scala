@@ -55,7 +55,8 @@ class RoutingBundleTest extends munit.FunSuite:
         Given(questions.toString),
         previous.map(p => Given(p.toString)),
         "0.9.84",
-        Given((d / "REPOS.md").toString)
+        Given((d / "REPOS.md").toString),
+        os.pwd
       )
       assemble(args).fold(m => fail(m), identity)
 

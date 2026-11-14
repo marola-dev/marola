@@ -1,7 +1,6 @@
 package marola.tools.submodules
 
-import marola.tools.shared.Cli
-import marola.tools.shared.Proc
+import marola.tools.shared.{Cli, Invocation, Proc, Sha, Submodule}
 
 import mainargs.{arg, main, ParserForMethods}
 
@@ -14,31 +13,32 @@ object PointerSync:
 
   /** The bump, in the umbrella checkout `top`. The exit code. */
   def bump(top: os.Path, out: os.Path, proc: Proc): Int = Proc.exitCode {
-    if proc.which("wiring", top).isEmpty then
+    if proc.which(WiringDoc.Tool, top).isEmpty then
       Proc.err("pointer-sync: wiring (marola-devkit) is not on PATH")
       1
     else
       os.makeDir.all(out)
-      val movedTsv = out / "moved.tsv"
+      val movedTsv = out / BumpFile.Moved
       os.write.over(movedTsv, "")
-      val moved = Vector.newBuilder[Moved]
-      for case Submodule(name, path) <- proc
-          .submodulePaths(top, "-f", ".gitmodules")
-          .map(Submodule.fromConfig)
-      do
-        val url =
-          proc.mustCapture(top, "git", "config", "-f", ".gitmodules", s"submodule.$name.url")
-        val old = Sha(proc.mustCapture(top, "git", "rev-parse", s"HEAD:$path"))
-        // No submodule.<name>.branch anywhere, so --remote follows each remote's HEAD: its default branch.
-        proc.must(top, "git", "submodule", "update", "--quiet", "--init", "--remote", "--", path)
-        val now = Sha(proc.mustCapture(top, "git", "-C", path, "rev-parse", "HEAD"))
-        if old != now then
-          proc.must(top, "git", "add", "--", path)
-          val m = Moved(name, old, now, url)
-          os.write.append(movedTsv, m.tsvRow)
-          moved += m
-      commit(top, out, Bump(moved.result()), proc)
+      // Each row is appended as it moves, so a step that fails later leaves the rows so far.
+      val moved = proc.submodules(top, "-f", Submodule.Gitmodules).flatMap { sub =>
+        val moved = move(top, sub, proc)
+        moved.foreach(m => os.write.append(movedTsv, m.tsvRow))
+        moved
+      }
+      commit(top, out, Bump(moved), proc)
   }
+
+  private def move(top: os.Path, sub: Submodule, proc: Proc): Option[Moved] =
+    val url = proc.mustCapture(top, "git", "config", "-f", Submodule.Gitmodules, sub.urlKey)
+    val old = Sha(proc.mustCapture(top, "git", "rev-parse", s"HEAD:${sub.path}"))
+    // No submodule.<name>.branch anywhere, so --remote follows each remote's HEAD: its default branch.
+    proc.must(top, "git", "submodule", "update", "--quiet", "--init", "--remote", "--", sub.path)
+    val now = Sha(proc.mustCapture(top, "git", "-C", sub.path, "rev-parse", "HEAD"))
+    Option.when(old != now) {
+      proc.must(top, "git", "add", "--", sub.path)
+      Moved(sub.name, old, now, url)
+    }
 
   private def commit(top: os.Path, out: os.Path, bump: Bump, proc: Proc): Int =
     if bump.isEmpty then
@@ -46,11 +46,11 @@ object PointerSync:
       0
     else
       // The block is read from the submodules' trees, so it is regenerated only now (MIP-0076 §5.4).
-      proc.must(top, "wiring", ReposMd)
+      proc.must(top, WiringDoc.Tool, ReposMd)
       proc.must(top, "git", "add", "--", ReposMd)
-      os.write.over(out / "commit-msg.txt", bump.commitMessage)
-      os.write.over(out / "pr-body.md", bump.prBody)
-      proc.must(top, "git", "commit", "--quiet", "-F", (out / "commit-msg.txt").toString)
+      os.write.over(out / BumpFile.CommitMessage, bump.commitMessage)
+      os.write.over(out / BumpFile.PrBody, bump.prBody)
+      proc.must(top, "git", "commit", "--quiet", "-F", (out / BumpFile.CommitMessage).toString)
       Proc.say(s"pointer-sync: moved ${bump.names}")
       0
 
@@ -70,6 +70,6 @@ object PointerSync:
   def run(
       @arg(doc = "where moved.tsv, commit-msg.txt and pr-body.md go") out: Option[String] = None
   ): Int =
-    runIn(os.pwd, out.getOrElse(""), Proc())
+    runIn(Invocation.current().cwd, out.getOrElse(""), Proc())
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "pointer-sync", args)

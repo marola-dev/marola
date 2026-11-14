@@ -1,6 +1,6 @@
 package marola.tools.publishing
 
-import marola.tools.shared.Util
+import marola.tools.shared.Invocation
 
 class CitationTest extends munit.FunSuite:
   import Citation.*
@@ -148,7 +148,7 @@ class CitationTest extends munit.FunSuite:
     assertEquals(run(Config(zenodo, cff, Seq(readme)), true), 1)
 
   test("the committed files are current"):
-    val root = Util.repoRoot
+    val root = Invocation.current().repoRoot
     assertEquals(
       run(
         Config(

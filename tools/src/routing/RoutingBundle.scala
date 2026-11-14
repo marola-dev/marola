@@ -1,7 +1,6 @@
 package marola.tools.routing
 
-import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{Cli, Invocation, ReposDoc, Util}
 
 import java.nio.file.{Files, StandardCopyOption}
 import mainargs.{arg, main, ParserForMethods}
@@ -17,14 +16,11 @@ object RoutingBundle:
   val DigestChars = Digest.MaxChars
   val Start = WiringBlock.Start
   val End = WiringBlock.End
-  // MIP-0085's indexes: route says a missing one is missing, so each is published only when built.
-  private val Indexes = Seq("doc_code.json", "decisions.json", "meaning.json")
+  private val Indexes = BundleFile.Indexes
 
   // (?d): `^` and `$` see only \n, never a \r; (?U): \s and \d are Unicode.
   private val TotalLine = raw"(?mdU)^right first: \d+/\d+$$".r
   private val VerdictLine = raw"(?mdU)^(right|MISS)\s+(\S+)\s".r
-
-  extension (g: Given) private def path: os.Path = os.Path(g.shown, os.pwd)
 
   // ---- reading JSON loosely: a missing key or a wrong type is absent ---------------------------
 
@@ -122,14 +118,14 @@ object RoutingBundle:
   def assemble(args: Args): Either[String, Int] =
     for
       benchText <- Util
-        .readUtf8(args.bench.path)
+        .readUtf8(args.path(args.bench))
         .left
         .map(e => s"routing_bundle: ${args.bench.shown}: $e")
-      bench <- scores(benchText, args.questions.path, args.questions.shown)
-      lower <- args.previous.filter(p => os.isFile(p.path)) match
+      bench <- scores(benchText, args.path(args.questions), args.questions.shown)
+      lower <- args.previous.filter(p => os.isFile(args.path(p))) match
         case None           => Right(Nil)
         case Some(previous) =>
-          readJson(previous.path, previous.shown).map(prev =>
+          readJson(args.path(previous), previous.shown).map(prev =>
             Drop.between(bench, publishedBench(prev))
           )
       code <-
@@ -143,48 +139,50 @@ object RoutingBundle:
 
   private def write(args: Args, bench: Bench): Either[String, Unit] =
     val src = args.graphDir
-    val out = args.out.path
-    val indexes = Indexes.filter(n => os.isFile((src / n).path))
+    val out = args.path(args.out)
+    val indexes = Indexes.filter(n => os.isFile(args.path(src / n)))
     val io = (e: java.io.IOException) => s"routing_bundle: ${Util.osError(e)}"
+    def read(name: String) = readJson(args.path(src / name), (src / name).shown)
     for
-      _ <- (Seq("graph.json", "wiring.json", "build.json") ++ indexes)
+      _ <- (BundleFile.Checked ++ indexes)
         .foldLeft[Either[String, Unit]](Right(())) { (soFar, name) =>
-          soFar.flatMap(_ => checkSize(src / name, name))
+          soFar.flatMap(_ => checkSize(args.path(src / name), src / name, name))
         }
       _ <- attempt(io) {
         os.makeDir.all(out)
-        for name <- Seq("graph.json", "wiring.json") ++ indexes do
+        for name <- BundleFile.Copied ++ indexes do
           Files.copy(
-            (src / name).path.toNIO,
+            args.path(src / name).toNIO,
             (out / name).toNIO,
             StandardCopyOption.REPLACE_EXISTING
           )
       }
-      build <- readJson((src / "build.json").path, (src / "build.json").shown)
+      build <- read(BundleFile.Build)
       stamped = BuildInfo(build).stamped(args.graphify, bench)
       _ <- attempt(io)(
-        os.write.over(out / "build.json", Util.dumps(stamped.json, Some(1)) + "\n")
+        os.write.over(out / BundleFile.Build, Util.dumps(stamped.json, Some(1)) + "\n")
       )
-      graph <- readJson((src / "graph.json").path, (src / "graph.json").shown)
-      _ <- attempt(io)(
-        os.write.over(out / "routing-digest.md", digest(graph, wiringBlock(args.reposMd.path)))
-      )
+      graph <- read(BundleFile.Graph)
+      reposMd = wiringBlock(args.path(args.reposMd))
+      _ <- attempt(io)(os.write.over(out / BundleFile.Digest, digest(graph, reposMd)))
       sizes <- attempt(io) {
         os.list(out)
           .sortBy(_.last)
-          .filter(p => os.isFile(p) && p.last != "manifest.json")
+          .filter(p => os.isFile(p) && p.last != BundleFile.Manifest)
           .map(p => FileSize(p.last, os.size(p)))
       }
       manifest = Manifest(sizes).toJson
-      _ <- attempt(io)(os.write.over(out / "manifest.json", Util.dumps(manifest, Some(1)) + "\n"))
+      _ <- attempt(io)(
+        os.write.over(out / BundleFile.Manifest, Util.dumps(manifest, Some(1)) + "\n")
+      )
     yield println(
       s"routing_bundle: bench ${bench.right}/${bench.total}, ${sizes.length + 1} files in ${args.out.shown}"
     )
 
-  private def checkSize(file: Given, name: String): Either[String, Unit] =
-    if !os.isFile(file.path) then Left(s"routing_bundle: ${file.shown} is missing")
+  private def checkSize(path: os.Path, file: Given, name: String): Either[String, Unit] =
+    if !os.isFile(path) then Left(s"routing_bundle: ${file.shown} is missing")
     else
-      val size = os.size(file.path)
+      val size = os.size(path)
       if size > MaxBytes then
         Left(s"routing_bundle: $name is over ${MaxBytes >> 20} MB; route would refuse it")
       else
@@ -203,10 +201,10 @@ object RoutingBundle:
       graphDir: String,
       out: String,
       @arg(doc = "route bench's output, a file") bench: String,
-      questions: String = "routing-bench.yaml",
+      questions: String = BundleFile.Questions,
       previous: Option[String] = None,
       graphify: String = "",
-      reposMd: String = "docs/2-Building-marola/REPOS.md"
+      reposMd: String = ReposDoc.Path
   ): Int =
     val args = Args(
       Given(graphDir),
@@ -215,7 +213,8 @@ object RoutingBundle:
       Given(questions),
       previous.map(Given(_)),
       graphify,
-      Given(reposMd)
+      Given(reposMd),
+      Invocation.current().cwd
     )
     assemble(args) match
       case Right(code) => code

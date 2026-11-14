@@ -1,6 +1,6 @@
 package marola.tools.publishing
 
-import marola.tools.shared.Util
+import marola.tools.shared.Invocation
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 
@@ -70,8 +70,8 @@ class MipGraphTest extends munit.FunSuite:
     )
 
   test("the committed graph is current"):
-    val dir = Util.repoRoot / "docs" / "MIPs"
-    val figure = Util.repoRoot / "docs" / "archify" / "docs" / "mip-graph.json"
+    val dir = Invocation.current().repoRoot / "docs" / "MIPs"
+    val figure = Invocation.current().repoRoot / "docs" / "archify" / "docs" / "mip-graph.json"
     assertEquals(generate(Config(dir, dir / "README.md", figure), check = true), 0)
 
   test("statuses read the first word of their row"):

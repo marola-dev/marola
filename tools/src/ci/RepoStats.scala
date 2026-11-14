@@ -1,7 +1,7 @@
 package marola.tools.ci
 
 import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{Conclusion, GitHubNames, Invocation, RepoSlug, Util}
 
 import mainargs.{arg, main, ParserForMethods}
 import Util.field
@@ -30,7 +30,7 @@ object RepoStats:
     }
 
   /** Every job of one workflow run, steps included. Needs `actions: read` on the token. */
-  private def fetchJobs(repo: String, runId: String, cwd: os.Path): Either[String, Seq[Job]] =
+  private def fetchJobs(repo: RepoSlug, runId: String, cwd: os.Path): Either[String, Seq[Job]] =
     def fetchFrom(page: Int): Either[String, Seq[Job]] =
       val url = s"repos/$repo/actions/runs/$runId/jobs?per_page=100&page=$page"
       call(Seq(GitHubNames.Cli, "api", "-H", s"Accept: ${GitHubNames.JsonMediaType}", url), cwd)
@@ -111,20 +111,20 @@ object RepoStats:
     def run(
         @arg(doc = "Directory the badge JSONs go to") outDir: String,
         @arg(doc = "Repo root the LOC paths are relative to") root: String = DefaultRoot,
-        @arg(doc = "owner/name, for the CI-health badge") repo: String = DefaultRepo,
+        @arg(doc = "owner/name, for the CI-health badge") repo: String = DefaultRepo.value,
         @arg(doc = "Workflow run to report on; omitted = LOC badges only") runId: Option[String] =
           None,
         @arg(doc = "Job name to leave out (the reporting job itself)") excludeJob: Option[String] =
           None
     ): Int =
-      val cwd = os.pwd
+      val cwd = Invocation.current().cwd
       RepoStats.run(
         RepoStatsConfig(
           outDir = outDir,
           outPath = os.Path(outDir, cwd),
           root = os.Path(root, cwd),
           cwd = cwd,
-          repo = repo,
+          repo = RepoSlug(repo),
           runId = runId,
           excludeJob = excludeJob
         )

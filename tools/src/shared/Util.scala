@@ -3,23 +3,12 @@ package marola.tools.shared
 import java.io.IOException
 import java.nio.charset.{CharacterCodingException, CodingErrorAction, StandardCharsets}
 import java.nio.ByteBuffer
+import scala.annotation.tailrec
 
-// Shared helpers: the repo root, strict UTF-8 reads, JSON written byte for byte as Python's
-// `json.dumps` writes it (the published files keep that exact form, and readers grep them), and
-// the `posixpath`/`fnmatch` pieces the link rewriter needs.
+// Shared helpers: strict UTF-8 reads, JSON written byte for byte as Python's `json.dumps` writes it
+// (the published files keep that exact form, and readers grep them), and the
+// `posixpath`/`fnmatch` pieces the link rewriter needs.
 object Util:
-
-  /** The umbrella's checkout. `scripts/marola-tools` exports MAROLA_ROOT; otherwise the nearest
-    * directory above the working directory that holds `tools/project.scala`.
-    */
-  lazy val repoRoot: os.Path =
-    sys.env.get("MAROLA_ROOT").filter(_.nonEmpty).map(os.Path(_, os.pwd)).getOrElse {
-      Iterator
-        .iterate(os.pwd)(_ / os.up)
-        .take(os.pwd.segmentCount + 1)
-        .find(dir => os.exists(dir / "tools" / "project.scala"))
-        .getOrElse(sys.error("marola-tools: run me inside the umbrella, or set MAROLA_ROOT"))
-    }
 
   /** A file as text, invalid UTF-8 dropped (Python's `errors="ignore"`). */
   def readLossy(path: os.Path): String =
@@ -86,74 +75,52 @@ object Util:
     * ujson keeps every number as a Double, so a whole one is written without `.0`.
     */
   def dumps(value: ujson.Value, indent: Option[Int] = None, ensureAscii: Boolean = true): String =
-    val out = StringBuilder()
-    writeValue(out, value, indent, ensureAscii, 0)
-    out.toString
+    render(value, indent, ensureAscii, 0)
 
-  private def writeValue(
-      out: StringBuilder,
-      v: ujson.Value,
+  private def render(v: ujson.Value, indent: Option[Int], ascii: Boolean, depth: Int): String =
+    def inner(item: ujson.Value) = render(item, indent, ascii, depth + 1)
+    v match
+      case ujson.Null       => "null"
+      case ujson.Bool(b)    => if b then "true" else "false"
+      case ujson.Num(n)     => formatNumber(n)
+      case ujson.Str(s)     => quote(s, ascii)
+      case ujson.Arr(items) =>
+        if items.isEmpty then "[]" else container("[", "]", items.map(inner), indent, depth)
+      case ujson.Obj(map) =>
+        if map.isEmpty then "{}"
+        else
+          val members = map.map((k, item) => s"${quote(k, ascii)}: ${inner(item)}")
+          container("{", "}", members, indent, depth)
+
+  /** The members between their brackets: one a line at `indent`, or all on one line. */
+  private def container(
+      open: String,
+      close: String,
+      members: Iterable[String],
       indent: Option[Int],
-      ascii: Boolean,
       depth: Int
-  ): Unit = v match
-    case ujson.Null       => out ++= "null"
-    case ujson.Bool(b)    => out ++= (if b then "true" else "false")
-    case ujson.Num(n)     => out ++= formatNumber(n)
-    case ujson.Str(s)     => writeStr(out, s, ascii)
-    case ujson.Arr(items) =>
-      if items.isEmpty then out ++= "[]"
-      else
-        out += '['
-        for (item, i) <- items.zipWithIndex do
-          separator(out, i, indent, depth + 1)
-          writeValue(out, item, indent, ascii, depth + 1)
-        close(out, indent, depth)
-        out += ']'
-    case ujson.Obj(map) =>
-      if map.isEmpty then out ++= "{}"
-      else
-        out += '{'
-        for ((k, item), i) <- map.zipWithIndex do
-          separator(out, i, indent, depth + 1)
-          writeStr(out, k, ascii)
-          out ++= ": "
-          writeValue(out, item, indent, ascii, depth + 1)
-        close(out, indent, depth)
-        out += '}'
+  ): String = indent match
+    case Some(n) =>
+      def newline(level: Int) = "\n" + " " * (n * level)
+      members.map(newline(depth + 1) + _).mkString(open, ",", newline(depth) + close)
+    case None => members.mkString(open, ", ", close)
 
   def formatNumber(n: Double): String =
     if n.isWhole && math.abs(n) < 1e16 then n.toLong.toString else n.toString
 
-  private def separator(out: StringBuilder, i: Int, indent: Option[Int], depth: Int): Unit =
-    indent match
-      case Some(n) =>
-        if i > 0 then out += ','
-        out += '\n'
-        out ++= " " * (n * depth)
-      case None => if i > 0 then out ++= ", "
-
-  private def close(out: StringBuilder, indent: Option[Int], depth: Int): Unit =
-    indent.foreach { n =>
-      out += '\n'
-      out ++= " " * (n * depth)
-    }
-
-  private def writeStr(out: StringBuilder, s: String, ascii: Boolean): Unit =
-    out += '"'
-    s.foreach {
-      case '"'                    => out ++= "\\\""
-      case '\\'                   => out ++= "\\\\"
-      case '\n'                   => out ++= "\\n"
-      case '\r'                   => out ++= "\\r"
-      case '\t'                   => out ++= "\\t"
-      case '\b'                   => out ++= "\\b"
-      case '\f'                   => out ++= "\\f"
-      case c if c < 0x20          => out ++= f"\\u${c.toInt}%04x"
-      case c if ascii && c > 0x7f => out ++= f"\\u${c.toInt}%04x" // UTF-16 units, as Python
-      case c                      => out += c
-    }
-    out += '"'
+  private def quote(s: String, ascii: Boolean): String =
+    s.map {
+      case '"'                    => "\\\""
+      case '\\'                   => "\\\\"
+      case '\n'                   => "\\n"
+      case '\r'                   => "\\r"
+      case '\t'                   => "\\t"
+      case '\b'                   => "\\b"
+      case '\f'                   => "\\f"
+      case c if c < 0x20          => f"\\u${c.toInt}%04x"
+      case c if ascii && c > 0x7f => f"\\u${c.toInt}%04x" // UTF-16 units, as Python
+      case c                      => c.toString
+    }.mkString("\"", "", "\"")
 
   // ---- Python's repr, for messages that quoted a value with !r --------------------------------
 
@@ -164,42 +131,34 @@ object Util:
 
   def pyreprStr(s: String): String =
     val quote = if s.contains('\'') && !s.contains('"') then '"' else '\''
-    val out = StringBuilder()
-    out += quote
-    s.foreach {
-      case '\\'            => out ++= "\\\\"
-      case '\n'            => out ++= "\\n"
-      case '\r'            => out ++= "\\r"
-      case '\t'            => out ++= "\\t"
-      case c if c == quote => out += '\\'; out += c
-      case c               => out += c
+    val body = s.map {
+      case '\\'            => "\\\\"
+      case '\n'            => "\\n"
+      case '\r'            => "\\r"
+      case '\t'            => "\\t"
+      case c if c == quote => s"\\$c"
+      case c               => c.toString
     }
-    out += quote
-    out.toString
+    body.mkString(quote.toString, "", quote.toString)
 
   // ---- str.splitlines -------------------------------------------------------------------------
 
   private val lineBreaks =
-    Set('\n', '\u000b', '\u000c', '\u001c', '\u001d', '\u001e', '\u0085', '\u2028', '\u2029')
+    Set('\n', '\u000b', '\u000c', '\u001c', '\u001d', '\u001e', '\u0085', ' ', ' ')
 
   /** `str.splitlines(keepends=True)`: every line boundary Python knows, not only `\n`. */
   def splitlinesKeepends(text: String): Vector[String] =
-    val out = Vector.newBuilder[String]
-    var start = 0
-    var i = 0
-    while i < text.length do
-      val c = text(i)
-      val end =
-        if c == '\r' then if i + 1 < text.length && text(i + 1) == '\n' then i + 2 else i + 1
-        else if lineBreaks(c) then i + 1
-        else -1
-      if end >= 0 then
-        out += text.substring(start, end)
-        start = end
-        i = end
-      else i += 1
-    if start < text.length then out += text.substring(start)
-    out.result()
+    // Where the line break at `i` ends, or None when `i` is not one.
+    def breakEnd(i: Int): Option[Int] = text(i) match
+      case '\r' => Some(if i + 1 < text.length && text(i + 1) == '\n' then i + 2 else i + 1)
+      case c    => Option.when(lineBreaks(c))(i + 1)
+    @tailrec def from(start: Int, i: Int, lines: Vector[String]): Vector[String] =
+      if i >= text.length then if start < text.length then lines :+ text.substring(start) else lines
+      else
+        breakEnd(i) match
+          case Some(end) => from(end, end, lines :+ text.substring(start, end))
+          case None      => from(start, i + 1, lines)
+    from(0, 0, Vector.empty)
 
   /** `str.splitlines()`: the same lines, boundaries dropped. */
   def splitlines(text: String): Vector[String] =
@@ -213,18 +172,18 @@ object Util:
 
   /** `urllib.parse.unquote`: percent-decoded as UTF-8, a bad sequence replaced. */
   def unquote(s: String): String =
-    val bytes = java.io.ByteArrayOutputStream()
-    var i = 0
-    while i < s.length do
-      val c = s(i)
-      val hex = if c == '%' && i + 3 <= s.length then s.substring(i + 1, i + 3) else ""
-      if c == '%' && hex.length == 2 && hex.forall(Character.digit(_, 16) >= 0) then
-        bytes.write(Integer.parseInt(hex, 16))
-        i += 3
+    def escape(i: Int): Option[Byte] =
+      val hex = if s(i) == '%' && i + 3 <= s.length then s.substring(i + 1, i + 3) else ""
+      Option.when(hex.length == 2 && hex.forall(Character.digit(_, 16) >= 0))(
+        Integer.parseInt(hex, 16).toByte
+      )
+    @tailrec def from(i: Int, bytes: Vector[Byte]): Vector[Byte] =
+      if i >= s.length then bytes
       else
-        bytes.writeBytes(c.toString.getBytes(StandardCharsets.UTF_8))
-        i += 1
-    String(bytes.toByteArray, StandardCharsets.UTF_8)
+        escape(i) match
+          case Some(byte) => from(i + 3, bytes :+ byte)
+          case None       => from(i + 1, bytes ++ s(i).toString.getBytes(StandardCharsets.UTF_8))
+    String(from(0, Vector.empty).toArray, StandardCharsets.UTF_8)
 
   /** `urllib.parse.urlencode` over `quote_plus`. */
   def urlencode(pairs: Seq[(String, String)]): String =
@@ -262,11 +221,12 @@ object Util:
           if path.startsWith("//") && !path.startsWith("///") then 2
           else if path.startsWith("/") then 1
           else 0
-        val parts = scala.collection.mutable.ArrayBuffer.empty[String]
-        for comp <- path.split('/') if comp.nonEmpty && comp != "." do
+        val comps = path.split('/').filter(comp => comp.nonEmpty && comp != ".")
+        val parts = comps.foldLeft(Vector.empty[String]) { (parts, comp) =>
           if comp != ".." || (initial == 0 && parts.isEmpty) || parts.lastOption.contains("..")
-          then parts += comp
-          else if parts.nonEmpty then parts.dropRightInPlace(1)
+          then parts :+ comp
+          else parts.dropRight(1)
+        }
         val out = "/" * initial + parts.mkString("/")
         if out.isEmpty then "." else out
 
@@ -309,24 +269,24 @@ object Util:
 
   /** `fnmatch.translate`, without its `(?s:...)\Z` wrapper. */
   private def fnmatchRegex(pattern: String): String =
-    val out = StringBuilder()
-    var i = 0
-    while i < pattern.length do
-      pattern(i) match
-        case '*' => out ++= ".*"; i += 1
-        case '?' => out += '.'; i += 1
-        case '[' =>
-          var j = i + 1
-          if j < pattern.length && pattern(j) == '!' then j += 1
-          if j < pattern.length && pattern(j) == ']' then j += 1
-          while j < pattern.length && pattern(j) != ']' do j += 1
-          if j >= pattern.length then
-            out ++= "\\["
-            i += 1
-          else
-            val body = pattern.substring(i + 1, j).replace("\\", "\\\\")
-            val cls = if body.startsWith("!") then "^" + body.drop(1) else body
-            out ++= s"[$cls]"
-            i = j + 1
-        case c => out ++= java.util.regex.Pattern.quote(c.toString); i += 1
-    "(?s)" + out.toString
+    def at(i: Int, c: Char) = i < pattern.length && pattern(i) == c
+    // The `]` closing the set opened at `open`: a leading `!`, then a leading `]`, are its members.
+    def setEnd(open: Int): Option[Int] =
+      val afterBang = if at(open + 1, '!') then open + 2 else open + 1
+      val first = if at(afterBang, ']') then afterBang + 1 else afterBang
+      Option(pattern.indexOf(']', first)).filter(_ >= 0)
+    @tailrec def from(i: Int, out: Vector[String]): Vector[String] =
+      if i >= pattern.length then out
+      else
+        pattern(i) match
+          case '*' => from(i + 1, out :+ ".*")
+          case '?' => from(i + 1, out :+ ".")
+          case '[' =>
+            setEnd(i) match
+              case None    => from(i + 1, out :+ "\\[")
+              case Some(j) =>
+                val body = pattern.substring(i + 1, j).replace("\\", "\\\\")
+                val cls = if body.startsWith("!") then "^" + body.drop(1) else body
+                from(j + 1, out :+ s"[$cls]")
+          case c => from(i + 1, out :+ java.util.regex.Pattern.quote(c.toString))
+    "(?s)" + from(0, Vector.empty).mkString

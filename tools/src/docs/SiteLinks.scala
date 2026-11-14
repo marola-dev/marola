@@ -1,7 +1,7 @@
 package marola.tools.docs
 
 import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{Invocation, Util}
 
 import java.nio.file.{Files, InvalidPathException}
 import java.util.regex.{MatchResult, Pattern}
@@ -97,16 +97,17 @@ object SiteLinks:
       @arg(positional = true) siteDir: String,
       @arg(doc = "The live sitemap.xml, fetched before the build") oldSitemap: Option[String] = None
   ): Int =
-    val site = os.Path(siteDir, os.pwd)
+    val invocation = Invocation.current()
+    val site = invocation.path(siteDir)
     if !os.isDir(site) then
       System.err.println(s"site_links_check: no such directory: $siteDir")
       1
     else
       val hrefs = checkHrefs(site)
       val sitemap = oldSitemap.map { sitemap =>
-        val overrides = Util.repoRoot / Names.Mkdocs / Names.Overrides / Names.NotFoundPage
+        val overrides = invocation.repoRoot / Names.Mkdocs / Names.Overrides / Names.NotFoundPage
         val moves = readOrEmpty(overrides).map(forwardPrefixes).getOrElse(Vector.empty)
-        val xml = readOrEmpty(os.Path(sitemap, os.pwd)).getOrElse("")
+        val xml = readOrEmpty(invocation.path(sitemap)).getOrElse("")
         OldSitemap(sitemap, checkOldSitemap(site, xml, moves))
       }
       val verdict = SiteLinksVerdict(hrefs, sitemap)

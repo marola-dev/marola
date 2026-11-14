@@ -1,7 +1,6 @@
 package marola.tools.submodules
 
-import marola.tools.shared.Cli
-import marola.tools.shared.Proc
+import marola.tools.shared.{Cli, GitNames, Invocation, Proc}
 
 import mainargs.{arg, main, ParserForMethods}
 
@@ -14,27 +13,32 @@ import mainargs.{arg, main, ParserForMethods}
 // The checkouts are --depth=1, which is why this replays only HEAD (`--onto FETCH_HEAD HEAD~1`):
 // a plain rebase would also try to replay the shallow root, i.e. the whole old tree.
 object SiteDataPush:
-  def push(dir: String, proc: Proc, sleepSeconds: Int => Unit = s => Thread.sleep(s * 1000L)): Int =
+  def push(
+      run: PushRun,
+      proc: Proc,
+      sleepSeconds: Int => Unit = s => Thread.sleep(s * 1000L)
+  ): Int =
     Proc.exitCode {
-      val tries = Tries(proc.variable("SITE_DATA_PUSH_TRIES").getOrElse(Tries.Default))
-      val git = Seq("git", "-C", dir)
+      val PushRun(dir, tries, cwd) = run
+      def git(args: String*): Seq[String] = Seq("git", "-C", dir) ++ args
       def attempt(i: Int): Int =
-        if proc.status(os.pwd, git ++ Seq("push", "-q", "origin", "HEAD:site-data")*) == 0 then 0
+        if proc.status(cwd, git("push", "-q", GitNames.Origin, s"HEAD:${SiteData.Branch}")*) == 0
+        then 0
         else if tries.exhausted(i) then rejected(tries)
         else
           Proc.err(
             s"site-data-push: rejected (attempt $i/${tries.raw}), replaying onto the new tip"
           )
           sleepSeconds(tries.backoffSeconds(i))
-          proc.must(os.pwd, git ++ Seq("fetch", "-q", "--depth=1", "origin", "site-data")*)
+          proc.must(cwd, git("fetch", "-q", "--depth=1", GitNames.Origin, SiteData.Branch)*)
           // A failed rebase leaves HEAD on the other writer's commit, and pushing that "succeeds"
           // while dropping ours, so it has to stop here.
           val hasParent =
-            proc.quiet(os.pwd, git ++ Seq("rev-parse", "-q", "--verify", "HEAD~1")*) == 0
+            proc.quiet(cwd, git("rev-parse", "-q", "--verify", ReplayBase.Parent.arg)*) == 0
           val base = if hasParent then ReplayBase.Parent else ReplayBase.Root
-          if proc.status(os.pwd, git ++ Seq("rebase", "-q", "--onto", "FETCH_HEAD", base.arg)*) != 0
+          if proc.status(cwd, git("rebase", "-q", "--onto", GitNames.FetchHead, base.arg)*) != 0
           then
-            proc.call(os.pwd, git :+ "rebase" :+ "--abort", stderr = os.Pipe)
+            proc.call(cwd, git("rebase", "--abort"), stderr = os.Pipe)
             Proc.err("site-data-push: could not replay onto the new tip")
             1
           else attempt(i + 1)
@@ -52,6 +56,9 @@ object SiteDataPush:
     if checkout.isEmpty || checkout.startsWith("-") then
       Proc.err("usage: marola-tools site-data-push <site-data-worktree>")
       2
-    else push(checkout, Proc())
+    else
+      val invocation = Invocation.current()
+      val tries = Tries.from(invocation.env.get(Tries.EnvVar))
+      push(PushRun(checkout, tries, invocation.cwd), Proc())
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "site-data-push", args)

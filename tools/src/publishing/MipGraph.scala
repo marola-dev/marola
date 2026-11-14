@@ -1,7 +1,7 @@
 package marola.tools.publishing
 
 import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{Invocation, Util}
 
 import java.util.Locale
 import mainargs.{arg, main, Flag, ParserForMethods}
@@ -176,7 +176,7 @@ object MipGraph:
         "Can these two MIPs be worked in parallel? (--parallel MIP_A MIP_B)"
       ) parallel: Seq[Int]
   ): Int =
-    val config = Config.in(Util.repoRoot)
+    val config = Config.in(Invocation.current().repoRoot)
     parallel match
       case Seq()     => generate(config, check.value)
       case Seq(a, b) => parallelCheck(config.dir, a, b)

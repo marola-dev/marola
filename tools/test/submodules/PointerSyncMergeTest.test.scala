@@ -1,6 +1,6 @@
 package marola.tools.submodules
 
-import marola.tools.shared.Proc
+import marola.tools.shared.{Conclusion, Jq, Proc, RepoSlug, Sha}
 
 import java.io.{ByteArrayOutputStream, PrintStream}
 
@@ -129,14 +129,15 @@ esac
       val saved = System.out
       System.setOut(PrintStream(bytes, true))
       val code = try
-        runIn(
+        val run = MergeRun(
           RepoSlug("marola-dev/marola"),
           Option.when(sha.nonEmpty)(Sha(sha)),
           dryRun,
           work,
-          proc,
+          proc.variable(MergeRun.ReadTokenEnvVar).getOrElse(""),
           plan
         )
+        runIn(run, proc)
       finally System.setOut(saved)
       out = bytes.toString
       val calls = os.read(gh / "calls").stripLineEnd

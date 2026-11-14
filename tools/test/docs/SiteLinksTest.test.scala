@@ -1,6 +1,6 @@
 package marola.tools.docs
 
-import marola.tools.shared.Util
+import marola.tools.shared.Invocation
 
 class SiteLinksTest extends munit.FunSuite:
   import SiteLinks.*
@@ -14,7 +14,7 @@ class SiteLinksTest extends munit.FunSuite:
     val pairs = forwardPrefixes(html)
     assertEquals(pairs.map(_.from), Vector("/repos/marola-ml/api/", "/repos/", "/MIPs/", "/api/"))
     assertEquals(pairs.find(_.from == "/MIPs/").map(_.to), Some("/6-MIPs/"))
-    val real = os.read(Util.repoRoot / "mkdocs" / "overrides" / "404.html")
+    val real = os.read(Invocation.current().repoRoot / "mkdocs" / "overrides" / "404.html")
     assert(forwardPrefixes(real).nonEmpty, "the committed 404.html still parses")
 
   test("resolves"):

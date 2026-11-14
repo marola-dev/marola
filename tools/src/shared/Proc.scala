@@ -89,10 +89,14 @@ final case class Proc(
       case Proc.Result(0, dir) if dir.nonEmpty => os.Path(dir)
       case _                                   => cwd
 
-  /** `git config <source...> --get-regexp '^submodule\..*\.path$' || true` as (key, path) pairs. */
-  def submodulePaths(cwd: os.Path, source: String*): Vector[(String, String)] =
-    val cmd = Seq("git", "config") ++ source ++ Seq("--get-regexp", raw"^submodule\..*\.path$$")
-    Proc.lines(capture(cwd, cmd*).out).filter(_.nonEmpty).map(Proc.firstWordAndRest)
+  /** `git config <source...> --get-regexp '^submodule\..*\.path$' || true`. */
+  def submodules(cwd: os.Path, source: String*): Vector[Submodule] =
+    val cmd = Seq("git", "config") ++ source ++ Seq("--get-regexp", Submodule.PathKeyRegex)
+    Proc
+      .lines(capture(cwd, cmd*).out)
+      .filter(_.nonEmpty)
+      .map(Proc.firstWordAndRest)
+      .map(Submodule.fromConfig)
 
 object Proc:
   final case class Result(exitCode: Int, out: String)

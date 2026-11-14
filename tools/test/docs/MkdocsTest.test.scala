@@ -1,6 +1,6 @@
 package marola.tools.docs
 
-import marola.tools.shared.Util
+import marola.tools.shared.Invocation
 
 class MkdocsTest extends munit.FunSuite:
   import Mkdocs.*
@@ -13,27 +13,27 @@ class MkdocsTest extends munit.FunSuite:
     val bin = os.temp.dir()
     def path(extra: (String, String)*) = Map("PATH" -> bin.toString) ++ extra
     stub(bin, "podman", 0)
-    assertEquals(pickRuntime(MkdocsConfig.from(path())), Some("podman"))
+    assertEquals(pickRuntime(MkdocsConfig.from(path(), os.pwd)), Some("podman"))
     stub(bin, "docker", 0)
     assertEquals(
-      pickRuntime(MkdocsConfig.from(path("CONTAINER_RUNTIME" -> "docker"))),
+      pickRuntime(MkdocsConfig.from(path("CONTAINER_RUNTIME" -> "docker"), os.pwd)),
       Some("docker"),
       "CONTAINER_RUNTIME=docker skips a live podman"
     )
     stub(bin, "podman", 1)
     assertEquals(
-      pickRuntime(MkdocsConfig.from(path())),
+      pickRuntime(MkdocsConfig.from(path(), os.pwd)),
       Some("docker"),
       "a podman whose daemon does not answer is skipped"
     )
     stub(bin, "docker", 1)
     assertEquals(
-      pickRuntime(MkdocsConfig.from(path())),
+      pickRuntime(MkdocsConfig.from(path(), os.pwd)),
       None,
       "two installed-but-dead runtimes fail"
     )
     assertEquals(
-      pickRuntime(MkdocsConfig.from(Map("PATH" -> (bin / "empty").toString))),
+      pickRuntime(MkdocsConfig.from(Map("PATH" -> (bin / "empty").toString), os.pwd)),
       None,
       "neither installed fails too"
     )
@@ -51,7 +51,7 @@ class MkdocsTest extends munit.FunSuite:
     assertNotEquals(imageTag("/a/b/c"), imageTag("/a/b/d"))
     assertEquals(imageTag("/a/b/c"), "marola/mkdocs:146066531")
     assert(
-      os.read(Util.repoRoot / "mkdocs" / "docker-compose.yml")
+      os.read(Invocation.current().repoRoot / "mkdocs" / "docker-compose.yml")
         .contains("image: ${MKDOCS_IMAGE:-marola/mkdocs}")
     )
 
@@ -76,7 +76,7 @@ class MkdocsTest extends munit.FunSuite:
     assert(!os.exists(t / "dest" / "GONE.md"))
 
   test("mkdocs.yml and the image keep the keys the build depends on"):
-    val cfg = os.read.lines(Util.repoRoot / "mkdocs" / "mkdocs.yml")
+    val cfg = os.read.lines(Invocation.current().repoRoot / "mkdocs" / "mkdocs.yml")
     def lines(pattern: String) = cfg.count(_.matches(pattern))
     assertEquals(lines("""^ *server_url:.*"""), 1, "the 1.7.0 snake_case server_url")
     assertEquals(cfg.count(_.contains("http_method: POST")), 1, "SVGs are written into the output")
@@ -103,7 +103,10 @@ class MkdocsTest extends munit.FunSuite:
       0,
       "the font pin runs on the staged copy, not as a hook (#511)"
     )
-    assert(os.read(Util.repoRoot / "mkdocs" / "Dockerfile").contains("mkdocs-redirects==1.2.2"))
+    assert(
+      os.read(Invocation.current().repoRoot / "mkdocs" / "Dockerfile")
+        .contains("mkdocs-redirects==1.2.2")
+    )
     assertEquals(
       servePath(cfg.mkString("\n")),
       "/",
@@ -203,7 +206,7 @@ class MkdocsTest extends munit.FunSuite:
     "a build runs the stack, reads the container's exit code back, copies the site out, then downs it"
   ):
     withFakeRuntime("0") { (root, env, log) =>
-      assertEquals(runMode(Mode.Build, root, MkdocsConfig.from(env)), 0)
+      assertEquals(runMode(Mode.Build, root, MkdocsConfig.from(env, os.pwd)), 0)
       val compose =
         s"docker compose -p ${projectName(root.toString)} -f docker-compose.yml -f docker-compose.build.yml"
       val suffix = s" | cwd=mkdocs image=${imageTag(root.toString)}"
@@ -230,7 +233,7 @@ class MkdocsTest extends munit.FunSuite:
 
   test("a failed build exits with the container's code, and still downs the stack"):
     withFakeRuntime("3") { (root, env, log) =>
-      assertEquals(runMode(Mode.Build, root, MkdocsConfig.from(env)), 3)
+      assertEquals(runMode(Mode.Build, root, MkdocsConfig.from(env, os.pwd)), 3)
       assert(
         os.read.lines(log).last.contains("compose") && os.read.lines(log).last.contains(" down ")
       )
@@ -243,7 +246,7 @@ class MkdocsTest extends munit.FunSuite:
         runMode(
           Mode.Build,
           root,
-          MkdocsConfig.from(env + ("CONTAINER_RUNTIME" -> "no-such-runtime"))
+          MkdocsConfig.from(env + ("CONTAINER_RUNTIME" -> "no-such-runtime"), os.pwd)
         ),
         1
       )

@@ -1,12 +1,12 @@
 package marola.tools.ci
 
-import marola.tools.shared.Util
+import marola.tools.shared.{Invocation, Jq}
 
 class GhBillingTest extends munit.FunSuite:
   import GhBilling.*
 
   private val fixture =
-    os.read(Util.repoRoot / "tools" / "test" / "fixtures" / "gh-billing-usage.json")
+    os.read(Invocation.current().repoRoot / "tools" / "test" / "fixtures" / "gh-billing-usage.json")
 
   // The table for the fixture with --from-file.
   private val fixtureTable =

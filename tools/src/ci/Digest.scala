@@ -1,14 +1,13 @@
 package marola.tools.ci
 
 import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{GitHubNames, Invocation, Util}
 
 import mainargs.{arg, main, Flag, ParserForMethods}
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import java.time.{Duration, Instant, ZoneOffset}
-import java.time.format.DateTimeFormatter
+import java.time.{Clock, Duration}
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.{Element, Node}
 
@@ -60,14 +59,17 @@ object Digest:
       }
 
     /** Cache every item not seen before, then rewrite the index; returns how many were new. */
-    def store(found: Seq[Hit[ujson.Obj]], now: () => String = nowIso): Either[String, Int] =
+    def store(found: Seq[Hit[ujson.Obj]], now: () => String): Either[String, Int] =
       val already = cachedIds
       val fresh = found.filterNot(hit => already(hit.id))
       for hit <- fresh do
-        val record = ujson.Obj.from(hit.item.value)
-        record(RecordField.MatchedQueries) = hit.matched.map(_.label)
-        record(RecordField.RelevanceScore) = hit.relevanceScore
-        record(RecordField.FetchedAt) = now()
+        val record = ujson.Obj.from(
+          hit.item.value.toSeq ++ Seq[(String, ujson.Value)](
+            RecordField.MatchedQueries -> hit.matched.map(_.label),
+            RecordField.RelevanceScore -> hit.relevanceScore,
+            RecordField.FetchedAt -> now()
+          )
+        )
         os.write.over(
           itemsDir / s"${hit.id}.json",
           Util.dumps(record, indent = Some(2), ensureAscii = false)
@@ -80,12 +82,6 @@ object Digest:
 
   def arxivStore(root: os.Path): Store = storeOf(DigestKind.Papers, root)
   def awesomeStore(root: os.Path): Store = storeOf(DigestKind.Repos, root)
-
-  private val IsoMicros =
-    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'+00:00'").withZone(ZoneOffset.UTC)
-
-  /** Now in UTC as ISO 8601 with microseconds and `+00:00`, the format the cached records carry. */
-  def nowIso(): String = IsoMicros.format(Instant.now())
 
   /** Every run of Unicode White_Space as one space, none at the ends. */
   private def squash(s: String): String =
@@ -194,9 +190,10 @@ object Digest:
   /** Each candidate found once per query, deduplicated, then cached. */
   private def cache[A <: Candidate](
       store: Store,
-      found: Seq[Match[A]]
+      found: Seq[Match[A]],
+      now: () => String
   ): Either[String, Int] =
-    store.store(Hit.collect(found).map(_.map(_.toJson)))
+    store.store(Hit.collect(found).map(_.map(_.toJson)), now)
 
   private def summary(
       kind: DigestKind,
@@ -216,7 +213,7 @@ object Digest:
     )
 
   def arxiv(config: DigestConfig): Either[String, Unit] =
-    val DigestConfig(root, maxResults, asJson) = config
+    val DigestConfig(root, maxResults, asJson, _) = config
     val store = arxivStore(root)
     store.init()
     val fetched = ArxivQueries.map { q =>
@@ -239,13 +236,13 @@ object Digest:
       papers <- parsed
         .collectFirst { case Left(e) => e }
         .toLeft(parsed.collect { case Right(p) => p }.flatten)
-      fresh <- cache(store, papers)
+      fresh <- cache(store, papers, config.now)
     yield print(
       summary(DigestKind.Papers, store, ArxivQueries.length, errors, fresh).render(asJson)
     )
 
   def awesome(config: DigestConfig): Either[String, Unit] =
-    val DigestConfig(root, maxResults, asJson) = config
+    val DigestConfig(root, maxResults, asJson, _) = config
     val store = awesomeStore(root)
     store.init()
     val fetched =
@@ -271,7 +268,7 @@ object Digest:
       repos <- parsed
         .collectFirst { case Left(e) => e }
         .toLeft(parsed.collect { case Right(r) => r }.flatten)
-      fresh <- cache(store, repos)
+      fresh <- cache(store, repos, config.now)
     yield print(summary(DigestKind.Repos, store, total, errors, fresh).render(asJson))
 
   object ArxivCommand:
@@ -280,7 +277,11 @@ object Digest:
         @arg(doc = "Papers per query") maxResults: Int = DefaultMaxResults,
         @arg(doc = "Print the summary as JSON") json: Flag
     ): Int =
-      Cli.report(arxiv(DigestConfig(Util.repoRoot, maxResults, json.value)))
+      Cli.report(
+        arxiv(
+          DigestConfig(Invocation.current().repoRoot, maxResults, json.value, Clock.systemUTC())
+        )
+      )
 
   object AwesomeCommand:
     @main(doc = "Cache GitHub repo candidates for AWESOME-AGENTIC-ENGINEERING.md (MIP-0043)")
@@ -288,7 +289,11 @@ object Digest:
         @arg(doc = "Repos per query and sort") maxResults: Int = DefaultMaxResults,
         @arg(doc = "Print the summary as JSON") json: Flag
     ): Int =
-      Cli.report(awesome(DigestConfig(Util.repoRoot, maxResults, json.value)))
+      Cli.report(
+        awesome(
+          DigestConfig(Invocation.current().repoRoot, maxResults, json.value, Clock.systemUTC())
+        )
+      )
 
   def arxivCli(args: Seq[String]): Int =
     Cli.run(ParserForMethods(ArxivCommand), "arxiv-digest", args)

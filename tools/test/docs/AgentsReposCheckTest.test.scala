@@ -1,6 +1,6 @@
 package marola.tools.docs
 
-import marola.tools.shared.Util
+import marola.tools.shared.Invocation
 
 class AgentsReposCheckTest extends munit.FunSuite:
   import AgentsReposCheck.*
@@ -11,7 +11,7 @@ class AgentsReposCheckTest extends munit.FunSuite:
   private def exitCode(text: String): Int =
     val file = os.temp.dir() / "AGENTS.md"
     os.write(file, text)
-    check(file.toString)
+    check(file, file.toString)
 
   test("table row fails: a table row naming a repo"):
     val text =
@@ -73,7 +73,8 @@ class AgentsReposCheckTest extends munit.FunSuite:
     )
 
   test("a missing file is exit 2"):
-    assertEquals(check((os.temp.dir() / "nope.md").toString), 2)
+    val nope = os.temp.dir() / "nope.md"
+    assertEquals(check(nope, nope.toString), 2)
 
   test("the committed AGENTS.md passes"):
-    assertEquals(findings("AGENTS.md", os.read(Util.repoRoot / "AGENTS.md")), Nil)
+    assertEquals(findings("AGENTS.md", os.read(Invocation.current().repoRoot / "AGENTS.md")), Nil)

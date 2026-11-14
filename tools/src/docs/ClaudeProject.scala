@@ -1,7 +1,6 @@
 package marola.tools.docs
 
-import marola.tools.shared.Cli
-import marola.tools.shared.Util
+import marola.tools.shared.{Cli, Invocation}
 
 import mainargs.{main, ParserForMethods}
 
@@ -11,9 +10,8 @@ import mainargs.{main, ParserForMethods}
 object ClaudeProject:
   def check(text: String): Vector[String] = ProjectConfig.check(text).map(_.message)
 
-  @main(doc = "CLAUDE_PROJECT.config.md has its sections and routines, and leaks no id")
-  def run(): Int =
-    val path = Util.repoRoot / "CLAUDE_PROJECT.config.md"
+  /** The exit code for the file at `path`, every problem on stderr. */
+  def checkFile(path: os.Path): Int =
     if !os.exists(path) then
       System.err.println(s"claude_project_check: $path: No such file or directory")
       1
@@ -21,5 +19,8 @@ object ClaudeProject:
       val errors = check(os.read(path))
       errors.foreach(e => System.err.println(s"claude_project_check: $e"))
       if errors.isEmpty then 0 else 1
+
+  @main(doc = "CLAUDE_PROJECT.config.md has its sections and routines, and leaks no id")
+  def run(): Int = checkFile(Invocation.current().repoRoot / ProjectConfig.File)
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "claude-project-check", args)

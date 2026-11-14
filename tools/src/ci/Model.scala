@@ -1,38 +1,16 @@
 package marola.tools.ci
 
-import marola.tools.shared.Util
+import marola.tools.shared.{Conclusion, GitHubNames, Jq, RepoSlug, Util}
 
 import java.math.{BigDecimal as JBigDecimal, RoundingMode}
+import java.time.{Clock, Instant, ZoneOffset}
+import java.time.format.DateTimeFormatter
 
 // The ci context's domain: workflow runs and the README badges (repo-stats), the billing usage
 // report (gh-billing), and the research digests' candidates (arxiv-digest,
 // awesome-agentic-digest). Decoding and files are the commands' business, not this file's.
 
 // ---- workflow runs and badges ---------------------------------------------------------------
-
-/** A job's or a step's conclusion, under the name the Actions API gives it. */
-enum Conclusion:
-  case Success, Failure, Cancelled, TimedOut, Skipped, Neutral
-  case Unknown(raw: String)
-
-  def wire: String = this match
-    case Success      => "success"
-    case Failure      => "failure"
-    case Cancelled    => "cancelled"
-    case TimedOut     => "timed_out"
-    case Skipped      => "skipped"
-    case Neutral      => "neutral"
-    case Unknown(raw) => raw
-
-  /** A step that reached one of these actually executed; the rest are not evidence either way. */
-  def ran: Boolean = this match
-    case Success | Failure | Cancelled | TimedOut => true
-    case Skipped | Neutral | Unknown(_)           => false
-
-object Conclusion:
-  private val known = Seq(Success, Failure, Cancelled, TimedOut, Skipped, Neutral)
-
-  def parse(raw: String): Conclusion = known.find(_.wire == raw).getOrElse(Unknown(raw))
 
 /** A null conclusion is a step still queued or running. */
 final case class Step(conclusion: Option[Conclusion])
@@ -155,7 +133,7 @@ object RepoStatsSettings:
   val Cloc = "cloc"
   val Language = "Scala" // cloc's name for it
   val TestsJob = "tools-ci" // ci.yml's munit job
-  val DefaultRepo = "marola-dev/marola"
+  val DefaultRepo: RepoSlug = RepoSlug.inOrg("marola")
   val DefaultRoot = "."
 
 /** One `repo-stats write` run, as the command line gave it. */
@@ -164,17 +142,10 @@ final case class RepoStatsConfig(
     outPath: os.Path,
     root: os.Path,
     cwd: os.Path, // where gh runs
-    repo: String,
+    repo: RepoSlug,
     runId: Option[String],
     excludeJob: Option[String]
 )
-
-/** The GitHub names the commands use: the REST media type, the web host and its URL. */
-object GitHubNames:
-  val Cli = "gh"
-  val JsonMediaType = "application/vnd.github+json"
-  val Host = "github.com"
-  val Web = s"https://$Host"
 
 // ---- billing usage --------------------------------------------------------------------------
 
@@ -182,8 +153,7 @@ object GitHubNames:
 final case class JqValue(json: ujson.Value):
   /** jq's `@tsv` of the value. */
   def tsv: String = json match
-    case ujson.Str(s) =>
-      s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
+    case ujson.Str(s)  => Jq.tsvString(s)
     case ujson.Null    => ""
     case ujson.Num(n)  => Jq.number(n)
     case ujson.Bool(b) => b.toString
@@ -263,7 +233,7 @@ object BillingNames:
   val LoginPlaceholder = "{username}"
 
   // gh prefers either over its keyring, first match first.
-  val TokenEnvVars = Seq("GH_TOKEN", "GITHUB_TOKEN")
+  val TokenEnvVars = Seq(GitHubNames.GhTokenEnvVar, GitHubNames.GithubTokenEnvVar)
 
 /** Where a report comes from: a saved response, stdin, the live API, or nowhere (--dry-run). */
 enum BillingSource:
@@ -392,28 +362,6 @@ enum TokenScopes:
 object TokenScopes:
   val Prefix = "Token scopes:"
   val NoneWord = "none"
-
-/** Numbers as jq 1.7 computes and prints them. */
-object Jq:
-  /** `.*100|round/100|tostring`: round half away from zero, as C's round. */
-  def money(amount: Double): String =
-    number(JBigDecimal(amount * 100).setScale(0, RoundingMode.HALF_UP).doubleValue / 100)
-
-  /** Shortest digits, exponent past 17 digits or below 1e-4. */
-  def number(n: Double): String =
-    if n == 0 then (if 1 / n < 0 then "-0" else "0")
-    else
-      val exact = JBigDecimal(java.lang.Double.toString(math.abs(n))).stripTrailingZeros
-      val digits = exact.unscaledValue.toString
-      val pointAt = digits.length - exact.scale // digits before the decimal point
-      val sign = if n < 0 then "-" else ""
-      if pointAt <= -4 || pointAt > digits.length + 15 then
-        val mantissa = if digits.length == 1 then digits else s"${digits.head}.${digits.tail}"
-        val exponent = pointAt - 1
-        sign + mantissa + f"e${if exponent < 0 then "-" else "+"}${math.abs(exponent)}%02d"
-      else if pointAt <= 0 then s"${sign}0.${"0" * -pointAt}$digits"
-      else if pointAt >= digits.length then sign + digits + "0" * (pointAt - digits.length)
-      else s"$sign${digits.take(pointAt)}.${digits.drop(pointAt)}"
 
 // ---- research digests -----------------------------------------------------------------------
 
@@ -598,8 +546,16 @@ object DigestSources:
 
   val DefaultMaxResults = 5
 
-/** One digest run: the repo root its cache lives under, and the command line. */
-final case class DigestConfig(root: os.Path, maxResults: Int, asJson: Boolean)
+/** One digest run: the repo root its cache lives under, the command line, and the clock each new
+  * record's `fetched_at` is read from.
+  */
+final case class DigestConfig(root: os.Path, maxResults: Int, asJson: Boolean, clock: Clock):
+  def now(): String = DigestConfig.IsoMicros.format(Instant.now(clock))
+
+object DigestConfig:
+  /** ISO 8601 in UTC with microseconds and `+00:00`, the format the cached records carry. */
+  val IsoMicros: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'+00:00'").withZone(ZoneOffset.UTC)
 
 /** One digest run, as it reports itself. */
 final case class DigestSummary(

@@ -2,7 +2,7 @@ package marola.tools.docs
 
 import marola.tools.shared.Cli
 import marola.tools.shared.Proc
-import marola.tools.shared.Util
+import marola.tools.shared.Invocation
 
 import mainargs.{main, Flag, ParserForMethods}
 import SiteModel.*
@@ -19,7 +19,7 @@ object Mkdocs:
   def pickRuntime(config: MkdocsConfig): Option[String] =
     val proc = Proc.exact(config.env)
     config.runtimes.find { runtime =>
-      proc.which(runtime, os.pwd).isDefined && proc.quiet(os.pwd, runtime, "info") == 0
+      proc.which(runtime, config.cwd).isDefined && proc.quiet(config.cwd, runtime, "info") == 0
     }
 
   // mkdocs reads one tree, so docs are copied in rather than symlinked, and then baked into the
@@ -174,10 +174,11 @@ object Mkdocs:
 
   @main(doc = "Build or serve the documentation site in its container (MIP-0064)")
   def run(serve: Flag): Int =
+    val invocation = Invocation.current()
     runMode(
       if serve.value then Mode.Serve else Mode.Build,
-      Util.repoRoot,
-      MkdocsConfig.from(sys.env)
+      invocation.repoRoot,
+      MkdocsConfig.from(invocation.env, invocation.cwd)
     )
 
   def cli(args: Seq[String]): Int = Cli.run(ParserForMethods(this), "mkdocs", args)

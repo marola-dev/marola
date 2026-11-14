@@ -24,15 +24,15 @@ class StripScriptsTest extends munit.FunSuite:
   test("check tree"):
     val dir = os.temp.dir()
     os.write(dir / "clean.html", "<html><body>no scripts</body></html>")
-    assertEquals(check(Seq(dir.toString)), 0)
+    assertEquals(check(Seq(dir.toString), os.pwd), 0)
     os.write(
       dir / "doc.html",
       """<html><body><code>EXTERNAL_SCRIPT = &lt;script src="https://x/a.js"&gt;</code>""" +
         """<p>strips &lt;script src=&quot;https://...&quot;&gt; tags</p></body></html>"""
     )
-    assertEquals(check(Seq(dir.toString)), 0, "docs about script tags are not one")
+    assertEquals(check(Seq(dir.toString), os.pwd), 0, "docs about script tags are not one")
     os.write(
       dir / "real.html",
       """<html><head><script src="https://d3js.org/d3.v6.min.js"></script></head></html>"""
     )
-    assertEquals(check(Seq(dir.toString)), 1, "a real external script is caught")
+    assertEquals(check(Seq(dir.toString), os.pwd), 1, "a real external script is caught")
