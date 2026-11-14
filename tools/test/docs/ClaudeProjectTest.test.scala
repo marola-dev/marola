@@ -4,6 +4,7 @@ import marola.tools.shared.Util
 
 class ClaudeProjectTest extends munit.FunSuite:
   import ClaudeProject.*
+  import ProjectConfig.{Banner, Sections}
 
   private val good =
     val g = s"> An agent $Banner.\n" + Sections.map(s => s"\n## $s\n\nx\n").mkString
@@ -29,6 +30,25 @@ class ClaudeProjectTest extends munit.FunSuite:
     val leaked = check(s"${good}ping someone@example.org\n")
     assert(leaked.length == 1 && leaked.head.contains("e-mail"), leaked)
     assertEquals(check(s"${good}wakes session_01ExampleExampleExample00\n").length, 1)
+
+  test("each routine block, and what it lacks"):
+    val text = good.replace("```text\nhi\n```", "hi")
+    assertEquals(ProjectConfig.routines(text), Vector(ProjectRoutine("A", true, false)))
+    assertEquals(
+      ProjectRoutine.of("B\n\nnothing\n").errors,
+      Vector(ProjectConfigError.NoCron("B"), ProjectConfigError.NoPromptBlock("B"))
+    )
+
+  test("each error's message"):
+    assertEquals(ProjectConfigError.NoCron("B").message, "routine 'B': no cron")
+    assertEquals(
+      ProjectConfigError.MissingSection("1. Project").message,
+      "no section '## 1. Project'"
+    )
+    assertEquals(
+      ProjectConfigError.Leak("a@b.c").message,
+      "'a@b.c' looks like an e-mail or an id"
+    )
 
   test("the committed file passes"):
     assertEquals(check(os.read(Util.repoRoot / "CLAUDE_PROJECT.config.md")), Vector.empty)

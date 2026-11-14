@@ -10,27 +10,9 @@ import mainargs.{arg, main, Leftover, ParserForMethods}
 //
 //     marola-tools agents-repos-check [AGENTS.md]   # default: the repo root's
 object AgentsReposCheck:
-  val ReposPage = "docs/2-Building-marola/REPOS.md"
-
-  private val TableRow = """^\| \[?marola-(app|site|corpus|ml|oods|devkit)""".r
-  private val PinFile = """marola-image|corpus\.version|resources\.version""".r
-
   /** Each finding about `text`, shown under the name `file`. */
   def findings(file: String, text: String): Seq[String] =
-    val lines = text.split("\n", -1).toSeq.zipWithIndex.map((line, i) => (i + 1, line))
-    val rows = lines.collect { case (n, line) if TableRow.findFirstIn(line).isDefined => n }
-    val pins = lines.flatMap((n, line) => PinFile.findAllIn(line).map(m => s"$n:$m"))
-    Seq(
-      Option.when(rows.nonEmpty)(
-        s"agents_repos_check: $file:${rows.mkString(",")}: a repo table row; it belongs in $ReposPage"
-      ),
-      Option.when(pins.nonEmpty)(
-        s"agents_repos_check: $file: names a pin file (${pins.mkString(" ")}); it belongs in $ReposPage"
-      ),
-      Option.when(!text.contains(s"]($ReposPage"))(
-        s"agents_repos_check: $file does not link $ReposPage"
-      )
-    ).flatten
+    AgentsFinding.of(text).map(_.render(file))
 
   /** 0 clean, 1 with findings (printed on stdout), 2 when the file is missing. */
   def check(file: String): Int =

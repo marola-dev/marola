@@ -17,13 +17,13 @@ class FigureTest extends munit.FunSuite:
     )
 
   test("the drawing's size, its whole part, and the crop around the measured box"):
-    assertEquals(viewBoxSize(page), Some(("640.5", "480")))
+    assertEquals(viewBoxSize(page), Some(DrawingSize("640.5", "480")))
     assertEquals(viewBoxSize("<svg width=\"1\">"), None)
     assertEquals(whole("640.5"), "640")
     assertEquals(whole("480"), "480")
-    assertEquals(bbox("<title>BBOX 10 -20 300 200</title>"), Some(Seq(10, -20, 300, 200)))
+    assertEquals(bbox("<title>BBOX 10 -20 300 200</title>"), Some(BBox(10, -20, 300, 200)))
     assertEquals(bbox("<title>nothing</title>"), None)
-    assertEquals(crop(Seq(10, -20, 300, 200)), (-14, -44, 338, 268))
+    assertEquals(crop(BBox(10, -20, 300, 200)), CropBox(-14, -44, 338, 268))
     assert(
       sizeStyle("1", "2").startsWith(
         "<style>.diagram-container svg{width:1px!important;height:2px!important;"
@@ -37,6 +37,39 @@ class FigureTest extends munit.FunSuite:
     )
     assertEquals(deliverErrors("""{"diagnostics":[],"error":"bad type"}"""), Seq("bad type"))
     assertEquals(deliverErrors("""{"ok":true}"""), Seq("null"))
+    assertEquals(deliverErrors("not json"), Nil)
+    assertEquals(
+      deliverReport("""{"diagnostics":{"a":{"message":false}},"error":{"k":1}}"""),
+      Some(DeliverReport(Nil, "{\n  \"k\": 1\n}"))
+    )
+
+  test("a report's errors are its messages, else its error"):
+    assertEquals(DeliverReport(Seq("a"), "e").errors, Seq("a"))
+    assertEquals(DeliverReport(Nil, "e").errors, Seq("e"))
+
+  test("a box missing numbers is padded with 0; one that is not a number is none"):
+    assertEquals(bbox("BBOX 1 2"), Some(BBox(1, 2, 0, 0)))
+    assertEquals(bbox("BBOX 1 - 2"), None)
+
+  test("a box grown by a pad, and its viewBox"):
+    assertEquals(BBox(0, 0, 10, 20).grow(5), CropBox(-5, -5, 20, 30))
+    assertEquals(CropBox(-5, -5, 20, 30).viewBox, "-5 -5 20 30")
+
+  test("the source's diagram type, verbatim"):
+    assertEquals(archifySource("""{"diagram_type":"flow"}"""), ArchifySource("flow"))
+    assertEquals(archifySource("""{"diagram_type":3}"""), ArchifySource("3"))
+    assertEquals(archifySource("""{}"""), ArchifySource("null"))
+    assertEquals(archifySource(""), ArchifySource(""))
+
+  test("the tools from the environment, and the work directory from the PNG"):
+    assertEquals(
+      FigureTools.from(Map("CHROME" -> "", "CHROME_FLAGS" -> " --a  --b ")),
+      FigureTools(".tmp/archify", "google-chrome", Seq("--a", "--b"))
+    )
+    assertEquals(FigureTools.from(Map("ARCHIFY" -> "x", "CHROME" -> "c")).archify, "x")
+    assertEquals(FigureWork.of("docs/img/x.png").dir, ".tmp/figure/x")
+    assertEquals(FigureWork.of("a/.png"), FigureWork(".png"))
+    assertEquals(FigureWork.of("a/b.svg/"), FigureWork("b.svg"))
 
   test("draw: Archify, a measuring shot, then the cropped picture"):
     val t = os.temp.dir(prefix = "figure")

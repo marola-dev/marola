@@ -1,7 +1,7 @@
 package marola.tools.docs
 
 class MermaidFontTest extends munit.FunSuite:
-  import MermaidFont.*
+  import MermaidFence.{pin as pinMermaidFont, InitLine}
 
   private val sample = """# Sample
     |
@@ -44,3 +44,15 @@ class MermaidFontTest extends munit.FunSuite:
   test("idempotent"):
     val once = pinMermaidFont(sample)
     assertEquals(pinMermaidFont(once), once)
+
+  test("a fence needs the pin when it is Mermaid and does not start with it"):
+    assert(MermaidFence("", " Mermaid ", "a\n").needsPin)
+    assert(!MermaidFence("", "mermaid", s"$InitLine\na\n").needsPin)
+    assert(!MermaidFence("", "markdown", "a\n").needsPin)
+    assertEquals(MermaidFence("  ", "mermaid", "a\n").pinnedCode, s"  $InitLine\na\n")
+
+  test("the pages pinned, summed and reported"):
+    assertEquals(
+      (PinnedPages(2) + PinnedPages(1)).summary,
+      "mermaid-font: pinned the Mermaid font in 3 page(s)"
+    )

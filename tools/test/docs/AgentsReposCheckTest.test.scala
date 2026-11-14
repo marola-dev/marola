@@ -4,6 +4,7 @@ import marola.tools.shared.Util
 
 class AgentsReposCheckTest extends munit.FunSuite:
   import AgentsReposCheck.*
+  import AgentsFinding.ReposPage
 
   private val link = s"The repos, their artifacts and pins: [REPOS.md]($ReposPage)."
 
@@ -54,6 +55,21 @@ class AgentsReposCheckTest extends munit.FunSuite:
         s"agents_repos_check: A:3,4: a repo table row; it belongs in $ReposPage",
         s"agents_repos_check: A: names a pin file (2:marola-image 2:resources.version); it belongs in $ReposPage"
       )
+    )
+
+  test("the findings as values, in order"):
+    assertEquals(
+      AgentsFinding.of("| marola-app |\nmarola-image\n"),
+      Seq(
+        AgentsFinding.RepoTableRows(Seq(1)),
+        AgentsFinding.PinFiles(Seq(PinHit(2, "marola-image"))),
+        AgentsFinding.NoReposLink
+      )
+    )
+    assertEquals(AgentsFinding.of(link), Nil)
+    assertEquals(
+      AgentsFinding.NoReposLink.render("F"),
+      s"agents_repos_check: F does not link $ReposPage"
     )
 
   test("a missing file is exit 2"):

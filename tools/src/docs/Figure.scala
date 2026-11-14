@@ -11,6 +11,9 @@ import mainargs.{arg, main, ParserForMethods}
 // CHROME_FLAGS extra flags. Paths are relative to the working directory.
 //
 //     marola-tools figure SRC.json OUT.png
+//
+// Trap: `just _figure-lock` hashes this file, not ContentModel.scala, so what changes the pixels
+// (the fonts, the measuring script, the pad, the frame) stays here.
 object Figure:
   val Fonts =
     """<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fjalla+One&family=Inter:wght@400;600&display=block">"""
@@ -38,50 +41,61 @@ object Figure:
       java.util.regex.Matcher.quoteReplacement(s"""<svg viewBox="$viewBox"""")
     )
 
-  /** The width and height of the page's first `<svg viewBox="0 0 W H">`. */
-  def viewBoxSize(page: String): Option[(String, String)] =
-    """<svg viewBox="[^"]*"""".r.findFirstIn(page).flatMap { tag =>
-      """.*0 0 ([0-9.]+) ([0-9.]+)"""".r.findFirstMatchIn(tag).map(m => (m.group(1), m.group(2)))
-    }
-
   /** `${w%.*}`: a size without its decimals. */
   def whole(size: String): String =
     val dot = size.lastIndexOf('.')
     if dot < 0 then size else size.take(dot)
 
-  /** The BBOX the measuring page wrote into its title: x0 y0 x1 y1. */
-  def bbox(dom: String): Option[Seq[Int]] =
+  /** The crop: the box grown by Pad on every side. */
+  def crop(box: BBox): CropBox = box.grow(Pad)
+
+  /** The size in the page's first `<svg viewBox="0 0 W H">`. */
+  def viewBoxSize(page: String): Option[DrawingSize] =
+    """<svg viewBox="[^"]*"""".r.findFirstIn(page).flatMap { tag =>
+      """.*0 0 ([0-9.]+) ([0-9.]+)"""".r
+        .findFirstMatchIn(tag)
+        .map(m => DrawingSize(m.group(1), m.group(2)))
+    }
+
+  /** The BBOX the measuring page wrote into its title: x0 y0 x1 y1, a missing one 0. */
+  def bbox(dom: String): Option[BBox] =
     """BBOX [-0-9 ]*""".r.findFirstIn(dom).flatMap { found =>
       val numbers =
         found.drop("BBOX ".length).trim.split(" +").filter(_.nonEmpty).take(4).map(_.toIntOption)
-      Option.when(numbers.forall(_.isDefined))(numbers.flatten.toSeq.padTo(4, 0))
+      Option.when(numbers.forall(_.isDefined)) {
+        val Seq(x0, y0, x1, y1) = numbers.flatten.toSeq.padTo(4, 0): @unchecked
+        BBox(x0, y0, x1, y1)
+      }
     }
 
-  /** The crop: the box grown by Pad on every side, as x0 y0 width height. */
-  def crop(box: Seq[Int]): (Int, Int, Int, Int) =
-    val Seq(x0, y0, x1, y1) = box: @unchecked
-    val (left, top) = (x0 - Pad, y0 - Pad)
-    (left, top, x1 - left + Pad, y1 - top + Pad)
-
-  /** What deliver.json says went wrong: each diagnostic's message, or else its `error`. */
-  def deliverErrors(json: String): Seq[String] =
+  /** deliver.json's diagnostics and error, a value that is not a string written as JSON. */
+  def deliverReport(json: String): Option[DeliverReport] =
     def raw(value: ujson.Value) = value.strOpt.getOrElse(ujson.write(value, indent = 2))
-    scala.util.Try(ujson.read(json)).toOption.toSeq.flatMap { result =>
+    scala.util.Try(ujson.read(json)).toOption.map { result =>
       val diagnostics = result.objOpt.flatMap(_.get("diagnostics")).toSeq.flatMap {
         case ujson.Arr(items) => items.toSeq
         case ujson.Obj(items) => items.values.toSeq
         case _                => Nil
       }
       val messages = diagnostics.flatMap(_.objOpt).flatMap(_.get("message")).filter(truthy).map(raw)
-      if messages.nonEmpty then messages
-      else Seq(raw(result.objOpt.flatMap(_.get("error")).getOrElse(ujson.Null)))
+      DeliverReport(messages, raw(result.objOpt.flatMap(_.get("error")).getOrElse(ujson.Null)))
     }
+
+  /** What deliver.json says went wrong: each diagnostic's message, or else its `error`. */
+  def deliverErrors(json: String): Seq[String] = deliverReport(json).toSeq.flatMap(_.errors)
 
   private def truthy(value: ujson.Value) = value != ujson.Null && value != ujson.False
 
-  private def basenamePng(png: String): String =
-    val name = png.split('/').filter(_.nonEmpty).lastOption.getOrElse(png)
-    if name != ".png" && name.endsWith(".png") then name.dropRight(4) else name
+  /** The source's `diagram_type`, empty when the source is not JSON. */
+  def archifySource(json: String): ArchifySource =
+    ArchifySource(
+      scala.util
+        .Try(ujson.read(json))
+        .toOption
+        .map(source => source.objOpt.flatMap(_.get("diagram_type")).getOrElse(ujson.Null))
+        .map(value => value.strOpt.getOrElse(ujson.write(value)))
+        .getOrElse("")
+    )
 
   // `realpath -m`: absolute, its directory's symlinks resolved, the file itself may not exist yet.
   private def realpath(path: os.Path): String =
@@ -90,10 +104,8 @@ object Figure:
       .getOrElse(path.toString)
 
   def draw(src: String, png: String, env: Map[String, String], cwd: os.Path): Int =
-    val archify = env.get("ARCHIFY").filter(_.nonEmpty).getOrElse(".tmp/archify")
-    val chrome = env.get("CHROME").filter(_.nonEmpty).getOrElse("google-chrome")
-    val chromeFlags = env.get("CHROME_FLAGS").toSeq.flatMap(_.split("""\s+""")).filter(_.nonEmpty)
-    val outRel = s".tmp/figure/${basenamePng(png)}"
+    val tools = FigureTools.from(env)
+    val outRel = FigureWork.of(png).dir
     val out = os.Path(outRel, cwd)
     os.remove.all(out)
     os.makeDir.all(out)
@@ -104,7 +116,7 @@ object Figure:
       val command = Seq(
         "timeout",
         "120",
-        chrome,
+        tools.chrome,
         "--headless",
         "--disable-gpu",
         "--hide-scrollbars",
@@ -112,24 +124,19 @@ object Figure:
         "--force-device-scale-factor=2",
         s"--window-size=$width,$height",
         "--virtual-time-budget=5000"
-      ) ++ chromeFlags ++ args
+      ) ++ tools.chromeFlags ++ args
       proc.call(cwd, command, stdout, os.Pipe)
 
-    val diagramType = scala.util
-      .Try(ujson.read(os.read(os.Path(src, cwd))))
-      .toOption
-      .map(source => source.objOpt.flatMap(_.get("diagram_type")).getOrElse(ujson.Null))
-      .map(value => value.strOpt.getOrElse(ujson.write(value)))
-      .getOrElse("")
+    val source = archifySource(scala.util.Try(os.read(os.Path(src, cwd))).getOrElse(""))
     val deliver = Proc
       .exact(env + ("ARCHIFY_UPDATE_CHECK_DISABLED" -> "1"))
       .call(
         cwd,
         Seq(
           "node",
-          s"$archify/archify/bin/archify.mjs",
+          s"${tools.archify}/archify/bin/archify.mjs",
           "deliver",
-          diagramType,
+          source.diagramType,
           src,
           s"$outRel/page.html",
           "--quality",
@@ -149,7 +156,7 @@ object Figure:
         case None =>
           System.err.println(s"figure: no <svg viewBox=\"0 0 W H\"> in $outRel/page.html")
           1
-        case Some((w, h)) =>
+        case Some(DrawingSize(w, h)) =>
           os.write(
             out / "measure.html",
             frame(page, css, s"0 0 $w $h", sizeStyle(whole(w), whole(h)) + Measure)
@@ -164,10 +171,11 @@ object Figure:
           bbox(dom) match
             case None      => 1
             case Some(box) =>
-              val (left, top, width, height) = crop(box)
+              val cropped = crop(box)
+              val (width, height) = (cropped.width, cropped.height)
               os.write(
                 out / "frame.html",
-                frame(page, css, s"$left $top $width $height", sizeStyle(s"$width", s"$height"))
+                frame(page, css, cropped.viewBox, sizeStyle(s"$width", s"$height"))
               )
               val shot = shoot(
                 s"$width",
