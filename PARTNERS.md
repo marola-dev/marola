@@ -16,6 +16,15 @@ deixar rastro, com sete princípios simples para quem está ao ar livre. O marol
 O selo acima é marca do Leave No Trace e não está sob a licença do marola (veja o
 [`REUSE.toml`](./REUSE.toml)).
 
+## OpenDiving
+
+O [OpenDiving](https://opendiving.app/) é um diário de mergulho de código aberto, feito para durar
+mais que qualquer fabricante: importa os arquivos do computador de mergulho, agrupa os mergulhos em
+viagens e pode rodar no seu próprio servidor ([github.com/opendiving](https://github.com/opendiving)).
+Os dois projetos são feitos sobre dados abertos e apontam um para o outro: o OpenDiving lista o
+marola entre os seus apps parceiros
+([opendiving/opendiving#106](https://github.com/opendiving/opendiving/issues/106)).
+
 ## No GitHub
 
 - [@ouroboric-dev](https://github.com/ouroboric-dev)
