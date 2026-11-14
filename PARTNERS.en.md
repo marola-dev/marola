@@ -16,6 +16,14 @@ Proud Partner: whoever goes to the sea should leave it as they found it.
 The mark above belongs to Leave No Trace and is not under marola's licence (see
 [`REUSE.toml`](./REUSE.toml)).
 
+## OpenDiving
+
+[OpenDiving](https://opendiving.app/) is an open source logbook for scuba divers, "a dive log built
+to outlive every vendor": it imports dive-computer files, groups dives into trips and can be
+self-hosted ([github.com/opendiving](https://github.com/opendiving)). Both projects are built on
+open data, and they link to each other: OpenDiving lists marola among its partner apps
+([opendiving/opendiving#106](https://github.com/opendiving/opendiving/issues/106)).
+
 ## On GitHub
 
 - [@ouroboric-dev](https://github.com/ouroboric-dev)
