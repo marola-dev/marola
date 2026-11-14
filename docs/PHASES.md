@@ -26,10 +26,10 @@
    [MIP-0057](MIPs/MIP-0057-gcp-as-opt-in-cloud-backend.md) (Draft) reviews GCP and commits to no
    build.*
 
-4. **Phase 3: Deploy.** A hosted webhook. The first deploy artefact is already here and free:
-   [marola-site](https://github.com/marola-dev/marola-site)'s `site.yml` builds MIP-0005's boards
-   every 3 h and publishes the static map to a Cloudflare Worker serving static assets on the free
-   plan, with GitHub Pages as a fallback: no paid service, no server, no per-visitor cost. The
+4. **Phase 3: Deploy.** A hosted webhook. The first deploy artefact is already here:
+   [marola-site](https://github.com/marola-dev/marola-site)'s server, run since 2026-11-13 on a
+   Hostinger KVM 4 VPS in Brazil as NixOS units in piabrota/nix-os, which also builds MIP-0005's
+   boards four times a day; no Cloudflare and no per-visitor cost. The
    second is the image a hosted service will run,
    [marola-app](https://github.com/marola-dev/marola-app)'s
    [`Dockerfile`](https://github.com/marola-dev/marola-app/blob/main/Dockerfile) (`jvm` = Temurin
