@@ -128,7 +128,15 @@ esac
       val bytes = ByteArrayOutputStream()
       val saved = System.out
       System.setOut(PrintStream(bytes, true))
-      val code = try runIn("marola-dev/marola", sha, dryRun, work, proc, plan)
+      val code = try
+        runIn(
+          RepoSlug("marola-dev/marola"),
+          Option.when(sha.nonEmpty)(Sha(sha)),
+          dryRun,
+          work,
+          proc,
+          plan
+        )
       finally System.setOut(saved)
       out = bytes.toString
       val calls = os.read(gh / "calls").stripLineEnd
@@ -271,25 +279,32 @@ esac
   test("a fork's PR with the same branch is not ours"):
     val list =
       """[{"number":3,"headRefOid":"abc","isCrossRepository":true,"labels":[]},{"number":4,"headRefOid":"def","isCrossRepository":false,"labels":[{"name":"x"}]}]"""
-    assertEquals(openPr(list), Some(Pr("4", "def", held = false)))
-    assertEquals(openPr("[]"), None)
-    assertEquals(openPr("not json"), None)
+    assertEquals(GitHub.openPr(list), Some(Pr(PrNumber("4"), Sha("def"), Vector("x"))))
+    assert(!GitHub.openPr(list).exists(_.held))
+    assertEquals(GitHub.openPr("[]"), None)
+    assertEquals(GitHub.openPr("not json"), None)
 
   test("checks from several pages, ci-ok on the second"):
     val pages = """{"check_runs":[{"name":"a\tb","status":"completed","conclusion":null}]}
 {"check_runs":[{"name":"ci-ok","status":"completed","conclusion":"success","app":{"id":15368}}]}"""
-    val runs = Json.values(pages)
+    val runs = Jq.values(pages)
     assert(runs.complete)
-    assertEquals(checkRuns(runs.documents).map(_.name), Vector("a\\tb", "ci-ok"))
-    assertEquals(failed(checkRuns(runs.documents)), "`a\\tb` ()")
-    assertEquals(ciOk(runs.documents), "success")
+    assertEquals(GitHub.checkRuns(runs.documents).map(_.name), Vector("a\\tb", "ci-ok"))
+    assertEquals(Checks.failed(GitHub.checkRuns(runs.documents)), "`a\\tb` ()")
+    assertEquals(GitHub.ciOk(runs.documents), Vector(Conclusion.Success))
 
   test("the wiring block is the only part of REPOS.md that may change"):
     val text = "intro\n<!-- wiring:start -->\n| a | b |\n<!-- wiring:end -->\noutro"
-    assertEquals(outsideMarkers(text), "intro\n<!-- wiring:start -->\n<!-- wiring:end -->\noutro\n")
-    assertEquals(outsideMarkers(text.replace("| a | b |", "| x |")), outsideMarkers(text))
+    assertEquals(
+      WiringDoc.outsideMarkers(text),
+      "intro\n<!-- wiring:start -->\n<!-- wiring:end -->\noutro\n"
+    )
+    assertEquals(
+      WiringDoc.outsideMarkers(text.replace("| a | b |", "| x |")),
+      WiringDoc.outsideMarkers(text)
+    )
     assertNotEquals(
-      outsideMarkers(text.replace("intro\n", "intro\r\n")),
-      outsideMarkers(text),
+      WiringDoc.outsideMarkers(text.replace("intro\n", "intro\r\n")),
+      WiringDoc.outsideMarkers(text),
       "a CRLF is a change"
     )

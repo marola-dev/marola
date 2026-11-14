@@ -135,26 +135,28 @@ class PointerSyncTest extends munit.FunSuite:
 
   test("compare links"):
     assertEquals(
-      compareUrl("https://github.com/marola-dev/marola-app.git", "aaa", "bbb"),
+      Moved("x", Sha("aaa"), Sha("bbb"), "https://github.com/marola-dev/marola-app.git").compareUrl,
       Some("https://github.com/marola-dev/marola-app/compare/aaa...bbb")
     )
     assertEquals(
-      compareUrl("https://github.com/marola-dev/marola-site", "aaa", "bbb"),
+      Moved("x", Sha("aaa"), Sha("bbb"), "https://github.com/marola-dev/marola-site").compareUrl,
       Some("https://github.com/marola-dev/marola-site/compare/aaa...bbb")
     )
-    assertEquals(compareUrl("/tmp/app", "aaa", "bbb"), None)
+    assertEquals(Moved("x", Sha("aaa"), Sha("bbb"), "/tmp/app").compareUrl, None)
 
   test("commit message and PR body"):
-    val moved = Seq(
-      Moved("app", "a" * 40, "b" * 40, "https://github.com/marola-dev/app.git"),
-      Moved("x", "c" * 40, "d" * 40, "/x")
+    val moved = Bump(
+      Vector(
+        Moved("app", Sha("a" * 40), Sha("b" * 40), "https://github.com/marola-dev/app.git"),
+        Moved("x", Sha("c" * 40), Sha("d" * 40), "/x")
+      )
     )
     assertEquals(
-      commitMessage(moved),
+      moved.commitMessage,
       "chore: move submodule pointers (app, x)\n\nEach submodule's default-branch tip, as git submodule update --remote found it:\n\n" +
-        "- app: aaaaaaa -> bbbbbbb\n- x: ccccccc -> ddddddd\n\n" + Trailers
+        "- app: aaaaaaa -> bbbbbbb\n- x: ccccccc -> ddddddd\n\n" + Bump.Trailers
     )
-    val body = prBody(moved)
+    val body = moved.prBody
     assert(
       body.contains(
         s"| `app` | `aaaaaaa` | `bbbbbbb` | [compare](https://github.com/marola-dev/app/compare/${"a" * 40}...${"b" * 40}) |\n"

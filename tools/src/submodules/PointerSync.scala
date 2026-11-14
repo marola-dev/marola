@@ -10,38 +10,7 @@ import mainargs.{arg, main, ParserForMethods}
 //
 //     marola-tools pointer-sync --out DIR   # DIR/moved.tsv (empty when nothing moved); DIR/pr-body.md and one commit when it did
 object PointerSync:
-  val ReposMd = "docs/2-Building-marola/REPOS.md"
-
-  val Trailers =
-    "Tested: pointer bump only; each submodule's own CI gates its main\n" +
-      "Co-Authored-By: Claude <noreply@anthropic.com>\n"
-
-  final case class Moved(name: String, old: String, now: String, url: String)
-
-  private val GitHubRepo = raw"https://github\.com/([^/]+/[^/]+)".r
-
-  /** A GitHub compare link, or None for a non-GitHub remote. */
-  def compareUrl(url: String, old: String, now: String): Option[String] =
-    url.stripSuffix(".git") match
-      case GitHubRepo(repo) => Some(s"https://github.com/$repo/compare/$old...$now")
-      case _                => None
-
-  def names(moved: Seq[Moved]): String = moved.map(_.name).mkString(",").replace(",", ", ")
-
-  def commitMessage(moved: Seq[Moved]): String =
-    val rows = moved.map(m => s"- ${m.name}: ${m.old.take(7)} -> ${m.now.take(7)}\n").mkString
-    s"chore: move submodule pointers (${names(moved)})\n\n" +
-      "Each submodule's default-branch tip, as git submodule update --remote found it:\n\n" +
-      rows + "\n" + Trailers
-
-  def prBody(moved: Seq[Moved]): String =
-    val rows = moved.map { m =>
-      val link = compareUrl(m.url, m.old, m.now).map(url => s"[compare]($url)").getOrElse("")
-      s"| `${m.name}` | `${m.old.take(7)}` | `${m.now.take(7)}` | $link |\n"
-    }
-    "Moves each submodule to its default branch's tip (MIP-0070 §5.6). `pointer-sync.yml` opens this PR " +
-      "and force-updates it on every run; merge it once CI is green.\n\n" +
-      "| Submodule | From | To | Changes |\n|---|---|---|---|\n" + rows.mkString
+  val ReposMd = WiringDoc.Path
 
   /** The bump, in the umbrella checkout `top`. The exit code. */
   def bump(top: os.Path, out: os.Path, proc: Proc): Int = Proc.exitCode {
@@ -53,33 +22,36 @@ object PointerSync:
       val movedTsv = out / "moved.tsv"
       os.write.over(movedTsv, "")
       val moved = Vector.newBuilder[Moved]
-      for (key, path) <- proc.submodulePaths(top, "-f", ".gitmodules") do
-        val name = key.stripPrefix("submodule.").stripSuffix(".path")
+      for case Submodule(name, path) <- proc
+          .submodulePaths(top, "-f", ".gitmodules")
+          .map(Submodule.fromConfig)
+      do
         val url =
           proc.mustCapture(top, "git", "config", "-f", ".gitmodules", s"submodule.$name.url")
-        val old = proc.mustCapture(top, "git", "rev-parse", s"HEAD:$path")
+        val old = Sha(proc.mustCapture(top, "git", "rev-parse", s"HEAD:$path"))
         // No submodule.<name>.branch anywhere, so --remote follows each remote's HEAD: its default branch.
         proc.must(top, "git", "submodule", "update", "--quiet", "--init", "--remote", "--", path)
-        val now = proc.mustCapture(top, "git", "-C", path, "rev-parse", "HEAD")
+        val now = Sha(proc.mustCapture(top, "git", "-C", path, "rev-parse", "HEAD"))
         if old != now then
           proc.must(top, "git", "add", "--", path)
-          os.write.append(movedTsv, s"$name\t$old\t$now\t$url\n")
-          moved += Moved(name, old, now, url)
-      commit(top, out, moved.result(), proc)
+          val m = Moved(name, old, now, url)
+          os.write.append(movedTsv, m.tsvRow)
+          moved += m
+      commit(top, out, Bump(moved.result()), proc)
   }
 
-  private def commit(top: os.Path, out: os.Path, moved: Vector[Moved], proc: Proc): Int =
-    if moved.isEmpty then
+  private def commit(top: os.Path, out: os.Path, bump: Bump, proc: Proc): Int =
+    if bump.isEmpty then
       Proc.say("pointer-sync: every submodule is already at its default branch's tip")
       0
     else
       // The block is read from the submodules' trees, so it is regenerated only now (MIP-0076 §5.4).
       proc.must(top, "wiring", ReposMd)
       proc.must(top, "git", "add", "--", ReposMd)
-      os.write.over(out / "commit-msg.txt", commitMessage(moved))
-      os.write.over(out / "pr-body.md", prBody(moved))
+      os.write.over(out / "commit-msg.txt", bump.commitMessage)
+      os.write.over(out / "pr-body.md", bump.prBody)
       proc.must(top, "git", "commit", "--quiet", "-F", (out / "commit-msg.txt").toString)
-      Proc.say(s"pointer-sync: moved ${names(moved)}")
+      Proc.say(s"pointer-sync: moved ${bump.names}")
       0
 
   /** The command, run from `cwd`. */
