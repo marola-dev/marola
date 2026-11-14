@@ -1,7 +1,8 @@
 package marola.tools.routing
 
 class GraphSvgTest extends munit.FunSuite:
-  import GraphSvg.*
+  import GraphSvg.load
+  import Figure.{fixed1, layout, render}
 
   private val sample = ujson.read(
     """{"built_at_commit": "0123456789", "nodes": [
@@ -16,18 +17,18 @@ class GraphSvgTest extends munit.FunSuite:
   )
 
   test("assigns repos"):
-    assertEquals(repoOf("marola-ml/x.py"), "marola-ml")
-    assertEquals(repoOf("tools/src/main.rs"), "marola")
-    assertEquals(repoOf("marola-appx/y"), "marola")
+    assertEquals(Repo.ofSource("marola-ml/x.py").slug, "marola-ml")
+    assertEquals(Repo.ofSource("tools/src/main.rs").slug, "marola")
+    assertEquals(Repo.ofSource("marola-appx/y").slug, "marola")
 
   test("loads kept nodes and their links once"):
-    val (nodes, links) = load(sample, f => !f.endsWith(".py"))
+    val Graph(nodes, links) = load(sample, f => !f.endsWith(".py"))
     assertEquals(nodes.map(_.id), Vector("a", "b"))
-    assertEquals(nodes(1).repo, "marola-app")
-    assertEquals(links, Vector((0, 1)))
+    assertEquals(nodes(1).repo.slug, "marola-app")
+    assertEquals(links, Vector(Edge(0, 1)))
 
   test("draws the same bytes every time"):
-    val (nodes, links) = load(sample, _ => true)
+    val Graph(nodes, links) = load(sample, _ => true)
     val one = render(nodes, links, layout(nodes, links), "t")
     val two = render(nodes, links, layout(nodes, links), "t")
     assertEquals(one, two)
