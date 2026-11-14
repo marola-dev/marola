@@ -251,7 +251,7 @@ _figure-lock:
     set -euo pipefail
     for src in docs/archify/*.json docs/archify/en/*.json docs/archify/docs/*.json; do
         slug="${src#docs/archify/}"
-        printf '%s\t%s\n' "${slug%.json}" "$(cat "$src" docs/archify/picasso.css tools/src/Figure.scala | sha256sum | cut -c1-16)-$(cut -c1-7 <<<"{{ archify_rev }}")"
+        printf '%s\t%s\n' "${slug%.json}" "$(cat "$src" docs/archify/picasso.css tools/src/docs/Figure.scala | sha256sum | cut -c1-16)-$(cut -c1-7 <<<"{{ archify_rev }}")"
     done
 
 # Every figure has its PNG and an English twin that is the same drawing, each README shows its own

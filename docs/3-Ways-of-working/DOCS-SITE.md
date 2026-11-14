@@ -10,7 +10,7 @@ does, with the same gates.
 
 ![How a docs.marola.dev build runs](../img/archify/docs-site-build.png)
 
-[`marola-tools prepare-docs`](../../tools/src/PrepareDocs.scala) writes the site's source tree into the
+[`marola-tools prepare-docs`](../../tools/src/docs/PrepareDocs.scala) writes the site's source tree into the
 gitignored `.tmp/docs-aggregated/`; the tracked `docs/` is never written to.
 
 | Source | Mounted at |
@@ -28,7 +28,7 @@ fetched at `flake.lock`'s locked rev, the version every repo runs. `build.json` 
 each repo was built from, and each landing ends with a line naming it.
 
 **What it generates.** Each repo's `adr/index.md`, below. A repo's `api-docs` branch is unpacked by
-[`marola-tools fetch-api-docs`](../../tools/src/FetchApiDocs.scala); a repo without one gets a notice,
+[`marola-tools fetch-api-docs`](../../tools/src/docs/FetchApiDocs.scala); a repo without one gets a notice,
 and a link into its `api-docs/` then fails as broken.
 
 ## The landing rule
@@ -134,7 +134,7 @@ prefix first, keeping path, query and hash; `node scripts/docs_redirect_check.js
 | `marola-tools prepare-docs` | every build | the landing rule, refused links, a broken relative link (Markdown or HTML `href`/`src`), a hand-written ADR index |
 | `mkdocs --strict` | every build | an unresolved page link; anchors are warnings |
 | `marola-tools strip-external-scripts --check` | `docs.yml` | a third-party script in the output |
-| [`marola-tools site-links-check`](../../tools/src/SiteLinks.scala) | `docs-build` on a PR, and `docs.yml` before deploy | a `https://docs.marola.dev/…` link that resolves to nothing, and a URL of the live sitemap (fetched before the build) that is now neither a page, a redirect nor a forward |
+| [`marola-tools site-links-check`](../../tools/src/docs/SiteLinks.scala) | `docs-build` on a PR, and `docs.yml` before deploy | a `https://docs.marola.dev/…` link that resolves to nothing, and a URL of the live sitemap (fetched before the build) that is now neither a page, a redirect nor a forward |
 | `docs-lint` (devkit) | each repo's `quality-other`, once its tree passes | a foreign recipe without the checkout marker, another repo's paths, `docs/index.md`, a link leaving the repo |
 
 The munit suite in `tools/test/` covers each `marola-tools` command; `just quality` runs it.

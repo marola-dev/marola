@@ -1,3 +1,28 @@
+package marola.tools
+
+import marola.tools.ci.Digest
+import marola.tools.ci.GhBilling
+import marola.tools.ci.RepoStats
+import marola.tools.docs.AgentsReposCheck
+import marola.tools.docs.ClaudeProject
+import marola.tools.docs.DocLinks
+import marola.tools.docs.FetchApiDocs
+import marola.tools.docs.Figure
+import marola.tools.docs.MermaidFont
+import marola.tools.docs.Mkdocs
+import marola.tools.docs.PrepareDocs
+import marola.tools.docs.ReadingTime
+import marola.tools.docs.SiteLinks
+import marola.tools.docs.StripScripts
+import marola.tools.publishing.Citation
+import marola.tools.publishing.MipGraph
+import marola.tools.publishing.Release
+import marola.tools.routing.GraphSvg
+import marola.tools.routing.RoutingBundle
+import marola.tools.submodules.PointerSync
+import marola.tools.submodules.PointerSyncMerge
+import marola.tools.submodules.SiteDataPush
+
 // marola-tools: the umbrella's repo tooling, one command per job. Run it as
 // `scripts/marola-tools <command> [args]`; `scripts/marola-tools --help` lists the commands.
 

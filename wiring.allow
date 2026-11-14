@@ -1,3 +1,3 @@
 # `<artifact>: <reason>` per line: an artifact in REPOS.md's wiring block that `wiring --check` may find unread (MIP-0076).
 <tag>-v<tag>.pdf release asset: marola-research's release.yml attaches one research's PDF to its GitHub release for readers and Zenodo; no repo reads it
-api-docs branch: read by the umbrella's `marola-tools fetch-api-docs` (tools/src/FetchApiDocs.scala) for docs.marola.dev; wiring v0.20.4 reads scripts/, not tools/src/ (marola-dev/marola#942)
+api-docs branch: read by the umbrella's `marola-tools fetch-api-docs` (tools/src/docs/FetchApiDocs.scala) for docs.marola.dev; wiring v0.20.4 reads scripts/, not tools/src/ (marola-dev/marola#942)

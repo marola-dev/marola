@@ -75,7 +75,7 @@ jobs:
               - '.graphifyignore'
               - '.github/workflows/ci.yml'
               - 'routing-bench.yaml'
-              - 'tools/src/RoutingBundle.scala'
+              - 'tools/src/routing/RoutingBundle.scala'
             docs:
               - 'docs/**'
               - 'mkdocs/**'

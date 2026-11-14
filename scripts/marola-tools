@@ -5,4 +5,4 @@
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export MAROLA_ROOT="$root"
-exec scala-cli run --quiet --main-class Main "$root/tools" -- "$@"
+exec scala-cli run --quiet --main-class marola.tools.Main "$root/tools" -- "$@"

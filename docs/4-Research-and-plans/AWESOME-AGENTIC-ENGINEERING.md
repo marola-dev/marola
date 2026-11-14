@@ -161,7 +161,7 @@ domain match); no public GitHub repo was found combining "marine-jellyfish detec
 
 ## How this list is kept updated
 
-`scripts/marola-tools awesome-agentic-digest` ([`tools/src/Digest.scala`](../../tools/src/Digest.scala)) queries the real GitHub Search API
+`scripts/marola-tools awesome-agentic-digest` ([`tools/src/ci/Digest.scala`](../../tools/src/ci/Digest.scala)) queries the real GitHub Search API
 (`api.github.com/search/repositories`, no auth needed for reasonable unauthenticated use) across
 verified agentic-engineering topics (`topic:agents`, `topic:llm-agents`, `topic:ai-agents`,
 `topic:mcp`, `topic:multi-agent-systems`), sorted by stars and by recent activity, and caches
