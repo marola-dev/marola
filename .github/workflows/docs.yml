@@ -13,13 +13,10 @@ on:
       - 'docs/**'
       - 'mkdocs/**'
       - 'README.md'
-      - 'llms.txt' # prepare-docs.sh copies it to the site root
+      - 'llms.txt' # marola-tools prepare-docs copies it to the site root
       - 'flake.lock' # marola-devkit mounts at its locked rev
-      - 'scripts/prepare-docs.sh'
-      - 'scripts/fetch-api-docs.sh'
-      - 'scripts/lib/repos_manifest.sh'
       - 'scripts/marola-tools'
-      - 'tools/**' # marola-tools: doc-links, mermaid-font, the site checks
+      - 'tools/**' # marola-tools: prepare-docs, mkdocs, doc-links, mermaid-font, the site checks
   schedule:
     - cron: "20 5 * * *" # once a day, off the hour other workflows use (CI-CD.md)
   workflow_dispatch:
@@ -56,19 +53,20 @@ jobs:
 
       # Builds .tmp/docs-aggregated, api-docs branches included; the tracked docs/ tree is never
       # written to (ruling T10-8).
-      # prepare-docs.sh and mkdocs.sh run marola-tools (tools/, Rust), built here once.
-      - uses: Swatinem/rust-cache@v2
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@v1
         with:
-          workspaces: tools
+          jvm: temurin:25
 
       - name: Build the aggregated docs tree
-        run: scripts/prepare-docs.sh
+        run: scripts/marola-tools prepare-docs
 
       - name: mkdocs (material + kroki), from the aggregated tree
         env:
           CONTAINER_RUNTIME: docker
           DOCS_SRC: .tmp/docs-aggregated
-        run: scripts/mkdocs.sh
+        run: scripts/marola-tools mkdocs
 
       - name: The published tree keeps script-src 'self'
         run: scripts/marola-tools strip-external-scripts --check mkdocs/generated-docs

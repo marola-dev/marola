@@ -2,7 +2,7 @@
 # then archives it with .zenodo.json and mints the version DOI (MIP-0079). No secret: the webhook
 # is Zenodo's, and GITHUB_TOKEN creates the release.
 # Hard rule: a tag that only moves submodule pointers since the previous v* tag gets no release,
-# so no Zenodo version (`scripts/release.sh --guard`).
+# so no Zenodo version (`scripts/marola-tools release --guard`).
 name: release
 
 on:
@@ -14,7 +14,7 @@ permissions: {}
 jobs:
   release:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
@@ -22,8 +22,13 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@v1
+        with:
+          jvm: temurin:25
       - run: scripts/marola-tools citation --check
-      - run: scripts/release.sh --guard "$GITHUB_REF_NAME"
+      - run: scripts/marola-tools release --guard "$GITHUB_REF_NAME"
       - env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --title "marola $GITHUB_REF_NAME"

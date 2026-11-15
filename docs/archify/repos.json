@@ -100,7 +100,7 @@
       "col": 1,
       "type": "backend",
       "label": "marola",
-      "sublabel": "docs, MIPs, marola-tools (Rust)",
+      "sublabel": "docs, MIPs, marola-tools (Scala 3)",
       "width": 160
     },
     {

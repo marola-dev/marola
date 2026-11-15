@@ -16,7 +16,7 @@
 | **Risk** | A wrong field in a released record stays there forever: a DOI cannot be deleted, only superseded by the next release. `scripts/citation.py --check` runs before every tag for that reason |
 | **Cost so far** | — |
 
-> **Note (2026-10-26).** `scripts/citation.py` is now [`tools/src/citation.rs`](../../tools/src/citation.rs), run as
+> **Note (2026-10-26).** `scripts/citation.py` is now [`tools/src/citation.rs`](https://github.com/marola-dev/marola/blob/3c4be70/tools/src/citation.rs) (since 2026-11-14 [`tools/src/publishing/Citation.scala`](../../tools/src/publishing/Citation.scala), #942), run as
 > `scripts/marola-tools citation` (`just citation`, `--check` unchanged): the umbrella holds no Python
 > (AGENTS.md). The READMEs dropped the DOI badge; the DOI stays in their "How to cite" section. The
 > text below keeps the names it was written with.

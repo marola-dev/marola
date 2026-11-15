@@ -21,7 +21,7 @@ that copy with the pinned devkit's.
 ## The routing table
 
 Where a change belongs, and what moves when it lands. This is the table's only copy: the umbrella's
-`AGENTS.md` links here, and `scripts/agents_repos_check.sh` fails if it restates it. The pin each
+`AGENTS.md` links here, and `marola-tools agents-repos-check` fails if it restates it. The pin each
 artifact moves is in [Artifacts, pins and dispatches](#artifacts-pins-and-dispatches).
 
 | Repo | Owns | Publishes | Consumers | Moved by |
@@ -67,8 +67,8 @@ stale. An edit between the markers is overwritten.
 | `<tag>-v<tag>.pdf` release asset | marola-research `release.yml` (on a `*-v[0-9]*.[0-9]*.[0-9]*` tag) | — | — |
 | `marola-corpus-<tag>.tar.gz` release asset | marola-corpus `release.yml` (on a `v*` tag) | marola-ml `corpus.version`, marola-app `corpus.version` | marola-ml `scripts/corpus-fetch.sh`, marola-app `build.sbt`, marola-app `scripts/corpus-fetch.sh` |
 | `ml-resources-<tag>.tar.gz` release asset | marola-app `release.yml` (on a `v*` tag) | marola-ml `resources.version` | marola-ml `scripts/resources-fetch.sh` |
-| `api-docs` branch | marola-ml `ci.yml` (`api-docs.yml@v0.20.4`, on a push to `main`), marola-app `ci.yml` (`api-docs.yml@v0.20.4`, on a push to `main`) | — | marola `scripts/fetch-api-docs.sh` |
-| `site-data` branch of marola-site | marola `ci.yml` (on a push to `main`), marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | — | marola-site `site.yml` |
+| `api-docs` branch | marola-ml `ci.yml` (`api-docs.yml@v0.20.4`, on a push to `main`), marola-app `ci.yml` (`api-docs.yml@v0.20.4`, on a push to `main`) | — | — |
+| `site-data` branch of marola-site | marola-app `ci.yml` (on a push to `main`), marola-app `docker-smoke.yml` (on a schedule) | — | marola-site `site.yml` |
 | PRs into each repo in `.github/consumers.txt` | marola-devkit `bump-consumers.yml`, marola-devkit `bump-merge.yml` (on a schedule) | — | marola, marola-app, marola-site, marola-ml, marola-corpus, marola-oods, marola-skills |
 | PRs into marola-app: `recommendation_prompt.json`, `review_prompt.json` | marola-ml `compile-prompt.yml` (by hand) | — | marola-app |
 | a marola-devkit tag | marola-devkit | marola `flake.lock` v0.20.4, marketplace v0.20.4; marola-site `flake.nix` v0.20.4, marketplace v0.20.4; marola-corpus `flake.nix` v0.20.4, marketplace v0.20.4; marola-ml `flake.nix` v0.20.4, marketplace v0.20.4; marola-app `flake.lock` v0.20.4, marketplace v0.20.4; marola-oods `flake.nix` v0.20.4, marketplace v0.20.4; marola-skills `flake.lock` v0.20.4, marketplace v0.20.4 | `agents-check.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `api-docs.yml` v0.20.4 (marola-ml marola-app); `ci-short-circuit.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `gemini-review.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods); `labels-sync.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `notify-devkit.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills marola-devkit); `notify-umbrella.yml` v0.20.4 (marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `pr-body.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods marola-skills); `python-ci.yml` v0.20.4 (marola-site marola-ml marola-app marola-skills); `scala-ci.yml` v0.20.4 (marola-app); `skills-update.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods); `static-ci.yml` v0.20.4 (marola marola-site marola-corpus marola-ml marola-app marola-oods) |

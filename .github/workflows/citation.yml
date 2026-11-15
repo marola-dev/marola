@@ -16,12 +16,14 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-      - uses: Swatinem/rust-cache@v2
+      # marola-tools (tools/, Scala 3): scala-cli on a JDK 25, its downloads cached by coursier.
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@v1
         with:
-          workspaces: tools
+          jvm: temurin:25
       - run: scripts/marola-tools citation --check
       - uses: citation-file-format/cffconvert-github-action@2.0.0
         with:

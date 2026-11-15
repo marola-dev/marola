@@ -54,3 +54,5 @@ __pycache__/
 
 # tools/ (marola-tools) build output
 /tools/target/
+/tools/.scala-build/
+/tools/.bsp/

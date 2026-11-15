@@ -13,7 +13,7 @@ site_dir: generated-docs
 
 # Any unresolved internal link fails the build instead of shipping a 404. It does NOT cover a
 # missing index.md (prepare-docs writes it from the umbrella README): mkdocs builds that with exit 0
-# and no landing page, so scripts/mkdocs.sh checks for the file itself. MIP-0064 §4.4.
+# and no landing page, so `marola-tools mkdocs` checks for the file itself. MIP-0064 §4.4.
 strict: true
 # Anchor checks are info by default; at warn, strict fails a link to a heading that is not there.
 validation:
@@ -76,7 +76,7 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
 
-# No hooks: scripts/mkdocs.sh pins every ```mermaid fence's font-family in the staged copy
+# No hooks: `marola-tools mkdocs` pins every ```mermaid fence's font-family in the staged copy
 # (`marola-tools mermaid-font`) before Kroki measures it — #511.
 
 plugins:

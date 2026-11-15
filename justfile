@@ -46,34 +46,24 @@ log n="10" *args="":
 # app's gates are marola-app's own (`cd marola-app && just quality`).
 quality: quality-other
 
-# rustfmt, clippy and the tests of tools/ (marola-tools), merge-key-check, the script self-tests, actionlint, hadolint, docs-lint, `wiring --check` (needs the
+# scalafmt and the munit suite of tools/ (marola-tools, Scala 3, compiled with -Werror), merge-key-check, actionlint, hadolint, docs-lint, `wiring --check` (needs the
 # submodules checked out), `decisions --check`. A missing tool fails, never skips.
 # The devkit's own scripts are self-tested in its CI; here only marola's run.
 quality-other:
     #!/usr/bin/env bash
     set -euo pipefail
     [ -e .devkit/devkit.just ] || echo "quality-other: no .devkit here — the devkit's recipes (pr, stack, issue-*) are missing; run 'nix develop', or 'just devkit-link'" >&2
-    for tool in cargo actionlint hadolint agents-check workflow-runners docs-lint wiring decisions merge-key-check; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
+    for tool in scala-cli node actionlint hadolint agents-check workflow-runners docs-lint wiring decisions merge-key-check; do command -v "$tool" >/dev/null || { echo "quality-other: $tool not installed — run inside 'nix develop' (flake.nix has it)" >&2; exit 1; }; done
     # Not `just --fmt --check`: its --unstable style differed between this machine and the CI
     # runner on the same file and version. --list only checks that the file parses.
     just --list >/dev/null
     # One command per line: `set -e` exempts the left side of `a && b`.
-    cargo fmt --manifest-path tools/Cargo.toml --check
-    cargo clippy --manifest-path tools/Cargo.toml --locked --all-targets -- -D warnings
-    cargo test --manifest-path tools/Cargo.toml --locked
+    scala-cli fmt --check tools
+    scala-cli test tools
     merge-key-check .
-    scripts/gh-billing.sh --self-test
-    scripts/site-data-push.sh --self-test
-    scripts/pointer-sync.sh --self-test
-    scripts/pointer-sync-merge.sh --self-test
     scripts/marola-tools claude-project-check
-    scripts/release.sh --self-test
-    scripts/mkdocs.sh --self-test
-    scripts/prepare-docs.sh --self-test
-    scripts/fetch-api-docs.sh --self-test
     node scripts/docs_redirect_check.js
-    scripts/agents_repos_check.sh --self-test
-    scripts/agents_repos_check.sh
+    scripts/marola-tools agents-repos-check
     wiring --check docs/2-Building-marola/REPOS.md
     decisions --mips docs/MIPs --check
     workflow-runners
@@ -88,7 +78,7 @@ quality-other:
     if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.build.yml config --quiet && docker compose -f mkdocs/docker-compose.yml -f mkdocs/docker-compose.serve.yml config --quiet && echo "docker compose config: ok"; else echo "docker compose not installed — skipping compose config check"; fi
 
 quality-fix:
-    cargo fmt --manifest-path tools/Cargo.toml && cargo clippy --manifest-path tools/Cargo.toml --fix --allow-dirty --all-targets
+    scala-cli fmt tools
 
 # Run by the devkit's pre-commit hook (.devkit/.githooks): staged workflows must pass actionlint.
 # The lint gates are prepush's.
@@ -117,14 +107,14 @@ prepush:
 # mkdocs/generated-docs. Needs a Docker or Podman daemon and `git submodule update --init`.
 # Strict: a broken internal link anywhere fails this, including links into marola-app's pages.
 docs:
-    scripts/prepare-docs.sh
-    DOCS_SRC=.tmp/docs-aggregated scripts/mkdocs.sh
+    scripts/marola-tools prepare-docs
+    DOCS_SRC=.tmp/docs-aggregated scripts/marola-tools mkdocs
 
 # Serve the docs on http://localhost:8001/. The docs are baked into the image, so a doc edit needs
 # a restart — no live reload.
 docs-serve:
-    scripts/prepare-docs.sh
-    DOCS_SRC=.tmp/docs-aggregated scripts/mkdocs.sh --serve
+    scripts/marola-tools prepare-docs
+    DOCS_SRC=.tmp/docs-aggregated scripts/marola-tools mkdocs --serve
 
 # ---------------------------------------------------------------------
 # Browser-session context — repomix.config.json, repomix-instruction.md
@@ -241,7 +231,7 @@ figure-init:
     fi
     echo "figure-init: $(git -C "$d" rev-parse --short HEAD)"
 
-# Draw every Archify source with scripts/figure.sh, which validates it, lays picasso's look
+# Draw every Archify source with `marola-tools figure`, which validates it, lays picasso's look
 # (docs/archify/picasso.css) over it and crops headless Chrome's picture to the drawing:
 # docs/archify/<slug>.json and en/<slug>.json (the README's, in two languages) to docs/img/, and
 # docs/archify/docs/<slug>.json (the docs' diagrams, MIP-0068) to docs/img/archify/. Needs node,
@@ -250,9 +240,9 @@ figure: figure-init
     #!/usr/bin/env bash
     set -euo pipefail
     for src in docs/archify/*.json docs/archify/en/*.json; do
-        slug="${src#docs/archify/}"; scripts/figure.sh "$src" "docs/img/${slug%.json}.png"
+        slug="${src#docs/archify/}"; scripts/marola-tools figure "$src" "docs/img/${slug%.json}.png"
     done
-    for src in docs/archify/docs/*.json; do scripts/figure.sh "$src" "docs/img/archify/$(basename "$src" .json).png"; done
+    for src in docs/archify/docs/*.json; do scripts/marola-tools figure "$src" "docs/img/archify/$(basename "$src" .json).png"; done
     just _figure-lock > docs/archify/figures.lock
 
 # One line per figure: a hash of its source, the look and the script, then the Archify pin.
@@ -261,7 +251,7 @@ _figure-lock:
     set -euo pipefail
     for src in docs/archify/*.json docs/archify/en/*.json docs/archify/docs/*.json; do
         slug="${src#docs/archify/}"
-        printf '%s\t%s\n' "${slug%.json}" "$(cat "$src" docs/archify/picasso.css scripts/figure.sh | sha256sum | cut -c1-16)-$(cut -c1-7 <<<"{{ archify_rev }}")"
+        printf '%s\t%s\n' "${slug%.json}" "$(cat "$src" docs/archify/picasso.css tools/src/docs/Figure.scala | sha256sum | cut -c1-16)-$(cut -c1-7 <<<"{{ archify_rev }}")"
     done
 
 # Every figure has its PNG and an English twin that is the same drawing, each README shows its own
@@ -311,9 +301,9 @@ claude-cost *args="session":
     npx --yes ccusage@latest {{ args }}
 
 # GitHub's own bill this month — Actions minutes, GHCR/Packages storage and transfer, Copilot —
-# in one call to the consolidated billing-usage API (scripts/gh-billing.sh).
+# in one call to the consolidated billing-usage API (`marola-tools gh-billing`).
 gh-billing *args:
-    scripts/gh-billing.sh {{ args }}
+    scripts/marola-tools gh-billing {{ args }}
 
 # ---------------------------------------------------------------------
 # ai-jail — https://github.com/akitaonrails/ai-jail. Policy: `.ai-jail`.
@@ -408,7 +398,7 @@ clip *args:
 # Tag main as vX.Y.Z and push it; release.yml publishes the release and Zenodo mints its DOI
 # (MIP-0079). Refuses unless main is clean, level with origin and the citation metadata is valid.
 release *args:
-    scripts/release.sh {{ args }}
+    scripts/marola-tools release {{ args }}
 
 # List the release tags, newest first.
 releases:

@@ -27,8 +27,8 @@ repo as a git submodule. It holds this file, the ways of working (`docs/3-Ways-o
 research and plans (`docs/4-Research-and-plans/`), the MIPs and their `.tasks.md`, the phase list
 (`docs/PHASES.md`), MIP and cross-repo parent issues, the aggregated docs site at
 <https://docs.marola.dev/>, and the submodule pointers. **It holds no product code**: no app and no
-app gates; its only code is its own tooling, `tools/` (marola-tools, in Rust: see
-[No Python](#no-python-hard-rule)). [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md) holds the
+app gates; its only code is its own tooling, `tools/` (marola-tools, in Scala 3: see
+[Scala 3 tooling](#scala-3-tooling-hard-rule)). [PHILOSOPHY](docs/3-Ways-of-working/PHILOSOPHY.md) holds the
 reasons behind the rules here, and [CONTRIBUTING](docs/3-Ways-of-working/CONTRIBUTING.md) is the guide for every repo.
 
 ## The repos
@@ -36,7 +36,7 @@ reasons behind the rules here, and [CONTRIBUTING](docs/3-Ways-of-working/CONTRIB
 Each repo has its own `AGENTS.md`, `docs/`, gates and issues. Read that repo's `AGENTS.md` before
 changing anything in it; it says what it overrides. What each repo owns, publishes and pins is in
 [`docs/2-Building-marola/REPOS.md`](docs/2-Building-marola/REPOS.md), the routing table's only copy
-(`scripts/agents_repos_check.sh` fails if this file restates it). No repo reads another repo's
+(`scripts/marola-tools agents-repos-check` fails if this file restates it). No repo reads another repo's
 tree, in CI or in tests, and no consumer builds its producer from source: a consumer moves to a new
 producer version by bumping its pin in a PR.
 
@@ -84,7 +84,7 @@ which checkout each recipe needs.
   PRs as `marola-pr-bot`, and only `marola-merge-bot` merges without a person (MIP-0086); neither
   is a PAT.
 - **A pointer move never makes a release or a Zenodo version** (hard rule, MIP-0079). A release
-  needs a change outside the gitlinks since the previous `v*` tag; `scripts/release.sh --guard`
+  needs a change outside the gitlinks since the previous `v*` tag; `marola-tools release --guard`
   enforces it in `just release` and again in `release.yml`.
 - `docs.yml` builds the docs from each submodule's latest `main` regardless of the pointers;
   `ci.yml`'s `docs-build` builds a PR on its pinned commits.
@@ -94,7 +94,7 @@ which checkout each recipe needs.
 
 ```bash
 git clone --recurse-submodules https://github.com/marola-dev/marola
-nix develop      # just, cargo, gh, hadolint, actionlint (flake.nix); Docker is the host's
+nix develop      # just, scala-cli, a JDK 25, gh, hadolint, actionlint (flake.nix); Docker is the host's
 just             # list the recipes
 just quality     # this repo's gates
 just docs        # the aggregated docs (docs/ + every submodule's) into mkdocs/generated-docs
@@ -102,15 +102,15 @@ just docs-serve  # preview on http://localhost:8001/
 ```
 
 Run the gates of the repo you changed before calling a change done: here `just quality`
-(`quality-other`: rustfmt, clippy and `cargo test` on `tools/`, actionlint, hadolint, `docs-lint`,
-the reading-time and figure checks and the `scripts/*` self-tests, the
+(`quality-other`: scalafmt and the munit suite of `tools/`, actionlint, hadolint, `docs-lint`,
+the reading-time, figure and redirect checks, the
 gates `ci.yml` runs, at the versions `flake.lock` pins; a missing tool fails rather than skips, so
 use `nix develop`); in a submodule, its own `AGENTS.md` names them. The pre-push hook runs
 `just prepush`; `git push --no-verify` bypasses it, CI does not.
 
 **Writing a doc is a deploy.** mkdocs builds the sidebar from the file tree (the `1-`…`6-`
 prefixes order it), and the build is `--strict`: a link that does not resolve inside the
-aggregated tree fails it. `scripts/prepare-docs.sh` puts this repo at the root, with `README.md` as
+aggregated tree fails it. `marola-tools prepare-docs` puts this repo at the root, with `README.md` as
 the landing page and `docs/MIPs/` at `6-MIPs/`, and every repo in `mkdocs/repos.yml` at
 `5-Repos/<name>/` (marola-devkit fetched at `flake.lock`'s locked rev), each README its landing and
 its `api-docs` branch under `api-docs/`. No repo has a `docs/index.md`. Links are rewritten for the
@@ -205,14 +205,28 @@ it does not replace this rule.
 - **One feature, one session.** Start a feature with `/clear` and `/rename` it to the branch name,
   so a session's context holds one PR's work and nothing from the last one.
 
-## No Python (hard rule)
+## Scala 3 tooling (hard rule)
 
-**The umbrella holds no Python.** Its own tooling is Rust: one crate in `tools/`, one binary,
-`scripts/marola-tools <command>` (`citation`, `mip-graph`, `doc-links`, `reading-time`,
-`graph-svg`, …), with `cargo test` as every command's test suite and rustfmt and
-`clippy -D warnings` as its gates. Shell stays for glue that only calls other tools. Gleam is
-allowed where it is clearly easier than Rust; nothing else. No `.py` file, no `pyproject.toml`, no
-`ruff.toml`, no `pip` or `uv` step in this repo's own code or CI.
+**The umbrella's own code is Scala 3, and only Scala 3: no Python, no Rust** (the owner,
+2026-11-14, #942). Its tooling is one scala-cli project in `tools/` (versions and compiler options
+in `tools/project.scala`), run as `scripts/marola-tools <command>` (`citation`, `mip-graph`,
+`doc-links`, `prepare-docs`, `pointer-sync`, `release`, `reading-time`, …; `--help` lists them).
+It is laid out by bounded context (the owner, 2026-11-14): `tools/src/shared/` is the shared
+kernel (`Sha`, `RepoSlug`, `Conclusion`, `Jq`, `Invocation`, `Proc`, …), and each context
+(`ci`, `docs`, `publishing`, `routing`, `submodules`) has a model file with its domain types and
+pure logic (no IO), adapters that decode gh, git and files into the model, and one command object
+per command, with its munit suite at the same path under `tools/test/`; `scala-cli test tools`
+(compiled with `-Werror`) and `scala-cli fmt --check tools` are its gates. Simplicity,
+composition and FP come first: immutable values, small pure functions composed over `Either` and
+`Option`, no `var` or `return` in logic, IO only at the edge. No magic strings (a name is a constant
+or an enum case), no implicit configuration (env, defaults, cwd and the clock are read once at the
+`@main` edge into a config case class), no private constructors. Direct style on os-lib, upickle
+and mainargs, no effect system.
+Shell stays only for one-line glue (a workflow `run:`, a justfile recipe, the `scripts/marola-tools`
+wrapper). `scripts/docs_redirect_check.js` stays JavaScript: it runs the browser script of
+`mkdocs/overrides/404.html`, which only a JavaScript engine can. No `.py` or `.rs` file, no
+`pyproject.toml`, `Cargo.toml` or `rust-toolchain.toml`, no `pip`, `uv` or `cargo` step in this
+repo's own code or CI.
 
 Two exceptions, both not ours to change here: the vendored `routing` skill
 (`.claude/skills/routing/scripts/route.py`, marola-devkit's, moved by `skills.yml`), and the
@@ -261,12 +275,14 @@ as not run; it is never skipped silently.
   English (the devkit plugin), `humanizar` on Portuguese (ww3-gpu's copy until
   marola-dev/marola-devkit#102 settles a marola one), and marola-site's `ptbr-humanizer` on the
   site's visitor copy.
-- **This repo's READMEs**: `README.md` is in Portuguese, the full version and the docs site's
-  landing. `README.en.md` is the English one, written ELI5: short sentences, no jargon, a link
-  for the detail. A change to one reaches the other in the same PR.
+- **This repo's READMEs**: `README.md` is in Portuguese and the docs site's landing;
+  `README.en.md` is its English mirror. Both stay short (what marola is, how to run it, this repo,
+  how to cite), with only the DOI, version, CI, tests, Scala, JDK, Scala LOC and reading-time
+  badges (the owner, 2026-11-14); the detail lives on docs.marola.dev. A change to one reaches the
+  other in the same PR.
 - **Every README shows its reading time** (`marola-tools reading-time`, at Brysbaert's 181 words
   per minute for Portuguese and 238 for English): after editing one, run `just reading-time`;
-  `rust-ci` fails on a stale badge. A figure in a README comes from a source in the repo, never a
+  `tools-ci` fails on a stale badge. A figure in a README comes from a source in the repo, never a
   hand-drawn image: Archify JSON under `docs/archify/` (`just figure`, in pt-BR and en, checked by
   `just figure-check`) or the code graph (`just graphify-figure`).
 - **Formal technical English**: the Writing Skills plugin's `asd-ste100` (ASD Simplified Technical

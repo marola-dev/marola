@@ -27,7 +27,7 @@
     {
       "id": "prep",
       "type": "backend",
-      "label": "prepare-docs.sh",
+      "label": "marola-tools prepare-docs",
       "pos": [
         430,
         170
@@ -93,7 +93,7 @@
     {
       "id": "mk",
       "type": "backend",
-      "label": "mkdocs.sh",
+      "label": "marola-tools mkdocs",
       "sublabel": "mkdocs --strict",
       "pos": [
         430,
