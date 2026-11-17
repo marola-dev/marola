@@ -43,3 +43,39 @@ class UtilTest extends munit.FunSuite:
     assertEquals(urlPath("https://docs.marola.dev/a%20b/?x#y"), "/a%20b/")
     assertEquals(urlPath("https://docs.marola.dev"), "")
     assertEquals(urlencode(Seq("q" -> "a b/é")), "q=a+b%2F%C3%A9")
+
+  test("readUtf8 keeps the message a person needs, UTF-8 or OS"):
+    val dir = os.temp.dir()
+    os.write.over(dir / "good.txt", "olá mar".getBytes("UTF-8"))
+    assertEquals(Util.readUtf8(dir / "good.txt"), Right("olá mar"))
+    os.write.over(dir / "bad.txt", Array[Byte](0x6f, (0xff & 0xff).toByte, 0x6f))
+    assertEquals(Util.readUtf8(dir / "bad.txt"), Left(Util.NotUtf8))
+    assertEquals(Util.readUtf8(dir / "gone.txt"), Left("No such file or directory (os error 2)"))
+
+  test("hasExtension: a leading dot starts a name"):
+    assertEquals(Util.hasExtension(os.RelPath("README.md").resolveFrom(os.pwd), "md"), true)
+    assertEquals(Util.hasExtension(os.RelPath("README.md").resolveFrom(os.pwd), "MD"), false)
+    assertEquals(Util.hasExtension(os.RelPath(".md").resolveFrom(os.pwd), "md"), false)
+    assertEquals(Util.hasExtension(os.RelPath("CITATION").resolveFrom(os.pwd), "cff"), false)
+
+  test("trimUnicode trims what String.trim misses"):
+    assertEquals(Util.trimUnicode("  value  "), "value")
+    assertEquals(Util.trimUnicode("\u00a0mar\u2003"), "mar")
+
+  test("an I/O error reads as the OS words it, errno included"):
+    import java.io.IOException
+    import java.nio.file.{NoSuchFileException, NotDirectoryException}
+    assertEquals(Util.osError(NoSuchFileException("x")), "No such file or directory (os error 2)")
+    assertEquals(Util.osError(NotDirectoryException("x")), "Not a directory (os error 20)")
+    assertEquals(Util.osError(new IOException("broken pipe")), "broken pipe")
+
+  test("formatNumber keeps whole numbers bare, and others as the JVM printed them"):
+    assertEquals(Util.formatNumber(3.0), "3")
+    assertEquals(Util.formatNumber(3.5), "3.5")
+    assertEquals(Util.formatNumber(1e16), "1.0E16")
+
+  test("pyrepr quotes a value the way Python's repr quoted it"):
+    assertEquals(Util.pyrepr(Some(ujson.Str("it's"))), "\"it's\"")
+    assertEquals(Util.pyrepr(Some(ujson.Str("plain"))), "'plain'")
+    assertEquals(Util.pyrepr(None), "None")
+    assertEquals(Util.pyrepr(Some(ujson.Num(3))), "3")
