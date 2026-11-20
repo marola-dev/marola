@@ -1,0 +1,3764 @@
+{
+ "rows": [
+  {
+   "mip": "MIP-0001",
+   "file": "MIP-0001-water-quality-and-sea-lore.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola ranks beaches by waves, wind, temperature and a jellyfish heuristic, but says nothing about whether the water is fit to swim in, and in Santa Catarina that is published, per sampling point, by the state environment agency (IMA)."
+  },
+  {
+   "mip": "MIP-0001",
+   "file": "MIP-0001-water-quality-and-sea-lore.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Leaves the Ponto 73 case unaddressed"
+  },
+  {
+   "mip": "MIP-0001",
+   "file": "MIP-0001-water-quality-and-sea-lore.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Parse the PDF bulletins (rejected): Works, no coordinates"
+  },
+  {
+   "mip": "MIP-0001",
+   "file": "MIP-0001-water-quality-and-sea-lore.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Let the LLM write the lore (rejected): Cheapest to build"
+  },
+  {
+   "mip": "MIP-0001",
+   "file": "MIP-0001-water-quality-and-sea-lore.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Score `RESULTADO` directly (e.g. penalise 100-800 enterococci as \"borderline\") (rejected): Tempting, but it second-guesses the agency's own five-sample classification with a single number"
+  },
+  {
+   "mip": "MIP-0002",
+   "file": "MIP-0002-telegram-bot-phase-1.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Everything marola computes is reachable only from a terminal."
+  },
+  {
+   "mip": "MIP-0002",
+   "file": "MIP-0002-telegram-bot-phase-1.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "WhatsApp (needs Business API approval) (rejected)"
+  },
+  {
+   "mip": "MIP-0002",
+   "file": "MIP-0002-telegram-bot-phase-1.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A Telegram library (`java-telegram-bot-api`, `TelegramBots`) (rejected)"
+  },
+  {
+   "mip": "MIP-0003",
+   "file": "MIP-0003-fast-replies-caching-and-fan-out.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "A marola answer today costs one 30-45s Overpass query, twelve sequential Open-Meteo calls and one IMA download, every time, for every user, even for the same beach twice in a minute."
+  },
+  {
+   "mip": "MIP-0003",
+   "file": "MIP-0003-fast-replies-caching-and-fan-out.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Self-hosted Overpass (rejected): the \"proper\" fix"
+  },
+  {
+   "mip": "MIP-0003",
+   "file": "MIP-0003-fast-replies-caching-and-fan-out.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "SQLite instead of files (rejected): nicer queries, one more dependency"
+  },
+  {
+   "mip": "MIP-0003",
+   "file": "MIP-0003-fast-replies-caching-and-fan-out.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Redis (rejected): right tool for a multi-instance bot"
+  },
+  {
+   "mip": "MIP-0004",
+   "file": "MIP-0004-daily-digest-subscriptions-and-reach.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "A bot people query once is a novelty; a message that arrives at 18:00 saying \"amanhã 07:00 na Joaquina: 82/100, água própria, baleias prováveis\" is a habit."
+  },
+  {
+   "mip": "MIP-0004",
+   "file": "MIP-0004-daily-digest-subscriptions-and-reach.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Push for everyone who ever shared a location (rejected): no consent, no"
+  },
+  {
+   "mip": "MIP-0004",
+   "file": "MIP-0004-daily-digest-subscriptions-and-reach.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Instagram/WhatsApp status cards (rejected): later"
+  },
+  {
+   "mip": "MIP-0004",
+   "file": "MIP-0004-daily-digest-subscriptions-and-reach.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Only SC forever (rejected): simpler, and caps the audience at one state"
+  },
+  {
+   "mip": "MIP-0005",
+   "file": "MIP-0005-map-and-static-site.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "Today every answer costs a live pipeline run per person."
+  },
+  {
+   "mip": "MIP-0005",
+   "file": "MIP-0005-map-and-static-site.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Dynamic site (server + API) (rejected): Needs hosting, auth"
+  },
+  {
+   "mip": "MIP-0005",
+   "file": "MIP-0005-map-and-static-site.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Map inside Telegram (`sendLocation`/venue messages) (rejected): Useful for one beach"
+  },
+  {
+   "mip": "MIP-0005",
+   "file": "MIP-0005-map-and-static-site.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A native app on a friend's developer account (rejected): Store review, two codebases"
+  },
+  {
+   "mip": "MIP-0005",
+   "file": "MIP-0005-map-and-static-site.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Supabase as the data store (rejected): Not needed for read-only data"
+  },
+  {
+   "mip": "MIP-0006",
+   "file": "MIP-0006-live-look-user-cameras.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Forecasts say what the sea should be doing; a photo says what it *is* doing."
+  },
+  {
+   "mip": "MIP-0006",
+   "file": "MIP-0006-live-look-user-cameras.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Buy camera access / partner with a cam provider (rejected): Real cameras, real money"
+  },
+  {
+   "mip": "MIP-0006",
+   "file": "MIP-0006-live-look-user-cameras.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Scrape public cams (rejected): No"
+  },
+  {
+   "mip": "MIP-0006",
+   "file": "MIP-0006-live-look-user-cameras.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Photos only in the bot, not on the map (rejected): Halves the value"
+  },
+  {
+   "mip": "MIP-0007",
+   "file": "MIP-0007-time-series-foundation-models.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "A pretrained time-series transformer (Nixtla's TimeGPT, or the open-weight models Chronos, TimesFM, Moirai) forecasts a numeric series from its history alone, zero-shot."
+  },
+  {
+   "mip": "MIP-0007",
+   "file": "MIP-0007-time-series-foundation-models.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Nixtla API from day one (rejected): Fast to try"
+  },
+  {
+   "mip": "MIP-0007",
+   "file": "MIP-0007-time-series-foundation-models.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Hand-written rules only (\"rain > 30 mm in 48 h → warn\") (rejected): Cheaper, explainable, and probably the control that wins early"
+  },
+  {
+   "mip": "MIP-0007",
+   "file": "MIP-0007-time-series-foundation-models.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing until the bot exists (rejected): The accumulation part (§4.2) must start now or there is no series when the models are ready"
+  },
+  {
+   "mip": "MIP-0008",
+   "file": "MIP-0008-docker-images-and-smoke-test.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "Ship marola as container images, so anyone can run what `nix develop` + `just run` does without Nix: a lightweight JVM image (`marola:jvm`), a native binary image (`marola:native`, GraalVM native-image, JDK 25), a `marola-ollama` compose stack (marola + an Ollama sidecar with the model pre-pulled, the `just run -- --summarize` path), and `marola-local`: the same stack with the fine-tuned `marola-llama3.2` model baked in (`finetune/`), versioned like code."
+  },
+  {
+   "mip": "MIP-0008",
+   "file": "MIP-0008-docker-images-and-smoke-test.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Nix-built images (`dockerTools`) (rejected): reproducible and small"
+  },
+  {
+   "mip": "MIP-0008",
+   "file": "MIP-0008-docker-images-and-smoke-test.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A single fat `marola-ollama` image (Ollama + JRE + jar in one) (rejected): 4+ GB, rebuilt on every code change"
+  },
+  {
+   "mip": "MIP-0008",
+   "file": "MIP-0008-docker-images-and-smoke-test.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Smoke workflow deploying Pages itself (rejected): races with `site.yml`"
+  },
+  {
+   "mip": "MIP-0008",
+   "file": "MIP-0008-docker-images-and-smoke-test.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): `nix develop` works"
+  },
+  {
+   "mip": "MIP-0009",
+   "file": "MIP-0009-map-wave-markers-and-hover-aspects.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "Every beach on the map becomes a wave marker coloured by its score instead of a plain dot, and hovering it (tapping, on a phone) shows every aspect marola already knows for that beach at the selected hour: wind level with an emoji, whale-sighting likelihood, jellyfish risk, water temperature, waves, water-quality verdict: the numbers the CLI prints, without opening the card."
+  },
+  {
+   "mip": "MIP-0009",
+   "file": "MIP-0009-map-wave-markers-and-hover-aspects.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "An emoji as the marker (🌊 in a `divIcon`) (rejected): cannot take the score colour"
+  },
+  {
+   "mip": "MIP-0009",
+   "file": "MIP-0009-map-wave-markers-and-hover-aspects.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A heat/density layer (leaflet.heat) (rejected): explicitly not wanted"
+  },
+  {
+   "mip": "MIP-0009",
+   "file": "MIP-0009-map-wave-markers-and-hover-aspects.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Permanent labels on every marker (rejected): unreadable at area zoom"
+  },
+  {
+   "mip": "MIP-0009",
+   "file": "MIP-0009-map-wave-markers-and-hover-aspects.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Popups on hover (rejected): Leaflet popups close on mouse-out and steal the map's focus"
+  },
+  {
+   "mip": "MIP-0009",
+   "file": "MIP-0009-map-wave-markers-and-hover-aspects.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "MapLibre with data-driven symbols (rejected): richer, but a build step and a bigger vendor blob for one tooltip"
+  },
+  {
+   "mip": "MIP-0009",
+   "file": "MIP-0009-map-wave-markers-and-hover-aspects.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): the card works"
+  },
+  {
+   "mip": "MIP-0010",
+   "file": "MIP-0010-mlflow-experiment-tracking.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola already measures itself: `just benchmark` scores three answer modes on 22 questions, the DSPy compile step optimises two prompts against a metric, and the fine-tune tiers produce model variants."
+  },
+  {
+   "mip": "MIP-0010",
+   "file": "MIP-0010-mlflow-experiment-tracking.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): the Markdown ledger and regex gate work today"
+  },
+  {
+   "mip": "MIP-0010",
+   "file": "MIP-0010-mlflow-experiment-tracking.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Langfuse (rejected): already optional in `dspy/`"
+  },
+  {
+   "mip": "MIP-0010",
+   "file": "MIP-0010-mlflow-experiment-tracking.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Weights & Biases / hosted trackers (rejected): an account and a key for a personal project's ledger"
+  },
+  {
+   "mip": "MIP-0010",
+   "file": "MIP-0010-mlflow-experiment-tracking.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Java client instead of REST (rejected): see §4.2"
+  },
+  {
+   "mip": "MIP-0011",
+   "file": "MIP-0011-claude-code-best-practices.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola already follows the parts of Anthropic's guidance that are habits: a `CLAUDE.md` that imports `AGENTS.md`, two in-repo skills, one session per feature, a cost line per PR, the agent in a sandbox."
+  },
+  {
+   "mip": "MIP-0011",
+   "file": "MIP-0011-claude-code-best-practices.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): the prose works most of the time"
+  },
+  {
+   "mip": "MIP-0011",
+   "file": "MIP-0011-claude-code-best-practices.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Managed settings (`managed-settings.json`) (rejected): organisation-level"
+  },
+  {
+   "mip": "MIP-0011",
+   "file": "MIP-0011-claude-code-best-practices.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "ai-jail alone (rejected): filesystem/process containment, no notion of a paid API call or a test gate"
+  },
+  {
+   "mip": "MIP-0011",
+   "file": "MIP-0011-claude-code-best-practices.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "One giant `settings.json` PR (rejected): harder to attribute a regression (a hook slowing sessions) to a change"
+  },
+  {
+   "mip": "MIP-0012",
+   "file": "MIP-0012-llm4s-adoption-and-dspy-deprecation.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Two changes, deliberately separable."
+  },
+  {
+   "mip": "MIP-0012",
+   "file": "MIP-0012-llm4s-adoption-and-dspy-deprecation.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Keeps two toolchains and the admitted skew for a three-example bootstrap"
+  },
+  {
+   "mip": "MIP-0012",
+   "file": "MIP-0012-llm4s-adoption-and-dspy-deprecation.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Build `ds4s` as a library first (`FUTURE-WORK.md` §10) (rejected): Right scope for a general port"
+  },
+  {
+   "mip": "MIP-0012",
+   "file": "MIP-0012-llm4s-adoption-and-dspy-deprecation.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Replace `LlmClient` with llm4s everywhere (rejected): Lost on churn and weight on the local default"
+  },
+  {
+   "mip": "MIP-0012",
+   "file": "MIP-0012-llm4s-adoption-and-dspy-deprecation.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Adopt llm4s only for the compile step (rejected): Pointless"
+  },
+  {
+   "mip": "MIP-0012",
+   "file": "MIP-0012-llm4s-adoption-and-dspy-deprecation.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Kyo's AI modules / sttp-ai instead of llm4s (rejected): Cheaper effect fit"
+  },
+  {
+   "mip": "MIP-0012",
+   "file": "MIP-0012-llm4s-adoption-and-dspy-deprecation.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Make `llm4s-ollama` the default (rejected): Rejected until tools/JSON mode reach the local path (OQ1/OQ2)"
+  },
+  {
+   "mip": "MIP-0013",
+   "file": "MIP-0013-opencode-tryout.md",
+   "status": "Accepted",
+   "section": "1",
+   "kind": "summary",
+   "text": "Try [OpenCode](https://opencode.ai) (MIT, `anomalyco/opencode`, v1.18.29 on 2026-09-04, in nixpkgs at 1.18.28) as the day-to-day coding agent for this repository, for a bounded experiment: two MIP-0010-sized tasks delivered end to end under OpenCode, measured on the things this repo already measures (gates green, `Cost:` per PR, review findings), against the same two tasks' Claude Code figures."
+  },
+  {
+   "mip": "MIP-0013",
+   "file": "MIP-0013-opencode-tryout.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Claude Code works and the subscription covers it"
+  },
+  {
+   "mip": "MIP-0013",
+   "file": "MIP-0013-opencode-tryout.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Other harnesses (Codex CLI, Gemini CLI, Aider) (rejected): none reads `.claude/skills/` and `AGENTS.md` as OpenCode does"
+  },
+  {
+   "mip": "MIP-0013",
+   "file": "MIP-0013-opencode-tryout.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "OpenCode for CI only (`/oc` in PR comments) (rejected): a paid run per mention with no reviewer"
+  },
+  {
+   "mip": "MIP-0013",
+   "file": "MIP-0013-opencode-tryout.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Replace outright, skip the tryout (rejected): would discard a working"
+  },
+  {
+   "mip": "MIP-0014",
+   "file": "MIP-0014-marola-book.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola has more written-down design and honesty than most personal projects (`PHILOSOPHY.md`, eleven MIPs, an effects map, a benchmarks ledger), but all of it is reference material, answering \"what did we build\" one file at a time, never \"how would you build this, and why these specific choices, read start to finish.\" This MIP proposes turning that material into a real technical book, written in LaTeX, versioned in a git repository, built to PDF in CI on every push and released on every tag, the same production discipline this repo already applies to code, aimed at prose instead."
+  },
+  {
+   "mip": "MIP-0014",
+   "file": "MIP-0014-marola-book.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): the docs already serve developers who read `docs/`"
+  },
+  {
+   "mip": "MIP-0014",
+   "file": "MIP-0014-marola-book.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "mdBook / Docusaurus (Markdown-native, like *The Rust Programming Language*) (rejected): lower authoring friction"
+  },
+  {
+   "mip": "MIP-0014",
+   "file": "MIP-0014-marola-book.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Pandoc, Markdown → LaTeX (rejected): see §4.5"
+  },
+  {
+   "mip": "MIP-0014",
+   "file": "MIP-0014-marola-book.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A `book/` directory in this repo instead of a separate repo (rejected): see §5.4's trade-off paragraph"
+  },
+  {
+   "mip": "MIP-0014",
+   "file": "MIP-0014-marola-book.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Blog-post series instead of a book (rejected): lower effort, no PDF/CI story"
+  },
+  {
+   "mip": "MIP-0015",
+   "file": "MIP-0015-interacao-swim-matching.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Let a marola user say \"I'm swimming at Beach X around Time Y\" and see whether anyone else who said the same thing is going too; matching people to a shared swim, not broadcasting anyone's location."
+  },
+  {
+   "mip": "MIP-0015",
+   "file": "MIP-0015-interacao-swim-matching.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Full real-time presence, à la NomadTable's \"see who's nearby now\" (rejected): richer, but continuous location for a toy project with a handful of users is a much bigger privacy surface than an opt-in"
+  },
+  {
+   "mip": "MIP-0015",
+   "file": "MIP-0015-interacao-swim-matching.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A public \"who's here\" layer on the map (rejected): deanonymizes immediately at marola's scale (§8) and breaks MIP-0005's \"no cookies"
+  },
+  {
+   "mip": "MIP-0015",
+   "file": "MIP-0015-interacao-swim-matching.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing until the audio is confirmed (rejected): the honest default given §11.1"
+  },
+  {
+   "mip": "MIP-0016",
+   "file": "MIP-0016-water-quality-map-markers.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "The map gets one small marker per bathing-water sampling point: a green circle with a ✓ for PRÓPRIA, a red circle with a ✕ for IMPRÓPRIA, grey with a ?"
+  },
+  {
+   "mip": "MIP-0016",
+   "file": "MIP-0016-water-quality-map-markers.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Draw the points where the agency puts them (rejected): measured to be on land for every fixture point (§2)"
+  },
+  {
+   "mip": "MIP-0016",
+   "file": "MIP-0016-water-quality-map-markers.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Fixed bearing per area (\"the sea is east of Florianópolis\") (rejected): wrong for the south and west coasts of the same island"
+  },
+  {
+   "mip": "MIP-0016",
+   "file": "MIP-0016-water-quality-map-markers.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Snap to the beach polygon's seaward edge (rejected): needs the coastline anyway to know which edge is seaward"
+  },
+  {
+   "mip": "MIP-0016",
+   "file": "MIP-0016-water-quality-map-markers.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Colour the beach marker per worst point, no pins (rejected): is what exists"
+  },
+  {
+   "mip": "MIP-0016",
+   "file": "MIP-0016-water-quality-map-markers.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): the card lists the points"
+  },
+  {
+   "mip": "MIP-0017",
+   "file": "MIP-0017-agentic-tooling-survey.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Two external sources were surveyed for agentic-workflow ideas transferable to marola's own Claude Code setup (not marola-the-product): [`MadsLorentzen/ai-job-search`](https://github.com/MadsLorentzen/ai-job-search) (a personal job-application automation framework built on Claude Code, ~13.8k★) and four repos from GitHub's trending-agentic-tooling crop of the week of 2026-09-04."
+  },
+  {
+   "mip": "MIP-0017",
+   "file": "MIP-0017-agentic-tooling-survey.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (skip this survey's ideas entirely) (rejected): loses two real efficiency/auditability ideas at zero-cost"
+  },
+  {
+   "mip": "MIP-0017",
+   "file": "MIP-0017-agentic-tooling-survey.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Adopt `pacifio/atlas` (a real dependency) instead of §5.1's plain-CSV tracker (rejected): rejected"
+  },
+  {
+   "mip": "MIP-0017",
+   "file": "MIP-0017-agentic-tooling-survey.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Adopt `Graphify-Labs/graphify` for codebase context (rejected): rejected"
+  },
+  {
+   "mip": "MIP-0017",
+   "file": "MIP-0017-agentic-tooling-survey.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Adopt `eneskirca/nodeterm`-style parallel-session tooling (rejected): rejected"
+  },
+  {
+   "mip": "MIP-0017",
+   "file": "MIP-0017-agentic-tooling-survey.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Mirror `ai-job-search`'s numbered sub-file skill layout (`01-…md`, `02-…md` inside one skill directory) for marola's own skills (rejected): considered for `mip`'s multi-step template"
+  },
+  {
+   "mip": "MIP-0018",
+   "file": "MIP-0018-self-documentation-and-media-exporter.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Marola's own development already produces MIP design docs, PR bodies with `Cost:`/`Tested:` trailers, and (as of this session) a `GH_POST_MORTEM.md` operator log: raw material that's already close to storytelling content."
+  },
+  {
+   "mip": "MIP-0018",
+   "file": "MIP-0018-self-documentation-and-media-exporter.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing, keep reconstructing content manually each week (rejected): Real ongoing friction"
+  },
+  {
+   "mip": "MIP-0018",
+   "file": "MIP-0018-self-documentation-and-media-exporter.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Auto-generate the post text itself (LLM-written draft, not just a planner) (rejected): Rejected per §4's own research finding"
+  },
+  {
+   "mip": "MIP-0018",
+   "file": "MIP-0018-self-documentation-and-media-exporter.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A hosted/SaaS build-in-public tool (e.g. a Buffer/Hypefury-style scheduler) (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0018",
+   "file": "MIP-0018-self-documentation-and-media-exporter.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Wix as the blog platform (rejected): Not rejected outright"
+  },
+  {
+   "mip": "MIP-0018",
+   "file": "MIP-0018-self-documentation-and-media-exporter.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "`git subtree` for the cross-repo mechanic (rejected): Rejected (§6 of `docs/3-Working-on-the-repo/SELF-DOCUMENTING.md`)"
+  },
+  {
+   "mip": "MIP-0019",
+   "file": "MIP-0019-arxiv-ocean-forecasting-survey.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "`scripts/arxiv_digest.py` (new, this MIP's companion change) queried the live arXiv API across seven oceanography/forecasting/jellyfish-prediction search terms and cached 40 papers."
+  },
+  {
+   "mip": "MIP-0019",
+   "file": "MIP-0019-arxiv-ocean-forecasting-survey.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (skip this survey) (rejected): Loses a real"
+  },
+  {
+   "mip": "MIP-0019",
+   "file": "MIP-0019-arxiv-ocean-forecasting-survey.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "An LLM-based relevance re-ranker on top of the raw arXiv results (ask a model \"is this paper actually about marine jellyfish, not personality psychology or astronomy\") (rejected): considered, rejected for v1"
+  },
+  {
+   "mip": "MIP-0019",
+   "file": "MIP-0019-arxiv-ocean-forecasting-survey.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Scraping GitHub's actual Trending page instead of the search API (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0020",
+   "file": "MIP-0020-instagram-bot-account.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola gets an Instagram professional account whose first post is a picture of the live map with the GitHub Pages URL in the caption and the bio."
+  },
+  {
+   "mip": "MIP-0020",
+   "file": "MIP-0020-instagram-bot-account.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): The map stays a README link"
+  },
+  {
+   "mip": "MIP-0020",
+   "file": "MIP-0020-instagram-bot-account.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Post from a phone forever (v1 only) (rejected): Genuinely fine at one post a week"
+  },
+  {
+   "mip": "MIP-0020",
+   "file": "MIP-0020-instagram-bot-account.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Instagram API with Facebook Login (rejected): Needs a Facebook Page linked to the account and `pages_read_engagement`"
+  },
+  {
+   "mip": "MIP-0020",
+   "file": "MIP-0020-instagram-bot-account.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A third-party scheduler (Buffer/Later/Hootsuite) (rejected): Paid tiers for the useful parts"
+  },
+  {
+   "mip": "MIP-0020",
+   "file": "MIP-0020-instagram-bot-account.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Unofficial/private-API clients (rejected): Against Instagram's terms"
+  },
+  {
+   "mip": "MIP-0020",
+   "file": "MIP-0020-instagram-bot-account.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Threads instead (rejected): Has a publishing API too and is text-first"
+  },
+  {
+   "mip": "MIP-0020",
+   "file": "MIP-0020-instagram-bot-account.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A `--cron` flag on `ig_publish.py` that skips the typed `yes` (rejected): Removes the consent step instead of replacing it"
+  },
+  {
+   "mip": "MIP-0020",
+   "file": "MIP-0020-instagram-bot-account.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "No gate at all (true autonomy) (rejected): The most literal reading of \"autonomous daily posting agent\""
+  },
+  {
+   "mip": "MIP-0020",
+   "file": "MIP-0020-instagram-bot-account.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A Telegram channel post first (rejected): The same render + cron + approval shape with no Meta app"
+  },
+  {
+   "mip": "MIP-0021",
+   "file": "MIP-0021-beach-accessibility.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "An `AccessibilityClient` fetches, in one extra Overpass query per run, the amenities OpenStreetMap knows within 300 m of the beaches `BeachFinder` already found (parking, toilets, showers, lifeguard posts) and marola prints them as facts with counts (\"parking nearby: 3, lifeguard post: yes\")."
+  },
+  {
+   "mip": "MIP-0021",
+   "file": "MIP-0021-beach-accessibility.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Read tags on the beach elements (`wheelchair=*`, `lifeguard=*`) (rejected): §4 measured zero"
+  },
+  {
+   "mip": "MIP-0021",
+   "file": "MIP-0021-beach-accessibility.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Google Places / a paid POI API (rejected): Richer, costs money"
+  },
+  {
+   "mip": "MIP-0021",
+   "file": "MIP-0021-beach-accessibility.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Fold it into `BeachFinder`'s query (rejected): One round trip instead of two"
+  },
+  {
+   "mip": "MIP-0021",
+   "file": "MIP-0021-beach-accessibility.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Ask the LLM to describe facilities (rejected): Unsourced text about safety-relevant facts"
+  },
+  {
+   "mip": "MIP-0021",
+   "file": "MIP-0021-beach-accessibility.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): The reply keeps answering \"when\" and not \"how do I get there and is anyone watching\""
+  },
+  {
+   "mip": "MIP-0022",
+   "file": "MIP-0022-safety-answer-footer.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "When an `--ask` / `ask_ocean_question` / `/perguntar` answer was grounded in a document under `knowledge/safety/`, the rendered reply ends with a fixed two-line footer, who to call (guarda- vidas / Bombeiros 193, SAMU 192) and \"this does not replace professional help\", appended by the rendering code after the model's text."
+  },
+  {
+   "mip": "MIP-0022",
+   "file": "MIP-0022-safety-answer-footer.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Put the footer in the prompt (\"always end safety answers with…\") (rejected): The model can drop"
+  },
+  {
+   "mip": "MIP-0022",
+   "file": "MIP-0022-safety-answer-footer.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Front-matter marker per document instead of a directory (rejected): Needs a `Corpus` parser change"
+  },
+  {
+   "mip": "MIP-0022",
+   "file": "MIP-0022-safety-answer-footer.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Footer on every answer (rejected): Simpler, but turns the numbers into wallpaper on whale-season questions"
+  },
+  {
+   "mip": "MIP-0022",
+   "file": "MIP-0022-safety-answer-footer.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Make the corpus part of this MIP (rejected): No"
+  },
+  {
+   "mip": "MIP-0022",
+   "file": "MIP-0022-safety-answer-footer.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): The first first-aid document ships answers with no \"call 193/192\""
+  },
+  {
+   "mip": "MIP-0023",
+   "file": "MIP-0023-waitlist-promotion-and-maintenance.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola has a real product surface today, the static map (MIP-0005, live at https://h0ffmann.github.io/marola/), and a real gap: no way for an interested visitor to leave contact info for the not-yet-built Telegram bot, no plan for where a hobby launch gets seen, and no written answer for keeping the site and eventual bot maintained without babysitting."
+  },
+  {
+   "mip": "MIP-0023",
+   "file": "MIP-0023-waitlist-promotion-and-maintenance.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (keep asking friends by hand) (rejected): Free, but no durable signal or scale past the maintainer's own network"
+  },
+  {
+   "mip": "MIP-0023",
+   "file": "MIP-0023-waitlist-promotion-and-maintenance.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Embed a Formspree/Tally form directly on `index.html` (rejected): Rejected as default"
+  },
+  {
+   "mip": "MIP-0023",
+   "file": "MIP-0023-waitlist-promotion-and-maintenance.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Build a bespoke Cloudflare Worker sign-up form now (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0023",
+   "file": "MIP-0023-waitlist-promotion-and-maintenance.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Launch on Product Hunt/BetaList immediately, wait-list as the \"product.\" Rejected (rejected): a poor audience match for \"not live yet,\" burning a one-shot slot on the weakest form of it"
+  },
+  {
+   "mip": "MIP-0025",
+   "file": "MIP-0025-marola-sea-domain-model.md",
+   "status": "Partially implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "Ship `marola-sea-1.0`: a 3B base model post-trained in three layers (marine-domain SFT, MCP tool-call SFT, safety DPO), merged and quantized to GGUF, served through Ollama exactly like today's `marola-llama3.2` (`finetune/README.md`)."
+  },
+  {
+   "mip": "MIP-0025",
+   "file": "MIP-0025-marola-sea-domain-model.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Prompt-only via DSPy (`dspy/compile_recommendation_prompt.py`) (rejected): Already built, already run live"
+  },
+  {
+   "mip": "MIP-0025",
+   "file": "MIP-0025-marola-sea-domain-model.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A bigger untuned model (e.g., the 26GB `dolphin-mixtral:8x7b` already used in `ARCHITECTURE.md` §5a's DSPy compile run) (rejected): Better instruction-following observed live already"
+  },
+  {
+   "mip": "MIP-0025",
+   "file": "MIP-0025-marola-sea-domain-model.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "RAG only, no fine-tuning at all (rejected): The `knowledge/*.md` RAG path (`ask_ocean_question`) already exists and stays regardless of this MIP"
+  },
+  {
+   "mip": "MIP-0025",
+   "file": "MIP-0025-marola-sea-domain-model.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): `finetune/`'s Tier 2 stays \"written"
+  },
+  {
+   "mip": "MIP-0029",
+   "file": "MIP-0029-ocean-layer-positioning.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola is already, in substance, more than a swim-time answer: MIP-0001 grounds it in bathing-water quality and a sourced sea-lore corpus, MIP-0009/0016 put tides, wind, jellyfish and water-quality marks on the map, MIP-0021/0022 add accessibility and a safety footer, and `FUTURE-WORK.md` §1 already argues the scoring engine should generalize past swimming to surf, dive, sailing, fishing, whale watching."
+  },
+  {
+   "mip": "MIP-0029",
+   "file": "MIP-0029-ocean-layer-positioning.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Keep \"swim\" as the brand (rejected): Zero cost, maximum clarity"
+  },
+  {
+   "mip": "MIP-0029",
+   "file": "MIP-0029-ocean-layer-positioning.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "\"Beach intelligence.\" Anchors to a place rather than the sea itself (which matters offshore, for divers and sailors who never touch the beach) (rejected): narrower than \"ocean,\" not chosen"
+  },
+  {
+   "mip": "MIP-0029",
+   "file": "MIP-0029-ocean-layer-positioning.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "\"Sea assistant.\" Duplicates `AGENTS.md:8`'s existing \"assistant\" noun and undersells the deterministic-layer framing `PHILOSOPHY.md` argues for (rejected): not chosen"
+  },
+  {
+   "mip": "MIP-0029",
+   "file": "MIP-0029-ocean-layer-positioning.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A separate product name per use case (\"marola-swim,\" \"marola-surf\") (rejected): Multiplies the branding work `FUTURE-WORK.md` §1 explicitly designed against (one `ActivityScoring` object per activity, no other code touched)"
+  },
+  {
+   "mip": "MIP-0029",
+   "file": "MIP-0029-ocean-layer-positioning.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Cheapest, and not wrong today since no second use case is built"
+  },
+  {
+   "mip": "MIP-0030",
+   "file": "MIP-0030-coastal-trails.md",
+   "status": "Partially implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola shows named trails from OpenStreetMap near any beach or lake it already found for an area: named `highway=path`/`track` ways and `route=hiking`/`foot` relations within 500 m of one."
+  },
+  {
+   "mip": "MIP-0030",
+   "file": "MIP-0030-coastal-trails.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Free, but it leaves facts that are already mapped off a map that exists to show what is near a beach"
+  },
+  {
+   "mip": "MIP-0030",
+   "file": "MIP-0030-coastal-trails.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Overpass per area for good (rejected): one query per build"
+  },
+  {
+   "mip": "MIP-0030",
+   "file": "MIP-0030-coastal-trails.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Overpass per state (rejected): a state-wide query goes far over `[timeout:60]` and against Overpass's fair use"
+  },
+  {
+   "mip": "MIP-0030",
+   "file": "MIP-0030-coastal-trails.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Ways only misses the Transcarioca, and relations only misses almost every local trail (rejected)"
+  },
+  {
+   "mip": "MIP-0030",
+   "file": "MIP-0030-coastal-trails.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "`ST_ReadOSM` straight on the `.pbf` needs no extra tool, but it builds every way from its nodes over a whole region (§4.2) (rejected)"
+  },
+  {
+   "mip": "MIP-0030",
+   "file": "MIP-0030-coastal-trails.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A shell and SQL ETL in marola-oods (rejected): smaller, but it gives that repo code of its own"
+  },
+  {
+   "mip": "MIP-0030",
+   "file": "MIP-0030-coastal-trails.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The ETL in marola-site (rejected): the site would read extracts and write the lake (§2)"
+  },
+  {
+   "mip": "MIP-0030",
+   "file": "MIP-0030-coastal-trails.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Wikiloc or AllTrails tracks (§4.3) (rejected): no reuse terms"
+  },
+  {
+   "mip": "MIP-0031",
+   "file": "MIP-0031-water-quality-inea-inema.md",
+   "status": "Partially implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "Two new `WaterQualityClient` implementations, `IneaRjWaterQualityClient` (Rio de Janeiro) and `InemaBaWaterQualityClient` (Bahia), extend `AppConfig`'s `Auto` provider selection so beaches in those states get a real PRÓPRIA/IMPRÓPRIA verdict instead of \"no data\", matching what Santa Catarina already gets from `ImaScWaterQualityClient`."
+  },
+  {
+   "mip": "MIP-0031",
+   "file": "MIP-0031-water-quality-inea-inema.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Leaves the honest \"no data\" state MIP-0030 confirmed is not a bug"
+  },
+  {
+   "mip": "MIP-0031",
+   "file": "MIP-0031-water-quality-inea-inema.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Brasil.IO's dataset anyway, ignoring staleness (rejected): Rejected outright (§4.1)"
+  },
+  {
+   "mip": "MIP-0031",
+   "file": "MIP-0031-water-quality-inea-inema.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Geocode automatically (a geocoding API against each point's free-text description) instead of hand-curating coordinates (rejected): Considered and rejected for v1"
+  },
+  {
+   "mip": "MIP-0032",
+   "file": "MIP-0032-model-strategy-benchmark-matrix.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "`just benchmark` today answers one question, \"is marola's RAG better than the plain prompt?\", for one model (`llama3.2`, local)."
+  },
+  {
+   "mip": "MIP-0032",
+   "file": "MIP-0032-model-strategy-benchmark-matrix.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "(a) An addendum to MIP-0010 (rejected): The ledger records runs"
+  },
+  {
+   "mip": "MIP-0032",
+   "file": "MIP-0032-model-strategy-benchmark-matrix.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "(b) An addendum to MIP-0025 (rejected): Its §7 is the verification of one candidate model"
+  },
+  {
+   "mip": "MIP-0032",
+   "file": "MIP-0032-model-strategy-benchmark-matrix.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Promptfoo (`FUTURE-WORK.md` §10) (rejected): a YAML matrix runner over providers"
+  },
+  {
+   "mip": "MIP-0032",
+   "file": "MIP-0032-model-strategy-benchmark-matrix.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A \"from-scratch\" arm (rejected): Pretraining is off the table for cost and corpus reasons (the maintainer's own conclusion)"
+  },
+  {
+   "mip": "MIP-0032",
+   "file": "MIP-0032-model-strategy-benchmark-matrix.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): MIP-0025 would compare three Markdown files by hand and the local-vs-hosted argument would stay prose"
+  },
+  {
+   "mip": "MIP-0033",
+   "file": "MIP-0033-release-0.md",
+   "status": "Partially implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "Release 0 is the first public-facing bundle of marola: the repo goes public, `marola.dev` (already public, already static) gets a real chatbot widget backed by Ollama running on the maintainer's own machine (via a Cloudflare Tunnel, with a graceful \"LLM unavailable\" state when the tunnel or Ollama is down), and the first fine-tuned marola model is published to Hugging Face."
+  },
+  {
+   "mip": "MIP-0033",
+   "file": "MIP-0033-release-0.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Keep the repo private, ship only the chatbot + model (rejected): Loses the outreach/transparency value the maintainer explicitly asked for (\"release public\")"
+  },
+  {
+   "mip": "MIP-0033",
+   "file": "MIP-0033-release-0.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A hosted (Hetzner) chatbot origin instead of the maintainer's own machine (rejected): Rejected per the maintainer's own explicit choice this session (\"start with something on my personal computer\") and because it reintroduces the cost questions the earlier hosting research already weighed against GitHub Pages' free baseline"
+  },
+  {
+   "mip": "MIP-0034",
+   "file": "MIP-0034-rss-feeds-and-content-syndication.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Three separable things, deliberately not one pipeline."
+  },
+  {
+   "mip": "MIP-0034",
+   "file": "MIP-0034-rss-feeds-and-content-syndication.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Costs nothing and loses nothing today"
+  },
+  {
+   "mip": "MIP-0034",
+   "file": "MIP-0034-rss-feeds-and-content-syndication.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Auto-ingest feed items into `knowledge/` with an LLM summarisation + `Reviewer` pass (rejected): The obvious reading of \"RSS feeds into the knowledge base\""
+  },
+  {
+   "mip": "MIP-0034",
+   "file": "MIP-0034-rss-feeds-and-content-syndication.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Store feed bodies in the index with a freshness decay instead of a hard corpus/alert split (rejected): Much more work"
+  },
+  {
+   "mip": "MIP-0034",
+   "file": "MIP-0034-rss-feeds-and-content-syndication.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A hosted aggregator (Feedly/Inoreader API) (rejected): An account, a key"
+  },
+  {
+   "mip": "MIP-0034",
+   "file": "MIP-0034-rss-feeds-and-content-syndication.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Scrape Marinha/CHM with a headless browser past Cloudflare (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0034",
+   "file": "MIP-0034-rss-feeds-and-content-syndication.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Only do the outbound feed, skip inbound (rejected): Genuinely viable and the cheapest subset"
+  },
+  {
+   "mip": "MIP-0035",
+   "file": "MIP-0035-map-plugin-api.md",
+   "status": "Accepted",
+   "section": "1",
+   "kind": "summary",
+   "text": "A small, stable JavaScript hook (`window.marola.registerPlugin`) exposed by `site/static/app.js`, plus a committed `site/static/plugins.json` manifest of known plugin script URLs that `app.js` loads via `<script>` injection on page load, the same shape Windy's own plugin model uses (a JS bundle, loaded by URL, given access to the map instance), adapted to marola's plain Leaflet map (not Windy's LeafletGL) and to a static site with no backend, which changes how a plugin gets *registered* (a PR to a JSON file, not an upload API) but not how it gets *loaded and run* (still just a `<script src>`)."
+  },
+  {
+   "mip": "MIP-0035",
+   "file": "MIP-0035-map-plugin-api.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A Windy-style upload/marketplace service (rejected): Rejected for v1"
+  },
+  {
+   "mip": "MIP-0035",
+   "file": "MIP-0035-map-plugin-api.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Sandboxed `<iframe>` plugins with a `postMessage` API (rejected): Real isolation, but a much smaller and harder-to-design capability surface (no direct Leaflet access) for a repo with"
+  },
+  {
+   "mip": "MIP-0035",
+   "file": "MIP-0035-map-plugin-api.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): every new layer stays a marola PR"
+  },
+  {
+   "mip": "MIP-0036",
+   "file": "MIP-0036-marola-advertising-action.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Release 0 (MIP-0033) is a milestone with no audience: the repo goes public, a chatbot goes live, a model lands on Hugging Face, and by default nobody outside this repository ever finds out."
+  },
+  {
+   "mip": "MIP-0036",
+   "file": "MIP-0036-marola-advertising-action.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing / a quiet release (rejected): Push the release tag"
+  },
+  {
+   "mip": "MIP-0036",
+   "file": "MIP-0036-marola-advertising-action.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Everything on launch day, simultaneously (rejected): The most literal reading of \"as loud as possible\""
+  },
+  {
+   "mip": "MIP-0036",
+   "file": "MIP-0036-marola-advertising-action.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "One post, one channel (Reddit or LinkedIn only) (rejected): Lowest risk, lowest cost"
+  },
+  {
+   "mip": "MIP-0036",
+   "file": "MIP-0036-marola-advertising-action.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Paid promotion (LinkedIn/Reddit ads) (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0036",
+   "file": "MIP-0036-marola-advertising-action.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Automating the posting (rejected): Rejected on this MIP's own §5.11 grounds and MIP-0018 §4's finding that most of these platforms have no usable API for an individual anyway"
+  },
+  {
+   "mip": "MIP-0036",
+   "file": "MIP-0036-marola-advertising-action.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Product Hunt / Hacker News as launch channels (rejected): Both are plausible and neither was researched here"
+  },
+  {
+   "mip": "MIP-0037",
+   "file": "MIP-0037-map-pwa.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "A service worker (`site/static/sw.js`) caches the app shell (`index.html`, `app.js`, `style.css`, `vendor/leaflet.*`) and the last successfully fetched board JSON, so a visitor who loses signal mid-session (a real scenario at a beach) keeps a working, if stale, map instead of a blank error."
+  },
+  {
+   "mip": "MIP-0037",
+   "file": "MIP-0037-map-pwa.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): The site already works when online"
+  },
+  {
+   "mip": "MIP-0037",
+   "file": "MIP-0037-map-pwa.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A full PWA framework (Workbox, etc.) pulls in a build step this repo's `site/static/` explicitly avoids (MIP-0005 §9) (rejected): a ~30-line hand-written service worker covers this MIP's actual scope (two file types, one JSON endpoint) without one"
+  },
+  {
+   "mip": "MIP-0038",
+   "file": "MIP-0038-forecast-model-spread.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola shows one wave height per beach-hour, from Open-Meteo's `best_match` model, and never says that other wave models disagree, sometimes by enough to move the hour across `Swimability`'s own `rough seas` threshold."
+  },
+  {
+   "mip": "MIP-0038",
+   "file": "MIP-0038-forecast-model-spread.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Keeps one clean number"
+  },
+  {
+   "mip": "MIP-0038",
+   "file": "MIP-0038-forecast-model-spread.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Show every model as a layer, Windy-style (rejected): Honest and free"
+  },
+  {
+   "mip": "MIP-0038",
+   "file": "MIP-0038-forecast-model-spread.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Average the models into one number (rejected): Tempting and wrong"
+  },
+  {
+   "mip": "MIP-0038",
+   "file": "MIP-0038-forecast-model-spread.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Score the roughest model (conservative) (rejected): Defensible for a safety product"
+  },
+  {
+   "mip": "MIP-0038",
+   "file": "MIP-0038-forecast-model-spread.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Use the Ensemble API instead (rejected): No marine variables (§4.2)"
+  },
+  {
+   "mip": "MIP-0038",
+   "file": "MIP-0038-forecast-model-spread.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A numeric confidence percentage (\"72% confident\") (rejected): A number marola cannot compute honestly from two models with no verification history"
+  },
+  {
+   "mip": "MIP-0039",
+   "file": "MIP-0039-deterministic-fact-guard.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Everything marola computes is deterministic, and then one 3B model writes a sentence over it, a second 3B model checks that sentence, and whatever comes back is printed."
+  },
+  {
+   "mip": "MIP-0039",
+   "file": "MIP-0039-deterministic-fact-guard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): The `--summarize` path keeps printing a contradicted jellyfish level to a swimmer"
+  },
+  {
+   "mip": "MIP-0039",
+   "file": "MIP-0039-deterministic-fact-guard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Make the prompt stricter (rejected): Already tried"
+  },
+  {
+   "mip": "MIP-0039",
+   "file": "MIP-0039-deterministic-fact-guard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Trust `Reviewer` and gate on its verdict (don't print when `verdict=revise`) (rejected): Cheaper, and it makes a 3B model the sole arbiter of whether a 3B model lied"
+  },
+  {
+   "mip": "MIP-0039",
+   "file": "MIP-0039-deterministic-fact-guard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "An LLM-as-judge grounding metric (Ragas-style, §4.2) (rejected): The right tool for prose-vs-prose"
+  },
+  {
+   "mip": "MIP-0039",
+   "file": "MIP-0039-deterministic-fact-guard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Adopt llm4s's `GroundingGuardrail` (rejected): 154 jars for a model-backed check (MIP-0012 §4.1/§8)"
+  },
+  {
+   "mip": "MIP-0039",
+   "file": "MIP-0039-deterministic-fact-guard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Slot-constrained generation only (§4.1/§5.3), skipping the guard (rejected): The intuitive answer"
+  },
+  {
+   "mip": "MIP-0039",
+   "file": "MIP-0039-deterministic-fact-guard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A fine-tune that refuses better (MIP-0025 Layer 3, DPO) (rejected): A real complement"
+  },
+  {
+   "mip": "MIP-0040",
+   "file": "MIP-0040-validating-the-reviewer-judge.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola's second LLM pass grades the first one and prints `Reviewer (score 72/100, verdict: approve)` to the user."
+  },
+  {
+   "mip": "MIP-0040",
+   "file": "MIP-0040-validating-the-reviewer-judge.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): The reviewer keeps printing a number that moved 55 points on an unchanged input today"
+  },
+  {
+   "mip": "MIP-0040",
+   "file": "MIP-0040-validating-the-reviewer-judge.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Set temperature 0 and stop there (rejected): Cheap, real, and it buys *reliability without validity*"
+  },
+  {
+   "mip": "MIP-0040",
+   "file": "MIP-0040-validating-the-reviewer-judge.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Delete the reviewer (rejected): Defensible if kappa comes back at zero"
+  },
+  {
+   "mip": "MIP-0040",
+   "file": "MIP-0040-validating-the-reviewer-judge.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Use a frontier model as the judge (Claude/GPT via MIP-0032's paid arm) (rejected): It would likely agree with a human more often"
+  },
+  {
+   "mip": "MIP-0040",
+   "file": "MIP-0040-validating-the-reviewer-judge.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Reviewer-of-the-reviewer / debate (rejected): The intuitive scaling move"
+  },
+  {
+   "mip": "MIP-0040",
+   "file": "MIP-0040-validating-the-reviewer-judge.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Adopt promptfoo or DeepEval (rejected): Both run locally against Ollama"
+  },
+  {
+   "mip": "MIP-0040",
+   "file": "MIP-0040-validating-the-reviewer-judge.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Fold this into `ROADMAP.md` §5's proposed multi-agent eval harness (rejected): That item is about scoring *per-agent contribution* across summariser/reviewer/escalation with shared-run-id traces"
+  },
+  {
+   "mip": "MIP-0041",
+   "file": "MIP-0041-soft-book-ingestion.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola's own dev-loop rules (`AGENTS.md`, `.claude/rules/*.md`, this session's own memory files) today only change reactively, one mid-session correction at a time, with no citation trail beyond \"the maintainer said so.\" This MIP proposes a small, human-gated pipeline, soft ingestion, that takes a book the maintainer already owns, extracts short, page-cited candidate principles with a local LLM pass, and writes them to a plain-checklist file for review, never auto-applying anything to a rule file."
+  },
+  {
+   "mip": "MIP-0041",
+   "file": "MIP-0041-soft-book-ingestion.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Manual reading + manual `AGENTS.md` edits (status quo) (rejected): keeps full human judgment"
+  },
+  {
+   "mip": "MIP-0041",
+   "file": "MIP-0041-soft-book-ingestion.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Auto-apply extracted `agentic-behavior` principles straight into `AGENTS.md` (rejected): rejected outright"
+  },
+  {
+   "mip": "MIP-0041",
+   "file": "MIP-0041-soft-book-ingestion.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Treat the book like another `knowledge/*.md` RAG corpus entry (`FUTURE-WORK.md` §9.1) (rejected): rejected for this specific use"
+  },
+  {
+   "mip": "MIP-0041",
+   "file": "MIP-0041-soft-book-ingestion.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A cloud LLM instead of local Ollama (rejected): available later as an opt-in"
+  },
+  {
+   "mip": "MIP-0042",
+   "file": "MIP-0042-map-v2-live-not-static.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Freeze today's static map at `marola.dev/v1/`, same files, same 3-hourly build, permanently available, and start a second client at `marola.dev/v2/` that computes a beach's score in the visitor's browser, at the moment they load the page, instead of reading a board baked hours earlier."
+  },
+  {
+   "mip": "MIP-0043",
+   "file": "MIP-0043-awesome-agentic-engineering-list.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "This MIP adds `docs/4-Research-and-plans/AWESOME-AGENTIC-ENGINEERING.md`, a public curated list of agentic-engineering projects (agent frameworks, MCP tooling, DSPy/prompt-compilation, critic/reviewer-pattern pipelines, spec/RFC-driven agent dev-loops) in the `sindresorhus/awesome` \"Awesome List\" convention, verified live against `github.com/sindresorhus/awesome` itself, not guessed from memory, plus a companion script, `scripts/awesome_agentic_digest.py`, that queries the real GitHub Search API for candidate repos and caches them for a human to manually curate into the doc."
+  },
+  {
+   "mip": "MIP-0043",
+   "file": "MIP-0043-awesome-agentic-engineering-list.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A GitHub Actions workflow that auto-opens a PR with digest results (rejected): rejected, this MIP's entire design principle (§5, following MIP-0041) is that nothing gets written into the curated doc unattended"
+  },
+  {
+   "mip": "MIP-0043",
+   "file": "MIP-0043-awesome-agentic-engineering-list.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A `--write` flag that appends candidates directly to the doc (rejected): rejected, this is exactly the failure mode §8's first bullet and MIP-0041's own risk section warn about"
+  },
+  {
+   "mip": "MIP-0043",
+   "file": "MIP-0043-awesome-agentic-engineering-list.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (no such doc) (rejected): loses the community/outreach value and the discoverability the \"top 10 similar repos\" section provides for marola itself"
+  },
+  {
+   "mip": "MIP-0043",
+   "file": "MIP-0043-awesome-agentic-engineering-list.md",
+   "status": "Implemented",
+   "section": "11",
+   "kind": "decided",
+   "text": "Decided 2026-09-28: yes, in this MIP's own implementation: it's a `docs/*.md` file like any other, and the doc index is meant to be complete."
+  },
+  {
+   "mip": "MIP-0044",
+   "file": "MIP-0044-site-sections.md",
+   "status": "Partially implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola.dev is a map and nothing else: no page explains what marola is, who made it, how to reach them, what changed last week, or where the code documentation lives."
+  },
+  {
+   "mip": "MIP-0044",
+   "file": "MIP-0044-site-sections.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "(a) Do nothing (rejected): The map stays the whole site"
+  },
+  {
+   "mip": "MIP-0044",
+   "file": "MIP-0044-site-sections.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "(b) A static-site generator (Hugo / Jekyll / Astro / 11ty) (rejected): Real tools, and each brings a toolchain"
+  },
+  {
+   "mip": "MIP-0044",
+   "file": "MIP-0044-site-sections.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "(c) Client-side markdown rendering (`marked`/`markdown-it`, vendored) (rejected): Less code"
+  },
+  {
+   "mip": "MIP-0044",
+   "file": "MIP-0044-site-sections.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "(d) GitHub Wiki as the docs surface (rejected): A separate repo"
+  },
+  {
+   "mip": "MIP-0044",
+   "file": "MIP-0044-site-sections.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "(e) A second Pages site (or Read the Docs) for `/dev/` (rejected): Another host, another privacy surface"
+  },
+  {
+   "mip": "MIP-0044",
+   "file": "MIP-0044-site-sections.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "(f) `sbt-unidoc` for one merged Scala API site instead of four per-module sites (rejected): Nicer output, but another sbt plugin to keep working against Scala 3.9"
+  },
+  {
+   "mip": "MIP-0044",
+   "file": "MIP-0044-site-sections.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "(g) A hosted contact form (Formspree/Netlify Forms) (rejected): A third-party origin in the CSP"
+  },
+  {
+   "mip": "MIP-0044",
+   "file": "MIP-0044-site-sections.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "(h) Skip the `/support/` page entirely and ship only `.github/FUNDING.yml` (rejected): Genuinely defensible and the least promotional option available"
+  },
+  {
+   "mip": "MIP-0045",
+   "file": "MIP-0045-nlp-and-parsing-over-llm.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Six places in marola call (or are one step from calling) a language model for a job that is classification, ranking, matching, or extraction rather than generation."
+  },
+  {
+   "mip": "MIP-0045",
+   "file": "MIP-0045-nlp-and-parsing-over-llm.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Defensible for §5.3/§5.4"
+  },
+  {
+   "mip": "MIP-0045",
+   "file": "MIP-0045-nlp-and-parsing-over-llm.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A better embedder instead (`nomic-embed-text`, free via Ollama) (rejected): Already tried"
+  },
+  {
+   "mip": "MIP-0045",
+   "file": "MIP-0045-nlp-and-parsing-over-llm.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "sentence-transformers (rejected): §4.4"
+  },
+  {
+   "mip": "MIP-0045",
+   "file": "MIP-0045-nlp-and-parsing-over-llm.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "An LLM-as-judge relevance filter (ask the model whether each passage is relevant) (rejected): Strictly more expensive than the thing it would replace"
+  },
+  {
+   "mip": "MIP-0045",
+   "file": "MIP-0045-nlp-and-parsing-over-llm.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Delete the embedding path entirely (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0046",
+   "file": "MIP-0046-remove-ai-slop-ui.md",
+   "status": "Accepted",
+   "section": "1",
+   "kind": "summary",
+   "text": "Every emoji on the map is replaced by a small monochrome mark drawn from nautical- and weather-chart vernacular: a barb-derived wind shaft, the site's own wave, a sounding bulb, a whale and a jellyfish silhouette, four plain facility pictograms, defined once as SVG `<symbol>`s inside `index.html` and referenced by `<use href=\"#…\">`."
+  },
+  {
+   "mip": "MIP-0046",
+   "file": "MIP-0046-remove-ai-slop-ui.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): The chrome is already clean and the emoji \"work\""
+  },
+  {
+   "mip": "MIP-0046",
+   "file": "MIP-0046-remove-ai-slop-ui.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Emoji everywhere, but only \"safe\" ones (drop 🪼) (rejected): Keeps the platform-variance problem and the generated look"
+  },
+  {
+   "mip": "MIP-0046",
+   "file": "MIP-0046-remove-ai-slop-ui.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Sprite the markers too (rejected): 80 `<use>` per render"
+  },
+  {
+   "mip": "MIP-0046",
+   "file": "MIP-0046-remove-ai-slop-ui.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A CSS-only icon set (borders/masks) (rejected): No extra request either"
+  },
+  {
+   "mip": "MIP-0046",
+   "file": "MIP-0046-remove-ai-slop-ui.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Redesign the page (rejected): Out of scope and against the skill's own advice"
+  },
+  {
+   "mip": "MIP-0047",
+   "file": "MIP-0047-desmos-equation-art.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola's visual vocabulary becomes equation-drawn: a small set of illustrative motifs, a trochoidal swell, a right-whale silhouette, a jellyfish, a two-constituent tide curve, a rip-current streamline pair, designed by tuning real equations in Desmos's free graphing calculator, then brought home as the equations, not as the picture, and rendered by a small in-repo script into the same inline SVG `<symbol>` sprite MIP-0046 introduces."
+  },
+  {
+   "mip": "MIP-0048",
+   "file": "MIP-0048-scaling-marola-sea.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola-sea today is SmolLM2-360M fine-tuned on marola's corpus: a proof that the pipeline works end to end, explicitly not a quality bar."
+  },
+  {
+   "mip": "MIP-0048",
+   "file": "MIP-0048-scaling-marola-sea.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): keep `tiny`"
+  },
+  {
+   "mip": "MIP-0048",
+   "file": "MIP-0048-scaling-marola-sea.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Train Qwen3.8-27B as originally asked (rejected): Hardware allows it (§4.3)"
+  },
+  {
+   "mip": "MIP-0048",
+   "file": "MIP-0048-scaling-marola-sea.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Llama-3.2-3B (`base` preset) (rejected): Works, but carries the naming obligation"
+  },
+  {
+   "mip": "MIP-0048",
+   "file": "MIP-0048-scaling-marola-sea.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Grow the corpus and keep the 360M model (rejected): Genuinely competitive, and cheaper"
+  },
+  {
+   "mip": "MIP-0048",
+   "file": "MIP-0048-scaling-marola-sea.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Skip fine-tuning (rejected): rely on RAG with a stock model"
+  },
+  {
+   "mip": "MIP-0049",
+   "file": "MIP-0049-scala-for-the-web-layer.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "The map page is 32 KB of hand-written ES5-style JavaScript plus 13 KB of CSS."
+  },
+  {
+   "mip": "MIP-0049",
+   "file": "MIP-0049-scala-for-the-web-layer.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Entirely defensible"
+  },
+  {
+   "mip": "MIP-0049",
+   "file": "MIP-0049-scala-for-the-web-layer.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Modernise the JavaScript instead (rejected): `const`/`let`, ES modules"
+  },
+  {
+   "mip": "MIP-0049",
+   "file": "MIP-0049-scala-for-the-web-layer.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The strongest alternative to §5.2 and the one to compare against when the time comes (rejected)"
+  },
+  {
+   "mip": "MIP-0049",
+   "file": "MIP-0049-scala-for-the-web-layer.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "TypeScript (rejected): Real types, but adds a build step and a second language toolchain"
+  },
+  {
+   "mip": "MIP-0049",
+   "file": "MIP-0049-scala-for-the-web-layer.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A game engine (Indigo) (rejected): §4.4"
+  },
+  {
+   "mip": "MIP-0050",
+   "file": "MIP-0050-brazilian-llms.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola is a Brazilian product that answers in English, running a 360M English-centric model that demonstrably invents facts."
+  },
+  {
+   "mip": "MIP-0050",
+   "file": "MIP-0050-brazilian-llms.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Defensible"
+  },
+  {
+   "mip": "MIP-0050",
+   "file": "MIP-0050-brazilian-llms.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A bigger general model (Llama-3.2-3B, the `base` preset) (rejected): Already available, already works"
+  },
+  {
+   "mip": "MIP-0050",
+   "file": "MIP-0050-brazilian-llms.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Translate at the edges (rejected): keep an English model"
+  },
+  {
+   "mip": "MIP-0050",
+   "file": "MIP-0050-brazilian-llms.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Sabiá-7B (rejected): §4.3"
+  },
+  {
+   "mip": "MIP-0051",
+   "file": "MIP-0051-wave-model-ensemble.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola quotes a wave height for every beach and never says where it came from."
+  },
+  {
+   "mip": "MIP-0051",
+   "file": "MIP-0051-wave-model-ensemble.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Rejected on §2's numbers"
+  },
+  {
+   "mip": "MIP-0051",
+   "file": "MIP-0051-wave-model-ensemble.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Pick the single best model and hard-code it (rejected): Cheaper, and it is what marola accidentally does today"
+  },
+  {
+   "mip": "MIP-0051",
+   "file": "MIP-0051-wave-model-ensemble.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Average instead of median (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0051",
+   "file": "MIP-0051-wave-model-ensemble.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Fold disagreement into the score (rejected): Rejected per §6 and MIP-0001's precedent"
+  },
+  {
+   "mip": "MIP-0051",
+   "file": "MIP-0051-wave-model-ensemble.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Go straight to running WW3/WRF (rung C first) (rejected): Rejected as the sequencing"
+  },
+  {
+   "mip": "MIP-0051",
+   "file": "MIP-0051-wave-model-ensemble.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Copernicus Marine (CMEMS) direct (rejected): A richer source than Open-Meteo"
+  },
+  {
+   "mip": "MIP-0052",
+   "file": "MIP-0052-wave-model-compute.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "MIP-0051 found that public wave models disagree by up to 6.7× at marola's sheltered beaches because they cannot resolve them."
+  },
+  {
+   "mip": "MIP-0052",
+   "file": "MIP-0052-wave-model-compute.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing at all, don't write this MIP (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0052",
+   "file": "MIP-0052-wave-model-compute.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Adopt the attached C++/Kokkos plan as written (rejected): Rejected on §4.1 and §5"
+  },
+  {
+   "mip": "MIP-0052",
+   "file": "MIP-0052-wave-model-compute.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Port to one of the other candidate languages instead (§4.2) (rejected): Rejected for the same reason the Kokkos plan is"
+  },
+  {
+   "mip": "MIP-0052",
+   "file": "MIP-0052-wave-model-compute.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Use MPAS for atmosphere instead of WRF (rejected): Not rejected, deferred"
+  },
+  {
+   "mip": "MIP-0052",
+   "file": "MIP-0052-wave-model-compute.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Buy the data instead of computing it (rejected): Not seriously costed here"
+  },
+  {
+   "mip": "MIP-0052",
+   "file": "MIP-0052-wave-model-compute.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "AI surrogates for the source terms (rejected): Not rejected, deferred"
+  },
+  {
+   "mip": "MIP-0052",
+   "file": "MIP-0052-wave-model-compute.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "NLML (Ikuyajolu et al., *JGR: Machine Learning and Computation*, 2026, the same authors as the 2023 OpenACC WW3 paper) emulates WW3's exact nonlinear interactions at 136× the speed of WRT, 1.04× the cost of DIA and twice DIA's accuracy, stable through a year-long integration (rejected): That is the direction the E3SM wave group actually went after OpenACC"
+  },
+  {
+   "mip": "MIP-0053",
+   "file": "MIP-0053-learned-local-correction.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "The question that prompted this MIP was whether a GPU model (XGBoost, a DNN, a transformer) can compete with WAVEWATCH III."
+  },
+  {
+   "mip": "MIP-0053",
+   "file": "MIP-0053-learned-local-correction.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): ship MIP-0051 and stop"
+  },
+  {
+   "mip": "MIP-0053",
+   "file": "MIP-0053-learned-local-correction.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Run our own 1.1 km nest (MIP-0051 §5.3 / MIP-0052) (rejected): The physically correct fix"
+  },
+  {
+   "mip": "MIP-0053",
+   "file": "MIP-0053-learned-local-correction.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Aurora 0.25° Wave (rejected): §4.1"
+  },
+  {
+   "mip": "MIP-0053",
+   "file": "MIP-0053-learned-local-correction.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "XGBoost or an LSTM instead of a linear fit (rejected): §4.2 and §4.4"
+  },
+  {
+   "mip": "MIP-0053",
+   "file": "MIP-0053-learned-local-correction.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Fine-tune marola-sea (MIP-0025/0048) to predict wave height (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0053",
+   "file": "MIP-0053-learned-local-correction.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Buy a commercial nearshore forecast (rejected): Still uncosted, still the honest alternative to all of the above"
+  },
+  {
+   "mip": "MIP-0054",
+   "file": "MIP-0054-portuguese-first-experience.md",
+   "status": "Accepted",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola's users are Brazilian swimmers; its beach names, bulletins and CONAMA verdicts are Portuguese; everything marola itself says, site copy, CLI output, scoring notes, sea lore, corpus, prompts, the model's summary, is English."
+  },
+  {
+   "mip": "MIP-0054",
+   "file": "MIP-0054-portuguese-first-experience.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Rejected by the release decision this MIP records and MIP-0050 §2's argument"
+  },
+  {
+   "mip": "MIP-0054",
+   "file": "MIP-0054-portuguese-first-experience.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Translate at the edges (English model, a translation pass after it) (rejected): a second model call on the safety-relevant path"
+  },
+  {
+   "mip": "MIP-0054",
+   "file": "MIP-0054-portuguese-first-experience.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Portuguese only, no toggle, wrong for a repo whose docs are English, and the catalog costs the same once it exists (rejected)"
+  },
+  {
+   "mip": "MIP-0054",
+   "file": "MIP-0054-portuguese-first-experience.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Language from location, rejected (§5.5) (rejected): a denied prompt must not cost the visitor their language"
+  },
+  {
+   "mip": "MIP-0054",
+   "file": "MIP-0054-portuguese-first-experience.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "IP geolocation in the page, §4.5 (rejected)"
+  },
+  {
+   "mip": "MIP-0054",
+   "file": "MIP-0054-portuguese-first-experience.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Regex over the English notes client-side, hard-codes English as the wire format (rejected): codes are the contract"
+  },
+  {
+   "mip": "MIP-0055",
+   "file": "MIP-0055-vector-store-and-ocean-knowledge-chunking.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "`--ask` and `ask_ocean_question` retrieve over `knowledge/*.md` through `FileKnowledgeStore`: a flat JSON file, every chunk scanned with cosine, one Ollama embedding call per question, and a relevance threshold that is `0.0` because the default embedder's scores carry no signal."
+  },
+  {
+   "mip": "MIP-0055",
+   "file": "MIP-0055-vector-store-and-ocean-knowledge-chunking.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing / keyword only (MIP-0045 §5.1's TF-IDF store) (rejected): loses PT↔EN and paraphrase matching"
+  },
+  {
+   "mip": "MIP-0055",
+   "file": "MIP-0055-vector-store-and-ocean-knowledge-chunking.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Keep the JSON file, swap the embedder (rejected): `MAROLA_LOCAL_EMBED_MODEL=bge-m3` today, with no code change"
+  },
+  {
+   "mip": "MIP-0055",
+   "file": "MIP-0055-vector-store-and-ocean-knowledge-chunking.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Qdrant as default (rejected): a process, a port and Docker for no gain at this scale"
+  },
+  {
+   "mip": "MIP-0055",
+   "file": "MIP-0055-vector-store-and-ocean-knowledge-chunking.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A bigger model at query time (rejected): costs on every request"
+  },
+  {
+   "mip": "MIP-0056",
+   "file": "MIP-0056-oods-open-ocean-data-store.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Build `data/oods/`: a git-versioned, everyone-can-read store of Brazilian bathing-water samples, one adapter per monitoring institute, a common schema, and DuckDB SQL views that union every state into one table."
+  },
+  {
+   "mip": "MIP-0056",
+   "file": "MIP-0056-oods-open-ocean-data-store.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): keep the five-sample cache"
+  },
+  {
+   "mip": "MIP-0056",
+   "file": "MIP-0056-oods-open-ocean-data-store.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Python (`oods/` package, DuckDB + pdfplumber), the natural ETL toolchain and the more familiar one for outside contributors (rejected): Lost on `PHILOSOPHY.md`'s own rule"
+  },
+  {
+   "mip": "MIP-0056",
+   "file": "MIP-0056-oods-open-ocean-data-store.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Store the weekly PDFs as the primary, what the app parses today (rejected): 300 KB binary each"
+  },
+  {
+   "mip": "MIP-0056",
+   "file": "MIP-0056-oods-open-ocean-data-store.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A separate `oods` repository, cleaner licence story and a smaller marola tree (rejected): but the adapters reuse marola's parsers and the map is the first consumer"
+  },
+  {
+   "mip": "MIP-0056",
+   "file": "MIP-0056-oods-open-ocean-data-store.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "SQLite / Delta / LFS, §4.4 (rejected)"
+  },
+  {
+   "mip": "MIP-0057",
+   "file": "MIP-0057-gcp-as-opt-in-cloud-backend.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola's `docs/2-Building-marola/ARCHITECTURE.md` §5 treats several capabilities as pluggable behind traits, each with a free local default."
+  },
+  {
+   "mip": "MIP-0057",
+   "file": "MIP-0057-gcp-as-opt-in-cloud-backend.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (stay local-only) (rejected): Loses nothing marola uses today"
+  },
+  {
+   "mip": "MIP-0057",
+   "file": "MIP-0057-gcp-as-opt-in-cloud-backend.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Add GCP as a backend for every integration at once (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0057",
+   "file": "MIP-0057-gcp-as-opt-in-cloud-backend.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Recommended path (rejected): add `gcp/` as a fully opt-in backend module behind the existing core traits"
+  },
+  {
+   "mip": "MIP-0057",
+   "file": "MIP-0057-gcp-as-opt-in-cloud-backend.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "This MIP does not commit to building even that slice, it only says that if one integration is picked first, the evidence points here (rejected)"
+  },
+  {
+   "mip": "MIP-0057",
+   "file": "MIP-0057-gcp-as-opt-in-cloud-backend.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A GCP-specific cost/deployment guard (`guard-gcp.sh`), built now, ahead of any GCP code (rejected): Rejected as premature"
+  },
+  {
+   "mip": "MIP-0058",
+   "file": "MIP-0058-daniela-vicentini-artwork.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola.dev gets its first credited human artist: Daniela Vicentini (@_danielavicentini), a visual artist and art therapist whose own portfolio already includes watercolors of Campeche, the same Santa Catarina coast marola's water-quality data (MIP-0056) covers."
+  },
+  {
+   "mip": "MIP-0059",
+   "file": "MIP-0059-jev-typed-decisions.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Jev is a \"System One\" model from TypeSafe AI, launched 2026-09-15..18: it takes a block of program state plus a set of typed questions and returns *typed* answers, one of a fixed option set, an ordinal score, or a yes/no probability, with calibrated probabilities and a confidence, in 70-500 ms."
+  },
+  {
+   "mip": "MIP-0059",
+   "file": "MIP-0059-jev-typed-decisions.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Strongest option today"
+  },
+  {
+   "mip": "MIP-0059",
+   "file": "MIP-0059-jev-typed-decisions.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Constrained decoding locally (grammar/JSON-schema-constrained Ollama) (rejected): Free, offline, no vendor"
+  },
+  {
+   "mip": "MIP-0059",
+   "file": "MIP-0059-jev-typed-decisions.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "This is the real competitor and should be benchmarked against Jev in the bootstrap ⚠ (not evaluated here) (rejected)"
+  },
+  {
+   "mip": "MIP-0059",
+   "file": "MIP-0059-jev-typed-decisions.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A fine-tuned local classifier (MIP-0025 tiers) (rejected): Cheapest at runtime"
+  },
+  {
+   "mip": "MIP-0060",
+   "file": "MIP-0060-open-code-review-on-ready.md",
+   "status": "Partially implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "[alibaba/open-code-review](https://github.com/alibaba/open-code-review) (OCR) is an Apache-2.0 Go CLI that reviews a git diff with an LLM agent constrained by deterministic file selection, rule matching and comment positioning, and emits line-level findings as JSON."
+  },
+  {
+   "mip": "MIP-0060",
+   "file": "MIP-0060-open-code-review-on-ready.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Upstream's Action as-is (`uses: alibaba/open-code-review@<sha>` + `ocr_version`) (rejected): Least work, and its incremental posting is better than ours"
+  },
+  {
+   "mip": "MIP-0060",
+   "file": "MIP-0060-open-code-review-on-ready.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Upstream's Action inside a `container: node:24` job (their self-hosted recipe) (rejected): Better isolation, but needs Docker on the runner path and host networking to reach Ollama"
+  },
+  {
+   "mip": "MIP-0060",
+   "file": "MIP-0060-open-code-review-on-ready.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "`/code-review` in CI (rejected): Already available, better recall"
+  },
+  {
+   "mip": "MIP-0060",
+   "file": "MIP-0060-open-code-review-on-ready.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Automatic on `ready_for_review`/every push (this MIP's first draft) (rejected): Dropped 2026-09-19 on the maintainer's call"
+  },
+  {
+   "mip": "MIP-0060",
+   "file": "MIP-0060-open-code-review-on-ready.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Reviews stay manual and late"
+  },
+  {
+   "mip": "MIP-0062",
+   "file": "MIP-0062-ressaca-hazard.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "A *ressaca* (heavy surf driven onto the coast, worst when a spring tide and a southerly wind coincide) is the event that erodes Florianópolis's beaches and the one condition under which the right advice is \"do not go in\"."
+  },
+  {
+   "mip": "MIP-0062",
+   "file": "MIP-0062-ressaca-hazard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Scrape the Navy's warnings (rejected): Authoritative, and it refuses automated fetches"
+  },
+  {
+   "mip": "MIP-0062",
+   "file": "MIP-0062-ressaca-hazard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Use the video's per-beach counts (rejected): Unsourced until the 2010–2024 study is found"
+  },
+  {
+   "mip": "MIP-0062",
+   "file": "MIP-0062-ressaca-hazard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Sea-level-rise lore (rejected): True and irrelevant to tomorrow's swim"
+  },
+  {
+   "mip": "MIP-0062",
+   "file": "MIP-0062-ressaca-hazard.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): marola keeps calling a ressaca \"rough seas\" and scoring it above zero"
+  },
+  {
+   "mip": "MIP-0063",
+   "file": "MIP-0063-github-issue-tracking-standard.md",
+   "status": "Partially implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola already does spec-driven development: a MIP is the spec, `MIP-NNNN.tasks.md` is the plan, a stacked PR is the increment."
+  },
+  {
+   "mip": "MIP-0063",
+   "file": "MIP-0063-github-issue-tracking-standard.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): ROADMAP prose and `tasks.md` keep working for one maintainer with one agent"
+  },
+  {
+   "mip": "MIP-0063",
+   "file": "MIP-0063-github-issue-tracking-standard.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Adopt spec-kit wholesale, as `brunogbv/cv` does (rejected): `.specify/`, nine skills"
+  },
+  {
+   "mip": "MIP-0063",
+   "file": "MIP-0063-github-issue-tracking-standard.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Milestones as phases (this design's first draft) (rejected): Rejected by the maintainer during brainstorming"
+  },
+  {
+   "mip": "MIP-0063",
+   "file": "MIP-0063-github-issue-tracking-standard.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Epic issues as a separate object, milestones reserved for releases (rejected): The milestone *is* the epic"
+  },
+  {
+   "mip": "MIP-0063",
+   "file": "MIP-0063-github-issue-tracking-standard.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Status as a label family (`status/triage`, …) instead of a board field (rejected): That is what a board is for"
+  },
+  {
+   "mip": "MIP-0063",
+   "file": "MIP-0063-github-issue-tracking-standard.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A `blocked` label with the blocker named in prose, which is what this design carried until the maintainer's review of PR #413 asked how a contributor is supposed to know what is ready (rejected): Rejected once §4.2's native dependencies turned out to be GA on Free"
+  },
+  {
+   "mip": "MIP-0064",
+   "file": "MIP-0064-mkdocs-documentation-site.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola.dev's Docs tab lands on a hand-built index page that links out to GitHub for every Markdown file: no rendering, no search, no diagrams."
+  },
+  {
+   "mip": "MIP-0064",
+   "file": "MIP-0064-mkdocs-documentation-site.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): The index works and costs nothing"
+  },
+  {
+   "mip": "MIP-0064",
+   "file": "MIP-0064-mkdocs-documentation-site.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Nix-native mkdocs + public `kroki.io` (rejected): No Docker, a three-line CI step"
+  },
+  {
+   "mip": "MIP-0064",
+   "file": "MIP-0064-mkdocs-documentation-site.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "mkdocs-material's built-in Mermaid (`pymdownx.superfences`, no Kroki at all) (rejected): Simplest possible diagrams"
+  },
+  {
+   "mip": "MIP-0064",
+   "file": "MIP-0064-mkdocs-documentation-site.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A hand-written `nav:` (rejected): Curated ordering and MIP grouping by status"
+  },
+  {
+   "mip": "MIP-0064",
+   "file": "MIP-0064-mkdocs-documentation-site.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Extending `build_docs_index.py` to render Markdown itself (rejected): A search index"
+  },
+  {
+   "mip": "MIP-0065",
+   "file": "MIP-0065-ci-cd-on-github-hosted-runners.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "Every gate and both deploys already run in GitHub Actions, but nine jobs are routed to the maintainer's desktop through `runs-on: ${{ vars.CI_RUNNER || 'self-hosted' }}`."
+  },
+  {
+   "mip": "MIP-0065",
+   "file": "MIP-0065-ci-cd-on-github-hosted-runners.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Flip `CI_RUNNER=ubuntu-latest`, change nothing else (rejected): One click, but both tool paths stay"
+  },
+  {
+   "mip": "MIP-0065",
+   "file": "MIP-0065-ci-cd-on-github-hosted-runners.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Nix for every job (rejected): One mechanism, but a Nix install in front of every JVM job for parity the sbt jobs already have through `setup-java`"
+  },
+  {
+   "mip": "MIP-0065",
+   "file": "MIP-0065-ci-cd-on-github-hosted-runners.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Keep `CI_RUNNER` as an escape hatch (rejected): Reopens the fork exposure whenever it is used"
+  },
+  {
+   "mip": "MIP-0065",
+   "file": "MIP-0065-ci-cd-on-github-hosted-runners.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Unregister the desktop runner entirely (rejected): Loses GPU publishing"
+  },
+  {
+   "mip": "MIP-0065",
+   "file": "MIP-0065-ci-cd-on-github-hosted-runners.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "This MIP first, MIP-0064 rebased on top (rejected): Offered"
+  },
+  {
+   "mip": "MIP-0065",
+   "file": "MIP-0065-ci-cd-on-github-hosted-runners.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Cross-MIP edges by hand (`issues.sh deps add`) (rejected): No code, but breaks \"edges come from the `depends on` column\" and a re-projection would not know the edge exists"
+  },
+  {
+   "mip": "MIP-0065",
+   "file": "MIP-0065-ci-cd-on-github-hosted-runners.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): CI keeps stopping when the desktop sleeps"
+  },
+  {
+   "mip": "MIP-0066",
+   "file": "MIP-0066-opt-in-dev-containers.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "A contributor who has Docker and VS Code (or JetBrains, or the devcontainer CLI, or GitHub Codespaces) opens the repo in a container and gets the toolchain `nix develop` gives today, from the same `flake.lock`, without installing Nix."
+  },
+  {
+   "mip": "MIP-0066",
+   "file": "MIP-0066-opt-in-dev-containers.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Reuse the `Dockerfile` `dev` target (rejected): One image already exists"
+  },
+  {
+   "mip": "MIP-0066",
+   "file": "MIP-0066-opt-in-dev-containers.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A Dockerfile without Nix (apt, sdkman, pip) (rejected): Fastest to open"
+  },
+  {
+   "mip": "MIP-0066",
+   "file": "MIP-0066-opt-in-dev-containers.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The full `default` shell in the container (rejected): One shell to reason about"
+  },
+  {
+   "mip": "MIP-0066",
+   "file": "MIP-0066-opt-in-dev-containers.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Codespaces prebuilds (rejected): The fastest Codespaces start"
+  },
+  {
+   "mip": "MIP-0066",
+   "file": "MIP-0066-opt-in-dev-containers.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Nix remains the only door"
+  },
+  {
+   "mip": "MIP-0067",
+   "file": "MIP-0067-inea-multi-city-bathing-water.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "MIP-0031 shipped one INEA parser and pointed it at one hardcoded June PDF."
+  },
+  {
+   "mip": "MIP-0067",
+   "file": "MIP-0067-inea-multi-city-bathing-water.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Rio keeps a frozen June verdict that reads as today's"
+  },
+  {
+   "mip": "MIP-0067",
+   "file": "MIP-0067-inea-multi-city-bathing-water.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A parser per zone (rejected): Four near-identical files that drift apart"
+  },
+  {
+   "mip": "MIP-0067",
+   "file": "MIP-0067-inea-multi-city-bathing-water.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Parse the `historico` PDFs instead (rejected): One file per zone-year and a third code format"
+  },
+  {
+   "mip": "MIP-0067",
+   "file": "MIP-0067-inea-multi-city-bathing-water.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "URL guessing from the `-N` suffix or the upload month (rejected): Rejected"
+  },
+  {
+   "mip": "MIP-0068",
+   "file": "MIP-0068-diagrams-in-docs.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "MIP-0064 put a self-hosted Kroki behind the docs site, and five Mermaid diagrams use it (`CI-CD.md` ×2, `ARCHITECTURE.md`, `MIPs/README.md`, the generated MIP graph)."
+  },
+  {
+   "mip": "MIP-0068",
+   "file": "MIP-0068-diagrams-in-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): The ASCII keeps misaligning"
+  },
+  {
+   "mip": "MIP-0068",
+   "file": "MIP-0068-diagrams-in-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Mermaid only (rejected): Simplest, and everything renders on GitHub"
+  },
+  {
+   "mip": "MIP-0068",
+   "file": "MIP-0068-diagrams-in-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Keep both themes, render each diagram twice (`styles_light`/`styles_dark`) (rejected): Doubles every render and every legibility check"
+  },
+  {
+   "mip": "MIP-0068",
+   "file": "MIP-0068-diagrams-in-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Commit rendered SVGs (rejected): This would render on GitHub for every dialect"
+  },
+  {
+   "mip": "MIP-0068",
+   "file": "MIP-0068-diagrams-in-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "kroki.io instead of self-hosted companions (rejected): No 612 MB pull"
+  },
+  {
+   "mip": "MIP-0068",
+   "file": "MIP-0068-diagrams-in-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Generate the task DAGs from `depends on` (rejected): It would be better than drawing them by hand"
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "`marola-dev/marola` becomes an umbrella: the team layer (ways of working, MIPs, the aggregated docs site) with every code repo as a git submodule."
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): It keeps the one-tree agent context"
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Full modularity (`core`/`local` as published libraries with semver) (rejected): This is the most SRP-pure option"
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Keep `marola-dev/marola` as the Scala app, with a new umbrella repo (rejected): Issues, MIP history and every `#N` reference would have to move or keep pointing at a code repo"
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Require the umbrella for shared tooling (`../devkit/scripts`) (rejected): A single-repo clone couldn't run `just pr`"
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A finer ML split now (`marola-llm`, `marola-nlp`, `marola-ml`, raised in discussion #522) (rejected): Today `dspy/` and `finetune/` are two small offline tools with one consumer"
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A GitHub App instead of a PAT (rejected): It is scoped per repo and has no personal owner"
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Issues all stay in the umbrella (rejected): Existing links wouldn't move"
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Vendor devkit files into each repo with a sync bot (rejected): This is the copy-and-drift model `FUTURE-WORK.md` §7 already hit"
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The umbrella owns `marola.dev` and pulls in the site's `dist/` (rejected): URLs would be unchanged"
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "11",
+   "kind": "decided",
+   "text": "Decided 2026-09-30: in #522, a fine-grained PAT; the names `marola-app` and `marola-site`, as proposed (`marola-backend`/`marola-frontend` were weighed and dropped by the team); issues per repo on the org Project."
+  },
+  {
+   "mip": "MIP-0070",
+   "file": "MIP-0070-umbrella-and-polyrepo-split.md",
+   "status": "Implemented",
+   "section": "11",
+   "kind": "decided",
+   "text": "Decided 2026-10-10: no PAT for cross-repo automation: MIP-0086 replaced it with two org-owned GitHub Apps, `marola-pr-bot` and `marola-merge-bot`, so no owner or expiry is left to choose."
+  },
+  {
+   "mip": "MIP-0072",
+   "file": "MIP-0072-gemini-review-on-request.md",
+   "status": "Partially implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "Requesting the empty, visible org team `marola-dev/gemini` as a reviewer on any marola pull request starts a Gemini review."
+  },
+  {
+   "mip": "MIP-0072",
+   "file": "MIP-0072-gemini-review-on-request.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Gemini Code Assist on GitHub (this MIP's first draft) (rejected): needs a GCP project with billing since the consumer app's shutdown"
+  },
+  {
+   "mip": "MIP-0072",
+   "file": "MIP-0072-gemini-review-on-request.md",
+   "status": "Partially implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "An agent loop (`run-gemini-cli`) (rejected): spent the day's quota on a single PR"
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "docs.marola.dev becomes the umbrella's site."
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected)"
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A separate umbrella landing page besides its README (rejected)"
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Pinning code links to the umbrella's gitlinks while the prose tracks `main` (rejected)"
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A nav plugin to order the sidebar (rejected)"
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Renaming `docs/MIPs/` to `docs/6-MIPs/` in the tree (rejected)"
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Redirects all in the 404 page (rejected)"
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "API docs committed to the default branch through PRs (rejected)"
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "API docs from release assets only (today) (rejected)"
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The devkit as a docs-only submodule (rejected)"
+  },
+  {
+   "mip": "MIP-0074",
+   "file": "MIP-0074-docs-umbrella-landing-and-repo-docs.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Per-repo `mkdocs.yml` (rejected)"
+  },
+  {
+   "mip": "MIP-0075",
+   "file": "MIP-0075-water-quality-store-r2.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "A private Cloudflare R2 bucket, `br-open-ocean-data-storage`, holds marola's open ocean data as one [DuckLake](https://ducklake.select/): tables whose rows are Parquet files under `lake/`, and a catalog, `catalog/oods.ducklake`, that records every table, file and snapshot."
+  },
+  {
+   "mip": "MIP-0075",
+   "file": "MIP-0075-water-quality-store-r2.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (marola-site#20's `site-data:water/` stopgap) (rejected): keeps the last fetch"
+  },
+  {
+   "mip": "MIP-0075",
+   "file": "MIP-0075-water-quality-store-r2.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Supabase Postgres (this MIP's first draft, 2026-10-02) (rejected): constraints and upserts for free"
+  },
+  {
+   "mip": "MIP-0075",
+   "file": "MIP-0075-water-quality-store-r2.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Backblaze B2 (this MIP from 2026-10-05 to 2026-10-07) (rejected): S3-compatible and no card for the free tier"
+  },
+  {
+   "mip": "MIP-0075",
+   "file": "MIP-0075-water-quality-store-r2.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Cloudflare D1 (marola#667) (rejected): an HTTP query API"
+  },
+  {
+   "mip": "MIP-0075",
+   "file": "MIP-0075-water-quality-store-r2.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Plain Parquet with a manifest, Delta Lake, a Postgres catalog (rejected): §4.4"
+  },
+  {
+   "mip": "MIP-0075",
+   "file": "MIP-0075-water-quality-store-r2.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Parquet in git (MIP-0056 §4.4) (rejected): free and reviewable"
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "Two tools, split by the kind of question."
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "5.1",
+   "kind": "decided",
+   "text": "Decided 2026-10-03: the wiring lives as a generated block inside `REPOS.md`."
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "5.5",
+   "kind": "decided",
+   "text": "Decided 2026-10-03: every code repo sends `submodule-updated` on each push to `main`, as MIP-0070 described."
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): MIP-0017's call, which was right for the monorepo"
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Only a hand-written `REPOS.md` (MIP-0074 as accepted) (rejected): it answers the wiring questions"
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Wiring injected into graphify's graph (prototyped in spike 2) (rejected): `path` is exact (0.2–0.35 KB) once you know the labels"
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "graphify's LLM pass over YAML and docs (rejected): about 0.6–0.7M tokens per pass"
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "graphify's MCP server (rejected): the same answers plus about 6.6 KB of schemas"
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Per-repo graphs merged with `merge-graphs` (rejected): no repo-to-repo edges"
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Committing graph output (rejected): 5.9 MB that churns on every change"
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A PyPI/uv pin instead of nixpkgs (rejected): a second pinning mechanism beside the devkit's flake"
+  },
+  {
+   "mip": "MIP-0076",
+   "file": "MIP-0076-agent-routing-tooling.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The wiring as a separate generated file instead of a block in `REPOS.md` (rejected): a second place for the same facts"
+  },
+  {
+   "mip": "MIP-0079",
+   "file": "MIP-0079-zenodo-dois-and-citation.md",
+   "status": "Accepted",
+   "section": "1",
+   "kind": "summary",
+   "text": "Each GitHub release of the umbrella, and later of marola-app, marola-ml and marola-corpus, is archived on Zenodo with its own DOI through Zenodo's GitHub integration."
+  },
+  {
+   "mip": "MIP-0079",
+   "file": "MIP-0079-zenodo-dois-and-citation.md",
+   "status": "Accepted",
+   "section": "5.8",
+   "kind": "decided",
+   "text": "Decided 2026-10-14: a submodule pointer move never makes a release or a Zenodo version."
+  },
+  {
+   "mip": "MIP-0079",
+   "file": "MIP-0079-zenodo-dois-and-citation.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): A GitHub URL breaks when a repo moves and doesn't pin a version"
+  },
+  {
+   "mip": "MIP-0079",
+   "file": "MIP-0079-zenodo-dois-and-citation.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "CITATION.cff alone (the first draft) (rejected): Zenodo would read it"
+  },
+  {
+   "mip": "MIP-0079",
+   "file": "MIP-0079-zenodo-dois-and-citation.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Both files kept by hand (rejected): ww3-gpu does this"
+  },
+  {
+   "mip": "MIP-0079",
+   "file": "MIP-0079-zenodo-dois-and-citation.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The devkit first (rejected): A tool, a tag and a pin bump before one record exists"
+  },
+  {
+   "mip": "MIP-0079",
+   "file": "MIP-0079-zenodo-dois-and-citation.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Software Heritage alone (rejected): It archives code but gives no DOI"
+  },
+  {
+   "mip": "MIP-0080",
+   "file": "MIP-0080-vendored-skills-lock.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "Every byte-identical copy of a third-party Claude Code skill gets a row in a per-repo `skills.lock`: the upstream repo, path and commit, a git blob sha per file, the licence, and an optional patch for a local edit."
+  },
+  {
+   "mip": "MIP-0080",
+   "file": "MIP-0080-vendored-skills-lock.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (the drift report alone) (rejected): it found R5 and R6 and nothing moved"
+  },
+  {
+   "mip": "MIP-0080",
+   "file": "MIP-0080-vendored-skills-lock.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A blocking \"must be latest\" CI check (rejected): every upstream push breaks every consumer's `main` at once"
+  },
+  {
+   "mip": "MIP-0080",
+   "file": "MIP-0080-vendored-skills-lock.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Install upstreams as plugins from their marketplaces (rejected): cloud sessions do not install project-enabled external plugins"
+  },
+  {
+   "mip": "MIP-0080",
+   "file": "MIP-0080-vendored-skills-lock.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "marola-skills as an umbrella submodule holding the copies (rejected): Claude Code loads project skills only from the started repo's `.claude/skills/` and its parents"
+  },
+  {
+   "mip": "MIP-0080",
+   "file": "MIP-0080-vendored-skills-lock.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "`git subtree` (rejected): it pins a commit"
+  },
+  {
+   "mip": "MIP-0080",
+   "file": "MIP-0080-vendored-skills-lock.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "`npx skills` or a similar installer (rejected): no documented ref pinning"
+  },
+  {
+   "mip": "MIP-0080",
+   "file": "MIP-0080-vendored-skills-lock.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The devkit sync bot MIP-0070 §9 rejected (rejected): that was a bot overwriting devkit files in every repo"
+  },
+  {
+   "mip": "MIP-0081",
+   "file": "MIP-0081-external-llm-evaluation.md",
+   "status": "Accepted",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola-sea is published to Hugging Face with no standard benchmark score, because running a harness needs GPUs marola does not have."
+  },
+  {
+   "mip": "MIP-0081",
+   "file": "MIP-0081-external-llm-evaluation.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Take one provider's scores as they come (rejected): Fastest, but the numbers would be unreproducible and the relationship exclusive in practice"
+  },
+  {
+   "mip": "MIP-0081",
+   "file": "MIP-0081-external-llm-evaluation.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Rent GPUs and run everything locally (rejected): Reproducible, but paid every run"
+  },
+  {
+   "mip": "MIP-0081",
+   "file": "MIP-0081-external-llm-evaluation.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The Hugging Face Open LLM Leaderboard (rejected): Retired in 2025"
+  },
+  {
+   "mip": "MIP-0083",
+   "file": "MIP-0083-forecast-benchmark-job.md",
+   "status": "Accepted",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola-app gains an `experiment` sbt module, written in Kyo, that every 4 hours (adjustable) samples 10 m wind and 2 m temperature forecasts at a registry of sampling points."
+  },
+  {
+   "mip": "MIP-0083",
+   "file": "MIP-0083-forecast-benchmark-job.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing / #723 alone (rejected): stale at the next model upgrade"
+  },
+  {
+   "mip": "MIP-0083",
+   "file": "MIP-0083-forecast-benchmark-job.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A new repo (marola-eval) in Scala, Rust or Haskell (rejected): proposed earlier on 2026-10-09 and withdrawn by the owner"
+  },
+  {
+   "mip": "MIP-0083",
+   "file": "MIP-0083-forecast-benchmark-job.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "GCS for MLflow, with WIF and Besom (rejected): a second cloud for the one bucket B2 already provides"
+  },
+  {
+   "mip": "MIP-0083",
+   "file": "MIP-0083-forecast-benchmark-job.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "An always-on MLflow (rejected): Phase 2 (MIP-0057)"
+  },
+  {
+   "mip": "MIP-0083",
+   "file": "MIP-0083-forecast-benchmark-job.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "GRIB from the originals (rejected): §4.1"
+  },
+  {
+   "mip": "MIP-0083",
+   "file": "MIP-0083-forecast-benchmark-job.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "`kyo-flow` for durability (rejected): §4.9"
+  },
+  {
+   "mip": "MIP-0083",
+   "file": "MIP-0083-forecast-benchmark-job.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A stacked blend of the providers for marola's forecast (the first version of §5.11) (rejected): its errors are a weighted average of the providers'"
+  },
+  {
+   "mip": "MIP-0083",
+   "file": "MIP-0083-forecast-benchmark-job.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A regional model of marola's own (WRF) (rejected): paid compute every cycle"
+  },
+  {
+   "mip": "MIP-0083",
+   "file": "MIP-0083-forecast-benchmark-job.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A learned post-processor (gradient boosting, a neural net) on the providers' output (rejected): more parameters than 2.5 years of 6-hourly pairs support"
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "MIP-0076 built the routing sources, but a session reaches them only if the person installed the devkit plugin, entered `nix develop`, initialised submodules and rebuilt the graph."
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): the plugin and `nix develop` stay prerequisites"
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Build locally everywhere (a portable `graph`, rebuilt on query) (rejected): always matches the working tree"
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Commit the graph (rejected): MIP-0076 rejected it"
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The bundle as a release asset (rejected): mints Zenodo versions (§5.3)"
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "An Actions artifact (rejected): expires, and downloading it needs a token"
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "docs.marola.dev (rejected): outside the cloud sessions' default network"
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The opt-out marker elsewhere (rejected): the committed settings turn the plugin off for everyone who pulls"
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Asking later (after the first request, or only when a plugin feature is needed) or a notice instead of a question (rejected): the first misses the hooks on the first task and gets skimmed"
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "graphify's MCP server for cloud sessions (rejected): plugins and their MCP servers do not load there"
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "11",
+   "kind": "decided",
+   "text": "Decided 2026-10-10: either answer is fine."
+  },
+  {
+   "mip": "MIP-0084",
+   "file": "MIP-0084-zero-setup-routing.md",
+   "status": "Implemented",
+   "section": "11",
+   "kind": "decided",
+   "text": "Decided 2026-10-10: nice to have, not a blocker: the umbrella is the workspace most sessions start in."
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "MIP-0084 gives every session a bundle and a `route` tool, holding only the code graph and the wiring."
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "5.4",
+   "kind": "decided",
+   "text": "Decided 2026-10-20: no committed `DOC-CODE.md`, since committing it meant `pointer-sync.sh` building the code graph on every pointer move, a `--check` against a bundle graph already behind the pointers, and one more file merged unread (§8)."
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "5.7",
+   "kind": "decided",
+   "text": "Decided 2026-10-20: BM25 ships, inside the bundle; no embedding (the [meaning spike](#meaning-spike-task-7-2026-10-20))."
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): `route` answers symbols and wiring"
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "graphify's Markdown pass for doc↔code (rejected): tried"
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "graphify's LLM pass (rejected): about 0.6–0.7M input tokens per run"
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Ollama embeddings (rejected): a daemon and a ~300 MB pull per machine"
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A full embedding model through ONNX Runtime (rejected): better vectors, but a large native dependency on every machine that queries"
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "mkdocs' search index (already built for docs.marola.dev) (rejected): full-text over docs only"
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "One combined graph (rejected): docs in the code graph was exactly what MIP-0076's revision undid"
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "11",
+   "kind": "decided",
+   "text": "Decided 2026-10-20: bundle only (§5.4), the maintainer's call in task 10, once committing it turned out to need a graph build in every pointer-sync run."
+  },
+  {
+   "mip": "MIP-0085",
+   "file": "MIP-0085-routing-index-family.md",
+   "status": "Implemented",
+   "section": "Meaning spike (task 7), 2026-10-20",
+   "kind": "decided",
+   "text": "Decided 2026-10-20: BM25 ships as `route query --meaning`, and no embedding does."
+  },
+  {
+   "mip": "MIP-0086",
+   "file": "MIP-0086-github-apps-for-automation.md",
+   "status": "Implemented",
+   "section": "1",
+   "kind": "summary",
+   "text": "Every GitHub write the org's automation makes moves to one of two org-owned GitHub Apps."
+  },
+  {
+   "mip": "MIP-0086",
+   "file": "MIP-0086-github-apps-for-automation.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "One App per need (#765's seven plus #740's) (rejected): smallest reach per key"
+  },
+  {
+   "mip": "MIP-0086",
+   "file": "MIP-0086-github-apps-for-automation.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Three Apps, `marola-bump` kept apart (rejected): the Workflows key would sit in marola-devkit only"
+  },
+  {
+   "mip": "MIP-0086",
+   "file": "MIP-0086-github-apps-for-automation.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "One App for everything (rejected): a key readable by every repo would merge into every repo"
+  },
+  {
+   "mip": "MIP-0086",
+   "file": "MIP-0086-github-apps-for-automation.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "An hourly `git ls-remote` poll instead of `notify-umbrella` (rejected): no notify credential at all"
+  },
+  {
+   "mip": "MIP-0086",
+   "file": "MIP-0086-github-apps-for-automation.md",
+   "status": "Implemented",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): PRs keep appearing as the maintainer's and the PATs lapse within a year"
+  },
+  {
+   "mip": "MIP-0087",
+   "file": "MIP-0087-claude-code-usage.md",
+   "status": "Draft",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola is worked on from two Claude Code surfaces: the CLI on a contributor's machine (in ai-jail, inside `nix develop`, one repo per session) and a Claude Project on claude.ai/code (a coordinator that starts one cloud thread per task, every marola repo cloned side by side)."
+  },
+  {
+   "mip": "MIP-0087",
+   "file": "MIP-0087-claude-code-usage.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing (rejected): Threads keep assuming the CLI's setup"
+  },
+  {
+   "mip": "MIP-0087",
+   "file": "MIP-0087-claude-code-usage.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Fold it into `AGENT-SKILLS.md` (rejected): That page is about skills"
+  },
+  {
+   "mip": "MIP-0087",
+   "file": "MIP-0087-claude-code-usage.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Make Project threads start inside one repo so its settings and hooks load (rejected): Not a setting a Project exposes today (the container clones every configured repo under `/home/user`)"
+  },
+  {
+   "mip": "MIP-0087",
+   "file": "MIP-0087-claude-code-usage.md",
+   "status": "Draft",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Vendor superpowers into each repo's `.claude/skills/` (rejected): Fifteen skills times six repos"
+  },
+  {
+   "mip": "MIP-0091",
+   "file": "MIP-0091-marola-forecaster-architecture.md",
+   "status": "Accepted",
+   "section": "1",
+   "kind": "summary",
+   "text": "marola will quote one wind and wave forecast for each beach."
+  },
+  {
+   "mip": "MIP-0091",
+   "file": "MIP-0091-marola-forecaster-architecture.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Do nothing, rank only as OWB does (rejected): marola must still select one number for each beach"
+  },
+  {
+   "mip": "MIP-0091",
+   "file": "MIP-0091-marola-forecaster-architecture.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The forecaster first, trained on simulations (rejected): A bandit tuned on synthetic rewards learns the simulator"
+  },
+  {
+   "mip": "MIP-0091",
+   "file": "MIP-0091-marola-forecaster-architecture.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A `marola-eval` repository (rejected): The owner withdrew it on 2026-10-09 (MIP-0083 §9)"
+  },
+  {
+   "mip": "MIP-0091",
+   "file": "MIP-0091-marola-forecaster-architecture.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A `marola-forecaster` code repository now (rejected): If the forecaster is in its own code repository now"
+  },
+  {
+   "mip": "MIP-0091",
+   "file": "MIP-0091-marola-forecaster-architecture.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The forecaster inside `experiment` (rejected): This alternative loses the direction of R1 that the build enforces"
+  },
+  {
+   "mip": "MIP-0091",
+   "file": "MIP-0091-marola-forecaster-architecture.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "The bandit in Python (marola-ml) (rejected): If the bandit is in Python"
+  },
+  {
+   "mip": "MIP-0091",
+   "file": "MIP-0091-marola-forecaster-architecture.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "A blend of the arms (rejected): A blend averages the errors of the arms and hides which arm is quoted (MIP-0083 §9, §5.11)"
+  },
+  {
+   "mip": "MIP-0091",
+   "file": "MIP-0091-marola-forecaster-architecture.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "One bandit over every arm (rejected): This alternative discards the losses of fetched arms that marola observes in all cases (policy note §4.5.1)"
+  },
+  {
+   "mip": "MIP-0091",
+   "file": "MIP-0091-marola-forecaster-architecture.md",
+   "status": "Accepted",
+   "section": "9",
+   "kind": "alternative",
+   "text": "Live epsilon-greedy (rejected): This alternative shows swimmers a forecast selected at random (R11)"
+  }
+ ]
+}
